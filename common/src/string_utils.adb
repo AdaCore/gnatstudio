@@ -630,7 +630,7 @@ package body String_Utils is
 
    function Strip_CR (Text : String) return String is
    begin
-      return Strip_Character (Text, ASCII.LF);
+      return Strip_Character (Text, ASCII.CR);
    end Strip_CR;
 
    procedure Strip_CR
