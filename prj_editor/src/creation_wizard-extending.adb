@@ -151,6 +151,7 @@ package body Creation_Wizard.Extending is
       Gtk_New (Page.Copy_Files,
                -"Copy selected files to the project's directory");
       Pack_Start (Box, Page.Copy_Files, Expand => False, Padding => 5);
+      Set_Active (Page.Copy_Files, True);
 
       Gtk_New (Frame);
       Pack_Start (Box, Frame, Expand => True, Fill => True);
@@ -224,6 +225,37 @@ package body Creation_Wizard.Extending is
       Files    : array (1 .. Page.Projects_Count) of File_Array_Access;
       Count    : array (1 .. Page.Projects_Count) of Natural := (others => 0);
 
+      procedure Add_File (Prj : Project_Type; File : VFS.Virtual_File);
+      --  Add a file into the list of files that are locally modified
+
+      --------------
+      -- Add_File --
+      --------------
+
+      procedure Add_File (Prj : Project_Type; File : VFS.Virtual_File) is
+         P   : Integer;
+      begin
+         P := Projects'First;
+         while P <= Projects'Last
+           and then Projects (P) /= Prj
+           and then Projects (P) /= No_Project
+         loop
+            P := P + 1;
+         end loop;
+
+         if Projects (P) = No_Project then
+            Projects (P) := Prj;
+         end if;
+
+         if Files (P) = null then
+            Files (P) := new File_Array (1 .. Direct_Sources_Count (Prj));
+         end if;
+
+         Count (P) := Count (P) + 1;
+         Files (P)(Count (P)) := File;
+      end Add_File;
+
+
    begin
       --  The new project will expand the root project. However, if the latter
       --  is itself an expanding project, we prefer to expand the original
@@ -249,32 +281,26 @@ package body Creation_Wizard.Extending is
       Model := Gtk_Tree_Store (Get_Model (Page.Files));
       PIter := Get_Iter_First (Model);
       while PIter /= Null_Iter loop
+         Prj := Get_Project_From_Name
+           (Get_Registry (Kernel).all,
+            Get_String (Get_String (Model, PIter, 1)));
+
+         --  If the project is selected, import all its source files
+         if Get_Boolean (Model, PIter, 0) then
+            P := 1;
+            loop
+               File := Get_Source_Files (Prj, P);
+               exit when File = VFS.No_File;
+               Add_File (Prj, File);
+               P := P + 1;
+            end loop;
+         end if;
+
          FIter := Children (Model, PIter);
          while FIter /= Null_Iter loop
             if Get_Boolean (Model, FIter, 0) then
                File := Create (Full_Filename => Get_String (Model, FIter, 2));
-               Prj  := Get_Project_From_File
-                 (Get_Registry (Kernel).all, File);
-
-               P := Projects'First;
-               while P <= Projects'Last
-                 and then Projects (P) /= Prj
-                 and then Projects (P) /= No_Project
-               loop
-                  P := P + 1;
-               end loop;
-
-               if Projects (P) = No_Project then
-                  Projects (P) := Prj;
-               end if;
-
-               if Files (P) = null then
-                  Files (P) := new File_Array
-                    (1 .. Direct_Sources_Count (Prj));
-               end if;
-
-               Count (P) := Count (P) + 1;
-               Files (P)(Count (P)) := File;
+               Add_File (Prj, File);
             end if;
 
             Next (Model, FIter);
