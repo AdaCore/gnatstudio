@@ -69,7 +69,7 @@ with Language;                   use Language;
 with Src_Editor_Buffer.Line_Information;
                                  use Src_Editor_Buffer.Line_Information;
 with Traces;                     use Traces;
-with Vfs;                        use Vfs;
+with VFS;                        use VFS;
 
 package body Src_Editor_View is
 
