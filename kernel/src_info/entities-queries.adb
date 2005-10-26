@@ -1274,8 +1274,10 @@ package body Entities.Queries is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Dependency_Iterator, Dependency_Iterator_Access);
    begin
-      Destroy (Iter.all);
-      Unchecked_Free (Iter);
+      if Iter /= null then
+         Destroy (Iter.all);
+         Unchecked_Free (Iter);
+      end if;
    end Destroy;
 
    -----------------------
