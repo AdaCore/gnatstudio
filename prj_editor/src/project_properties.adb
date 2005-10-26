@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
@@ -114,6 +113,9 @@ package body Project_Properties is
                          Attribute_As_Directory,
                          Attribute_As_Static_List,
                          Attribute_As_Dynamic_List);
+   type File_Filter is (Filter_None,
+                        Filter_From_Project,
+                        Filter_From_Extended);
 
    type Attribute_Type (Typ : Attribute_As := Attribute_As_String) is
    record
@@ -122,6 +124,7 @@ package body Project_Properties is
             | Attribute_As_Filename
             | Attribute_As_Directory   =>
             Default           : GNAT.OS_Lib.String_Access;
+            Filter            : File_Filter := Filter_None;
          when Attribute_As_Static_List =>
             Static_Allows_Any_String : Boolean := False;
             Static_List       : GNAT.OS_Lib.String_List_Access;
@@ -302,10 +305,10 @@ package body Project_Properties is
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String;
-      Project_Path    : String) return String;
+      Project_Path    : String) return GNAT.OS_Lib.String_List;
    --  Ask the user (through a dialog) for a new value for the attribute.
-   --  If the attribute is a list, this queries the value for one of the
-   --  elements in the list.
+   --  Multiple values can be returned if the attribute is a list. Returned
+   --  value must be freed by the user.
 
    -----------------------------------------------
    -- Attribute editors (files and directories) --
@@ -313,6 +316,7 @@ package body Project_Properties is
 
    type File_Attribute_Editor_Record is new Attribute_Editor_Record with record
       As_Directory : Boolean := False;
+      Filter       : File_Filter := Filter_None;
       Ent          : Gtk_Entry;
       Model        : Gtk_Tree_Store;
       View         : Gtk_Tree_View;
@@ -555,6 +559,17 @@ package body Project_Properties is
       return Project_Edition_Type;
    --  Display a warning dialog to indicate that the current view is
    --  incomplete, and it might be dangereous to edit the properties.
+
+   function Select_Files_Or_Directories
+     (Toplevel          : access Gtk_Window_Record'Class;
+      Project           : Project_Type;
+      Default           : String;
+      Project_Path      : String;
+      As_Directory      : Boolean;
+      Filter            : File_Filter;
+      Allow_Multiple    : Boolean := False) return VFS.File_Array;
+   --  Open a dialog to select one or more file or directory names.
+   --  Filter is used to select what kind of files should be shown to the user
 
    function Get_Current_Value
      (Project       : Project_Type;
@@ -1261,19 +1276,31 @@ package body Project_Properties is
       Choice_Count : Natural;
    begin
       if Child = null then
-         A := (Typ     => Attribute_As_String,
-               Default => null);
+         A := (Typ          => Attribute_As_String,
+               Filter       => Filter_None,
+               Default      => null);
 
       elsif Child.Tag.all = "string" then
          declare
             Typ     : constant String := Get_Attribute (Child, "type");
             Default : constant String := Get_Attribute (Child, "default");
+            Filter  : File_Filter := Filter_None;
          begin
+            if Get_Attribute (Child, "filter", "none") = "project" then
+               Filter := Filter_From_Project;
+            elsif Get_Attribute (Child, "filter", "none") =
+              "extended_project"
+            then
+               Filter := Filter_From_Extended;
+            end if;
+
             if Typ = "file" then
-               A := (Typ     => Attribute_As_Filename,
+               A := (Typ          => Attribute_As_Filename,
+                     Filter       => Filter,
                      Default => new String'(Default));
             elsif Typ = "directory" then
                A := (Typ     => Attribute_As_Directory,
+                     Filter  => Filter,
                      Default => new String'(Default));
             else
                if Typ /= "" then
@@ -1284,6 +1311,7 @@ package body Project_Properties is
                end if;
 
                A := (Typ     => Attribute_As_String,
+                     Filter  => Filter,
                      Default => new String'(Default));
             end if;
          end;
@@ -2076,31 +2104,184 @@ package body Project_Properties is
       return Editor;
    end Create_List_Attribute_Editor;
 
+   ---------------------------------
+   -- Select_Files_Or_Directories --
+   ---------------------------------
+
+   function Select_Files_Or_Directories
+     (Toplevel          : access Gtk_Window_Record'Class;
+      Project           : Project_Type;
+      Default           : String;
+      Project_Path      : String;
+      As_Directory      : Boolean;
+      Filter            : File_Filter;
+      Allow_Multiple    : Boolean := False) return VFS.File_Array
+   is
+      pragma Unreferenced (Allow_Multiple);
+      Dialog : Gtk_Dialog;
+      Tree   : Gtk_Tree_View;
+      Model  : Gtk_Tree_Store;
+      Iter   : Gtk_Tree_Iter;
+      Source : Natural;
+      File   : VFS.Virtual_File;
+      Button : Gtk_Widget;
+      Prj    : Project_Type;
+      Scrolled : Gtk_Scrolled_Window;
+   begin
+      if As_Directory then
+         File := Select_Directory
+           (Parent            => Gtk_Window (Toplevel),
+            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
+         if File = VFS.No_File then
+            return (1 .. 0 => VFS.No_File);
+         else
+            return (1 => File);
+         end if;
+      else
+         --  Ignore the case where we don't know the list of sources yet
+         if Filter /= Filter_None
+           and then Direct_Sources_Count (Project) /= 0
+         then
+            Gtk_New
+              (Dialog => Dialog,
+               Title  => -"Select files",
+               Parent => Gtk_Window (Toplevel),
+               Flags  => Destroy_With_Parent);
+            Set_Default_Size (Dialog, 500, 400);
+
+            Gtk_New (Scrolled);
+            Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+            Pack_Start (Get_Vbox (Dialog), Scrolled, Expand => True);
+
+            Tree := Create_Tree_View
+              (Column_Types => (0 => GType_Boolean,
+                                1 => GType_String,
+                                2 => GType_String),
+               Column_Names => (null, null),
+               Show_Column_Titles => False,
+               Initial_Sort_On    => 2);
+            Add (Scrolled, Tree);
+            Model := Gtk_Tree_Store (Get_Model (Tree));
+
+            case Filter is
+               when Filter_From_Project =>
+                  Prj := Project;
+               when Filter_From_Extended =>
+                  Prj := Parent_Project (Project);
+               when others =>
+                  Prj := Project;
+            end case;
+
+            while Prj /= Projects.No_Project loop
+               Source := 1;
+               loop
+                  File := Get_Source_Files (Prj, Source);
+                  exit when File = VFS.No_File;
+
+                  Append (Model, Iter, Null_Iter);
+                  Set (Model, Iter, 0, False);
+                  Set (Model, Iter, 1, Base_Name (File));
+                  Set (Model, Iter, 2, Full_Name (File).all);
+                  Source := Source + 1;
+               end loop;
+
+               --  If we had an extending project, look at the parent's sources
+               --  as well
+               Prj := Parent_Project (Prj);
+            end loop;
+
+            Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+            Grab_Default (Button);
+            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+            Show_All (Dialog);
+
+            if Run (Dialog) = Gtk_Response_OK then
+               Source := 0;
+               Iter := Get_Iter_First (Model);
+               while Iter /= Null_Iter loop
+                  if Get_Boolean (Model, Iter, 0) then
+                     Source := Source + 1;
+                  end if;
+
+                  Next (Model, Iter);
+               end loop;
+
+               if Source = 0 then
+                  Destroy (Dialog);
+                  return (1 .. 0 => VFS.No_File);
+               else
+                  declare
+                     Result : File_Array (1 .. Source);
+                  begin
+                     Source := Result'First;
+                     Iter := Get_Iter_First (Model);
+                     while Iter /= Null_Iter loop
+                        if Get_Boolean (Model, Iter, 0) then
+                           Result (Source) :=
+                             Create (Full_Filename =>
+                                       Get_String (Model, Iter, 2));
+                           Source := Source + 1;
+                        end if;
+
+                        Next (Model, Iter);
+                     end loop;
+
+                     Destroy (Dialog);
+                     return Result;
+                  end;
+               end if;
+            end if;
+
+            Destroy (Dialog);
+            return (1 .. 0 => VFS.No_File);
+
+         else
+            if Default = "" then
+               --  Not set yet, the directory should default to the project
+               --  directory (E617-011)
+               File := Select_File
+                 (Parent            => Gtk_Window (Toplevel),
+                  Base_Directory    => Create (Project_Path),
+                  Default_Name      => "",
+                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
+            else
+               File := Select_File
+                 (Parent            => Gtk_Window (Toplevel),
+                  Base_Directory    => Create (Dir_Name (Default)),
+                  Default_Name      => Base_Name (Default),
+                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
+            end if;
+
+            if File = VFS.No_File then
+               return (1 .. 0 => VFS.No_File);
+            else
+               return (1 => File);
+            end if;
+         end if;
+      end if;
+   end Select_Files_Or_Directories;
+
    -----------------
    -- Select_File --
    -----------------
 
    procedure Select_File
-     (Editor : access Gtk_Widget_Record'Class)
+     (Editor       : access Gtk_Widget_Record'Class)
    is
       Ed   : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      File : Virtual_File;
+      Files : constant VFS.File_Array := Select_Files_Or_Directories
+        (Toplevel           => Gtk_Window (Get_Toplevel (Editor)),
+         Project            => Ed.Project,
+         Default            => Get_Text (Gtk_Entry (Ed.Ent)),
+         Project_Path       => Get_Text (Ed.Path_Widget),
+         As_Directory       => Ed.As_Directory,
+         Filter             => Ed.Filter,
+         Allow_Multiple     => False);
    begin
-      if Ed.As_Directory then
-         File := Select_Directory
-           (Parent => Gtk_Window (Get_Toplevel (Editor)),
-            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
-         if File /= VFS.No_File then
-            Set_Text (Gtk_Entry (Ed.Ent), Full_Name (File).all);
-         end if;
-      else
-         File := Select_File
-           (Parent => Gtk_Window (Get_Toplevel (Editor)),
-            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
-         if File /= VFS.No_File then
-            Set_Text (Gtk_Entry (Ed.Ent), Full_Name (File).all);
-         end if;
-      end if;
+      for F in Files'Range loop
+         Set_Text (Gtk_Entry (Ed.Ent), Full_Name (Files (F)).all);
+      end loop;
    end Select_File;
 
    ------------------------
@@ -2109,41 +2290,42 @@ package body Project_Properties is
 
    procedure Add_String_In_List (Editor : access Gtk_Widget_Record'Class) is
       Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      Value : constant String := Create_Attribute_Dialog
+      Value : GNAT.OS_Lib.String_List := Create_Attribute_Dialog
         (Ed.Kernel, Gtk_Window (Get_Toplevel (Editor)),
          Ed.Project, Ed.Attribute, Attribute_Index => "",
          Project_Path => Get_Text (Ed.Path_Widget));
       Iter  : Gtk_Tree_Iter;
    begin
-      if Value /= "" then
+      for V in Value'Range loop
          Append (Ed.Model, Iter, Null_Iter);
          if Ed.As_Directory then
             Set (Ed.Model, Iter, 0, Normalize_Pathname
-                   (Value,
+                   (Value (V).all,
                     Directory     => Get_Text (Ed.Path_Widget),
                     Resolve_Links => False));
          else
-            Set (Ed.Model, Iter, 0, Base_Name (Value));
+            Set (Ed.Model, Iter, 0, Base_Name (Value (V).all));
          end if;
          Set (Ed.Model, Iter, 1, False);
-         Set (Ed.Model, Iter, 2, Value);
+         Set (Ed.Model, Iter, 2, Value (V).all);
 
          if Ed.Attribute.Base_Name_Only then
             Select_Attribute_In_List
               (Project     => Ed.Project,
                Index_Pkg   => Ed.Attribute.Pkg.all,
                Index_Name  => Ed.Attribute.Name.all,
-               Index_Value => Base_Name (Value),
+               Index_Value => Base_Name (Value (V).all),
                Is_Selected => True);
          else
             Select_Attribute_In_List
               (Project     => Ed.Project,
                Index_Pkg   => Ed.Attribute.Pkg.all,
                Index_Name  => Ed.Attribute.Name.all,
-               Index_Value => Value,
+               Index_Value => Value (V).all,
                Is_Selected => True);
          end if;
-      end if;
+      end loop;
+      Free (Value);
    end Add_String_In_List;
 
    -----------------------------
@@ -2317,6 +2499,7 @@ package body Project_Properties is
       Initialize_Hbox (Editor, Homogeneous => False);
       Editor.Kernel       := Kernel_Handle (Kernel);
       Editor.As_Directory := Attr.Typ = Attribute_As_Directory;
+      Editor.Filter       := Attr.Filter;
       Editor.Attribute    := Description;
       Editor.Path_Widget  := Path_Widget;
       Editor.Project      := Project;
@@ -2479,12 +2662,11 @@ package body Project_Properties is
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String;
-      Project_Path    : String) return String
+      Project_Path    : String) return GNAT.OS_Lib.String_List
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       Ent    : Gtk_Entry;
-      File   : Virtual_File;
       W      : List_Attribute_Editor;
       Attr   : constant Attribute_Type := Get_Attribute_Type_From_Description
         (Description, Attribute_Index);
@@ -2513,65 +2695,31 @@ package body Project_Properties is
                      S : constant String := Get_Text (Ent);
                   begin
                      Destroy (Dialog);
-                     return S;
+                     return (1 => new String'(S));
                   end;
                when others =>
                   Destroy (Dialog);
-                  return "";
+                  return (1 .. 0 => null);
             end case;
 
-         when Attribute_As_Filename =>
+         when Attribute_As_Filename | Attribute_As_Directory =>
             declare
                Current : constant String := Get_Current_Value
                  (Project, Description, Index => Attribute_Index);
+               Files   : constant VFS.File_Array := Select_Files_Or_Directories
+                 (Toplevel          => Toplevel,
+                  Project           => Project,
+                  Default           => Current,
+                  Project_Path      => Project_Path,
+                  As_Directory      => Attr.Typ = Attribute_As_Directory,
+                  Filter            => Attr.Filter,
+                  Allow_Multiple    => False);
+               Result : GNAT.OS_Lib.String_List (Files'Range);
             begin
-               --  Not set yet, the directory should default to the project
-               --  directory (E617-011)
-               if Current = "" then
-                  File := Select_File
-                    (Parent            => Gtk_Window (Toplevel),
-                     Base_Directory    => Create (Project_Path),
-                     Default_Name      => "",
-                     Use_Native_Dialog =>
-                       Get_Pref (Use_Native_Dialogs));
-               else
-                  File := Select_File
-                    (Parent            => Gtk_Window (Toplevel),
-                     Base_Directory    => Create (Dir_Name (Current)),
-                     Default_Name      => Base_Name (Current),
-                     Use_Native_Dialog =>
-                       Get_Pref (Use_Native_Dialogs));
-               end if;
-               if File /= VFS.No_File then
-                  return Full_Name (File).all;
-               else
-                  return "";
-               end if;
-            end;
-
-         when Attribute_As_Directory =>
-            declare
-               Current : constant String := Get_Current_Value
-                 (Project, Description, Index => Attribute_Index);
-            begin
-               if Current = "" then
-                  File := Select_Directory
-                    (Parent            => Gtk_Window (Toplevel),
-                     Base_Directory    => Create (Project_Path),
-                     Use_Native_Dialog =>
-                       Get_Pref (Use_Native_Dialogs));
-               else
-                  File := Select_Directory
-                    (Parent            => Gtk_Window (Toplevel),
-                     Base_Directory    => Create (Current),
-                     Use_Native_Dialog =>
-                       Get_Pref (Use_Native_Dialogs));
-               end if;
-               if File /= VFS.No_File then
-                  return Full_Name (File).all;
-               else
-                  return "";
-               end if;
+               for F in Files'Range loop
+                  Result (F) := new String'(Full_Name (Files (F)).all);
+               end loop;
+               return Result;
             end;
 
          when Attribute_As_Static_List | Attribute_As_Dynamic_List =>
@@ -2599,11 +2747,11 @@ package body Project_Properties is
                      S : constant String := Get_Text (Get_Entry (W.Combo));
                   begin
                      Destroy (Dialog);
-                     return S;
+                     return (1 .. 1 => new String'(S));
                   end;
                when others =>
                   Destroy (Dialog);
-                  return "";
+                  return (1 .. 0 => null);
             end case;
       end case;
    end Create_Attribute_Dialog;
@@ -3171,16 +3319,18 @@ package body Project_Properties is
                   --  done in-line
                   if Typ.Typ /= Attribute_As_String then
                      declare
-                        Value : constant String := Create_Attribute_Dialog
-                          (Kernel          => Ed.Kernel,
-                           Toplevel        => Gtk_Window (Get_Toplevel (Ed)),
-                           Project         => Ed.Project,
-                           Description     => Ed.Attribute,
-                           Attribute_Index => Attribute_Index,
-                           Project_Path    => Get_Text (Ed.Path_Widget));
+                        Value : GNAT.OS_Lib.String_List :=
+                          Create_Attribute_Dialog
+                            (Kernel          => Ed.Kernel,
+                             Toplevel        => Gtk_Window (Get_Toplevel (Ed)),
+                             Project         => Ed.Project,
+                             Description     => Ed.Attribute,
+                             Attribute_Index => Attribute_Index,
+                             Project_Path    => Get_Text (Ed.Path_Widget));
                      begin
-                        if Value /= "" then
-                           Set (Ed.Model, Iter, 1, Value);
+                        if Value'Length /= 0 then
+                           Set (Ed.Model, Iter, 1, Value (Value'First).all);
+                           Free (Value);
                         end if;
                      end;
                   else
@@ -3413,22 +3563,50 @@ package body Project_Properties is
       Align  : Gtk_Alignment;
       Event  : Gtk_Event_Box;
       Check  : Gtk_Check_Button;
-      Find   : Natural;
+      First, Last : Natural;
       Exists : Boolean := True;
    begin
+      --  Should the page be displayed ?
       if Attr.Hide_In /= null then
-         Find := Index (Attr.Hide_In.all, Context);
-         if Find < Attr.Hide_In'First then
-            null;
-         elsif (Find = Attr.Hide_In'First
-                or else Attr.Hide_In (Find - 1) = ' ')
-           and then (Find + Context'Length > Attr.Hide_In'Last
-                     or else Attr.Hide_In (Find + Context'Length) = ' ')
-         then
-            Widget := null;
-            return;
-         end if;
+         First := Attr.Hide_In'First;
+         loop
+            while First <= Attr.Hide_In'Last
+              and then Attr.Hide_In (First) = ' '
+            loop
+               First := First + 1;
+            end loop;
+
+            Last := First + 1;
+            while Last <= Attr.Hide_In'Last
+              and then Attr.Hide_In (Last) /= ' '
+            loop
+               Last := Last + 1;
+            end loop;
+
+            if First <= Attr.Hide_In'Last
+              and then Attr.Hide_In (First .. Last - 1) = Context
+            then
+               Widget := null;
+               return;
+            end if;
+
+            First := Last + 1;
+            exit when First > Attr.Hide_In'Last;
+         end loop;
       end if;
+
+      --  We also have an implicit filter for extended projects
+
+      if not Attr.Indexed
+        and then Attr.Non_Index_Type.Typ = Attribute_As_Filename
+        and then Attr.Non_Index_Type.Filter = Filter_From_Extended
+        and then Parent_Project (Project) = Projects.No_Project
+      then
+         Widget := null;
+         return;
+      end if;
+
+      --  Prepare the display of the page
 
       Gtk_New_Hbox (Box, Homogeneous => False);
 
@@ -3673,7 +3851,9 @@ package body Project_Properties is
                Path_Widget      => Editor.Path,
                Context          => "properties"));
 
-         if XML_Page.Box /= General_Page_Box and then XML_Page /= null then
+         if XML_Page /= null
+           and then XML_Page.Box /= General_Page_Box
+         then
             Gtk_New (Event);
             Add (Event, XML_Page.Box);
 
