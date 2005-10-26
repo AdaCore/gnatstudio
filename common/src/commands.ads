@@ -169,6 +169,9 @@ package Commands is
    --  Launch Command and all the consequent/alternate actions recursively,
    --  then return.
    --  If Wait is non-null, delay Wait milliseconds between each execution.
+   --  This can be used when the command executes an external process, to give
+   --  it more CPU time.
+   --
    --  Launching a command this way does not free memory associated to Command.
    --  WARNING: It is not possible to execute through Launch_Synchronous a
    --  command that causes its own destruction.
@@ -183,8 +186,8 @@ package Commands is
    procedure Launch_Synchronous_Generic
      (Command : access Root_Command'Class;
       Wait    : Duration := 0.0);
-   --  Same above, but you can specify exactly how a command should be
-   --  executed.
+   --  Same as Launch_Synchronous, but you can specify exactly how a command
+   --  should be executed.
    --  The procedure above behaves as if Execute_Command was just calling
    --  the primitive operation Execute.
    --  This subprogram can be used if other parameters need to be passed to
