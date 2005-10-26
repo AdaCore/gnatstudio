@@ -2077,6 +2077,9 @@ package body Projects.Registry is
       Result : Expect_Match;
 
    begin
+      Trace (Me, "Executing " & Gnatls_Path
+             & ' '
+             & Argument_List_To_String (Gnatls_Args (2 .. Gnatls_Args'Last)));
       Non_Blocking_Spawn
         (Fd, Gnatls_Path,
          Gnatls_Args (2 .. Gnatls_Args'Last),
@@ -2085,7 +2088,8 @@ package body Projects.Registry is
       Expect (Fd, Result, "GNATLS .+(\n| )Copyright", Timeout => -1);
 
       declare
-         S : constant String := Strip_CR (Expect_Out_Match (Fd));
+         Exp : constant String := Expect_Out_Match (Fd);
+         S : constant String := Strip_CR (Exp);
       begin
          GNAT_Version.all := new String'(S (S'First + 7 .. S'Last - 10));
       end;
@@ -2100,11 +2104,13 @@ package body Projects.Registry is
               Trim (Strip_CR (Expect_Out (Fd)), Ada.Strings.Left);
          begin
             if S = "Object Search Path:" & ASCII.LF then
+               Trace (Me, "Set source path from gnatls to " & Current.all);
                Set_Predefined_Source_Path (Registry, Current.all);
                Free (Current);
                Current := new String'("");
 
             elsif S = "Project Search Path:" & ASCII.LF then
+               Trace (Me, "Set object path from gnatls to " & Current.all);
                Object_Path_Set := True;
                Set_Predefined_Object_Path (Registry, Current.all);
                Free (Current);
@@ -2119,8 +2125,10 @@ package body Projects.Registry is
    exception
       when Process_Died =>
          if Object_Path_Set then
+            Trace (Me, "Set project path from gnatls to " & Current.all);
             Prj.Ext.Set_Project_Path (Current.all);
          else
+            Trace (Me, "Set object path (2) from gnatls to " & Current.all);
             Set_Predefined_Object_Path (Registry, Current.all);
          end if;
 
