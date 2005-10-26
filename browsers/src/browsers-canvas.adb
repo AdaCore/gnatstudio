@@ -912,6 +912,58 @@ package body Browsers.Canvas is
       World_Y,
       World_Width,
       World_Height  : Gint;
+
+      function Link_Callback
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean;
+
+      -------------------
+      -- Link_Callback --
+      -------------------
+
+      function Link_Callback
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
+         Src  : constant Canvas_Item := Canvas_Item (Get_Src (Link));
+         Dest : constant Canvas_Item := Canvas_Item (Get_Dest (Link));
+
+         Src_Coord, Dest_Coord : Gdk_Rectangle;
+         Link_Src_X_Pos, Link_Src_Y_Pos,
+         Link_Dest_X_Pos, Link_Dest_Y_Pos : Gfloat;
+         X1, Y1, X2, Y2 : Gint;
+         Src_Side, Dest_Side : Item_Side;
+
+      begin
+         Src_Coord := Get_Coord (Src);
+         Dest_Coord := Get_Coord (Dest);
+
+         Get_Src_Pos (Link, Link_Src_X_Pos, Link_Src_Y_Pos);
+         Get_Dest_Pos (Link, Link_Dest_X_Pos, Link_Dest_Y_Pos);
+
+         Clip_Line
+           (Src,
+            Dest_Coord.X + Gint (Gfloat (Dest_Coord.Width) * Link_Dest_X_Pos),
+            Dest_Coord.Y + Gint (Gfloat (Dest_Coord.Height) * Link_Dest_Y_Pos),
+            X_Pos => Link_Src_X_Pos, Y_Pos => Link_Src_Y_Pos,
+            Side  => Src_Side, X_Out => X1, Y_Out => Y1);
+         Clip_Line
+           (Dest,
+            Src_Coord.X + Gint (Gfloat (Src_Coord.Width) * Link_Src_X_Pos),
+            Src_Coord.Y + Gint (Gfloat (Src_Coord.Height) * Link_Src_Y_Pos),
+            X_Pos => Link_Dest_X_Pos, Y_Pos => Link_Dest_Y_Pos,
+            Side  => Dest_Side, X_Out => X2, Y_Out => Y2);
+
+         Put_Line (SVG_File,
+                   "<line class=""link"" x1=""" & Image (Integer (X1))
+                   & """ y1=""" & Image (Integer (Y1)) & """ "
+                   & "x2=""" & Image (Integer (X2))
+                   & """ y2=""" & Image (Integer (Y2)) & """ />");
+
+         return True;
+      end Link_Callback;
+
    begin
       SVG_File := Create_File (SVG_File_Name, Text);
 
@@ -921,6 +973,8 @@ package body Browsers.Canvas is
             Mode => GPS.Kernel.Console.Error);
          return;
       end if;
+
+      --  Header
 
       Get_World_Coordinates
         (Canvas, World_X, World_Y, World_Width, World_Height);
@@ -933,14 +987,18 @@ package body Browsers.Canvas is
       Put_Line (SVG_File, "<style type=""text/css""> <![CDATA[");
       Put_Line (SVG_File, "rect.item {fill:none; stroke:black}");
       Put_Line (SVG_File, "rect.title {fill:silver; stroke:black}");
+      Put_Line (SVG_File, "line.link {stroke: black; stroke-width: 1}");
       Put_Line (SVG_File, "]]>");
       Put_Line (SVG_File, "</style>");
       Put_Line (SVG_File, "<title>"
                 & Get_Title (Get (First_Child (Get_MDI (Kernel))))
                 & "</title>" & ASCII.LF);
+
       Put_Line (SVG_File, "<g transform=""translate("
                 & Image (abs Integer (World_X)) & ","
                 & Image (abs Integer (World_Y)) & ")"">");
+
+      --  Items
 
       Iterator := Start (Canvas);
       Item := Get (Iterator);
@@ -950,6 +1008,12 @@ package body Browsers.Canvas is
          Next (Iterator);
          Item := Get (Iterator);
       end loop;
+
+      --  Links
+
+      For_Each_Link (Canvas, Link_Callback'Unrestricted_Access);
+
+      --  Footer
 
       Put_Line (SVG_File, "</g>");
       Put_Line (SVG_File, "</svg>");
