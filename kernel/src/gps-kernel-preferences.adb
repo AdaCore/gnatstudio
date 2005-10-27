@@ -748,17 +748,6 @@ package body GPS.Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Child_Linked_Item_Color),
          -"Browsers");
 
-      Browsers_Vertical_Layout := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Browsers-Vertical-Layout",
-         Default => True,
-         Blurb   => -("If enabled, the boxes in the browsers will be"
-             & " organized into layers displayed one below the other. The"
-             & " graph will tend to grow vertically when you open new boxes"),
-         Nick    => -"Vertical layout"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
-         -"Browsers");
-
       Selected_Item_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Selected-Item-Color",
          Default => "#888888",
@@ -775,6 +764,17 @@ package body GPS.Kernel.Preferences is
          Default  => "#BEBEBE"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Title_Color), -"Browsers");
+
+      Browsers_Vertical_Layout := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Browsers-Vertical-Layout",
+         Default => True,
+         Blurb   => -("If enabled, the boxes in the browsers will be"
+             & " organized into layers displayed one below the other. The"
+             & " graph will tend to grow vertically when you open new boxes"),
+         Nick    => -"Vertical layout"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
+         -"Browsers");
 
       -- Diff_Utils --
 
