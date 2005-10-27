@@ -530,8 +530,10 @@ package body GPS.Kernel.Timeout is
          end if;
 
          Data.D  := (Kernel, Fd, Callback, Exit_Cb, Callback_Data, null);
-         Data.Id :=
-           Console_Process_Timeout.Add (Timeout, Process_Cb'Access, Data);
+         if not Synchronous then
+            Data.Id :=
+              Console_Process_Timeout.Add (Timeout, Process_Cb'Access, Data);
+         end if;
 
          if Show_In_Task_Manager then
             C      := new Monitor_Command;
