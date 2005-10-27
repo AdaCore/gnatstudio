@@ -302,21 +302,28 @@ package body Buffer_Views is
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (V.Kernel));
-      Selected : constant String := Get_Title (Child);
    begin
       --  If we are in the buffers view, do not show it, since otherwise that
       --  breaks the selection of multiple lines
       Unselect_All (Get_Selection (V.Tree));
-      if Get_Widget (Child) /= Gtk_Widget (V) then
-         while Iter /= Null_Iter loop
-            if Get_String (Model, Iter, Data_Column) = Selected then
-               Select_Iter (Get_Selection (V.Tree), Iter);
-               exit;
-            end if;
+      if Child /= null and then Get_Widget (Child) /= Gtk_Widget (V) then
+         declare
+            Selected : constant String := Get_Title (Child);
+         begin
+            while Iter /= Null_Iter loop
+               if Get_String (Model, Iter, Data_Column) = Selected then
+                  Select_Iter (Get_Selection (V.Tree), Iter);
+                  exit;
+               end if;
 
-            Next (Model, Iter);
-         end loop;
+               Next (Model, Iter);
+            end loop;
+         end;
       end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Message (E));
    end Child_Selected;
 
    -------------
@@ -350,11 +357,7 @@ package body Buffer_Views is
                Name : constant String := Get_Short_Title (Child);
             begin
                Append (Model, Iter, Null_Iter);
-               if Name = ""
-                 or else
-                   (Name'Length >= 8
-                    and then Name (Name'First .. Name'First + 7) = Untitled)
-               then
+               if Name = "" then
                   Set (Model, Iter, Name_Column, Untitled);
                   Set (Model, Iter, Data_Column, Untitled);
                else
@@ -371,6 +374,10 @@ package body Buffer_Views is
 
          Next (I_Child);
       end loop;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Message (E));
    end Refresh;
 
    --------------------------
