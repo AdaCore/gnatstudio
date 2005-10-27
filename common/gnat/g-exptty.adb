@@ -24,6 +24,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with System;      use System;
 
 package body GNAT.Expect.TTY is
 
@@ -46,28 +47,31 @@ package body GNAT.Expect.TTY is
       pragma Import (C, Free_Process, "gvd_free_process");
 
    begin
-      Close (Descriptor.Input_Fd);
+      --  If we haven't already closed the process
+      if Descriptor.Process /= System.Null_Address then
+         Close (Descriptor.Input_Fd);
 
-      if Descriptor.Error_Fd /= Descriptor.Output_Fd then
-         Close (Descriptor.Error_Fd);
+         if Descriptor.Error_Fd /= Descriptor.Output_Fd then
+            Close (Descriptor.Error_Fd);
+         end if;
+
+         Close (Descriptor.Output_Fd);
+
+         --  Send a Ctrl-C to the process first. This way, if the
+         --  launched process is a "sh" or "cmd", the child processes
+         --  will get terminated as well. Otherwise, terminating the
+         --  main process brutally will leave the children running.
+         Interrupt (Descriptor);
+         delay (0.05);
+
+         Terminate_Process (Descriptor.Process);
+         Status := Waitpid (Descriptor.Process);
+         Free_Process (Descriptor.Process'Address);
+         Descriptor.Process := System.Null_Address;
+
+         GNAT.OS_Lib.Free (Descriptor.Buffer);
+         Descriptor.Buffer_Size := 0;
       end if;
-
-      Close (Descriptor.Output_Fd);
-
-      --  Send a Ctrl-C to the process first. This way, if the
-      --  launched process is a "sh" or "cmd", the child processes
-      --  will get terminated as well. Otherwise, terminating the
-      --  main process brutally will leave the children running.
-      Interrupt (Descriptor);
-      delay (0.05);
-
-      Terminate_Process (Descriptor.Process);
-      GNAT.OS_Lib.Free (Descriptor.Buffer);
-      Descriptor.Buffer_Size := 0;
-
-      Status := Waitpid (Descriptor.Process);
-
-      Free_Process (Descriptor.Process'Address);
    end Close;
 
    -----------------------------
@@ -90,7 +94,9 @@ package body GNAT.Expect.TTY is
       pragma Import (C, Internal, "gvd_interrupt_process");
 
    begin
-      Internal (Descriptor.Process);
+      if Descriptor.Process /= System.Null_Address then
+         Internal (Descriptor.Process);
+      end if;
    end Interrupt;
 
    procedure Interrupt (Pid : Integer) is
