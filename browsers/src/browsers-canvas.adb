@@ -18,66 +18,67 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
+with Ada.Exceptions;                    use Ada.Exceptions;
+with Ada.Numerics.Elementary_Functions; use Ada.Numerics.Elementary_Functions;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
-with GNAT.Strings;           use GNAT.Strings;
+with GNAT.Strings;                      use GNAT.Strings;
 
-with Gdk.Color;              use Gdk.Color;
-with Gdk.GC;                 use Gdk.GC;
-with Gdk.Drawable;           use Gdk.Drawable;
-with Gdk.Event;              use Gdk.Event;
-with Gdk.Pixbuf;             use Gdk.Pixbuf;
-with Gdk.Pixmap;             use Gdk.Pixmap;
-with Gdk.Rectangle;          use Gdk.Rectangle;
-with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
-with Gdk.Window;             use Gdk.Window;
+with Gdk.Color;                         use Gdk.Color;
+with Gdk.GC;                            use Gdk.GC;
+with Gdk.Drawable;                      use Gdk.Drawable;
+with Gdk.Event;                         use Gdk.Event;
+with Gdk.Pixbuf;                        use Gdk.Pixbuf;
+with Gdk.Pixmap;                        use Gdk.Pixmap;
+with Gdk.Rectangle;                     use Gdk.Rectangle;
+with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
+with Gdk.Window;                        use Gdk.Window;
 
-with Glib;                   use Glib;
-with Glib.Convert;           use Glib.Convert;
-with Glib.Error;             use Glib.Error;
-with Glib.Graphs;            use Glib.Graphs;
-with Glib.Object;            use Glib.Object;
-with Glib.Xml_Int;           use Glib.Xml_Int;
+with Glib;                              use Glib;
+with Glib.Convert;                      use Glib.Convert;
+with Glib.Error;                        use Glib.Error;
+with Glib.Graphs;                       use Glib.Graphs;
+with Glib.Object;                       use Glib.Object;
+with Glib.Xml_Int;                      use Glib.Xml_Int;
 
-with Gtk.Accel_Group;        use Gtk.Accel_Group;
-with Gtk.Adjustment;         use Gtk.Adjustment;
-with Gtk.Button;             use Gtk.Button;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Handlers;           use Gtk.Handlers;
-with Gtk.Hbutton_Box;        use Gtk.Hbutton_Box;
-with Gtk.Image;              use Gtk.Image;
-with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Menu_Item;          use Gtk.Menu_Item;
-with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
-with Gtk.Stock;              use Gtk.Stock;
-with Gtk.Style;              use Gtk.Style;
-with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Accel_Group;                   use Gtk.Accel_Group;
+with Gtk.Adjustment;                    use Gtk.Adjustment;
+with Gtk.Button;                        use Gtk.Button;
+with Gtk.Enums;                         use Gtk.Enums;
+with Gtk.Handlers;                      use Gtk.Handlers;
+with Gtk.Hbutton_Box;                   use Gtk.Hbutton_Box;
+with Gtk.Image;                         use Gtk.Image;
+with Gtk.Menu;                          use Gtk.Menu;
+with Gtk.Menu_Item;                     use Gtk.Menu_Item;
+with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
+with Gtk.Stock;                         use Gtk.Stock;
+with Gtk.Style;                         use Gtk.Style;
+with Gtk.Widget;                        use Gtk.Widget;
 
-with Pango.Context;          use Pango.Context;
-with Pango.Enums;            use Pango.Enums;
-with Pango.Font;             use Pango.Font;
-with Pango.Layout;           use Pango.Layout;
+with Pango.Context;                     use Pango.Context;
+with Pango.Enums;                       use Pango.Enums;
+with Pango.Font;                        use Pango.Font;
+with Pango.Layout;                      use Pango.Layout;
 
-with Gtkada.Canvas;          use Gtkada.Canvas;
-with Gtkada.File_Selector;   use Gtkada.File_Selector;
-with Gtkada.Handlers;        use Gtkada.Handlers;
-with Gtkada.MDI;             use Gtkada.MDI;
+with Gtkada.Canvas;                     use Gtkada.Canvas;
+with Gtkada.File_Selector;              use Gtkada.File_Selector;
+with Gtkada.Handlers;                   use Gtkada.Handlers;
+with Gtkada.MDI;                        use Gtkada.MDI;
 
-with Commands;               use Commands;
-with Commands.Interactive;   use Commands.Interactive;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with Layouts;                use Layouts;
-with OS_Utils;               use OS_Utils;
+with Commands;                          use Commands;
+with Commands.Interactive;              use Commands.Interactive;
+with GPS.Intl;                          use GPS.Intl;
+with GPS.Kernel;                        use GPS.Kernel;
+with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
+with GPS.Kernel.Console;                use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
+with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with Layouts;                           use Layouts;
+with OS_Utils;                          use OS_Utils;
 with String_Utils;
-with Traces;                 use Traces;
-with VFS;                    use VFS;
+with Traces;                            use Traces;
+with VFS;                               use VFS;
 
 package body Browsers.Canvas is
 
@@ -196,6 +197,14 @@ package body Browsers.Canvas is
 
    procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class);
    --  Called when the canvas has been zoomed
+
+   function Arrow_Head_To_SVG
+     (Canvas : access Interactive_Canvas_Record'Class;
+      X, Y   : Gint;
+      Angle  : in Float)
+      return String;
+   --  Return a SVG representation of an arrow head defined by it coordinates
+   --  (X, Y, Angle).
 
    -------------
    -- Markers --
@@ -925,22 +934,23 @@ package body Browsers.Canvas is
         (Canvas : access Interactive_Canvas_Record'Class;
          Link   : access Canvas_Link_Record'Class) return Boolean
       is
-         pragma Unreferenced (Canvas);
-         Src  : constant Canvas_Item := Canvas_Item (Get_Src (Link));
-         Dest : constant Canvas_Item := Canvas_Item (Get_Dest (Link));
+         Src        : constant Canvas_Item := Canvas_Item (Get_Src (Link));
+         Dest       : constant Canvas_Item := Canvas_Item (Get_Dest (Link));
+         Link_Arrow : constant Arrow_Type := Get_Arrow_Type (Link);
 
          Src_Coord, Dest_Coord : Gdk_Rectangle;
          Link_Src_X_Pos, Link_Src_Y_Pos,
          Link_Dest_X_Pos, Link_Dest_Y_Pos : Gfloat;
          X1, Y1, X2, Y2 : Gint;
          Src_Side, Dest_Side : Item_Side;
-
       begin
          Src_Coord := Get_Coord (Src);
          Dest_Coord := Get_Coord (Dest);
 
          Get_Src_Pos (Link, Link_Src_X_Pos, Link_Src_Y_Pos);
          Get_Dest_Pos (Link, Link_Dest_X_Pos, Link_Dest_Y_Pos);
+
+         --  Link line
 
          Clip_Line
            (Src,
@@ -955,11 +965,56 @@ package body Browsers.Canvas is
             X_Pos => Link_Dest_X_Pos, Y_Pos => Link_Dest_Y_Pos,
             Side  => Dest_Side, X_Out => X2, Y_Out => Y2);
 
-         Put_Line (SVG_File,
-                   "<line class=""link"" x1=""" & Image (Integer (X1))
-                   & """ y1=""" & Image (Integer (Y1)) & """ "
-                   & "x2=""" & Image (Integer (X2))
-                   & """ y2=""" & Image (Integer (Y2)) & """ />");
+         Put_Line
+           (SVG_File,
+            "<line class=""link"" x1=""" & Image (Integer (X1))
+            & """ y1=""" & Image (Integer (Y1)) & """ "
+            & "x2=""" & Image (Integer (X2))
+            & """ y2=""" & Image (Integer (Y2)) & """ />");
+
+         --  Export the end arrow head
+
+         if Link_Arrow = End_Arrow or else Link_Arrow = Both_Arrow then
+            if X1 /= X2 then
+               Put_Line
+                 (SVG_File,
+                  Arrow_Head_To_SVG
+                    (Canvas, X2, Y2,
+                     Arctan (Float (Y1 - Y2), Float (X1 - X2))));
+            elsif Y1 > Y2 then
+               Put_Line
+                 (SVG_File,
+                  Arrow_Head_To_SVG
+                    (Canvas, X2, Y2, Ada.Numerics.Pi / 2.0));
+            else
+               Put_Line
+                 (SVG_File,
+                  Arrow_Head_To_SVG
+                    (Canvas, X2, Y2, -Ada.Numerics.Pi / 2.0));
+            end if;
+         end if;
+
+         --  Export the start arrow head
+
+         if Link_Arrow = Start_Arrow or else Link_Arrow = Both_Arrow then
+            if X1 /= X2 then
+               Put_Line
+                 (SVG_File,
+                  Arrow_Head_To_SVG
+                    (Canvas, X1, Y1,
+                     Arctan (Float (Y2 - Y1), Float (X2 - X1))));
+            elsif Y1 > Y2 then
+               Put_Line
+                 (SVG_File,
+                  Arrow_Head_To_SVG
+                    (Canvas, X1, Y1, -Ada.Numerics.Pi / 2.0));
+            else
+               Put_Line
+                 (SVG_File,
+                  Arrow_Head_To_SVG
+                    (Canvas, X1, Y1, +Ada.Numerics.Pi / 2.0));
+            end if;
+         end if;
 
          return True;
       end Link_Callback;
@@ -2672,5 +2727,38 @@ package body Browsers.Canvas is
    begin
       return "<text>Default content</text>";
    end Output_SVG_Item_Content;
+
+   -----------------------
+   -- Arrow_Head_To_SVG --
+   -----------------------
+
+   function Arrow_Head_To_SVG
+     (Canvas : access Interactive_Canvas_Record'Class;
+      X, Y   : Gint;
+      Angle  : in Float)
+      return String
+   is
+      use String_Utils;
+
+      Canvas_Arrow_Angle     : constant Float :=
+                                 Get_Arrow_Angle (Canvas);
+      Length                 : constant Float :=
+                                 Float (Get_Arrow_Length (Canvas));
+      X1, X2, X3, Y1, Y2, Y3 : Gint;
+   begin
+      X1 := X;
+      Y1 := Y;
+      X2 := X + Gint (Length * Cos (Angle + Canvas_Arrow_Angle));
+      Y2 := Y + Gint (Length * Sin (Angle + Canvas_Arrow_Angle));
+      X3 := X + Gint (Length * Cos (Angle - Canvas_Arrow_Angle));
+      Y3 := Y + Gint (Length * Sin (Angle - Canvas_Arrow_Angle));
+
+      return "<path class=""link"""
+        & " d=""M " & Image (Integer (X1)) & " " & Image (Integer (Y1))
+        & " L " & Image (Integer (X2)) & " " & Image (Integer (Y2))
+        & " L " & Image (Integer (X3)) & " " & Image (Integer (Y3))
+        & " Z"" />";
+
+   end Arrow_Head_To_SVG;
 
 end Browsers.Canvas;
