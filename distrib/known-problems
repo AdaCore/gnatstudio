@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 3.1.0
 
+- EA27-003 Pretty printer now working when using a cross-compiler
+  Problem:    GPS always assumes that you have a native installation of GNAT
+              on your machine, and therefore that it can find tools like
+              "gnatpp", "gnatclean", "gnatmetric" and "gnatstub" locally
+  Workaround: Either edit the .xml files in gps/share/plugins, or provide
+              small shell wrappers with the above names somewhere in your
+              PATH.
+
 - EA12-008 Debug contextual menu shows ".all" too often
   Problem:    When you have started the debugger, if you select more than an
               entity and right click in the selected text, the contextual menu
