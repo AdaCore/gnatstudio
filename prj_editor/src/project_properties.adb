@@ -670,6 +670,7 @@ package body Project_Properties is
    --  Entry value is the value as entered into the form. We need this value to
    --  check it against the default value that must be omitted. If Entry_Value
    --  is not specified then Value is used instead.
+
    procedure Update_Attribute_Value
      (Kernel             : access Kernel_Handle_Record'Class;
       Attr               : Attribute_Description_Access;
@@ -683,6 +684,10 @@ package body Project_Properties is
    function To_String (List : GNAT.OS_Lib.String_List) return String;
    --  Convert List into a string suitable to represent it. The string need not
    --  be parsable again to extract the values.
+
+   procedure Create_Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handle shell commands
 
    -------------------------------
    -- On_Indexed_Editor_Destroy --
@@ -1147,6 +1152,125 @@ package body Project_Properties is
       Project_Changed := True;
    end Generate_Project;
 
+   ------------------------------------
+   -- Create_Project_Command_Handler --
+   ------------------------------------
+
+   procedure Create_Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel        : constant Kernel_Handle := Get_Kernel (Data);
+      Attribute_Cst : aliased constant String := "attribute";
+      Package_Cst   : aliased constant String := "package";
+      Index_Cst     : aliased constant String := "index";
+      Tool_Cst      : aliased constant String := "tool";
+      Get_Attributes_Parameters : constant Cst_Argument_List :=
+        (1 => Attribute_Cst'Unchecked_Access,
+         2 => Package_Cst'Unchecked_Access,
+         3 => Index_Cst'Unchecked_Access);
+      Tool_Parameters : constant Cst_Argument_List :=
+        (1 => Tool_Cst'Unchecked_Access);
+
+      procedure Set_Return_Attribute
+        (Project          : Project_Type;
+         Attr, Pkg, Index : String;
+         As_List          : Boolean);
+      --  Store in Data the value of a specific attribute
+
+      --------------------------
+      -- Set_Return_Attribute --
+      --------------------------
+
+      procedure Set_Return_Attribute
+        (Project          : Project_Type;
+         Attr, Pkg, Index : String;
+         As_List          : Boolean)
+      is
+         Descr : constant Attribute_Description_Access :=
+            Get_Attribute_Type_From_Name (Pkg, Attr);
+      begin
+         if Descr = null then
+            Set_Error_Msg
+              (Data, "Project attribute doesn't exist: " & Pkg & ":" & Attr);
+            return;
+         end if;
+
+         if As_List then
+            declare
+               List : GNAT.OS_Lib.String_List := Get_Current_Value
+                 (Kernel, Project, Descr, Index);
+            begin
+               Set_Return_Value_As_List (Data);
+
+               --  If the attribute was a string in fact
+               if List'Length = 0 then
+                  Set_Return_Value
+                    (Data, Get_Current_Value (Project, Descr, Index));
+               else
+                  for L in List'Range loop
+                     Set_Return_Value (Data, List (L).all);
+                  end loop;
+               end if;
+
+               Basic_Types.Free (List);
+            end;
+         else
+            declare
+               Val : constant String := Get_Current_Value
+                   (Project, Descr, Index);
+            begin
+               if Val /= "" then
+                  Set_Return_Value (Data, Val);
+               else
+                  declare
+                     List : GNAT.OS_Lib.String_List := Get_Current_Value
+                       (Kernel, Project, Descr, Index);
+                  begin
+                     Set_Return_Value
+                       (Data, Argument_List_To_String (List, True));
+                     Basic_Types.Free (List);
+                  end;
+               end if;
+            end;
+         end if;
+      end Set_Return_Attribute;
+
+   begin
+      if Command = "get_attribute_as_list"
+        or else Command = "get_attribute_as_string"
+      then
+         Name_Parameters (Data, Get_Attributes_Parameters);
+         Set_Return_Attribute
+           (Project => Get_Data (Data, 1),
+            Attr    => Nth_Arg (Data, 2),
+            Pkg     => Nth_Arg (Data, 3, ""),
+            Index   => Nth_Arg (Data, 4, ""),
+            As_List => Command = "get_attribute_as_list");
+
+      elsif Command = "get_tool_switches_as_list"
+        or else Command = "get_tool_switches_as_string"
+      then
+         Name_Parameters (Data, Tool_Parameters);
+         declare
+            Tool  : constant String := Nth_Arg (Data, 2);
+            Props : constant Tool_Properties_Record :=
+              Get_Tool_Properties (Kernel, Tool);
+
+         begin
+            if Props = No_Tool then
+               Set_Error_Msg (Data, -"No such tool: " & Tool);
+            else
+               Set_Return_Attribute
+                 (Project => Get_Data (Data, 1),
+                  Attr    => Props.Project_Attribute.all,
+                  Pkg     => Props.Project_Package.all,
+                  Index   => Props.Project_Index.all,
+                  As_List => Command = "get_tool_switches_as_list");
+            end if;
+         end;
+      end if;
+   end Create_Project_Command_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1160,6 +1284,31 @@ package body Project_Properties is
         (Module                  => Properties_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => "Project_Properties");
+
+      Register_Command
+        (Kernel, "get_attribute_as_string",
+         Minimum_Args => 1,
+         Maximum_Args => 3,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_attribute_as_list",
+         Minimum_Args => 1,
+         Maximum_Args => 3,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_tool_switches_as_list",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_tool_switches_as_string",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
    end Register_Module;
 
    ------------------------------
