@@ -8,12 +8,14 @@
      <filter id="Project only" language="ada" />
      <description>Run GNAT Metrics on a project</description>
      <shell show-command="false">Editor.save</shell>
-     <shell>echo gnat metric -x "%pps"</shell>
+     <shell output="none">Project.root</shell>
+     <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
+     <shell>echo %1 metric -x "%pps"</shell>
      <external
       progress-regexp="completed (\d+) out of (\d+).*"
       progress-current="1"
       progress-final="2"
-      progress-hide="true">gnat metric -dd -x "%pps"</external>
+      progress-hide="true">%2 metric -dd -x "%pps"</external>
      <shell>Locations.parse "%1" metrics</shell>
      <shell show-command="false" output="none">XMLViewer "Metrics (%p)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
@@ -22,12 +24,14 @@
   <action name="metrics root project" >
      <description>Run GNAT Metrics on a root project</description>
      <shell show-command="false">Editor.save</shell>
-     <shell>echo gnat metric -x "%PPs"</shell>
+     <shell output="none">Project.root</shell>
+     <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
+     <shell>echo %1 metric -x "%PPs"</shell>
      <external
       progress-regexp="completed (\d+) out of (\d+).*"
       progress-current="1"
       progress-final="2"
-      progress-hide="true">gnat metric -dd -x "%PPs"</external>
+      progress-hide="true">%2 metric -dd -x "%PPs"</external>
      <shell>Locations.parse "%1" metrics</shell>
      <shell show-command="false" output="none">XMLViewer "Metrics (%P)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
@@ -37,8 +41,10 @@
      <filter id="File" language="ada" />
      <description>Run GNAT Metrics on a single file</description>
      <shell show-command="false">Editor.save</shell>
-     <shell>echo gnat metric -x "%pps" "%F"</shell>
-     <external>gnat metric -x "%pps" "%F"</external>
+     <shell output="none">Project.root</shell>
+     <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
+     <shell>echo %1 metric -x "%pps" "%F"</shell>
+     <external>%2 metric -x "%pps" "%F"</external>
      <shell>Locations.parse "%1" metrics</shell>
      <shell show-command="false" output="none">XMLViewer "Metrics (%f)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>

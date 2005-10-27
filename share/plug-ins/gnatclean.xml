@@ -2,8 +2,10 @@
 <GPS>
   <action name="build-clean-root-project">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
-    <shell>echo gnatclean "%PPs" %1</shell>
-    <external>gnatclean "%PPs" %2</external>
+    <shell output="none">Project.root</shell>
+    <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
+    <shell>echo %1 clean "%PPs" %1</shell>
+    <external>%2 clean "%PPs" %4</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>
@@ -13,8 +15,10 @@
   </menu>
   <action name="build-clean-all-root-project">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
-    <shell>echo gnatclean -r "%PPs" %1</shell>
-    <external>gnatclean -r "%PPs" %2</external>
+    <shell output="none">Project.root</shell>
+    <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
+    <shell>echo %1 clean -r "%PPs" %1</shell>
+    <external>%2 clean -r "%PPs" %4</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>
@@ -25,8 +29,10 @@
 
   <action name="build-clean-subproject">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
-    <shell>echo gnatclean "%pps" %1</shell>
-    <external>gnatclean "%pps" %2</external>
+    <shell output="none">Project.root</shell>
+    <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
+    <shell>echo %1 clean "%pps" %1</shell>
+    <external>%2 clean "%pps" %4</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>

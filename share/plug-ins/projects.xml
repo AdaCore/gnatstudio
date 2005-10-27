@@ -75,6 +75,31 @@
    </project_attribute>
 
    <project_attribute
+       name="gnat"
+       package="IDE"
+       editor_page="Languages"
+       editor_section="Tools"
+       description="The gnat driver used to run the various commands associated with the GNAT toolchain"
+       hide_in="wizard library_wizard"
+       label="Gnat">
+       <choice default="true" >gnat</choice>
+       <choice>powerpc-wrs-vxworks-gnat</choice>
+       <choice>powerpc-wrs-vxworksae-gnat</choice>
+       <choice>powerpc-elf-gnat</choice>
+       <choice>i386-wrs-vxworks-gnat</choice>
+       <choice>m68k-wrs-vxworks-gnat</choice>
+       <choice>mips-wrs-vxworks-gnat</choice>
+       <choice>sparc-wrs-vxworks-gnat</choice>
+       <choice>sparc64-wrs-vxworks-gnat</choice>
+       <choice>xscale-wrs-vxworks-gnat</choice>
+       <choice>powerpc-elf-lynxos-gnat</choice>
+       <choice>powerpc-xcoff-lynxos-gnat</choice>
+       <choice>erc32-elf-gnat</choice>
+       <choice>gnaamp</choice>
+       <string />
+   </project_attribute>
+
+   <project_attribute
        name="debugger_command"
        package="IDE"
        editor_page="Languages"

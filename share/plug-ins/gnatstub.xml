@@ -13,8 +13,10 @@
       <!-- Generate and load the body -->
       <shell>MDI.save_all</shell>
       <shell>Project.scenario_variables_cmd_line -X</shell>
+      <shell>Project.root</shell>
+      <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
       <external show-command="true"
-                output="">gnat stub "%pps" %1 "%F" "%d"</external>
+                output="">%1 stub "%pps" %3 "%F" "%d"</external>
       <on-failure><shell>Locations.parse """%1 """ gnatstub</shell></on-failure>
       <shell>Project.recompute</shell>
       <shell>File "%F"</shell>

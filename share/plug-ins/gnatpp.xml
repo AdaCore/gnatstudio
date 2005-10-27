@@ -11,8 +11,10 @@
 
       <shell>MDI.save_all</shell>
       <shell>Project.scenario_variables_cmd_line -X</shell>
-      <external output="">gnat pretty -rf "%pps" %1 "%F"</external>
-      <on-failure><shell>Locations.parse """%1 """ "Pretty printer"</shell></on-failure>
+      <shell>Project.root</shell>
+      <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
+      <external output="">%1 pretty -rf "%pps" %3 "%F"</external>
+      <on-failure><shell>Locations.parse """%3 """ "Pretty printer"</shell></on-failure>
       <shell>Editor.edit "%F" 0 0 0 true</shell>
    </action>
 
