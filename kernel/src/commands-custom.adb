@@ -1133,7 +1133,7 @@ package body Commands.Custom is
             Free (Args);
 
             Command.Execution.External_Process_Console := Console;
-            Command.Execution.External_Process_In_Progress := True;
+            Command.Execution.External_Process_In_Progress := Success;
             return Success;
          end Execute_External;
 
