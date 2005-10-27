@@ -913,6 +913,8 @@ package body Browsers.Canvas is
       B             : constant General_Browser := General_Browser (Browser);
       Canvas        : constant Interactive_Canvas := Get_Canvas (B);
       Kernel        : constant Kernel_Handle := Get_Kernel (B);
+      Font          : constant Pango_Font_Description :=
+                        Get_Pref (Default_Font);
       SVG_File      : File_Descriptor;
       SVG_File_Name : constant String := "/tmp/test.svg";
       Iterator      : Item_Iterator;
@@ -1039,15 +1041,26 @@ package body Browsers.Canvas is
                 & "x=""0"" y=""0"" "
                 & "width=""" & Image (Integer (World_Width)) & """ "
                 & "height=""" & Image (Integer (World_Height)) & """ >");
+
+      --  Styles
+
       Put_Line (SVG_File, "<style type=""text/css""> <![CDATA[");
+      Put_Line (SVG_File, "text, tspan {font-family: " & Get_Family (Font)
+                & "; font-size:"
+                & Image (Integer (To_Pixels (Get_Size (Font)))) & "}");
       Put_Line (SVG_File, "rect.item {fill:none; stroke:black}");
       Put_Line (SVG_File, "rect.title {fill:silver; stroke:black}");
       Put_Line (SVG_File, "line.link {stroke: black; stroke-width: 1}");
       Put_Line (SVG_File, "]]>");
       Put_Line (SVG_File, "</style>");
+
+      --  Title
+
       Put_Line (SVG_File, "<title>"
                 & Get_Title (Get (First_Child (Get_MDI (Kernel))))
                 & "</title>" & ASCII.LF);
+
+      --  Translation that simulates world coodinates
 
       Put_Line (SVG_File, "<g transform=""translate("
                 & Image (abs Integer (World_X)) & ","
