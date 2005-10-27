@@ -222,10 +222,6 @@ package body GPS.Kernel.Scripts is
    Shared_Lib_Cst : aliased constant String := "shared_lib";
    Module_Cst     : aliased constant String := "module";
    Xml_Cst        : aliased constant String := "xml";
-   Attribute_Cst  : aliased constant String := "attribute";
-   Package_Cst    : aliased constant String := "package";
-   Index_Cst      : aliased constant String := "index";
-   Tool_Cst       : aliased constant String := "tool";
    Action_Cst     : aliased constant String := "action";
    Prefix_Cst     : aliased constant String := "prefix";
    Sensitive_Cst  : aliased constant String := "sensitive";
@@ -249,11 +245,6 @@ package body GPS.Kernel.Scripts is
       3 => Col_Cst'Access);
    Xml_Custom_Parameters : constant Cst_Argument_List :=
      (1 => Xml_Cst'Access);
-   Get_Attributes_Parameters : constant Cst_Argument_List :=
-     (1 => Attribute_Cst'Access,
-      2 => Package_Cst'Access,
-      3 => Index_Cst'Access);
-   Tool_Parameters : constant Cst_Argument_List := (1 => Tool_Cst'Access);
    Exec_Action_Parameters : constant Cst_Argument_List :=
      (1 => Action_Cst'Access);
    Scenar_Var_Parameters : constant Cst_Argument_List :=
@@ -1102,63 +1093,6 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-
-      procedure Set_Return_Attribute
-        (Project          : Project_Type;
-         Attr, Pkg, Index : String;
-         As_List          : Boolean);
-      --  Store in Data the value of a specific attribute
-
-      --------------------------
-      -- Set_Return_Attribute --
-      --------------------------
-
-      procedure Set_Return_Attribute
-        (Project          : Project_Type;
-         Attr, Pkg, Index : String;
-         As_List          : Boolean) is
-      begin
-         if As_List then
-            declare
-               List : Argument_List := Get_Attribute_Value
-                 (Project, Build (Pkg, Attr), Index);
-            begin
-               Set_Return_Value_As_List (Data);
-
-               --  If the attribute was a string in fact
-               if List'Length = 0 then
-                  Set_Return_Value
-                    (Data, Get_Attribute_Value
-                       (Project, Build (Pkg, Attr), "", Index));
-               else
-                  for L in List'Range loop
-                     Set_Return_Value (Data, List (L).all);
-                  end loop;
-               end if;
-
-               Basic_Types.Free (List);
-            end;
-         else
-            declare
-               Val : constant String := Get_Attribute_Value
-                 (Project, Build (Pkg, Attr), "", Index);
-            begin
-               if Val /= "" then
-                  Set_Return_Value (Data, Val);
-               else
-                  declare
-                     List : Argument_List := Get_Attribute_Value
-                       (Project, Build (Pkg, Attr), Index);
-                  begin
-                     Set_Return_Value
-                       (Data, Argument_List_To_String (List, True));
-                     Basic_Types.Free (List);
-                  end;
-               end if;
-            end;
-         end if;
-      end Set_Return_Attribute;
-
       Instance : Class_Instance;
       Project  : Project_Type;
 
@@ -1243,38 +1177,6 @@ package body GPS.Kernel.Scripts is
                end loop;
             end;
 
-         elsif Command = "get_attribute_as_list"
-           or else Command = "get_attribute_as_string"
-         then
-            Name_Parameters (Data, Get_Attributes_Parameters);
-            Set_Return_Attribute
-              (Project => Get_Data (Data, 1),
-               Attr => Nth_Arg (Data, 2),
-               Pkg  => Nth_Arg (Data, 3, ""),
-               Index => Nth_Arg (Data, 4, ""),
-               As_List => Command = "get_attribute_as_list");
-
-         elsif Command = "get_tool_switches_as_list"
-           or else Command = "get_tool_switches_as_string"
-         then
-            Name_Parameters (Data, Tool_Parameters);
-            declare
-               Tool  : constant String := Nth_Arg (Data, 2);
-               Props : constant Tool_Properties_Record :=
-                 Get_Tool_Properties (Kernel, Tool);
-
-            begin
-               if Props = No_Tool then
-                  Set_Error_Msg (Data, -"No such tool: " & Tool);
-               else
-                  Set_Return_Attribute
-                    (Project => Get_Data (Data, 1),
-                     Attr    => Props.Project_Attribute.all,
-                     Pkg     => Props.Project_Package.all,
-                     Index   => Props.Project_Index.all,
-                     As_List => Command = "get_tool_switches_as_list");
-               end if;
-            end;
          end if;
       end if;
    end Create_Project_Command_Handler;
@@ -1872,30 +1774,6 @@ package body GPS.Kernel.Scripts is
          Class        => Get_Project_Class (Kernel),
          Minimum_Args => 0,
          Maximum_Args => 1,
-         Handler      => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_attribute_as_string",
-         Minimum_Args => 1,
-         Maximum_Args => 3,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_attribute_as_list",
-         Minimum_Args => 1,
-         Maximum_Args => 3,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_tool_switches_as_list",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_tool_switches_as_string",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
 
       if Active (Testsuite_Handle) then
