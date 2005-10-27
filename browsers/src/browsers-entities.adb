@@ -398,6 +398,7 @@ package body Browsers.Entities is
          Add_Item_And_Link
            (Type_Item (Callback.Item), Callback.Entity,
             Callback.Link_Name.all, Parent_Link => False);
+         Layout (Get_Browser (Callback.Item), Force => False);
          return True;
       end if;
       return False;
