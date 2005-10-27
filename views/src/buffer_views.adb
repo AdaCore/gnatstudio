@@ -30,6 +30,7 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -37,8 +38,8 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -64,6 +65,10 @@ package body Buffer_Views is
    History_Editors_Only : constant History_Key :=
      "Windows_View_Editors_Only";
    --  Used to store the current filter settings in histories
+
+   History_Show_Notebooks : constant History_Key :=
+     "Windows_View_Show_Notebooks";
+   --  Used to store the current view settings in histories
 
    Buffer_View_Module : Module_ID;
 
@@ -264,23 +269,27 @@ package body Buffer_Views is
          Iter := Get_Iter (Model, Path);
          Path_Free (Path);
 
-         Child := Find_MDI_Child_By_Name
-           (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
+         --  Only for actual windows
+         if Children (Model, Iter) = Null_Iter then
 
-         --  If there is any modified, don't do anything. The user is trying to
-         --  select multiple lines
+            Child := Find_MDI_Child_By_Name
+              (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
 
-         if Get_State (Event) = 0 then
-            if Get_Event_Type (Event) = Gdk_2button_Press then
-               Raise_Child (Child, Give_Focus => True);
-               return True;
+            --  If there is any modified, don't do anything. The user is trying
+            --  to select multiple lines
 
-            elsif Get_Event_Type (Event) = Button_Press
-              and then Get_Button (Event) = 1
-            then
-               Child_Drag_Begin (Child => Child, Event => Event);
-               Raise_Child (Child, Give_Focus => True);
-               return True;
+            if Get_State (Event) = 0 then
+               if Get_Event_Type (Event) = Gdk_2button_Press then
+                  Raise_Child (Child, Give_Focus => True);
+                  return True;
+
+               elsif Get_Event_Type (Event) = Button_Press
+                 and then Get_Button (Event) = 1
+               then
+                  Child_Drag_Begin (Child => Child, Event => Event);
+                  Raise_Child (Child, Give_Focus => True);
+                  return True;
+               end if;
             end if;
          end if;
       end if;
@@ -301,6 +310,7 @@ package body Buffer_Views is
       V     : constant Buffer_View_Access := Buffer_View_Access (View);
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
+      Iter2 : Gtk_Tree_Iter;
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (V.Kernel));
    begin
       --  If we are in the buffers view, do not show it, since otherwise that
@@ -311,9 +321,20 @@ package body Buffer_Views is
             Selected : constant String := Get_Title (Child);
          begin
             while Iter /= Null_Iter loop
-               if Get_String (Model, Iter, Data_Column) = Selected then
-                  Select_Iter (Get_Selection (V.Tree), Iter);
-                  exit;
+               Iter2 := Children (Model, Iter);
+               if Iter2 = Null_Iter then
+                  if Get_String (Model, Iter, Data_Column) = Selected then
+                     Select_Iter (Get_Selection (V.Tree), Iter);
+                     exit;
+                  end if;
+               else
+                  while Iter2 /= Null_Iter loop
+                     if Get_String (Model, Iter2, Data_Column) = Selected then
+                        Select_Iter (Get_Selection (V.Tree), Iter2);
+                        return;
+                     end if;
+                     Next (Model, Iter2);
+                  end loop;
                end if;
 
                Next (Model, Iter);
@@ -333,47 +354,124 @@ package body Buffer_Views is
    procedure Refresh (View : access Gtk_Widget_Record'Class) is
       V       : constant Buffer_View_Access := Buffer_View_Access (View);
       Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
-      I_Child : Child_Iterator;
-      Child   : MDI_Child;
-      Iter    : Gtk_Tree_Iter;
-      Editors_Only : Boolean;
-   begin
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (V.Kernel).all, History_Editors_Only, True);
-      Editors_Only := Get_History
+      Editors_Only   : constant Boolean := Get_History
         (Get_History (V.Kernel).all, History_Editors_Only);
+      Show_Notebooks : constant Boolean := Get_History
+        (Get_History (V.Kernel).all, History_Show_Notebooks);
 
+      Notebook_Index : Integer := -1;
+      Iter           : Gtk_Tree_Iter := Null_Iter;
+
+      procedure Show_Child (Parent : Gtk_Tree_Iter; Child : MDI_Child);
+      --  Insert the line for Child in the view
+
+      procedure Purify;
+      --  Clean up the tree so that we do not show empty notebook or
+      --  notebooks with a single child
+
+      ------------
+      -- Purify --
+      ------------
+
+      procedure Purify is
+         Iter2 : Gtk_Tree_Iter;
+      begin
+         if Iter /= Null_Iter then
+            Iter2 := Children (Model, Iter);
+            if Iter2 = Null_Iter then
+               --  If we had an empty notebook, remove it
+               Remove (Model, Iter);
+            elsif N_Children (Model, Iter) = 1 then
+               --  Single child ?
+               Set (Model, Iter, Icon_Column,
+                    Get_C_Proxy (Model, Iter2, Icon_Column));
+               Set (Model, Iter, Name_Column,
+                    Get_String (Model, Iter2, Name_Column));
+               Set (Model, Iter, Data_Column,
+                    Get_String (Model, Iter2, Data_Column));
+               Remove (Model, Iter2);
+            else
+               Notebook_Index := Notebook_Index + 1;
+            end if;
+         else
+            Notebook_Index := Notebook_Index + 1;
+         end if;
+      end Purify;
+
+      ----------------
+      -- Show_Child --
+      ----------------
+
+      procedure Show_Child (Parent : Gtk_Tree_Iter; Child : MDI_Child) is
+         Name : constant String := Get_Short_Title (Child);
+         Iter : Gtk_Tree_Iter;
+      begin
+         if not Editors_Only
+           or else Is_Source_Box (Child)
+         then
+            Append (Model, Iter, Parent);
+            if Name = "" then
+               Set (Model, Iter, Name_Column, Untitled);
+               Set (Model, Iter, Data_Column, Untitled);
+            else
+               Set (Model, Iter, Icon_Column,
+                    C_Proxy (Get_Icon (Child)));
+               Set (Model, Iter, Name_Column, Name);
+               Set (Model, Iter, Data_Column, Get_Title (Child));
+            end if;
+
+            if Child = Get_Focus_Child (Get_MDI (V.Kernel)) then
+               Select_Iter (Get_Selection (V.Tree), Iter);
+            end if;
+         end if;
+      end Show_Child;
+
+      I_Child : Gtkada.MDI.Child_Iterator;
+      Child   : MDI_Child;
+      Column  : Gint;
+      Current_Notebook : Gtk_Notebook;
+      pragma Unreferenced (Column);
+
+   begin
       Clear (Model);
-      I_Child := First_Child (Get_MDI (V.Kernel));
 
+      if Show_Notebooks then
+         Column := Freeze_Sort (Gtk_Tree_Store (Get_Model (V.Tree)));
+      else
+         Thaw_Sort (Gtk_Tree_Store (Get_Model (V.Tree)), 1);
+      end if;
+
+      I_Child := First_Child
+        (Get_MDI (V.Kernel), Group_By_Notebook => Show_Notebooks);
       loop
          Child := Get (I_Child);
          exit when Child = null;
 
-         if not Editors_Only
-           or else Is_Source_Box (Child)
-         then
-            declare
-               Name : constant String := Get_Short_Title (Child);
-            begin
+         if Show_Notebooks then
+            if Notebook_Index = -1
+              or else Get_Notebook (I_Child) /= Current_Notebook
+            then
+               Purify;
+               Current_Notebook := Get_Notebook (I_Child);
                Append (Model, Iter, Null_Iter);
-               if Name = "" then
-                  Set (Model, Iter, Name_Column, Untitled);
-                  Set (Model, Iter, Data_Column, Untitled);
-               else
-                  Set (Model, Iter, Icon_Column, C_Proxy (Get_Icon (Child)));
-                  Set (Model, Iter, Name_Column, Name);
-                  Set (Model, Iter, Data_Column, Get_Title (Child));
-               end if;
+               Set (Model, Iter, Name_Column,
+                    -"Notebook" & Integer'Image (Notebook_Index));
+            end if;
 
-               if Child = Get_Focus_Child (Get_MDI (V.Kernel)) then
-                  Select_Iter (Get_Selection (V.Tree), Iter);
-               end if;
-            end;
+            Show_Child (Iter, Child);
+         else
+            Show_Child (Null_Iter, Child);
          end if;
 
          Next (I_Child);
       end loop;
+
+      if Show_Notebooks then
+         Purify;
+      end if;
+
+      Expand_All (V.Tree);
+
    exception
       when E : others =>
          Trace (Exception_Handle, "Unexpected exception "
@@ -392,16 +490,30 @@ package body Buffer_Views is
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Event_Widget);
-      --  Nothing special in the context, just the module itself so that people
-      --  can still add information if needed
       V       : constant Buffer_View_Access := Buffer_View_Access (Object);
       Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
-      Context : constant Selection_Context_Access := new Selection_Context;
+      Context : Selection_Context_Access;
       Iter    : Gtk_Tree_Iter;
       Check   : Gtk_Check_Menu_Item;
    begin
+      --  Focus on the window, so that the selection is correctly taken into
+      --  account
+
+      Raise_Child
+        (Find_MDI_Child (Get_MDI (V.Kernel), V), Give_Focus => True);
+
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
-      Select_Iter (Get_Selection (V.Tree), Iter);
+
+      if Iter /= Null_Iter then
+         --  Nothing special in the context, just the module itself so that
+         --  people can still add information if needed
+         Context := new Selection_Context;
+
+         if not Iter_Is_Selected (Get_Selection (V.Tree), Iter) then
+            Unselect_All (Get_Selection (V.Tree));
+            Select_Iter (Get_Selection (V.Tree), Iter);
+         end if;
+      end if;
 
       if Menu /= null then
          Gtk_New (Check, Label => -"Show editors only");
@@ -410,6 +522,12 @@ package body Buffer_Views is
          Widget_Callback.Object_Connect
            (Check, "toggled", Refresh'Access, Slot_Object => V);
 
+         Gtk_New (Check, Label => -"Show notebooks");
+         Associate
+           (Get_History (Kernel).all, History_Show_Notebooks, Check);
+         Append (Menu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Refresh'Access, Slot_Object => V);
       end if;
 
       return Context;
@@ -442,7 +560,7 @@ package body Buffer_Views is
          Selection_Mode     => Selection_Multiple,
          Sortable_Columns   => True,
          Initial_Sort_On    => 2,
-         Hide_Expander      => True);
+         Hide_Expander      => False);
       Add (Scrolled, View.Tree);
 
       Widget_Callback.Object_Connect
@@ -455,7 +573,11 @@ package body Buffer_Views is
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_selected", Child_Selected'Access, View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), "child_icon_changed", Child_Selected'Access, View);
+        (Get_MDI (Kernel), "child_icon_changed", Refresh'Access, View);
+      Widget_Callback.Object_Connect
+        (Get_MDI (Kernel), "float_child", Refresh'Access, View);
+      Widget_Callback.Object_Connect
+        (Get_MDI (Kernel), "children_reorganized", Refresh'Access, View);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View.Tree,
@@ -571,6 +693,11 @@ package body Buffer_Views is
         (Kernel,
          "/" & (-"Tools"), -"Windows View", "", On_Open_View'Access,
          Ref_Item => -"File View", Add_Before => False);
+
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, History_Editors_Only, True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, History_Show_Notebooks, False);
 
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
