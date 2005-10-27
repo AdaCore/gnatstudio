@@ -83,6 +83,7 @@ Description of the main windows
 * The Work Space::
 * The Project View::
 * The File View::
+* The Window View::
 * The Outline View::
 * The Clipboard View::
 * Bookmarks::
@@ -315,6 +316,7 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Work Space::
 * The Project View::
 * The File View::
+* The Window View::
 * The Outline View::
 * The Clipboard View::
 * Bookmarks::
@@ -750,6 +752,23 @@ hierarchy by using the contextual menu @code{Show files from project only}.
 
 Each source file can also be explored as described in
 @ref{The Project View}.
+
+@c --------------------------------------------------------------------
+@node The Window View
+@section The Window View
+@cindex Window View
+@c --------------------------------------------------------------------
+
+@noindent
+The @code{Window View} displays the currently opened files sorted
+alphabetically. This view can be opened using @code{Tools->Window View}.
+
+@c Would be nice to have a screen shot
+
+When there is a lot of files opened in GPS, the @code{Window View}
+provides an easy way to select one of them. By double-clicking on a file
+listed in the @code{Window View}, GPS will raise and give the focus
+to the corresponding editor.
 
 @c --------------------------------------------------------------------
 @node The Outline View
@@ -6993,6 +7012,10 @@ commands such as @code{help}.
 @item File View
 Open a file system explorer on the left area.
 @xref{The File View}.
+
+@item Window View
+Open a view containing all currently opened files.
+@xref{The Window View}.
 
 @item Outline View
 Open a view of the current source editor.
