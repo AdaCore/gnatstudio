@@ -25,10 +25,11 @@ with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gtk.Arguments;             use Gtk.Arguments;
+with Gdk.Types;                 use Gdk.Types;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -36,19 +37,16 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Menu;                  use Gtk.Menu;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
+with Histories;                 use Histories;
 with GUI_Utils;                 use GUI_Utils;
-with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 with VFS;                       use VFS;
 with Traces;                    use Traces;
@@ -56,7 +54,6 @@ with String_List_Utils;         use String_List_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body Buffer_Views is
-
    Icon_Column : constant := 0;
    Name_Column : constant := 1;
    Data_Column : constant := 2;
@@ -64,24 +61,18 @@ package body Buffer_Views is
    Untitled    : constant String := "Untitled";
    --  Label used for new window that is not yet saved
 
+   History_Editors_Only : constant History_Key :=
+     "Windows_View_Editors_Only";
+   --  Used to store the current filter settings in histories
+
+   Buffer_View_Module : Module_ID;
+
    type Buffer_View_Record is new Gtk.Box.Gtk_Box_Record with record
       Tree   : Gtk_Tree_View;
       Kernel : Kernel_Handle;
       File   : Virtual_File; -- current selected file (cache)
    end record;
    type Buffer_View_Access is access all Buffer_View_Record'Class;
-
-   type Buffer_View_Module_Record is new Module_ID_Record with record
-      Main_Window : Gtkada.MDI.MDI_Window;
-      View        : Buffer_View_Access;
-   end record;
-   type Buffer_View_Module_Access is
-     access all Buffer_View_Module_Record'Class;
-
-   Buffer_View_Module : Buffer_View_Module_Access;
-
-   procedure Destroy (Module : in out Buffer_View_Module_Record);
-   --  Called when the module is destroyed
 
    procedure On_Open_View
      (Widget : access GObject_Record'Class;
@@ -97,29 +88,11 @@ package body Buffer_Views is
       Kernel : access Kernel_Handle_Record'Class);
    --  Create a new Buffer view
 
-   procedure Refresh (View : access Buffer_View_Record'Class);
+   procedure Child_Selected (View : access Gtk_Widget_Record'Class);
+   --  Called when a new child is selected
+
+   procedure Refresh (View : access Gtk_Widget_Record'Class);
    --  Refresh the contents of the Buffer view
-
-   procedure File_Edited_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
-   --  Callback for the "file_edited" signal
-
-   procedure File_Closed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
-   --  Callback for the "file_closed" signal
-
-   procedure Context_Changed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
-   --  Callback for the "context_changed" signal
-
-   function Get_Iter_From_File
-     (View : Buffer_View_Access;
-      File : Virtual_File) return Gtk_Tree_Iter;
-   --  Returns the tree iter for the given File or Null_Iter if file is not
-   --  part of the current buffer view.
 
    function Button_Press
      (View  : access Gtk_Widget_Record'Class;
@@ -161,31 +134,6 @@ package body Buffer_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
    --  Context factory when creating contextual menus
-
-   procedure Title_Changed
-     (MDI    : access GObject_Record'Class;
-      Child  : Gtk_Args;
-      Kernel : Kernel_Handle);
-   --  Connect to signal "child_title_changed" sent when a windows is renamed
-
-   package View_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Kernel_Handle);
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Module : in out Buffer_View_Module_Record) is
-   begin
-      if Module.View /= null then
-         Destroy (Module.View.Tree);
-         Module.View.Tree := null;
-         Module.View.Kernel := null;
-         Module.View := null;
-      end if;
-
-      Buffer_View_Module := null;
-   end Destroy;
 
    ------------------------
    -- Get_Selected_Files --
@@ -243,11 +191,13 @@ package body Buffer_Views is
       use type String_List_Utils.String_List.List_Node;
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      M        : constant Buffer_View_Module_Access := Buffer_View_Module;
+      View     : constant Buffer_View_Access := Buffer_View_Access
+        (Get_Widget
+           (Find_MDI_Child_By_Tag (Get_MDI (Kernel), Buffer_View_Record'Tag)));
       Selected : String_List_Utils.String_List.List;
       Node     : String_List_Utils.String_List.List_Node;
    begin
-      Selected := Get_Selected_Files (M.View);
+      Selected := Get_Selected_Files (View);
 
       Node := String_List_Utils.String_List.First (Selected);
 
@@ -301,12 +251,10 @@ package body Buffer_Views is
      (View  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean
    is
-      M        : constant Buffer_View_Module_Access := Buffer_View_Module;
-      Explorer : constant Buffer_View_Access :=
-                   Buffer_View_Access (View);
+      Explorer : constant Buffer_View_Access := Buffer_View_Access (View);
       Kernel   : constant Kernel_Handle := Explorer.Kernel;
       Model    : constant Gtk_Tree_Store :=
-                   Gtk_Tree_Store (Get_Model (M.View.Tree));
+                   Gtk_Tree_Store (Get_Model (Explorer.Tree));
       Path     : constant Gtk_Tree_Path :=
         Get_Path_At_Event (Explorer.Tree, Event);
       Iter     : Gtk_Tree_Iter;
@@ -319,9 +267,21 @@ package body Buffer_Views is
          Child := Find_MDI_Child_By_Name
            (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
 
-         if Get_Event_Type (Event) = Gdk_2button_Press then
-            Raise_Child (Child, Give_Focus => True);
-            return True;
+         --  If there is any modified, don't do anything. The user is trying to
+         --  select multiple lines
+
+         if Get_State (Event) = 0 then
+            if Get_Event_Type (Event) = Gdk_2button_Press then
+               Raise_Child (Child, Give_Focus => True);
+               return True;
+
+            elsif Get_Event_Type (Event) = Button_Press
+              and then Get_Button (Event) = 1
+            then
+               Child_Drag_Begin (Child => Child, Event => Event);
+               Raise_Child (Child, Give_Focus => True);
+               return True;
+            end if;
          end if;
       end if;
 
@@ -334,170 +294,62 @@ package body Buffer_Views is
    end Button_Press;
 
    --------------------
-   -- File_Edited_Cb --
+   -- Child_Selected --
    --------------------
 
-   procedure File_Edited_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-   is
-      M     : constant Buffer_View_Module_Access := Buffer_View_Module;
-      Child : constant MDI_Child :=
-                Find_MDI_Child_By_Tag
-                  (Get_MDI (Kernel), Buffer_View_Record'Tag);
+   procedure Child_Selected (View : access Gtk_Widget_Record'Class) is
+      V     : constant Buffer_View_Access := Buffer_View_Access (View);
+      Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
+      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (V.Kernel));
+      Selected : constant String := Get_Title (Child);
    begin
-      if Child /= null and then M.View /= null then
-         declare
-            Model : constant Gtk_Tree_Store :=
-                      Gtk_Tree_Store (Get_Model (M.View.Tree));
-            D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-            Iter  : Gtk_Tree_Iter := Get_Iter_From_File (M.View, D.File);
-         begin
-            if Iter = Null_Iter then
-               Append (Model, Iter, Null_Iter);
-               declare
-                  Name : constant String := Base_Name (D.File);
-               begin
-                  if Name'Length >= 8
-                    and then Name (Name'First .. Name'First + 7) = Untitled
-                  then
-                     Set (Model, Iter, Name_Column, Name);
-                     Set (Model, Iter, Data_Column, Name);
-                  else
-                     Set
-                       (Model, Iter, Icon_Column,
-                        C_Proxy (Get_Icon (Get_File_Editor (Kernel, D.File))));
-                     Set (Model, Iter, Name_Column, Name);
-                     Set (Model, Iter, Data_Column, Full_Name (D.File).all);
-                  end if;
-               end;
+      --  If we are in the buffers view, do not show it, since otherwise that
+      --  breaks the selection of multiple lines
+      Unselect_All (Get_Selection (V.Tree));
+      if Get_Widget (Child) /= Gtk_Widget (V) then
+         while Iter /= Null_Iter loop
+            if Get_String (Model, Iter, Data_Column) = Selected then
+               Select_Iter (Get_Selection (V.Tree), Iter);
+               exit;
             end if;
-         end;
+
+            Next (Model, Iter);
+         end loop;
       end if;
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end File_Edited_Cb;
-
-   --------------------
-   -- File_Closed_Cb --
-   --------------------
-
-   procedure File_Closed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-   is
-      M     : constant Buffer_View_Module_Access := Buffer_View_Module;
-      Child : constant MDI_Child :=
-                Find_MDI_Child_By_Tag
-                  (Get_MDI (Kernel), Buffer_View_Record'Tag);
-   begin
-      if Child /= null and then M /= null and then M.View /= null then
-         declare
-            Model : constant Gtk_Tree_Store :=
-                      Gtk_Tree_Store (Get_Model (M.View.Tree));
-            D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-            Iter  : Gtk_Tree_Iter := Get_Iter_From_File (M.View, D.File);
-         begin
-            if Iter /= Null_Iter then
-               Remove (Model, Iter);
-            end if;
-         end;
-      end if;
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end File_Closed_Cb;
-
-   ------------------------
-   -- Context_Changed_Cb --
-   ------------------------
-
-   procedure Context_Changed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-   is
-      D      : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
-      Module : constant Module_ID := Module_ID (Get_Creator (D.Context));
-      M      : constant Buffer_View_Module_Access := Buffer_View_Module;
-      Child  : constant MDI_Child :=
-                 Find_MDI_Child_By_Tag
-                   (Get_MDI (Kernel), Buffer_View_Record'Tag);
-      File   : Virtual_File;
-      Iter   : Gtk_Tree_Iter;
-   begin
-      if Child /= null then
-         if Module /= null
-           and then (Get_Name (Module) = "Source_Editor")
-           and then D.Context.all in File_Selection_Context'Class
-           and then Has_File_Information
-             (File_Selection_Context_Access (D.Context))
-         then
-            File := File_Information
-              (File_Selection_Context_Access (D.Context));
-            if File /= M.View.File then
-               M.View.File := File;
-
-               --  Select the corresponding file
-               Iter := Get_Iter_From_File (M.View, File);
-               Unselect_All (Get_Selection (M.View.Tree));
-               Select_Iter (Get_Selection (M.View.Tree), Iter);
-            end if;
-         end if;
-      end if;
-   end Context_Changed_Cb;
-
-   ------------------------
-   -- Get_Iter_From_File --
-   ------------------------
-
-   function Get_Iter_From_File
-     (View : Buffer_View_Access;
-      File : Virtual_File) return Gtk_Tree_Iter
-   is
-      Filename : constant String := Full_Name (File).all;
-      Model    : constant Gtk_Tree_Model := Get_Model (View.Tree);
-      Iter     : Gtk_Tree_Iter := Get_Iter_First (Model);
-   begin
-      while Iter /= Null_Iter loop
-         if Get_String (Model, Iter, Data_Column) = Filename then
-            return Iter;
-         end if;
-
-         Next (Model, Iter);
-      end loop;
-
-      return Null_Iter;
-   end Get_Iter_From_File;
+   end Child_Selected;
 
    -------------
    -- Refresh --
    -------------
 
-   procedure Refresh (View : access Buffer_View_Record'Class) is
-      Model   : constant Gtk_Tree_Store :=
-                  Gtk_Tree_Store (Get_Model (View.Tree));
+   procedure Refresh (View : access Gtk_Widget_Record'Class) is
+      V       : constant Buffer_View_Access := Buffer_View_Access (View);
+      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       I_Child : Child_Iterator;
       Child   : MDI_Child;
       Iter    : Gtk_Tree_Iter;
+      Editors_Only : Boolean;
    begin
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (V.Kernel).all, History_Editors_Only, True);
+      Editors_Only := Get_History
+        (Get_History (V.Kernel).all, History_Editors_Only);
+
       Clear (Model);
-      I_Child := First_Child (Buffer_View_Module.Main_Window);
+      I_Child := First_Child (Get_MDI (V.Kernel));
 
       loop
          Child := Get (I_Child);
          exit when Child = null;
 
-         if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
-            Append (Model, Iter, Null_Iter);
+         if not Editors_Only
+           or else Is_Source_Box (Child)
+         then
             declare
-               Box  : constant Source_Editor_Box :=
-                        Get_Source_Box_From_MDI (Child);
-               File : constant Virtual_File := Get_Filename (Box);
-               Name : constant String := Base_Name (File);
+               Name : constant String := Get_Short_Title (Child);
             begin
+               Append (Model, Iter, Null_Iter);
                if Name = ""
                  or else
                    (Name'Length >= 8
@@ -508,7 +360,11 @@ package body Buffer_Views is
                else
                   Set (Model, Iter, Icon_Column, C_Proxy (Get_Icon (Child)));
                   Set (Model, Iter, Name_Column, Name);
-                  Set (Model, Iter, Data_Column, Full_Name (File).all);
+                  Set (Model, Iter, Data_Column, Get_Title (Child));
+               end if;
+
+               if Child = Get_Focus_Child (Get_MDI (V.Kernel)) then
+                  Select_Iter (Get_Selection (V.Tree), Iter);
                end if;
             end;
          end if;
@@ -528,39 +384,29 @@ package body Buffer_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Kernel, Event_Widget, Menu);
+      pragma Unreferenced (Event_Widget);
       --  Nothing special in the context, just the module itself so that people
       --  can still add information if needed
       V       : constant Buffer_View_Access := Buffer_View_Access (Object);
       Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Context : constant Selection_Context_Access := new Selection_Context;
       Iter    : Gtk_Tree_Iter;
+      Check   : Gtk_Check_Menu_Item;
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
       Select_Iter (Get_Selection (V.Tree), Iter);
+
+      if Menu /= null then
+         Gtk_New (Check, Label => -"Show editors only");
+         Associate (Get_History (Kernel).all, History_Editors_Only, Check);
+         Append (Menu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Refresh'Access, Slot_Object => V);
+
+      end if;
+
       return Context;
    end View_Context_Factory;
-
-   -------------------
-   -- Title_Changed --
-   -------------------
-
-   procedure Title_Changed
-     (MDI    : access GObject_Record'Class;
-      Child  : Gtk_Args;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (MDI, Kernel);
-      M    : constant Buffer_View_Module_Access := Buffer_View_Module;
-      C    : constant MDI_Child := MDI_Child (To_Object (Child, 1));
-      Name : constant String := String (Get_Title (C));
-   begin
-      if Name'Length < 8
-        or else Name (Name'First .. Name'First + 7) /= Untitled
-      then
-         Refresh (M.View);
-      end if;
-   end Title_Changed;
 
    -------------
    -- Gtk_New --
@@ -592,12 +438,15 @@ package body Buffer_Views is
          Hide_Expander      => True);
       Add (Scrolled, View.Tree);
 
-      Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access,
-                Watch => GObject (View));
-      Add_Hook (Kernel, File_Closed_Hook, File_Closed_Cb'Access,
-               Watch => GObject (View));
-      Add_Hook (Kernel, Context_Changed_Hook, Context_Changed_Cb'Access,
-                Watch => GObject (View));
+      Widget_Callback.Object_Connect
+        (Get_MDI (Kernel), "child_added", Refresh'Access, Slot_Object => View);
+      Widget_Callback.Object_Connect
+        (Get_MDI (Kernel), "child_removed", Refresh'Access,
+         Slot_Object => View);
+      Widget_Callback.Object_Connect
+        (Get_MDI (Kernel), "child_title_changed", Refresh'Access, View);
+      Widget_Callback.Object_Connect
+        (Get_MDI (Kernel), "child_selected", Child_Selected'Access, View);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View.Tree,
@@ -610,7 +459,7 @@ package body Buffer_Views is
         (Kernel          => Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
-         ID              => Module_ID (Buffer_View_Module),
+         ID              => Buffer_View_Module,
          Context_Func    => View_Context_Factory'Access);
 
       Refresh (View);
@@ -659,27 +508,21 @@ package body Buffer_Views is
    function Open_View
      (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
    is
-      M     : constant Buffer_View_Module_Access := Buffer_View_Module;
       Child : MDI_Child;
+      View  : Buffer_View_Access;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Buffer_View_Record'Tag);
 
       if Child = null then
-         Gtk_New (M.View, Kernel);
+         Gtk_New (View, Kernel);
          Child := Put
-           (Kernel, M.View,
+           (Kernel, View,
             Default_Width  => 215,
             Default_Height => 600,
             Position       => Position_Left,
             Module         => Buffer_View_Module);
          Set_Title (Child, -"Windows View", -"Windows View");
-
-         View_Callback.Object_Connect
-           (Get_MDI (Kernel), "child_title_changed",
-            Title_Changed'Unrestricted_Access,
-            Child,
-            Kernel_Handle (Kernel));
       end if;
 
       return Child;
@@ -710,11 +553,9 @@ package body Buffer_Views is
    is
       Command : Interactive_Command_Access;
    begin
-      Buffer_View_Module := new Buffer_View_Module_Record;
-      Buffer_View_Module.Main_Window := Get_MDI (Kernel);
-
+      Buffer_View_Module := new Module_ID_Record;
       Register_Module
-        (Module      => Module_ID (Buffer_View_Module),
+        (Module      => Buffer_View_Module,
          Module_Name => "Buffer_View",
          Kernel      => Kernel);
       Register_Menu
@@ -727,10 +568,10 @@ package body Buffer_Views is
 
       Command := new Close_Command;
       Register_Contextual_Menu
-        (Kernel, "Windows View Close Editors",
+        (Kernel, "Windows View Close Windows",
          Action => Command,
          Filter => Create (Module => "Buffer_View"),
-         Label  => -"Close editors");
+         Label  => -"Close selected windows");
    end Register_Module;
 
 end Buffer_Views;
