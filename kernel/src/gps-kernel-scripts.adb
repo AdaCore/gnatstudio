@@ -60,7 +60,6 @@ with VFS;                     use VFS;
 package body GPS.Kernel.Scripts is
 
    Me : constant Debug_Handle := Create ("GPS.Kernel.Scripts");
-   Test_Suite_Me : constant Debug_Handle := Create ("Test_Suite", Off);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Class_Instance_Record'Class, Class_Instance);
@@ -1899,7 +1898,7 @@ package body GPS.Kernel.Scripts is
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
 
-      if Active (Test_Suite_Me) then
+      if Active (Testsuite_Handle) then
          Register_Command
            (Kernel, "contextual_menu",
             Class        => Get_Context_Class (Kernel),
