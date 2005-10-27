@@ -2738,7 +2738,7 @@ package body Browsers.Canvas is
      (Item : access Browser_Item_Record) return String is
       pragma Unreferenced (Item);
    begin
-      return "<text>Default content</text>";
+      return "";
    end Output_SVG_Item_Content;
 
    -----------------------
