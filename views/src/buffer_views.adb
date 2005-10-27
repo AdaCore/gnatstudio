@@ -454,6 +454,8 @@ package body Buffer_Views is
         (Get_MDI (Kernel), "child_title_changed", Refresh'Access, View);
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_selected", Child_Selected'Access, View);
+      Widget_Callback.Object_Connect
+        (Get_MDI (Kernel), "child_icon_changed", Child_Selected'Access, View);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View.Tree,
