@@ -222,6 +222,21 @@ package body GPS.Kernel.Clipboard is
       end if;
    end Append_To_Clipboard;
 
+   ----------------------------
+   -- Remove_Clipboard_Entry --
+   ----------------------------
+
+   procedure Remove_Clipboard_Entry
+     (Clipboard : access Clipboard_Record; Index : Natural) is
+   begin
+      if Index in Clipboard.List'Range then
+         Clipboard.List (Index .. Clipboard.List'Last - 1) :=
+           Clipboard.List (Index + 1 .. Clipboard.List'Last);
+         Clipboard.List (Clipboard.List'Last) := null;
+         Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+      end if;
+   end Remove_Clipboard_Entry;
+
    -------------------
    -- Cut_Clipboard --
    -------------------

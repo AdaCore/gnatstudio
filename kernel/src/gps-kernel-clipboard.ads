@@ -77,6 +77,10 @@ package GPS.Kernel.Clipboard is
       Index1, Index2 : Natural);
    --  Merge the two entries in the clipboard, and remove the second one.
 
+   procedure Remove_Clipboard_Entry
+     (Clipboard : access Clipboard_Record; Index : Natural);
+   --  Remove an entry in the clipboard
+
    function Get_Content
      (Clipboard : access Clipboard_Record) return Selection_List;
    --  Return the current contents of the clipboard. The returned value must
