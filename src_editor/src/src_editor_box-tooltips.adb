@@ -66,7 +66,8 @@ package body Src_Editor_Box.Tooltips is
      (Editor  : access Source_Editor_Box_Record;
       Context : access Entity_Selection_Context'Class;
       Entity  : out Entity_Information;
-      Ref     : out Entity_Reference);
+      Ref     : out Entity_Reference;
+      Status  : out Find_Decl_Or_Body_Query_Status);
    --  Perform a cross-reference to the declaration of the entity located at
    --  (Line, Column) in Editor. Fail silently when no declaration or no
    --  entity can be located, and set File_Decl to null.
@@ -242,9 +243,9 @@ package body Src_Editor_Box.Tooltips is
      (Editor  : access Source_Editor_Box_Record;
       Context : access Entity_Selection_Context'Class;
       Entity  : out Entity_Information;
-      Ref     : out Entity_Reference)
+      Ref     : out Entity_Reference;
+      Status  : out Find_Decl_Or_Body_Query_Status)
    is
-      Status   : Find_Decl_Or_Body_Query_Status;
       Filename : constant Virtual_File := Get_Filename (Editor);
    begin
       Ref := No_Entity_Reference;
@@ -383,6 +384,7 @@ package body Src_Editor_Box.Tooltips is
          Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
          Entity      : Entity_Information;
          Entity_Ref  : Entity_Reference;
+         Status      : Find_Decl_Or_Body_Query_Status;
 
       begin
          if Entity_Name = "" then
@@ -414,7 +416,7 @@ package body Src_Editor_Box.Tooltips is
          --  tooltip, based on cross references.
 
          Get_Declaration_Info
-           (Box, Context'Unchecked_Access, Entity, Entity_Ref);
+           (Box, Context'Unchecked_Access, Entity, Entity_Ref, Status);
 
          Destroy (Context);
 
@@ -449,7 +451,18 @@ package body Src_Editor_Box.Tooltips is
             Alloc (Get_Default_Colormap, Color);
 
             Layout1 := Create_Pango_Layout (Widget, "");
-            Set_Markup (Layout1, Str);
+
+            if Status = Overloaded_Entity_Found
+              or else Status = Fuzzy_Match
+            then
+               Set_Markup (Layout1,
+                           -("(Cross-referencea info not up-to-date, "
+                             & "this is a guess)")
+                           & ASCII.LF & Str);
+            else
+               Set_Markup (Layout1, Str);
+            end if;
+
             Set_Font_Description (Layout1, Font);
             Get_Pixel_Size (Layout1, W1, H1);
 
