@@ -559,6 +559,7 @@ package body GPS.Kernel.Timeout is
       else
          Unref (Data);
          Pop_State (Kernel);
+         Fd := null;
       end if;
 
    exception
