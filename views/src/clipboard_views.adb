@@ -134,6 +134,13 @@ package body Clipboard_Views is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Merge the selected entry with the previous one
 
+   type Remove_Entry_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Remove_Entry_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Remove the currently selected entry
+
    --------------
    -- Tooltips --
    --------------
@@ -227,6 +234,29 @@ package body Clipboard_Views is
          if Selected /= -1 then
             Merge_Clipboard
               (Get_Clipboard (View.Kernel), Selected, Selected + 1);
+            return Success;
+         end if;
+      end if;
+      return Failure;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Remove_Entry_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Selected : Integer;
+      View : constant Clipboard_View_Access := Clipboard_View_Access
+        (Get_Widget (Open_View (Get_Kernel (Context.Context))));
+   begin
+      if Context.Event /= null then
+         Selected := Get_Selected_From_Event (View, Context.Event);
+         if Selected /= -1 then
+            Remove_Clipboard_Entry (Get_Clipboard (View.Kernel), Selected);
             return Success;
          end if;
       end if;
@@ -599,6 +629,13 @@ package body Clipboard_Views is
          Action => Command,
          Filter => Create (Module => "Clipboard_View"),
          Label  => -"Append To Previous");
+
+      Command := new Remove_Entry_Command;
+      Register_Contextual_Menu
+        (Kernel, "Clipboard View Remove Entry",
+         Action => Command,
+         Filter => Create (Module => "Clipboard_View"),
+         Label  => -"Delete entry");
    end Register_Module;
 
 end Clipboard_Views;
