@@ -210,16 +210,22 @@ package GPS.Kernel.Contexts is
    --  column on which the cursor currently is.
 
    function Get_Entity
-     (Context : access Entity_Selection_Context)
+     (Context           : access Entity_Selection_Context;
+      Ask_If_Overloaded : Boolean := False)
       return Entities.Entity_Information;
    --  Return the location of the declaration for the entity in Context.
    --  This information is automatically cached in the context, in case several
-   --  modules need to compute it;
+   --  modules need to compute it; However, if you first do a call with
+   --  Ask_If_Overloaded set to False, then one set to True, the latter will
+   --  override the former if we have more precise information.
    --  No_Entity_Information is returned if the information could not be found.
    --  Note also that in most cases you should set the busy cursor before
    --  calling this function, since it might take some time.
    --  You do not need to free the memory, since it will automatically be freed
    --  when the context is destroyed.
+   --  If Ask_If_Overloaded is true and there are several possible matches for
+   --  the entity, an interactive dialog is opened for the user. Otherwise, the
+   --  closest matching entity is returned
 
    procedure Destroy (Context : in out Entity_Selection_Context);
    --  Destroy the memory associated with the entity
@@ -275,7 +281,8 @@ private
       Entity_Column : Integer := 0;
       Entity        : Entities.Entity_Information := null;
 
-      Entity_Resolved : Boolean := False;
+      Entity_Resolved : Entities.Queries.Find_Decl_Or_Body_Query_Status :=
+        Entities.Queries.Entity_Not_Found;
       --  Set to True when we have called Get_Entity at least once. This is
       --  used to differentiate cases where Entity is null because we have
       --  never tested and cases where it is null because there is none to be

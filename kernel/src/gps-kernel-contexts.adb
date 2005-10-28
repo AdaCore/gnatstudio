@@ -22,13 +22,16 @@ with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
 with Projects;           use Projects;
 with Projects.Registry;  use Projects.Registry;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
+with GPS.Intl;           use GPS.Intl;
 with VFS;                use VFS;
 with Entities;           use Entities;
 with Entities.Queries;   use Entities.Queries;
 with Language_Handlers;  use Language_Handlers;
-
+with Traces; use Traces;
 package body GPS.Kernel.Contexts is
+   Me : constant Debug_Handle := Create ("Contexts");
    type Filter_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_File;
@@ -496,20 +499,26 @@ package body GPS.Kernel.Contexts is
    ----------------
 
    function Get_Entity
-     (Context : access Entity_Selection_Context)
-      return Entities.Entity_Information
+     (Context           : access Entity_Selection_Context;
+      Ask_If_Overloaded : Boolean := False) return Entity_Information
    is
-      Status : Find_Decl_Or_Body_Query_Status;
       File   : Source_File;
+      Never_Examined : constant Boolean :=
+        Context.Entity_Resolved = Entity_Not_Found
+        or else (Context.Entity_Resolved = Overloaded_Entity_Found
+                 and then Ask_If_Overloaded);
 
    begin
-      if not Context.Entity_Resolved
+      if Context.Entity_Resolved = Overloaded_Entity_Found
+        and then not Ask_If_Overloaded
+      then
+         return Context.Entity;
+
+      elsif Never_Examined
         and then Has_Entity_Name_Information (Context)
         and then Has_Line_Information (Context)
         and then Has_File_Information (Context)
       then
-         Context.Entity_Resolved := True;
-
          File := Get_Or_Create
            (Db   => Get_Database (Get_Kernel (Context)),
             File => File_Information (Context),
@@ -518,25 +527,41 @@ package body GPS.Kernel.Contexts is
                File_Information (Context)));
 
          if File = null then
+            Context.Entity_Resolved := Success;
             return null;
          end if;
 
          Find_Declaration_Or_Overloaded
-           (Kernel      => Get_Kernel (Context),
-            File        => File,
-            Entity_Name => Entity_Name_Information (Context),
-            Line        => Line_Information (Context),
-            Column      => Entity_Column_Information (Context),
-            Entity      => Context.Entity,
-            Status      => Status);
+           (Kernel            => Get_Kernel (Context),
+            File              => File,
+            Entity_Name       => Entity_Name_Information (Context),
+            Line              => Line_Information (Context),
+            Column            => Entity_Column_Information (Context),
+            Ask_If_Overloaded => Ask_If_Overloaded,
+            Entity            => Context.Entity,
+            Status            => Context.Entity_Resolved);
 
-         if Status /= Success and then Status /= Fuzzy_Match then
+         Trace (Me, "MANU Get_Entity " & Context.Entity_Resolved'Img
+                & " Ask=" & Ask_If_Overloaded'Img);
+
+         if Context.Entity_Resolved = Fuzzy_Match
+           or else Context.Entity_Resolved = Overloaded_Entity_Found
+         then
+            Insert (Get_Kernel (Context),
+                    -"Cross-reference info not up-to-date when searching for "
+                    & Entity_Name_Information (Context),
+                    Mode => Info);
+            if Ask_If_Overloaded then
+               Context.Entity_Resolved := Success;
+            end if;
+         elsif Context.Entity_Resolved /= Success then
             Context.Entity := null;
+            Context.Entity_Resolved := Success;
          end if;
 
          Ref (Context.Entity);
       else
-         Context.Entity_Resolved := True;
+         Context.Entity_Resolved := Success;
       end if;
 
       return Context.Entity;
