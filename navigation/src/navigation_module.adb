@@ -43,6 +43,7 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;          use GPS.Location_View;
 with GPS.Intl;                   use GPS.Intl;
+with XML_Parsers;                use XML_Parsers;
 
 with Traces;                     use Traces;
 with String_Utils;               use String_Utils;
@@ -50,11 +51,13 @@ with VFS;                        use VFS;
 with Language;                   use Language;
 
 package body Navigation_Module is
+   Me : constant Debug_Handle := Create ("Navigation");
+
+   Max_Locations_In_History : constant := 200;
+   --  Maximum number of locations stored in the history
 
    Navigation_Module_Name : constant String := "Navigation";
    Navigation_Module_ID : Module_ID;
-
-   Me : constant Debug_Handle := Create ("Navigation");
 
    type Location_Marker_Array is array (Natural range <>) of Location_Marker;
    type Location_Marker_Array_Access is access Location_Marker_Array;
@@ -210,6 +213,14 @@ package body Navigation_Module is
    procedure Go_To_Current_Marker (Kernel : access Kernel_Handle_Record'Class);
    --  Go to the location pointed to by the current marker in the history
 
+   procedure Save_History_Markers
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Save all locations to an XML file
+
+   procedure Load_History_Markers
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Load all locations from an XML file
+
    --------------------------------
    -- On_Marker_Added_In_History --
    --------------------------------
@@ -223,7 +234,8 @@ package body Navigation_Module is
         Navigation_Module (Navigation_Module_ID);
    begin
       if Module.Markers = null then
-         Module.Markers := new Location_Marker_Array (1 .. 200);
+         Module.Markers := new Location_Marker_Array
+           (1 .. Max_Locations_In_History);
          Module.Current_Marker := 0;
          Module.Last_Marker := 0;
       end if;
@@ -240,6 +252,87 @@ package body Navigation_Module is
       Module.Last_Marker := Module.Current_Marker;
       Refresh_Location_Buttons (Kernel);
    end On_Marker_Added_In_History;
+
+   --------------------------
+   -- Save_History_Markers --
+   --------------------------
+
+   procedure Save_History_Markers
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Filename : constant String := Get_Home_Dir (Kernel) & "locations.xml";
+      File, Child : Node_Ptr;
+      M           : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+   begin
+      if M.Markers /= null then
+         Trace (Me, "Saving " & Filename);
+         File     := new Node;
+         File.Tag := new String'("Locations");
+
+         for Index in M.Markers'First .. M.Last_Marker loop
+            Child := Save (M.Markers (Index));
+            if Child /= null then
+               if Index = M.Current_Marker then
+                  Set_Attribute (Child, "current", "true");
+               end if;
+               Add_Child (File, Child, Append => True);
+            end if;
+         end loop;
+
+         Print (File, Filename);
+         Free (File);
+      end if;
+   end Save_History_Markers;
+
+   --------------------------
+   -- Load_History_Markers --
+   --------------------------
+
+   procedure Load_History_Markers
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Filename : constant String := Get_Home_Dir (Kernel) & "locations.xml";
+      File, Child : Node_Ptr;
+      M           : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+      Marker      : Location_Marker;
+      Err         : String_Access;
+   begin
+      if Is_Regular_File (Filename) then
+         Trace (Me, "Loading " & Filename);
+         XML_Parsers.Parse (Filename, File, Err);
+
+         if File = null then
+            Insert (Kernel, Err.all, Mode => Error);
+            Free (Err);
+         else
+            M.Markers := new Location_Marker_Array
+              (1 .. Max_Locations_In_History);
+            M.Current_Marker := 0;
+            M.Last_Marker := 0;
+
+            Child := File.Child;
+            while Child /= null loop
+               Marker := Create_Marker (Kernel, Child);
+
+               if Marker /= null then
+                  M.Last_Marker := M.Last_Marker + 1;
+                  M.Markers (M.Last_Marker) := Marker;
+                  if Get_Attribute (Child, "current", "false") = "true" then
+                     M.Current_Marker := M.Last_Marker;
+                  end if;
+
+                  exit when M.Last_Marker = Max_Locations_In_History;
+               end if;
+
+               Child := Child.Next;
+            end loop;
+
+            Free (File);
+         end if;
+      end if;
+   end Load_History_Markers;
 
    ---------------------------------
    -- Check_Marker_History_Status --
@@ -955,6 +1048,7 @@ package body Navigation_Module is
       Kernel_Callback.Connect
         (Button, "clicked", On_Forward'Access, Kernel_Handle (Kernel));
 
+      Load_History_Markers (Kernel);
       Refresh_Location_Buttons (Kernel);
    end Register_Module;
 
@@ -980,6 +1074,8 @@ package body Navigation_Module is
 
    procedure Destroy (Id : in out Navigation_Module_Record) is
    begin
+      Save_History_Markers (Get_Kernel (Id));
+
       if Id.Markers /= null then
          for M in Id.Markers'Range loop
             if Id.Markers (M) /= null then
