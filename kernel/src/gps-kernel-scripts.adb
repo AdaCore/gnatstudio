@@ -964,6 +964,7 @@ package body GPS.Kernel.Scripts is
                Entity_Name => Name,
                Line        => L,
                Column      => C,
+               Ask_If_Overloaded => False,
                Entity      => Entity,
                Status      => Status);
 
