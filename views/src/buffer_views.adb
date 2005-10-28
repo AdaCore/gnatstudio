@@ -44,14 +44,12 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with Histories;                 use Histories;
 with GUI_Utils;                 use GUI_Utils;
 with Src_Editor_Module;         use Src_Editor_Module;
 with VFS;                       use VFS;
 with Traces;                    use Traces;
-with String_List_Utils;         use String_List_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body Buffer_Views is
@@ -125,13 +123,6 @@ package body Buffer_Views is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Close the selected editors
 
-   function Get_Selected_Files
-     (Explorer : Buffer_View_Access) return String_List_Utils.String_List.List;
-   --  Return the list of files that are selected
-
-   package Explorer_Selection_Foreach is
-     new Selection_Foreach (Buffer_View_Record);
-
    function View_Context_Factory
      (Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -139,50 +130,6 @@ package body Buffer_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
    --  Context factory when creating contextual menus
-
-   ------------------------
-   -- Get_Selected_Files --
-   ------------------------
-
-   function Get_Selected_Files
-     (Explorer : Buffer_View_Access) return String_List_Utils.String_List.List
-   is
-      Result : String_List_Utils.String_List.List;
-
-      procedure Add_Selected_Item
-        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Explorer_Selection_Foreach.Data_Type_Access);
-      --  Add an item to Result.
-
-      -----------------------
-      -- Add_Selected_Item --
-      -----------------------
-
-      procedure Add_Selected_Item
-        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Explorer_Selection_Foreach.Data_Type_Access)
-      is
-         pragma Unreferenced (Path, Data);
-      begin
-         String_List_Utils.String_List.Append
-           (Result, Get_String (Model, Iter, Data_Column));
-      end Add_Selected_Item;
-
-   begin
-      if Explorer = null then
-         return Result;
-      end if;
-
-      Explorer_Selection_Foreach.Selected_Foreach
-        (Get_Selection (Explorer.Tree),
-         Add_Selected_Item'Unrestricted_Access,
-         Explorer_Selection_Foreach.Data_Type_Access (Explorer));
-      return Result;
-   end Get_Selected_Files;
 
    -------------
    -- Execute --
@@ -193,32 +140,59 @@ package body Buffer_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      use type String_List_Utils.String_List.List_Node;
-
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       View     : constant Buffer_View_Access := Buffer_View_Access
         (Get_Widget
            (Find_MDI_Child_By_Tag (Get_MDI (Kernel), Buffer_View_Record'Tag)));
-      Selected : String_List_Utils.String_List.List;
-      Node     : String_List_Utils.String_List.List_Node;
+      Model    : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Model (View.Tree));
+      Child    : MDI_Child;
+      Iter, Iter2 : Gtk_Tree_Iter;
+      Count       : Natural := 0;
+      CIter       : Child_Iterator := First_Child (Get_MDI (Kernel));
    begin
-      Selected := Get_Selected_Files (View);
-
-      Node := String_List_Utils.String_List.First (Selected);
-
-      while Node /= String_List_Utils.String_List.Null_Node loop
-         declare
-            Filename : constant String :=
-                         String_List_Utils.String_List.Data (Node);
-            File     : constant Virtual_File := Create (Filename);
-         begin
-            Close_File_Editors (Kernel, File);
-         end;
-
-         Node := String_List_Utils.String_List.Next (Node);
+      while Get (CIter) /= null loop
+         Count := Count + 1;
+         Next (CIter);
       end loop;
 
-      String_List_Utils.String_List.Free (Selected);
+      declare
+         Children : MDI_Child_Array (1 .. Count);
+      begin
+         Count := Children'First;
+
+         Iter := Get_Iter_First (Get_Model (View.Tree));
+         while Iter /= Null_Iter loop
+            Iter2 := Gtk.Tree_Store.Children (Model, Iter);
+            while Iter2 /= Null_Iter loop
+               if Iter_Is_Selected (Get_Selection (View.Tree), Iter2) then
+                  Child := Find_MDI_Child_By_Name
+                    (Get_MDI (Kernel), Get_String (Model, Iter2, Data_Column));
+                  if Child /= null then
+                     Children (Count) := Child;
+                     Count := Count + 1;
+                  end if;
+               end if;
+
+               Next (Model, Iter2);
+            end loop;
+
+            if Iter_Is_Selected (Get_Selection (View.Tree), Iter) then
+               Child := Find_MDI_Child_By_Name
+                 (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
+               if Child /= null then
+                  Children (Count) := Child;
+                  Count := Count + 1;
+               end if;
+            end if;
+
+            Next (Model, Iter);
+         end loop;
+
+         for C in Children'Range loop
+            Close_Child (Children (C));
+         end loop;
+      end;
 
       return Success;
    end Execute;
