@@ -241,7 +241,7 @@ package Browsers.Canvas is
    --     be computed by adding the new desired offset to Width_Offset. The
    --     addition to Width_Offset will generally be the same as Xoffset
    --
-   --   - Call the parent's Size_Request_And_Draw procedure. This will
+   --   - Call the parent's Resize_And_Draw procedure. This will
    --     ultimately resize the item.
    --   - Draw the item at coordinates Xoffset, Yoffset in the double-buffer.
    --   - Modify Xoffset, Yoffset to the position that a child of item should
