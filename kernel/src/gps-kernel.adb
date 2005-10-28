@@ -36,7 +36,6 @@ with Glib.Properties;           use Glib.Properties;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -53,7 +52,6 @@ with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
@@ -61,6 +59,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Mapper;              use Basic_Mapper;
+with Basic_Types;
 with Default_Preferences;       use Default_Preferences;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
@@ -561,7 +560,7 @@ package body GPS.Kernel is
       Old          : Node_Ptr;
       State        : Gdk_Window_State;
       X, Y         : Gint;
-      Err          : String_Access;
+      Err          : GNAT.OS_Lib.String_Access;
       Main_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (Handle.Main_Window);
 
@@ -1095,7 +1094,8 @@ package body GPS.Kernel is
       Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
    is
       procedure Set
-        (Tree, Iter : System.Address;
+        (Tree : System.Address;
+         Iter : Gtk_Tree_Iter;
          Col1 : Gint; Value1 : String;
          Col2, Value2, Col3, Value3 : Gint;
          Col4 : Gint; Value4 : String;
@@ -1115,6 +1115,11 @@ package body GPS.Kernel is
          2 => GType_Int,
          3 => GType_String,
          4 => GType_Pointer);
+      Column_Names : GNAT.OS_Lib.String_List :=
+        (1 => new String'("File"),
+         2 => new String'("Line"),
+         3 => new String'("Column"),
+         4 => new String'("Name"));
 
       Iter      : Entity_Iterator;
       Candidate : Entity_Information;
@@ -1127,10 +1132,8 @@ package body GPS.Kernel is
       Model     : Gtk_Tree_Store;
       Dialog    : Gtk_Dialog;
       It        : Gtk_Tree_Iter;
-      Renderer  : Gtk_Cell_Renderer_Text;
       Scrolled  : Gtk_Scrolled_Window;
       View      : Gtk_Tree_View;
-      Col       : Gtk_Tree_View_Column;
       Col_Num   : Gint;
       pragma Unreferenced (Col_Num);
 
@@ -1144,75 +1147,47 @@ package body GPS.Kernel is
          Count := Count + 1;
          Candidate := Get (Iter);
 
-         if Get_Name (Candidate).all = Entity_Name then
-            if Count = 1 then
-               Gtk_New (Dialog,
-                        Title  => -"Select the declaration",
-                        Parent => Get_Main_Window (Kernel),
-                        Flags  => Modal or Destroy_With_Parent);
-               Set_Default_Size (Dialog, 500, 500);
+         if Count = 1 then
+            Gtk_New (Dialog,
+                     Title  => -"Select the declaration",
+                     Parent => Get_Main_Window (Kernel),
+                     Flags  => Modal or Destroy_With_Parent);
+            Set_Default_Size (Dialog, 500, 500);
 
-               Gtk_New (Label, -"This entity is overloaded.");
-               Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+            Gtk_New (Label, -"This entity is overloaded.");
+            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
 
-               Gtk_New (Label, -"Please select the appropriate declaration.");
-               Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+            Gtk_New (Label, -"Please select the appropriate declaration.");
+            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
 
-               Gtk_New (Scrolled);
-               Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-               Pack_Start (Get_Vbox (Dialog), Scrolled);
+            Gtk_New (Scrolled);
+            Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+            Pack_Start (Get_Vbox (Dialog), Scrolled);
 
-               Gtk_New (View);
-               Set_Mode (Get_Selection (View), Selection_Single);
-               Add (Scrolled, View);
+            View := Create_Tree_View
+              (Column_Types    => Column_Types,
+               Column_Names    => Column_Names,
+               Initial_Sort_On => 1);
+            Add (Scrolled, View);
+            Model := Gtk_Tree_Store (Get_Model (View));
 
-               Gtk_New (Model, Column_Types);
-               Set_Model (View, Gtk_Tree_Model (Model));
+            Widget_Callback.Object_Connect
+              (View, "row_activated", Row_Activated'Access, Dialog);
 
-               Gtk_New (Renderer);
-
-               Gtk_New (Col);
-               Col_Num := Append_Column (View, Col);
-               Set_Title (Col, -"File");
-               Pack_Start (Col, Renderer, False);
-               Add_Attribute (Col, Renderer, "text", 0);
-
-               Gtk_New (Col);
-               Col_Num := Append_Column (View, Col);
-               Set_Title (Col, -"Line");
-               Pack_Start (Col, Renderer, False);
-               Add_Attribute (Col, Renderer, "text", 1);
-
-               Gtk_New (Col);
-               Col_Num := Append_Column (View, Col);
-               Set_Title (Col, -"Column");
-               Pack_Start (Col, Renderer, False);
-               Add_Attribute (Col, Renderer, "text", 2);
-
-               Gtk_New (Col);
-               Col_Num := Append_Column (View, Col);
-               Set_Title (Col, -"Entity name");
-               Pack_Start (Col, Renderer, False);
-               Add_Attribute (Col, Renderer, "text", 3);
-
-               Widget_Callback.Object_Connect
-                 (View, "row_activated", Row_Activated'Access, Dialog);
-
-               Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-               Button := Add_Button
-                 (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-            end if;
-
-            Append (Model, It, Null_Iter);
-            Set (Get_Object (Model), It'Address,
-                 0, Full_Name (Get_Filename
-                    (Get_File (Get_Declaration_Of (Candidate)))).all
-                 & ASCII.NUL,
-                 1, Gint (Get_Line (Get_Declaration_Of (Candidate))),
-                 2, Gint (Get_Column (Get_Declaration_Of (Candidate))),
-                 3, Entity_Name & ASCII.NUL,
-                 4, Candidate.all'Address);
+            Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+            Button := Add_Button
+              (Dialog, Stock_Cancel, Gtk_Response_Cancel);
          end if;
+
+         Append (Model, It, Null_Iter);
+         Set (Get_Object (Model), It,
+           0, Base_Name
+             (Get_Filename (Get_File (Get_Declaration_Of (Candidate))))
+           & ASCII.NUL,
+           1, Gint (Get_Line (Get_Declaration_Of (Candidate))),
+           2, Gint (Get_Column (Get_Declaration_Of (Candidate))),
+           3, Entity_Name & ASCII.NUL,
+           4, Candidate.all'Address);
 
          Next (Iter);
       end loop;
@@ -1234,6 +1209,8 @@ package body GPS.Kernel is
          Destroy (Dialog);
       end if;
 
+      Basic_Types.Free (Column_Names);
+
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1252,13 +1229,14 @@ package body GPS.Kernel is
    ------------------------------------
 
    procedure Find_Declaration_Or_Overloaded
-     (Kernel      : access Kernel_Handle_Record;
-      File        : Source_File;
-      Entity_Name : String;
-      Line        : Natural;
-      Column      : Natural;
-      Entity      : out Entities.Entity_Information;
-      Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
+     (Kernel            : access Kernel_Handle_Record;
+      File              : Entities.Source_File;
+      Entity_Name       : String;
+      Line              : Natural;
+      Column            : Natural;
+      Ask_If_Overloaded : Boolean;
+      Entity            : out Entities.Entity_Information;
+      Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
    is
       Closest_Ref : Entities.Entity_Reference;
    begin
@@ -1271,7 +1249,9 @@ package body GPS.Kernel is
       --   - consider it as overloaded entity: same as below;
       --   - use the closest match: nothing to do.
 
-      if Status = Overloaded_Entity_Found then
+      if Ask_If_Overloaded
+        and then Status = Overloaded_Entity_Found
+      then
          Select_Entity_Declaration (Kernel, File, Entity_Name, Entity, Status);
       end if;
    end Find_Declaration_Or_Overloaded;

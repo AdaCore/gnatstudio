@@ -260,15 +260,18 @@ package GPS.Kernel is
    --  Return the database used for cross-references
 
    procedure Find_Declaration_Or_Overloaded
-     (Kernel      : access Kernel_Handle_Record;
-      File        : Entities.Source_File;
-      Entity_Name : String;
-      Line        : Natural;
-      Column      : Natural;
-      Entity      : out Entities.Entity_Information;
-      Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
-   --  Find the declaration of the given entity in the file. If multiple
-   --  entities match, an interactive dialog is open for the user.
+     (Kernel            : access Kernel_Handle_Record;
+      File              : Entities.Source_File;
+      Entity_Name       : String;
+      Line              : Natural;
+      Column            : Natural;
+      Ask_If_Overloaded : Boolean;
+      Entity            : out Entities.Entity_Information;
+      Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
+   --  Find the declaration of the given entity in the file.
+   --  If Ask_If_Overloaded is True and there are several possible matches for
+   --  the entiy (for instance because the xref info is not up-to-date), an
+   --  interactive dialog is opened.
 
    --------------
    -- Contexts --
