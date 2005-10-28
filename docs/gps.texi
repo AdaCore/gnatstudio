@@ -760,15 +760,31 @@ Each source file can also be explored as described in
 @c --------------------------------------------------------------------
 
 @noindent
-The @code{Window View} displays the currently opened files sorted
-alphabetically. This view can be opened using @code{Tools->Window View}.
+The @code{Window View} displays the currently opened windows.
+It is opened through the @code{Tools->Window View} menu.
 
-@c Would be nice to have a screen shot
+It can display the opened windows in one of two ways:
+@itemize @bullet
+@item Sorted alphabetically
+@item Organized by notebooks, as in the GPS window itself. This latter view
+ is mostly useful if you have lots of windows open
+@end itemize
 
-When there is a lot of files opened in GPS, the @code{Window View}
-provides an easy way to select one of them. By double-clicking on a file
-listed in the @code{Window View}, GPS will raise and give the focus
-to the corresponding editor.
+The mode is selected through the contextual menu.
+
+You can also chose, through this contextual menu, whether only the source
+editors should be visible, or whether all windows should be displayed.
+
+This window allows you to quickly select and focus on a particular window,
+by clicking on the corresponding line with the left mouse button. If you
+click and leave the mouse button pressed, this starts a drag and drop
+operation so that you can also move the window to some other place in the
+desktop (see the description of the MDI earlier in this document).
+
+Multiple windows can be selected by clicking with the mouse while pressing
+the control or shift keys. The Window view provides a contextual menu to
+easily close all selected windows at once, which is a very fast way to
+cleanup your desktop after you have finished working on a task.
 
 @c --------------------------------------------------------------------
 @node The Outline View
