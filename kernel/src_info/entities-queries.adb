@@ -330,6 +330,7 @@ package body Entities.Queries is
       UEI      : Entity_Informations;
       Case_Sensitive : constant Boolean := not Case_Insensitive_Identifiers
         (Source.Handler);
+      Iter     : Entity_Iterator;
    begin
       if Active (Me) then
          Trace (Me, "Find name=" & Normalized_Entity_Name
@@ -378,7 +379,20 @@ package body Entities.Queries is
          Entity      := null;
          Closest_Ref := No_Entity_Reference;
       else
-         Status := Fuzzy_Match;
+         --  How many entities with this name do we have ?
+         Find_All_Entities_In_File
+           (Iter, File => Source, Name => Normalized_Entity_Name);
+         if Get (Iter) /= null then
+            Next (Iter);
+            if Get (Iter) = null then
+               Status := Fuzzy_Match;
+            else
+               Status := Overloaded_Entity_Found;
+            end if;
+         else
+            Status := Fuzzy_Match;
+         end if;
+
          Entity := Closest;
       end if;
    end Find;
@@ -2315,7 +2329,11 @@ package body Entities.Queries is
 
    function Get (Iter : Entity_Iterator) return Entity_Information is
    begin
-      return Iter.EL.Table (Iter.Index_In_EL);
+      if Iter.EL /= null then
+         return Iter.EL.Table (Iter.Index_In_EL);
+      else
+         return null;
+      end if;
    end Get;
 
    ----------
@@ -2332,6 +2350,8 @@ package body Entities.Queries is
         or else Iter.Index_In_EL > Last (Iter.EL.all)
       then
          if Iter.Processing_Entities then
+            Iter.Index_In_EL := Entity_Information_Arrays.First;
+
             if Iter.Name = null then
                Get_Next (Iter.File.Entities, Iter.SIter);
                EIS := Get_Element (Iter.SIter);
@@ -2340,22 +2360,22 @@ package body Entities.Queries is
                else
                   Iter.EL := null;
                end if;
-            end if;
 
-            Iter.Index_In_EL := Entity_Information_Arrays.First;
-
-            if Iter.EL = null then
-               Iter.Processing_Entities := False;
-               if Iter.Name /= null then
-                  UEI := Get (Iter.File.All_Entities,
-                              (Str => Iter.Name,
-                               Case_Sensitive => Iter.Case_Sensitive));
-               else
+               if Iter.EL = null then
                   UEI := Get_Element (Iter.Iter);
+                  if UEI /= null then
+                     Iter.EL := UEI.List;
+                  end if;
                end if;
-
+            else
+               Iter.Processing_Entities := False;
+               UEI := Get (Iter.File.All_Entities,
+                           (Str => Iter.Name,
+                            Case_Sensitive => Iter.Case_Sensitive));
                if UEI /= null then
                   Iter.EL := UEI.List;
+               else
+                  Iter.EL := null;
                end if;
             end if;
 
@@ -2368,6 +2388,9 @@ package body Entities.Queries is
             else
                Iter.EL := UEI.List;
             end if;
+
+         else
+            Iter.EL := null;
          end if;
       end if;
    end Next;

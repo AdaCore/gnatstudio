@@ -34,11 +34,11 @@ package Entities.Queries is
       Fuzzy_Match,
       Success);
    --  Status of the cross-reference operation
-   --  Fuzzy_Match is returned if the exact location wasn't found (e.g the LI
+   --  Fuzzy_Match is used if the exact location wasn't found (e.g the LI
    --  file wasn't up-to-date), and the returned location is the closest that
-   --  matched.
-   --  Whenever the status is Overloaded_Entity_Found, no Entity is returned
-   --  at the saem time, since GPS doesn't know which exact one should be used.
+   --  matched. This is assuming there is a single entity with that name
+   --  visible. If there are at least two entities with this name,
+   --  Overloaded_Entity_Found is used instead, and no Entity is returned
 
    procedure Find_Declaration
      (Db              : Entities_Database;
