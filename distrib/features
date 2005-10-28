@@ -3,6 +3,9 @@ For more details, please see the documentation.
 
 New features in GPS 3.1.0
 
+- Display a dialog to chose between overloaded entities when doing a
+  cross-reference query and the information is not up-to-date
+
 - Extending projects can now be created through a wizard
 
 - Editor properties dialog, to select the language, charset,... associated with
