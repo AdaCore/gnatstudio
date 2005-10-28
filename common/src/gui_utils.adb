@@ -1680,7 +1680,9 @@ package body GUI_Utils is
             Pack_Start (Col, Toggle_Render, False);
             Add_Attribute (Col, Toggle_Render, "active", Gint (N));
 
-         elsif Column_Types (ColNum) = GType_String then
+         elsif Column_Types (ColNum) = GType_String
+           or else Column_Types (ColNum) = GType_Int
+         then
             if Text_Render = null then
                Gtk_New (Text_Render);
             end if;
