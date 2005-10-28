@@ -166,15 +166,15 @@ package body Python.GUI is
       pragma Unreferenced (Ignored);
 
    begin
+      --  We need to set the program name, or some import commands will raise
+      --  errors
+      Py_SetProgramName ("Python_Interpreter");
+
       --  Prevent python's standard Ctrl-C handling, to leave it to the calling
       --  application.
       Old_Handler := Signal (Sigint, System.Null_Address);
       Py_Initialize;
       Old_Handler := Signal (Sigint, Old_Handler);
-
-      --  We need to set the program name, or some import commands will raise
-      --  errors
-      Py_SetProgramName ("Python_Interpreter");
 
       if not PyRun_SimpleString (Setup_Cmd) then
          raise Interpreter_Error;
