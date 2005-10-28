@@ -88,6 +88,7 @@ with String_Utils;              use String_Utils;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
+--  with Src_Editor_Box.Context;    use Src_Editor_Box.Context;
 
 package body Src_Editor_Box is
 
@@ -277,7 +278,7 @@ package body Src_Editor_Box is
 
       Push_State (Kernel_Handle (Kernel), Busy);
 
-      Entity := Get_Entity (Context);
+      Entity := Get_Entity (Context, Ask_If_Overloaded => True);
 
       if Entity = null then
          --  Probably means that we either could not locate the ALI file,
@@ -1225,6 +1226,7 @@ package body Src_Editor_Box is
                  (File_Area_Context_Access (Context),
                   Get_Text (Start_Iter, End_Iter),
                   Start_Line, End_Line);
+--               Compute_Entity_Context (Editor);
 
             else
                Context := new Entity_Selection_Context;
@@ -1251,6 +1253,8 @@ package body Src_Editor_Box is
 
                   Place_Cursor (Editor.Source_Buffer, Entity_Start);
                end if;
+
+--               Compute_Entity_Context (Editor);
             end if;
          end if;
 
@@ -2234,6 +2238,7 @@ package body Src_Editor_Box is
             Entity_Name => Block.Name.all,
             Line        => Integer
               (Get_Editable_Line (Editor.Source_Buffer, L) - 1),
+            Ask_If_Overloaded => False,
             Column      => 1,
             Entity      => Entity,
             Status      => Status);
