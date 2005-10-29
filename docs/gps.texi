@@ -623,6 +623,9 @@ For more information on supported languages, @xref{Supported Languages}.
 A given file might appear multiple times in the @code{Project View},
 if the project it belongs to is imported by several other projects.
 
+If you left click on a file and keep the button pressed, you can drop it
+anywhere in GPS to open an editor at that location.
+
 @item entities
 @cindex entity
 If you open the node for a source file, the file is parsed by one of the
@@ -751,7 +754,8 @@ show the files and directories that belong to the project
 hierarchy by using the contextual menu @code{Show files from project only}.
 
 Each source file can also be explored as described in
-@ref{The Project View}.
+@ref{The Project View}. Drag and drop of files is also possible from the
+files view, to conveniently open a file.
 
 @c --------------------------------------------------------------------
 @node The Window View
