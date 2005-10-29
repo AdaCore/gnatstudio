@@ -583,7 +583,10 @@ package body Project_Explorers is
    is
       T : constant Project_Explorer := Project_Explorer (Explorer);
    begin
-      return On_Button_Press (T.Kernel, T.Tree, T.Tree.Model, Event, False);
+      return On_Button_Press
+        (T.Kernel,
+         MDI_Explorer_Child (Find_MDI_Child (Get_MDI (T.Kernel), T)),
+         T.Tree, T.Tree.Model, Event, False);
 
    exception
       when E : others =>
@@ -2025,6 +2028,7 @@ package body Project_Explorers is
    is
       Explorer : Project_Explorer;
       Child    : MDI_Child;
+      C2       : MDI_Explorer_Child;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Explorer_Record'Tag);
@@ -2032,8 +2036,11 @@ package body Project_Explorers is
       if Child = null then
          Gtk_New (Explorer, Kernel);
          Refresh (Explorer);
+
+         C2 := new MDI_Explorer_Child_Record;
+         Initialize (C2, Explorer, All_Buttons);
          Child := Put
-           (Kernel, Explorer,
+           (Kernel, C2,
             Default_Width  => 215,
             Default_Height => 600,
             Position       => Position_Left,

@@ -25,6 +25,7 @@ with Gtk.Menu;       use Gtk.Menu;
 with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
 with Gtk.Tree_View;  use Gtk.Tree_View;
+with Gtkada.MDI;     use Gtkada.MDI;
 
 with GPS.Kernel;     use GPS.Kernel;
 with Language;       use Language;
@@ -32,6 +33,16 @@ with Projects;
 with VFS;
 
 package Project_Explorers_Common is
+
+   type MDI_Explorer_Child_Record is
+     new Gtkada.MDI.MDI_Child_Record with private;
+   type MDI_Explorer_Child is access all MDI_Explorer_Child_Record'Class;
+
+   function Dnd_Data
+     (Child : access MDI_Explorer_Child_Record; Copy : Boolean)
+      return Gtkada.MDI.MDI_Child;
+   procedure Child_Drag_Finished (Child  : access MDI_Explorer_Child_Record);
+   --  See inherited documentation
 
    ------------------------
    -- Column definitions --
@@ -210,6 +221,7 @@ package Project_Explorers_Common is
 
    function On_Button_Press
      (Kernel    : Kernel_Handle;
+      Child     : access MDI_Explorer_Child_Record'Class;
       Tree      : access Gtk_Tree_View_Record'Class;
       Model     : Gtk_Tree_Store;
       Event     : Gdk_Event;
@@ -226,5 +238,14 @@ package Project_Explorers_Common is
       Event  : Gdk_Event;
       Menu   : Gtk_Menu) return Selection_Context_Access;
    --  Return the context to use for the contextual menu.
+
+private
+   type MDI_Explorer_Child_Record is
+     new Gtkada.MDI.MDI_Child_Record with
+      record
+         Kernel        : GPS.Kernel.Kernel_Handle;
+         Dnd_From_File : VFS.Virtual_File := VFS.No_File;
+         --  The file from which we started a Dnd operation
+      end record;
 
 end Project_Explorers_Common;

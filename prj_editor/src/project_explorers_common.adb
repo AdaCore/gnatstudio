@@ -28,6 +28,7 @@ with Glib.Convert;              use Glib.Convert;
 with Basic_Types;               use Basic_Types;
 with Entities;                  use Entities;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
@@ -379,12 +380,43 @@ package body Project_Explorers_Common is
       return Category;
    end Filter_Category;
 
+   --------------
+   -- Dnd_Data --
+   --------------
+
+   function Dnd_Data
+     (Child : access MDI_Explorer_Child_Record; Copy : Boolean)
+      return Gtkada.MDI.MDI_Child
+   is
+      pragma Unreferenced (Copy);
+   begin
+      if Child.Dnd_From_File = VFS.No_File then
+         --  So that we can move the explorer itself
+         return MDI_Child (Child);
+      else
+         Open_File_Editor
+           (Child.Kernel, Child.Dnd_From_File, Line => 0, Column => 0);
+         return Get_Focus_Child (Get_MDI (Child.Kernel));
+      end if;
+   end Dnd_Data;
+
+   -------------------------
+   -- Child_Drag_Finished --
+   -------------------------
+
+   procedure Child_Drag_Finished (Child  : access MDI_Explorer_Child_Record) is
+   begin
+      --  So that we can also move the explorer itself
+      Child.Dnd_From_File := VFS.No_File;
+   end Child_Drag_Finished;
+
    ---------------------
    -- On_Button_Press --
    ---------------------
 
    function On_Button_Press
      (Kernel    : Kernel_Handle;
+      Child     : access MDI_Explorer_Child_Record'Class;
       Tree      : access Gtk_Tree_View_Record'Class;
       Model     : Gtk_Tree_Store;
       Event     : Gdk_Event;
@@ -441,6 +473,14 @@ package body Project_Explorers_Common is
                              Get_String (Model, Iter, Absolute_Name_Column)),
                         Line => 0,
                         Column => 0);
+                     return True;
+
+                  elsif Get_Event_Type (Event) = Button_Press then
+                     Child.Kernel        := Kernel;
+                     Child.Dnd_From_File := Create
+                       (Full_Filename =>
+                          Get_String (Model, Iter, Absolute_Name_Column));
+                     Child_Drag_Begin (Child, Event);
                      return True;
                   end if;
 

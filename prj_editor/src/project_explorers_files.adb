@@ -920,7 +920,9 @@ package body Project_Explorers_Files is
         Project_Explorer_Files (Explorer);
    begin
       return On_Button_Press
-        (T.Kernel, T.File_Tree, T.File_Model, Event, True);
+        (T.Kernel,
+         MDI_Explorer_Child (Find_MDI_Child (Get_MDI (T.Kernel), T)),
+         T.File_Tree, T.File_Model, Event, True);
 
    exception
       when E : others =>
@@ -1158,6 +1160,7 @@ package body Project_Explorers_Files is
       pragma Unreferenced (Widget);
       Files    : Project_Explorer_Files;
       Child    : MDI_Child;
+      C2       : MDI_Explorer_Child;
    begin
       --  Start with the files view, so that if both are needed, the project
       --  view ends up on top of the files view
@@ -1166,9 +1169,11 @@ package body Project_Explorers_Files is
 
       if Child = null then
          Gtk_New (Files, Kernel);
+         C2 := new MDI_Explorer_Child_Record;
+         Initialize (C2, Files, All_Buttons);
          Child := Put
            (Kernel,
-            Files,
+            C2,
             Default_Width  => 215,
             Default_Height => 600,
             Position       => Position_Left,
