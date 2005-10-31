@@ -186,33 +186,16 @@ package body Codefix.Formal_Errors is
       Free (This, True);
    end Free;
 
-   ----------
-   -- "or" --
-   ----------
-
-   function "or" (Right, Left : Useless_Entity_Operation)
-                  return Useless_Entity_Operation_Mask
-   is
-      type Mod_Type is mod 256;
-   begin
-      return Useless_Entity_Operation_Mask
-        (Mod_Type (Useless_Entity_Operation'Pos (Right)) or
-           Mod_Type (Useless_Entity_Operation'Pos (Left)));
-   end "or";
-
    ------------
    -- Is_Set --
    ------------
 
    function Is_Set
-     (Mask : Useless_Entity_Operation_Mask;
-      Flag : Useless_Entity_Operation) return Boolean
+     (Mask : Useless_Entity_Operations;
+      Flag : Useless_Entity_Operations) return Boolean
    is
-      type Mod_Type is mod 256;
    begin
-      return (Mod_Type (Mask) and
-                Mod_Type (Useless_Entity_Operation'Pos (Flag))) =
-        Mod_Type (Useless_Entity_Operation'Pos (Flag));
+      return (Mask and Flag) = Flag;
    end Is_Set;
 
    ---------------
@@ -519,7 +502,7 @@ package body Codefix.Formal_Errors is
       Cursor       : File_Cursor'Class;
       Category     : Language_Category;
       Name         : String;
-      Operations   : Useless_Entity_Operation_Mask) return Solution_List
+      Operations   : Useless_Entity_Operations) return Solution_List
    is
       function Add_Pragma return Add_Pragma_Cmd;
       --  Add a pragma after the declaration or, if there is no declaration,

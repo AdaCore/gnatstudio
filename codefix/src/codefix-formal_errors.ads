@@ -86,24 +86,16 @@ package Codefix.Formal_Errors is
    --  type Useless_Entity_Operation
    ----------------------------------------------------------------------------
 
-   type Useless_Entity_Operation is
-     (Nothing, Remove_Entity, Add_Pragma_Unreferenced, Comment_Entity);
+   type Useless_Entity_Operations is mod 8;
 
-   for Useless_Entity_Operation use
-     (Nothing => 0,
-      Remove_Entity => 1,
-      Add_Pragma_Unreferenced => 2,
-      Comment_Entity => 4);
-
-   type Useless_Entity_Operation_Mask is range 0 .. 7;
-
-   function "or" (Right, Left : Useless_Entity_Operation)
-                  return Useless_Entity_Operation_Mask;
-   --  Performs a bitwise operation for the two operands
+   Nothing                 : constant Useless_Entity_Operations;
+   Remove_Entity           : constant Useless_Entity_Operations;
+   Add_Pragma_Unreferenced : constant Useless_Entity_Operations;
+   Comment_Entity          : constant Useless_Entity_Operations;
 
    function Is_Set
-     (Mask : Useless_Entity_Operation_Mask;
-      Flag : Useless_Entity_Operation) return Boolean;
+     (Mask : Useless_Entity_Operations;
+      Flag : Useless_Entity_Operations) return Boolean;
    --  Returns true if the Flag is contained in the Mask.
 
    ----------------------------------------------------------------------------
@@ -167,7 +159,7 @@ package Codefix.Formal_Errors is
       Cursor       : File_Cursor'Class;
       Category     : Language_Category;
       Name         : String;
-      Operations   : Useless_Entity_Operation_Mask) return Solution_List;
+      Operations   : Useless_Entity_Operations) return Solution_List;
    --  Propose to delete the unit unreferrenced or, in some cases, to add
    --  a pragma 'not referrenced'. Those operations can be disabled with
    --  the appropriate mask.
@@ -237,6 +229,11 @@ private
    --  object referenced in.
 
    Invalid_Error_Message : constant Error_Message :=
-     (Null_File_Cursor with null, False, False);
+      (Null_File_Cursor with null, False, False);
+
+   Nothing                 : constant Useless_Entity_Operations := 0;
+   Remove_Entity           : constant Useless_Entity_Operations := 1;
+   Add_Pragma_Unreferenced : constant Useless_Entity_Operations := 2;
+   Comment_Entity          : constant Useless_Entity_Operations := 4;
 
 end Codefix.Formal_Errors;
