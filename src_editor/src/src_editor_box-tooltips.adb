@@ -456,7 +456,7 @@ package body Src_Editor_Box.Tooltips is
               or else Status = Fuzzy_Match
             then
                Set_Markup (Layout1,
-                           -("(Cross-referencea info not up-to-date, "
+                           -("(Cross-references info not up-to-date, "
                              & "this is a guess)")
                            & ASCII.LF & Str);
             else
