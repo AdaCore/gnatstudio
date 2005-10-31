@@ -1292,7 +1292,7 @@ package body Codefix.Errors_Parser is
       First_Word     : constant String := Get_Message (Message)
         (Matches (1).First .. Matches (1).Last);
       Category       : Language_Category;
-      Operation_Mask : Useless_Entity_Operation_Mask;
+      Operation_Mask : Useless_Entity_Operations;
 
    begin
       if First_Word = "procedure" then
