@@ -1,6 +1,13 @@
 \input texinfo   @c -*-texinfo-*-
 @input texiplus
 
+@c For uniformity, screenshots are generated using the following set up:
+@c   - Under Windows XP, using the default XP theme
+@c   - Using the standard Windows screen or window capture
+@c     (using e.g Ctrl-PrntScrn)
+@c   - Save the resultat image (if needed, truncated to show only relevant
+@c     items) in jpeg format, quality 95%
+
 @c %**start of header
 @setfilename gps.info
 @settitle Using the GNAT Programming Studio
@@ -776,7 +783,7 @@ It can display the opened windows in one of two ways:
 
 The mode is selected through the contextual menu.
 
-You can also chose, through this contextual menu, whether only the source
+You can also choose, through this contextual menu, whether only the source
 editors should be visible, or whether all windows should be displayed.
 
 This window allows you to quickly select and focus on a particular window,
@@ -3519,58 +3526,60 @@ the value it had when it was deleted.
 
 @subsection Description of extending projects
 
-The project files where designed to support big projects, with several
-hundreds of thousands of source files. In such contexts, one developper
+@noindent
+The project files were designed to support big projects, with several
+hundreds or thousands of source files. In such contexts, one developer
 will generally work on a subset of the sources. It is also not rare for
 such a project to take several hours to fully compile. Most developers
 therefore do not need to have the full copy of the project compiled on
 their own machine or personal disk space.
 
-However, one would still like to be able to parse the other source files
+However, it is still useful to be able to access other source files
 of the application, for instance to find out whether a subprogram can be
 changed and where it is currently called.
 
 Such a setup can be achieved through extending projects. These are
 special types of projects that inherit most of their attributes and source
-files from another project, but can have, in their source directories, some
-source files that hide those inherited from the original project.
+files from another project, and can have, in their source directories, some
+source files that hide/replace those inherited from the original project.
 
 When compiling such projects, the compiler will put the newly created
-project files in the extending project's diretory, and will leave the original
+project files in the extending project's directory, and will leave the original
 untouched. As a result, the original project can be shared read-only among
 several developers (for instance, it is usual for this original project to be
 the result of a nightly build of the application).
 
 @subsection Creating extending projects
 
+@noindent
 This project wizard allows you to easily create extending projects. You
 should select an empty directory (which will be created automatically if
 needed), as well as a list of source files you want to work on initially.
-New files can be added later on.
+New files can also be added later.
 
 As a result, GPS will copy the selected source files to the new directory
 (if you so decided), and create a number of project files there. It will then
-load a new project, which has basically the same properties as the previous
+load a new project, which has the same properties as the previous
 one, except that some files are found transparently in the new directory,
-and object files resulting from the compilation are copied into that
+and object files resulting from the compilation are create into that
 directory as opposed to the object directory of the original project.
 
 @subsection Adding files to extending projects
-
 @cindex Add To Extending Project
 
+@noindent
 Once you have loaded an extending project in GPS, things work mostly
 transparently. If you open a file through the @code{File->Open From Project}
 dialog, the files found in the local directory of your extending project
 will be picked up first.
 
-Compilation, as we mentioned before, will put its object files in the
-extending project's directory as well, leaving the original project untouched.
+The build actions will create object files in the extending project's
+directory, leaving the original project untouched.
 
 It might happen that you want to start working on a source file that you
 had not added in the extending project when it was created. You can of course
 edit the file found in the original project, provided you have write access
-to it. However, it is generally nicer to edit it in the context of the
+to it. However, it is generally better to edit it in the context of the
 extending project, so that the original project can be shared among
 developers.
 
@@ -6701,7 +6710,7 @@ Create a new activity. The name can be edited by double clicking on
 it.
 
 @item Remove from activity
-Removes the selected file from the activity. This also delete the
+Remove the selected file from the activity and delete the
 activity log.
 
 @item Edit revision log
@@ -11014,7 +11023,7 @@ the filter is @code{"none"}, then any file anywhere on the system is valid.
 If the filter is @code{"project"}, then only files from the selected project
 can be specified. If the filter is @code{"extended_project"}, then only the
 files from the project extended by the current project can be specified. The
-attribute will not be shown if the current project is now an extending project.
+attribute will not be shown if the current project is not an extending project.
 
 @end itemize
 
