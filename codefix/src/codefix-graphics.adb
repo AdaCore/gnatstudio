@@ -314,7 +314,7 @@ package body Codefix.Graphics is
 
             case Get_Context (Current_Line.all) is
                when Original_Unit =>
-                  Current_Iterator.Action := Nothing;
+                  Current_Iterator.Action := Diff_Utils.Nothing;
                when Unit_Modified =>
                   Current_Iterator.Action := Change;
                when Unit_Created =>
