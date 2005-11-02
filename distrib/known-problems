@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 3.1.0
 
+- EB01-006 Search dialog doesn't warn when no occurrence found
+  Problem:    Start searching in a file when there is no match. You get a dialog
+              indicating there is no match. Then switch to another file, and
+              press "Search next" again. The dialog is not displayed again even
+              when there is no match
+  Workaround: If the editor doesn't scroll, it indicates there is no match
+
 - EA27-003 Pretty printer now working when using a cross-compiler
   Problem:    GPS always assumes that you have a native installation of GNAT
               on your machine, and therefore that it can find tools like
