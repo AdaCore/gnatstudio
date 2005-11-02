@@ -117,12 +117,14 @@ package body GPS.Kernel is
      (Kernel      : access Kernel_Handle_Record'Class;
       File        : Source_File;
       Entity_Name : String;
-      Decl        : out Entity_Information;
+      Decl        : in out Entity_Information;
       Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
    --  Open a dialog to ask the user to select among multiple declaration for
    --  the entity with name Entity_Name.
    --  Decl is set to No_Entity_Information and Status to Entity_Not_Found if
-   --  the user didn't select any declaration.
+   --  the user didn't select any declaration. When calling this procedure,
+   --  Decl should be put to the closest entity match given line and column
+   --  numbers.
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -1090,7 +1092,7 @@ package body GPS.Kernel is
      (Kernel      : access Kernel_Handle_Record'Class;
       File        : Source_File;
       Entity_Name : String;
-      Decl        : out Entity_Information;
+      Decl        : in out Entity_Information;
       Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
    is
       procedure Set
@@ -1124,10 +1126,8 @@ package body GPS.Kernel is
       Iter      : Entity_Iterator;
       Candidate : Entity_Information;
       Button    : Gtk_Widget;
-      pragma Unreferenced (Button);
-
+      OK_Button : Gtk_Widget;
       Count     : Natural := 0;
-
       Label     : Gtk_Label;
       Model     : Gtk_Tree_Store;
       Dialog    : Gtk_Dialog;
@@ -1135,7 +1135,7 @@ package body GPS.Kernel is
       Scrolled  : Gtk_Scrolled_Window;
       View      : Gtk_Tree_View;
       Col_Num   : Gint;
-      pragma Unreferenced (Col_Num);
+      pragma Unreferenced (Button, Col_Num);
 
    begin
       Find_All_Entities_In_File
@@ -1164,19 +1164,18 @@ package body GPS.Kernel is
             Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
             Pack_Start (Get_Vbox (Dialog), Scrolled);
 
+            OK_Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
             View := Create_Tree_View
-              (Column_Types    => Column_Types,
-               Column_Names    => Column_Names,
-               Initial_Sort_On => 1);
+              (Column_Types       => Column_Types,
+               Column_Names       => Column_Names,
+               Initial_Sort_On    => 1);
             Add (Scrolled, View);
             Model := Gtk_Tree_Store (Get_Model (View));
 
             Widget_Callback.Object_Connect
               (View, "row_activated", Row_Activated'Access, Dialog);
-
-            Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-            Button := Add_Button
-              (Dialog, Stock_Cancel, Gtk_Response_Cancel);
          end if;
 
          Append (Model, It, Null_Iter);
@@ -1187,7 +1186,11 @@ package body GPS.Kernel is
            1, Gint (Get_Line (Get_Declaration_Of (Candidate))),
            2, Gint (Get_Column (Get_Declaration_Of (Candidate))),
            3, Entity_Name & ASCII.NUL,
-           4, Candidate.all'Address);
+              4, Candidate.all'Address);
+
+         if Candidate = Decl then
+            Select_Iter (Get_Selection (View), It);
+         end if;
 
          Next (Iter);
       end loop;
@@ -1198,6 +1201,8 @@ package body GPS.Kernel is
       Status := Entity_Not_Found;
 
       if Count > 0 then
+         Grab_Default (OK_Button);
+         Grab_Focus (OK_Button);
          Show_All (Dialog);
 
          if Run (Dialog) = Gtk_Response_OK then
