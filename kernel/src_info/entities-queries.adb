@@ -2369,6 +2369,7 @@ package body Entities.Queries is
                end if;
 
                if Iter.EL = null then
+                  Iter.Processing_Entities := False;
                   UEI := Get_Element (Iter.Iter);
                   if UEI /= null then
                      Iter.EL := UEI.List;
