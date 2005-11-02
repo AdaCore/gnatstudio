@@ -732,7 +732,6 @@ package body Vsearch_Ext is
             --  Give a visual feedback that the search is terminated.
             if not Found
               and then not Has_Next
-              and then not Vsearch.Find_Next
             then
                Button := Message_Dialog
                  (Msg     => (-"No occurrences of '") & Pattern &
