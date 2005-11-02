@@ -2088,8 +2088,7 @@ package body Projects.Registry is
       Expect (Fd, Result, "GNATLS .+(\n| )Copyright", Timeout => -1);
 
       declare
-         Exp : constant String := Expect_Out_Match (Fd);
-         S : constant String := Strip_CR (Exp);
+         S : constant String := Strip_CR (Expect_Out_Match (Fd));
       begin
          GNAT_Version.all := new String'(S (S'First + 7 .. S'Last - 10));
       end;
