@@ -201,7 +201,7 @@ package body Refactoring.Parameters is
    begin
       return Name_Parameters
         (Kernel => Get_Kernel (Context.Context),
-         Entity => Get_Entity (C),
+         Entity => Get_Entity (C, Ask_If_Overloaded => True),
          File   => File_Information (C),
          Line   => Line_Information (C),
          Column => Column_Information (C));

@@ -205,7 +205,8 @@ package body Refactoring.Rename is
       Ent     : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context.Context);
       Dialog  : Entity_Renaming_Dialog;
-      Entity  : constant Entity_Information := Get_Entity (Ent);
+      Entity  : constant Entity_Information :=
+        Get_Entity (Ent, Ask_If_Overloaded => True);
    begin
       Ref (Selection_Context_Access (Ent));
 

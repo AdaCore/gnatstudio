@@ -1513,7 +1513,7 @@ package body Src_Editor_Box is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Editor : constant Source_Editor_Box :=
                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      Entity : Entity_Information := Get_Entity (C);
+      Entity : Entity_Information := Get_Entity (C, Ask_If_Overloaded => True);
    begin
       if Entity = null then
          --  Probably means that we either could not locate the ALI file,
