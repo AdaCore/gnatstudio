@@ -295,9 +295,12 @@ package body Project_Viewers is
    --  Save the project associated with the kernel, and all its imported
    --  projects.
 
-   procedure Read_Project_Name
-     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type);
+   function Read_Project_Name
+     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type)
+      return Boolean;
    --  Open a popup dialog to select a new name for Project.
+   --  True is returned if a new name was chosen, False if the user pressed
+   --  Cancel.
 
    procedure Edit_Multiple_Switches
      (Viewer : access Gtk_Widget_Record'Class);
@@ -942,8 +945,9 @@ package body Project_Viewers is
    -- Read_Project_Name --
    -----------------------
 
-   procedure Read_Project_Name
+   function Read_Project_Name
      (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type)
+      return Boolean
    is
       procedure Report_Error (Msg : String);
       --  Report an error to the console
@@ -991,14 +995,18 @@ package body Project_Viewers is
             Report_Errors => Report_Error'Unrestricted_Access);
          Run_Hook (Kernel, Project_Changed_Hook);
          Recompute_View (Kernel);
+         Destroy (Dialog);
+         return True;
       end if;
 
       Destroy (Dialog);
+      return False;
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
+         return False;
    end Read_Project_Name;
 
    -----------------------
@@ -1009,14 +1017,16 @@ package body Project_Viewers is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Tmp : Boolean;
-      pragma Unreferenced (Widget, Tmp);
+      Tmp : Boolean := True;
+      pragma Unreferenced (Widget);
    begin
       if Status (Get_Project (Kernel)) /= From_File then
-         Read_Project_Name (Kernel, Get_Project (Kernel));
+         Tmp := Read_Project_Name (Kernel, Get_Project (Kernel));
       end if;
 
-      Tmp := Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
+      if Tmp then
+         Tmp := Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
+      end if;
 
    exception
       when E : others =>
@@ -1032,19 +1042,22 @@ package body Project_Viewers is
      (Command : access Save_Project_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Tmp     : Boolean;
-      pragma Unreferenced (Command, Tmp);
+      Tmp     : Boolean := True;
+      pragma Unreferenced (Command);
       File    : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context.Context);
       Kernel  : constant Kernel_Handle := Get_Kernel (File);
       Project : constant Project_Type := Project_Information (File);
    begin
       if Status (Project) /= From_File then
-         Read_Project_Name (Kernel, Project);
+         Tmp := Read_Project_Name (Kernel, Project);
       end if;
 
-      Tmp := Save_Project (Kernel, Project);
-      return Success;
+      if Tmp and then Save_Project (Kernel, Project) then
+         return Success;
+      else
+         return Failure;
+      end if;
    end Execute;
 
    -------------
