@@ -22,16 +22,13 @@ with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
 with Projects;           use Projects;
 with Projects.Registry;  use Projects.Registry;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
-with GPS.Intl;           use GPS.Intl;
 with VFS;                use VFS;
 with Entities;           use Entities;
 with Entities.Queries;   use Entities.Queries;
 with Language_Handlers;  use Language_Handlers;
-with Traces; use Traces;
+
 package body GPS.Kernel.Contexts is
-   Me : constant Debug_Handle := Create ("Contexts");
    type Filter_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_File;
@@ -541,16 +538,9 @@ package body GPS.Kernel.Contexts is
             Entity            => Context.Entity,
             Status            => Context.Entity_Resolved);
 
-         Trace (Me, "MANU Get_Entity " & Context.Entity_Resolved'Img
-                & " Ask=" & Ask_If_Overloaded'Img);
-
          if Context.Entity_Resolved = Fuzzy_Match
            or else Context.Entity_Resolved = Overloaded_Entity_Found
          then
-            Insert (Get_Kernel (Context),
-                    -"Cross-reference info not up-to-date when searching for "
-                    & Entity_Name_Information (Context),
-                    Mode => Info);
             if Ask_If_Overloaded then
                Context.Entity_Resolved := Success;
             end if;
