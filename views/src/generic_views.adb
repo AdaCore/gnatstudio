@@ -1,0 +1,165 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                         Copyright (C) 2005                        --
+--                              AdaCore                              --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Intl;                   use GPS.Intl;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtkada.MDI;                 use Gtkada.MDI;
+with Glib.Object;                use Glib.Object;
+with Glib.Xml_Int;               use Glib.Xml_Int;
+
+package body Generic_Views is
+
+   Module : Module_ID;
+
+   ----------------
+   -- Get_Module --
+   ----------------
+
+   function Get_Module return GPS.Kernel.Modules.Module_ID is
+   begin
+      return Module;
+   end Get_Module;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+      View  : View_Access;
+      Child : MDI_Child;
+   begin
+      if Node.Tag.all = Module_Name then
+         View := new View_Record;
+         Initialize (View, User);
+         Child := Put
+           (User, View,
+            Default_Width  => 215,
+            Default_Height => 600,
+            Position       => Position_Left,
+            Module         => Module);
+         Set_Title (Child, View_Name, View_Name);
+         return Child;
+      end if;
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr
+   is
+      pragma Unreferenced (User);
+      N : Node_Ptr;
+   begin
+      if Widget.all in View_Record'Class then
+         N := new Node;
+         N.Tag := new String'(Module_Name);
+         return N;
+      end if;
+      return null;
+   end Save_Desktop;
+
+   ------------------
+   -- On_Open_View --
+   ------------------
+
+   procedure On_Open_View
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      View  : View_Access;
+      pragma Unreferenced (Widget, View);
+   begin
+      View := Get_Or_Create_View (Kernel);
+   end On_Open_View;
+
+   ------------------------
+   -- Get_Or_Create_View --
+   ------------------------
+
+   function Get_Or_Create_View
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return View_Access
+   is
+      Child : MDI_Child;
+      View  : View_Access;
+   begin
+      Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel), View_Record'Tag);
+      if Child = null then
+         View := new View_Record;
+         Initialize (View, Kernel);
+         Child := Put
+           (Kernel, View,
+            Default_Width  => 215,
+            Default_Height => 600,
+            Position       => Position_Left,
+            Module         => Module);
+         Set_Title (Child, View_Name, View_Name);
+      end if;
+
+      Raise_Child (Child);
+      Set_Focus_Child (Get_MDI (Kernel), Child);
+
+      if Child = null then
+         return null;
+      else
+         return View_Access (Get_Widget (Child));
+      end if;
+   end Get_Or_Create_View;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      ID     : GPS.Kernel.Modules.Module_ID := null)
+   is
+   begin
+      if ID = null then
+         Module := new Module_ID_Record;
+      else
+         Module := ID;
+      end if;
+      Register_Module
+        (Module                  => Module,
+         Kernel                  => Kernel,
+         Module_Name             => Module_Name,
+         Priority                => GPS.Kernel.Modules.Default_Priority);
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
+
+      Register_Menu
+        (Kernel, "/" & (-"Tools"), View_Name, "", On_Open_View'Access,
+         Ref_Item => -"File View", Add_Before => False);
+   end Register_Module;
+
+end Generic_Views;

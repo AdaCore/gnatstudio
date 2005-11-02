@@ -22,7 +22,6 @@ with Ada.Exceptions;            use Ada.Exceptions;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types;                 use Gdk.Types;
@@ -41,6 +40,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
+with Generic_Views;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -68,28 +68,22 @@ package body Buffer_Views is
      "Windows_View_Show_Notebooks";
    --  Used to store the current view settings in histories
 
-   Buffer_View_Module : Module_ID;
-
    type Buffer_View_Record is new Gtk.Box.Gtk_Box_Record with record
       Tree   : Gtk_Tree_View;
       Kernel : Kernel_Handle;
       File   : Virtual_File; -- current selected file (cache)
    end record;
-   type Buffer_View_Access is access all Buffer_View_Record'Class;
 
-   procedure On_Open_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Create the Buffer view (or raise the existing one)
-
-   function Open_View
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
-   --  Create the Buffer view if needed
-
-   procedure Gtk_New
-     (View   : out Buffer_View_Access;
+   procedure Initialize
+     (View   : access Buffer_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class);
    --  Create a new Buffer view
+
+   package Generic_View is new Generic_Views
+     (Module_Name => "Windows_View",
+      View_Name   => "Windows View",
+      View_Record => Buffer_View_Record);
+   subtype Buffer_View_Access is Generic_View.View_Access;
 
    procedure Child_Selected (View : access Gtk_Widget_Record'Class);
    --  Called when a new child is selected
@@ -107,15 +101,6 @@ package body Buffer_Views is
       Event : Gdk_Event) return Gtk_Tree_Path;
    --  Return the path at which Event has occured.
    --  User must free memory associated to the returned path.
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Handling of desktops
 
    type Close_Command is new Interactive_Command with null record;
    function Execute
@@ -515,17 +500,16 @@ package body Buffer_Views is
       return Context;
    end View_Context_Factory;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Gtk_New
-     (View   : out Buffer_View_Access;
+   procedure Initialize
+     (View   : access Buffer_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
       Scrolled : Gtk_Scrolled_Window;
    begin
-      View := new Buffer_View_Record;
       View.Kernel := Kernel_Handle (Kernel);
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -572,90 +556,11 @@ package body Buffer_Views is
         (Kernel          => Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
-         ID              => Buffer_View_Module,
+         ID              => Generic_View.Get_Module,
          Context_Func    => View_Context_Factory'Access);
 
       Refresh (View);
-   end Gtk_New;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Buffer_View_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Windows_View");
-         return N;
-      end if;
-      return null;
-   end Save_Desktop;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Windows_View" then
-         return Open_View (User);
-      end if;
-      return null;
-   end Load_Desktop;
-
-   ---------------
-   -- Open_View --
-   ---------------
-
-   function Open_View
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
-   is
-      Child : MDI_Child;
-      View  : Buffer_View_Access;
-   begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Buffer_View_Record'Tag);
-
-      if Child = null then
-         Gtk_New (View, Kernel);
-         Child := Put
-           (Kernel, View,
-            Default_Width  => 215,
-            Default_Height => 600,
-            Position       => Position_Left,
-            Module         => Buffer_View_Module);
-         Set_Title (Child, -"Windows View", -"Windows View");
-      end if;
-
-      return Child;
-   end Open_View;
-
-   ------------------
-   -- On_Open_View --
-   ------------------
-
-   procedure On_Open_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      View : MDI_Child;
-      pragma Unreferenced (Widget);
-   begin
-      View := Open_View (Kernel);
-      Raise_Child (View);
-      Set_Focus_Child (Get_MDI (Kernel), View);
-   end On_Open_View;
+   end Initialize;
 
    ---------------------
    -- Register_Module --
@@ -666,23 +571,12 @@ package body Buffer_Views is
    is
       Command : Interactive_Command_Access;
    begin
-      Buffer_View_Module := new Module_ID_Record;
-      Register_Module
-        (Module      => Buffer_View_Module,
-         Module_Name => "Buffer_View",
-         Kernel      => Kernel);
-      Register_Menu
-        (Kernel,
-         "/" & (-"Tools"), -"Windows View", "", On_Open_View'Access,
-         Ref_Item => -"File View", Add_Before => False);
+      Generic_View.Register_Module (Kernel);
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Editors_Only, True);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Show_Notebooks, False);
-
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
 
       Command := new Close_Command;
       Register_Contextual_Menu

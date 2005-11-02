@@ -33,7 +33,6 @@ with Gdk.Types;                 use Gdk.Types;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
-with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -45,13 +44,12 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Generic_Views;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -64,39 +62,22 @@ with Traces;                    use Traces;
 
 package body Clipboard_Views is
 
-   type Clipboard_Views_Module_Record is new Module_ID_Record with null record;
-   Clipboard_Views_Module : Module_ID;
-
    type Clipboard_View_Record is new Gtk.Box.Gtk_Box_Record with record
       Tree    : Gtk_Tree_View;
       Kernel  : Kernel_Handle;
       Current : Gdk_Pixbuf;
    end record;
-   type Clipboard_View_Access is access all Clipboard_View_Record'Class;
 
-   procedure Gtk_New
-     (View   : out Clipboard_View_Access;
+   procedure Initialize
+     (View   : access Clipboard_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class);
    --  Create a new clipboard view
 
-   procedure On_Open_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Create the clipboard view (or raise the existing one)
-
-   function Open_View
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
-   --  Create the clipboard view if needed
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Handling of desktops
+   package Generic_View is new Generic_Views
+     (Module_Name => "Clipboard_View",
+      View_Name   => "Clipboard View",
+      View_Record => Clipboard_View_Record);
+   subtype Clipboard_View_Access is Generic_View.View_Access;
 
    procedure On_Clipboard_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -226,8 +207,8 @@ package body Clipboard_Views is
    is
       pragma Unreferenced (Command);
       Selected : Integer;
-      View : constant Clipboard_View_Access := Clipboard_View_Access
-        (Get_Widget (Open_View (Get_Kernel (Context.Context))));
+      View : constant Clipboard_View_Access :=
+        Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
    begin
       if Context.Event /= null then
          Selected := Get_Selected_From_Event (View, Context.Event);
@@ -250,8 +231,8 @@ package body Clipboard_Views is
    is
       pragma Unreferenced (Command);
       Selected : Integer;
-      View : constant Clipboard_View_Access := Clipboard_View_Access
-        (Get_Widget (Open_View (Get_Kernel (Context.Context))));
+      View : constant Clipboard_View_Access :=
+        Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
    begin
       if Context.Event /= null then
          Selected := Get_Selected_From_Event (View, Context.Event);
@@ -344,10 +325,9 @@ package body Clipboard_Views is
    --------------------------
 
    procedure On_Clipboard_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Refresh (Clipboard_View_Access (Get_Widget (Open_View (Kernel))));
+      Refresh (Generic_View.Get_Or_Create_View (Kernel));
    end On_Clipboard_Changed;
 
    ----------------------------
@@ -357,8 +337,8 @@ package body Clipboard_Views is
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      View : constant Clipboard_View_Access := Clipboard_View_Access
-        (Get_Widget (Open_View (Kernel)));
+      View : constant Clipboard_View_Access :=
+        Generic_View.Get_Or_Create_View (Kernel);
    begin
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
    end On_Preferences_Changed;
@@ -456,18 +436,17 @@ package body Clipboard_Views is
                 & Exception_Information (E));
    end Refresh;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Gtk_New
-     (View   : out Clipboard_View_Access;
+   procedure Initialize
+     (View   : access Clipboard_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
       Scrolled : Gtk_Scrolled_Window;
       Tooltip  : Clipboard_View_Tooltips_Access;
    begin
-      View := new Clipboard_View_Record;
       View.Kernel := Kernel_Handle (Kernel);
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -501,7 +480,7 @@ package body Clipboard_Views is
         (Kernel          => Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
-         ID              => Clipboard_Views_Module,
+         ID              => Generic_View.Get_Module,
          Context_Func    => View_Context_Factory'Access);
 
       Add_Hook (Kernel, Clipboard_Changed_Hook, On_Clipboard_Changed'Access,
@@ -513,95 +492,9 @@ package body Clipboard_Views is
       --  Initialize tooltips
 
       Tooltip := new Clipboard_View_Tooltips;
-      Tooltip.Clipboard_View := View;
+      Tooltip.Clipboard_View := Clipboard_View_Access (View);
       Set_Tooltip (Tooltip, View.Tree, 250);
-   end Gtk_New;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Clipboard_View_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Clipboard_View");
-         return N;
-      end if;
-      return null;
-   end Save_Desktop;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Clipboard_View" then
-         return Open_View (User);
-      end if;
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- On_Open_View --
-   ------------------
-
-   procedure On_Open_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      View : MDI_Child;
-      pragma Unreferenced (Widget);
-   begin
-      View := Open_View (Kernel);
-      Raise_Child (View);
-      Set_Focus_Child (Get_MDI (Kernel), View);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
-   end On_Open_View;
-
-   ---------------
-   -- Open_View --
-   ---------------
-
-   function Open_View
-     (Kernel : access Kernel_Handle_Record'Class)
-      return MDI_Child
-   is
-      Child   : MDI_Child;
-      View    : Clipboard_View_Access;
-   begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Clipboard_View_Record'Tag);
-
-      if Child = null then
-         Gtk_New (View, Kernel);
-         Child := Put
-           (Kernel, View,
-            Default_Width  => 215,
-            Default_Height => 600,
-            Position       => Position_Left,
-            Module         => Clipboard_Views_Module);
-         Set_Title (Child, -"Clipboard View", -"Clipboard View");
-      end if;
-
-      return Child;
-   end Open_View;
+   end Initialize;
 
    ---------------------
    -- Register_Module --
@@ -612,17 +505,7 @@ package body Clipboard_Views is
    is
       Command : Interactive_Command_Access;
    begin
-      Clipboard_Views_Module := new Clipboard_Views_Module_Record;
-      Register_Module
-        (Module      => Clipboard_Views_Module,
-         Module_Name => "Clipboard_View",
-         Kernel      => Kernel);
-      Register_Menu
-        (Kernel,
-         "/" & (-"Tools"), -"Clipboard View", "", On_Open_View'Access);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
-
+      Generic_View.Register_Module (Kernel);
       Command := new Merge_With_Previous_Command;
       Register_Contextual_Menu
         (Kernel, "Clipboard View Append To Previous",

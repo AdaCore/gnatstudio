@@ -52,6 +52,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Generic_Views;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -100,7 +101,17 @@ package body Bookmark_Views is
       Kernel    : Kernel_Handle;
       Goto_Icon : Gdk_Pixbuf;
    end record;
-   type Bookmark_View_Access is access all Bookmark_View_Record'Class;
+
+   procedure Initialize
+     (View   : access Bookmark_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class);
+   --  Create a new Bookmark view
+
+   package Generic_View is new Generic_Views
+     (Module_Name => "Bookmark_View",
+      View_Name   => "Bookmarks",
+      View_Record => Bookmark_View_Record);
+   subtype Bookmark_View_Access is Generic_View.View_Access;
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Bookmark_Data_Access);
@@ -108,29 +119,6 @@ package body Bookmark_Views is
      (Bookmark_Data_Access, System.Address);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Location_Marker_Record'Class, Location_Marker);
-
-   procedure Gtk_New
-     (View   : out Bookmark_View_Access;
-      Kernel : access Kernel_Handle_Record'Class);
-   --  Create a new Bookmark view
-
-   procedure On_Open_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Create the Bookmark view (or raise the existing one)
-
-   function Open_View
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
-   --  Create the Bookmark view if needed
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Handling of desktops
 
    procedure Refresh (View : access Bookmark_View_Record'Class);
    --  Refresh the contents of the Bookmark view
@@ -291,8 +279,8 @@ package body Bookmark_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View        : constant Bookmark_View_Access := Bookmark_View_Access
-        (Get_Widget (Open_View (Get_Kernel (Context.Context))));
+      View        : constant Bookmark_View_Access :=
+        Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
       Data        : Bookmark_Data_Access;
       Node, Prev  : List_Node;
    begin
@@ -346,8 +334,8 @@ package body Bookmark_Views is
      (Command : access Rename_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      View  : constant Bookmark_View_Access := Bookmark_View_Access
-        (Get_Widget (Open_View (Get_Kernel (Context.Context))));
+      View  : constant Bookmark_View_Access :=
+        Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
       Model : constant Gtk_Tree_Store :=
                 Gtk_Tree_Store (Get_Model (View.Tree));
       Iter  : Gtk_Tree_Iter;
@@ -586,24 +574,23 @@ package body Bookmark_Views is
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      View : constant Bookmark_View_Access := Bookmark_View_Access
-        (Get_Widget (Open_View (Kernel)));
+      View : constant Bookmark_View_Access :=
+        Generic_View.Get_Or_Create_View (Kernel);
    begin
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
    end On_Preferences_Changed;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Gtk_New
-     (View   : out Bookmark_View_Access;
+   procedure Initialize
+     (View   : access Bookmark_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
       Scrolled : Gtk_Scrolled_Window;
       Tooltip  : Bookmark_View_Tooltips_Access;
    begin
-      View := new Bookmark_View_Record;
       View.Kernel := Kernel_Handle (Kernel);
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -651,88 +638,9 @@ package body Bookmark_Views is
       --  Initialize tooltips
 
       Tooltip := new Bookmark_View_Tooltips;
-      Tooltip.Bookmark_View := View;
+      Tooltip.Bookmark_View := Bookmark_View_Access (View);
       Set_Tooltip (Tooltip, View.Tree, 250);
-   end Gtk_New;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Bookmark_View_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Bookmark_View");
-         return N;
-      end if;
-      return null;
-   end Save_Desktop;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Bookmark_View" then
-         return Open_View (User);
-      end if;
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- On_Open_View --
-   ------------------
-
-   procedure On_Open_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      View : MDI_Child;
-      pragma Unreferenced (Widget);
-   begin
-      View := Open_View (Kernel);
-      Raise_Child (View);
-      Set_Focus_Child (Get_MDI (Kernel), View);
-   end On_Open_View;
-
-   ---------------
-   -- Open_View --
-   ---------------
-
-   function Open_View
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
-   is
-      Child : MDI_Child;
-      View  : Bookmark_View_Access;
-   begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Bookmark_View_Record'Tag);
-
-      if Child = null then
-         Gtk_New (View, Kernel);
-         Child := Put
-           (Kernel, View,
-            Default_Width  => 215,
-            Default_Height => 600,
-            Position       => Position_Left,
-            Module         => Bookmark_Views_Module);
-         Set_Title (Child, -"Bookmarks", -"Bookmarks");
-      end if;
-
-      return Child;
-   end Open_View;
+   end Initialize;
 
    -------------
    -- Destroy --
@@ -836,16 +744,8 @@ package body Bookmark_Views is
       Command : Interactive_Command_Access;
    begin
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
-      Register_Module
-        (Module      => Module_ID (Bookmark_Views_Module),
-         Module_Name => "Bookmark_View",
-         Kernel      => Kernel);
-      Register_Menu
-        (Kernel,
-         "/" & (-"Tools"), -"Bookmarks", "", On_Open_View'Access,
-         Ref_Item => -"Interrupt", Add_Before => True);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Generic_View.Register_Module
+        (Kernel, Module_ID (Bookmark_Views_Module));
 
       Register_Hook (Kernel, Bookmark_Added_Hook);
 
