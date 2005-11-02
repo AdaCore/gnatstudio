@@ -331,6 +331,7 @@ package body Entities.Queries is
       Case_Sensitive : constant Boolean := not Case_Insensitive_Identifiers
         (Source.Handler);
       Iter     : Entity_Iterator;
+
    begin
       if Active (Me) then
          Trace (Me, "Find name=" & Normalized_Entity_Name
@@ -374,21 +375,27 @@ package body Entities.Queries is
       if Distance = 0 then
          Status := Success;
          Entity := Closest;
+
       elsif Distance = Integer'Last then
          Status      := Entity_Not_Found;
          Entity      := null;
          Closest_Ref := No_Entity_Reference;
+
       else
          --  How many entities with this name do we have ?
+
          Find_All_Entities_In_File
            (Iter, File => Source, Name => Normalized_Entity_Name);
+
          if Get (Iter) /= null then
             Next (Iter);
+
             if Get (Iter) = null then
                Status := Fuzzy_Match;
             else
                Status := Overloaded_Entity_Found;
             end if;
+
          else
             Status := Fuzzy_Match;
          end if;
