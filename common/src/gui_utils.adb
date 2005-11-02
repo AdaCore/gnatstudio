@@ -428,14 +428,8 @@ package body GUI_Utils is
             Grab_Focus (Widget);
             Show_All (Menu);
 
-            --  Here we are calling Popup with an Activate_Time 150ms after
-            --  the event time, plus the time to execute the menu factory.
-            --
-            --  The addition of 150ms is a workaround for a bug in Gtk+
-            --  versions 2.4.13 and under, and should be removed when we switch
-            --  to Gtk+ version 2.4.14 or above. The regression causes menus
-            --  with a lot of entries (such as in the VCS Explorer) to
-            --  disappear immediately if they are created with a single click.
+            --  Here we are calling Popup with an Activate_Time adjusted
+            --  by the time to execute the menu factory.
             --
             --  The addition of the time to execute the menu factory is an
             --  adjustment needed under Windows, because the time of events is
@@ -445,10 +439,11 @@ package body GUI_Utils is
             --  (such as the first contextual menu on an entity, before any
             --  xref information has been loaded) to disappear immediately if
             --  they are created with a simple click.
+
             if Host = Windows then
                Popup (Menu,
                       Button        => Gdk.Event.Get_Button (Event),
-                      Activate_Time => Gdk.Event.Get_Time (Event) + 150
+                      Activate_Time => Gdk.Event.Get_Time (Event)
                         + Guint32 ((Clock - Time_Before_Factory) * 1000));
             else
                Popup (Menu,
@@ -618,8 +613,8 @@ package body GUI_Utils is
                if Host = Windows then
                   Popup (Menu,
                          Button        => Gdk.Event.Get_Button (Event),
-                         Activate_Time => Gdk.Event.Get_Time (Event) + 150
-                        + Guint32 ((Clock - Time_Before_Factory) * 1000));
+                         Activate_Time => Gdk.Event.Get_Time (Event)
+                           + Guint32 ((Clock - Time_Before_Factory) * 1000));
                else
                   Popup (Menu,
                          Button        => Gdk.Event.Get_Button (Event),
