@@ -88,7 +88,6 @@ with String_Utils;              use String_Utils;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
---  with Src_Editor_Box.Context;    use Src_Editor_Box.Context;
 
 package body Src_Editor_Box is
 
@@ -1226,7 +1225,6 @@ package body Src_Editor_Box is
                  (File_Area_Context_Access (Context),
                   Get_Text (Start_Iter, End_Iter),
                   Start_Line, End_Line);
---               Compute_Entity_Context (Editor);
 
             else
                Context := new Entity_Selection_Context;
@@ -1253,8 +1251,6 @@ package body Src_Editor_Box is
 
                   Place_Cursor (Editor.Source_Buffer, Entity_Start);
                end if;
-
---               Compute_Entity_Context (Editor);
             end if;
          end if;
 
