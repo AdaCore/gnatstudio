@@ -105,6 +105,13 @@ Known Problems fixed in GPS 3.1.0
               unstable when closing the other views.
   Workaround: Always close the new views before closing the original view
 
+- E620-006 Project icon modified even when cancelling saving
+  Problem:    If you are working with the default project created by GPS, and
+              try to save it, a dialog is displayed to ask for the name you 
+              would like to use. Clicking Cancel doesn't save the project, but
+              still modified the icon in the Project View
+  Workaround: Try to save the project again if needed
+
 - E617-006 Casing problem in the executable name when editing projects
   Problem:    If you use file names with upper cases in your project, GPS will
               convert these names to lower case in the project file when you
