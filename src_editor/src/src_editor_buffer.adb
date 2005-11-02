@@ -713,7 +713,7 @@ package body Src_Editor_Buffer is
 
          procedure Move_Char;
          pragma Inline (Move_Char);
-         --  Move one character vackward or forward
+         --  Move one character backward or forward
 
          procedure Move_Char is
          begin
