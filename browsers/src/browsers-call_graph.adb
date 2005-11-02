@@ -1253,7 +1253,7 @@ package body Browsers.Call_Graph is
       Location : Entities.File_Location;
    begin
       Find_Next_Body
-        (Entity   => Get_Entity (C),
+        (Entity   => Get_Entity (C, Ask_If_Overloaded => True),
          Location => Location);
 
       Add_Navigation_Location (Get_Kernel (C), -"Call graph Browser");
@@ -1286,7 +1286,8 @@ package body Browsers.Call_Graph is
       pragma Unreferenced (Command);
       C      : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context.Context);
-      Entity : constant Entity_Information := Get_Entity (C);
+      Entity : constant Entity_Information :=
+        Get_Entity (C, Ask_If_Overloaded => True);
    begin
       if Entity = null then
          Insert (Get_Kernel (Context.Context),
@@ -1567,7 +1568,7 @@ package body Browsers.Call_Graph is
         and then Context.all in Entity_Selection_Context'Class
       then
          Entity := Entity_Selection_Context_Access (Context);
-         Node_Entity := Get_Entity (Entity);
+         Node_Entity := Get_Entity (Entity, Ask_If_Overloaded => True);
 
          if Node_Entity /= null then
             Examine_Entity_Call_Graph
@@ -1599,7 +1600,8 @@ package body Browsers.Call_Graph is
       if Context /= null
         and then Context.all in Entity_Selection_Context'Class
       then
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+         Entity := Get_Entity (Entity_Selection_Context_Access (Context),
+                               Ask_If_Overloaded => True);
          Find_All_References_Internal
            (Kernel,
             Entity,
@@ -1855,7 +1857,7 @@ package body Browsers.Call_Graph is
       Node_Entity : Entity_Information;
    begin
       Push_State (Get_Kernel (Entity), Busy);
-      Node_Entity := Get_Entity (Entity);
+      Node_Entity := Get_Entity (Entity, Ask_If_Overloaded => True);
 
       if Node_Entity /= null then
          --  ??? Should check that Decl.Kind is a subprogram
@@ -1895,7 +1897,7 @@ package body Browsers.Call_Graph is
       Info : Entity_Information;
    begin
       Push_State (Get_Kernel (Entity), Busy);
-      Info := Get_Entity (Entity);
+      Info := Get_Entity (Entity, Ask_If_Overloaded => True);
 
       if Info /= null then
          Examine_Ancestors_Call_Graph
@@ -2055,7 +2057,8 @@ package body Browsers.Call_Graph is
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Entity   : constant Entity_Information := Get_Entity
-        (Entity_Selection_Context_Access (Context.Context));
+        (Entity_Selection_Context_Access (Context.Context),
+         Ask_If_Overloaded => True);
       Filter   : Reference_Kind_Filter := (others => False);
       File     : constant Virtual_File := File_Information
         (File_Selection_Context_Access (Context.Context));
@@ -2133,7 +2136,8 @@ package body Browsers.Call_Graph is
       Widget    : Gtk_Widget;
       Entity    : constant Entity_Information :=
         Get_Entity
-          (Entity_Selection_Context_Access (Context.Context));
+          (Entity_Selection_Context_Access (Context.Context),
+           Ask_If_Overloaded => True);
       Current_File     : constant Virtual_File := File_Information
         (File_Selection_Context_Access (Context.Context));
       Button    : Gtk_Button;

@@ -461,7 +461,8 @@ package body Browsers.Entities is
       Item := Add_Or_Select_Item
         (Browser => Type_Browser (Get_Widget (Child)),
          Entity  =>
-           Get_Entity (Entity_Selection_Context_Access (Context.Context)));
+           Get_Entity (Entity_Selection_Context_Access (Context.Context),
+                       Ask_If_Overloaded => True));
       Layout (Type_Browser (Get_Widget (Child)), Force => False);
       return Commands.Success;
    end Execute;
@@ -710,7 +711,8 @@ package body Browsers.Entities is
       then
          Item := Add_Or_Select_Item
            (Browser => Type_Browser (Get_Widget (Child)),
-            Entity  => Get_Entity (Entity_Selection_Context_Access (Context)));
+            Entity  => Get_Entity (Entity_Selection_Context_Access (Context),
+                                   Ask_If_Overloaded => True));
       end if;
 
       Unref (Context);
