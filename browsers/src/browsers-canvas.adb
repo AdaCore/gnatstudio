@@ -2703,7 +2703,7 @@ package body Browsers.Canvas is
       Put_Line (SVG_File_FD, "text, tspan {font-family: " & Get_Family (Font)
                 & "; font-size:"
                 & Image (Integer (To_Pixels (Get_Size (Font)))) & "}");
-      Put_Line (SVG_File_FD, "rect.item {fill:none; stroke:black}");
+      Put_Line (SVG_File_FD, "rect.item {fill:white; stroke:black}");
       Put_Line (SVG_File_FD, "rect.title {fill:silver; stroke:black}");
       Put_Line (SVG_File_FD, "line.link {stroke: black; stroke-width: 1}");
       Put_Line (SVG_File_FD, "]]>");
@@ -2721,6 +2721,10 @@ package body Browsers.Canvas is
                 & Image (abs Integer (World_X)) & ","
                 & Image (abs Integer (World_Y)) & ")"">");
 
+      --  Links
+
+      For_Each_Link (Canvas, Link_Callback'Unrestricted_Access);
+
       --  Items
 
       Iterator := Start (Canvas);
@@ -2731,10 +2735,6 @@ package body Browsers.Canvas is
          Next (Iterator);
          Item := Get (Iterator);
       end loop;
-
-      --  Links
-
-      For_Each_Link (Canvas, Link_Callback'Unrestricted_Access);
 
       --  Footer
 
