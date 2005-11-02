@@ -2634,15 +2634,14 @@ package body Src_Editor_Module is
          Filter     => Filter);
 
       Command := new Goto_Other_File_Command;
+      Filter  := new Has_Other_File_Filter;
       Register_Contextual_Menu
         (Kernel, "Goto file spec<->body",
          Action     => Command,
          Label      => -"Goto file spec<->body",
          Ref_Item   => "Goto type of entity",
          Add_Before => False,
-         Filter => Action_Filter
-           (not Line_Numbers_Area_Filter
-            and Create (Module => Src_Editor_Module_Name)));
+         Filter     => Filter);
 
       Register_Contextual_Submenu
         (Kernel, "References",
