@@ -198,6 +198,11 @@ package body Browsers.Canvas is
    procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class);
    --  Called when the canvas has been zoomed
 
+   procedure Browser_To_SVG
+     (Browser     : access General_Browser_Record'Class;
+      SVG_File_FD : GNAT.OS_Lib.File_Descriptor);
+   --  Output an SVG representation of a browser in a file.
+
    function Arrow_Head_To_SVG
      (Canvas : access Interactive_Canvas_Record'Class;
       X, Y   : Gint;
@@ -908,185 +913,52 @@ package body Browsers.Canvas is
 
    procedure On_Export_To_SVG (Browser : access Gtk_Widget_Record'Class) is
       use GNAT.OS_Lib;
-      use String_Utils;
 
       B             : constant General_Browser := General_Browser (Browser);
-      Canvas        : constant Interactive_Canvas := Get_Canvas (B);
       Kernel        : constant Kernel_Handle := Get_Kernel (B);
-      Font          : constant Pango_Font_Description :=
-                        Get_Pref (Default_Font);
-      SVG_File      : File_Descriptor;
-      SVG_File_Name : constant String := "/tmp/test.svg";
-      Iterator      : Item_Iterator;
-      Item          : Canvas_Item;
-      World_X,
-      World_Y,
-      World_Width,
-      World_Height  : Gint;
-
-      function Link_Callback
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean;
-
-      -------------------
-      -- Link_Callback --
-      -------------------
-
-      function Link_Callback
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean
-      is
-         Src        : constant Canvas_Item := Canvas_Item (Get_Src (Link));
-         Dest       : constant Canvas_Item := Canvas_Item (Get_Dest (Link));
-         Link_Arrow : constant Arrow_Type := Get_Arrow_Type (Link);
-
-         Src_Coord, Dest_Coord : Gdk_Rectangle;
-         Link_Src_X_Pos, Link_Src_Y_Pos,
-         Link_Dest_X_Pos, Link_Dest_Y_Pos : Gfloat;
-         X1, Y1, X2, Y2 : Gint;
-         Src_Side, Dest_Side : Item_Side;
-      begin
-         Src_Coord := Get_Coord (Src);
-         Dest_Coord := Get_Coord (Dest);
-
-         Get_Src_Pos (Link, Link_Src_X_Pos, Link_Src_Y_Pos);
-         Get_Dest_Pos (Link, Link_Dest_X_Pos, Link_Dest_Y_Pos);
-
-         --  Link line
-
-         Clip_Line
-           (Src,
-            Dest_Coord.X + Gint (Gfloat (Dest_Coord.Width) * Link_Dest_X_Pos),
-            Dest_Coord.Y + Gint (Gfloat (Dest_Coord.Height) * Link_Dest_Y_Pos),
-            X_Pos => Link_Src_X_Pos, Y_Pos => Link_Src_Y_Pos,
-            Side  => Src_Side, X_Out => X1, Y_Out => Y1);
-         Clip_Line
-           (Dest,
-            Src_Coord.X + Gint (Gfloat (Src_Coord.Width) * Link_Src_X_Pos),
-            Src_Coord.Y + Gint (Gfloat (Src_Coord.Height) * Link_Src_Y_Pos),
-            X_Pos => Link_Dest_X_Pos, Y_Pos => Link_Dest_Y_Pos,
-            Side  => Dest_Side, X_Out => X2, Y_Out => Y2);
-
-         Put_Line
-           (SVG_File,
-            "<line class=""link"" x1=""" & Image (Integer (X1))
-            & """ y1=""" & Image (Integer (Y1)) & """ "
-            & "x2=""" & Image (Integer (X2))
-            & """ y2=""" & Image (Integer (Y2)) & """ />");
-
-         --  Export the end arrow head
-
-         if Link_Arrow = End_Arrow or else Link_Arrow = Both_Arrow then
-            if X1 /= X2 then
-               Put_Line
-                 (SVG_File,
-                  Arrow_Head_To_SVG
-                    (Canvas, X2, Y2,
-                     Arctan (Float (Y1 - Y2), Float (X1 - X2))));
-            elsif Y1 > Y2 then
-               Put_Line
-                 (SVG_File,
-                  Arrow_Head_To_SVG
-                    (Canvas, X2, Y2, Ada.Numerics.Pi / 2.0));
-            else
-               Put_Line
-                 (SVG_File,
-                  Arrow_Head_To_SVG
-                    (Canvas, X2, Y2, -Ada.Numerics.Pi / 2.0));
-            end if;
-         end if;
-
-         --  Export the start arrow head
-
-         if Link_Arrow = Start_Arrow or else Link_Arrow = Both_Arrow then
-            if X1 /= X2 then
-               Put_Line
-                 (SVG_File,
-                  Arrow_Head_To_SVG
-                    (Canvas, X1, Y1,
-                     Arctan (Float (Y2 - Y1), Float (X2 - X1))));
-            elsif Y1 > Y2 then
-               Put_Line
-                 (SVG_File,
-                  Arrow_Head_To_SVG
-                    (Canvas, X1, Y1, -Ada.Numerics.Pi / 2.0));
-            else
-               Put_Line
-                 (SVG_File,
-                  Arrow_Head_To_SVG
-                    (Canvas, X1, Y1, +Ada.Numerics.Pi / 2.0));
-            end if;
-         end if;
-
-         return True;
-      end Link_Callback;
-
+      SVG_File_FD   : File_Descriptor;
+      State_Pushed  : Boolean := False;
    begin
-      SVG_File := Create_File (SVG_File_Name, Text);
+      declare
+         Name   : constant Virtual_File :=
+           Select_File
+             (Title             => -"Export Browser as SVG",
+              Parent            => Get_Main_Window (Kernel),
+              Default_Name      => "browser.svg",
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+              Kind              => Save_File,
+              History           => Get_History (Kernel));
 
-      if SVG_File = Invalid_FD then
-         GPS.Kernel.Console.Insert
-           (Kernel, "Cannot create " & SVG_File_Name,
-            Mode => GPS.Kernel.Console.Error);
-         return;
-      end if;
+      begin
+         if Name /= VFS.No_File then
+            Push_State (Get_Kernel (B), Busy);
+            State_Pushed := True;
 
-      --  Header
+            SVG_File_FD := Create_File (Full_Name (Name).all, Text);
 
-      Get_World_Coordinates
-        (Canvas, World_X, World_Y, World_Width, World_Height);
+            if SVG_File_FD = Invalid_FD then
+               GPS.Kernel.Console.Insert
+                 (Kernel, "Cannot create " & Full_Name (Name).all,
+                  Mode => GPS.Kernel.Console.Error);
+            else
+               Browser_To_SVG (B, SVG_File_FD);
+               Close (SVG_File_FD);
+            end if;
 
-      Put_Line (SVG_File, "<?xml version=""1.0"" standalone=""no""?>");
-      Put_Line (SVG_File, "<svg xmlns=""http://www.w3.org/2000/svg"" "
-                & "x=""0"" y=""0"" "
-                & "width=""" & Image (Integer (World_Width)) & """ "
-                & "height=""" & Image (Integer (World_Height)) & """ >");
+            State_Pushed := False;
+            Pop_State (Get_Kernel (B));
 
-      --  Styles
+         end if;
+      end;
 
-      Put_Line (SVG_File, "<style type=""text/css""> <![CDATA[");
-      Put_Line (SVG_File, "text, tspan {font-family: " & Get_Family (Font)
-                & "; font-size:"
-                & Image (Integer (To_Pixels (Get_Size (Font)))) & "}");
-      Put_Line (SVG_File, "rect.item {fill:none; stroke:black}");
-      Put_Line (SVG_File, "rect.title {fill:silver; stroke:black}");
-      Put_Line (SVG_File, "line.link {stroke: black; stroke-width: 1}");
-      Put_Line (SVG_File, "]]>");
-      Put_Line (SVG_File, "</style>");
+   exception
+      when E : others =>
+         if State_Pushed then
+            Pop_State (Get_Kernel (B));
+         end if;
 
-      --  Title
-
-      Put_Line (SVG_File, "<title>"
-                & Get_Title (Get (First_Child (Get_MDI (Kernel))))
-                & "</title>" & ASCII.LF);
-
-      --  Translation that simulates world coodinates
-
-      Put_Line (SVG_File, "<g transform=""translate("
-                & Image (abs Integer (World_X)) & ","
-                & Image (abs Integer (World_Y)) & ")"">");
-
-      --  Items
-
-      Iterator := Start (Canvas);
-      Item := Get (Iterator);
-
-      while Item /= null loop
-         Put_Line (SVG_File, Output_SVG (Browser_Item (Item)));
-         Next (Iterator);
-         Item := Get (Iterator);
-      end loop;
-
-      --  Links
-
-      For_Each_Link (Canvas, Link_Callback'Unrestricted_Access);
-
-      --  Footer
-
-      Put_Line (SVG_File, "</g>");
-      Put_Line (SVG_File, "</svg>");
-
-      Close (SVG_File);
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
    end On_Export_To_SVG;
 
    ----------------
@@ -2695,6 +2567,181 @@ package body Browsers.Canvas is
            Commands.Failure;
       end if;
    end Execute;
+
+   --------------------
+   -- Browser_To_SVG --
+   --------------------
+
+   procedure Browser_To_SVG
+     (Browser     : access General_Browser_Record'Class;
+      SVG_File_FD : GNAT.OS_Lib.File_Descriptor)
+   is
+      use String_Utils;
+
+      Canvas        : constant Interactive_Canvas := Get_Canvas (Browser);
+      Kernel        : constant Kernel_Handle := Get_Kernel (Browser);
+      Font          : constant Pango_Font_Description :=
+                        Get_Pref (Default_Font);
+      Iterator      : Item_Iterator;
+      Item          : Canvas_Item;
+      World_X,
+      World_Y,
+      World_Width,
+      World_Height  : Gint;
+
+      function Link_Callback
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean;
+
+      -------------------
+      -- Link_Callback --
+      -------------------
+
+      function Link_Callback
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean
+      is
+         Src        : constant Canvas_Item := Canvas_Item (Get_Src (Link));
+         Dest       : constant Canvas_Item := Canvas_Item (Get_Dest (Link));
+         Link_Arrow : constant Arrow_Type := Get_Arrow_Type (Link);
+
+         Src_Coord, Dest_Coord : Gdk_Rectangle;
+         Link_Src_X_Pos, Link_Src_Y_Pos,
+         Link_Dest_X_Pos, Link_Dest_Y_Pos : Gfloat;
+         X1, Y1, X2, Y2 : Gint;
+         Src_Side, Dest_Side : Item_Side;
+      begin
+         Src_Coord := Get_Coord (Src);
+         Dest_Coord := Get_Coord (Dest);
+
+         Get_Src_Pos (Link, Link_Src_X_Pos, Link_Src_Y_Pos);
+         Get_Dest_Pos (Link, Link_Dest_X_Pos, Link_Dest_Y_Pos);
+
+         --  Link line
+
+         Clip_Line
+           (Src,
+            Dest_Coord.X + Gint (Gfloat (Dest_Coord.Width) * Link_Dest_X_Pos),
+            Dest_Coord.Y + Gint (Gfloat (Dest_Coord.Height) * Link_Dest_Y_Pos),
+            X_Pos => Link_Src_X_Pos, Y_Pos => Link_Src_Y_Pos,
+            Side  => Src_Side, X_Out => X1, Y_Out => Y1);
+         Clip_Line
+           (Dest,
+            Src_Coord.X + Gint (Gfloat (Src_Coord.Width) * Link_Src_X_Pos),
+            Src_Coord.Y + Gint (Gfloat (Src_Coord.Height) * Link_Src_Y_Pos),
+            X_Pos => Link_Dest_X_Pos, Y_Pos => Link_Dest_Y_Pos,
+            Side  => Dest_Side, X_Out => X2, Y_Out => Y2);
+
+         Put_Line
+           (SVG_File_FD,
+            "<line class=""link"" x1=""" & Image (Integer (X1))
+            & """ y1=""" & Image (Integer (Y1)) & """ "
+            & "x2=""" & Image (Integer (X2))
+            & """ y2=""" & Image (Integer (Y2)) & """ />");
+
+         --  Export the end arrow head
+
+         if Link_Arrow = End_Arrow or else Link_Arrow = Both_Arrow then
+            if X1 /= X2 then
+               Put_Line
+                 (SVG_File_FD,
+                  Arrow_Head_To_SVG
+                    (Canvas, X2, Y2,
+                     Arctan (Float (Y1 - Y2), Float (X1 - X2))));
+            elsif Y1 > Y2 then
+               Put_Line
+                 (SVG_File_FD,
+                  Arrow_Head_To_SVG
+                    (Canvas, X2, Y2, Ada.Numerics.Pi / 2.0));
+            else
+               Put_Line
+                 (SVG_File_FD,
+                  Arrow_Head_To_SVG
+                    (Canvas, X2, Y2, -Ada.Numerics.Pi / 2.0));
+            end if;
+         end if;
+
+         --  Export the start arrow head
+
+         if Link_Arrow = Start_Arrow or else Link_Arrow = Both_Arrow then
+            if X1 /= X2 then
+               Put_Line
+                 (SVG_File_FD,
+                  Arrow_Head_To_SVG
+                    (Canvas, X1, Y1,
+                     Arctan (Float (Y2 - Y1), Float (X2 - X1))));
+            elsif Y1 > Y2 then
+               Put_Line
+                 (SVG_File_FD,
+                  Arrow_Head_To_SVG
+                    (Canvas, X1, Y1, -Ada.Numerics.Pi / 2.0));
+            else
+               Put_Line
+                 (SVG_File_FD,
+                  Arrow_Head_To_SVG
+                    (Canvas, X1, Y1, +Ada.Numerics.Pi / 2.0));
+            end if;
+         end if;
+
+         return True;
+      end Link_Callback;
+   begin
+      --  Header
+
+      Get_World_Coordinates
+        (Canvas, World_X, World_Y, World_Width, World_Height);
+
+      Put_Line (SVG_File_FD, "<?xml version=""1.0"" standalone=""no""?>");
+      Put_Line (SVG_File_FD, "<svg xmlns=""http://www.w3.org/2000/svg"" "
+                & "x=""0"" y=""0"" "
+                & "width=""" & Image (Integer (World_Width)) & """ "
+                & "height=""" & Image (Integer (World_Height)) & """ >");
+
+      --  Styles
+
+      Put_Line (SVG_File_FD, "<style type=""text/css""> <![CDATA[");
+      Put_Line (SVG_File_FD, "text, tspan {font-family: " & Get_Family (Font)
+                & "; font-size:"
+                & Image (Integer (To_Pixels (Get_Size (Font)))) & "}");
+      Put_Line (SVG_File_FD, "rect.item {fill:none; stroke:black}");
+      Put_Line (SVG_File_FD, "rect.title {fill:silver; stroke:black}");
+      Put_Line (SVG_File_FD, "line.link {stroke: black; stroke-width: 1}");
+      Put_Line (SVG_File_FD, "]]>");
+      Put_Line (SVG_File_FD, "</style>");
+
+      --  Title
+
+      Put_Line (SVG_File_FD, "<title>"
+                & Get_Title (Get (First_Child (Get_MDI (Kernel))))
+                & "</title>" & ASCII.LF);
+
+      --  Translation that simulates world coodinates
+
+      Put_Line (SVG_File_FD, "<g transform=""translate("
+                & Image (abs Integer (World_X)) & ","
+                & Image (abs Integer (World_Y)) & ")"">");
+
+      --  Items
+
+      Iterator := Start (Canvas);
+      Item := Get (Iterator);
+
+      while Item /= null loop
+         Put_Line (SVG_File_FD, Output_SVG (Browser_Item (Item)));
+         Next (Iterator);
+         Item := Get (Iterator);
+      end loop;
+
+      --  Links
+
+      For_Each_Link (Canvas, Link_Callback'Unrestricted_Access);
+
+      --  Footer
+
+      Put_Line (SVG_File_FD, "</g>");
+      Put_Line (SVG_File_FD, "</svg>");
+
+   end Browser_To_SVG;
 
    ----------------
    -- Output_SVG --
