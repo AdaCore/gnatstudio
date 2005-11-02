@@ -10,6 +10,9 @@ New features in GPS 3.1.0
 
 - Extending projects can now be created through a wizard
 
+- New project attribute to chose the name of the GNAT driver on the machine,
+  in particular when pretty printing and generating bodies
+
 - Editor properties dialog, to select the language, charset,... associated with
   a file
 
