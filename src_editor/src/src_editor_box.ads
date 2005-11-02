@@ -316,6 +316,13 @@ package Src_Editor_Box is
       Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
    --  True if the current entity has a type
 
+   type Has_Other_File_Filter is new GPS.Kernel.Action_Filter_Record
+     with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Has_Other_File_Filter;
+      Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
+   --  True if the current file has a spec/body
+
    type Goto_Line_Command is new Interactive_Command with record
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;

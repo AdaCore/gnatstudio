@@ -1325,6 +1325,35 @@ package body Src_Editor_Box is
    ------------------------------
 
    function Filter_Matches_Primitive
+     (Filter  : access Has_Other_File_Filter;
+      Context : access GPS.Kernel.Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      C      : File_Selection_Context_Access;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+   begin
+      if Context.all in File_Selection_Context'Class then
+         C := File_Selection_Context_Access (Context);
+         declare
+            File       : constant VFS.Virtual_File := File_Information (C);
+            Project    : constant Project_Type := Get_Project_From_File
+              (Get_Registry (Kernel).all, File);
+            Other_File : constant String := Other_File_Base_Name
+              (Project, File);
+         begin
+            if Other_File /= "" and then Other_File /= Base_Name (File) then
+               return True;
+            end if;
+         end;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
      (Filter  : access Has_Body_Filter;
       Context : access GPS.Kernel.Selection_Context'Class) return Boolean
    is
