@@ -19,8 +19,10 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Heap_Sort_G;
+with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Gdk.GC;                    use Gdk.GC;
@@ -60,6 +62,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
 package body Browsers.Entities is
@@ -111,6 +114,9 @@ package body Browsers.Entities is
    type Type_Item_Record is new Browsers.Canvas.Arrow_Item_Record with record
       Entity               : Entity_Information;
       Inherited_Primitives : Boolean := False;
+      General_Lines,
+      Attr_Lines,
+      Meth_Lines           : Xref_List;
    end record;
    type Type_Item is access all Type_Item_Record'Class;
 
@@ -126,6 +132,10 @@ package body Browsers.Entities is
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Entity  : Entity_Information);
    --  Internal initialization function
+
+   procedure Destroy (Item : in out Type_Item_Record);
+   --  Free the memory occupied by the item. This is called automatically when
+   --  the item is removed from the canvas.
 
    function Get_Background_GC
      (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC;
@@ -145,6 +155,8 @@ package body Browsers.Entities is
      (Item : access Type_Item_Record) return Glib.Gint;
    procedure Redraw_Title_Bar (Item : access Type_Item_Record);
    procedure Highlight (Item : access Type_Item_Record);
+   function Output_SVG_Item_Content
+     (Item : access Type_Item_Record) return String;
    --  See doc for inherited subprograms
 
    ------------------
@@ -271,14 +283,14 @@ package body Browsers.Entities is
    procedure Add_Parameters
      (List : in out Xref_List;
       Item : access Type_Item_Record'Class);
-   --  Add the list of parameters for Entity (a subprogram) to the end of
-   --  Attr_Layout.
+   --  Add the list of parameters for a subprogram entity to the end of
+   --  an cross-reference list.
 
    procedure Add_Fields
      (List : in out Xref_List;
       Item : access Type_Item_Record'Class);
    --  Add the list of fields for a record-like entity to the end of
-   --  Attr_Layout.
+   --  a cross-reference list.
    --  This is also usable to get the enumeration literals for an enumeration
    --  type.
 
@@ -287,7 +299,8 @@ package body Browsers.Entities is
       Attr_List    : in out Xref_List;
       Meth_List    : in out Xref_List;
       Item         : access Type_Item_Record'Class);
-   --  Add the parent package for Entity at the end of Attr_Layout
+   --  Add the parent package information for an entity at the end of its
+   --  cross-reference lists.
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -747,6 +760,17 @@ package body Browsers.Entities is
       Ref (Entity);
       Item.Entity := Entity;
    end Initialize;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Item : in out Type_Item_Record) is
+   begin
+      Free (Item.General_Lines);
+      Free (Item.Attr_Lines);
+      Free (Item.Meth_Lines);
+   end Destroy;
 
    --------
    -- E1 --
@@ -1505,9 +1529,14 @@ package body Browsers.Entities is
       Display_Lines (Item, Meth_Lines, Margin + Xoffset + Left_Margin, Y,
                      Meth_Layout_W1, Layout);
 
-      Free (General_Lines);
-      Free (Attr_Lines);
-      Free (Meth_Lines);
+      Free (Item.General_Lines);
+      Free (Item.Attr_Lines);
+      Free (Item.Meth_Lines);
+
+      Item.General_Lines := General_Lines;
+      Item.Attr_Lines    := Attr_Lines;
+      Item.Meth_Lines    := Meth_Lines;
+
    end Resize_And_Draw;
 
    ----------------------
@@ -1923,5 +1952,59 @@ package body Browsers.Entities is
             null;
       end case;
    end Clip_Line;
+
+   -----------------------------
+   -- Output_SVG_Item_Content --
+   -----------------------------
+
+   function Output_SVG_Item_Content
+     (Item : access Type_Item_Record) return String
+   is
+      Output   : Unbounded_String;
+      Line     : GNAT.OS_Lib.String_Access;
+      Dummy_Cb : Active_Area_Cb := null;
+      J, K, L  : Positive := 1;
+   begin
+      Get_Line (Item.General_Lines, J, Callback => Dummy_Cb, Text => Line);
+
+      while Line /= null loop
+         Append
+           (Output,
+            "<tspan y=""" & Image (J + 1) & ".3em"">"
+            & Strip_Character (Line.all, '@') & "</tspan>"
+            & ASCII.LF);
+
+         J := J + 1;
+         Get_Line (Item.General_Lines, J, Callback => Dummy_Cb, Text => Line);
+      end loop;
+
+      Get_Line (Item.Attr_Lines, K, Callback => Dummy_Cb, Text => Line);
+
+      while Line /= null loop
+         Append
+           (Output,
+            "<tspan y=""" & Image (J + K) & ".3em"">"
+            & Strip_Character (Line.all, '@') & "</tspan>"
+            & ASCII.LF);
+
+         K := K + 1;
+         Get_Line (Item.Attr_Lines, K, Callback => Dummy_Cb, Text => Line);
+      end loop;
+
+      Get_Line (Item.Meth_Lines, L, Callback => Dummy_Cb, Text => Line);
+
+      while Line /= null loop
+         Append
+           (Output,
+            "<tspan y=""" & Image (J + K + L - 1) & ".3em"">"
+            & Strip_Character (Line.all, '@') & "</tspan>"
+            & ASCII.LF);
+
+         L := L + 1;
+         Get_Line (Item.Meth_Lines, L, Callback => Dummy_Cb, Text => Line);
+      end loop;
+
+      return "<text>" & ASCII.LF & To_String (Output) & "</text>";
+   end Output_SVG_Item_Content;
 
 end Browsers.Entities;
