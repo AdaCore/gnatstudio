@@ -3,9 +3,6 @@ For more details, please see the documentation.
 
 New features in GPS 3.1.0
 
-- C807-008, E801-005 Export graphs to SVG so that people can import them into
-  other tools.
-
 - Drag-and-Drop of files is now possible from the Project View or Files View
 
 - Display a dialog to chose between overloaded entities when doing a
@@ -89,6 +86,9 @@ New features in GPS 3.1.0
 - D122-006 Support for VCS Activities
   A way to handle multiple files and do atomic commit and commit with a shared
   log if the external VCS supports it.
+
+- C807-008 Export graphs to SVG so that people can import them into
+  other tools.
 
 - D825-010 Call graph can now be displayed in the Locations window
 
