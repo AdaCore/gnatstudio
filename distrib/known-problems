@@ -7,6 +7,12 @@ Known Problems fixed in GPS 3.1.0
               when there is no match
   Workaround: If the editor doesn't scroll, it indicates there is no match
 
+- EA28-010 Unwanted scrolling when using Undo/Redo
+  Problem:    When an Undo/Redo causes lines in the editor to be added or
+              removed, some unwanted scrolling can occur, causing the cursor
+              to be placed in the center of the editor.
+  Workaround: No known workaround.
+
 - EA27-003 Pretty printer now working when using a cross-compiler
   Problem:    GPS always assumes that you have a native installation of GNAT
               on your machine, and therefore that it can find tools like
@@ -114,7 +120,7 @@ Known Problems fixed in GPS 3.1.0
 
 - E620-006 Project icon modified even when cancelling saving
   Problem:    If you are working with the default project created by GPS, and
-              try to save it, a dialog is displayed to ask for the name you 
+              try to save it, a dialog is displayed to ask for the name you
               would like to use. Clicking Cancel doesn't save the project, but
               still modified the icon in the Project View
   Workaround: Try to save the project again if needed
