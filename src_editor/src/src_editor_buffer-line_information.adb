@@ -42,6 +42,8 @@ with Src_Editor_Buffer;        use Src_Editor_Buffer;
 with Src_Editor_Module;        use Src_Editor_Module;
 with Traces;                   use Traces;
 
+with Language.Ada;             use Language.Ada;
+
 package body Src_Editor_Buffer.Line_Information is
 
    Me : constant Debug_Handle := Create ("Src_Editor_Buffer.Line_Information");
@@ -1477,6 +1479,20 @@ package body Src_Editor_Buffer.Line_Information is
 
       Cursor_Move : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Line        : Editable_Line_Type;
+
+      use Language;
+
+      First_Line_Found : Boolean := Buffer.Lang /= Ada_Lang;
+      --  ??? This is a kludge to implement the following feature:
+      --  "When folding all blocks, we do not want to fold the main enclosing
+      --   block".
+      --  This is valid only for languages that do have an enclosing block,
+      --  we cannot simply rely on whether a block is top-level or not, since,
+      --  for C files, we do want to fold the top-level blocks.
+      --  The correct implementation would be for example to add a
+      --  "Has_Globally_Enclosing_Construct" function in the Languages, or,
+      --  better, to wait until we implement "fold nth sublevel" capacity, and
+      --  rely on it.
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return;
@@ -1501,13 +1517,18 @@ package body Src_Editor_Buffer.Line_Information is
             if Command /= null
               and then Command.all in Hide_Editable_Lines_Type'Class
             then
-               Line := Line + Hide_Editable_Lines_Type (Command.all).Number;
-               Result := Execute (Command);
+               if First_Line_Found then
+                  Line := Line +
+                    Hide_Editable_Lines_Type (Command.all).Number;
+                  Result := Execute (Command);
 
-               --  Set the field Blocks_Need_Parsing to False to indicate that
-               --  even though lines have been deleted, the block information
-               --  hasn't changed.
-               Buffer.Blocks_Need_Parsing := False;
+                  --  Set the field Blocks_Need_Parsing to False to indicate
+                  --  that even though lines have been deleted, the block
+                  --  information hasn't changed.
+                  Buffer.Blocks_Need_Parsing := False;
+               else
+                  First_Line_Found := True;
+               end if;
             end if;
          end if;
 
