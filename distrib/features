@@ -10,9 +10,6 @@ New features in GPS 3.1.0
 
 - Extending projects can now be created through a wizard
 
-- E218-027 New project attribute to chose the name of the GNAT driver on the
-  machine, in particular when pretty printing and generating bodies
-
 - Editor properties dialog, to select the language, charset,... associated with
   a file
 
@@ -22,17 +19,17 @@ New features in GPS 3.1.0
 - E817-002 Data Window no longer open automatically with the debugger.
   It is now open on demand
 
-- E718-005 New shell command GPS.Project.dependencies
-
 - Open From Project dialog now states explicitely when no completion is found
-
-- E614-022 When documentation is generated for an Ada body, links are created
-  from entities to their declarations
 
 - E723-001 Build->Run commands can now be interrupted
 
+- E718-005 New shell command GPS.Project.dependencies
+
 - E708-001 New check box in the "Find references..." contextual menu to include
   references to overriding or overriden methods
+
+- E614-022 When documentation is generated for an Ada body, links are created
+  from entities to their declarations
 
 - Multi-level clipboard to save multiple selections
   New menu Edit->Paste Previous, and the Clipboard View
@@ -75,6 +72,9 @@ New features in GPS 3.1.0
   well as the program counter are materialized by special highlightings.
   It is also possible to scroll the assembly view horizontally.
 
+- E218-027 New project attribute to chose the name of the GNAT driver on the
+  machine, in particular when pretty printing and generating bodies
+
 - E202-013 Support for bookmarks
 
 - DC03-011 New switch: --readonly
@@ -83,14 +83,14 @@ New features in GPS 3.1.0
 
 - DC03-006 Improved indentation of multiple-line Ada constructs
 
+- D825-010 Call graph can now be displayed in the Locations window
+
 - D122-006 Support for VCS Activities
   A way to handle multiple files and do atomic commit and commit with a shared
   log if the external VCS supports it.
 
 - C807-008 Export graphs to SVG so that people can import them into
   other tools.
-
-- D825-010 Call graph can now be displayed in the Locations window
 
 - BA07-005 Improved cross-references for generics
   From a reference to an entity declared in a generic, it is now possible to
