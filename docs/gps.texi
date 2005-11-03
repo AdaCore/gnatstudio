@@ -4812,8 +4812,11 @@ background contextual menu.
 @cindex export
 @cindex image
 @cindex png
+@cindex svg
 The entire contents of a browser can be exported as a @code{png} image
-using the entry @code{Export...} in the background contextual menu.
+using the entry @code{Export to PNG} in the background contextual menu.
+It can also be exported as a @code{SVG} file using the @code{Export to SVG}
+entry.
 
 @item Zooming
 Several different zoom levels are available. The contextual menu in
@@ -8859,7 +8862,7 @@ which they are searched. Files with the @file{.xml} extension found through
 the system directory. Likewise, files found in the user's directory can
 override any file found in the @code{GPS_CUSTOM_PATH} directories.
 
-Note that only files with the @file{.xml} 
+Note that only files with the @file{.xml}
 @ifset python
 or @file{.py} extensions
 @end ifset
