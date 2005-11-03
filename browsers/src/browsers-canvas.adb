@@ -838,7 +838,7 @@ package body Browsers.Canvas is
       when E : others =>
          Pop_State (Get_Kernel (Data.Browser));
          Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+                "Unexpected exception: " & Exception_Information (E));
    end Set_Root;
 
    ------------------
@@ -904,7 +904,7 @@ package body Browsers.Canvas is
          end if;
 
          Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+                "Unexpected exception: " & Exception_Information (E));
    end On_Export;
 
    ----------------------
@@ -958,7 +958,7 @@ package body Browsers.Canvas is
          end if;
 
          Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+                "Unexpected exception: " & Exception_Information (E));
    end On_Export_To_SVG;
 
    ----------------
@@ -979,7 +979,7 @@ package body Browsers.Canvas is
       when E : others =>
          Pop_State (Get_Kernel (B));
          Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+                "Unexpected exception: " & Exception_Information (E));
    end On_Refresh;
 
    -------------------
@@ -993,7 +993,7 @@ package body Browsers.Canvas is
    exception
       when E : others =>
          Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+                "Unexpected exception: " & Exception_Information (E));
    end On_Select_All;
 
    -----------------------
