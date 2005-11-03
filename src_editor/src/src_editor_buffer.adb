@@ -856,7 +856,6 @@ package body Src_Editor_Buffer is
       end if;
    end Get_Delimiters;
 
-
    ---------------------------
    -- Highlight_Parenthesis --
    ---------------------------
@@ -2974,7 +2973,8 @@ package body Src_Editor_Buffer is
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Gint;
-      Column : Gint)
+      Column : Gint;
+      Center : Boolean)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -2990,7 +2990,11 @@ package body Src_Editor_Buffer is
          --  valid, so we can safely get the iterator at this position.
 
          Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
-         Buffer.Cursor_Set_Explicitely := 2;
+
+         if Center then
+            Buffer.Cursor_Set_Explicitely := 2;
+         end if;
+
          Place_Cursor (Buffer, Iter);
       end if;
    end Set_Cursor_Position;
@@ -2998,7 +3002,8 @@ package body Src_Editor_Buffer is
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Natural)
+      Column : Natural;
+      Center : Boolean := True)
    is
       Buffer_Line : Buffer_Line_Type :=
         Get_Buffer_Line (Buffer, Line);
@@ -3014,7 +3019,9 @@ package body Src_Editor_Buffer is
          Buffer_Line := Get_Buffer_Line (Buffer, Line);
       end if;
 
-      Set_Cursor_Position (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
+      Set_Cursor_Position
+        (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1),
+         Center);
    end Set_Cursor_Position;
 
    ---------------------------------

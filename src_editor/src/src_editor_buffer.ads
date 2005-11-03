@@ -147,8 +147,12 @@ package Src_Editor_Buffer is
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Natural);
+      Column : Natural;
+      Center : Boolean := True);
    --  Move the insert cursor to the given position.
+   --  If, following this call, the cursor location needs to be displayed, the
+   --  editor will scroll so that the cursor is centered if Center is True.
+   --  Otherwise, only a minimal scrolling will be performed.
    --
    --  The validity of the cursor position must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
@@ -709,8 +713,12 @@ private
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Gint;
-      Column : Gint);
+      Column : Gint;
+      Center : Boolean);
    --  Move the insert cursor to the given position.
+   --  If, following this call, the cursor location needs to be displayed, the
+   --  editor will scroll so that the cursor is centered if Center is True.
+   --  Otherwise, only a minimal scrolling will be performed.
    --
    --  The validity of the cursor position must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
