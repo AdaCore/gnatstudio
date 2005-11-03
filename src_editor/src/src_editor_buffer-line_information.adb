@@ -714,7 +714,7 @@ package body Src_Editor_Buffer.Line_Information is
          return;
       end if;
 
-      Set_Cursor_Position (Buffer, Gint (Line - 1), 0);
+      Set_Cursor_Position (Buffer, Gint (Line - 1), 0, False);
 
       if BL.all /= null then
          for Col in BL.all'Range loop
