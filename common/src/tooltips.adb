@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-
-
 with Ada.Exceptions;  use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
@@ -127,11 +125,27 @@ package body Tooltips is
          Add           (Tooltip.Display_Window, W);
          Get_Pointer   (null, X, Y, Mask, Window);
 
-         --  Get screen size and adjust the tooltip position to always be on
-         --  screen.
+         --  Get screen size
 
          Get_Geometry
            (Null_Window, Win_X, Win_Y, Win_Width, Win_Height, Win_Depth);
+
+         --  Adjust Win_Width and Win_Height to correspond to the proper screen
+         --  in case of multiple screen display.
+         --  ??? Note that this code assume that all the screens have the same
+         --  size, it could be the case that some tooltips are partly of the
+         --  screen if GPS is not on the main screen.
+
+         if X > Win_Width then
+            Win_Width := Win_Width * (1 + X / Win_Width);
+         end if;
+
+         if Y > Win_Height then
+            Win_Height := Win_Height * (1 + Y / Win_Height);
+         end if;
+
+         --  Now adjust the screen position for the full tooltip window to
+         --  always be on the screen.
 
          if X + Tooltip.Width + 12 > Win_Width then
             X := Win_Width - Tooltip.Width - 12;
