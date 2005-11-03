@@ -747,12 +747,12 @@ package body Browsers.Canvas is
          Widget_Callback.Object_Connect
            (Mitem, "activate", Toggle_Orthogonal'Access, B);
 
-         Gtk_New (Mitem, Label => -"Export to SVG");
+         Gtk_New (Mitem, Label => -"Export to SVG...");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, "activate", On_Export_To_SVG'Access, B);
 
-         Gtk_New (Mitem, Label => -"Export to PNG");
+         Gtk_New (Mitem, Label => -"Export to PNG...");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, "activate", On_Export'Access, B);
