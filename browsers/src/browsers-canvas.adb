@@ -2740,14 +2740,14 @@ package body Browsers.Canvas is
 
       Put_Line (SVG_File_FD, "</g>");
       Put_Line (SVG_File_FD, "</svg>");
-
    end Browser_To_SVG;
 
    ----------------
    -- Output_SVG --
    ----------------
 
-   function Output_SVG (Item : access Browser_Item_Record'Class) return String
+   function Output_SVG
+     (Item : access Browser_Item_Record'Class) return String
    is
       use String_Utils;
 
