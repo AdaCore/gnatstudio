@@ -18,6 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package contains various subprograms to do highlevel xref queries
+--  in background mode. In particular, it is used for the call-graph related
+--  queries.
+
 with GPS.Kernel;
 with Gtk.Widget;
 
