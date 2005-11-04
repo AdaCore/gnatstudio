@@ -35,11 +35,13 @@ package Diff_Utils2 is
    subtype T_Loc is Natural range 0 .. 3;
    Everywhere : constant T_Loc := 0;
 
+   Invalid_Mark : constant Natural := Natural'Last;
+
    type Diff_Range is record
       First            : Natural := 0;
       Last             : Natural := 0;
       Action           : Diff_Action := Nothing;
-      Blank_Lines_Mark : Natural := 0;
+      Blank_Lines_Mark : Natural := Invalid_Mark;
    end record;
 
    Null_Range : constant Diff_Range := (0, 0, Nothing, 0);
