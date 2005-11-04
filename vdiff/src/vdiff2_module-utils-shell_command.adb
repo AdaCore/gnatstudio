@@ -309,10 +309,12 @@ package body Vdiff2_Module.Utils.Shell_Command is
    is
       Args : Argument_List (1 .. 1);
    begin
-      Args (1) := new String'(Image (Mark));
-      Execute_GPS_Shell_Command
-        (Kernel, "Editor.remove_blank_lines", Args);
-      Free (Args (1));
+      if Mark /= Invalid_Mark then
+         Args (1) := new String'(Image (Mark));
+         Execute_GPS_Shell_Command
+           (Kernel, "Editor.remove_blank_lines", Args);
+         Free (Args (1));
+      end if;
    end Remove_Blank_Lines;
 
    ------------------
