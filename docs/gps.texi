@@ -14667,6 +14667,11 @@ elsewhere.
 Desktop file in XML format (using the menu @code{File->Save More->Desktop}),
 loaded automatically if found.
 
+   @item $HOME/.gps/locations.xml
+This file contains the list of locations that GPS has previously edited. It
+corresponds to the history navigation (@code{Navigate->Back} and
+@code{Navigate->Forward})
+
    @item $HOME/.gps/history
 @cindex history
 Contains the state and history of combo boxes (e.g. the
