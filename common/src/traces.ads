@@ -104,8 +104,8 @@ package Traces is
       Default   : Default_Activation_Status := From_Config;
       Finalize  : Boolean := True)
       return Debug_Handle;
-   --  Create a new handle.
-   --  Name is upper-cases, and looked-for in the configuration file to check
+   --  Create a new handle
+   --  Name is upper-cased, and looked-for in the configuration file to check
    --  whether debug traces should be emitted for that module.
    --
    --  Two calls to this subprogram with the same name (case insensitive) will
