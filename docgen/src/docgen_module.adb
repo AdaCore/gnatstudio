@@ -287,8 +287,8 @@ package body Docgen_Module is
 
          Is_Spec := Is_Spec_File (Kernel, File);
 
-         --  ??? For GPS 3.0.0, we only generate documentation for Ada
-         --  files.
+         --  ??? For now, only generate documentation for Ada files
+
          Is_Ada :=
            Get_Language_From_File (Get_Language_Handler (Kernel), File) =
            Ada_Lang;
@@ -296,6 +296,7 @@ package body Docgen_Module is
          if not Is_Ada then
             Trace (Me, Base_Name (File) & " is not an Ada file. " &
                    "No documentation will be generated.");
+
          elsif Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files
            or else Is_Spec
          then
@@ -689,7 +690,8 @@ package body Docgen_Module is
       then
          Insert
            (Kernel,
-            Base_Name (File) & " is not an Ada file.",
+            Base_Name (File) &
+            (-" is not an Ada file, cannot generate documentation"),
             Add_LF => True,
             Mode   => Error);
 
@@ -699,7 +701,7 @@ package body Docgen_Module is
       if B = null then
          Insert
            (Kernel,
-            "No backend selected for the documentation generator.",
+            -"No backend selected for the documentation generator",
             Add_LF => True,
             Mode   => Error);
 

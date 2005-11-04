@@ -23,6 +23,7 @@ with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Projects.Registry;  use Projects, Projects.Registry;
 with VFS;                use VFS;
+with GPS.Intl;           use GPS.Intl;
 
 package body Docgen is
 
@@ -36,8 +37,8 @@ package body Docgen is
      (Report : in out Docgen_Error_Reporter_Record;
       File   : Source_File)
    is
-      Message : constant String := "No cross references found for " &
-      Full_Name (Get_Filename (File)).all & ".";
+      Message : constant String := -"No cross references found for " &
+                  Full_Name (Get_Filename (File)).all;
    begin
       Report.Called := True;
       Insert (Report.Kernel, Message, Add_LF => True, Mode => Error);
