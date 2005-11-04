@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;
+with Glib.Values;
 with GNAT.OS_Lib;
 with HTables;
 with VFS;
@@ -35,10 +36,10 @@ with Language;
 package Entities is
 
    type Source_File_Record is tagged private;
-   type Source_File is access Source_File_Record'Class;
+   type Source_File is access all Source_File_Record'Class;
 
    type Entity_Information_Record is tagged private;
-   type Entity_Information is access Entity_Information_Record'Class;
+   type Entity_Information is access all Entity_Information_Record'Class;
 
    type LI_Handler_Record is abstract tagged limited private;
    type LI_Handler is access all LI_Handler_Record'Class;
@@ -778,6 +779,24 @@ package Entities is
    --  Return a displayable name for the handler.
    --  This name is used to print messages in the console when computing the
    --  xref database
+
+   -------------
+   -- GValues --
+   -------------
+   --  The following subprograms can be used to store an entity in a GValue,
+   --  for instance to store it in a tree view
+
+   function To_GValue (Entity : Entity_Information) return Glib.Values.GValue;
+   function From_GValue (Value : Glib.Values.GValue) return Entity_Information;
+   --  Store an entity in a GValue, or get its value back. This properly
+   --  handles reference counting, so that while the GValue is in use, the
+   --  entity remains valid. The returned entity has a borrow reference, and
+   --  thus needs to be Ref'ed if you want to keep it. Removing the row in the
+   --  tree for instance makes the entity invalid.
+
+   function Get_Entity_Information_Type return Glib.GType;
+   --  Return the type associated with an entity. This is the type that should
+   --  be used when creating the tree model.
 
 private
 

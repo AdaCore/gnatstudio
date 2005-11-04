@@ -20,6 +20,7 @@
 
 with Ada.Calendar;            use Ada.Calendar;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort_G;
@@ -27,6 +28,7 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with Entities.Debug;          use Entities.Debug;
 with File_Utils;              use File_Utils;
+with Glib.Values;             use Glib, Glib.Values;
 with GPS.Intl;                use GPS.Intl;
 with Language;                use Language;
 with Language_Handlers;   use Language_Handlers;
@@ -35,6 +37,7 @@ with Namet;                   use Namet;
 with Projects.Registry;       use Projects.Registry;
 with Projects;                use Projects;
 with String_Utils;            use String_Utils;
+with System;                  use System;
 with Traces;                  use Traces;
 with VFS;                     use VFS;
 
@@ -65,6 +68,18 @@ package body Entities is
    use Entity_Reference_Arrays;
    use Dependency_Arrays;
    use Instantiation_Arrays;
+
+   Entity_Information_Type : Glib.GType := Glib.GType_None;
+
+   function To_EI is new Ada.Unchecked_Conversion
+     (System.Address, Entity_Information);
+   function Entity_Information_Boxed_Copy
+     (Boxed : System.Address) return System.Address;
+   procedure Entity_Information_Boxed_Free (Boxed : System.Address);
+   pragma Convention (C, Entity_Information_Boxed_Copy);
+   pragma Convention (C, Entity_Information_Boxed_Free);
+   --  Internal subprograms used in the conversion of Entity_Information to
+   --  GValues.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Entity_Information_Record'Class, Entity_Information);
@@ -2558,5 +2573,77 @@ package body Entities is
          return Instantiation.Generic_Parent;
       end if;
    end Generic_Parent;
+
+   -----------------------------------
+   -- Entity_Information_Boxed_Copy --
+   -----------------------------------
+
+   function Entity_Information_Boxed_Copy
+     (Boxed : System.Address) return System.Address
+   is
+      Value : constant Entity_Information := To_EI (Boxed);
+   begin
+      if Value /= null then
+         Ref (Value);
+      end if;
+      return Boxed;
+   end Entity_Information_Boxed_Copy;
+
+   -----------------------------------
+   -- Entity_Information_Boxed_Free --
+   -----------------------------------
+
+   procedure Entity_Information_Boxed_Free (Boxed : System.Address) is
+      Entity : Entity_Information := To_EI (Boxed);
+   begin
+      Unref (Entity);
+   end Entity_Information_Boxed_Free;
+
+   ---------------------------------
+   -- Get_Entity_Information_Type --
+   ---------------------------------
+
+   function Get_Entity_Information_Type return Glib.GType is
+   begin
+      if Entity_Information_Type = GType_None then
+         Entity_Information_Type := Boxed_Type_Register_Static
+           ("Entity_Information", Entity_Information_Boxed_Copy'Access,
+            Entity_Information_Boxed_Free'Access);
+      end if;
+
+      return Entity_Information_Type;
+   end Get_Entity_Information_Type;
+
+   ---------------
+   -- To_GValue --
+   ---------------
+
+   function To_GValue
+     (Entity : Entity_Information) return Glib.Values.GValue
+   is
+      Value : GValue;
+   begin
+      Init (Value, Get_Entity_Information_Type);
+      if Entity = null then
+         Set_Boxed (Value, System.Null_Address);
+      else
+         Ref (Entity);
+         Set_Boxed (Value, Entity.all'Address);
+      end if;
+      return Value;
+   end To_GValue;
+
+   -----------------
+   -- From_GValue --
+   -----------------
+
+   function From_GValue
+     (Value : Glib.Values.GValue) return Entity_Information
+   is
+      Entity : Entity_Information;
+   begin
+      Entity := To_EI (Get_Boxed (Value));
+      return Entity;
+   end From_GValue;
 
 end Entities;
