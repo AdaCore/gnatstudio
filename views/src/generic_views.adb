@@ -106,13 +106,17 @@ package body Generic_Views is
    ------------------------
 
    function Get_Or_Create_View
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Reuse_If_Exist : Boolean := True)
       return View_Access
    is
       Child : MDI_Child;
       View  : View_Access;
    begin
-      Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel), View_Record'Tag);
+      if Reuse_If_Exist then
+         Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel), View_Record'Tag);
+      end if;
+
       if Child = null then
          View := new View_Record;
          Initialize (View, Kernel);
@@ -120,7 +124,7 @@ package body Generic_Views is
            (Kernel, View,
             Default_Width  => 215,
             Default_Height => 600,
-            Position       => Position_Left,
+            Position       => Position_View,
             Module         => Module);
          Set_Title (Child, View_Name, View_Name);
       end if;
