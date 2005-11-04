@@ -79,8 +79,10 @@ package body Buffer_Views is
       Kernel : access Kernel_Handle_Record'Class);
    --  Create a new Buffer view
 
+   Module_Name : constant String := "Windows_View";
+
    package Generic_View is new Generic_Views
-     (Module_Name => "Windows_View",
+     (Module_Name => Module_Name,
       View_Name   => "Windows View",
       View_Record => Buffer_View_Record);
    subtype Buffer_View_Access is Generic_View.View_Access;
@@ -582,7 +584,7 @@ package body Buffer_Views is
       Register_Contextual_Menu
         (Kernel, "Windows View Close Windows",
          Action => Command,
-         Filter => Create (Module => "Buffer_View"),
+         Filter => Create (Module => Module_Name),
          Label  => -"Close selected windows");
    end Register_Module;
 
