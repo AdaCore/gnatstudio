@@ -91,6 +91,7 @@ with Browsers.Entities;
 with Browsers.Projects;
 with Buffer_Views;
 with Builder_Module;
+with Call_Graph_Views;
 with Casing_Exceptions;
 with Clipboard_Views;
 with Codefix_Module;
@@ -168,6 +169,8 @@ procedure GPS.Main is
      Create ("MODULE.Project_Properties", On);
    CPP_Trace : constant Debug_Handle := Create ("MODULE.CPP", On);
    Outline_View_Trace : constant Debug_Handle := Create ("MODULE.OUTLINE", On);
+   Call_Graph_View_Trace : constant Debug_Handle :=
+     Create ("MODULE.CALL_GRAPH_VIEW", On);
 
    GPS_Started_Hook : constant String := "gps_started";
 
@@ -1257,6 +1260,10 @@ procedure GPS.Main is
 
       if Active (Call_Graph_Trace) then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Call_Graph_View_Trace) then
+         Call_Graph_Views.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Dependency_Trace) then
