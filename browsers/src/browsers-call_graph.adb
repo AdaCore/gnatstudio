@@ -2303,13 +2303,7 @@ package body Browsers.Call_Graph is
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Filter  := new Container_Entity_Filter;
-      Command := new Entity_Calls_Command;
-      Entity_Calls_Command (Command.all).To_Browser := False;
-      Register_Contextual_Menu
-        (Kernel, "Entity calls",
-         Label  => "References/%e calls (in locations)",
-         Filter => Filter,
-         Action => Command);
+      Register_Filter (Kernel, Filter, "Entity is container");
 
       Command := new Entity_Calls_Command;
       Entity_Calls_Command (Command.all).To_Browser := True;
@@ -2325,14 +2319,6 @@ package body Browsers.Call_Graph is
          Filter => Filter,
          Action => null);
       --  Separator
-
-      Command := new Entity_Called_By_Command;
-      Entity_Called_By_Command (Command.all).To_Browser := False;
-      Register_Contextual_Menu
-        (Kernel, "Entity called by",
-         Label  => "References/%e is called by (in locations)",
-         Filter => Filter,
-         Action => Command);
 
       Command := new Entity_Called_By_Command;
       Entity_Called_By_Command (Command.all).To_Browser := True;
