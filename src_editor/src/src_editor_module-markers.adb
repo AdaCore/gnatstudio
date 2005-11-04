@@ -239,7 +239,10 @@ package body Src_Editor_Module.Markers is
          Weak_Unref (Marker.Mark,
                    On_Destroy_Mark'Access, Convert (M1));
 
-         Delete_Mark (Marker.Buffer, Marker.Mark);
+         if not In_Destruction_Is_Set (Source_Buffer (Marker.Buffer)) then
+            Delete_Mark (Marker.Buffer, Marker.Mark);
+         end if;
+
          Marker.Mark := null;
       end if;
 
