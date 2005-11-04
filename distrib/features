@@ -5,6 +5,8 @@ New features in GPS 3.1.0
 
 - New view: call graph tree, for a more convenient interface to the callgraph
 
+- Locations history is now saved across sessions
+
 - Drag-and-Drop of files is now possible from the Project View or Files View
 
 - Display a dialog to chose between overloaded entities when doing a
