@@ -1750,4 +1750,21 @@ package body GUI_Utils is
       end if;
    end Toggle_Callback;
 
+   ----------------
+   -- Expand_Row --
+   ----------------
+
+   procedure Expand_Row
+     (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+      Path   : Gtk_Tree_Path;
+      Tmp    : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Path := Get_Path (Get_Model (Tree), Iter);
+      Tmp := Expand_Row (Tree, Path, Open_All => False);
+      Path_Free (Path);
+   end Expand_Row;
+
 end GUI_Utils;

@@ -211,6 +211,11 @@ package GUI_Utils is
    --  Find in Model a node matching Name in Column.
    --  return Gtk_Null_Iter if there is no such node
 
+   procedure Expand_Row
+     (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Expand the node at Iter
+
    type Editable_Cb is access procedure
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
