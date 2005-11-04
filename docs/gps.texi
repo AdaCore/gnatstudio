@@ -4813,9 +4813,9 @@ background contextual menu.
 @cindex image
 @cindex png
 @cindex svg
-The entire contents of a browser can be exported as a @code{png} image
-using the entry @code{Export to PNG} in the background contextual menu.
-It can also be exported as a @code{SVG} file using the @code{Export to SVG}
+The entire contents of a browser can be exported as a @code{PNG} image
+using the entry @code{Export to PNG...} in the background contextual menu.
+It can also be exported in @code{SVG} format using the @code{Export to SVG...}
 entry.
 
 @item Zooming
