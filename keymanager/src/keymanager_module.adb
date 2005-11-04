@@ -827,14 +827,15 @@ package body KeyManager_Module is
       Custom  : Command_Access;
 
    begin
-      --  ??? We could test Modif/=0 if we can only have key shortcuts with a
-      --  modifier (control, alt,...) However, this prevents assigning key
-      --  shortcuts to f1, f2, Home, PageUp,.. so is probably not worth it.
+      --  We could test Modif /= 0 if we allowed only key shortcuts with a
+      --  modifier (control, alt, ...). However, this would prevent assigning
+      --  key shortcuts to F1, F2, Home, PageUp,.. so is not desirable.
 
       if Handler.Active
         and then Get_Event_Type (Event) = Key_Press
       then
          --  Remove any num-lock and caps-lock modifiers.
+
          Modif := Modif and not (Lock_Mask or Mod2_Mask);
 
          if Handler.Secondary_Keymap = null then
