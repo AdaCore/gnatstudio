@@ -410,6 +410,24 @@ package body GPS.Kernel.Contexts is
       Context.Entity_Column := Entity_Column;
    end Set_Entity_Information;
 
+   ----------------------------
+   -- Set_Entity_Information --
+   ----------------------------
+
+   procedure Set_Entity_Information
+     (Context       : access Entity_Selection_Context;
+      Entity        : access Entities.Entity_Information_Record'Class) is
+   begin
+      Ref (Entity_Information (Entity));
+      Free (Context.Entity_Name);
+      Context.Entity_Name     :=
+        new String'(Get_Name (Entity_Information (Entity)).all);
+      Context.Entity_Column   :=
+        Get_Column (Get_Declaration_Of (Entity_Information (Entity)));
+      Context.Entity          := Entity_Information (Entity);
+      Context.Entity_Resolved := Success;
+   end Set_Entity_Information;
+
    ---------------------------------
    -- Has_Entity_Name_Information --
    ---------------------------------

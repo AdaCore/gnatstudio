@@ -194,6 +194,15 @@ package GPS.Kernel.Contexts is
    --  The line at which the entity starts is the line set in
    --  Set_File_Information
 
+   procedure Set_Entity_Information
+     (Context       : access Entity_Selection_Context;
+      Entity        : access Entities.Entity_Information_Record'Class);
+   --  Same as above, but we provide directly the entity itself. This is more
+   --  efficient when you already know the entity.
+   --  This doesn't change the File_Information stored in the context, so that
+   --  you can decide whether contextual menus should show file-related
+   --  entries.
+
    function Has_Entity_Name_Information
      (Context : access Entity_Selection_Context) return Boolean;
    function Entity_Name_Information
