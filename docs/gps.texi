@@ -14672,6 +14672,11 @@ This file contains the list of locations that GPS has previously edited. It
 corresponds to the history navigation (@code{Navigate->Back} and
 @code{Navigate->Forward})
 
+   @item $HOME/.gps/properties.xml
+This file is used to store file-specific properties across GPS sessions. In
+particular, it contains the encoding to use for various files when the
+default encoding isn't appropriate.
+
    @item $HOME/.gps/history
 @cindex history
 Contains the state and history of combo boxes (e.g. the
