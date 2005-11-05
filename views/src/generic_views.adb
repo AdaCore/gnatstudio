@@ -18,14 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Intl;                   use GPS.Intl;
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtkada.MDI;                 use Gtkada.MDI;
-with Glib.Object;                use Glib.Object;
-with Glib.Xml_Int;               use Glib.Xml_Int;
+with Glib.Object;        use Glib.Object;
+with Glib.Xml_Int;       use Glib.Xml_Int;
+with Gtk.Widget;         use Gtk.Widget;
+with Gtkada.MDI;         use Gtkada.MDI;
+
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Intl;           use GPS.Intl;
 
 package body Generic_Views is
 
@@ -153,11 +154,12 @@ package body Generic_Views is
       else
          Module := ID;
       end if;
+
       Register_Module
-        (Module                  => Module,
-         Kernel                  => Kernel,
-         Module_Name             => Module_Name,
-         Priority                => GPS.Kernel.Modules.Default_Priority);
+        (Module      => Module,
+         Kernel      => Kernel,
+         Module_Name => Module_Name,
+         Priority    => GPS.Kernel.Modules.Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 

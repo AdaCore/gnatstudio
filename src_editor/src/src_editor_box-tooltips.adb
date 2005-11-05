@@ -427,21 +427,21 @@ package body Src_Editor_Box.Tooltips is
          Ref (Entity);
 
          declare
-            Str : constant String :=
-                    "<b>" & Attributes_To_String (Get_Attributes (Entity)) &
-                    ' ' &
-                    (-Kind_To_String (Get_Kind (Entity))) & ' ' &
-                    Get_Full_Name (Entity, ".") & "</b>" &
-                    ASCII.LF &
-                    (-"declared at ") &
-                    Base_Name (Get_Filename
-                               (Get_File (Get_Declaration_Of (Entity)))) &
-                    ':' & Image (Get_Line (Get_Declaration_Of (Entity)));
-            Str2 : constant String :=
-                     Get_Instance (Entity_Ref)
-                     & Get_Documentation (Box.Kernel, Entity);
-            Font : constant Pango_Font_Description :=
-                     Get_Pref (Default_Font);
+            Str   : constant String :=
+                      "<b>" & Attributes_To_String (Get_Attributes (Entity)) &
+                      ' ' &
+                      (-Kind_To_String (Get_Kind (Entity))) & ' ' &
+                      Get_Full_Name (Entity, ".") & "</b>" &
+                      ASCII.LF &
+                      (-"declared at ") &
+                      Base_Name (Get_Filename
+                                 (Get_File (Get_Declaration_Of (Entity)))) &
+                      ':' & Image (Get_Line (Get_Declaration_Of (Entity)));
+            Str2   : constant String :=
+                       Get_Instance (Entity_Ref)
+                       & Get_Documentation (Box.Kernel, Entity);
+            Font   : constant Pango_Font_Description :=
+                       Get_Pref (Default_Font);
             Color  : Gdk_Color;
             Layout1, Layout2, Layout3 : Pango_Layout;
             Width, Height, W1, H1, W2, H2, W3, H3 : Gint := 0;

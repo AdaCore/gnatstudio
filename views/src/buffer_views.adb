@@ -18,41 +18,42 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Exceptions;       use Ada.Exceptions;
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Types;                 use Gdk.Types;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Notebook;              use Gtk.Notebook;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Glib;                 use Glib;
+with Glib.Object;          use Glib.Object;
+with Gdk.Event;            use Gdk.Event;
+with Gdk.Pixbuf;           use Gdk.Pixbuf;
+with Gdk.Types;            use Gdk.Types;
+with Gtk.Box;              use Gtk.Box;
+with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Menu;             use Gtk.Menu;
+with Gtk.Notebook;         use Gtk.Notebook;
+with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
+with Gtk.Tree_View;        use Gtk.Tree_View;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
+with Gtk.Tree_Store;       use Gtk.Tree_Store;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtkada.Handlers;      use Gtkada.Handlers;
+with Gtkada.MDI;           use Gtkada.MDI;
 
 with Generic_Views;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Intl;                  use GPS.Intl;
-with Histories;                 use Histories;
-with GUI_Utils;                 use GUI_Utils;
-with Src_Editor_Module;         use Src_Editor_Module;
-with VFS;                       use VFS;
-with Traces;                    use Traces;
-with Commands.Interactive;      use Commands, Commands.Interactive;
+with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
+with GPS.Intl;             use GPS.Intl;
+with Histories;            use Histories;
+with GUI_Utils;            use GUI_Utils;
+with Src_Editor_Module;    use Src_Editor_Module;
+with VFS;                  use VFS;
+with Traces;               use Traces;
+with Commands.Interactive; use Commands, Commands.Interactive;
 
 package body Buffer_Views is
+
    Icon_Column : constant := 0;
    Name_Column : constant := 1;
    Data_Column : constant := 2;
@@ -127,13 +128,15 @@ package body Buffer_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View     : constant Buffer_View_Access := Buffer_View_Access
-        (Get_Widget
-           (Find_MDI_Child_By_Tag (Get_MDI (Kernel), Buffer_View_Record'Tag)));
-      Model    : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
-      Child    : MDI_Child;
+      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View        : constant Buffer_View_Access :=
+                      Buffer_View_Access
+                        (Get_Widget
+                           (Find_MDI_Child_By_Tag
+                              (Get_MDI (Kernel), Buffer_View_Record'Tag)));
+      Model       : constant Gtk_Tree_Store :=
+                      Gtk_Tree_Store (Get_Model (View.Tree));
+      Child       : MDI_Child;
       Iter, Iter2 : Gtk_Tree_Iter;
       Count       : Natural := 0;
       CIter       : Child_Iterator := First_Child (Get_MDI (Kernel));
@@ -222,7 +225,7 @@ package body Buffer_Views is
       Model    : constant Gtk_Tree_Store :=
                    Gtk_Tree_Store (Get_Model (Explorer.Tree));
       Path     : constant Gtk_Tree_Path :=
-        Get_Path_At_Event (Explorer.Tree, Event);
+                   Get_Path_At_Event (Explorer.Tree, Event);
       Iter     : Gtk_Tree_Iter;
       Child    : MDI_Child;
    begin
@@ -273,9 +276,9 @@ package body Buffer_Views is
    procedure Child_Selected (View : access Gtk_Widget_Record'Class) is
       V     : constant Buffer_View_Access := Buffer_View_Access (View);
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (V.Kernel));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Iter2 : Gtk_Tree_Iter;
-      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (V.Kernel));
    begin
       --  If we are in the buffers view, do not show it, since otherwise that
       --  breaks the selection of multiple lines
@@ -286,13 +289,16 @@ package body Buffer_Views is
                Selected : constant String := Get_Title (Child);
             begin
                Unselect_All (Get_Selection (V.Tree));
+
                while Iter /= Null_Iter loop
                   Iter2 := Children (Model, Iter);
+
                   if Iter2 = Null_Iter then
                      if Get_String (Model, Iter, Data_Column) = Selected then
                         Select_Iter (Get_Selection (V.Tree), Iter);
                         exit;
                      end if;
+
                   else
                      while Iter2 /= Null_Iter loop
                         if Get_String (Model, Iter2, Data_Column) =
@@ -347,9 +353,11 @@ package body Buffer_Views is
       begin
          if Iter /= Null_Iter then
             Iter2 := Children (Model, Iter);
+
             if Iter2 = Null_Iter then
                --  If we had an empty notebook, remove it
                Remove (Model, Iter);
+
             elsif N_Children (Model, Iter) = 1 then
                --  Single child ?
                Set (Model, Iter, Icon_Column,
@@ -359,6 +367,7 @@ package body Buffer_Views is
                Set (Model, Iter, Data_Column,
                     Get_String (Model, Iter2, Data_Column));
                Remove (Model, Iter2);
+
             else
                Notebook_Index := Notebook_Index + 1;
             end if;
@@ -395,9 +404,9 @@ package body Buffer_Views is
          end if;
       end Show_Child;
 
-      I_Child : Gtkada.MDI.Child_Iterator;
-      Child   : MDI_Child;
-      Column  : Gint;
+      I_Child          : Gtkada.MDI.Child_Iterator;
+      Child            : MDI_Child;
+      Column           : Gint;
       Current_Notebook : Gtk_Notebook;
       pragma Unreferenced (Column);
 
@@ -412,6 +421,7 @@ package body Buffer_Views is
 
       I_Child := First_Child
         (Get_MDI (V.Kernel), Group_By_Notebook => Show_Notebooks);
+
       loop
          Child := Get (I_Child);
          exit when Child = null;
@@ -428,6 +438,7 @@ package body Buffer_Views is
             end if;
 
             Show_Child (Iter, Child);
+
          else
             Show_Child (Null_Iter, Child);
          end if;
