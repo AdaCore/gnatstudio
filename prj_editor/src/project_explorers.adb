@@ -58,6 +58,8 @@ with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Pango.Font;                use Pango.Font;
+with Pango.Layout;              use Pango.Layout;
 
 with Namet;                     use Namet;
 
@@ -67,16 +69,16 @@ with Basic_Types;
 with Projects;                  use Projects;
 with Language;                  use Language;
 with String_Utils;              use String_Utils;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Intl;                use GPS.Intl;
-with Language_Handlers;   use Language_Handlers;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Intl;                  use GPS.Intl;
+with Language_Handlers;         use Language_Handlers;
 with Traces;                    use Traces;
 with Find_Utils;                use Find_Utils;
 with File_Utils;                use File_Utils;
@@ -219,7 +221,7 @@ package body Project_Explorers is
    ------------------
 
    procedure Add_Or_Update_Flat_View_Root_Node
-     (Explorer     : access Project_Explorer_Record'Class);
+     (Explorer : access Project_Explorer_Record'Class);
    --  Add the root node for the flat view.
 
    function Add_Project_Node
@@ -247,11 +249,11 @@ package body Project_Explorers is
    --  unconditionally
 
    procedure Set_Directory_Node_Attributes
-     (Explorer         : access Project_Explorer_Record'Class;
-      Directory        : String;
-      Node             : Gtk_Tree_Iter;
-      Project          : Project_Type;
-      Node_Type        : Directory_Node_Types);
+     (Explorer  : access Project_Explorer_Record'Class;
+      Directory : String;
+      Node      : Gtk_Tree_Iter;
+      Project   : Project_Type;
+      Node_Type : Directory_Node_Types);
    --  Set the attributes in tree model for a directory node
 
    procedure Add_Files_In_Directory
@@ -361,16 +363,18 @@ package body Project_Explorers is
       Explorer : Project_Explorer;
    end record;
    type Refresh_Hook is access all Refresh_Hook_Record'Class;
-   procedure Execute (Hook   : Refresh_Hook_Record;
-                      Kernel : access Kernel_Handle_Record'Class);
+   procedure Execute
+     (Hook   : Refresh_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project view has changed
 
    type Project_Changed_Hook_Record is new Hook_No_Args_Record with record
       Explorer : Project_Explorer;
    end record;
    type Project_Hook is access all Project_Changed_Hook_Record'Class;
-   procedure Execute (Hook   : Project_Changed_Hook_Record;
-                      Kernel : access Kernel_Handle_Record'Class);
+   procedure Execute
+     (Hook   : Project_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project as changed, as opposed to the project view.
    --  This means we need to start up with a completely new tree, no need to
    --  try to keep the current one.
@@ -603,7 +607,7 @@ package body Project_Explorers is
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues)
    is
       pragma Unreferenced (Args);
-      T       : constant Project_Explorer := Project_Explorer (Explorer);
+      T : constant Project_Explorer := Project_Explorer (Explorer);
    begin
       Context_Changed (T.Kernel);
    exception
@@ -818,12 +822,11 @@ package body Project_Explorers is
       --  "Object" is also the explorer, but this way we make sure the current
       --  context is that of the explorer (since it will have the MDI focus)
       T         : constant Project_Explorer :=
-        Get_Or_Create_Project_View (Kernel);
+                    Get_Or_Create_Project_View (Kernel);
+      Iter      : constant Gtk_Tree_Iter :=
+                    Find_Iter_For_Event (T.Tree, T.Tree.Model, Event);
       Item      : Gtk_Menu_Item;
       Check     : Gtk_Check_Menu_Item;
-
-      Iter      : constant Gtk_Tree_Iter := Find_Iter_For_Event
-        (T.Tree, T.Tree.Model, Event);
       Path      : Gtk_Tree_Path;
       Node_Type : Node_Types;
    begin
@@ -979,7 +982,8 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter)
    is
       Node_Text : constant String :=
-        Get_String (Explorer.Tree.Model, Node, Absolute_Name_Column);
+                    Get_String
+                      (Explorer.Tree.Model, Node, Absolute_Name_Column);
    begin
       if Get_History
         (Get_History (Explorer.Kernel).all, Show_Absolute_Paths)
@@ -1057,11 +1061,11 @@ package body Project_Explorers is
    -----------------------------------
 
    procedure Set_Directory_Node_Attributes
-     (Explorer         : access Project_Explorer_Record'Class;
-      Directory        : String;
-      Node             : Gtk_Tree_Iter;
-      Project          : Project_Type;
-      Node_Type        : Directory_Node_Types) is
+     (Explorer  : access Project_Explorer_Record'Class;
+      Directory : String;
+      Node      : Gtk_Tree_Iter;
+      Project   : Project_Type;
+      Node_Type : Directory_Node_Types) is
    begin
       Set (Explorer.Tree.Model, Node, Absolute_Name_Column,
            Locale_To_UTF8 (Name_As_Directory (Directory)));
@@ -1081,6 +1085,7 @@ package body Project_Explorers is
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
+      Font       : Pango_Font_Description;
       Window     : Gdk.Window.Gdk_Window;
       New_Window : Gdk_Window;
       Mask       : Gdk_Modifier_Type;
@@ -1114,10 +1119,35 @@ package body Project_Explorers is
 
       if not Row_Found then
          return;
+
+      else
+         --  Now check that the cursor is over a text
+
+         Iter := Get_Iter (Tooltip.Explorer.Tree.Model, Path);
+
+         declare
+            Str     : constant String := Get_String
+              (Tooltip.Explorer.Tree.Model, Iter, Base_Name_Column);
+            S_Icon  : constant Gint := 15; -- size used for the icon
+            S_Level : constant Gint := 12; -- size used for each indent level
+            --  ??? S_Icon and S_Level have been computed experimentally. It is
+            --  maybe possible to get the proper values from the Tree_View.
+            Layout  : Pango_Layout;
+            Width   : Gint;
+            Height  : Gint;
+         begin
+            Font := Get_Pref (Default_Font);
+            Layout := Create_Pango_Layout (Tooltip.Explorer, Str);
+            Set_Font_Description (Layout, Font);
+            Get_Pixel_Size (Layout, Width, Height);
+
+            if Cell_X > S_Icon + (Get_Depth (Path) * S_Level) + Width + 10 then
+               return;
+            end if;
+         end;
       end if;
 
       Get_Cell_Area (Tooltip.Explorer.Tree, Path, Column, Area);
-      Iter := Get_Iter (Tooltip.Explorer.Tree.Model, Path);
 
       Path_Free (Path);
 
@@ -1178,12 +1208,18 @@ package body Project_Explorers is
       end case;
 
       if Text /= null then
-         Create_Pixmap_From_Text
-           (Text.all,
-            Get_Pref (Default_Font),
-            White (Get_Default_Colormap),
-            Tooltip.Explorer.Tree,
-            Pixmap);
+         declare
+            Color : Gdk_Color;
+         begin
+            Color := Parse ("#EEEEEE");
+            Alloc (Get_Default_Colormap, Color);
+
+            Create_Pixmap_From_Text
+              (Text.all,
+               Font, Color,
+               Tooltip.Explorer.Tree,
+               Pixmap);
+         end;
          Free (Text);
       end if;
    end Draw;
@@ -1198,8 +1234,8 @@ package body Project_Explorers is
    is
       Project : constant Project_Type := Get_Project_From_Node
         (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-      Files : File_Array_Access := Get_Source_Files
-        (Project, Recursive => False);
+      Files   : File_Array_Access :=
+                  Get_Source_Files (Project, Recursive => False);
    begin
       Update_Project_Node (Explorer, Files, Node);
       Unchecked_Free (Files);
@@ -1221,7 +1257,7 @@ package body Project_Explorers is
       Project  : Project_Type)
    is
       Obj  : constant String :=
-        Name_As_Directory (Object_Path (Project, False));
+               Name_As_Directory (Object_Path (Project, False));
       Exec : constant String := Executables_Directory (Project);
 
       function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter;
@@ -1232,7 +1268,7 @@ package body Project_Explorers is
       -----------------------
 
       function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter is
-         N : Gtk_Tree_Iter;
+         N   : Gtk_Tree_Iter;
          Ref : Gtk_Tree_Iter := Children (Explorer.Tree.Model, Node);
       begin
          while Ref /= Null_Iter loop
@@ -1392,7 +1428,7 @@ package body Project_Explorers is
       Margin    : constant Gint := 30;
       T         : constant Project_Explorer := Project_Explorer (Explorer);
       Path      : constant Gtk_Tree_Path :=
-        Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
+                    Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
       Node      : constant Gtk_Tree_Iter := Get_Iter (T.Tree.Model, Path);
       Success   : Boolean;
       pragma Unreferenced (Success);
@@ -1449,7 +1485,7 @@ package body Project_Explorers is
    is
       E    : constant Project_Explorer := Project_Explorer (Explorer);
       Path : constant Gtk_Tree_Path :=
-        Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
+               Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
       Node : constant Gtk_Tree_Iter := Get_Iter (E.Tree.Model, Path);
 
    begin
@@ -1744,7 +1780,7 @@ package body Project_Explorers is
    is
       Index : Natural;
       N, N2 : Gtk_Tree_Iter;
-      Dir : constant String := Name_As_Directory
+      Dir   : constant String := Name_As_Directory
         (Normalize_Pathname
            (Get_Directory_From_Node (Explorer.Tree.Model, Node),
             Resolve_Links => False));
@@ -1830,8 +1866,8 @@ package body Project_Explorers is
       Force_Expanded   : Boolean := False)
    is
       N, N2     : Gtk_Tree_Iter;
-      Node_Type : constant Node_Types
-        := Get_Node_Type (Explorer.Tree.Model, Node);
+      Node_Type : constant Node_Types :=
+                    Get_Node_Type (Explorer.Tree.Model, Node);
       N_Type    : Node_Types;
       Prj       : constant Project_Type := Get_Project_From_Node
         (Explorer.Tree.Model, Explorer.Kernel, Node, False);
@@ -1910,13 +1946,13 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class)
    is
       Iter2, Iter3 : Gtk_Tree_Iter;
-      Imported : Project_Type_Array := Get_Imported_Projects
+      Imported     : Project_Type_Array := Get_Imported_Projects
         (Get_Project (Explorer.Kernel),
          Direct_Only     => False,
          Include_Project => True);
-      Name     : Name_Id;
-      Found    : Boolean;
-      Id       : Gint;
+      Name         : Name_Id;
+      Found        : Boolean;
+      Id           : Gint;
       pragma Unreferenced (Id);
    begin
       Iter2 := Get_Iter_First (Explorer.Tree.Model);
@@ -2264,8 +2300,8 @@ package body Project_Explorers is
          Result : out Gtk_Tree_Iter;
          Finish : out Boolean)
       is
-         N : aliased constant String := Get_Base_Name
-           (Explorer.Tree.Model, Start);
+         N      : aliased constant String :=
+                    Get_Base_Name (Explorer.Tree.Model, Start);
          Status : Search_Status;
       begin
          Status := Get (C.Matches, N);
@@ -2334,6 +2370,10 @@ package body Project_Explorers is
          --  Return the first word in Str. This is required since the model
          --  of the explorer stores the arguments of the subprograms as well,
          --  and no match would be found otherwise
+
+         ----------------
+         -- First_Word --
+         ----------------
 
          function First_Word (Str : String) return String is
          begin
@@ -2422,9 +2462,9 @@ package body Project_Explorers is
       function Check_Entities (File : VFS.Virtual_File) return Boolean is
          use type Entities.LI_Handler;
          Languages  : constant Language_Handler :=
-           Language_Handler (Get_Language_Handler (Kernel));
-         Handler    : constant Entities.LI_Handler := Get_LI_Handler_From_File
-           (Languages, File);
+                        Language_Handler (Get_Language_Handler (Kernel));
+         Handler    : constant Entities.LI_Handler :=
+                        Get_LI_Handler_From_File (Languages, File);
          Constructs : Construct_List;
          Status     : Boolean := False;
 
