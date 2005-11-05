@@ -481,7 +481,7 @@ package body Project_Explorers_Common is
                        (Full_Filename =>
                           Get_String (Model, Iter, Absolute_Name_Column));
                      Child_Drag_Begin (Child, Event);
-                     return True;
+                     return False;
                   end if;
 
                when Entity_Node =>
