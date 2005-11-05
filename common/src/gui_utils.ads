@@ -21,14 +21,18 @@
 --  This package contains a series of subprograms that can be used
 --  for misc. graphical tasks.
 
+with System;
+
+with GNAT.OS_Lib;
+
+with Glib.Object;
+with Glib.Values;
+with Glib;                     use Glib;
 with Gdk.Color;
 with Gdk.Event;
 with Gtk.Menu_Item;
 with Gdk.Types;
 with Gdk.Window;
-with Glib.Object;
-with Glib.Values;
-with Glib;                     use Glib;
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
@@ -56,8 +60,6 @@ with Gtk.Tree_View_Column;
 with Gtk.Widget;
 with Pango.Font;
 with String_List_Utils;
-with System;
-with GNAT.OS_Lib;
 
 package GUI_Utils is
 
@@ -77,11 +79,11 @@ package GUI_Utils is
    --  is already visible in the list. Text must be UTF8-encoded.
 
    procedure Add_Unique_Combo_Entry
-     (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Text        : String;
-      Item_String : String := "";
+     (Combo           : access Gtk.Combo.Gtk_Combo_Record'Class;
+      Text            : String;
+      Item_String     : String := "";
       Use_Item_String : Boolean := False;
-      Prepend     : Boolean := False);
+      Prepend         : Boolean := False);
    --  Add Text to the popdown list of Combo, if it is not already there.
    --  If the Text is already in the combo box, nothing is done.
    --  If Use_Item_String is True, then Item_String will be inserted in the
@@ -89,11 +91,11 @@ package GUI_Utils is
    --  Text must be UTF8-encoded.
 
    function Add_Unique_Combo_Entry
-     (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Text        : String;
-      Item_String : String := "";
+     (Combo           : access Gtk.Combo.Gtk_Combo_Record'Class;
+      Text            : String;
+      Item_String     : String := "";
       Use_Item_String : Boolean := False;
-      Prepend     : Boolean := False) return Gtk.List_Item.Gtk_List_Item;
+      Prepend         : Boolean := False) return Gtk.List_Item.Gtk_List_Item;
    --  Same as above, but return the inserted item (or the previously existing
    --  one).
 
@@ -143,7 +145,7 @@ package GUI_Utils is
    type Completion_Handler is access function
      (Input     : String;
       User_Data : System.Address)
-     return String_List_Utils.String_List.List;
+      return String_List_Utils.String_List.List;
    --  This function should return a list of adequate elements that all
    --  begin with Input, or a list containing only Input.
    --  The list if freed automatically by the interactive console.

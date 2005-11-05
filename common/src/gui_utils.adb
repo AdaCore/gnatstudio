@@ -22,6 +22,11 @@ with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Text_IO;              use Ada.Text_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
+with Glib.Convert;             use Glib.Convert;
+with Glib.Object;              use Glib.Object;
+with Glib.Properties;          use Glib.Properties;
+with Glib.Values;              use Glib.Values;
+
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Cursor;               use Gdk.Cursor;
 with Gdk.Drawable;             use Gdk.Drawable;
@@ -34,11 +39,6 @@ with Gdk.Pixmap;               use Gdk.Pixmap;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Types;                use Gdk.Types;
 with Gdk.Window;               use Gdk.Window;
-
-with Glib.Convert;             use Glib.Convert;
-with Glib.Object;              use Glib.Object;
-with Glib.Properties;          use Glib.Properties;
-with Glib.Values;              use Glib.Values;
 
 with Gtk.Accel_Map;            use Gtk.Accel_Map;
 with Gtk.Bin;                  use Gtk.Bin;
@@ -267,10 +267,10 @@ package body GUI_Utils is
    is
       use type Widget_List.Glist;
       Entry_Text : constant String := Get_Text (Get_Entry (Combo));
-      Children  : Widget_List.Glist := Get_Children (Get_List (Combo));
-      Item      : Gtk_List_Item;
-      Label     : Gtk_Label;
-      Index     : Integer := -1;
+      Children   : Widget_List.Glist := Get_Children (Get_List (Combo));
+      Item       : Gtk_List_Item;
+      Label      : Gtk_Label;
+      Index      : Integer := -1;
    begin
       --  We have to search explicitely in the list, since the selection might
       --  be different from what is actually displayed in the list, for
@@ -322,7 +322,7 @@ package body GUI_Utils is
       Force_Refresh : Boolean := False)
    is
       use type Gdk_Window;
-      Cursor     : Gdk.Cursor.Gdk_Cursor;
+      Cursor : Gdk.Cursor.Gdk_Cursor;
    begin
       if Window /= null then
          if Busy then
@@ -1645,9 +1645,9 @@ package body GUI_Utils is
            or else (not Previous_Was_Icon
                     and then (Col = null or else not Is_Icon))
          then
-            Gtk_New           (Col);
-            Set_Resizable     (Col, True);
-            Set_Reorderable   (Col, True);
+            Gtk_New         (Col);
+            Set_Resizable   (Col, True);
+            Set_Reorderable (Col, True);
 
             Col_Number := Append_Column (View, Col);
             if Column_Names (Column_Names'First + N) /= null then
