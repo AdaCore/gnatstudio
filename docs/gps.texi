@@ -6624,7 +6624,15 @@ The VCS Activities give the ability to group files to be committed
 together. The set of files can be committed atomically if supported by
 the version control system used.
 
-@c ??? would be nice to add a screen shot here
+@iftex
+@cindex screen shot
+@image{vcs-activities, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{vcs-activities}
+@end ifhtml
 
 The way to bring up the VCS Activities view is through the
 @code{VCS->Activities} menu.
