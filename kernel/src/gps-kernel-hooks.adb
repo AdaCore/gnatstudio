@@ -950,7 +950,7 @@ package body GPS.Kernel.Hooks is
       Set_Busy : Boolean := True) return Boolean
    is
       Info : constant Hook_Description_Access :=
-        Hook_Description_Access (Get (Kernel.Hooks, Name));
+               Hook_Description_Access (Get (Kernel.Hooks, Name));
       N    : List_Node := Null_Node;
       F    : Hook_Function;
    begin
@@ -1204,7 +1204,7 @@ package body GPS.Kernel.Hooks is
      (Wrapper : Shell_Wrapper_No_Args_Record;
       Kernel  : access Kernel_Handle_Record'Class)
    is
-      D : Callback_Data'Class := Create (Wrapper.Script, 1);
+      D   : Callback_Data'Class := Create (Wrapper.Script, 1);
       Tmp : Boolean;
       pragma Unreferenced (Kernel, Tmp);
    begin
@@ -1299,9 +1299,8 @@ package body GPS.Kernel.Hooks is
       elsif Command = "register" then
          Name_Parameters (Data, Register_Hook_Args);
          declare
-            Name  : constant String := Nth_Arg (Data, 1);
---              Descr : constant String := Nth_Arg (Data, 2);
-            Typ   : constant String := Nth_Arg (Data, 2, "");
+            Name : constant String := Nth_Arg (Data, 1);
+            Typ  : constant String := Nth_Arg (Data, 2, "");
          begin
             Register_Hook (Get_Kernel (Data), Name, Typ);
          end;
@@ -1381,7 +1380,7 @@ package body GPS.Kernel.Hooks is
          Info := Get_Data (Data, 1);
          Name_Parameters (Data, Add_Hook_Args);
          declare
-            Func    : Subprogram_Type := Nth_Arg (Data, 2);
+            Func     : Subprogram_Type := Nth_Arg (Data, 2);
             Wrapper  : Shell_Wrapper;
             Wrapper2 : Shell_Wrapper_No_Args;
             Wrapper3 : Shell_Wrapper_Return;
