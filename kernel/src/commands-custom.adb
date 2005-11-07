@@ -263,9 +263,11 @@ package body Commands.Custom is
       end Append;
 
       Current, Total : Integer := 0;
-      Save_Output : constant Boolean :=
-        Command.Execution.Save_Output (Command.Execution.Cmd_Index);
-      Index, EOL : Integer;
+      Save_Output    : constant Boolean :=
+                         Command.Execution.Save_Output
+                           (Command.Execution.Cmd_Index);
+
+      Index, EOL     : Integer;
 
    begin
       if Command.Execution.Progress_Matcher /= null then
@@ -801,7 +803,8 @@ package body Commands.Custom is
 
       function Execute_Next_Command return Boolean;
       --  Execute the following commands, until the next external one.
-      --  Return True if there are still commands to executed after that one.
+      --  Return True if there are still commands to be executed after that
+      --  one.
 
       -------------------------
       -- Dollar_Substitution --
@@ -1113,27 +1116,29 @@ package body Commands.Custom is
 
             Launch_Process
               (Command.Kernel,
-               Command       => Args (Args'First).all,
-               Arguments     => Args (Args'First + 1 .. Args'Last),
-               Console       => Console,
-               Callback      => Store_Command_Output'Access,
-               Exit_Cb       => Exit_Cb'Access,
-               Success       => Success,
-               Show_Command  => Component.Show_Command,
+               Command              => Args (Args'First).all,
+               Arguments            => Args (Args'First + 1 .. Args'Last),
+               Console              => Console,
+               Callback             => Store_Command_Output'Access,
+               Exit_Cb              => Exit_Cb'Access,
+               Success              => Success,
+               Show_Command         => Component.Show_Command,
 
                --  Showing the output is already handled by the callback
                --  Store_Command_Output
-               Show_Output   => False,
+               Show_Output          => False,
 
-               Callback_Data => new Custom_Callback_Data'
+               Callback_Data        => new Custom_Callback_Data'
                  (Command => Custom_Command_Access (Command)),
                Show_In_Task_Manager => Component.Show_In_Task_Manager,
-               Line_By_Line  => False,
-               Directory     => To_String (Context.Dir));
+               Line_By_Line         => False,
+               Directory            => To_String (Context.Dir),
+               Fd                   => Command.Fd);
             Free (Args);
 
             Command.Execution.External_Process_Console := Console;
             Command.Execution.External_Process_In_Progress := Success;
+
             return Success;
          end Execute_External;
 
@@ -1789,5 +1794,15 @@ package body Commands.Custom is
          end if;
       end if;
    end To_XML;
+
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   procedure Interrupt (Command : in out Custom_Command) is
+   begin
+      Command.Execution.Cmd_Index := Command.Components'First;
+      Close (Command.Fd.all);
+   end Interrupt;
 
 end Commands.Custom;
