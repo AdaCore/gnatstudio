@@ -155,7 +155,7 @@
    <!-- CVS update -->
 
    <action name="generic_cvs_update" show-command="true" output="none">
-      <external output="">cvs update "$*"</external>
+      <external>cvs update "$*"</external>
       <on-failure>
          <shell output="">echo "CVS error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -268,7 +268,7 @@
    <!-- CVS revert -->
 
    <action name="generic_cvs_revert" show-command="true" output="none">
-      <external output="">cvs update -C "$*"</external>
+      <external>cvs update -C "$*"</external>
       <on-failure>
          <shell output="">echo "CVS error:"</shell>
          <shell output="">echo "%2"</shell>
