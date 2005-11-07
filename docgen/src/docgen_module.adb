@@ -955,7 +955,8 @@ package body Docgen_Module is
         (Kernel, "Generate file documentation",
          Label  => "Documentation/Generate for %f",
          Action => Command,
-         Filter => Lookup_Filter (Kernel, "File"));
+         Filter => Action_Filter (Lookup_Filter (Kernel, "File") and
+                                  Create (Language => "ada")));
 
       Docgen_Module (Docgen_Module_Id).Generate_Body_Files
         := Param_Spec_Boolean
