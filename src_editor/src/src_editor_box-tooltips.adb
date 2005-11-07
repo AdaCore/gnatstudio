@@ -442,14 +442,10 @@ package body Src_Editor_Box.Tooltips is
                        & Get_Documentation (Box.Kernel, Entity);
             Font   : constant Pango_Font_Description :=
                        Get_Pref (Default_Font);
-            Color  : Gdk_Color;
             Layout1, Layout2, Layout3 : Pango_Layout;
             Width, Height, W1, H1, W2, H2, W3, H3 : Gint := 0;
             GC     : Gdk.Gdk_GC;
          begin
-            Color := Parse ("#EEEEEE");
-            Alloc (Get_Default_Colormap, Color);
-
             Layout1 := Create_Pango_Layout (Widget, "");
 
             if Status = Overloaded_Entity_Found
@@ -484,7 +480,7 @@ package body Src_Editor_Box.Tooltips is
             Height := Height + H3;
 
             Gdk_New (GC, Get_Window (Widget));
-            Set_Foreground (GC, Color);
+            Set_Foreground (GC, Get_Pref (Tooltip_Color));
 
             Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
             Draw_Rectangle (Pixmap, GC, True, 0, 0, Width - 1, Height - 1);
