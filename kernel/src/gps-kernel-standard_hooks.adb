@@ -518,18 +518,19 @@ package body GPS.Kernel.Standard_Hooks is
    procedure Line_Information_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String := Get_Hook_Name (Data, 1);
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Name       : constant String := Get_Hook_Name (Data, 1);
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Identifier : constant String := Nth_Arg (Data, 2);
-      Args   : aliased  File_Line_Hooks_Args :=
-        (Kernel            => Kernel,
-         Identifier_Length => Identifier'Length,
-         Identifier        => Identifier,
-         File              => Get_File
-           (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel)))),
-         Info              => null,
-         Every_Line        => Nth_Arg (Data, 4),
-         Normalize         => Nth_Arg (Data, 5));
+      Args       : aliased  File_Line_Hooks_Args :=
+                     (Kernel            => Kernel,
+                      Identifier_Length => Identifier'Length,
+                      Identifier        => Identifier,
+                      File              => Get_File
+                        (Get_Data
+                           (Nth_Arg (Data, 3, Get_File_Class (Kernel)))),
+                      Info              => null,
+                      Every_Line        => Nth_Arg (Data, 4),
+                      Normalize         => Nth_Arg (Data, 5));
       pragma Unreferenced (Command);
    begin
       Set_Return_Value
@@ -543,24 +544,25 @@ package body GPS.Kernel.Standard_Hooks is
    procedure Location_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String := Get_Hook_Name (Data, 1);
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Name       : constant String := Get_Hook_Name (Data, 1);
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Identifier : constant String := Nth_Arg (Data, 2);
       Category   : constant String := Nth_Arg (Data, 3);
       Message    : constant String := Nth_Arg (Data, 7);
-      Args   : aliased Location_Hooks_Args :=
-        (Kernel            => Kernel,
-         Ident_Length      => Identifier'Length,
-         Identifier        => Identifier,
-         Cat_Length        => Category'Length,
-         Category          => Category,
-         File              => Get_File
-           (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel)))),
-         Line              => Nth_Arg (Data, 5),
-         Column            => Nth_Arg (Data, 6),
-         Mes_Length        => Message'Length,
-         Message           => Message,
-         Action            => null);
+      Args       : aliased Location_Hooks_Args :=
+                     (Kernel            => Kernel,
+                      Ident_Length      => Identifier'Length,
+                      Identifier        => Identifier,
+                      Cat_Length        => Category'Length,
+                      Category          => Category,
+                      File              => Get_File
+                        (Get_Data
+                           (Nth_Arg (Data, 4, Get_File_Class (Kernel)))),
+                      Line              => Nth_Arg (Data, 5),
+                      Column            => Nth_Arg (Data, 6),
+                      Mes_Length        => Message'Length,
+                      Message           => Message,
+                      Action            => null);
       pragma Unreferenced (Command);
    begin
       Set_Return_Value
@@ -578,12 +580,12 @@ package body GPS.Kernel.Standard_Hooks is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Anchor : constant String := Nth_Arg (Data, 4);
       Args   : aliased Html_Hooks_Args :=
-        (Kernel            => Kernel,
-         File              => Get_File
-           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
-         Enable_Navigation => Nth_Arg (Data, 3),
-         Anchor_Length     => Anchor'Length,
-         Anchor            => Anchor);
+                 (Kernel            => Kernel,
+                  File              => Get_File
+                    (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
+                  Enable_Navigation => Nth_Arg (Data, 3),
+                  Anchor_Length     => Anchor'Length,
+                  Anchor            => Anchor);
       pragma Unreferenced (Command);
    begin
       Set_Return_Value
@@ -603,12 +605,12 @@ package body GPS.Kernel.Standard_Hooks is
       pragma Unreferenced (Command);
    begin
       Args :=
-        (Kernel            => Kernel,
-         Orig_File         => Get_File
+        (Kernel    => Kernel,
+         Orig_File => Get_File
            (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
-         New_File          => Get_File
+         New_File  => Get_File
            (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel), True))),
-         Diff_File         => Get_File
+         Diff_File => Get_File
            (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel), True))));
       Set_Return_Value
         (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
@@ -624,9 +626,10 @@ package body GPS.Kernel.Standard_Hooks is
       Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Args   : aliased File_Hooks_Args :=
-        (Kernel => Kernel,
-         File   => Get_File
-           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))));
+                 (Kernel => Kernel,
+                  File   => Get_File
+                    (Get_Data
+                       (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))));
       pragma Unreferenced (Command);
    begin
       Run_Hook (Kernel, Name, Args'Unchecked_Access);
@@ -642,8 +645,8 @@ package body GPS.Kernel.Standard_Hooks is
       Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Args   : aliased Project_Hooks_Args :=
-        (Kernel  => Kernel,
-         Project => Get_Data (Data, 2));
+                 (Kernel  => Kernel,
+                  Project => Get_Data (Data, 2));
       pragma Unreferenced (Command);
    begin
       Run_Hook (Kernel, Name, Args'Unchecked_Access);
@@ -660,9 +663,9 @@ package body GPS.Kernel.Standard_Hooks is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Value  : constant String := Nth_Arg (Data, 2);
       Args   : aliased String_Hooks_Args :=
-        (Kernel => Kernel,
-         Length => Value'Length,
-         Value  => Value);
+                 (Kernel => Kernel,
+                  Length => Value'Length,
+                  Value  => Value);
       pragma Unreferenced (Command);
    begin
       Run_Hook (Kernel, Name, Args'Unchecked_Access);
@@ -678,7 +681,7 @@ package body GPS.Kernel.Standard_Hooks is
       Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Args   : aliased Context_Hooks_Args :=
-        (Kernel, Context =>  Get_Data (Data, 2));
+                 (Kernel, Context =>  Get_Data (Data, 2));
       pragma Unreferenced (Command);
    begin
       Run_Hook (Kernel, Name, Args'Unchecked_Access);
@@ -694,11 +697,12 @@ package body GPS.Kernel.Standard_Hooks is
       Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Args   : aliased File_Location_Hooks_Args :=
-        (Kernel => Kernel,
-         File   => Get_File
-           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
-         Line   => Nth_Arg (Data, 3),
-         Column => Nth_Arg (Data, 4));
+                 (Kernel => Kernel,
+                  File   => Get_File
+                    (Get_Data
+                       (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
+                  Line   => Nth_Arg (Data, 3),
+                  Column => Nth_Arg (Data, 4));
       pragma Unreferenced (Command);
    begin
       Run_Hook (Kernel, Name, Args'Unchecked_Access);
@@ -724,9 +728,9 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access Context_Hooks_Args) return Boolean
    is
-      D : Callback_Data'Class := Create (Script, 2);
+      C   : constant Class_Instance := Create_Context (Script, Data.Context);
+      D   : Callback_Data'Class := Create (Script, 2);
       Tmp : Boolean;
-      C : constant Class_Instance := Create_Context (Script, Data.Context);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, C);
@@ -766,7 +770,7 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access String_Hooks_Args) return Boolean
    is
-      D : Callback_Data'Class := Create (Script, 2);
+      D   : Callback_Data'Class := Create (Script, 2);
       Tmp : Boolean;
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
@@ -786,9 +790,9 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access Project_Hooks_Args) return Boolean
    is
-      D : Callback_Data'Class := Create (Script, 2);
+      P   : constant Class_Instance := Create_Project (Script, Data.Project);
+      D   : Callback_Data'Class := Create (Script, 2);
       Tmp : Boolean;
-      P : constant Class_Instance := Create_Project (Script, Data.Project);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, P);
@@ -818,9 +822,9 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access File_Hooks_Args) return Boolean
    is
-      D : Callback_Data'Class := Create (Script, 2);
+      F   : constant Class_Instance := Create_File (Script, Data.File);
+      D   : Callback_Data'Class := Create (Script, 2);
       Tmp : Boolean;
-      F : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, F);
@@ -850,9 +854,9 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access Source_File_Hooks_Args) return Boolean
    is
-      D : Callback_Data'Class := Create (Script, 8);
-      Tmp  : Boolean;
-      F : constant Class_Instance := Create_File (Script, Data.File);
+      F   : constant Class_Instance := Create_File (Script, Data.File);
+      D   : Callback_Data'Class := Create (Script, 8);
+      Tmp : Boolean;
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, F);
@@ -889,9 +893,9 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access File_Line_Hooks_Args) return Boolean
    is
+      F   : constant Class_Instance := Create_File (Script, Data.File);
       D   : Callback_Data'Class := Create (Script, 5);
       Tmp : Boolean;
-      F   : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, Data.Identifier);
@@ -925,9 +929,9 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access Location_Hooks_Args) return Boolean
    is
-      D : Callback_Data'Class := Create (Script, 7);
+      F   : constant Class_Instance := Create_File (Script, Data.File);
+      D   : Callback_Data'Class := Create (Script, 7);
       Tmp : Boolean;
-      F : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, Data.Identifier);
@@ -963,9 +967,9 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access Html_Hooks_Args) return Boolean
    is
-      D : Callback_Data'Class := Create (Script, 4);
+      F   : constant Class_Instance := Create_File (Script, Data.File);
+      D   : Callback_Data'Class := Create (Script, 4);
       Tmp : Boolean;
-      F : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, F);
@@ -998,9 +1002,9 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access File_Location_Hooks_Args) return Boolean
    is
-      D : Callback_Data'Class := Create (Script, 4);
+      F   : constant Class_Instance := Create_File (Script, Data.File);
+      D   : Callback_Data'Class := Create (Script, 4);
       Tmp : Boolean;
-      F : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, F);
@@ -1033,11 +1037,11 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access Diff_Hooks_Args) return Boolean
    is
-      D : Callback_Data'Class := Create (Script, 4);
+      F1  : constant Class_Instance := Create_File (Script, Data.Orig_File);
+      F2  : constant Class_Instance := Create_File (Script, Data.New_File);
+      F3  : constant Class_Instance := Create_File (Script, Data.Diff_File);
+      D   : Callback_Data'Class := Create (Script, 4);
       Tmp : Boolean;
-      F1 : constant Class_Instance := Create_File (Script, Data.Orig_File);
-      F2 : constant Class_Instance := Create_File (Script, Data.New_File);
-      F3 : constant Class_Instance := Create_File (Script, Data.Diff_File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, F1);
@@ -1072,9 +1076,9 @@ package body GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access Compilation_Hooks_Args) return Boolean
    is
-      D : Callback_Data'Class := Create (Script, 3);
+      F   : constant Class_Instance := Create_File (Script, Data.File);
+      D   : Callback_Data'Class := Create (Script, 3);
       Tmp : Boolean;
-      F : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, F);
