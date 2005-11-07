@@ -74,4 +74,19 @@ package Entities.Commands is
    --
    --  If Watch is destroyed during the search, then the latter is cancelled.
 
+   ------------------------------------------------------
+   -- Searching for all entities called by another one --
+   ------------------------------------------------------
+
+   procedure Examine_Entity_Call_Graph
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity          : Entity_Information;
+      User_Data       : access Commands_User_Data_Record'Class;
+      Get_All_Refs    : Boolean);
+   --  Search for all entities called by Entity.
+   --  If Get_All_Refs is true, then all occurrences of the called entities
+   --  within Entity will result in a call to On_Entity_Found. Otherwise, a
+   --  single call it made for each entity, passing Ref as No_Entity_Reference.
+   --  This call is synchronous.
+
 end Entities.Commands;

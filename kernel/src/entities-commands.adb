@@ -233,4 +233,84 @@ package body Entities.Commands is
                 "Unexpected exception: " & Exception_Information (E));
    end Examine_Ancestors_Call_Graph;
 
+   -------------------------------
+   -- Examine_Entity_Call_Graph --
+   -------------------------------
+
+   procedure Examine_Entity_Call_Graph
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity          : Entity_Information;
+      User_Data       : access Commands_User_Data_Record'Class;
+      Get_All_Refs    : Boolean)
+   is
+      Calls       : Calls_Iterator;
+      Called_E    : Entity_Information;
+      Refs        : Entity_Reference_Iterator;
+      Ref         : Entity_Reference;
+      Data        : Commands_User_Data;
+   begin
+      if Entity /= null then
+         Push_State (Kernel_Handle (Kernel), Busy);
+         Calls := Get_All_Called_Entities (Entity);
+
+         For_Each_Entity :
+         while not At_End (Calls) loop
+            Called_E := Get (Calls);
+
+            if Called_E /= null
+              and then Is_Subprogram (Called_E)
+            then
+               if Get_All_Refs then
+                  Find_All_References
+                    (Iter     => Refs,
+                     Entity   => Called_E,
+                     In_Scope => Entity);
+                  while not At_End (Refs) loop
+                     Ref := Get (Refs);
+                     if Ref /= No_Entity_Reference
+                       and then Show_In_Call_Graph (Get_Kind (Ref))
+                       and then Get_Caller (Ref) = Entity
+                       and then Is_Subprogram (Get_Entity (Refs))
+                       and then Get_Declaration_Of (Called_E) /=
+                          Get_Location (Ref)
+                     then
+                        if not On_Entity_Found
+                          (User_Data,
+                           Entity => Called_E,
+                           Parent => Entity,
+                           Ref    => Ref,
+                           Is_Renaming => False)
+                        then
+                           exit For_Each_Entity;
+                        end if;
+                     end if;
+
+                     Next (Refs);
+                  end loop;
+                  Destroy (Refs);
+               else
+                  if not On_Entity_Found
+                    (User_Data,
+                     Entity => Called_E,
+                     Parent => Entity,
+                     Ref    => No_Entity_Reference,
+                     Is_Renaming => False)
+                  then
+                     exit For_Each_Entity;
+                  end if;
+               end if;
+            end if;
+
+            Next (Calls);
+         end loop For_Each_Entity;
+
+         Destroy (Calls);
+
+         Destroy (User_Data.all, Cancelled => False);
+         Data := Commands_User_Data (User_Data);
+         Unchecked_Free (Data);
+         Pop_State (Kernel_Handle (Kernel));
+      end if;
+   end Examine_Entity_Call_Graph;
+
 end Entities.Commands;
