@@ -272,10 +272,10 @@ package body Casing_Exceptions is
             when Upper =>
                return "Casing/Upper " & Krunch (To_Upper (Name));
             when Mixed =>
-               Mixed_Case (Name);
+               Mixed_Case (Name, False);
                return "Casing/Mixed " & Krunch (Name);
             when Smart_Mixed =>
-               Smart_Mixed_Case (Name);
+               Mixed_Case (Name, True);
                return "Casing/Smart Mixed " & Krunch (Name);
          end case;
       end Get_Label;
@@ -320,10 +320,10 @@ package body Casing_Exceptions is
             when Lower       =>
                Set_Casing (Context.Context, To_Lower (Str));
             when Mixed       =>
-               Mixed_Case (Str);
+               Mixed_Case (Str, False);
                Set_Casing (Context.Context, Str);
             when Smart_Mixed =>
-               Smart_Mixed_Case (Str);
+               Mixed_Case (Str, True);
                Set_Casing (Context.Context, Str);
          end case;
       end Execute;
