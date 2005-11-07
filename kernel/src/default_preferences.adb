@@ -754,9 +754,13 @@ package body Default_Preferences is
          Desc := From_String (Fallback_Font);
       end if;
 
-      if Info.Descr /= null then
-         Free (Info.Descr);
-      end if;
+      --  ??? Valgrind reports a memory leak on Info.Descr, although trying
+      --  to free it will result in random fonts being used under Windows
+      --  when restoring the desktop, so do nothing instead of the following:
+      --
+      --  if Info.Descr /= null then
+      --     Free (Info.Descr);
+      --  end if;
 
       Info.Descr := Desc;
    end Get_Font;
