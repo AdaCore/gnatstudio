@@ -683,8 +683,8 @@ package body Docgen.Work_On_File is
             Put_Line (Doc_File, To_String (Process_Result));
             Close (Doc_File);
 
-            if
-              Get_Element (Data.Source_File_Node) /= No_Source_File_Information
+            if Get_Element (Data.Source_File_Node) /=
+              No_Source_File_Information
             then
                Get_Next (Data.Source_File_List, Data.Source_File_Node);
             end if;
