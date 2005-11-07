@@ -58,13 +58,15 @@
 --
 --      %l, %c -> the current line and column in the current file.
 
-with GPS.Kernel;         use GPS.Kernel;
 with GNAT.Expect;          use GNAT.Expect;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with Commands.Interactive; use Commands.Interactive;
+
 with Glib.Xml_Int;
 with Gtk.Widget;
+
+with Commands.Interactive; use Commands.Interactive;
+with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 with Interactive_Consoles;
 
 package Commands.Custom is
@@ -139,6 +141,7 @@ package Commands.Custom is
    --  since they launch external processes in background mode and must wait
    --  for their output.
 
+   procedure Interrupt (Command : in out Custom_Command);
    function Start (Command : access Custom_Command) return Component_Iterator;
    function Command_Editor
      (Command : access Custom_Command) return Gtk.Widget.Gtk_Widget;
@@ -280,6 +283,8 @@ private
       Execution : Custom_Command_Execution;
       --  The current context for the execution of the command. If this is
       --  null, no command is currently executing
+
+      Fd : Process_Descriptor_Access;
    end record;
 
    procedure To_XML
