@@ -47,59 +47,37 @@ package body Case_Handling is
    -- Mixed_Case --
    ----------------
 
-   procedure Mixed_Case (S : in out String) is
-      Dot : Boolean := False;
+   procedure Mixed_Case (S     : in out String;
+                         Smart : Boolean := False)
+   is
+      Do_Upper : Boolean;
    begin
       if S'Length = 0 then
          return;
       end if;
 
-      S (S'First) := To_Upper (S (S'First));
+      Do_Upper := True;
 
-      for J in S'First + 1 .. S'Last loop
-         if Dot or else S (J - 1) = '_' then
+      for J in S'Range loop
+         if Do_Upper then
             S (J) := To_Upper (S (J));
-         else
+         elsif not Smart then
             S (J) := To_Lower (S (J));
          end if;
 
-         if S (J) = '.' then
-            Dot := True;
-         elsif S (J) /= ' '
-           and then S (J) /= ASCII.HT
-           and then S (J) /= ASCII.LF
-           and then S (J) /= ASCII.CR
+         if S (J) = '.'
+           or S (J) = '_'
+           or S (J) = ' '
+           or S (J) = ASCII.HT
+           or S (J) = ASCII.LF
+           or S (J) = ASCII.CR
          then
-            Dot := False;
+            Do_Upper := True;
+         else
+            Do_Upper := False;
          end if;
       end loop;
    end Mixed_Case;
-
-   ----------------------
-   -- Smart_Mixed_Case --
-   ----------------------
-
-   procedure Smart_Mixed_Case (S : in out String) is
-      Dot : Boolean := False;
-   begin
-      S (S'First) := To_Upper (S (S'First));
-
-      for J in S'First + 1 .. S'Last loop
-         if Dot or else S (J - 1) = '_' then
-            S (J) := To_Upper (S (J));
-         end if;
-
-         if S (J) = '.' then
-            Dot := True;
-         elsif S (J) /= ' '
-           and then S (J) /= ASCII.HT
-           and then S (J) /= ASCII.LF
-           and then S (J) /= ASCII.CR
-         then
-            Dot := False;
-         end if;
-      end loop;
-   end Smart_Mixed_Case;
 
    ---------------
    --  Set_Case --
@@ -201,7 +179,7 @@ package body Case_Handling is
                Mixed_Case (Word);
 
             when Smart_Mixed =>
-               Smart_Mixed_Case (Word);
+               Mixed_Case (Word, True);
          end case;
 
          --  Check now for substring exceptions
