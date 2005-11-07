@@ -64,6 +64,13 @@ package body GPS.Kernel.Contexts is
       return Boolean;
    --  See inherited documentation
 
+   type Filter_In_Project is new GPS.Kernel.Action_Filter_Record
+   with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_In_Project;
+      Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
+   --  True if the current file belongs to an opened project
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -112,6 +119,33 @@ package body GPS.Kernel.Contexts is
           (File_Selection_Context_Access (Ctxt))
         and then Has_File_Information
           (File_Selection_Context_Access (Ctxt));
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_In_Project;
+      Context : access GPS.Kernel.Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      C      : File_Selection_Context_Access;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+   begin
+      if Context.all in File_Selection_Context'Class then
+         C := File_Selection_Context_Access (Context);
+         declare
+            File       : constant VFS.Virtual_File := File_Information (C);
+            Project    : constant Project_Type := Get_Project_From_File
+              (Get_Registry (Kernel).all, File, False);
+         begin
+            if Project /= No_Project then
+               return True;
+            end if;
+         end;
+      end if;
+      return False;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -653,12 +687,14 @@ package body GPS.Kernel.Contexts is
       Entity_Filter       : constant Action_Filter := new Filter_Entity;
       Project_File_Filter : constant Action_Filter := new Filter_Project_File;
       Project_Only_Filter : constant Action_Filter := new Filter_Project_Only;
+      In_Project_Filter   : constant Action_Filter := new Filter_In_Project;
    begin
       Register_Filter (Kernel, File_Filter, "File");
       Register_Filter (Kernel, Directory_Filter, "Directory");
       Register_Filter (Kernel, Entity_Filter, "Entity");
       Register_Filter (Kernel, Project_Only_Filter, "Project only");
       Register_Filter (Kernel, Project_File_Filter, "Project and file");
+      Register_Filter (Kernel, In_Project_Filter, "In project");
    end Register_Default_Filters;
 
 end GPS.Kernel.Contexts;
