@@ -2361,6 +2361,13 @@ package body Src_Editor_Buffer is
       B       : constant Source_Buffer := Hook.Buffer;
       Timeout : Gint;
       Prev    : Boolean;
+
+      Keyword_Font : constant Pango.Font.Pango_Font_Description :=
+        Get_Pref_Font (Keywords_Style);
+      Comment_Font : constant Pango.Font.Pango_Font_Description :=
+        Get_Pref_Font (Comments_Style);
+      String_Font  : constant Pango.Font.Pango_Font_Description :=
+        Get_Pref_Font (Strings_Style);
    begin
       --  Since we update the tags directly, gtk+ will automatically refresh
       --  the source view, we don't need to do anything for this.
@@ -2369,16 +2376,16 @@ package body Src_Editor_Buffer is
         (B.Syntax_Tags,
          Keyword_Color       => Get_Pref_Fg   (Keywords_Style),
          Keyword_Color_Bg    => Get_Pref_Bg   (Keywords_Style),
-         Keyword_Font_Desc   => Get_Pref_Font (Keywords_Style),
+         Keyword_Font_Desc   => Keyword_Font,
          Comment_Color       => Get_Pref_Fg   (Comments_Style),
          Comment_Color_Bg    => Get_Pref_Bg   (Comments_Style),
-         Comment_Font_Desc   => Get_Pref_Font (Comments_Style),
+         Comment_Font_Desc   => Comment_Font,
          Character_Color     => Get_Pref_Fg   (Strings_Style),
          Character_Color_Bg  => Get_Pref_Bg   (Strings_Style),
-         Character_Font_Desc => Get_Pref_Font (Strings_Style),
+         Character_Font_Desc => String_Font,
          String_Color        => Get_Pref_Fg   (Strings_Style),
          String_Color_Bg     => Get_Pref_Bg   (Strings_Style),
-         String_Font_Desc    => Get_Pref_Font (Strings_Style));
+         String_Font_Desc    => String_Font);
 
       --  Connect timeout, to handle automatic saving of buffer
 
