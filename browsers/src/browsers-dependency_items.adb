@@ -1002,7 +1002,8 @@ package body Browsers.Dependency_Items is
       Tools   : constant String := '/' & (-"Tools");
       Command : Interactive_Command_Access;
       Filter  : constant Action_Filter :=
-        Action_Filter (not Lookup_Filter (Kernel, "Entity"));
+        Action_Filter ((not Lookup_Filter (Kernel, "Entity")) and
+                       Lookup_Filter (Kernel, "In project"));
    begin
       Dependency_Browser_Module_ID := new Dependency_Browser_Module;
       Register_Module

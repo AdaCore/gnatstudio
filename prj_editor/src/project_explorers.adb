@@ -2815,7 +2815,7 @@ package body Project_Explorers is
         (Kernel, "Locate file in explorer",
          Action => Command,
          Filter => Action_Filter
-           (Lookup_Filter (Kernel, "File")
+           (Lookup_Filter (Kernel, "In project")
             and not Create (Module => Explorer_Module_Name)),
          Label  => "Locate in explorer: %f");
 
