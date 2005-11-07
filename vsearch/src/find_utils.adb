@@ -143,7 +143,7 @@ package body Find_Utils is
       Ref_Column  : in out Integer;
       Was_Partial : out Boolean)
    is
-      Last_Line_Start : Natural := Start_Index;
+      Last_Line_Start : Natural;
 
       function Pretty_Print_Line
         (Line      : String;
@@ -210,8 +210,9 @@ package body Find_Utils is
               or else Context.Sub_Matches (0).First > Buffer'Last;
 
             Pos := Context.Sub_Matches (0).First;
+            Ref_Column := 1;
             To_Line_Column
-              (Buffer (Ref_Index .. Buffer'Last),
+              (Buffer (Last_Line_Start .. Buffer'Last),
                Pos, Ref_Line, Ref_Column, Last_Line_Start);
             Ref_Index := Pos;
 
@@ -223,35 +224,27 @@ package body Find_Utils is
 
                Line_End : constant Natural := End_Of_Line (Buffer, Pos);
 
-               Line    : constant String :=
-                 Pretty_Print_Line
-                   (Buffer (Last_Line_Start .. Line_End),
-                    Pos, Natural'Min (Pos + End_Col - Ref_Column, Line_End));
+               End_Pos  : constant Natural := Natural'Min
+                 (Pos + End_Col - Ref_Column, Line_End);
 
-               End_Line   : Natural := 0;
-               End_Column : Natural := 0;
+               Match_Length : constant Natural :=
+                 Context.Sub_Matches (0).Last - Pos + 1;
+
+               Line    : constant String := Pretty_Print_Line
+                 (Buffer (Last_Line_Start .. Line_End), Pos, End_Pos);
+
+               End_Line   : Natural := Ref_Line;
+               End_Column : Natural := 1;
                Dummy      : Natural := 0;
             begin
                To_Line_Column
-                 (Buffer (Ref_Index .. Buffer'Last),
+                 (Buffer (Last_Line_Start .. Buffer'Last),
                   Pos + End_Col - Ref_Column,
                   End_Line, End_Column, Dummy);
 
-               --  For efficiency reasons, we calculate the line/column of the
-               --  end position from the start position. The lines below
-               --  perform the adjustment to find the real position.
-
-               if End_Line = 0 then
-                  End_Line := Ref_Line;
-                  End_Column := Ref_Column + End_Column;
-               else
-                  End_Line := End_Line + Ref_Line;
-               end if;
-
                if not Callback (Match_Result'
                    (Length         => Line'Length,
-                    Pattern_Length => End_Of_Line (Buffer, Pos) + 1 -
-                      Last_Line_Start,
+                    Pattern_Length => Match_Length,
                     Index          => Pos,
                     Begin_Line     => Ref_Line,
                     End_Line       => End_Line,
@@ -299,8 +292,9 @@ package body Find_Utils is
                   or else Is_Word_Delimiter
                     (Buffer (Pos + Context.Look_For'Length))))
             then
+               Ref_Column := 1;
                To_Line_Column
-                 (Buffer (Ref_Index .. Buffer'Last),
+                 (Buffer (Last_Line_Start .. Buffer'Last),
                   Pos, Ref_Line, Ref_Column, Last_Line_Start);
                Ref_Index := Pos;
 
@@ -313,25 +307,14 @@ package body Find_Utils is
                       (Buffer (Last_Line_Start .. Line_End_Pos),
                        Pos, Pos + Context.Look_For'Length);
 
-                  End_Line   : Natural := 0;
-                  End_Column : Natural := 0;
+                  End_Line   : Natural := Ref_Line;
+                  End_Column : Natural := 1;
                   Dummy      : Natural := 0;
                begin
                   To_Line_Column
-                    (Buffer (Ref_Index .. Buffer'Last),
+                    (Buffer (Last_Line_Start .. Buffer'Last),
                      Pos + Context.Look_For'Length,
                      End_Line, End_Column, Dummy);
-
-                  --  For efficiency reasons, we calculate the line/column of
-                  --  the end position from the start position. The lines
-                  --  below perform the adjustment to find the real position.
-
-                  if End_Line = 0 then
-                     End_Line := Ref_Line;
-                     End_Column := Ref_Column + End_Column;
-                  else
-                     End_Line := End_Line + Ref_Line;
-                  end if;
 
                   if not Callback (Match_Result'
                       (Length         => Line'Length,
@@ -357,6 +340,25 @@ package body Find_Utils is
    begin
       Was_Partial := False;
 
+      --  Initialize the value of Last_Line_Start.
+
+      Last_Line_Start := Buffer'First;
+
+      declare
+         J : Integer := Start_Index - 1;
+      begin
+         loop
+            exit when J < Buffer'First;
+
+            if Buffer (J) = ASCII.LF then
+               Last_Line_Start := J + 1;
+               exit;
+            end if;
+
+            J := UTF8_Find_Prev_Char (Buffer, J);
+         end loop;
+      end;
+
       --  ??? Would be nice to handle backward search, which is extremely hard
       --  with regular expressions
 
@@ -381,16 +383,25 @@ package body Find_Utils is
       Line, Column : in out Natural;
       Line_Start   : in out Natural)
    is
-      J         : Natural := Buffer'First;
-      Tab_Width : constant Natural := Get_Tab_Width;
+      J          : Natural := Buffer'First;
+      Tab_Width  : constant Natural := Get_Tab_Width;
+
+      function At_Line_End return Boolean;
+      pragma Inline (At_Line_End);
+      --  Return True if J points to an end-of-line character
+
+      function At_Line_End return Boolean is
+      begin
+         return Buffer (J) = ASCII.LF
+           or else (Buffer (J) = ASCII.CR
+                    and then Buffer (J + 1) /= ASCII.LF);
+      end At_Line_End;
+
    begin
       loop
          exit when J > Pos - 1;
 
-         if Buffer (J) = ASCII.LF
-           or else (Buffer (J) = ASCII.CR
-                    and then Buffer (J + 1) /= ASCII.LF)
-         then
+         if At_Line_End then
             Line        := Line + 1;
             Column      := 1;
             Line_Start := J + 1;
