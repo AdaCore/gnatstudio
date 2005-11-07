@@ -326,7 +326,7 @@ package body Clipboard_Views is
    procedure On_Clipboard_Changed
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Refresh (Generic_View.Get_Or_Create_View (Kernel));
+      Refresh (Generic_View.Get_Or_Create_View (Kernel, Focus => False));
    end On_Clipboard_Changed;
 
    ----------------------------
