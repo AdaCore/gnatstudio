@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2003 - 2004                      --
---                            ACT-Europe                             --
+--                    Copyright (C) 2003 - 2005                      --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -204,6 +204,7 @@ package Commands.Interactive is
    --  Create a new proxy. Context.Args will be freed automatically by the
    --  proxy
 
+   procedure Interrupt (Command : in out Interactive_Command_Proxy);
    function Execute (Command : access Interactive_Command_Proxy)
       return Command_Return_Type;
    function Name (Command : access Interactive_Command_Proxy) return String;
