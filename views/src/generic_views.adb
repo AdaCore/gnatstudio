@@ -138,8 +138,9 @@ package body Generic_Views is
 
       function Get_Or_Create_View
         (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Reuse_If_Exist : Boolean := True)
-      return View_Access
+         Reuse_If_Exist : Boolean := True;
+         Focus          : Boolean := True)
+         return View_Access
       is
          Child : MDI_Child;
          View  : View_Access;
@@ -161,8 +162,10 @@ package body Generic_Views is
             Set_Title (Child, View_Name, View_Name);
          end if;
 
-         Raise_Child (Child);
-         Set_Focus_Child (Get_MDI (Kernel), Child);
+         if Focus then
+            Raise_Child (Child);
+            Set_Focus_Child (Get_MDI (Kernel), Child);
+         end if;
 
          if Child = null then
             return null;

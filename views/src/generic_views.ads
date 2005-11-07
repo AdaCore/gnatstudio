@@ -88,12 +88,13 @@ package Generic_Views is
       --  Return the module ID corresponding to that view
 
       function Get_Or_Create_View
-        (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Reuse_If_Exist : Boolean := True)
+        (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Reuse_If_Exist : Boolean := True;
+         Focus          : Boolean := True)
          return View_Access;
       --  Return the view (create a new one if necessary, or always if
       --  Reuse_If_Exist is False).
-      --  The view gets the focus automatically
+      --  The view gets the focus automatically if Focus is True.
 
    private
       --  The following subprograms need to be in the spec so that we can get
