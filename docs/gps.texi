@@ -7786,6 +7786,12 @@ information on themes. It is only displayed when there are themes registered.
 @cindex font
 The default font used in GPS
 
+@item Fixed view font
+@cindex font
+The fixed (monospace) font used in views like the outline view, the bookmark
+view,@dots{}. As much as possible, this font should use a fixed width for
+characters, for a better rendering
+
 @item Character set
 @cindex character set
 @cindex ISO-8859-1
