@@ -697,16 +697,20 @@ package body Browsers.Call_Graph is
    is
       Child_Browser : constant MDI_Child := Open_Call_Graph_Browser (Kernel);
       Data : Examine_Ancestors_Data_Access;
+      Browser       : constant Call_Graph_Browser :=
+        Call_Graph_Browser (Get_Widget (Child_Browser));
+      Item          : constant Entity_Item :=
+        Add_Entity_If_Not_Present (Browser, Entity);
    begin
       Data := new Examine_Ancestors_Data'
         (Commands_User_Data_Record with
-         Browser        => Call_Graph_Browser (Get_Widget (Child_Browser)),
-         Item           => null,
+         Browser        => Browser,
+         Item           => Item,
          Link_From_Item => True);
-      Data.Item := Add_Entity_If_Not_Present (Data.Browser, Entity);
 
       if not Children_Shown (Data.Item) then
          Set_Children_Shown (Data.Item, True);
+         Redraw_Title_Bar (Data.Item);
          Examine_Entity_Call_Graph
            (Kernel          => Kernel,
             Entity          => Entity,
@@ -719,10 +723,9 @@ package body Browsers.Call_Graph is
 
       --  We need to do a layout in all cases, so that the newly added item
       --  is put at a correct place.
-      Layout (Data.Browser, Force => False);
-      Refresh_Canvas (Get_Canvas (Data.Browser));
-      Align_Item (Get_Canvas (Data.Browser), Data.Item, 0.5, 0.5);
-      Redraw_Title_Bar (Data.Item);
+      Layout (Browser, Force => False);
+      Refresh_Canvas (Get_Canvas (Browser));
+      Align_Item (Get_Canvas (Browser), Item, 0.5, 0.5);
 
    exception
       when E : others =>
