@@ -56,10 +56,8 @@ package body Commands.Interactive is
       Action_Node : Glib.Xml_Int.Node_Ptr);
    --  See docs for inherited subprograms
 
-
    Internal_Component : aliased Internal_Component_Record;
    --  Used for all internal components, ie that can't be edited graphically
-
 
    ----------------
    -- On_Failure --
@@ -358,5 +356,14 @@ package body Commands.Interactive is
    begin
       return Undo (Command.Command);
    end Undo;
+
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   procedure Interrupt (Command : in out Interactive_Command_Proxy) is
+   begin
+      Interrupt (Command.Command.all);
+   end Interrupt;
 
 end Commands.Interactive;
