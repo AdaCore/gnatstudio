@@ -276,11 +276,11 @@ package body GPS.Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Default_Font), -"General");
 
       View_Fixed_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "View-Fixed-Font",
-         Default => Config.Default_Font,
-         Blurb   => -("Non-Proportional font used in the various views such"
-                      & " as the Outline View, the Clipboard View,..."),
-         Nick    => -"Fixed font"));
+        (Name    => "General-Fixed-View-Font",
+         Default => "Courier 10",
+         Blurb   => -("Fixed pitch (monospace) font used in the various views "
+                      & "(Outline View, Clipboard View, ...)"),
+         Nick    => -"Fixed view font"));
       Register_Property
         (Kernel.Preferences, Param_Spec (View_Fixed_Font), -"General");
 
