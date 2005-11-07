@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2004                         --
---                             AdaCore                               --
+--                      Copyright (C) 2004-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,12 +43,11 @@ package Case_Handling is
    --    underscore to upper-case, all other characters are set to lower-case.
    --  - Smart_Mixed: As Mixed but never force an upper-case to lower-case.
 
-   procedure Mixed_Case (S : in out String);
+   procedure Mixed_Case (S     : in out String;
+                         Smart : Boolean := False);
    --  Return S with a casing matching Ada style: upper case after an
    --  underscore or a dot.
-
-   procedure Smart_Mixed_Case (S : in out String);
-   --  As above but do not change upper-case letters in S
+   --  If smart is set, do not change upper-case letters in S
 
    ---------------------
    -- Case Exceptions --
