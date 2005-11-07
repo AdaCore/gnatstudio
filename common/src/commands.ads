@@ -69,6 +69,9 @@ package Commands is
       Progress : Progress_Record);
    --  Set the progress of Command
 
+   procedure Interrupt (Command : in out Root_Command);
+   --  Called when the Command is explicitely interupted.
+
    type Command_Return_Type is
      (Success,
       --  The command terminated with success
