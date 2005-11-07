@@ -29,7 +29,6 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Values;               use Glib.Values;
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Pixmap;                use Gdk.Pixmap;
@@ -263,7 +262,7 @@ package body Bookmark_Views is
       Create_Pixmap_From_Text
         (Text.all,
          Get_Pref (Default_Font),
-         White (Get_Default_Colormap),
+         Get_Pref (Tooltip_Color),
          Tooltip.Bookmark_View.Tree,
          Pixmap);
       Free (Text);

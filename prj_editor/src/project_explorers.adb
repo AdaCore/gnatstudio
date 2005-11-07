@@ -33,7 +33,6 @@ with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Pixmap;                use Gdk.Pixmap;
 
 with Gtk.Dnd;                   use Gtk.Dnd;
@@ -1208,18 +1207,11 @@ package body Project_Explorers is
       end case;
 
       if Text /= null then
-         declare
-            Color : Gdk_Color;
-         begin
-            Color := Parse ("#EEEEEE");
-            Alloc (Get_Default_Colormap, Color);
-
-            Create_Pixmap_From_Text
-              (Text.all,
-               Font, Color,
-               Tooltip.Explorer.Tree,
-               Pixmap);
-         end;
+         Create_Pixmap_From_Text
+           (Text.all,
+            Font, Get_Pref (Tooltip_Color),
+            Tooltip.Explorer.Tree,
+            Pixmap);
          Free (Text);
       end if;
    end Draw;

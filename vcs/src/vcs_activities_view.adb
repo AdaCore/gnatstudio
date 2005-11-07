@@ -23,7 +23,6 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Gdk;
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Pixmap;                use Gdk.Pixmap;
@@ -385,7 +384,7 @@ package body VCS_Activities_View is
          Create_Pixmap_From_Text
            (Text.all,
             Get_Pref (Default_Font),
-            White (Get_Default_Colormap),
+            Get_Pref (Tooltip_Color),
             Tooltip.Explorer.Tree,
             Pixmap);
          Free (Text);
