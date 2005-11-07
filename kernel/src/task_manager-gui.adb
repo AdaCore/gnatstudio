@@ -424,10 +424,10 @@ package body Task_Manager.GUI is
       end if;
 
       if Index in Manager.Queues'Range then
-         Manager.Queues (Index).Status := Interrupted;
+         Interrupt (Command_Queues.Head (Manager.Queues (Index).Queue).all);
+
          Manager.Queues (Index).Need_Refresh := True;
          Refresh_Command (Manager, Index);
-
          Run (Manager, Active => Index < Manager.Passive_Index);
       end if;
    end Interrupt_Command;
