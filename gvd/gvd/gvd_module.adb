@@ -2456,7 +2456,7 @@ package body GVD_Module is
    begin
       return Process /= null
         and then Process.Debugger /= null
-        and then (Context.all in Entity_Selection_Context'Class
+        and then (Context.all in File_Selection_Context'Class
                   or else Context.all in File_Area_Context'Class)
         and then not Command_In_Process (Get_Process (Process.Debugger));
    end Filter_Matches_Primitive;
