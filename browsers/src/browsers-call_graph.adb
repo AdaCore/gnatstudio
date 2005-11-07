@@ -2554,7 +2554,7 @@ package body Browsers.Call_Graph is
       while Line /= null loop
          Append
            (Output,
-            "<tspan y=""" & Image (J + 1) & ".3em"">"
+            "<tspan x="".3em"" y=""" & Image (J + 1) & ".3em"">"
             & Strip_Character (Line.all, '@') & "</tspan>"
             & ASCII.LF);
 

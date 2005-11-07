@@ -2766,7 +2766,7 @@ package body Browsers.Canvas is
         & "height=""1.3em"" "
         & "class=""title""" & "/>"
         & ASCII.LF
-        & "<text x=""" & Image (Integer (Item.Title_X)) & """ "
+        & "<text x=""" & Image (Integer (Item.Title_X)) & """ dx="".3em"" "
         & "y=""" & Image (Integer (Item.Title_X)) & """ dy=""1em"">"
         & Get_Text (Item.Title_Layout)
         & "</text>"
