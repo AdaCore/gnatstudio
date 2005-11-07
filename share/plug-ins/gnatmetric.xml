@@ -5,7 +5,10 @@
 
 <GPS>
   <action name="metrics project" >
-     <filter id="Project only" language="ada" />
+     <filter_and>
+       <filter id="Project only" />
+       <filter language="ada" />
+     </filter_and>
      <description>Run GNAT Metrics on a project</description>
      <shell show-command="false">Editor.save</shell>
      <shell output="none">Project.root</shell>
@@ -38,7 +41,10 @@
   </action>
 
   <action name="metrics file" >
-     <filter id="File" language="ada" />
+     <filter_and>
+       <filter id="File" />
+       <filter language="ada" />
+     </filter_and>
      <description>Run GNAT Metrics on a single file</description>
      <shell show-command="false">Editor.save</shell>
      <shell output="none">Project.root</shell>
