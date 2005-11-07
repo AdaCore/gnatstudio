@@ -1227,7 +1227,9 @@ package body VCS_View_Pkg is
               (Kernel,
                Create
                  (Full_Filename =>
-                    Get_String (Page.Model, Iter, Name_Column)));
+                    Get_String (Page.Model, Iter, Name_Column)),
+               Line   => 0,
+               Column => 0);
             Emit_Stop_By_Name (Page.Tree, "button_press_event");
          end if;
       end if;

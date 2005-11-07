@@ -1312,7 +1312,9 @@ package body VCS_Activities_View is
               (Kernel,
                Create
                  (Full_Filename =>
-                    Get_String (Explorer.Model, Iter, Name_Column)));
+                    Get_String (Explorer.Model, Iter, Name_Column)),
+               Line   => 0,
+               Column => 0);
             Emit_Stop_By_Name (Explorer.Tree, "button_press_event");
          end if;
       end if;
