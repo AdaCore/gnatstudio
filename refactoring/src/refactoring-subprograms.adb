@@ -618,7 +618,8 @@ package body Refactoring.Subprograms is
         (Kernel,
          Name  => "Extract Method",
          Label => "Refactoring/Extract method",
-         Filter => Filter and Create (Module => "Source_Editor"),
+         Filter => Filter and Create (Module => "Source_Editor") and
+           Create (Language => "ada"),
          Action => C);
 
       if Active (Testsuite_Handle) then
