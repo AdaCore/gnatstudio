@@ -135,7 +135,8 @@ package body Custom_Module is
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
       procedure Parse_Submenu_Node
         (Node : Node_Ptr; Parent_Path : UTF8_String);
-      function Parse_Filter_Node (Node : Node_Ptr) return Action_Filter;
+      function Parse_Filter_Node (Node : Node_Ptr;
+                                  Name : String) return Action_Filter;
       --  Parse the various nodes: <action>, <shell>, ...
 
       ---------------------------
@@ -264,7 +265,8 @@ package body Custom_Module is
       -- Parse_Filter_Node --
       -----------------------
 
-      function Parse_Filter_Node (Node : Node_Ptr) return Action_Filter is
+      function Parse_Filter_Node (Node : Node_Ptr;
+                                  Name : String) return Action_Filter is
          Filter, Filter_Tmp : Action_Filter;
          Child  : Node_Ptr;
       begin
@@ -279,12 +281,46 @@ package body Custom_Module is
             begin
                if Id /= "" then
                   Filter := Lookup_Filter (Kernel, Id);
+
                   if Filter = null then
                      Insert
                        (Kernel,
                           -"Unknown action filter " & Id,
                         Mode => Error);
                      raise Assert_Failure;
+                  end if;
+
+                  if Lang /= "" or
+                    Shell /= "" or
+                    Shell_Lang /= GPS_Shell_Name or
+                    Module /= ""
+                  then
+                     Insert
+                       (Kernel,
+                        -"Filter " & Name & ": Id shall be the only " &
+                        "attribute when defined.",
+                        Mode => Error);
+                     if Lang /= "" then
+                        Insert (Kernel,
+                                -" Attribute language=" & Lang & " ignored.",
+                                Mode => Error);
+                     end if;
+                     if Shell /= "" then
+                        Insert (Kernel,
+                                -" Attribute shell_cmd=" & Shell & " ignored.",
+                                Mode => Error);
+                     end if;
+                     if Shell_Lang /= GPS_Shell_Name then
+                        Insert (Kernel,
+                                -" Attribute shell_lang=" & Shell_Lang &
+                                " ignored.",
+                                Mode => Error);
+                     end if;
+                     if Module /= "" then
+                        Insert (Kernel,
+                                -" Attribute module=" & Module & " ignored.",
+                                Mode => Error);
+                     end if;
                   end if;
                else
                   Filter := Action_Filter
@@ -304,7 +340,7 @@ package body Custom_Module is
                  or else Child.Tag.all = "filter_and"
                  or else Child.Tag.all = "filter_or"
                then
-                  Filter_Tmp := Parse_Filter_Node (Child);
+                  Filter_Tmp := Parse_Filter_Node (Child, Name);
 
                   if Filter = null then
                      Filter := Filter_Tmp;
@@ -360,9 +396,10 @@ package body Custom_Module is
             then
                if Filter_A /= null then
                   Filter_A :=
-                    Action_Filter (Filter_A or Parse_Filter_Node (Child));
+                    Action_Filter (Filter_A or Parse_Filter_Node (Child,
+                                                                  Name));
                else
-                  Filter_A := Parse_Filter_Node (Child);
+                  Filter_A := Parse_Filter_Node (Child, Name);
                end if;
 
             elsif To_Lower (Child.Tag.all) = "description" then
@@ -832,7 +869,7 @@ package body Custom_Module is
                        & " a name attribute when defined outside of <action>"),
                      Mode => Error);
                else
-                  Filter := Parse_Filter_Node (Current_Node);
+                  Filter := Parse_Filter_Node (Current_Node, Name);
                   Register_Filter (Kernel, Filter, Name);
                end if;
             end;
