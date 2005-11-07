@@ -164,7 +164,7 @@ package GPS.Kernel.Preferences is
    Save_Desktop_On_Exit  : Param_Spec_Boolean;
    Multi_Language_Build  : Param_Spec_Boolean;
    Auto_Jump_To_First    : Param_Spec_Boolean;
-
+   Tooltip_Color         : Param_Spec_Color;
 
    -- Messages --
    Message_Highlight      : Param_Spec_Color;
