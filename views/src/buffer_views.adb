@@ -25,7 +25,6 @@ with Glib.Object;          use Glib.Object;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Gdk.Types;            use Gdk.Types;
-with Gtk.Box;              use Gtk.Box;
 with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Menu;             use Gtk.Menu;
@@ -69,7 +68,7 @@ package body Buffer_Views is
      "Windows_View_Show_Notebooks";
    --  Used to store the current view settings in histories
 
-   type Buffer_View_Record is new Gtk.Box.Gtk_Box_Record with record
+   type Buffer_View_Record is new Generic_Views.View_Record with record
       Tree   : Gtk_Tree_View;
       Kernel : Kernel_Handle;
       File   : Virtual_File; -- current selected file (cache)
@@ -82,10 +81,10 @@ package body Buffer_Views is
 
    Module_Name : constant String := "Windows_View";
 
-   package Generic_View is new Generic_Views
-     (Module_Name => Module_Name,
-      View_Name   => "Windows View",
-      View_Record => Buffer_View_Record);
+   package Generic_View is new Generic_Views.Simple_Views
+     (Module_Name        => Module_Name,
+      View_Name          => "Windows View",
+      Formal_View_Record => Buffer_View_Record);
    subtype Buffer_View_Access is Generic_View.View_Access;
 
    procedure Child_Selected (View : access Gtk_Widget_Record'Class);
@@ -521,14 +520,10 @@ package body Buffer_Views is
      (View   : access Buffer_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Scrolled : Gtk_Scrolled_Window;
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Initialize_Vbox (View, Homogeneous => False);
-
-      Gtk_New (Scrolled);
-      Pack_Start (View, Scrolled, Expand => True);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Gtk.Scrolled_Window.Initialize (View);
+      Set_Policy (View, Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (Icon_Column => Gdk.Pixbuf.Get_Type,
@@ -540,7 +535,7 @@ package body Buffer_Views is
          Sortable_Columns   => True,
          Initial_Sort_On    => 2,
          Hide_Expander      => False);
-      Add (Scrolled, View.Tree);
+      Add (View, View.Tree);
 
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_added", Refresh'Access, Slot_Object => View);

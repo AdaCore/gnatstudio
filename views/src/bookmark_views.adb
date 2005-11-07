@@ -36,7 +36,6 @@ with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
-with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -96,7 +95,7 @@ package body Bookmark_Views is
 
    Bookmark_Views_Module : Bookmark_Views_Module_Access;
 
-   type Bookmark_View_Record is new Gtk.Box.Gtk_Box_Record with record
+   type Bookmark_View_Record is new Generic_Views.View_Record with record
       Tree      : Gtk_Tree_View;
       Kernel    : Kernel_Handle;
       Goto_Icon : Gdk_Pixbuf;
@@ -107,10 +106,10 @@ package body Bookmark_Views is
       Kernel : access Kernel_Handle_Record'Class);
    --  Create a new Bookmark view
 
-   package Generic_View is new Generic_Views
-     (Module_Name => "Bookmark_View",
-      View_Name   => "Bookmarks",
-      View_Record => Bookmark_View_Record);
+   package Generic_View is new Generic_Views.Simple_Views
+     (Module_Name        => "Bookmark_View",
+      View_Name          => "Bookmarks",
+      Formal_View_Record => Bookmark_View_Record);
    subtype Bookmark_View_Access is Generic_View.View_Access;
 
    function Convert is new Ada.Unchecked_Conversion
@@ -588,15 +587,11 @@ package body Bookmark_Views is
      (View   : access Bookmark_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Scrolled : Gtk_Scrolled_Window;
       Tooltip  : Bookmark_View_Tooltips_Access;
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Initialize_Vbox (View, Homogeneous => False);
-
-      Gtk_New (Scrolled);
-      Pack_Start (View, Scrolled, Expand => True);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Gtk.Scrolled_Window.Initialize (View);
+      Set_Policy (View, Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (Icon_Column     => Gdk.Pixbuf.Get_Type,
@@ -612,7 +607,7 @@ package body Bookmark_Views is
          Initial_Sort_On    => 2,
          Merge_Icon_Columns => False,
          Hide_Expander      => True);
-      Add (Scrolled, View.Tree);
+      Add (View, View.Tree);
 
       View.Goto_Icon := Render_Icon (View, Stock_Jump_To, Icon_Size_Menu);
 

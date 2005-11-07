@@ -33,7 +33,6 @@ with Gdk.Types;                 use Gdk.Types;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
-with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
@@ -62,7 +61,7 @@ with Traces;                    use Traces;
 
 package body Clipboard_Views is
 
-   type Clipboard_View_Record is new Gtk.Box.Gtk_Box_Record with record
+   type Clipboard_View_Record is new Generic_Views.View_Record with record
       Tree    : Gtk_Tree_View;
       Kernel  : Kernel_Handle;
       Current : Gdk_Pixbuf;
@@ -73,10 +72,10 @@ package body Clipboard_Views is
       Kernel : access Kernel_Handle_Record'Class);
    --  Create a new clipboard view
 
-   package Generic_View is new Generic_Views
-     (Module_Name => "Clipboard_View",
-      View_Name   => "Clipboard View",
-      View_Record => Clipboard_View_Record);
+   package Generic_View is new Generic_Views.Simple_Views
+     (Module_Name        => "Clipboard_View",
+      View_Name          => "Clipboard View",
+      Formal_View_Record => Clipboard_View_Record);
    subtype Clipboard_View_Access is Generic_View.View_Access;
 
    procedure On_Clipboard_Changed
@@ -444,15 +443,11 @@ package body Clipboard_Views is
      (View   : access Clipboard_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Scrolled : Gtk_Scrolled_Window;
       Tooltip  : Clipboard_View_Tooltips_Access;
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Initialize_Vbox (View, Homogeneous => False);
-
-      Gtk_New (Scrolled);
-      Pack_Start (View, Scrolled, Expand => True);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Gtk.Scrolled_Window.Initialize (View);
+      Set_Policy (View, Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (0 => Gdk.Pixbuf.Get_Type,
@@ -463,7 +458,7 @@ package body Clipboard_Views is
          Selection_Mode     => Selection_None,
          Sortable_Columns   => False,
          Hide_Expander      => True);
-      Add (Scrolled, View.Tree);
+      Add (View, View.Tree);
 
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
 
