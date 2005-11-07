@@ -86,6 +86,7 @@ package body GPS.Kernel.Task_Manager is
      (Command : access Wrapper_Command) return Command_Return_Type;
    function Name (Command : access Wrapper_Command) return String;
    function Progress (Command : access Wrapper_Command) return Progress_Record;
+   procedure Interrupt (Command : in out Wrapper_Command);
    --  A wrapper for commands, so that they are not destroyed on exit.
 
    function Create_Wrapper
@@ -302,6 +303,15 @@ package body GPS.Kernel.Task_Manager is
    begin
       return Progress (Command.Command);
    end Progress;
+
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   procedure Interrupt (Command : in out Wrapper_Command) is
+   begin
+      Interrupt (Command.Command.all);
+   end Interrupt;
 
    --------------------
    -- Create_Wrapper --
