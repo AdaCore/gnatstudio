@@ -33,7 +33,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Unknown;          use Language.Unknown;
-with Language_Handlers;     use Language_Handlers;
+with Language_Handlers;         use Language_Handlers;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Pixmaps_Prj;               use Pixmaps_Prj;
 with Projects.Registry;         use Projects, Projects.Registry;
@@ -165,9 +165,9 @@ package body Project_Explorers_Common is
       Category    : Language_Category;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
+      Name    : constant String := Category_Name (Category);
       N       : Gtk_Tree_Iter;
       Sibling : Gtk_Tree_Iter;
-      Name    : constant String := Category_Name (Category);
    begin
       Sibling := Children (Model, Parent_Iter);
 
@@ -276,6 +276,9 @@ package body Project_Explorers_Common is
       Node      : Gtk_Tree_Iter;
       File_Name : VFS.Virtual_File)
    is
+      Languages  : constant Language_Handler :=
+                     Language_Handler (Get_Language_Handler (Kernel));
+
       N, N2      : Gtk_Tree_Iter;
 
       Lang       : Language_Access;
@@ -285,8 +288,6 @@ package body Project_Explorers_Common is
       type Gtk_Tree_Iter_Array is array (Language_Category'Range)
         of Gtk_Tree_Iter;
       Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
-      Languages  : constant Language_Handler :=
-        Language_Handler (Get_Language_Handler (Kernel));
       Handler    : LI_Handler;
 
    begin
@@ -471,7 +472,7 @@ package body Project_Explorers_Common is
                         Create
                           (Full_Filename =>
                              Get_String (Model, Iter, Absolute_Name_Column)),
-                        Line => 0,
+                        Line   => 0,
                         Column => 0);
                      return True;
 
@@ -728,6 +729,10 @@ package body Project_Explorers_Common is
       --  Return the "basename" for the entity, ie convert "parent.name" to
       --  "name", in the case of Ada parent packages.
       --  ??? Should this be done by the parser itself
+
+      -----------------
+      -- Entity_Base --
+      -----------------
 
       function Entity_Base (Name : String) return String is
       begin
