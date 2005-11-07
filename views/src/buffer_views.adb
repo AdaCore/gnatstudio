@@ -179,7 +179,9 @@ package body Buffer_Views is
          end loop;
 
          for C in Children'Range loop
-            Close_Child (Children (C));
+            if Children (C) /= null then
+               Close_Child (Children (C));
+            end if;
          end loop;
       end;
 
