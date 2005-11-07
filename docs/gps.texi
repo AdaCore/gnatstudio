@@ -93,6 +93,7 @@ Description of the main windows
 * The Window View::
 * The Outline View::
 * The Clipboard View::
+* The Callgraph View::
 * Bookmarks::
 * The Messages Window::
 @ifset python
@@ -326,6 +327,7 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Window View::
 * The Outline View::
 * The Clipboard View::
+* The Callgraph View::
 * Bookmarks::
 * The Messages Window::
 
@@ -889,6 +891,53 @@ selection @code{Edit->Paste} will in fact paste the two entries at the same
 time. This is in particular useful when you want to copy lines from separate
 places in the initial file, merge them, and then paste them together one or
 more times later on, through a single operation.
+
+@c --------------------------------------------------------------------
+@node The Callgraph View
+@section The Callgraph View
+@cindex callgraph
+@c --------------------------------------------------------------------
+
+@noindent
+The callgraph view plays a role similar the callgraph browser. They display
+the same information about entities, but in two different ways: the callgraph
+view displays the information in a tree, easily navigable and perhaps easier
+to manipulate when lots of entities are involved; the callgraph browser
+displays the information as graphical boxes that can be manipulated on the
+screen, and is best suited to generate a diagram that can be later exported
+to your own documents.
+
+This callgraph view is used to display the information about what subprograms
+are called by a given entity, and, opposite, what entities are calling a
+given entity.
+
+This view is automatically displayed when you select one of the contextual
+menus @code{References/... calls (in tree)} and
+@code{References/... is called by (in tree)}. Every time you select one of
+these menus, a new view is opened to display that entity.
+
+Whenever you expand a node from the tree by clicking on the small expander
+arrow on the left of the line, further callgraph information is computed for
+the selected entity, which makes it very easy to get information for a full
+callgraph tree.
+
+Closing and expanding a node again will recompute the callgraph for the
+entity.
+
+By default, GPS adds one special node to each entity. This node is called
+either @code{... called at} or @code{... calling parent at}, and is used to
+display the location where the entity occurs within its caller. Clicking on
+any of the locations will open the corresponding editor at the specified
+location.
+
+However, you might choose to concentrate on the callgraph itself and hide
+these locations node. This can be done by toggling the contextual menu
+@code{Show Locations}.
+
+All open callgraph views are automatically saved in the desktop, and restored
+the next time you restart GPS. However, the information displayed in these
+might no longer be accurate at this stage, since it shows the status of the
+callgraph during the last GPS session.
 
 @c --------------------------------------------------------------------
 @node Bookmarks
@@ -3024,10 +3073,8 @@ displaying references to the current entity or selection.
 Open or raise the call graph browser on the specified entity and display all
 the subprograms called by @i{entity}. @xref{Call Graph}.
 
-@item @i{Entity} calls (in locations)
-This behaves the same as the one above, except that it will list its result
-in the Locations window. This is generally more convenient if you expect lots
-of references.
+@item @i{Entity} calls (in tree)
+This behaves as above, but will display its results in a tree. This is generally more convenient if you expect lots of references, @xref{The Callgraph View}.
 
 @item @i{Entity} is called by (in browser)
 @cindex call graph
@@ -3040,10 +3087,8 @@ cross-references, which may take a significant amount of time the first
 time.  After a global look up, information is cached in memory, so that
 further global queries will be faster.
 
-@item @i{Entity} is called by (in locations)
-This behaves the same as the one above, except that it will list its result
-in the Locations window. This is generally more convenient if you expect lots
-of references.
+@item @i{Entity} is called by (in tree)
+This behaves as above, but will display its results in a tree. This is generally more convenient if you expect lots of references, @xref{The Callgraph View}.
 
 @item Find all references to @i{entity}
 @cindex find all references
