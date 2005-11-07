@@ -393,6 +393,12 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel, Param_Spec (Auto_Jump_To_First), -"General");
 
+      Tooltip_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Tooltip-Color",
+         Default => "#EEEEEE",
+         Blurb   => -"Color to use for the tooltips background",
+         Nick    => -"Tooltip color"));
+
       -- MDI --
 
       MDI_Opaque := Param_Spec_Boolean (Gnew_Boolean
