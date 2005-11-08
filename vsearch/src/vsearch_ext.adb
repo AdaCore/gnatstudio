@@ -681,7 +681,7 @@ package body Vsearch_Ext is
      (Vsearch : Vsearch_Extended;
       Replace : Boolean := False)
    is
-      Toplevel       : constant Gtk_Widget := Get_Toplevel (Vsearch);
+      Toplevel       : Gtk_Widget := Get_Toplevel (Vsearch);
       Found          : Boolean;
       Has_Next       : Boolean;
       Button         : Message_Dialog_Buttons;
@@ -693,6 +693,10 @@ package body Vsearch_Ext is
       C              : Search_Commands.Generic_Asynchronous_Command_Access;
 
    begin
+      if Gtk_Widget (Vsearch) = Toplevel then
+         Toplevel := Gtk_Widget (Get_Main_Window (Vsearch.Kernel));
+      end if;
+
       if not Vsearch.Find_Next then
          Create_Context (Vsearch);
       end if;
