@@ -159,7 +159,7 @@
    <!-- SVN update -->
 
    <action name="generic_svn_update" show-command="true" output="none">
-      <external>svn --non-interactive update "$*"</external>
+      <external output="">svn --non-interactive update "$*"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -171,7 +171,7 @@
    <!-- SVN resolved -->
 
    <action name="generic_svn_resolved" show-command="true" output="none">
-      <external>svn resolved "$*"</external>
+      <external output="">svn resolved "$*"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -249,7 +249,7 @@
    <!-- SVN revert -->
 
    <action name="generic_svn_revert" show-command="true" output="none">
-      <external>svn revert "$*"</external>
+      <external output="">svn revert "$*"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
