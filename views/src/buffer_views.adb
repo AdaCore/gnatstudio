@@ -40,16 +40,16 @@ with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
 
 with Generic_Views;
-with GPS.Kernel;           use GPS.Kernel;
-with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
-with GPS.Intl;             use GPS.Intl;
-with Histories;            use Histories;
-with GUI_Utils;            use GUI_Utils;
-with Src_Editor_Module;    use Src_Editor_Module;
-with VFS;                  use VFS;
-with Traces;               use Traces;
-with Commands.Interactive; use Commands, Commands.Interactive;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Intl;               use GPS.Intl;
+with Histories;              use Histories;
+with GUI_Utils;              use GUI_Utils;
+with Src_Editor_Module;      use Src_Editor_Module;
+with VFS;                    use VFS;
+with Traces;                 use Traces;
+with Commands.Interactive;   use Commands, Commands.Interactive;
 
 package body Buffer_Views is
 
@@ -256,7 +256,11 @@ package body Buffer_Views is
                   return True;
                end if;
             else
-               Select_Iter (Get_Selection (Explorer.Tree), Iter);
+               if Iter_Is_Selected (Get_Selection (Explorer.Tree), Iter) then
+                  Unselect_Iter (Get_Selection (Explorer.Tree), Iter);
+               else
+                  Select_Iter (Get_Selection (Explorer.Tree), Iter);
+               end if;
                return True;
             end if;
          end if;
