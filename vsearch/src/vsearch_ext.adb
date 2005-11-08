@@ -1051,6 +1051,11 @@ package body Vsearch_Ext is
          Set_Sensitive (Vsearch_Module_Id.Next_Menu_Item, True);
          Set_Sensitive (Vsearch_Module_Id.Prev_Menu_Item, True);
 
+         --  Always activate the "Next" button, so that we can still do
+         --  selective replace. Otherwise, the button is greyed out when we
+         --  have a replace string, and would stay as such.
+         Set_Sensitive (Vsearch.Search_Next_Button, True);
+
       else
          --  Remove size constraints on Search_Next_Button.
          Set_Size_Request (Vsearch.Search_Next_Button, -1, -1);
@@ -1058,6 +1063,10 @@ package body Vsearch_Ext is
          Set_Label (Vsearch.Search_Next_Button, Stock_Find);
          Set_Sensitive (Vsearch_Module_Id.Next_Menu_Item, False);
          Set_Sensitive (Vsearch_Module_Id.Prev_Menu_Item, False);
+
+         --  "Find" should not be active if we have some replacement text
+         Set_Sensitive
+           (Vsearch.Search_Next_Button, Get_Text (Vsearch.Replace_Entry) = "");
       end if;
    end Set_First_Next_Mode;
 
@@ -1122,10 +1131,11 @@ package body Vsearch_Ext is
      (Vsearch : access Gtk_Widget_Record'Class)
    is
       Has_Replace : constant Boolean :=
-        Get_Text (Vsearch_Extended (Vsearch).Replace_Entry) = "";
+        Get_Text (Vsearch_Extended (Vsearch).Replace_Entry) /= "";
    begin
+      --  "Find" should not be active if we have some replacement text
       Set_Sensitive
-        (Vsearch_Extended (Vsearch).Search_Next_Button, Has_Replace);
+        (Vsearch_Extended (Vsearch).Search_Next_Button, not Has_Replace);
       Reset_Search (Vsearch, Vsearch_Extended (Vsearch).Kernel);
    end Replace_Text_Changed;
 
