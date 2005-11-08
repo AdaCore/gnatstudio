@@ -115,10 +115,22 @@ package Src_Editor_Buffer is
       Lang   : Language.Language_Access);
    --  Set the language of the given buffer. The syntax highlighting
    --  is redone using the new language.
+   --  It also memorize the language in the GPS properties, so that future
+   --  uses of the same file use the same language automatically.
 
    function Get_Language
      (Buffer : access Source_Buffer_Record) return Language.Language_Access;
    --  Get the current language. Return null if the language is not set.
+
+   procedure Set_Charset
+     (Buffer : access Source_Buffer_Record; Charset : String);
+   --  Set the charset to use for this buffer. If unset, the buffer will use
+   --  the default charset specified in the preferences.
+   --  The charset in used is memorized for future use of this file if needed.
+   --  If the charset has changed, the file is reloaded if possible.
+
+   function Get_Charset (Buffer : access Source_Buffer_Record) return String;
+   --  Return the charset used for the buffer
 
    function Is_Valid_Position
      (Buffer : access Source_Buffer_Record;
@@ -1059,6 +1071,9 @@ private
 
       In_Destruction : Boolean := False;
       --  Indicates whether the buffer is currently being destroyed.
+
+      Charset : GNAT.OS_Lib.String_Access;
+      --  The charset associated with the buffer.
    end record;
 
 end Src_Editor_Buffer;

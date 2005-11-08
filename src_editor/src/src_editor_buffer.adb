@@ -71,6 +71,7 @@ with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                  use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
 with Language;                            use Language;
+with Language.Unknown;                    use Language.Unknown;
 with Language_Handlers;                   use Language_Handlers;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
@@ -2591,16 +2592,20 @@ package body Src_Editor_Buffer is
 
       Strip_CR (Contents.all, Last, CR_Found);
 
+      Set_Charset (Buffer, Get_File_Charset (Filename));
+
       UTF8 := Glib.Convert.Convert
         (Contents (Contents'First .. Last), "UTF-8",
-         Get_File_Charset (Filename),
+         Buffer.Charset.all,
          Ignore'Unchecked_Access, Length'Unchecked_Access);
 
       if UTF8 = Gtkada.Types.Null_Ptr then
          --  In case conversion failed, use a default encoding so that we can
          --  at least show something in the editor
+         Set_Charset (Buffer, "ISO-8859-1");
          UTF8 := Glib.Convert.Convert
-           (Contents (Contents'First .. Last), "UTF-8", "ISO-8859-1",
+           (Contents (Contents'First .. Last), "UTF-8",
+            Buffer.Charset.all,
             Ignore'Unchecked_Access, Length'Unchecked_Access);
       end if;
 
@@ -2774,7 +2779,7 @@ package body Src_Editor_Buffer is
                   declare
                      Contents : constant String := Glib.Convert.Convert
                        (Str.Contents (1 .. Str.Length),
-                        Get_File_Charset (Filename), "UTF-8");
+                        Buffer.Charset.all, "UTF-8");
                   begin
                      if Strip_Blank then
                         Index := Contents'Length;
@@ -2905,6 +2910,10 @@ package body Src_Editor_Buffer is
          Buffer.Timestamp := File_Time_Stamp (Get_Filename (Buffer));
 
          if Name_Changed then
+            --  Force an update of the persistent properties if need be
+            Set_Charset  (Buffer, Get_Charset (Buffer));
+            Set_Language (Buffer, Get_Language (Buffer));
+
             --  ??? The following is expensive, it would be nice to have a
             --  simpler way to report a possible change in the list of sources
             --  of a project.
@@ -2961,7 +2970,95 @@ package body Src_Editor_Buffer is
 
          Buffer_Information_Changed (Buffer);
       end if;
+
+      if Buffer.Filename /= VFS.No_File then
+         if Lang /= Get_Language_From_File
+           (Get_Language_Handler (Buffer.Kernel), Buffer.Filename)
+         then
+            if Lang = Language.Unknown.Unknown_Lang
+              or else Lang = Get_Language_From_File
+              (Get_Language_Handler (Buffer.Kernel), Buffer.Filename,
+               From_Project_Only => True)
+            then
+               --  If this is the same as the project => Do not save, so that
+               --  changing in the project correctly impacts this file
+               Set_Language_From_File
+                 (Get_Language_Handler (Buffer.Kernel),
+                  Buffer.Filename, "");
+            else
+               --  Note for the future which language should be used
+               Set_Language_From_File
+                 (Get_Language_Handler (Buffer.Kernel),
+                  Buffer.Filename, Get_Name (Lang));
+            end if;
+         end if;
+      end if;
    end Set_Language;
+
+   -----------------
+   -- Set_Charset --
+   -----------------
+
+   procedure Set_Charset
+     (Buffer : access Source_Buffer_Record; Charset : String)
+   is
+      Success : Boolean;
+      Buttons : Message_Dialog_Buttons;
+      pragma Unreferenced (Buttons);
+   begin
+      if Buffer.Filename /= VFS.No_File then
+         if Charset /= Get_File_Charset (Buffer.Filename) then
+            if Charset = Get_File_Charset (VFS.No_File) then
+               --  Since we are using the default charset, do not save in the
+               --  properties
+               Set_File_Charset (Buffer.Filename, "");
+            else
+               --  Else note for the future which charset should be used
+               Set_File_Charset (Buffer.Filename, Charset);
+            end if;
+         end if;
+      end if;
+
+      if Buffer.Charset /= null
+        and then Buffer.Charset.all /= Charset
+      then
+         Free (Buffer.Charset);
+         Buffer.Charset := new String'(Charset);
+
+         if Get_Status (Buffer) = Modified then
+            Buttons := Message_Dialog
+              (Msg => -("The character set has been modified."
+               & ASCII.LF
+               & "Since the file is currently modified, the new"
+               & ASCII.LF
+               & "character set will only apply when the file is"
+               & ASCII.LF
+               & " saved, the file will not be reloaded automatically"),
+               Dialog_Type => Warning,
+               Buttons     => Button_OK,
+               Title       => -"Warning: charset modified",
+               Parent      => Get_Main_Window (Buffer.Kernel));
+         else
+            Load_File (Buffer, Buffer.Filename, Success => Success);
+         end if;
+      else
+         Free (Buffer.Charset);
+         Buffer.Charset := new String'(Charset);
+      end if;
+   end Set_Charset;
+
+   -----------------
+   -- Get_Charset --
+   -----------------
+
+   function Get_Charset (Buffer : access Source_Buffer_Record) return String is
+   begin
+      if Buffer.Charset = null then
+         return Get_File_Charset (VFS.No_File);
+      else
+         return Buffer.Charset.all;
+      end if;
+   end Get_Charset;
 
    ------------------
    -- Get_Language --
