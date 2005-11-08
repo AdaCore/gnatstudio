@@ -230,9 +230,11 @@ package body GVD.Code_Editors is
       Source            : GVD.Source_Editor.Source_Editor;
       Font              : Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
-      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array) is
+      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array)
+   is
+      pragma Unreferenced (Current_Line_Icon, Stop_Icon);
    begin
-      Configure (Editor.Asm, Font, Current_Line_Icon, Stop_Icon);
+      Configure (Editor.Asm, Font);
       pragma Assert (Editor.Source = null);
       Editor.Source := Source;
    end Configure;
