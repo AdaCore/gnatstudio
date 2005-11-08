@@ -1910,7 +1910,11 @@ process_send_signal (p, signo, current_group)
   /* gid may be a pid, or minus a pgrp's number */
 #ifdef TIOCSIGSEND
   if (!NILP (current_group)) {
-    ioctl (XINT (p->infd), TIOCSIGSEND, signo);
+    /* On some systems like Solaris 2.9 the ioctl may failed
+       So if if this is the case, send explicitely the SIGINT
+       signal */
+    if (ioctl (XINT (p->infd), TIOCSIGSEND, signo) == -1)
+      GVD_KILLPG (gid, signo);
   }
   else
     {
