@@ -51,7 +51,6 @@ with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Window;                        use Gtk.Window;
 
-with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.Entry_Completion;           use Gtkada.Entry_Completion;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Handlers;                   use Gtkada.Handlers;
@@ -80,7 +79,6 @@ with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Timeout;                use GPS.Kernel.Timeout;
-with GUI_Utils;                         use GUI_Utils;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -2219,6 +2217,12 @@ package body Src_Editor_Module is
       pragma Unreferenced (Button);
 
    begin
+      Buffer := Get_Buffer
+        (Get_Source_Box_From_MDI (Get_Focus_Child (Get_MDI (Kernel))));
+      if Buffer = null then
+         return Failure;
+      end if;
+
       Gtk_New (Dialog,
                Title  => -"Properties for " & Full_Name (File).all,
                Parent => Get_Main_Window (Kernel),
@@ -2261,7 +2265,9 @@ package body Src_Editor_Module is
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
 
-      Lang := Create_Language_Combo (Get_Language_Handler (Kernel), File);
+      Lang := Create_Language_Combo
+        (Get_Language_Handler (Kernel), File,
+         Default => Get_Name (Get_Language (Buffer)));
       Pack_Start (Box, Lang, Expand => True, Fill => True);
 
       --  Charset
@@ -2274,7 +2280,8 @@ package body Src_Editor_Module is
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
 
-      Charset := Create_Charset_Combo (File);
+      Charset := Create_Charset_Combo
+        (File, Default => Get_Charset (Buffer));
       Pack_Start (Box, Charset, Expand => True, Fill => True);
 
       Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
@@ -2282,67 +2289,13 @@ package body Src_Editor_Module is
 
       Show_All (Dialog);
 
-      declare
-         Current_Lang    : constant String := Get_Text (Get_Entry (Lang));
-         Current_Charset : constant String := Get_Text (Get_Entry (Charset));
-         Buttons         : Message_Dialog_Buttons;
-         Success         : Boolean;
-         pragma Unreferenced (Buttons);
-      begin
-         if Run (Dialog) = Gtk_Response_OK then
-            if Get_Text (Get_Entry (Lang)) /= Current_Lang then
-               if Get_Index_In_List (Lang) <= 0 then
-                  Set_Language_From_File
-                    (Get_Language_Handler (Kernel), File, "");
-               else
-                  Set_Language_From_File
-                    (Get_Language_Handler (Kernel), File,
-                     Get_Text (Get_Entry (Lang)));
-               end if;
-
-               --  Refresh the language associated with the buffer. This also
-               --  changes the xref engine used
-               Buffer := Get_Buffer
-                 (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
-               if Buffer /= null then
-                  Set_Language
-                    (Buffer,
-                     Get_Language_From_File
-                       (Get_Language_Handler (Kernel), File));
-               end if;
-            end if;
-
-            if Get_Text (Get_Entry (Charset)) /= Current_Charset then
-               if File /= VFS.No_File then
-                  Set_File_Charset (File, Get_Text (Get_Entry (Charset)));
-
-                  if Buffer = null then
-                     Buffer := Get_Buffer
-                       (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
-                  end if;
-
-                  if Buffer /= null then
-                     if Get_Status (Buffer) = Modified then
-                        Buttons := Message_Dialog
-                          (Msg => -("The character set has been modified."
-                           & ASCII.LF
-                           & "Since the file is currently modified, the new"
-                           & ASCII.LF
-                           & "character set will only apply when the file is"
-                           & ASCII.LF
-                           & " saved"),
-                           Dialog_Type => Warning,
-                           Buttons     => Button_OK,
-                           Title       => -"Warning: charset modified",
-                           Parent      => Get_Main_Window (Kernel));
-                     else
-                        Load_File (Buffer, File, Success => Success);
-                     end if;
-                  end if;
-               end if;
-            end if;
-         end if;
-      end;
+      if Run (Dialog) = Gtk_Response_OK then
+         Set_Language
+           (Buffer, Get_Language_By_Name
+              (Get_Language_Handler (Kernel),
+               Get_Text (Get_Entry (Lang))));
+         Set_Charset (Buffer, Get_Text (Get_Entry (Charset)));
+      end if;
 
       Destroy (Dialog);
       return Success;
