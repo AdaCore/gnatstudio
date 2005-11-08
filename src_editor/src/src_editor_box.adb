@@ -62,6 +62,7 @@ with Entities;                  use Entities;
 with Find_Utils;                use Find_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -1737,6 +1738,7 @@ package body Src_Editor_Box is
 
       Set_Cursor_Location (Editor, 1, 1);
       Set_Filename (Editor.Source_Buffer, Filename);
+      Set_Charset (Editor.Source_Buffer, Get_File_Charset (Filename));
       Set_Text (Editor.Modified_Label, -"Unmodified");
 
       Editor.Writable := True;
