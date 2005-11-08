@@ -75,8 +75,12 @@ package body GPS.Kernel.Charsets is
        Description => new String'("Japanese (SHIFT-JIS)")),
       (Name        => new String'("GB2312"),
        Description => new String'("Chinese (GB2312)")),
-      (Name        => new String'("UNICODE"),
-       Description => new String'("Unicode")));
+      (Name        => new String'("UTF-8"),
+       Description => new String'("Unicode UTF-8")),
+      (Name        => new String'("UTF-16"),
+       Description => new String'("Unicode UTF-16")),
+      (Name        => new String'("UTF-32"),
+       Description => new String'("Unicode UTF-32")));
    --  The list comes from "man charsets", or "`iconv -l`".
    --  See also the list in "gedit  File->Open  Available Encodings"
 
@@ -126,7 +130,8 @@ package body GPS.Kernel.Charsets is
    --------------------------
 
    function Create_Charset_Combo
-     (File : VFS.Virtual_File) return Gtk.Combo.Gtk_Combo
+     (File    : VFS.Virtual_File;
+      Default : String := "") return Gtk.Combo.Gtk_Combo
    is
       Combo : Gtk_Combo;
       Found : Boolean := False;
@@ -150,6 +155,8 @@ package body GPS.Kernel.Charsets is
 
       if Found then
          Set_Text (Get_Entry (Combo), Prop.Value.all);
+      elsif Default /= "" then
+         Set_Text (Get_Entry (Combo), Default);
       else
          Set_Text (Get_Entry (Combo), Get_Pref (Default_Charset));
       end if;
@@ -270,11 +277,15 @@ package body GPS.Kernel.Charsets is
       Found : Boolean;
       Prop  : String_Property;
    begin
-      Get_Property (Prop, File, "charset", Found);
-      if Found then
-         return Prop.Value.all;
-      else
+      if File = VFS.No_File then
          return Get_Pref (Default_Charset);
+      else
+         Get_Property (Prop, File, "charset", Found);
+         if Found then
+            return Prop.Value.all;
+         else
+            return Get_Pref (Default_Charset);
+         end if;
       end if;
    end Get_File_Charset;
 

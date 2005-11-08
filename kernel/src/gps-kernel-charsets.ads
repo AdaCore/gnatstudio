@@ -50,12 +50,16 @@ package GPS.Kernel.Charsets is
    ------------
 
    function Create_Charset_Combo
-     (File : VFS.Virtual_File) return Gtk.Combo.Gtk_Combo;
+     (File    : VFS.Virtual_File;
+      Default : String := "") return Gtk.Combo.Gtk_Combo;
    --  Return a combo box that can be used to edit the charset associated with
    --  a file.
+   --  Default is used if File is VFS.No_File. If unspecified, the
+   --  corresponding preference is used.
 
    function Get_File_Charset (File : VFS.Virtual_File) return String;
-   --  Return the charset that should be used to edit File
+   --  Return the charset that should be used to edit File.
+   --  If File is VFS.No_File, the default charset is returned.
 
    procedure Set_File_Charset
      (File : VFS.Virtual_File; Charset : String := "");
