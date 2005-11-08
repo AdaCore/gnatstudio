@@ -359,6 +359,15 @@ package body Src_Editor_View is
       Move_Mark (Buffer, View.Saved_Cursor_Mark, Insert_Iter);
    end Save_Cursor_Position;
 
+   -------------------
+   -- Acquire_Focus --
+   -------------------
+
+   procedure Acquire_Focus (View : access Source_View_Record) is
+   begin
+      Set_Focus_Child (Get_MDI (View.Kernel), View.Child);
+   end Acquire_Focus;
+
    -----------------------------
    -- Restore_Cursor_Position --
    -----------------------------

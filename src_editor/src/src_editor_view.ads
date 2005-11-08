@@ -131,6 +131,10 @@ package Src_Editor_View is
       Child : MDI_Child);
    --  Inform View that it is being contained in Child.
 
+   procedure Acquire_Focus
+     (View : access Source_View_Record);
+   --  Get the MDI focus on the view
+
    procedure Save_Cursor_Position
      (View : access Source_View_Record'Class);
    --  Save the cursor position
