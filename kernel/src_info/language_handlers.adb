@@ -461,7 +461,8 @@ package body Language_Handlers is
 
    function Create_Language_Combo
      (Handler : access Language_Handler_Record;
-      File    : VFS.Virtual_File) return Gtk_Combo
+      File    : VFS.Virtual_File;
+      Default : String := "") return Gtk_Combo
    is
       Combo     : Gtk_Combo;
       Languages : Argument_List := Known_Languages (Handler, Sorted => True);
@@ -490,7 +491,9 @@ package body Language_Handlers is
 
       Free (Languages);
 
-      if File /= VFS.No_File
+      if File = VFS.No_File and then Default /= "" then
+         Set_Text (Get_Entry (Combo), Default);
+      elsif File /= VFS.No_File
         and then Language_Is_Overriden (Handler, File)
       then
          Set_Text (Get_Entry (Combo), Get_Language_From_File (Handler, File));

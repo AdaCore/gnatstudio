@@ -167,11 +167,14 @@ package Language_Handlers is
 
    function Create_Language_Combo
      (Handler : access Language_Handler_Record;
-      File    : VFS.Virtual_File) return Gtk.Combo.Gtk_Combo;
+      File    : VFS.Virtual_File;
+      Default : String := "") return Gtk.Combo.Gtk_Combo;
    --  Create a combo box to select the language for File.
    --  File is used to select the default value in the combo.
    --  The first entry in the combo always indicates that the language from the
-   --  project should be used
+   --  project should be used.
+   --  Default is used when File is VFS.No_File (and thus has no associated
+   --  language)
 
 private
    type Language_Info is record
