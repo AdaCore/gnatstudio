@@ -23,17 +23,11 @@
 
 with Glib;
 with Glib.Object;
-with Gdk.Bitmap;
 with Gdk.Font;
-with Gdk.Rectangle;
-with Gdk.Pixmap;
 with Gtk.Box;
-with Gtk.Layout;
 with Gtk.Menu;
-with Gtk.Pixmap;
 with Gtk.Text_Tag;
 with Gtk.Text_View;
-with Gtkada.Types;
 with Basic_Types;
 with Pango.Font;
 
@@ -55,15 +49,11 @@ package GVD.Assembly_View is
 
    procedure Configure
      (Assembly_View     : GVD_Assembly_View;
-      Font              : Pango.Font.Pango_Font_Description;
-      Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
-      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array);
+      Font              : Pango.Font.Pango_Font_Description);
    --  Set the various settings of the assembly view.
    --  Ps_Font_Name is the name of the postscript font that will be used to
    --  display the text. It should be a fixed-width font, which is nice for
    --  source code.
-   --  Current_Line_Icon is displayed on the left of the line currently
-   --  "active" (using the procedure Set_Line below).
 
    procedure Set_Address
      (Assembly_View : GVD_Assembly_View;
@@ -137,19 +127,6 @@ private
    --  Note that Columns is the number of visible columns in the widget, ie
    --  after Tabs have been expanded.
 
-   function On_Pixmap_Clicked
-     (Assembly_View : GVD_Assembly_View;
-      Button        : Natural;
-      Line          : Natural) return Boolean;
-   --  Called whenever the left or right mouse buttons are pressed in the
-   --  buttons area.
-
-   function Invisible_Column_Width
-     (Assembly_View : GVD_Assembly_View) return Glib.Gint;
-   --  Return the width, in pixels, of the column on the left side of the
-   --  text widget, whose contents is not included in the buffer.
-   --  This column can be used for instance to display line numbers.
-
    function Child_Contextual_Menu
      (Assembly_View : GVD_Assembly_View;
       Line          : Natural;
@@ -164,16 +141,6 @@ private
      (Assembly_View : GVD_Assembly_View;
       Text          : String);
    --  Set the text associated with the box. The Hightlighting is reset.
-
-   procedure Get_Entity_Area
-     (Assembly_View : GVD_Assembly_View;
-      X, Y          : in Glib.Gint;
-      Area          : out Gdk.Rectangle.Gdk_Rectangle;
-      Entity        : in out Basic_Types.String_Access);
-   --  Return the entity pointed to by the mouse, as well as the smallest
-   --  rectangle containing the entity. The X,Y coordinates of the rectangle
-   --  should be relative to the X,Y arguments passed to the procedure.
-   --  Area is not relevant if the Entity returned is null.
 
    type Cache_Data;
    type Cache_Data_Access is access Cache_Data;
@@ -193,16 +160,11 @@ private
    type GVD_Assembly_View_Record is new Gtk.Box.Gtk_Box_Record with record
       Process             : Glib.Object.GObject;
       View                : Gtk.Text_View.Gtk_Text_View;
-      Buttons             : Gtk.Layout.Gtk_Layout;
 
       Cache               : Cache_Data_Access;
       Current_Range       : Cache_Data_Access;
       --  The range of assembly code being displayed.
 
-      Stop_Pixmap         : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
-      Stop_Mask           : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
-
-      Current_Line_Button : Gtk.Pixmap.Gtk_Pixmap;
       Current_Line        : Natural := 0;
       --  ??? Not sure we need to keep that.
 
@@ -217,6 +179,10 @@ private
       --  should be displayed.
 
       Pc_Tag              : Gtk.Text_Tag.Gtk_Text_Tag;
+      --  Tag used to materialized the PC.
+
+      Breakpoint_Tag      : Gtk.Text_Tag.Gtk_Text_Tag;
+      --  Tag used to materialized breakpoints.
 
       Pc                  : GVD.Types.Address_Type :=
         GVD.Types.Invalid_Address;
