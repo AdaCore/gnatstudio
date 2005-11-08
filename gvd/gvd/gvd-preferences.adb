@@ -102,8 +102,15 @@ package body GVD.Preferences is
          Nick     => -"Current assembly line",
          Blurb    => -("Color used to highlight the assembly code for the"
                        & " current source line"),
-         Default  => "#FF0000"));
+         Default  => "#0000FF"));
       Register_Property (Prefs, Param_Spec (Asm_Highlight_Color), General);
+
+      Asm_Breakpoint_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Asm-Breakpoint-Color",
+         Nick     => -"Breakpoint line",
+         Blurb    => -("Assembly line on which a breakpoint is set"),
+         Default  => "#FF0000"));
+      Register_Property (Prefs, Param_Spec (Asm_Breakpoint_Color), General);
 
       Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Highlight-Color",
