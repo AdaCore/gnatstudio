@@ -613,14 +613,17 @@ package body Refactoring.Subprograms is
       C : constant Interactive_Command_Access := new Extract_Method_Command;
       Filter : Action_Filter;
    begin
-      Filter := new Is_Area_Context;
-      Register_Contextual_Menu
-        (Kernel,
-         Name  => "Extract Method",
-         Label => "Refactoring/Extract method",
-         Filter => Filter and Create (Module => "Source_Editor") and
-           Create (Language => "ada"),
-         Action => C);
+      --  Disabled for now
+      if False then
+         Filter := new Is_Area_Context;
+         Register_Contextual_Menu
+           (Kernel,
+            Name  => "Extract Method",
+            Label => "Refactoring/Extract method",
+            Filter => Filter and Create (Module => "Source_Editor") and
+              Create (Language => "ada"),
+            Action => C);
+      end if;
 
       if Active (Testsuite_Handle) then
          Register_Command
