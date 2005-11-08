@@ -1108,6 +1108,7 @@ package body Src_Editor_Box is
       Out_Of_Bounds : Boolean := False;
       Start_Line, End_Line : Integer;
       Selection_Is_Single_Entity : Boolean;
+      Click_In_Selection         : Boolean;
 
       function In_Selection
         (L, C : Gint; First, Last : Gtk_Text_Iter) return Boolean;
@@ -1172,21 +1173,26 @@ package body Src_Editor_Box is
             Context := new File_Selection_Context;
 
          else
-            --  Get the current entity bounds
-
-            Get_Iter_At_Line_Offset
-              (Editor.Source_Buffer, Entity_Start, Line, Column);
-            Search_Entity_Bounds (Entity_Start, Entity_End);
-
             --  Check whether there is a selection
 
             Get_Selection_Bounds
               (Editor.Source_Buffer, Start_Iter, End_Iter, Has_Selection);
 
+            Get_Iter_At_Line_Offset
+              (Editor.Source_Buffer, Entity_Start, Line, Column);
+
+            Click_In_Selection :=
+              Has_Selection
+              and then In_Range (Entity_Start, Start_Iter, End_Iter);
+
+            --  Get the current entity bounds
+
+            Search_Entity_Bounds (Entity_Start, Entity_End);
             Selection_Is_Single_Entity :=
               Has_Selection
               and then Equal (Entity_Start, Start_Iter)
               and then Equal (Entity_End, End_Iter);
+
 
             --  If we click in the current selection, use this as the context.
             --  However, if the selection is a single entity, we should create
@@ -1240,7 +1246,7 @@ package body Src_Editor_Box is
                   To_Box_Column (Entity_Column));
 
                if Menu /= null
-                 and then not Selection_Is_Single_Entity
+                 and then not Click_In_Selection
                then
                   --  Move the cursor at the correct location. The cursor is
                   --  grabbed automatically by the kernel when displaying the
@@ -1248,7 +1254,17 @@ package body Src_Editor_Box is
                   --  otherwise..
                   --  Do not move the cursor if we have clicked in the
                   --  selection, since otherwise that cancels the selection
+                  --
+                  --  Force the focus on the MDI window right away, instead of
+                  --  waiting for the editor to gain the focus later on.
+                  --  Otherwise, if the editor doesn't have the focus at this
+                  --  point, it will move back to its Saved_Cursor_Mark when
+                  --  it does, instead of where we have used Place_Cursor. Note
+                  --  that explicitly using Save_Cursor_Position doesn't work
+                  --  either, since it needs to be called after Place_Cursor,
+                  --  which does the scrolling to Saved_Cursor_Mark.
 
+                  Acquire_Focus (Editor.Source_View);
                   Place_Cursor (Editor.Source_Buffer, Entity_Start);
                end if;
             end if;
