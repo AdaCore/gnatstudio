@@ -177,3 +177,9 @@ Known Problems fixed in GPS 3.1.0
               crash under Windows when moving to/from the last menu item.
   Workaround: Use the mouse to navigate in the menu bar instead
 
+- D709-012 Cannot use Debug->Interrupt under Solaris 9
+  Problem:    Under Solaris 9, after running the program being debugged, the
+              program can not be halted using the Debug->Interrupt menu.
+  Workaround: Under a shell, use the "kill -INT <gdb process>" command to
+              simulate an interrupt to the debugger.
+
