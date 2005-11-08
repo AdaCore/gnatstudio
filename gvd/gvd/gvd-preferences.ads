@@ -44,6 +44,7 @@ package GVD.Preferences is
 
    -- Assembly Window --
    Asm_Highlight_Color           : Param_Spec_Color;
+   Asm_Breakpoint_Color          : Param_Spec_Color;
    Assembly_Range_Size           : Param_Spec_Int;
 
    -- Data Window --
