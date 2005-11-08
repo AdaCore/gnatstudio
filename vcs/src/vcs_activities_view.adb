@@ -236,12 +236,6 @@ package body VCS_Activities_View is
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
    --  Default context factory
 
-   function Get_Path_At_Event
-     (Tree  : Gtk_Tree_View;
-      Event : Gdk_Event) return Gtk_Tree_Path;
-   --  Return the path at which Event has occured.
-   --  User must free memory associated to the returned path.
-
    function Get_Cached_Data
      (Explorer : access VCS_Activities_View_Record'Class;
       Index    : VFS.Virtual_File) return Line_Record;
@@ -1161,31 +1155,6 @@ package body VCS_Activities_View is
       Initialize (Explorer, Kernel);
    end Gtk_New;
 
-   -----------------------
-   -- Get_Path_At_Event --
-   -----------------------
-
-   function Get_Path_At_Event
-     (Tree  : Gtk_Tree_View;
-      Event : Gdk_Event) return Gtk_Tree_Path
-   is
-      X         : constant Gdouble := Get_X (Event);
-      Y         : constant Gdouble := Get_Y (Event);
-      Buffer_X  : Gint;
-      Buffer_Y  : Gint;
-      Row_Found : Boolean;
-      Path      : Gtk_Tree_Path;
-      Column    : Gtk_Tree_View_Column := null;
-
-   begin
-      Path := Gtk_New;
-      Get_Path_At_Pos
-        (Tree, Gint (X), Gint (Y),
-         Path, Column, Buffer_X, Buffer_Y, Row_Found);
-
-      return Path;
-   end Get_Path_At_Event;
-
    ------------------
    -- Context_Func --
    ------------------
@@ -1210,62 +1179,71 @@ package body VCS_Activities_View is
    begin
       --  If there is no selection, select the item under the cursor
 
-      Path := Get_Path_At_Event (Explorer.Tree, Event);
-
-      if Path /= null
-        and then not Path_Is_Selected (Get_Selection (Explorer.Tree), Path)
-      then
-         --  Right click over a line which is not the current selection, this
-         --  line becomes the new selection.
-         Unselect_All (Get_Selection (Explorer.Tree));
-         Select_Path (Get_Selection (Explorer.Tree), Path);
-      end if;
-
-      --  If Get_Depth (Path) is 1 then we are on an activity node
-
-      if Get_Depth (Path) = 1 then
-         Context := new Activity_Context;
-
-         Iter := Get_Iter (Explorer.Model, Path);
-
+      Iter := Find_Iter_For_Event
+        (Explorer.Tree, Get_Model (Explorer.Tree), Event);
+      if Iter = Null_Iter then
+         Context := new Selection_Context;
          Set_Context_Information
            (Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
-         Set_Activity_Information
-           (Activity_Context_Access (Context),
-            Get_String (Explorer.Model, Iter, Activity_Id_Column));
 
-      elsif Get_Depth (Path) > 1 then
-         Files := Get_Selected_Files (Explorer);
+      else
+         Path := Get_Path (Get_Model (Explorer.Tree), Iter);
 
-         declare
-            First_File : constant Virtual_File := Create
-              (Full_Filename => String_List.Head (Files));
-         begin
+         if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
+            --  Right click over a line which is not the current selection,
+            --  this line becomes the new selection.
+            Unselect_All (Get_Selection (Explorer.Tree));
+            Select_Path (Get_Selection (Explorer.Tree), Path);
+         end if;
+
+         --  If Get_Depth (Path) is 1 then we are on an activity node
+
+         if Get_Depth (Path) = 1 then
             Context := new Activity_Context;
 
-            Iter := Parent (Explorer.Model, Get_Iter (Explorer.Model, Path));
+            Iter := Get_Iter (Explorer.Model, Path);
 
+            Set_Context_Information
+              (Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
             Set_Activity_Information
               (Activity_Context_Access (Context),
                Get_String (Explorer.Model, Iter, Activity_Id_Column));
+
+         elsif Get_Depth (Path) > 1 then
+            Files := Get_Selected_Files (Explorer);
+
+            declare
+               First_File : constant Virtual_File := Create
+                 (Full_Filename => String_List.Head (Files));
+            begin
+               Context := new Activity_Context;
+
+               Iter :=
+                 Parent (Explorer.Model, Get_Iter (Explorer.Model, Path));
+
+               Set_Activity_Information
+                 (Activity_Context_Access (Context),
+                  Get_String (Explorer.Model, Iter, Activity_Id_Column));
+               Set_Context_Information
+                 (Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
+               Set_File_Information
+                 (File_Selection_Context_Access (Context),
+                  File => First_File);
+            end;
+
+            String_List.Free (Files);
+
+         else
+            --  Path is 0, outside the tree view data
+
+            Context := new Selection_Context;
+
             Set_Context_Information
               (Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
-            Set_File_Information
-              (File_Selection_Context_Access (Context), File => First_File);
-         end;
+         end if;
 
-         String_List.Free (Files);
-
-      else
-         --  Path is 0, outside the tree view data
-
-         Context := new Selection_Context;
-
-         Set_Context_Information
-           (Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
+         Path_Free (Path);
       end if;
-
-      Path_Free (Path);
 
       Set_Current_Context (Explorer, Context);
       VCS_Activities_Contextual_Menu (Kernel_Handle (Kernel), Context, Menu);
@@ -1304,18 +1282,24 @@ package body VCS_Activities_View is
 
    begin
       if Get_Event_Type (Event) = Gdk_2button_Press then
-         Path := Get_Path_At_Event (Explorer.Tree, Event);
+         Iter := Find_Iter_For_Event
+           (Explorer.Tree, Get_Model (Explorer.Tree), Event);
+         if Iter /= Null_Iter then
+            Path := Get_Path (Get_Model (Explorer.Tree), Iter);
 
-         if Path /= null and then Get_Depth (Path) = 2 then
-            Iter := Get_Iter (Explorer.Model, Path);
-            Open_File_Editor
-              (Kernel,
-               Create
-                 (Full_Filename =>
-                    Get_String (Explorer.Model, Iter, Name_Column)),
-               Line   => 0,
-               Column => 0);
-            Emit_Stop_By_Name (Explorer.Tree, "button_press_event");
+            if Get_Depth (Path) = 2 then
+               Iter := Get_Iter (Explorer.Model, Path);
+               Open_File_Editor
+                 (Kernel,
+                  Create
+                    (Full_Filename =>
+                       Get_String (Explorer.Model, Iter, Name_Column)),
+                  Line   => 0,
+                  Column => 0);
+               Emit_Stop_By_Name (Explorer.Tree, "button_press_event");
+            end if;
+
+            Path_Free (Path);
          end if;
       end if;
 
