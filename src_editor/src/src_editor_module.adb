@@ -2313,29 +2313,31 @@ package body Src_Editor_Module is
             end if;
 
             if Get_Text (Get_Entry (Charset)) /= Current_Charset then
-               Set_File_Charset (File, Get_Text (Get_Entry (Charset)));
+               if File /= VFS.No_File then
+                  Set_File_Charset (File, Get_Text (Get_Entry (Charset)));
 
-               if Buffer = null then
-                  Buffer := Get_Buffer
-                    (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
-               end if;
+                  if Buffer = null then
+                     Buffer := Get_Buffer
+                       (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
+                  end if;
 
-               if Buffer /= null then
-                  if Get_Status (Buffer) = Modified then
-                     Buttons := Message_Dialog
-                       (Msg => -("The character set has been modified."
-                        & ASCII.LF
-                        & "Since the file is currently modified, the new"
-                        & ASCII.LF
-                        & "character set will only apply when the file is"
-                        & ASCII.LF
-                        & " saved"),
-                        Dialog_Type => Warning,
-                        Buttons     => Button_OK,
-                        Title       => -"Warning: charset modified",
-                        Parent      => Get_Main_Window (Kernel));
-                  else
-                     Load_File (Buffer, File, Success => Success);
+                  if Buffer /= null then
+                     if Get_Status (Buffer) = Modified then
+                        Buttons := Message_Dialog
+                          (Msg => -("The character set has been modified."
+                           & ASCII.LF
+                           & "Since the file is currently modified, the new"
+                           & ASCII.LF
+                           & "character set will only apply when the file is"
+                           & ASCII.LF
+                           & " saved"),
+                           Dialog_Type => Warning,
+                           Buttons     => Button_OK,
+                           Title       => -"Warning: charset modified",
+                           Parent      => Get_Main_Window (Kernel));
+                     else
+                        Load_File (Buffer, File, Success => Success);
+                     end if;
                   end if;
                end if;
             end if;
