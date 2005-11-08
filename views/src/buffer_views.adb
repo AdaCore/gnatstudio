@@ -289,37 +289,35 @@ package body Buffer_Views is
       --  breaks the selection of multiple lines
 
       if Child /= null then
-         if Get_Widget (Child) /= Gtk_Widget (V) then
-            declare
-               Selected : constant String := Get_Title (Child);
-            begin
-               Unselect_All (Get_Selection (V.Tree));
+         declare
+            Selected : constant String := Get_Title (Child);
+         begin
+            Unselect_All (Get_Selection (V.Tree));
 
-               while Iter /= Null_Iter loop
-                  Iter2 := Children (Model, Iter);
+            while Iter /= Null_Iter loop
+               Iter2 := Children (Model, Iter);
 
-                  if Iter2 = Null_Iter then
-                     if Get_String (Model, Iter, Data_Column) = Selected then
-                        Select_Iter (Get_Selection (V.Tree), Iter);
-                        exit;
-                     end if;
-
-                  else
-                     while Iter2 /= Null_Iter loop
-                        if Get_String (Model, Iter2, Data_Column) =
-                          Selected
-                        then
-                           Select_Iter (Get_Selection (V.Tree), Iter2);
-                           return;
-                        end if;
-                        Next (Model, Iter2);
-                     end loop;
+               if Iter2 = Null_Iter then
+                  if Get_String (Model, Iter, Data_Column) = Selected then
+                     Select_Iter (Get_Selection (V.Tree), Iter);
+                     exit;
                   end if;
 
-                  Next (Model, Iter);
-               end loop;
-            end;
-         end if;
+               else
+                  while Iter2 /= Null_Iter loop
+                     if Get_String (Model, Iter2, Data_Column) =
+                       Selected
+                     then
+                        Select_Iter (Get_Selection (V.Tree), Iter2);
+                        return;
+                     end if;
+                     Next (Model, Iter2);
+                  end loop;
+               end if;
+
+               Next (Model, Iter);
+            end loop;
+         end;
       end if;
    exception
       when E : others =>
