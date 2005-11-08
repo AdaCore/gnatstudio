@@ -263,6 +263,7 @@ package body GVD.Assembly_View is
       Current_Line_Mask   : Gdk.Bitmap.Gdk_Bitmap;
       Tag_Table           : constant Gtk_Text_Tag_Table :=
                               Get_Tag_Table (Get_Buffer (Assembly_View.View));
+      Color               : Gdk_Color;
    begin
       --  Font
 
@@ -307,9 +308,9 @@ package body GVD.Assembly_View is
       --  counter at the Gtk_Text_Buffer level.
 
       Gtk_New (Assembly_View.Pc_Tag);
+      Set_Rgb (Color, 0, Guint16'Last, 0);
       Set_Property
-        (Assembly_View.Pc_Tag, Background_Gdk_Property,
-         Get_Pref (Memory_Highlighted_Color));
+        (Assembly_View.Pc_Tag, Background_Gdk_Property, Color);
       Add (Tag_Table, Assembly_View.Pc_Tag);
    end Configure;
 
