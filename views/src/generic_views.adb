@@ -90,7 +90,7 @@ package body Generic_Views is
               (User, View,
                Default_Width  => 215,
                Default_Height => 600,
-               Position       => Position_Left,
+               Position       => Position_View,
                Module         => Module);
             Set_Title (Child, View_Name, View_Name);
             return Child;
