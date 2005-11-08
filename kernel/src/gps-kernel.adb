@@ -233,6 +233,8 @@ package body GPS.Kernel is
 
       GPS.Kernel.Scripts.Initialize (Handle);
 
+      Restore_Persistent_Properties (Handle);
+
       Create_Clipboard (Handle);
 
       Add_Hook
