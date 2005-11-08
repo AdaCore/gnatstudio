@@ -316,7 +316,8 @@ package body Call_Graph_Views is
                Line       => Natural (Get_Int (Model, Iter, Line_Column)),
                Column     => Natural (Get_Int (Model, Iter, Column_Column)),
                Column_End => Natural (Get_Int (Model, Iter, Column_Column))
-                  + Get_Name (Entity)'Length);
+               + Get_Name (Entity)'Length);
+            return True;
          end if;
       end if;
 
@@ -693,7 +694,7 @@ package body Call_Graph_Views is
    is
       Names : GNAT.OS_Lib.String_List :=
         (1 => new String'(-"Name"),
-         2 => new String'(-"Declaration"));
+         2 => new String'(-"Location"));
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Scrolled_Window.Initialize (View);
