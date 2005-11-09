@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -80,5 +80,14 @@ package Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type;
    --  This is used for control commands. A control command is an action whose
    --  purpose is to modify the status of the current view.
+
+   type Tab_As_Space_Command is new Interactive_Command with record
+      Kernel : GPS.Kernel.Kernel_Handle;
+   end record;
+   function Execute
+     (Command : access Tab_As_Space_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type;
+   --  A command that inserts spaces in the current editor.
 
 end Src_Editor_View.Commands;
