@@ -51,8 +51,6 @@ with VFS;                    use VFS;
 with Traces;                 use Traces;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 
-with Ada.Text_IO;            use Ada.Text_IO;
-
 package body Buffer_Views is
 
    Icon_Column : constant := 0;
