@@ -694,6 +694,8 @@ package body Builder_Module is
             Cmd := new String'("gprmake");
       end case;
 
+      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
+
       Launch_Process
         (Kernel,
          Remote_Protocol      => Get_Pref (Remote_Protocol),
@@ -712,8 +714,6 @@ package body Builder_Module is
          Show_In_Task_Manager => True,
          Synchronous          => Synchronous,
          Show_Exit_Status     => True);
-
-      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
       Free (Cmd);
       Free (Args);
@@ -1171,6 +1171,7 @@ package body Builder_Module is
       declare
          Args : Argument_List_Access := Argument_String_To_List (Cmd);
       begin
+         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
          Launch_Process
            (Kernel,
             Remote_Protocol      => Get_Pref (Remote_Protocol),
@@ -1189,7 +1190,6 @@ package body Builder_Module is
             Show_In_Task_Manager => True,
             Synchronous          => False,
             Show_Exit_Status     => True);
-         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
          Free (Args);
       end;
 
