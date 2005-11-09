@@ -96,6 +96,8 @@ New features in GPS 3.1.0
 - C807-008 Export graphs to SVG so that people can import them into
   other tools.
 
+- C623-001 Support for aborting external actions from the task manager.
+
 - BA07-005 Improved cross-references for generics
   From a reference to an entity declared in a generic, it is now possible to
   find out what instantiation of the generic is involved.
