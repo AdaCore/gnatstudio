@@ -1802,6 +1802,7 @@ package body Commands.Custom is
    procedure Interrupt (Command : in out Custom_Command) is
    begin
       Command.Execution.Cmd_Index := Command.Components'First;
+      Interrupt (Command.Fd.all);
       Close (Command.Fd.all);
    end Interrupt;
 
