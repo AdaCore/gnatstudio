@@ -325,7 +325,7 @@ package Language is
    --                      variable decl.
 
    Default_Indent_Parameters : constant Indent_Parameters :=
-     (Indent_Level        => 3,
+     (Indent_Level        => 8,
       Indent_Continue     => 2,
       Indent_Decl         => 0,
       Tab_Width           => 8,
