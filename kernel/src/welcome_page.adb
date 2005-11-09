@@ -134,9 +134,10 @@ package body Welcome_Page is
       Scroll   : Gtk_Scrolled_Window;
 
       Pics_Dir : constant String := Get_System_Dir (Kernel)
-        & "share/doc" & Directory_Separator & "gps" & Directory_Separator
-        & "html" & Directory_Separator;
+        & "share" & Directory_Separator & "doc" & Directory_Separator
+        & "gps" & Directory_Separator & "html" & Directory_Separator;
       Requisition : Gtk_Requisition;
+
    begin
       Main_Box := new Welcome_Page_Record;
       Initialize_Vbox (Main_Box);
