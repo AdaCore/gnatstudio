@@ -30,6 +30,7 @@ with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
 
 with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Text_View;          use Gtk.Text_View;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
@@ -38,6 +39,7 @@ with Gtkada.MDI;             use Gtkada.MDI;
 
 with Basic_Types;
 with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
@@ -101,6 +103,10 @@ package body GPS.Kernel.Console is
       User   : Kernel_Handle)
       return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed
 
    -----------------
    -- Get_Console --
@@ -315,6 +321,20 @@ package body GPS.Kernel.Console is
       end if;
    end Destroy;
 
+   ----------------------------
+   -- On_Preferences_Changed --
+   ----------------------------
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Console : constant Interactive_Console := Get_Console (Kernel);
+   begin
+      if Console /= null then
+         Modify_Font (Get_View (Console), Get_Pref_Font (Default_Style));
+      end if;
+   end On_Preferences_Changed;
+
    ------------------------
    -- Initialize_Console --
    ------------------------
@@ -356,6 +376,10 @@ package body GPS.Kernel.Console is
 
       Console_Module_Id.Child   := Child;
       Console_Module_Id.Console := Console;
+
+      Add_Hook (Kernel, "preferences_changed",
+                On_Preferences_Changed'Access,
+                Watch => GObject (Console));
 
       Kernel_Callback.Connect
         (Console, "destroy", Console_Destroyed'Access, Kernel_Handle (Kernel));
