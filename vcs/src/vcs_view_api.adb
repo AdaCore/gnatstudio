@@ -251,12 +251,6 @@ package body VCS_View_API is
       Log_Exists : Boolean;
 
    begin
-      if Context /= null and then Context.all in Activity_Context'Class then
-         --  We do not want the Version Control menu for the Activities
-         --  Explorer.
-         return;
-      end if;
-
       if Context = null then
          Ref := Get_Current_Ref (Get_Project (Kernel));
       else
@@ -384,7 +378,12 @@ package body VCS_View_API is
 
             Add_Action (Status_Files, On_Menu_Get_Status'Access);
             Add_Action (Update, On_Menu_Update'Access);
-            Add_Action (Commit, On_Menu_Commit'Access, not Log_Exists);
+
+            --  Removed for files belonging to activities as we only want
+            --  group commit here.
+            if Context.all not in Activity_Context'Class then
+               Add_Action (Commit, On_Menu_Commit'Access, not Log_Exists);
+            end if;
 
             Add_Separator;
 
@@ -437,10 +436,19 @@ package body VCS_View_API is
 
             Add_Separator;
 
-            Add_Action (Add, On_Menu_Add'Access, not Log_Exists);
+            --  Removed for files inside activities. See previous comments.
+            if Context.all not in Activity_Context'Class then
+               Add_Action (Add, On_Menu_Add'Access, not Log_Exists);
+            end if;
+
             Add_Action
               (Add_No_Commit, On_Menu_Add_No_Commit'Access, not Log_Exists);
-            Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
+
+            --  Removed for files inside activities. See previous comments.
+            if Context.all not in Activity_Context'Class then
+               Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
+            end if;
+
             Add_Action
               (Remove_No_Commit, On_Menu_Remove_No_Commit'Access,
                not Log_Exists);
@@ -458,8 +466,12 @@ package body VCS_View_API is
 
       --  Fill the section for the activity
 
+      --  ??? removed this menu item when in the VCS Activities window.
+      --  For now, moving from one activity to another is not possible.
+      --  We shall however display this submenu once it is allowed.
       if (File_Section or else Show_Everything)
         and then First /= No_Activity
+        and then Context.all not in Activity_Context'Class
       then
          Gtk_New (Menu_Item, Label => -"Add to Activity");
          Append (Menu, Menu_Item);
@@ -760,7 +772,9 @@ package body VCS_View_API is
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
 
-         if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID) then
+         if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID)
+           and then Context.all not in Activity_Context'Class
+         then
             Explorer := Get_Explorer (Kernel, False);
             List := Get_Selected_Files (Explorer);
          else
