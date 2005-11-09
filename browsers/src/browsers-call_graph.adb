@@ -696,29 +696,33 @@ package body Browsers.Call_Graph is
       Entity     : Entity_Information)
    is
       Child_Browser : constant MDI_Child := Open_Call_Graph_Browser (Kernel);
-      Data : Examine_Ancestors_Data_Access;
       Browser       : constant Call_Graph_Browser :=
         Call_Graph_Browser (Get_Widget (Child_Browser));
       Item          : constant Entity_Item :=
         Add_Entity_If_Not_Present (Browser, Entity);
    begin
-      Data := new Examine_Ancestors_Data'
-        (Commands_User_Data_Record with
-         Browser        => Browser,
-         Item           => Item,
-         Link_From_Item => True);
+      if not Children_Shown (Item) then
+         declare
+            Data : constant Examine_Ancestors_Data_Access :=
+              new Examine_Ancestors_Data'
+                (Commands_User_Data_Record with
+                 Browser        => Browser,
+                 Item           => Item,
+                 Link_From_Item => True);
+         begin
+            Set_Children_Shown (Data.Item, True);
+            Redraw_Title_Bar (Data.Item);
+            Examine_Entity_Call_Graph
+              (Kernel          => Kernel,
+               Entity          => Entity,
+               User_Data       => Data,
+               Get_All_Refs    => True);
 
-      if not Children_Shown (Data.Item) then
-         Set_Children_Shown (Data.Item, True);
-         Redraw_Title_Bar (Data.Item);
-         Examine_Entity_Call_Graph
-           (Kernel          => Kernel,
-            Entity          => Entity,
-            User_Data       => Data,
-            Get_All_Refs    => True);
+            --  Data is no longer valid now, since it has been destroyed
+         end;
 
          --  Refresh all linked items, since we have added references in them
-         Refresh_Linked_Items (Data.Item, Refresh_Children => True);
+         Refresh_Linked_Items (Item, Refresh_Children => True);
       end if;
 
       --  We need to do a layout in all cases, so that the newly added item
@@ -768,6 +772,7 @@ package body Browsers.Call_Graph is
       Line             : Natural;
       Text             : String_Access;
       New_Cb, Callback : Active_Area_Cb;
+      Changing         : Entity_Item;
    begin
       Child := Add_Entity_If_Not_Present (Browser, Entity);
 
@@ -803,57 +808,36 @@ package body Browsers.Call_Graph is
       Line := 2;
 
       if Link_From_Item then
-         New_Cb := Build (Get_Kernel (Browser), Item, Loc);
-
-         loop
-            Get_Line (Child.Refs, Line, 1, Callback, Text);
-            exit when Text = null;
-
-            if Show_Location_Callback_Access (Callback).Parent = Item then
-               Expand_Line
-                 (Child.Refs, Line,
-                  " @" & Image (Get_Line (Loc))
-                    & ':' & Image (Get_Column (Loc)) & '@',
-                  (1 => New_Cb));
-               return;
-            end if;
-
-            Line := Line + 1;
-         end loop;
-
-         Add_Line
-           (Child.Refs,
-            Get_Full_Name (Item.Entity)
-            & ": @"
-            & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
-            Callback => (1 => New_Cb));
-
+         Changing := Child;
+         Child    := Item;
       else
-         New_Cb := Build (Get_Kernel (Browser), Child, Loc);
-
-         loop
-            Get_Line (Item.Refs, Line, 1, Callback, Text);
-            exit when Text = null;
-
-            if Show_Location_Callback_Access (Callback).Parent = Child then
-               Expand_Line
-                 (Item.Refs, Line,
-                  " @" & Image (Get_Line (Loc))
-                    & ':' & Image (Get_Column (Loc)) & '@',
-                  (1 => New_Cb));
-               return;
-            end if;
-
-            Line := Line + 1;
-         end loop;
-
-         Add_Line
-           (Item.Refs,
-            Get_Full_Name (Child.Entity)
-            & ": @"
-            & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
-            Callback => (1 => New_Cb));
+         Changing := Item;
       end if;
+
+      New_Cb := Build (Get_Kernel (Browser), Child, Loc);
+
+      loop
+         Get_Line (Changing.Refs, Line, 1, Callback, Text);
+         exit when Text = null;
+
+         if Show_Location_Callback_Access (Callback).Parent = Child then
+            Expand_Line
+              (Changing.Refs, Line,
+               " @" & Image (Get_Line (Loc))
+               & ':' & Image (Get_Column (Loc)) & '@',
+               (1 => New_Cb));
+            return;
+         end if;
+
+         Line := Line + 1;
+      end loop;
+
+      Add_Line
+        (Changing.Refs,
+         Get_Full_Name (Child.Entity)
+         & ": @"
+         & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
+         Callback => (1 => New_Cb));
    end Add_Entity_And_Link;
 
    ---------------------
