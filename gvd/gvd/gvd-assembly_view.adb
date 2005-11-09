@@ -99,7 +99,20 @@ package body GVD.Assembly_View is
    --  Result is set to True if a breakpoint is set at address Addr
 
    procedure Reset_Highlighting (Assembly_View : GVD_Assembly_View);
-   --  Reset the buffer hightlighting
+   --  Reset the buffer highlighting.
+
+   procedure Highlight (Assembly_View : GVD_Assembly_View);
+   --  Redo the buffer highlighting.
+
+   procedure Highlight_Address_Range (Assembly_View : GVD_Assembly_View);
+   --  Highlight the range of addresses corresponding to the current source
+   --  line.
+
+   procedure Highlight_Pc_Line (Assembly_View : GVD_Assembly_View);
+   --  Highlight the Pc line.
+
+   procedure Highlight_Breakpoint_Lines (Assembly_View : GVD_Assembly_View);
+   --  Highlight lines on which a breakpoint is set.
 
    procedure On_Frame_Changed
      (Assembly_View : GVD_Assembly_View;
@@ -203,7 +216,7 @@ package body GVD.Assembly_View is
 
       Set_Font (Assembly_View, Font);
 
-      --  Highlighting
+      --  Current address range highlighting
 
       Gtk_New (Assembly_View.Highlight_Tag);
       Set_Property
@@ -211,7 +224,16 @@ package body GVD.Assembly_View is
          Get_Pref (Asm_Highlight_Color));
       Add (Tag_Table, Assembly_View.Highlight_Tag);
 
-      --  Pc
+      --  Breakpoints highlighting
+
+      Gtk_New (Assembly_View.Breakpoint_Tag);
+      Set_Property
+        (Assembly_View.Breakpoint_Tag, Background_Gdk_Property,
+         Get_Pref (Asm_Breakpoint_Color));
+      Add (Tag_Table, Assembly_View.Breakpoint_Tag);
+
+      --  Pc Hightlighting
+
       --  ??? This a temporrary solution used to materialized the program
       --  counter at the Gtk_Text_Buffer level.
 
@@ -221,13 +243,6 @@ package body GVD.Assembly_View is
         (Assembly_View.Pc_Tag, Background_Gdk_Property, Color);
       Add (Tag_Table, Assembly_View.Pc_Tag);
 
-      --  Breakpoints
-
-      Gtk_New (Assembly_View.Breakpoint_Tag);
-      Set_Property
-        (Assembly_View.Breakpoint_Tag, Background_Gdk_Property,
-         Get_Pref (Asm_Breakpoint_Color));
-      Add (Tag_Table, Assembly_View.Breakpoint_Tag);
    end Configure;
 
    ----------------
@@ -307,72 +322,6 @@ package body GVD.Assembly_View is
       Apply_Tag (Buffer, Tag, Start_Iter, End_Iter);
       Delete_Mark (Buffer, Start_Mark);
    end Insert_At_Cursor;
-
-   ----------------------
-   -- Pixels_From_Line --
-   ----------------------
-
-   function Pixels_From_Line
-     (Assembly_View : GVD_Assembly_View;
-      Line          : Natural) return Gint is
-   begin
-      return Gint (Line - 1) * Assembly_View.Line_Height + 3;
-   end Pixels_From_Line;
-
-   ----------------------
-   -- Line_From_Pixels --
-   ----------------------
-
-   function Line_From_Pixels
-     (Assembly_View : GVD_Assembly_View;
-      Y             : Gint) return Natural is
-   begin
-      return Natural (Y / Assembly_View.Line_Height + 1);
-   end Line_From_Pixels;
-
-   --------------------
-   -- Move_N_Columns --
-   --------------------
-
-   procedure Move_N_Columns
-     (Assembly_View : GVD_Assembly_View;
-      Index         : in out Natural;
-      Columns       : Integer)
-   is
-      Buffer     : constant Gtk_Text_Buffer := Get_Buffer (Assembly_View.View);
-      Text       : String_Access;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      J          : Integer := 1;
-      Tab_Size   : constant Integer := 8;
-
-   begin
-      Get_Bounds (Buffer, Start_Iter, End_Iter);
-      Text := new String'(Get_Text (Buffer, Start_Iter, End_Iter));
-
-      --  Go to the right column, but make sure we are still on
-      --  the current line.
-      --  Index is the index in the buffer, while J is the current
-      --  column number (after processing horizontal tabs).
-
-      while J <= Columns loop
-         Index := Index + 1;
-
-         exit when Index > Text'Last
-           or else Text (Index) = ASCII.LF;
-
-         if Text (Index) = ASCII.HT
-           and then J mod Tab_Size /= 0
-         then
-            --  Go to the next column that is a multiple of Tab_Size
-            J := (1 + J / Tab_Size) * Tab_Size + 1;
-         else
-            J := J + 1;
-         end if;
-      end loop;
-
-      Free (Text);
-   end Move_N_Columns;
 
    --------------
    -- Set_Text --
@@ -517,6 +466,74 @@ package body GVD.Assembly_View is
    end Highlight_Address_Range;
 
    -----------------------
+   -- Highlight_Pc_Line --
+   -----------------------
+
+   procedure Highlight_Pc_Line (Assembly_View : GVD_Assembly_View) is
+      Buffer        : constant Gtk_Text_Buffer :=
+                        Get_Buffer (Assembly_View.View);
+      Start_Iter,
+      End_Iter      : Gtk_Text_Iter;
+      Dummy_Boolean : Boolean;
+   begin
+      Iter_From_Address
+        (Assembly_View, Assembly_View.Pc, Start_Iter, Dummy_Boolean);
+      Copy (Start_Iter, Dest => End_Iter);
+      Forward_To_Line_End (End_Iter, Dummy_Boolean);
+      Apply_Tag (Buffer, Assembly_View.Pc_Tag, Start_Iter, End_Iter);
+   end Highlight_Pc_Line;
+
+   --------------------------------
+   -- Highlight_Breakpoint_Lines --
+   --------------------------------
+
+   procedure Highlight_Breakpoint_Lines
+     (Assembly_View : GVD_Assembly_View)
+   is
+      Buffer    : constant Gtk_Text_Buffer :=
+                    Get_Buffer (Assembly_View.View);
+
+      Start_Iter,
+      End_Iter  : Gtk_Text_Iter;
+      Found     : Boolean;
+      Dummy     : Boolean;
+   begin
+      if Assembly_View.Breakpoints = null then
+         return;
+      end if;
+
+      --  Add the new ones
+      for B in Assembly_View.Breakpoints'Range loop
+         if Assembly_View.Breakpoints (B).Address /= Invalid_Address then
+            Iter_From_Address
+              (Assembly_View,
+               Assembly_View.Breakpoints (B).Address,
+               Start_Iter,
+               Found);
+
+            if Found then
+               Copy (Start_Iter, Dest => End_Iter);
+               Forward_To_Line_End (End_Iter, Dummy);
+               Apply_Tag
+                 (Buffer, Assembly_View.Breakpoint_Tag, Start_Iter, End_Iter);
+            end if;
+         end if;
+      end loop;
+   end Highlight_Breakpoint_Lines;
+
+   ---------------
+   -- Highlight --
+   ---------------
+
+   procedure Highlight (Assembly_View : GVD_Assembly_View) is
+   begin
+      Reset_Highlighting (Assembly_View);
+      Highlight_Address_Range (Assembly_View);
+      Highlight_Breakpoint_Lines (Assembly_View);
+      Highlight_Pc_Line (Assembly_View);
+   end Highlight;
+
+   -----------------------
    -- Iter_From_Address --
    -----------------------
 
@@ -625,32 +642,9 @@ package body GVD.Assembly_View is
      (Assembly_View : GVD_Assembly_View;
       Br            : GVD.Types.Breakpoint_Array)
    is
-      Buffer    : constant Gtk_Text_Buffer :=
-                    Get_Buffer (Assembly_View.View);
-
-      Start_Iter,
-      End_Iter  : Gtk_Text_Iter;
-      Found     : Boolean;
-      Dummy     : Boolean;
    begin
-      --  Remove all existing breakpoints
-      Get_Bounds (Buffer, Start_Iter, End_Iter);
-      Remove_Tag (Buffer, Assembly_View.Breakpoint_Tag, Start_Iter, End_Iter);
-
-      --  Add the new ones
-      for B in Br'Range loop
-         if Br (B).Address /= Invalid_Address then
-            Iter_From_Address
-              (Assembly_View, Br (B).Address, Start_Iter, Found);
-
-            if Found then
-               Copy (Start_Iter, Dest => End_Iter);
-               Forward_To_Line_End (End_Iter, Dummy);
-               Apply_Tag
-                 (Buffer, Assembly_View.Breakpoint_Tag, Start_Iter, End_Iter);
-            end if;
-         end if;
-      end loop;
+      Assembly_View.Breakpoints := new Breakpoint_Array'(Br);
+      Highlight (Assembly_View);
    end Update_Breakpoints;
 
    --------------
@@ -780,16 +774,7 @@ package body GVD.Assembly_View is
                      Integer (Get_Pref (Assembly_Range_Size)))));
          end if;
 
-         if Down or else Assembly_View.Current_Range.High
-           /= Invalid_Address
-         then
-            --  Scroll to the right position
-            --              Set_Value (Get_Vadj (Get_Child (Box)), Pos);
-            null;
-         end if;
-
-         --  Re-highlight the current range
-         Highlight_Address_Range (Assembly_View);
+         Highlight (Assembly_View);
 
          Set_Busy (Visual_Debugger (Assembly_View.Process), False);
       end if;
@@ -1045,18 +1030,14 @@ package body GVD.Assembly_View is
    --------------------
 
    procedure Update_Display (Assembly_View : GVD_Assembly_View) is
-      Buffer        : constant Gtk_Text_Buffer :=
-                        Get_Buffer (Assembly_View.View);
-      Start_Iter    : Gtk_Text_Iter;
-      End_Iter      : Gtk_Text_Iter;
-      Dummy_Boolean : Boolean;
+      Buffer       : constant Gtk_Text_Buffer :=
+                       Get_Buffer (Assembly_View.View);
+      Start_Iter   : Gtk_Text_Iter;
+      Dummy        : Boolean;
 
       Address_Low  : Address_Type := Assembly_View.Source_Line_Start;
       Address_High : Address_Type := Assembly_View.Source_Line_End;
    begin
-      --  Restore the previous range to the default color
-      Reset_Highlighting (Assembly_View);
-
       if Assembly_View.Pc /= Invalid_Address
         and then (Assembly_View.Source_Line_End = Invalid_Address
                   or else Assembly_View.Pc > Assembly_View.Source_Line_End)
@@ -1078,20 +1059,14 @@ package body GVD.Assembly_View is
             Address_High);
       end if;
 
-      --  Highlight the range of addresses correponding to the current source
-      --  line.
+      --  Redo the highlighting
 
-      Highlight_Address_Range (Assembly_View);
-
-      --  Display the arrow showing the location of the program counter.
-
-      Iter_From_Address
-        (Assembly_View, Assembly_View.Pc, Start_Iter, Dummy_Boolean);
-      Copy (Start_Iter, Dest => End_Iter);
-      Forward_To_Line_End (End_Iter, Dummy_Boolean);
-      Apply_Tag (Buffer, Assembly_View.Pc_Tag, Start_Iter, End_Iter);
+      Highlight (Assembly_View);
 
       --  Make sure that the Pc line is visible
+
+      Iter_From_Address
+        (Assembly_View, Assembly_View.Pc, Start_Iter, Dummy);
       Place_Cursor (Buffer, Start_Iter);
       Scroll_Mark_Onscreen (Assembly_View.View, Get_Insert (Buffer));
 
