@@ -51,6 +51,8 @@ with VFS;                    use VFS;
 with Traces;                 use Traces;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 
+with Ada.Text_IO;            use Ada.Text_IO;
+
 package body Buffer_Views is
 
    Icon_Column : constant := 0;
@@ -242,11 +244,11 @@ package body Buffer_Views is
 
             --  If there is any modified, don't do anything. The user is trying
             --  to select multiple line. Note that Get_State behaves
-            --  differently under Linux and Windows. It will be 0 on Linux, and
-            --  Button1_Mask or Button2_Mask on Windows.
+            --  differently under Linux and Windows, it returns Button1_Mask
+            --  or Button2_Mask on Windows.
 
-            if Get_State (Event) = 0 or else
-                  Get_State (Event) = Button1_Mask
+            if (Get_State (Event) and Shift_Mask) = 0
+              and then (Get_State (Event) and Control_Mask) = 0
             then
                if Get_Event_Type (Event) = Gdk_2button_Press then
                   Raise_Child (Child, Give_Focus => True);
@@ -259,7 +261,7 @@ package body Buffer_Views is
                   Raise_Child (Child, Give_Focus => True);
                   return True;
                end if;
-            elsif Get_State (Event) = Control_Mask then
+            elsif (Get_State (Event) and Control_Mask) /= 0 then
                if Iter_Is_Selected (Get_Selection (Explorer.Tree), Iter) then
                   Unselect_Iter (Get_Selection (Explorer.Tree), Iter);
                else
