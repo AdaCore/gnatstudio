@@ -947,7 +947,8 @@ package body GPS.Kernel.Scripts is
                --  not have enough information to recognize the context.
                Source := Get_Predefined_File
                  (Get_Database (Kernel),
-                  Get_LI_Handler (Get_Database (Kernel), Get_File (F)));
+                  Get_LI_Handler_By_Name
+                    (Get_Language_Handler (Kernel), "Ada"));
                L      := Predefined_Line;
                C      := Predefined_Column;
             else
