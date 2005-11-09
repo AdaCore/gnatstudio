@@ -834,7 +834,7 @@ package body VCS_Activities_View_API is
          Set_Sensitive (Item, File_Section);
       end if;
 
-      if Activity_Section or else File_Section then
+      if Activity_Section then
          --  Fill the section relative to files
 
          Gtk_New (Item, Label => -"Edit revision log");
