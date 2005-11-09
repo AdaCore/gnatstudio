@@ -241,9 +241,13 @@ package body Buffer_Views is
               (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
 
             --  If there is any modified, don't do anything. The user is trying
-            --  to select multiple lines
+            --  to select multiple line. Note that Get_State behaves
+            --  differently under Linux and Windows. It will be 0 on Linux, and
+            --  Button1_Mask or Button2_Mask on Windows.
 
-            if Get_State (Event) = 0 then
+            if Get_State (Event) = 0 or else
+                  Get_State (Event) = Button1_Mask
+            then
                if Get_Event_Type (Event) = Gdk_2button_Press then
                   Raise_Child (Child, Give_Focus => True);
                   return True;
@@ -255,7 +259,7 @@ package body Buffer_Views is
                   Raise_Child (Child, Give_Focus => True);
                   return True;
                end if;
-            else
+            elsif Get_State (Event) = Control_Mask then
                if Iter_Is_Selected (Get_Selection (Explorer.Tree), Iter) then
                   Unselect_Iter (Get_Selection (Explorer.Tree), Iter);
                else
