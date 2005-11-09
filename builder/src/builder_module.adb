@@ -875,9 +875,9 @@ package body Builder_Module is
 
          if Syntax_Only then
             Common_Args := new Argument_List'
-              (Unique_Compile'Access, Quiet_Opt'Access, Syntax_Check'Access);
+              (Quiet_Opt'Access, Syntax_Check'Access);
          else
-            Common_Args := new Argument_List'(1 => Unique_Compile'Access);
+            Common_Args := new Argument_List'(1 .. 0 => null);
          end if;
 
       else
@@ -972,7 +972,7 @@ package body Builder_Module is
                  Get_Attribute_Value (Prj, Remote_Host_Attribute),
                Command              => Cmd.all,
                Arguments            => Default_Builder_Switches
-               & Common_Args.all & (1 => Local_File),
+                 & Common_Args.all & (Unique_Compile'Access, Local_File),
                Fd                   => Fd,
                Console              => Get_Console (Kernel),
                Show_Command         => not Quiet,
