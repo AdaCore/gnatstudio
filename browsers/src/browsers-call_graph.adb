@@ -121,6 +121,7 @@ package body Browsers.Call_Graph is
       record
          Data : Callback_Data_Access;
       end record;
+   type Add_To_List_User_Data_Access is access all Add_To_List_User_Data'Class;
    function On_Entity_Found
      (D           : access Add_To_List_User_Data;
       Entity      : Entities.Entity_Information;
@@ -1352,7 +1353,7 @@ package body Browsers.Call_Graph is
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Entity     : constant Entity_Information := Get_Data (Data, 1);
       Filter     : Reference_Kind_Filter;
-      User_Data  : aliased Add_To_List_User_Data;
+      User_Data  : Add_To_List_User_Data_Access;
    begin
       if Command = "find_all_refs" then
          Name_Parameters (Data, References_Cmd_Parameters);
@@ -1406,20 +1407,22 @@ package body Browsers.Call_Graph is
       elsif Command = "calls" then
          --  The following unchecked_access is safe since
          --  Examine_Ancestors_Call_Graph is called synchronously
+         User_Data := new Add_To_List_User_Data;
          User_Data.Data := Data'Unchecked_Access;
          Examine_Entity_Call_Graph
            (Kernel          => Kernel,
-            User_Data       => User_Data'Unchecked_Access,
+            User_Data       => User_Data,
             Entity          => Entity,
             Get_All_Refs    => True);
 
       elsif Command = "called_by" then
          --  The following unchecked_access is safe since
          --  Examine_Ancestors_Call_Graph is called synchronously
+         User_Data := new Add_To_List_User_Data;
          User_Data.Data := Data'Unchecked_Access;
          Examine_Ancestors_Call_Graph
            (Kernel          => Kernel,
-            User_Data       => User_Data'Unchecked_Access,
+            User_Data       => User_Data,
             Entity          => Entity,
             Background_Mode => False);
 
