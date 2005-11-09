@@ -80,10 +80,6 @@ package GVD.Assembly_View is
 
 private
 
-   procedure Highlight_Address_Range (Assembly_View : GVD_Assembly_View);
-   --  Highlight address lines in the buffer that correspond to a given source
-   --  line.
-
    procedure Set_Font
      (Assembly_View : GVD_Assembly_View;
       Font          : Pango.Font.Pango_Font_Description);
@@ -102,30 +98,10 @@ private
    --  Insert some text in the child text at the cursor position.
    --  Tag is applied to the inserted text.
 
-   function Pixels_From_Line
-     (Assembly_View : GVD_Assembly_View;
-      Line          : Natural) return Glib.Gint;
-   --  Return the location (in pixels) for a given line.
-
-   function Line_From_Pixels
-     (Assembly_View : GVD_Assembly_View;
-      Y             : Glib.Gint) return Natural;
-   --  Return the line for a given location in pixels.
-
    function Index_From_Line
      (Assembly_View : GVD_Assembly_View;
       Line          : Natural) return Natural;
    --  Return the index in the buffer at which Line starts.
-
-   procedure Move_N_Columns
-     (Assembly_View : GVD_Assembly_View;
-      Index         : in out Natural;
-      Columns       : Integer);
-   --  Move the current Index by Columns columns to the left, while
-   --  staying on the current line. Index will never be moved to the next
-   --  line.
-   --  Note that Columns is the number of visible columns in the widget, ie
-   --  after Tabs have been expanded.
 
    function Child_Contextual_Menu
      (Assembly_View : GVD_Assembly_View;
@@ -185,11 +161,12 @@ private
       --  Tag used to materialized breakpoints.
 
       Pc                  : GVD.Types.Address_Type :=
-        GVD.Types.Invalid_Address;
+                              GVD.Types.Invalid_Address;
       Source_Line_Start   : GVD.Types.Address_Type :=
-        GVD.Types.Invalid_Address;
+                              GVD.Types.Invalid_Address;
       Source_Line_End     : GVD.Types.Address_Type :=
-        GVD.Types.Invalid_Address;
+                              GVD.Types.Invalid_Address;
+      Breakpoints         : GVD.Types.Breakpoint_Array_Ptr;
 
    end record;
 
