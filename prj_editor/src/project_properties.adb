@@ -1190,11 +1190,54 @@ package body Project_Properties is
             Get_Attribute_Type_From_Name (Pkg, Attr);
       begin
          if Descr = null then
-            Set_Error_Msg
-              (Data, "Project attribute doesn't exist: " & Pkg & ":" & Attr);
+            --  Test whether the attribute is known anyway. Not all attributes
+            --  are declared in projects.xml, in particular the predefined ones
+            --  related to switches and naming, that have their own editor
+
+            if As_List then
+               declare
+                  List : Argument_List := Get_Attribute_Value
+                    (Project, Build (Pkg, Attr), Index);
+               begin
+                  Set_Return_Value_As_List (Data);
+
+                  --  If the attribute was a string in fact
+                  if List'Length = 0 then
+                     Set_Return_Value
+                       (Data, Get_Attribute_Value
+                          (Project, Build (Pkg, Attr), "", Index));
+                  else
+                     for L in List'Range loop
+                        Set_Return_Value (Data, List (L).all);
+                     end loop;
+                  end if;
+
+                  Basic_Types.Free (List);
+               end;
+            else
+               declare
+                  Val : constant String := Get_Attribute_Value
+                    (Project, Build (Pkg, Attr), "", Index);
+               begin
+                  if Val /= "" then
+                     Set_Return_Value (Data, Val);
+                  else
+                     declare
+                        List : Argument_List := Get_Attribute_Value
+                          (Project, Build (Pkg, Attr), Index);
+                     begin
+                        Set_Return_Value
+                          (Data, Argument_List_To_String (List, True));
+                        Basic_Types.Free (List);
+                     end;
+                  end if;
+               end;
+            end if;
             return;
          end if;
 
+         --  Else use the description from projects.xml, which also provides
+         --  the default value for attributes not declared in the project
          if As_List then
             declare
                List : GNAT.OS_Lib.String_List := Get_Current_Value
