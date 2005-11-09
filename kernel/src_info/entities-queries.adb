@@ -1542,6 +1542,7 @@ package body Entities.Queries is
       Ref          : E_Reference;
       Max          : File_Location := No_File_Location;
       Ref_Is_Body  : Boolean := False;
+      Body_Seen    : Boolean := False;
    begin
       if Entity.End_Of_Scope.Location.File = File
         and then ((Force_Spec and then Entity.End_Of_Scope.Kind = End_Of_Spec)
@@ -1561,18 +1562,24 @@ package body Entities.Queries is
                return Ref.Location;
             end if;
 
-            if Ref.Kind = Body_Entity
-              and then Ref.Location = Entity.Declaration
-            then
-               Ref_Is_Body := True;
+            if Ref.Kind = Body_Entity then
+               Body_Seen := True;
+
+               if Ref.Location = Entity.Declaration then
+                  Ref_Is_Body := True;
+               end if;
             end if;
 
             --  Subprograms sometimes have no end-of-spec reference, although
             --  they should so that the parameters are correctly associated to
             --  them. We simulate these by considering the end-of-spec is the
-            --  location of the last parameter declaration
+            --  location of the last parameter declaration. This however fails
+            --  with some languages (C...) where the backend might generate
+            --  the parameters declaration associated with the body. We need to
+            --  protect against that
 
             if Force_Spec
+              and then not Body_Seen
               and then Is_Parameter_Reference (Ref.Kind)
               and then Ref.Location.File = File
             then
