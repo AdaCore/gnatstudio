@@ -23,7 +23,10 @@ with Gtk.Text_Iter;     use Gtk.Text_Iter;
 with Commands;          use Commands;
 with GPS.Kernel;        use GPS.Kernel;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
+with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_View;   use Src_Editor_View;
+
+with Language;          use Language;
 
 package body Src_Editor_View.Commands is
 
@@ -199,6 +202,52 @@ package body Src_Editor_View.Commands is
          when As_Is =>
             View.As_Is_Mode := True;
       end case;
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Tab_As_Space_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+      View          : constant Source_View :=
+        Source_View (Get_Current_Focus_Widget (Command.Kernel));
+      Buffer        : constant Source_Buffer :=
+        Source_Buffer (Get_Buffer (View));
+      Indent_Params : Indent_Parameters;
+      Indent_Style  : Indentation_Kind;
+      Tab_Width     : Natural renames Indent_Params.Indent_Level;
+
+      Line          : Editable_Line_Type;
+      Column        : Positive;
+      Num           : Natural;
+   begin
+      if View = null then
+         return Failure;
+      end if;
+
+      --  Read the indentation parameters corresponding to the language.
+      Get_Indentation_Parameters
+        (Get_Language (Buffer), Indent_Params, Indent_Style);
+
+      --  Get the cursor position
+      Get_Cursor_Position (Buffer, Line, Column);
+
+      --  Compute the number of spaces to insert
+      Num := Tab_Width - ((Column - 1) mod Tab_Width);
+
+      --  Insert the spaces
+      declare
+         Text : constant String (1 .. Num) := (others => ' ');
+      begin
+         Replace_Slice (Buffer, Text, Line, Column, Before => 0, After => 0);
+      end;
+
       return Success;
    end Execute;
 
