@@ -23,7 +23,7 @@ with GNAT.Calendar; use GNAT.Calendar;
 with String_Utils; use String_Utils;
 with VFS;          use VFS;
 with GNAT.Strings; use GNAT.Strings;
-with GNAT.Bubble_Sort; use GNAT.Bubble_Sort;
+with GNAT.Heap_Sort; use GNAT.Heap_Sort;
 
 package body Entities.Debug is
 
@@ -469,14 +469,14 @@ package body Entities.Debug is
             OpF2 : constant Virtual_File := Get_Filename (Sorted (Op2));
          begin
             if OpF1 = VFS.No_File then
-               return True;
+               return OpF2 /= VFS.No_File;
             elsif OpF2 = VFS.No_File then
                return False;
             elsif Dump_Full_File_Names then
                --  We want <=, but it is more efficient to compute it this way
                return OpF2 < OpF1;
             else
-               return not (Base_Name (OpF2) < Base_Name (OpF1));
+               return Base_Name (OpF1) <= Base_Name (OpF2);
             end if;
          end Lt;
 
