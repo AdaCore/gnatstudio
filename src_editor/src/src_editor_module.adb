@@ -2633,6 +2633,17 @@ package body Src_Editor_Module is
          Action      => "No casing/indentation on next key",
          Default_Key => "control-q");
 
+      Command := new Tab_As_Space_Command;
+      Tab_As_Space_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Register_Action
+        (Kernel, "Insert spaces until next indentation column",
+         Command, -"Insert spaces until next indentation column",
+         Src_Action_Context);
+      Bind_Default_Key
+        (Kernel      => Kernel,
+         Action      => "Insert spaces until next indentation column",
+         Default_Key => "Tab");
+
       Register_Module
         (Module                  => Src_Editor_Module_Id,
          Kernel                  => Kernel,
