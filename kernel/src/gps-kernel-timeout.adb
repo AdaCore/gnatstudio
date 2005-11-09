@@ -462,8 +462,7 @@ package body GPS.Kernel.Timeout is
 
          if Data.Console /= null and then Show_Command then
             Insert (Data.Console,
-                    Exec.all & ' '
-                    & Argument_List_To_Quoted_String (Args.all),
+                    Command & ' ' & Argument_List_To_String (Arguments),
                     Add_LF => True);
          end if;
 
@@ -474,8 +473,11 @@ package body GPS.Kernel.Timeout is
             Change_Dir (Directory);
          end if;
 
-         Trace (Me, "Spawning " & Exec.all
-                & ' ' & Argument_List_To_String (Args.all));
+         if Active (Me) then
+            Trace (Me, "Spawning " & Exec.all
+                   & ' ' & Argument_List_To_String (Args.all));
+         end if;
+
          Non_Blocking_Spawn (Fd.all, Exec.all, Args.all, Err_To_Out => True);
 
          if Directory /= "" then
