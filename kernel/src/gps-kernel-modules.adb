@@ -345,7 +345,9 @@ package body GPS.Kernel.Modules is
       L := First (List);
       while L /= Null_List loop
          W := Get_Data (L);
-         if Get_Property (W, Has_Toplevel_Focus_Property) then
+         if Get_Object (W) /= System.Null_Address
+           and then Get_Property (W, Has_Toplevel_Focus_Property)
+         then
             Free (List);
             return Get_Focus (Gtk_Window (W));
          end if;
