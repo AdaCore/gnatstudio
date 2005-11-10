@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package implements shell commands for the GPS commands.
+
 package GPS.Kernel.Command_API is
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
