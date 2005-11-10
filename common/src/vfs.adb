@@ -26,6 +26,7 @@ with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with System;
 
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -42,7 +43,6 @@ with File_Utils;                use File_Utils;
 with OS_Utils;                  use OS_Utils;
 with Remote_Connections;        use Remote_Connections;
 with String_Utils;              use String_Utils;
-with System;
 with Traces;                    use Traces;
 
 package body VFS is
@@ -677,6 +677,7 @@ package body VFS is
             Free (Base);
             Change_Dir (Current_Dir);
          end;
+
       else
          if Append and then Is_Regular_File (Locale_Full_Name (File)) then
             Fd := Open_Read_Write (Locale_Full_Name (File), Binary);
