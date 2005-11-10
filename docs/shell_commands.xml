@@ -2533,6 +2533,24 @@ This command returns the output of the process up to the point where regexp matc
   </shell_doc>
 
   <!--#################################################################
+    ####   Command class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Command">
+      <description>Interface to GPS command.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Command.interrupt">
+      <param name="self">The instance of GPS.Command</param>
+      <description>Interrupts the current command</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Process.progress">
+      <param name="self">The instance of GPS.Command</param>
+      <description>Returns a tuple ['current', 'total'], representing the current progress of the command. If current = total, then the command is finished. </description>
+  </shell_doc>
+    
+  <!--#################################################################
     ####   Hook class
     ###################################################################-->
 
