@@ -2,7 +2,7 @@
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                      Copyright (C) 2000-2005                      --
---                                AdaCore                            --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,9 +20,11 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
+
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+
 with Glib.Unicode;            use Glib, Glib.Unicode;
 
 package body String_Utils is
