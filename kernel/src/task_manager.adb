@@ -18,10 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;   use Ada.Exceptions;
+
 with Gtk.Progress_Bar; use Gtk.Progress_Bar;
 with Gtk.Main;         use Gtk.Main;
 with Traces;           use Traces;
-with Ada.Exceptions;   use Ada.Exceptions;
 
 with Task_Manager.GUI; use Task_Manager.GUI;
 
