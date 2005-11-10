@@ -345,6 +345,11 @@ package body GPS.Kernel.Modules is
       L := First (List);
       while L /= Null_List loop
          W := Get_Data (L);
+         --  ??? The first test here is a temporary workaround, we should
+         --  investigate why Get_Object (W) can be null.
+         --  This is to fix a fatal Storage_Error in the following scenario:
+         --   starting from the default desktop, make a child floating, and
+         --   close it using the keyboard shortcut for File->Close
          if Get_Object (W) /= System.Null_Address
            and then Get_Property (W, Has_Toplevel_Focus_Property)
          then
