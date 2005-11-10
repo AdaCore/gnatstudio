@@ -331,7 +331,7 @@ package body GPS.Kernel.Console is
       Console : constant Interactive_Console := Get_Console (Kernel);
    begin
       if Console /= null then
-         Modify_Font (Get_View (Console), Get_Pref_Font (Default_Style));
+         Modify_Font (Get_View (Console), Get_Pref (View_Fixed_Font));
       end if;
    end On_Preferences_Changed;
 
@@ -354,7 +354,7 @@ package body GPS.Kernel.Console is
          "",
          null,
          Kernel.all'Address,
-         Get_Pref_Font (Default_Style),
+         Get_Pref (View_Fixed_Font),
          Highlight    => Get_Pref (Message_Highlight),
          History_List => null,
          Key          => "",
