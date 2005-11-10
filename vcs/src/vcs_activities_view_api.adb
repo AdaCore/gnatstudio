@@ -23,6 +23,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
+with GNAT.OS_Lib;               use GNAT;
 
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;
@@ -534,6 +535,7 @@ package body VCS_Activities_View_API is
 
       Tab       : constant String := "        ";
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
+      Logs_Dir  : constant String := Get_Home_Dir (Kernel) & "log_files";
       A_Context : constant Activity_Context_Access :=
                     Activity_Context_Access (Context);
       Activity  : constant Activity_Id :=
@@ -542,7 +544,8 @@ package body VCS_Activities_View_API is
                     Get_VCS_For_Activity (Kernel, Activity);
       Files     : constant String_List.List :=
                     Get_Files_In_Activity (Activity);
-      Filename  : constant String := Image (Activity) & ".dif";
+      Filename  : constant String := Logs_Dir & OS_Lib.Directory_Separator &
+                    Image (Activity) & ".dif";
       File      : Virtual_File;
       W_File    : Writable_File;
       Content   : Unbounded_String;
