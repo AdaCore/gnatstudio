@@ -2598,10 +2598,11 @@ package body Debugger.Gdb is
                then
                   declare
                      Str    : String (1 .. 0);
+                     Str_Last : Natural;
                   begin
                      Index := Index + 1;
                      Parse_Cst_String
-                       (Type_Str, Index, Str,
+                       (Type_Str, Index, Str, Str_Last,
                         Backslash_Special => Get_Language_Context
                         (Lang).Quote_Character = '\');
                      Index := Index - 1;
@@ -2631,19 +2632,21 @@ package body Debugger.Gdb is
             declare
                Tmp : Natural := Index;
                S   : String (1 .. 0);
+               S_Last : Natural;
             begin
-               Parse_Cst_String (Type_Str, Tmp, S);
+               Parse_Cst_String (Type_Str, Tmp, S, S_Last);
                Dim.Last := Long_Integer (Tmp - Index) + Dim.First - 4;
             end;
          end if;
 
          declare
             S : String (1 .. Integer (Dim.Last - Dim.First + 1));
+            S_Last : Natural;
             Simple : Simple_Type_Access;
 
          begin
             Parse_Cst_String
-              (Type_Str, Index, S,
+              (Type_Str, Index, S, S_Last,
                Backslash_Special => Get_Language_Context
                (Lang).Quote_Character = '\');
             Simple := Simple_Type_Access
@@ -2651,7 +2654,7 @@ package body Debugger.Gdb is
             if Simple = null then
                Simple := Simple_Type_Access (New_Simple_Type);
             end if;
-            Set_Value (Simple.all, S);
+            Set_Value (Simple.all, S (S'First .. S_Last));
 
             --  The index should always be 0, since we add Dim.First before
             --  displaying it.
