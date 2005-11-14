@@ -40,7 +40,6 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Style;                use Gtk.Style;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
@@ -48,6 +47,7 @@ with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
@@ -481,7 +481,7 @@ package body Task_Manager.GUI is
       Iface.Progress_Layout := Create_Pango_Layout (Iface);
       Set_Font_Description
         (Iface.Progress_Layout,
-         Get_Font_Description (Get_Default_Style));
+         Get_Pref (View_Fixed_Font));
 
       Gdk_New
         (Iface.Progress_Template,
@@ -924,6 +924,8 @@ package body Task_Manager.GUI is
       Add (Scrolled, View.Tree);
 
       Add (View, Scrolled);
+
+      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
 
       View.Manager.GUI := Gtk_Widget (View);
 
