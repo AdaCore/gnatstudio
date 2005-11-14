@@ -307,12 +307,15 @@ package body String_Utils is
      (Type_Str          : String;
       Index             : in out Natural;
       Str               : out String;
+      Str_Last          : out Natural;
       Backslash_Special : Boolean := True)
    is
       procedure Parse_Next_Char
         (Index : in out Natural;
          Char  : out Character);
       --  Parse the character pointed to by Index, including special characters
+
+      In_String : Boolean;
 
       ---------------------
       -- Parse_Next_Char --
@@ -331,7 +334,7 @@ package body String_Utils is
          if Index + 4 <= Type_Str'Last
            and then Type_Str (Index) = '['
            and then Type_Str (Index + 1) = '"'
-           and then (Type_Str (Index + 2) = '"'
+           and then (Type_Str (Index + 2 .. Index + 4) = """""]"
                      or else Type_Str (Index + 2) in '0' .. '9'
                      or else Type_Str (Index + 2) in 'a' .. 'f')
          then
@@ -371,7 +374,6 @@ package body String_Utils is
       S_Index   : Natural := Str'First;
       Char      : Character;
       Num       : Long_Integer;
-      In_String : Boolean;
       Last      : Natural := Str'Last;
 
    begin  --  Parse_Cst_String
@@ -395,19 +397,30 @@ package body String_Utils is
       loop
          case Type_Str (Index) is
             when '"' =>
-               In_String := not In_String;
-               Index := Index + 1;
-
-               --  In cases like {field = 0x8048f88 "bar"}, we need to consider
-               --  the string finished, but not for
-               --     "bar", 'cd' <repeats 12 times>
-               if not In_String
-                 and then Index <= Type_Str'Last
-                 and then Type_Str (Index) /= ' '
-                 and then Type_Str (Index) /= ','
+               --  Handling of Ada-style strings:   A""double quote
+               if In_String
+                 and then Index < Type_Str'Last
+                 and then Type_Str (Index + 1) = '"'
                then
+                  Index := Index + 2;
+                  Str (S_Index) := '"';
+                  S_Index := S_Index + 1;
+               else
+                  In_String := not In_String;
                   Index := Index + 1;
-                  return;
+
+                  --  In cases like {field = 0x8048f88 "bar"}, we need to
+                  --  consider the string finished, but not for
+                  --     "bar", 'cd' <repeats 12 times>
+                  if not In_String
+                    and then Index <= Type_Str'Last
+                    and then Type_Str (Index) /= ' '
+                    and then Type_Str (Index) /= ','
+                  then
+                     Index := Index + 1;
+                     Str_Last  := S_Index - 1;
+                     return;
+                  end if;
                end if;
 
             when ''' =>
@@ -480,6 +493,7 @@ package body String_Utils is
                            and then Type_Str (Index + 2) /= '"'))
                then
                   Index := Index + 1;
+                  Str_Last  := S_Index - 1;
                   return;
                end if;
 
@@ -497,6 +511,7 @@ package body String_Utils is
       end loop;
 
       Index := Index + 1;
+      Str_Last  := S_Index - 1;
    end Parse_Cst_String;
 
    -----------------------
