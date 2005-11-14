@@ -125,6 +125,11 @@ package body Help_Module is
       Directory : String);
    --  Add a new directory to the documentation path
 
+   procedure Add_Doc_Path_From_Env
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Add the directories from the environment variable GPS_DOC_PATH to the
+   --  search path. This also adds predefined directories.
+
    Help_Module_ID   : Help_Module_ID_Access;
    Help_Module_Name : constant String := "Help_Viewer";
 
@@ -198,9 +203,6 @@ package body Help_Module is
       Shell_Lang : GNAT.OS_Lib.String_Access;
    end record;
    type String_Menu_Item is access all String_Menu_Item_Record'Class;
-
-   procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class);
-   --  Parse all the index files in the path
 
    type On_Recent is new Menu_Callback_Record with record
       Kernel : Kernel_Handle;
@@ -534,23 +536,34 @@ package body Help_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Directory : String)
    is
-      Old : GNAT.OS_Lib.String_Access := Help_Module_ID.Doc_Path;
-      Dir : constant String := Normalize_Pathname
+      Old  : GNAT.OS_Lib.String_Access := Help_Module_ID.Doc_Path;
+      Dir  : constant String := Normalize_Pathname
         (Directory, Get_System_Dir (Kernel));
-      Iter : Path_Iterator := Start (Old.all);
+      Iter : Path_Iterator;
    begin
-      while not At_End (Old.all, Iter) loop
-         if Current (Old.all, Iter) = Dir then
-            return;
+      if Directory /= "" then
+         if Old /= null then
+            Iter := Start (Old.all);
+            while not At_End (Old.all, Iter) loop
+               if Current (Old.all, Iter) = Dir then
+                  return;
+               end if;
+               Iter := Next (Old.all, Iter);
+            end loop;
+
+            Trace (Me, "Adding " & Dir & " to GPS_DOC_PATH");
+            if Old.all = "" then
+               Help_Module_ID.Doc_Path := new String'(Dir);
+            else
+               Help_Module_ID.Doc_Path :=
+                 new String'(Dir & Path_Separator & Old.all);
+            end if;
+            Free (Old);
+         else
+            Help_Module_ID.Doc_Path := new String'(Dir);
          end if;
-         Iter := Next (Old.all, Iter);
-      end loop;
-
-      Trace (Me, "Adding " & Dir & " to GPS_DOC_PATH");
-      Help_Module_ID.Doc_Path := new String'(Dir & Path_Separator & Old.all);
-      Free (Old);
-
-      Parse_Index_File (Kernel, Directory => Dir);
+         Parse_Index_File (Kernel, Directory => Dir);
+      end if;
    end Add_Doc_Directory;
 
    --------------
@@ -1023,24 +1036,6 @@ package body Help_Module is
       end if;
    end Parse_Index_File;
 
-   -----------------------
-   -- Parse_Index_Files --
-   -----------------------
-
-   procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class) is
-      Iter : Path_Iterator;
-   begin
-      Trace (Me, "Parse_Index_Files, DOC_PATH="
-             & Help_Module_ID.Doc_Path.all);
-      Iter := Start (Help_Module_ID.Doc_Path.all);
-      while not At_End (Help_Module_ID.Doc_Path.all, Iter) loop
-         Parse_Index_File
-           (Kernel    => Kernel,
-            Directory => Current (Help_Module_ID.Doc_Path.all, Iter));
-         Iter := Next (Help_Module_ID.Doc_Path.all, Iter);
-      end loop;
-   end Parse_Index_Files;
-
    -------------------
    -- On_Load_Index --
    -------------------
@@ -1118,6 +1113,29 @@ package body Help_Module is
       end if;
    end On_Load_Index;
 
+   ---------------------------
+   -- Add_Doc_Path_From_Env --
+   ---------------------------
+
+   procedure Add_Doc_Path_From_Env
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Path_From_Env : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
+      Iter          : Path_Iterator := Start (Path_From_Env.all);
+   begin
+      while not At_End (Path_From_Env.all, Iter) loop
+         Add_Doc_Directory (Kernel, Current (Path_From_Env.all, Iter));
+         Iter := Next (Path_From_Env.all, Iter);
+      end loop;
+      Free (Path_From_Env);
+      Add_Doc_Directory
+        (Kernel, Get_System_Dir (Kernel) & "share/doc/gps/html/");
+
+      --  We add the custom path here to make sure that the node parsed by
+      --  the custom module will be able to find the documentation.
+      Add_Doc_Directory (Kernel, Get_Custom_Path);
+   end Add_Doc_Path_From_Env;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1126,8 +1144,6 @@ package body Help_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Help             : constant String := "/_" & (-"Help") & '/';
-      Path_From_Env    : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
-
    begin
       Help_Module_ID := new Help_Module_ID_Record;
       Register_Module
@@ -1195,28 +1211,12 @@ package body Help_Module is
          Text        => -"_Contents",
          Callback    => On_Load_Index'Access);
 
-      Help_Module_ID.Doc_Path := new String'(Path_From_Env.all);
-      Parse_Index_Files (Kernel);
-      Add_Doc_Directory
-        (Kernel, Get_System_Dir (Kernel) & "share/doc/gps/html/");
+      --  This procedure will not reset the Doc path, since it might have been
+      --  set before from other modules (through XML strings)
+      Add_Doc_Path_From_Env (Kernel);
 
       Register_Menu
         (Kernel, Help, -"A_bout", "", On_About'Access);
-
-      if Path_From_Env.all = "" then
-         --  We add the custom path here to make sure that the node parsed by
-         --  the custom module will be able to find the documentation. We have
-         --  not added this path before as we don't wan't to parse the
-         --  documentation node twice.
-
-         Free (Help_Module_ID.Doc_Path);
-
-         Help_Module_ID.Doc_Path := new String'
-           (Get_Custom_Path & Path_Separator &
-            Get_System_Dir (Kernel) & "doc/gps/html/");
-      end if;
-
-      Free (Path_From_Env);
    end Register_Module;
 
 end Help_Module;
