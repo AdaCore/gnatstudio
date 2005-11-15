@@ -492,13 +492,24 @@ package body Debugger.Gdb.Cpp is
    begin
       pragma Assert (Index <= Type_Str'Last);
 
-      --  Count the number of ancestors
+      --  Count the number of ancestors. Recent versions of gdb now output
+      --  the class names as
+      --     "class Namespace::class:ancestor {"
 
       while Type_Str (Tmp) /= '{' loop
-         if Type_Str (Tmp) = ':' or else Type_Str (Tmp) = ',' then
+         if Type_Str (Tmp) = ':' then
+            if Type_Str (Tmp + 1) = ':' then
+               Tmp := Tmp + 2;
+            else
+               Num_Ancestors := Num_Ancestors + 1;
+               Tmp := Tmp + 1;
+            end if;
+         elsif Type_Str (Tmp) = ',' then
             Num_Ancestors := Num_Ancestors + 1;
+            Tmp := Tmp + 1;
+         else
+            Tmp := Tmp + 1;
          end if;
-         Tmp := Tmp + 1;
       end loop;
 
       Result := New_Class_Type (Num_Ancestors => Num_Ancestors);
