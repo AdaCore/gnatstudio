@@ -959,8 +959,9 @@ package body Codefix.Text_Manager is
 
                --  Does this body have the right profile ?
 
-               if not Current_Info.Is_Declaration and then
-                 Current_Info.Name.all = Spec.Name.all
+               if not Current_Info.Is_Declaration
+                 and then Current_Info.Name /= null
+                 and then Current_Info.Name.all = Spec.Name.all
                  and then Normalize (Current_Info.Profile) =
                    Normalize (Spec.Profile)
                then
