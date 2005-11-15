@@ -377,6 +377,12 @@ package body Debugger.Gdb.C is
 
                if Type_Str (Index) /= Context.Record_Start then
                   Skip_Word (Type_Str, Index);  --  skips struct name
+                  while Index + 1 <= Type_Str'Last
+                    and then Type_Str (Index .. Index + 1) = "::"
+                  loop
+                     Index := Index + 2;
+                     Skip_Word (Type_Str, Index);
+                  end loop;
                end if;
 
                Skip_Blanks (Type_Str, Index);
@@ -651,6 +657,8 @@ package body Debugger.Gdb.C is
          --  The size of the field can optionally be indicated between the
          --  name and the semicolon, as in "__time_t tv_sec : 32;".
          --  We simply ignore the size.
+         --  However, in c++ mode the name can also be
+         --     "My_Record::My_Field1_Type field"
 
          Skip_Word (Type_Str, Tmp, Step => -1);
          if Type_Str (Tmp - 1) = ':' then
@@ -682,14 +690,31 @@ package body Debugger.Gdb.C is
             Result := New_Simple_Type;
             Set_Type_Name (Result, Type_Str (Index .. Field_End - 1));
          else
-            Tmp := Index;
-            Parse_Type
-              (Lang,
-               Type_Str (Index .. Name_Start - 1)
-               & Type_Str (Name_End + 1 .. Field_End - 1),
-               Record_Field_Name
-               (Lang, Entity, Type_Str (Name_Start .. Name_End)),
-               Tmp, Result);
+            declare
+               --  We query the type of the field by the field name, instead of
+               --  relying on the type name itsef. A problem occurs otherwise
+               --  with nested records, such as:
+               --     struct My_Record_Of_Record {
+               --        struct Field1_Record { int a; int* b} c;
+               --        int d;
+               --     };
+               --     struct My_Record_Of_Record Mror;
+               --  querying the type for "struct Field1_Record" would fail,
+               --  whereas querying the type for Mror.c works as expected
+
+               T : constant String := Type_Of
+                 (Get_Debugger (Lang),
+                  Entity & "." & Type_Str (Name_Start .. Name_End));
+            begin
+               Tmp := T'First;
+               Parse_Type
+                 (Lang,
+                  Type_Str =>  T,
+                  Entity   => Record_Field_Name
+                    (Lang, Entity, Type_Str (Name_Start .. Name_End)),
+                  Index    => Tmp,
+                  Result   => Result);
+            end;
          end if;
       end if;
 
@@ -755,6 +780,12 @@ package body Debugger.Gdb.C is
          C_Field_Name
            (Lang, Entity,
             Type_Str, Index, Tmp, End_Of_Name, Save, Field_Value);
+         if Field_Value = null then
+            Free (Result);
+            Result := null;
+            return;
+         end if;
+
          Set_Field_Name
            (R.all, Field, Type_Str (Tmp .. End_Of_Name), Variant_Parts => 0);
          Set_Value (R.all, Field_Value, Field);
