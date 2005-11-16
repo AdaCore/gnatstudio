@@ -225,6 +225,7 @@ package body Wizards is
       end if;
 
       Page.Content := Create_Content (Page, Wiz);
+      Update_Page (Page);
 
       Size_Request (Page.Content, Req);
       Size_Request (Get_Contents (Wiz), Full_Req);
