@@ -117,7 +117,11 @@ package body GPS.Kernel.Console is
    is
       pragma Unreferenced (Kernel);
    begin
-      return Interactive_Console (Console_Module_Id.Console);
+      if Console_Module_Id = null then
+         return null;
+      else
+         return Interactive_Console (Console_Module_Id.Console);
+      end if;
    end Get_Console;
 
    -----------
