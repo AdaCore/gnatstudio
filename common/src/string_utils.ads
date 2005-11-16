@@ -132,7 +132,7 @@ package String_Utils is
    --  and converted to the equivalent Character value.
    --  Str must be long enough to contain the string, not check is done. As a
    --  special case, if Str'Length = 0 then no attempt is done to fill up
-   --  the string, and only Length is computed. Last is set to the last
+   --  the string, and only Length is computed. Str_Last is set to the last
    --  meaningful character in Str.
    --
    --  Index is set to the number of characters parsed in the string.
