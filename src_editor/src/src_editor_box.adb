@@ -1173,6 +1173,9 @@ package body Src_Editor_Box is
               (Editor.Source_Buffer, Start_Iter, Line, Column);
             Context := new File_Selection_Context;
 
+            Acquire_Focus (Editor.Source_View);
+            Place_Cursor (Editor.Source_Buffer, Start_Iter);
+
          else
             --  Check whether there is a selection
 
