@@ -27,6 +27,7 @@ with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Gdk.Types;            use Gdk.Types;
 with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
 with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Handlers;         use Gtk.Handlers;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Notebook;         use Gtk.Notebook;
 with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
@@ -52,7 +53,6 @@ with Traces;                 use Traces;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 
 package body Buffer_Views is
-
    Icon_Column : constant := 0;
    Name_Column : constant := 1;
    Data_Column : constant := 2;
@@ -72,6 +72,7 @@ package body Buffer_Views is
       Tree   : Gtk_Tree_View;
       Kernel : Kernel_Handle;
       File   : Virtual_File; -- current selected file (cache)
+      Child_Selected_Id : Gtk.Handlers.Handler_Id;
    end record;
 
    procedure Initialize
@@ -240,32 +241,39 @@ package body Buffer_Views is
             Child := Find_MDI_Child_By_Name
               (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
 
-            --  If there is any modified, don't do anything. The user is trying
-            --  to select multiple line. Note that Get_State behaves
-            --  differently under Linux and Windows, it returns Button1_Mask
-            --  or Button2_Mask on Windows.
+            if Get_Button (Event) = 5 then
+               --  Right click ?
+               return False;
 
-            if (Get_State (Event) and Shift_Mask) = 0
-              and then (Get_State (Event) and Control_Mask) = 0
-            then
-               if Get_Event_Type (Event) = Gdk_2button_Press then
-                  Raise_Child (Child, Give_Focus => True);
-                  return True;
+            elsif Get_Button (Event) = 1 then
+               --  If there is any modified, don't do anything. The user is
+               --  trying to select multiple line. Note that Get_State behaves
+               --  differently under Linux and Windows, it returns Button1_Mask
+               --  or Button2_Mask on Windows.
 
-               elsif Get_Event_Type (Event) = Button_Press
-                 and then Get_Button (Event) = 1
+               if (Get_State (Event) and Shift_Mask) = 0
+                 and then (Get_State (Event) and Control_Mask) = 0
                then
-                  Child_Drag_Begin (Child => Child, Event => Event);
-                  Raise_Child (Child, Give_Focus => True);
+                  if Get_Event_Type (Event) = Gdk_2button_Press then
+                     Raise_Child (Child, Give_Focus => True);
+                     return True;
+
+                  elsif Get_Event_Type (Event) = Button_Press then
+                     Child_Drag_Begin (Child => Child, Event => Event);
+                     Raise_Child (Child, Give_Focus => True);
+                     return True;
+                  end if;
+
+               elsif (Get_State (Event) and Control_Mask) /= 0 then
+                  if Iter_Is_Selected
+                    (Get_Selection (Explorer.Tree), Iter)
+                  then
+                     Unselect_Iter (Get_Selection (Explorer.Tree), Iter);
+                  else
+                     Select_Iter (Get_Selection (Explorer.Tree), Iter);
+                  end if;
                   return True;
                end if;
-            elsif (Get_State (Event) and Control_Mask) /= 0 then
-               if Iter_Is_Selected (Get_Selection (Explorer.Tree), Iter) then
-                  Unselect_Iter (Get_Selection (Explorer.Tree), Iter);
-               else
-                  Select_Iter (Get_Selection (Explorer.Tree), Iter);
-               end if;
-               return True;
             end if;
          end if;
       end if;
@@ -484,10 +492,12 @@ package body Buffer_Views is
       Check   : Gtk_Check_Menu_Item;
    begin
       --  Focus on the window, so that the selection is correctly taken into
-      --  account
-
+      --  account. But do not process the usual callback, since we do not want
+      --  to unselect everything and select the Windows View itself
+      Handler_Block (Get_MDI (V.Kernel), V.Child_Selected_Id);
       Raise_Child
         (Find_MDI_Child (Get_MDI (V.Kernel), V), Give_Focus => True);
+      Handler_Unblock (Get_MDI (V.Kernel), V.Child_Selected_Id);
 
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
 
@@ -552,8 +562,9 @@ package body Buffer_Views is
          Slot_Object => View);
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_title_changed", Refresh'Access, View);
-      Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), "child_selected", Child_Selected'Access, View);
+      View.Child_Selected_Id := Widget_Callback.Object_Connect
+        (Get_MDI (Kernel), "child_selected",
+         Widget_Callback.To_Marshaller (Child_Selected'Access), View);
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_icon_changed", Refresh'Access, View);
       Widget_Callback.Object_Connect
