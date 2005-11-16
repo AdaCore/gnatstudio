@@ -140,6 +140,7 @@ package body Codefix.Errors_Parser is
                   Message,
                   Solutions,
                   Matches);
+
                Success := True;
                return;
             end if;
@@ -1320,12 +1321,21 @@ package body Codefix.Errors_Parser is
          Operation_Mask := Add_Pragma_Unreferenced or Remove_Entity;
       end if;
 
-      Solutions := Not_Referenced
-         (Current_Text,
-          Message,
-          Category,
-          Get_Message (Message) (Matches (2).First .. Matches (2).Last),
-          Operation_Mask);
+      begin
+         Solutions := Not_Referenced
+           (Current_Text,
+            Message,
+            Category,
+            Get_Message (Message) (Matches (2).First .. Matches (2).Last),
+            Operation_Mask);
+      exception
+         when Codefix_Panic =>
+            --  This could happen on some error messages, for example when
+            --  a generic parameter is not referenced, since GPS is not yet
+            --  able to parse such entities.
+
+            raise Uncorrectable_Message;
+      end;
    end Fix;
 
    ------------------------
@@ -1410,13 +1420,32 @@ package body Codefix.Errors_Parser is
       Matches      : Match_Array)
    is
       pragma Unreferenced (This, Errors_List);
+
+      Construct_Info : Construct_Information;
    begin
-      Solutions := Not_Referenced
-        (Current_Text,
-         Message,
-         Cat_Variable,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-         Remove_Entity or Nothing);
+      begin
+         Construct_Info := Get_Unit (Current_Text, Message);
+      exception
+         when Codefix_Panic =>
+            --  This can happen when the cursor is on a parameter, since
+            --  parameters are not yet stored by the parser
+
+            raise Uncorrectable_Message;
+      end;
+
+
+      if Construct_Info.Category = Cat_Variable
+        or else Construct_Info.Category = Cat_Local_Variable
+      then
+         Solutions := Not_Referenced
+           (Current_Text,
+            Message,
+            Cat_Variable,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+            Remove_Entity or Nothing);
+      else
+         raise Uncorrectable_Message;
+      end if;
    end Fix;
 
    -----------------------
