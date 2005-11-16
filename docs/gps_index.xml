@@ -3,6 +3,10 @@
    <doc_path>share/doc/gnat/html</doc_path>
    <doc_path>share/doc/gnat-cross/html</doc_path>
 
+   <!--  Backward compatibility with earlier versions of GNAT -->
+   <doc_path>doc/gnat/html</doc_path>
+   <doc_path>doc/gnat-cross/html</doc_path>
+
    <documentation_file>
       <name>gps-welcome.html</name>
       <descr>Welcome</descr>
