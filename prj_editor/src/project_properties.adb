@@ -4295,12 +4295,15 @@ package body Project_Properties is
       Page  : constant Integer := Integer (Get_Current_Page (Note));
       P     : Project_Editor_Page;
       Flags : Selector_Flags;
+      Pages_From_XML_Count : constant Integer := Ed.XML_Pages'Length;
+      --  Properties_Module_Id.Pages'Length
    begin
-      if Page >= Properties_Module_ID.Pages'Length
+      if Page >= Pages_From_XML_Count
         and then not Gtk.Object.In_Destruction_Is_Set (Ed)
       then
+         --  Some pages might not be visible though...
          P := Get_Nth_Project_Editor_Page
-           (Ed.Kernel, Page - Properties_Module_ID.Pages'Length + 1);
+           (Ed.Kernel, Page - Pages_From_XML_Count + 1);
       end if;
 
       if P /= null then
@@ -4309,8 +4312,7 @@ package body Project_Properties is
          begin
             Refresh
               (Page     => P,
-               Widget   => Ed.Pages
-                 (Page - Properties_Module_ID.Pages'Length + 1),
+               Widget   => Ed.Pages (Page - Pages_From_XML_Count + 1),
                Project  => Ed.Project,
                Languages => Languages);
             Free (Languages);
@@ -4440,6 +4442,8 @@ package body Project_Properties is
          --  account this setting when it saves the project.
 
          if Relative /= Paths_Are_Relative (Project) then
+            Trace (Me, "Process_General_Page: Paths will now be "
+                   & Boolean'Image (Relative));
             if Relative then
                Set_Paths_Type (Project, Projects.Relative);
             else
