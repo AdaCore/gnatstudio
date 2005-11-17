@@ -76,10 +76,13 @@ package body GVD.Dialogs.Callbacks is
 
       if Thread_Dialog /= null and then Top = Thread_Dialog then
          Match ("[0-9]+", Str, Matched);
-         Thread_Switch
-           (Process.Debugger,
-            Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
-            Mode => GVD.Types.Visible);
+
+         if Matched (0) /= No_Match then
+            Thread_Switch
+              (Process.Debugger,
+               Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
+               Mode => GVD.Types.Visible);
+         end if;
 
       elsif Task_Dialog /= null and then Top = Task_Dialog then
          Task_Switch
@@ -94,22 +97,24 @@ package body GVD.Dialogs.Callbacks is
          --  an assertion failure in Debugger.Send_Full. This does
          --  not happen for Task_Switch or Thread_Switch (above)
 
-         PD_Switch
-           (Process.Debugger,
-            Str (Matched (0).First .. Matched (0).Last),
-            Mode => GVD.Types.Hidden);
+         if Matched (0) /= No_Match then
+            PD_Switch
+              (Process.Debugger,
+               Str (Matched (0).First .. Matched (0).Last),
+               Mode => GVD.Types.Hidden);
 
-         --  After switching to a new protection domain, we want the
-         --  PD dialog to reflect that change immediately
+            --  After switching to a new protection domain, we want the
+            --  PD dialog to reflect that change immediately
 
-         Info_PD (Process.Debugger, Info, Len);
-         Freeze (Gtk_Clist (Object));
+            Info_PD (Process.Debugger, Info, Len);
+            Freeze (Gtk_Clist (Object));
 
-         Update_PD (PD_Dialog, Info (1 .. Len));
-         Handler_Block (Object, PD_Dialog.Select_Row_Id);
-         Select_Row (Gtk_Clist (Object), Index, 0);
-         Handler_Unblock (Object, PD_Dialog.Select_Row_Id);
-         Thaw (Gtk_Clist (Object));
+            Update_PD (PD_Dialog, Info (1 .. Len));
+            Handler_Block (Object, PD_Dialog.Select_Row_Id);
+            Select_Row (Gtk_Clist (Object), Index, 0);
+            Handler_Unblock (Object, PD_Dialog.Select_Row_Id);
+            Thaw (Gtk_Clist (Object));
+         end if;
 
       else
          raise Program_Error;
