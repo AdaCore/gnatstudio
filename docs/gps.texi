@@ -3467,8 +3467,9 @@ appropriate scenario (@ref{The Project Properties Editor}).
 
 @noindent
 Creating a new scenario variable is done through the contextual menu
-(right-click) in the Project Explorer. Select the menu @code{Project->Add
-Configuration Variable}. This opens the following dialog:
+(right-click) in the Project Explorer or the Scenario View itself. Select the
+menu @code{Project->Add Configuration Variable}. This opens the following
+dialog:
 
 @iftex
 @cindex screen shot
