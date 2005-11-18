@@ -431,7 +431,9 @@ package body Bookmark_Views is
       Iter    : Gtk_Tree_Iter;
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
-      Select_Iter (Get_Selection (V.Tree), Iter);
+      if Iter /= Null_Iter then
+         Select_Iter (Get_Selection (V.Tree), Iter);
+      end if;
       return Context;
    end View_Context_Factory;
 
