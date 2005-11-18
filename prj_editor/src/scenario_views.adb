@@ -203,12 +203,6 @@ package body Scenario_Views is
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Box.Initialize_Vbox (View, Homogeneous => False);
 
-      Gtk_New (View.Empty_Event);
-      Gtk_New (Label,
-               -"The project contains no scenario variables");
-      Add (View.Empty_Event, Label);
-      Pack_Start (View, View.Empty_Event, Expand => True);
-
       Gtk_New
         (View.Table,
          Rows        => 1,
@@ -217,6 +211,12 @@ package body Scenario_Views is
       Pack_Start (View, View.Table, Expand => False);
       Set_Col_Spacing (View.Table, 0, 0);
       Set_Col_Spacing (View.Table, 1, 1);
+
+      Gtk_New (View.Empty_Event);
+      Gtk_New (Label,
+               -"The project contains no scenario variables");
+      Add (View.Empty_Event, Label);
+      Pack_Start (View, View.Empty_Event, Expand => True);
 
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
@@ -390,6 +390,7 @@ package body Scenario_Views is
          Resize (V.Table, Rows => 1, Columns => 4);
          Hide_All (V.Table);
          Show_All (V.Empty_Event);
+         Set_Child_Visible (V.Empty_Event, True);
 
       else
          declare
@@ -398,9 +399,12 @@ package body Scenario_Views is
          begin
             if Scenar_Var'Length = 0 then
                Show_All (V.Empty_Event);
+               Set_Child_Visible (V.Empty_Event, Truer);
+               Set_USize (V.Empty_Event, -1, -1);
                Hide_All (V.Table);
             else
                Hide_All (V.Empty_Event);
+               Set_Child_Visible (V.Empty_Event, False);
                Resize (V.Table,
                        Rows => Guint (Scenar_Var'Length) + 1, Columns => 4);
 
