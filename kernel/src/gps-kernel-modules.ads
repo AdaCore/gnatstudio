@@ -123,7 +123,6 @@ with Gtk.Menu;
 with Gtk.Menu_Item;
 with Gtk.Selection;
 with Gtk.Widget;
-with Gtkada.MDI;
 with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
 with Interfaces.C.Strings;
@@ -333,26 +332,6 @@ package GPS.Kernel.Modules is
    --  (for a Location_Marker and is used to restore a marker from a previous
    --  session.
    --  null is returned if no Location_Marker could be created.
-
-   ----------------------
-   -- Desktop handling --
-   ----------------------
-
-   procedure Add_Default_Desktop_Item
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Tag_Name : String;
-      Position : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
-      Focus    : Boolean := False;
-      Raised   : Boolean := False);
-   --  Add an item to the default desktop.
-   --  If Focus is True, then the widget will be given the focus, unless
-   --  another widget is also registered later on with Focus set to True.
-   --  If Raised is True and the child is docked, then this widget will appear
-   --  on top unless another widget is also registered later on with Raised set
-   --  to True and in the same Dock.
-   --  It isn't possible currently to define a node with subnodes for specific
-   --  data, so your Load_Desktop procedure should be ready to handle such a
-   --  childless XML node (the most typical case).
 
    ----------------------
    -- Contextual menus --

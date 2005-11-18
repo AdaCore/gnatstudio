@@ -1126,24 +1126,6 @@ package body GPS.Kernel.Modules is
          Menu_Destroy => Destroy_Contextual_Menu'Access);
    end Register_Contextual_Menu;
 
-   ------------------------------
-   -- Add_Default_Desktop_Item --
-   ------------------------------
-
-   procedure Add_Default_Desktop_Item
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Tag_Name : String;
-      Position : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
-      Focus    : Boolean := False;
-      Raised   : Boolean := False)
-   is
-      N        : Glib.Xml_Int.Node_Ptr;
-   begin
-      N := new Glib.Xml_Int.Node;
-      N.Tag := new String'(Tag_Name);
-      Add_To_Tree (Kernel.Default_Desktop, N, Position, Focus, Raised);
-   end Add_Default_Desktop_Item;
-
    --------------------
    -- Find_Menu_Item --
    --------------------
@@ -1692,7 +1674,6 @@ package body GPS.Kernel.Modules is
    is
       C, Previous, Last_Group : Contextual_Menu_Access;
    begin
-      Trace (Me, "Register_Contextual_Menu " & Menu.Name.all);
       C := Find_Contextual_Menu_By_Name (Kernel, Menu.Name.all);
 
       if Menu.Name.all /= "" and then C /= null then
