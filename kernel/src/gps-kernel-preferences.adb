@@ -365,8 +365,10 @@ package body GPS.Kernel.Preferences is
 
       Save_Desktop_On_Exit := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Save-Desktop-On-Exit",
-         Nick    => -"Save desktop on exit",
-         Blurb   => -("Whether the desktop should be saved when exiting GPS"),
+         Nick    => -"Save project-specific desktop on exit",
+         Blurb   => -("Whether the desktop should be saved when exiting GPS."
+             & " This only applies to project-specific desktops, never to"
+             & " the default desktop"),
          Default => True));
       Register_Property
         (Kernel.Preferences, Param_Spec (Save_Desktop_On_Exit), -"General");
