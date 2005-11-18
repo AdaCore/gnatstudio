@@ -2730,7 +2730,8 @@ package body Project_Viewers is
          Action => Command,
          Label  => "Project/Add configuration variable",
          Filter => Action_Filter
-           (Create (Module => "Explorer") and Filter));
+           ((Create (Module => "Explorer") and Filter)
+            or Create (Module => "Scenario_View")));
 
       Filter := Lookup_Filter (Kernel, "Project and file");
       Register_Contextual_Menu
