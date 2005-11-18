@@ -2125,7 +2125,8 @@ package body Projects.Editor is
               (Current_Term
                  (First_Term (Expression_Of (Node, Tree), Tree), Tree),
                Tree,
-               Create_Literal_String (Default, Tree));
+               Enclose_In_Expression
+                 (Create_Literal_String (Default, Tree), Tree));
          end if;
       end Callback;
 
