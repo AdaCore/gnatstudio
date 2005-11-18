@@ -26,8 +26,6 @@
 --
 --  </description>
 
-with Gtk.Table;
-with Gtk.Box;
 with GPS.Kernel;
 
 package Scenario_Views is
@@ -36,27 +34,4 @@ package Scenario_Views is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Initialize the module
 
-   type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with private;
-   type Scenario_View is access all Scenario_View_Record'Class;
-
-   procedure Gtk_New
-     (View    : out Scenario_View;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Create a new scenario view associated with Manager.
-   --  The view is automatically refreshed every time the project view in
-   --  the manager changes.
-
-   procedure Initialize
-     (View    : access Scenario_View_Record'Class;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Internal function for creating new widgets
-
-private
-   type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with record
-      Table         : Gtk.Table.Gtk_Table;
-      Kernel        : GPS.Kernel.Kernel_Handle;
-      Combo_Is_Open : Boolean := False;
-      --  Flag temporarily set to True when a user is modifying the value of
-      --  one of the scenario variable through the combo boxes.
-   end record;
 end Scenario_Views;

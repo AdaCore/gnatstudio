@@ -18,18 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gdk.Event;       use Gdk.Event;
 with Glib;            use Glib;
 with Glib.Convert;    use Glib.Convert;
 with Glib.Object;     use Glib.Object;
+with Gtk.Box;         use Gtk.Box;
 with Gtk.Button;      use Gtk.Button;
 with Gtk.Dialog;      use Gtk.Dialog;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Event_Box;   use Gtk.Event_Box;
 with Gtk.GEntry;      use Gtk.GEntry;
+with Gtk.Handlers;
 with Gtk.Image;       use Gtk.Image;
 with Gtk.Label;       use Gtk.Label;
 with Gtk.List;        use Gtk.List;
 with Gtk.List_Item;   use Gtk.List_Item;
-with Gtk.Handlers;
+with Gtk.Menu;        use Gtk.Menu;
 with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Table;       use Gtk.Table;
 with Gtk.Tooltips;    use Gtk.Tooltips;
@@ -58,6 +62,28 @@ with Traces;   use Traces;
 package body Scenario_Views is
 
    Me : constant Debug_Handle := Create ("Scenario_Views");
+
+   type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with record
+      Table         : Gtk.Table.Gtk_Table;
+      Kernel        : GPS.Kernel.Kernel_Handle;
+      Empty_Event   : Gtk.Event_Box.Gtk_Event_Box;
+      Combo_Is_Open : Boolean := False;
+      --  Flag temporarily set to True when a user is modifying the value of
+      --  one of the scenario variable through the combo boxes.
+   end record;
+   type Scenario_View is access all Scenario_View_Record'Class;
+
+   procedure Gtk_New
+     (View    : out Scenario_View;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Create a new scenario view associated with Manager.
+   --  The view is automatically refreshed every time the project view in
+   --  the manager changes.
+
+   procedure Initialize
+     (View    : access Scenario_View_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Internal function for creating new widgets
 
    procedure Add_Possible_Values
      (Kernel : access Kernel_Handle_Record'Class;
@@ -115,6 +141,14 @@ package body Scenario_Views is
    type Scenario_Module_Record is new Module_ID_Record with null record;
    Scenario_Module_Id : Module_ID;
 
+   function View_Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+   --  Context factory when creating contextual menus
+
    -----------
    -- Setup --
    -----------
@@ -137,6 +171,24 @@ package body Scenario_Views is
       Initialize (View, Kernel);
    end Gtk_New;
 
+   --------------------------
+   -- View_Context_Factory --
+   --------------------------
+
+   function View_Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk_Menu) return Selection_Context_Access
+   is
+      pragma Unreferenced (Kernel, Event_Widget, Menu, Object, Event);
+      --  Nothing special in the context, just the module itself so that people
+      --  can still add information if needed
+   begin
+      return new Selection_Context;
+   end View_Context_Factory;
+
    ----------------
    -- Initialize --
    ----------------
@@ -146,9 +198,17 @@ package body Scenario_Views is
       Kernel : access Kernel_Handle_Record'Class)
    is
       Hook : Refresh_Hook;
+      Label : Gtk_Label;
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Box.Initialize_Vbox (View, Homogeneous => False);
+
+      Gtk_New (View.Empty_Event);
+      Gtk_New (Label,
+               -"The project contains no scenario variables");
+      Add (View.Empty_Event, Label);
+      Pack_Start (View, View.Empty_Event, Expand => True);
+
       Gtk_New
         (View.Table,
          Rows        => 1,
@@ -169,6 +229,19 @@ package body Scenario_Views is
 
       --  Update the viewer with the current project
       Execute (Hook.all, Kernel);
+
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => View.Table,
+         Object          => View,
+         ID              => Scenario_Module_Id,
+         Context_Func    => View_Context_Factory'Access);
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => View.Empty_Event,
+         Object          => View,
+         ID              => Scenario_Module_Id,
+         Context_Func    => View_Context_Factory'Access);
    end Initialize;
 
    ----------------------------
@@ -316,62 +389,71 @@ package body Scenario_Views is
       if Get_Project (Kernel) = No_Project then
          Resize (V.Table, Rows => 1, Columns => 4);
          Hide_All (V.Table);
+         Show_All (V.Empty_Event);
 
       else
          declare
             Scenar_Var : constant Scenario_Variable_Array :=
               Scenario_Variables (Kernel);
          begin
-            Resize (V.Table,
-                    Rows => Guint (Scenar_Var'Length) + 1, Columns => 4);
+            if Scenar_Var'Length = 0 then
+               Show_All (V.Empty_Event);
+               Hide_All (V.Table);
+            else
+               Hide_All (V.Empty_Event);
+               Resize (V.Table,
+                       Rows => Guint (Scenar_Var'Length) + 1, Columns => 4);
 
-            for J in Scenar_Var'Range loop
-               Row := Guint (J - Scenar_Var'First) + 1;
+               for J in Scenar_Var'Range loop
+                  Row := Guint (J - Scenar_Var'First) + 1;
 
-               Gtk_New (Button);
-               Gtk_New (Pix, Stock_Properties, Icon_Size_Small_Toolbar);
-               Add (Button, Pix);
-               Attach
-                 (V.Table, Button, 0, 1,
-                  Row, Row + 1, Xoptions => 0, Yoptions => 0);
-               View_Callback.Connect
-                 (Button, "clicked", Edit_Variable'Access,
-                  (View => V, Var => Scenar_Var (J)));
-               Set_Tip (Get_Tooltips (V.Kernel), Button,
-                        -"Edit variable properties");
+                  Gtk_New (Button);
+                  Gtk_New (Pix, Stock_Properties, Icon_Size_Small_Toolbar);
+                  Add (Button, Pix);
+                  Attach
+                    (V.Table, Button, 0, 1,
+                     Row, Row + 1, Xoptions => 0, Yoptions => 0);
+                  View_Callback.Connect
+                    (Button, "clicked", Edit_Variable'Access,
+                     (View => V, Var => Scenar_Var (J)));
+                  Set_Tip (Get_Tooltips (V.Kernel), Button,
+                           -"Edit variable properties");
 
-               Gtk_New (Button);
-               Gtk_New (Pix, Stock_Delete, Icon_Size_Small_Toolbar);
-               Add (Button, Pix);
-               Attach
-                 (V.Table, Button, 1, 2,
-                  Row, Row + 1, Xoptions => 0, Yoptions => 0);
-               Set_Tip
-                 (Get_Tooltips (V.Kernel), Button, -"Delete variable");
-               View_Callback.Connect
-                 (Button, "clicked", Delete_Variable'Access,
-                  (View => V, Var => Scenar_Var (J)));
+                  Gtk_New (Button);
+                  Gtk_New (Pix, Stock_Delete, Icon_Size_Small_Toolbar);
+                  Add (Button, Pix);
+                  Attach
+                    (V.Table, Button, 1, 2,
+                     Row, Row + 1, Xoptions => 0, Yoptions => 0);
+                  Set_Tip
+                    (Get_Tooltips (V.Kernel), Button, -"Delete variable");
+                  View_Callback.Connect
+                    (Button, "clicked", Delete_Variable'Access,
+                     (View => V, Var => Scenar_Var (J)));
 
-               Gtk_New (Label, Locale_To_UTF8
-                        (External_Reference_Of (Scenar_Var (J))));
-               Set_Alignment (Label, 0.0, 0.5);
-               Attach (V.Table, Label, 2, 3, Row, Row + 1, Xoptions => Fill,
-                       Xpadding => 5);
+                  Gtk_New (Label, Locale_To_UTF8
+                           (External_Reference_Of (Scenar_Var (J))));
+                  Set_Alignment (Label, 0.0, 0.5);
+                  Attach (V.Table, Label, 2, 3, Row, Row + 1, Xoptions => Fill,
+                          Xpadding => 5);
 
-               Gtk_New (Combo);
-               Set_Editable (Get_Entry (Combo), False);
-               Set_Width_Chars (Get_Entry (Combo), 0);
-               Attach (V.Table, Combo, 3, 4, Row, Row + 1);
+                  Gtk_New (Combo);
+                  Set_Editable (Get_Entry (Combo), False);
+                  Set_Width_Chars (Get_Entry (Combo), 0);
+                  Attach (V.Table, Combo, 3, 4, Row, Row + 1);
 
-               Add_Possible_Values (Kernel, Get_List (Combo), Scenar_Var (J));
-               Set_Text (Get_Entry (Combo), Value_Of (Scenar_Var (J)));
+                  Add_Possible_Values
+                    (Kernel, Get_List (Combo), Scenar_Var (J));
+                  Set_Text (Get_Entry (Combo), Value_Of (Scenar_Var (J)));
 
-               View_Callback.Connect
-                 (Combo, "changed", Variable_Value_Changed'Access,
-                  (View => V, Var => Scenar_Var (J)));
-            end loop;
+                  View_Callback.Connect
+                    (Combo, "changed", Variable_Value_Changed'Access,
+                     (View => V, Var => Scenar_Var (J)));
+               end loop;
+
+               Show_All (V.Table);
+            end if;
          end;
-         Show_All (V);
       end if;
    end Execute;
 
