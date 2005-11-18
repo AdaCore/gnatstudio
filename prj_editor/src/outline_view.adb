@@ -852,7 +852,6 @@ package body Outline_View is
 
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
-      Add_Default_Desktop_Item (Kernel, "Outline_View", Position_Left);
 
       Outline_View_Profiles := Param_Spec_Boolean
         (Gnew_Boolean

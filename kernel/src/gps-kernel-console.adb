@@ -521,9 +521,6 @@ package body GPS.Kernel.Console is
          Priority     => Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
-      Add_Default_Desktop_Item
-        (Kernel, "Message_Window", Position_Bottom,
-         Focus => True, Raised => True);
 
       Initialize_Console (Kernel);
 

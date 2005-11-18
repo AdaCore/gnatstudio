@@ -2820,10 +2820,6 @@ package body Project_Explorers is
             and not Create (Module => Explorer_Module_Name)),
          Label  => "Locate in explorer: %p");
 
-      --  Add a project explorer to the default desktop.
-      Add_Default_Desktop_Item
-        (Kernel, "Project_Explorer_Project", Position_Left, False, True);
-
       Register_Menu
         (Kernel, Project, -"Project _View", "", On_Open_Explorer'Access);
 
