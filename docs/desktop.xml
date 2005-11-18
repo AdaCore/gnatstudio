@@ -7,14 +7,21 @@
   <Width> 800</Width>
   <MDI project="" >
     <Pane Orientation="ORIENTATION_HORIZONTAL" >
-      <Notebook Height="674" Width="279" >
-        <Child Raised="True" Position="3" State="NORMAL" >
-          <Project_Explorer_Project  />
-        </Child>
-        <Child Position="3" State="NORMAL" >
-          <Outline_View  />
-        </Child>
-      </Notebook>
+      <Pane Orientation="ORIENTATION_VERTICAL" >
+        <Notebook Height=" 82" Width=" 279" >
+          <Child Raised="True" Position=" 3" State="NORMAL" >
+            <Scenario_View />
+          </Child>
+        </Notebook>
+        <Notebook Height="517" Width="279" >
+          <Child Raised="True" Position="3" State="NORMAL" >
+            <Project_Explorer_Project  />
+          </Child>
+          <Child Position="3" State="NORMAL" >
+            <Outline_View  />
+          </Child>
+        </Notebook>
+      </Pane>
       <Pane Orientation="ORIENTATION_VERTICAL" >
         <Notebook default="true" Height="429" Width="515" />
         <Notebook Height="132" Width="515" >
