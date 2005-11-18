@@ -820,9 +820,6 @@ private
       Lang_Handler : Language_Handlers.Language_Handler;
       --  The type used to convert from file names to languages
 
-      Default_Desktop : Glib.Xml_Int.Node_Ptr;
-      --  The tree describing the default desktop
-
       Open_Files : VFS.File_Array_Access;
       --  The list of currently open files
 
