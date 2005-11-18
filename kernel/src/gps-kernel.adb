@@ -562,8 +562,6 @@ package body GPS.Kernel is
       N            : Node_Ptr;
       M            : Node_Ptr;
       Old          : Node_Ptr;
-      State        : Gdk_Window_State;
-      X, Y         : Gint;
       Err          : GNAT.OS_Lib.String_Access;
       Main_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (Handle.Main_Window);
@@ -627,43 +625,6 @@ package body GPS.Kernel is
       Set_Attribute (M, "project", Project_Name);
       Add_Child (N, M);
 
-      --  Add GPS-specific nodes
-
-      State := Get_State (Main_Window);
-
-      if (State and Window_State_Maximized) = 0 then
-         M       := new Node;
-         M.Tag   := new String'("Width");
-         M.Value := new String'
-           (Allocation_Int'Image
-              (Get_Allocation_Width (Handle.Main_Window)));
-         Add_Child (N, M);
-
-         M       := new Node;
-         M.Tag   := new String'("Height");
-         M.Value := new String'
-           (Allocation_Int'Image
-              (Get_Allocation_Height (Handle.Main_Window)));
-         Add_Child (N, M);
-
-         Get_Root_Origin (Get_Window (Handle.Main_Window), X, Y);
-
-         M       := new Node;
-         M.Tag   := new String'("X");
-         M.Value := new String'(Gint'Image (X));
-         Add_Child (N, M);
-
-         M       := new Node;
-         M.Tag   := new String'("Y");
-         M.Value := new String'(Gint'Image (Y));
-         Add_Child (N, M);
-      end if;
-
-      M       := new Node;
-      M.Tag   := new String'("State");
-      M.Value := new String'(Gdk_Window_State'Image (State));
-      Add_Child (N, M);
-
       Print (N, File_Name);
       Free (N);
    end Save_Desktop;
@@ -694,14 +655,8 @@ package body GPS.Kernel is
       Child                : Node_Ptr;
       Desktop_Node         : Node_Ptr;
       Default_Desktop_Node : Node_Ptr;
-      Width                : Gint := 640;
-      Height               : Gint := 480;
-      X, Y                 : Gint := -1;
-      State                : Gdk_Window_State := 0;
       Main_Window          : constant GPS_Window :=
         GPS_Window (Handle.Main_Window);
-      Desktop_Loaded       : constant Boolean :=
-        Main_Window.Desktop_Loaded;
       Success_Loading_Desktop : Boolean := False;
       Err                  : String_Access;
       Predefined_Desktop   : constant String :=
@@ -748,39 +703,15 @@ package body GPS.Kernel is
                   elsif Get_Attribute (Child, "project") = Project_Name then
                      Desktop_Node := Child;
                   end if;
-               elsif Child.Tag.all = "Height" then
-                  Height := Gint'Value (Child.Value.all);
-               elsif Child.Tag.all = "Width" then
-                  Width := Gint'Value (Child.Value.all);
-               elsif Child.Tag.all = "X" then
-                  X := Gint'Value (Child.Value.all);
-               elsif Child.Tag.all = "Y" then
-                  Y := Gint'Value (Child.Value.all);
-               elsif Child.Tag.all = "State" then
-                  State := Gdk_Window_State'Value (Child.Value.all);
                end if;
             end if;
 
             Child := Child.Next;
          end loop;
 
-         --  Only set the main window attributes the first time, this would be
-         --  too confusing to do it during an open session.
-         --  We always give priority to the user's default size, even if we
-         --  end up loading the default desktop
-
-         if not Desktop_Loaded then
-            Set_Default_Size (Main_Window, Width, Height);
-            Set_UPosition (Main_Window, X, Y);
-
-            if (State and Window_State_Maximized) /= 0 then
-               Maximize (Main_Window);
-            end if;
-
-            --  Call Show_All before restoring the desktop, in case some
-            --  children stored in the desktop have something to hide.
-            Show_All (Get_Child (Main_Window));
-         end if;
+         --  Call Show_All before restoring the desktop, in case some
+         --  children stored in the desktop have something to hide.
+         Show_All (Get_Child (Main_Window));
 
          Success_Loading_Desktop := False;
 
