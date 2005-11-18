@@ -5,6 +5,8 @@ New features in GPS x.y.z
 
 - EB17-011 It is now possible to redefine GPS's default desktop for all users
 
+- EA14-023 The Scenario View is back in the default desktop
+
 New features in GPS 3.1.0
 
 - New source editor action, to insert TAB as spaces, with a custom width for
