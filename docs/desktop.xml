@@ -1,11 +1,6 @@
 <?xml version="1.0"?>
 <GPS_Desktop>
-  <State> 0</State>
-  <Y> 436</Y>
-  <X> 0</X>
-  <Height> 700</Height>
-  <Width> 800</Width>
-  <MDI project="" >
+  <MDI project="" width="800" height="600" state="0" >
     <Pane Orientation="ORIENTATION_HORIZONTAL" >
       <Pane Orientation="ORIENTATION_VERTICAL" >
         <Notebook Height=" 82" Width=" 279" >
