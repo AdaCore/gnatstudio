@@ -569,10 +569,16 @@ package body GPS.Kernel is
         Get_Window (Handle.Main_Window);
 
    begin
+      if As_Default_Desktop or else Project_Name = "" then
+         Trace (Me, "not saving the default desktop");
+         return;
+      end if;
+
       --  Read the previous contents of the file, to save the desktops for
       --  other projects
 
-      Trace (Me, "saving desktop file " & File_Name);
+      Trace (Me, "saving desktop file " & File_Name
+             & " for project " & Project_Name);
 
       if Main_Window = null then
          return;
@@ -696,100 +702,114 @@ package body GPS.Kernel is
         GPS_Window (Handle.Main_Window);
       Desktop_Loaded       : constant Boolean :=
         Main_Window.Desktop_Loaded;
-      Success_Loading_Desktop : Boolean;
+      Success_Loading_Desktop : Boolean := False;
       Err                  : String_Access;
       Predefined_Desktop   : constant String :=
         Get_System_Dir (Handle) & "share/gps/desktop.xml";
       Is_Default_Desktop   : Boolean := False;
+      Try_User_Desktop     : Boolean := True;
 
    begin
       Main_Window.Desktop_Loaded := True;
 
-      if Is_Regular_File (File) then
-         Trace (Me, "loading desktop file " & File
-                & " Project=" & Project_Name);
-         XML_Parsers.Parse (File, Node, Err);
-      elsif Is_Regular_File (Predefined_Desktop) then
-         Trace (Me, "loading predefined desktop");
-         Is_Default_Desktop := True;
-         XML_Parsers.Parse (Predefined_Desktop, Node, Err);
-      else
-         Trace (Me, "No desktop to load");
-         Set_Default_Size (Main_Window, 800, 600);
-         Show_All (Get_Child (Main_Window));
-         return False;
-      end if;
+      --  We might have to try twice: once to check the user's desktop.xml
+      --  file, and if that fails the predefined desktop.xml file
 
-      if Node = null then
-         Insert (Handle, Err.all, Mode => Error);
-         Free (Err);
-      else
-         Child := Node.Child;
-      end if;
+      while not Success_Loading_Desktop
+        and then (Try_User_Desktop or else not Is_Default_Desktop)
+      loop
+         if Try_User_Desktop and then Is_Regular_File (File) then
+            Trace (Me, "loading desktop file " & File
+                   & " Project=" & Project_Name);
+            XML_Parsers.Parse (File, Node, Err);
+         elsif Is_Regular_File (Predefined_Desktop) then
+            Trace (Me, "loading predefined desktop");
+            Is_Default_Desktop := True;
+            XML_Parsers.Parse (Predefined_Desktop, Node, Err);
+         else
+            Trace (Me, "No desktop to load");
+            Set_Default_Size (Main_Window, 800, 600);
+            Show_All (Get_Child (Main_Window));
+            return False;
+         end if;
 
-      while Child /= null loop
-         if Child.Tag /= null then
-            if Child.Tag.all = "MDI" then
-               if Get_Attribute (Child, "project") = "" then
-                  Default_Desktop_Node := Child;
-               elsif Get_Attribute (Child, "project") = Project_Name then
-                  Desktop_Node := Child;
+         if Node = null then
+            Insert (Handle, Err.all, Mode => Error);
+            Free (Err);
+         else
+            Child := Node.Child;
+         end if;
+
+         while Child /= null loop
+            if Child.Tag /= null then
+               if Child.Tag.all = "MDI" then
+                  if Get_Attribute (Child, "project") = "" then
+                     Default_Desktop_Node := Child;
+                  elsif Get_Attribute (Child, "project") = Project_Name then
+                     Desktop_Node := Child;
+                  end if;
+               elsif Child.Tag.all = "Height" then
+                  Height := Gint'Value (Child.Value.all);
+               elsif Child.Tag.all = "Width" then
+                  Width := Gint'Value (Child.Value.all);
+               elsif Child.Tag.all = "X" then
+                  X := Gint'Value (Child.Value.all);
+               elsif Child.Tag.all = "Y" then
+                  Y := Gint'Value (Child.Value.all);
+               elsif Child.Tag.all = "State" then
+                  State := Gdk_Window_State'Value (Child.Value.all);
                end if;
-            elsif Child.Tag.all = "Height" then
-               Height := Gint'Value (Child.Value.all);
-            elsif Child.Tag.all = "Width" then
-               Width := Gint'Value (Child.Value.all);
-            elsif Child.Tag.all = "X" then
-               X := Gint'Value (Child.Value.all);
-            elsif Child.Tag.all = "Y" then
-               Y := Gint'Value (Child.Value.all);
-            elsif Child.Tag.all = "State" then
-               State := Gdk_Window_State'Value (Child.Value.all);
             end if;
+
+            Child := Child.Next;
+         end loop;
+
+         --  Only set the main window attributes the first time, this would be
+         --  too confusing to do it during an open session.
+         --  We always give priority to the user's default size, even if we
+         --  end up loading the default desktop
+
+         if not Desktop_Loaded then
+            Set_Default_Size (Main_Window, Width, Height);
+            Set_UPosition (Main_Window, X, Y);
+
+            if (State and Window_State_Maximized) /= 0 then
+               Maximize (Main_Window);
+            end if;
+
+            --  Call Show_All before restoring the desktop, in case some
+            --  children stored in the desktop have something to hide.
+            Show_All (Get_Child (Main_Window));
          end if;
 
-         Child := Child.Next;
+         Present_On_Child_Focus (MDI, False);
+
+         Success_Loading_Desktop := False;
+
+         if Desktop_Node /= null then
+            Trace (Me, "loading desktop for " & Project_Name);
+            Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
+              (MDI, Desktop_Node, Kernel_Handle (Handle));
+         elsif Default_Desktop_Node /= null then
+            Trace (Me, "loading default desktop (from file)");
+            Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
+              (MDI, Default_Desktop_Node, Kernel_Handle (Handle));
+         end if;
+
+         Free (Node);
+
+         --  If we fail loading the user desktop, we still want to load the
+         --  default desktop
+
+         Try_User_Desktop := False;
+
+         if not Success_Loading_Desktop then
+            Trace (Me, "Couldn't load desktop successfully");
+         end if;
       end loop;
-
-      --  Only set the main window attributes the first time, this would be
-      --  too confusing to do it during an open session.
-
-      if not Desktop_Loaded then
-         Set_Default_Size (Main_Window, Width, Height);
-         Set_UPosition (Main_Window, X, Y);
-
-         if (State and Window_State_Maximized) /= 0 then
-            Maximize (Main_Window);
-         end if;
-      end if;
-
-      --  Call Show_All before restoring the desktop, in case some
-      --  children stored in the desktop have something to hide.
-      Show_All (Get_Child (Main_Window));
-
-      Present_On_Child_Focus (MDI, False);
-
-      Success_Loading_Desktop := False;
-
-      if Desktop_Node /= null then
-         Trace (Me, "loading desktop for " & Project_Name);
-         Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
-           (MDI, Desktop_Node, Kernel_Handle (Handle));
-      elsif Default_Desktop_Node /= null then
-         Trace (Me, "loading default desktop (from file)");
-         Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
-           (MDI, Default_Desktop_Node, Kernel_Handle (Handle));
-      end if;
-
-      if not Success_Loading_Desktop then
-         Trace (Me, "Couldn't load desktop successfully");
-         Is_Default_Desktop := True;
-      end if;
 
       --  Report a context changed, so that all views can update themselves
       Context_Changed (Handle);
-
-      Free (Node);
 
       Present_On_Child_Focus (MDI, True);
 
