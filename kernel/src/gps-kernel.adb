@@ -782,8 +782,6 @@ package body GPS.Kernel is
             Show_All (Get_Child (Main_Window));
          end if;
 
-         Present_On_Child_Focus (MDI, False);
-
          Success_Loading_Desktop := False;
 
          if Desktop_Node /= null then
@@ -810,8 +808,6 @@ package body GPS.Kernel is
 
       --  Report a context changed, so that all views can update themselves
       Context_Changed (Handle);
-
-      Present_On_Child_Focus (MDI, True);
 
       if Is_Default_Desktop then
          return False;
