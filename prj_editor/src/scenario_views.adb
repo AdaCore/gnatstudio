@@ -399,7 +399,7 @@ package body Scenario_Views is
          begin
             if Scenar_Var'Length = 0 then
                Show_All (V.Empty_Event);
-               Set_Child_Visible (V.Empty_Event, Truer);
+               Set_Child_Visible (V.Empty_Event, True);
                Set_USize (V.Empty_Event, -1, -1);
                Hide_All (V.Table);
             else
