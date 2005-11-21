@@ -168,8 +168,9 @@ package GPS.Kernel.Standard_Hooks is
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
       Focus             : Boolean := True;
-      Position          : Gtkada.MDI.Child_Position :=
-                            Gtkada.MDI.Position_Default;
+      Group             : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
+      Initial_Position  : Gtkada.MDI.Child_Position :=
+                            Gtkada.MDI.Position_Automatic;
    end record;
    --  Line and column indicate the location to display initially, and are
    --  ignored if left to 0 (in which case any existing editor will be left
@@ -199,8 +200,9 @@ package GPS.Kernel.Standard_Hooks is
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
       Focus             : Boolean := True;
-      Position          : Gtkada.MDI.Child_Position :=
-        Gtkada.MDI.Position_Default);
+      Group             : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
+      Initial_Position  : Gtkada.MDI.Child_Position :=
+        Gtkada.MDI.Position_Automatic);
    --  Call Open_File_Action_Hook
 
    procedure Clear_Highlighting

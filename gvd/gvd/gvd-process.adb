@@ -872,7 +872,7 @@ package body GVD.Process is
    procedure Create_Call_Stack
      (Process : access Visual_Debugger_Record'Class)
    is
-      Child : MDI_Child;
+      Child : GPS_MDI_Child;
    begin
       Gtk_New (Process.Stack);
 
@@ -880,11 +880,11 @@ package body GVD.Process is
         (Process.Stack, "delete_event",
          On_Stack_Delete_Event'Access, Process);
 
-      Child := Put
-        (Get_Kernel (Debugger_Module_ID.all),
-         Process.Stack,
-         Position => Position_Debugger_Stack,
-         Module   => Debugger_Module_ID);
+      Gtk_New (Child, Process.Stack,
+               Group  => Group_Debugger_Stack,
+               Module => Debugger_Module_ID);
+      Put (Get_MDI (Get_Kernel (Debugger_Module_ID.all)), Child,
+           Initial_Position => Position_Right);
       Set_Focus_Child (Child);
       Split (Process.Window.MDI,
              Orientation_Horizontal,
@@ -922,7 +922,7 @@ package body GVD.Process is
      (Process : access Visual_Debugger_Record'Class)
    is
       Data_Window_Name : constant String := -"Debugger Data";
-      Child           : MDI_Child;
+      Child           : GPS_MDI_Child;
       Annotation_Font : Pango_Font_Description;
    begin
       if Process.Data_Canvas = null then
@@ -957,18 +957,10 @@ package body GVD.Process is
          Configure (Process.Data_Canvas, Annotation_Font => Annotation_Font);
          Free (Annotation_Font);
 
-         Child := Put
-           (Get_Kernel (Debugger_Module_ID.all),
-            Process.Data_Scrolledwindow,
-            Position => Position_Debugger_Data,
-            Module   => Debugger_Module_ID);
-         Set_Focus_Child (Child);
-         Split (Process.Window.MDI,
-                Orientation_Vertical,
-                Reuse_If_Possible => True,
-                Height => 200,
-                After => False);
-
+         Gtk_New (Child, Process.Data_Scrolledwindow,
+                  Group          => Group_Graphs,
+                  Default_Height => 200,
+                  Module         => Debugger_Module_ID);
          if Process.Debugger_Num = 1 then
             Set_Title (Child, Data_Window_Name);
          else
@@ -976,14 +968,18 @@ package body GVD.Process is
                        Image (Process.Debugger_Num) & ">");
          end if;
 
+         Put (Get_MDI (Get_Kernel (Debugger_Module_ID.all)), Child,
+              Initial_Position => Position_Top);
+         Set_Focus_Child (Child);
+
          --  Initialize the pixmaps and colors for the canvas
 
          Realize (Process.Data_Canvas);
          Init_Graphics (GVD_Canvas (Process.Data_Canvas));
 
       else
-         Child := Find_MDI_Child
-           (Process.Window.MDI, Process.Data_Scrolledwindow);
+         Child := GPS_MDI_Child (Find_MDI_Child
+           (Process.Window.MDI, Process.Data_Scrolledwindow));
          Set_Focus_Child (Child);
       end if;
    end Create_Data_Window;
@@ -1043,11 +1039,10 @@ package body GVD.Process is
 
       --  Add debugger console in the MDI
 
-      Child := Put
-        (Process.Window.MDI, Process.Debugger_Text,
-         Flags => All_Buttons,
-         Position => Position_Bottom,
-         Focus_Widget => Gtk_Widget (Get_View (Process.Debugger_Text)));
+      Gtk_New (Child, Process.Debugger_Text,
+               Group        => Group_Consoles,
+               Focus_Widget => Gtk_Widget (Get_View (Process.Debugger_Text)));
+      Put (Process.Window.MDI, Child, Initial_Position => Position_Bottom);
       Set_Focus_Child (Child);
 
       if Process.Debugger_Num = 1 then
@@ -1285,11 +1280,11 @@ package body GVD.Process is
          Process.Debuggee_Id :=
            TTY_Timeout.Add (Timeout, TTY_Cb'Access, Process.all'Access);
 
-         Child := Put
-           (Window.MDI, Process.Debuggee_Console,
-            Flags => All_Buttons,
-            Position       => Position_Bottom,
+         Gtk_New
+           (Child, Process.Debuggee_Console,
+            Group => Group_Consoles,
             Focus_Widget => Gtk_Widget (Get_View (Process.Debuggee_Console)));
+         Put (Window.MDI, Child, Initial_Position => Position_Bottom);
 
          if Process.Debugger_Num = 1 then
             Set_Title (Child, -"Debugger Execution");

@@ -677,7 +677,7 @@ package body Shell_Script is
    function Get_Or_Create_Console (Kernel : access Kernel_Handle_Record'Class)
       return MDI_Child
    is
-      Child  : MDI_Child;
+      Child  : GPS_MDI_Child;
       Script : constant Shell_Scripting := Shell_Scripting
         (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
    begin
@@ -693,25 +693,26 @@ package body Shell_Script is
             Key          => "shell",
             Wrap_Mode    => Wrap_Char);
          Set_Completion_Handler (Script.Console, Commands_As_List'Access);
-         Child := Put
-           (Kernel, Script.Console,
-            Default_Width       => 400,
-            Default_Height      => 120,
-            Focus_Widget        => Gtk_Widget (Get_View (Script.Console)),
-            Position            => Position_Bottom,
-            Module              => Shell_Module_Id,
-            Desktop_Independent => True);
+         Gtk_New (Child, Script.Console,
+                  Default_Width      => 400,
+                  Default_Height     => 120,
+                  Focus_Widget       => Gtk_Widget (Get_View (Script.Console)),
+                  Group              => Group_Consoles,
+                  Module             => Shell_Module_Id,
+                  Desktop_Independent => True);
          Set_Title (Child, -"Shell");
+         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
 
          Kernel_Callback.Connect
            (Script.Console, "destroy", Console_Destroyed'Access,
             Kernel_Handle (Kernel));
       else
-         Child := Find_MDI_Child (Get_MDI (Kernel), Script.Console);
+         Child := GPS_MDI_Child
+           (Find_MDI_Child (Get_MDI (Kernel), Script.Console));
       end if;
 
       Raise_Child (Child);
-      return Child;
+      return MDI_Child (Child);
    end Get_Or_Create_Console;
 
    ------------------

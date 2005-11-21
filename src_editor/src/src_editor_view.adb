@@ -50,6 +50,7 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 
 with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Text_Buffer;         use Gtkada.Text_Buffer;
 
 with Pango.Font;                 use Pango.Font;
@@ -365,7 +366,7 @@ package body Src_Editor_View is
 
    procedure Acquire_Focus (View : access Source_View_Record) is
    begin
-      Set_Focus_Child (Get_MDI (View.Kernel), View.Child);
+      Set_Focus_Child (View.Child);
    end Acquire_Focus;
 
    -----------------------------
@@ -681,7 +682,9 @@ package body Src_Editor_View is
       --  If we have the focus and are setting the position, scroll to the
       --  location
 
-      if User.Child = Get_Focus_Child (Get_MDI (User.Kernel)) then
+      if Gtkada.MDI.MDI_Child (User.Child) =
+        Get_Focus_Child (Get_MDI (User.Kernel))
+      then
          Save_Cursor_Position (User);
          Scroll_To_Cursor_Location (User, False);
       end if;
@@ -1895,7 +1898,7 @@ package body Src_Editor_View is
                      Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
                      Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
-                     Set_Focus_Child (Get_MDI (View.Kernel), View);
+                     Set_Focus_Child (View.Child);
                      On_Click (Buffer, Line, Button_X);
                   end;
                else
@@ -2351,7 +2354,7 @@ package body Src_Editor_View is
 
    procedure Set_Child
      (View  : access Source_View_Record;
-      Child : MDI_Child) is
+      Child : GPS.Kernel.MDI.GPS_MDI_Child) is
    begin
       View.Child := Child;
    end Set_Child;

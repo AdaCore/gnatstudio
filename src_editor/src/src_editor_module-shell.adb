@@ -905,7 +905,8 @@ package body Src_Editor_Module.Shell is
                if Command = "edit" then
                   Force := Nth_Arg (Data, 5, Default => False);
                   Position := Nth_Arg
-                    (Data, 6, Default => Natural (Position_Default));
+                    (Data, 6,
+                     Default => Child_Position'Pos (Position_Automatic));
 
                   if Length = 0 then
                      Open_File_Editor
@@ -915,7 +916,7 @@ package body Src_Editor_Module.Shell is
                         Column,
                         Enable_Navigation => False,
                         Force_Reload => Force,
-                        Position => Child_Position (Position));
+                        Initial_Position => Child_Position'Val (Position));
                   else
                      Open_File_Editor
                        (Kernel,

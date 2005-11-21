@@ -347,7 +347,7 @@ package body GPS.Kernel.Console is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Console     : GPS_Message;
-      Child       : MDI_Child;
+      Child       : GPS_MDI_Child;
 
    begin
       --  ??? Using an interactive_console seems overkill, since the user
@@ -365,20 +365,20 @@ package body GPS.Kernel.Console is
          Wrap_Mode    => Wrap_Char);
       Enable_Prompt_Display (Console, False);
 
-      Child := Put
-        (Kernel, Console,
-         Default_Width       => 400,
-         Default_Height      => 120,
-         Position            => Position_Bottom,
-         Focus_Widget        => Gtk_Widget (Get_View (Console)),
-         Flags               => 0,
-         Module              => Console_Module_Id,
-         Desktop_Independent => True);
-      Set_Focus_Child (Child);
+      Gtk_New (Child, Console,
+               Default_Width       => 400,
+               Default_Height      => 120,
+               Group               => Group_Consoles,
+               Focus_Widget        => Gtk_Widget (Get_View (Console)),
+               Flags               => 0,
+               Module              => Console_Module_Id,
+               Desktop_Independent => True);
       Set_Title (Child, -"Messages");
+      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
+      Set_Focus_Child (Child);
       Raise_Child (Child);
 
-      Console_Module_Id.Child   := Child;
+      Console_Module_Id.Child   := MDI_Child (Child);
       Console_Module_Id.Console := Console;
 
       Add_Hook (Kernel, "preferences_changed",
@@ -405,6 +405,7 @@ package body GPS.Kernel.Console is
    is
       Console : Interactive_Console;
       Child   : MDI_Child;
+      NChild  : GPS_MDI_Child;
       Create  : Boolean;
    begin
       if Title /= "" then
@@ -429,22 +430,21 @@ package body GPS.Kernel.Console is
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 
             if Module /= null then
-               Child := Put
-                 (Kernel,
-                  Child               => Console,
-                  Position            => Position_Bottom,
-                  Focus_Widget        => Gtk_Widget (Get_View (Console)),
-                  Module              => Module_ID (Module),
-                  Desktop_Independent => True);
+               Gtk_New (NChild, Console,
+                        Group               => Group_Consoles,
+                        Focus_Widget        => Gtk_Widget (Get_View (Console)),
+                        Module              => Module_ID (Module),
+                        Desktop_Independent => True);
+               Child := MDI_Child (NChild);
             else
-               Child := Put
-                 (Get_MDI (Kernel),
-                  Child               => Console,
-                  Position            => Position_Bottom,
+               Gtk_New
+                 (Child, Console,
+                  Group               => Group_Consoles,
                   Focus_Widget        => Gtk_Widget (Get_View (Console)));
             end if;
-            Raise_Child (Child);
             Set_Title (Child, Title, Title);
+            Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
+            Raise_Child (Child);
 
          elsif Child /= null then
             Console := Interactive_Console (Get_Widget (Child));

@@ -2058,26 +2058,25 @@ package body Project_Explorers is
       Child    : MDI_Child;
       C2       : MDI_Explorer_Child;
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Explorer_Record'Tag);
+      Child := MDI_Child (Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Project_Explorer_Record'Tag));
 
       if Child = null then
          Gtk_New (Explorer, Kernel);
          Refresh (Explorer);
 
          C2 := new MDI_Explorer_Child_Record;
-         Initialize (C2, Explorer, All_Buttons);
-         Child := Put
-           (Kernel, C2,
-            Default_Width  => 215,
-            Default_Height => 600,
-            Position       => Position_Left,
-            Module         => Explorer_Module_ID);
+         Initialize (C2, Explorer,
+                     Default_Width  => 215,
+                     Default_Height => 600,
+                     Group          => Group_View,
+                     Module         => Explorer_Module_ID);
          Set_Title
-           (Child, -"Project Explorer - Project View",  -"Project View");
+           (C2, -"Project Explorer - Project View",  -"Project View");
+         Put (Get_MDI (Kernel), C2, Initial_Position => Position_Left);
 
-         Set_Focus_Child (Child);
-         Raise_Child (Child);
+         Set_Focus_Child (C2);
+         Raise_Child (C2);
          return Explorer;
       else
          Raise_Child (Child);

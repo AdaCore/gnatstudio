@@ -28,6 +28,7 @@ with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtkada.MDI;     use Gtkada.MDI;
 
 with GPS.Kernel;     use GPS.Kernel;
+with GPS.Kernel.MDI; use GPS.Kernel.MDI;
 with Language;       use Language;
 with Projects;
 with VFS;
@@ -35,7 +36,7 @@ with VFS;
 package Project_Explorers_Common is
 
    type MDI_Explorer_Child_Record is
-     new Gtkada.MDI.MDI_Child_Record with private;
+     new GPS.Kernel.MDI.GPS_MDI_Child_Record with private;
    type MDI_Explorer_Child is access all MDI_Explorer_Child_Record'Class;
 
    function Dnd_Data
@@ -241,7 +242,7 @@ package Project_Explorers_Common is
 
 private
    type MDI_Explorer_Child_Record is
-     new Gtkada.MDI.MDI_Child_Record with
+     new GPS.Kernel.MDI.GPS_MDI_Child_Record with
       record
          Kernel        : GPS.Kernel.Kernel_Handle;
          Dnd_From_File : VFS.Virtual_File := VFS.No_File;

@@ -145,11 +145,10 @@ package body GPS.Main_Window is
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
    --  Called when the the main window is destroyed
 
-   type Navigation_Mode is (All_Windows, Notebook_Windows);
    type MDI_Child_Selection_Command is new Interactive_Command with record
-      Kernel : Kernel_Handle;
+      Kernel       : Kernel_Handle;
       Move_To_Next : Boolean;
-      Mode   : Navigation_Mode;
+      Group        : Child_Group;
    end record;
    type MDI_Child_Selection_Command_Access is access all
      MDI_Child_Selection_Command'Class;
@@ -617,7 +616,7 @@ package body GPS.Main_Window is
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
       Command.Move_To_Next := True;
-      Command.Mode         := All_Windows;
+      Command.Group        := Group_Any;
       Register_Action
         (Main_Window.Kernel,
          Name        => "Move to next window",
@@ -633,7 +632,7 @@ package body GPS.Main_Window is
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
       Command.Move_To_Next := False;
-      Command.Mode         := All_Windows;
+      Command.Group        := Group_Any;
       Register_Action
         (Main_Window.Kernel,
          Name        => "Move to previous window",
@@ -648,7 +647,7 @@ package body GPS.Main_Window is
 
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
-      Command.Mode         := Notebook_Windows;
+      Command.Group        := Group_Default;
       Command.Move_To_Next := True;
       Register_Action
         (Main_Window.Kernel,
@@ -1086,16 +1085,16 @@ package body GPS.Main_Window is
      (Command : access MDI_Child_Selection_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
-      if Command.Mode = Notebook_Windows then
+      if Command.Group /= Group_Any then
          Check_Interactive_Selection_Dialog
            (Get_MDI (Command.Kernel), null,
             Move_To_Next            => Command.Move_To_Next,
-            Visible_In_Central_Only => Command.Mode = Notebook_Windows);
+            Only_Group              => Command.Group);
       else
          Check_Interactive_Selection_Dialog
            (Get_MDI (Command.Kernel), Context.Event,
             Move_To_Next            => Command.Move_To_Next,
-            Visible_In_Central_Only => Command.Mode = Notebook_Windows);
+            Only_Group              => Command.Group);
       end if;
       return Success;
    end Execute;

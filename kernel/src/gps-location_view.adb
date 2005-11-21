@@ -1912,8 +1912,8 @@ package body GPS.Location_View is
       Allow_Creation : Boolean := True)
       return MDI_Child
    is
-      Child   : MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Location_View_Record'Tag);
+      Child   : GPS_MDI_Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Location_View_Record'Tag));
       Locations : Location_View;
    begin
       if Child = null then
@@ -1923,18 +1923,18 @@ package body GPS.Location_View is
 
          Gtk_New (Locations, Kernel_Handle (Kernel),
                   Abstract_Module_ID (Location_View_Module_Id));
-         Child := Put
-           (Kernel, Locations,
-            Module              => Location_View_Module_Id,
-            Default_Width       => Get_Pref (Default_Widget_Width),
-            Default_Height      => Get_Pref (Default_Widget_Height),
-            Position            => Position_Bottom,
-            Desktop_Independent => True);
-         Set_Focus_Child (Child);
+         Gtk_New (Child, Locations,
+                  Module              => Location_View_Module_Id,
+                  Default_Width       => Get_Pref (Default_Widget_Width),
+                  Default_Height      => Get_Pref (Default_Widget_Height),
+                  Group               => Group_Consoles,
+                  Desktop_Independent => True);
          Set_Title (Child, -"Locations");
+         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
+         Set_Focus_Child (Child);
       end if;
 
-      return Child;
+      return MDI_Child (Child);
    end Get_Or_Create_Location_View_MDI;
 
    -------------------

@@ -722,22 +722,22 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class)
       return MDI_Child
    is
-      Child   : MDI_Child;
+      Child   : GPS_MDI_Child;
       Outline : Outline_View_Access;
       Data    : aliased Context_Hooks_Args;
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Outline_View_Record'Tag);
+      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Outline_View_Record'Tag));
 
       if Child = null then
          Gtk_New (Outline, Kernel);
-         Child := Put
-           (Kernel, Outline,
-            Default_Width  => 215,
-            Default_Height => 600,
-            Position       => Position_Left,
-            Module         => Outline_View_Module);
+         Gtk_New (Child, Outline,
+                  Default_Width  => 215,
+                  Default_Height => 600,
+                  Group          => Group_View,
+                  Module         => Outline_View_Module);
          Set_Title (Child, -"Outline View", -"Outline View");
+         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
 
          Data := Context_Hooks_Args'
            (Kernel  => Kernel_Handle (Kernel),
@@ -756,7 +756,7 @@ package body Outline_View is
                    Watch => GObject (Outline));
       end if;
 
-      return Child;
+      return MDI_Child (Child);
    end Open_Outline;
 
    ----------------

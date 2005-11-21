@@ -493,7 +493,7 @@ package body Codefix_Module is
       pragma Unreferenced (Widget);
 
       Graphic_Codefix : Graphic_Codefix_Access;
-      Child           : MDI_Child;
+      Child           : GPS_MDI_Child;
       Session         : Codefix_Session;
    begin
       if Codefix_Module_ID.Sessions = null then
@@ -507,8 +507,8 @@ package body Codefix_Module is
 
       Update_All (Session.Current_Text.all);
 
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Graphic_Codefix_Record'Tag);
+      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Graphic_Codefix_Record'Tag));
       if Child = null then
          Gtk_New
            (Graphic_Codefix,
@@ -516,8 +516,10 @@ package body Codefix_Module is
             Session,
             Remove_Pixmap'Access,
             Create_Pixmap_And_Category'Access);
-         Child := Put (Kernel, Graphic_Codefix, Module => Codefix_Module_ID);
+         Gtk_New (Child, Graphic_Codefix,
+                  Module => Codefix_Module_ID);
          Set_Title (Child, -"Code fixing", -"Codefix");
+         Put (Get_MDI (Kernel), Child);
       else
          Graphic_Codefix := Graphic_Codefix_Access (Get_Widget (Child));
          Load_Next_Error (Graphic_Codefix, True);

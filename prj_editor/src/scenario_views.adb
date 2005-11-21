@@ -470,18 +470,18 @@ package body Scenario_Views is
    is
       pragma Unreferenced (Widget);
       Scenario : Scenario_View;
-      Child    : MDI_Child;
+      Child    : GPS_MDI_Child;
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Scenario_View_Record'Tag);
+      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Scenario_View_Record'Tag));
       if Child = null then
          Gtk_New (Scenario, Kernel);
-         Child := Put
-           (Kernel, Scenario,
-            Default_Width => 215,
-            Position      => Position_Left,
-            Module        => Scenario_Module_Id);
+         Gtk_New (Child, Scenario,
+                  Default_Width => 215,
+                  Group         => Group_View,
+                  Module        => Scenario_Module_Id);
          Set_Title (Child, -"Scenario View", -"Scenario View");
+         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
       end if;
 
       Set_Focus_Child (Child);

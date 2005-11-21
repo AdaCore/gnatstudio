@@ -63,7 +63,7 @@ package body XML_Viewer is
 
    type XML_Viewer_Record is new Gtk_Vbox_Record with record
       Name  : String_Access;
-      Child : MDI_Child;
+      Child : GPS_MDI_Child;
       Tree  : Tree_View;
    end record;
    type XML_Viewer is access all XML_Viewer_Record'Class;
@@ -335,10 +335,10 @@ package body XML_Viewer is
 
       Pack_Start (View, Scroll);
 
-      View.Child := Put
-        (Kernel, View,
-         Position => Position_Left,
-         Module   => Custom_Module_ID);
+      Gtk_New (View.Child, View, Group => Group_View,
+               Module => Custom_Module_ID);
+      Put (Get_MDI (Kernel), View.Child,
+           Initial_Position => Position_Left);
 
       --  Create the columns
 

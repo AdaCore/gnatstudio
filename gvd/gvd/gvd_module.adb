@@ -2051,7 +2051,7 @@ package body GVD_Module is
       Editor   : constant Code_Editor  := Process.Editor_Text;
       Address  : constant Address_Type := Get_Asm_Address (Editor);
       Assembly : constant GVD_Assembly_View := Get_Asm (Editor);
-      Child    : MDI_Child;
+      Child    : GPS_MDI_Child;
 
    begin
       Trace (Me, "*** [On_Assembly] *** Address = " &
@@ -2069,12 +2069,12 @@ package body GVD_Module is
            Editor);
 
       Set_Mode (Editor, Source_Asm);
-      Child := Put (Kernel, Assembly, Module => GVD_Module_ID,
-                    Position => Position_Right);
+      Gtk_New (Child, Assembly, Module => GVD_Module_ID);
+      Set_Title (Child, -"Assembly View");
+      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Right);
       Unref (Assembly);
       Set_Focus_Child (Child);
       Raise_Child (Child);
-      Set_Title (Child, -"Assembly View");
 
       if not Command_In_Process (Get_Process (Process.Debugger)) then
          Set_Source_Line (Assembly, Get_Line (Editor));

@@ -33,11 +33,11 @@ with Gtk.Main;
 with Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
-with Gtkada.MDI;             use Gtkada.MDI;
 with Gtkada.Text_View;       use Gtkada.Text_View;
 with Pango.Font;
 
 with GPS.Kernel;
+with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Src_Editor_Buffer;
 
@@ -128,7 +128,7 @@ package Src_Editor_View is
 
    procedure Set_Child
      (View  : access Source_View_Record;
-      Child : MDI_Child);
+      Child : GPS.Kernel.MDI.GPS_MDI_Child);
    --  Inform View that it is being contained in Child.
 
    procedure Acquire_Focus
@@ -239,7 +239,7 @@ private
       Cursor_Position      : Gdouble := Gdouble'Last;
       --  Stores the cursor position relative to the screen.
 
-      Child                : MDI_Child := null;
+      Child                : GPS.Kernel.MDI.GPS_MDI_Child := null;
       --  The child that contains Editor.
    end record;
 

@@ -1449,7 +1449,7 @@ package body Vsearch_Ext is
       Raise_Widget : Boolean := False;
       Float_Widget : Boolean := True) return Vsearch_Extended
    is
-      Child   : MDI_Child;
+      Child   : GPS_MDI_Child;
       Success : Boolean;
 
       Text : constant UTF8_String :=
@@ -1457,8 +1457,8 @@ package body Vsearch_Ext is
 
       pragma Unreferenced (Success);
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Vsearch_Extended_Record'Tag);
+      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Vsearch_Extended_Record'Tag));
 
       --  If not currently displayed
       if Child = null then
@@ -1480,16 +1480,17 @@ package body Vsearch_Ext is
               (Vsearch_Module_Id.Search, "delete_event", On_Delete'Access);
          end if;
 
-         Child := Put (Kernel, Vsearch_Module_Id.Search,
-                       All_Buttons or Float_As_Transient
-                       or Always_Destroy_Float,
-                       Focus_Widget =>
-                         Gtk_Widget (Vsearch_Module_Id.Search.Pattern_Combo),
-                       Position => Position_Left,
-                       Module => Vsearch_Module_Id,
-                       Desktop_Independent => True);
-         Float_Vsearch (Child);
+         Gtk_New (Child, Vsearch_Module_Id.Search,
+                  Flags => All_Buttons or Float_As_Transient
+                     or Always_Destroy_Float,
+                  Focus_Widget =>
+                    Gtk_Widget (Vsearch_Module_Id.Search.Pattern_Combo),
+                  Group    => Group_View,
+                  Module => Vsearch_Module_Id,
+                  Desktop_Independent => True);
          Set_Title (Child, -"Search");
+         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
+         Float_Vsearch (Child);
 
          Widget_Callback.Connect (Child, "float_child", Float_Vsearch'Access);
          Widget_Callback.Connect

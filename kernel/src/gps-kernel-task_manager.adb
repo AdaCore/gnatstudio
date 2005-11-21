@@ -197,8 +197,8 @@ package body GPS.Kernel.Task_Manager is
      (Kernel         : access Kernel_Handle_Record'Class;
       Allow_Creation : Boolean := True) return MDI_Child
    is
-      Child : MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Task_Manager_Interface_Record'Tag);
+      Child : GPS_MDI_Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Task_Manager_Interface_Record'Tag));
       Iface : Task_Manager_Interface;
    begin
       if Child = null then
@@ -207,17 +207,16 @@ package body GPS.Kernel.Task_Manager is
          end if;
 
          Gtk_New (Iface, Get_Task_Manager (Kernel));
-
-         Child := Put
-           (Kernel, Iface, Module => Task_Manager_Module_Id,
-            Position => Position_Bottom,
-            Desktop_Independent => True);
-         Set_Focus_Child (Child);
-
+         Gtk_New (Child, Iface,
+                  Group               => Group_Consoles,
+                  Module              => Task_Manager_Module_Id,
+                  Desktop_Independent => True);
          Set_Title (Child, -"Task Manager");
-         return Child;
+         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
+         Set_Focus_Child (Child);
+         return MDI_Child (Child);
       else
-         return Child;
+         return MDI_Child (Child);
       end if;
    end Get_Or_Create_Task_Manager_Interface_MDI;
 

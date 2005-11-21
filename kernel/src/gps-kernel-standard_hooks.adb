@@ -334,8 +334,9 @@ package body GPS.Kernel.Standard_Hooks is
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
       Focus             : Boolean := True;
-      Position          : Gtkada.MDI.Child_Position :=
-        Gtkada.MDI.Position_Default)
+      Group             : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
+      Initial_Position  : Gtkada.MDI.Child_Position :=
+        Gtkada.MDI.Position_Automatic)
    is
       Data : aliased Source_File_Hooks_Args :=
         (Kernel            => Kernel_Handle (Kernel),
@@ -347,23 +348,9 @@ package body GPS.Kernel.Standard_Hooks is
          New_File          => New_File,
          Force_Reload      => Force_Reload,
          Focus             => Focus,
-         Position          => Position);
+         Group             => Group,
+         Initial_Position  => Initial_Position);
    begin
---        if Enable_Navigation then
---           declare
---           Length : constant Integer := Integer'Max (0, Column_End - Column);
---              Args   : Argument_List :=
---                (new String'("Editor.edit"),
---                 new String'(To_Host_Pathname (Full_Name (Filename).all)),
---                 new String'(Image (Line)),
---                 new String'(Image (Column)),
---                 new String'(Image (Length)));
---           begin
---           Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
---              Basic_Types.Free (Args);
---           end;
---        end if;
-
       if not Run_Hook_Until_Success
         (Kernel, Open_File_Action_Hook, Data'Unchecked_Access)
       then
@@ -389,7 +376,8 @@ package body GPS.Kernel.Standard_Hooks is
          New_File          => False,
          Force_Reload      => False,
          Focus             => False,
-         Position          => Gtkada.MDI.Position_Default);
+         Group             => Gtkada.MDI.Group_Default,
+         Initial_Position  => Gtkada.MDI.Position_Automatic);
    begin
       if not Run_Hook_Until_Success
         (Kernel, Open_File_Action_Hook, Data'Unchecked_Access)
@@ -472,8 +460,12 @@ package body GPS.Kernel.Standard_Hooks is
                New_File          => Nth_Arg (Data, 7),
                Force_Reload      => Nth_Arg (Data, 8),
                Focus             => Nth_Arg (Data, 9, True),
-               Position          => Gtkada.MDI.Child_Position
-                 (Nth_Arg (Data, 10, Natural (Gtkada.MDI.Position_Default))));
+               Group             => Gtkada.MDI.Child_Group
+                  (Nth_Arg (Data, 11, Natural (Gtkada.MDI.Group_Default))),
+               Initial_Position   => Gtkada.MDI.Child_Position'Val
+                  (Nth_Arg (Data, 10,
+                   Gtkada.MDI.Child_Position'Pos
+                     (Gtkada.MDI.Position_Automatic))));
       Set_Return_Value
         (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
    end Open_File_Run_Hook_Handler;

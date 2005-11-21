@@ -546,30 +546,31 @@ package body Browsers.Projects is
    function Open_Project_Browser
      (Kernel : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Child
    is
-      Child   : MDI_Child;
+      Child   : GPS_MDI_Child;
       Browser : Project_Browser;
       Title   : constant String := -"Project Browser";
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Browser_Record'Tag);
+      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Project_Browser_Record'Tag));
 
       if Child /= null then
          Raise_Child (Child);
       else
          Browser := Create_Project_Browser (Kernel);
-         Child := Put
-           (Kernel, Browser,
-            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
-            Default_Width  => Get_Pref (Default_Widget_Width),
-            Default_Height => Get_Pref (Default_Widget_Height),
-            Module => Project_Browser_Module_ID);
-         Set_Focus_Child (Child);
+         Gtk_New (Child, Browser,
+                  Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
+                  Default_Width  => Get_Pref (Default_Widget_Width),
+                  Default_Height => Get_Pref (Default_Widget_Height),
+                  Group          => Group_Graphs,
+                  Module         => Project_Browser_Module_ID);
          Set_Title (Child, Title);
+         Put (Get_MDI (Kernel), Child);
+         Set_Focus_Child (Child);
       end if;
 
       Add_Navigation_Location (Kernel, Title);
 
-      return Child;
+      return MDI_Child (Child);
    end Open_Project_Browser;
 
    ------------------
@@ -581,18 +582,18 @@ package body Browsers.Projects is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child
    is
-      pragma Unreferenced (MDI);
-      Child : MDI_Child;
+      Child : GPS_MDI_Child;
    begin
       if Node.Tag.all = "Project_Browser" then
-         Child := Put
-           (User, Gtk_Widget (Create_Project_Browser (User)),
-            Default_Width  => Get_Pref (Default_Widget_Width),
-            Default_Height => Get_Pref (Default_Widget_Height),
-            Module         => Project_Browser_Module_ID);
+         Gtk_New (Child, Create_Project_Browser (User),
+                  Default_Width  => Get_Pref (Default_Widget_Width),
+                  Default_Height => Get_Pref (Default_Widget_Height),
+                  Group          => Group_Graphs,
+                  Module         => Project_Browser_Module_ID);
          Set_Title (Child, -"Project Browser");
+         Put (MDI, Child);
 
-         return Child;
+         return MDI_Child (Child);
       end if;
 
       return null;

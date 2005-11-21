@@ -28,7 +28,6 @@ with Glib.Convert;              use Glib.Convert;
 with Basic_Types;               use Basic_Types;
 with Entities;                  use Entities;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;

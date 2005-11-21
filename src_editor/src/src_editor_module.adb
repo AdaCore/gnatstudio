@@ -905,7 +905,7 @@ package body Src_Editor_Module is
       Current : Source_Editor_Box) return Source_Editor_Box
    is
       Editor : Source_Editor_Box;
-      Child  : MDI_Child;
+      Child  : GPS_MDI_Child;
       Num    : Natural;
    begin
       if Current = null then
@@ -918,19 +918,13 @@ package body Src_Editor_Module is
          Create_New_View (Editor, Kernel, Current);
 
          Child := new Editor_Child_Record;
-         Initialize (Child, Editor, All_Buttons);
-         Child := Put
-           (Kernel, Child,
+         Initialize
+           (Child, Editor,
+            Flags          => All_Buttons,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
             Default_Width  => Get_Pref (Default_Widget_Width),
             Default_Height => Get_Pref (Default_Widget_Height),
             Module         => Src_Editor_Module_Id);
-         Set_Child (Get_View (Editor), Child);
-
-         Widget_Callback.Connect
-           (Child, "selected", Update_Cache_On_Focus'Access);
-
-         Set_Focus_Child (Child);
 
          --  Find the first free view number
          Num := 2;
@@ -949,6 +943,14 @@ package body Src_Editor_Module is
                Full_Name (Title).all & " <" & Im & ">",
                Base_Name (Title) & " <" & Im & ">");
          end;
+
+         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Automatic);
+         Set_Child (Get_View (Editor), Child);
+
+         Widget_Callback.Connect
+           (Child, "selected", Update_Cache_On_Focus'Access);
+
+         Set_Focus_Child (Child);
 
          File_Callback.Connect
            (Child, "destroy", On_Editor_Destroy'Access, User_Data => Title);
@@ -985,8 +987,8 @@ package body Src_Editor_Module is
       Mode   : Save_Function_Mode) return Boolean
    is
       pragma Unreferenced (Module);
-      Success        : Boolean;
-      Box            : constant Source_Editor_Box := Source_Editor_Box (Child);
+      Success      : Boolean;
+      Box          : constant Source_Editor_Box := Source_Editor_Box (Child);
    begin
       case Mode is
          when Query =>
@@ -1086,13 +1088,15 @@ package body Src_Editor_Module is
       Create_New : Boolean := True;
       Focus      : Boolean := True;
       Force      : Boolean := False;
-      Position   : Gtkada.MDI.Child_Position :=
-        Gtkada.MDI.Position_Default) return Source_Editor_Box
+      Group      : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
+      Initial_Position   : Gtkada.MDI.Child_Position :=
+        Gtkada.MDI.Position_Automatic) return Source_Editor_Box
    is
       No_Name : constant String := -"Untitled";
       MDI     : constant MDI_Window := Get_MDI (Kernel);
       Editor  : Source_Editor_Box;
-      Child   : MDI_Child;
+      Child   : GPS_MDI_Child;
+      Child2  : MDI_Child;
       Dummy   : Boolean;
       Id      : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -1103,17 +1107,17 @@ package body Src_Editor_Module is
              & " Focus=" & Focus'Img);
 
       if File /= VFS.No_File then
-         Child := Find_Editor (Kernel, File);
+         Child2 := Find_Editor (Kernel, File);
 
-         if Child /= null then
+         if Child2 /= null then
             Dummy := Check_Timestamp_And_Reload
-              (Source_Editor_Box (Get_Widget (Child)),
+              (Source_Editor_Box (Get_Widget (Child2)),
                Interactive   => False,
                Always_Reload => Force);
 
-            Raise_Child (Child, Focus);
+            Raise_Child (Child2, Focus);
 
-            return Source_Editor_Box (Get_Widget (Child));
+            return Source_Editor_Box (Get_Widget (Child2));
          end if;
       end if;
 
@@ -1124,21 +1128,22 @@ package body Src_Editor_Module is
 
       if Editor /= null then
          Child := new Editor_Child_Record;
-         Initialize (Child, Editor, All_Buttons);
-         Child := Put
-           (Kernel, Child,
+         Initialize
+           (Child, Editor,
+            Flags          => All_Buttons,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
+            Group          => Group,
             Default_Width  => Get_Pref (Default_Widget_Width),
             Default_Height => Get_Pref (Default_Widget_Height),
-            Module         => Src_Editor_Module_Id,
-            Position       => Position);
+            Module         => Src_Editor_Module_Id);
+         Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
          Widget_Callback.Connect
            (Child, "selected", Update_Cache_On_Focus'Access);
 
          --  Add child to the hash table of editors.
-         Editors_Hash.Set (Id.Editors, File, (Child => Child));
+         Editors_Hash.Set (Id.Editors, File, (Child => MDI_Child (Child)));
 
          --  Make sure the entry in the hash table is removed when the editor
          --  is destroyed.
@@ -1151,7 +1156,7 @@ package body Src_Editor_Module is
 
          if File /= VFS.No_File then
             Set_Title (Child, Full_Name (File).all, Base_Name (File));
-            File_Edited (Kernel, Get_Filename (Child));
+            File_Edited (Kernel, Get_Filename (MDI_Child (Child)));
 
          else
             --  Determine the number of "Untitled" files open.
@@ -1165,7 +1170,7 @@ package body Src_Editor_Module is
                The_Child := Get (Iterator);
 
                while The_Child /= null loop
-                  if The_Child /= Child
+                  if The_Child /= MDI_Child (Child)
                     and then Get_Widget (The_Child).all in
                     Source_Editor_Box_Record'Class
                     and then Get_Filename (The_Child) = VFS.No_File
@@ -1213,7 +1218,8 @@ package body Src_Editor_Module is
                end if;
 
                Set_File_Identifier (Get_Buffer (Editor), Ident);
-               Set_Filename (Get_Buffer (Editor), Get_Filename (Child));
+               Set_Filename
+                 (Get_Buffer (Editor), Get_Filename (MDI_Child (Child)));
                File_Edited (Kernel, Ident);
             end;
          end if;
@@ -2061,10 +2067,11 @@ package body Src_Editor_Module is
 
          Source := Open_File
            (Kernel, D.File,
-            Create_New => D.New_File,
-            Focus      => D.Focus,
-            Force      => D.Force_Reload,
-            Position   => D.Position);
+            Create_New       => D.New_File,
+            Focus            => D.Focus,
+            Force            => D.Force_Reload,
+            Group            => D.Group,
+            Initial_Position => D.Initial_Position);
 
          --  This used to be done in Open_File_Editor itself, before we call
          --  the Hook, but then we wouldn't have access to Create_File_Marker.

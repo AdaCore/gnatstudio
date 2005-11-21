@@ -78,7 +78,7 @@ package body Generic_Views is
       is
          pragma Unreferenced (MDI);
          View  : View_Access;
-         Child : MDI_Child;
+         Child : GPS_MDI_Child;
       begin
          if Node.Tag.all = Module_Name then
             View := new Formal_View_Record;
@@ -86,14 +86,15 @@ package body Generic_Views is
             if Node.Child /= null then
                Load_From_XML (View, Node.Child);
             end if;
-            Child := Put
-              (User, View,
-               Default_Width  => 215,
-               Default_Height => 600,
-               Position       => Position_View,
-               Module         => Module);
+
+            Gtk_New (Child, View,
+                     Default_Width  => 215,
+                     Default_Height => 600,
+                     Module         => Module,
+                     Group          => Group_View);
             Set_Title (Child, View_Name, View_Name);
-            return Child;
+            Put (Get_MDI (User), Child, Initial_Position => Position_Left);
+            return MDI_Child (Child);
          end if;
          return null;
       end Load_Desktop;
@@ -142,29 +143,29 @@ package body Generic_Views is
          Focus          : Boolean := True)
          return View_Access
       is
-         Child : MDI_Child;
-         View  : View_Access;
+         Child  : GPS_MDI_Child;
+         View   : View_Access;
       begin
          if Reuse_If_Exist then
-            Child := Find_MDI_Child_By_Tag
-              (Get_MDI (Kernel), Formal_View_Record'Tag);
+            Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+              (Get_MDI (Kernel), Formal_View_Record'Tag));
          end if;
 
          if Child = null then
             View := new Formal_View_Record;
             Initialize (View, Kernel);
-            Child := Put
-              (Kernel, View,
-               Default_Width  => 215,
-               Default_Height => 600,
-               Position       => Position_View,
-               Module         => Module);
+            Gtk_New (Child, View,
+                     Default_Width  => 215,
+                     Default_Height => 600,
+                     Group          => Group_View,
+                     Module         => Module);
             Set_Title (Child, View_Name, View_Name);
+            Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
          end if;
 
          if Focus then
             Raise_Child (Child);
-            Set_Focus_Child (Get_MDI (Kernel), Child);
+            Set_Focus_Child (Child);
          end if;
 
          if Child = null then

@@ -95,7 +95,7 @@ package body Vdiff_Module is
    is
       R      : Diff_Occurrence_Link := Result;
       Vdiff  : Vdiff_Access;
-      Child  : MDI_Child;
+      Child  : GPS_MDI_Child;
    begin
       if Result = null then
          Insert (Kernel, -"No differences found for: " &
@@ -111,17 +111,17 @@ package body Vdiff_Module is
       Fill_Diff_Lists
         (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
       Show_All (Vdiff);
-      Child := Put
-        (Kernel, Vdiff,
-         Default_Width  => Get_Pref (Default_Widget_Width),
-         Default_Height => Get_Pref (Default_Widget_Height),
-         Module         => Vdiff_Module_ID);
-      Set_Focus_Child (Child);
+      Gtk_New (Child, Vdiff,
+               Default_Width  => Get_Pref (Default_Widget_Width),
+               Default_Height => Get_Pref (Default_Widget_Height),
+               Module         => Vdiff_Module_ID);
       Set_Title (Child, -"Visual Comparison");
+      Put (Get_MDI (Kernel), Child);
+      Set_Focus_Child (Child);
 
       Free (R);
 
-      return Child;
+      return MDI_Child (Child);
    end Compare_Two_Files;
 
    ------------------

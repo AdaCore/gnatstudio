@@ -1138,8 +1138,10 @@ package body Python_Module is
          Widget := Get_User_Data
            (Widget_From_PyObject (Get_Param (Python_Callback_Data (Data), 1)),
             Stub);
-         Child := Put (Get_MDI (Get_Kernel (Data)), Gtk_Widget (Widget));
+         Gtk_New (Child, Gtk_Widget (Widget), Group => Group_Default);
          Set_Title (Child, Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, ""));
+         Put (Get_MDI (Get_Kernel (Data)), Child,
+              Initial_Position => Position_Automatic);
          Set_Focus_Child (Child);
       end if;
    end Python_GUI_Command_Handler;

@@ -1170,18 +1170,15 @@ package body Project_Explorers_Files is
       if Child = null then
          Gtk_New (Files, Kernel);
          C2 := new MDI_Explorer_Child_Record;
-         Initialize (C2, Files, All_Buttons);
-         Child := Put
-           (Kernel,
-            C2,
-            Default_Width  => 215,
-            Default_Height => 600,
-            Position       => Position_Left,
-            Module         => Explorer_Files_Module_Id);
-         Set_Focus_Child (Child);
-         Set_Title
-           (Child, -"Project Explorer - File View",  -"File View");
-         Raise_Child (Child);
+         Initialize (C2, Files,
+                     Default_Width  => 215,
+                     Default_Height => 600,
+                     Group          => Group_View,
+                     Module         => Explorer_Files_Module_Id);
+         Set_Title (C2, -"Project Explorer - File View",  -"File View");
+         Put (Get_MDI (Kernel), C2, Initial_Position => Position_Left);
+         Set_Focus_Child (C2);
+         Raise_Child (C2);
       else
          Raise_Child (Child);
          Set_Focus_Child (Get_MDI (Kernel), Child);

@@ -579,7 +579,7 @@ package body Browsers.Call_Graph is
      (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
    is
       Browser : Call_Graph_Browser;
-      Child   : MDI_Child;
+      Child   : GPS_MDI_Child;
    begin
       Browser := new Call_Graph_Browser_Record;
       Initialize (Browser, Kernel, Create_Toolbar => False);
@@ -591,15 +591,16 @@ package body Browsers.Call_Graph is
          ID              => Call_Graph_Module_Id,
          Context_Func    => Default_Browser_Context_Factory'Access);
 
-      Child := Put
-        (Kernel, Browser,
-         Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-         Default_Width  => Get_Pref (Default_Widget_Width),
-         Default_Height => Get_Pref (Default_Widget_Height),
-         Module         => Call_Graph_Module_Id);
+      Gtk_New (Child, Browser,
+               Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
+               Default_Width  => Get_Pref (Default_Widget_Width),
+               Default_Height => Get_Pref (Default_Widget_Height),
+               Group          => Group_Graphs,
+               Module         => Call_Graph_Module_Id);
       Set_Title (Child, -"Call graph Browser");
+      Put (Get_MDI (Kernel), Child);
 
-      return Child;
+      return MDI_Child (Child);
    end Create_Call_Graph_Browser;
 
    -----------------------------

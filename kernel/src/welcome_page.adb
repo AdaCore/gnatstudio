@@ -208,12 +208,12 @@ package body Welcome_Page is
       Show_All (Scroll);
 
       Set_Size_Request (Scroll, -1, 500);
-      Child := Put (Get_MDI (Kernel), Scroll);
+      Gtk_New (Child, Scroll);
+      Set_Title (Child, -"Welcome to GPS");
+      Put (Get_MDI (Kernel), Child);
 
       Modify_Bg (Get_Parent (Main_Box),
                  State_Normal, White (Get_Default_Colormap));
-
-      Set_Title (Child, -"Welcome to GPS");
 
       return Child;
    end Create_Welcome_Page;

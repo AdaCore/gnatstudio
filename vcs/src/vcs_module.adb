@@ -866,21 +866,22 @@ package body VCS_Module is
       Show        : Boolean := False) return VCS_View_Access
    is
       M : constant VCS_Module_ID_Access := VCS_Module_ID;
+      Child : GPS_MDI_Child;
    begin
       if M.Explorer = null then
          Gtk_New (M.Explorer, Kernel);
       end if;
 
       if Show and then M.Explorer_Child = null then
-         M.Explorer_Child := Put
-           (Kernel, M.Explorer,
-            Default_Width  => Get_Pref (Default_Widget_Width),
-            Default_Height => Get_Pref (Default_Widget_Height),
-            Position       => Position_VCS_Explorer,
-            Module         => VCS_Module_ID);
-
-         Set_Focus_Child (M.Explorer_Child);
+         Gtk_New (Child, M.Explorer,
+                  Default_Width  => Get_Pref (Default_Widget_Width),
+                  Default_Height => Get_Pref (Default_Widget_Height),
+                  Group          => Group_VCS_Explorer,
+                  Module         => VCS_Module_ID);
+         M.Explorer_Child := MDI_Child (Child);
          Set_Title (M.Explorer_Child, -"VCS Explorer");
+         Put (Get_MDI (Kernel), M.Explorer_Child);
+         Set_Focus_Child (M.Explorer_Child);
       end if;
 
       if M.Explorer_Child /= null
@@ -931,21 +932,22 @@ package body VCS_Module is
       Show        : Boolean := False) return VCS_Activities_View_Access
    is
       M : constant VCS_Module_ID_Access := VCS_Module_ID;
+      Child : GPS_MDI_Child;
    begin
       if M.Activities = null then
          Gtk_New (M.Activities, Kernel);
       end if;
 
       if Show and then M.Activities_Child = null then
-         M.Activities_Child := Put
-           (Kernel, M.Activities,
-            Default_Width  => Get_Pref (Default_Widget_Width),
-            Default_Height => Get_Pref (Default_Widget_Height),
-            Position       => Position_VCS_Activities,
-            Module         => VCS_Module_ID);
-
-         Set_Focus_Child (M.Activities_Child);
+         Gtk_New (Child, M.Activities,
+                  Default_Width  => Get_Pref (Default_Widget_Width),
+                  Default_Height => Get_Pref (Default_Widget_Height),
+                  Group          => Group_VCS_Activities,
+                  Module         => VCS_Module_ID);
+         M.Activities_Child := MDI_Child (Child);
          Set_Title (M.Activities_Child, -"VCS Activities");
+         Put (Get_MDI (Kernel), M.Activities_Child);
+         Set_Focus_Child (M.Activities_Child);
       end if;
 
       if M.Activities_Child /= null

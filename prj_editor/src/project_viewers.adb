@@ -865,27 +865,28 @@ package body Project_Viewers is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Child   : MDI_Child;
+      Child   : GPS_MDI_Child;
       Viewer  : Project_Viewer;
       Context : Selection_Context_Access := Get_Current_Context (Kernel);
 
    begin
       Ref (Context);
 
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Viewer_Record'Tag);
+      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Project_Viewer_Record'Tag));
 
       if Child /= null then
          Raise_Child (Child);
          Viewer := Project_Viewer (Get_Widget (Child));
       else
          Gtk_New (Viewer, Kernel);
-         Child := Put
-           (Kernel, Viewer,
-            Default_Width  => Get_Pref (Default_Widget_Width),
-            Default_Height => Get_Pref (Default_Widget_Height),
-            Module => Prj_Editor_Module_ID);
+         Gtk_New (Child, Viewer,
+                  Default_Width  => Get_Pref (Default_Widget_Width),
+                  Default_Height => Get_Pref (Default_Widget_Height),
+                  Group          => Group_Default,
+                  Module         => Prj_Editor_Module_ID);
          Set_Title (Child, -"Switches editor");
+         Put (Get_MDI (Kernel), Child);
       end if;
 
       --  The initial contents of the viewer should be read immediately from

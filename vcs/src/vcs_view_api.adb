@@ -1221,7 +1221,8 @@ package body VCS_View_API is
             Open_File_Editor
               (Kernel,
                Get_Log_From_File (Kernel, File, True, Suffix),
-               Position => Position_Bottom);
+               Group    => Group_Consoles,
+               Initial_Position => Position_Bottom);
          end if;
 
          Files_Temp := String_List.Next (Files_Temp);
