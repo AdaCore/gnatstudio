@@ -33,12 +33,13 @@ package GPS.Kernel.MDI is
    --  This is a list of predefined Child_Positions used by various elements
    --  in GPS.
 
-   Position_Graphs         : constant Child_Position := 101;
-   Position_VCS_Explorer   : constant Child_Position := 102;
-   Position_Debugger_Stack : constant Child_Position := 103;
-   Position_Debugger_Data  : constant Child_Position := 104;
-   Position_VCS_Activities : constant Child_Position := 105;
-   Position_View           : constant Child_Position := 106;
+   Group_Graphs         : constant Child_Group := 101;
+   Group_VCS_Explorer   : constant Child_Group := 102;
+   Group_Debugger_Stack : constant Child_Group := 103;
+   Group_Debugger_Data  : constant Child_Group := 104;
+   Group_VCS_Activities : constant Child_Group := 105;
+   Group_View           : constant Child_Group := 106;
+   Group_Consoles       : constant Child_Group := 107;
 
    function Get_Current_Window
      (Handle : access Kernel_Handle_Record'Class) return Gtk.Window.Gtk_Window;
@@ -51,7 +52,35 @@ package GPS.Kernel.MDI is
    ------------
 
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with private;
+   type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
    --  Base record for all MDI children that go into the MDI
+
+   procedure Gtk_New
+     (Child        : out GPS_MDI_Child;
+      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags        : Child_Flags := All_Buttons;
+      Group        : Child_Group := Group_Default;
+      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+      Default_Width, Default_Height : Glib.Gint := -1;
+      Module        : access Module_ID_Record'Class;
+      Desktop_Independent : Boolean := False);
+   --  Recommended version of Gtk_New to use, instead of the one in
+   --  GtkAda.MDI. This version has several new parameters:
+   --    - Module : used to associate a module with a widget. This is used to
+   --               get the current context for instance
+   --    - Desktop_Independent: if this is true, then the window will not be
+   --               closed  when a new desktop is loaded.
+
+   procedure Initialize
+     (Child        : access GPS_MDI_Child_Record'Class;
+      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags        : Child_Flags := All_Buttons;
+      Group        : Child_Group := Group_Default;
+      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+      Default_Width, Default_Height : Glib.Gint := -1;
+      Module        : access Module_ID_Record'Class;
+      Desktop_Independent : Boolean := False);
+   --  Internal version of Gtk_New
 
    function Get_MDI
      (Handle : access Kernel_Handle_Record'Class)
@@ -59,22 +88,6 @@ package GPS.Kernel.MDI is
    --  Return the MDI associated with Handle.
    --  Use the Put function below instead of the one in GtkAda.MDI to
    --  associated a widget with a GPS module
-
-   function Put
-     (Handle        : access Kernel_Handle_Record'Class;
-      Child         : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Flags         : Gtkada.MDI.Child_Flags := Gtkada.MDI.All_Buttons;
-      Position      : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
-      Focus_Widget  : Gtk.Widget.Gtk_Widget := null;
-      Default_Width, Default_Height : Glib.Gint := -1;
-      Module        : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False) return Gtkada.MDI.MDI_Child;
-   --  Recommended version of Put to use, instead of the one in
-   --  GtkAda.MDI. This version has several new parameters:
-   --    - Module : used to associate a module with a widget. This is used to
-   --               get the current context for instance
-   --    - Desktop_Independent: if this is true, then the window will not be
-   --               closed  when a new desktop is loaded.
 
    function Get_Module_From_Child
      (Child : Gtkada.MDI.MDI_Child) return Module_ID;
@@ -107,6 +120,5 @@ private
       Module              : Abstract_Module_ID;
       Desktop_Independent : Boolean;
    end record;
-   type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
 
 end GPS.Kernel.MDI;

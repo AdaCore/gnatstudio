@@ -84,6 +84,50 @@ package body GPS.Kernel.MDI is
    end Get_Current_Window;
 
    -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Child        : out GPS_MDI_Child;
+      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags        : Child_Flags := All_Buttons;
+      Group        : Child_Group := Group_Default;
+      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+      Default_Width, Default_Height : Glib.Gint := -1;
+      Module        : access Module_ID_Record'Class;
+      Desktop_Independent : Boolean := False) is
+   begin
+      Child := new GPS_MDI_Child_Record;
+      Initialize (Child, Widget, Flags, Group, Focus_Widget,
+                  Default_Width, Default_Height, Module, Desktop_Independent);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Child        : access GPS_MDI_Child_Record'Class;
+      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags        : Child_Flags := All_Buttons;
+      Group        : Child_Group := Group_Default;
+      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+      Default_Width, Default_Height : Glib.Gint := -1;
+      Module        : access Module_ID_Record'Class;
+      Desktop_Independent : Boolean := False)
+   is
+   begin
+      Gtkada.MDI.Initialize (Child, Widget, Flags, Group, Focus_Widget);
+
+      if Default_Width /= -1 or else Default_Height /= -1 then
+         Set_Size_Request (Child, Default_Width, Default_Height);
+      end if;
+
+      Child.Module := Abstract_Module_ID (Module);
+      Child.Desktop_Independent := Desktop_Independent;
+   end Initialize;
+
+   -------------
    -- Get_MDI --
    -------------
 
@@ -94,40 +138,6 @@ package body GPS.Kernel.MDI is
    begin
       return Top.MDI;
    end Get_MDI;
-
-   ---------
-   -- Put --
-   ---------
-
-   function Put
-     (Handle              : access Kernel_Handle_Record'Class;
-      Child               : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Flags               : Child_Flags := All_Buttons;
-      Position            : Child_Position := Position_Default;
-      Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
-      Default_Width, Default_Height : Gint := -1;
-      Module              : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False) return MDI_Child
-   is
-      C : GPS_MDI_Child;
-   begin
-      if Child.all in GPS_MDI_Child_Record'Class then
-         C := GPS_MDI_Child (Child);
-      elsif Child.all in MDI_Child_Record'Class then
-         return Put (Get_MDI (Handle), Child, Position, Flags, Focus_Widget);
-      else
-         C := new GPS_MDI_Child_Record;
-         Initialize (C, Child, Flags);
-      end if;
-
-      if Default_Width /= -1 or else Default_Height /= -1 then
-         Set_Size_Request (Child, Default_Width, Default_Height);
-      end if;
-
-      C.Module := Abstract_Module_ID (Module);
-      C.Desktop_Independent := Desktop_Independent;
-      return Put (Get_MDI (Handle), C, Position, Flags, Focus_Widget);
-   end Put;
 
    ---------------------------
    -- Get_Module_From_Child --
