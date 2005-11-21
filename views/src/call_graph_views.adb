@@ -78,7 +78,7 @@ package body Call_Graph_Views is
    type Callgraph_View_Record is new Generic_Views.View_Record with record
       Tree   : Gtk_Tree_View;
       Kernel : Kernel_Handle;
-      Typ    : View_Type;
+      Typ    : View_Type := View_Calls;
 
       Block_On_Expanded : Boolean := False;
       --  If true, we do not recompute the contents of children nodes when a
