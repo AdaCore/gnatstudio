@@ -4658,6 +4658,7 @@ package body Project_Properties is
          end;
 
          if Changed then
+            Set_Project_Modified (Project, True);
             Recompute_View (Kernel);
          end if;
       end if;
