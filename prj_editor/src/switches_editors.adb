@@ -1894,6 +1894,7 @@ package body Switches_Editors is
          Value    : Prj.Variable_Value;
          Is_Default_Value : Boolean;
          Rename_Prj : Project_Type;
+         To_Remove : Boolean := False;
       begin
          Rename_Prj := Find_Project_Of_Package (Project, Page.Pkg.all);
 
@@ -1906,41 +1907,90 @@ package body Switches_Editors is
             return;
          end if;
 
+         --  Check if we in fact have the initial value. We much check the
+         --  normalized switches (after expansion), since otherwise -gnatwue
+         --  and -gnatweu would appear to be different. Note that this test
+         --  doesn't handle the case where "-O" and "-O1" are the same.
+
          declare
-            Args : Argument_List := Get_Switches (Page, Normalize => False);
+            Args : Argument_List := Normalize_Compiler_Switches
+              (Page, Get_Switches (Page, Normalize => False));
          begin
+            Trace (Me, "MANU File=" & Base_Name (File_Name) & "--"
+                   & "Pkg=" & Page.Pkg.all);
+            for A in Args'Range loop
+               Trace (Me, "MANU Args=" & Args (A).all);
+            end loop;
+
             if Project = No_Project then
+               Trace (Me, "MANU Project is No_Project");
                Is_Default_Value := False;
 
             else
+               --  If the switches are exactly the ones set by default for the
+               --  language, remove the file-specific attribute
+
                Get_Switches
                  (Project          => Rename_Prj,
                   In_Pkg           => Page.Pkg.all,
-                  File             => File_Name,
+                  File             => VFS.No_File,
                   Language         => Language,
                   Value            => Value,
                   Is_Default_Value => Is_Default_Value);
-
-               --  Check if we in fact have the initial value. We much check
-               --  the normalized switches (after expansion), since otherwise
-               --  -gnatwue and -gnatweu would appear to be different.
-               --  Note that this test doesn't handle the case where
-               --  "-O" and "-O1" are the same.
                declare
-                  Default_Args : constant Argument_List :=
-                                  To_Argument_List (Get_Tree (Project), Value);
-                  Default_Args_N : Argument_List := Normalize_Compiler_Switches
-                    (Page, Default_Args);
-                  A : Argument_List :=
-                    Normalize_Compiler_Switches (Page, Clone (Args));
+                  Default_Args : Argument_List := Normalize_Compiler_Switches
+                      (Page, To_Argument_List (Get_Tree (Project), Value));
                begin
-                  Is_Default_Value := Is_Equal (Default_Args_N, A);
-                  Free (Default_Args_N);
-                  Free (A);
+                  for D in Default_Args'Range loop
+                     Trace (Me, "MANU Predefined=" & Default_Args (D).all);
+                  end loop;
+                  Is_Default_Value := Is_Equal (Default_Args, Args);
+                  Free (Default_Args);
                end;
+
+               if Is_Default_Value then
+                  To_Remove := File_Name /= VFS.No_File;
+
+               else
+                  --  If the switches are the ones already set for the file,
+                  --  no change has been done in the dialog
+
+                  Get_Switches
+                    (Project          => Rename_Prj,
+                     In_Pkg           => Page.Pkg.all,
+                     File             => File_Name,
+                     Language         => Language,
+                     Value            => Value,
+                     Is_Default_Value => Is_Default_Value);
+                  declare
+                     Default_Args : Argument_List :=
+                       Normalize_Compiler_Switches
+                         (Page, To_Argument_List (Get_Tree (Project), Value));
+                  begin
+                     for D in Default_Args'Range loop
+                        Trace (Me, "MANU Before=" & Default_Args (D).all);
+                     end loop;
+                     Is_Default_Value := Is_Equal (Default_Args, Args);
+                     Free (Default_Args);
+                  end;
+               end if;
             end if;
 
-            if not Is_Default_Value then
+            Trace (Me, "MANU To_Remove=" & To_Remove'Img
+                   & " Is_Default_Value=" & Is_Default_Value'Img);
+
+            if To_Remove then
+               if File_Name /= VFS.No_File then
+                  Delete_Attribute
+                    (Project            => Rename_Prj,
+                     Scenario_Variables => Scenario_Variables,
+                     Attribute          => Build
+                       (Page.Pkg.all, Get_String (Name_Switches)),
+                     Attribute_Index    => Base_Name (File_Name));
+                  Changed := True;
+               end if;
+
+            elsif not Is_Default_Value then
                if File_Name /= VFS.No_File then
                   if Args'Length /= 0 then
                      Update_Attribute_Value_In_Scenario
