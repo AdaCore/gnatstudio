@@ -37,7 +37,6 @@ with Basic_Types;           use Basic_Types;
 with Config;                use Config;
 with GPS.Intl;              use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
-with GVD.Call_Stack;        use GVD.Call_Stack;
 with GVD.Callbacks;         use GVD.Callbacks;
 with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
 with GVD.Process;           use GVD.Process;
@@ -255,22 +254,6 @@ package body GVD.Dialogs is
       Update_PD (PD_Dialog, Info (1 .. Len));
    end Update;
 
-   -----------------------
-   -- Update_Call_Stack --
-   -----------------------
-
-   procedure Update_Call_Stack
-     (Debugger : access Glib.Object.GObject_Record'Class)
-   is
-      Tab : constant Visual_Debugger := Visual_Debugger (Debugger);
-   begin
-      if Tab.Stack = null or else Tab.Debugger = null then
-         return;
-      end if;
-
-      Update (Tab.Stack, Tab.Debugger);
-   end Update_Call_Stack;
-
    -----------------------------
    -- On_Task_Process_Stopped --
    -----------------------------
@@ -321,18 +304,6 @@ package body GVD.Dialogs is
          Update (PD_Dialog, Tab);
       end if;
    end On_PD_Process_Stopped;
-
-   ------------------------------
-   -- On_Stack_Process_Stopped --
-   ------------------------------
-
-   procedure On_Stack_Process_Stopped
-     (Widget : access Glib.Object.GObject_Record'Class)
-   is
-      Tab : constant Visual_Debugger := Visual_Debugger (Widget);
-   begin
-      Update_Call_Stack (Tab);
-   end On_Stack_Process_Stopped;
 
    ----------------
    -- Initialize --

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2003                        --
---                             ACT-Europe                            --
+--                         Copyright (C) 2003-2005                   --
+--                             AdaCore                               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,55 +18,30 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Menu;            use Gtk.Menu;
-with Gtk.Tree_View;       use Gtk.Tree_View;
-with Gtk.Tree_Store;      use Gtk.Tree_Store;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Debugger;            use Debugger;
+with GVD.Process;
+with GPS.Kernel;
 
 package GVD.Call_Stack is
 
-   type Call_Stack_Record is new Gtk_Scrolled_Window_Record with private;
-   type Call_Stack is access all Call_Stack_Record'Class;
+   procedure Highlight_Call_Stack_Frame
+     (Process : access GVD.Process.Visual_Debugger_Record'Class);
+   --  Highlight frame number Frame based on the current debugger output
+   --  stored in Process. Nothing is done if Process is not associated with
+   --  a call stack
 
-   type Stack_List_Mask is mod 2 ** 16;
-   Frame_Num       : constant Stack_List_Mask := 2 ** 0;
-   Program_Counter : constant Stack_List_Mask := 2 ** 1;
-   Subprog_Name    : constant Stack_List_Mask := 2 ** 2;
-   Params          : constant Stack_List_Mask := 2 ** 3;
-   File_Location   : constant Stack_List_Mask := 2 ** 4;
-   All_Info        : constant Stack_List_Mask := 2 ** 5 - 1;
-   --  Lists the information to be displayed in the stack list window.
+   procedure Attach_To_Call_Stack
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean);
+   --  Attach debugger to a call stack.
+   --  If an unattached call stack exists in the desktop, it is reused.
+   --  If no call stack exists, one is created if Create_If_Necessary is true.
+   --  Nothing is done when Debugger is already attached to a call stack.
+   --
+   --  The debugger console should be created already. When it is closed (ie
+   --  the debugger exits), the call stack will be destroyed
 
-   procedure Gtk_New (Widget : out Call_Stack);
-   --  Create a new call stack dialog.
-
-   procedure Initialize (Widget : access Call_Stack_Record'Class);
-   --  Internal initialization function.
-
-   function Get_List_Mask (Stack : Call_Stack) return Stack_List_Mask;
-   procedure Set_List_Mask (Stack : Call_Stack; Mask : Stack_List_Mask);
-   --  Accessors for Stack.Backtrace_Mask.
-
-   procedure Highlight_Frame (Stack : Call_Stack; Frame : Natural);
-   --  Highlight frame number Frame.
-
-   procedure Update (Stack : Call_Stack; Debugger : Debugger_Access);
-   --  Update the call stack.
-
-private
-
-   type Call_Stack_Record is new Gtk_Scrolled_Window_Record with record
-      Tree                       : Gtk_Tree_View;
-      Model                      : Gtk_Tree_Store;
-      Debugger                   : Debugger_Access;
-
-      Call_Stack_Contextual_Menu : Gtk.Menu.Gtk_Menu;
-      Block                      : Boolean := False;
-      --  Whether to process selection events.
-
-      Backtrace_Mask             : Stack_List_Mask := Subprog_Name;
-      --  What columns to be displayed in the stack list window
-   end record;
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register menus and other functions to support the callstacks
 
 end GVD.Call_Stack;

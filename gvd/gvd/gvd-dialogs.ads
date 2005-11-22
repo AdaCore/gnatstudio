@@ -132,17 +132,6 @@ package GVD.Dialogs is
    --  It will update the protection domains window associated with a given
    --  tab.
 
-   procedure Update_Call_Stack
-     (Debugger : access Glib.Object.GObject_Record'Class);
-   --  Update the contents of the call stack window.
-   --  The information is read from Debugger (which is in fact a
-   --  Visual_Debugger).
-
-   procedure On_Stack_Process_Stopped
-     (Widget : access Glib.Object.GObject_Record'Class);
-   --  Callback function connected to the "process_stopped" signal.
-   --  It will update the call stack window associated with a given tab.
-
    procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
       Main_Window                : Gtk_Window;

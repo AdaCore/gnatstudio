@@ -65,6 +65,7 @@ with GPS.Kernel;
 with GPS.Main_Window.Debug;      use GPS.Main_Window.Debug;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GUI_Utils;                  use GUI_Utils;
+with GVD.Call_Stack;             use GVD.Call_Stack;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Dialogs;                use GVD.Dialogs;
@@ -166,11 +167,6 @@ package body GVD.Process is
       Event    : Gdk.Event.Gdk_Event) return Boolean;
    --  Callback for all the button press events in the debugger command window.
    --  This is used to display the contexual menu.
-
-   function On_Stack_Delete_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-   --  Callback for the "delete_event" signal on the Call Stack window.
 
    function On_Editor_Text_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
@@ -339,23 +335,6 @@ package body GVD.Process is
       N := Write (TTY_Descriptor (Top.Debuggee_TTY), NL'Address, 1);
       return "";
    end Debuggee_Console_Handler;
-
-   ---------------------------
-   -- On_Stack_Delete_Event --
-   ---------------------------
-
-   function On_Stack_Delete_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      pragma Unreferenced (Params);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Object);
-
-   begin
-      Process.Stack := null;
-      return False;
-   end On_Stack_Delete_Event;
 
    ---------------------------------
    -- On_Editor_Text_Delete_Event --
@@ -583,7 +562,6 @@ package body GVD.Process is
       Addr_First  : Natural := 0;
       Addr_Last   : Natural;
       Pc          : Address_Type;
-      Frame_Info  : Frame_Info_Type := Location_Not_Found;
 
    begin
       if Process.Post_Processing or else Process.Current_Output = null then
@@ -646,23 +624,7 @@ package body GVD.Process is
          Update_Assembly_View (Process.Editor_Text);
       end if;
 
-      Found_Frame_Info
-        (Process.Debugger,
-         Process.Current_Output.all,
-         First, Last, Frame_Info);
-
-      if Process.Stack /= null
-        and then Frame_Info = Location_Found
-      then
-         Highlight_Frame
-           (Process.Stack,
-            Integer'Value (Process.Current_Output (First .. Last)));
-      end if;
-
-      if Frame_Info = No_Debug_Info then
-         Show_Message (Process.Editor_Text,
-                       -"There is no debug information for this frame.");
-      end if;
+      Highlight_Call_Stack_Frame (Process);
 
       --  Last step is to update the breakpoints once all the rest has been
       --  set up correctly.
@@ -865,41 +827,6 @@ package body GVD.Process is
       Initialize (Process, Window, Source);
    end Gtk_New;
 
-   -----------------------
-   -- Create_Call_Stack --
-   -----------------------
-
-   procedure Create_Call_Stack
-     (Process : access Visual_Debugger_Record'Class)
-   is
-      Child : GPS_MDI_Child;
-   begin
-      Gtk_New (Process.Stack);
-
-      Object_Return_Callback.Object_Connect
-        (Process.Stack, "delete_event",
-         On_Stack_Delete_Event'Access, Process);
-
-      Gtk_New (Child, Process.Stack,
-               Group  => Group_Debugger_Stack,
-               Module => Debugger_Module_ID);
-      Put (Get_MDI (Get_Kernel (Debugger_Module_ID.all)), Child,
-           Initial_Position => Position_Right);
-      Set_Focus_Child (Child);
-      Split (Process.Window.MDI,
-             Orientation_Horizontal,
-             Reuse_If_Possible => True,
-             Width => 200,
-             After => True);
-
-      if Process.Debugger_Num = 1 then
-         Set_Title (Child, -"Call Stack");
-      else
-         Set_Title (Child, (-"Call Stack") & " <" &
-                    Image (Process.Debugger_Num) & ">");
-      end if;
-   end Create_Call_Stack;
-
    ----------------------------
    -- On_Data_Canvas_Destroy --
    ----------------------------
@@ -919,8 +846,10 @@ package body GVD.Process is
    ------------------------
 
    procedure Create_Data_Window
-     (Process : access Visual_Debugger_Record'Class)
+     (Process             : access Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean := True)
    is
+      pragma Unreferenced (Create_If_Necessary);
       Data_Window_Name : constant String := -"Debugger Data";
       Child           : GPS_MDI_Child;
       Annotation_Font : Pango_Font_Description;
@@ -1087,12 +1016,6 @@ package body GVD.Process is
          Object_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
       Object_Callback.Connect
         (Process, "process_stopped",
-         Object_Callback.To_Marshaller (On_Stack_Process_Stopped'Access));
-      Object_Callback.Connect
-        (Process, "context_changed",
-         Object_Callback.To_Marshaller (On_Stack_Process_Stopped'Access));
-      Object_Callback.Connect
-        (Process, "process_stopped",
          Object_Callback.To_Marshaller (On_Task_Process_Stopped'Access));
       Object_Callback.Connect
         (Process, "process_stopped",
@@ -1176,9 +1099,9 @@ package body GVD.Process is
       Set_Busy (Process, True);
       Setup_Command_Window (Process);
 
-      if Get_Pref (Show_Call_Stack) then
-         Create_Call_Stack (Process);
-      end if;
+      Attach_To_Call_Stack
+        (Process,
+         Create_If_Necessary => Get_Pref (Show_Call_Stack));
 
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String'(Remote_Host);
@@ -1310,10 +1233,6 @@ package body GVD.Process is
          Close (Window.MDI, Process.Debugger_Text);
          if Process.Data_Scrolledwindow /= null then
             Close (Window.MDI, Process.Data_Scrolledwindow);
-         end if;
-
-         if Process.Stack /= null then
-            Close (Window.MDI, Process.Stack);
          end if;
 
          Process.Exiting := False;

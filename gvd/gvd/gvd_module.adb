@@ -359,10 +359,6 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Data Window
 
-   procedure On_Call_Stack
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Call Stack
-
    procedure On_Threads
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Threads
@@ -1461,68 +1457,6 @@ package body GVD_Module is
       Create_Data_Window
         (Visual_Debugger (Get_Debugger_List (Kernel).Debugger));
    end On_Data_Window;
-
-   -------------------
-   -- On_Call_Stack --
-   -------------------
-
-   procedure On_Call_Stack
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Process : Visual_Debugger;
-      Child   : MDI_Child;
-      Button  : Message_Dialog_Buttons;
-      List    : Debugger_List_Link := Get_Debugger_List (Kernel);
-      pragma Unreferenced (Button);
-
-   begin
-      while List /= null loop
-         Process := Visual_Debugger (List.Debugger);
-
-         if Process.Debugger /= null then
-            if Process.Stack = null then
-               Create_Call_Stack (Process);
-
-               if Command_In_Process (Get_Process (Process.Debugger)) then
-                  Button := Message_Dialog
-                    ((-"Cannot show call stack while the debugger is busy.") &
-                     ASCII.LF &
-                     (-"Interrupt the debugger or wait for its availability."),
-                     Dialog_Type => Warning,
-                     Buttons => Button_OK);
-
-               else
-                  Update_Call_Stack (Process);
-               end if;
-
-            else
-               Child := Find_MDI_Child (Top.MDI, Process.Stack);
-
-               if Child /= null then
-                  Raise_Child (Child);
-               else
-                  --  Something really bad happened: the stack window is not
-                  --  part of the MDI, reset it.
-
-                  Destroy (Process.Stack);
-                  Process.Stack := null;
-                  Create_Call_Stack (Process);
-               end if;
-            end if;
-         end if;
-
-         List := List.Next;
-      end loop;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Call_Stack;
 
    ----------------
    -- On_Threads --
@@ -2860,10 +2794,6 @@ package body GVD_Module is
          Close (Top.MDI, Debugger.Data_Scrolledwindow);
       end if;
 
-      if Debugger.Stack /= null then
-         Close (Top.MDI, Debugger.Stack);
-      end if;
-
       if Debugger.Breakpoints /= null then
          Free (Debugger.Breakpoints);
       end if;
@@ -2906,7 +2836,6 @@ package body GVD_Module is
             GVD_Module_ID.File_Hook := null;
          end if;
 
-         Set_Pref (Kernel, Show_Call_Stack, Debugger.Stack /= null);
          Remove_Debugger_Columns (Kernel, VFS.No_File);
 
          if GVD_Module_ID.Thread_Dialog /= null then
@@ -3582,8 +3511,9 @@ package body GVD_Module is
 
       Register_Menu (Kernel, Data_Sub, -"_Data Window", "",
                      On_Data_Window'Access, Ref_Item => -"Protection Domains");
-      Register_Menu (Kernel, Data_Sub, -"_Call Stack", "",
-                     On_Call_Stack'Access, Ref_Item => -"Protection Domains");
+
+      GVD.Call_Stack.Register_Module (Kernel);
+
       Register_Menu (Kernel, Data_Sub, -"_Threads", "",
                      On_Threads'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"Ta_sks", "",

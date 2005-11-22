@@ -32,8 +32,6 @@ pragma Warnings (On);
 with Gdk.Color;
 with Gtk.Menu;
 with Gtk.Dialog;
-with Gtk.Handlers;
-pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Main;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Window;
@@ -54,8 +52,6 @@ pragma Elaborate_All (GVD.Histories);
 with VFS;
 
 with Interactive_Consoles; use Interactive_Consoles;
-
-with GVD.Call_Stack;       use GVD.Call_Stack;
 
 package GVD.Process is
 
@@ -124,10 +120,10 @@ package GVD.Process is
       Command_History         : String_History.History_List;
       --  The history of commands for the current session.
 
-      Delete_Text_Handler_Id  : Gtk.Handlers.Handler_Id;
-      Stack_List_Select_Id    : Gtk.Handlers.Handler_Id;
-
-      Stack                   : GVD.Call_Stack.Call_Stack;
+      Stack                   : Gtk.Widget.Gtk_Widget;
+      --  This is really a GVD.Call_Stack.Call_Stack instance, but is kept
+      --  more general here to limit the dependencies between packages.
+      --  This field must only be used from gvd-call_stack.adb
 
       Data_Scrolledwindow     : Gtk_Scrolled_Window;
       Data_Canvas             : Interactive_Canvas;
@@ -283,12 +279,13 @@ package GVD.Process is
    --  Main_Debug_Window should be the window in which the debugger is
    --  displayed.
 
-   procedure Create_Call_Stack (Process : access Visual_Debugger_Record'Class);
-   --  Create the call stack widget associated with Process.
-
    procedure Create_Data_Window
-     (Process : access Visual_Debugger_Record'Class);
+     (Process             : access Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean := True);
    --  Create or raise the data window
+   --  If Create_If_Necessary is False, then if there is any callstack window
+   --  not associated with a debugger yet, it will be reused. Otherwise, no
+   --  call stack window is created.
 
    procedure Process_Graph_Cmd
      (Process : access Visual_Debugger_Record'Class;
