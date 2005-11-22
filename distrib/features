@@ -12,7 +12,7 @@ New features in GPS 3.1.0
 
 - Drag-and-Drop of files is now possible from the Project View or Files View
 
-- Display a dialog to chose between overloaded entities when doing a
+- Display a dialog to choose between overloaded entities when doing a
   cross-reference query and the information is not up-to-date
 
 - Extending projects can now be created through a wizard
@@ -46,8 +46,7 @@ New features in GPS 3.1.0
 
 - New menus Edit->Sort Ascending and Edit->Sort Descending
 
-- New refactoring module: Rename entity, Name parameters in call,
-  Extract Method.
+- New refactoring module: Rename entity, Name parameters in call.
 
 - New python API for interacting with the editors
   See EditorBuffer, EditorView, ...
