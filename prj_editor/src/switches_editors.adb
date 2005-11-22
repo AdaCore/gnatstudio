@@ -1916,14 +1916,7 @@ package body Switches_Editors is
             Args : Argument_List := Normalize_Compiler_Switches
               (Page, Get_Switches (Page, Normalize => False));
          begin
-            Trace (Me, "MANU File=" & Base_Name (File_Name) & "--"
-                   & "Pkg=" & Page.Pkg.all);
-            for A in Args'Range loop
-               Trace (Me, "MANU Args=" & Args (A).all);
-            end loop;
-
             if Project = No_Project then
-               Trace (Me, "MANU Project is No_Project");
                Is_Default_Value := False;
 
             else
@@ -1941,9 +1934,6 @@ package body Switches_Editors is
                   Default_Args : Argument_List := Normalize_Compiler_Switches
                       (Page, To_Argument_List (Get_Tree (Project), Value));
                begin
-                  for D in Default_Args'Range loop
-                     Trace (Me, "MANU Predefined=" & Default_Args (D).all);
-                  end loop;
                   Is_Default_Value := Is_Equal (Default_Args, Args);
                   Free (Default_Args);
                end;
@@ -1967,17 +1957,11 @@ package body Switches_Editors is
                        Normalize_Compiler_Switches
                          (Page, To_Argument_List (Get_Tree (Project), Value));
                   begin
-                     for D in Default_Args'Range loop
-                        Trace (Me, "MANU Before=" & Default_Args (D).all);
-                     end loop;
                      Is_Default_Value := Is_Equal (Default_Args, Args);
                      Free (Default_Args);
                   end;
                end if;
             end if;
-
-            Trace (Me, "MANU To_Remove=" & To_Remove'Img
-                   & " Is_Default_Value=" & Is_Default_Value'Img);
 
             if To_Remove then
                if File_Name /= VFS.No_File then
