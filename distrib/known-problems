@@ -4,22 +4,19 @@ Known Problems fixed in GPS 3.1.0
   Problem:    Start searching in a file when there is no match. You get a dialog
               indicating there is no match. Then switch to another file, and
               press "Search next" again. The dialog is not displayed again even
-              when there is no match
+              when there is no match.
   Workaround: If the editor doesn't scroll, it indicates there is no match
 
 - EA28-010 Unwanted scrolling when using Undo/Redo
   Problem:    When an Undo/Redo causes lines in the editor to be added or
               removed, some unwanted scrolling can occur, causing the cursor
               to be placed in the center of the editor.
-  Workaround: No known workaround.
+  Workaround: This visual glitch can be ignored
 
 - EA27-003 Pretty printer now working when using a cross-compiler
   Problem:    GPS always assumes that you have a native installation of GNAT
-              on your machine, and therefore that it can find tools like
-              "gnatpp", "gnatclean", "gnatmetric" and "gnatstub" locally
-  Workaround: Either edit the .xml files in gps/share/plugins, or provide
-              small shell wrappers with the above names somewhere in your
-              PATH.
+              on your machine, and therefore that it can find the "gnat" tool.
+  Workaround: Edit the .xml files (e.g. gnatpp.xml) in gps/share/plug-ins
 
 - EA12-008 Debug contextual menu shows ".all" too often
   Problem:    When you have started the debugger, if you select more than an
@@ -27,22 +24,22 @@ Known Problems fixed in GPS 3.1.0
               will have choices to display "text.all", instead of just "text"
   Workaround: Type the "graph display" command in the debugger console directly
 
+- EA06-022 Contextual menus sometimes disappear under Windows
+  Problem:    Under Windows, when creating a contextual menu using a short
+              right-click, the menu might disappear immediately. This occurs
+              most often when clicking for the first time on an entity in a
+              file editor.
+  Workaround: Open the contextual menu by keeping the right button pressed
+
 - EA06-005 Saving new file incorrectly sets the language
   Problem:    If you create a new file and save it, then start typing, the
               text is incorrectly highlighted because the language of the file
               has not been detected correctly.
   Workaround: Reload the project through Project->Recent
 
-- EA06-022 Contextual menus sometimes disappear under Windows
-  Problem:    Under Windows, when creating a contextual menu using a short
-              right-click, the menu might disappear immediately. This occurs
-              most often when clicking for the first time on an entity in a
-              file editor.
-  Workaround: Create the contextual menu by keeping the right button pressed.
-
 - EA06-002 Duplicate entries in Locations view after a search
   Problem:    If you do a Search for all occurrences twice for the same pattern,
-              duplicate references are inserted into the Locations view
+              duplicate references are inserted into the Locations view.
   Workaround: Clear the locations view before starting the search
 
 - E920-001 GPS installation conflicts with GtkAda installation
@@ -97,7 +94,8 @@ Known Problems fixed in GPS 3.1.0
   Problem:    If you have selected part of a line, and right-click in it to
               display the contextual menu, the selection is cancelled. As a
               result, the action can no longer rely on the selection (for
-              instance if you have put Copy/Paste/Cut in the contexual menu).
+              instance if you have put Cut/Copy/Paste in the contexual menu).
+  Workaround: None
 
 - E708-005 International characters converted to local character set when saving
   Problem:    When saving files, GPS ignores the preference in Character Set
@@ -105,11 +103,11 @@ Known Problems fixed in GPS 3.1.0
   Workaround: Set the environment variable CHARSET to your preferred character
               set (for example UTF-8)
 
-- E708-004 Find Referemces... dialog returning unexpected references
+- E708-004 Find References... dialog returning unexpected references
   Problem:    The Find References... contextual menu opens a contextual menu
               where you can choose what kind of references should be returned.
               However, it happens that GPS returns other kinds in addition.
-  Workaround: Ignore the other types (since the kind is listed in the Locations
+  Workaround: Ignore the other types (the kind is listed in the Locations
               window)
 
 - E701-005 Crash/Freeze when closing a New View of an editor
@@ -122,19 +120,20 @@ Known Problems fixed in GPS 3.1.0
   Problem:    If you are working with the default project created by GPS, and
               try to save it, a dialog is displayed to ask for the name you
               would like to use. Clicking Cancel doesn't save the project, but
-              still modified the icon in the Project View
+              no longer display the "modified" icon in the Project View
   Workaround: Try to save the project again if needed
 
 - E617-006 Casing problem in the executable name when editing projects
   Problem:    If you use file names with upper cases in your project, GPS will
               convert these names to lower case in the project file when you
               specify an executable name for this main unit.
-  Workaround: manually edit your project file, or edit projects.xml to specify
-              that the index is case sensitive for "executable"
+  Workaround: Manually edit your project file, or edit projects.xml to specify
+              that the index is case sensitive for "executable".
 
 - E606-010 GPS is unable to read files from disk after a long period
   Problem:    In a project that contains a lot of C/C++ files, or when working
-              extensively with C/C++ files, GPS is unable to open new files.
+              extensively with C/C++ files, GPS can besome unable to open new
+              files.
   Workaround: Close GPS and restart
 
 - E606-009 Local_Pragma_File project property always saved as a base file name
@@ -142,11 +141,11 @@ Known Problems fixed in GPS 3.1.0
               file is always saved as a base name, instead of a relative or
               absolute path.
   Workaround: Edit projects.xml in the GPS installation to remove the
-              base_file_name attribute
+              base_file_name attribute.
 
 - E525-012 Pasting in the consoles
   Problem:    When using the system-defined method for pasting the clipboard
-              (ie ctrl-v under Windows, or middle-button press under Unix) in
+              (i.e. ctrl-v under Windows, or middle-button press under Unix) in
               the GPS consoles, the text is always appended at the end of the
               line.
   Workaround: Use the menu Edit->Paste or its associated key binding
@@ -156,7 +155,7 @@ Known Problems fixed in GPS 3.1.0
               statement, starting at the 'do' keyword instead of starting
               at the 'accept' keyword
   Workaround: This is only a visual glitch that can be ignored. Indentation
-              will not be affected
+              will not be affected.
 
 - E503-024 Missing xref in C++
   Problem:    Some cross-reference contextual menus are missing when clicking
