@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.1.0
 
+- EB22-001 Replace does not work well on files containing TABs
+  Problem:    When using the Replace feature, some occurrences of the search
+              pattern might be skipped, in files containing TABs.
+  Workaround: Remove the TABs before using the Replace feature.
+
 - EB01-006 Search dialog doesn't warn when no occurrence found
   Problem:    Start searching in a file when there is no match. You get a dialog
               indicating there is no match. Then switch to another file, and
