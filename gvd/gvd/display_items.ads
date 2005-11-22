@@ -116,12 +116,17 @@ package Display_Items is
    --  This does not redraw the canvas or the item on the canvas, unless
    --  Redisplay_Canvas is True
 
+   procedure Update_Component
+     (Item      : access Display_Item_Record'Class;
+      Component : Items.Generic_Type_Access := null);
+   --  Update a specific component of a complex item.
+   --  The item must have been displayed at least once before the last time
+   --  its visibility state changed.
+   --  If Component is null, the whole item is redraw, otherwise only the
+   --  specific Component is updated.
+
    procedure Reset_Recursive (Item : access Display_Item_Record'Class);
    --  Calls Reset_Recursive for the entity represented by the item.
-
-   procedure Unselect_All
-     (Process : access GVD.Process.Visual_Debugger_Record'Class);
-   --  Unselect all items and their components
 
    function Is_Alias_Of
      (Item : access Display_Item_Record) return Display_Item;

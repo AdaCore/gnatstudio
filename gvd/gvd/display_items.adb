@@ -142,23 +142,6 @@ package body Display_Items is
    --  Redraw the contents of item.
    --  It also warns the canvas that the item has changed.
 
-   procedure Update_Component
-     (Item : access Display_Item_Record'Class;
-      Component : Generic_Type_Access := null);
-   --  Update a specific component of a complex item.
-   --  The item must have been displayed at least once before the last time
-   --  its visibility state changed.
-   --  If Component is null, the whole item is redraw, otherwise only the
-   --  specific Component is updated.
-
-   procedure Select_Item
-     (Item      : access Display_Item_Record'Class;
-      Component : Generic_Type_Access);
-   --  Select a specific Component in Item, after unselecting the current
-   --  selection.
-   --  If Component is null, no new selection is made, but the current one is
-   --  released.
-
    procedure Dereference_Item
      (Item            : access Display_Item_Record;
       Deref_Component : Generic_Type_Access;
@@ -313,7 +296,7 @@ package body Display_Items is
                 (not Typed_Aliases
                  or else Structurally_Equivalent (Alias_Item.Entity, Entity))
             then
-               Select_Item (Alias_Item, Alias_Item.Entity);
+               Select_Item (Debugger, Alias_Item, Alias_Item.Entity);
                Show_Item (Get_Canvas (Debugger), Alias_Item);
 
                if Default_Entity = null then
@@ -921,78 +904,6 @@ package body Display_Items is
       end if;
    end Dereference_Item;
 
-   ------------------
-   -- Unselect_All --
-   ------------------
-
-   procedure Unselect_All
-     (Process : access Visual_Debugger_Record'Class)
-   is
-   begin
-      if Process.Selected_Component /= null
-        and then Process.Selected_Item /= null
-      then
-         Set_Selected (Process.Selected_Component, False);
-         Update_Component
-           (Display_Item (Process.Selected_Item), Process.Selected_Component);
-         Item_Updated (Get_Canvas (Process), Process.Selected_Item);
-         Process.Selected_Component := null;
-         Process.Selected_Item := null;
-      end if;
-   end Unselect_All;
-
-   -----------------
-   -- Select_Item --
-   -----------------
-
-   procedure Select_Item
-     (Item      : access Display_Item_Record'Class;
-      Component : Generic_Type_Access)
-   is
-      Has_New_Selection : constant Boolean :=
-        Item.Debugger.Selected_Item /= Canvas_Item (Item) or else
-        Item.Debugger.Selected_Component /= Component;
-   begin
-      --  Unselect the current selection
-
-      if Has_New_Selection then
-         if Item.Debugger.Selected_Component /= null
-           and then Item.Debugger.Selected_Item /= null
-         then
-            Set_Selected (Item.Debugger.Selected_Component, False);
-            Update_Component
-              (Display_Item (Item.Debugger.Selected_Item),
-               Item.Debugger.Selected_Component);
-
-            --  Avoid refreshing the same item twice, if we're going to do it
-            --  in the second part of this procedure anyway.
-            if Item.Debugger.Selected_Item /= Canvas_Item (Item)
-              or else Component = null
-            then
-               Item_Updated
-                 (Get_Canvas (Item.Debugger), Item.Debugger.Selected_Item);
-            end if;
-         end if;
-
-         if Component /= null then
-            --  Select the new one
-            Set_Selected (Component, not Get_Selected (Component));
-
-            Update_Component (Item, Component);
-            Item_Updated (Get_Canvas (Item.Debugger), Item);
-
-            if Get_Selected (Component) then
-               Item.Debugger.Selected_Item := Canvas_Item (Item);
-               Item.Debugger.Selected_Component := Component;
-            else
-               Item.Debugger.Selected_Item := null;
-            end if;
-         else
-            Item.Debugger.Selected_Item := null;
-         end if;
-      end if;
-   end Select_Item;
-
    ---------------------
    -- On_Button_Click --
    ---------------------
@@ -1122,7 +1033,7 @@ package body Display_Items is
         and then Get_Event_Type (Event) = Button_Press
         and then Gint (Get_Y (Event)) > Item.Title_Height
       then
-         Select_Item (Item, Component);
+         Select_Item (Item.Debugger, Item, Component);
       end if;
 
    exception
@@ -1283,9 +1194,7 @@ package body Display_Items is
       Iter   : Item_Iterator;
       It     : Display_Item;
    begin
-      if Item.Debugger.Selected_Item = Canvas_Item (Item) then
-         Item.Debugger.Selected_Item := null;
-      end if;
+      Unselect (Item.Debugger, Item);
 
       --  Should recompute aliases (delete all the items that we aliased
       --  to this one, since the user was probably expecting them not to be

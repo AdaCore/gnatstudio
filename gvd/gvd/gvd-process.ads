@@ -35,14 +35,12 @@ with Gtk.Dialog;
 with Gtk.Main;
 with Gtk.Window;
 with Gtk.Widget;
-with Gtkada.Canvas;       use Gtkada.Canvas;
 
 with Pango.Font;
 
 with Process_Proxies;     use Process_Proxies;
 with Debugger;            use Debugger;
 with GPS.Main_Window;
-with Items;
 with GVD.Code_Editors;
 with GVD.Source_Editor;
 with GVD.Types;
@@ -139,10 +137,6 @@ package GVD.Process is
       Debuggee_Descriptor     : GNAT.Expect.TTY.TTY_Process_Descriptor;
       Debuggee_Id             : Gtk.Main.Timeout_Handler_Id := 0;
       Cleanup_TTY             : Boolean := False;
-
-      Selected_Item           : Gtkada.Canvas.Canvas_Item := null;
-      Selected_Component      : Items.Generic_Type_Access := null;
-      --  The currently selected item, and its specific component.
 
       Registered_Dialog       : Gtk.Dialog.Gtk_Dialog := null;
       --  Currently displayed dialog that should be deleted on next user input.

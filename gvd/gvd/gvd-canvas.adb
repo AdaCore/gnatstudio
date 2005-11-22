@@ -114,6 +114,10 @@ package body GVD.Canvas is
       Box_Context     : Box_Drawing_Context;
       Tooltip_Context : Items.Drawing_Context;
 
+      Selected_Item           : Gtkada.Canvas.Canvas_Item := null;
+      Selected_Component      : Items.Generic_Type_Access := null;
+      --  The currently selected item, and its specific component.
+
       Contextual_Background_Menu : Gtk.Menu.Gtk_Menu;
       Item_Contextual_Menu       : Gtk.Menu.Gtk_Menu;
    end record;
@@ -294,6 +298,10 @@ package body GVD.Canvas is
      (Canvas : access Glib.Object.GObject_Record'Class;
       Event  : Gdk.Event.Gdk_Event);
    --  Called for clicks in the background of the canvas.
+
+   procedure Unselect_All
+     (Process : access GVD.Process.Visual_Debugger_Record'Class);
+   --  Unselect all items and their components
 
    ----------------
    -- Get_Canvas --
@@ -608,11 +616,99 @@ package body GVD.Canvas is
    begin
       if GVD_Canvas (Canvas).Process /= null then
          GVD_Canvas (Canvas).Process.Data := null;
-         GVD_Canvas (Canvas).Process.Selected_Item := null;
-         GVD_Canvas (Canvas).Process.Selected_Component := null;
+         GVD_Canvas (Canvas).Selected_Item := null;
+         GVD_Canvas (Canvas).Selected_Component := null;
          GVD_Canvas (Canvas).Process := null;
       end if;
    end On_Data_Canvas_Destroy;
+
+   ------------------
+   -- Unselect_All --
+   ------------------
+
+   procedure Unselect_All
+     (Process : access Visual_Debugger_Record'Class)
+   is
+      Canvas : constant GVD_Canvas := GVD_Canvas (Process.Data);
+   begin
+      if Canvas.Selected_Component /= null
+        and then Canvas.Selected_Item /= null
+      then
+         Set_Selected (Canvas.Selected_Component, False);
+         Update_Component
+           (Display_Item (Canvas.Selected_Item), Canvas.Selected_Component);
+         Item_Updated (Canvas.Canvas, Canvas.Selected_Item);
+         Canvas.Selected_Component := null;
+         Canvas.Selected_Item := null;
+      end if;
+   end Unselect_All;
+
+   -----------------
+   -- Select_Item --
+   -----------------
+
+   procedure Select_Item
+     (Process   : access Visual_Debugger_Record'Class;
+      Item      : access Display_Item_Record'Class;
+      Component : Generic_Type_Access)
+   is
+      Canvas : constant GVD_Canvas := GVD_Canvas (Process.Data);
+      Has_New_Selection : constant Boolean :=
+        Canvas.Selected_Item /= Canvas_Item (Item) or else
+        Canvas.Selected_Component /= Component;
+   begin
+      --  Unselect the current selection
+
+      if Has_New_Selection then
+         if Canvas.Selected_Component /= null
+           and then Canvas.Selected_Item /= null
+         then
+            Set_Selected (Canvas.Selected_Component, False);
+            Update_Component
+              (Display_Item (Canvas.Selected_Item), Canvas.Selected_Component);
+
+            --  Avoid refreshing the same item twice, if we're going to do it
+            --  in the second part of this procedure anyway.
+            if Canvas.Selected_Item /= Canvas_Item (Item)
+              or else Component = null
+            then
+               Item_Updated (Canvas.Canvas, Canvas.Selected_Item);
+            end if;
+         end if;
+
+         if Component /= null then
+            --  Select the new one
+            Set_Selected (Component, not Get_Selected (Component));
+
+            Update_Component (Item, Component);
+            Item_Updated (Canvas.Canvas, Item);
+
+            if Get_Selected (Component) then
+               Canvas.Selected_Item := Canvas_Item (Item);
+               Canvas.Selected_Component := Component;
+            else
+               Canvas.Selected_Item := null;
+            end if;
+         else
+            Canvas.Selected_Item := null;
+         end if;
+      end if;
+   end Select_Item;
+
+   --------------
+   -- Unselect --
+   --------------
+
+   procedure Unselect
+     (Process : access GVD.Process.Visual_Debugger_Record'Class;
+      Item    : access Display_Items.Display_Item_Record'Class)
+   is
+      Canvas : constant GVD_Canvas := GVD_Canvas (Process.Data);
+   begin
+      if Canvas.Selected_Item = Canvas_Item (Item) then
+         Canvas.Selected_Item := null;
+      end if;
+   end Unselect;
 
    --------------------------
    -- Change_Align_On_Grid --

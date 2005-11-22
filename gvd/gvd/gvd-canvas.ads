@@ -123,4 +123,18 @@ package GVD.Canvas is
       return Gtkada.Canvas.Interactive_Canvas;
    --  Return the canvas on which the drawing is done
 
+   procedure Select_Item
+     (Process   : access GVD.Process.Visual_Debugger_Record'Class;
+      Item      : access Display_Items.Display_Item_Record'Class;
+      Component : Items.Generic_Type_Access);
+   --  Select a specific Component in Item, after unselecting the current
+   --  selection.
+   --  If Component is null, no new selection is made, but the current one is
+   --  released.
+
+   procedure Unselect
+     (Process : access GVD.Process.Visual_Debugger_Record'Class;
+      Item    : access Display_Items.Display_Item_Record'Class);
+   --  Unselect Item if it is currently selected
+
 end GVD.Canvas;
