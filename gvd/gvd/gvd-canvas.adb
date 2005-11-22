@@ -875,8 +875,10 @@ package body GVD.Canvas is
          end if;
 
          --  Initialize the pixmaps and colors for the canvas
-         Realize (Data.Canvas);
-         Init_Graphics (Debugger);
+         if Debugger.Data /= null then
+            Realize (Data.Canvas);
+            Init_Graphics (Debugger);
+         end if;
 
          if Child /= null then
             if Debugger.Debugger_Num = 1 then
