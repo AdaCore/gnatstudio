@@ -21,7 +21,6 @@
 with Glib;              use Glib;
 with Gdk.Drawable;      use Gdk.Drawable;
 with Gdk.GC;            use Gdk.GC;
-with Gtk.Widget;        use Gtk.Widget;
 with Gdk.Pixmap;        use Gdk.Pixmap;
 with Gdk.Window;        use Gdk.Window;
 with Gdk.Event;         use Gdk.Event;
@@ -172,7 +171,7 @@ package body Display_Items is
    --  that is being derefenced.
 
    function Search_Item
-     (Canvas : access Interactive_Canvas_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Id     : String;
       Name   : String) return Display_Item;
    --  Search for an item whose Id is Id in the canvas.
@@ -248,8 +247,7 @@ package body Display_Items is
       Link_From      : Display_Item := null;
       Link_Name      : String := "")
    is
-      Context     : constant Drawing_Context :=
-        Get_Item_Context (GVD_Canvas (Debugger.Data_Canvas));
+      Context     : constant Drawing_Context := Get_Item_Context (Debugger);
       Entity      : Generic_Type_Access := Default_Entity;
       Value_Found : Boolean := False;
       Alias_Item  : Display_Item;
@@ -304,8 +302,7 @@ package body Display_Items is
             --  Avoid creating the same item twice if it already exists in the
             --  canvas
 
-            Alias_Item :=
-              Search_Item (Debugger.Data_Canvas, Id.all, Variable_Name);
+            Alias_Item := Search_Item (Debugger, Id.all, Variable_Name);
 
             --  Two structures are aliased only if they have the same address
             --  and the same structure. The latter is to handle cases like
@@ -317,7 +314,7 @@ package body Display_Items is
                  or else Structurally_Equivalent (Alias_Item.Entity, Entity))
             then
                Select_Item (Alias_Item, Alias_Item.Entity);
-               Show_Item (Debugger.Data_Canvas, Alias_Item);
+               Show_Item (Get_Canvas (Debugger), Alias_Item);
 
                if Default_Entity = null then
                   Free (Entity);
@@ -327,8 +324,8 @@ package body Display_Items is
 
                if Link_From /= null then
                   Create_Link
-                    (Debugger.Data_Canvas, Link_From, Alias_Item, Link_Name);
-                  Refresh_Canvas (Debugger.Data_Canvas);
+                    (Get_Canvas (Debugger), Link_From, Alias_Item, Link_Name);
+                  Refresh_Data_Window (Debugger);
                end if;
 
                Set_Busy (Debugger, False);
@@ -371,7 +368,7 @@ package body Display_Items is
       Item := new Display_Item_Record;
       Item.Entity := Entity;
       Item.Is_A_Variable := Is_Parsable_Entity and then Default_Entity = null;
-      Item.Num := Get_Next_Item_Num (GVD_Canvas (Debugger.Data_Canvas));
+      Item.Num := Get_Next_Item_Num (Debugger);
       Item.Debugger := Visual_Debugger (Debugger);
       Set_Valid (Item.Entity, Value_Found);
       Item.Id := Id;
@@ -380,12 +377,12 @@ package body Display_Items is
 
       if Link_From /= null then
          Item.Is_Dereference := True;
-         Create_Link (Debugger.Data_Canvas, Link_From, Item, Link_Name);
-         Put (Debugger.Data_Canvas, Item);
+         Create_Link (Get_Canvas (Debugger), Link_From, Item, Link_Name);
+         Put (Get_Canvas (Debugger), Item);
       end if;
 
-      if Get_Detect_Aliases (GVD_Canvas (Debugger.Data_Canvas)) then
-         Recompute_All_Aliases (Debugger.Data_Canvas, False);
+      if Get_Detect_Aliases (Debugger) then
+         Recompute_All_Aliases (Debugger, False);
       end if;
 
       Set_Busy (Debugger, False);
@@ -437,7 +434,7 @@ package body Display_Items is
       Constraint_Size (Item.Entity.all);
 
       Update_Display (Item);
-      Refresh_Canvas (Item.Debugger.Data_Canvas);
+      Refresh_Data_Window (Item.Debugger);
    end Initialize;
 
    -----------------
@@ -492,9 +489,9 @@ package body Display_Items is
       Alloc_Height : Gint;
       Title_Height, Title_Width : Gint;
       Context     : constant Drawing_Context :=
-        Get_Item_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
+        Get_Item_Context (Item.Debugger);
       Box_Context : constant Box_Drawing_Context :=
-        Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
+        Get_Box_Context (Item.Debugger);
       W, H : Gint;
       Layout : Pango_Layout;
 
@@ -502,7 +499,7 @@ package body Display_Items is
 
    begin
       Layout := Create_Pango_Layout
-        (Item.Debugger.Data_Canvas,
+        (Get_Canvas (Item.Debugger),
          Integer'Image (Item.Num) & ": " & Item.Name.all);
       Set_Font_Description (Layout, Get_Pref (Title_Font));
 
@@ -563,7 +560,7 @@ package body Display_Items is
          Height => Title_Height);
 
       Draw_Shadow
-        (Style       => Get_Style (Item.Debugger.Data_Canvas),
+        (Style       => Get_Style (Get_Canvas (Item.Debugger)),
          Window      => Pixmap (Item),
          State_Type  => State_Normal,
          Shadow_Type => Shadow_Out,
@@ -633,9 +630,9 @@ package body Display_Items is
       Component : Generic_Type_Access := null)
    is
       Context     : constant Drawing_Context :=
-        Get_Item_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
+        Get_Item_Context (Item.Debugger);
       Box_Context : constant Box_Drawing_Context :=
-        Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
+        Get_Box_Context (Item.Debugger);
    begin
       if not Get_Selected (Component) then
          if Item.Auto_Refresh then
@@ -675,22 +672,20 @@ package body Display_Items is
    -----------------
 
    function Search_Item
-     (Canvas : access Interactive_Canvas_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Id     : String;
       Name   : String) return Display_Item
    is
       Alias_Item : Display_Item := null;
       Deref_Name : constant String := Dereference_Name
-        (Get_Language
-         (Visual_Debugger (Get_Process (GVD_Canvas (Canvas))).Debugger),
-         Name);
+        (Get_Language (Process.Debugger), Name);
       Iter : Item_Iterator;
       Item : Display_Item;
    begin
       --  Always search if we have a special name to look for, so as to avoid
       --  creating the same item multiple times
-      if Name /= "" or else Get_Detect_Aliases (GVD_Canvas (Canvas)) then
-         Iter := Start (Canvas);
+      if Name /= "" or else Get_Detect_Aliases (Process) then
+         Iter := Start (Get_Canvas (Process));
          loop
             Item := Display_Item (Get (Iter));
             exit when Item = null;
@@ -719,7 +714,9 @@ package body Display_Items is
 
    function Update_On_Auto_Refresh
      (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean is
+      Item    : access Canvas_Item_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Canvas);
    begin
       --  Only update when the item is not an alias of something else (and thus
       --  is hidden).
@@ -727,7 +724,7 @@ package body Display_Items is
       if Display_Item (Item).Auto_Refresh
         and then Display_Item (Item).Is_Alias_Of = null
       then
-         Update (GVD_Canvas (Canvas), Display_Item (Item));
+         Update (Display_Item (Item));
       end if;
 
       return True;
@@ -738,11 +735,9 @@ package body Display_Items is
    ------------
 
    procedure Update
-     (Canvas           : access Interactive_Canvas_Record'Class;
-      Item             : access Display_Item_Record'Class;
+     (Item             : access Display_Item_Record'Class;
       Redisplay_Canvas : Boolean := False)
    is
-      pragma Unreferenced (Canvas);
       Value_Found : Boolean;
       Was_Visible : constant Boolean := Get_Visibility (Item.Entity.all);
 
@@ -784,7 +779,7 @@ package body Display_Items is
       Redisplay_Canvas : Boolean := True)
    is
       Context     : constant Drawing_Context :=
-        Get_Item_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
+        Get_Item_Context (Item.Debugger);
    begin
       --  Update graphically.
       --  Note that we should not change the visibility status of item
@@ -802,7 +797,7 @@ package body Display_Items is
       Update_Display (Item);
 
       if Redisplay_Canvas then
-         Refresh_Canvas (Item.Debugger.Data_Canvas);
+         Refresh_Data_Window (Item.Debugger);
       end if;
    end Update_Resize_Display;
 
@@ -922,9 +917,29 @@ package body Display_Items is
 
       if Attach_Links_To_Components then
          For_Each_Link
-           (Item.Debugger.Data_Canvas, Set_Link_Pos'Unrestricted_Access);
+           (Get_Canvas (Item.Debugger), Set_Link_Pos'Unrestricted_Access);
       end if;
    end Dereference_Item;
+
+   ------------------
+   -- Unselect_All --
+   ------------------
+
+   procedure Unselect_All
+     (Process : access Visual_Debugger_Record'Class)
+   is
+   begin
+      if Process.Selected_Component /= null
+        and then Process.Selected_Item /= null
+      then
+         Set_Selected (Process.Selected_Component, False);
+         Update_Component
+           (Display_Item (Process.Selected_Item), Process.Selected_Component);
+         Item_Updated (Get_Canvas (Process), Process.Selected_Item);
+         Process.Selected_Component := null;
+         Process.Selected_Item := null;
+      end if;
+   end Unselect_All;
 
    -----------------
    -- Select_Item --
@@ -955,7 +970,7 @@ package body Display_Items is
               or else Component = null
             then
                Item_Updated
-                 (Item.Debugger.Data_Canvas, Item.Debugger.Selected_Item);
+                 (Get_Canvas (Item.Debugger), Item.Debugger.Selected_Item);
             end if;
          end if;
 
@@ -964,7 +979,7 @@ package body Display_Items is
             Set_Selected (Component, not Get_Selected (Component));
 
             Update_Component (Item, Component);
-            Item_Updated (Item.Debugger.Data_Canvas, Item);
+            Item_Updated (Get_Canvas (Item.Debugger), Item);
 
             if Get_Selected (Component) then
                Item.Debugger.Selected_Item := Canvas_Item (Item);
@@ -1048,10 +1063,10 @@ package body Display_Items is
         and then Get_Event_Type (Event) = Button_Press
         and then Gint (Get_Y (Event)) <= Item.Title_Height
       then
-         if Is_On_Top (Item.Debugger.Data_Canvas, Item) then
-            Lower_Item (Item.Debugger.Data_Canvas, Item);
+         if Is_On_Top (Get_Canvas (Item.Debugger), Item) then
+            Lower_Item (Get_Canvas (Item.Debugger), Item);
          else
-            Raise_Item (Item.Debugger.Data_Canvas, Item);
+            Raise_Item (Get_Canvas (Item.Debugger), Item);
          end if;
       end if;
 
@@ -1068,7 +1083,7 @@ package body Display_Items is
       then
          Popup
            (Item_Contextual_Menu
-             (GVD_Canvas (Item.Debugger.Data_Canvas),
+             (Item.Debugger,
               Item,
               Component,
               Get_Component_Name
@@ -1160,12 +1175,12 @@ package body Display_Items is
       --  If needed, recompute the position of the links
       if Attach_Links_To_Components then
          For_Each_Link
-           (Item.Debugger.Data_Canvas,
+           (Get_Canvas (Item.Debugger),
             Reattach_All_Links'Unrestricted_Access);
       end if;
 
       --  Redraw the canvas
-      Refresh_Canvas (Item.Debugger.Data_Canvas);
+      Refresh_Data_Window (Item.Debugger);
    end Change_Visibility;
 
    ----------------------
@@ -1179,7 +1194,7 @@ package body Display_Items is
    is
       Width   : constant Gint := Gint (Get_Coord (Item).Width);
       Context : constant Box_Drawing_Context :=
-        Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
+        Get_Box_Context (Item.Debugger);
       W, H : Gint;
    begin
       Item.Auto_Refresh := Auto_Refresh;
@@ -1233,14 +1248,14 @@ package body Display_Items is
          --  update of the value.
 
          if Item.Auto_Refresh then
-            Update (Item.Debugger.Data_Canvas, Item);
-            Refresh_Canvas (Item.Debugger.Data_Canvas);
+            Update (Item);
+            Refresh_Data_Window (Item.Debugger);
          else
             --  Redisplay the item, so that no field is displayed
             --  in red anymore.
             Reset_Recursive (Item);
             Update_Display (Item);
-            Item_Updated (Item.Debugger.Data_Canvas, Item);
+            Item_Updated (Get_Canvas (Item.Debugger), Item);
          end if;
       end if;
    end Set_Auto_Refresh;
@@ -1263,7 +1278,8 @@ package body Display_Items is
      (Item : access Display_Item_Record;
       Remove_Aliases : Boolean := True)
    is
-      Canvas : constant GVD_Canvas := GVD_Canvas (Item.Debugger.Data_Canvas);
+      Canvas : constant Interactive_Canvas :=
+        Get_Canvas (Item.Debugger);
       Iter   : Item_Iterator;
       It     : Display_Item;
    begin
@@ -1310,44 +1326,9 @@ package body Display_Items is
       --  Warning: the memory has been freed after Remove.
 
       if Remove_Aliases then
-         Recompute_All_Aliases (Canvas, Recompute_Values => False);
+         Recompute_All_Aliases (Item.Debugger, Recompute_Values => False);
       end if;
    end Free;
-
-   -------------------------
-   -- On_Background_Click --
-   -------------------------
-
-   procedure On_Background_Click
-     (The_Canvas : access Gtk_Widget_Record'Class;
-      Event      : Gdk.Event.Gdk_Event)
-   is
-      Canvas : constant GVD_Canvas := GVD_Canvas (The_Canvas);
-      Iter   : Item_Iterator;
-   begin
-      if Get_Button (Event) = 1 then
-         Iter := Start (Canvas);
-         if Get (Iter) /= null then
-            Select_Item (Display_Item (Get (Iter)), null);
-         end if;
-
-      elsif Get_Button (Event) = 3
-        and then Get_Event_Type (Event) = Button_Press
-      then
-         Popup
-           (Contextual_Background_Menu
-             (Canvas,
-              Visual_Debugger
-               (Get_Process (Canvas)).Window.Main_Accel_Group),
-            Button            => Get_Button (Event),
-            Activate_Time     => Get_Time (Event));
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Background_Click;
 
    -----------------------
    -- Recompute_Address --
@@ -1552,13 +1533,12 @@ package body Display_Items is
    procedure On_Canvas_Process_Stopped
      (Object : access Glib.Object.GObject_Record'Class)
    is
-      Canvas : constant GVD_Canvas :=
-        GVD_Canvas (Visual_Debugger (Object).Data_Canvas);
+      Process : constant Visual_Debugger := Visual_Debugger (Object);
    begin
       --  If the canvas is not displayed, nothing to do
-      if Canvas /= null then
-         Recompute_All_Aliases (Canvas);
-         Refresh_Canvas (Canvas);
+      if Process /= null and then Get_Canvas (Process) /= null then
+         Recompute_All_Aliases (Process);
+         Refresh_Data_Window (Process);
       end if;
 
    exception
@@ -1630,26 +1610,26 @@ package body Display_Items is
    ---------------------------
 
    procedure Recompute_All_Aliases
-     (Canvas           : access Interactive_Canvas_Record'Class;
+     (Process          : access Visual_Debugger_Record'Class;
       Recompute_Values : Boolean := True) is
    begin
       --  Remove all the temporary links and aliases
-      For_Each_Link (Canvas, Remove_Temporary'Access);
-      For_Each_Item (Canvas, Remove_Aliases'Access);
+      For_Each_Link (Get_Canvas (Process), Remove_Temporary'Access);
+      For_Each_Item (Get_Canvas (Process), Remove_Aliases'Access);
 
       --  First: Recompile all the addresses, and detect the aliases.
-      if Get_Detect_Aliases (GVD_Canvas (Canvas)) then
-         For_Each_Item (Canvas, Recompute_Address'Access);
+      if Get_Detect_Aliases (Process) then
+         For_Each_Item (Get_Canvas (Process), Recompute_Address'Access);
       end if;
 
       --  Then re-parse the value of each item and display them again.
       if Recompute_Values then
-         For_Each_Item (Canvas, Update_On_Auto_Refresh'Access);
+         For_Each_Item (Get_Canvas (Process), Update_On_Auto_Refresh'Access);
       end if;
 
       --  Now that everything has been redimensionned, we can finish to
       --  manipulate the aliases
-      For_Each_Item (Canvas, Recompute_Sizes'Access);
+      For_Each_Item (Get_Canvas (Process), Recompute_Sizes'Access);
    end Recompute_All_Aliases;
 
    ---------------------
@@ -1749,7 +1729,7 @@ package body Display_Items is
    begin
       if Format /= Item.Format then
          Item.Format := Format;
-         Update (Item.Debugger.Data_Canvas, Item, True);
+         Update (Item, True);
       end if;
    end Set_Format;
 

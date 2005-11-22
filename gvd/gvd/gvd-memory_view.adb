@@ -38,7 +38,6 @@ with Gtk.Text_Mark;            use Gtk.Text_Mark;
 with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
 with Gtk.Text_View;            use Gtk.Text_View;
 
-with Gtkada.Canvas;            use Gtkada.Canvas;
 
 with Pango.Font;               use Pango.Font;
 
@@ -46,6 +45,7 @@ with Debugger;                 use Debugger;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GUI_Utils;                use GUI_Utils;
+with GVD.Canvas;               use GVD.Canvas;
 with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
 with String_Utils;             use String_Utils;
@@ -721,9 +721,7 @@ package body GVD.Memory_View is
       end loop;
 
       Display_Memory (View, View.Starting_Address);
-
-      Refresh_Canvas
-        (Interactive_Canvas (Get_Current_Process (View.Window).Data_Canvas));
+      Refresh_Data_Window (Get_Current_Process (View.Window));
    end Apply_Changes;
 
    -------------

@@ -43,14 +43,12 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
-with Gtkada.Canvas;             use Gtkada.Canvas;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -63,7 +61,6 @@ with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with Debugger;                  use Debugger;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
-with Display_Items;             use Display_Items;
 with Entities;                  use Entities;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -355,10 +352,6 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Kill
 
-   procedure On_Data_Window
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Data Window
-
    procedure On_Threads
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Threads
@@ -394,10 +387,6 @@ package body GVD_Module is
    procedure On_Display_Expression
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Display Any Expression
-
-   procedure On_Data_Refresh
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Refresh
 
    procedure On_Start
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1445,19 +1434,6 @@ package body GVD_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Interrupt;
 
-   --------------------
-   -- On_Data_Window --
-   --------------------
-
-   procedure On_Data_Window
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Create_Data_Window
-        (Visual_Debugger (Get_Debugger_List (Kernel).Debugger));
-   end On_Data_Window;
-
    ----------------
    -- On_Threads --
    ----------------
@@ -1769,47 +1745,6 @@ package body GVD_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Display_Expression;
-
-   ---------------------
-   -- On_Data_Refresh --
-   ---------------------
-
-   procedure On_Data_Refresh
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-      Iter    : Item_Iterator;
-      Item    : Canvas_Item;
-
-   begin
-      if Process = null or else Process.Debugger = null then
-         return;
-      end if;
-
-      Iter := Start (Process.Data_Canvas);
-      loop
-         Item := Get (Iter);
-         exit when Item = null;
-
-         Display_Items.Update
-           (GVD_Canvas (Process.Data_Canvas),
-            Display_Item (Item),
-            Redisplay_Canvas => False);
-
-         Next (Iter);
-      end loop;
-
-      Refresh_Canvas (Process.Data_Canvas);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Data_Refresh;
 
    -------------------
    -- Start_Program --
@@ -2790,10 +2725,6 @@ package body GVD_Module is
          Close (Top.MDI, Debugger.Debuggee_Console);
       end if;
 
-      if Debugger.Data_Scrolledwindow /= null then
-         Close (Top.MDI, Debugger.Data_Scrolledwindow);
-      end if;
-
       if Debugger.Breakpoints /= null then
          Free (Debugger.Breakpoints);
       end if;
@@ -3509,9 +3440,7 @@ package body GVD_Module is
       Register_Menu (Kernel, Debug_Sub, -"_Kill", "",
                      On_Kill'Access);
 
-      Register_Menu (Kernel, Data_Sub, -"_Data Window", "",
-                     On_Data_Window'Access, Ref_Item => -"Protection Domains");
-
+      GVD.Canvas.Register_Module (Kernel);
       GVD.Call_Stack.Register_Module (Kernel);
 
       Register_Menu (Kernel, Data_Sub, -"_Threads", "",
@@ -3537,11 +3466,6 @@ package body GVD_Module is
                      On_Display_Regs'Access);
       Register_Menu (Kernel, Data_Sub, -"Display Any _Expression...", "",
                      On_Display_Expression'Access);
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Data_Sub, Mitem);
-      Register_Menu (Kernel, Data_Sub, -"Re_fresh", Stock_Refresh,
-                     On_Data_Refresh'Access, null,
-                     GDK_L, Control_Mask);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);

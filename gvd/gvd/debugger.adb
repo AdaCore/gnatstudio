@@ -38,6 +38,7 @@ with Gtkada.Types;               use Gtkada.Types;
 with Basic_Types;                use Basic_Types;
 with Config;                     use Config;
 with GVD;                        use GVD;
+with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Process;                use GVD.Process;
 with GVD.Source_Editor;          use GVD.Source_Editor;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,66 +18,48 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object;
-with Gtkada.Canvas;
-with Gdk.GC;
-with Gdk.Pixmap;
-with Gdk.Bitmap;
-with Gtk.Menu;
-with Gtk.Widget;
-with Gtk.Accel_Group;
 with Display_Items;
+with Gdk.GC;
+with Gdk.Bitmap;
+with Gdk.Pixmap;
+with Gtk.Menu;
+with Gtkada.Canvas;
+with GPS.Kernel;
+with GVD.Process;
 with Items;
-with Histories;
 
 package GVD.Canvas is
 
-   ----------------
-   -- GVD_Canvas --
-   ----------------
+   procedure Attach_To_Data_Window
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean);
+   --  Attach debugger to a data window.
+   --  If an unattached data window exists in the desktop, it is reused.
+   --  If none exists, one is created if Create_If_Necessary is true.
+   --  Nothing is done when Debugger is already attached to a data window.
+   --
+   --  The debugger console should be created already. When it is closed (ie
+   --  the debugger exits), the data window will be destroyed
 
-   type GVD_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record
-     with private;
-   type GVD_Canvas is access all GVD_Canvas_Record'Class;
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register menus and other functions to support the data windows
 
-   procedure Gtk_New
-     (Canvas : out GVD_Canvas; History : Histories.History := null);
-   --  Create a new canvas.
-   --  History is used for the combo boxes in the dialogs.
-   --  This can be null if the histories are not kept.
+   procedure Refresh_Data_Window
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class);
+   --  Refresh the contents of the data window (if any) associated with
+   --  Debugger
 
-   procedure Init_Graphics (Canvas : access GVD_Canvas_Record'Class);
-   --  Initializes all the internal graphic contexts needed for the canvas.
-   --  The canvas should have been realized before calling this procedure.
+   procedure Process_Graph_Cmd
+     (Process : access GVD.Process.Visual_Debugger_Record'Class;
+      Cmd     : String);
+   --  Parse and process a "graph print" or "graph display" command
 
-   function Get_Detect_Aliases
-     (Canvas : access GVD_Canvas_Record'Class) return Boolean;
-   --  Return True if aliases detection has been activated.
-
-   procedure Set_Detect_Aliases
-     (Canvas   : access GVD_Canvas_Record'Class;
-      Activate : Boolean);
-   --  Change the status of aliases detection in the canvas
-
-   function Get_Next_Item_Num
-     (Canvas : access GVD_Canvas_Record'Class) return Integer;
-   --  Return the number that should be used for the next item inserted into
-   --  the canvas.
-   --  Two successive calls to that function will not return the same value.
-
-   procedure Set_Process
-     (Canvas  : access GVD_Canvas_Record;
-      Process : access Glib.Object.GObject_Record'Class);
-   --  Set the process associated with the canvas.
-
-   function Get_Process
-     (Canvas : access GVD_Canvas_Record) return Glib.Object.GObject;
-   --  Return the process tab that contains the canvas.
-
-   procedure Preferences_Changed
-     (Canvas : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Called when the preferences have changed, and the canvas should be
-   --  redisplayed with the new setup.
+   -------------------
+   -- Items support --
+   -------------------
+   --  The following types and subprograms are used when drawing items in the
+   --  canvas.
 
    type Box_Drawing_Context is record
       Grey_GC           : Gdk.GC.Gdk_GC;
@@ -99,27 +81,30 @@ package GVD.Canvas is
    --  item (see Items.Drawing_Context instead)
 
    function Get_Item_Context
-     (Canvas : access GVD_Canvas_Record'Class) return Items.Drawing_Context;
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class)
+      return Items.Drawing_Context;
    --  Return the drawing context associated with the items on the canvas.
 
-   function Get_Tooltip_Context
-     (Canvas : access GVD_Canvas_Record'Class) return Items.Drawing_Context;
-   --  Return the drawing context associated with the tooltips. Fonts are
-   --  not scaled depending on the zoom level.
-
    function Get_Box_Context
-     (Canvas : access GVD_Canvas_Record'Class) return Box_Drawing_Context;
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class)
+      return Box_Drawing_Context;
    --  Return the drawing context associated with the box around each
    --  item on the canvas.
 
+   function Get_Next_Item_Num
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class)
+      return Integer;
+   --  Return the number that should be used for the next item inserted into
+   --  the canvas.
+   --  Two successive calls to that function will not return the same value.
+
    function Contextual_Background_Menu
-     (Canvas      : access GVD_Canvas_Record;
-      Accel_Group : Gtk.Accel_Group.Gtk_Accel_Group)
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class)
      return Gtk.Menu.Gtk_Menu;
    --  Get the contextual background menu associated with canvas.
 
    function Item_Contextual_Menu
-     (Canvas         : access GVD.Canvas.GVD_Canvas_Record'Class;
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
       Item           : access Display_Items.Display_Item_Record'Class;
       Component      : Items.Generic_Type_Access;
       Component_Name : String) return Gtk.Menu.Gtk_Menu;
@@ -128,23 +113,14 @@ package GVD.Canvas is
    --  Note that Component can be null if the user has clicked for instance
    --  on the title bar.
 
-private
+   function Get_Detect_Aliases
+     (Process : access GVD.Process.Visual_Debugger_Record'Class)
+      return Boolean;
+   --  Return True if aliases detection has been activated.
 
-   type GVD_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
-   record
-      Detect_Aliases : Boolean;
-      Item_Num       : Integer := 0;
-      Process        : Glib.Object.GObject;
-      --  The process tab that contains the canvas
-
-      --  The graphic contexts used to draw the canvas and its items
-      Item_Context    : Items.Drawing_Context;
-      Box_Context     : Box_Drawing_Context;
-      Tooltip_Context : Items.Drawing_Context;
-
-      Contextual_Background_Menu : Gtk.Menu.Gtk_Menu;
-      Item_Contextual_Menu : Gtk.Menu.Gtk_Menu;
-      History         : Histories.History;
-   end record;
+   function Get_Canvas
+     (Process : access GVD.Process.Visual_Debugger_Record'Class)
+      return Gtkada.Canvas.Interactive_Canvas;
+   --  Return the canvas on which the drawing is done
 
 end GVD.Canvas;

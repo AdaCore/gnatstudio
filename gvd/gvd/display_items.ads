@@ -20,7 +20,6 @@
 
 with Glib;
 with Glib.Object;
-with Gtk.Widget;
 with Items;
 with GVD.Process;
 with Gdk.Event;
@@ -89,18 +88,13 @@ package Display_Items is
      (Item : access Display_Item_Record) return Boolean;
    --  Return Item.Auto_Refresh;
 
-   procedure On_Background_Click
-     (The_Canvas : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event      : Gdk.Event.Gdk_Event);
-   --  Called for clicks in the background of the canvas.
-
    procedure On_Canvas_Process_Stopped
      (Object : access Glib.Object.GObject_Record'Class);
    --  Called when the process associated with the Visual_Debugger Object
    --  stops to update the display items.
 
    procedure Recompute_All_Aliases
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+     (Process          : access GVD.Process.Visual_Debugger_Record'Class;
       Recompute_Values : Boolean := True);
    --  Recompute all the aliases, and reparse the values for all the
    --  displayed items if Recompute_Values is True
@@ -116,8 +110,7 @@ package Display_Items is
    --  This does not redraw the canvas or the item on the canvas.
 
    procedure Update
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
-      Item   : access Display_Item_Record'Class;
+     (Item    : access Display_Item_Record'Class;
       Redisplay_Canvas : Boolean := False);
    --  Unconditionally update the value of Item after parsing the new value.
    --  This does not redraw the canvas or the item on the canvas, unless
@@ -125,6 +118,10 @@ package Display_Items is
 
    procedure Reset_Recursive (Item : access Display_Item_Record'Class);
    --  Calls Reset_Recursive for the entity represented by the item.
+
+   procedure Unselect_All
+     (Process : access GVD.Process.Visual_Debugger_Record'Class);
+   --  Unselect all items and their components
 
    function Is_Alias_Of
      (Item : access Display_Item_Record) return Display_Item;

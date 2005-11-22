@@ -33,7 +33,6 @@ with Gdk.Color;
 with Gtk.Menu;
 with Gtk.Dialog;
 with Gtk.Main;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Window;
 with Gtk.Widget;
 with Gtkada.Canvas;       use Gtkada.Canvas;
@@ -125,8 +124,9 @@ package GVD.Process is
       --  more general here to limit the dependencies between packages.
       --  This field must only be used from gvd-call_stack.adb
 
-      Data_Scrolledwindow     : Gtk_Scrolled_Window;
-      Data_Canvas             : Interactive_Canvas;
+      Data                    : Gtk.Widget.Gtk_Widget;
+      --  This is really a GVD.Canvas instance. This field must only be
+      --  used from gvd-canvas.adb
 
       Debugger_Text           : Interactive_Console;
       Debugger_Text_Font      : Pango.Font.Pango_Font_Description;
@@ -278,19 +278,6 @@ package GVD.Process is
    --  Conversion function.
    --  Main_Debug_Window should be the window in which the debugger is
    --  displayed.
-
-   procedure Create_Data_Window
-     (Process             : access Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean := True);
-   --  Create or raise the data window
-   --  If Create_If_Necessary is False, then if there is any callstack window
-   --  not associated with a debugger yet, it will be reused. Otherwise, no
-   --  call stack window is created.
-
-   procedure Process_Graph_Cmd
-     (Process : access Visual_Debugger_Record'Class;
-      Cmd     : String);
-   --  Parse and process a "graph print" or "graph display" command
 
    procedure Final_Post_Process
      (Process : access Visual_Debugger_Record'Class;

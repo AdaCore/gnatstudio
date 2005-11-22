@@ -49,7 +49,6 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Types;               use Gtkada.Types;
 
-with Pango.Enums;                use Pango.Enums;
 with Pango.Font;                 use Pango.Font;
 
 with Basic_Types;                use Basic_Types;
@@ -75,7 +74,6 @@ with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
 with Histories;                  use Histories;
-with Items.Simples;              use Items.Simples;
 with Pixmaps_IDE;                use Pixmaps_IDE;
 with String_List_Utils;          use String_List_Utils;
 with String_Utils;               use String_Utils;
@@ -106,34 +104,6 @@ package body GVD.Process is
    Signals : constant Chars_Ptr_Array :=
      "executable_changed" + "process_stopped" + "context_changed" +
      "debugger_closed";
-
-   Graph_Cmd_Format : constant Pattern_Matcher := Compile
-     ("graph\s+(print|display)\s+(`([^`]+)`|""([^""]+)"")?(.*)",
-      Case_Insensitive);
-   --  Format of the graph print commands, and how to parse them
-
-   Graph_Cmd_Type_Paren          : constant := 1;
-   Graph_Cmd_Expression_Paren    : constant := 3;
-   Graph_Cmd_Quoted_Paren        : constant := 4;
-   Graph_Cmd_Rest_Paren          : constant := 5;
-   --  Indexes of the parentheses pairs in Graph_Cmd_Format for each of the
-   --  relevant fields.
-
-   Graph_Cmd_Dependent_Format : constant Pattern_Matcher := Compile
-     ("\s+dependent\s+on\s+(\d+)\s*", Case_Insensitive);
-   --  Partial analyses of the last part of a graph command
-
-   Graph_Cmd_Link_Format : constant Pattern_Matcher := Compile
-     ("\s+link_name\s+(.+)", Case_Insensitive);
-   --  Partial analyses of the last part of a graph command
-
-   Graph_Cmd_Format2 : constant Pattern_Matcher := Compile
-     ("graph\s+(enable|disable)\s+display\s+(.*)", Case_Insensitive);
-   --  Second possible set of commands.
-
-   Graph_Cmd_Format3 : constant Pattern_Matcher := Compile
-     ("graph\s+undisplay\s+(.*)", Case_Insensitive);
-   --  Third possible set of commands
 
    Regexp_Any : constant Pattern_Matcher :=
      Compile (".+", Single_Line or Multiple_Lines);
@@ -181,10 +151,6 @@ package body GVD.Process is
    procedure On_Debugger_Text_Grab_Focus
      (Object : access Glib.Object.GObject_Record'Class);
    --  Callback for the "grab_focus" signal on the command window.
-
-   procedure On_Data_Canvas_Destroy
-     (Canvas : access Gtk_Widget_Record'Class);
-   --  Called when the data canvas is destroyed
 
    function Interpret_Command_Handler
      (Console : access Interactive_Console_Record'Class;
@@ -827,92 +793,6 @@ package body GVD.Process is
       Initialize (Process, Window, Source);
    end Gtk_New;
 
-   ----------------------------
-   -- On_Data_Canvas_Destroy --
-   ----------------------------
-
-   procedure On_Data_Canvas_Destroy
-     (Canvas : access Gtk_Widget_Record'Class)
-   is
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Process (GVD_Canvas (Canvas)));
-   begin
-      Process.Data_Canvas := null;
-      Process.Data_Scrolledwindow := null;
-   end On_Data_Canvas_Destroy;
-
-   ------------------------
-   -- Create_Data_Window --
-   ------------------------
-
-   procedure Create_Data_Window
-     (Process             : access Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean := True)
-   is
-      pragma Unreferenced (Create_If_Necessary);
-      Data_Window_Name : constant String := -"Debugger Data";
-      Child           : GPS_MDI_Child;
-      Annotation_Font : Pango_Font_Description;
-   begin
-      if Process.Data_Canvas = null then
-         --  Create the data area
-
-         Gtk_New (Process.Data_Scrolledwindow);
-         Set_Policy
-           (Process.Data_Scrolledwindow, Policy_Automatic, Policy_Automatic);
-
-         --  Create the canvas for this visual debugger.
-
-         Gtk_New (GVD_Canvas (Process.Data_Canvas),
-                  GPS.Kernel.Get_History (GPS_Window (Process.Window).Kernel));
-         Add (Process.Data_Scrolledwindow, Process.Data_Canvas);
-         Set_Process (GVD_Canvas (Process.Data_Canvas), Process);
-         Widget_Callback.Connect
-           (Process.Data_Canvas, "background_click",
-            Widget_Callback.To_Marshaller (On_Background_Click'Access));
-         Widget_Callback.Connect
-           (Process.Data_Canvas, "destroy",
-            On_Data_Canvas_Destroy'Access);
-         Align_On_Grid (Process.Data_Canvas, True);
-
-         --  Initialize the canvas
-
-         Annotation_Font :=
-           Copy (Get_Pref (GPS.Kernel.Preferences.Default_Font));
-         Set_Size
-           (Annotation_Font,
-            Gint'Max (Pango_Scale,
-                      Get_Size (Annotation_Font) - 2 * Pango_Scale));
-         Configure (Process.Data_Canvas, Annotation_Font => Annotation_Font);
-         Free (Annotation_Font);
-
-         Gtk_New (Child, Process.Data_Scrolledwindow,
-                  Group          => Group_Graphs,
-                  Default_Height => 200,
-                  Module         => Debugger_Module_ID);
-         if Process.Debugger_Num = 1 then
-            Set_Title (Child, Data_Window_Name);
-         else
-            Set_Title (Child, Data_Window_Name & " <" &
-                       Image (Process.Debugger_Num) & ">");
-         end if;
-
-         Put (Get_MDI (Get_Kernel (Debugger_Module_ID.all)), Child,
-              Initial_Position => Position_Top);
-         Set_Focus_Child (Child);
-
-         --  Initialize the pixmaps and colors for the canvas
-
-         Realize (Process.Data_Canvas);
-         Init_Graphics (GVD_Canvas (Process.Data_Canvas));
-
-      else
-         Child := GPS_MDI_Child (Find_MDI_Child
-           (Process.Window.MDI, Process.Data_Scrolledwindow));
-         Set_Focus_Child (Child);
-      end if;
-   end Create_Data_Window;
-
    --------------------------
    -- Setup_Command_Window --
    --------------------------
@@ -1102,6 +982,7 @@ package body GVD.Process is
       Attach_To_Call_Stack
         (Process,
          Create_If_Necessary => Get_Pref (Show_Call_Stack));
+      Attach_To_Data_Window (Process, Create_If_Necessary => False);
 
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String'(Remote_Host);
@@ -1231,9 +1112,6 @@ package body GVD.Process is
          Process.Exiting := True;
 
          Close (Window.MDI, Process.Debugger_Text);
-         if Process.Data_Scrolledwindow /= null then
-            Close (Window.MDI, Process.Data_Scrolledwindow);
-         end if;
 
          Process.Exiting := False;
          Success := False;
@@ -1280,233 +1158,6 @@ package body GVD.Process is
    begin
       Object_Callback.Emit_By_Name (GObject (Debugger), "process_stopped");
    end Process_Stopped;
-
-   -----------------------
-   -- Process_Graph_Cmd --
-   -----------------------
-
-   procedure Process_Graph_Cmd
-     (Process : access Visual_Debugger_Record'Class;
-      Cmd     : String)
-   is
-      Matched   : Match_Array (0 .. 10);
-      Matched2  : Match_Array (0 .. 10);
-      Item      : Display_Item;
-      Index,
-      Last      : Positive;
-      Enable    : Boolean;
-      First     : Natural;
-      Link_Name : Basic_Types.String_Access;
-      Link_From : Display_Item;
-      Dependent_On_First : Natural := Natural'Last;
-      Link_Name_First    : Natural := Natural'Last;
-
-   begin
-      --  graph (print|display) expression [dependent on display_num]
-      --        [link_name name]
-      --  graph (print|display) `command`
-      --  graph enable display display_num [display_num ...]
-      --  graph disable display display_num [display_num ...]
-      --  graph undisplay display_num
-
-      Match (Graph_Cmd_Format, Cmd, Matched);
-
-      if Matched (0) /= No_Match then
-         Create_Data_Window (Process);
-         Enable := Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd'
-           or else Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'D';
-
-         --  Do we have any 'dependent on' expression ?
-
-         if Matched (Graph_Cmd_Rest_Paren).First >= Cmd'First then
-            Match (Graph_Cmd_Dependent_Format,
-                   Cmd (Matched (Graph_Cmd_Rest_Paren).First
-                        .. Matched (Graph_Cmd_Rest_Paren).Last),
-                   Matched2);
-
-            if Matched2 (1) /= No_Match then
-               Dependent_On_First := Matched2 (0).First;
-               Link_From := Find_Item
-                 (Process.Data_Canvas,
-                  Integer'Value
-                  (Cmd (Matched2 (1).First .. Matched2 (1).Last)));
-            end if;
-         end if;
-
-         --  Do we have any 'link name' expression ?
-
-         if Matched (Graph_Cmd_Rest_Paren).First >= Cmd'First then
-            Match (Graph_Cmd_Link_Format,
-                   Cmd (Matched (Graph_Cmd_Rest_Paren).First
-                        .. Matched (Graph_Cmd_Rest_Paren).Last),
-                   Matched2);
-
-            if Matched2 (0) /= No_Match then
-               Link_Name_First := Matched2 (0).First;
-               Link_Name := new String'
-                 (Cmd (Matched2 (1).First .. Matched2 (1).Last));
-            end if;
-         end if;
-
-         --  A general expression (graph print `cmd`)
-         if Matched (Graph_Cmd_Expression_Paren) /= No_Match then
-            declare
-               Expr : constant String := Cmd
-                 (Matched (Graph_Cmd_Expression_Paren).First ..
-                  Matched (Graph_Cmd_Expression_Paren).Last);
-               Entity : constant Items.Generic_Type_Access :=
-                 New_Debugger_Type (Expr);
-
-            begin
-               Set_Value
-                 (Debugger_Output_Type (Entity.all),
-                  Send
-                    (Process.Debugger,
-                     Refresh_Command (Debugger_Output_Type (Entity.all)),
-                     Mode => Internal));
-
-               --  No link ?
-
-               if Dependent_On_First = Natural'Last then
-                  Gtk_New
-                    (Item,
-                     Variable_Name  => Expr,
-                     Debugger       => Process,
-                     Auto_Refresh   => Enable,
-                     Default_Entity => Entity);
-                  Put (Process.Data_Canvas, Item);
-
-               else
-                  Gtk_New
-                    (Item,
-                     Variable_Name  => Expr,
-                     Debugger       => Process,
-                     Auto_Refresh   => Enable,
-                     Default_Entity => Entity,
-                     Link_From      => Link_From,
-                     Link_Name      => Link_Name.all);
-               end if;
-
-               if Item /= null then
-                  Show_Item (Process.Data_Canvas, Item);
-               end if;
-            end;
-
-         --  A quoted name or standard name
-
-         else
-            --  Quoted
-
-            if Matched (Graph_Cmd_Quoted_Paren) /= No_Match then
-               First := Matched (Graph_Cmd_Quoted_Paren).First;
-               Last  := Matched (Graph_Cmd_Quoted_Paren).Last;
-
-            --  Standard
-
-            else
-               First := Matched (Graph_Cmd_Rest_Paren).First;
-               Last  := Natural'Min (Link_Name_First, Dependent_On_First);
-
-               if Last = Natural'Last then
-                  Last := Matched (Graph_Cmd_Rest_Paren).Last;
-               else
-                  Last := Last - 1;
-               end if;
-            end if;
-
-            --  If we don't want any link:
-
-            if Dependent_On_First = Natural'Last then
-               Gtk_New
-                 (Item,
-                  Variable_Name => Cmd (First .. Last),
-                  Debugger      => Process,
-                  Auto_Refresh  =>
-                    Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
-
-               if Item /= null then
-                  Put (Process.Data_Canvas, Item);
-                  Show_Item (Process.Data_Canvas, Item);
-                  Recompute_All_Aliases
-                    (Process.Data_Canvas, Recompute_Values => False);
-               end if;
-
-            --  Else if we have a link
-
-            else
-               if Link_Name = null then
-                  Link_Name := new String'(Cmd (First .. Last));
-               end if;
-
-               Gtk_New
-                 (Item,
-                  Variable_Name => Cmd (First .. Last),
-                  Debugger      => Process,
-                  Auto_Refresh  => Enable,
-                  Link_From     => Link_From,
-                  Link_Name     => Link_Name.all);
-
-               if Item /= null then
-                  Show_Item (Process.Data_Canvas, Item);
-               end if;
-            end if;
-         end if;
-
-         Free (Link_Name);
-
-      else
-         --  Is this an enable/disable command ?
-
-         Match (Graph_Cmd_Format2, Cmd, Matched);
-
-         if Matched (2) /= No_Match then
-            Create_Data_Window (Process);
-
-            Index := Matched (2).First;
-            Enable := Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'e'
-              or else Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'E';
-
-            while Index <= Cmd'Last loop
-               Last := Index;
-               Skip_To_Blank (Cmd, Last);
-               Set_Auto_Refresh
-                 (Find_Item
-                    (Process.Data_Canvas,
-                     Integer'Value (Cmd (Index .. Last - 1))),
-                  Enable,
-                  Update_Value => True);
-               Index := Last + 1;
-               Skip_Blanks (Cmd, Index);
-            end loop;
-
-         --  Third possible set of commands
-
-         else
-            Match (Graph_Cmd_Format3, Cmd, Matched);
-            if Matched (1) /= No_Match then
-               Create_Data_Window (Process);
-               Index := Matched (1).First;
-               while Index <= Cmd'Last loop
-                  Last := Index;
-                  Skip_To_Blank (Cmd, Last);
-                  Free
-                    (Find_Item
-                      (Process.Data_Canvas,
-                       Integer'Value (Cmd (Index .. Last - 1))));
-                  Index := Last + 1;
-                  Skip_Blanks (Cmd, Index);
-               end loop;
-            end if;
-         end if;
-      end if;
-
-   exception
-      when Constraint_Error =>
-         --  Usually because Find_Item returned a null value.
-         Output_Error
-           (GPS_Window (Process.Window).Kernel,
-            (-" Error while processing: ") & Cmd);
-   end Process_Graph_Cmd;
 
    --------------------
    -- Close_Debugger --
