@@ -79,6 +79,7 @@ with GUI_Utils;                 use GUI_Utils;
 with GVD.Assembly_View;         use GVD.Assembly_View;
 with GVD.Call_Stack;            use GVD.Call_Stack;
 with GVD.Canvas;                use GVD.Canvas;
+with GVD.Consoles;              use GVD.Consoles;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Dialogs;               use GVD.Dialogs;
 with GVD.Memory_View;           use GVD.Memory_View;
@@ -2718,7 +2719,7 @@ package body GVD_Module is
       --  This might have been closed by the user
 
       if Debugger.Debugger_Text /= null then
-         Close (Top.MDI, Debugger.Debugger_Text);
+         Close (Top.MDI, Debugger.Debugger_Text, Force => True);
       end if;
 
       if Debugger.Debuggee_Console /= null then
@@ -3442,6 +3443,7 @@ package body GVD_Module is
 
       GVD.Canvas.Register_Module (Kernel);
       GVD.Call_Stack.Register_Module (Kernel);
+      GVD.Consoles.Register_Module (Kernel);
 
       Register_Menu (Kernel, Data_Sub, -"_Threads", "",
                      On_Threads'Access, Ref_Item => -"Protection Domains");
