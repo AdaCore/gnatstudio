@@ -2716,6 +2716,11 @@ package body GVD_Module is
 
       Debugger.Debugger := null;
 
+      --  Memorize whether we should automatically start the call stack the
+      --  next time GVD is started or not
+
+      Set_Pref (Kernel, Show_Call_Stack, Debugger.Stack /= null);
+
       --  This might have been closed by the user
 
       if Debugger.Debugger_Text /= null then
