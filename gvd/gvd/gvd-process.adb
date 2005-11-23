@@ -26,18 +26,13 @@ with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with System;                     use System;
 
-with Gdk.Color;                  use Gdk.Color;
-with Gdk.Event;                  use Gdk.Event;
-
 with Glib.Object;                use Glib.Object;
 with Glib; use Glib;
 
 with Gtk.Arguments;              use Gtk.Arguments;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Main;                   use Gtk.Main;
-with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Object;                 use Gtk.Object;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -49,9 +44,6 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Types;               use Gtkada.Types;
 
-with Pango.Font;                 use Pango.Font;
-
-with Basic_Types;                use Basic_Types;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
@@ -61,12 +53,12 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel;
-with GPS.Main_Window.Debug;      use GPS.Main_Window.Debug;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GUI_Utils;                  use GUI_Utils;
 with GVD.Call_Stack;             use GVD.Call_Stack;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
+with GVD.Consoles;               use GVD.Consoles;
 with GVD.Dialogs;                use GVD.Dialogs;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Source_Editor;          use GVD.Source_Editor;
@@ -75,7 +67,6 @@ with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
 with Histories;                  use Histories;
 with Pixmaps_IDE;                use Pixmaps_IDE;
-with String_List_Utils;          use String_List_Utils;
 with String_Utils;               use String_Utils;
 with VFS;                        use VFS;
 
@@ -85,9 +76,6 @@ package body GVD.Process is
 
    function TTY_Cb (Data : Visual_Debugger) return Boolean;
    --  Callback for communication with a tty.
-
-   package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
-     (Visual_Debugger_Record, Boolean);
 
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
@@ -113,12 +101,6 @@ package body GVD.Process is
    -- Local Subprograms --
    -----------------------
 
-   function Debugger_Contextual_Menu
-     (Process  : access Visual_Debugger_Record'Class)
-      return Gtk.Menu.Gtk_Menu;
-   --  Create (if necessary) and reset the contextual menu used in the
-   --  debugger command window.
-
    procedure First_Text_Output_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
@@ -132,31 +114,10 @@ package body GVD.Process is
       Window     : System.Address);
    --  Real handler called by First_Text_Output_Filter
 
-   function Debugger_Button_Press
-     (Process : access Visual_Debugger_Record'Class;
-      Event    : Gdk.Event.Gdk_Event) return Boolean;
-   --  Callback for all the button press events in the debugger command window.
-   --  This is used to display the contexual menu.
-
    function On_Editor_Text_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  Callback for the "delete_event" signal on the editor text
-
-   function On_Command_Scrolledwindow_Delete_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-   --  Callback for the "delete_event" signal on the command window.
-
-   procedure On_Debugger_Text_Grab_Focus
-     (Object : access Glib.Object.GObject_Record'Class);
-   --  Callback for the "grab_focus" signal on the command window.
-
-   function Interpret_Command_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Input   : String;
-      Object  : System.Address) return String;
-   --  Launch the command interpreter for Input and return the output.
 
    function Debuggee_Console_Handler
      (Console : access Interactive_Console_Record'Class;
@@ -168,16 +129,6 @@ package body GVD.Process is
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  Callback for the "delete_event" signal on the debuggee console.
-
-   function Complete_Command
-     (Input  : in String;
-      Object : System.Address)
-      return String_List_Utils.String_List.List;
-   --  Return the list of completions for Input.
-
-   procedure Setup_Command_Window
-     (Process : access Visual_Debugger_Record'Class);
-   --  Set up/initialize the command window associated with Process.
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Visual_Debugger);
@@ -223,63 +174,6 @@ package body GVD.Process is
          return True;
    end TTY_Cb;
 
-   ----------------------
-   -- Complete_Command --
-   ----------------------
-
-   function Complete_Command
-     (Input  : in String;
-      Object : System.Address)
-     return String_List_Utils.String_List.List
-   is
-      use String_List_Utils.String_List;
-      Top    : constant Visual_Debugger := Convert (Object);
-      Result : List;
-   begin
-      if not Command_In_Process (Get_Process (Top.Debugger)) then
-         --  Do not launch completion if the last character is ' ', as that
-         --  might result in an output of several thousand entries, which
-         --  will take a long time to parse.
-
-         if Input /= ""
-           and then Input (Input'Last) /= ' '
-         then
-            declare
-               S : String_Array := Complete (Top.Debugger, Input);
-            begin
-               for J in S'Range loop
-                  Append (Result, S (J).all);
-               end loop;
-
-               Free (S);
-            end;
-         end if;
-      end if;
-
-      if Is_Empty (Result) then
-         Append (Result, Input);
-      end if;
-
-      return Result;
-   end Complete_Command;
-
-   -------------------------------
-   -- Interpret_Command_Handler --
-   -------------------------------
-
-   function Interpret_Command_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Input  : String;
-      Object : System.Address) return String
-   is
-      pragma Unreferenced (Console);
-      Top : constant Visual_Debugger := Convert (Object);
-   begin
-      Top.Interactive_Command := True;
-      Process_User_Command (Top, Input, Mode => User);
-      return "";
-   end Interpret_Command_Handler;
-
    ------------------------------
    -- Debuggee_Console_Handler --
    ------------------------------
@@ -315,27 +209,6 @@ package body GVD.Process is
       return False;
    end On_Editor_Text_Delete_Event;
 
-   --------------------------------------------
-   -- On_Command_Scrolledwindow_Delete_Event --
-   --------------------------------------------
-
-   function On_Command_Scrolledwindow_Delete_Event
-     (Object : access GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      pragma Unreferenced (Params);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Object);
-
-   begin
-      if Process.Exiting then
-         Process.Debugger_Text := null;
-         return False;
-      else
-         return True;
-      end if;
-   end On_Command_Scrolledwindow_Delete_Event;
-
    --------------------------------------
    -- On_Debuggee_Console_Delete_Event --
    --------------------------------------
@@ -363,19 +236,6 @@ package body GVD.Process is
          return True;
       end if;
    end On_Debuggee_Console_Delete_Event;
-
-   ---------------------------------
-   -- On_Debugger_Text_Grab_Focus --
-   ---------------------------------
-
-   procedure On_Debugger_Text_Grab_Focus
-     (Object : access GObject_Record'Class)
-   is
-      Debugger : constant Visual_Debugger := Visual_Debugger (Object);
-   begin
-      Switch_Debugger (Debugger.Window, GObject (Object));
-      Wind (Debugger.Command_History, Forward);
-   end On_Debugger_Text_Grab_Focus;
 
    -----------------------
    -- Add_Regexp_Filter --
@@ -443,28 +303,6 @@ package body GVD.Process is
       return Convert (GPS_Window (Main_Debug_Window),
                       Get_Descriptor (Get_Process (Debugger)).all);
    end Convert;
-
-   ------------------------------
-   -- Debugger_Contextual_Menu --
-   ------------------------------
-
-   function Debugger_Contextual_Menu
-     (Process : access Visual_Debugger_Record'Class)
-      return Gtk.Menu.Gtk_Menu
-   is
-      Mitem : Gtk_Menu_Item;
-   begin
-      if Process.Contextual_Menu /= null then
-         return Process.Contextual_Menu;
-      end if;
-
-      Gtk_New (Process.Contextual_Menu);
-      Gtk_New (Mitem, Label => -"Info");
-      Set_State (Mitem, State_Insensitive);
-      Append (Process.Contextual_Menu, Mitem);
-      Show_All (Process.Contextual_Menu);
-      return Process.Contextual_Menu;
-   end Debugger_Contextual_Menu;
 
    -----------------
    -- Output_Text --
@@ -760,26 +598,6 @@ package body GVD.Process is
       end case;
    end Text_Output_Filter;
 
-   ---------------------------
-   -- Debugger_Button_Press --
-   ---------------------------
-
-   function Debugger_Button_Press
-     (Process : access Visual_Debugger_Record'Class;
-      Event    : Gdk.Event.Gdk_Event) return Boolean is
-   begin
-      if Get_Button (Event) = 3 then
-         Popup (Debugger_Contextual_Menu (Process),
-                Button        => Get_Button (Event),
-                Activate_Time => Get_Time (Event));
-         Emit_Stop_By_Name (Process.Debugger_Text, "button_press_event");
-
-         return True;
-      end if;
-
-      return False;
-   end Debugger_Button_Press;
-
    -------------
    -- Gtk_New --
    -------------
@@ -792,76 +610,6 @@ package body GVD.Process is
       Process := new Visual_Debugger_Record;
       Initialize (Process, Window, Source);
    end Gtk_New;
-
-   --------------------------
-   -- Setup_Command_Window --
-   --------------------------
-
-   procedure Setup_Command_Window
-     (Process : access Visual_Debugger_Record'Class)
-   is
-      Child : MDI_Child;
-      H     : constant History := GPS.Kernel.Get_History
-        (GPS_Window (Process.Window).Kernel);
-
-   begin
-      Gtk_New
-        (Process.Debugger_Text,
-         "",
-         Interpret_Command_Handler'Access,
-         Process.all'Address,
-         Process.Debugger_Text_Font,
-         History_List => H,
-         Key          => "gvd_console",
-         Wrap_Mode    => Wrap_Char,
-         Empty_Equals_Repeat => True);
-
-      if H /= null then
-         Set_Max_Length (H.all, 100, "gvd_console");
-         Allow_Duplicates (H.all, "gvd_console", True, True);
-      end if;
-
-      Set_Highlight_Color
-        (Process.Debugger_Text,
-         Process.Debugger_Text_Highlight_Color);
-
-      Set_Completion_Handler
-        (Process.Debugger_Text,
-         Complete_Command'Access);
-
-      Object_Return_Callback.Object_Connect
-        (Process.Debugger_Text, "delete_event",
-         On_Command_Scrolledwindow_Delete_Event'Access, Process);
-
-      Object_Callback.Object_Connect
-        (Get_View (Process.Debugger_Text), "grab_focus",
-         Object_Callback.To_Marshaller (On_Debugger_Text_Grab_Focus'Access),
-         Process);
-
-      --  Set up the command window for the contextual menus
-
-      Add_Events (Process.Debugger_Text, Button_Press_Mask);
-      Canvas_Event_Handler.Object_Connect
-        (Process.Debugger_Text, "button_press_event",
-         Canvas_Event_Handler.To_Marshaller (Debugger_Button_Press'Access),
-         Process);
-
-      --  Add debugger console in the MDI
-
-      Gtk_New (Child, Process.Debugger_Text,
-               Group        => Group_Consoles,
-               Focus_Widget => Gtk_Widget (Get_View (Process.Debugger_Text)));
-      Put (Process.Window.MDI, Child, Initial_Position => Position_Bottom);
-      Set_Focus_Child (Child);
-
-      if Process.Debugger_Num = 1 then
-         Set_Title (Child, -"Debugger Console");
-      else
-         Set_Title (Child, (-"Debugger Console") & " <" &
-                    Image (Process.Debugger_Num) & ">");
-      end if;
-      Raise_Child (Child);
-   end Setup_Command_Window;
 
    ----------------
    -- Initialize --
@@ -900,15 +648,6 @@ package body GVD.Process is
       Object_Callback.Connect
         (Process, "process_stopped",
          Object_Callback.To_Marshaller (On_Thread_Process_Stopped'Access));
-
-      --  Allocate the colors for highlighting. This needs to be done before
-      --  Initializing the debugger, since some file name might be output at
-      --  that time.
-
-      Process.Debugger_Text_Highlight_Color :=
-        Get_Pref (Debugger_Highlight_Color);
-
-      Process.Debugger_Text_Font := Get_Pref_Font (Default_Style);
 
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
@@ -977,7 +716,7 @@ package body GVD.Process is
 
    begin
       Set_Busy (Process, True);
-      Setup_Command_Window (Process);
+      Attach_To_Debugger_Console (Process, Create_If_Necessary => True);
 
       Attach_To_Call_Stack
         (Process,
@@ -1066,7 +805,7 @@ package body GVD.Process is
             "",
             Debuggee_Console_Handler'Access,
             Process.all'Address,
-            Process.Debugger_Text_Font,
+            Get_Pref_Font (Default_Style),
             History_List => null,
             Key          => "gvd_tty_console",
             Wrap_Mode    => Wrap_Char);
