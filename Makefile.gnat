@@ -69,6 +69,8 @@ GNAT_SOURCES= \
   prj-ext.adb \
   prj-nmsc.ads \
   prj-nmsc.adb \
+  prj-pars.ads \
+  prj-pars.adb \
   prj-part.ads \
   prj-part.adb \
   prj-pp.ads \
@@ -135,7 +137,10 @@ GNAT_SOURCES= \
   widechar.ads \
   widechar.adb \
   gprmake.adb \
+  makegpr.ads \
   makegpr.adb \
+  makeutl.ads \
+  makeutl.adb \
   impunit.adb \
   gnat_style.css
 
