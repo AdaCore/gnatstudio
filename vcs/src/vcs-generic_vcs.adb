@@ -467,7 +467,6 @@ package body VCS.Generic_VCS is
       while Node /= Null_Node loop
          declare
             Args    : GNAT.OS_Lib.String_List_Access;
-            Dot_Dir : Boolean := False;
             --  Set to True when the current working directory already part of
             --  the command line.
          begin
@@ -529,14 +528,11 @@ package body VCS.Generic_VCS is
                      Base : constant String := Base_Name (Data  (Node));
                   begin
                      if Base = "" then
-                        --  The data is a directory. In this case,  since we
-                        --  are launching the command from the  local directory
+                        --  The data is a directory. In this case, since we
+                        --  are launching the command from the local directory
                         --  transform the directory to ".".
 
-                        if not Dot_Dir then
-                           Args (Index) := new String'(".");
-                           Dot_Dir := True;
-                        end if;
+                        Args (Index) := new String'(".");
                      else
                         Args (Index) := new String'(Base);
                      end if;
