@@ -52,12 +52,9 @@ with Debugger;               use Debugger;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
-with GPS.Main_Window;        use GPS.Main_Window;
 with GVD.Code_Editors;       use GVD.Code_Editors;
 with GVD_Module;             use GVD_Module;
-with GVD.Preferences;        use GVD.Preferences;
 with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with Process_Proxies;        use Process_Proxies;
@@ -65,6 +62,7 @@ with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 
 package body GVD.Call_Stack is
+
    ---------------------
    -- Local constants --
    ---------------------
@@ -171,7 +169,7 @@ package body GVD.Call_Stack is
    --  Debug->Data->Call Stack
 
    procedure On_Debugger_Terminate
-     (Process : access GObject_Record'Class);
+     (Stack : access GObject_Record'Class);
    --  Called when the debugger is terminated
 
    ---------------------------
@@ -179,21 +177,11 @@ package body GVD.Call_Stack is
    ---------------------------
 
    procedure On_Debugger_Terminate
-     (Process : access GObject_Record'Class)
+     (Stack : access GObject_Record'Class)
    is
-      P : constant Visual_Debugger := Visual_Debugger (Process);
+      C : constant Call_Stack := Call_Stack (Stack);
    begin
-      --  Are we killing the last debugger ? If yes, update the preference to
-      --  automatically restart the call stack if appropriate next time
-
-      if Get_Debugger_List (GPS_Window (P.Window).Kernel).Next = null then
-         Set_Pref (GPS_Window (P.Window).Kernel,
-                   Show_Call_Stack, P.Stack /= null);
-      end if;
-
-      if P.Stack /= null then
-         Close (GPS_Window (P.Window).MDI, P.Stack);
-      end if;
+      Destroy (C);
    end On_Debugger_Terminate;
 
    -------------------
@@ -601,11 +589,10 @@ package body GVD.Call_Stack is
               (Debugger, "context_changed",
                Update_Call_Stack'Access,
                Slot_Object => Debugger.Stack);
-
             Object_Callback.Object_Connect
               (Debugger.Debugger_Text, "destroy",
                On_Debugger_Terminate'Access,
-               Slot_Object => Debugger);
+               Slot_Object => Debugger.Stack);
 
             if Debugger.Debugger /= null
               and then Get_Process (Debugger.Debugger) /= null
@@ -781,7 +768,9 @@ package body GVD.Call_Stack is
       Free (Bt (1 .. Len));
 
       S.Block := True;
-      Select_Iter (Get_Selection (S.Tree), Get_Iter_First (S.Model));
+      if Get_Iter_First (S.Model) /= Null_Iter then
+         Select_Iter (Get_Selection (S.Tree), Get_Iter_First (S.Model));
+      end if;
       S.Block := False;
    end Update_Call_Stack;
 
