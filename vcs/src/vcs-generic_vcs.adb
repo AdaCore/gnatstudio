@@ -466,7 +466,10 @@ package body VCS.Generic_VCS is
 
       while Node /= Null_Node loop
          declare
-            Args : GNAT.OS_Lib.String_List_Access;
+            Args    : GNAT.OS_Lib.String_List_Access;
+            Dot_Dir : Boolean := False;
+            --  Set to True when the current working directory already part of
+            --  the command line.
          begin
             --  Args, Dir and Dir_Args are freed when the command proxy is
             --  destroyed.
@@ -499,6 +502,7 @@ package body VCS.Generic_VCS is
                end if;
 
                if Ref.Absolute_Names then
+                  --  The VCS works on absolute names
                   declare
                      Filename : constant String := Data (Node);
                      Pref_Len : Natural := Dir.all'Length;
@@ -520,7 +524,23 @@ package body VCS.Generic_VCS is
                   end;
 
                else
-                  Args (Index) := new String'(Base_Name (Data (Node)));
+                  --  The VCS works on the local directory
+                  declare
+                     Base : constant String := Base_Name (Data  (Node));
+                  begin
+                     if Base = "" then
+                        --  The data is a directory. In this case,  since we
+                        --  are launching the command from the  local directory
+                        --  transform the directory to ".".
+
+                        if not Dot_Dir then
+                           Args (Index) := new String'(".");
+                           Dot_Dir := True;
+                        end if;
+                     else
+                        Args (Index) := new String'(Base);
+                     end if;
+                  end;
                end if;
 
                Index := Index + 1;
