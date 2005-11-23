@@ -98,10 +98,12 @@ package body GVD.Call_Stack is
    end record;
    type Call_Stack is access all Call_Stack_Record'Class;
 
-   procedure Gtk_New (Widget : out Call_Stack);
+   procedure Gtk_New (Widget : out Call_Stack; Mask : Stack_List_Mask);
    --  Create a new call stack dialog.
 
-   procedure Initialize (Widget : access Call_Stack_Record'Class);
+   procedure Initialize
+     (Widget : access Call_Stack_Record'Class;
+      Mask   : Stack_List_Mask);
    --  Internal initialization function.
 
    type Call_Stack_Frame_Record is record
@@ -147,7 +149,8 @@ package body GVD.Call_Stack is
    --  Callback for the selection change.
 
    function Create_Call_Stack
-     (MDI : access MDI_Window_Record'Class) return MDI_Child;
+     (MDI : access MDI_Window_Record'Class;
+      Mask : Stack_List_Mask) return MDI_Child;
    --  Create a new callstack in the MDI
 
    function Load_Desktop
@@ -455,17 +458,19 @@ package body GVD.Call_Stack is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Widget : out Call_Stack) is
+   procedure Gtk_New (Widget : out Call_Stack; Mask : Stack_List_Mask) is
    begin
       Widget := new Call_Stack_Record;
-      GVD.Call_Stack.Initialize (Widget);
+      GVD.Call_Stack.Initialize (Widget, Mask);
    end Gtk_New;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (Widget : access Call_Stack_Record'Class) is
+   procedure Initialize
+     (Widget : access Call_Stack_Record'Class;
+      Mask   : Stack_List_Mask) is
    begin
       Gtk.Scrolled_Window.Initialize (Widget);
 
@@ -476,6 +481,7 @@ package body GVD.Call_Stack is
 
       Add (Widget, Widget.Tree);
 
+      Widget.Backtrace_Mask := Mask;
       Set_Column_Types (Widget);
 
       Gtkada.Handlers.Object_Return_Callback.Object_Connect
@@ -559,7 +565,7 @@ package body GVD.Call_Stack is
          --  If no exsting call stack was found, create one
 
          if Child = null and then Create_If_Necessary then
-            Child := Create_Call_Stack (MDI);
+            Child := Create_Call_Stack (MDI, Subprog_Name);
             Stack := Call_Stack (Get_Widget (Child));
             Stack.Process := Visual_Debugger (Debugger);
          end if;
@@ -627,12 +633,13 @@ package body GVD.Call_Stack is
    -----------------------
 
    function Create_Call_Stack
-     (MDI : access MDI_Window_Record'Class) return MDI_Child
+     (MDI : access MDI_Window_Record'Class;
+      Mask : Stack_List_Mask) return MDI_Child
    is
       Stack : Call_Stack;
       Child : GPS_MDI_Child;
    begin
-      Gtk_New (Stack);
+      Gtk_New (Stack, Mask);
       Gtk_New (Child, Stack,
                Group  => Group_Debugger_Stack,
                Module => Debugger_Module_ID);
@@ -674,7 +681,10 @@ package body GVD.Call_Stack is
       pragma Unreferenced (Kernel);
    begin
       if Node.Tag.all = "Call_Stack" then
-         return Create_Call_Stack (MDI);
+         return Create_Call_Stack
+           (MDI, Mask => Stack_List_Mask'Value
+              (Glib.Xml_Int.Get_Attribute
+                 (Node, "mask", Stack_List_Mask'Image (Subprog_Name))));
       end if;
       return null;
    end Load_Desktop;
@@ -693,6 +703,9 @@ package body GVD.Call_Stack is
       if Widget.all in Call_Stack_Record'Class then
          N     := new Glib.Xml_Int.Node;
          N.Tag := new String'("Call_Stack");
+         Glib.Xml_Int.Set_Attribute
+           (N, "mask",
+            Stack_List_Mask'Image (Call_Stack (Widget).Backtrace_Mask));
          return N;
       end if;
       return null;
