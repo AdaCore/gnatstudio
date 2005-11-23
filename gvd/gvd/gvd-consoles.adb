@@ -27,7 +27,6 @@ with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
 with Gdk.Event;              use Gdk.Event;
 with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Main;               use Gtk.Main;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
@@ -126,11 +125,13 @@ package body GVD.Consoles is
    procedure On_Grab_Focus (Console : access Gtk_Widget_Record'Class);
    --  Callback for the "grab_focus" signal on the console.
 
-   function On_Button_Press
-     (Console : access Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Boolean;
-   --  Callback for all the button press events in the console.
-   --  This is used to display the contexual menu.
+   function Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk_Menu) return Selection_Context_Access;
+   --  Create the context for the contextual menus
 
    function Load_Desktop
      (MDI    : MDI_Window;
@@ -202,41 +203,27 @@ package body GVD.Consoles is
    end TTY_Cb;
 
    ---------------------
-   -- On_Button_Press --
+   -- Context_Factory --
    ---------------------
 
-   function On_Button_Press
-     (Console : access Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Boolean
+   function Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk_Menu) return Selection_Context_Access
    is
-      C : constant Debugger_Console := Debugger_Console (Console);
+      pragma Unreferenced (Kernel, Event_Widget, Event, Object);
       Mitem : Gtk_Menu_Item;
    begin
-      if C.Process /= null then
-         if C.Contextual_Menu = null then
-            Gtk_New (C.Contextual_Menu);
-            Gtk_New (Mitem, Label => -"Info");
-            Set_State (Mitem, State_Insensitive);
-            Append (C.Contextual_Menu, Mitem);
-            Show_All (C.Contextual_Menu);
-         end if;
-
-         if Get_Button (Event) = 3 then
-            Popup (C.Contextual_Menu,
-                   Button        => Get_Button (Event),
-                   Activate_Time => Get_Time (Event));
-            Emit_Stop_By_Name (C, "button_press_event");
-
-            return True;
-         end if;
+      if Menu /= null then
+         Gtk_New (Mitem, Label => -"Info");
+         Set_State (Mitem, State_Insensitive);
+         Append (Menu, Mitem);
       end if;
-      return False;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: "
-                & Exception_Information (E));
-         return False;
-   end On_Button_Press;
+
+      return null;
+   end Context_Factory;
 
    ----------------
    -- On_Destroy --
@@ -409,13 +396,12 @@ package body GVD.Consoles is
       Widget_Callback.Object_Connect
         (Get_View (Console), "grab_focus", On_Grab_Focus'Access, Console);
 
-      --  Set up the command window for the contextual menus
-
-      Add_Events (Console, Button_Press_Mask);
-      Gtkada.Handlers.Return_Callback.Connect
-        (Console, "button_press_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (On_Button_Press'Access));
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Get_View (Console),
+         Object          => Console,
+         ID              => Debugger_Module_ID,
+         Context_Func    => Context_Factory'Access);
 
       --  Add debugger console in the MDI
 
