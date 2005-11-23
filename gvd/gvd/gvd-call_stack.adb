@@ -28,12 +28,11 @@ with Glib.Xml_Int;
 with Glib;                   use Glib;
 
 with Gtk.Arguments;          use Gtk.Arguments;
-with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+--  with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
@@ -53,6 +52,7 @@ with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Intl;               use GPS.Intl;
+with GUI_Utils;              use GUI_Utils;
 with GVD.Code_Editors;       use GVD.Code_Editors;
 with GVD_Module;             use GVD_Module;
 with GVD.Process;            use GVD.Process;
@@ -89,7 +89,6 @@ package body GVD.Call_Stack is
       Tree                       : Gtk_Tree_View;
       Model                      : Gtk_Tree_Store;
       Process                    : Visual_Debugger;
-      Call_Stack_Contextual_Menu : Gtk.Menu.Gtk_Menu;
       Block                      : Boolean := False;
       --  Whether to process selection events.
 
@@ -106,41 +105,27 @@ package body GVD.Call_Stack is
       Mask   : Stack_List_Mask);
    --  Internal initialization function.
 
-   type Call_Stack_Frame_Record is record
-      Stack : Call_Stack;
-      Mask  : Stack_List_Mask;
-   end record;
    package Call_Stack_Cb is new Gtk.Handlers.User_Callback
-     (Gtk_Menu_Item_Record, Call_Stack_Frame_Record);
+     (Call_Stack_Record, Stack_List_Mask);
 
    procedure Update_Call_Stack
      (Stack : access Glib.Object.GObject_Record'Class);
    --  Update the call stack. This is meant as a callback for gtk+ signals
 
-   function Columns_Types return GType_Array;
-   --  Returns the types for the columns in the Model.
-   --  This is not implemented as
-   --       Columns_Types : constant GType_Array ...
-   --  because Gdk.Pixbuf.Get_Type cannot be called before
-   --  Gtk.Main.Init.
-
    procedure Set_Column_Types (Tree : access Call_Stack_Record'Class);
    --  Setup the columns.
 
-   function On_Button_Press_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : GValues) return Boolean;
-   --  Callback for the "button_press" signal on the stack list.
-
-   function Call_Stack_Contextual_Menu
-     (Process : access Call_Stack_Record'Class)
-      return Gtk.Menu.Gtk_Menu;
-   --  Create (if necessary) and reset the contextual menu used in the
-   --  debugger call stack window.
+   function Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk_Menu) return Selection_Context_Access;
+   --  Create the context for the contextual menus
 
    procedure Change_Mask
-     (Widget : access Gtk_Menu_Item_Record'Class;
-      Mask   : Call_Stack_Frame_Record);
+     (Stack  : access Call_Stack_Record'Class;
+      Mask   : Stack_List_Mask);
    --  Toggle the display of a specific column in the Stack_List window.
 
    procedure On_Selection_Changed
@@ -264,194 +249,79 @@ package body GVD.Call_Stack is
    -----------------
 
    procedure Change_Mask
-     (Widget : access Gtk_Menu_Item_Record'Class;
-      Mask   : Call_Stack_Frame_Record)
-   is
-      pragma Unreferenced (Widget);
+     (Stack  : access Call_Stack_Record'Class;
+      Mask   : Stack_List_Mask) is
    begin
-      Mask.Stack.Backtrace_Mask := Mask.Stack.Backtrace_Mask xor Mask.Mask;
-      Set_Column_Types (Mask.Stack);
+      Stack.Backtrace_Mask := Stack.Backtrace_Mask xor Mask;
+      Set_Column_Types (Stack);
    end Change_Mask;
 
-   --------------------------------
-   -- Call_Stack_Contextual_Menu --
-   --------------------------------
+   ---------------------
+   -- Context_Factory --
+   ---------------------
 
-   function Call_Stack_Contextual_Menu
-     (Process : access Call_Stack_Record'Class)
-      return Gtk.Menu.Gtk_Menu
+   function Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk_Menu) return Selection_Context_Access
    is
+      pragma Unreferenced (Kernel, Event_Widget, Event);
+      Stack : constant Call_Stack := Call_Stack (Object);
       Check : Gtk_Check_Menu_Item;
    begin
-      --  Destroy the old menu (We need to recompute the state of the toggle
-      --  buttons)
+      if Menu /= null then
+         Gtk_New (Check, Label => -"Frame Number");
+         Set_Active (Check, (Stack.Backtrace_Mask and Frame_Num) /= 0);
+         Append (Menu, Check);
+         Call_Stack_Cb.Object_Connect
+           (Check, "activate", Change_Mask'Access, Stack, Frame_Num);
 
-      if Process.Call_Stack_Contextual_Menu /= null then
-         Destroy (Process.Call_Stack_Contextual_Menu);
+         Gtk_New (Check, Label => -"Program Counter");
+         Set_Active (Check, (Stack.Backtrace_Mask and Program_Counter) /= 0);
+         Append (Menu, Check);
+         Call_Stack_Cb.Object_Connect
+           (Check, "activate", Change_Mask'Access, Stack, Program_Counter);
+
+         Gtk_New (Check, Label => -"Subprogram Name");
+         Set_Active (Check, (Stack.Backtrace_Mask and Subprog_Name) /= 0);
+         Append (Menu, Check);
+         Call_Stack_Cb.Object_Connect
+           (Check, "activate", Change_Mask'Access, Stack, Subprog_Name);
+
+         Gtk_New (Check, Label => -"Parameters");
+         Set_Active (Check, (Stack.Backtrace_Mask and Params) /= 0);
+         Append (Menu, Check);
+         Call_Stack_Cb.Object_Connect
+           (Check, "activate", Change_Mask'Access, Stack, Params);
+
+         Gtk_New (Check, Label => -"File Location");
+         Set_Active (Check, (Stack.Backtrace_Mask and File_Location) /= 0);
+         Append (Menu, Check);
+         Call_Stack_Cb.Object_Connect
+           (Check, "activate", Change_Mask'Access, Stack, File_Location);
       end if;
 
-      Gtk_New (Process.Call_Stack_Contextual_Menu);
-      Gtk_New (Check, Label => -"Frame Number");
-      Set_Active (Check, (Process.Backtrace_Mask and Frame_Num) /= 0);
-      Append (Process.Call_Stack_Contextual_Menu, Check);
-      Call_Stack_Cb.Connect
-        (Check, "activate",
-         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Call_Stack (Process), Frame_Num));
-
-      Gtk_New (Check, Label => -"Program Counter");
-      Set_Active (Check, (Process.Backtrace_Mask and Program_Counter) /= 0);
-      Append (Process.Call_Stack_Contextual_Menu, Check);
-      Call_Stack_Cb.Connect
-        (Check, "activate",
-         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Call_Stack (Process), Program_Counter));
-
-      Gtk_New (Check, Label => -"Subprogram Name");
-      Set_Active (Check, (Process.Backtrace_Mask and Subprog_Name) /= 0);
-      Append (Process.Call_Stack_Contextual_Menu, Check);
-      Call_Stack_Cb.Connect
-        (Check, "activate",
-         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Call_Stack (Process), Subprog_Name));
-
-      Gtk_New (Check, Label => -"Parameters");
-      Set_Active (Check, (Process.Backtrace_Mask and Params) /= 0);
-      Append (Process.Call_Stack_Contextual_Menu, Check);
-      Call_Stack_Cb.Connect
-        (Check, "activate",
-         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Call_Stack (Process), Params));
-
-      Gtk_New (Check, Label => -"File Location");
-      Set_Active (Check, (Process.Backtrace_Mask and File_Location) /= 0);
-      Append (Process.Call_Stack_Contextual_Menu, Check);
-      Call_Stack_Cb.Connect
-        (Check, "activate",
-         Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
-         (Call_Stack (Process), File_Location));
-
-      Show_All (Process.Call_Stack_Contextual_Menu);
-      return Process.Call_Stack_Contextual_Menu;
-   end Call_Stack_Contextual_Menu;
-
-   ---------------------------
-   -- On_Button_Press_Event --
-   ---------------------------
-
-   function On_Button_Press_Event
-     (Object : access GObject_Record'Class;
-      Params : GValues) return Boolean
-   is
-      Arg1    : constant Gdk_Event := Get_Event (Nth (Params, 1));
-      Process : constant Call_Stack := Call_Stack (Object);
-
-   begin
-      if Get_Button (Arg1) = 3
-        and then Get_Event_Type (Arg1) = Button_Press
-      then
-         Popup (Call_Stack_Contextual_Menu (Process),
-                Button        => Gdk.Event.Get_Button (Arg1),
-                Activate_Time => Gdk.Event.Get_Time (Arg1));
-         Emit_Stop_By_Name (Process.Tree, "button_press_event");
-
-         return True;
-      end if;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         return False;
-   end On_Button_Press_Event;
-
-   -------------------
-   -- Columns_Types --
-   -------------------
-
-   function Columns_Types return GType_Array is
-   begin
-      return GType_Array'
-        (Frame_Num_Column       => GType_String,
-         Program_Counter_Column => GType_String,
-         Subprog_Name_Column    => GType_String,
-         Params_Column          => GType_String,
-         File_Location_Column   => GType_String);
-   end Columns_Types;
+      return null;
+   end Context_Factory;
 
    ----------------------
    -- Set_Column_Types --
    ----------------------
 
    procedure Set_Column_Types (Tree : access Call_Stack_Record'Class) is
-      Col           : Gtk_Tree_View_Column;
-      Text_Rend     : Gtk_Cell_Renderer_Text;
-
-      Dummy         : Gint;
-      pragma Unreferenced (Dummy);
-
    begin
-      --  Remove all columns
-
-      Col := Get_Column (Tree.Tree, 0);
-
-      while Col /= null loop
-         Dummy := Remove_Column (Tree.Tree, Col);
-         Col := Get_Column (Tree.Tree, 0);
-      end loop;
-
-      if (Tree.Backtrace_Mask and Frame_Num) /= 0 then
-         Gtk_New (Text_Rend);
-         Gtk_New (Col);
-         Pack_Start (Col, Text_Rend, True);
-         Add_Attribute (Col, Text_Rend, "text", Frame_Num_Column);
-         Set_Title (Col, -"Num");
-         Dummy := Append_Column (Tree.Tree, Col);
-         Set_Expander_Column (Tree.Tree, Col);
-         Set_Resizable (Col, True);
-      end if;
-
-      if (Tree.Backtrace_Mask and Program_Counter) /= 0 then
-         Gtk_New (Text_Rend);
-         Gtk_New (Col);
-         Pack_Start (Col, Text_Rend, True);
-         Add_Attribute (Col, Text_Rend, "text", Program_Counter_Column);
-         Set_Title (Col, -"PC");
-         Dummy := Append_Column (Tree.Tree, Col);
-         Set_Resizable (Col, True);
-      end if;
-
-      if (Tree.Backtrace_Mask and Subprog_Name) /= 0 then
-         Gtk_New (Text_Rend);
-         Gtk_New (Col);
-         Pack_Start (Col, Text_Rend, True);
-         Add_Attribute (Col, Text_Rend, "text", Subprog_Name_Column);
-         Set_Title (Col, -"Subprogram");
-         Dummy := Append_Column (Tree.Tree, Col);
-         Set_Resizable (Col, True);
-      end if;
-
-      if (Tree.Backtrace_Mask and Params) /= 0 then
-         Gtk_New (Text_Rend);
-         Gtk_New (Col);
-         Pack_Start (Col, Text_Rend, True);
-         Add_Attribute (Col, Text_Rend, "text", Params_Column);
-         Set_Title (Col, -"Parameters");
-         Dummy := Append_Column (Tree.Tree, Col);
-         Set_Resizable (Col, True);
-      end if;
-
-      if (Tree.Backtrace_Mask and File_Location) /= 0 then
-         Gtk_New (Text_Rend);
-         Gtk_New (Col);
-         Pack_Start (Col, Text_Rend, True);
-         Add_Attribute (Col, Text_Rend, "text", File_Location_Column);
-         Set_Title (Col, -"Location");
-         Dummy := Append_Column (Tree.Tree, Col);
-         Set_Resizable (Col, True);
-      end if;
+      Set_Visible (Get_Column (Tree.Tree, 0),
+                   (Tree.Backtrace_Mask and Frame_Num) /= 0);
+      Set_Visible (Get_Column (Tree.Tree, 1),
+                   (Tree.Backtrace_Mask and Program_Counter) /= 0);
+      Set_Visible (Get_Column (Tree.Tree, 2),
+                   (Tree.Backtrace_Mask and Subprog_Name) /= 0);
+      Set_Visible (Get_Column (Tree.Tree, 3),
+                   (Tree.Backtrace_Mask and Params) /= 0);
+      Set_Visible (Get_Column (Tree.Tree, 4),
+                   (Tree.Backtrace_Mask and File_Location) /= 0);
    end Set_Column_Types;
 
    -------------
@@ -470,23 +340,43 @@ package body GVD.Call_Stack is
 
    procedure Initialize
      (Widget : access Call_Stack_Record'Class;
-      Mask   : Stack_List_Mask) is
+      Mask   : Stack_List_Mask)
+   is
+      Name_Frame   : aliased String := -"Num";
+      Name_Counter : aliased String := -"PC";
+      Name_Subprog : aliased String := -"Subprogram";
+      Name_Params  : aliased String := -"Parameters";
+      Name_Loc     : aliased String := -"Location";
    begin
       Gtk.Scrolled_Window.Initialize (Widget);
-
       Set_Policy (Widget, Policy_Automatic, Policy_Automatic);
 
-      Gtk_New (Widget.Model, Columns_Types);
-      Gtk_New (Widget.Tree, Widget.Model);
+      Widget.Tree := Create_Tree_View
+        (Column_Types => (Frame_Num_Column       => GType_String,
+                          Program_Counter_Column => GType_String,
+                          Subprog_Name_Column    => GType_String,
+                          Params_Column          => GType_String,
+                          File_Location_Column   => GType_String),
+         Column_Names =>
+           (1 + Frame_Num_Column       => Name_Frame'Unchecked_Access,
+            1 + Program_Counter_Column => Name_Counter'Unchecked_Access,
+            1 + Subprog_Name_Column    => Name_Subprog'Unchecked_Access,
+            1 + Params_Column          => Name_Params'Unchecked_Access,
+            1 + File_Location_Column   => Name_Loc'Unchecked_Access),
+         Sortable_Columns => False);
+      Widget.Model := Gtk_Tree_Store (Get_Model (Widget.Tree));
 
       Add (Widget, Widget.Tree);
 
       Widget.Backtrace_Mask := Mask;
       Set_Column_Types (Widget);
 
-      Gtkada.Handlers.Object_Return_Callback.Object_Connect
-        (Widget.Tree, "button_press_event",
-         On_Button_Press_Event'Access, Widget);
+      Register_Contextual_Menu
+        (Kernel          => Get_Kernel (Debugger_Module_ID.all),
+         Event_On_Widget => Widget.Tree,
+         Object          => Widget,
+         ID              => Debugger_Module_ID,
+         Context_Func    => Context_Factory'Access);
 
       Gtkada.Handlers.Object_Callback.Object_Connect
         (Get_Selection (Widget.Tree), "changed",
@@ -562,7 +452,7 @@ package body GVD.Call_Stack is
             Next (Iter);
          end loop;
 
-         --  If no exsting call stack was found, create one
+         --  If no existing call stack was found, create one
 
          if Child = null and then Create_If_Necessary then
             Child := Create_Call_Stack (MDI, Subprog_Name);
