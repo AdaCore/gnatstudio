@@ -288,7 +288,7 @@ package body GVD.Canvas is
    --  Called when the data canvas is destroyed
 
    procedure On_Debugger_Terminate
-     (Process : access GObject_Record'Class);
+     (Canvas : access GObject_Record'Class);
    --  Called when the debugger is terminated
 
    procedure On_Data_Refresh (Canvas : access Gtk_Widget_Record'Class);
@@ -582,7 +582,7 @@ package body GVD.Canvas is
    exception
       when E : others =>
          Traces.Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+                       "Unexpected exception: " & Exception_Information (E));
    end On_Data_Refresh;
 
    ---------------------------
@@ -590,21 +590,15 @@ package body GVD.Canvas is
    ---------------------------
 
    procedure On_Debugger_Terminate
-     (Process : access GObject_Record'Class)
+     (Canvas : access GObject_Record'Class)
    is
-      P : constant Visual_Debugger := Visual_Debugger (Process);
+      C : constant GVD_Canvas := GVD_Canvas (Canvas);
    begin
-      --  Are we killing the last debugger ? If yes, update the preference to
-      --  automatically restart the call stack if appropriate next time
-
---        if Get_Debugger_List (GPS_Window (P.Window).Kernel).Next = null then
---           Set_Pref (GPS_Window (P.Window).Kernel,
---                     Show_Call_Stack, P.Stack /= null);
---        end if;
-
-      if P.Data /= null then
-         Close (GPS_Window (P.Window).MDI, P.Data);
-      end if;
+      Destroy (C);
+   exception
+      when E : others =>
+         Traces.Trace (Exception_Handle, "Unexpected exception: "
+                       & Exception_Information (E));
    end On_Debugger_Terminate;
 
    ----------------------------
@@ -886,6 +880,7 @@ package body GVD.Canvas is
                Group          => Group_Graphs,
                Default_Height => 200,
                Module         => Debugger_Module_ID);
+      Set_Title (Child, -"Debugger Data");
       Put (Get_MDI (Kernel), Child, Initial_Position => Position_Top);
       Set_Focus_Child (Child);
 
@@ -986,19 +981,10 @@ package body GVD.Canvas is
          end if;
 
          if Debugger.Data /= null then
---              Gtkada.Handlers.Object_Callback.Object_Connect
---                (Debugger, "process_stopped",
---                 Update_Call_Stack'Access,
---                 Slot_Object => Debugger.Stack);
---              Object_Callback.Object_Connect
---                (Debugger, "context_changed",
---                 Update_Call_Stack'Access,
---                 Slot_Object => Debugger.Stack);
-
             Object_Callback.Object_Connect
               (Debugger.Debugger_Text, "destroy",
                On_Debugger_Terminate'Access,
-               Slot_Object => Debugger);
+               Slot_Object => Debugger.Data);
          end if;
 
       else
