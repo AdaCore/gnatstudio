@@ -2407,18 +2407,53 @@ package body VCS_View_API is
      (Project   : Project_Type;
       Recursive : Boolean := False) return String_List.List
    is
-      Result : String_List.List;
+      use String_List;
+
+      Result : List;
+      Final  : List;
+      Node   : List_Node;
+      Prev   : List_Node;
    begin
       declare
          A : constant String_Array_Access
            := Source_Dirs (Project, Recursive);
       begin
          for J in A'Range loop
-            String_List.Append (Result, A (J).all);
+            Append (Result, A (J).all);
          end loop;
       end;
 
-      return Result;
+      --  The result of Source_Dirs can contain duplicate entries.
+      --  We need to remove these duplicates from the final result. The most
+      --  efficient way to do this (in O(N*log (N))) is to sort the list and
+      --  eliminate duplicates on the sorted list.
+
+      if Filenames_Are_Case_Sensitive then
+         Sort (Result);
+      else
+         Sort_Case_Insensitive (Result);
+      end if;
+
+      Node := First (Result);
+
+      while Node /= Null_Node loop
+         declare
+            S : constant String := Data (Node);
+         begin
+            if Prev = Null_Node
+              or else not File_Equal (Data (Prev), S)
+            then
+               Append (Final, S);
+            end if;
+
+            Prev := Node;
+            Node := Next (Node);
+         end;
+      end loop;
+
+      Free (Result);
+
+      return Final;
    end Get_Dirs_In_Project;
 
    ------------------------------
