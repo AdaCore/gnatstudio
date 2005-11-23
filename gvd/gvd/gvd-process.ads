@@ -24,10 +24,6 @@ with Glib.Object;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Expect; use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;
-with GNAT.TTY;
-pragma Warnings (On);
 
 with Gtk.Dialog;
 with Gtk.Main;
@@ -123,14 +119,9 @@ package GVD.Process is
       --  used from gvd-canvas.adb
 
       Debugger_Text           : Interactive_Console;
-
       Debuggee_Console        : Interactive_Console;
-      --  Separate console for debugged programs, if debugger supports ttys
-
-      Debuggee_TTY            : GNAT.TTY.TTY_Handle;
-      Debuggee_Descriptor     : GNAT.Expect.TTY.TTY_Process_Descriptor;
-      Debuggee_Id             : Gtk.Main.Timeout_Handler_Id := 0;
-      Cleanup_TTY             : Boolean := False;
+      --  Separate console for debugged programs, if debugger supports ttys.
+      --  See gvd-consoles.adb for these two fields
 
       Registered_Dialog       : Gtk.Dialog.Gtk_Dialog := null;
       --  Currently displayed dialog that should be deleted on next user input.

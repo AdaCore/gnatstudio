@@ -28,12 +28,20 @@ with Glib.Xml_Int;           use Glib.Xml_Int;
 with Gdk.Event;              use Gdk.Event;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Handlers;           use Gtk.Handlers;
+with Gtk.Main;               use Gtk.Main;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Dialogs;         use Gtkada.Dialogs;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
+with GNAT.TTY;               use GNAT.TTY;
+pragma Warnings (On);
+with GNAT.Expect;            use GNAT.Expect;
+with GNAT.Regpat;            use GNAT.Regpat;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
@@ -55,6 +63,13 @@ with Traces;                 use Traces;
 
 package body GVD.Consoles is
 
+   Regexp_Any : constant Pattern_Matcher :=
+     Compile (".+", Single_Line or Multiple_Lines);
+   --  Any non empty string, as long as possible.
+
+   Timeout       : constant Guint32 := 50;
+   --  Timeout between updates of the debuggee console
+
    type Debugger_Console_Record is new Interactive_Console_Record with
       record
          Process         : Visual_Debugger;
@@ -62,9 +77,25 @@ package body GVD.Consoles is
       end record;
    type Debugger_Console is access all Debugger_Console_Record'Class;
 
+   type Debuggee_Console_Record is new Interactive_Console_Record with
+      record
+         Process             : Visual_Debugger;
+         Debuggee_TTY        : GNAT.TTY.TTY_Handle;
+         Debuggee_Descriptor : GNAT.Expect.TTY.TTY_Process_Descriptor;
+         Debuggee_Id         : Gtk.Main.Timeout_Handler_Id := 0;
+         Cleanup_TTY         : Boolean := False;
+      end record;
+   type Debuggee_Console is access all Debuggee_Console_Record'Class;
+
+   package TTY_Timeout is new Gtk.Main.Timeout (Debuggee_Console);
+
    function Create_Console
      (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
    --  Create a new debugger console
+
+   function Create_Debuggee_Console
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
+   --  Create a new debuggee consolea
 
    function Complete_Command
      (Input  : String; Console : System.Address)
@@ -74,11 +105,23 @@ package body GVD.Consoles is
    procedure On_Destroy (Console : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal on the console.
 
+   procedure On_Debuggee_Destroy (Console : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" signal on the debugee console
+
+   function TTY_Cb (Console : Debuggee_Console) return Boolean;
+   --  Callback for communication with a tty.
+
    function Interpret_Command_Handler
      (Console            : access Interactive_Console_Record'Class;
       Input              : String;
       Console_User_Data  : System.Address) return String;
    --  Launch the command interpreter for Input and return the output.
+
+   function Debuggee_Console_Handler
+     (Console : access Interactive_Console_Record'Class;
+      Input   : String;
+      Object  : System.Address) return String;
+   --  Handler of I/O for the debuggee console.
 
    procedure On_Grab_Focus (Console : access Gtk_Widget_Record'Class);
    --  Callback for the "grab_focus" signal on the console.
@@ -97,6 +140,66 @@ package body GVD.Consoles is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle) return Glib.Xml_Int.Node_Ptr;
    --  Desktop-related functions (see Gtkada.MDI)
+
+   ---------------------------
+   -- Cleanup_TTY_If_Needed --
+   ---------------------------
+
+   procedure Cleanup_TTY_If_Needed
+     (Console : access Interactive_Console_Record'Class)
+   is
+      C : constant Debuggee_Console := Debuggee_Console (Console);
+   begin
+      if C.Cleanup_TTY then
+         Close_TTY (C.Debuggee_TTY);
+         Allocate_TTY (C.Debuggee_TTY);
+         Close_Pseudo_Descriptor (C.Debuggee_Descriptor);
+         Pseudo_Descriptor (C.Debuggee_Descriptor, C.Debuggee_TTY, 0);
+         Set_TTY (C.Process.Debugger, TTY_Name (C.Debuggee_TTY));
+         Flush (C.Debuggee_Descriptor);
+         C.Cleanup_TTY := False;
+      end if;
+   end Cleanup_TTY_If_Needed;
+
+   ------------
+   -- TTY_Cb --
+   ------------
+
+   function TTY_Cb (Console : Debuggee_Console) return Boolean is
+      Match  : Expect_Match;
+   begin
+      if Console.Process /= null then
+         Expect (Console.Debuggee_Descriptor, Match, Regexp_Any, Timeout => 1);
+
+         if Match /= Expect_Timeout then
+            Insert (Console,
+                    Expect_Out (Console.Debuggee_Descriptor),
+                    Add_LF => False);
+            Highlight_Child
+              (Find_MDI_Child (Console.Process.Window.MDI, Console));
+         end if;
+      end if;
+
+      return True;
+
+   exception
+      when Process_Died =>
+         Insert (Console,
+                 Expect_Out (Console.Debuggee_Descriptor),
+                 Add_LF => False);
+         Highlight_Child
+           (Find_MDI_Child (Console.Process.Window.MDI, Console));
+
+         Console.Cleanup_TTY := True;
+
+         if not Command_In_Process
+           (Get_Process (Console.Process.Debugger))
+         then
+            Cleanup_TTY_If_Needed (Console);
+         end if;
+
+         return True;
+   end TTY_Cb;
 
    ---------------------
    -- On_Button_Press --
@@ -146,6 +249,27 @@ package body GVD.Consoles is
          C.Process.Debugger_Text := null;
       end if;
    end On_Destroy;
+
+   -------------------------
+   -- On_Debuggee_Destroy --
+   -------------------------
+
+   procedure On_Debuggee_Destroy
+     (Console : access Gtk_Widget_Record'Class)
+   is
+      C : constant Debuggee_Console := Debuggee_Console (Console);
+   begin
+      if C.Process /= null then
+         C.Process.Debuggee_Console := null;
+      end if;
+
+      Close_Pseudo_Descriptor (C.Debuggee_Descriptor);
+      Close_TTY (C.Debuggee_TTY);
+
+      if C.Debuggee_Id /= 0 then
+         Gtk.Main.Timeout_Remove (C.Debuggee_Id);
+      end if;
+   end On_Debuggee_Destroy;
 
    -------------------
    -- On_Grab_Focus --
@@ -229,6 +353,30 @@ package body GVD.Consoles is
       return "";
    end Interpret_Command_Handler;
 
+   ------------------------------
+   -- Debuggee_Console_Handler --
+   ------------------------------
+
+   function Debuggee_Console_Handler
+     (Console : access Interactive_Console_Record'Class;
+      Input   : String;
+      Object  : System.Address) return String
+   is
+      pragma Unreferenced (Object);
+      C   : constant Debuggee_Console := Debuggee_Console (Console);
+      NL  : aliased Character := ASCII.LF;
+      N   : Integer;
+      pragma Unreferenced (N);
+
+   begin
+      if C.Process /= null then
+         N := Write
+           (TTY_Descriptor (C.Debuggee_TTY), Input'Address, Input'Length);
+         N := Write (TTY_Descriptor (C.Debuggee_TTY), NL'Address, 1);
+      end if;
+      return "";
+   end Debuggee_Console_Handler;
+
    --------------------
    -- Create_Console --
    --------------------
@@ -281,6 +429,41 @@ package body GVD.Consoles is
 
       return Child;
    end Create_Console;
+
+   -----------------------------
+   -- Create_Debuggee_Console --
+   -----------------------------
+
+   function Create_Debuggee_Console
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
+   is
+      Console : Debuggee_Console;
+      Child   : MDI_Child;
+   begin
+      Console := new Debuggee_Console_Record;
+      Initialize
+        (Console,
+         Prompt      => "",
+         Handler     => Debuggee_Console_Handler'Access,
+         User_Data   => Console.all'Address,
+         Font         => Get_Pref_Font (Default_Style),
+         History_List => null,
+         Key          => "gvd_tty_console",
+         Wrap_Mode    => Wrap_Char);
+
+      Widget_Callback.Connect (Console, "destroy", On_Debuggee_Destroy'Access);
+
+      Allocate_TTY (Console.Debuggee_TTY);
+
+      Gtk_New
+        (Child, Console,
+         Flags        => 0,
+         Group        => Group_Consoles,
+         Focus_Widget => Gtk_Widget (Get_View (Console)));
+      Set_Title (Child, -"Debugger Execution");
+      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
+      return Child;
+   end Create_Debuggee_Console;
 
    --------------------------------
    -- Attach_To_Debugger_Console --
@@ -349,6 +532,80 @@ package body GVD.Consoles is
       end if;
    end Attach_To_Debugger_Console;
 
+   --------------------------------
+   -- Attach_To_Debuggee_Console --
+   --------------------------------
+
+   procedure Attach_To_Debuggee_Console
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean)
+   is
+      Kernel  : constant Kernel_Handle :=
+        Get_Kernel (Debugger_Module_ID.all);
+      Button  : Message_Dialog_Buttons;
+      Child   : MDI_Child;
+      Iter    : Child_Iterator;
+      Console : Debuggee_Console;
+      pragma Unreferenced (Button);
+   begin
+      if Debugger.Debuggee_Console = null then
+         --  Do we have an existing unattached console ?
+         Iter := First_Child (Get_MDI (Kernel));
+         loop
+            Child := Get (Iter);
+            exit when Child = null;
+
+            if Get_Widget (Child).all in Debuggee_Console_Record'Class then
+               Console := Debuggee_Console (Get_Widget (Child));
+               if Console.Process = null then
+                  exit;
+               end if;
+               Console := null;
+            end if;
+
+            Next (Iter);
+         end loop;
+
+         --  If no exsting call stack was found, create one
+
+         if Child = null and then Create_If_Necessary then
+            Child   := Create_Debuggee_Console (Kernel);
+            Console := Debuggee_Console (Get_Widget (Child));
+         end if;
+
+         Console.Process           := Visual_Debugger (Debugger);
+         Debugger.Debuggee_Console := Interactive_Console (Console);
+
+         Set_TTY (Debugger.Debugger, TTY_Name (Console.Debuggee_TTY));
+         Pseudo_Descriptor
+           (Console.Debuggee_Descriptor, Console.Debuggee_TTY, 0);
+         Flush (Console.Debuggee_Descriptor);
+         Console.Debuggee_Id :=
+           TTY_Timeout.Add (Timeout, TTY_Cb'Access, Console.all'Access);
+
+         if Child /= null then
+            if Debugger.Debugger_Num = 1 then
+               Set_Title (Child, -"Debugger Execution");
+            else
+               Set_Title
+                 (Child, (-"Debugger Execution") & " <"
+                  & Image (Debugger.Debugger_Num) & ">");
+            end if;
+         end if;
+
+      else
+         Child := Find_MDI_Child (Get_MDI (Kernel), Debugger.Debuggee_Console);
+         if Child /= null then
+            Raise_Child (Child);
+         else
+            --  Something really bad happened: the stack window is not
+            --  part of the MDI, reset it.
+            Destroy (Debugger.Debuggee_Console);
+            Debugger.Debuggee_Console := null;
+         end if;
+      end if;
+   end Attach_To_Debuggee_Console;
+
    ------------------
    -- Load_Desktop --
    ------------------
@@ -362,6 +619,8 @@ package body GVD.Consoles is
    begin
       if Node.Tag.all = "Debugger_Console" then
          return Create_Console (Kernel);
+      elsif Node.Tag.all = "Debuggee_Console" then
+         return Create_Debuggee_Console (Kernel);
       end if;
       return null;
    end Load_Desktop;
@@ -380,6 +639,10 @@ package body GVD.Consoles is
       if Widget.all in Debugger_Console_Record'Class then
          N     := new Glib.Xml_Int.Node;
          N.Tag := new String'("Debugger_Console");
+         return N;
+      elsif Widget.all in Debuggee_Console_Record'Class then
+         N     := new Glib.Xml_Int.Node;
+         N.Tag := new String'("Debuggee_Console");
          return N;
       end if;
       return null;

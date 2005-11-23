@@ -31,7 +31,6 @@ with Glib; use Glib;
 
 with Gtk.Arguments;              use Gtk.Arguments;
 with Gtk.Dialog;                 use Gtk.Dialog;
-with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Object;                 use Gtk.Object;
@@ -49,7 +48,6 @@ with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
 with Display_Items;              use Display_Items;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel;
@@ -65,17 +63,11 @@ with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
-with Histories;                  use Histories;
 with Pixmaps_IDE;                use Pixmaps_IDE;
 with String_Utils;               use String_Utils;
 with VFS;                        use VFS;
 
 package body GVD.Process is
-
-   package TTY_Timeout is new Gtk.Main.Timeout (Visual_Debugger);
-
-   function TTY_Cb (Data : Visual_Debugger) return Boolean;
-   --  Callback for communication with a tty.
 
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
@@ -92,10 +84,6 @@ package body GVD.Process is
    Signals : constant Chars_Ptr_Array :=
      "executable_changed" + "process_stopped" + "context_changed" +
      "debugger_closed";
-
-   Regexp_Any : constant Pattern_Matcher :=
-     Compile (".+", Single_Line or Multiple_Lines);
-   --  Any non empty string, as long as possible.
 
    -----------------------
    -- Local Subprograms --
@@ -119,83 +107,6 @@ package body GVD.Process is
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  Callback for the "delete_event" signal on the editor text
 
-   function Debuggee_Console_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Input   : String;
-      Object  : System.Address) return String;
-   --  Handler of I/O for the debuggee console.
-
-   function On_Debuggee_Console_Delete_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-   --  Callback for the "delete_event" signal on the debuggee console.
-
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Visual_Debugger);
-
-   ------------
-   -- TTY_Cb --
-   ------------
-
-   function TTY_Cb (Data : Visual_Debugger) return Boolean is
-      Match  : Expect_Match;
-   begin
-      Expect (Data.Debuggee_Descriptor, Match, Regexp_Any, Timeout => 1);
-
-      if Match /= Expect_Timeout then
-         Insert (Data.Debuggee_Console,
-                 Expect_Out (Data.Debuggee_Descriptor),
-                 Add_LF => False);
-         Highlight_Child
-           (Find_MDI_Child (Data.Window.MDI, Data.Debuggee_Console));
-      end if;
-
-      return True;
-
-   exception
-      when Process_Died =>
-         Insert (Data.Debuggee_Console,
-                 Expect_Out (Data.Debuggee_Descriptor),
-                 Add_LF => False);
-         Highlight_Child
-           (Find_MDI_Child (Data.Window.MDI, Data.Debuggee_Console));
-
-         if Command_In_Process (Get_Process (Data.Debugger)) then
-            Data.Cleanup_TTY := True;
-         else
-            Close_TTY (Data.Debuggee_TTY);
-            Allocate_TTY (Data.Debuggee_TTY);
-            Close_Pseudo_Descriptor (Data.Debuggee_Descriptor);
-            Pseudo_Descriptor (Data.Debuggee_Descriptor, Data.Debuggee_TTY, 0);
-            Set_TTY (Data.Debugger, TTY_Name (Data.Debuggee_TTY));
-            Flush (Data.Debuggee_Descriptor);
-         end if;
-
-         return True;
-   end TTY_Cb;
-
-   ------------------------------
-   -- Debuggee_Console_Handler --
-   ------------------------------
-
-   function Debuggee_Console_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Input   : String;
-      Object  : System.Address) return String
-   is
-      pragma Unreferenced (Console);
-      Top : constant Visual_Debugger := Convert (Object);
-      NL  : aliased Character := ASCII.LF;
-      N   : Integer;
-      pragma Unreferenced (N);
-
-   begin
-      N := Write
-        (TTY_Descriptor (Top.Debuggee_TTY), Input'Address, Input'Length);
-      N := Write (TTY_Descriptor (Top.Debuggee_TTY), NL'Address, 1);
-      return "";
-   end Debuggee_Console_Handler;
-
    ---------------------------------
    -- On_Editor_Text_Delete_Event --
    ---------------------------------
@@ -208,34 +119,6 @@ package body GVD.Process is
    begin
       return False;
    end On_Editor_Text_Delete_Event;
-
-   --------------------------------------
-   -- On_Debuggee_Console_Delete_Event --
-   --------------------------------------
-
-   function On_Debuggee_Console_Delete_Event
-     (Object : access GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      pragma Unreferenced (Params);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Object);
-
-   begin
-      if Process.Exiting then
-         Process.Debuggee_Console := null;
-         Close_Pseudo_Descriptor (Process.Debuggee_Descriptor);
-         Close_TTY (Process.Debuggee_TTY);
-
-         if Process.Debuggee_Id /= 0 then
-            Gtk.Main.Timeout_Remove (Process.Debuggee_Id);
-         end if;
-
-         return False;
-      else
-         return True;
-      end if;
-   end On_Debuggee_Console_Delete_Event;
 
    -----------------------
    -- Add_Regexp_Filter --
@@ -444,15 +327,8 @@ package body GVD.Process is
          end if;
       end if;
 
-      if Process.Cleanup_TTY then
-         Process.Cleanup_TTY := False;
-         Close_TTY (Process.Debuggee_TTY);
-         Allocate_TTY (Process.Debuggee_TTY);
-         Close_Pseudo_Descriptor (Process.Debuggee_Descriptor);
-         Pseudo_Descriptor
-           (Process.Debuggee_Descriptor, Process.Debuggee_TTY, 0);
-         Set_TTY (Process.Debugger, TTY_Name (Process.Debuggee_TTY));
-         Flush (Process.Debuggee_Descriptor);
+      if Process.Debuggee_Console /= null then
+         Cleanup_TTY_If_Needed (Process.Debuggee_Console);
       end if;
 
       Process.Post_Processing := False;
@@ -704,9 +580,6 @@ package body GVD.Process is
       Debugger_Name   : String := "";
       Success         : out Boolean)
    is
-      Timeout       : constant Guint32 := 50;
-
-      Child         : MDI_Child;
       Window        : constant GPS_Window :=
         GPS_Window (Process.Window);
       Buttons       : Message_Dialog_Buttons;
@@ -796,46 +669,15 @@ package body GVD.Process is
          Set_Sensitive (Widget, WTX_Version >= 3);
       end if;
 
-      if Get_Pref (Execution_Window)
-        and then Support_TTY (Process.Debugger)
-        and then GNAT.TTY.TTY_Supported
-      then
-         Gtk_New
-           (Process.Debuggee_Console,
-            "",
-            Debuggee_Console_Handler'Access,
-            Process.all'Address,
-            Get_Pref_Font (Default_Style),
-            History_List => null,
-            Key          => "gvd_tty_console",
-            Wrap_Mode    => Wrap_Char);
+      --  If we have a debuggee console in the desktop, always use it.
+      --  Otherwise, we only create one when the user has asked for it
 
-         Object_Return_Callback.Object_Connect
-           (Process.Debuggee_Console, "delete_event",
-            On_Debuggee_Console_Delete_Event'Access, Process);
-
-         Allocate_TTY (Process.Debuggee_TTY);
-         Set_TTY (Process.Debugger, TTY_Name (Process.Debuggee_TTY));
-         Pseudo_Descriptor
-           (Process.Debuggee_Descriptor, Process.Debuggee_TTY, 0);
-         Flush (Process.Debuggee_Descriptor);
-
-         Process.Debuggee_Id :=
-           TTY_Timeout.Add (Timeout, TTY_Cb'Access, Process.all'Access);
-
-         Gtk_New
-           (Child, Process.Debuggee_Console,
-            Group => Group_Consoles,
-            Focus_Widget => Gtk_Widget (Get_View (Process.Debuggee_Console)));
-         Put (Window.MDI, Child, Initial_Position => Position_Bottom);
-
-         if Process.Debugger_Num = 1 then
-            Set_Title (Child, -"Debugger Execution");
-         else
-            Set_Title (Child, (-"Debugger Execution") & " <" &
-                       Image (Process.Debugger_Num) & ">");
-         end if;
-      end if;
+      Attach_To_Debuggee_Console
+        (Process,
+         Create_If_Necessary =>
+           Get_Pref (Execution_Window)
+           and then Support_TTY (Process.Debugger)
+           and then GNAT.TTY.TTY_Supported);
 
       Set_Busy (Process, False);
       Success := True;

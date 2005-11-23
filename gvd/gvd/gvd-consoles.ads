@@ -22,6 +22,7 @@
 
 with GVD.Process;
 with GPS.Kernel;
+with Interactive_Consoles;
 
 package GVD.Consoles is
 
@@ -33,8 +34,18 @@ package GVD.Consoles is
    --  If none exists, one is created if Create_If_Necessary is true.
    --  Nothing is done when Debugger is already attached to a console.
 
+   procedure Attach_To_Debuggee_Console
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean);
+   --  Attach to the console for the program that is debugged.
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the consoles
+
+   procedure Cleanup_TTY_If_Needed
+     (Console : access Interactive_Consoles.Interactive_Console_Record'Class);
+   --  Detatch the TTY from the debuggee console.
+   --  Nothing is done if Console.Cleanup_TTY is False
 
 end GVD.Consoles;
