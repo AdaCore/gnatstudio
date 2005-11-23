@@ -29,14 +29,10 @@ with GNAT.Expect.TTY;
 with GNAT.TTY;
 pragma Warnings (On);
 
-with Gdk.Color;
-with Gtk.Menu;
 with Gtk.Dialog;
 with Gtk.Main;
 with Gtk.Window;
 with Gtk.Widget;
-
-with Pango.Font;
 
 with Process_Proxies;     use Process_Proxies;
 with Debugger;            use Debugger;
@@ -127,8 +123,6 @@ package GVD.Process is
       --  used from gvd-canvas.adb
 
       Debugger_Text           : Interactive_Console;
-      Debugger_Text_Font      : Pango.Font.Pango_Font_Description;
-      Debugger_Text_Highlight_Color : Gdk.Color.Gdk_Color;
 
       Debuggee_Console        : Interactive_Console;
       --  Separate console for debugged programs, if debugger supports ttys
@@ -180,8 +174,6 @@ package GVD.Process is
       --  Last match in Current_Output.
       --  This is needed to avoid matching twice the same string and to
       --  optimize the handling of regexp filters.
-
-      Contextual_Menu         : Gtk.Menu.Gtk_Menu;
 
       Current_File            : VFS.Virtual_File;
       --  The file containing the current location.
