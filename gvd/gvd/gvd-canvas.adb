@@ -813,7 +813,6 @@ package body GVD.Canvas is
          Iter := Start (C.Canvas);
          if Get (Iter) /= null then
             Unselect_All (C.Process);
---            Select_Item (Display_Item (Get (Iter)), null);
          end if;
 
       elsif Get_Button (Event) = 3

@@ -28,7 +28,6 @@ with Glib.Xml_Int;
 with Glib;                   use Glib;
 
 with Gtk.Arguments;          use Gtk.Arguments;
---  with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Handlers;           use Gtk.Handlers;
