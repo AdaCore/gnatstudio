@@ -27,7 +27,6 @@ with Gdk.Color;                 use Gdk.Color;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -200,7 +199,6 @@ package body GVD_Module is
       --  The current visual debugger
 
       Breakpoints_Editor             : Breakpoint_Editor_Access;
-      PD_Dialog                      : PD_Dialog_Access;
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
@@ -350,10 +348,6 @@ package body GVD_Module is
    procedure On_Kill
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Kill
-
-   procedure On_PD
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Protection Domains
 
    procedure On_Edit_Breakpoints
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -783,19 +777,6 @@ package body GVD_Module is
    begin
       return Gtk_Window (GVD_Module_ID.Breakpoints_Editor);
    end Get_Breakpoints_Editor;
-
-   -------------------
-   -- Get_PD_Dialog --
-   -------------------
-
-   function Get_PD_Dialog
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtk.Dialog.Gtk_Dialog
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      return Gtk_Dialog (GVD_Module_ID.PD_Dialog);
-   end Get_PD_Dialog;
 
    -----------------------
    -- Get_Debugger_List --
@@ -1398,51 +1379,6 @@ package body GVD_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Interrupt;
-
-   -----------
-   -- On_PD --
-   -----------
-
-   procedure On_PD
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-
-   begin
-      if Process = null or else Process.Debugger = null then
-         return;
-      end if;
-
-      if Command_In_Process (Get_Process (Process.Debugger)) then
-         Button := Message_Dialog
-           ((-"Cannot display protection domain list while the " &
-             "debugger is busy.") &
-            ASCII.LF &
-            (-"Interrupt the debugger or wait for its availability."),
-           Dialog_Type => Warning,
-           Buttons => Button_OK);
-         return;
-      end if;
-
-      if GVD_Module_ID.PD_Dialog = null then
-         Gtk_New (GVD_Module_ID.PD_Dialog, Gtk_Window (Top));
-      end if;
-
-      Show_All (GVD_Module_ID.PD_Dialog);
-      Gdk_Raise (Get_Window (GVD_Module_ID.PD_Dialog));
-      Update (GVD_Module_ID.PD_Dialog, Process);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_PD;
 
    -------------------------
    -- On_Edit_Breakpoints --
@@ -2651,10 +2587,6 @@ package body GVD_Module is
 
          Remove_Debugger_Columns (Kernel, VFS.No_File);
 
-         if GVD_Module_ID.PD_Dialog /= null then
-            Hide (GVD_Module_ID.PD_Dialog);
-         end if;
-
          if GVD_Module_ID.Breakpoints_Editor /= null then
             Hide (GVD_Module_ID.Breakpoints_Editor);
          end if;
@@ -3295,9 +3227,6 @@ package body GVD_Module is
 
       --  Add debugger menus
 
-      Mitem := Register_Menu (Kernel, Data_Sub, -"_Protection Domains", "",
-                              On_PD'Access);
-      Set_Sensitive (Mitem, False);
       Register_Menu (Kernel, Debug_Sub, Ref_Item => -"Data");
       Register_Menu (Kernel, Debug_Sub, -"_Connect to Board...", "",
                      On_Connect_To_Board'Access);
@@ -3403,10 +3332,6 @@ package body GVD_Module is
    procedure Destroy (Id : in out GVD_Module_Record) is
    begin
       Debug_Terminate (Get_Kernel (Id));
-
-      if Id.PD_Dialog /= null then
-         Destroy (Id.PD_Dialog);
-      end if;
    end Destroy;
 
    ----------------

@@ -20,97 +20,21 @@
 
 with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with GNAT.Regpat;           use GNAT.Regpat;
-
-with Glib;                  use Glib;
 
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Handlers;          use Gtk.Handlers;
 
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 
-with Config;                use Config;
 with GPS.Intl;              use GPS.Intl;
-with GPS.Main_Window;       use GPS.Main_Window;
 with GVD.Process;           use GVD.Process;
 with GVD.Types;             use GVD.Types;
-with GVD_Module;            use GVD_Module;
 with Traces;                use Traces;
 
 package body GVD.Dialogs.Callbacks is
 
    use GVD;
    use Gtk.Arguments;
-
-   -----------------------------
-   -- On_Task_List_Select_Row --
-   -----------------------------
-
-   procedure On_Task_List_Select_Row
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Index         : constant Gint := To_Gint (Params, 1);
-      Str           : constant String :=
-        Get_Text (Gtk_Clist (Object), Index, 0);
-      Top           : constant GVD_Dialog :=
-        GVD_Dialog (Get_Toplevel (Object));
-      Main_Window   : constant GPS_Window :=
-        GPS_Window (Top.Main_Window);
-      Process       : constant Visual_Debugger :=
-        Get_Current_Process (Main_Window);
-      Matched       : Match_Array (0 .. 0);
-      Info          : PD_Information_Array (1 .. Max_PD);
-      Len           : Natural;
-      PD_Dialog     : constant GVD_Dialog :=
-        GVD_Dialog (Get_PD_Dialog (Main_Window.Kernel));
-
-   begin
-      if Process.Debugger = null then
-         Hide (Top);
-      end if;
-
---        if Task_Dialog /= null and then Top = Task_Dialog then
---           Task_Switch
---          (Process.Debugger, Natural (Index) + 1, Mode => GVD.Types.Visible);
-
-      if PD_Dialog /= null and then Top = PD_Dialog then
-         Match ("(0x)?[0-9a-fA-F]+", Str, Matched);
-
-         --  ??? The Command_Type was changed from Visible to Hidden
-         --  (revision 1.62) because the debugger is still
-         --  processing the previous command (Info_PD), and there is
-         --  an assertion failure in Debugger.Send_Full. This does
-         --  not happen for Task_Switch or Thread_Switch (above)
-
-         if Matched (0) /= No_Match then
-            PD_Switch
-              (Process.Debugger,
-               Str (Matched (0).First .. Matched (0).Last),
-               Mode => GVD.Types.Hidden);
-
-            --  After switching to a new protection domain, we want the
-            --  PD dialog to reflect that change immediately
-
-            Info_PD (Process.Debugger, Info, Len);
-            Freeze (Gtk_Clist (Object));
-
-            Update_PD (PD_Dialog, Info (1 .. Len));
-            Handler_Block (Object, PD_Dialog.Select_Row_Id);
-            Select_Row (Gtk_Clist (Object), Index, 0);
-            Handler_Unblock (Object, PD_Dialog.Select_Row_Id);
-            Thaw (Gtk_Clist (Object));
-         end if;
-
-      else
-         raise Program_Error;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Task_List_Select_Row;
 
    -----------------------------
    -- On_Close_Button_Clicked --

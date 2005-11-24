@@ -28,13 +28,11 @@ with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Main_Window;       use GPS.Main_Window;
 with GPS.Intl;              use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
-with GVD.Callbacks;         use GVD.Callbacks;
 with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
 with GVD.Process;           use GVD.Process;
 with GVD.Types;             use GVD.Types;
 with GVD.Views;             use GVD.Views;
 with GVD;                   use GVD;
-with GVD_Module;            use GVD_Module;
 with Glib;                  use Glib;
 with Glib.Object;           use Glib.Object;
 with Gtk.Enums;             use Gtk.Enums;
@@ -62,6 +60,17 @@ package body GVD.Dialogs is
    Question_Titles : constant Gtkada.Types.Chars_Ptr_Array :=
      "" + (-"Choice");
 
+   generic
+      with function Get_View
+        (Process : access Visual_Debugger_Record'Class)
+         return Gtk_Scrolled_Window;
+      with procedure Attach
+        (Process : access Visual_Debugger_Record'Class;
+         Create_If_Necessary : Boolean);
+   procedure Open_View
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Open one of the views, and update it immediately
+
    -----------------
    -- Thread View --
    -----------------
@@ -78,19 +87,22 @@ package body GVD.Dialogs is
      (Debugger : access Debugger_Root'Class;
       Info     : out Thread_Information_Array;
       Len      : out Natural);
+   procedure Info_PD_Dispatch
+     (Debugger : access Debugger_Root'Class;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural);
 
+   type Thread_View_Record;
    type Switch_Subprogram is access procedure
-     (Debugger : access Debugger_Root'Class;
-      Num      : Natural;
-      Mode     : GVD.Types.Command_Type);
+     (View : access Thread_View_Record'Class; Line : String);
    procedure Task_Switch_Dispatch
-     (Debugger : access Debugger_Root'Class;
-      Num      : Natural;
-      Mode     : GVD.Types.Command_Type);
+     (View : access Thread_View_Record'Class; Line : String);
    procedure Thread_Switch_Dispatch
-     (Debugger : access Debugger_Root'Class;
-      Num      : Natural;
-      Mode     : GVD.Types.Command_Type);
+     (View : access Thread_View_Record'Class; Line : String);
+   procedure PD_Switch_Dispatch
+     (View : access Thread_View_Record'Class; Line : String);
+   --  Would be nice to use a primitive operation, but that would require
+   --  declaring the types in the spec, not nice...
 
    type Thread_View_Record is new Scrolled_Views.Process_View_Record with
       record
@@ -125,10 +137,6 @@ package body GVD.Dialogs is
    procedure Update_Threads (Thread : access Gtk_Widget_Record'Class);
    --  Update the contents of the thread dialog.
 
-   procedure On_Threads
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Threads
-
    procedure On_Thread_Selection (Thread : access Gtk_Widget_Record'Class);
    --  Called when a thread was selected in the view
 
@@ -148,10 +156,6 @@ package body GVD.Dialogs is
       Kernel : access Kernel_Handle_Record'Class);
    --  See inherited documentation
 
-   procedure On_Tasks
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Tasks
-
    package Tasks_Views is new Scrolled_Views.Simple_Views
      (Module_Name        => "Tasks_View",
       View_Name          => -"Tasks",
@@ -160,29 +164,38 @@ package body GVD.Dialogs is
       Set_View           => Set_Task_View,
       Initialize         => Initialize);
 
+   -----------------------------
+   -- Protection domains view --
+   -----------------------------
+
+   type PD_View_Record is new Thread_View_Record with null record;
+   function Get_PD_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Scrolled_Window;
+   procedure Set_PD_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Scrolled_Window);
+   procedure Initialize
+     (PDs    : access PD_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class);
+   --  See inherited documentation
+
+   package PD_Views is new Scrolled_Views.Simple_Views
+     (Module_Name        => "PD_View",
+      View_Name          => -"Protection Domains",
+      Formal_View_Record => PD_View_Record,
+      Get_View           => Get_PD_View,
+      Set_View           => Set_PD_View,
+      Initialize         => Initialize);
+
    ----------
    -- Misc --
    ----------
-
-   procedure Initialize
-     (Dialog      : access GVD_Dialog_Record'Class;
-      Title       : String;
-      Main_Window : Gtk_Window);
-   --  Create a standard dialog.
-
-   procedure Initialize_Task_Thread
-     (Dialog : access GVD_Dialog_Record'Class);
-   --  Common initializations between task and thread dialogs.
 
    function Delete_Dialog
      (Dialog : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the user deletes a dialog by clicking on the small
    --  button in the title bar of the window.
-
-   procedure Update_Task_Thread
-     (Dialog   : access GVD_Dialog_Record'Class;
-      Info     : in out Thread_Information_Array);
-   --  Common operations between task and thread dialogs.
 
    procedure Attach_To_Thread_Dialog
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
@@ -192,6 +205,62 @@ package body GVD.Dialogs is
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
       Create_If_Necessary : Boolean)
       renames Tasks_Views.Attach_To_View;
+   procedure Attach_To_PD_Dialog
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean)
+      renames PD_Views.Attach_To_View;
+
+   ---------------
+   -- Open_View --
+   ---------------
+
+   procedure Open_View
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot display tasks list while the debugger is busy.") &
+            ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
+         return;
+      end if;
+
+      Attach (Process, Create_If_Necessary => True);
+      Update_Threads (Get_View (Process));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Open_View;
+
+   ----------------------------
+   -- Generics instantiation --
+   ----------------------------
+
+   procedure On_Threads is new Open_View
+     (Get_Thread_View, Attach_To_Thread_Dialog);
+   --  Debug->Data->Threads
+
+   procedure On_Tasks is new Open_View
+     (Get_Task_View, Attach_To_Tasks_Dialog);
+   --  Debug->Data->Tasks
+
+   procedure On_PD is new Open_View (Get_PD_View, Attach_To_PD_Dialog);
+   --  Debug->Data->PD
 
    ---------------------------
    -- Info_Threads_Dispatch --
@@ -217,16 +286,35 @@ package body GVD.Dialogs is
       Info_Tasks (Debugger, Info, Len);
    end Info_Tasks_Dispatch;
 
+   ----------------------
+   -- Info_PD_Dispatch --
+   ----------------------
+
+   procedure Info_PD_Dispatch
+     (Debugger : access Debugger_Root'Class;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural) is
+   begin
+      Info_PD (Debugger, Info, Len);
+   end Info_PD_Dispatch;
+
    --------------------------
    -- Task_Switch_Dispatch --
    --------------------------
 
    procedure Task_Switch_Dispatch
-     (Debugger : access Debugger_Root'Class;
-      Num      : Natural;
-      Mode     : GVD.Types.Command_Type) is
+     (View : access Thread_View_Record'Class; Line : String)
+   is
+      Matched : Match_Array (0 .. 0);
    begin
-      Task_Switch (Debugger, Num, Mode);
+      Match ("[0-9]+", Line, Matched);
+
+      if Matched (0) /= No_Match then
+         Task_Switch
+           (Get_Process (View).Debugger,
+            Natural'Value (Line (Matched (0).First .. Matched (0).Last)),
+            Mode => GVD.Types.Visible);
+      end if;
    end Task_Switch_Dispatch;
 
    ----------------------------
@@ -234,12 +322,48 @@ package body GVD.Dialogs is
    ----------------------------
 
    procedure Thread_Switch_Dispatch
-     (Debugger : access Debugger_Root'Class;
-      Num      : Natural;
-      Mode     : GVD.Types.Command_Type) is
+     (View : access Thread_View_Record'Class; Line : String)
+   is
+      Matched : Match_Array (0 .. 0);
    begin
-      Thread_Switch (Debugger, Num, Mode);
+      Match ("[0-9]+", Line, Matched);
+
+      if Matched (0) /= No_Match then
+         Thread_Switch
+           (Get_Process (View).Debugger,
+            Natural'Value (Line (Matched (0).First .. Matched (0).Last)),
+            Mode => GVD.Types.Visible);
+      end if;
    end Thread_Switch_Dispatch;
+
+   ------------------------
+   -- PD_Switch_Dispatch --
+   ------------------------
+
+   procedure PD_Switch_Dispatch
+     (View : access Thread_View_Record'Class; Line : String)
+   is
+      Matched : Match_Array (0 .. 0);
+   begin
+      Match ("(0x)?[0-9a-fA-F]+", Line, Matched);
+
+      --  ??? The Command_Type was changed from Visible to Hidden
+      --  (revision 1.62) because the debugger is still
+      --  processing the previous command (Info_PD), and there is
+      --  an assertion failure in Debugger.Send_Full. This does
+      --  not happen for Task_Switch or Thread_Switch (above)
+
+      if Matched (0) /= No_Match then
+         PD_Switch
+           (Get_Process (View).Debugger,
+            Line (Matched (0).First .. Matched (0).Last),
+            Mode => GVD.Types.Hidden);
+
+         --  After switching to a new protection domain, we want the
+         --  PD dialog to reflect that change immediately
+         Update_Threads (View);
+      end if;
+   end PD_Switch_Dispatch;
 
    ---------------------
    -- Register_Module --
@@ -252,88 +376,18 @@ package body GVD.Dialogs is
       Data_Sub : constant String := Debug & (-"D_ata") & '/';
    begin
       Register_Menu
+        (Kernel, Data_Sub, -"_Protection Domains", "", On_PD'Access);
+      Register_Menu
         (Kernel, Data_Sub, -"_Threads", "",
          On_Threads'Access, Ref_Item => -"Protection Domains");
       Register_Menu
         (Kernel, Data_Sub, -"Ta_sks", "",
          On_Tasks'Access, Ref_Item => -"Protection Domains");
+
       Thread_Views.Register_Desktop_Functions;
       Tasks_Views.Register_Desktop_Functions;
+      PD_Views.Register_Desktop_Functions;
    end Register_Module;
-
-   ----------------
-   -- On_Threads --
-   ----------------
-
-   procedure On_Threads
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-
-   begin
-      if Process = null or else Process.Debugger = null then
-         return;
-      end if;
-
-      if Command_In_Process (Get_Process (Process.Debugger)) then
-         Button := Message_Dialog
-           ((-"Cannot display threads list while the debugger is busy.") &
-            ASCII.LF &
-            (-"Interrupt the debugger or wait for its availability."),
-           Dialog_Type => Warning,
-           Buttons => Button_OK);
-         return;
-      end if;
-
-      Attach_To_Thread_Dialog (Process, Create_If_Necessary => True);
-      Update_Threads (Get_Thread_View (Process));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Threads;
-
-   --------------
-   -- On_Tasks --
-   --------------
-
-   procedure On_Tasks
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-
-   begin
-      if Process = null or else Process.Debugger = null then
-         return;
-      end if;
-
-      if Command_In_Process (Get_Process (Process.Debugger)) then
-         Button := Message_Dialog
-           ((-"Cannot display tasks list while the debugger is busy.") &
-            ASCII.LF &
-            (-"Interrupt the debugger or wait for its availability."),
-           Dialog_Type => Warning,
-           Buttons => Button_OK);
-         return;
-      end if;
-
-      Attach_To_Tasks_Dialog (Process, Create_If_Necessary => True);
-      Update_Threads (Get_Task_View (Process));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Tasks;
 
    -------------------------
    -- On_Thread_Selection --
@@ -343,7 +397,6 @@ package body GVD.Dialogs is
       T     : constant Thread_View := Thread_View (Thread);
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (T.Tree));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
-      Matched : Match_Array (0 .. 0);
    begin
       while Iter /= Null_Iter
         and then not Iter_Is_Selected (Get_Selection (T.Tree), Iter)
@@ -352,18 +405,7 @@ package body GVD.Dialogs is
       end loop;
 
       if Iter /= Null_Iter then
-         declare
-            Str : constant String := Get_String (Model, Iter, 0);
-         begin
-            Match ("[0-9]+", Str, Matched);
-
-            if Matched (0) /= No_Match then
-               T.Switch
-                 (Get_Process (T).Debugger,
-                  Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
-                  Mode => GVD.Types.Visible);
-            end if;
-         end;
+         T.Switch (T, Get_String (Model, Iter, 0));
       end if;
 
    exception
@@ -416,16 +458,31 @@ package body GVD.Dialogs is
       Process.Tasks := Gtk_Widget (View);
    end Set_Task_View;
 
+   -----------------
+   -- Get_PD_View --
+   -----------------
+
+   function Get_PD_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Scrolled_Window is
+   begin
+      return Gtk_Scrolled_Window (Process.PDs);
+   end Get_PD_View;
+
+   -----------------
+   -- Set_PD_View --
+   -----------------
+
+   procedure Set_PD_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Scrolled_Window) is
+   begin
+      Process.PDs := Gtk_Widget (View);
+   end Set_PD_View;
+
    -------------
    -- Gtk_New --
    -------------
-   procedure Gtk_New
-     (PD_Dialog  : out PD_Dialog_Access;
-      Main_Window : Gtk_Window) is
-   begin
-      PD_Dialog := new PD_Dialog_Record;
-      Initialize (PD_Dialog, Main_Window);
-   end Gtk_New;
 
    procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
@@ -454,57 +511,6 @@ package body GVD.Dialogs is
       Widget_Callback.Object_Connect
         (Process, "process_stopped", Update_Threads'Access, Thread);
    end On_Attach;
-
-   ------------------------
-   -- Update_Task_Thread --
-   ------------------------
-
-   procedure Update_Task_Thread
-     (Dialog : access GVD_Dialog_Record'Class;
-      Info   : in out Thread_Information_Array)
-   is
-      Num_Columns : Thread_Fields;
-      Row         : Gint;
-      pragma Unreferenced (Row);
-
-   begin
-      if Dialog.List = null and then Info'Length > 0 then
-         Num_Columns := Info (Info'First).Num_Fields;
-         Gtk_New
-           (Dialog.List, Gint (Num_Columns), Info (Info'First).Information);
-         Show_All (Dialog.List);
-         Dialog.Select_Row_Id := Widget_Callback.Connect
-           (Dialog.List,
-            "select_row",
-            On_Task_List_Select_Row'Access);
-         Add (Dialog.Scrolledwindow1, Dialog.List);
-      end if;
-
-      if Info'Length > 0 then
-         Freeze (Dialog.List);
-         Clear (Dialog.List);
-
-         for J in Info'First + 1 .. Info'Last loop
-            Row := Append (Dialog.List, Info (J).Information);
-         end loop;
-
-         Row := Columns_Autosize (Dialog.List);
-         Thaw (Dialog.List);
-      end if;
-
-      Free (Info);
-   end Update_Task_Thread;
-
-   -----------------
-   --  Update_PD  --
-   -----------------
-
-   procedure Update_PD
-     (Dialog   : access GVD_Dialog_Record'Class;
-      Info     : in out PD_Information_Array) is
-   begin
-      Update_Task_Thread (Dialog, Info);
-   end Update_PD;
 
    --------------------
    -- Update_Threads --
@@ -577,114 +583,6 @@ package body GVD.Dialogs is
       end if;
    end Update_Threads;
 
-   ------------
-   -- Update --
-   ------------
-
-   procedure Update
-     (PD_Dialog : access PD_Dialog_Record;
-      Debugger   : access Glib.Object.GObject_Record'Class)
-   is
-      Process : constant Process_Proxy_Access :=
-        Get_Process (Visual_Debugger (Debugger).Debugger);
-      Info    : PD_Information_Array (1 .. Max_PD);
-      Len     : Natural;
-
-   begin
-      if not Visible_Is_Set (PD_Dialog) then
-         return;
-      end if;
-
-      --  If the debugger was killed, no need to refresh
-
-      if Process = null then
-         if PD_Dialog.List /= null then
-            Thaw (PD_Dialog.List);
-         end if;
-
-         return;
-      end if;
-
-      --  Read the information from the debugger
-      Info_PD (Visual_Debugger (Debugger).Debugger, Info, Len);
-      Update_PD (PD_Dialog, Info (1 .. Len));
-   end Update;
-
-   ----------------------------
-   -- On_PD_Process_Stopped --
-   ----------------------------
-
-   procedure On_PD_Process_Stopped
-     (Widget : access Glib.Object.GObject_Record'Class)
-   is
-      Tab       : constant Visual_Debugger := Visual_Debugger (Widget);
-      PD_Dialog : constant PD_Dialog_Access :=
-        PD_Dialog_Access (Get_PD_Dialog (Tab.Window.Kernel));
-
-   begin
-      if PD_Dialog /= null then
-         Update (PD_Dialog, Tab);
-      end if;
-   end On_PD_Process_Stopped;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Dialog      : access GVD_Dialog_Record'Class;
-      Title       : String;
-      Main_Window : Gtk_Window) is
-   begin
-      Gtk.Dialog.Initialize (Dialog, Title, Main_Window, 0);
-      Dialog.Main_Window := Main_Window;
-
-      Set_Policy (Dialog, False, True, False);
-      Set_Position (Dialog, Win_Pos_Mouse);
-      Set_Default_Size (Dialog, -1, 200);
-
-      Dialog.Vbox1 := Get_Vbox (Dialog);
-      Set_Homogeneous (Dialog.Vbox1, False);
-      Set_Spacing (Dialog.Vbox1, 0);
-
-      Dialog.Hbox1 := Get_Action_Area (Dialog);
-      Set_Border_Width (Dialog.Hbox1, 5);
-      Set_Homogeneous (Dialog.Hbox1, True);
-      Set_Spacing (Dialog.Hbox1, 5);
-
-      Gtk_New (Dialog.Hbuttonbox1);
-      Pack_Start (Dialog.Hbox1, Dialog.Hbuttonbox1, True, True, 0);
-      Set_Spacing (Dialog.Hbuttonbox1, 10);
-      Set_Child_Size (Dialog.Hbuttonbox1, 85, 27);
-      Set_Layout (Dialog.Hbuttonbox1, Buttonbox_Spread);
-
-      Gtk_New_From_Stock (Dialog.Close_Button, Stock_Close);
-      Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
-
-      Return_Callback.Connect
-        (Dialog, "delete_event",
-         Return_Callback.To_Marshaller (Delete_Dialog'Access));
-   end Initialize;
-
-   procedure Initialize_Task_Thread
-     (Dialog : access GVD_Dialog_Record'Class) is
-   begin
-      Button_Callback.Connect
-        (Dialog.Close_Button, "clicked",
-         Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
-
-      Set_Default_Size (Dialog, 400, 200);
-      Gtk_New (Dialog.Scrolledwindow1);
-      Pack_Start
-        (Dialog.Vbox1, Dialog.Scrolledwindow1, True, True, 0);
-      Set_Policy
-        (Dialog.Scrolledwindow1,
-         Policy_Automatic,
-         Policy_Automatic);
-      --  We can't create the clist here, since we don't know yet how many
-      --  columns there will be. This will be done on the first call to update
-   end Initialize_Task_Thread;
-
    ----------------
    -- Initialize --
    ----------------
@@ -720,15 +618,20 @@ package body GVD.Dialogs is
    ----------------
 
    procedure Initialize
-     (PD_Dialog  : access PD_Dialog_Record'Class;
-      Main_Window : Gtk_Window) is
+     (PDs    : access PD_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Initialize (PD_Dialog, -"Protection Domains", Main_Window);
-      Initialize_Task_Thread (PD_Dialog);
+      Initialize (Thread => PDs, Kernel => Kernel);
+      PDs.Get_Info := Info_PD_Dispatch'Access;
+      PDs.Switch   := PD_Switch_Dispatch'Access;
    end Initialize;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
    procedure Initialize
-     (Question_Dialog            : access Question_Dialog_Record'Class;
+     (Dialog                     : access Question_Dialog_Record'Class;
       Main_Window                : Gtk_Window;
       Debugger                   : Debugger_Access;
       Multiple_Selection_Allowed : Boolean;
@@ -744,16 +647,44 @@ package body GVD.Dialogs is
       Label     : Gtk_Label;
 
    begin
-      Initialize (Question_Dialog, "Question", Main_Window);
-      Question_Dialog.Debugger := Debugger;
+      Gtk.Dialog.Initialize (Dialog, -"Question", Main_Window, 0);
+      Dialog.Main_Window := Main_Window;
+
+      Set_Policy (Dialog, False, True, False);
+      Set_Position (Dialog, Win_Pos_Mouse);
+      Set_Default_Size (Dialog, -1, 200);
+
+      Dialog.Vbox1 := Get_Vbox (Dialog);
+      Set_Homogeneous (Dialog.Vbox1, False);
+      Set_Spacing (Dialog.Vbox1, 0);
+
+      Dialog.Hbox1 := Get_Action_Area (Dialog);
+      Set_Border_Width (Dialog.Hbox1, 5);
+      Set_Homogeneous (Dialog.Hbox1, True);
+      Set_Spacing (Dialog.Hbox1, 5);
+
+      Gtk_New (Dialog.Hbuttonbox1);
+      Pack_Start (Dialog.Hbox1, Dialog.Hbuttonbox1, True, True, 0);
+      Set_Spacing (Dialog.Hbuttonbox1, 10);
+      Set_Child_Size (Dialog.Hbuttonbox1, 85, 27);
+      Set_Layout (Dialog.Hbuttonbox1, Buttonbox_Spread);
+
+      Gtk_New_From_Stock (Dialog.Close_Button, Stock_Close);
+      Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
+
+      Return_Callback.Connect
+        (Dialog, "delete_event",
+         Return_Callback.To_Marshaller (Delete_Dialog'Access));
+
+      Dialog.Debugger := Debugger;
 
       Widget_Callback.Connect
-        (Question_Dialog.Close_Button, "clicked",
+        (Dialog.Close_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Question_Close_Clicked'Access));
 
       if Question_Description /= "" then
          Gtk_New (Label, Question_Description);
-         Pack_Start (Question_Dialog.Vbox1, Label, False, False, 5);
+         Pack_Start (Dialog.Vbox1, Label, False, False, 5);
       end if;
 
       --  Detect if only choices are "Yes" and "No"
@@ -767,9 +698,9 @@ package body GVD.Dialogs is
            (Questions (Questions'Last).Choice.all = "n"
             and then Questions (Questions'First).Choice.all = "y"))
       then
-         Set_Default_Size (Question_Dialog, 100, 50);
+         Set_Default_Size (Dialog, 100, 50);
          Gtk_New_From_Stock (OK_Button, Stock_Yes);
-         Add (Question_Dialog.Hbuttonbox1, OK_Button);
+         Add (Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
             "clicked",
@@ -777,69 +708,64 @@ package body GVD.Dialogs is
          Grab_Focus (OK_Button);
 
          Gtk_New_From_Stock (OK_Button, Stock_No);
-         Add (Question_Dialog.Hbuttonbox1, OK_Button);
+         Add (Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
             "clicked",
             On_Question_No_Clicked'Access);
 
-         Ref (Question_Dialog.Close_Button);
-         Remove (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
+         Ref (Dialog.Close_Button);
+         Remove (Dialog.Hbuttonbox1, Dialog.Close_Button);
 
       else
-         Gtk_New (Question_Dialog.Scrolledwindow1);
-         Pack_Start
-           (Question_Dialog.Vbox1, Question_Dialog.Scrolledwindow1,
-            True, True, 0);
+         Gtk_New (Dialog.Scrolledwindow1);
+         Pack_Start (Dialog.Vbox1, Dialog.Scrolledwindow1, True, True, 0);
          Set_Policy
-           (Question_Dialog.Scrolledwindow1, Policy_Automatic,
-            Policy_Automatic);
+           (Dialog.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
 
          --  Make sure the Cancel button is on the right, for homogeneity
-         Ref (Question_Dialog.Close_Button);
-         Remove (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
+         Ref (Dialog.Close_Button);
+         Remove (Dialog.Hbuttonbox1, Dialog.Close_Button);
          Gtk_New_From_Stock (OK_Button, Stock_Ok);
-         Add (Question_Dialog.Hbuttonbox1, OK_Button);
+         Add (Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
             "clicked",
             On_Question_OK_Clicked'Access);
-         Add (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
-         Unref (Question_Dialog.Close_Button);
+         Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
+         Unref (Dialog.Close_Button);
 
-         Gtk_New (Question_Dialog.List, 2, Question_Titles);
-         Add (Question_Dialog.Scrolledwindow1, Question_Dialog.List);
+         Gtk_New (Dialog.List, 2, Question_Titles);
+         Add (Dialog.Scrolledwindow1, Dialog.List);
 
          if Multiple_Selection_Allowed then
-            Set_Selection_Mode (Question_Dialog.List, Selection_Multiple);
+            Set_Selection_Mode (Dialog.List, Selection_Multiple);
          else
-            Set_Selection_Mode (Question_Dialog.List, Selection_Single);
+            Set_Selection_Mode (Dialog.List, Selection_Single);
          end if;
 
          for J in Questions'Range loop
             Temp (0) := C.Strings.New_String (Questions (J).Choice.all);
             Temp (1) := C.Strings.New_String (Questions (J).Description.all);
-            Row := Append (Question_Dialog.List, Temp);
+            Row := Append (Dialog.List, Temp);
             Free (Temp);
          end loop;
 
          Set_Column_Width
-           (Question_Dialog.List, 0,
-            Optimal_Column_Width (Question_Dialog.List, 0));
+           (Dialog.List, 0, Optimal_Column_Width (Dialog.List, 0));
          Set_Column_Width
-           (Question_Dialog.List, 1,
-            Gint'Min (Optimal_Column_Width (Question_Dialog.List, 1),
+           (Dialog.List, 1,
+            Gint'Min (Optimal_Column_Width (Dialog.List, 1),
                       Max_Column_Width));
-         Set_Column_Auto_Resize (Question_Dialog.List, 0, True);
-         Set_Column_Auto_Resize (Question_Dialog.List, 1, True);
+         Set_Column_Auto_Resize (Dialog.List, 0, True);
+         Set_Column_Auto_Resize (Dialog.List, 1, True);
 
-         Width := Optimal_Column_Width (Question_Dialog.List, 0)
-           + Optimal_Column_Width (Question_Dialog.List, 1)
-           + 20;
-         Set_Default_Size (Question_Dialog, Gint'Min (Width, 500), 200);
+         Width := Optimal_Column_Width (Dialog.List, 0)
+           + Optimal_Column_Width (Dialog.List, 1) + 20;
+         Set_Default_Size (Dialog, Gint'Min (Width, 500), 200);
       end if;
 
-      Register_Dialog (Convert (Main_Window, Debugger), Question_Dialog);
+      Register_Dialog (Convert (Main_Window, Debugger), Dialog);
    end Initialize;
 
    ----------

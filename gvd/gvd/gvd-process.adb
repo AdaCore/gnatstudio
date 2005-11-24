@@ -584,12 +584,14 @@ package body GVD.Process is
    begin
       Set_Busy (Process, True);
       Attach_To_Debugger_Console (Process, Create_If_Necessary => True);
+
+      --  If some unattached dialogs exist, claim them
       Attach_To_Call_Stack
-        (Process,
-         Create_If_Necessary => Get_Pref (Show_Call_Stack));
-      Attach_To_Data_Window (Process, Create_If_Necessary => False);
+        (Process, Create_If_Necessary => Get_Pref (Show_Call_Stack));
+      Attach_To_Data_Window   (Process, Create_If_Necessary => False);
       Attach_To_Thread_Dialog (Process, Create_If_Necessary => False);
-      Attach_To_Tasks_Dialog (Process, Create_If_Necessary => False);
+      Attach_To_Tasks_Dialog  (Process, Create_If_Necessary => False);
+      Attach_To_PD_Dialog     (Process, Create_If_Necessary => False);
 
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String'(Remote_Host);

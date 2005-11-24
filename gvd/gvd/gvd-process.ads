@@ -109,23 +109,17 @@ package GVD.Process is
       Command_History         : String_History.History_List;
       --  The history of commands for the current session.
 
-      Stack                   : Gtk.Widget.Gtk_Widget;
-      --  This is really a GVD.Call_Stack.Call_Stack instance, but is kept
-      --  more general here to limit the dependencies between packages.
-      --  This field must only be used from gvd-call_stack.adb
-
-      Data                    : Gtk.Widget.Gtk_Widget;
-      --  This is really a GVD.Canvas instance. This field must only be
-      --  used from gvd-canvas.adb
-
       Debugger_Text           : Interactive_Console;
       Debuggee_Console        : Interactive_Console;
       --  Separate console for debugged programs, if debugger supports ttys.
       --  See gvd-consoles.adb for these two fields
 
+      Stack                   : Gtk.Widget.Gtk_Widget;
       Threads                 : Gtk.Widget.Gtk_Widget;
       Tasks                   : Gtk.Widget.Gtk_Widget;
-      --  The threads and task views
+      PDs                     : Gtk.Widget.Gtk_Widget;
+      Data                    : Gtk.Widget.Gtk_Widget;
+      --  The call stack, threads, task, protection domains and data views
 
       Registered_Dialog       : Gtk.Dialog.Gtk_Dialog := null;
       --  Currently displayed dialog that should be deleted on next user input.

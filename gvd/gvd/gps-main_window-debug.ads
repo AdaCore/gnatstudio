@@ -25,14 +25,6 @@ with Glib.Object;
 
 package GPS.Main_Window.Debug is
 
-   procedure Update_External_Dialogs
-     (Window   : access GPS_Window_Record'Class;
-      Debugger : Glib.Object.GObject := null);
-   --  Update the contents of all the dialogs associated with the window
-   --  (backtrace, threads, ...) if they are visible.
-   --  Their contents is updated based on the current debugger, unless
-   --  Debugger is not null.
-
    procedure Preferences_Changed
      (Window : access GPS_Window_Record'Class);
    --  Emit the "preferences_changed" signal, which indicates a change in

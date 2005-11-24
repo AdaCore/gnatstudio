@@ -21,7 +21,6 @@
 --  This package defines the debugger module (called GVD).
 
 with Glib.Object;
-with Gtk.Dialog;
 with Gtk.Window;
 with GPS.Kernel.Modules;
 with Ada.Unchecked_Deallocation;
@@ -79,10 +78,5 @@ package GVD_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtk.Window.Gtk_Window;
    --  Return the breakpoint editor associated with Kernel, if any
-
-   function Get_PD_Dialog
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtk.Dialog.Gtk_Dialog;
-   --  Return the PD dialog associated with Kernel, if any
 
 end GVD_Module;

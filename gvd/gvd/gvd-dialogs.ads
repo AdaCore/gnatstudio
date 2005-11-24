@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object;
 with GPS.Kernel;
 with Gtk.Dialog; use Gtk.Dialog;
 with Gtk.Box; use Gtk.Box;
@@ -45,17 +44,16 @@ package GVD.Dialogs is
       Create_If_Necessary : Boolean);
    --  Attach to a task dialog
 
+   procedure Attach_To_PD_Dialog
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean);
+   --  Attach to a protection domains dialog
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the functions to load and save the desktop
 
-   type GVD_Dialog_Record is new Gtk_Dialog_Record with private;
-   type GVD_Dialog is access all GVD_Dialog_Record'Class;
-
-   type PD_Dialog_Record is new GVD_Dialog_Record with private;
-   type PD_Dialog_Access is access all PD_Dialog_Record'Class;
-
-   type Question_Dialog_Record is new GVD_Dialog_Record with private;
+   type Question_Dialog_Record is new Gtk_Dialog_Record with private;
    type Question_Dialog_Access is access all Question_Dialog_Record'Class;
 
    type Question_Record is record
@@ -71,31 +69,6 @@ package GVD.Dialogs is
    --  Free all the dynamic memory associated with each question record.
 
    procedure Gtk_New
-     (PD_Dialog  : out PD_Dialog_Access;
-      Main_Window : Gtk_Window);
-   --  Create an empty protection domains dialog.
-   --  No information will be displayed in it, and you need to add it through
-   --  a call to Update.
-
-   procedure Initialize
-     (PD_Dialog  : access PD_Dialog_Record'Class;
-      Main_Window : Gtk_Window);
-   --  Internal initialization function
-
-   procedure Update
-     (PD_Dialog  : access PD_Dialog_Record;
-      Debugger   : access Glib.Object.GObject_Record'Class);
-   --  Update the contents of the protection domains dialog.
-   --  The information is read from Debugger (which is in fact a
-   --  Visual_Debugger).
-
-   procedure On_PD_Process_Stopped
-     (Widget : access Glib.Object.GObject_Record'Class);
-   --  Callback function connected to the "process_stopped" signal.
-   --  It will update the protection domains window associated with a given
-   --  tab.
-
-   procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
       Main_Window                : Gtk_Window;
       Debugger                   : Debugger_Access;
@@ -107,7 +80,7 @@ package GVD.Dialogs is
    --  only a basic Yes/No dialog.
 
    procedure Initialize
-     (Question_Dialog            : access Question_Dialog_Record'Class;
+     (Dialog                     : access Question_Dialog_Record'Class;
       Main_Window                : Gtk_Window;
       Debugger                   : Debugger_Access;
       Multiple_Selection_Allowed : Boolean;
@@ -115,7 +88,7 @@ package GVD.Dialogs is
       Question_Description       : String := "");
 
 private
-   type GVD_Dialog_Record is new Gtk_Dialog_Record with record
+   type Question_Dialog_Record is new Gtk_Dialog_Record with record
       Main_Window     : Gtk_Window;
       Vbox1           : Gtk_Vbox;
       Scrolledwindow1 : Gtk_Scrolled_Window;
@@ -124,21 +97,10 @@ private
       Hbuttonbox1     : Gtk_Hbutton_Box;
       Close_Button    : Gtk_Button;
       Select_Row_Id   : Gtk.Handlers.Handler_Id;
-   end record;
-   --  ??? Why not store directly the Visual_Debugger in this record,
-   --  instead of having to convert in the callbacks ?
-
-   type PD_Dialog_Record is new GVD_Dialog_Record with null record;
-
-   type Question_Dialog_Record is new GVD_Dialog_Record with record
-      Debugger : Debugger_Access;
+      Debugger        : Debugger_Access;
    end record;
    --  We have to store the debugger for this dialog, since the user's choice
    --  should be sent to the right debugger, even if the user has switched
    --  tabs in between.
-
-   procedure Update_PD
-     (Dialog   : access GVD_Dialog_Record'Class;
-      Info     : in out PD_Information_Array);
 
 end GVD.Dialogs;

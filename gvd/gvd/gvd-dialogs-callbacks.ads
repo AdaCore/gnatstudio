@@ -23,10 +23,6 @@ with Gtk.Arguments;
 
 package GVD.Dialogs.Callbacks is
 
-   procedure On_Task_List_Select_Row
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-
    procedure On_Question_No_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);

@@ -26,7 +26,6 @@ with Gtkada.Handlers;    use Gtkada.Handlers;
 
 with Breakpoints_Editor; use Breakpoints_Editor;
 with GVD_Module;         use GVD_Module;
-with GVD.Dialogs;        use GVD.Dialogs;
 with GVD.Process;        use GVD.Process;
 with Debugger;           use Debugger;
 with Process_Proxies;    use Process_Proxies;
@@ -92,36 +91,6 @@ package body GPS.Main_Window.Debug is
       Set_Current_Debugger (Window.Kernel, null);
    end Cleanup_Debuggers;
 
-   -----------------------------
-   -- Update_External_Dialogs --
-   -----------------------------
-
-   procedure Update_External_Dialogs
-     (Window   : access GPS_Window_Record'Class;
-      Debugger : Glib.Object.GObject := null)
-   is
-      use type Glib.Object.GObject;
-
-      Tab           : Visual_Debugger := Visual_Debugger (Debugger);
-      PD_Dialog     : PD_Dialog_Access;
-
-   begin
-      if Debugger = null then
-         Tab := Get_Current_Process (Window);
-      end if;
-
-      if Tab /= null
-        and then Tab.Debugger /= null
-        and then not Command_In_Process (Get_Process (Tab.Debugger))
-      then
-         PD_Dialog := PD_Dialog_Access (Get_PD_Dialog (Window.Kernel));
-
-         if PD_Dialog /= null then
-            Update (PD_Dialog, Tab);
-         end if;
-      end if;
-   end Update_External_Dialogs;
-
    -------------------------
    -- Preferences_Changed --
    -------------------------
@@ -158,7 +127,6 @@ package body GPS.Main_Window.Debug is
          return;
       end if;
 
-      Update_External_Dialogs (Window, Debugger);
       Bp_Editor := Breakpoint_Editor_Access
         (Get_Breakpoints_Editor (Window.Kernel));
 
