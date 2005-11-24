@@ -241,6 +241,11 @@ package GVD.Process is
    function Get_Num (Tab : Visual_Debugger) return Glib.Gint;
    --  Return the number identifying the debugger associated with a process tab
 
+   function Get_Console
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk.Widget.Gtk_Widget;
+   --  Return the debugger console associated with Process
+
    function Convert
      (Main_Debug_Window : access GPS.Main_Window.GPS_Window_Record'Class;
       Descriptor        : GNAT.Expect.Process_Descriptor'Class)

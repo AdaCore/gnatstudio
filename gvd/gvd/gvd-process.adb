@@ -1035,6 +1035,17 @@ package body GVD.Process is
       return Gint (Tab.Debugger_Num);
    end Get_Num;
 
+   -----------------
+   -- Get_Console --
+   -----------------
+
+   function Get_Console
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk.Widget.Gtk_Widget is
+   begin
+      return Gtk_Widget (Process.Debugger_Text);
+   end Get_Console;
+
    ---------------------------------
    -- Set_Current_Source_Location --
    ---------------------------------
