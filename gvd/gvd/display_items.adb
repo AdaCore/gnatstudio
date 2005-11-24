@@ -1435,27 +1435,6 @@ package body Display_Items is
       end if;
    end Duplicate_Links;
 
-   -------------------------------
-   -- On_Canvas_Process_Stopped --
-   -------------------------------
-
-   procedure On_Canvas_Process_Stopped
-     (Object : access Glib.Object.GObject_Record'Class)
-   is
-      Process : constant Visual_Debugger := Visual_Debugger (Object);
-   begin
-      --  If the canvas is not displayed, nothing to do
-      if Process /= null and then Get_Canvas (Process) /= null then
-         Recompute_All_Aliases (Process);
-         Refresh_Data_Window (Process);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Canvas_Process_Stopped;
-
    --------------------
    -- Remove_Aliases --
    --------------------

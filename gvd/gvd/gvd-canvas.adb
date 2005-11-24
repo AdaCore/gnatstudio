@@ -122,6 +122,11 @@ package body GVD.Canvas is
       Kernel : access Kernel_Handle_Record'Class);
    --  Create a new data window in the MDI
 
+   procedure On_Attach
+     (Canvas  : access GVD_Canvas_Record;
+      Process : access Visual_Debugger_Record'Class);
+   --  Called when the Canvas is attached to an debugger
+
    function Get_Canvas
      (Process : access Visual_Debugger_Record'Class)
       return Gtk_Scrolled_Window;
@@ -298,6 +303,39 @@ package body GVD.Canvas is
    procedure Unselect_All
      (Process : access GVD.Process.Visual_Debugger_Record'Class);
    --  Unselect all items and their components
+
+   procedure On_Canvas_Process_Stopped
+     (Canvas : access Gtk_Widget_Record'Class);
+   --  Called when the debugger has stopped, to refresh the canvas
+
+   -------------------------------
+   -- On_Canvas_Process_Stopped --
+   -------------------------------
+
+   procedure On_Canvas_Process_Stopped
+     (Canvas : access Gtk_Widget_Record'Class)
+   is
+      C : constant GVD_Canvas := GVD_Canvas (Canvas);
+   begin
+      if Get_Process (C) /= null then
+         Recompute_All_Aliases (Get_Process (C));
+         Refresh_Data_Window (Get_Process (C));
+      end if;
+   end On_Canvas_Process_Stopped;
+
+   ---------------
+   -- On_Attach --
+   ---------------
+
+   procedure On_Attach
+     (Canvas  : access GVD_Canvas_Record;
+      Process : access Visual_Debugger_Record'Class) is
+   begin
+      Widget_Callback.Object_Connect
+        (Process, "process_stopped", On_Canvas_Process_Stopped'Access, Canvas);
+      Widget_Callback.Object_Connect
+        (Process, "context_changed", On_Canvas_Process_Stopped'Access, Canvas);
+   end On_Attach;
 
    ----------------
    -- Get_Canvas --

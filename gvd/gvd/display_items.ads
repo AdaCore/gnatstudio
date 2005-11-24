@@ -88,11 +88,6 @@ package Display_Items is
      (Item : access Display_Item_Record) return Boolean;
    --  Return Item.Auto_Refresh;
 
-   procedure On_Canvas_Process_Stopped
-     (Object : access Glib.Object.GObject_Record'Class);
-   --  Called when the process associated with the Visual_Debugger Object
-   --  stops to update the display items.
-
    procedure Recompute_All_Aliases
      (Process          : access GVD.Process.Visual_Debugger_Record'Class;
       Recompute_Values : Boolean := True);

@@ -512,13 +512,6 @@ package body GVD.Process is
         (Process, Signals, Class_Record,
          Type_Name => "GvdDebuggerProcessTab");
 
-      Object_Callback.Connect
-        (Process, "process_stopped",
-         Object_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
-      Object_Callback.Connect
-        (Process, "context_changed",
-         Object_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
-
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
       --  debugger outputs a file name that should be displayed in the editor.
