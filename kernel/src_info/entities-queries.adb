@@ -480,10 +480,24 @@ package body Entities.Queries is
       Updated : Source_File;
    begin
       if Active (Me) then
-         Trace (Me, "Find_Declaration entity=" & Entity_Name
-                & " source=" & Full_Name (Get_Filename (Source)).all
-                & " line=" & Line'Img
-                & " column=" & Column'Img);
+         if Source /= null then
+            Trace (Me, "Find_Declaration entity=" & Entity_Name
+                   & " source=" & Full_Name (Get_Filename (Source)).all
+                   & " line=" & Line'Img
+                   & " column=" & Column'Img);
+         else
+            Trace (Me, "Find_Declaration entity=" & Entity_Name
+                   & " source=<null>"
+                   & " line=" & Line'Img
+                   & " column=" & Column'Img);
+         end if;
+      end if;
+
+      if Source = null then
+         Status := Entity_Not_Found;
+         Entity := null;
+         Trace (Me, "Entity not found");
+         return;
       end if;
 
       if Source = Get_Predefined_File (Db, Source.Handler) then
