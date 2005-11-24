@@ -80,6 +80,9 @@ package body Call_Graph_Views is
       Kernel : Kernel_Handle;
       Typ    : View_Type := View_Calls;
 
+      Show_Locations : Boolean := True;
+      --  Whether we should show the locations in the call graph
+
       Block_On_Expanded : Boolean := False;
       --  If true, we do not recompute the contents of children nodes when a
       --  node is expanded
@@ -184,8 +187,7 @@ package body Call_Graph_Views is
    procedure Hide_Show_Locations (View  : access Gtk_Widget_Record'Class) is
       V : constant Callgraph_View_Access := Callgraph_View_Access (View);
       M : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
-      Show : constant Boolean :=
-        Get_History (Get_History (V.Kernel).all, History_Show_Locations);
+      Show : constant Boolean := not V.Show_Locations;
 
       procedure Remove_Locations (Iter : Gtk_Tree_Iter);
       --  Remove the locations in Iter and its children
@@ -257,6 +259,9 @@ package body Call_Graph_Views is
       Parent_Iter : Gtk_Tree_Iter;
       Value       : GValue;
    begin
+      V.Show_Locations := Show;
+      Set_History (Get_History (V.Kernel).all, History_Show_Locations, Show);
+
       if Show then
          Parent_Iter := Get_Iter_First (M);
          while Parent_Iter /= Null_Iter loop
@@ -429,7 +434,7 @@ package body Call_Graph_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Event_Widget);
+      pragma Unreferenced (Event_Widget, Kernel);
       V     : constant Callgraph_View_Access := Callgraph_View_Access (Object);
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter  : Gtk_Tree_Iter;
@@ -457,8 +462,7 @@ package body Call_Graph_Views is
 
       if Menu /= null then
          Gtk_New (Check, Label => -"Show locations");
-         Associate
-           (Get_History (Kernel).all, History_Show_Locations, Check);
+         Set_Active (Check, V.Show_Locations);
          Prepend (Menu, Check);
          Widget_Callback.Object_Connect
            (Check, "toggled", Hide_Show_Locations'Access, V);
@@ -712,6 +716,9 @@ package body Call_Graph_Views is
          Sortable_Columns   => True,
          Initial_Sort_On    => Names'First);
       Add (View, View.Tree);
+
+      View.Show_Locations :=
+        Get_History (Get_History (Kernel).all, History_Show_Locations);
 
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
 
