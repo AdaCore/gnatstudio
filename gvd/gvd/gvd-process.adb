@@ -46,7 +46,6 @@ with Gtkada.Types;               use Gtkada.Types;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
-with Display_Items;              use Display_Items;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
