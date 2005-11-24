@@ -18,35 +18,95 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Interfaces.C.Strings;
-with Interfaces.C;          use Interfaces.C;
-
-with Glib;                  use Glib;
-
-with Gtk.Enums;             use Gtk.Enums;
-with Gtk.Handlers;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Stock;             use Gtk.Stock;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtk;                   use Gtk;
-
-with Gtkada.Handlers;       use Gtkada.Handlers;
-with Gtkada.Types;          use Gtkada.Types;
-
+with Ada.Exceptions;        use Ada.Exceptions;
 with Basic_Types;           use Basic_Types;
 with Config;                use Config;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNAT.Regpat;           use GNAT.Regpat;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Main_Window;       use GPS.Main_Window;
 with GPS.Intl;              use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
 with GVD.Callbacks;         use GVD.Callbacks;
 with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
 with GVD.Process;           use GVD.Process;
+with GVD.Types;             use GVD.Types;
+with GVD.Views;             use GVD.Views;
 with GVD;                   use GVD;
 with GVD_Module;            use GVD_Module;
+with Glib;                  use Glib;
+with Glib.Object;           use Glib.Object;
+with Gtk.Enums;             use Gtk.Enums;
+with Gtk.Handlers;
+with Gtk.Label;             use Gtk.Label;
+with Gtk.Stock;             use Gtk.Stock;
+with Gtk.Tree_Model;        use Gtk.Tree_Model;
+with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
+with Gtk.Tree_Store;        use Gtk.Tree_Store;
+with Gtk.Tree_View;         use Gtk.Tree_View;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtk;                   use Gtk;
+with Gtkada.Dialogs;        use Gtkada.Dialogs;
+with Gtkada.Handlers;       use Gtkada.Handlers;
+with Gtkada.Types;          use Gtkada.Types;
+with GUI_Utils;             use GUI_Utils;
+with Interfaces.C.Strings;  use Interfaces.C.Strings;
+with Interfaces.C;          use Interfaces.C;
 with Process_Proxies;       use Process_Proxies;
+with Traces;                use Traces;
 
 package body GVD.Dialogs is
+   Me : constant Debug_Handle := Create ("GVD.Dialogs");
 
-   Question_Titles : constant Chars_Ptr_Array := "" + (-"Choice");
+   Question_Titles : constant Gtkada.Types.Chars_Ptr_Array :=
+     "" + (-"Choice");
+
+   -----------------
+   -- Thread View --
+   -----------------
+
+   type Thread_View_Record is new Scrolled_Views.Process_View_Record with
+      record
+         Tree : Gtk.Tree_View.Gtk_Tree_View;
+      end record;
+   type Thread_View is access all Thread_View_Record'Class;
+
+   procedure Initialize
+     (Thread : access Thread_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class);
+   function Get_Thread_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Scrolled_Window;
+   procedure Set_Thread_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Scrolled_Window);
+   procedure On_Attach
+     (Thread  : access Thread_View_Record;
+      Process : access Visual_Debugger_Record'Class);
+   --  See description in GVD.Generic_View
+
+   package Thread_Views is new Scrolled_Views.Simple_Views
+     (Module_Name        => "Thread_View",
+      View_Name          => -"Threads",
+      Formal_View_Record => Thread_View_Record,
+      Get_View           => Get_Thread_View,
+      Set_View           => Set_Thread_View,
+      Initialize         => Initialize);
+
+   procedure Update_Threads (Thread : access Gtk_Widget_Record'Class);
+   --  Update the contents of the thread dialog.
+
+   procedure On_Threads
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Threads
+
+   procedure On_Thread_Selection (Thread : access Gtk_Widget_Record'Class);
+   --  Called when a thread was selected in the view
+
+   ----------
+   -- Misc --
+   ----------
 
    procedure Initialize
      (Dialog      : access GVD_Dialog_Record'Class;
@@ -68,6 +128,121 @@ package body GVD.Dialogs is
       Info     : in out Thread_Information_Array);
    --  Common operations between task and thread dialogs.
 
+   procedure Attach_To_Thread_Dialog
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean)
+      renames Thread_Views.Attach_To_View;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Debug    : constant String := '/' & (-"_Debug") & '/';
+      Data_Sub : constant String := Debug & (-"D_ata") & '/';
+   begin
+      Register_Menu
+        (Kernel, Data_Sub, -"_Threads", "",
+         On_Threads'Access, Ref_Item => -"Protection Domains");
+      Thread_Views.Register_Desktop_Functions;
+   end Register_Module;
+
+   ----------------
+   -- On_Threads --
+   ----------------
+
+   procedure On_Threads
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot display threads list while the debugger is busy.") &
+            ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
+         return;
+      end if;
+
+      Attach_To_Thread_Dialog (Process, Create_If_Necessary => True);
+      Update_Threads (Get_Thread_View (Process));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Threads;
+
+   -------------------------
+   -- On_Thread_Selection --
+   -------------------------
+
+   procedure On_Thread_Selection (Thread : access Gtk_Widget_Record'Class) is
+      T     : constant Thread_View := Thread_View (Thread);
+      Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (T.Tree));
+      Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
+      Matched : Match_Array (0 .. 0);
+   begin
+      while Iter /= Null_Iter
+        and then not Iter_Is_Selected (Get_Selection (T.Tree), Iter)
+      loop
+         Next (Model, Iter);
+      end loop;
+
+      declare
+         Str : constant String := Get_String (Model, Iter, 0);
+      begin
+         Match ("[0-9]+", Str, Matched);
+
+         if Matched (0) /= No_Match then
+            Thread_Switch
+              (Get_Process (T).Debugger,
+               Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
+               Mode => GVD.Types.Visible);
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception: "
+                & Exception_Information (E));
+   end On_Thread_Selection;
+
+   ---------------------
+   -- Get_Thread_View --
+   ---------------------
+
+   function Get_Thread_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Scrolled_Window is
+   begin
+      return Gtk_Scrolled_Window (Process.Threads);
+   end Get_Thread_View;
+
+   ---------------------
+   -- Set_Thread_View --
+   ---------------------
+
+   procedure Set_Thread_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Scrolled_Window) is
+   begin
+      Process.Threads := Gtk_Widget (View);
+   end Set_Thread_View;
+
    -------------
    -- Gtk_New --
    -------------
@@ -78,14 +253,6 @@ package body GVD.Dialogs is
    begin
       Task_Dialog := new Task_Dialog_Record;
       Initialize (Task_Dialog, Main_Window);
-   end Gtk_New;
-
-   procedure Gtk_New
-     (Thread_Dialog : out Thread_Dialog_Access;
-      Main_Window   : Gtk_Window) is
-   begin
-      Thread_Dialog := new Thread_Dialog_Record;
-      Initialize (Thread_Dialog, Main_Window);
    end Gtk_New;
 
    procedure Gtk_New
@@ -111,6 +278,18 @@ package body GVD.Dialogs is
          Multiple_Selection_Allowed, Questions,
          Question_Description);
    end Gtk_New;
+
+   ---------------
+   -- On_Attach --
+   ---------------
+
+   procedure On_Attach
+     (Thread  : access Thread_View_Record;
+      Process : access Visual_Debugger_Record'Class) is
+   begin
+      Widget_Callback.Object_Connect
+        (Process, "process_stopped", Update_Threads'Access, Thread);
+   end On_Attach;
 
    ------------------------
    -- Update_Task_Thread --
@@ -196,34 +375,79 @@ package body GVD.Dialogs is
       Update_Task_Thread (Task_Dialog, Info (1 .. Len));
    end Update;
 
-   procedure Update
-     (Thread_Dialog : access Thread_Dialog_Record;
-      Debugger      : access Glib.Object.GObject_Record'Class)
-   is
-      Process : constant Process_Proxy_Access :=
-        Get_Process (Visual_Debugger (Debugger).Debugger);
-      Info    : Thread_Information_Array (1 .. Max_Tasks);
-      Len     : Natural;
+   --------------------
+   -- Update_Threads --
+   --------------------
 
+   procedure Update_Threads (Thread : access Gtk_Widget_Record'Class) is
+      View        : constant Thread_View := Thread_View (Thread);
+      Info        : Thread_Information_Array (1 .. Max_Tasks);
+      Len         : Natural;
+      Num_Columns : Thread_Fields;
+      Iter        : Gtk_Tree_Iter;
    begin
-      if not Visible_Is_Set (Thread_Dialog) then
-         return;
-      end if;
+      if Get_Process (View) /= null
+        and then Visible_Is_Set (View)
+        and then Get_Process (Get_Process (View).Debugger) /= null
+      then
+         Info_Threads (Get_Process (View).Debugger, Info, Len);
+         Num_Columns := Info (Info'First).Num_Fields;
 
-      --  If the debugger was killed, no need to refresh
-
-      if Process = null then
-         if Thread_Dialog.List /= null then
-            Thaw (Thread_Dialog.List);
+         if View.Tree /= null
+           and then Get_N_Columns (Get_Model (View.Tree)) /=
+           Gint (Num_Columns)
+         then
+            Trace (Me, "Threads: Number of columns has changed");
+            Destroy (View.Tree);
+            View.Tree := null;
          end if;
 
-         return;
-      end if;
+         if View.Tree = null and then Len > Info'First then
+            declare
+               Titles : GNAT.OS_Lib.String_List (1 .. Integer (Num_Columns));
+            begin
+               Trace (Me, "Threads: Creating tree, num_columns="
+                      & Num_Columns'Img);
+               for T in Titles'Range loop
+                  Titles (T) := new String'
+                    (Value
+                       (Info (Info'First).Information (Thread_Fields (T))));
+               end loop;
 
-      --  Read the information from the debugger
-      Info_Threads (Visual_Debugger (Debugger).Debugger, Info, Len);
-      Update_Task_Thread (Thread_Dialog, Info (1 .. Len));
-   end Update;
+               View.Tree := Create_Tree_View
+                 (Column_Types       =>
+                    (0 .. Guint (Num_Columns) - 1 => GType_String),
+                  Column_Names       => Titles,
+                  Show_Column_Titles => False);
+               Free (Titles);
+
+               Add (View, View.Tree);
+               Show_All (View.Tree);
+               Widget_Callback.Object_Connect
+                 (Get_Selection (View.Tree), "changed",
+                  On_Thread_Selection'Access, Thread);
+            end;
+         end if;
+
+         Clear (Gtk_Tree_Store (Get_Model (View.Tree)));
+
+         for J in Info'First + 1 .. Len loop
+            Append (Gtk_Tree_Store (Get_Model (View.Tree)), Iter, Null_Iter);
+            for Col in Info (J).Information'Range loop
+               Set (Gtk_Tree_Store (Get_Model (View.Tree)),
+                    Iter,
+                    Gint (Col - Info (J).Information'First),
+                    Value (Info (J).Information (Col)));
+            end loop;
+         end loop;
+
+         Free (Info);
+      end if;
+   end Update_Threads;
+
+   ------------
+   -- Update --
+   ------------
 
    procedure Update
      (PD_Dialog : access PD_Dialog_Record;
@@ -270,23 +494,6 @@ package body GVD.Dialogs is
          Update (Task_Dialog, Tab);
       end if;
    end On_Task_Process_Stopped;
-
-   -------------------------------
-   -- On_Thread_Process_Stopped --
-   -------------------------------
-
-   procedure On_Thread_Process_Stopped
-     (Widget : access Glib.Object.GObject_Record'Class)
-   is
-      Tab           : constant Visual_Debugger := Visual_Debugger (Widget);
-      Thread_Dialog : constant Thread_Dialog_Access :=
-        Thread_Dialog_Access (Get_Thread_Dialog (Tab.Window.Kernel));
-
-   begin
-      if Thread_Dialog /= null then
-         Update (Thread_Dialog, Tab);
-      end if;
-   end On_Thread_Process_Stopped;
 
    ----------------------------
    -- On_PD_Process_Stopped --
@@ -371,13 +578,26 @@ package body GVD.Dialogs is
       Initialize_Task_Thread (Task_Dialog);
    end Initialize;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
    procedure Initialize
-     (Thread_Dialog : access Thread_Dialog_Record'Class;
-      Main_Window   : Gtk_Window) is
+     (Thread : access Thread_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
    begin
-      Initialize (Thread_Dialog, -"Thread Status", Main_Window);
-      Initialize_Task_Thread (Thread_Dialog);
+      Gtk.Scrolled_Window.Initialize (Thread);
+      Set_Policy (Thread, Policy_Automatic, Policy_Automatic);
+
+      --  The tree will be created on the first call to Update, since we do not
+      --  know yet how many columns are needed
    end Initialize;
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (PD_Dialog  : access PD_Dialog_Record'Class;
@@ -395,7 +615,7 @@ package body GVD.Dialogs is
       Questions                  : Question_Array;
       Question_Description       : String := "")
    is
-      Temp      : Chars_Ptr_Array (0 .. 1);
+      Temp      : Gtkada.Types.Chars_Ptr_Array (0 .. 1);
       Row       : Gint;
       pragma Unreferenced (Row);
 

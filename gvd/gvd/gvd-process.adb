@@ -521,9 +521,6 @@ package body GVD.Process is
       Object_Callback.Connect
         (Process, "process_stopped",
          Object_Callback.To_Marshaller (On_Task_Process_Stopped'Access));
-      Object_Callback.Connect
-        (Process, "process_stopped",
-         Object_Callback.To_Marshaller (On_Thread_Process_Stopped'Access));
 
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
@@ -590,11 +587,11 @@ package body GVD.Process is
    begin
       Set_Busy (Process, True);
       Attach_To_Debugger_Console (Process, Create_If_Necessary => True);
-
       Attach_To_Call_Stack
         (Process,
          Create_If_Necessary => Get_Pref (Show_Call_Stack));
       Attach_To_Data_Window (Process, Create_If_Necessary => False);
+      Attach_To_Thread_Dialog (Process, Create_If_Necessary => False);
 
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String'(Remote_Host);

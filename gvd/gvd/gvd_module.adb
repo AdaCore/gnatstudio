@@ -200,7 +200,6 @@ package body GVD_Module is
       --  The current visual debugger
 
       Breakpoints_Editor             : Breakpoint_Editor_Access;
-      Thread_Dialog                  : Thread_Dialog_Access;
       Task_Dialog                    : Task_Dialog_Access;
       PD_Dialog                      : PD_Dialog_Access;
    end record;
@@ -352,10 +351,6 @@ package body GVD_Module is
    procedure On_Kill
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Kill
-
-   procedure On_Threads
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Threads
 
    procedure On_Tasks
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -793,19 +788,6 @@ package body GVD_Module is
    begin
       return Gtk_Window (GVD_Module_ID.Breakpoints_Editor);
    end Get_Breakpoints_Editor;
-
-   -----------------------
-   -- Get_Thread_Dialog --
-   -----------------------
-
-   function Get_Thread_Dialog
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtk.Dialog.Gtk_Dialog
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      return Gtk_Dialog (GVD_Module_ID.Thread_Dialog);
-   end Get_Thread_Dialog;
 
    ---------------------
    -- Get_Task_Dialog --
@@ -1434,50 +1416,6 @@ package body GVD_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Interrupt;
-
-   ----------------
-   -- On_Threads --
-   ----------------
-
-   procedure On_Threads
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-
-   begin
-      if Process = null or else Process.Debugger = null then
-         return;
-      end if;
-
-      if Command_In_Process (Get_Process (Process.Debugger)) then
-         Button := Message_Dialog
-           ((-"Cannot display threads list while the debugger is busy.") &
-            ASCII.LF &
-            (-"Interrupt the debugger or wait for its availability."),
-           Dialog_Type => Warning,
-           Buttons => Button_OK);
-         return;
-      end if;
-
-      if GVD_Module_ID.Thread_Dialog = null then
-         Gtk_New (GVD_Module_ID.Thread_Dialog, Gtk_Window (Top));
-      end if;
-
-      Show_All (GVD_Module_ID.Thread_Dialog);
-      Gdk_Raise (Get_Window (GVD_Module_ID.Thread_Dialog));
-      Update (GVD_Module_ID.Thread_Dialog, Process);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Threads;
 
    --------------
    -- On_Tasks --
@@ -2775,10 +2713,6 @@ package body GVD_Module is
 
          Remove_Debugger_Columns (Kernel, VFS.No_File);
 
-         if GVD_Module_ID.Thread_Dialog /= null then
-            Hide (GVD_Module_ID.Thread_Dialog);
-         end if;
-
          if GVD_Module_ID.Task_Dialog /= null then
             Hide (GVD_Module_ID.Task_Dialog);
          end if;
@@ -3449,9 +3383,8 @@ package body GVD_Module is
       GVD.Canvas.Register_Module (Kernel);
       GVD.Call_Stack.Register_Module (Kernel);
       GVD.Consoles.Register_Module (Kernel);
+      GVD.Dialogs.Register_Module (Kernel);
 
-      Register_Menu (Kernel, Data_Sub, -"_Threads", "",
-                     On_Threads'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"Ta_sks", "",
                      On_Tasks'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"A_ssembly", "", On_Assembly'Access);
@@ -3541,10 +3474,6 @@ package body GVD_Module is
 
       if Id.Task_Dialog /= null then
          Destroy (Id.Task_Dialog);
-      end if;
-
-      if Id.Thread_Dialog /= null then
-         Destroy (Id.Thread_Dialog);
       end if;
 
       if Id.PD_Dialog /= null then

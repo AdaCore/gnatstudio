@@ -62,8 +62,6 @@ package body GVD.Dialogs.Callbacks is
       Matched       : Match_Array (0 .. 0);
       Info          : PD_Information_Array (1 .. Max_PD);
       Len           : Natural;
-      Thread_Dialog : constant GVD_Dialog :=
-        GVD_Dialog (Get_Thread_Dialog (Main_Window.Kernel));
       Task_Dialog   : constant GVD_Dialog :=
         GVD_Dialog (Get_Task_Dialog (Main_Window.Kernel));
       PD_Dialog     : constant GVD_Dialog :=
@@ -74,17 +72,7 @@ package body GVD.Dialogs.Callbacks is
          Hide (Top);
       end if;
 
-      if Thread_Dialog /= null and then Top = Thread_Dialog then
-         Match ("[0-9]+", Str, Matched);
-
-         if Matched (0) /= No_Match then
-            Thread_Switch
-              (Process.Debugger,
-               Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
-               Mode => GVD.Types.Visible);
-         end if;
-
-      elsif Task_Dialog /= null and then Top = Task_Dialog then
+      if Task_Dialog /= null and then Top = Task_Dialog then
          Task_Switch
            (Process.Debugger, Natural (Index) + 1, Mode => GVD.Types.Visible);
 

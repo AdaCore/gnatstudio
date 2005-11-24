@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;
+with GPS.Kernel;
 with Gtk.Dialog; use Gtk.Dialog;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
@@ -27,19 +28,27 @@ with Gtk.Handlers;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Window; use Gtk.Window;
+with GVD.Process;
 with Debugger; use Debugger;
 with Basic_Types;
 
 package GVD.Dialogs is
+
+   procedure Attach_To_Thread_Dialog
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean);
+   --  Attach to a thread dialog (if Create_If_Necessary is True, only attach
+   --  if one exists and is not attached to a debugger)
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the functions to load and save the desktop
 
    type GVD_Dialog_Record is new Gtk_Dialog_Record with private;
    type GVD_Dialog is access all GVD_Dialog_Record'Class;
 
    type Task_Dialog_Record is new GVD_Dialog_Record with private;
    type Task_Dialog_Access is access all Task_Dialog_Record'Class;
-
-   type Thread_Dialog_Record is new GVD_Dialog_Record with private;
-   type Thread_Dialog_Access is access all Thread_Dialog_Record'Class;
 
    type PD_Dialog_Record is new GVD_Dialog_Record with private;
    type PD_Dialog_Access is access all PD_Dialog_Record'Class;
@@ -82,30 +91,6 @@ package GVD.Dialogs is
      (Widget : access Glib.Object.GObject_Record'Class);
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the task window associated with a given tab.
-
-   procedure Gtk_New
-     (Thread_Dialog : out Thread_Dialog_Access;
-      Main_Window   : Gtk_Window);
-   --  Create an empty thread dialog.
-   --  No information will be displayed in it, and you need to add it through
-   --  a call to Update.
-
-   procedure Initialize
-     (Thread_Dialog : access Thread_Dialog_Record'Class;
-      Main_Window   : Gtk_Window);
-   --  Internal initialization function
-
-   procedure Update
-     (Thread_Dialog : access Thread_Dialog_Record;
-      Debugger      : access Glib.Object.GObject_Record'Class);
-   --  Update the contents of the thread dialog.
-   --  The information is read from Debugger (which is in fact a
-   --  Visual_Debugger).
-
-   procedure On_Thread_Process_Stopped
-     (Widget : access Glib.Object.GObject_Record'Class);
-   --  Callback function connected to the "process_stopped" signal.
-   --  It will update the thread window associated with a given tab.
 
    procedure Gtk_New
      (PD_Dialog  : out PD_Dialog_Access;
@@ -166,8 +151,6 @@ private
    --  instead of having to convert in the callbacks ?
 
    type Task_Dialog_Record is new GVD_Dialog_Record with null record;
-
-   type Thread_Dialog_Record is new GVD_Dialog_Record with null record;
 
    type PD_Dialog_Record is new GVD_Dialog_Record with null record;
 

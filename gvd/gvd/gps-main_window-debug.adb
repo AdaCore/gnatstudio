@@ -103,7 +103,6 @@ package body GPS.Main_Window.Debug is
       use type Glib.Object.GObject;
 
       Tab           : Visual_Debugger := Visual_Debugger (Debugger);
-      Thread_Dialog : Thread_Dialog_Access;
       Task_Dialog   : Task_Dialog_Access;
       PD_Dialog     : PD_Dialog_Access;
 
@@ -116,14 +115,8 @@ package body GPS.Main_Window.Debug is
         and then Tab.Debugger /= null
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
-         Thread_Dialog :=
-           Thread_Dialog_Access (Get_Thread_Dialog (Window.Kernel));
          Task_Dialog := Task_Dialog_Access (Get_Task_Dialog (Window.Kernel));
          PD_Dialog := PD_Dialog_Access (Get_PD_Dialog (Window.Kernel));
-
-         if Thread_Dialog /= null then
-            Update (Thread_Dialog, Tab);
-         end if;
 
          if Task_Dialog /= null then
             Update (Task_Dialog, Tab);

@@ -212,9 +212,9 @@ package body GVD.Generic_View is
          end if;
       end Attach_To_View;
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
+      ------------------
+      -- Load_Desktop --
+      ------------------
 
       function Load_Desktop
         (MDI    : MDI_Window;
