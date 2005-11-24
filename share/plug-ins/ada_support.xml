@@ -203,10 +203,14 @@
           <check label="Enable assertions" switch="-gnata" line="2" column="2"
                  tip="Assertions enabled. Pragma Assert and pragma Debug are activated" />
 
-          <check label="Ada 83 mode" switch="-gnat83" line="3" column="2"
+          <radio line="3" column="2">
+              <radio-entry label="Ada 83 mode" switch="-gnat83"
                  tip="Enforces Ada 83 restrictions" />
-          <check label="Ada 05 mode" switch="-gnat05" line="3" column="2"
+              <radio-entry label="Ada 95 mode" switch="" 
+                 tip="Compile in Ada 95 mode" />
+              <radio-entry label="Ada 2005 mode" switch="-gnat05"
                  tip="Activates Ada 2005 language features" />
+          </radio>
       </switches>
    </tool>
 
