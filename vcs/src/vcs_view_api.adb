@@ -717,7 +717,7 @@ package body VCS_View_API is
            and then not Has_File_Information (File)
          then
             String_List.Append (Dirs, Directory_Information (File));
-            Status :=  Local_Get_Status (Ref, Dirs);
+            Status := Local_Get_Status (Ref, Dirs);
             String_List.Free (Dirs);
             Display_File_Status
               (Get_Kernel (Context), Status, Ref, False, True);
@@ -770,14 +770,19 @@ package body VCS_View_API is
       File     : File_Selection_Context_Access;
    begin
       if Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
+         if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID) then
+            if Context.all in Activity_Context'Class then
+               --  This is a selection from the Activities Explorer
+               List := VCS_Activities_View.Get_Selected_Files (Kernel);
 
-         if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID)
-           and then Context.all not in Activity_Context'Class
-         then
-            Explorer := Get_Explorer (Kernel, False);
-            List := Get_Selected_Files (Explorer);
+            else
+               Explorer := Get_Explorer (Kernel, False);
+               List := Get_Selected_Files (Explorer);
+            end if;
+
          else
+            File := File_Selection_Context_Access (Context);
+
             if Has_File_Information (File) then
                String_List.Append
                  (List, Full_Name (File_Information (File)).all);
