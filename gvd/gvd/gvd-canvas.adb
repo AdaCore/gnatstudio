@@ -28,7 +28,6 @@ with Gdk.Window;          use Gdk.Window;
 with Gdk;                 use Gdk;
 with Glib;                use Glib;
 with Glib.Object;         use Glib.Object;
-with Glib.Xml_Int;        use Glib.Xml_Int;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Enums;           use Gtk.Enums;
@@ -40,7 +39,6 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
-with Gtkada.MDI;          use Gtkada.MDI;
 with Pango.Enums;         use Pango.Enums;
 with Pango.Font;          use Pango.Font;
 with Pango.Layout;        use Pango.Layout;
@@ -51,7 +49,6 @@ with Debugger;               use Debugger;
 with Display_Items;          use Display_Items;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel;             use GPS.Kernel;
@@ -62,7 +59,7 @@ with GVD.Preferences;        use GVD.Preferences;
 with GVD.Process;            use GVD.Process;
 with GVD.Trace;
 with GVD.Types;
-with GVD_Module;             use GVD_Module;
+with GVD.Views;              use GVD.Views;
 with Items;                  use Items;
 with Items.Simples;          use Items.Simples;
 with Pixmaps_IDE;            use Pixmaps_IDE;
@@ -71,8 +68,6 @@ with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 
 package body GVD.Canvas is
-   Me : constant Debug_Handle := Create ("Canvas");
-
    Graph_Cmd_Format : constant Pattern_Matcher := Compile
      ("graph\s+(print|display)\s+(`([^`]+)`|""([^""]+)"")?(.*)",
       Case_Insensitive);
@@ -101,35 +96,49 @@ package body GVD.Canvas is
      ("graph\s+undisplay\s+(.*)", Case_Insensitive);
    --  Third possible set of commands
 
-   type GVD_Canvas_Record is new Gtk_Scrolled_Window_Record with record
-      Kernel         : Kernel_Handle;
-      Canvas         : Interactive_Canvas;
-      Detect_Aliases : Boolean;
-      Item_Num       : Integer := 0;
-      Process        : Visual_Debugger;
-      --  The process tab that contains the canvas
+   type GVD_Canvas_Record is new Scrolled_Views.Process_View_Record with
+      record
+         Kernel         : Kernel_Handle;
+         Canvas         : Interactive_Canvas;
+         Detect_Aliases : Boolean;
+         Item_Num       : Integer := 0;
 
-      --  The graphic contexts used to draw the canvas and its items
-      Item_Context    : Items.Drawing_Context;
-      Box_Context     : Box_Drawing_Context;
-      Tooltip_Context : Items.Drawing_Context;
+         --  The graphic contexts used to draw the canvas and its items
+         Item_Context    : Items.Drawing_Context;
+         Box_Context     : Box_Drawing_Context;
+         Tooltip_Context : Items.Drawing_Context;
 
-      Selected_Item           : Gtkada.Canvas.Canvas_Item := null;
-      Selected_Component      : Items.Generic_Type_Access := null;
-      --  The currently selected item, and its specific component.
+         Selected_Item           : Gtkada.Canvas.Canvas_Item := null;
+         Selected_Component      : Items.Generic_Type_Access := null;
+         --  The currently selected item, and its specific component.
 
-      Contextual_Background_Menu : Gtk.Menu.Gtk_Menu;
-      Item_Contextual_Menu       : Gtk.Menu.Gtk_Menu;
-   end record;
+         Contextual_Background_Menu : Gtk.Menu.Gtk_Menu;
+         Item_Contextual_Menu       : Gtk.Menu.Gtk_Menu;
+      end record;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
 
-   function Create_Data_Window
-     (Kernel : access Kernel_Handle_Record'Class)
-      return MDI_Child;
+   procedure Initialize
+     (Canvas : access GVD_Canvas_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class);
    --  Create a new data window in the MDI
 
-   procedure Init_Graphics
-     (Process : access Visual_Debugger_Record'Class);
+   function Get_Canvas
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Scrolled_Window;
+   procedure Set_Canvas
+     (Process : access Visual_Debugger_Record'Class;
+      Canvas  : Gtk_Scrolled_Window);
+   --  Get or set the data window associated with Process
+
+   package Canvas_Views is new Scrolled_Views.Simple_Views
+     (Module_Name        => "Debugger_Data",
+      View_Name          => "Debugger Data",
+      Formal_View_Record => GVD_Canvas_Record,
+      Get_View           => Get_Canvas,
+      Set_View           => Set_Canvas,
+      Initialize         => Initialize);
+
+   procedure On_Realize (Canvas : access Gtk_Widget_Record'Class);
    --  Initializes all the internal graphic contexts needed for the canvas.
    --  The canvas should have been realized before calling this procedure.
 
@@ -143,18 +152,9 @@ package body GVD.Canvas is
    --  Debug->Data->Data Window
 
    procedure Preferences_Changed
-     (Process : access Visual_Debugger_Record'Class);
+     (Canvas  : access GVD_Canvas_Record'Class);
    --  Called when the preferences have changed, and the canvas should be
    --  redisplayed with the new setup.
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Kernel : Kernel_Handle) return Glib.Xml_Int.Node_Ptr;
-   function Load_Desktop
-     (MDI    : MDI_Window;
-      Node   : Glib.Xml_Int.Node_Ptr;
-      Kernel : Kernel_Handle) return MDI_Child;
-   --  Handling of desktops
 
    -----------------
    -- Local Types --
@@ -287,10 +287,6 @@ package body GVD.Canvas is
      (Canvas : access Gtk_Widget_Record'Class);
    --  Called when the data canvas is destroyed
 
-   procedure On_Debugger_Terminate
-     (Canvas : access GObject_Record'Class);
-   --  Called when the debugger is terminated
-
    procedure On_Data_Refresh (Canvas : access Gtk_Widget_Record'Class);
    --  "Refresh" contextual menu
 
@@ -302,6 +298,28 @@ package body GVD.Canvas is
    procedure Unselect_All
      (Process : access GVD.Process.Visual_Debugger_Record'Class);
    --  Unselect all items and their components
+
+   ----------------
+   -- Get_Canvas --
+   ----------------
+
+   function Get_Canvas
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Scrolled_Window is
+   begin
+      return Gtk_Scrolled_Window (Process.Data);
+   end Get_Canvas;
+
+   ----------------
+   -- Set_Canvas --
+   ----------------
+
+   procedure Set_Canvas
+     (Process : access Visual_Debugger_Record'Class;
+      Canvas  : Gtk_Scrolled_Window) is
+   begin
+      Process.Data := Gtk_Widget (Canvas);
+   end Set_Canvas;
 
    ----------------
    -- Get_Canvas --
@@ -585,34 +603,19 @@ package body GVD.Canvas is
                        "Unexpected exception: " & Exception_Information (E));
    end On_Data_Refresh;
 
-   ---------------------------
-   -- On_Debugger_Terminate --
-   ---------------------------
-
-   procedure On_Debugger_Terminate
-     (Canvas : access GObject_Record'Class)
-   is
-      C : constant GVD_Canvas := GVD_Canvas (Canvas);
-   begin
-      Destroy (C);
-   exception
-      when E : others =>
-         Traces.Trace (Exception_Handle, "Unexpected exception: "
-                       & Exception_Information (E));
-   end On_Debugger_Terminate;
-
    ----------------------------
    -- On_Data_Canvas_Destroy --
    ----------------------------
 
    procedure On_Data_Canvas_Destroy
-     (Canvas : access Gtk_Widget_Record'Class) is
+     (Canvas : access Gtk_Widget_Record'Class)
+   is
+      Process : constant Visual_Debugger := Get_Process (GVD_Canvas (Canvas));
    begin
-      if GVD_Canvas (Canvas).Process /= null then
-         GVD_Canvas (Canvas).Process.Data := null;
+      if Process /= null then
+         Process.Data := null;
          GVD_Canvas (Canvas).Selected_Item := null;
          GVD_Canvas (Canvas).Selected_Component := null;
-         GVD_Canvas (Canvas).Process := null;
       end if;
    end On_Data_Canvas_Destroy;
 
@@ -733,9 +736,9 @@ package body GVD.Canvas is
       Set_Detect_Aliases (Canvas, not Canvas.Detect_Aliases);
 
       --  Recompute all the aliases
-      Recompute_All_Aliases (Canvas.Process);
+      Recompute_All_Aliases (Get_Process (Canvas));
 
-      Refresh_Data_Window (Canvas.Process);
+      Refresh_Data_Window (Get_Process (Canvas));
 
    exception
       when E : others =>
@@ -749,7 +752,7 @@ package body GVD.Canvas is
 
    procedure Display_Expression (Canvas : access Gtk_Widget_Record'Class) is
    begin
-      Display_Expression (GVD_Canvas (Canvas).Process);
+      Display_Expression (Get_Process (GVD_Canvas (Canvas)));
    exception
       when E : others =>
          Traces.Trace (Exception_Handle,
@@ -812,14 +815,14 @@ package body GVD.Canvas is
       if Get_Button (Event) = 1 then
          Iter := Start (C.Canvas);
          if Get (Iter) /= null then
-            Unselect_All (C.Process);
+            Unselect_All (Get_Process (C));
          end if;
 
       elsif Get_Button (Event) = 3
         and then Get_Event_Type (Event) = Button_Press
       then
          Popup
-           (Contextual_Background_Menu (C.Process),
+           (Contextual_Background_Menu (Get_Process (C)),
             Button            => Get_Button (Event),
             Activate_Time     => Get_Time (Event));
       end if;
@@ -830,40 +833,39 @@ package body GVD.Canvas is
                        "Unexpected exception: " & Exception_Information (E));
    end On_Background_Click;
 
-   ------------------------
-   -- Create_Data_Window --
-   ------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Create_Data_Window
-     (Kernel : access Kernel_Handle_Record'Class)
-      return MDI_Child
+   procedure Initialize
+     (Canvas : access GVD_Canvas_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
    is
-      Child           : GPS_MDI_Child;
-      Data            : GVD_Canvas;
       Annotation_Font : Pango_Font_Description;
    begin
-      Data := new GVD_Canvas_Record;
-      Gtk.Scrolled_Window.Initialize (Data);
-      Set_Policy (Data, Policy_Automatic, Policy_Automatic);
+      Gtk.Scrolled_Window.Initialize (Canvas);
+      Set_Policy (Canvas, Policy_Automatic, Policy_Automatic);
 
-      Data.Kernel         := Kernel_Handle (Kernel);
-      Data.Detect_Aliases := Get_Pref (Default_Detect_Aliases);
+      Canvas.Kernel         := Kernel_Handle (Kernel);
+      Canvas.Detect_Aliases := Get_Pref (Default_Detect_Aliases);
 
-      Gtk_New (Data.Canvas);
-      Align_On_Grid (Data.Canvas, True);
-      Add (Data, Data.Canvas);
-      Add_Events (Data.Canvas, Key_Press_Mask);
+      Gtk_New (Canvas.Canvas);
+      Align_On_Grid (Canvas.Canvas, True);
+      Add (Canvas, Canvas.Canvas);
+      Add_Events (Canvas.Canvas, Key_Press_Mask);
 
       Gtkada.Handlers.Return_Callback.Connect
-        (Data.Canvas, "key_press_event",
+        (Canvas.Canvas, "key_press_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access));
       Object_Callback.Object_Connect
-        (Data.Canvas, "background_click",
+        (Canvas.Canvas, "background_click",
          Object_Callback.To_Marshaller (On_Background_Click'Access),
-         Data);
+         Canvas);
       Widget_Callback.Object_Connect
-        (Data.Canvas, "destroy",
-         On_Data_Canvas_Destroy'Access, Data);
+        (Canvas.Canvas, "destroy",
+         On_Data_Canvas_Destroy'Access, Canvas);
+      Widget_Callback.Object_Connect
+        (Canvas.Canvas, "realize", On_Realize'Access, Canvas);
 
       --  Initialize the canvas
 
@@ -872,52 +874,39 @@ package body GVD.Canvas is
         (Annotation_Font,
          Gint'Max (Pango_Scale,
            Get_Size (Annotation_Font) - 2 * Pango_Scale));
-      Configure (Data.Canvas, Annotation_Font => Annotation_Font);
+      Configure (Canvas.Canvas, Annotation_Font => Annotation_Font);
       Free (Annotation_Font);
+   end Initialize;
 
-      Gtk_New (Child, Data,
-               Group          => Group_Graphs,
-               Default_Height => 200,
-               Module         => Debugger_Module_ID);
-      Set_Title (Child, -"Debugger Data");
-      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Top);
-      Set_Focus_Child (Child);
+   ----------------
+   -- On_Realize --
+   ----------------
 
-      return MDI_Child (Child);
-   end Create_Data_Window;
-
-   -------------------
-   -- Init_Graphics --
-   -------------------
-
-   procedure Init_Graphics
-     (Process : access Visual_Debugger_Record'Class)
-   is
-      Canvas : constant GVD_Canvas := GVD_Canvas (Process.Data);
-      Win : constant Gdk.Window.Gdk_Window := Get_Window (Canvas);
+   procedure On_Realize (Canvas : access Gtk_Widget_Record'Class) is
+      C   : constant GVD_Canvas := GVD_Canvas (Canvas);
+      Win : constant Gdk.Window.Gdk_Window := Get_Window (C.Canvas);
    begin
       pragma Assert (Win /= null);
-      if Canvas.Box_Context.Close_Pixmap = null then
+      if C.Box_Context.Close_Pixmap = null then
          Create_From_Xpm_D
-           (Canvas.Box_Context.Close_Pixmap, Win,
-            Canvas.Box_Context.Close_Mask, Null_Color, cancel_xpm);
+           (C.Box_Context.Close_Pixmap, Win,
+            C.Box_Context.Close_Mask, Null_Color, cancel_xpm);
          Create_From_Xpm_D
-           (Canvas.Box_Context.Locked_Pixmap, Win,
-            Canvas.Box_Context.Locked_Mask, Null_Color, lock_xpm);
+           (C.Box_Context.Locked_Pixmap, Win,
+            C.Box_Context.Locked_Mask, Null_Color, lock_xpm);
          Create_From_Xpm_D
-           (Canvas.Box_Context.Auto_Display_Pixmap, Win,
-            Canvas.Box_Context.Auto_Display_Mask, Null_Color,
+           (C.Box_Context.Auto_Display_Pixmap, Win,
+            C.Box_Context.Auto_Display_Mask, Null_Color,
             display_small_xpm);
          Create_From_Xpm_D
-           (Canvas.Item_Context.Hidden_Pixmap, Win,
-            Canvas.Item_Context.Hidden_Mask, Null_Color, box_xpm);
+           (C.Item_Context.Hidden_Pixmap, Win,
+            C.Item_Context.Hidden_Mask, Null_Color, box_xpm);
          Create_From_Xpm_D
-           (Canvas.Item_Context.Unknown_Pixmap, Win,
-            Canvas.Item_Context.Unknown_Mask, Null_Color, trash_xpm);
-
-         GVD.Canvas.Preferences_Changed (Process);
+           (C.Item_Context.Unknown_Pixmap, Win,
+            C.Item_Context.Unknown_Mask, Null_Color, trash_xpm);
+         Preferences_Changed (C);
       end if;
-   end Init_Graphics;
+   end On_Realize;
 
    ---------------------------
    -- Attach_To_Data_Window --
@@ -926,76 +915,7 @@ package body GVD.Canvas is
    procedure Attach_To_Data_Window
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
       Create_If_Necessary : Boolean)
-   is
-      MDI  : constant MDI_Window :=
-        Get_MDI (Get_Kernel (Debugger_Module_ID.all));
-      Iter : Child_Iterator;
-      Child : MDI_Child;
-      Data  : GVD_Canvas;
-   begin
-      if Debugger.Data = null then
-         --  Do we have an existing unattached data window ?
-         Iter := First_Child (MDI);
-         loop
-            Child := Get (Iter);
-            exit when Child = null;
-
-            if Get_Widget (Child).all in GVD_Canvas_Record'Class then
-               Data := GVD_Canvas (Get_Widget (Child));
-               if Data.Process = null then
-                  Traces.Trace
-                    (Me, "Debugger attached to existing data window");
-                  Data.Process := Visual_Debugger (Debugger);
-                  Debugger.Data := Gtk_Widget (Data);
-                  exit;
-               end if;
-               Data := null;
-            end if;
-            Next (Iter);
-         end loop;
-
-         --  If none was found, create one
-
-         if Child = null and then Create_If_Necessary then
-            Traces.Trace (Me, "Creating new data window");
-            Child := Create_Data_Window (Get_Kernel (Debugger_Module_ID.all));
-            Data  := GVD_Canvas (Get_Widget (Child));
-            Data.Process := Visual_Debugger (Debugger);
-            Debugger.Data := Gtk_Widget (Data);
-         end if;
-
-         --  Initialize the pixmaps and colors for the canvas
-         if Debugger.Data /= null then
-            Realize (Data.Canvas);
-            Init_Graphics (Debugger);
-         end if;
-
-         if Child /= null then
-            if Debugger.Debugger_Num = 1 then
-               Set_Title (Child, -"Debugger Data");
-            else
-               Set_Title (Child, -"Debugger Data" & " <" &
-                          Image (Debugger.Debugger_Num) & ">");
-            end if;
-         end if;
-
-         if Debugger.Data /= null then
-            Object_Callback.Object_Connect
-              (Debugger.Debugger_Text, "destroy",
-               On_Debugger_Terminate'Access,
-               Slot_Object => Debugger.Data);
-         end if;
-
-      else
-         Child := Find_MDI_Child (MDI, Debugger.Data);
-         if Child /= null then
-            Raise_Child (Child);
-         else
-            Destroy (Debugger.Data);
-            Debugger.Data := null;
-         end if;
-      end if;
-   end Attach_To_Data_Window;
+     renames Canvas_Views.Attach_To_View;
 
    -----------------------
    -- Get_Next_Item_Num --
@@ -1035,119 +955,123 @@ package body GVD.Canvas is
    -------------------------
 
    procedure Preferences_Changed
-     (Process : access Visual_Debugger_Record'Class)
+     (Canvas  : access GVD_Canvas_Record'Class)
    is
-      C   : constant GVD_Canvas := GVD_Canvas (Process.Data);
       Win : Gdk.Window.Gdk_Window;
       Item : Canvas_Item;
       Iter : Item_Iterator;
       Hide : constant Boolean := Get_Pref (Hide_Big_Items);
 
    begin
-      Realize (C);
-      Win := Get_Window (C);
+      Realize (Canvas);
+      Win := Get_Window (Canvas);
       Set_Detect_Aliases
-        (C, Get_Pref (Default_Detect_Aliases));
-      Recompute_All_Aliases (Process);
+        (Canvas, Get_Pref (Default_Detect_Aliases));
+
+      --  If we are not attached to a process, this means the canvas is empty
+      --  and nothing needs to be done anyway
+      if Get_Process (Canvas) /= null then
+         Recompute_All_Aliases (Get_Process (Canvas));
+      end if;
 
       --  The drawing context for the items
 
-      if C.Item_Context.GC /= null then
-         Destroy (C.Item_Context.GC);
+      if Canvas.Item_Context.GC /= null then
+         Destroy (Canvas.Item_Context.GC);
       end if;
 
-      Gdk_New (C.Item_Context.GC, Win);
-      Set_Foreground (C.Item_Context.GC, Black (Get_Default_Colormap));
-      C.Tooltip_Context.GC := C.Item_Context.GC;
+      Gdk_New (Canvas.Item_Context.GC, Win);
+      Set_Foreground (Canvas.Item_Context.GC, Black (Get_Default_Colormap));
+      Canvas.Tooltip_Context.GC := Canvas.Item_Context.GC;
 
-      if C.Item_Context.Xref_GC /= null then
-         Destroy (C.Item_Context.Xref_GC);
+      if Canvas.Item_Context.Xref_GC /= null then
+         Destroy (Canvas.Item_Context.Xref_GC);
       end if;
 
-      Gdk_New (C.Item_Context.Xref_GC, Win);
+      Gdk_New (Canvas.Item_Context.Xref_GC, Win);
       Set_Foreground
-        (C.Item_Context.Xref_GC, Get_Pref (Xref_Color));
-      C.Tooltip_Context.Xref_GC := C.Item_Context.Xref_GC;
+        (Canvas.Item_Context.Xref_GC, Get_Pref (Xref_Color));
+      Canvas.Tooltip_Context.Xref_GC := Canvas.Item_Context.Xref_GC;
 
-      if C.Item_Context.Modified_GC /= null then
-         Destroy (C.Item_Context.Modified_GC);
+      if Canvas.Item_Context.Modified_GC /= null then
+         Destroy (Canvas.Item_Context.Modified_GC);
       end if;
 
-      Gdk_New (C.Item_Context.Modified_GC, Win);
+      Gdk_New (Canvas.Item_Context.Modified_GC, Win);
       Set_Foreground
-        (C.Item_Context.Modified_GC, Get_Pref (Change_Color));
-      C.Tooltip_Context.Modified_GC := C.Item_Context.Modified_GC;
+        (Canvas.Item_Context.Modified_GC, Get_Pref (Change_Color));
+      Canvas.Tooltip_Context.Modified_GC := Canvas.Item_Context.Modified_GC;
 
-      if C.Item_Context.Selection_GC /= null then
-         Destroy (C.Item_Context.Selection_GC);
+      if Canvas.Item_Context.Selection_GC /= null then
+         Destroy (Canvas.Item_Context.Selection_GC);
       end if;
 
-      Gdk_New (C.Item_Context.Selection_GC, Win);
-      Set_Foreground (C.Item_Context.Selection_GC,
+      Gdk_New (Canvas.Item_Context.Selection_GC, Win);
+      Set_Foreground (Canvas.Item_Context.Selection_GC,
                       Get_Pref (Selected_Item_Color));
-      C.Tooltip_Context.Selection_GC := C.Item_Context.Selection_GC;
+      Canvas.Tooltip_Context.Selection_GC := Canvas.Item_Context.Selection_GC;
 
-      if C.Item_Context.Text_Layout /= null then
-         Unref (C.Item_Context.Text_Layout);
-         Unref (C.Item_Context.Type_Layout);
+      if Canvas.Item_Context.Text_Layout /= null then
+         Unref (Canvas.Item_Context.Text_Layout);
+         Unref (Canvas.Item_Context.Type_Layout);
       end if;
 
-      C.Item_Context.Line_Height := To_Pixels
+      Canvas.Item_Context.Line_Height := To_Pixels
         (Get_Size (Get_Pref (Default_Font)));
 
-      C.Item_Context.Big_Item_Height := Get_Pref (Big_Item_Height);
+      Canvas.Item_Context.Big_Item_Height := Get_Pref (Big_Item_Height);
 
-      C.Item_Context.Text_Layout := Create_Pango_Layout (C.Canvas);
+      Canvas.Item_Context.Text_Layout := Create_Pango_Layout (Canvas.Canvas);
       Set_Font_Description
-        (C.Item_Context.Text_Layout, Get_Pref (Default_Font));
+        (Canvas.Item_Context.Text_Layout, Get_Pref (Default_Font));
 
-      C.Item_Context.Type_Layout := Create_Pango_Layout (C.Canvas);
+      Canvas.Item_Context.Type_Layout := Create_Pango_Layout (Canvas.Canvas);
       Set_Font_Description
-        (C.Item_Context.Type_Layout, Get_Pref (Type_Font));
+        (Canvas.Item_Context.Type_Layout, Get_Pref (Type_Font));
 
       --  The drawing context for the boxes
 
-      if C.Box_Context.Grey_GC /= null then
-         Destroy (C.Box_Context.Grey_GC);
+      if Canvas.Box_Context.Grey_GC /= null then
+         Destroy (Canvas.Box_Context.Grey_GC);
       end if;
 
-      Gdk_New (C.Box_Context.Grey_GC, Win);
+      Gdk_New (Canvas.Box_Context.Grey_GC, Win);
       Set_Foreground
-        (C.Box_Context.Grey_GC, Get_Pref (Title_Color));
+        (Canvas.Box_Context.Grey_GC, Get_Pref (Title_Color));
 
-      if C.Box_Context.Black_GC /= null then
-         Destroy (C.Box_Context.Black_GC);
+      if Canvas.Box_Context.Black_GC /= null then
+         Destroy (Canvas.Box_Context.Black_GC);
       end if;
 
-      Gdk_New (C.Box_Context.Black_GC, Win);
-      Set_Foreground (C.Box_Context.Black_GC, Black (Get_Default_Colormap));
-
-      if C.Box_Context.Refresh_Button_GC /= null then
-         Destroy (C.Box_Context.Refresh_Button_GC);
-      end if;
-
-      Gdk_New (C.Box_Context.Refresh_Button_GC, Win);
-
-      if C.Box_Context.Thaw_Bg_GC /= null then
-         Destroy (C.Box_Context.Thaw_Bg_GC);
-      end if;
-
-      Gdk_New (C.Box_Context.Thaw_Bg_GC, Win);
+      Gdk_New (Canvas.Box_Context.Black_GC, Win);
       Set_Foreground
-        (C.Box_Context.Thaw_Bg_GC, Get_Pref (Thaw_Bg_Color));
+        (Canvas.Box_Context.Black_GC, Black (Get_Default_Colormap));
 
-      if C.Box_Context.Freeze_Bg_GC /= null then
-         Destroy (C.Box_Context.Freeze_Bg_GC);
+      if Canvas.Box_Context.Refresh_Button_GC /= null then
+         Destroy (Canvas.Box_Context.Refresh_Button_GC);
       end if;
 
-      Gdk_New (C.Box_Context.Freeze_Bg_GC, Win);
+      Gdk_New (Canvas.Box_Context.Refresh_Button_GC, Win);
+
+      if Canvas.Box_Context.Thaw_Bg_GC /= null then
+         Destroy (Canvas.Box_Context.Thaw_Bg_GC);
+      end if;
+
+      Gdk_New (Canvas.Box_Context.Thaw_Bg_GC, Win);
       Set_Foreground
-        (C.Box_Context.Freeze_Bg_GC,
-         Get_Pref (Freeze_Bg_Color));
+        (Canvas.Box_Context.Thaw_Bg_GC, Get_Pref (Thaw_Bg_Color));
 
-      Allocate_Fonts (C);
+      if Canvas.Box_Context.Freeze_Bg_GC /= null then
+         Destroy (Canvas.Box_Context.Freeze_Bg_GC);
+      end if;
 
-      Iter := Start (C.Canvas);
+      Gdk_New (Canvas.Box_Context.Freeze_Bg_GC, Win);
+      Set_Foreground
+        (Canvas.Box_Context.Freeze_Bg_GC, Get_Pref (Freeze_Bg_Color));
+
+      Allocate_Fonts (Canvas);
+
+      Iter := Start (Canvas.Canvas);
       loop
          Item := Get (Iter);
          exit when Item = null;
@@ -1157,7 +1081,7 @@ package body GVD.Canvas is
          Next (Iter);
       end loop;
 
-      Refresh_Canvas (C.Canvas);
+      Refresh_Canvas (Canvas.Canvas);
    end Preferences_Changed;
 
    -------------------------
@@ -1726,7 +1650,7 @@ package body GVD.Canvas is
       pragma Unreferenced (Widget);
 
       Top  : constant GPS_Window :=
-        GPS_Window (Visual_Debugger (Item.Canvas.Process).Window);
+        GPS_Window (Get_Process (Item.Canvas).Window);
       View : GVD_Memory_View;
 
    begin
@@ -1872,42 +1796,6 @@ package body GVD.Canvas is
                        "Unexpected exception: " & Exception_Information (E));
    end On_Data_Window;
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI    : MDI_Window;
-      Node   : Glib.Xml_Int.Node_Ptr;
-      Kernel : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Data_Window" then
-         return Create_Data_Window (Kernel);
-      end if;
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Kernel : Kernel_Handle) return Glib.Xml_Int.Node_Ptr
-   is
-      pragma Unreferenced (Kernel);
-      N : Glib.Xml_Int.Node_Ptr;
-   begin
-      if Widget.all in GVD_Canvas_Record'Class then
-         N     := new Glib.Xml_Int.Node;
-         N.Tag := new String'("Data_Window");
-         return N;
-      end if;
-      return null;
-   end Save_Desktop;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1920,8 +1808,7 @@ package body GVD.Canvas is
    begin
       Register_Menu (Kernel, Data_Sub, -"_Data Window", "",
                      On_Data_Window'Access, Ref_Item => -"Protection Domains");
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Canvas_Views.Register_Desktop_Functions;
    end Register_Module;
 
 end GVD.Canvas;

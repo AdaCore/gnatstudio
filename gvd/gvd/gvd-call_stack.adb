@@ -23,11 +23,9 @@ with Ada.Exceptions;         use Ada.Exceptions;
 with Gdk.Event;              use Gdk.Event;
 
 with Glib.Object;            use Glib.Object;
-with Glib.Values;            use Glib.Values;
-with Glib.Xml_Int;
+with Glib.Xml_Int;           use Glib.Xml_Int;
 with Glib;                   use Glib;
 
-with Gtk.Arguments;          use Gtk.Arguments;
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Handlers;           use Gtk.Handlers;
@@ -42,22 +40,20 @@ with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.Dialogs;         use Gtkada.Dialogs;
 with Gtkada.Handlers;        use Gtkada.Handlers;
-with Gtkada.MDI;             use Gtkada.MDI;
 
 with Basic_Types;            use Basic_Types;
 with Config;                 use Config;
 with Debugger;               use Debugger;
 with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Intl;               use GPS.Intl;
 with GUI_Utils;              use GUI_Utils;
 with GVD.Code_Editors;       use GVD.Code_Editors;
+with GVD.Views;              use GVD.Views;
 with GVD_Module;             use GVD_Module;
 with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with Process_Proxies;        use Process_Proxies;
-with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 
 package body GVD.Call_Stack is
@@ -84,25 +80,47 @@ package body GVD.Call_Stack is
    File_Location   : constant Stack_List_Mask := 2 ** 4;
    --  Lists the information to be displayed in the stack list window.
 
-   type Call_Stack_Record is new Gtk_Scrolled_Window_Record with record
-      Tree                       : Gtk_Tree_View;
-      Model                      : Gtk_Tree_Store;
-      Process                    : Visual_Debugger;
-      Block                      : Boolean := False;
-      --  Whether to process selection events.
+   type Call_Stack_Record is new Scrolled_Views.Process_View_Record with
+      record
+         Tree                       : Gtk_Tree_View;
+         Model                      : Gtk_Tree_Store;
+         Block                      : Boolean := False;
+         --  Whether to process selection events.
 
-      Backtrace_Mask             : Stack_List_Mask := Subprog_Name;
-      --  What columns to be displayed in the stack list window
-   end record;
+         Backtrace_Mask             : Stack_List_Mask := Subprog_Name;
+         --  What columns to be displayed in the stack list window
+      end record;
    type Call_Stack is access all Call_Stack_Record'Class;
 
-   procedure Gtk_New (Widget : out Call_Stack; Mask : Stack_List_Mask);
-   --  Create a new call stack dialog.
+   procedure Load_From_XML
+     (View : access Call_Stack_Record; XML : Glib.Xml_Int.Node_Ptr);
+   function Save_To_XML
+     (View : access Call_Stack_Record) return Glib.Xml_Int.Node_Ptr;
+   procedure On_Attach
+     (View    : access Call_Stack_Record;
+      Process : access GVD.Process.Visual_Debugger_Record'Class);
+   --  See inherited documentation
 
    procedure Initialize
      (Widget : access Call_Stack_Record'Class;
-      Mask   : Stack_List_Mask);
+      Kernel : access Kernel_Handle_Record'Class);
    --  Internal initialization function.
+
+   function Get_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Scrolled_Window;
+   procedure Set_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Scrolled_Window);
+   --  Store or retrieve the view from the process
+
+   package Simple_Views is new Scrolled_Views.Simple_Views
+     (Module_Name        => "Call_Stack",
+      View_Name          => -"Call Stack",
+      Formal_View_Record => Call_Stack_Record,
+      Get_View           => Get_View,
+      Set_View           => Set_View,
+      Initialize         => Initialize);
 
    package Call_Stack_Cb is new Gtk.Handlers.User_Callback
      (Call_Stack_Record, Stack_List_Mask);
@@ -128,48 +146,35 @@ package body GVD.Call_Stack is
    --  Toggle the display of a specific column in the Stack_List window.
 
    procedure On_Selection_Changed
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : GValues);
+     (Object : access Glib.Object.GObject_Record'Class);
    --  Callback for the selection change.
-
-   function Create_Call_Stack
-     (MDI : access MDI_Window_Record'Class;
-      Mask : Stack_List_Mask) return MDI_Child;
-   --  Create a new callstack in the MDI
-
-   function Load_Desktop
-     (MDI    : MDI_Window;
-      Node   : Glib.Xml_Int.Node_Ptr;
-      Kernel : GPS.Kernel.Kernel_Handle) return MDI_Child;
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle) return Glib.Xml_Int.Node_Ptr;
-   --  Desktop-related functions (see Gtkada.MDI)
-
-   function On_Stack_Delete_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-   --  Callback for the "delete_event" signal on the Call Stack window.
 
    procedure On_Call_Stack
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Call Stack
 
-   procedure On_Debugger_Terminate
-     (Stack : access GObject_Record'Class);
-   --  Called when the debugger is terminated
+   --------------
+   -- Get_View --
+   --------------
 
-   ---------------------------
-   -- On_Debugger_Terminate --
-   ---------------------------
-
-   procedure On_Debugger_Terminate
-     (Stack : access GObject_Record'Class)
+   function Get_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Scrolled_Window
    is
-      C : constant Call_Stack := Call_Stack (Stack);
    begin
-      Destroy (C);
-   end On_Debugger_Terminate;
+      return Gtk_Scrolled_Window (Process.Stack);
+   end Get_View;
+
+   --------------
+   -- Set_View --
+   --------------
+
+   procedure Set_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Scrolled_Window) is
+   begin
+      Process.Stack := Gtk_Widget (View);
+   end Set_View;
 
    -------------------
    -- On_Call_Stack --
@@ -199,41 +204,24 @@ package body GVD.Call_Stack is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Call_Stack;
 
-   ---------------------------
-   -- On_Stack_Delete_Event --
-   ---------------------------
-
-   function On_Stack_Delete_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      pragma Unreferenced (Params);
-      Process : constant Visual_Debugger := Visual_Debugger (Object);
-   begin
-      Process.Stack := null;
-      return False;
-   end On_Stack_Delete_Event;
-
    --------------------------
    -- On_Selection_Changed --
    --------------------------
 
    procedure On_Selection_Changed
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : GValues)
+     (Object : access Glib.Object.GObject_Record'Class)
    is
-      pragma Unreferenced (Params);
       Stack : constant Call_Stack := Call_Stack (Object);
       Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
    begin
-      if Stack.Process = null or else Stack.Block then
+      if Get_Process (Stack) = null or else Stack.Block then
          return;
       end if;
 
       Get_Selected (Get_Selection (Stack.Tree), Model, Iter);
       Stack_Frame
-        (Stack.Process.Debugger,
+        (Get_Process (Stack).Debugger,
          Natural'Value (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
          GVD.Types.Visible);
 
@@ -323,15 +311,37 @@ package body GVD.Call_Stack is
                    (Tree.Backtrace_Mask and File_Location) /= 0);
    end Set_Column_Types;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ---------------
+   -- On_Attach --
+   ---------------
 
-   procedure Gtk_New (Widget : out Call_Stack; Mask : Stack_List_Mask) is
+   procedure On_Attach
+     (View    : access Call_Stack_Record;
+      Process : access GVD.Process.Visual_Debugger_Record'Class)
+   is
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
    begin
-      Widget := new Call_Stack_Record;
-      GVD.Call_Stack.Initialize (Widget, Mask);
-   end Gtk_New;
+      Object_Callback.Object_Connect
+        (Process, "process_stopped", Update_Call_Stack'Access, View);
+      Object_Callback.Object_Connect
+        (Process, "context_changed", Update_Call_Stack'Access, View);
+
+      if Process.Debugger /= null
+        and then Get_Process (Process.Debugger) /= null
+      then
+         if Command_In_Process (Get_Process (Process.Debugger)) then
+            Button := Message_Dialog
+              ((-"Cannot show call stack while the debugger is busy.") &
+               ASCII.LF &
+               (-"Interrupt the debugger or wait for its availability."),
+               Dialog_Type => Warning,
+               Buttons     => Button_OK);
+         else
+            Update_Call_Stack (View);
+         end if;
+      end if;
+   end On_Attach;
 
    ----------------
    -- Initialize --
@@ -339,8 +349,9 @@ package body GVD.Call_Stack is
 
    procedure Initialize
      (Widget : access Call_Stack_Record'Class;
-      Mask   : Stack_List_Mask)
+      Kernel : access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Kernel);
       Name_Frame   : aliased String := -"Num";
       Name_Counter : aliased String := -"PC";
       Name_Subprog : aliased String := -"Subprogram";
@@ -367,7 +378,6 @@ package body GVD.Call_Stack is
 
       Add (Widget, Widget.Tree);
 
-      Widget.Backtrace_Mask := Mask;
       Set_Column_Types (Widget);
 
       Register_Contextual_Menu
@@ -422,123 +432,7 @@ package body GVD.Call_Stack is
 
    procedure Attach_To_Call_Stack
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean)
-   is
-      MDI     : constant MDI_Window :=
-        Get_MDI (Get_Kernel (Debugger_Module_ID.all));
-      Button  : Message_Dialog_Buttons;
-      Child   : MDI_Child;
-      Iter    : Child_Iterator;
-      Stack   : Call_Stack;
-      pragma Unreferenced (Button);
-   begin
-      if Debugger.Stack = null then
-         --  Do we have an existing unattached callstack ?
-         Iter := First_Child (MDI);
-         loop
-            Child := Get (Iter);
-            exit when Child = null;
-
-            if Get_Widget (Child).all in Call_Stack_Record'Class then
-               Stack := Call_Stack (Get_Widget (Child));
-               if Stack.Process = null then
-                  Stack.Process := Visual_Debugger (Debugger);
-                  exit;
-               end if;
-               Stack := null;
-            end if;
-
-            Next (Iter);
-         end loop;
-
-         --  If no existing call stack was found, create one
-
-         if Child = null and then Create_If_Necessary then
-            Child := Create_Call_Stack (MDI, Subprog_Name);
-            Stack := Call_Stack (Get_Widget (Child));
-            Stack.Process := Visual_Debugger (Debugger);
-         end if;
-
-         if Child /= null then
-            if Debugger.Debugger_Num = 1 then
-               Set_Title (Child, -"Call Stack");
-            else
-               Set_Title
-                 (Child, (-"Call Stack") & " <"
-                  & Image (Debugger.Debugger_Num) & ">");
-            end if;
-         end if;
-
-         Debugger.Stack := Gtk_Widget (Stack);
-
-         if Debugger.Stack /= null then
-            Gtkada.Handlers.Object_Return_Callback.Object_Connect
-              (Debugger.Stack, "delete_event",
-               On_Stack_Delete_Event'Access, Debugger);
-
-            Gtkada.Handlers.Object_Callback.Object_Connect
-              (Debugger, "process_stopped",
-               Update_Call_Stack'Access,
-               Slot_Object => Debugger.Stack);
-            Object_Callback.Object_Connect
-              (Debugger, "context_changed",
-               Update_Call_Stack'Access,
-               Slot_Object => Debugger.Stack);
-            Object_Callback.Object_Connect
-              (Debugger.Debugger_Text, "destroy",
-               On_Debugger_Terminate'Access,
-               Slot_Object => Debugger.Stack);
-
-            if Debugger.Debugger /= null
-              and then Get_Process (Debugger.Debugger) /= null
-            then
-               if Command_In_Process (Get_Process (Debugger.Debugger)) then
-                  Button := Message_Dialog
-                    ((-"Cannot show call stack while the debugger is busy.") &
-                     ASCII.LF &
-                     (-"Interrupt the debugger or wait for its availability."),
-                     Dialog_Type => Warning,
-                     Buttons     => Button_OK);
-               else
-                  Update_Call_Stack (Debugger.Stack);
-               end if;
-            end if;
-         end if;
-      else
-         Child := Find_MDI_Child (MDI, Debugger.Stack);
-         if Child /= null then
-            Raise_Child (Child);
-         else
-            --  Something really bad happened: the stack window is not
-            --  part of the MDI, reset it.
-            Destroy (Debugger.Stack);
-            Debugger.Stack := null;
-         end if;
-      end if;
-   end Attach_To_Call_Stack;
-
-   -----------------------
-   -- Create_Call_Stack --
-   -----------------------
-
-   function Create_Call_Stack
-     (MDI : access MDI_Window_Record'Class;
-      Mask : Stack_List_Mask) return MDI_Child
-   is
-      Stack : Call_Stack;
-      Child : GPS_MDI_Child;
-   begin
-      Gtk_New (Stack, Mask);
-      Gtk_New (Child, Stack,
-               Group  => Group_Debugger_Stack,
-               Module => Debugger_Module_ID);
-      Set_Title (Child, -"Call Stack");
-      Put (MDI, Child, Initial_Position => Position_Right);
-      Set_Focus_Child (Child);
-
-      Stack.Process := null;
-      return  MDI_Child (Child);
-   end Create_Call_Stack;
+      Create_If_Necessary : Boolean) renames Simple_Views.Attach_To_View;
 
    ---------------------
    -- Register_Module --
@@ -550,55 +444,38 @@ package body GVD.Call_Stack is
       Debug          : constant String := '/' & (-"_Debug") & '/';
       Data_Sub       : constant String := Debug & (-"D_ata") & '/';
    begin
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
-
+      Simple_Views.Register_Desktop_Functions;
       Register_Menu (Kernel, Data_Sub, -"_Call Stack", "",
                      On_Call_Stack'Access, Ref_Item => -"Data Window",
                      Add_Before => False);
    end Register_Module;
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
+   -------------------
+   -- Load_From_XML --
+   -------------------
 
-   function Load_Desktop
-     (MDI    : MDI_Window;
-      Node   : Glib.Xml_Int.Node_Ptr;
-      Kernel : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (Kernel);
+   procedure Load_From_XML
+     (View : access Call_Stack_Record; XML : Glib.Xml_Int.Node_Ptr) is
    begin
-      if Node.Tag.all = "Call_Stack" then
-         return Create_Call_Stack
-           (MDI, Mask => Stack_List_Mask'Value
-              (Glib.Xml_Int.Get_Attribute
-                 (Node, "mask", Stack_List_Mask'Image (Subprog_Name))));
-      end if;
-      return null;
-   end Load_Desktop;
+      View.Backtrace_Mask := Stack_List_Mask'Value (XML.Value.all);
+   exception
+      when others =>
+         View.Backtrace_Mask := Subprog_Name;
+   end Load_From_XML;
 
-   ------------------
-   -- Save_Desktop --
-   ------------------
+   -----------------
+   -- Save_To_XML --
+   -----------------
 
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Kernel : Kernel_Handle) return Glib.Xml_Int.Node_Ptr
+   function Save_To_XML
+     (View : access Call_Stack_Record) return Glib.Xml_Int.Node_Ptr
    is
-      pragma Unreferenced (Kernel);
-      N : Glib.Xml_Int.Node_Ptr;
+      N : constant Node_Ptr := new Node;
    begin
-      if Widget.all in Call_Stack_Record'Class then
-         N     := new Glib.Xml_Int.Node;
-         N.Tag := new String'("Call_Stack");
-         Glib.Xml_Int.Set_Attribute
-           (N, "mask",
-            Stack_List_Mask'Image (Call_Stack (Widget).Backtrace_Mask));
-         return N;
-      end if;
-      return null;
-   end Save_Desktop;
+      N.Tag   := new String'("mask");
+      N.Value := new String'(Stack_List_Mask'Image (View.Backtrace_Mask));
+      return N;
+   end Save_To_XML;
 
    -----------------------
    -- Update_Call_Stack --
@@ -621,8 +498,8 @@ package body GVD.Call_Stack is
       S.Block := True;
       Clear (S.Model);
 
-      if S.Process /= null then
-         Process := Get_Process (S.Process.Debugger);
+      if Get_Process (S) /= null then
+         Process := Get_Process (Get_Process (S).Debugger);
       end if;
 
       --  If the debugger was killed, no need to refresh
@@ -634,7 +511,7 @@ package body GVD.Call_Stack is
 
       --  Parse the information from the debugger
 
-      Backtrace (S.Process.Debugger, Bt, Len);
+      Backtrace (Get_Process (S).Debugger, Bt, Len);
 
       --  Update the contents of the window
 
