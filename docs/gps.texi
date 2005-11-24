@@ -14279,12 +14279,6 @@ parameters:
   @end table
   Bring the specified files in sync with the latest repository revision.
 
-@item update_dir
-  @table @code
-    @item $* = directory
-  @end table
-  Update the contents of one directory.
-
 @item resolved
   @table @code
     @item $* = list of files
