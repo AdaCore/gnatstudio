@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Tags;           use Ada.Tags;
 with Glib;               use Glib;
 with Glib.Xml_Int;       use Glib.Xml_Int;
 with GPS.Kernel;         use GPS.Kernel;
@@ -26,7 +27,6 @@ with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtkada.MDI;         use Gtkada.MDI;
---  with GVD_Module;         use GVD_Module;
 with String_Utils;       use String_Utils;
 
 package body GVD.Generic_View is
@@ -147,7 +147,7 @@ package body GVD.Generic_View is
                Child := Get (Iter);
                exit when Child = null;
 
-               if Get_Widget (Child).all in Formal_View_Record'Class then
+               if Get_Widget (Child)'Tag = Formal_View_Record'Tag then
                   View := Formal_View_Access (Get_Widget (Child));
                   exit when Get_Process (View) = null;
                end if;
@@ -253,7 +253,7 @@ package body GVD.Generic_View is
          pragma Unreferenced (Kernel);
          N : Glib.Xml_Int.Node_Ptr;
       begin
-         if Widget.all in Formal_View_Record'Class then
+         if Widget'Tag = Formal_View_Record'Tag then
             N       := new Glib.Xml_Int.Node;
             N.Tag   := new String'(Module_Name);
             N.Child := Save_To_XML (Formal_View_Access (Widget));
