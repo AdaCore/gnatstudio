@@ -4,6 +4,7 @@ package body Sdefault is
    S2 : aliased constant String := "<unknown>";
    S3 : aliased constant String := "@TARGET@/";
    S4 : aliased constant String := "<unknown>";
+   S5 : aliased constant String := "@TARGET@";
 
    function Include_Dir_Default_Name return String_Ptr is
    begin
@@ -21,4 +22,8 @@ package body Sdefault is
    begin
       return new String'(S4);
    end Search_Dir_Prefix;
+   function Target_OS_Name return String_Ptr is
+   begin
+      return new String'(S5);
+   end Target_OS_Name; 
 end Sdefault;
