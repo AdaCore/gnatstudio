@@ -386,6 +386,18 @@
    </project_attribute>
 
    <project_attribute
+       name="externally_built"
+       editor_page="Library"
+       editor_section="General"
+       label="Externally Built"
+       hide_in="wizard"
+       description="Set this attribute to True if the compiler should not check whether the library is up-to-date. As a result, the sources do not need to be
+available, apart of course for the spec files and the bodies of generic packages">
+       <choice default="true">False</choice>
+       <choice>True</choice>
+   </project_attribute>
+ 
+   <project_attribute
        name="library_interface"
        editor_page="Library"
        editor_section="Standalone library"
