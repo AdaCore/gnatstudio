@@ -30,6 +30,7 @@ with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Event;           use Gdk.Event;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Main;            use Gtk.Main;
+with Gtk.Object;
 with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
 with Gtk.Text_View;       use Gtk.Text_View;
 with Gtk.Text_Iter;       use Gtk.Text_Iter;
@@ -574,6 +575,10 @@ package body Interactive_Consoles is
 
    begin
       --  Prevent recursion
+
+      if Gtk.Object.In_Destruction_Is_Set (Console) then
+         return;
+      end if;
 
       if C.Internal_Insert then
          return;
