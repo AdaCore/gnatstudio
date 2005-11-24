@@ -66,9 +66,37 @@ package body GVD.Dialogs is
    -- Thread View --
    -----------------
 
+   type Get_Info_Subprogram is access procedure
+     (Debugger : access Debugger_Root'Class;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural);
+   procedure Info_Threads_Dispatch
+     (Debugger : access Debugger_Root'Class;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural);
+   procedure Info_Tasks_Dispatch
+     (Debugger : access Debugger_Root'Class;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural);
+
+   type Switch_Subprogram is access procedure
+     (Debugger : access Debugger_Root'Class;
+      Num      : Natural;
+      Mode     : GVD.Types.Command_Type);
+   procedure Task_Switch_Dispatch
+     (Debugger : access Debugger_Root'Class;
+      Num      : Natural;
+      Mode     : GVD.Types.Command_Type);
+   procedure Thread_Switch_Dispatch
+     (Debugger : access Debugger_Root'Class;
+      Num      : Natural;
+      Mode     : GVD.Types.Command_Type);
+
    type Thread_View_Record is new Scrolled_Views.Process_View_Record with
       record
-         Tree : Gtk.Tree_View.Gtk_Tree_View;
+         Tree     : Gtk.Tree_View.Gtk_Tree_View;
+         Get_Info : Get_Info_Subprogram := Info_Threads_Dispatch'Access;
+         Switch   : Switch_Subprogram := Thread_Switch_Dispatch'Access;
       end record;
    type Thread_View is access all Thread_View_Record'Class;
 
@@ -104,6 +132,34 @@ package body GVD.Dialogs is
    procedure On_Thread_Selection (Thread : access Gtk_Widget_Record'Class);
    --  Called when a thread was selected in the view
 
+   ----------------
+   -- Tasks view --
+   ----------------
+
+   type Task_View_Record is new Thread_View_Record with null record;
+   function Get_Task_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Scrolled_Window;
+   procedure Set_Task_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Scrolled_Window);
+   procedure Initialize
+     (Tasks  : access Task_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class);
+   --  See inherited documentation
+
+   procedure On_Tasks
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Tasks
+
+   package Tasks_Views is new Scrolled_Views.Simple_Views
+     (Module_Name        => "Tasks_View",
+      View_Name          => -"Tasks",
+      Formal_View_Record => Task_View_Record,
+      Get_View           => Get_Task_View,
+      Set_View           => Set_Task_View,
+      Initialize         => Initialize);
+
    ----------
    -- Misc --
    ----------
@@ -132,6 +188,58 @@ package body GVD.Dialogs is
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
       Create_If_Necessary : Boolean)
       renames Thread_Views.Attach_To_View;
+   procedure Attach_To_Tasks_Dialog
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean)
+      renames Tasks_Views.Attach_To_View;
+
+   ---------------------------
+   -- Info_Threads_Dispatch --
+   ---------------------------
+
+   procedure Info_Threads_Dispatch
+     (Debugger : access Debugger_Root'Class;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural) is
+   begin
+      Info_Threads (Debugger, Info, Len);
+   end Info_Threads_Dispatch;
+
+   -------------------------
+   -- Info_Tasks_Dispatch --
+   -------------------------
+
+   procedure Info_Tasks_Dispatch
+     (Debugger : access Debugger_Root'Class;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural) is
+   begin
+      Info_Tasks (Debugger, Info, Len);
+   end Info_Tasks_Dispatch;
+
+   --------------------------
+   -- Task_Switch_Dispatch --
+   --------------------------
+
+   procedure Task_Switch_Dispatch
+     (Debugger : access Debugger_Root'Class;
+      Num      : Natural;
+      Mode     : GVD.Types.Command_Type) is
+   begin
+      Task_Switch (Debugger, Num, Mode);
+   end Task_Switch_Dispatch;
+
+   ----------------------------
+   -- Thread_Switch_Dispatch --
+   ----------------------------
+
+   procedure Thread_Switch_Dispatch
+     (Debugger : access Debugger_Root'Class;
+      Num      : Natural;
+      Mode     : GVD.Types.Command_Type) is
+   begin
+      Thread_Switch (Debugger, Num, Mode);
+   end Thread_Switch_Dispatch;
 
    ---------------------
    -- Register_Module --
@@ -146,7 +254,11 @@ package body GVD.Dialogs is
       Register_Menu
         (Kernel, Data_Sub, -"_Threads", "",
          On_Threads'Access, Ref_Item => -"Protection Domains");
+      Register_Menu
+        (Kernel, Data_Sub, -"Ta_sks", "",
+         On_Tasks'Access, Ref_Item => -"Protection Domains");
       Thread_Views.Register_Desktop_Functions;
+      Tasks_Views.Register_Desktop_Functions;
    end Register_Module;
 
    ----------------
@@ -186,6 +298,43 @@ package body GVD.Dialogs is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Threads;
 
+   --------------
+   -- On_Tasks --
+   --------------
+
+   procedure On_Tasks
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot display tasks list while the debugger is busy.") &
+            ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
+         return;
+      end if;
+
+      Attach_To_Tasks_Dialog (Process, Create_If_Necessary => True);
+      Update_Threads (Get_Task_View (Process));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Tasks;
+
    -------------------------
    -- On_Thread_Selection --
    -------------------------
@@ -202,18 +351,20 @@ package body GVD.Dialogs is
          Next (Model, Iter);
       end loop;
 
-      declare
-         Str : constant String := Get_String (Model, Iter, 0);
-      begin
-         Match ("[0-9]+", Str, Matched);
+      if Iter /= Null_Iter then
+         declare
+            Str : constant String := Get_String (Model, Iter, 0);
+         begin
+            Match ("[0-9]+", Str, Matched);
 
-         if Matched (0) /= No_Match then
-            Thread_Switch
-              (Get_Process (T).Debugger,
-               Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
-               Mode => GVD.Types.Visible);
-         end if;
-      end;
+            if Matched (0) /= No_Match then
+               T.Switch
+                 (Get_Process (T).Debugger,
+                  Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
+                  Mode => GVD.Types.Visible);
+            end if;
+         end;
+      end if;
 
    exception
       when E : others =>
@@ -243,18 +394,31 @@ package body GVD.Dialogs is
       Process.Threads := Gtk_Widget (View);
    end Set_Thread_View;
 
+   -------------------
+   -- Get_Task_View --
+   -------------------
+
+   function Get_Task_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Scrolled_Window is
+   begin
+      return Gtk_Scrolled_Window (Process.Tasks);
+   end Get_Task_View;
+
+   -------------------
+   -- Set_Task_View --
+   -------------------
+
+   procedure Set_Task_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Scrolled_Window) is
+   begin
+      Process.Tasks := Gtk_Widget (View);
+   end Set_Task_View;
+
    -------------
    -- Gtk_New --
    -------------
-
-   procedure Gtk_New
-     (Task_Dialog : out Task_Dialog_Access;
-      Main_Window : Gtk_Window) is
-   begin
-      Task_Dialog := new Task_Dialog_Record;
-      Initialize (Task_Dialog, Main_Window);
-   end Gtk_New;
-
    procedure Gtk_New
      (PD_Dialog  : out PD_Dialog_Access;
       Main_Window : Gtk_Window) is
@@ -342,39 +506,6 @@ package body GVD.Dialogs is
       Update_Task_Thread (Dialog, Info);
    end Update_PD;
 
-   ------------
-   -- Update --
-   ------------
-
-   procedure Update
-     (Task_Dialog : access Task_Dialog_Record;
-      Debugger    : access Glib.Object.GObject_Record'Class)
-   is
-      Process : constant Process_Proxy_Access :=
-        Get_Process (Visual_Debugger (Debugger).Debugger);
-      Info    : Thread_Information_Array (1 .. Max_Tasks);
-      Len     : Natural;
-
-   begin
-      if not Visible_Is_Set (Task_Dialog) then
-         return;
-      end if;
-
-      --  If the debugger was killed, no need to refresh
-
-      if Process = null then
-         if Task_Dialog.List /= null then
-            Thaw (Task_Dialog.List);
-         end if;
-
-         return;
-      end if;
-
-      --  Read the information from the debugger
-      Info_Tasks (Visual_Debugger (Debugger).Debugger, Info, Len);
-      Update_Task_Thread (Task_Dialog, Info (1 .. Len));
-   end Update;
-
    --------------------
    -- Update_Threads --
    --------------------
@@ -390,7 +521,7 @@ package body GVD.Dialogs is
         and then Visible_Is_Set (View)
         and then Get_Process (Get_Process (View).Debugger) /= null
       then
-         Info_Threads (Get_Process (View).Debugger, Info, Len);
+         View.Get_Info (Get_Process (View).Debugger, Info, Len);
          Num_Columns := Info (Info'First).Num_Fields;
 
          if View.Tree /= null
@@ -417,8 +548,7 @@ package body GVD.Dialogs is
                View.Tree := Create_Tree_View
                  (Column_Types       =>
                     (0 .. Guint (Num_Columns) - 1 => GType_String),
-                  Column_Names       => Titles,
-                  Show_Column_Titles => False);
+                  Column_Names       => Titles);
                Free (Titles);
 
                Add (View, View.Tree);
@@ -429,7 +559,9 @@ package body GVD.Dialogs is
             end;
          end if;
 
-         Clear (Gtk_Tree_Store (Get_Model (View.Tree)));
+         if View.Tree /= null then
+            Clear (Gtk_Tree_Store (Get_Model (View.Tree)));
+         end if;
 
          for J in Info'First + 1 .. Len loop
             Append (Gtk_Tree_Store (Get_Model (View.Tree)), Iter, Null_Iter);
@@ -477,23 +609,6 @@ package body GVD.Dialogs is
       Info_PD (Visual_Debugger (Debugger).Debugger, Info, Len);
       Update_PD (PD_Dialog, Info (1 .. Len));
    end Update;
-
-   -----------------------------
-   -- On_Task_Process_Stopped --
-   -----------------------------
-
-   procedure On_Task_Process_Stopped
-     (Widget : access Glib.Object.GObject_Record'Class)
-   is
-      Tab         : constant Visual_Debugger := Visual_Debugger (Widget);
-      Task_Dialog : constant Task_Dialog_Access :=
-        Task_Dialog_Access (Get_Task_Dialog (Tab.Window.Kernel));
-
-   begin
-      if Task_Dialog /= null then
-         Update (Task_Dialog, Tab);
-      end if;
-   end On_Task_Process_Stopped;
 
    ----------------------------
    -- On_PD_Process_Stopped --
@@ -570,14 +685,6 @@ package body GVD.Dialogs is
       --  columns there will be. This will be done on the first call to update
    end Initialize_Task_Thread;
 
-   procedure Initialize
-     (Task_Dialog : access Task_Dialog_Record'Class;
-      Main_Window : Gtk_Window) is
-   begin
-      Initialize (Task_Dialog, -"Task Status", Main_Window);
-      Initialize_Task_Thread (Task_Dialog);
-   end Initialize;
-
    ----------------
    -- Initialize --
    ----------------
@@ -593,6 +700,19 @@ package body GVD.Dialogs is
 
       --  The tree will be created on the first call to Update, since we do not
       --  know yet how many columns are needed
+   end Initialize;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Tasks  : access Task_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Initialize (Thread => Tasks, Kernel => Kernel);
+      Tasks.Get_Info := Info_Tasks_Dispatch'Access;
+      Tasks.Switch   := Task_Switch_Dispatch'Access;
    end Initialize;
 
    ----------------

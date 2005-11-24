@@ -124,7 +124,8 @@ package GVD.Process is
       --  See gvd-consoles.adb for these two fields
 
       Threads                 : Gtk.Widget.Gtk_Widget;
-      --  The threads view
+      Tasks                   : Gtk.Widget.Gtk_Widget;
+      --  The threads and task views
 
       Registered_Dialog       : Gtk.Dialog.Gtk_Dialog := null;
       --  Currently displayed dialog that should be deleted on next user input.

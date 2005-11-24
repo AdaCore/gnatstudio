@@ -62,8 +62,6 @@ package body GVD.Dialogs.Callbacks is
       Matched       : Match_Array (0 .. 0);
       Info          : PD_Information_Array (1 .. Max_PD);
       Len           : Natural;
-      Task_Dialog   : constant GVD_Dialog :=
-        GVD_Dialog (Get_Task_Dialog (Main_Window.Kernel));
       PD_Dialog     : constant GVD_Dialog :=
         GVD_Dialog (Get_PD_Dialog (Main_Window.Kernel));
 
@@ -72,11 +70,11 @@ package body GVD.Dialogs.Callbacks is
          Hide (Top);
       end if;
 
-      if Task_Dialog /= null and then Top = Task_Dialog then
-         Task_Switch
-           (Process.Debugger, Natural (Index) + 1, Mode => GVD.Types.Visible);
+--        if Task_Dialog /= null and then Top = Task_Dialog then
+--           Task_Switch
+--          (Process.Debugger, Natural (Index) + 1, Mode => GVD.Types.Visible);
 
-      elsif PD_Dialog /= null and then Top = PD_Dialog then
+      if PD_Dialog /= null and then Top = PD_Dialog then
          Match ("(0x)?[0-9a-fA-F]+", Str, Matched);
 
          --  ??? The Command_Type was changed from Visible to Hidden

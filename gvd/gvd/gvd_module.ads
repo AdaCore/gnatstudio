@@ -80,11 +80,6 @@ package GVD_Module is
       return Gtk.Window.Gtk_Window;
    --  Return the breakpoint editor associated with Kernel, if any
 
-   function Get_Task_Dialog
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtk.Dialog.Gtk_Dialog;
-   --  Return the tasj dialog associated with Kernel, if any
-
    function Get_PD_Dialog
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtk.Dialog.Gtk_Dialog;

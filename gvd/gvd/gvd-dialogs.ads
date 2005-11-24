@@ -40,15 +40,17 @@ package GVD.Dialogs is
    --  Attach to a thread dialog (if Create_If_Necessary is True, only attach
    --  if one exists and is not attached to a debugger)
 
+   procedure Attach_To_Tasks_Dialog
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean);
+   --  Attach to a task dialog
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the functions to load and save the desktop
 
    type GVD_Dialog_Record is new Gtk_Dialog_Record with private;
    type GVD_Dialog is access all GVD_Dialog_Record'Class;
-
-   type Task_Dialog_Record is new GVD_Dialog_Record with private;
-   type Task_Dialog_Access is access all Task_Dialog_Record'Class;
 
    type PD_Dialog_Record is new GVD_Dialog_Record with private;
    type PD_Dialog_Access is access all PD_Dialog_Record'Class;
@@ -67,30 +69,6 @@ package GVD.Dialogs is
 
    procedure Free (Questions : in out Question_Array);
    --  Free all the dynamic memory associated with each question record.
-
-   procedure Gtk_New
-     (Task_Dialog : out Task_Dialog_Access;
-      Main_Window : Gtk_Window);
-   --  Create an empty task dialog.
-   --  No information will be displayed in it, and you need to add it through
-   --  a call to Update.
-
-   procedure Initialize
-     (Task_Dialog : access Task_Dialog_Record'Class;
-      Main_Window : Gtk_Window);
-   --  Internal initialization function
-
-   procedure Update
-     (Task_Dialog : access Task_Dialog_Record;
-      Debugger    : access Glib.Object.GObject_Record'Class);
-   --  Update the contents of the task dialog.
-   --  The information is read from Debugger (which is in fact a
-   --  Visual_Debugger).
-
-   procedure On_Task_Process_Stopped
-     (Widget : access Glib.Object.GObject_Record'Class);
-   --  Callback function connected to the "process_stopped" signal.
-   --  It will update the task window associated with a given tab.
 
    procedure Gtk_New
      (PD_Dialog  : out PD_Dialog_Access;
@@ -149,8 +127,6 @@ private
    end record;
    --  ??? Why not store directly the Visual_Debugger in this record,
    --  instead of having to convert in the callbacks ?
-
-   type Task_Dialog_Record is new GVD_Dialog_Record with null record;
 
    type PD_Dialog_Record is new GVD_Dialog_Record with null record;
 
