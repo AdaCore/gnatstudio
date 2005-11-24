@@ -203,14 +203,15 @@
           <check label="Enable assertions" switch="-gnata" line="2" column="2"
                  tip="Assertions enabled. Pragma Assert and pragma Debug are activated" />
 
-          <radio line="3" column="2">
-              <radio-entry label="Ada 83 mode" switch="-gnat83"
-                 tip="Enforces Ada 83 restrictions" />
-              <radio-entry label="Ada 95 mode" switch="" 
-                 tip="Compile in Ada 95 mode" />
-              <radio-entry label="Ada 2005 mode" switch="-gnat05"
-                 tip="Activates Ada 2005 language features" />
-          </radio>
+          <!--  Do not use radio buttons here, since this would always generate
+                at least one of the switches, and the default is different for
+                each compiler anyway (GNATPro, GNAT GAP,...) -->
+          <check label="Ada 83 mode" switch="-gnat83" line="3" column="2"
+                 tip="Override the compiler's default, and enforces Ada 83 restrictions" />
+          <check label="Ada 95 mode" switch="-gnat95" line="3" column="2"
+                 tip="Override the compiler's default, and compile in Ada 95 mode" />
+          <check label="Ada 2005 mode" switch="-gnat05" line="3" column="2"
+                 tip="Override the compiler's default, and activate Ada 2005 language features" />
       </switches>
    </tool>
 
