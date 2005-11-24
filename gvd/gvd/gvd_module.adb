@@ -3552,4 +3552,13 @@ package body GVD_Module is
       end if;
    end Destroy;
 
+   ----------------
+   -- Get_Module --
+   ----------------
+
+   function Get_Module return GPS.Kernel.Modules.Module_ID is
+   begin
+      return Debugger_Module_ID;
+   end Get_Module;
+
 end GVD_Module;

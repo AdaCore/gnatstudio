@@ -30,6 +30,9 @@ package GVD_Module is
 
    Debugger_Module_ID : GPS.Kernel.Modules.Module_ID;
 
+   function Get_Module return GPS.Kernel.Modules.Module_ID;
+   --  Return the debugger module
+
    type Debugger_List_Node;
    type Debugger_List_Link is access Debugger_List_Node;
 
