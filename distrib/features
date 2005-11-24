@@ -3,6 +3,9 @@ For more details, please see the documentation.
 
 New features in GPS 3.2.0
 
+- Projects;
+  - EB23-004: New attribute in Project Properties: externally_built
+
 - Handling of desktops:
   - EB18-006 The size and position of the GPS window are now specific to each
     saved project, and thus the default desktop can use a size other than the
