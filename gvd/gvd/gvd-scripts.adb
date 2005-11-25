@@ -171,13 +171,17 @@ package body GVD.Scripts is
             File : Virtual_File;
             List : Debugger_List_Link := Get_Debugger_List (Kernel);
          begin
-            Id := Nth_Arg (Data, 1);
-            while List /= null loop
-               Process := Visual_Debugger (List.Debugger);
-               exit when Get_Num (Process) = Gint (Id);
-               Process := null;
-               List := List.Next;
-            end loop;
+            if Number_Of_Arguments (Data) = 0 then
+               Process := Visual_Debugger (Get_Current_Debugger (Kernel));
+            else
+               Id := Nth_Arg (Data, 1);
+               while List /= null loop
+                  Process := Visual_Debugger (List.Debugger);
+                  exit when Get_Num (Process) = Gint (Id);
+                  Process := null;
+                  List := List.Next;
+               end loop;
+            end if;
 
          exception
             when Invalid_Data =>
@@ -292,7 +296,7 @@ package body GVD.Scripts is
       GPS.Kernel.Scripts.Register_Command
         (Kernel, Constructor_Method, 0, 0, Shell_Handler'Access, Class);
       GPS.Kernel.Scripts.Register_Command
-        (Kernel, "get", 1, 1, Shell_Handler'Access, Class,
+        (Kernel, "get", 0, 1, Shell_Handler'Access, Class,
          Static_Method => True);
       GPS.Kernel.Scripts.Register_Command
         (Kernel, "list", 0, 0, Shell_Handler'Access, Class);
