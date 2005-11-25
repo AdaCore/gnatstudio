@@ -1,21 +1,61 @@
-This file lists a summary of the new features introduced in GPS.
-For more details, please see the documentation.
+GPS NEW FEATURES LIST
+=====================
+
+Copyright (c) 2005, AdaCore
+
+This file contains a list of new features introduced in GPS.
+A full description of all GPS features can be found in the GPS
+documentation.
+
+An ISO date (YYYY-MM-DD) appears in parentheses after the
+description line. This date shows the implementation date
+of the feature.
 
 New features in GPS 3.2.0
+-------------------------
 
-- Projects;
-  - EB23-004: New attribute in Project Properties: externally_built
+EB25-007 Full shell/python interface for accessing the debugger (2005-11-25)
 
-- Debugger:
-  - EB25-007: Fully python interface for commanding the debugger
+  A new set of constructors and methods are available to create, access
+  and send commands to the debugger. See the GPS.Debugger class
+  documentation for more details.
 
-- Handling of desktops:
-  - EB18-006 The size and position of the GPS window are now specific to each
-    saved project, and thus the default desktop can use a size other than the
-    one you use when developing.
-  - EB17-011 It is now possible to modify the default desktop for all users
-  - EA18-018 The default desktop is never saved automatically anymore. This
-    allows you to define it once and for all, and keep the automatic saving of
-    desktops for project-specific desktops
-  - EA14-023 The Scenario View is back in the default desktop
+  Keywords: Debugger, Python
+
+EB23-004 New attribute in Project Properties: externally_built (2005-11-24)
+
+  The "externally_built" project attribute can now be set/modified
+  graphically in the project properties editor.
+
+  Keywords: Project
+
+EB18-006 Size & position of GPS window now specific to each project (2005-11-18)
+
+  The size of the GPS main window is now saved as part of each project
+  saved. Thus the default desktop can use a size other than the one you
+  use when developing particular projects.
+
+  Keywords: Desktop
+
+EB17-011 Possibility to modify the default desktop for all users (2005-11-18)
+
+  The default desktop can now be found under <prefix>/share/gps/desktop.xml
+  and be modified manually.
+
+  Keywords: Desktop
+
+EA18-018 Default desktop no longer saved automatically (2005-11-18)
+
+  The default desktop is now never saved automatically, which allows
+  you to define it once and for all, and keep the automatic saving of
+  desktops for project-specific desktops.
+
+  Keywords: Desktop
+
+EA14-023 Scenario View back in the default desktop (2005-11-18)
+
+  The scenario view which was removed from the default desktop in
+  previous releases is displayed again by default.
+
+  Keywords: Desktop, Scenario View
 
