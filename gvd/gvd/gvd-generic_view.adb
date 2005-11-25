@@ -177,11 +177,11 @@ package body GVD.Generic_View is
                Initialize (View, Kernel);
                Gtk_New (Child2, View,
                         Flags  => MDI_Child_Flags,
-                        Group  => Group_Debugger_Stack,
+                        Group  => Group,
                         Module => Get_Module);
                Child := MDI_Child (Child2);
                Set_Title (Child, View_Name);
-               Put (MDI, Child, Initial_Position => Position_Right);
+               Put (MDI, Child, Initial_Position => Position);
                Set_Focus_Child (Child);
             end if;
 

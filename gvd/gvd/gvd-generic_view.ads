@@ -48,6 +48,10 @@ generic
    --  The two hooks on which we want to refresh the view. These should be read
    --  from GVD.Scripts, but cannot for elaboration circularity issues.
 
+   Group    : Gtkada.MDI.Child_Group;
+   Position : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Right;
+   --  How should the MDI child be created ?
+
    with function Get_Module return GPS.Kernel.Modules.Module_ID is <>;
    --  The module to be associated with the MDI child, in particular when
    --  creating contextual menus. This needs to be a function instead of a
