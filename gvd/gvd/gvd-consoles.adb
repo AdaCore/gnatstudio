@@ -505,11 +505,9 @@ package body GVD.Consoles is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      pragma Unreferenced (Kernel);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Debugger_Views.Register_Desktop_Functions;
-      Debuggee_Views.Register_Desktop_Functions;
+      Debugger_Views.Register_Desktop_Functions (Kernel);
+      Debuggee_Views.Register_Desktop_Functions (Kernel);
    end Register_Module;
 end GVD.Consoles;

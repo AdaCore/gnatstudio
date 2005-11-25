@@ -33,7 +33,6 @@ with Gtk.Arguments;              use Gtk.Arguments;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
-with Gtk.Object;                 use Gtk.Object;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 with Gtk;                        use Gtk;
@@ -41,7 +40,6 @@ with Gtk;                        use Gtk;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
-with Gtkada.Types;               use Gtkada.Types;
 
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
@@ -59,6 +57,7 @@ with GVD.Consoles;               use GVD.Consoles;
 with GVD.Dialogs;                use GVD.Dialogs;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Source_Editor;          use GVD.Source_Editor;
+with GVD.Scripts;                use GVD.Scripts;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
@@ -73,16 +72,6 @@ package body GVD.Process is
    function To_Main_Debug_Window is new
      Ada.Unchecked_Conversion (System.Address, GPS_Window);
    pragma Warnings (On);
-
-   --  This pointer will keep a pointer to the C 'class record' for
-   --  gtk. To avoid allocating memory for each widget, this may be done
-   --  only once, and reused
-   Class_Record : Gtk.Object.GObject_Class := Gtk.Object.Uninitialized_Class;
-
-   --  Array of the signals created for this widget
-   Signals : constant Chars_Ptr_Array :=
-     "executable_changed" + "process_stopped" + "context_changed" +
-     "debugger_closed";
 
    -----------------------
    -- Local Subprograms --
@@ -185,6 +174,18 @@ package body GVD.Process is
       return Convert (GPS_Window (Main_Debug_Window),
                       Get_Descriptor (Get_Process (Debugger)).all);
    end Convert;
+
+   ------------------------
+   -- Command_In_Process --
+   ------------------------
+
+   function Command_In_Process
+     (Debugger : access Visual_Debugger_Record'Class) return Boolean is
+   begin
+      return Debugger.Debugger /= null
+        and then Get_Process (Debugger.Debugger) /= null
+        and then Command_In_Process (Get_Process (Debugger.Debugger));
+   end Command_In_Process;
 
    -----------------
    -- Output_Text --
@@ -507,10 +508,6 @@ package body GVD.Process is
         (Process.Editor_Text, "delete_event",
          On_Editor_Text_Delete_Event'Access, Process);
 
-      Glib.Object.Initialize_Class_Record
-        (Process, Signals, Class_Record,
-         Type_Name => "GvdDebuggerProcessTab");
-
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
       --  debugger outputs a file name that should be displayed in the editor.
@@ -576,14 +573,6 @@ package body GVD.Process is
    begin
       Set_Busy (Process, True);
       Attach_To_Debugger_Console (Process, Create_If_Necessary => True);
-
-      --  If some unattached dialogs exist, claim them
-      Attach_To_Call_Stack
-        (Process, Create_If_Necessary => Get_Pref (Show_Call_Stack));
-      Attach_To_Data_Window   (Process, Create_If_Necessary => False);
-      Attach_To_Thread_Dialog (Process, Create_If_Necessary => False);
-      Attach_To_Tasks_Dialog  (Process, Create_If_Necessary => False);
-      Attach_To_PD_Dialog     (Process, Create_If_Necessary => False);
 
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String'(Remote_Host);
@@ -658,6 +647,14 @@ package body GVD.Process is
          Set_Sensitive (Widget, WTX_Version >= 3);
       end if;
 
+      --  If some unattached dialogs exist, claim them
+      Attach_To_Call_Stack
+        (Process, Create_If_Necessary => Get_Pref (Show_Call_Stack));
+      Attach_To_Data_Window   (Process, Create_If_Necessary => False);
+      Attach_To_Thread_Dialog (Process, Create_If_Necessary => False);
+      Attach_To_Tasks_Dialog  (Process, Create_If_Necessary => False);
+      Attach_To_PD_Dialog     (Process, Create_If_Necessary => False);
+
       --  If we have a debuggee console in the desktop, always use it.
       --  Otherwise, we only create one when the user has asked for it
 
@@ -694,41 +691,6 @@ package body GVD.Process is
          Success := False;
    end Configure;
 
-   ---------------------
-   -- Context_Changed --
-   ---------------------
-
-   procedure Context_Changed
-     (Debugger : access Visual_Debugger_Record'Class) is
-   begin
-      --  Emit the signal
-      Object_Callback.Emit_By_Name (GObject (Debugger), "context_changed");
-   end Context_Changed;
-
-   ------------------------
-   -- Executable_Changed --
-   ------------------------
-
-   procedure Executable_Changed
-     (Debugger        : access Visual_Debugger_Record'Class;
-      Executable_Name : String)
-   is
-      pragma Unreferenced (Executable_Name);
-   begin
-      --  Emit the signal
-      Object_Callback.Emit_By_Name (GObject (Debugger), "executable_changed");
-   end Executable_Changed;
-
-   ---------------------
-   -- Process_Stopped --
-   ---------------------
-
-   procedure Process_Stopped
-     (Debugger : access Visual_Debugger_Record'Class) is
-   begin
-      Object_Callback.Emit_By_Name (GObject (Debugger), "process_stopped");
-   end Process_Stopped;
-
    --------------------
    -- Close_Debugger --
    --------------------
@@ -741,7 +703,9 @@ package body GVD.Process is
          return;
       end if;
 
-      Object_Callback.Emit_By_Name (GObject (Debugger), "debugger_closed");
+      --  ??? Isn't this already run before from gvd_module ?
+      Run_Debugger_Hook (Debugger, Debugger_Terminated_Hook);
+
       Debugger.Exiting := True;
       Free (Debugger.Breakpoints);
       Unregister_Dialog (Debugger);

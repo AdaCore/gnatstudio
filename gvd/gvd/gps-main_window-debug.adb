@@ -26,6 +26,7 @@ with Gtkada.Handlers;    use Gtkada.Handlers;
 
 with Breakpoints_Editor; use Breakpoints_Editor;
 with GVD_Module;         use GVD_Module;
+with GVD.Scripts;        use GVD.Scripts;
 with GVD.Process;        use GVD.Process;
 with Debugger;           use Debugger;
 with Process_Proxies;    use Process_Proxies;
@@ -135,13 +136,13 @@ package body GPS.Main_Window.Debug is
       end if;
 
       --  ??? Replace by a signal "debugger_switch" on the main window
-      --  Do not call Executable_Changed if the debugger is busy, since
+      --  Do not call Executable_Changed_Hook if the debugger is busy, since
       --  this would generate an assert failure, trying to send commands to
       --  the gdb while the debugger is already handling a command.
       --  This test should also go when we use a debugger_switch signal.
 
       if not Command_In_Process (Get_Process (Process.Debugger)) then
-         Executable_Changed (Process, "");
+         Run_Debugger_Hook (Process, Debugger_Executable_Changed_Hook);
       end if;
 
       --  Update the sensitivity of the Data/Protection Domains menu

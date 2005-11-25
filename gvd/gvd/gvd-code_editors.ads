@@ -153,10 +153,6 @@ package GVD.Code_Editors is
    --  Return the name of the currently edited file.
    --  "" is returned if there is no current file.
 
-   procedure On_Executable_Changed
-     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Called when the executable associated with the editor has changed.
-
    procedure Preferences_Changed
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Called when the preferences have changed, and the editor should be

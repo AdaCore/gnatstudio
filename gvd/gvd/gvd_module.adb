@@ -69,7 +69,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Main_Window.Debug;     use GPS.Main_Window.Debug;
@@ -86,13 +85,14 @@ with GVD.Menu;                  use GVD.Menu;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Proc_Utils;            use GVD.Proc_Utils;
 with GVD.Process;               use GVD.Process;
+with GVD.Scripts;               use GVD.Scripts;
 with GVD.Source_Editor.GPS;     use GVD.Source_Editor.GPS;
 with GVD.Source_Editor;         use GVD.Source_Editor;
 with GVD.Types;                 use GVD.Types;
 with Histories;                 use Histories;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Language;                  use Language;
-with Language_Handlers;     use Language_Handlers;
+with Language_Handlers;         use Language_Handlers;
 with List_Select_Pkg;           use List_Select_Pkg;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Process_Proxies;           use Process_Proxies;
@@ -111,9 +111,6 @@ package body GVD_Module is
    --  The key in the history for the arguments to the run command.
    --  WARNING: this constant is shared with builder_module.adb, since we want
    --  to have the same history for the run command in GPS.
-
-   Debugger_Started : constant String := "debugger_started";
-   Debugger_Terminated : constant String := "debugger_terminated";
 
    Debug_Menu_Prefix : constant String := "<gps>/Debug/Initialize/";
 
@@ -253,11 +250,6 @@ package body GVD_Module is
    procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences are changed in the GPS kernel
 
-   procedure Debugger_Command_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
-      Command : String);
-   --  Interactive command handler for the debugger module.
-
    function Delete_Asm
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
    --  Callback for the "delete_event" signal of the assembly view.
@@ -291,8 +283,10 @@ package body GVD_Module is
    --  Create and load a default project from the executable loaded in
    --  Debugger.
 
-   procedure On_Debug_Terminate_Single (Widget : access GObject_Record'Class);
-   --  Callback for the "debugger_closed" singla.
+   procedure On_Debug_Terminate_Single
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   --  Hook called when the debugger is terminated
 
    procedure On_Assembly
      (Widget : access Glib.Object.GObject_Record'Class;
@@ -439,8 +433,10 @@ package body GVD_Module is
    -- Misc Callbacks --
    --------------------
 
-   procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "executable_changed" signal on the debugger process.
+   procedure On_Executable_Changed
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   --  Hook for "debugger_executable_changed"
 
    --------------------
    -- GVD_Contextual --
@@ -2353,8 +2349,8 @@ package body GVD_Module is
 
       First_Debugger := Get_Current_Debugger (Kernel) = null;
       Gtk_New (Page, Top);
-      Object_Callback.Connect
-        (Page, "debugger_closed", On_Debug_Terminate_Single'Access);
+      Add_Hook
+        (Kernel, Debugger_Terminated_Hook, On_Debug_Terminate_Single'Access);
 
       Program_Args := new String'("");
 
@@ -2457,14 +2453,9 @@ package body GVD_Module is
       Load_Project_From_Executable
         (K, Get_Current_Process (Get_Main_Window (K)));
 
-      --  Connect only once the debugger has started, to avoid recomputing the
-      --  side information twice.
-      Widget_Callback.Object_Connect
-        (Page, "executable_changed", On_Executable_Changed'Access, Top);
-
       GVD_Module_ID.Initialized := True;
 
-      Run_Hook (K, Debugger_Started);
+      Run_Debugger_Hook (Page, Debugger_Started_Hook);
 
       Pop_State (K);
 
@@ -2611,10 +2602,10 @@ package body GVD_Module is
       while Debugger_List /= null loop
          Current_Debugger := GPS_Debugger (Debugger_List.Debugger);
          Debugger_List := Debugger_List.Next;
+         Run_Debugger_Hook (Current_Debugger, Debugger_Terminated_Hook);
          Debug_Terminate (Kernel, Current_Debugger);
       end loop;
 
-      Run_Hook (Kernel, Debugger_Terminated);
       Pop_State (Kernel);
    end Debug_Terminate;
 
@@ -2661,10 +2652,12 @@ package body GVD_Module is
    -------------------------------
 
    procedure On_Debug_Terminate_Single
-     (Widget : access GObject_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   is
+      Process : constant Visual_Debugger := Get_Process (Data);
    begin
-      Debug_Terminate
-        (Get_Kernel (GVD_Module_ID.all), Visual_Debugger (Widget));
+      Debug_Terminate (Kernel_Handle (Kernel), Process);
    end On_Debug_Terminate_Single;
 
    -----------------------
@@ -2815,19 +2808,21 @@ package body GVD_Module is
    -- On_Executable_Changed --
    ---------------------------
 
-   procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class) is
-      Top : constant GPS_Window := GPS_Window (Object);
+   procedure On_Executable_Changed
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   is
       Process  : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Top.Kernel));
+        Get_Process (Debugger_Hooks_Data_Access (Data));
    begin
       --  Change the project to match the executable
 
-      Load_Project_From_Executable (Top.Kernel, Process);
+      Load_Project_From_Executable (Kernel, Process);
 
       --  Re-create all debugger columns.
 
-      Remove_Debugger_Columns (Top.Kernel, VFS.No_File);
-      Create_Debugger_Columns (Top.Kernel, VFS.No_File);
+      Remove_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
+      Create_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
    end On_Executable_Changed;
 
    -------------
@@ -3056,38 +3051,6 @@ package body GVD_Module is
       end if;
    end Preferences_Changed;
 
-   ------------------------------
-   -- Debugger_Command_Handler --
-   ------------------------------
-
-   procedure Debugger_Command_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
-      Command : String)
-   is
-      Kernel : constant Kernel_Handle := GPS.Kernel.Scripts.Get_Kernel (Data);
-   begin
-      if GVD_Module_ID.Initialized then
-         if Command = "send" then
-            declare
-               Process : constant Visual_Debugger :=
-                 Get_Current_Process (Get_Main_Window (Kernel));
-            begin
-               Process_User_Command
-                 (Process,
-                  GPS.Kernel.Scripts.Nth_Arg (Data, 2),
-                  Output_Command => True);
-            end;
-
-         elsif Command = GPS.Kernel.Scripts.Constructor_Method then
-            --  Nothing to do for now. The plan, ultimately, is to be able to
-            --  control which debugger the commands will apply to by selecting
-            --  a debugger from the constructor, for instance by passing a name
-            --  to the constructor
-            null;
-         end if;
-      end if;
-   end Debugger_Command_Handler;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -3100,8 +3063,6 @@ package body GVD_Module is
       Data_Sub       : constant String := Debug & (-"D_ata") & '/';
       Mitem          : Gtk_Menu_Item;
       Menu           : Gtk_Menu;
-      Debugger_Class : constant GPS.Kernel.Scripts.Class_Type :=
-        GPS.Kernel.Scripts.New_Class (Kernel, "Debugger");
       Command        : Interactive_Command_Access;
       Filter         : Action_Filter;
       Debugger_Filter   : Action_Filter;
@@ -3113,6 +3074,7 @@ package body GVD_Module is
       GVD_Module_ID := new GVD_Module_Record;
       Debugger_Module_ID := Module_ID (GVD_Module_ID);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
+      GVD.Scripts.Create_Hooks (Kernel);
       GVD_Module_ID.Show_Lines_With_Code :=
         Get_Pref (Editor_Show_Line_With_Code);
 
@@ -3302,25 +3264,8 @@ package body GVD_Module is
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Preferences_Changed'Access);
-
-      --  Commands
-
-      GPS.Kernel.Scripts.Register_Command
-        (Kernel, GPS.Kernel.Scripts.Constructor_Method,
-         Class         => Debugger_Class,
-         Handler       => Debugger_Command_Handler'Access);
-
-      GPS.Kernel.Scripts.Register_Command
-        (Kernel, "send",
-         Class         => Debugger_Class,
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Handler       => Debugger_Command_Handler'Access);
-
-      --  Hooks
-
-      Register_Hook (Kernel, Debugger_Started);
-      Register_Hook (Kernel, Debugger_Terminated);
+      Add_Hook (Kernel, Debugger_Executable_Changed_Hook,
+                On_Executable_Changed'Access);
 
       Init_Graphics;
    end Register_Module;

@@ -683,27 +683,6 @@ package body GVD.Assembly_View is
       return null;
    end Find_In_Cache;
 
-   ---------------------------
-   -- On_Executable_Changed --
-   ---------------------------
-
-   procedure On_Executable_Changed (Assembly_View : GVD_Assembly_View) is
-      Tmp : Cache_Data_Access;
-   begin
-      --  Clear the cache, since it is no longer valid.
-
-      while Assembly_View.Cache /= null loop
-         Tmp := Assembly_View.Cache.Next;
-         Free (Assembly_View.Cache.Data);
-         Assembly_View.Cache := Tmp;
-      end loop;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Executable_Changed;
-
    ----------------------------
    -- Show_Current_Line_Menu --
    ----------------------------

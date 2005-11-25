@@ -44,6 +44,7 @@ with GPS.Main_Window;     use GPS.Main_Window;
 with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Process;         use GVD.Process;
+with GVD.Scripts;         use GVD.Scripts;
 with GVD.Trace;           use GVD.Trace;
 with GVD.Types;           use GVD.Types;
 with Items.Arrays;        use Items.Arrays;
@@ -823,7 +824,9 @@ package body Debugger.Gdb is
          --  No need to do anything in text-only mode
 
          if Debugger.Window /= null then
-            Executable_Changed (Convert (Debugger.Window, Debugger), "");
+            Run_Debugger_Hook
+              (Convert (Debugger.Window, Debugger),
+               Debugger_Executable_Changed_Hook);
          end if;
 
          --  Detect the current language. Note that most of the work is done
@@ -1054,8 +1057,9 @@ package body Debugger.Gdb is
       --  No need to do anything in text-only mode
 
       if Debugger.Window /= null then
-         Executable_Changed
-           (Convert (Debugger.Window, Debugger), Executable);
+         Run_Debugger_Hook
+           (Convert (Debugger.Window, Debugger),
+            Debugger_Executable_Changed_Hook);
       end if;
 
       --  Detect the current language, and get the name and line of the

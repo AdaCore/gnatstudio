@@ -42,6 +42,7 @@ with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Process;                use GVD.Process;
 with GVD.Source_Editor;          use GVD.Source_Editor;
+with GVD.Scripts;                use GVD.Scripts;
 with GVD.Types;                  use GVD.Types;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Intl;                   use GPS.Intl;
@@ -453,14 +454,12 @@ package body Debugger is
             Current_Command : constant String := Process.Current_Command.all;
             Result          : Boolean;
             pragma Unreferenced (Result);
-            Pos             : Positive;
 
          begin
             Free (Process.Current_Command);
 
             if Process_Command (Debugger) then
-               --  ??? register if needed for
-               --  executable_changed/context_changed/process_stopped
+               --  ??? register if needed for some of the hooks
                --  before returning
                return False;
             end if;
@@ -468,24 +467,17 @@ package body Debugger is
             Final_Post_Process (Process, Mode);
 
             if Is_Load_Command (Debugger, Current_Command) then
-               Detect_Language (Debugger);
-               Pos := Current_Command'First;
-               Skip_To_Blank (Current_Command, Pos);
-               Skip_Blanks (Current_Command, Pos);
-
-               declare
-                  pragma Suppress (Index_Check);
-                  pragma Suppress (Range_Check);
-                  --  ??? work around a bug in GNAT 3.14
-               begin
-                  Executable_Changed
-                    (Process, Current_Command (Pos .. Current_Command'Last));
-               end;
+--                 Detect_Language (Debugger);
+--                 Pos := Current_Command'First;
+--                 Skip_To_Blank (Current_Command, Pos);
+--                 Skip_Blanks (Current_Command, Pos);
+--            Executable_Name= Current_Command (Pos .. Current_Command'Last);
+               Run_Debugger_Hook (Process, Debugger_Executable_Changed_Hook);
 
             elsif Is_Context_Command (Debugger, Current_Command) then
-               Context_Changed (Process);
+               Run_Debugger_Hook (Process, Debugger_Context_Changed_Hook);
             elsif Is_Execution_Command (Debugger, Current_Command) then
-               Process_Stopped (Process);
+               Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
             end if;
 
             Update_Breakpoints
@@ -603,8 +595,7 @@ package body Debugger is
       Set_Command_In_Process (Get_Process (Debugger), False);
 
       if Mode /= Internal and then Process_Command (Debugger) then
-         --  ??? register if needed for
-         --  executable_changed/context_changed/process_stopped
+         --  ??? register if needed for hooks
          --  before returning
          return;
       end if;
@@ -617,9 +608,9 @@ package body Debugger is
             --  Postprocessing (e.g handling of auto-update).
 
             if Is_Context_Command (Debugger, Cmd) then
-               Context_Changed (Process);
+               Run_Debugger_Hook (Process, Debugger_Context_Changed_Hook);
             elsif Is_Execution_Command (Debugger, Cmd) then
-               Process_Stopped (Process);
+               Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
             end if;
 
             Update_Breakpoints

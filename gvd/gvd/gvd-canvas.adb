@@ -117,15 +117,13 @@ package body GVD.Canvas is
       end record;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
 
+   procedure Update (Canvas : access GVD_Canvas_Record);
+   --  Called when the canvas needs refreshing
+
    procedure Initialize
      (Canvas : access GVD_Canvas_Record'Class;
       Kernel : access Kernel_Handle_Record'Class);
    --  Create a new data window in the MDI
-
-   procedure On_Attach
-     (Canvas  : access GVD_Canvas_Record;
-      Process : access Visual_Debugger_Record'Class);
-   --  Called when the Canvas is attached to an debugger
 
    function Get_Canvas
      (Process : access Visual_Debugger_Record'Class)
@@ -304,38 +302,17 @@ package body GVD.Canvas is
      (Process : access GVD.Process.Visual_Debugger_Record'Class);
    --  Unselect all items and their components
 
-   procedure On_Canvas_Process_Stopped
-     (Canvas : access Gtk_Widget_Record'Class);
-   --  Called when the debugger has stopped, to refresh the canvas
+   ------------
+   -- Update --
+   ------------
 
-   -------------------------------
-   -- On_Canvas_Process_Stopped --
-   -------------------------------
-
-   procedure On_Canvas_Process_Stopped
-     (Canvas : access Gtk_Widget_Record'Class)
-   is
-      C : constant GVD_Canvas := GVD_Canvas (Canvas);
+   procedure Update (Canvas : access GVD_Canvas_Record) is
    begin
-      if Get_Process (C) /= null then
-         Recompute_All_Aliases (Get_Process (C));
-         Refresh_Data_Window (Get_Process (C));
+      if Get_Process (Canvas) /= null then
+         Recompute_All_Aliases (Get_Process (Canvas));
+         Refresh_Data_Window (Get_Process (Canvas));
       end if;
-   end On_Canvas_Process_Stopped;
-
-   ---------------
-   -- On_Attach --
-   ---------------
-
-   procedure On_Attach
-     (Canvas  : access GVD_Canvas_Record;
-      Process : access Visual_Debugger_Record'Class) is
-   begin
-      Widget_Callback.Object_Connect
-        (Process, "process_stopped", On_Canvas_Process_Stopped'Access, Canvas);
-      Widget_Callback.Object_Connect
-        (Process, "context_changed", On_Canvas_Process_Stopped'Access, Canvas);
-   end On_Attach;
+   end Update;
 
    ----------------
    -- Get_Canvas --
@@ -1846,7 +1823,7 @@ package body GVD.Canvas is
    begin
       Register_Menu (Kernel, Data_Sub, -"_Data Window", "",
                      On_Data_Window'Access, Ref_Item => -"Protection Domains");
-      Canvas_Views.Register_Desktop_Functions;
+      Canvas_Views.Register_Desktop_Functions (Kernel);
    end Register_Module;
 
 end GVD.Canvas;

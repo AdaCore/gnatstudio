@@ -63,33 +63,6 @@ package GVD.Process is
    --  This is the graphical part of the Debugger.* packages, and all graphic
    --  subprogram calls should be done on that type instead of on a
    --  Debugger'Class.
-   --
-   --  Signals defined:
-   --
-   --  - "process_stopped"
-   --    procedure Handler (Widget : access Visual_Debugger_Record'Class);
-   --
-   --    Generated each time the process debugged ran and then stopped (e.g
-   --    on a breakpoint, after a next command, ...).
-   --
-   --  - "context_changed"
-   --    procedure Handler (Widget : access Visual_Debugger_Record'Class);
-   --
-   --    Generated each time the context of the debuggee is changed (this
-   --    includes thread switching, frame selection, ...).
-   --
-   --  - "executable_changed"
-   --    procedure Handler (Widget : access Visual_Debugger_Record'Class);
-   --
-   --    Emitted every time the executable associated with the debugger is
-   --    changed (via for instance the menu Files->Open Program).
-   --    This is also called initially when the executable is given on the
-   --    command line.
-   --
-   --  - "debugger_closed"
-   --    procedure Handler (Widget : access Visual_Debugger_Record'Class);
-   --
-   --    Emitted whenever the underlying debugger is closed.
 
    type Regexp_Filter_List is private;
 
@@ -121,16 +94,8 @@ package GVD.Process is
       Data                    : Gtk.Widget.Gtk_Widget;
       --  The call stack, threads, task, protection domains and data views
 
-      Registered_Dialog       : Gtk.Dialog.Gtk_Dialog := null;
-      --  Currently displayed dialog that should be deleted on next user input.
-      --  This is mostly used for question dialogs, since the user can also
-      --  type its input directly in the command window.
-
       Breakpoints             : GVD.Types.Breakpoint_Array_Ptr;
       --  The list of breakpoints and watchpoints currently defined.
-
-      Has_Temporary_Breakpoint : Boolean := True;
-      --  Whether there exists a temporary breakpoint in Breakpoints.
 
       Descriptor              : GVD.Types.Program_Descriptor;
       --  This is used to store the launching method.
@@ -147,14 +112,31 @@ package GVD.Process is
       --  command. This is needed to buffer the output before calling the
       --  various filters.
 
+      Exiting                 : Boolean := False;
+      --  True if the debugger is exiting.
+
+      Interactive_Command    : Boolean := False;
+      --  True if the current command was typed manually by the user in the
+      --  console.
+
+      ------------
+      --  private fields
+      ------------
+      --  The following fields should only be used in gvd-process.adb
+
+      Registered_Dialog       : Gtk.Dialog.Gtk_Dialog := null;
+      --  Currently displayed dialog that should be deleted on next user input.
+      --  This is mostly used for question dialogs, since the user can also
+      --  type its input directly in the command window.
+
+      Has_Temporary_Breakpoint : Boolean := True;
+      --  Whether there exists a temporary breakpoint in Breakpoints.
+
       Current_Output_Pos      : Natural := 1;
       --  Position in Current_Output to insert new text.
 
       Post_Processing         : Boolean := False;
       --  True if the debugger is handling post processing of a command.
-
-      Exiting                 : Boolean := False;
-      --  True if the debugger is exiting.
 
       Filters                 : Regexp_Filter_List;
       --  List of regexp filters registered to this process.
@@ -167,12 +149,9 @@ package GVD.Process is
       Current_File            : VFS.Virtual_File;
       --  The file containing the current location.
 
-      Interactive_Command    : Boolean := False;
-      --  True if the current command was typed manually by the user in the
-      --  console.
-
       Current_Line            : Integer := 0;
       --  The current line in Current_File.
+
    end record;
    type Visual_Debugger is access all Visual_Debugger_Record'Class;
 
@@ -280,25 +259,14 @@ package GVD.Process is
    --  Main_Window should be a pointer to the top-level window in gvd.
    --  This returns null if there is no current debugger.
 
-   procedure Process_Stopped
-     (Debugger : access Visual_Debugger_Record'Class);
-   --  Emit the "process_stopped" signal.
-
-   procedure Context_Changed
-     (Debugger : access Visual_Debugger_Record'Class);
-   --  Emit the "context_changed" signal.
-
-   procedure Executable_Changed
-     (Debugger : access Visual_Debugger_Record'Class;
-      Executable_Name : String);
-   --  Emit the "executable_changed" signal.
-   --  This basically warns all listeners that the associated debugger is now
-   --  editing a file called Executable_Name
+   function Command_In_Process
+     (Debugger : access Visual_Debugger_Record'Class) return Boolean;
+   --  Return True if a command is currently being processed, and thus no
+   --  other command can be sent to the debugger
 
    procedure Close_Debugger (Debugger : Visual_Debugger);
    --  Close the debugger, remove the notebook page and modify the commmands
    --  history accordingly.
-   --  Emit the "debugger_closed" signal.
 
    procedure Process_User_Command
      (Debugger       : Visual_Debugger;

@@ -264,23 +264,6 @@ package body GVD.Code_Editors is
       end if;
    end Set_Address;
 
-   ---------------------------
-   -- On_Executable_Changed --
-   ---------------------------
-
-   procedure On_Executable_Changed
-     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
-      Edit : constant Code_Editor := Code_Editor (Editor);
-   begin
-      --  Always clear the cache for the assembly editor, even if it is not
-      --  displayed.
-
-      if Edit.Asm /= null then
-         GVD.Assembly_View.On_Executable_Changed (Edit.Asm);
-      end if;
-   end On_Executable_Changed;
-
    -------------------------
    -- Preferences_Changed --
    -------------------------

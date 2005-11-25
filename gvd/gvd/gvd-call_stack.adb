@@ -38,7 +38,6 @@ with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
 
-with Gtkada.Dialogs;         use Gtkada.Dialogs;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 
 with Basic_Types;            use Basic_Types;
@@ -92,13 +91,11 @@ package body GVD.Call_Stack is
       end record;
    type Call_Stack is access all Call_Stack_Record'Class;
 
+   procedure Update (View   : access Call_Stack_Record);
    procedure Load_From_XML
      (View : access Call_Stack_Record; XML : Glib.Xml_Int.Node_Ptr);
    function Save_To_XML
      (View : access Call_Stack_Record) return Glib.Xml_Int.Node_Ptr;
-   procedure On_Attach
-     (View    : access Call_Stack_Record;
-      Process : access GVD.Process.Visual_Debugger_Record'Class);
    --  See inherited documentation
 
    procedure Initialize
@@ -124,10 +121,6 @@ package body GVD.Call_Stack is
 
    package Call_Stack_Cb is new Gtk.Handlers.User_Callback
      (Call_Stack_Record, Stack_List_Mask);
-
-   procedure Update_Call_Stack
-     (Stack : access Glib.Object.GObject_Record'Class);
-   --  Update the call stack. This is meant as a callback for gtk+ signals
 
    procedure Set_Column_Types (Tree : access Call_Stack_Record'Class);
    --  Setup the columns.
@@ -311,38 +304,6 @@ package body GVD.Call_Stack is
                    (Tree.Backtrace_Mask and File_Location) /= 0);
    end Set_Column_Types;
 
-   ---------------
-   -- On_Attach --
-   ---------------
-
-   procedure On_Attach
-     (View    : access Call_Stack_Record;
-      Process : access GVD.Process.Visual_Debugger_Record'Class)
-   is
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-   begin
-      Object_Callback.Object_Connect
-        (Process, "process_stopped", Update_Call_Stack'Access, View);
-      Object_Callback.Object_Connect
-        (Process, "context_changed", Update_Call_Stack'Access, View);
-
-      if Process.Debugger /= null
-        and then Get_Process (Process.Debugger) /= null
-      then
-         if Command_In_Process (Get_Process (Process.Debugger)) then
-            Button := Message_Dialog
-              ((-"Cannot show call stack while the debugger is busy.") &
-               ASCII.LF &
-               (-"Interrupt the debugger or wait for its availability."),
-               Dialog_Type => Warning,
-               Buttons     => Button_OK);
-         else
-            Update_Call_Stack (View);
-         end if;
-      end if;
-   end On_Attach;
-
    ----------------
    -- Initialize --
    ----------------
@@ -444,7 +405,7 @@ package body GVD.Call_Stack is
       Debug          : constant String := '/' & (-"_Debug") & '/';
       Data_Sub       : constant String := Debug & (-"D_ata") & '/';
    begin
-      Simple_Views.Register_Desktop_Functions;
+      Simple_Views.Register_Desktop_Functions (Kernel);
       Register_Menu (Kernel, Data_Sub, -"_Call Stack", "",
                      On_Call_Stack'Access, Ref_Item => -"Data Window",
                      Add_Before => False);
@@ -477,14 +438,11 @@ package body GVD.Call_Stack is
       return N;
    end Save_To_XML;
 
-   -----------------------
-   -- Update_Call_Stack --
-   -----------------------
+   ------------
+   -- Update --
+   ------------
 
-   procedure Update_Call_Stack
-     (Stack : access Glib.Object.GObject_Record'Class)
-   is
-      S        : constant Call_Stack := Call_Stack (Stack);
+   procedure Update (View : access Call_Stack_Record) is
       Bt       : Backtrace_Array (1 .. Max_Frame);
       Len      : Natural;
       Process  : Process_Proxy_Access;
@@ -495,23 +453,23 @@ package body GVD.Call_Stack is
    begin
       --  Remove previous stack information.
 
-      S.Block := True;
-      Clear (S.Model);
+      View.Block := True;
+      Clear (View.Model);
 
-      if Get_Process (S) /= null then
-         Process := Get_Process (Get_Process (S).Debugger);
+      if Get_Process (View) /= null then
+         Process := Get_Process (Get_Process (View).Debugger);
       end if;
 
       --  If the debugger was killed, no need to refresh
 
       if Process = null then
-         S.Block := False;
+         View.Block := False;
          return;
       end if;
 
       --  Parse the information from the debugger
 
-      Backtrace (Get_Process (S).Debugger, Bt, Len);
+      Backtrace (Get_Process (View).Debugger, Bt, Len);
 
       --  Update the contents of the window
 
@@ -526,31 +484,31 @@ package body GVD.Call_Stack is
             Index := Index + 1;
          end loop;
 
-         Append (S.Model, Iter, Null_Iter);
+         Append (View.Model, Iter, Null_Iter);
 
-         Set (S.Model, Iter, Frame_Num_Column,
+         Set (View.Model, Iter, Frame_Num_Column,
               Natural'Image (Bt (J).Frame_Id));
 
-         Set (S.Model, Iter, Program_Counter_Column,
+         Set (View.Model, Iter, Program_Counter_Column,
               Bt (J).Program_Counter.all);
 
-         Set (S.Model, Iter, Subprog_Name_Column,
+         Set (View.Model, Iter, Subprog_Name_Column,
               Subp (Subp'First .. Index - 1));
 
-         Set (S.Model, Iter, Params_Column,
+         Set (View.Model, Iter, Params_Column,
               Subp (Index .. Subp'Last));
 
-         Set (S.Model, Iter, File_Location_Column,
+         Set (View.Model, Iter, File_Location_Column,
               Bt (J).Source_Location.all);
       end loop;
 
       Free (Bt (1 .. Len));
 
-      S.Block := True;
-      if Get_Iter_First (S.Model) /= Null_Iter then
-         Select_Iter (Get_Selection (S.Tree), Get_Iter_First (S.Model));
+      View.Block := True;
+      if Get_Iter_First (View.Model) /= Null_Iter then
+         Select_Iter (Get_Selection (View.Tree), Get_Iter_First (View.Model));
       end if;
-      S.Block := False;
-   end Update_Call_Stack;
+      View.Block := False;
+   end Update;
 
 end GVD.Call_Stack;

@@ -45,7 +45,6 @@ with Gtk.Tree_Store;        use Gtk.Tree_Store;
 with Gtk.Tree_View;         use Gtk.Tree_View;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk;                   use Gtk;
-with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Gtkada.Types;          use Gtkada.Types;
 with GUI_Utils;             use GUI_Utils;
@@ -61,9 +60,6 @@ package body GVD.Dialogs is
      "" + (-"Choice");
 
    generic
-      with function Get_View
-        (Process : access Visual_Debugger_Record'Class)
-         return Gtk_Scrolled_Window;
       with procedure Attach
         (Process : access Visual_Debugger_Record'Class;
          Create_If_Necessary : Boolean);
@@ -121,9 +117,7 @@ package body GVD.Dialogs is
    procedure Set_Thread_View
      (Process : access Visual_Debugger_Record'Class;
       View    : Gtk_Scrolled_Window);
-   procedure On_Attach
-     (Thread  : access Thread_View_Record;
-      Process : access Visual_Debugger_Record'Class);
+   procedure Update (Thread : access Thread_View_Record);
    --  See description in GVD.Generic_View
 
    package Thread_Views is new Scrolled_Views.Simple_Views
@@ -133,9 +127,6 @@ package body GVD.Dialogs is
       Get_View           => Get_Thread_View,
       Set_View           => Set_Thread_View,
       Initialize         => Initialize);
-
-   procedure Update_Threads (Thread : access Gtk_Widget_Record'Class);
-   --  Update the contents of the thread dialog.
 
    procedure On_Thread_Selection (Thread : access Gtk_Widget_Record'Class);
    --  Called when a thread was selected in the view
@@ -220,26 +211,8 @@ package body GVD.Dialogs is
       pragma Unreferenced (Widget);
       Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-
    begin
-      if Process = null or else Process.Debugger = null then
-         return;
-      end if;
-
-      if Command_In_Process (Get_Process (Process.Debugger)) then
-         Button := Message_Dialog
-           ((-"Cannot display tasks list while the debugger is busy.") &
-            ASCII.LF &
-            (-"Interrupt the debugger or wait for its availability."),
-           Dialog_Type => Warning,
-           Buttons => Button_OK);
-         return;
-      end if;
-
       Attach (Process, Create_If_Necessary => True);
-      Update_Threads (Get_View (Process));
 
    exception
       when E : others =>
@@ -251,16 +224,10 @@ package body GVD.Dialogs is
    -- Generics instantiation --
    ----------------------------
 
-   procedure On_Threads is new Open_View
-     (Get_Thread_View, Attach_To_Thread_Dialog);
-   --  Debug->Data->Threads
-
-   procedure On_Tasks is new Open_View
-     (Get_Task_View, Attach_To_Tasks_Dialog);
-   --  Debug->Data->Tasks
-
-   procedure On_PD is new Open_View (Get_PD_View, Attach_To_PD_Dialog);
-   --  Debug->Data->PD
+   procedure On_Threads is new Open_View (Attach_To_Thread_Dialog);
+   procedure On_Tasks is new Open_View   (Attach_To_Tasks_Dialog);
+   procedure On_PD is new Open_View      (Attach_To_PD_Dialog);
+   --  The various menus to open views
 
    ---------------------------
    -- Info_Threads_Dispatch --
@@ -361,7 +328,7 @@ package body GVD.Dialogs is
 
          --  After switching to a new protection domain, we want the
          --  PD dialog to reflect that change immediately
-         Update_Threads (View);
+         Update (View);
       end if;
    end PD_Switch_Dispatch;
 
@@ -384,9 +351,9 @@ package body GVD.Dialogs is
         (Kernel, Data_Sub, -"Ta_sks", "",
          On_Tasks'Access, Ref_Item => -"Protection Domains");
 
-      Thread_Views.Register_Desktop_Functions;
-      Tasks_Views.Register_Desktop_Functions;
-      PD_Views.Register_Desktop_Functions;
+      Thread_Views.Register_Desktop_Functions (Kernel);
+      Tasks_Views.Register_Desktop_Functions (Kernel);
+      PD_Views.Register_Desktop_Functions (Kernel);
    end Register_Module;
 
    -------------------------
@@ -500,46 +467,33 @@ package body GVD.Dialogs is
          Question_Description);
    end Gtk_New;
 
-   ---------------
-   -- On_Attach --
-   ---------------
+   ------------
+   -- Update --
+   ------------
 
-   procedure On_Attach
-     (Thread  : access Thread_View_Record;
-      Process : access Visual_Debugger_Record'Class) is
-   begin
-      Widget_Callback.Object_Connect
-        (Process, "process_stopped", Update_Threads'Access, Thread);
-   end On_Attach;
-
-   --------------------
-   -- Update_Threads --
-   --------------------
-
-   procedure Update_Threads (Thread : access Gtk_Widget_Record'Class) is
-      View        : constant Thread_View := Thread_View (Thread);
+   procedure Update (Thread : access Thread_View_Record) is
       Info        : Thread_Information_Array (1 .. Max_Tasks);
       Len         : Natural;
       Num_Columns : Thread_Fields;
       Iter        : Gtk_Tree_Iter;
    begin
-      if Get_Process (View) /= null
-        and then Visible_Is_Set (View)
-        and then Get_Process (Get_Process (View).Debugger) /= null
+      if Get_Process (Thread) /= null
+        and then Visible_Is_Set (Thread)
+        and then Get_Process (Get_Process (Thread).Debugger) /= null
       then
-         View.Get_Info (Get_Process (View).Debugger, Info, Len);
+         Thread.Get_Info (Get_Process (Thread).Debugger, Info, Len);
          Num_Columns := Info (Info'First).Num_Fields;
 
-         if View.Tree /= null
-           and then Get_N_Columns (Get_Model (View.Tree)) /=
+         if Thread.Tree /= null
+           and then Get_N_Columns (Get_Model (Thread.Tree)) /=
            Gint (Num_Columns)
          then
             Trace (Me, "Threads: Number of columns has changed");
-            Destroy (View.Tree);
-            View.Tree := null;
+            Destroy (Thread.Tree);
+            Thread.Tree := null;
          end if;
 
-         if View.Tree = null and then Len > Info'First then
+         if Thread.Tree = null and then Len > Info'First then
             declare
                Titles : GNAT.OS_Lib.String_List (1 .. Integer (Num_Columns));
             begin
@@ -551,28 +505,28 @@ package body GVD.Dialogs is
                        (Info (Info'First).Information (Thread_Fields (T))));
                end loop;
 
-               View.Tree := Create_Tree_View
+               Thread.Tree := Create_Tree_View
                  (Column_Types       =>
                     (0 .. Guint (Num_Columns) - 1 => GType_String),
                   Column_Names       => Titles);
                Free (Titles);
 
-               Add (View, View.Tree);
-               Show_All (View.Tree);
+               Add (Thread, Thread.Tree);
+               Show_All (Thread.Tree);
                Widget_Callback.Object_Connect
-                 (Get_Selection (View.Tree), "changed",
+                 (Get_Selection (Thread.Tree), "changed",
                   On_Thread_Selection'Access, Thread);
             end;
          end if;
 
-         if View.Tree /= null then
-            Clear (Gtk_Tree_Store (Get_Model (View.Tree)));
+         if Thread.Tree /= null then
+            Clear (Gtk_Tree_Store (Get_Model (Thread.Tree)));
          end if;
 
          for J in Info'First + 1 .. Len loop
-            Append (Gtk_Tree_Store (Get_Model (View.Tree)), Iter, Null_Iter);
+            Append (Gtk_Tree_Store (Get_Model (Thread.Tree)), Iter, Null_Iter);
             for Col in Info (J).Information'Range loop
-               Set (Gtk_Tree_Store (Get_Model (View.Tree)),
+               Set (Gtk_Tree_Store (Get_Model (Thread.Tree)),
                     Iter,
                     Gint (Col - Info (J).Information'First),
                     Value (Info (J).Information (Col)));
@@ -581,7 +535,7 @@ package body GVD.Dialogs is
 
          Free (Info);
       end if;
-   end Update_Threads;
+   end Update;
 
    ----------------
    -- Initialize --

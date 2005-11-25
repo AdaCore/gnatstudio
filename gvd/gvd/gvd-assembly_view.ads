@@ -71,9 +71,6 @@ package GVD.Assembly_View is
       Br            : GVD.Types.Breakpoint_Array);
    --  See GVD.Code_Editors for more information
 
-   procedure On_Executable_Changed (Assembly_View : GVD_Assembly_View);
-   --  Called when the executable associated with the explorer has changed.
-
    procedure Preferences_Changed (Assembly_View : GVD_Assembly_View);
    --  Called when the preferences have changed, and the editor should be
    --  redisplayed with the new setup.
