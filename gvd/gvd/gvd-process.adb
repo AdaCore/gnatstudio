@@ -79,7 +79,6 @@ with Traces;                     use Traces;
 with VFS;                        use VFS;
 
 package body GVD.Process is
-
    type GPS_Proxy is new Process_Proxy with record
       Kernel : Kernel_Handle;
    end record;
@@ -827,6 +826,7 @@ package body GVD.Process is
       Lowered_Command : constant String := To_Lower (Command);
       First           : Natural := Lowered_Command'First;
       Data            : History_Data;
+      Tmp             : Boolean;
 
       procedure Pre_User_Command;
       --  Handle all the set up for a user command (logs, history, ...)
@@ -863,7 +863,17 @@ package body GVD.Process is
 
       Skip_Blanks (Lowered_Command, First);
 
-      if not Command_In_Process (Get_Process (Debugger.Debugger))
+      --  Is this a command handled by a script ?
+      Tmp := Run_Debugger_Action_Hook
+        (Debugger  => Debugger,
+         Hook_Name => Debugger_Command_Action_Hook,
+         Command   => Command (First .. Command'Last));
+      if Tmp then
+         if not Command_In_Process (Get_Process (Debugger.Debugger)) then
+            Display_Prompt (Debugger.Debugger);
+         end if;
+
+      elsif not Command_In_Process (Get_Process (Debugger.Debugger))
         and then Looking_At (Lowered_Command, First, "graph")
       then
          Pre_User_Command;
@@ -924,6 +934,7 @@ package body GVD.Process is
       Quit_String     : constant String := "quit     ";
       Lowered_Command : constant String := To_Lower (Command);
       First           : Natural := Lowered_Command'First;
+      Tmp             : Boolean;
    begin
       --  Command has been converted to lower-cases, but the new version
       --  should be used only to compare with our standard list of commands.
@@ -934,33 +945,46 @@ package body GVD.Process is
          return "";
       end if;
 
-      Skip_Blanks (Lowered_Command, First);
-
-      if Looking_At (Lowered_Command, First, "graph")
-        or else
-          (Lowered_Command'Length <= Quit_String'Length
-           and then Lowered_Command =
-             Quit_String (1 .. Lowered_Command'Length))
-        or else Continuation_Line (Debugger.Debugger)
-        or else Debugger.Registered_Dialog /= null
-      then
-         Process_User_Command (Debugger, Command, Output_Command, Mode);
-         return "";
-      end if;
-
       if Output_Command then
          Output_Text (Debugger, Command & ASCII.LF, Is_Command => True);
       end if;
 
-      declare
-         Result : constant String :=
-           Send (Debugger.Debugger, Command, Mode => Mode);
-      begin
+      Skip_Blanks (Lowered_Command, First);
+
+      --  Is this a command handled by a script ?
+      Tmp := Run_Debugger_Action_Hook
+        (Debugger  => Debugger,
+         Hook_Name => Debugger_Command_Action_Hook,
+         Command   => Command (First .. Command'Last));
+      if not Tmp then
+         if Looking_At (Lowered_Command, First, "graph")
+           or else
+             (Lowered_Command'Length <= Quit_String'Length
+              and then Lowered_Command =
+                Quit_String (1 .. Lowered_Command'Length))
+           or else Continuation_Line (Debugger.Debugger)
+           or else Debugger.Registered_Dialog /= null
+         then
+            Process_User_Command
+              (Debugger, Command, Output_Command => False, Mode => Mode);
+            return "";
+         end if;
+
+         declare
+            Result : constant String :=
+              Send (Debugger.Debugger, Command, Mode => Mode);
+         begin
+            if Output_Command then
+               Display_Prompt (Debugger.Debugger);
+            end if;
+            return Result;
+         end;
+      else
          if Output_Command then
             Display_Prompt (Debugger.Debugger);
          end if;
-         return Result;
-      end;
+         return "";
+      end if;
    end Process_User_Command;
 
    ---------------------

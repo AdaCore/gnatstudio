@@ -31,10 +31,25 @@ package GVD.Scripts is
    --  Data associated with all the hooks declared in the GVD module.
    --  It contains a pointer to the debugger that generated the event
 
+   type Debugger_String_Hooks_Data (Length : Natural) is new
+     GPS.Kernel.Hooks.Hooks_Data with
+      record
+         Process : GVD.Process.Visual_Debugger;
+         Command : String (1 .. Length);
+      end record;
+   type Debugger_String_Hooks_Data_Access is access all
+     Debugger_String_Hooks_Data'Class;
+
    procedure Run_Debugger_Hook
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
       Name     : String);
    --  Run a hook and passes Debugger as a parameter to it
+
+   function Run_Debugger_Action_Hook
+     (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
+      Hook_Name : String;
+      Command   : String) return Boolean;
+   --  Run a action hook
 
    function Get_Process
      (Data : access GPS.Kernel.Hooks.Hooks_Data'Class)
@@ -75,6 +90,17 @@ package GVD.Scripts is
    --  debugger is closed. It is still possible to issue commands to the
    --  debugger at this stage.
 
+   ------------------
+   -- Action Hooks --
+   ------------------
+   --  All these hooks take a Debugger_Action_Hooks_Data in parameter
+
+   Debugger_Command_Action_Hook : constant String :=
+     "debugger_command_action_hook";
+   --  Action hook called when the user has typed a command in the debugger
+   --  console. This hooks gives a chance to scripts to implement their own
+   --  debugger commands.
+
 private
    type Debugger_Hooks_Data is new GPS.Kernel.Hooks.Hooks_Data with record
       Debugger : GVD.Process.Visual_Debugger;
@@ -87,4 +113,13 @@ private
       Hook_Name : String;
       Data      : access Debugger_Hooks_Data) return Boolean;
    --  See inherited documentation
+
+   function Get_Name (Data : Debugger_String_Hooks_Data) return String;
+   function Execute_Shell
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access Debugger_String_Hooks_Data) return Boolean;
+   --  See inherited documentation
+
 end GVD.Scripts;

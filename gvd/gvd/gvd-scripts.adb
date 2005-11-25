@@ -27,14 +27,18 @@ with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with GPS.Intl;           use GPS.Intl;
 with GVD.Process;        use GVD.Process;
+with GVD.Types;
 with GVD_Module;         use GVD_Module;
 with VFS;                use VFS;
 
 package body GVD.Scripts is
 
-   Debugger_Hook_Data_Name : constant String := "Debugger";
+   Debugger_Hook_Data_Name        : constant String := "Debugger";
+   Debugger_String_Hook_Data_Name : constant String := "Debugger_String";
 
    procedure Debugger_Hooks_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure Debugger_String_Hooks_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Process the hook types associated with the debugger
 
@@ -80,6 +84,39 @@ package body GVD.Scripts is
       return Tmp;
    end Execute_Shell;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : Debugger_String_Hooks_Data) return String is
+      pragma Unreferenced (Data);
+   begin
+      return Debugger_String_Hook_Data_Name;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access Debugger_String_Hooks_Data) return Boolean
+   is
+      D   : Callback_Data'Class := Create (Script, 3);
+      Tmp : Boolean;
+      Inst : constant Class_Instance :=
+        Get_Or_Create_Instance (Script, Data.Process);
+   begin
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, Inst);
+      Set_Nth_Arg (D, 3, Data.Command);
+      Tmp := Execute (Command, D);
+      Free (Inst);
+      return Tmp;
+   end Execute_Shell;
+
    ----------------------------
    -- Debugger_Hooks_Handler --
    ----------------------------
@@ -103,6 +140,30 @@ package body GVD.Scripts is
                 Args'Unchecked_Access);
    end Debugger_Hooks_Handler;
 
+   -----------------------------------
+   -- Debugger_String_Hooks_Handler --
+   -----------------------------------
+
+   procedure Debugger_String_Hooks_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+      Debugger_Cmd : constant String := Nth_Arg (Data, 2);
+      Inst    : constant Class_Instance :=
+        Nth_Arg (Data, 1, New_Class (Get_Kernel (Data), "Debugger"));
+      Args    : aliased Debugger_String_Hooks_Data :=
+        (Length   => Debugger_Cmd'Length,
+         Kernel   => Get_Kernel (Data),
+         Process  => Visual_Debugger (GObject'(Get_Data (Inst))),
+         Command  => Debugger_Cmd);
+   begin
+      Free (Inst);
+      Set_Return_Value
+        (Data, Run_Hook_Until_Success (Get_Kernel (Data),
+         Get_Hook_Name (Data, 1),
+         Args'Unchecked_Access));
+   end Debugger_String_Hooks_Handler;
+
    -----------------------
    -- Run_Debugger_Hook --
    -----------------------
@@ -118,6 +179,30 @@ package body GVD.Scripts is
                Debugger => Visual_Debugger (Debugger));
       Run_Hook (Kernel, Name, Args'Unchecked_Access);
    end Run_Debugger_Hook;
+
+   ------------------------------
+   -- Run_Debugger_Action_Hook --
+   ------------------------------
+
+   function Run_Debugger_Action_Hook
+     (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
+      Hook_Name : String;
+      Command   : String) return Boolean
+   is
+      Kernel : constant Kernel_Handle := Debugger.Window.Kernel;
+      Args : aliased Debugger_String_Hooks_Data :=
+        (Length   => Command'Length,
+         Kernel   => Kernel,
+         Command  => Command,
+         Process  => Visual_Debugger (Debugger));
+      Tmp : Boolean;
+   begin
+      Set_Busy (Debugger);
+      Tmp := Run_Hook_Until_Success
+        (Kernel, Hook_Name, Args'Unchecked_Access, Set_Busy => True);
+      Set_Busy (Debugger, False);
+      return Tmp;
+   end Run_Debugger_Action_Hook;
 
    -----------------
    -- Get_Process --
@@ -233,7 +318,7 @@ package body GVD.Scripts is
          Set_Return_Value
            (Data, Process_User_Command
               (Process, GPS.Kernel.Scripts.Nth_Arg (Data, 2),
-               Output_Command => True));
+               Output_Command => True, Mode => GVD.Types.Internal));
          Free (Inst);
 
       elsif Command = "get_file" then
@@ -296,12 +381,30 @@ package body GVD.Scripts is
          Type_Name        => Debugger_Hook_Data_Name,
          Profile          => Hook_With_Args,
          Run_Hook_Handler => Debugger_Hooks_Handler'Access);
+      Create_Hook_Type
+        (Kernel           => Kernel,
+         Type_Name        => Debugger_String_Hook_Data_Name,
+         Profile          => Hook_With_Args_And_Return,
+         Run_Hook_Handler => Debugger_String_Hooks_Handler'Access);
 
       Register_Hook
         (Kernel, Debugger_Process_Stopped_Hook,
          Type_Name => Debugger_Hook_Data_Name);
-      Register_Hook (Kernel, Debugger_Started_Hook);
-      Register_Hook (Kernel, Debugger_Terminated_Hook);
+      Register_Hook
+        (Kernel, Debugger_Context_Changed_Hook,
+         Type_Name => Debugger_Hook_Data_Name);
+      Register_Hook
+        (Kernel, Debugger_Executable_Changed_Hook,
+         Type_Name => Debugger_Hook_Data_Name);
+      Register_Hook
+        (Kernel, Debugger_Started_Hook,
+         Type_Name => Debugger_Hook_Data_Name);
+      Register_Hook
+        (Kernel, Debugger_Terminated_Hook,
+         Type_Name => Debugger_Hook_Data_Name);
+      Register_Hook
+        (Kernel, Debugger_Command_Action_Hook,
+         Type_Name => Debugger_String_Hook_Data_Name);
 
       --  Commands
 
