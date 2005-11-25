@@ -272,12 +272,32 @@ It isn't recommended to do any direct graphical action before this hook has been
 
   <shell_doc name="@hook@ debugger_started">
      <param name="hook">A string, the name of the hook</param>
+     <param name="debugger">An instance of GPS.Debugger</param>
      <description>Hook called when a new debugger has been started</description>
   </shell_doc>
 
   <shell_doc name="@hook@ debugger_terminated">
      <param name="hook">A string, the name of the hook</param>
+     <param name="debugger">An instance of GPS.Debugger</param>
      <description>Hook called when the debugger session has been terminated</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ debugger_process_stopped">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="debugger">An instance of GPS.Debugger</param>
+     <description>Called when the debugger ran and has stopped, for instance when hitting a breakpoint, or after a next command</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ debugger_context_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="debugger">An instance of GPS.Debugger</param>
+     <description>Called when the debugger context has changed, for instance after the user has switched the current thread, has selected a new frame,...</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ debugger_executable_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="debugger">An instance of GPS.Debugger</param>
+     <description>Called when the file being debugged has changed</description>
   </shell_doc>
 
   <shell_doc name="@hook@ marker_added_to_history">
