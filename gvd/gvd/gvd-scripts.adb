@@ -18,10 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Debugger;           use Debugger;
+with Glib;               use Glib;
+with Glib.Object;        use Glib.Object;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with GPS.Intl;           use GPS.Intl;
 with GVD.Process;        use GVD.Process;
+with GVD_Module;         use GVD_Module;
+with VFS;                use VFS;
 
 package body GVD.Scripts is
 
@@ -31,10 +38,15 @@ package body GVD.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Process the hook types associated with the debugger
 
-   procedure Debugger_Command_Handler
+   procedure Shell_Handler
      (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
    --  Interactive script handler for the debugger module.
+
+   function Get_Or_Create_Instane
+     (Script  : access Scripting_Language_Record'Class;
+      Process : Visual_Debugger) return Class_Instance;
+   --  Get or create an existing instance associated with Process.
 
    --------------
    -- Get_Name --
@@ -111,35 +123,148 @@ package body GVD.Scripts is
       return Debugger_Hooks_Data_Access (Data).Debugger;
    end Get_Process;
 
-   ------------------------------
-   -- Debugger_Command_Handler --
-   ------------------------------
+   ---------------------------
+   -- Get_Or_Create_Instane --
+   ---------------------------
 
-   procedure Debugger_Command_Handler
+   function Get_Or_Create_Instane
+     (Script  : access Scripting_Language_Record'Class;
+      Process : Visual_Debugger) return Class_Instance
+   is
+      Inst : Class_Instance := Get_Instance (Script, Process);
+   begin
+      if Inst = null then
+         Inst := New_Instance
+           (Script, New_Class (Get_Kernel (Script), "Debugger"));
+         Set_Data (Inst, GObject (Process));
+      end if;
+      return Inst;
+   end Get_Or_Create_Instane;
+
+   -------------------
+   -- Shell_Handler --
+   -------------------
+
+   procedure Shell_Handler
      (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String)
    is
       Kernel : constant Kernel_Handle := GPS.Kernel.Scripts.Get_Kernel (Data);
+      Arg_Cmd  : aliased constant String := "cmd";
+      Arg_ID   : aliased constant String := "id";
+      Arg_File : aliased constant String := "file";
+      Arg_Args : aliased constant String := "args";
+      Process : Visual_Debugger;
+      Inst    : Class_Instance;
    begin
-      if Command = "send" then
+      if Command = Constructor_Method then
+         Set_Error_Msg
+           (Data, -("Cannot create instances of Debugger directly"
+            & ASCII.LF
+            & "Use GPS.Debugger.get() or GPS.Debugger.spawn() instead"));
+
+      elsif Command = "get" then
+         Name_Parameters (Data, (1 => Arg_ID'Unchecked_Access));
          declare
-            Process : constant Visual_Debugger :=
-              Get_Current_Process (Get_Main_Window (Kernel));
+            Id   : Natural;
+            File_Inst : Class_Instance;
+            File : Virtual_File;
+            List : Debugger_List_Link := Get_Debugger_List (Kernel);
          begin
-            Process_User_Command
-              (Process,
-               GPS.Kernel.Scripts.Nth_Arg (Data, 2),
-               Output_Command => True);
+            Id := Nth_Arg (Data, 1);
+            while List /= null loop
+               Process := Visual_Debugger (List.Debugger);
+               exit when Get_Num (Process) = Gint (Id);
+               Process := null;
+               List := List.Next;
+            end loop;
+
+         exception
+            when Invalid_Data =>
+               --  We got pass a file as Id
+               File_Inst := Nth_Arg
+                 (Data, 1, Get_File_Class (Kernel), Allow_Null => False);
+               File := Get_File (Get_Data (File_Inst));
+               Free (File_Inst);
+
+               while List /= null loop
+                  Process := Visual_Debugger (List.Debugger);
+                  exit when Get_Executable (Process.Debugger) = File;
+                  Process := null;
+                  List := List.Next;
+               end loop;
          end;
 
-      elsif Command = Constructor_Method then
-         --  Nothing to do for now. The plan, ultimately, is to be able to
-         --  control which debugger the commands will apply to by selecting
-         --  a debugger from the constructor, for instance by passing a name
-         --  to the constructor
-         null;
+         if Process = null then
+            Set_Error_Msg (Data, "No such debugger");
+         else
+            Set_Return_Value
+              (Data, Get_Or_Create_Instane (Get_Script (Data), Process));
+         end if;
+
+      elsif Command = "list" then
+         declare
+            List : Debugger_List_Link := Get_Debugger_List (Kernel);
+         begin
+            Set_Return_Value_As_List (Data);
+            while List /= null loop
+               Process := Visual_Debugger (List.Debugger);
+               Set_Return_Value
+                 (Data, Get_Or_Create_Instane (Get_Script (Data), Process));
+               List := List.Next;
+            end loop;
+         end;
+
+      elsif Command = "send" then
+         Name_Parameters (Data, (1 => Arg_Cmd'Unchecked_Access));
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Set_Return_Value
+           (Data, Process_User_Command
+              (Process, GPS.Kernel.Scripts.Nth_Arg (Data, 2),
+               Output_Command => True));
+
+      elsif Command = "get_file" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Set_Return_Value
+           (Data, Create_File
+              (Get_Script (Data), Get_Executable (Process.Debugger)));
+
+      elsif Command = "get_num" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Set_Return_Value (Data, Integer (Get_Num (Process)));
+
+      elsif Command = "is_busy" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Set_Return_Value (Data, Command_In_Process (Process));
+
+      elsif Command = "close" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Close_Debugger (Process);
+
+      elsif Command = "spawn" then
+         Name_Parameters (Data, (1 => Arg_File'Unchecked_Access,
+                                 2 => Arg_Args'Unchecked_Access));
+         declare
+            File_Inst : constant Class_Instance := Nth_Arg
+              (Data, 1, Get_File_Class (Kernel), Allow_Null => False);
+            File : constant Virtual_File := Get_File (Get_Data (File_Inst));
+         begin
+            Free (File_Inst);
+            Process := Spawn
+              (Kernel => Kernel,
+               File   => File,
+               Project => Get_Project (Kernel),
+               Args    => Nth_Arg (Data, 2, ""));
+            Set_Return_Value
+              (Data, Get_Or_Create_Instane (Get_Script (Data), Process));
+         end;
       end if;
-   end Debugger_Command_Handler;
+   end Shell_Handler;
 
    ------------------
    -- Create_Hooks --
@@ -148,7 +273,7 @@ package body GVD.Scripts is
    procedure Create_Hooks
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debugger_Class : constant Class_Type := New_Class (Kernel, "Debugger");
+      Class : constant Class_Type := New_Class (Kernel, "Debugger");
    begin
       Create_Hook_Type
         (Kernel           => Kernel,
@@ -165,15 +290,25 @@ package body GVD.Scripts is
       --  Commands
 
       GPS.Kernel.Scripts.Register_Command
-        (Kernel, Constructor_Method,
-         Class         => Debugger_Class,
-         Handler       => Debugger_Command_Handler'Access);
+        (Kernel, Constructor_Method, 0, 0, Shell_Handler'Access, Class);
       GPS.Kernel.Scripts.Register_Command
-        (Kernel, "send",
-         Class         => Debugger_Class,
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Handler       => Debugger_Command_Handler'Access);
+        (Kernel, "get", 1, 1, Shell_Handler'Access, Class,
+         Static_Method => True);
+      GPS.Kernel.Scripts.Register_Command
+        (Kernel, "list", 0, 0, Shell_Handler'Access, Class);
+      GPS.Kernel.Scripts.Register_Command
+        (Kernel, "send", 1, 1, Shell_Handler'Access, Class);
+      GPS.Kernel.Scripts.Register_Command
+        (Kernel, "get_file", 0, 0, Shell_Handler'Access, Class);
+      GPS.Kernel.Scripts.Register_Command
+        (Kernel, "get_num", 0, 0, Shell_Handler'Access, Class);
+      GPS.Kernel.Scripts.Register_Command
+        (Kernel, "is_busy", 0, 0, Shell_Handler'Access, Class);
+      GPS.Kernel.Scripts.Register_Command
+        (Kernel, "close", 0, 0, Shell_Handler'Access, Class);
+      GPS.Kernel.Scripts.Register_Command
+        (Kernel, "spawn", 1, 2, Shell_Handler'Access, Class,
+         Static_Method => True);
    end Create_Hooks;
 
 end GVD.Scripts;
