@@ -172,6 +172,13 @@ package GPS.Kernel.Hooks is
    --  in Data. The idea is to create a Callback_Data, and then call
    --  directly Execute_Command.
    --  Should return True in case of success.
+   --  This typically looks like:
+   --      D : Callback_Data'Class := Create (Script, 2);
+   --      Set_Nth_Arg (D, 1, Hook_Name);
+   --      Set_Nth_Arg (D, 2, ...);
+   --      Tmp := Execute (Command, D);
+   --      Free whatever is needed in D
+   --      return Tmp;
 
    ----------------
    -- Hook types --
@@ -189,12 +196,21 @@ package GPS.Kernel.Hooks is
    --  type of parameters is described by Type_Name, which should be the same
    --  value as returned by Get_Name (Hooks_Data).
    --  Command_Handler will get two kinds of commands in argument:
-   --      "__run_hook__" & Get_Name (Data)
-   --      "__run_hook__" & Hook_Name
-   --  In all thse cases, the behavior must be the same:
+   --         "__run_hook__" & Get_Name (Data)
+   --      or "__run_hook__" & Hook_Name
+   --  This depends on where the hook is called from.
+   --  In both cases, the behavior must be the same:
    --  Create a Hooks_Data from its Callback_Data parameter, and then call
    --  Run_Hook by passing the created Hooks_Data. The name of the hook to be
    --  run is the first argument of the Callback_Data.
+   --
+   --  The code for Run_Hook_Handler typically looks like:
+   --     Args : aliased Foo_Hooks_Data :=
+   --         (Kernel => Get_Kernel (Data),
+   --          ...    => ...);
+   --     Set_Return_Value
+   --      (Data, Run_Hook (Get_Kernel (Data), Get_Hook_Name (Data, 1),
+   --                       Args'Unchecked_Access));
 
    procedure Register_Hook
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
