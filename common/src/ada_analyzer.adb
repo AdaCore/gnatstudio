@@ -221,6 +221,14 @@ package body Ada_Analyzer is
       Tok_Ampersand       => True,
       others              => False);
 
+   Is_Extended_Operator : constant Token_Set :=
+     (Tok_Double_Asterisk .. Tok_Slash     |
+      Tok_Comma .. Tok_Colon_Equal         |
+      Tok_Semicolon                        |
+      Tok_Ampersand .. Tok_Greater_Greater |
+      Tok_Colon .. Tok_Dot_Dot             => True,
+      others                               => False);
+
    Max_Identifier : constant := 256;
    --  Maximum length of an identifier.
 
@@ -2686,10 +2694,14 @@ package body Ada_Analyzer is
                      Adjust := Indent_Continue + Continuation_Val;
                      Paren_In_Middle := True;
 
+                     --  If Prev_Prev_Token is an operator, it means that
+                     --  spaces have already been inserted.
+
                      if Format_Operators
                        and then not Is_Blank (Char)
                        and then Char /= '('
                        and then Char /= '''
+                       and then not Is_Extended_Operator (Prev_Prev_Token)
                      then
                         Spaces (2) := Buffer (P);
                         Replace_Text (P, P + 1, Spaces (1 .. 2));
