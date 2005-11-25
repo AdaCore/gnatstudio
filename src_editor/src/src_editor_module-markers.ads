@@ -91,7 +91,7 @@ private
          Id     : Natural;   --  Needed only for the shell API
          File   : VFS.Virtual_File;
          Line   : Natural;
-         --  ??? Line here should be an Editable_Line_Type, to avoid
+         --  ??? Line here should be an Editable_Line_Type, in order to avoid
          --  ambiguity.
          Column : Natural;
          Length : Natural := 1;
