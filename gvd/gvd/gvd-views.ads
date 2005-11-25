@@ -22,6 +22,7 @@
 
 with GVD.Generic_View;
 with GVD.Process;          use GVD.Process;
+with GVD.Scripts;          use GVD.Scripts;
 with GVD_Module;           use GVD_Module;
 with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
 with Interactive_Consoles; use Interactive_Consoles;
@@ -29,15 +30,19 @@ with Interactive_Consoles; use Interactive_Consoles;
 package GVD.Views is
 
    package Scrolled_Views is new GVD.Generic_View
-     (Base_Type              => Gtk_Scrolled_Window_Record,
-      Base_Type_Access       => Gtk_Scrolled_Window,
-      Visual_Debugger_Record => GVD.Process.Visual_Debugger_Record,
-      Visual_Debugger        => GVD.Process.Visual_Debugger);
+     (Base_Type                     => Gtk_Scrolled_Window_Record,
+      Base_Type_Access              => Gtk_Scrolled_Window,
+      Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
+      Visual_Debugger               => GVD.Process.Visual_Debugger,
+      Debugger_Process_Stopped_Hook => Debugger_Process_Stopped_Hook,
+      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook);
 
    package Console_Views is new GVD.Generic_View
-     (Base_Type              => Interactive_Console_Record,
-      Base_Type_Access       => Interactive_Console,
-      Visual_Debugger_Record => GVD.Process.Visual_Debugger_Record,
-      Visual_Debugger        => GVD.Process.Visual_Debugger);
+     (Base_Type                     => Interactive_Console_Record,
+      Base_Type_Access              => Interactive_Console,
+      Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
+      Visual_Debugger               => GVD.Process.Visual_Debugger,
+      Debugger_Process_Stopped_Hook => Debugger_Process_Stopped_Hook,
+      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook);
 
 end GVD.Views;
