@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
@@ -96,8 +95,6 @@ with Language_Handlers;         use Language_Handlers;
 with List_Select_Pkg;           use List_Select_Pkg;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Process_Proxies;           use Process_Proxies;
-with Projects.Editor;           use Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Std_Dialogs;               use Std_Dialogs;
 with Traces;                    use Traces;
@@ -117,20 +114,7 @@ package body GVD_Module is
    Max_Tooltip_Width : constant := 400;
    --  Maximum size to use for the tooltip windows
 
-   type GPS_Debugger_Record is new
-     GVD.Process.Visual_Debugger_Record with null record;
-   type GPS_Debugger is access all GPS_Debugger_Record'Class;
-
    type Bp_Array is array (Integer range <>) of Breakpoint_Identifier;
-
-   procedure Gtk_New
-     (Debugger : out GPS_Debugger;
-      Window   : access GPS_Window_Record'Class);
-
-   procedure Set_Busy
-     (Debugger      : access GPS_Debugger_Record;
-      Busy          : Boolean := True;
-      Force_Refresh : Boolean := False);
 
    type File_Edited_Hook_Record is new Hook_Args_Record with record
       Top : GPS_Window;
@@ -150,16 +134,6 @@ package body GVD_Module is
       Data   : access Hooks_Data'Class);
    --  Callback for the "source_lines_revealed_hook" hook.
 
-   type GPS_Proxy is new Process_Proxy with record
-      Kernel : Kernel_Handle;
-   end record;
-   --  GPS specific proxy, used to redefine Set_Command_In_Process
-
-   procedure Set_Command_In_Process
-     (Proxy      : access GPS_Proxy;
-      In_Process : Boolean := True);
-   --  Set the appropriate debugger menu items to the corresponding state.
-
    type GVD_Module_Record is new Module_ID_Record with record
       Initialized                    : Boolean := False;
       --  Whether the debugger is running;
@@ -168,15 +142,6 @@ package body GVD_Module is
       --  Whether the lines with code should be explicitly queried.
 
       Initialize_Menu                : Gtk_Menu;
-
-      Current_Executable_For_Project : Virtual_File :=
-        Create_From_Base ("</\unknown>");
-      --  This is the last executable that was used to compute the automatic
-      --  project. The default value is to make sure that it won't match an
-      --  actual executable name, and thus make sure we will at least
-      --  compute the project once.
-      --  It might be left to No_File in case we don't know the
-      --  executable because the module was already loaded on cross targets.
 
       Delete_Id                      : Handler_Id := (Null_Signal_Id, null);
       File_Hook                      : File_Edited_Hook;
@@ -217,28 +182,9 @@ package body GVD_Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Remove debugger related buttons from the main toolbar.
 
-   type Debugger_State is (Debug_None, Debug_Busy, Debug_Available);
-   --  Possible states of a debugger:
-   --  - Debug_None: debugger is not running
-   --  - Debug_Busy: debugger is busy processing a command
-   --  - Debug_Available: debugger is available
-
-   procedure Set_Sensitive
-     (Kernel : Kernel_Handle;
-      State  : Debugger_State);
-   --  Change the sensitive state of the debugger menu items and toolbar
-   --  buttons
-
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called every time the project view changes, to recompute the dynamic
    --  menus.
-
-   procedure Create_Debugger_Columns
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File);
-   --  Create the side information columns corresponding to the debugger
-   --  in the editors for file.
-   --  If File is empty, create them for all files.
 
    procedure Remove_Debugger_Columns
      (Kernel : Kernel_Handle;
@@ -250,6 +196,13 @@ package body GVD_Module is
    procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences are changed in the GPS kernel
 
+   procedure Create_Debugger_Columns
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File);
+   --  Create the side information columns corresponding to the debugger
+   --  in the editors for file.
+   --  If File is empty, create them for all files.
+
    function Delete_Asm
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
    --  Callback for the "delete_event" signal of the assembly view.
@@ -260,9 +213,6 @@ package body GVD_Module is
       Data   : File_Project_Record;
       Args   : String);
    --  Initialize the debugger
-
-   procedure Debug_Terminate (Kernel : Kernel_Handle);
-   --  Terminate the debugging session, and closes all debuggers
 
    procedure Debug_Terminate
      (Kernel   : Kernel_Handle;
@@ -276,12 +226,6 @@ package body GVD_Module is
    --  If Context contains an entity, get the entity name.
    --  Dereference the entity if Dereference is True.
    --  Return "" if entity name could not be found in Context.
-
-   procedure Load_Project_From_Executable
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Debugger : access Visual_Debugger_Record'Class);
-   --  Create and load a default project from the executable loaded in
-   --  Debugger.
 
    procedure On_Debug_Terminate_Single
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -533,234 +477,6 @@ package body GVD_Module is
      (Context : access Selection_Context'Class) return String;
    --  Provide expansion for "$!" in the labels for contextual menus
 
-   ----------------------------------
-   -- Load_Project_From_Executable --
-   ----------------------------------
-
-   procedure Load_Project_From_Executable
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Debugger : access Visual_Debugger_Record'Class)
-   is
-      Project : Project_Type := Get_Project (Kernel);
-      Exec    : Virtual_File;
-
-   begin
-      --  Do nothing unless the current project was already generated from an
-      --  executable
-
-      if Status (Project) /= From_Executable then
-         return;
-      end if;
-
-      Exec := Get_Executable (Debugger.Debugger);
-
-      if Exec = GVD_Module_ID.Current_Executable_For_Project then
-         return;
-      end if;
-
-      GVD_Module_ID.Current_Executable_For_Project := Exec;
-
-      --  No handling of desktop is done here, we want to leave all windows
-      --  as-is.
-
-      declare
-         Debugger_Name : constant String :=
-           (Get_Attribute_Value
-             (Project, Debugger_Command_Attribute, Default => ""));
-         Target        : constant String :=
-           (Get_Attribute_Value
-             (Project, Program_Host_Attribute, Default => ""));
-         Protocol      : constant String :=
-           (Get_Attribute_Value
-             (Project, Protocol_Attribute, Default => ""));
-
-      begin
-         Unload_Project (Project_Registry (Get_Registry (Kernel).all));
-
-         if Exec /= VFS.No_File then
-            Project := Create_Project
-              (Project_Registry (Get_Registry (Kernel).all),
-               "debugger_" & Base_Name (Exec),
-               GNAT.Directory_Operations.Get_Current_Dir);
-         else
-            Project := Create_Project
-              (Project_Registry (Get_Registry (Kernel).all),
-               "debugger_no_file",
-               GNAT.Directory_Operations.Get_Current_Dir);
-         end if;
-
-         if Debugger_Name /= "" then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Debugger_Command_Attribute,
-               Value              => Debugger_Name);
-         end if;
-
-         if Target /= "" then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Program_Host_Attribute,
-               Value              => Target);
-         end if;
-
-         if Protocol /= "" then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Protocol_Attribute,
-               Value              => Protocol);
-         end if;
-      end;
-
-      declare
-         List       : String_Array := Source_Files_List (Debugger.Debugger);
-         Bases      : GNAT.OS_Lib.Argument_List (List'Range);
-         Dirs       : GNAT.OS_Lib.Argument_List (List'Range);
-         Dirs_Index : Natural := Dirs'First;
-         Main       : GNAT.OS_Lib.Argument_List (1 .. 1);
-         Langs      : GNAT.OS_Lib.Argument_List (List'Range);
-         Lang_Index : Natural := Langs'First;
-
-      begin
-         for L in List'Range loop
-            Bases (L) := new String'(Base_Name (List (L).all));
-         end loop;
-
-         Update_Attribute_Value_In_Scenario
-           (Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Source_Files_Attribute,
-            Values             => Bases);
-         Free (Bases);
-
-         for L in List'Range loop
-            declare
-               Dir   : constant String := GNAT.OS_Lib.Normalize_Pathname
-                 (Dir_Name (List (L).all),
-                  Dir_Name (Exec).all,
-                  Resolve_Links => False);
-               Found : Boolean := False;
-            begin
-               for D in Dirs'First .. Dirs_Index - 1 loop
-                  if Dirs (D).all = Dir then
-                     Found := True;
-                     exit;
-                  end if;
-               end loop;
-
-               if not Found then
-                  Dirs (Dirs_Index) := new String'(Dir);
-                  Dirs_Index := Dirs_Index + 1;
-               end if;
-            end;
-         end loop;
-
-         Update_Attribute_Value_In_Scenario
-           (Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Source_Dirs_Attribute,
-            Values             => Dirs (Dirs'First .. Dirs_Index - 1));
-         Free (Dirs);
-
-         for L in List'Range loop
-            declare
-               Lang : constant String := Get_Language_From_File
-                 (Get_Language_Handler (Kernel),
-                  Create (Full_Filename => List (L).all));
-               Found : Boolean := False;
-            begin
-               if Lang /= "" then
-                  for La in Langs'First .. Lang_Index - 1 loop
-                     if Langs (La).all = Lang then
-                        Found := True;
-                        exit;
-                     end if;
-                  end loop;
-
-                  if not Found then
-                     Langs (Lang_Index) := new String'(Lang);
-                     Lang_Index := Lang_Index + 1;
-                  end if;
-               end if;
-            end;
-         end loop;
-
-         Update_Attribute_Value_In_Scenario
-           (Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Languages_Attribute,
-            Values             => Langs (Langs'First .. Lang_Index - 1));
-         Free (Langs);
-
-         if Exec /= VFS.No_File then
-            Update_Attribute_Value_In_Scenario
-              (Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Obj_Dir_Attribute,
-               Value              => Dir_Name (Exec).all);
-            Update_Attribute_Value_In_Scenario
-              (Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Exec_Dir_Attribute,
-               Value              => Dir_Name (Exec).all);
-
-            Main (Main'First) := new String'(Full_Name (Exec).all);
-            Update_Attribute_Value_In_Scenario
-              (Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Main_Attribute,
-               Values             => Main);
-            Free (Main);
-         end if;
-         Free (List);
-      end;
-
-      --  Is the information for this executable already cached ? If yes,
-      --  we simply reuse it to avoid the need to interact with the debugger.
-
-      Load_Custom_Project
-        (Project_Registry (Get_Registry (Kernel).all), Project);
-      Set_Status (Get_Project (Kernel), From_Executable);
-      Run_Hook (Kernel, Project_Changed_Hook);
-      Recompute_View (Kernel);
-   end Load_Project_From_Executable;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Debugger : out GPS_Debugger;
-      Window   : access GPS_Window_Record'Class)
-   is
-      Edit : GVD.Source_Editor.GPS.GEdit;
-   begin
-      Debugger := new GPS_Debugger_Record;
-
-      GVD.Source_Editor.GPS.Gtk_New (Edit, Window);
-      GVD.Process.Initialize (Debugger, Window, Source_Editor (Edit));
-   end Gtk_New;
-
-   --------------
-   -- Set_Busy --
-   --------------
-
-   procedure Set_Busy
-     (Debugger      : access GPS_Debugger_Record;
-      Busy          : Boolean := True;
-      Force_Refresh : Boolean := False)
-   is
-      pragma Unreferenced (Force_Refresh);
-   begin
-      if Busy then
-         Push_State (GPS_Window (Debugger.Window).Kernel, Processing);
-      else
-         Pop_State (GPS_Window (Debugger.Window).Kernel);
-      end if;
-   end Set_Busy;
-
    ----------------------------
    -- Get_Breakpoints_Editor --
    ----------------------------
@@ -942,7 +658,7 @@ package body GVD_Module is
    -----------------------------
 
    procedure Create_Debugger_Columns
-     (Kernel : Kernel_Handle;
+     (Kernel : access Kernel_Handle_Record'Class;
       File   : Virtual_File) is
    begin
       --  Create the information column for the current line.
@@ -973,23 +689,6 @@ package body GVD_Module is
       Remove_Line_Information_Column
         (Kernel, File, Breakpoints_Column_Id);
    end Remove_Debugger_Columns;
-
-   ----------------------------
-   -- Set_Command_In_Process --
-   ----------------------------
-
-   procedure Set_Command_In_Process
-     (Proxy      : access GPS_Proxy;
-      In_Process : Boolean := True) is
-   begin
-      Set_Command_In_Process (Process_Proxy (Proxy.all)'Access, In_Process);
-
-      if In_Process then
-         Set_Sensitive (Proxy.Kernel, Debug_Busy);
-      else
-         Set_Sensitive (Proxy.Kernel, Debug_Available);
-      end if;
-   end Set_Command_In_Process;
 
    --------------------
    -- On_Add_Symbols --
@@ -2284,7 +1983,7 @@ package body GVD_Module is
    -------------------
 
    procedure Set_Sensitive
-     (Kernel : Kernel_Handle;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       State  : Debugger_State)
    is
       Debug     : constant String := '/' & (-"Debug") & '/';
@@ -2331,139 +2030,10 @@ package body GVD_Module is
       Data   : File_Project_Record;
       Args   : String)
    is
-      K              : constant Kernel_Handle := Kernel_Handle (Kernel);
-      Top            : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (K));
-      Page           : GPS_Debugger;
-      Module         : String_Access;
-      Program_Args   : String_Access;
-      Blank_Pos      : Natural;
-      Proxy          : Process_Proxy_Access;
-      Success        : Boolean;
-      First_Debugger : Boolean;
-
-      use type GNAT.OS_Lib.String_Access;
-
+      Page : Visual_Debugger;
+      pragma Unreferenced (Page);
    begin
-      Push_State (K, Busy);
-
-      First_Debugger := Get_Current_Debugger (Kernel) = null;
-      Gtk_New (Page, Top);
-      Add_Hook
-        (Kernel, Debugger_Terminated_Hook, On_Debug_Terminate_Single'Access);
-
-      Program_Args := new String'("");
-
-      if Data.File /= No_File then
-         Module := new String'(Full_Name (Data.File).all);
-
-      elsif Args /= "" then
-         Blank_Pos := Ada.Strings.Fixed.Index (Args, " ");
-
-         if Blank_Pos = 0 then
-            Module := new String'(Args);
-         else
-            Module := new String'(Args (Args'First .. Blank_Pos - 1));
-            Free (Program_Args);
-            Program_Args := new String'(Args (Blank_Pos + 1 .. Args'Last));
-         end if;
-
-      else
-         Module := new String'("");
-      end if;
-
-      declare
-         Ptr         : GNAT.OS_Lib.String_Access :=
-           GNAT.OS_Lib.Get_Executable_Suffix;
-         Module_Exec : constant String := Module.all & Ptr.all;
-
-      begin
-         GNAT.OS_Lib.Free (Ptr);
-
-         if Module'Length > 0
-           and then not GNAT.OS_Lib.Is_Regular_File (Module.all)
-           and then GNAT.OS_Lib.Is_Regular_File (Module_Exec)
-         then
-            Free (Module);
-            Module := new String'(Module_Exec);
-         end if;
-      end;
-
-      declare
-         Args : GNAT.OS_Lib.Argument_List_Access :=
-           GNAT.OS_Lib.Argument_String_To_List
-             (Get_Attribute_Value
-               (Get_Project (K), Debugger_Command_Attribute,
-                Default => "gdb"));
-
-      begin
-         Proxy := new GPS_Proxy;
-         GPS_Proxy (Proxy.all).Kernel := K;
-         Configure
-           (Process         => Page,
-            Kind            => Gdb_Type,
-            Proxy           => Proxy,
-            Executable      => Module.all,
-            Debugger_Args   => Args (2 .. Args'Last),
-            Executable_Args => Program_Args.all,
-            Remote_Host     =>
-              Get_Attribute_Value (Get_Project (K), Remote_Host_Attribute),
-            Remote_Target   =>
-              Get_Attribute_Value (Get_Project (K), Program_Host_Attribute),
-            Remote_Protocol =>
-              Get_Attribute_Value (Get_Project (K), Protocol_Attribute),
-            Debugger_Name   => Args (1).all,
-            Success         => Success);
-         GNAT.OS_Lib.Free (Args);
-         Free (Module);
-
-         if not Success then
-            if Get_Current_Debugger (Kernel) = null then
-               Debug_Terminate (K);
-            end if;
-
-            Pop_State (K);
-            return;
-         end if;
-      end;
-
-      Set_Sensitive (K, Debug_Available);
-
-      if First_Debugger then
-         --  Add columns information for not currently opened files.
-
-         GVD_Module_ID.Lines_Hook := new Lines_Revealed_Hook_Record;
-         Add_Hook
-           (K, Source_Lines_Revealed_Hook, GVD_Module_ID.Lines_Hook,
-            Watch => GObject (Top));
-
-         GVD_Module_ID.File_Hook := new File_Edited_Hook_Record;
-         GVD_Module_ID.File_Hook.Top := Top;
-         Add_Hook
-           (K, GPS.Kernel.File_Edited_Hook, GVD_Module_ID.File_Hook,
-            Watch => GObject (Top));
-
-         --  Add columns for debugging information to all the files that
-         --  are currently open.
-
-         Create_Debugger_Columns (K, VFS.No_File);
-      end if;
-
-      --  Force the creation of the project if needed
-      Load_Project_From_Executable
-        (K, Get_Current_Process (Get_Main_Window (K)));
-
-      GVD_Module_ID.Initialized := True;
-
-      Run_Debugger_Hook (Page, Debugger_Started_Hook);
-
-      Pop_State (K);
-
-   exception
-      when E : others =>
-         Pop_State (K);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      Page := Spawn (Kernel, Data.File, Get_Project (Kernel), Args);
    end Debug_Init;
 
    -------------------
@@ -2588,19 +2158,50 @@ package body GVD_Module is
       Pop_State (Kernel);
    end Debug_Terminate;
 
+   ------------------------
+   -- Setup_Side_Columns --
+   ------------------------
+
+   procedure Setup_Side_Columns
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Top : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+   begin
+      if GVD_Module_ID.Lines_Hook = null then
+         --  Add columns information for not currently opened files.
+
+         GVD_Module_ID.Lines_Hook := new Lines_Revealed_Hook_Record;
+         Add_Hook
+           (Kernel, Source_Lines_Revealed_Hook, GVD_Module_ID.Lines_Hook,
+            Watch => GObject (Top));
+
+         GVD_Module_ID.File_Hook := new File_Edited_Hook_Record;
+         GVD_Module_ID.File_Hook.Top := Top;
+         Add_Hook
+           (Kernel, GPS.Kernel.File_Edited_Hook, GVD_Module_ID.File_Hook,
+            Watch => GObject (Top));
+
+         --  Add columns for debugging information to all the files that
+         --  are currently open.
+
+         Create_Debugger_Columns (Kernel, VFS.No_File);
+      end if;
+      GVD_Module_ID.Initialized := True;
+   end Setup_Side_Columns;
+
    ---------------------
    -- Debug_Terminate --
    ---------------------
 
    procedure Debug_Terminate (Kernel : Kernel_Handle) is
       Debugger_List    : Debugger_List_Link;
-      Current_Debugger : GPS_Debugger;
+      Current_Debugger : Visual_Debugger;
    begin
       Push_State (Kernel, Busy);
       Debugger_List := Get_Debugger_List (Kernel);
 
       while Debugger_List /= null loop
-         Current_Debugger := GPS_Debugger (Debugger_List.Debugger);
+         Current_Debugger := Visual_Debugger (Debugger_List.Debugger);
          Debugger_List := Debugger_List.Next;
          Run_Debugger_Hook (Current_Debugger, Debugger_Terminated_Hook);
          Debug_Terminate (Kernel, Current_Debugger);
@@ -3266,6 +2867,8 @@ package body GVD_Module is
                 Preferences_Changed'Access);
       Add_Hook (Kernel, Debugger_Executable_Changed_Hook,
                 On_Executable_Changed'Access);
+      Add_Hook (Kernel, Debugger_Terminated_Hook,
+                On_Debug_Terminate_Single'Access);
 
       Init_Graphics;
    end Register_Module;

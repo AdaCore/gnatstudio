@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 pragma Warnings (Off);
 with GNAT.TTY;                   use GNAT.TTY;
@@ -41,13 +43,17 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
+with Basic_Types;                use Basic_Types;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GUI_Utils;                  use GUI_Utils;
 with GVD.Call_Stack;             use GVD.Call_Stack;
@@ -57,15 +63,31 @@ with GVD.Consoles;               use GVD.Consoles;
 with GVD.Dialogs;                use GVD.Dialogs;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Source_Editor;          use GVD.Source_Editor;
+with GVD.Source_Editor.GPS;      use GVD.Source_Editor.GPS;
 with GVD.Scripts;                use GVD.Scripts;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
+with Language_Handlers;          use Language_Handlers;
 with Pixmaps_IDE;                use Pixmaps_IDE;
+with Process_Proxies;            use Process_Proxies;
+with Projects;                   use Projects;
+with Projects.Editor;            use Projects.Editor;
+with Projects.Registry;          use Projects.Registry;
 with String_Utils;               use String_Utils;
+with Traces;                     use Traces;
 with VFS;                        use VFS;
 
 package body GVD.Process is
+
+   type GPS_Proxy is new Process_Proxy with record
+      Kernel : Kernel_Handle;
+   end record;
+   --  GPS specific proxy, used to redefine Set_Command_In_Process
+
+   procedure Set_Command_In_Process
+     (Proxy : access GPS_Proxy; In_Process : Boolean := True);
+   --  Set the appropriate debugger menu items to the corresponding state.
 
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
@@ -94,6 +116,57 @@ package body GVD.Process is
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  Callback for the "delete_event" signal on the editor text
+
+   procedure Initialize
+     (Process : access Visual_Debugger_Record'Class;
+      Window  : access GPS.Main_Window.GPS_Window_Record'Class;
+      Source  : GVD.Source_Editor.Source_Editor);
+   --  Internal initialize procedure.
+
+   procedure Configure
+     (Process         : access Visual_Debugger_Record'Class;
+      Kind            : GVD.Types.Debugger_Type;
+      Proxy           : Process_Proxy_Access;
+      Executable      : String;
+      Debugger_Args   : Argument_List;
+      Executable_Args : String;
+      Remote_Host     : String := "";
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Debugger_Name   : String := "";
+      Success         : out Boolean);
+   --  Configure a visual debugger.
+   --  Kind specifies which debugger should be launched.
+   --  Currently, only gdb is supported.
+   --
+   --  Executable is the name of the executable module to debug.
+   --  This function returns a Process_Tab_Access.
+   --
+   --  Debugger_Args are the optional parameters for the underlying debugger.
+   --
+   --  Executable_Args are the optional parameters for the debuggee.
+   --
+   --  See Debugger.Spawn for a documentation on Remote_Host, Remote_Target,
+   --  Remote_Protocol and Debugger_Name.
+   --
+   --  Success is set to true is the debugger could be successfully started.
+
+   ----------------------------
+   -- Set_Command_In_Process --
+   ----------------------------
+
+   procedure Set_Command_In_Process
+     (Proxy      : access GPS_Proxy;
+      In_Process : Boolean := True) is
+   begin
+      Set_Command_In_Process (Process_Proxy (Proxy.all)'Access, In_Process);
+
+      if In_Process then
+         Set_Sensitive (Proxy.Kernel, Debug_Busy);
+      else
+         Set_Sensitive (Proxy.Kernel, Debug_Available);
+      end if;
+   end Set_Command_In_Process;
 
    ---------------------------------
    -- On_Editor_Text_Delete_Event --
@@ -474,19 +547,6 @@ package body GVD.Process is
       end case;
    end Text_Output_Filter;
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Process : out Visual_Debugger;
-      Window  : access GPS.Main_Window.GPS_Window_Record'Class;
-      Source  : GVD.Source_Editor.Source_Editor) is
-   begin
-      Process := new Visual_Debugger_Record;
-      Initialize (Process, Window, Source);
-   end Gtk_New;
-
    ----------------
    -- Initialize --
    ----------------
@@ -504,7 +564,7 @@ package body GVD.Process is
       Process.Window := Window.all'Access;
 
       Gtk_New_Hbox (Process.Editor_Text, Process);
-      Object_Return_Callback.Object_Connect
+      Gtkada.Handlers.Object_Return_Callback.Object_Connect
         (Process.Editor_Text, "delete_event",
          On_Editor_Text_Delete_Event'Access, Process);
 
@@ -761,7 +821,7 @@ package body GVD.Process is
      (Debugger       : Visual_Debugger;
       Command        : String;
       Output_Command : Boolean := False;
-      Mode           : Visible_Command := GVD.Types.Visible)
+      Mode           : Command_Type := GVD.Types.Visible)
    is
       Quit_String     : constant String := "quit     ";
       Lowered_Command : constant String := To_Lower (Command);
@@ -848,6 +908,51 @@ package body GVD.Process is
             Send (Debugger.Debugger, Command, Mode => Mode);
          end if;
       end if;
+   end Process_User_Command;
+
+   --------------------------
+   -- Process_User_Command --
+   --------------------------
+
+   function Process_User_Command
+     (Debugger       : Visual_Debugger;
+      Command        : String;
+      Output_Command : Boolean := False;
+      Mode           : GVD.Types.Invisible_Command := GVD.Types.Hidden)
+      return String
+   is
+      Quit_String     : constant String := "quit     ";
+      Lowered_Command : constant String := To_Lower (Command);
+      First           : Natural := Lowered_Command'First;
+   begin
+      --  Command has been converted to lower-cases, but the new version
+      --  should be used only to compare with our standard list of commands.
+      --  We should pass the original string to the debugger, in case we are
+      --  in a case-sensitive language.
+
+      if Debugger.Debugger = null then
+         return "";
+      end if;
+
+      Skip_Blanks (Lowered_Command, First);
+
+      if Looking_At (Lowered_Command, First, "graph")
+        or else
+          (Lowered_Command'Length <= Quit_String'Length
+           and then Lowered_Command =
+             Quit_String (1 .. Lowered_Command'Length))
+        or else Continuation_Line (Debugger.Debugger)
+        or else Debugger.Registered_Dialog /= null
+      then
+         Process_User_Command (Debugger, Command, Output_Command, Mode);
+         return "";
+      end if;
+
+      if Output_Command then
+         Output_Text (Debugger, Command & ASCII.LF, Is_Command => True);
+      end if;
+
+      return Send (Debugger.Debugger, Command, Mode => Mode);
    end Process_User_Command;
 
    ---------------------
@@ -1033,5 +1138,325 @@ package body GVD.Process is
    begin
       return Process.Current_Line;
    end Get_Current_Source_Line;
+
+   -----------
+   -- Spawn --
+   -----------
+
+   function Spawn
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File    : VFS.Virtual_File;
+      Project : Projects.Project_Type;
+      Args    : String) return Visual_Debugger
+   is
+      Process : Visual_Debugger;
+      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Edit           : GVD.Source_Editor.GPS.GEdit;
+      Module         : GNAT.OS_Lib.String_Access;
+      Program_Args   : GNAT.OS_Lib.String_Access;
+      Blank_Pos      : Natural;
+      Proxy          : Process_Proxy_Access;
+      Success        : Boolean;
+
+   begin
+      Push_State (Kernel_Handle (Kernel), Busy);
+
+      Process := new Visual_Debugger_Record;
+      GVD.Source_Editor.GPS.Gtk_New (Edit, Top);
+      GVD.Process.Initialize
+        (Process, Top, GVD.Source_Editor.Source_Editor (Edit));
+
+      Program_Args := new String'("");
+
+      if File /= No_File then
+         Module := new String'(Full_Name (File).all);
+
+      elsif Args /= "" then
+         Blank_Pos := Ada.Strings.Fixed.Index (Args, " ");
+
+         if Blank_Pos = 0 then
+            Module := new String'(Args);
+         else
+            Module := new String'(Args (Args'First .. Blank_Pos - 1));
+            Free (Program_Args);
+            Program_Args := new String'(Args (Blank_Pos + 1 .. Args'Last));
+         end if;
+
+      else
+         Module := new String'("");
+      end if;
+
+      declare
+         Ptr         : GNAT.OS_Lib.String_Access :=
+           GNAT.OS_Lib.Get_Executable_Suffix;
+         Module_Exec : constant String := Module.all & Ptr.all;
+
+      begin
+         GNAT.OS_Lib.Free (Ptr);
+
+         if Module'Length > 0
+           and then not GNAT.OS_Lib.Is_Regular_File (Module.all)
+           and then GNAT.OS_Lib.Is_Regular_File (Module_Exec)
+         then
+            Free (Module);
+            Module := new String'(Module_Exec);
+         end if;
+      end;
+
+      declare
+         Args : GNAT.OS_Lib.Argument_List_Access :=
+           GNAT.OS_Lib.Argument_String_To_List
+             (Get_Attribute_Value
+                (Project, Debugger_Command_Attribute,
+                 Default => "gdb"));
+
+      begin
+         Proxy := new GPS_Proxy;
+         GPS_Proxy (Proxy.all).Kernel := Kernel_Handle (Kernel);
+         Configure
+           (Process         => Process,
+            Kind            => Gdb_Type,
+            Proxy           => Proxy,
+            Executable      => Module.all,
+            Debugger_Args   => Args (2 .. Args'Last),
+            Executable_Args => Program_Args.all,
+            Remote_Host     =>
+              Get_Attribute_Value (Project, Remote_Host_Attribute),
+            Remote_Target   =>
+              Get_Attribute_Value (Project, Program_Host_Attribute),
+            Remote_Protocol =>
+              Get_Attribute_Value (Project, Protocol_Attribute),
+            Debugger_Name   => Args (1).all,
+            Success         => Success);
+         GNAT.OS_Lib.Free (Args);
+         Free (Module);
+
+         if not Success then
+            if Get_Current_Debugger (Kernel) = null then
+               Debug_Terminate (Kernel_Handle (Kernel));
+            end if;
+
+            Pop_State (Kernel_Handle (Kernel));
+            return null;
+         end if;
+      end;
+
+      Set_Sensitive (Kernel, Debug_Available);
+      Setup_Side_Columns (Kernel);
+
+      --  Force the creation of the project if needed
+      Load_Project_From_Executable (Kernel, Get_Current_Process (Top));
+
+      Run_Debugger_Hook (Process, Debugger_Started_Hook);
+
+      Pop_State (Kernel_Handle (Kernel));
+      return Process;
+
+   exception
+      when E : others =>
+         Pop_State (Kernel_Handle (Kernel));
+         Traces.Trace (Exception_Handle,
+                       "Unexpected exception: " & Exception_Information (E));
+         return Process;
+   end Spawn;
+
+   ----------------------------------
+   -- Load_Project_From_Executable --
+   ----------------------------------
+
+   procedure Load_Project_From_Executable
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Debugger : access Visual_Debugger_Record'Class)
+   is
+      Project : Project_Type := Get_Project (Kernel);
+      Exec    : Virtual_File;
+
+   begin
+      --  Do nothing unless the current project was already generated from an
+      --  executable
+
+      if Status (Project) /= From_Executable then
+         return;
+      end if;
+
+      declare
+         List : Argument_List := Get_Attribute_Value
+           (Project, Main_Attribute);
+      begin
+         for L in List'Range loop
+            if List (L).all = Full_Name (Exec).all then
+               Free (List);
+               return;
+            end if;
+         end loop;
+         Free (List);
+      end;
+
+      --  No handling of desktop is done here, we want to leave all windows
+      --  as-is.
+
+      declare
+         Debugger_Name : constant String :=
+           (Get_Attribute_Value
+             (Project, Debugger_Command_Attribute, Default => ""));
+         Target        : constant String :=
+           (Get_Attribute_Value
+             (Project, Program_Host_Attribute, Default => ""));
+         Protocol      : constant String :=
+           (Get_Attribute_Value
+             (Project, Protocol_Attribute, Default => ""));
+
+      begin
+         Unload_Project (Project_Registry (Get_Registry (Kernel).all));
+
+         if Exec /= VFS.No_File then
+            Project := Create_Project
+              (Project_Registry (Get_Registry (Kernel).all),
+               "debugger_" & Base_Name (Exec),
+               GNAT.Directory_Operations.Get_Current_Dir);
+         else
+            Project := Create_Project
+              (Project_Registry (Get_Registry (Kernel).all),
+               "debugger_no_file",
+               GNAT.Directory_Operations.Get_Current_Dir);
+         end if;
+
+         if Debugger_Name /= "" then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Debugger_Command_Attribute,
+               Value              => Debugger_Name);
+         end if;
+
+         if Target /= "" then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Program_Host_Attribute,
+               Value              => Target);
+         end if;
+
+         if Protocol /= "" then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Protocol_Attribute,
+               Value              => Protocol);
+         end if;
+      end;
+
+      declare
+         List       : String_Array := Source_Files_List (Debugger.Debugger);
+         Bases      : GNAT.OS_Lib.Argument_List (List'Range);
+         Dirs       : GNAT.OS_Lib.Argument_List (List'Range);
+         Dirs_Index : Natural := Dirs'First;
+         Main       : GNAT.OS_Lib.Argument_List (1 .. 1);
+         Langs      : GNAT.OS_Lib.Argument_List (List'Range);
+         Lang_Index : Natural := Langs'First;
+
+      begin
+         for L in List'Range loop
+            Bases (L) := new String'(Base_Name (List (L).all));
+         end loop;
+
+         Update_Attribute_Value_In_Scenario
+           (Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Source_Files_Attribute,
+            Values             => Bases);
+         Free (Bases);
+
+         for L in List'Range loop
+            declare
+               Dir   : constant String := GNAT.OS_Lib.Normalize_Pathname
+                 (Dir_Name (List (L).all),
+                  Dir_Name (Exec).all,
+                  Resolve_Links => False);
+               Found : Boolean := False;
+            begin
+               for D in Dirs'First .. Dirs_Index - 1 loop
+                  if Dirs (D).all = Dir then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Found then
+                  Dirs (Dirs_Index) := new String'(Dir);
+                  Dirs_Index := Dirs_Index + 1;
+               end if;
+            end;
+         end loop;
+
+         Update_Attribute_Value_In_Scenario
+           (Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Source_Dirs_Attribute,
+            Values             => Dirs (Dirs'First .. Dirs_Index - 1));
+         Free (Dirs);
+
+         for L in List'Range loop
+            declare
+               Lang : constant String := Get_Language_From_File
+                 (Get_Language_Handler (Kernel),
+                  Create (Full_Filename => List (L).all));
+               Found : Boolean := False;
+            begin
+               if Lang /= "" then
+                  for La in Langs'First .. Lang_Index - 1 loop
+                     if Langs (La).all = Lang then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Langs (Lang_Index) := new String'(Lang);
+                     Lang_Index := Lang_Index + 1;
+                  end if;
+               end if;
+            end;
+         end loop;
+
+         Update_Attribute_Value_In_Scenario
+           (Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Languages_Attribute,
+            Values             => Langs (Langs'First .. Lang_Index - 1));
+         Free (Langs);
+
+         if Exec /= VFS.No_File then
+            Update_Attribute_Value_In_Scenario
+              (Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Obj_Dir_Attribute,
+               Value              => Dir_Name (Exec).all);
+            Update_Attribute_Value_In_Scenario
+              (Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Exec_Dir_Attribute,
+               Value              => Dir_Name (Exec).all);
+
+            Main (Main'First) := new String'(Full_Name (Exec).all);
+            Update_Attribute_Value_In_Scenario
+              (Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Main_Attribute,
+               Values             => Main);
+            Free (Main);
+         end if;
+         Free (List);
+      end;
+
+      --  Is the information for this executable already cached ? If yes,
+      --  we simply reuse it to avoid the need to interact with the debugger.
+
+      Load_Custom_Project
+        (Project_Registry (Get_Registry (Kernel).all), Project);
+      Set_Status (Get_Project (Kernel), From_Executable);
+      Run_Hook (Kernel, Project_Changed_Hook);
+      Recompute_View (Kernel);
+   end Load_Project_From_Executable;
 
 end GVD.Process;

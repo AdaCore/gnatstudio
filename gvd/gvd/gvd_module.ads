@@ -21,9 +21,9 @@
 --  This package defines the debugger module (called GVD).
 
 with Glib.Object;
-with Gtk.Window;
-with GPS.Kernel.Modules;
 with Ada.Unchecked_Deallocation;
+with GPS.Kernel.Modules;
+with Gtk.Window;
 
 package GVD_Module is
 
@@ -53,6 +53,27 @@ package GVD_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Args   : String);
    --  Initialize the debugger if needed.
+
+   procedure Debug_Terminate (Kernel : GPS.Kernel.Kernel_Handle);
+   --  Terminate the debugging session, and closes all debuggers
+
+   type Debugger_State is (Debug_None, Debug_Busy, Debug_Available);
+   --  Possible states of a debugger:
+   --  - Debug_None: debugger is not running
+   --  - Debug_Busy: debugger is busy processing a command
+   --  - Debug_Available: debugger is available
+
+   procedure Set_Sensitive
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      State  : Debugger_State);
+   --  Change the sensitive state of the debugger menu items and toolbar
+   --  buttons
+
+   procedure Setup_Side_Columns
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Create the hooks that are responsible for refreshing the side column
+   --  while at least one debugger is running. Does nothing if the hooks have
+   --  already been created
 
    function Get_Debugger_List
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)

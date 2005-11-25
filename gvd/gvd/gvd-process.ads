@@ -30,22 +30,19 @@ with Gtk.Main;
 with Gtk.Window;
 with Gtk.Widget;
 
-with Process_Proxies;     use Process_Proxies;
 with Debugger;            use Debugger;
+with GPS.Kernel;
 with GPS.Main_Window;
 with GVD.Code_Editors;
-with GVD.Source_Editor;
 with GVD.Types;
 with GVD.Histories;
+with Projects;
 pragma Elaborate_All (GVD.Histories);
 with VFS;
 
 with Interactive_Consoles; use Interactive_Consoles;
 
 package GVD.Process is
-
-   Command_History_Collapse_Entries : constant Boolean := True;
-   --  Whether we should collapse entries in the history list.
 
    type History_Data is record
       Mode    : GVD.Types.Command_Type;
@@ -155,45 +152,19 @@ package GVD.Process is
    end record;
    type Visual_Debugger is access all Visual_Debugger_Record'Class;
 
-   procedure Gtk_New
-     (Process : out Visual_Debugger;
-      Window  : access GPS.Main_Window.GPS_Window_Record'Class;
-      Source  : GVD.Source_Editor.Source_Editor);
-   --  Create a new visual debugger and add it to Window.
+   function Spawn
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File    : VFS.Virtual_File;
+      Project : Projects.Project_Type;
+      Args    : String) return Visual_Debugger;
+   --  Spawn a new debugger on File (taking into account the settings from
+   --  Project). Args are passed to the executable File.
 
-   procedure Initialize
-     (Process : access Visual_Debugger_Record'Class;
-      Window  : access GPS.Main_Window.GPS_Window_Record'Class;
-      Source  : GVD.Source_Editor.Source_Editor);
-   --  Internal initialize procedure.
-
-   procedure Configure
-     (Process         : access Visual_Debugger_Record'Class;
-      Kind            : GVD.Types.Debugger_Type;
-      Proxy           : Process_Proxy_Access;
-      Executable      : String;
-      Debugger_Args   : Argument_List;
-      Executable_Args : String;
-      Remote_Host     : String := "";
-      Remote_Target   : String := "";
-      Remote_Protocol : String := "";
-      Debugger_Name   : String := "";
-      Success         : out Boolean);
-   --  Configure a visual debugger.
-   --  Kind specifies which debugger should be launched.
-   --  Currently, only gdb is supported.
-   --
-   --  Executable is the name of the executable module to debug.
-   --  This function returns a Process_Tab_Access.
-   --
-   --  Debugger_Args are the optional parameters for the underlying debugger.
-   --
-   --  Executable_Args are the optional parameters for the debuggee.
-   --
-   --  See Debugger.Spawn for a documentation on Remote_Host, Remote_Target,
-   --  Remote_Protocol and Debugger_Name.
-   --
-   --  Success is set to true is the debugger could be successfully started.
+   procedure Load_Project_From_Executable
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Visual_Debugger_Record'Class);
+   --  Create and load a default project from the executable loaded in
+   --  Debugger.
 
    Debugger_Not_Supported : exception;
    --  Raised by Create_Debugger when the debugger type is not supported.
@@ -272,7 +243,7 @@ package GVD.Process is
      (Debugger       : Visual_Debugger;
       Command        : String;
       Output_Command : Boolean := False;
-      Mode           : GVD.Types.Visible_Command := GVD.Types.Visible);
+      Mode           : GVD.Types.Command_Type := GVD.Types.Visible);
    --  Process a command entered by the user.
    --  In most cases, the command is simply transfered asynchronously to the
    --  debugger process. However, commands internal to GVD are filtered and
@@ -281,6 +252,14 @@ package GVD.Process is
    --  command window. An ASCII.LF is appended at the end before printing.
    --  Mode is the type of the command which will be transmitted to the
    --  debugger.
+
+   function Process_User_Command
+     (Debugger       : Visual_Debugger;
+      Command        : String;
+      Output_Command : Boolean := False;
+      Mode           : GVD.Types.Invisible_Command := GVD.Types.Hidden)
+      return String;
+   --  Same as above, but returns the debugger output
 
    procedure Output_Text
      (Process      : Visual_Debugger;
