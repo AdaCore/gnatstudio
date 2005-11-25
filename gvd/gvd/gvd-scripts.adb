@@ -43,7 +43,7 @@ package body GVD.Scripts is
       Command : String);
    --  Interactive script handler for the debugger module.
 
-   function Get_Or_Create_Instane
+   function Get_Or_Create_Instance
      (Script  : access Scripting_Language_Record'Class;
       Process : Visual_Debugger) return Class_Instance;
    --  Get or create an existing instance associated with Process.
@@ -68,14 +68,15 @@ package body GVD.Scripts is
       Hook_Name : String;
       Data      : access Debugger_Hooks_Data) return Boolean
    is
-      pragma Unreferenced (Data);
       D   : Callback_Data'Class := Create (Script, 2);
       Tmp : Boolean;
+      Inst : constant Class_Instance :=
+        Get_Or_Create_Instance (Script, Data.Debugger);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, "debugger");  --  ??? Should contain the instance
+      Set_Nth_Arg (D, 2, Inst);
       Tmp := Execute (Command, D);
-      --  Free instance if needed
+      Free (Inst);
       return Tmp;
    end Execute_Shell;
 
@@ -87,10 +88,16 @@ package body GVD.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
-      Args : aliased Debugger_Hooks_Data;
+      Args    : aliased Debugger_Hooks_Data;
+      Process : Visual_Debugger;
+      Inst    : Class_Instance;
    begin
+      Inst := Nth_Arg (Data, 1, New_Class (Get_Kernel (Data), "Debugger"));
+      Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+      Free (Inst);
+
       Args := (Kernel   => Get_Kernel (Data),
-               Debugger => null);  --  ??? Get from instance
+               Debugger => Process);
       Run_Hook (Get_Kernel (Data),
                 Get_Hook_Name (Data, 1),
                 Args'Unchecked_Access);
@@ -123,11 +130,11 @@ package body GVD.Scripts is
       return Debugger_Hooks_Data_Access (Data).Debugger;
    end Get_Process;
 
-   ---------------------------
-   -- Get_Or_Create_Instane --
-   ---------------------------
+   ----------------------------
+   -- Get_Or_Create_Instance --
+   ----------------------------
 
-   function Get_Or_Create_Instane
+   function Get_Or_Create_Instance
      (Script  : access Scripting_Language_Record'Class;
       Process : Visual_Debugger) return Class_Instance
    is
@@ -139,7 +146,7 @@ package body GVD.Scripts is
          Set_Data (Inst, GObject (Process));
       end if;
       return Inst;
-   end Get_Or_Create_Instane;
+   end Get_Or_Create_Instance;
 
    -------------------
    -- Shell_Handler --
@@ -203,7 +210,7 @@ package body GVD.Scripts is
             Set_Error_Msg (Data, "No such debugger");
          else
             Set_Return_Value
-              (Data, Get_Or_Create_Instane (Get_Script (Data), Process));
+              (Data, Get_Or_Create_Instance (Get_Script (Data), Process));
          end if;
 
       elsif Command = "list" then
@@ -214,7 +221,7 @@ package body GVD.Scripts is
             while List /= null loop
                Process := Visual_Debugger (List.Debugger);
                Set_Return_Value
-                 (Data, Get_Or_Create_Instane (Get_Script (Data), Process));
+                 (Data, Get_Or_Create_Instance (Get_Script (Data), Process));
                List := List.Next;
             end loop;
          end;
@@ -227,6 +234,7 @@ package body GVD.Scripts is
            (Data, Process_User_Command
               (Process, GPS.Kernel.Scripts.Nth_Arg (Data, 2),
                Output_Command => True));
+         Free (Inst);
 
       elsif Command = "get_file" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -234,21 +242,25 @@ package body GVD.Scripts is
          Set_Return_Value
            (Data, Create_File
               (Get_Script (Data), Get_Executable (Process.Debugger)));
+         Free (Inst);
 
       elsif Command = "get_num" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Set_Return_Value (Data, Integer (Get_Num (Process)));
+         Free (Inst);
 
       elsif Command = "is_busy" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Set_Return_Value (Data, Command_In_Process (Process));
+         Free (Inst);
 
       elsif Command = "close" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Close_Debugger (Process);
+         Free (Inst);
 
       elsif Command = "spawn" then
          Name_Parameters (Data, (1 => Arg_File'Unchecked_Access,
@@ -265,7 +277,7 @@ package body GVD.Scripts is
                Project => Get_Project (Kernel),
                Args    => Nth_Arg (Data, 2, ""));
             Set_Return_Value
-              (Data, Get_Or_Create_Instane (Get_Script (Data), Process));
+              (Data, Get_Or_Create_Instance (Get_Script (Data), Process));
          end;
       end if;
    end Shell_Handler;
