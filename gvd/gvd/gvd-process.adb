@@ -952,7 +952,15 @@ package body GVD.Process is
          Output_Text (Debugger, Command & ASCII.LF, Is_Command => True);
       end if;
 
-      return Send (Debugger.Debugger, Command, Mode => Mode);
+      declare
+         Result : constant String :=
+           Send (Debugger.Debugger, Command, Mode => Mode);
+      begin
+         if Output_Command then
+            Display_Prompt (Debugger.Debugger);
+         end if;
+         return Result;
+      end;
    end Process_User_Command;
 
    ---------------------
