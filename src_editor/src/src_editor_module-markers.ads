@@ -91,6 +91,8 @@ private
          Id     : Natural;   --  Needed only for the shell API
          File   : VFS.Virtual_File;
          Line   : Natural;
+         --  ??? Line here should be an Editable_Line_Type, to avoid
+         --  ambiguity.
          Column : Natural;
          Length : Natural := 1;
          Mark   : Gtk.Text_Mark.Gtk_Text_Mark;

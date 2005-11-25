@@ -184,11 +184,15 @@ package body Src_Editor_Module.Markers is
      (Marker : access File_Marker_Record'Class)
    is
       Iter : Gtk_Text_Iter;
+      Line : Gint;
+      Col  : Gint;
    begin
       if Marker.Mark /= null then
          Get_Iter_At_Mark (Marker.Buffer, Iter, Marker.Mark);
-         Marker.Line   := Integer (Get_Line (Iter)) + 1;
-         Marker.Column := Integer (Get_Line_Offset (Iter)) + 1;
+         Get_Screen_Position (Source_Buffer (Marker.Buffer), Iter, Line, Col);
+         Marker.Line   := Integer (Get_Editable_Line
+           (Source_Buffer (Marker.Buffer), Buffer_Line_Type (Line + 1)));
+         Marker.Column := Integer (Col + 1);
       end if;
    end Update_Marker_Location;
 
