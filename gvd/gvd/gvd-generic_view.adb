@@ -22,9 +22,12 @@ with Ada.Tags;           use Ada.Tags;
 with Glib;               use Glib;
 with Glib.Xml_Int;       use Glib.Xml_Int;
 with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Intl;           use GPS.Intl;
 with Gtk.Widget;         use Gtk.Widget;
+with Gtkada.Dialogs;     use Gtkada.Dialogs;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtkada.MDI;         use Gtkada.MDI;
 with String_Utils;       use String_Utils;
@@ -95,6 +98,16 @@ package body GVD.Generic_View is
       return View.Process;
    end Get_Process;
 
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (View : access Process_View_Record) is
+      pragma Unreferenced (View);
+   begin
+      null;
+   end Update;
+
    ------------------
    -- Simple_Views --
    ------------------
@@ -138,6 +151,8 @@ package body GVD.Generic_View is
          Child2  : GPS_MDI_Child;
          Iter    : Child_Iterator;
          View    : Formal_View_Access;
+         Button  : Message_Dialog_Buttons;
+         pragma Unreferenced (Button);
       begin
          View := Formal_View_Access (Get_View (Process));
          if View = null then
@@ -196,6 +211,18 @@ package body GVD.Generic_View is
                end if;
 
                On_Attach (View, Process);
+
+               if Command_In_Process (Process) then
+                  Button := Message_Dialog
+                    (-"Cannot update " & View_Name
+                     & (-" while the debugger is busy." & ASCII.LF &
+                       (-"Interrupt the debugger or wait for its"
+                          & " availability.")),
+                     Dialog_Type => Warning,
+                     Buttons     => Button_OK);
+               else
+                  Update (View);
+               end if;
 
                Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
             end if;
@@ -262,14 +289,37 @@ package body GVD.Generic_View is
          return null;
       end Save_Desktop;
 
+      ---------------
+      -- On_Update --
+      ---------------
+
+      procedure On_Update
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      is
+         pragma Unreferenced (Kernel);
+         Process : constant Visual_Debugger := Get_Process (Data);
+         View : constant Formal_View_Access :=
+           Formal_View_Access (Get_View (Process));
+      begin
+         if View /= null then
+            Update (View);
+         end if;
+      end On_Update;
+
       --------------------------------
       -- Register_Desktop_Functions --
       --------------------------------
 
-      procedure Register_Desktop_Functions is
+      procedure Register_Desktop_Functions
+        (Kernel : access Kernel_Handle_Record'Class) is
       begin
          GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
            (Save_Desktop'Access, Load_Desktop'Access);
+         Add_Hook (Kernel, Debugger_Process_Stopped_Hook, On_Update'Access,
+                  Func_Name => "Update_" & Module_Name);
+         Add_Hook (Kernel, Debugger_Context_Changed_Hook, On_Update'Access,
+                   Func_Name => "Update_" & Module_Name);
       end Register_Desktop_Functions;
 
    end Simple_Views;

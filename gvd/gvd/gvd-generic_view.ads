@@ -23,8 +23,11 @@
 --  This is a generic package. Because of elaboration circularity issues,
 --  several of the formal parameters can really just be passed from
 --  gvd-process and gvd_module.ads
+--
+--  See default instanciations in GVD.Views
 
 with Glib.Xml_Int;
+with GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;
 with Gtk.Widget;
 with Gtkada.MDI;
@@ -40,6 +43,11 @@ generic
    --  The visual debugger class. We cannot with GVD.Process in this package,
    --  since otherwise this creates elaboration circularities
 
+   Debugger_Process_Stopped_Hook : String;
+   Debugger_Context_Changed_Hook : String;
+   --  The two hooks on which we want to refresh the view. These should be read
+   --  from GVD.Scripts, but cannot for elaboration circularity issues.
+
    with function Get_Module return GPS.Kernel.Modules.Module_ID is <>;
    --  The module to be associated with the MDI child, in particular when
    --  creating contextual menus. This needs to be a function instead of a
@@ -54,9 +62,18 @@ generic
      return Gtk.Widget.Gtk_Widget is <>;
    --  Return the debugger console associated with Process
 
+   with function Get_Process
+     (Data : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      return Visual_Debugger is <>;
+   --  Return the debugger stored in Data (which will be of type
+
+   with function Command_In_Process
+     (Process : access Visual_Debugger_Record'Class) return Boolean is <>;
+   --  Whether a command is currently being processed by the debugger
+
 package GVD.Generic_View is
 
-   type Process_View_Record is new Base_Type with private;
+   type Process_View_Record is abstract new Base_Type with private;
 
    function Get_Process
      (View : access Process_View_Record) return Visual_Debugger;
@@ -67,8 +84,15 @@ package GVD.Generic_View is
      (View    : access Process_View_Record;
       Process : access Visual_Debugger_Record'Class);
    --  Called when the view is being attached to Process. This procedure should
-   --  typically be used to connect to specific events on Process.
+   --  typically be used to connect to specific events on Process. However, it
+   --  doesn't need to force a refresh of the view, which is done
+   --  automatically.
    --  By default, it does nothing
+
+   procedure Update (View : access Process_View_Record);
+   --  Refresh the view by getting up-to-date information from the debugger.
+   --  Nothing is done when the view is not associated with a debugger.
+   --  It does nothing by default
 
    function Save_To_XML
      (View : access Process_View_Record) return Glib.Xml_Int.Node_Ptr;
@@ -124,7 +148,8 @@ package GVD.Generic_View is
       --  The debugger console should be created already. When it is closed (ie
       --  the debugger exits), the view will be destroyed
 
-      procedure Register_Desktop_Functions;
+      procedure Register_Desktop_Functions
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
       --  Register the functions needed to load and save the desktop
 
    private
@@ -148,10 +173,15 @@ package GVD.Generic_View is
          Node   : Glib.Xml_Int.Node_Ptr;
          Kernel : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child;
       --  Functions to save and load desktops
+
+      procedure On_Update
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+      --  Hook called when the view needs to be refreshed
    end Simple_Views;
 
 private
-   type Process_View_Record is new Base_Type with record
+   type Process_View_Record is abstract new Base_Type with record
       Process : Visual_Debugger;
          --  The process associated with the view
    end record;
