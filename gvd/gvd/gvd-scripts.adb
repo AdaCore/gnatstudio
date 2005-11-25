@@ -299,7 +299,8 @@ package body GVD.Scripts is
         (Kernel, "get", 0, 1, Shell_Handler'Access, Class,
          Static_Method => True);
       GPS.Kernel.Scripts.Register_Command
-        (Kernel, "list", 0, 0, Shell_Handler'Access, Class);
+        (Kernel, "list", 0, 0, Shell_Handler'Access, Class,
+         Static_Method => True);
       GPS.Kernel.Scripts.Register_Command
         (Kernel, "send", 1, 1, Shell_Handler'Access, Class);
       GPS.Kernel.Scripts.Register_Command
