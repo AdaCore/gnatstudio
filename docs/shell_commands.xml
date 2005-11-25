@@ -300,6 +300,30 @@ It isn't recommended to do any direct graphical action before this hook has been
      <description>Called when the file being debugged has changed</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ debugger_command_action_hook">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="debugger">An instance of GPS.Debugger</param>
+     <param name="command">A string, the command the user wants to execute</param>
+     <return>A boolean</return>
+     <description>This hook is emitted when the user types a command in the debugger console, or emits the console through the GPS.Debugger API. It gives you a chance to override the behavior for the command, or even define your own commands. Note that you must ensure that any debugger command you execute this way does finish with a prompt. The function should return True if you have handled the command</description>
+     <example lang="python">
+## The following example implements a new gdb command, "hello". When the
+## user types this command in the console, we end up executing "print A"
+## instead. This can be used for instance to implement convenient
+## macros
+
+def debugger_commands (hook, debugger, command):
+   if command == "hello":
+      debugger.send ("print A")
+      return True
+   else:
+      return False
+
+GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
+     </example>
+   </shell_doc>
+
+
   <shell_doc name="@hook@ marker_added_to_history">
      <param name="hook">A string, the name of the hook</param>
      <description>Hook called when a new marker is added to the history list of previous locations, where the user can navigate back and forward</description>
@@ -2859,6 +2883,11 @@ highlight_category, style_category and warning_category reference the colors to 
   <shell_doc name="GPS.Debugger">
      <description>Interface to debugger related commands. This class allows you to start a debugger and send commands to it.
 By connection to the various debugger_* hooks, you can also monitor the state of the debugger.
+
+By connecting to the "debugger_command_action_hook", you can also create your
+own debugger commands, that the user can then type in the debugger console. This
+is a nice way to implement debugger macros.
+
 While developping such debugger interfaces, it might be useful to modify the file $HOME/.gps/traces.cfg, and add a line "GVD.Out=yes" in it. This will copy all input/output with the debuggers into the GPS log file.</description>
       <example lang="python">
 import GPS
