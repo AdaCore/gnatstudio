@@ -1,0 +1,90 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                      Copyright (C) 2005                           --
+--                               AdaCore                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  This package defines the hooks used in the GVD module
+
+with GPS.Kernel.Hooks;
+with GPS.Kernel.Scripts;
+with GVD.Process;
+
+package GVD.Scripts is
+
+   type Debugger_Hooks_Data is new GPS.Kernel.Hooks.Hooks_Data with private;
+   type Debugger_Hooks_Data_Access is access all Debugger_Hooks_Data'Class;
+   --  Data associated with all the hooks declared in the GVD module.
+   --  It contains a pointer to the debugger that generated the event
+
+   procedure Run_Debugger_Hook
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Name     : String);
+   --  Run a hook and passes Debugger as a parameter to it
+
+   function Get_Process
+     (Data : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      return GVD.Process.Visual_Debugger;
+   --  Return the debugger stored in Data
+
+   procedure Create_Hooks
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Create the hooks and shell API
+
+   -----------
+   -- Hooks --
+   -----------
+   --  All these hooks take a Debugger_Hooks_Data in parameter
+
+   Debugger_Process_Stopped_Hook : constant String :=
+     "debugger_process_stopped";
+   --  Called when the debugged process ran and then stopped, for instance on
+   --  a breakpoint, after a "next" command, ...
+
+   Debugger_Context_Changed_Hook : constant String :=
+     "debugger_context_changed";
+   --  Called when the context of the debuggee has changed, for instance after
+   --  thread switching, frame selection,...
+
+   Debugger_Executable_Changed_Hook : constant String :=
+     "debugger_executable_changed";
+   --  Called when the executable associated with the debugger has changed, for
+   --  instance via Debug->Debug->Open File. This is also called initially when
+   --  the executable is given on the command line
+
+   Debugger_Started_Hook    : constant String := "debugger_started";
+   --  Debugger_Started_Hook is called after the debugger has been spawn, and
+   --  it is possible to send commands to it
+
+   Debugger_Terminated_Hook : constant String := "debugger_terminated";
+   --  Debugger_Terminated_Hook is called just before the connection to the
+   --  debugger is closed. It is still possible to issue commands to the
+   --  debugger at this stage.
+
+private
+   type Debugger_Hooks_Data is new GPS.Kernel.Hooks.Hooks_Data with record
+      Debugger : GVD.Process.Visual_Debugger;
+   end record;
+
+   function Get_Name (Data : Debugger_Hooks_Data) return String;
+   function Execute_Shell
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access Debugger_Hooks_Data) return Boolean;
+   --  See inherited documentation
+end GVD.Scripts;
