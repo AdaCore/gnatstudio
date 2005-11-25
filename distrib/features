@@ -6,6 +6,9 @@ New features in GPS 3.2.0
 - Projects;
   - EB23-004: New attribute in Project Properties: externally_built
 
+- Debugger:
+  - EB25-007: Fully python interface for commanding the debugger
+
 - Handling of desktops:
   - EB18-006 The size and position of the GPS window are now specific to each
     saved project, and thus the default desktop can use a size other than the
