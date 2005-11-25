@@ -2857,20 +2857,86 @@ highlight_category, style_category and warning_category reference the colors to 
     ###################################################################-->
 
   <shell_doc name="GPS.Debugger">
-     <description>Interface to debugger related commands</description>
+     <description>Interface to debugger related commands. This class allows you to start a debugger and send commands to it.
+By connection to the various debugger_* hooks, you can also monitor the state of the debugger.</description>
+      <example lang="python">
+import GPS
+
+def debugger_stopped (hook, debugger):
+   GPS.Console ("Messages").write (
+     "hook=" + hook + " on debugger="
+     + `debugger.get_num()` + "\n")
+def start():
+   d = GPS.Debugger.spawn (GPS.File ("../obj/parse"))
+   d.send ("begin")
+   d.send ("next")
+   d.send ("next")
+   d.send ("graph display A")
+GPS.Hook ("debugger_process_stopped").add (debugger_stopped)
+      </example>
       <see_also name="GPS.Debugger.__init__()" />
+      <see_also name="@hook@ debugger_started" />
+      <see_also name="@hook@ debugger_process_stopped" />
+      <see_also name="@hook@ debugger_context_changed" />
   </shell_doc>
 
   <shell_doc name="GPS.Debugger.__init__">
      <param name="self">An instance of GPS.Debugger</param>
-     <description>Initializes a new instance of the debugger class. This is associated with the current debugger, and will always reference the debugger current at the time when a method is called. Thus, if the user changes the current debugger, the command in GPS.Debugger.send() will be sent to the new current debugger</description>
+     <description>It is an error to create a Debugger instance directly. Instead, use GPS.Debugger.get() or GPS.Debugger.spawn()</description>
+     <see_also name="GPS.Debugger.get()" />
+     <see_also name="GPS.Debugger.spawn()" />
   </shell_doc>
 
-  <shell_doc name="GPS.Debugger.send">
+  <shell_doc name="GPS.Debugger.get">
+     <param name="id" default="">Either an integer or an instance of GPS.File</param>
+     <return>An instance of GPS.Debugger</return>
+     <description>This command gives access to an already running debugger, and will return an instance of GPS.Debugger attached to it. The parameter can be null, in which case the current debugger is returned; it can be an integer, in which case the corresponding debugger is returned (starting at 1); or it can be a file, in which case this function returns the debugger currently debugging that file.</description>
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.list">
+     <return>A list of GPS.Debugger instances</return>
+     <description>This command returns the list of currently running debuggers</description>
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.send">
      <param name="self">An instance of GPS.Debugger</param>
-     <param name="command">A string</param>
-     <description>Send command to the debugger self</description>
-  </shell_doc>
+     <param name="cmd">A string</param>
+     <return>A string</return>
+     <description>This command executes cmd in the debugger, and returns the output of the debugger. GPS is blocked while cmd is executing on the debugger</description>
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.get_file">
+     <param name="self">An instance of GPS.Debugger</param>
+     <return>An instance of GPS.File</return>
+     <description>Returns the name of the executable currently debugged in that debugger</description>
+     <see_also name="GPS.Debugger.get_num()" />
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.get_num">
+     <param name="self">An instance of GPS.Debugger</param>
+     <return>An integer</return>
+     <description>Returns the index of the debugger. This can be used later on to retrieve the debugger from GPS.Debugger.get(), or to get access to other windows associated with that debugger</description>
+     <see_also name="GPS.Debugger.get_file()" />
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.is_busy">
+     <param name="self">An instance of GPS.Debugger</param>
+     <return>A boolean</return>
+     <description>Returns true if the debugger is currently executing a command. In this case, it is an error to send a new command to it</description>
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.close">
+     <param name="self">An instance of GPS.Debugger</param>
+     <description>Closes the given debugger. This also closes all associated windows (call stack, console,...)</description>
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.spawn">
+     <param name="file">An instance of GPS.File</param>
+     <param name="args" default="">A string</param>
+     <return>An instance of GPS.Debugger</return>
+     <description>This command starts a new debugger. It will debug file. When file is executed, the extra arguments args are passed</description>
+   </shell_doc>
+
 
   <!--#################################################################
     ####   Preference class
