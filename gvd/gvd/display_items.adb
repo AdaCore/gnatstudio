@@ -730,9 +730,10 @@ package body Display_Items is
       if Item.Entity.all in Debugger_Output_Type'Class then
          Set_Value
            (Debugger_Output_Type (Item.Entity.all),
-            Send (Item.Debugger.Debugger,
-                  Refresh_Command (Debugger_Output_Type (Item.Entity.all)),
-                  Mode => GVD.Types.Internal));
+            Process_User_Command
+              (Item.Debugger,
+               Refresh_Command (Debugger_Output_Type (Item.Entity.all)),
+               Mode => GVD.Types.Internal));
 
       elsif Item.Name /= null then
          Parse_Value (Item.Debugger.Debugger, Item.Name.all,
