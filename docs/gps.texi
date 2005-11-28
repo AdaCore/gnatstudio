@@ -168,6 +168,7 @@ Debugging
 * The Memory Window::
 * Using the Source Editor when Debugging::
 * The Debugger Console::
+* Customizing the Debugger::
 * Upgrading from GVD to GPS::
 
 Version Control System
@@ -5263,6 +5264,7 @@ debug sessions at once.
 * Using the Source Editor when Debugging::
 * The Assembly Window::
 * The Debugger Console::
+* Customizing the Debugger::
 * Upgrading from GVD to GPS::
 @end menu
 
@@ -6447,6 +6449,101 @@ displaying a contextual menu, which is not possible in GVD.
 
 @item Flexibility of project files, see @ref{Project Handling} for more details.
 @end itemize
+
+@c --------------------------------------------------------------------
+@node Customizing the Debugger
+@section Customizing the Debugger
+@cindex debugger
+@c --------------------------------------------------------------------
+
+@noindent
+GPS is a high-level interface to several debugger backends, in particular gdb.
+Each back end has its own strengths, but you can enhance the command line
+interface to these backends through GPS, using Python.
+
+This section will provide a small such example. The idea is to provide the
+notion of "alias" in the debugger console. For example, this can be used so
+that you type "foo", and this really executes a longer command, like displaying
+the value of a variable with a long name.
+
+@code{gdb} already provides this feature through the @code{define} keywords,
+but we will in fact rewrite that feature in terms of python.
+
+GPS provides an extensive Python API to interface with each of the running
+debugger. In particular, it provides the function "send", which can be used
+to send a command to the debugger, and get its output, and the function
+"set_output", which can be used when you implement your own functions.
+
+It also provides, through @code{hook}, the capability to monitor the state of
+the debugger back-end. In particular, one such hook,
+@code{debugger_command_action_hook} is called when the user has typed a
+command in the debugger console, and before the command is executed. This can
+be used to add your own commands. The example below uses this hook.
+
+Here is the code:
+
+@smallexample
+import GPS
+
+aliases=@{@}
+
+def set_alias (name, command):
+   """Set a new debugger alias. Typing this alias in a debugger window
+      will then execute command"""
+   global aliases
+   aliases[name] = command
+
+def execute_alias (debugger, name):
+   return debugger.send (aliases[name], output=False)
+
+def debugger_commands (hook, debugger, command):
+   global aliases
+   words = command.split()
+   if words[0] == "alias":
+      set_alias (words[1], " ".join (words [2:]))
+      return True
+   elif aliases.has_key (words [0]):
+      debugger.set_output (execute_alias (debugger, words[0]))
+      return True
+   else:
+      return False
+
+GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
+@end smallexample
+
+The list of aliases is stored in the global variable @code{aliases}, which
+is modified by @code{set_alias}. Whenever the user executes an alias, the
+real command send to the debugger is sent through @code{execute_alias}.
+
+The real part of the work is done by @code{debugger_commands}. If the user
+is executing the @code{alias} command, it defines a new alias. Otherwise, if
+he typed the name of an alias, we really want to execute that alias. Else,
+we let the debugger back-end handle that command.
+
+After you have copied this example in the @file{$HOME/.gps/plug-ins} directory,
+you can start a debugger as usual in GPS, and type the following in its
+console:
+
+@smallexample
+   (gdb) alias foo print a_long_long_name
+   (gdb) foo
+@end smallexample
+
+The first command defines the alias, the second line executes it.
+
+This alias can also be used within the @code{graph display} command, so that
+the value of the variable is in fact displayed in the data window automatically,
+for instance:
+
+@smallexample
+   (gdb) graph display `foo`
+@end smallexample
+
+Other examples can be programmed. You could write complex python functions,
+which would for instance query the value of several variables, and pretty
+print the result. This complex python function can then be called from the
+debugger console, or automatically every time the debugger stops through the
+@code{graph display} command.
 
 @c --------------------------------------------------------------------
 @node Version Control System
