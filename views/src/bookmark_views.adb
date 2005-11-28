@@ -183,6 +183,9 @@ package body Bookmark_Views is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Rename the selected bookmark
 
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
+   --  Called when the bookmark view is destroyed
+
    --------------
    -- Tooltips --
    --------------
@@ -581,6 +584,15 @@ package body Bookmark_Views is
    end On_Preferences_Changed;
 
    ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
+   begin
+      Unref (Bookmark_View_Access (View).Goto_Icon);
+   end On_Destroy;
+
+   ----------------
    -- Initialize --
    ----------------
 
@@ -612,6 +624,7 @@ package body Bookmark_Views is
 
       View.Goto_Icon := Render_Icon (View, Stock_Jump_To, Icon_Size_Menu);
 
+      Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
       Return_Callback.Object_Connect
         (View.Tree,
          "button_press_event",
