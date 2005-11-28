@@ -66,10 +66,12 @@ package body Src_Editor_Buffer.Buffer_Commands is
          Last_Highlight_Iter,
          Found);
 
-      if Equal (First_Highlight_Iter, On_Cursor_Iter) then
-         Place_Cursor (Buffer, Last_Highlight_Iter);
-      else
-         Place_Cursor (Buffer, First_Highlight_Iter);
+      if Found > 0 then
+         if Equal (First_Highlight_Iter, On_Cursor_Iter) then
+            Place_Cursor (Buffer, Last_Highlight_Iter);
+         else
+            Place_Cursor (Buffer, First_Highlight_Iter);
+         end if;
       end if;
 
       return Commands.Success;
