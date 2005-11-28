@@ -955,7 +955,7 @@ package body GVD.Process is
       Tmp := Run_Debugger_Action_Hook
         (Debugger  => Debugger,
          Hook_Name => Debugger_Command_Action_Hook,
-         Command   => Command (First .. Command'Last));
+         Command   => Command);
       if not Tmp then
          if Looking_At (Lowered_Command, First, "graph")
            or else
@@ -983,9 +983,25 @@ package body GVD.Process is
          if Output_Command then
             Display_Prompt (Debugger.Debugger);
          end if;
-         return "";
+
+         --  ??? We should capture the output here... Not clear how to do,
+         --  since several user commands might have been executed
+         return Debugger.Current_Output.all;
       end if;
    end Process_User_Command;
+
+   ----------------
+   -- Set_Output --
+   ----------------
+
+   procedure Set_Output
+     (Process : access Visual_Debugger_Record'Class;
+      Output  : String) is
+   begin
+      Free (Process.Current_Output);
+      Process.Current_Output := new String'(Output);
+      Process.Current_Output_Pos := Process.Current_Output'First;
+   end Set_Output;
 
    ---------------------
    -- Register_Dialog --
