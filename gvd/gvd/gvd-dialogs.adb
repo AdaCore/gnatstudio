@@ -24,6 +24,7 @@ with Config;                use Config;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Main_Window;       use GPS.Main_Window;
 with GPS.Intl;              use GPS.Intl;
@@ -46,6 +47,7 @@ with Gtk.Tree_View;         use Gtk.Tree_View;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk;                   use Gtk;
 with Gtkada.Handlers;       use Gtkada.Handlers;
+with Gtkada.MDI;            use Gtkada.MDI;
 with Gtkada.Types;          use Gtkada.Types;
 with GUI_Utils;             use GUI_Utils;
 with Interfaces.C.Strings;  use Interfaces.C.Strings;
@@ -126,6 +128,8 @@ package body GVD.Dialogs is
       Formal_View_Record => Thread_View_Record,
       Get_View           => Get_Thread_View,
       Set_View           => Set_Thread_View,
+      Group              => Group_Debugger_Stack,
+      Position           => Position_Right,
       Initialize         => Initialize);
 
    procedure On_Thread_Selection (Thread : access Gtk_Widget_Record'Class);
@@ -153,6 +157,8 @@ package body GVD.Dialogs is
       Formal_View_Record => Task_View_Record,
       Get_View           => Get_Task_View,
       Set_View           => Set_Task_View,
+      Group              => Group_Debugger_Stack,
+      Position           => Position_Right,
       Initialize         => Initialize);
 
    -----------------------------
@@ -177,6 +183,8 @@ package body GVD.Dialogs is
       Formal_View_Record => PD_View_Record,
       Get_View           => Get_PD_View,
       Set_View           => Set_PD_View,
+      Group              => Group_Debugger_Stack,
+      Position           => Position_Right,
       Initialize         => Initialize);
 
    ----------

@@ -39,6 +39,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.MDI;          use Gtkada.MDI;
 with Pango.Enums;         use Pango.Enums;
 with Pango.Font;          use Pango.Font;
 with Pango.Layout;        use Pango.Layout;
@@ -49,6 +50,7 @@ with Debugger;               use Debugger;
 with Display_Items;          use Display_Items;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel;             use GPS.Kernel;
@@ -139,6 +141,8 @@ package body GVD.Canvas is
       Formal_View_Record => GVD_Canvas_Record,
       Get_View           => Get_Canvas,
       Set_View           => Set_Canvas,
+      Group              => Group_Graphs,
+      Position           => Position_Top,
       Initialize         => Initialize);
 
    procedure On_Realize (Canvas : access Gtk_Widget_Record'Class);
@@ -431,8 +435,8 @@ package body GVD.Canvas is
             begin
                Set_Value
                  (Debugger_Output_Type (Entity.all),
-                  Send
-                    (Process.Debugger,
+                  Process_User_Command
+                    (Visual_Debugger (Process),
                      Refresh_Command (Debugger_Output_Type (Entity.all)),
                      Mode => GVD.Types.Internal));
 
@@ -573,7 +577,9 @@ package body GVD.Canvas is
       end if;
 
    exception
-      when Constraint_Error =>
+      when E : Constraint_Error =>
+         Traces.Trace (Exception_Handle, "Unexpected exception: "
+                       & Exception_Information (E));
          --  Usually because Find_Item returned a null value.
          GVD.Trace.Output_Error
            (GPS_Window (Process.Window).Kernel,

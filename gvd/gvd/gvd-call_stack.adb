@@ -39,11 +39,13 @@ with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.Handlers;        use Gtkada.Handlers;
+with Gtkada.MDI;             use Gtkada.MDI;
 
 with Basic_Types;            use Basic_Types;
 with Config;                 use Config;
 with Debugger;               use Debugger;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Intl;               use GPS.Intl;
 with GUI_Utils;              use GUI_Utils;
@@ -117,6 +119,8 @@ package body GVD.Call_Stack is
       Formal_View_Record => Call_Stack_Record,
       Get_View           => Get_View,
       Set_View           => Set_View,
+      Group              => Group_Debugger_Stack,
+      Position           => Position_Right,
       Initialize         => Initialize);
 
    package Call_Stack_Cb is new Gtk.Handlers.User_Callback

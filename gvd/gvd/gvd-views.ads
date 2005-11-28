@@ -20,12 +20,10 @@
 
 --  Various instanciations of GVD.Generic_Views
 
-with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GVD.Generic_View;
 with GVD.Process;          use GVD.Process;
 with GVD.Scripts;          use GVD.Scripts;
 with GVD_Module;           use GVD_Module;
-with Gtkada.MDI;           use Gtkada.MDI;
 with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
 with Interactive_Consoles; use Interactive_Consoles;
 
@@ -37,9 +35,7 @@ package GVD.Views is
       Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
       Visual_Debugger               => GVD.Process.Visual_Debugger,
       Debugger_Process_Stopped_Hook => Debugger_Process_Stopped_Hook,
-      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook,
-      Group                         => Group_Debugger_Stack,
-      Position                      => Position_Right);
+      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook);
 
    package Console_Views is new GVD.Generic_View
      (Base_Type                     => Interactive_Console_Record,
@@ -47,8 +43,6 @@ package GVD.Views is
       Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
       Visual_Debugger               => GVD.Process.Visual_Debugger,
       Debugger_Process_Stopped_Hook => Debugger_Process_Stopped_Hook,
-      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook,
-      Group                         => Group_Consoles,
-      Position                      => Position_Bottom);
+      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook);
 
 end GVD.Views;

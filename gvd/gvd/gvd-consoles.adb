@@ -40,6 +40,7 @@ with GNAT.Expect;            use GNAT.Expect;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
@@ -116,6 +117,8 @@ package body GVD.Consoles is
       Formal_View_Record => Debugger_Console_Record,
       Get_View           => Get_Debugger_Console,
       Set_View           => Set_Debugger_Console,
+      Group              => Group_Consoles,
+      Position           => Position_Bottom,
       Initialize         => Initialize);
    package Debuggee_Views is new Console_Views.Simple_Views
      (Module_Name        => "Debugger_Execution",
@@ -123,6 +126,8 @@ package body GVD.Consoles is
       Formal_View_Record => Debuggee_Console_Record,
       Get_View           => Get_Debuggee_Console,
       Set_View           => Set_Debuggee_Console,
+      Group              => Group_Consoles,
+      Position           => Position_Bottom,
       Initialize         => Initialize);
 
    function Complete_Command
