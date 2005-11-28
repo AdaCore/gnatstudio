@@ -246,6 +246,7 @@ package body GVD.Scripts is
       Arg_ID   : aliased constant String := "id";
       Arg_File : aliased constant String := "file";
       Arg_Args : aliased constant String := "args";
+      Arg_Output : aliased constant String := "output";
       Process : Visual_Debugger;
       Inst    : Class_Instance;
    begin
@@ -312,13 +313,15 @@ package body GVD.Scripts is
          end;
 
       elsif Command = "send" then
-         Name_Parameters (Data, (1 => Arg_Cmd'Unchecked_Access));
+         Name_Parameters (Data, (1 => Arg_Cmd'Unchecked_Access,
+                                 2 => Arg_Output'Unchecked_Access));
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Set_Return_Value
            (Data, Process_User_Command
               (Process, GPS.Kernel.Scripts.Nth_Arg (Data, 2),
-               Output_Command => True, Mode => GVD.Types.Internal));
+               Output_Command => Nth_Arg (Data, 3, True),
+               Mode => GVD.Types.Internal));
          Free (Inst);
 
       elsif Command = "get_file" then
@@ -345,6 +348,12 @@ package body GVD.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Close_Debugger (Process);
+         Free (Inst);
+
+      elsif Command = "set_output" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Set_Output (Process, Nth_Arg (Data, 2));
          Free (Inst);
 
       elsif Command = "spawn" then
@@ -417,7 +426,7 @@ package body GVD.Scripts is
         (Kernel, "list", 0, 0, Shell_Handler'Access, Class,
          Static_Method => True);
       GPS.Kernel.Scripts.Register_Command
-        (Kernel, "send", 1, 1, Shell_Handler'Access, Class);
+        (Kernel, "send", 1, 2, Shell_Handler'Access, Class);
       GPS.Kernel.Scripts.Register_Command
         (Kernel, "get_file", 0, 0, Shell_Handler'Access, Class);
       GPS.Kernel.Scripts.Register_Command
@@ -429,6 +438,8 @@ package body GVD.Scripts is
       GPS.Kernel.Scripts.Register_Command
         (Kernel, "spawn", 1, 2, Shell_Handler'Access, Class,
          Static_Method => True);
+      GPS.Kernel.Scripts.Register_Command
+        (Kernel, "set_output", 1, 1, Shell_Handler'Access, Class);
    end Create_Hooks;
 
 end GVD.Scripts;
