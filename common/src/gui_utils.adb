@@ -316,19 +316,26 @@ package body GUI_Utils is
    -- Set_Busy_Cursor --
    ---------------------
 
+   Busy_Cursor : Gdk.Cursor.Gdk_Cursor;
+   --  A global variable, allocated once and never freed
+
    procedure Set_Busy_Cursor
      (Window        : Gdk.Window.Gdk_Window;
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False)
    is
       use type Gdk_Window;
-      Cursor : Gdk.Cursor.Gdk_Cursor;
    begin
       if Window /= null then
          if Busy then
-            Gdk_New (Cursor, Watch);
-            Set_Cursor (Window, Cursor);
-            Destroy (Cursor);
+            if Busy_Cursor = null then
+               --  We create the cursor only once, since this is both more
+               --  efficient and avoids some memory leaks (for some reason, it
+               --  seems that gtk+ is not properly deallocated cursors, for
+               --  windows that were created while the busy cursor was active).
+               Gdk_New (Busy_Cursor, Watch);
+            end if;
+            Set_Cursor (Window, Busy_Cursor);
          else
             Set_Cursor (Window, null);
          end if;
