@@ -1280,9 +1280,7 @@ package body GVD.Process is
          Free (Module);
 
          if not Success then
-            if Get_Current_Debugger (Kernel) = null then
-               Debug_Terminate (Kernel_Handle (Kernel));
-            end if;
+            Debug_Terminate (Kernel_Handle (Kernel));
 
             Pop_State (Kernel_Handle (Kernel));
             return null;
