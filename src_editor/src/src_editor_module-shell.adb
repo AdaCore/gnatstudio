@@ -1735,6 +1735,7 @@ package body Src_Editor_Module.Shell is
          else
             File := Get_File (Get_Data (File_Inst));
             Child := Find_Editor (Kernel, File);
+            Free (File_Inst);
          end if;
 
          if Child = null then
