@@ -594,7 +594,7 @@ package Debugger is
    --  if Name is "").
    --  The breakpoint is activated only for unhandled exceptions if Unhandled
    --  is True, or for all exceptions if False.
-   --  Note all combinations are possible (for instance, Gdb in Ada mode can
+   --  Not all combinations are possible (for instance, Gdb in Ada mode can
    --  not break on a specific exception only when it is unhandled).
    --  GDB_COMMAND: "break exception"
 
@@ -635,6 +635,14 @@ package Debugger is
      (Debugger  : access Debugger_Root)
       return GVD.Types.Breakpoint_Array is abstract;
    --  Return the list of breakpoints set in the current session.
+
+   function Get_Last_Breakpoint_Id
+     (Debugger  : access Debugger_Root)
+      return GVD.Types.Breakpoint_Identifier is abstract;
+   --  Return the Id of the last created breakpoint.
+   --  Some of the Break_* commands above might create several breakpoints, so
+   --  it might not be accurate to rely on this function to get the list of
+   --  all breakpoints created by a Break_* subprograms
 
    procedure Set_Breakpoint_Condition
      (Debugger  : access Debugger_Root;

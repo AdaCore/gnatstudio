@@ -259,6 +259,10 @@ package Debugger.Gdb is
       Num      : GVD.Types.Breakpoint_Identifier;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   function Get_Last_Breakpoint_Id
+     (Debugger  : access Gdb_Debugger)
+      return GVD.Types.Breakpoint_Identifier;
+
    procedure Set_Breakpoint_Condition
      (Debugger  : access Gdb_Debugger;
       Num       : GVD.Types.Breakpoint_Identifier;

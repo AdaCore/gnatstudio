@@ -1775,6 +1775,34 @@ package body Debugger.Gdb is
       end if;
    end Break_Regexp;
 
+   ----------------------------
+   -- Get_Last_Breakpoint_Id --
+   ----------------------------
+
+   function Get_Last_Breakpoint_Id
+     (Debugger : access Gdb_Debugger) return Breakpoint_Identifier
+   is
+      S            : constant String :=
+        Send (Debugger, "print $bpnum", Mode => Internal);
+      Index        : Integer := S'First;
+      Error_String : constant String := "void";
+   begin
+      Skip_To_String (S, Index, Error_String);
+
+      if Index <= S'Last - Error_String'Length + 1 then
+         return 0;
+      end if;
+
+      Index := S'First;
+      Skip_To_Char (S, Index, '=');
+
+      return Breakpoint_Identifier'Value (S (Index + 1 .. S'Last));
+
+   exception
+      when Constraint_Error =>
+         return 0;
+   end Get_Last_Breakpoint_Id;
+
    ------------------------------
    -- Set_Breakpoint_Condition --
    ------------------------------
