@@ -5942,6 +5942,13 @@ ways of setting these properties:
 
 @end itemize
 
+@cindex saving breakpoints
+@cindex breakpoints, saving
+If you have enabled the preference @code{Save breakpoints on exit}, GPS will
+automatically save the currently set breakpoints, and restore them the next
+time you debug the same executable. This allows you to immediately start
+debugging your application again, without reseting the breakpoints every time.
+
 @c --------------------------------------------------------------------
 @node The Memory Window
 @section The Memory Window
@@ -8383,6 +8390,13 @@ The number of spaces for the default indentation.
 @item @b{Debugger}
 @cindex debugger
 @table @i
+
+@item Save Breakpoints on exit
+@cindex breakpoint
+If this preference is enabled, the debugger will automatically save breakpoints
+when it exists, and restore them the next time the same executable is debugged.
+This is a convenient way to work on an executable, where the typical usage
+looks like compile, debug, compile, debug,@dots{}
 
 @item Break on exceptions
 @cindex breakpoint
