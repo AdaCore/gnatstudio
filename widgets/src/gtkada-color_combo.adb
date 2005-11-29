@@ -248,6 +248,8 @@ package body Gtkada.Color_Combo is
             Transparent => Null_Color,
             Data        => paint_xpm);
          Gtk_New (Pixmap, Val, Mask);
+         Gdk.Pixmap.Unref (Val);
+         Gdk.Bitmap.Unref (Mask);
          Add (Get_Button (Combo), Pixmap);
          Show (Pixmap);
       end if;
