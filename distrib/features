@@ -59,3 +59,11 @@ EA14-023 Scenario View back in the default desktop (2005-11-18)
 
   Keywords: Desktop, Scenario View
 
+E512-008 Saving breakpoints between sessions (2005-11-29)
+
+  A new preference was added that indicates whether debugger breakpoints should
+  be saved between debugger sessions. If activated, the breakpoints will be
+  automatically set when the same executable is debugged again.
+
+  Keywords: Debugger
+
