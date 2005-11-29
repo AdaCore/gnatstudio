@@ -55,7 +55,7 @@ package GVD_Module is
    --  Initialize the debugger if needed.
 
    procedure Debug_Terminate (Kernel : GPS.Kernel.Kernel_Handle);
-   --  Terminate the debugging session, and closes all debuggers
+   --  Terminate the debugging session, and closes all remaining debuggers
 
    type Debugger_State is (Debug_None, Debug_Busy, Debug_Available);
    --  Possible states of a debugger:

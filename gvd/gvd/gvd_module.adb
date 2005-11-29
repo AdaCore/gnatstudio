@@ -89,7 +89,6 @@ with GVD.Source_Editor.GPS;     use GVD.Source_Editor.GPS;
 with GVD.Source_Editor;         use GVD.Source_Editor;
 with GVD.Types;                 use GVD.Types;
 with Histories;                 use Histories;
-with Interactive_Consoles;      use Interactive_Consoles;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with List_Select_Pkg;           use List_Select_Pkg;
@@ -213,12 +212,6 @@ package body GVD_Module is
       Data   : File_Project_Record;
       Args   : String);
    --  Initialize the debugger
-
-   procedure Debug_Terminate
-     (Kernel   : Kernel_Handle;
-      Debugger : access Visual_Debugger_Record'Class);
-   --  Close the given debugger and terminate the debugging session if this
-   --  is the last one.
 
    function Get_Variable_Name
      (Context     : Selection_Context_Access;
@@ -2046,118 +2039,6 @@ package body GVD_Module is
       Debug_Init (Kernel_Handle (Kernel), Data, "");
    end On_Debug_Init;
 
-   ---------------------
-   -- Debug_Terminate --
-   ---------------------
-
-   procedure Debug_Terminate
-     (Kernel   : Kernel_Handle;
-      Debugger : access Visual_Debugger_Record'Class)
-   is
-      Top              : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Debugger_List    : Debugger_List_Link;
-      Prev             : Debugger_List_Link;
-      Editor           : Code_Editor;
-
-   begin
-      Debugger_List := Get_Debugger_List (Kernel);
-
-      while Debugger_List /= null loop
-         exit when Debugger_List.Debugger = GObject (Debugger);
-
-         Prev := Debugger_List;
-         Debugger_List := Debugger_List.Next;
-      end loop;
-
-      if Debugger_List = null then
-         --  Should never happen
-
-         Trace (Me, "debugger not found");
-         return;
-      end if;
-
-      Push_State (Kernel, Busy);
-      Debugger.Exiting := True;
-      Editor := Debugger.Editor_Text;
-
-      if Debugger.Debugger /= null
-        and then Get_Process (Debugger.Debugger) /= null
-      then
-         Close (Debugger.Debugger);
-      end if;
-
-      Debugger.Debugger := null;
-
-      --  Memorize whether we should automatically start the call stack the
-      --  next time GVD is started or not
-
-      Set_Pref (Kernel, Show_Call_Stack, Debugger.Stack /= null);
-
-      --  This might have been closed by the user
-
-      if Debugger.Debugger_Text /= null then
-         Close (Top.MDI, Debugger.Debugger_Text, Force => True);
-      end if;
-
-      if Debugger.Debuggee_Console /= null then
-         Close (Top.MDI, Debugger.Debuggee_Console);
-      end if;
-
-      if Debugger.Breakpoints /= null then
-         Free (Debugger.Breakpoints);
-      end if;
-
-      if Get_Mode (Editor) /= Source then
-         Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
-      end if;
-
-      Free_Debug_Info (GEdit (Get_Source (Debugger.Editor_Text)));
-      Debugger.Exiting := False;
-      Unref (Debugger);
-
-      if Prev = null then
-         Set_First_Debugger (Kernel, Debugger_List.Next);
-
-         if Debugger_List.Next = null then
-            Set_Current_Debugger (Kernel, null);
-         else
-            Set_Current_Debugger (Kernel, Debugger_List.Next.Debugger);
-         end if;
-      else
-         Prev.Next := Debugger_List.Next;
-         Set_Current_Debugger (Kernel, Prev.Debugger);
-      end if;
-
-      Free (Debugger_List);
-
-      if Get_Debugger_List (Kernel) = null then
-         GVD_Module_ID.Initialized := False;
-
-         if GVD_Module_ID.Lines_Hook /= null then
-            Remove_Hook
-              (Kernel, Source_Lines_Revealed_Hook, GVD_Module_ID.Lines_Hook);
-            GVD_Module_ID.Lines_Hook := null;
-         end if;
-
-         if GVD_Module_ID.File_Hook /= null then
-            Remove_Hook
-              (Kernel, GPS.Kernel.File_Edited_Hook, GVD_Module_ID.File_Hook);
-            GVD_Module_ID.File_Hook := null;
-         end if;
-
-         Remove_Debugger_Columns (Kernel, VFS.No_File);
-
-         if GVD_Module_ID.Breakpoints_Editor /= null then
-            Hide (GVD_Module_ID.Breakpoints_Editor);
-         end if;
-
-         Set_Sensitive (Kernel, Debug_None);
-      end if;
-
-      Pop_State (Kernel);
-   end Debug_Terminate;
-
    ------------------------
    -- Setup_Side_Columns --
    ------------------------
@@ -2194,18 +2075,38 @@ package body GVD_Module is
    ---------------------
 
    procedure Debug_Terminate (Kernel : Kernel_Handle) is
-      Debugger_List    : Debugger_List_Link;
+      Debugger_List    : Debugger_List_Link := Get_Debugger_List (Kernel);
       Current_Debugger : Visual_Debugger;
    begin
       Push_State (Kernel, Busy);
-      Debugger_List := Get_Debugger_List (Kernel);
 
       while Debugger_List /= null loop
          Current_Debugger := Visual_Debugger (Debugger_List.Debugger);
          Debugger_List := Debugger_List.Next;
-         Run_Debugger_Hook (Current_Debugger, Debugger_Terminated_Hook);
-         Debug_Terminate (Kernel, Current_Debugger);
+         Close (Current_Debugger);
       end loop;
+
+      GVD_Module_ID.Initialized := False;
+
+      if GVD_Module_ID.Lines_Hook /= null then
+         Remove_Hook
+           (Kernel, Source_Lines_Revealed_Hook, GVD_Module_ID.Lines_Hook);
+         GVD_Module_ID.Lines_Hook := null;
+      end if;
+
+      if GVD_Module_ID.File_Hook /= null then
+         Remove_Hook
+           (Kernel, GPS.Kernel.File_Edited_Hook, GVD_Module_ID.File_Hook);
+         GVD_Module_ID.File_Hook := null;
+      end if;
+
+      Remove_Debugger_Columns (Kernel, VFS.No_File);
+
+      if GVD_Module_ID.Breakpoints_Editor /= null then
+         Hide (GVD_Module_ID.Breakpoints_Editor);
+      end if;
+
+      Set_Sensitive (Kernel, Debug_None);
 
       Pop_State (Kernel);
    end Debug_Terminate;
@@ -2239,7 +2140,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
    begin
-      Debug_Terminate (Kernel, Get_Current_Process (Get_Main_Window (Kernel)));
+      Close (Get_Current_Process (Get_Main_Window (Kernel)));
 
    exception
       when E : others =>
@@ -2256,9 +2157,10 @@ package body GVD_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
    is
+      pragma Unreferenced (Kernel);
       Process : constant Visual_Debugger := Get_Process (Data);
    begin
-      Debug_Terminate (Kernel_Handle (Kernel), Process);
+      Close (Process);
    end On_Debug_Terminate_Single;
 
    -----------------------
@@ -2441,8 +2343,7 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Debug_Terminate
-           (Kernel_Handle (Kernel), Get_Current_Process (Hook.Top));
+         Close (Get_Current_Process (Hook.Top));
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Execute;
@@ -2549,7 +2450,7 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Debug_Terminate (Kernel_Handle (Kernel), Process);
+         Close (Process);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Execute;

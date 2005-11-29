@@ -160,6 +160,10 @@ package GVD.Process is
    --  Spawn a new debugger on File (taking into account the settings from
    --  Project). Args are passed to the executable File.
 
+   procedure Close (Process : access Visual_Debugger_Record);
+   --  Close the given debugger and terminate the debugging session if this
+   --  is the last one.
+
    procedure Load_Project_From_Executable
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access Visual_Debugger_Record'Class);
