@@ -1875,34 +1875,36 @@ package body Projects.Registry is
             Project2 := Real_Project;
          end if;
 
-         if Project2 /= No_Project then
-            if Use_Source_Path then
-               Path := Locate_Regular_File
-                 (Locale, Include_Path (Project2, False));
+         if Locale /= "" then
+            if Project2 /= No_Project then
+               if Use_Source_Path then
+                  Path := Locate_Regular_File
+                    (Locale, Include_Path (Project2, False));
+               end if;
+
+               if Path = null
+                 and then Use_Object_Path
+               then
+                  Path := Locate_Regular_File
+                    (Locale, Object_Path (Project2, False));
+               end if;
             end if;
 
-            if Path = null
-              and then Use_Object_Path
-            then
-               Path := Locate_Regular_File
-                 (Locale, Object_Path (Project2, False));
-            end if;
-         end if;
+            if Get_Root_Project (Registry) /= No_Project then
+               if Path = null and then Use_Source_Path then
+                  Path := Locate_Regular_File
+                    (Locale,
+                     Include_Path (Get_Root_Project (Registry), True)
+                     & Path_Separator & Get_Predefined_Source_Path (Registry)
+                     & Path_Separator & ".");
+               end if;
 
-         if Get_Root_Project (Registry) /= No_Project then
-            if Path = null and then Use_Source_Path then
-               Path := Locate_Regular_File
-                 (Locale,
-                  Include_Path (Get_Root_Project (Registry), True)
-                  & Path_Separator & Get_Predefined_Source_Path (Registry)
-                  & Path_Separator & ".");
-            end if;
-
-            if Path = null and then Use_Object_Path then
-               Path := Locate_Regular_File
-                 (Locale,
-                  Object_Path (Get_Root_Project (Registry), True)
-                  & Path_Separator & Get_Predefined_Object_Path (Registry));
+               if Path = null and then Use_Object_Path then
+                  Path := Locate_Regular_File
+                    (Locale,
+                     Object_Path (Get_Root_Project (Registry), True)
+                     & Path_Separator & Get_Predefined_Object_Path (Registry));
+               end if;
             end if;
          end if;
 
