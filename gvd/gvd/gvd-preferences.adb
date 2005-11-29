@@ -66,6 +66,17 @@ package body GVD.Preferences is
 
       Register_Property  (Prefs, Param_Spec (Execution_Window), General);
 
+      Save_Breakpoints_On_Exit := Param_Spec_Boolean (Gnew_Boolean
+        (Name       => XML_Prefix & "Save-Breakpoints-On-Exit",
+         Nick       => -"Save breakpoints on exit",
+         Blurb      =>
+            -("True if the breakpoints should be saved when the debugger"
+             & " session is terminated, and restored the next time the same"
+             & " executable is debugged"),
+         Default    => True));
+      Register_Property
+        (Prefs, Param_Spec (Save_Breakpoints_On_Exit), General);
+
       Editor_Show_Line_With_Code := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Editor-Show-Line-With-Code",
          Nick      => -"Show lines with code",
