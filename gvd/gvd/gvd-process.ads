@@ -160,7 +160,7 @@ package GVD.Process is
    --  Spawn a new debugger on File (taking into account the settings from
    --  Project). Args are passed to the executable File.
 
-   procedure Close (Process : access Visual_Debugger_Record);
+   procedure Close_Debugger (Process : access Visual_Debugger_Record);
    --  Close the given debugger and terminate the debugging session if this
    --  is the last one.
 
@@ -245,10 +245,6 @@ package GVD.Process is
      (Debugger : access Visual_Debugger_Record'Class) return Boolean;
    --  Return True if a command is currently being processed, and thus no
    --  other command can be sent to the debugger
-
-   procedure Close_Debugger (Debugger : Visual_Debugger);
-   --  Close the debugger, remove the notebook page and modify the commmands
-   --  history accordingly.
 
    procedure Process_User_Command
      (Debugger       : Visual_Debugger;

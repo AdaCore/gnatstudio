@@ -28,8 +28,8 @@ with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with System;                     use System;
 
+with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with Glib; use Glib;
 
 with Gtk.Arguments;              use Gtk.Arguments;
 with Gtk.Dialog;                 use Gtk.Dialog;
@@ -80,6 +80,8 @@ with Traces;                     use Traces;
 with VFS;                        use VFS;
 
 package body GVD.Process is
+   Me : constant Debug_Handle := Create ("GVD.Process");
+
    type GPS_Proxy is new Process_Proxy with record
       Kernel : Kernel_Handle;
    end record;
@@ -755,62 +757,99 @@ package body GVD.Process is
    -- Close_Debugger --
    --------------------
 
-   procedure Close_Debugger (Debugger : Visual_Debugger) is
-      Top  : constant GPS_Window := Debugger.Window;
-      List : Debugger_List_Link;
+   procedure Close_Debugger (Process : access Visual_Debugger_Record) is
+      Kernel        : constant Kernel_Handle := Process.Window.Kernel;
+      Debugger_List : Debugger_List_Link := Get_Debugger_List (Kernel);
+      Prev          : Debugger_List_Link;
+      Editor        : Code_Editor;
    begin
-      if Debugger.Exiting then
+      if Process.Exiting then
          return;
       end if;
 
-      --  ??? Isn't this already run before from gvd_module ?
-      Run_Debugger_Hook (Debugger, Debugger_Terminated_Hook);
+      Traces.Trace (Me, "Closing Debugger");
 
-      Debugger.Exiting := True;
-      Free (Debugger.Breakpoints);
-      Unregister_Dialog (Debugger);
+      while Debugger_List /= null
+        and then Debugger_List.Debugger /= GObject (Process)
+      loop
+         Prev          := Debugger_List;
+         Debugger_List := Debugger_List.Next;
+      end loop;
 
-      if Debugger.Timeout_Id /= 0 then
-         Set_Busy (Debugger, False);
-         Timeout_Remove (Debugger.Timeout_Id);
-         Debugger.Timeout_Id := 0;
+      if Debugger_List = null then
+         --  Should never happen
+         return;
       end if;
 
-      if Debugger.Debugger /= null then
-         if Get_Command_Mode (Get_Process (Debugger.Debugger))
-           in Visible_Command
-         then
-            Set_Busy (Debugger, False);
-         end if;
+      Process.Exiting := True;
+      Push_State (Kernel, Busy);
+      Run_Debugger_Hook (Process, Debugger_Terminated_Hook);
 
-         Close (Debugger.Debugger);
-         Debugger.Debugger := null;
+      --  Close the underlying debugger
+
+      if Process.Debugger /= null
+        and then Get_Process (Process.Debugger) /= null
+      then
+         Close (Process.Debugger);
       end if;
 
-      --  Recompute Top.Current_Debugger and Top.First_Debugger:
+      Process.Debugger := null;
 
-      List := Get_Debugger_List (Top.Kernel);
+      --  Memorize whether we should automatically start the call stack the
+      --  next time GVD is started or not
 
-      if List /= null then
-         if Visual_Debugger (List.Debugger) = Debugger then
-            Set_First_Debugger (Top.Kernel, List.Next);
-            Set_Current_Debugger (Top.Kernel, List.Next.Debugger);
+      Set_Pref (Kernel, Show_Call_Stack, Process.Stack /= null);
+
+      --  This might have been closed by the user
+
+      if Process.Debugger_Text /= null then
+         Close (Get_MDI (Kernel), Process.Debugger_Text, Force => True);
+      end if;
+
+      if Process.Breakpoints /= null then
+         Free (Process.Breakpoints);
+      end if;
+
+      Editor := Process.Editor_Text;
+      if Get_Mode (Editor) /= Source then
+         Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
+      end if;
+
+      Free_Debug_Info (GEdit (Get_Source (Process.Editor_Text)));
+
+      Free (Process.Breakpoints);
+      Unregister_Dialog (Process);
+      Free (Process.Command_History);
+
+      if Process.Timeout_Id /= 0 then
+         Set_Busy (Process, False);
+         Timeout_Remove (Process.Timeout_Id);
+         Process.Timeout_Id := 0;
+      end if;
+
+      Process.Exiting := False;
+      Unref (Process);
+
+      if Prev = null then
+         Set_First_Debugger (Kernel, Debugger_List.Next);
+
+         if Debugger_List.Next = null then
+            Set_Current_Debugger (Kernel, null);
          else
-            while List.Next /= null loop
-               if Visual_Debugger (List.Next.Debugger) = Debugger then
-                  List.Next := List.Next.Next;
-                  Set_Current_Debugger (Top.Kernel, List.Debugger);
-
-                  exit;
-               end if;
-
-               List := List.Next;
-            end loop;
+            Set_Current_Debugger (Kernel, Debugger_List.Next.Debugger);
          end if;
+      else
+         Prev.Next := Debugger_List.Next;
+         Set_Current_Debugger (Kernel, Prev.Debugger);
       end if;
 
-      Free (Debugger.Command_History);
-      Unref (Debugger);
+      Free (Debugger_List);
+
+      if Get_Debugger_List (Kernel) = null then
+         Debug_Terminate (Kernel);
+      end if;
+
+      Pop_State (Kernel);
    end Close_Debugger;
 
    --------------------------
@@ -1281,7 +1320,7 @@ package body GVD.Process is
          Free (Module);
 
          if not Success then
-            Close (Process);
+            Close_Debugger (Process);
             Pop_State (Kernel_Handle (Kernel));
             return null;
          end if;
@@ -1305,87 +1344,6 @@ package body GVD.Process is
                        "Unexpected exception: " & Exception_Information (E));
          return Process;
    end Spawn;
-
-   -----------
-   -- Close --
-   -----------
-
-   procedure Close (Process : access Visual_Debugger_Record) is
-      Kernel   : constant Kernel_Handle := Process.Window.Kernel;
-      Debugger_List    : Debugger_List_Link := Get_Debugger_List (Kernel);
-      Prev             : Debugger_List_Link;
-      Editor           : Code_Editor;
-
-   begin
-      while Debugger_List /= null
-        and then Debugger_List.Debugger /= GObject (Process)
-      loop
-         Prev          := Debugger_List;
-         Debugger_List := Debugger_List.Next;
-      end loop;
-
-      if Debugger_List = null then
-         --  Should never happen
-         return;
-      end if;
-
-      Push_State (Kernel, Busy);
-      Run_Debugger_Hook (Process, Debugger_Terminated_Hook);
-      Process.Exiting := True;
-
-      if Process.Debugger /= null
-        and then Get_Process (Process.Debugger) /= null
-      then
-         Close (Process.Debugger);
-      end if;
-
-      Process.Debugger := null;
-
-      --  Memorize whether we should automatically start the call stack the
-      --  next time GVD is started or not
-
-      Set_Pref (Kernel, Show_Call_Stack, Process.Stack /= null);
-
-      --  This might have been closed by the user
-
-      if Process.Debugger_Text /= null then
-         Close (Get_MDI (Kernel), Process.Debugger_Text, Force => True);
-      end if;
-
-      if Process.Breakpoints /= null then
-         Free (Process.Breakpoints);
-      end if;
-
-      Editor := Process.Editor_Text;
-      if Get_Mode (Editor) /= Source then
-         Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
-      end if;
-
-      Free_Debug_Info (GEdit (Get_Source (Process.Editor_Text)));
-      Process.Exiting := False;
-      Unref (Process);
-
-      if Prev = null then
-         Set_First_Debugger (Kernel, Debugger_List.Next);
-
-         if Debugger_List.Next = null then
-            Set_Current_Debugger (Kernel, null);
-         else
-            Set_Current_Debugger (Kernel, Debugger_List.Next.Debugger);
-         end if;
-      else
-         Prev.Next := Debugger_List.Next;
-         Set_Current_Debugger (Kernel, Prev.Debugger);
-      end if;
-
-      Free (Debugger_List);
-
-      if Get_Debugger_List (Kernel) = null then
-         Debug_Terminate (Kernel);
-      end if;
-
-      Pop_State (Kernel);
-   end Close;
 
    ----------------------------------
    -- Load_Project_From_Executable --

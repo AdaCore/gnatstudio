@@ -220,11 +220,6 @@ package body GVD_Module is
    --  Dereference the entity if Dereference is True.
    --  Return "" if entity name could not be found in Context.
 
-   procedure On_Debug_Terminate_Single
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
-   --  Hook called when the debugger is terminated
-
    procedure On_Assembly
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
@@ -2083,7 +2078,7 @@ package body GVD_Module is
       while Debugger_List /= null loop
          Current_Debugger := Visual_Debugger (Debugger_List.Debugger);
          Debugger_List := Debugger_List.Next;
-         Close (Current_Debugger);
+         Close_Debugger (Current_Debugger);
       end loop;
 
       GVD_Module_ID.Initialized := False;
@@ -2140,7 +2135,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
    begin
-      Close (Get_Current_Process (Get_Main_Window (Kernel)));
+      Close_Debugger (Get_Current_Process (Get_Main_Window (Kernel)));
 
    exception
       when E : others =>
@@ -2148,20 +2143,6 @@ package body GVD_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Terminate_Current;
-
-   -------------------------------
-   -- On_Debug_Terminate_Single --
-   -------------------------------
-
-   procedure On_Debug_Terminate_Single
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
-   is
-      pragma Unreferenced (Kernel);
-      Process : constant Visual_Debugger := Get_Process (Data);
-   begin
-      Close (Process);
-   end On_Debug_Terminate_Single;
 
    -----------------------
    -- Get_Variable_Name --
@@ -2343,7 +2324,7 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Close (Get_Current_Process (Hook.Top));
+         Close_Debugger (Get_Current_Process (Hook.Top));
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Execute;
@@ -2450,7 +2431,7 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Close (Process);
+         Close_Debugger (Process);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Execute;
@@ -2768,8 +2749,6 @@ package body GVD_Module is
                 Preferences_Changed'Access);
       Add_Hook (Kernel, Debugger_Executable_Changed_Hook,
                 On_Executable_Changed'Access);
-      Add_Hook (Kernel, Debugger_Terminated_Hook,
-                On_Debug_Terminate_Single'Access);
 
       Init_Graphics;
    end Register_Module;
