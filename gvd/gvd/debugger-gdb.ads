@@ -36,7 +36,7 @@ package Debugger.Gdb is
 
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
-      Executable      : String;
+      Executable      : VFS.Virtual_File := VFS.No_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
@@ -126,7 +126,7 @@ package Debugger.Gdb is
 
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
-      Executable : String;
+      Executable : VFS.Virtual_File;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    function Get_Executable
@@ -407,7 +407,7 @@ private
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    type Gdb_Debugger is new Debugger.Debugger_Root with record
-      Executable       : GNAT.OS_Lib.String_Access;
+      Executable       : VFS.Virtual_File;
       Executable_Args  : GNAT.OS_Lib.String_Access;
       Stored_Language  : GNAT.OS_Lib.String_Access;
       WTX_List         : GNAT.OS_Lib.String_Access;

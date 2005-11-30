@@ -234,7 +234,7 @@ package GVD.Types is
    --  Beware that some debuggers might not be available.
 
    type Program_Descriptor is record
-      Program       : String_Access;
+      Program       : VFS.Virtual_File;
       Debugger      : Debugger_Type;
       Debugger_Name : String_Access;
       Remote_Host   : String_Access;

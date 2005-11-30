@@ -54,7 +54,6 @@ with Items.Simples;       use Items.Simples;
 with Items;               use Items;
 with Language.Debugger;   use Language.Debugger;
 with Language;            use Language;
-with OS_Utils;            use OS_Utils;
 with Process_Proxies;     use Process_Proxies;
 with String_Utils;        use String_Utils;
 with VFS;                 use VFS;
@@ -236,6 +235,11 @@ package body Debugger.Gdb is
    procedure Restore_Language
      (Debugger : access Gdb_Debugger);
    --  Restore the language that was active before Switch_Language was called.
+
+   function Get_Module (Executable : VFS.Virtual_File) return String;
+   --  Return the name of the module contained in Executable
+   --  Assume that the name of the module is the executable file
+   --  with no path information and no extension.
 
    ---------------------
    -- Language_Filter --
@@ -639,7 +643,7 @@ package body Debugger.Gdb is
 
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
-      Executable      : String;
+      Executable      : VFS.Virtual_File := VFS.No_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
@@ -674,7 +678,6 @@ package body Debugger.Gdb is
            (Debugger, Local_Arguments, Debugger_Name, Proxy, Remote_Host);
       end if;
 
-      Free (Debugger.Executable);
       Free (Debugger.Executable_Args);
       Free (Debugger.Remote_Host);
       Free (Debugger.Remote_Target);
@@ -684,9 +687,7 @@ package body Debugger.Gdb is
          Free (Local_Arguments (J));
       end loop;
 
-      if Executable /= "" then
-         Debugger.Executable := new String'(Executable);
-      end if;
+      Debugger.Executable := Executable;
 
       if Executable_Args /= "" then
          Debugger.Executable_Args := new String'(Executable_Args);
@@ -807,15 +808,8 @@ package body Debugger.Gdb is
 
       --  Load the module to debug, if any.
 
-      if Debugger.Executable /= null then
-         declare
-            Exec : constant String := Debugger.Executable.all;
-            --  Copy Executable, since Debugger.Executable might be freed
-            --  by Set_Executable below.
-
-         begin
-            Set_Executable (Debugger, Exec, Mode => Visible);
-         end;
+      if Debugger.Executable /= VFS.No_File then
+         Set_Executable (Debugger, Debugger.Executable, Mode => Visible);
       else
          --  Indicate that a new executable is present (even if there is none,
          --  we still need to reset some data).
@@ -866,7 +860,9 @@ package body Debugger.Gdb is
          Set_Args (Debugger, Debugger.Executable_Args.all, Mode => Visible);
       end if;
 
-      if Debugger.Window /= null and then Debugger.Executable = null then
+      if Debugger.Window /= null
+        and then Debugger.Executable = VFS.No_File
+      then
          Display_Prompt (Debugger);
       end if;
 
@@ -968,27 +964,9 @@ package body Debugger.Gdb is
    --------------------
 
    function Get_Executable
-     (Debugger : access Gdb_Debugger) return VFS.Virtual_File
-   is
-      E : GNAT.OS_Lib.String_Access;
-      Result : Virtual_File;
+     (Debugger : access Gdb_Debugger) return VFS.Virtual_File is
    begin
-      if Debugger.Executable /= null then
-         if Is_Absolute_Path_Or_URL (Debugger.Executable.all) then
-            Result := Create (Full_Filename => Debugger.Executable.all);
-         else
-            E := Locate_Exec_On_Path (Debugger.Executable.all);
-            if E /= null then
-               Result := Create (Full_Filename => E.all);
-               Free (E);
-            else
-               Result := Create_From_Base (Debugger.Executable.all);
-            end if;
-         end if;
-         return Result;
-      else
-         return VFS.No_File;
-      end if;
+      return Debugger.Executable;
    end Get_Executable;
 
    --------------------
@@ -997,7 +975,7 @@ package body Debugger.Gdb is
 
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
-      Executable : String;
+      Executable : VFS.Virtual_File;
       Mode       : Command_Type := Hidden)
    is
       pragma Unreferenced (Mode);
@@ -1008,22 +986,28 @@ package body Debugger.Gdb is
       --  because gdb does not seem to take into account this variable at all.
       Cmd                 : Basic_Types.String_Access;
       Process             : Visual_Debugger;
-      Exec_Has_Spaces     : constant Boolean := Index (Executable, " ") /= 0;
+      Exec_Has_Spaces     : constant Boolean :=
+        Index (Full_Name (Executable).all, " ") /= 0;
 
    begin
-      Free (Debugger.Executable);
-
-      if Debugger.Remote_Target = null then
-         Debugger.Executable := new String'(Executable);
-      else
-         Debugger.Executable :=
-           new String'(To_Unix_Pathname (Executable));
-      end if;
+      Debugger.Executable := Executable;
 
       if Exec_Has_Spaces then
-         Cmd := new String'("file """ & Debugger.Executable.all & '"');
+         if Debugger.Remote_Target = null then
+            Cmd := new String'("file """ & Full_Name (Executable).all & '"');
+         else
+            Cmd := new String'
+              ("file """ & To_Unix_Pathname (Full_Name (Executable).all)
+               & '"');
+         end if;
+
       else
-         Cmd := new String'("file " & Debugger.Executable.all);
+         if Debugger.Remote_Target = null then
+            Cmd := new String'("file " & Full_Name (Executable).all);
+         else
+            Cmd := new String'
+              ("file " & To_Unix_Pathname (Full_Name (Executable).all));
+         end if;
       end if;
 
       if Debugger.Window /= null then
@@ -1287,38 +1271,28 @@ package body Debugger.Gdb is
       return Num /= Expect_Timeout;
    end Wait_Prompt;
 
+   ----------------
+   -- Get_Module --
+   ----------------
+
+   function Get_Module (Executable : VFS.Virtual_File) return String is
+      Exec : constant String := Base_Name (Executable);
+      Dot_Index : Natural;
+   begin
+      --  Strip extensions (e.g .out)
+
+      Dot_Index := Index (Exec, ".");
+
+      if Dot_Index = 0 then
+         Dot_Index := Exec'Last + 1;
+      end if;
+
+      return Exec (Exec'First .. Dot_Index - 1);
+   end Get_Module;
+
    ---------
    -- Run --
    ---------
-
-   function Get_Module (Executable : String) return String;
-   --  Return the name of the module contained in Executable
-   --  Assume that the name of the module is the executable file
-   --  with no path information and no extension.
-
-   function Get_Module (Executable : String) return String is
-      Dot_Index, Dir_Sep : Natural;
-   begin
-      --  Strip path info
-
-      Dir_Sep := Executable'Last;
-
-      while Dir_Sep > Executable'First
-        and then not Is_Directory_Separator (Executable (Dir_Sep - 1))
-      loop
-         Dir_Sep := Dir_Sep - 1;
-      end loop;
-
-      --  Strip extensions (e.g .out)
-
-      Dot_Index := Index (Executable (Dir_Sep .. Executable'Last), ".");
-
-      if Dot_Index = 0 then
-         Dot_Index := Executable'Last + 1;
-      end if;
-
-      return Executable (Dir_Sep .. Dot_Index - 1);
-   end Get_Module;
 
    procedure Run
      (Debugger  : access Gdb_Debugger;
@@ -1326,10 +1300,10 @@ package body Debugger.Gdb is
       Mode      : Command_Type := Hidden) is
    begin
       if Arguments = "" and then Debugger.Remote_Target /= null
-        and then Debugger.Executable /= null
+        and then Debugger.Executable /= VFS.No_File
       then
          declare
-            Module : constant String := Get_Module (Debugger.Executable.all);
+            Module : constant String := Get_Module (Debugger.Executable);
          begin
             Send (Debugger, "run " & Module, Mode => Mode);
          end;
@@ -1367,10 +1341,10 @@ package body Debugger.Gdb is
       end if;
 
       if Arguments = "" and then Debugger.Remote_Target /= null
-        and then Debugger.Executable /= null
+        and then Debugger.Executable /= VFS.No_File
       then
          declare
-            Module : constant String := Get_Module (Debugger.Executable.all);
+            Module : constant String := Get_Module (Debugger.Executable);
          begin
             if Debugger.Has_Start_Cmd = 1 then
                Send (Debugger, "start " & Module, Mode => Mode);

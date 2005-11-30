@@ -131,7 +131,7 @@ package body GVD.Process is
      (Process         : access Visual_Debugger_Record'Class;
       Kind            : GVD.Types.Debugger_Type;
       Proxy           : Process_Proxy_Access;
-      Executable      : String;
+      Executable      : VFS.Virtual_File;
       Debugger_Args   : Argument_List;
       Executable_Args : String;
       Remote_Host     : String := "";
@@ -888,7 +888,7 @@ package body GVD.Process is
      (Process         : access Visual_Debugger_Record'Class;
       Kind            : Debugger_Type;
       Proxy           : Process_Proxy_Access;
-      Executable      : String;
+      Executable      : VFS.Virtual_File;
       Debugger_Args   : Argument_List;
       Executable_Args : String;
       Remote_Host     : String := "";
@@ -919,7 +919,7 @@ package body GVD.Process is
          Process.Descriptor.Protocol := new String'(Remote_Protocol);
       end if;
 
-      Process.Descriptor.Program := new String'(Executable);
+      Process.Descriptor.Program := Executable;
       Process.Descriptor.Debugger_Name := new String'(Debugger_Name);
 
       case Kind is
@@ -932,31 +932,17 @@ package body GVD.Process is
 
       --  Spawn the debugger.
 
-      if Remote_Host /= "" or else Is_Regular_File (Executable) then
-         Spawn
-           (Process.Debugger,
-            Executable,
-            Debugger_Args,
-            Executable_Args,
-            Proxy,
-            Process.Window.all'Access,
-            Remote_Host,
-            Remote_Target,
-            Remote_Protocol,
-            Debugger_Name);
-      else
-         Spawn
-           (Process.Debugger, "", Debugger_Args, Executable_Args,
-            Proxy,
-            Process.Window.all'Access, Remote_Host, Remote_Target,
-            Remote_Protocol, Debugger_Name);
-
-         if Executable /= "" then
-            Output_Error
-              (GPS_Window (Process.Window).Kernel,
-               (-" Could not find file: ") & Executable);
-         end if;
-      end if;
+      Spawn
+        (Process.Debugger,
+         Executable,
+         Debugger_Args,
+         Executable_Args,
+         Proxy,
+         Process.Window.all'Access,
+         Remote_Host,
+         Remote_Target,
+         Remote_Protocol,
+         Debugger_Name);
 
       --  Set the output filter, so that we output everything in the Gtk_Text
       --  window.
@@ -1532,12 +1518,13 @@ package body GVD.Process is
       Process : Visual_Debugger;
       Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
       Edit           : GVD.Source_Editor.GPS.GEdit;
-      Module         : GNAT.OS_Lib.String_Access;
+      Module         : VFS.Virtual_File;
       Program_Args   : GNAT.OS_Lib.String_Access;
       Blank_Pos      : Natural;
       Proxy          : Process_Proxy_Access;
       Success        : Boolean;
       Property       : Breakpoint_Property_Record;
+      Exec           : GNAT.OS_Lib.String_Access;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -1550,39 +1537,55 @@ package body GVD.Process is
       Program_Args := new String'("");
 
       if File /= No_File then
-         Module := new String'(Full_Name (File).all);
+         Module := File;
 
       elsif Args /= "" then
          Blank_Pos := Ada.Strings.Fixed.Index (Args, " ");
 
          if Blank_Pos = 0 then
-            Module := new String'(Args);
+            Exec := Locate_Exec_On_Path (Args);
+            if Exec /= null then
+               Module := Create (Full_Filename => Exec.all);
+               Free (Exec);
+            else
+               Module := Create (Full_Filename => Normalize_Pathname (Args));
+            end if;
+
          else
-            Module := new String'(Args (Args'First .. Blank_Pos - 1));
+            Exec := Locate_Exec_On_Path (Args (Args'First .. Blank_Pos - 1));
+            if Exec /= null then
+               Module := Create (Full_Filename => Exec.all);
+               Free (Exec);
+            else
+               Module := Create
+                 (Full_Filename =>
+                    Normalize_Pathname (Args (Args'First .. Blank_Pos - 1)));
+            end if;
+
             Free (Program_Args);
             Program_Args := new String'(Args (Blank_Pos + 1 .. Args'Last));
          end if;
 
       else
-         Module := new String'("");
+         Module := VFS.No_File;
       end if;
 
-      declare
-         Ptr         : GNAT.OS_Lib.String_Access :=
-           GNAT.OS_Lib.Get_Executable_Suffix;
-         Module_Exec : constant String := Module.all & Ptr.all;
+      --  On windows, we should try to debug "file.exe" if "file" is not found
+      if Module /= VFS.No_File and then not Is_Regular_File (Module) then
+         declare
+            Ptr         : GNAT.OS_Lib.String_Access :=
+              GNAT.OS_Lib.Get_Executable_Suffix;
+            Mod2        : Virtual_File;
+         begin
+            Mod2 := Create
+              (Full_Filename => Full_Name (Module).all & Ptr.all);
+            Free (Ptr);
 
-      begin
-         GNAT.OS_Lib.Free (Ptr);
-
-         if Module'Length > 0
-           and then not GNAT.OS_Lib.Is_Regular_File (Module.all)
-           and then GNAT.OS_Lib.Is_Regular_File (Module_Exec)
-         then
-            Free (Module);
-            Module := new String'(Module_Exec);
-         end if;
-      end;
+            if Is_Regular_File (Mod2) then
+               Module := Mod2;
+            end if;
+         end;
+      end if;
 
       declare
          Args : GNAT.OS_Lib.Argument_List_Access :=
@@ -1598,7 +1601,7 @@ package body GVD.Process is
            (Process         => Process,
             Kind            => Gdb_Type,
             Proxy           => Proxy,
-            Executable      => Module.all,
+            Executable      => Module,
             Debugger_Args   => Args (2 .. Args'Last),
             Executable_Args => Program_Args.all,
             Remote_Host     =>
@@ -1610,7 +1613,6 @@ package body GVD.Process is
             Debugger_Name   => Args (1).all,
             Success         => Success);
          GNAT.OS_Lib.Free (Args);
-         Free (Module);
 
          if not Success then
             Close_Debugger (Process);

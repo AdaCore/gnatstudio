@@ -1596,8 +1596,7 @@ package body GVD_Module is
          end if;
 
          if S /= No_File then
-            Set_Executable
-              (Process.Debugger, Full_Name (S).all, Mode => Hidden);
+            Set_Executable (Process.Debugger, S, Mode => Hidden);
             Change_Dir (Dir_Name (S).all);
          end if;
 

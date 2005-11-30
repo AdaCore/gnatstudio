@@ -42,7 +42,7 @@ package Debugger is
 
    procedure Spawn
      (Debugger        : access Debugger_Root;
-      Executable      : String;
+      Executable      : VFS.Virtual_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
@@ -362,7 +362,7 @@ package Debugger is
 
    procedure Set_Executable
      (Debugger   : access Debugger_Root;
-      Executable : String;
+      Executable : VFS.Virtual_File;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
       is abstract;
    --  Load an executable into the debugger.
