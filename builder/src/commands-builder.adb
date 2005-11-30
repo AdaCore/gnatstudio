@@ -20,8 +20,10 @@
 
 with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Maps;      use Ada.Strings.Maps;
 with GNAT.Expect;           use GNAT.Expect;
 with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.String_Split;     use GNAT.String_Split;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;       use GNAT.Expect.TTY;
 pragma Warnings (On);
@@ -64,14 +66,21 @@ package body Commands.Builder is
       Warning_Category : Style_Access;
       Style_Category   : Style_Access;
       Output           : String;
-      Quiet            : Boolean := False) is
+      Quiet            : Boolean := False)
+   is
+      Lines : Slice_Set;
    begin
       if not Quiet then
          Insert (Kernel, Output, Add_LF => False);
       end if;
 
-      String_List_Utils.String_List.Append
-        (Builder_Module_ID.Output, Output);
+      Create (Lines, Output, To_Set (ASCII.LF));
+
+      for I in 1 .. Slice_Count (Lines) loop
+         String_List_Utils.String_List.Append
+           (Builder_Module_ID.Output, Slice (Lines, I));
+      end loop;
+
       Parse_File_Locations
         (Kernel,
          Output,
