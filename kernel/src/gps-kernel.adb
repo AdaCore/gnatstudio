@@ -567,7 +567,7 @@ package body GPS.Kernel is
         Get_Window (Handle.Main_Window);
 
    begin
-      if As_Default_Desktop or else Project_Name = "" then
+      if Project_Name = "" and then not As_Default_Desktop then
          Trace (Me, "not saving the default desktop");
          return;
       end if;
