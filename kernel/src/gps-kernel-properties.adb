@@ -479,7 +479,9 @@ package body GPS.Kernel.Properties is
                      Specific_Data => 1);
                   Save (Descr.Value, Prop);
                end if;
-               Add_Child (File, Prop);
+               if Prop /= null then
+                  Add_Child (File, Prop);
+               end if;
             end if;
 
             Get_Next (Hash.all, Iter2);
