@@ -66,6 +66,8 @@ package Display_Items is
    --  Debugger can be null. In this case, the item will never be computed
    --
    --  Num must be specified, and is the number of the item
+   --
+   --  If the item already existed in the canvas, Item is set to null
 
    procedure Free
      (Item : access Display_Item_Record;
