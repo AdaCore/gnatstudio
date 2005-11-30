@@ -1060,7 +1060,7 @@ package body GVD.Process is
 
       --  Save the breakpoints if needed
 
-      if Get_Pref (Save_Breakpoints_On_Exit) then
+      if Get_Pref (Preserve_State_On_Exit) then
          if Process.Breakpoints /= null then
             Property             := new Breakpoint_Property_Record;
             Property.Breakpoints := Process.Breakpoints;
@@ -1076,16 +1076,6 @@ package body GVD.Process is
                Name => "breakpoints");
          end if;
       end if;
-
-      --  Close the underlying debugger
-
-      if Process.Debugger /= null
-        and then Get_Process (Process.Debugger) /= null
-      then
-         Close (Process.Debugger);
-      end if;
-
-      Process.Debugger := null;
 
       --  Memorize whether we should automatically start the call stack the
       --  next time GVD is started or not
@@ -1112,6 +1102,16 @@ package body GVD.Process is
       Free (Process.Breakpoints);
       Unregister_Dialog (Process);
       Free (Process.Command_History);
+
+      --  Close the underlying debugger
+
+      if Process.Debugger /= null
+        and then Get_Process (Process.Debugger) /= null
+      then
+         Close (Process.Debugger);
+      end if;
+
+      Process.Debugger := null;
 
       if Process.Timeout_Id /= 0 then
          Set_Busy (Process, False);
@@ -1626,7 +1626,7 @@ package body GVD.Process is
       Load_Project_From_Executable (Kernel, Get_Current_Process (Top));
 
       --  Restore the breakpoints
-      if Get_Pref (Save_Breakpoints_On_Exit) then
+      if Get_Pref (Preserve_State_On_Exit) then
          Get_Property
            (Property, Get_Executable (Process.Debugger),
             Name => "breakpoints", Found => Success);
