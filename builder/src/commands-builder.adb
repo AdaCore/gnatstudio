@@ -76,9 +76,9 @@ package body Commands.Builder is
 
       Create (Lines, Output, To_Set (ASCII.LF));
 
-      for I in 1 .. Slice_Count (Lines) loop
+      for J in 1 .. Slice_Count (Lines) loop
          String_List_Utils.String_List.Append
-           (Builder_Module_ID.Output, Slice (Lines, I));
+           (Builder_Module_ID.Output, Slice (Lines, J));
       end loop;
 
       Parse_File_Locations
