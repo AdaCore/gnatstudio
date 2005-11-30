@@ -514,7 +514,9 @@ package body GPS.Kernel.Properties is
       Trace (Me, "Loading " & Filename);
       if Is_Readable_File (Filename) then
          Root := Parse (Filename);
-         File := Root.Child;
+         if Root /= null then
+            File := Root.Child;
+         end if;
          while File /= null loop
             Prop := File.Child;
             while Prop /= null loop
