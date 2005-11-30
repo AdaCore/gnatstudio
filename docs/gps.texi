@@ -5577,6 +5577,17 @@ created automatically when needed (e.g. when using the Debug constextual menu
 to display a variable). You can also force its display through the menu
 @code{Debug->Data->Data Window}.
 
+However, if you save the desktop through the menu
+@code{File->Save More->Desktop} while the data window is open, it will be
+automatically reopen the next time the desktop is loaded, for instance when
+restarting GPS.
+
+The contents of the data window is preserved by default whenever you close it.
+Thus, if you reopen the data window either during the same debugger session,
+or automatically when you start a debugger on the same executable, it will
+display the same items again. This behavior is controlled by the
+@code{Preserve State on Exit} preference.
+
 @cindex menu
 @cindex contextual menu
    The data window contains all the graphic boxes that can be accessed
@@ -5732,6 +5743,10 @@ want to clearly see its structure).
      @item Zoom
 @cindex zoom
 Allows you to choose the zoom level directly from a menu.
+
+     @item Clear
+@cindex clear
+When this item is selected, all the boxes currently displayed are removed.
 
    @end table
 
@@ -5944,7 +5959,7 @@ ways of setting these properties:
 
 @cindex saving breakpoints
 @cindex breakpoints, saving
-If you have enabled the preference @code{Save breakpoints on exit}, GPS will
+If you have enabled the preference @code{Preserve state on exit}, GPS will
 automatically save the currently set breakpoints, and restore them the next
 time you debug the same executable. This allows you to immediately start
 debugging your application again, without reseting the breakpoints every time.
@@ -6196,7 +6211,7 @@ Here is the complete list of such commands. The arguments between square
 brackets are optional and can be omitted.
 
 @table @command
-@item graph (print|display) expression [dependent on display_num] [link_name name]
+@item graph (print|display) expression [dependent on display_num] [link_name name] [at x, y] [num num]
 @cindex graph print
 @cindex graph display
 This command creates a new item in the canvas, that shows the value of
@@ -6208,6 +6223,8 @@ automatically refreshed when the debugger stops, whereas @code{graph display}
 displays an automatically refreshed item.
 
 The new item is associated with a number, that is visible in its title bar.
+This number can be specified through the @code{num} keyword, and will be taken
+into account if no such item already exists.
 These numbers can be used to create links between the items, using the
 second argument to the command, @var{dependent on}. The link itself (i.e. the
 line) can be given a name that is automatically displayed, using the third
@@ -8391,12 +8408,17 @@ The number of spaces for the default indentation.
 @cindex debugger
 @table @i
 
-@item Save Breakpoints on exit
+@item Preserve State on Exit
 @cindex breakpoint
 If this preference is enabled, the debugger will automatically save breakpoints
 when it exists, and restore them the next time the same executable is debugged.
 This is a convenient way to work on an executable, where the typical usage
 looks like compile, debug, compile, debug,@dots{}
+
+When the preference is enabled, the debugger will also preserve the contents
+of the data window whenever it is closed. Reopening the window either during
+the same debugger session, or automatically when a new debugger is started
+on the same executable, will recreate the same boxes within the data window.
 
 @item Break on exceptions
 @cindex breakpoint
