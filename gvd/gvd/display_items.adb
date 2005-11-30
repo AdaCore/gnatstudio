@@ -350,6 +350,7 @@ package body Display_Items is
                   end if;
 
                   Free (Item, Remove_Aliases => False);
+                  Item := null;
                   return;
                end if;
             end if;
@@ -371,7 +372,7 @@ package body Display_Items is
 
    exception
       when others =>
-         Set_Busy (Debugger, False);
+         Item := null;
          raise;
    end Gtk_New;
 
