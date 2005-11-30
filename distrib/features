@@ -14,6 +14,14 @@ of the feature.
 New features in GPS 3.2.0
 -------------------------
 
+EB30-005 Saving the contents of the Data Window (2005-11-30)
+
+  Whenever you close the debugger data window (for instance when the debugger
+  is terminated, or manually during a debug session), its contents is now
+  preserved, so that if you reopen the data window, it displays the same boxes.
+
+  Keywords: Debugger
+
 EB25-007 Full shell/python interface for accessing the debugger (2005-11-25)
 
   A new set of constructors and methods are available to create, access
@@ -28,6 +36,14 @@ EB23-004 New attribute in Project Properties: externally_built (2005-11-24)
   graphically in the project properties editor.
 
   Keywords: Project
+
+EB21-009 Debugger windows not saved in the desktop (2005-11-30)
+
+  If you save the desktop while a debugger is running, the saved desktop now
+  includes the debugger windows (consoles, call stack, data window). They will
+  be correctly restored the next time the desktop is loaded.
+
+  Keywords: Debugger, Desktop
 
 EB18-006 Size & position of GPS window now specific to each project (2005-11-18)
 
