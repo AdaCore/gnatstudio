@@ -635,14 +635,14 @@ package body GVD.Canvas is
                Link_Name      => Link_Name.all);
          end if;
 
-         Put (GVD_Canvas (Process.Data).Canvas, Item, X, Y);
-
+         --  Might be null if it was already on the canvas
          if Item /= null then
+            Put (GVD_Canvas (Process.Data).Canvas, Item, X, Y);
             Show_Item (GVD_Canvas (Process.Data).Canvas, Item);
-         end if;
 
-         if Link_From /= null then
-            Recompute_All_Aliases (Process, Recompute_Values => False);
+            if Link_From /= null then
+               Recompute_All_Aliases (Process, Recompute_Values => False);
+            end if;
          end if;
 
          Free (Link_Name);
