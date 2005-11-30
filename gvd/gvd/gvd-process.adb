@@ -1048,6 +1048,10 @@ package body GVD.Process is
 
       if Get_Pref (Preserve_State_On_Exit) then
          if Process.Breakpoints /= null then
+            Traces.Trace (Me, "Saving breakpoints in properties");
+            --  Take into account breakpoints that have been set manually
+            --  through the console, when the breakpoints window is not shown
+            Update_Breakpoints (Process, Force => True);
             Property             := new Breakpoint_Property_Record;
             Property.Breakpoints := Process.Breakpoints;
             Process.Breakpoints  := null;
