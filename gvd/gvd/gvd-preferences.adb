@@ -77,7 +77,7 @@ package body GVD.Preferences is
              & " when the window is closed."),
          Default    => True));
       Register_Property
-        (Prefs, Param_Spec (Save_Breakpoints_On_Exit), General);
+        (Prefs, Param_Spec (Preserve_State_On_Exit), General);
 
       Editor_Show_Line_With_Code := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Editor-Show-Line-With-Code",
