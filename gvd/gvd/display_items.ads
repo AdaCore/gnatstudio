@@ -37,8 +37,10 @@ package Display_Items is
 
    procedure Gtk_New
      (Item           : out Display_Item;
+      Graph_Cmd      : String;
       Variable_Name  : String;
-      Debugger       : access GVD.Process.Visual_Debugger_Record'CLass;
+      Num            : Integer;
+      Debugger       : access GVD.Process.Visual_Debugger_Record'Class;
       Auto_Refresh   : Boolean := True;
       Default_Entity : Items.Generic_Type_Access := null;
       Link_From      : Display_Item := null;
@@ -48,6 +50,10 @@ package Display_Items is
    --  be parsed again whenever the debugger stops. This is the default
    --  behavior, that can be changed by the user.
    --
+   --  Graph_Cmd is the "graph" command that was used to create the item. This
+   --  is the command that is saved across GVD sessions so that we can restore
+   --  the displayed variables the next time the debugger is started.
+   --
    --  If Variable_Name is "", then no parsing is done to get the type and
    --  or value of the variable.
    --  Default_Entity can be used to initialize the entity associated with the
@@ -56,6 +62,10 @@ package Display_Items is
    --  If Link_From is not null, the new item is directly inserted in the
    --  canvas, and a link is created between the new item and Link_From.
    --  Link_Name is the label used for the link between the two items.
+   --
+   --  Debugger can be null. In this case, the item will never be computed
+   --
+   --  Num must be specified, and is the number of the item
 
    procedure Free
      (Item : access Display_Item_Record;
@@ -64,6 +74,9 @@ package Display_Items is
    --  including its type description.
    --  If Remove_Aliases is True, then all the items on the canvas that are
    --  aliases of Item are also removed.
+
+   function Get_Graph_Cmd (Item : access Display_Item_record) return String;
+   --  Return the "graph display..." command used to create the item
 
    function Find_Item
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
@@ -132,6 +145,12 @@ package Display_Items is
    function Get_Num (Item : access Display_Item_Record) return Integer;
    --  Return the number of Item.
 
+   function Get_Entity
+     (Item : access Display_Item_Record'Class)
+      return Items.Generic_Type_Access;
+   --  Return the entity represented by the item. If the name hasn't been
+   --  specified, this is what will always be used to represent the item.
+
    function Get_Debugger
      (Item : access Display_Item_Record'Class)
       return GVD.Process.Visual_Debugger;
@@ -175,6 +194,7 @@ private
    type Display_Item_Record is new Gtkada.Canvas.Buffered_Item_Record with
    record
       Num          : Integer;
+      Graph_Cmd    : Basic_Types.String_Access := null;
       Name         : Basic_Types.String_Access := null;
       Entity       : Items.Generic_Type_Access := null;
       Auto_Refresh : Boolean := True;
