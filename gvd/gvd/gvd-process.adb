@@ -1545,21 +1545,27 @@ package body GVD.Process is
          if Blank_Pos = 0 then
             Exec := Locate_Exec_On_Path (Args);
             if Exec /= null then
-               Module := Create (Full_Filename => Exec.all);
+               Module := Create
+                 (Full_Filename =>
+                    Normalize_Pathname (Exec.all, Get_Current_Dir));
                Free (Exec);
             else
-               Module := Create (Full_Filename => Normalize_Pathname (Args));
+               Module := Create
+                 (Full_Filename => Normalize_Pathname (Args, Get_Current_Dir));
             end if;
 
          else
             Exec := Locate_Exec_On_Path (Args (Args'First .. Blank_Pos - 1));
             if Exec /= null then
-               Module := Create (Full_Filename => Exec.all);
+               Module := Create
+                 (Full_Filename =>
+                    Normalize_Pathname (Exec.all, Get_Current_Dir));
                Free (Exec);
             else
                Module := Create
                  (Full_Filename =>
-                    Normalize_Pathname (Args (Args'First .. Blank_Pos - 1)));
+                    Normalize_Pathname (Args (Args'First .. Blank_Pos - 1),
+                                        Get_Current_Dir));
             end if;
 
             Free (Program_Args);
