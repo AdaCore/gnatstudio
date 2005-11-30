@@ -178,6 +178,8 @@ package body GVD.Generic_View is
                Gtk_New (Child2, View,
                         Flags  => MDI_Child_Flags,
                         Group  => Group,
+                        Default_Width => 150,
+                        Default_Height => 150,
                         Module => Get_Module);
                Child := MDI_Child (Child2);
                Set_Title (Child, View_Name);
