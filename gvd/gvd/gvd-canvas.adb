@@ -28,6 +28,7 @@ with Gdk.Window;          use Gdk.Window;
 with Gdk;                 use Gdk;
 with Glib;                use Glib;
 with Glib.Object;         use Glib.Object;
+with Glib.Xml_Int;        use Glib.Xml_Int;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Enums;           use Gtk.Enums;
@@ -49,10 +50,12 @@ with Basic_Types;            use Basic_Types;
 with Debugger;               use Debugger;
 with Display_Items;          use Display_Items;
 with GNAT.Regpat;            use GNAT.Regpat;
+with GNAT.Strings;           use GNAT.Strings;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;  use GPS.Kernel.Properties;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Main_Window;        use GPS.Main_Window;
 with GVD.Memory_View;        use GVD.Memory_View;
@@ -70,25 +73,38 @@ with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 
 package body GVD.Canvas is
+   Me : constant Debug_Handle := Create ("Canvas");
+
    Graph_Cmd_Format : constant Pattern_Matcher := Compile
-     ("graph\s+(print|display)\s+(`([^`]+)`|""([^""]+)"")?(.*)",
+     ("("                  --  paren 1: whole command except dynamic attributes
+      & "graph\s+(print|display)"         --  paren 2: type of command
+      & "\s+("                            --  paren 3: what to display
+      & "`([^`]+)`"                       --  paren 4: a general expression ?
+      & "|""([^""]+)"""                   --  paren 5: or a quoted expression ?
+      & "|(\S+)"                          --  paren 6: or a standard name ?
+      & ")"                               --  end of paren 3
+      & "(\s+dependent\s+on\s+(\d+))?"    --  parenthesis 7 .. 8
+      & "(\s+link_name\s+(\S+))?"         --  parenthesis 9 .. 10
+      & ")"                               --  end of paren 1
+      & "(\s+at\s+(\d+),\s*(\d+))?"       --  parenthesis 11 .. 13
+      & "(\s+num\s+(\d+))?",              --  parenthesis 14 .. 15
       Case_Insensitive);
    --  Format of the graph print commands, and how to parse them
 
-   Graph_Cmd_Type_Paren          : constant := 1;
-   Graph_Cmd_Expression_Paren    : constant := 3;
-   Graph_Cmd_Quoted_Paren        : constant := 4;
-   Graph_Cmd_Rest_Paren          : constant := 5;
+   Graph_Cmd_Max_Paren           : constant := 15;
+   Graph_Cmd_Cmd_Paren           : constant := 1;
+   Graph_Cmd_Type_Paren          : constant := 2;
+   Graph_Cmd_Expression_Paren    : constant := 4;
+   Graph_Cmd_Quoted_Paren        : constant := 5;
+   Graph_Cmd_Variable_Paren      : constant := 6;
+   Graph_Cmd_Dependent_Paren     : constant := 8;
+   Graph_Cmd_Link_Paren          : constant := 10;
+   Graph_Cmd_At_Paren            : constant := 11;
+   Graph_Cmd_X_Paren             : constant := 12;
+   Graph_Cmd_Y_Paren             : constant := 13;
+   Graph_Cmd_Num_Paren           : constant := 15;
    --  Indexes of the parentheses pairs in Graph_Cmd_Format for each of the
    --  relevant fields.
-
-   Graph_Cmd_Dependent_Format : constant Pattern_Matcher := Compile
-     ("\s+dependent\s+on\s+(\d+)\s*", Case_Insensitive);
-   --  Partial analyses of the last part of a graph command
-
-   Graph_Cmd_Link_Format : constant Pattern_Matcher := Compile
-     ("\s+link_name\s+(.+)", Case_Insensitive);
-   --  Partial analyses of the last part of a graph command
 
    Graph_Cmd_Format2 : constant Pattern_Matcher := Compile
      ("graph\s+(enable|disable)\s+display\s+(.*)", Case_Insensitive);
@@ -119,6 +135,9 @@ package body GVD.Canvas is
       end record;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
 
+   procedure On_Attach
+     (Canvas  : access GVD_Canvas_Record;
+      Process : access Visual_Debugger_Record'Class);
    procedure Update (Canvas : access GVD_Canvas_Record);
    --  Called when the canvas needs refreshing
 
@@ -162,6 +181,38 @@ package body GVD.Canvas is
      (Canvas  : access GVD_Canvas_Record'Class);
    --  Called when the preferences have changed, and the canvas should be
    --  redisplayed with the new setup.
+
+   function Get_Next_Item_Num
+     (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
+      Candidate : Integer := -1) return Integer;
+   --  Return the number that should be used for the next item inserted into
+   --  the canvas.
+   --  Two successive calls to that function will not return the same value.
+   --  Candidate is a suggested candidate, and will be returned if no
+   --  other item matches that number. It is ignored if unspecified
+
+   ----------------
+   -- Properties --
+   ----------------
+
+   type GVD_Items_Property_Record is new Property_Record with record
+      Items : String_List_Access;
+   end record;
+   type GVD_Items_Property is access all GVD_Items_Property_Record'Class;
+
+   procedure Save
+     (Property : access GVD_Items_Property_Record;
+      Node     : in out Glib.Xml_Int.Node_Ptr);
+   procedure Load
+     (Property : in out GVD_Items_Property_Record;
+      From     : Glib.Xml_Int.Node_Ptr);
+   procedure Destroy (Property : in out GVD_Items_Property_Record);
+   --  See inherited documentation
+
+   procedure Load_Items_From_Property
+     (Process  : access Visual_Debugger_Record'Class;
+      Property : GVD_Items_Property_Record'Class);
+   --  Restore the items stored in the property
 
    -----------------
    -- Local Types --
@@ -297,6 +348,9 @@ package body GVD.Canvas is
    procedure On_Data_Refresh (Canvas : access Gtk_Widget_Record'Class);
    --  "Refresh" contextual menu
 
+   procedure On_Data_Clear (Canvas : access Gtk_Widget_Record'Class);
+   --  "Clear" contextual menu
+
    procedure On_Background_Click
      (Canvas : access Glib.Object.GObject_Record'Class;
       Event  : Gdk.Event.Gdk_Event);
@@ -305,6 +359,107 @@ package body GVD.Canvas is
    procedure Unselect_All
      (Process : access GVD.Process.Visual_Debugger_Record'Class);
    --  Unselect all items and their components
+
+   ----------
+   -- Save --
+   ----------
+
+   procedure Save
+     (Property : access GVD_Items_Property_Record;
+      Node     : in out Glib.Xml_Int.Node_Ptr)
+   is
+      Tmp : Glib.Xml_Int.Node_Ptr;
+   begin
+      if Property.Items /= null then
+         for Item in reverse Property.Items'Range loop
+            Tmp := new Glib.Xml_Int.Node;
+            Add_Child (Node, Tmp);
+            Tmp.Tag   := new String'("item");
+            Tmp.Value := new String'(Property.Items (Item).all);
+         end loop;
+      end if;
+   end Save;
+
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load
+     (Property : in out GVD_Items_Property_Record;
+      From     : Glib.Xml_Int.Node_Ptr)
+   is
+      Tmp : Glib.Xml_Int.Node_Ptr := From.Child;
+      Count : Natural := 0;
+   begin
+      while Tmp /= null loop
+         Count := Count + 1;
+         Tmp   := Tmp.Next;
+      end loop;
+
+      Property.Items := new GNAT.Strings.String_List (1 .. Count);
+      Count := Property.Items'First;
+
+      Tmp := From.Child;
+      while Tmp /= null loop
+         Property.Items (Count) := new String'(Tmp.Value.all);
+         Count := Count + 1;
+         Tmp   := Tmp.Next;
+      end loop;
+   end Load;
+
+   ------------------------------
+   -- Load_Items_From_Property --
+   ------------------------------
+
+   procedure Load_Items_From_Property
+     (Process  : access Visual_Debugger_Record'Class;
+      Property : GVD_Items_Property_Record'Class)
+   is
+   begin
+      if Property.Items /= null then
+         for Item in reverse Property.Items'Range loop
+            Process_User_Command
+              (Visual_Debugger (Process), Property.Items (Item).all,
+               Output_Command => True,
+               Mode => GVD.Types.Internal);
+         end loop;
+      end if;
+   end Load_Items_From_Property;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Property : in out GVD_Items_Property_Record) is
+   begin
+      Free (Property.Items);
+   end Destroy;
+
+   ---------------
+   -- On_Attach --
+   ---------------
+
+   procedure On_Attach
+     (Canvas  : access GVD_Canvas_Record;
+      Process : access Visual_Debugger_Record'Class)
+   is
+      Property : GVD_Items_Property_Record;
+      Found    : Boolean;
+   begin
+      Clear (Canvas.Canvas);
+      Canvas.Item_Num := 0;
+
+      if Get_Pref (Preserve_State_On_Exit) then
+         Get_Property
+           (Property,
+            Get_Executable (Process.Debugger),
+            Name  => "debugger_items",
+            Found => Found);
+         if Found then
+            Load_Items_From_Property (Process, Property);
+         end if;
+      end if;
+   end On_Attach;
 
    ------------
    -- Update --
@@ -364,8 +519,7 @@ package body GVD.Canvas is
      (Process : access Visual_Debugger_Record'Class;
       Cmd     : String)
    is
-      Matched   : Match_Array (0 .. 10);
-      Matched2  : Match_Array (0 .. 10);
+      Matched   : Match_Array (0 .. Graph_Cmd_Max_Paren);
       Item      : Display_Item;
       Index,
       Last      : Positive;
@@ -373,13 +527,14 @@ package body GVD.Canvas is
       First     : Natural;
       Link_Name : Basic_Types.String_Access;
       Link_From : Display_Item;
-      Dependent_On_First : Natural := Natural'Last;
-      Link_Name_First    : Natural := Natural'Last;
+      X, Y               : Gint := Gint'First;
+      Num       : Integer := -1;
+      Entity    : Generic_Type_Access;
 
    begin
       --  graph (print|display) expression [dependent on display_num]
-      --        [link_name name]
-      --  graph (print|display) `command`
+      --        [link_name name] [at x, y] [num \d+]
+      --  graph (print|display) `command` [at x, y] [num \d+]
       --  graph enable display display_num [display_num ...]
       --  graph disable display display_num [display_num ...]
       --  graph undisplay display_num
@@ -392,140 +547,102 @@ package body GVD.Canvas is
            or else Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'D';
 
          --  Do we have any 'dependent on' expression ?
-
-         if Matched (Graph_Cmd_Rest_Paren).First >= Cmd'First then
-            Match (Graph_Cmd_Dependent_Format,
-                   Cmd (Matched (Graph_Cmd_Rest_Paren).First
-                        .. Matched (Graph_Cmd_Rest_Paren).Last),
-                   Matched2);
-
-            if Matched2 (1) /= No_Match then
-               Dependent_On_First := Matched2 (0).First;
-               Link_From := Find_Item
-                 (GVD_Canvas (Process.Data).Canvas,
-                  Integer'Value
-                  (Cmd (Matched2 (1).First .. Matched2 (1).Last)));
+         if Matched (Graph_Cmd_Dependent_Paren) /= No_Match then
+            Num := Safe_Value
+              (Cmd (Matched (Graph_Cmd_Dependent_Paren).First
+                    .. Matched (Graph_Cmd_Dependent_Paren).Last),
+               -1);
+            if Num /= -1 then
+               Link_From := Find_Item (GVD_Canvas (Process.Data).Canvas, Num);
             end if;
          end if;
 
-         --  Do we have any 'link name' expression ?
-
-         if Matched (Graph_Cmd_Rest_Paren).First >= Cmd'First then
-            Match (Graph_Cmd_Link_Format,
-                   Cmd (Matched (Graph_Cmd_Rest_Paren).First
-                        .. Matched (Graph_Cmd_Rest_Paren).Last),
-                   Matched2);
-
-            if Matched2 (0) /= No_Match then
-               Link_Name_First := Matched2 (0).First;
-               Link_Name := new String'
-                 (Cmd (Matched2 (1).First .. Matched2 (1).Last));
-            end if;
+         --  Do we have any 'link name' expression
+         if Matched (Graph_Cmd_Link_Paren) /= No_Match then
+            Link_Name := new String'
+              (Cmd (Matched (Graph_Cmd_Link_Paren).First
+                    .. Matched (Graph_Cmd_Link_Paren).Last));
          end if;
 
-         --  A general expression (graph print `cmd`)
-         if Matched (Graph_Cmd_Expression_Paren) /= No_Match then
-            declare
-               Expr : constant String := Cmd
-                 (Matched (Graph_Cmd_Expression_Paren).First ..
-                  Matched (Graph_Cmd_Expression_Paren).Last);
-               Entity : constant Items.Generic_Type_Access :=
-                 New_Debugger_Type (Expr);
+         --  Do we have any 'at' expression
+         if Matched (Graph_Cmd_At_Paren) /= No_Match then
+            X := Gint (Safe_Value
+               (Cmd (Matched (Graph_Cmd_X_Paren).First
+                     .. Matched (Graph_Cmd_X_Paren).Last), Integer'First));
+            Y := Gint (Safe_Value
+               (Cmd (Matched (Graph_Cmd_Y_Paren).First
+                     .. Matched (Graph_Cmd_Y_Paren).Last), Integer'First));
+         end if;
 
-            begin
-               Set_Value
-                 (Debugger_Output_Type (Entity.all),
-                  Process_User_Command
-                    (Visual_Debugger (Process),
-                     Refresh_Command (Debugger_Output_Type (Entity.all)),
-                     Mode => GVD.Types.Internal));
-
-               --  No link ?
-
-               if Dependent_On_First = Natural'Last then
-                  Gtk_New
-                    (Item,
-                     Variable_Name  => Expr,
-                     Debugger       => Process,
-                     Auto_Refresh   => Enable,
-                     Default_Entity => Entity);
-                  Put (GVD_Canvas (Process.Data).Canvas, Item);
-
-               else
-                  Gtk_New
-                    (Item,
-                     Variable_Name  => Expr,
-                     Debugger       => Process,
-                     Auto_Refresh   => Enable,
-                     Default_Entity => Entity,
-                     Link_From      => Link_From,
-                     Link_Name      => Link_Name.all);
-               end if;
-
-               if Item /= null then
-                  Show_Item (GVD_Canvas (Process.Data).Canvas, Item);
-               end if;
-            end;
-
-         --  A quoted name or standard name
-
+         --  Do we have any 'num' expression
+         if Matched (Graph_Cmd_Num_Paren) /= No_Match then
+            Num := Safe_Value
+                (Cmd (Matched (Graph_Cmd_Num_Paren).First
+                      .. Matched (Graph_Cmd_Num_Paren).Last), -1);
+            Num := Get_Next_Item_Num (Process, Num);
          else
-            --  Quoted
+            Num := Get_Next_Item_Num (Process);
+         end if;
 
-            if Matched (Graph_Cmd_Quoted_Paren) /= No_Match then
-               First := Matched (Graph_Cmd_Quoted_Paren).First;
-               Last  := Matched (Graph_Cmd_Quoted_Paren).Last;
+         --  What do we want to display ?
+         if Matched (Graph_Cmd_Expression_Paren) /= No_Match then
+            First  := Matched (Graph_Cmd_Expression_Paren).First;
+            Last   := Matched (Graph_Cmd_Expression_Paren).Last;
+            Entity := New_Debugger_Type (Cmd (First .. Last));
+            Set_Value
+              (Debugger_Output_Type (Entity.all),
+               Process_User_Command
+                 (Visual_Debugger (Process),
+                  Refresh_Command (Debugger_Output_Type (Entity.all)),
+                  Mode => GVD.Types.Internal));
 
-            --  Standard
+         elsif Matched (Graph_Cmd_Quoted_Paren) /= No_Match then
+            First := Matched (Graph_Cmd_Quoted_Paren).First;
+            Last  := Matched (Graph_Cmd_Quoted_Paren).Last;
+         else
+            First := Matched (Graph_Cmd_Variable_Paren).First;
+            Last  := Matched (Graph_Cmd_Variable_Paren).Last;
+         end if;
 
-            else
-               First := Matched (Graph_Cmd_Rest_Paren).First;
-               Last  := Natural'Min (Link_Name_First, Dependent_On_First);
+         --  No link ?
 
-               if Last = Natural'Last then
-                  Last := Matched (Graph_Cmd_Rest_Paren).Last;
-               else
-                  Last := Last - 1;
-               end if;
+         if Link_From = null then
+            Gtk_New
+              (Item,
+               Graph_Cmd      => Cmd (Matched
+                 (Graph_Cmd_Cmd_Paren).First
+                 .. Matched (Graph_Cmd_Cmd_Paren).Last),
+               Variable_Name  => Cmd (First .. Last),
+               Debugger       => Visual_Debugger (Process),
+               Auto_Refresh   => Enable,
+               Num            => Num,
+               Default_Entity => Entity);
+         else
+            if Link_Name = null then
+               Link_Name := new String'(Cmd (First .. Last));
             end if;
+            Gtk_New
+              (Item,
+               Graph_Cmd      => Cmd (Matched
+                 (Graph_Cmd_Cmd_Paren).First
+                 .. Matched (Graph_Cmd_Cmd_Paren).Last),
+               Variable_Name  => Cmd (First .. Last),
+               Debugger       => Visual_Debugger (Process),
+               Auto_Refresh   => Enable,
+               Default_Entity => Entity,
+               Num            => Num,
+               Link_From      => Link_From,
+               Link_Name      => Link_Name.all);
+         end if;
 
-            --  If we don't want any link:
+         Put (GVD_Canvas (Process.Data).Canvas, Item, X, Y);
 
-            if Dependent_On_First = Natural'Last then
-               Gtk_New
-                 (Item,
-                  Variable_Name => Cmd (First .. Last),
-                  Debugger      => Process,
-                  Auto_Refresh  =>
-                    Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
+         if Item /= null then
+            Show_Item (GVD_Canvas (Process.Data).Canvas, Item);
+         end if;
 
-               if Item /= null then
-                  Put (GVD_Canvas (Process.Data).Canvas, Item);
-                  Show_Item (GVD_Canvas (Process.Data).Canvas, Item);
-                  Recompute_All_Aliases
-                    (Process,
-                     Recompute_Values => False);
-               end if;
-
-            --  Else if we have a link
-
-            else
-               if Link_Name = null then
-                  Link_Name := new String'(Cmd (First .. Last));
-               end if;
-
-               Gtk_New
-                 (Item,
-                  Variable_Name => Cmd (First .. Last),
-                  Debugger      => Process,
-                  Auto_Refresh  => Enable,
-                  Link_From     => Link_From,
-                  Link_Name     => Link_Name.all);
-
-               if Item /= null then
-                  Show_Item (GVD_Canvas (Process.Data).Canvas, Item);
-               end if;
-            end if;
+         if Link_From /= null then
+            Recompute_All_Aliases (Process, Recompute_Values => False);
          end if;
 
          Free (Link_Name);
@@ -596,6 +713,15 @@ package body GVD.Canvas is
       Refresh_Canvas (GVD_Canvas (Debugger.Data).Canvas);
    end Refresh_Data_Window;
 
+   -------------------
+   -- On_Data_Clear --
+   -------------------
+
+   procedure On_Data_Clear (Canvas : access Gtk_Widget_Record'Class) is
+   begin
+      Clear (GVD_Canvas (Canvas).Canvas);
+   end On_Data_Clear;
+
    ---------------------
    -- On_Data_Refresh --
    ---------------------
@@ -632,8 +758,48 @@ package body GVD.Canvas is
      (Canvas : access Gtk_Widget_Record'Class)
    is
       Process : constant Visual_Debugger := Get_Process (GVD_Canvas (Canvas));
+      Iter   : Item_Iterator;
+      Property : GVD_Items_Property;
+      Count    : Natural := 0;
    begin
+      Traces.Trace (Me, "On_Data_Canvas_Destroy");
       if Process /= null then
+         if Get_Pref (Preserve_State_On_Exit) then
+            Iter := Start (GVD_Canvas (Canvas).Canvas);
+            while Get (Iter) /= null loop
+               if Get_Graph_Cmd (Display_Item (Get (Iter))) /= "" then
+                  Count := Count + 1;
+               end if;
+               Next (Iter);
+            end loop;
+
+            if Count = 0 then
+               Remove_Property
+                 (File => Get_Executable (Process.Debugger),
+                  Name => "debugger_items");
+            else
+               Property := new GVD_Items_Property_Record;
+               Property.Items := new GNAT.Strings.String_List (1 .. Count);
+               Count := Property.Items'First;
+
+               Iter := Start (GVD_Canvas (Canvas).Canvas);
+               while Get (Iter) /= null loop
+                  if Get_Graph_Cmd (Display_Item (Get (Iter))) /= "" then
+                     Property.Items (Count) :=
+                       new String'(Get_Graph_Cmd (Display_Item (Get (Iter))));
+                     Count := Count + 1;
+                  end if;
+                  Next (Iter);
+               end loop;
+
+               Set_Property
+                 (File       => Get_Executable (Process.Debugger),
+                  Name       => "debugger_items",
+                  Property   => Property,
+                  Persistent => True);
+            end if;
+         end if;
+
          Process.Data := null;
          GVD_Canvas (Canvas).Selected_Item := null;
          GVD_Canvas (Canvas).Selected_Component := null;
@@ -883,7 +1049,7 @@ package body GVD.Canvas is
          Object_Callback.To_Marshaller (On_Background_Click'Access),
          Canvas);
       Widget_Callback.Object_Connect
-        (Canvas.Canvas, "destroy",
+        (Canvas, "destroy",
          On_Data_Canvas_Destroy'Access, Canvas);
       Widget_Callback.Object_Connect
         (Canvas.Canvas, "realize", On_Realize'Access, Canvas);
@@ -943,12 +1109,15 @@ package body GVD.Canvas is
    -----------------------
 
    function Get_Next_Item_Num
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class)
-      return Integer
-   is
+     (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
+      Candidate : Integer := -1) return Integer is
    begin
-      GVD_Canvas (Debugger.Data).Item_Num :=
-        GVD_Canvas (Debugger.Data).Item_Num + 1;
+      if Candidate > GVD_Canvas (Debugger.Data).Item_Num then
+         GVD_Canvas (Debugger.Data).Item_Num := Candidate;
+      else
+         GVD_Canvas (Debugger.Data).Item_Num :=
+           GVD_Canvas (Debugger.Data).Item_Num + 1;
+      end if;
       return GVD_Canvas (Debugger.Data).Item_Num;
    end Get_Next_Item_Num;
 
@@ -1264,6 +1433,14 @@ package body GVD.Canvas is
       Gtk_New (Mitem, Label => -"Zoom");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Set_Submenu (Mitem, Zooms_Menu);
+
+      Gtk_New (Mitem);
+      Append (Canvas.Contextual_Background_Menu, Mitem);
+
+      Gtk_New (Mitem, Label => -"Clear");
+      Append (Canvas.Contextual_Background_Menu, Mitem);
+      Widget_Callback.Object_Connect
+        (Mitem, "activate", On_Data_Clear'Access, Canvas);
 
       Gtk_New (Mitem);
       Append (Canvas.Contextual_Background_Menu, Mitem);
