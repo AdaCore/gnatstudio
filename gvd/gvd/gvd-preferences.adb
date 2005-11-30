@@ -66,13 +66,15 @@ package body GVD.Preferences is
 
       Register_Property  (Prefs, Param_Spec (Execution_Window), General);
 
-      Save_Breakpoints_On_Exit := Param_Spec_Boolean (Gnew_Boolean
-        (Name       => XML_Prefix & "Save-Breakpoints-On-Exit",
-         Nick       => -"Save breakpoints on exit",
+      Preserve_State_On_Exit := Param_Spec_Boolean (Gnew_Boolean
+        (Name       => XML_Prefix & "Preserve_State-On-Exit",
+         Nick       => -"Preserve state on exit",
          Blurb      =>
             -("True if the breakpoints should be saved when the debugger"
              & " session is terminated, and restored the next time the same"
-             & " executable is debugged"),
+             & " executable is debugged. This preference also controls"
+             & " whether the contents of the data window should be preserved"
+             & " when the window is closed."),
          Default    => True));
       Register_Property
         (Prefs, Param_Spec (Save_Breakpoints_On_Exit), General);
