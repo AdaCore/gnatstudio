@@ -22,6 +22,7 @@ with Glib;              use Glib;
 with Gdk.Drawable;      use Gdk.Drawable;
 with Gdk.GC;            use Gdk.GC;
 with Gdk.Pixmap;        use Gdk.Pixmap;
+with Gdk.Rectangle;     use Gdk.Rectangle;
 with Gdk.Window;        use Gdk.Window;
 with Gdk.Event;         use Gdk.Event;
 with Gtk.Enums;         use Gtk.Enums;
@@ -42,12 +43,9 @@ with GVD.Preferences;     use GVD.Preferences;
 with GVD.Process;         use GVD.Process;
 with GVD.Types;
 with Basic_Types;         use Basic_Types;
-with GVD.Trace;           use GVD.Trace;
 with Process_Proxies;     use Process_Proxies;
 with Ada.Exceptions;      use Ada.Exceptions;
 with Traces;              use Traces;
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Main_Window;     use GPS.Main_Window;
 
 package body Display_Items is
 
@@ -133,9 +131,7 @@ package body Display_Items is
 
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
-      Context        : Drawing_Context;
-      Variable_Name : String;
-      Auto_Refresh  : Boolean := True);
+      Context        : Drawing_Context);
    --  Item.Entity must have been parsed already.
 
    procedure Update_Display (Item : access Display_Item_Record'Class);
@@ -217,13 +213,74 @@ package body Display_Items is
       Link   : access Canvas_Link_Record'Class) return Boolean;
    --  Remove all temporary links from the canvas
 
+   procedure Parse_Type (Item : access Display_Item_Record'Class);
+   --  Parse the type of the entity associated with Item. If the type is
+   --  already known, nothing is done
+
+   procedure Parse_Value (Item : access Display_Item_Record'Class);
+   --  Parse the value of the entity
+
+   ----------------
+   -- Parse_Type --
+   ----------------
+
+   procedure Parse_Type (Item : access Display_Item_Record'Class) is
+   begin
+      if Item.Is_A_Variable and then Item.Entity = null then
+         Set_Busy (Item.Debugger, True, Force_Refresh => True);
+         begin
+            Item.Entity := Parse_Type (Item.Debugger.Debugger, Item.Name.all);
+         exception
+            when E : Language.Unexpected_Type | Constraint_Error =>
+               Trace (Exception_Handle,
+                      "Exception when getting type of entity: "
+                      & Exception_Information (E));
+               Item.Entity := null;
+         end;
+         Set_Busy (Item.Debugger, False);
+
+         if Item.Entity = null then
+            Trace (Me, "Result of Parse_Type is null");
+         end if;
+      end if;
+   end Parse_Type;
+
+   -----------------
+   -- Parse_Value --
+   -----------------
+
+   procedure Parse_Value (Item : access Display_Item_Record'Class) is
+      Value_Found : Boolean;
+   begin
+      if Item.Entity /= null and then Item.Is_A_Variable then
+         Set_Busy (Item.Debugger, True, Force_Refresh => True);
+         begin
+            Parse_Value
+              (Item.Debugger.Debugger,
+               Item.Name.all,
+               Item.Entity,
+               Value_Found => Value_Found);
+            Set_Valid (Item.Entity, Value_Found);
+
+         exception
+            when Language.Unexpected_Type | Constraint_Error =>
+               Set_Valid (Item.Entity, False);
+         end;
+         Set_Busy (Item.Debugger, False);
+      elsif Item.Entity /= null then
+         Set_Valid (Item.Entity, True);
+      end if;
+   end Parse_Value;
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
      (Item           : out Display_Item;
+      Graph_Cmd      : String;
       Variable_Name  : String;
+      Num            : Integer;
       Debugger       : access Visual_Debugger_Record'Class;
       Auto_Refresh   : Boolean := True;
       Default_Entity : Items.Generic_Type_Access := null;
@@ -231,144 +288,86 @@ package body Display_Items is
       Link_Name      : String := "")
    is
       Context     : constant Drawing_Context := Get_Item_Context (Debugger);
-      Entity      : Generic_Type_Access := Default_Entity;
-      Value_Found : Boolean := False;
       Alias_Item  : Display_Item;
-      Id          : String_Access;
-      Is_Parsable_Entity : Boolean := True;
-      Kernel      : constant Kernel_Handle :=
-        GPS_Window (Debugger.Window).Kernel;
-
    begin
+      Item                := new Display_Item_Record;
+      Item.Graph_Cmd      := new String'(Graph_Cmd);
+      Item.Entity         := Default_Entity;
+      Item.Is_A_Variable  := Default_Entity = null;
+      Item.Num            := Num;
+      Item.Debugger       := Visual_Debugger (Debugger);
+      Item.Name           := new String'(Variable_Name);
+      Item.Auto_Refresh   := Auto_Refresh;
+      Item.Is_Dereference := False;
+
       --  We need the information on the type, so that we detect aliases only
       --  for structurally equivalent types. If we have an error at this level,
-      --  this means that the variable is unknown, and we don't create an item
-      --  in that case.
+      --  the variable might not be known yet, and we will simply try to
+      --  refresh over and over again until we can parse the type
 
-      Set_Busy (Debugger, True, Force_Refresh => True);
+      Parse_Type (Item);
 
-      if Default_Entity = null then
-         begin
-            Entity := Parse_Type (Debugger.Debugger, Variable_Name);
-         exception
-            when E : Language.Unexpected_Type | Constraint_Error =>
-               Trace (Exception_Handle,
-                      "Exception when getting type of entity: "
-                      & Exception_Information (E));
-               Output_Error
-                 (Kernel, (-"Could not parse type for ") & Variable_Name);
-
-               Entity := New_Debugger_Type
-                 (Print_Value_Cmd (Debugger.Debugger, Variable_Name));
-               Is_Parsable_Entity := False;
-         end;
-
-         if Entity = null then
-            Trace (Me, "Result of Parse_Type is null");
-            Output_Error
-              (Kernel, (-"Could not get the type of ") & Variable_Name);
-            Entity := New_Debugger_Type
-              (Print_Value_Cmd (Debugger.Debugger, Variable_Name));
-            Is_Parsable_Entity := False;
-         end if;
+      if Item.Entity /= null then
+         Set_Valid (Item.Entity, False);
       end if;
 
-      --  If the an auto-updated similar item is on the canvas, we simply show
+      --  If an auto-updated similar item is on the canvas, we simply show
       --  and select it.
 
-      if Variable_Name /= "" then
-         Id := new String'(Get_Uniq_Id (Debugger.Debugger, Variable_Name));
-      end if;
+      if Item.Entity /= null then
+         if Variable_Name /= "" then
+            Item.Id :=
+              new String'(Get_Uniq_Id (Debugger.Debugger, Variable_Name));
+         end if;
 
-      if Is_Parsable_Entity then
-         if Auto_Refresh then
-            --  Avoid creating the same item twice if it already exists in the
-            --  canvas
+         if Item.Is_A_Variable then
+            if Auto_Refresh then
+               --  Avoid creating the same item twice if it already exists in
+               --  the canvas
 
-            Alias_Item := Search_Item (Debugger, Id.all, Variable_Name);
+               Alias_Item :=
+                 Search_Item (Debugger, Item.Id.all, Variable_Name);
 
-            --  Two structures are aliased only if they have the same address
-            --  and the same structure. The latter is to handle cases like
-            --  "struct A {struct B {int field}} where A, B and field have the
-            --  same address and would be considered as aliases otherwise.
-            if Alias_Item /= null
-              and then
-                (not Typed_Aliases
-                 or else Structurally_Equivalent (Alias_Item.Entity, Entity))
-            then
-               Select_Item (Debugger, Alias_Item, Alias_Item.Entity);
-               Show_Item (Get_Canvas (Debugger), Alias_Item);
+               --  Two structures are aliased only if they have the same
+               --  address and the same structure. The latter is to handle
+               --  cases like "struct A {struct B {int field}} where A, B and
+               --  field have the same address and would be considered as
+               --  aliases otherwise.
+               if Alias_Item /= null
+                 and then
+                   (not Typed_Aliases
+                    or else
+                      Structurally_Equivalent (Alias_Item.Entity, Item.Entity))
+               then
+                  Select_Item (Debugger, Alias_Item, Alias_Item.Entity);
+                  Show_Item (Get_Canvas (Debugger), Alias_Item);
 
-               if Default_Entity = null then
-                  Free (Entity);
+                  if Link_From /= null then
+                     Create_Link
+                       (Get_Canvas (Debugger),
+                        Link_From, Alias_Item, Link_Name);
+                     Refresh_Data_Window (Debugger);
+                  end if;
+
+                  Free (Item, Remove_Aliases => False);
+                  return;
                end if;
-
-               Free (Id);
-
-               if Link_From /= null then
-                  Create_Link
-                    (Get_Canvas (Debugger), Link_From, Alias_Item, Link_Name);
-                  Refresh_Data_Window (Debugger);
-               end if;
-
-               Set_Busy (Debugger, False);
-               return;
             end if;
          end if;
 
-         --  We now know there is no alias, so we can spend time parsing the
-         --  value if necessary.
-
-         if Default_Entity = null then
-            begin
-               Parse_Value
-                 (Debugger.Debugger,
-                  Variable_Name,
-                  Entity,
-                  Value_Found => Value_Found);
-
-               if not Value_Found then
-                  Output_Error
-                    (Kernel, (-"Could not get the value of ") & Variable_Name);
-               end if;
-
-            exception
-               when Language.Unexpected_Type | Constraint_Error =>
-                  Output_Error
-                    (Kernel,
-                     (-"Could not parse the value for ") & Variable_Name);
-                  Set_Busy (Debugger, False);
-                  return;
-            end;
-
-         else
-            Value_Found := True;
-         end if;
+         Parse_Value (Item);
       end if;
 
-      --  Create the item
-
-      Item := new Display_Item_Record;
-      Item.Entity := Entity;
-      Item.Is_A_Variable := Is_Parsable_Entity and then Default_Entity = null;
-      Item.Num := Get_Next_Item_Num (Debugger);
-      Item.Debugger := Visual_Debugger (Debugger);
-      Set_Valid (Item.Entity, Value_Found);
-      Item.Id := Id;
-
-      Display_Items.Initialize (Item, Context, Variable_Name, Auto_Refresh);
+      Display_Items.Initialize (Item, Context);
 
       if Link_From /= null then
          Item.Is_Dereference := True;
          Create_Link (Get_Canvas (Debugger), Link_From, Item, Link_Name);
-         Put (Get_Canvas (Debugger), Item);
       end if;
 
       if Get_Detect_Aliases (Debugger) then
          Recompute_All_Aliases (Debugger, False);
       end if;
-
-      Set_Busy (Debugger, False);
 
    exception
       when others =>
@@ -382,18 +381,12 @@ package body Display_Items is
 
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
-      Context       : Drawing_Context;
-      Variable_Name : String;
-      Auto_Refresh  : Boolean := True)
+      Context       : Drawing_Context)
    is
       use type Gdk.GC.Gdk_GC;
       Lang          : constant Language.Language_Access :=
         Get_Language (Item.Debugger.Debugger);
    begin
-      Item.Name          := new String'(Variable_Name);
-      Item.Auto_Refresh  := Auto_Refresh;
-      Item.Is_Dereference := False;
-
       if not Is_Visible (Item) then
          return;
       end if;
@@ -402,23 +395,50 @@ package body Display_Items is
       --  we never want the top level item to be hidden, so we force it to
       --  visible (and possibly recalculate the size).
 
-      Size_Request
-        (Item.Entity.all,
-         Context,
-         Lang,
-         Mode           => Item.Mode,
-         Hide_Big_Items => Get_Pref (Hide_Big_Items));
+      if Item.Entity /= null
+        and then Is_Valid (Item.Entity)
+      then
+         Size_Request
+           (Item.Entity.all,
+            Context,
+            Lang,
+            Mode           => Item.Mode,
+            Hide_Big_Items => Get_Pref (Hide_Big_Items));
 
-      if not Get_Visibility (Item.Entity.all) then
-         Set_Visibility (Item.Entity, True);
-         Size_Request (Item.Entity.all, Context, Lang, Item.Mode);
+         if not Get_Visibility (Item.Entity.all) then
+            Set_Visibility (Item.Entity, True);
+            Size_Request (Item.Entity.all, Context, Lang, Item.Mode);
+         end if;
+
+         Constraint_Size (Item.Entity.all);
       end if;
-
-      Constraint_Size (Item.Entity.all);
 
       Update_Display (Item);
       Refresh_Data_Window (Item.Debugger);
    end Initialize;
+
+   -------------------
+   -- Get_Graph_Cmd --
+   -------------------
+
+   function Get_Graph_Cmd
+     (Item : access Display_Item_Record) return String
+   is
+      Rect : Gdk_Rectangle;
+   begin
+      --  ??? Should memorize coordinates
+      --  ??? Should memorize enabled state
+      --  ??? Should memorize auto-refresh state
+      --  ??? Should memorize num as well
+      if Item.Graph_Cmd /= null then
+         Rect := Get_Coord (Item);
+         return Item.Graph_Cmd.all & " at"
+           & Gint'Image (Rect.X) & "," & Gint'Image (Rect.Y)
+           & " num" & Integer'Image (Item.Num);
+      else
+         return "";
+      end if;
+   end Get_Graph_Cmd;
 
    -----------------
    -- Is_Alias_Of --
@@ -477,6 +497,8 @@ package body Display_Items is
         Get_Box_Context (Item.Debugger);
       W, H : Gint;
       Layout : Pango_Layout;
+      Valid : constant Boolean :=
+        Item.Entity /= null and then Is_Valid (Item.Entity);
 
       use Gdk;
 
@@ -485,11 +507,6 @@ package body Display_Items is
         (Get_Canvas (Item.Debugger),
          Integer'Image (Item.Num) & ": " & Item.Name.all);
       Set_Font_Description (Layout, Get_Pref (Title_Font));
-
-      --  Compute the required size for the value itself.
-
-      Alloc_Width  := Get_Width  (Item.Entity.all) + 2 * Border_Spacing;
-      Alloc_Height := Get_Height (Item.Entity.all) + 2 * Border_Spacing;
 
       --  Compute the width and height of the title bar
 
@@ -500,13 +517,27 @@ package body Display_Items is
         + 2 * Spacing;
       Item.Title_Height := Title_Height;
 
+      --  Compute the required size for the value itself.
+
+      if Valid then
+         Alloc_Width  := Get_Width  (Item.Entity.all) + 2 * Border_Spacing;
+         Alloc_Height := Get_Height (Item.Entity.all) + 2 * Border_Spacing;
+      else
+         Set_Text (Context.Text_Layout, -"Unknown variable");
+         Get_Pixel_Size (Context.Text_Layout, Alloc_Width, Alloc_Height);
+         Alloc_Width  := Alloc_Width + 2 * Border_Spacing;
+         Alloc_Height := Alloc_Height + 2 * Border_Spacing;
+      end if;
+
       --  Finally, we can find the total size for the display item.
 
-      Alloc_Width := Gint'Max (Alloc_Width, Title_Width);
-      Alloc_Width := Gint'Max (Alloc_Width, 40);
+      Alloc_Width  := Gint'Max (Alloc_Width, Title_Width);
+      Alloc_Width  := Gint'Max (Alloc_Width, 40);
       Alloc_Height := Title_Height + Alloc_Height;
 
-      Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Border_Spacing);
+      if Valid then
+         Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Border_Spacing);
+      end if;
 
       --  Keep some space for the shadow (3d look).
 
@@ -590,7 +621,7 @@ package body Display_Items is
       Set_Clip_Mask (Box_Context.Black_GC, Null_Pixmap);
       Set_Clip_Origin (Box_Context.Black_GC, 0, 0);
 
-      if Item.Entity /= null then
+      if Valid then
          Paint
            (Item.Entity.all,
             Context,
@@ -599,6 +630,13 @@ package body Display_Items is
             Mode   => Item.Mode,
             X      => Border_Spacing,
             Y      => Title_Height + Border_Spacing);
+      else
+         Draw_Layout
+           (Drawable => Pixmap (Item),
+            GC       => Context.GC,
+            X        => Border_Spacing,
+            Y        => Title_Height + Border_Spacing,
+            Layout   => Context.Text_Layout);
       end if;
 
       Unref (Layout);
@@ -721,35 +759,36 @@ package body Display_Items is
      (Item             : access Display_Item_Record'Class;
       Redisplay_Canvas : Boolean := False)
    is
-      Value_Found : Boolean;
-      Was_Visible : constant Boolean := Get_Visibility (Item.Entity.all);
+      Was_Visible : Boolean;
 
    begin
-      --  Parse the value
-
-      if Item.Entity.all in Debugger_Output_Type'Class then
-         Set_Value
-           (Debugger_Output_Type (Item.Entity.all),
-            Process_User_Command
-              (Item.Debugger,
-               Refresh_Command (Debugger_Output_Type (Item.Entity.all)),
-               Mode => GVD.Types.Internal));
-
-      elsif Item.Name /= null then
-         Parse_Value (Item.Debugger.Debugger, Item.Name.all,
-                      Item.Entity, Item.Format, Value_Found);
-         Set_Valid (Item.Entity, Value_Found);
+      if Item.Is_A_Variable
+        and then Item.Entity = null
+      then
+         Parse_Type (Item);
       end if;
 
-      Update_Resize_Display
-        (Item, Was_Visible, Get_Pref (Hide_Big_Items),
-         Redisplay_Canvas => Redisplay_Canvas);
+      if Item.Entity /= null then
+         Was_Visible := Get_Visibility (Item.Entity.all);
 
-      --  If we got an exception while parsing the value, we register the new
-      --  value as being incorrect.
-   exception
-      when Language.Unexpected_Type | Constraint_Error =>
-         Set_Valid (Item.Entity, False);
+         --  Parse the value
+
+         if Item.Entity.all in Debugger_Output_Type'Class then
+            Set_Value
+              (Debugger_Output_Type (Item.Entity.all),
+               Process_User_Command
+                 (Item.Debugger,
+                  Refresh_Command (Debugger_Output_Type (Item.Entity.all)),
+                  Mode => GVD.Types.Internal));
+
+         elsif Item.Name /= null then
+            Parse_Value (Item);
+         end if;
+
+         Update_Resize_Display
+           (Item, Was_Visible, Get_Pref (Hide_Big_Items),
+            Redisplay_Canvas => Redisplay_Canvas);
+      end if;
    end Update;
 
    ---------------------------
@@ -1631,5 +1670,16 @@ package body Display_Items is
    begin
       return Item.Format;
    end Get_Format;
+
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity
+     (Item : access Display_Item_Record'Class)
+      return Items.Generic_Type_Access is
+   begin
+      return Item.Entity;
+   end Get_Entity;
 
 end Display_Items;
