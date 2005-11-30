@@ -91,13 +91,6 @@ package GVD.Canvas is
    --  Return the drawing context associated with the box around each
    --  item on the canvas.
 
-   function Get_Next_Item_Num
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class)
-      return Integer;
-   --  Return the number that should be used for the next item inserted into
-   --  the canvas.
-   --  Two successive calls to that function will not return the same value.
-
    function Contextual_Background_Menu
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class)
      return Gtk.Menu.Gtk_Menu;
