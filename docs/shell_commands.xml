@@ -1907,7 +1907,7 @@ If the line and column are not specified, then the current selection is returned
     ###################################################################-->
 
   <shell_doc name="GPS.FileContext">
-      <description>Represents an context that contains file information</description>
+      <description>Represents a context that contains file information</description>
       <see_also name="GPS.FileContext.__init__()" />
   </shell_doc>
 
@@ -1939,7 +1939,7 @@ If the line and column are not specified, then the current selection is returned
     ###################################################################-->
 
   <shell_doc name="GPS.AreaContext">
-      <description>Represents an context that contains file information and a range of lines currently selected</description>
+      <description>Represents a context that contains file information and a range of lines currently selected</description>
       <see_also name="GPS.AreaContext.__init__()" />
   </shell_doc>
 
@@ -1965,7 +1965,7 @@ If the line and column are not specified, then the current selection is returned
     ###################################################################-->
 
   <shell_doc name="GPS.EntityContext">
-      <description>Represents an context that contains entity information</description>
+      <description>Represents a context that contains entity information</description>
       <see_also name="GPS.EntityContext.__init__()" />
   </shell_doc>
 
