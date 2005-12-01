@@ -283,6 +283,7 @@ package body GPS.Kernel.Timeout is
             Output : constant String := Strip_CR (Expect_Out (Fd.all));
          begin
             if Data.D.Callback /= null then
+               Data.D.Process_Died := True;
                Data.D.Callback (Data.D, Output);
             end if;
 
@@ -531,7 +532,7 @@ package body GPS.Kernel.Timeout is
               (Compile (".*$", Single_Line));
          end if;
 
-         Data.D  := (Kernel, Fd, Callback, Exit_Cb, Callback_Data, null);
+         Data.D := (Kernel, Fd, Callback, Exit_Cb, Callback_Data, null, False);
          if not Synchronous then
             Data.Id :=
               Console_Process_Timeout.Add (Timeout, Process_Cb'Access, Data);
