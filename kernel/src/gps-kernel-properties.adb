@@ -112,6 +112,10 @@ package body GPS.Kernel.Properties is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles script commands for properties
 
+   procedure Properties_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles script commands for properties
+
    ----------
    -- Free --
    ----------
@@ -498,8 +502,19 @@ package body GPS.Kernel.Properties is
 
       Print (Root, Filename);
       Free (Root);
-      Reset (All_Properties);
    end Save_Persistent_Properties;
+
+   ----------------------
+   -- Reset_Properties --
+   ----------------------
+
+   procedure Reset_Properties
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Reset (All_Properties);
+   end Reset_Properties;
 
    -----------------------------------
    -- Restore_Persistent_Properties --
@@ -644,6 +659,18 @@ package body GPS.Kernel.Properties is
       end if;
    end Project_Command_Handler;
 
+   --------------------------------
+   -- Properties_Command_Handler --
+   --------------------------------
+
+   procedure Properties_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String) is
+   begin
+      if Command = "save_persistent_properties" then
+         Save_Persistent_Properties (Get_Kernel (Data));
+      end if;
+   end Properties_Command_Handler;
+
    ------------------------------
    -- Register_Script_Commands --
    ------------------------------
@@ -691,6 +718,10 @@ package body GPS.Kernel.Properties is
          Maximum_Args => 1,
          Class        => Project_Class,
          Handler      => Project_Command_Handler'Access);
+
+      Register_Command
+        (Kernel, "save_persistent_properties",
+         Handler => Properties_Command_Handler'Access);
    end Register_Script_Commands;
 
 end GPS.Kernel.Properties;

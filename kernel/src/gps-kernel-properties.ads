@@ -163,13 +163,16 @@ package GPS.Kernel.Properties is
    procedure Save_Persistent_Properties
      (Kernel : access Kernel_Handle_Record'Class);
    --  Save all persistent properties for all files in the current project.
-   --  This clears the current cache, so that no property will be available
-   --  after this call, not even non-persistent ones.
-   --  This subprogram should only be called by the kernel itself.
 
    procedure Restore_Persistent_Properties
      (Kernel : access Kernel_Handle_Record'Class);
    --  Restore persistent properties for the files in the current project.
+   --  This subprogram should only be called by the kernel itself.
+
+   procedure Reset_Properties
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Clear the properties cache. No property will be available after this
+   --  call.
    --  This subprogram should only be called by the kernel itself.
 
    -------------
