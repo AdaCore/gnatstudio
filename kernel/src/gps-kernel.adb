@@ -914,7 +914,8 @@ package body GPS.Kernel is
       then
          Window.Animation_Timeout := Process_Timeout.Add
            (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
-            Process_Anim'Access, (Handle, null, null, null, null, null));
+            Process_Anim'Access,
+            (Handle, null, null, null, null, null, False));
       end if;
 
       Window.State_Level := Window.State_Level + 1;
