@@ -1615,7 +1615,14 @@ procedure GPS.Main is
          Save_Desktop (Kernel);
       end if;
 
-      Save_Accel_Map (File_Utils.Name_As_Directory (Dir.all) & "custom_key");
+      begin
+         Save_Accel_Map
+           (File_Utils.Name_As_Directory (Dir.all) & "custom_key");
+      exception
+         when E: others =>
+            Trace (Exception_Handle,
+                   "Unexpected exception: " & Exception_Information (E));
+      end;
 
       Free_Modules (Kernel);
 
