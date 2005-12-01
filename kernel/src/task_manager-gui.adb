@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Exceptions;           use Ada.Exceptions;
 
 with Gdk.Color;                use Gdk.Color;
@@ -70,8 +69,7 @@ package body Task_Manager.GUI is
 
    Icon_Column             : constant := 0;
    Command_Name_Column     : constant := 1;
-   Command_Status_Column   : constant := 2;
-   Command_Progress_Column : constant := 3;
+   Command_Progress_Column : constant := 2;
 
    -----------------
    -- Local types --
@@ -442,6 +440,7 @@ package body Task_Manager.GUI is
       Params : GValues)
    is
       pragma Unreferenced (Params);
+      use type Gdk_Drawable;
 
       Color   : Gdk_Color;
       Iface   : constant Task_Manager_Interface :=
@@ -449,6 +448,11 @@ package body Task_Manager.GUI is
       Success : Boolean;
 
    begin
+      if Iface.Progress_Template /= null then
+         --  Already realized
+         return;
+      end if;
+
       Iface.Progress_Width := 100;
       Iface.Progress_Height := 15;
       --  ??? should find a better computation for these constants
@@ -742,22 +746,6 @@ package body Task_Manager.GUI is
               (View.Tree.Model, View.Lines (Index), Command_Name_Column,
                Name_String.all);
 
-            case Manager.Queues (Index).Status is
-               when Running =>
-                  Set
-                    (View.Tree.Model,
-                     View.Lines (Index),
-                     Command_Status_Column,
-                       -(To_Lower (Progress.Activity'Img)));
-
-               when Not_Started | Paused | Completed | Interrupted =>
-                  Set
-                    (View.Tree.Model,
-                     View.Lines (Index),
-                     Command_Status_Column,
-                       -(To_Lower (Manager.Queues (Index).Status'Img)));
-            end case;
-
             --  Create the pixbuf showing the progress.
 
             if View.Progress_Layout /= null then
@@ -802,6 +790,7 @@ package body Task_Manager.GUI is
                     (View.Tree.Model, View.Lines (Index),
                      Command_Progress_Column,
                      C_Proxy (Pix));
+                  Unref (Pix);
                end;
             end if;
          end if;
@@ -855,14 +844,6 @@ package body Task_Manager.GUI is
 
       Gtk_New (Col);
       Set_Resizable (Col, True);
-      Set_Title (Col, -"Status");
-      Gtk_New (Text_Rend);
-      Pack_Start (Col, Text_Rend, True);
-      Add_Attribute (Col, Text_Rend, "text", Command_Status_Column);
-      Dummy := Append_Column (Tree, Col);
-
-      Gtk_New (Col);
-      Set_Resizable (Col, True);
       Set_Title (Col, -"Progress");
       Gtk_New (Pixbuf_Rend);
       Pack_Start (Col, Pixbuf_Rend, False);
@@ -879,7 +860,6 @@ package body Task_Manager.GUI is
       return GType_Array'
         (Icon_Column             => Gdk.Pixbuf.Get_Type,
          Command_Name_Column     => GType_String,
-         Command_Status_Column   => GType_String,
          Command_Progress_Column => Gdk.Pixbuf.Get_Type);
    end Columns_Types;
 
