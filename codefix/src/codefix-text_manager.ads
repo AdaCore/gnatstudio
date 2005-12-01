@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2003                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2005                      --
+--                              AdaCode                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -73,7 +73,6 @@ package Codefix.Text_Manager is
    function Get_Line (This : Text_Cursor) return Integer;
    function Get_Column (This : Text_Cursor) return Integer;
    --  Return the location
-
 
    type File_Cursor is new Text_Cursor with private;
    Null_File_Cursor : constant File_Cursor;
@@ -326,7 +325,9 @@ package Codefix.Text_Manager is
       return Construct_Information;
    --  Get the Construct_Information found at the specified position, or the
    --  nearest before or after the position (depends on the value of
-   --  Position_Expected.
+   --  Position_Expected. If Category_1 is Cat_Unknown, then will return any
+   --  construct found, otherwise it will return the first construct of
+   --  Category_1 or Category_2. Returns null if no matching unit is found.
 
    function Search_Body
      (Current_Text : Text_Navigator_Abstr;
@@ -690,7 +691,6 @@ package Codefix.Text_Manager is
    --  Replace in this the text from Start to Stop by the one from Source_Start
    --  to Source_End. Please note that This must have been previously
    --  initialised with lines from 'Dest_Start' to 'Dest_Stop'.
-
 
    procedure Commit
      (This         : Extract;
