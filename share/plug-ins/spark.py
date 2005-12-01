@@ -125,7 +125,8 @@ a = """<?xml version="1.0"?>
 
   <Language>
     <Name>Listing</Name>
-    <Spec_Suffix>.lst</Spec_Suffix>
+    <Spec_Suffix>.lss</Spec_Suffix>
+    <Body_Suffix>.lsb</Body_Suffix>
   </Language>
 
   <!-- Set up the Project Preferences menu                           -->
@@ -134,7 +135,7 @@ a = """<?xml version="1.0"?>
   <tool name="Examiner">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches lines="6">
+    <switches lines="7">
       <title line="1">Examiner Files</title>
       <field line="1" label=" Index File " as-file="true" switch="~index_file=" />
       <field line="1" label=" Warning File " as-file="true" switch="~warning_file=" />
@@ -151,7 +152,7 @@ a = """<?xml version="1.0"?>
         <radio-entry label="Data Flow only" switch="~flow_analysis=data" />
       </radio>
       <check line="3" label="Generate Run Time Checks" switch="~exp_checks" />
-	  <title line="4">Replacement rules for composite constants</title>
+      <title line="4">Replacement rules for composite constants</title>
       <radio line="4">
         <radio-entry label="None" switch="~rules=none" />
         <radio-entry label="Lazy" switch="~rules=lazy" />
@@ -163,8 +164,14 @@ a = """<?xml version="1.0"?>
       <check line="5" label=" HTML Output " switch="~html" />
       <field line="5" label=" Listing File Extension " switch="~listing=" />
       <field line="5" label=" Report File Name " switch="~report=" />
-      <title line="6">General</title>
-      <field line="6" label=" Annotation Character " switch="~annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
+      <title line="6">Error Explanations</title>
+      <radio line="6">
+        <radio-entry label="Off" switch="~error_explanations=off" />
+        <radio-entry label="First Occurrence" switch="~error_explanations=first" />
+	<radio-entry label="Every Occurrence" switch="~error_explanations=every" />
+      </radio>
+      <title line="7">General</title>
+      <field line="7" label=" Annotation Character " switch="~annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
     </switches>
   </tool>
 
