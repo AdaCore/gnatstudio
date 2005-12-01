@@ -321,7 +321,7 @@ package body GVD.Scripts is
            (Data, Process_User_Command
               (Process, GPS.Kernel.Scripts.Nth_Arg (Data, 2),
                Output_Command => Nth_Arg (Data, 3, True),
-               Mode => GVD.Types.Internal));
+               Mode => GVD.Types.Hidden));
          Free (Inst);
 
       elsif Command = "get_executable" then
