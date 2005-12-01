@@ -804,12 +804,13 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Exec_Action_Parameters);
 
          declare
-            Action : constant Action_Record_Access := Lookup_Action
+            Action      : constant Action_Record_Access := Lookup_Action
               (Kernel, Nth_Arg (Data, 1));
-            Context : constant Selection_Context_Access :=
+            Context     : constant Selection_Context_Access :=
               Get_Current_Context (Kernel);
-            Custom : Command_Access;
-            Args   : String_List_Access;
+            Custom      : Command_Access;
+            Args        : String_List_Access;
+            Synchronous : constant Boolean := True;
          begin
             if Action = null then
                Set_Error_Msg (Data, -"No such registered action");
@@ -825,17 +826,16 @@ package body GPS.Kernel.Scripts is
 
                Custom := Create_Proxy
                  (Command => Action.Command,
-                  Context => (Event   => null,
-                              Context => null,
-                              Dir     => null,
-                              Args    => Args,
-                              Label   => new String'(Nth_Arg (Data, 1))));
+                  Context => (Event       => null,
+                              Context     => null,
+                              Synchronous => Synchronous,
+                              Dir         => null,
+                              Args        => Args,
+                              Label       => new String'(Nth_Arg (Data, 1))));
 
-               --  Have a small delay, since custom actions would launch
-               --  external commands in background
                Launch_Background_Command
                  (Kernel, Custom, Destroy_On_Exit => True,
-                  Active   => False,
+                  Active   => Synchronous,
                   Show_Bar => True,
                   Queue_Id => "");
             end if;
