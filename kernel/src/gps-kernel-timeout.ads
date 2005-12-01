@@ -58,6 +58,9 @@ package GPS.Kernel.Timeout is
       --  False.
       --  This command can be used to report the progress of the action, so
       --  that the task manager is usefully updated.
+
+      Process_Died : Boolean := False;
+      --  This flag is true when the process is died, false otherwise
    end record;
 
    procedure Free is new Ada.Unchecked_Deallocation
@@ -150,5 +153,7 @@ package GPS.Kernel.Timeout is
    --  Fd is allocated by this procedure, and will be cleaned automatically,
    --  and should not be freed by the caller of Launch_Process (although it is
    --  of course authorized to Close Fd).
+
+private
 
 end GPS.Kernel.Timeout;
