@@ -42,17 +42,19 @@ package GPS.Kernel.Macros is
    function Substitute
      (Param   : String;
       Context : GPS.Kernel.Selection_Context_Access;
-      Quoted  : Boolean) return String;
+      Quoted  : Boolean;
+      Done    : access Boolean) return String;
    --  Return the replacement suitable for %Param.
    --  This should mostly be used from String_Utils.Substitute.
    --  The empty string "" is returned if Param is not one of the macro
-   --  parameters.
+   --  parameters, and Done.all set to False.
+   --  If Param is recognized and handled, Done.all is set to True.
    --  It is assumed that Context contains enough information for this
    --  substitution, and this can be checked with Macro_Filter above.
    --  Substrings that start with '%' but are not one of the macros are left
    --  as is.
    --  Invalid_Substitution might be raised if the context is still invalid,
-   --  although this isn't garanteed in general and you must check with
+   --  although this isn't guaranteed in general and you must check with
    --  Macro_Filter first.
 
 private

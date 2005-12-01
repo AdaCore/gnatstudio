@@ -129,14 +129,18 @@ package body GPS.Kernel.Macros is
    function Substitute
      (Param   : String;
       Context : GPS.Kernel.Selection_Context_Access;
-      Quoted  : Boolean) return String
+      Quoted  : Boolean;
+      Done    : access Boolean) return String
    is
       File    : File_Selection_Context_Access;
       Project : Project_Type := No_Project;
       Index   : Integer;
       Recurse, List_Dirs, List_Sources : Boolean;
       Entity  : Entity_Information;
+
    begin
+      Done.all := True;
+
       if Param = "f"
         or else Param = "F"
         or else Param = "fk"
@@ -331,6 +335,7 @@ package body GPS.Kernel.Macros is
       end if;
 
       --  No substitution
+      Done.all := False;
       return "";
    end Substitute;
 
