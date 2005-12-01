@@ -925,10 +925,12 @@ package body Commands.Custom is
          Quoted : Boolean) return String
       is
          Num   : Integer;
+         Done  : aliased Boolean := False;
          Macro : constant String :=
-                   Substitute (Param, Command.Execution.Context, Quoted);
+                   Substitute (Param, Command.Execution.Context,
+                               Quoted, Done'Access);
       begin
-         if Macro /= "" then
+         if Done then
             return Macro;
          end if;
 

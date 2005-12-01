@@ -483,7 +483,7 @@ package body GPS.Kernel.Modules is
      (Creator : access Contextual_Label_Parameters;
       Context : access Selection_Context'Class) return String
    is
-      Has_Error : Boolean := False;
+      Has_Error : aliased Boolean := False;
 
       function Substitution (Param : String; Quoted : Boolean) return String;
       --  Substitute %P, %f,... as appropriate
@@ -510,9 +510,9 @@ package body GPS.Kernel.Modules is
          else
             declare
                Tmp : constant String := GPS.Kernel.Macros.Substitute
-                 (Param, Selection_Context_Access (Context), Quoted);
+                 (Param, Selection_Context_Access (Context),
+                  Quoted, Has_Error'Access);
             begin
-               Has_Error := Tmp = "";
                return Tmp;
             end;
          end if;
