@@ -1132,6 +1132,7 @@ package body Commands.Custom is
                  (Command => Custom_Command_Access (Command)),
                Show_In_Task_Manager => Component.Show_In_Task_Manager,
                Line_By_Line         => False,
+               Synchronous          => Context.Synchronous,
                Directory            => To_String (Context.Dir),
                Fd                   => Command.Fd);
             Free (Args);
@@ -1201,7 +1202,10 @@ package body Commands.Custom is
             if Current.On_Failure_For = Command.Execution.Current_Failure then
                Success := Execute_Simple_Command (Current.Component);
 
-               if Current.Component.all in External_Component_Record'Class then
+               if not Context.Synchronous
+                 and then Current.Component.all
+                    in External_Component_Record'Class
+               then
                   --  We'll have to run again to check for completion
                   return True;
                end if;
