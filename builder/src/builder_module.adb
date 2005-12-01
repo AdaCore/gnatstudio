@@ -21,6 +21,9 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Tags;                  use Ada.Tags;
+with Ada.Strings;               use Ada.Strings;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;
 with System;
 
 with GNAT.Expect;               use GNAT.Expect;
@@ -110,7 +113,11 @@ package body Builder_Module is
    --  ??? Shouldn't have hard-coded options.
 
    type Files_Callback_Data is new Callback_Data_Record with record
-      Files : File_Array_Access;
+      Files  : File_Array_Access;
+
+      Buffer : Ada.Strings.Unbounded.Unbounded_String;
+      --  This field is used to store uncomplete lines got during the
+      --  processing of the compilation output.
    end record;
    type Files_Callback_Data_Access is access all Files_Callback_Data'Class;
    procedure Destroy (Data : in out Files_Callback_Data);
@@ -400,7 +407,7 @@ package body Builder_Module is
       Compile_Only   : Boolean := False;
       Unique_Project : Boolean := False) return Argument_List_Access
    is
-      Project_Str    : String_Access;
+      Project_Str    : GNAT.OS_Lib.String_Access;
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access;
       Remote_Host    : constant String :=
@@ -493,13 +500,53 @@ package body Builder_Module is
    ---------------------------
 
    procedure Parse_Compiler_Output
-     (Data : Process_Data; Output : String) is
+     (Data : Process_Data; Output : String)
+   is
+      Last_EOL      : Natural;
    begin
-      Process_Builder_Output
-        (Kernel  => Data.Kernel,
-         Command => Data.Command,
-         Output  => Output & ASCII.LF,
-         Quiet   => False);
+      if not Data.Process_Died then
+         Last_EOL := Index (Output, (1 => ASCII.LF), Backward);
+
+         --  In case we did not find any LF in the output, we'll just append it
+         --  in the current buffer.
+
+         if Last_EOL = 0 then
+            Ada.Strings.Unbounded.Append
+              (Files_Callback_Data (Data.Callback_Data.all).Buffer,
+               Output);
+
+            return;
+         end if;
+      else
+         if Output'Length > 0 then
+            Last_EOL := Output'Length;
+         end if;
+      end if;
+
+      if Output'Length > 0 then
+         Process_Builder_Output
+           (Kernel  => Data.Kernel,
+            Command => Data.Command,
+            Output  => Ada.Strings.Unbounded.To_String
+              (Files_Callback_Data (Data.Callback_Data.all).Buffer) &
+              Output (1 .. Last_EOL) & ASCII.LF,
+            Quiet   => False);
+
+         Files_Callback_Data (Data.Callback_Data.all).Buffer :=
+           Ada.Strings.Unbounded.To_Unbounded_String
+             (Output (Last_EOL + 1 .. Output'Last));
+      else
+         Process_Builder_Output
+           (Kernel  => Data.Kernel,
+            Command => Data.Command,
+            Output  => Ada.Strings.Unbounded.To_String
+              (Files_Callback_Data (Data.Callback_Data.all).Buffer) &
+              ASCII.LF,
+            Quiet   => False);
+
+         Files_Callback_Data (Data.Callback_Data.all).Buffer :=
+           Ada.Strings.Unbounded.To_Unbounded_String ("");
+      end if;
    end Parse_Compiler_Output;
 
    --------------------------
@@ -514,7 +561,7 @@ package body Builder_Module is
         Files_Callback_Data_Access (Data.Callback_Data);
       Success : Boolean;
    begin
-      if Files /= null then
+      if Files /= null and then Files.Files /= null then
          for F in Files.Files'Range loop
             if Is_Regular_File (Files.Files (F)) then
                Trace (Me, "Deleting temporary file "
@@ -707,6 +754,7 @@ package body Builder_Module is
          Console              => Get_Console (Kernel),
          Show_Command         => True,
          Show_Output          => False,
+         Callback_Data        => new Files_Callback_Data,
          Success              => Success,
          Line_By_Line         => False,
          Callback             => Parse_Compiler_Output'Access,
@@ -960,9 +1008,9 @@ package body Builder_Module is
                Index    => Ada_String,
                Use_Initial_Value => True);
          begin
-            if Files_To_Free /= null then
-               Cb_Data := new Files_Callback_Data'(Files => Files_To_Free);
-            end if;
+            Cb_Data := new Files_Callback_Data'
+              (Files  => Files_To_Free,
+               Buffer => Ada.Strings.Unbounded.Null_Unbounded_String);
 
             Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
             Launch_Process
