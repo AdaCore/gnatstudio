@@ -885,6 +885,7 @@ package body KeyManager_Module is
                              (Command.Command,
                               (Event,
                                Context,
+                               False,
                                null,
                                null,
                                new String'(Binding.Action.all))),
@@ -914,13 +915,14 @@ package body KeyManager_Module is
                Custom :=
                  Create_Proxy
                    (Any_Context_Command.Command,
-                    (Event, Context, null, null, null));
+                    (Event, Context, False,  null, null, null));
             else
                Custom :=
                  Create_Proxy
                    (Any_Context_Command.Command,
                     (Event,
                      Context,
+                     False,
                      null,
                      null,
                      new String'(Any_Context_Command.Description.all)));

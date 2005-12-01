@@ -370,11 +370,20 @@ package body VCS.Generic_VCS is
 
             Custom := Create_Proxy
               (The_Action.Command,
-               (null, null, Dir, Args,
-                new String'(Describe_Action (Ref, Dir_Action))));
+               (Event       => null,
+                Context     => null,
+                Synchronous => False,
+                Dir         => Dir,
+                Args        => Args,
+                Label      => new String'(Describe_Action (Ref, Dir_Action))));
 
             Launch_Background_Command
-              (Kernel, Custom, False, Show_Bar, Ref.Id.all, True);
+              (Kernel          => Kernel,
+               Command         => Custom,
+               Active          => False,
+               Show_Bar        => Show_Bar,
+               Queue_Id        => Ref.Id.all,
+               Destroy_On_Exit => True);
          end;
 
          Node := Next (Node);
@@ -545,11 +554,20 @@ package body VCS.Generic_VCS is
 
             Custom := Create_Proxy
               (The_Action.Command,
-               (null, null, Dir, Args,
-                new String'(Describe_Action (Ref, Action))));
+               (Event       => null,
+                Context     => null,
+                Synchronous => False,
+                Dir         => Dir,
+                Args        => Args,
+                Label       => new String'(Describe_Action (Ref, Action))));
 
             Launch_Background_Command
-              (Kernel, Custom, False, Show_Bar, Ref.Id.all, True);
+              (Kernel          => Kernel,
+               Command         => Custom,
+               Active          => False,
+               Show_Bar        => Show_Bar,
+               Queue_Id        => Ref.Id.all,
+               Destroy_On_Exit => True);
          end;
       end loop;
    end Generic_Command;
@@ -593,11 +611,20 @@ package body VCS.Generic_VCS is
 
       Custom := Create_Proxy
         (The_Action.Command,
-         (null, Create_File_Context (Kernel, File), Dir, Args,
-          new String'(Describe_Action (Ref, Action))));
+         (Event       => null,
+          Context     => Create_File_Context (Kernel, File),
+          Synchronous => False,
+          Dir         => Dir,
+          Args        => Args,
+          Label       => new String'(Describe_Action (Ref, Action))));
 
       Launch_Background_Command
-        (Kernel, Custom, False, True, Ref.Id.all, True);
+        (Kernel          => Kernel,
+         Command         => Custom,
+         Active          => False,
+         Show_Bar        => True,
+         Queue_Id        => Ref.Id.all,
+         Destroy_On_Exit => True);
    end Generic_Command;
 
    ----------------

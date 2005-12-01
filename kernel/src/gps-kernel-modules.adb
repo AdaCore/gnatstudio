@@ -1230,12 +1230,14 @@ package body GPS.Kernel.Modules is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel_Handle (Widget));
    begin
-      if Context /= null and then Filter_Matches (Command.Filter, Context) then
+      if Context /= null
+        and then Filter_Matches (Command.Filter, Context)
+      then
          Ref (Context);
          Launch_Background_Command
            (Kernel_Handle (Widget),
             Create_Proxy
-              (Command.Command, (null, Context, null, null, null)),
+              (Command.Command, (null, Context, False, null, null, null)),
             Destroy_On_Exit => False,
             Active => True, Show_Bar => True, Queue_Id => "");
       elsif Get_Error_Message (Command.Filter) /= "" then
