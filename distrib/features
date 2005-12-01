@@ -45,6 +45,13 @@ EB21-009 Debugger windows not saved in the desktop (2005-11-30)
 
   Keywords: Debugger, Desktop
 
+EB18-009 Status column in the Task Manager was removed (2005-12-01)
+
+  This column wasn't showing useful additional data not already visible in the
+  progress bar, and was removed to save screen space
+
+  Keywords: Task Manager
+
 EB18-006 Size & position of GPS window now specific to each project (2005-11-18)
 
   The size of the GPS main window is now saved as part of each project
