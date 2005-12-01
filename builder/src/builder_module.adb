@@ -743,6 +743,7 @@ package body Builder_Module is
 
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
+      Console.Raise_Console (Kernel);
       Launch_Process
         (Kernel,
          Remote_Protocol      => Get_Pref (Remote_Protocol),
@@ -1013,6 +1014,11 @@ package body Builder_Module is
                Buffer => Ada.Strings.Unbounded.Null_Unbounded_String);
 
             Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
+
+            if not Quiet then
+               Console.Raise_Console (Kernel);
+            end if;
+
             Launch_Process
               (Kernel,
                Remote_Protocol      => Get_Pref (Remote_Protocol),
@@ -1044,6 +1050,11 @@ package body Builder_Module is
             Compilable_File,
             Compile_Only => True);
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
+
+         if not Quiet then
+            Console.Raise_Console (Kernel);
+         end if;
+
          Launch_Process
            (Kernel,
             Remote_Protocol      => Get_Pref (Remote_Protocol),
@@ -1220,6 +1231,7 @@ package body Builder_Module is
          Args : Argument_List_Access := Argument_String_To_List (Cmd);
       begin
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
+         Console.Raise_Console (Kernel);
          Launch_Process
            (Kernel,
             Remote_Protocol      => Get_Pref (Remote_Protocol),
@@ -1463,7 +1475,9 @@ package body Builder_Module is
             Exec := Locate_Exec_On_Path (Command);
 
             if Exec = null then
-               Insert (K, -"Could not locate executable on path: " & Command);
+               Insert
+                 (K, -"Could not locate executable on path: " & Command,
+                  Mode => Error);
             else
                Console := Create_Interactive_Console (K, Title);
                Launch_Process
