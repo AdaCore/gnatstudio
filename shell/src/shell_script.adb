@@ -2088,19 +2088,20 @@ package body Shell_Script is
    begin
       Custom := Create_Proxy
         (A.Command,
-         Context => (null,
-                     null,
-                     null,
-                     new Argument_List'(Clone (D.Args.all)),
-                     null));
+         Context => (Event       => null,
+                     Context     => null,
+                     Synchronous => True,
+                     Dir         => null,
+                     Args        => new Argument_List'(Clone (D.Args.all)),
+                     Label       => null));
 
       Launch_Background_Command
-        (Get_Kernel (Args),
-         Custom,
-         True,
-         True,
-         "",
-         True);
+        (Kernel          => Get_Kernel (Args),
+         Command         => Custom,
+         Active          => True,
+         Show_Bar        => True,
+         Queue_Id        => "",
+         Destroy_On_Exit => True);
 
       --  ??? Should evaluate output properly, but we are in asynchronous mode
       return True;
