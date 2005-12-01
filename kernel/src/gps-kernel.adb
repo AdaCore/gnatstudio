@@ -1229,6 +1229,7 @@ package body GPS.Kernel is
          Create (Handle.Home_Dir.all & "styles.xml"));
 
       Save_Persistent_Properties (Handle);
+      Reset_Properties (Handle);
 
       Save (Handle.History.all, Handle.Home_Dir.all & "history");
       Free (Handle.History.all);
