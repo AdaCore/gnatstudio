@@ -404,12 +404,14 @@ The returned list is sorted alphabetically, and the name of the language has bee
      <description>Execute one of the actions defined in GPS. Such actions are
 either predefined by GPS or defined by the users through customization files.
 See the GPS documentation for more information on how to create new actions.
-Through this call, GPS will not wait for the action to terminate, therefore the
-action should not contain external commands to execute, if you expect to get
-their output.
+GPS will wait until the command completes to return the control to the caller,
+whether you execute a shell command, or an external process. 
 
 The action's name can start with a '/', and be a full menu path. As a result,
-the menu itself will be executed, just as if the user had pressed it.
+the menu itself will be executed, just as if the user had pressed it. Note that
+most GPS menus execute asynchronously, and therefore execute_action will return
+control immediately even though the command has not completed (this is the
+case for instance when starting a compilation).
 
 The extra arguments must be strings, and are passed to the action, which can
 use them through $1, $2,...
@@ -446,6 +448,11 @@ Optionally you can also pass the full contents of an XML file, starting from the
   <shell_doc name="GPS.unset_busy">
      <description>Reset the "busy" state</description>
      <see_also>GPS.set_busy()</see_also>
+  </shell_doc>
+
+  <shell_doc name="GPS.save_persistent_properties">
+     <description>Forces an immediate save of the persistent properties that GPS maintains for files and projects (for instance the text encoding, the programming language, the debugger breakpoints,...).
+You do not have to call this subprogram explicitly in general, since this is done automatically by GPS on exit.
   </shell_doc>
 
   <shell_doc name="GPS.current_context">
