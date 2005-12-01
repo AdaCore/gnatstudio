@@ -1994,9 +1994,11 @@ package body Src_Editor_Box is
          Scroll_To_Cursor_Location (Editor.Source_View, True);
 
       elsif Is_Valid_Position (Editor.Source_Buffer, Editable_Line, 1) then
-         Console.Insert
-           (Editor.Kernel, -"Invalid column number: " & Image (Column),
-            Mode => Error);
+         --  We used to generate an error message (Invalid column number),
+         --  but this was too intrusive: in the case of e.g. loading the
+         --  desktop, if it often the case that the files have been modified
+         --  and the column is no longer valid, so we silently ignore this.
+         --  ??? Consider going to the last column instead of the first
 
          if Force_Focus then
             Grab_Focus (Editor.Source_View);
