@@ -41,6 +41,9 @@ package Commands.Interactive is
       Event   : Gdk.Event.Gdk_Event := null;
       Context : GPS.Kernel.Selection_Context_Access;
 
+      Synchronous : Boolean := False;
+      --  Whether the command should be executed synchronously
+
       Dir     : GNAT.OS_Lib.String_Access;
       --  The directory in which the execution should take place
 
@@ -49,11 +52,12 @@ package Commands.Interactive is
    end record;
 
    Null_Context : constant Interactive_Command_Context :=
-     (Event   => null,
-      Context => null,
-      Dir     => null,
-      Args    => null,
-      Label   => null);
+     (Event       => null,
+      Context     => null,
+      Synchronous => False,
+      Dir         => null,
+      Args        => null,
+      Label       => null);
 
    procedure Free (X : in out Interactive_Command_Context);
    --  Free memory associated to X.
