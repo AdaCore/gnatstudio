@@ -545,7 +545,7 @@ package body Builder_Module is
             Quiet   => False);
 
          Files_Callback_Data (Data.Callback_Data.all).Buffer :=
-           Ada.Strings.Unbounded.To_Unbounded_String ("");
+           Ada.Strings.Unbounded.Null_Unbounded_String;
       end if;
    end Parse_Compiler_Output;
 
