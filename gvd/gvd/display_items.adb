@@ -427,15 +427,19 @@ package body Display_Items is
    is
       Rect : Gdk_Rectangle;
    begin
-      --  ??? Should memorize coordinates
-      --  ??? Should memorize enabled state
-      --  ??? Should memorize auto-refresh state
-      --  ??? Should memorize num as well
+      --  ??? Should memorize auto-refresh state ("graph print" vs "display")
       if Item.Graph_Cmd /= null then
          Rect := Get_Coord (Item);
-         return Item.Graph_Cmd.all & " at"
-           & Gint'Image (Rect.X) & "," & Gint'Image (Rect.Y)
-           & " num" & Integer'Image (Item.Num);
+         if Item.Is_Alias_Of = null then
+            return Item.Graph_Cmd.all & " at"
+              & Gint'Image (Rect.X) & "," & Gint'Image (Rect.Y)
+              & " num" & Integer'Image (Item.Num);
+         else
+            return Item.Graph_Cmd.all & " at"
+              & Gint'Image (Rect.X) & "," & Gint'Image (Rect.Y)
+              & " num" & Integer'Image (Item.Num)
+              & " alias_of" & Integer'Image (Item.Is_Alias_Of.Num);
+         end if;
       else
          return "";
       end if;

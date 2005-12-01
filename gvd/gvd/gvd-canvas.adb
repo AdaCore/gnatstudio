@@ -87,7 +87,8 @@ package body GVD.Canvas is
       & "(\s+link_name\s+(\S+))?"         --  parenthesis 9 .. 10
       & ")"                               --  end of paren 1
       & "(\s+at\s+(\d+),\s*(\d+))?"       --  parenthesis 11 .. 13
-      & "(\s+num\s+(\d+))?",              --  parenthesis 14 .. 15
+      & "(\s+num\s+(\d+))?"               --  parenthesis 14 .. 15
+      & "(\s+alias_of\s+\d+)?",           --  parenthesis 16
       Case_Insensitive);
    --  Format of the graph print commands, and how to parse them
 
