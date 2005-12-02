@@ -21,7 +21,8 @@
 --  This package initializes the GPS Task Manager, and provides menus
 --  to display the Task Manager Interface.
 
-with Commands; use Commands;
+with Commands;     use Commands;
+with Task_Manager; use Task_Manager;
 
 package GPS.Kernel.Task_Manager is
 
@@ -59,5 +60,9 @@ package GPS.Kernel.Task_Manager is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the task manager module graphical entry points
+
+   function Get_Task_Manager
+     (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access;
+   --  Return the GPS task manager.
 
 end GPS.Kernel.Task_Manager;
