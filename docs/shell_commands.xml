@@ -2593,14 +2593,13 @@ This command returns the output of the process up to the point where regexp matc
   </shell_doc>
 
   <shell_doc name="GPS.Command.get">
-      <param name="self">The instance of GPS.Command</param>
       <param name="name">A string</param>	  
       <description>Return the list of commands of the name given in parameter, scheduled or running in the task manager</description>
   </shell_doc>
 
   <shell_doc name="GPS.Command.get_result">
       <param name="self">The instance of GPS.Command</param>
-      <description>Return the result of the command, if any. Must be overwritten by children</description>
+      <description>Return the result of the command, if any. Must be overriden by children</description>
   </shell_doc>
   
   <shell_doc name="GPS.Command.interrupt">
@@ -2609,7 +2608,6 @@ This command returns the output of the process up to the point where regexp matc
   </shell_doc>
 
   <shell_doc name="GPS.Command.list">
-      <param name="self">The instance of GPS.Command</param>
       <description>Return the list of commands scheduled or running in the task manager</description>
   </shell_doc>
   
@@ -2620,7 +2618,7 @@ This command returns the output of the process up to the point where regexp matc
   
   <shell_doc name="GPS.Command.progress">
       <param name="self">The instance of GPS.Command</param>
-      <description>Return a tuple ['current', 'total'], representing the current progress of the command. If current = total, then the command is finished. </description>
+      <description>Return a list ['current', 'total'], representing the current progress of the command. If current = total, then the command is finished. </description>
   </shell_doc>
 
   <!--#################################################################
