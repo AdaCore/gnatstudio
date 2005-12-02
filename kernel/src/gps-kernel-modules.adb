@@ -509,10 +509,12 @@ package body GPS.Kernel.Modules is
             end if;
          else
             declare
-               Tmp : constant String := GPS.Kernel.Macros.Substitute
+               Done : aliased Boolean := False;
+               Tmp  : constant String := GPS.Kernel.Macros.Substitute
                  (Param, Selection_Context_Access (Context),
-                  Quoted, Has_Error'Access);
+                  Quoted, Done'Access);
             begin
+               Has_Error := not Done;
                return Tmp;
             end;
          end if;
