@@ -512,7 +512,7 @@ package GPS.Kernel.Scripts is
       Args    : Callback_Data'Class) return Boolean is abstract;
    --  Execute a command, the argument of which are specified separately in
    --  Args.
-   --  Returns the value returned by the command itself.
+   --  Return the value returned by the command itself.
 
    function Execute_Command_With_Args
      (Script  : access Scripting_Language_Record;
@@ -862,7 +862,7 @@ package GPS.Kernel.Scripts is
    function Get_Command_Instance
      (Script  : access Scripting_Language_Record'Class;
       Command : access Commands.Root_Command'Class) return Class_Instance;
-   --  Returns the command instance corresponding to the command and the script
+   --  Return the command instance corresponding to the command and the script
    --  given in parameter. Create one if needed.
 
    procedure Delete_Command_Instance
