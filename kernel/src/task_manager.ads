@@ -90,6 +90,12 @@ package Task_Manager is
    --  otherwise tasks that are considered as silent (ie, that have no
    --  associated progress bar) are not taken into account.
 
+   type Command_Array is array (Integer range <>) of Command_Access;
+
+   function Get_Scheduled_Commands
+     (Manager : Task_Manager_Access) return Command_Array;
+   --  Return all the commands currently stored in the task manager.
+
 private
 
    procedure Run
