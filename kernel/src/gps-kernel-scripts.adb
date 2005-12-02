@@ -21,6 +21,7 @@
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
+with GNAT.Dynamic_HTables;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with Glib.Object;             use Glib.Object;
@@ -46,7 +47,7 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
 with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
-with Language_Handlers;   use Language_Handlers;
+with Language_Handlers;       use Language_Handlers;
 with Prj.Ext;                 use Prj.Ext;
 with Projects.Editor;         use Projects.Editor;
 with Projects.Registry;       use Projects.Registry;
@@ -95,6 +96,26 @@ package body GPS.Kernel.Scripts is
       Inst   : Class_Instance);
    --  Set the instance for a specific language
 
+   type Instance_HTable_Index is range 0 .. 1;
+
+   type Command_Key is record
+      Script  : Scripting_Language;
+      Command : Command_Access;
+   end record;
+
+   function Hash (F : Command_Key) return Instance_HTable_Index;
+   function Equal (F1, F2 : Command_Key) return Boolean;
+
+   package Instance_HTable is new GNAT.Dynamic_HTables.Simple_HTable
+     (Instance_HTable_Index,
+      Class_Instance,
+      null,
+      Command_Key,
+      Hash,
+      Equal);
+
+   use Instance_HTable;
+
    type Scripting_Data_Record is new Kernel_Scripting_Data_Record with record
       Scripting_Languages  : Scripting_Language_List :=
         new Scripting_Language_Array'(1 .. 0 => null);
@@ -111,6 +132,8 @@ package body GPS.Kernel.Scripts is
       Hook_Class           : Class_Type := No_Class;
 
       Context_Instances    : Instance_List;
+      Command_Instances    : Instance_HTable.Instance;
+      --  ??? Where can we remove entries from this table ?
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
@@ -2695,5 +2718,86 @@ package body GPS.Kernel.Scripts is
 
       Free (Inst);
    end GUI_Command_Handler;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (F : Command_Key) return Instance_HTable_Index is
+      pragma Unreferenced (F);
+   begin
+      return 1;
+   end Hash;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal (F1, F2 : Command_Key) return Boolean is
+   begin
+      return F1.Command = F2.Command and then F1.Script = F2.Script;
+   end Equal;
+
+   --------------------------
+   -- Get_Command_Instance --
+   --------------------------
+
+   function Get_Command_Instance
+     (Script  : access Scripting_Language_Record'Class;
+      Command : access Root_Command'Class) return Class_Instance
+   is
+      Instance : Class_Instance;
+      Command_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Script), "Command");
+
+      function Convert is new Ada.Unchecked_Conversion
+        (Command_Access, System.Address);
+   begin
+      Instance := Get
+        (Scripting_Data_Record
+           (Get_Kernel (Script).Scripts.all).Command_Instances,
+         (Script => Scripting_Language (Script),
+          Command => Command_Access (Command)));
+
+      if Instance = null then
+         Instance :=
+           New_Instance (Script, Command_Class);
+
+         Set_Data
+           (Instance, Command_Class, Convert (Command_Access (Command)));
+
+         Set (Scripting_Data_Record
+           (Get_Kernel (Script).Scripts.all).Command_Instances,
+           (Script => Scripting_Language (Script), Command =>
+              Command_Access (Command)),
+           Instance);
+      end if;
+
+      return Instance;
+   end Get_Command_Instance;
+
+   -----------------------------
+   -- Delete_Command_Instance --
+   -----------------------------
+
+   procedure Delete_Command_Instance
+     (Script  : access Scripting_Language_Record'Class;
+      Command : access Root_Command'Class)
+   is
+      Instance      : Class_Instance;
+   begin
+      Instance := Get
+        (Scripting_Data_Record
+           (Get_Kernel (Script).Scripts.all).Command_Instances,
+         (Script => Scripting_Language (Script),
+          Command => Command_Access (Command)));
+
+      if Instance /= null then
+         Remove (Scripting_Data_Record
+           (Get_Kernel (Script).Scripts.all).Command_Instances,
+           (Script => Scripting_Language (Script),
+            Command => Command_Access (Command)));
+      end if;
+   end Delete_Command_Instance;
 
 end GPS.Kernel.Scripts;
