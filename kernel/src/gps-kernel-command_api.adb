@@ -57,10 +57,10 @@ package body GPS.Kernel.Command_API is
          begin
             Set_Return_Value_As_List (Data);
 
-            for I in Commands'Range loop
+            for J in Commands'Range loop
                Set_Return_Value
                  (Data, Get_Command_Instance
-                    (Get_Script (Data), Commands (I)));
+                    (Get_Script (Data), Commands (J)));
             end loop;
          end;
       elsif Command = "get" then
@@ -72,11 +72,11 @@ package body GPS.Kernel.Command_API is
          begin
             Set_Return_Value_As_List (Data);
 
-            for I in Commands'Range loop
-               if Name (Commands (I)) = Expected_Name then
+            for J in Commands'Range loop
+               if Name (Commands (J)) = Expected_Name then
                   Set_Return_Value
                     (Data, Get_Command_Instance
-                       (Get_Script (Data), Commands (I)));
+                       (Get_Script (Data), Commands (J)));
                end if;
             end loop;
          end;
