@@ -483,7 +483,7 @@ package body GPS.Kernel.Modules is
      (Creator : access Contextual_Label_Parameters;
       Context : access Selection_Context'Class) return String
    is
-      Has_Error : aliased Boolean := False;
+      Has_Error : Boolean := False;
 
       function Substitution (Param : String; Quoted : Boolean) return String;
       --  Substitute %P, %f,... as appropriate
