@@ -33,6 +33,7 @@ with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
 with Traces;             use Traces;
+with Commands;           use Commands;
 
 package body Expect_Interface is
 
@@ -56,7 +57,7 @@ package body Expect_Interface is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
 
-   type Custom_Action_Record is record
+   type Custom_Action_Record is new Root_Command with record
       Pattern    : Pattern_Matcher_Access;
       Command    : Argument_List_Access;
       On_Match   : GPS.Kernel.Scripts.Subprogram_Type;
@@ -67,12 +68,19 @@ package body Expect_Interface is
       Unmatched_Output : String_Access;
    end record;
 
+   procedure Free (X : in out Custom_Action_Record);
+   --  Free memory associated to X.
+
+   function Execute
+     (Command : access Custom_Action_Record) return Command_Return_Type;
+   --  Do not do anything. This command is not aimed at being used in the
+   --  task manager.
+
    type Custom_Action_Access is access all Custom_Action_Record;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Custom_Action_Record, Custom_Action_Access);
 
    procedure Free (X : in out Custom_Action_Access);
-   procedure Free (X : in out Custom_Action_Record);
    --  Free memory associated to X.
 
    type Instance_Callback_Data is new Callback_Data_Record with record
@@ -141,6 +149,18 @@ package body Expect_Interface is
       end if;
    end Free;
 
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Custom_Action_Record) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+   begin
+      return Execute_Again;
+   end Execute;
+
    --------------
    -- Get_Data --
    --------------
@@ -149,7 +169,8 @@ package body Expect_Interface is
      (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access
    is
       Process_Class : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "Process");
+        New_Class (Get_Kernel (Data), "Process",
+                   New_Class (Get_Kernel (Data), "Command"));
       Value : constant System.Address := Nth_Arg_Data
         (Data, N, Process_Class);
    begin
@@ -192,7 +213,8 @@ package body Expect_Interface is
    -------------
 
    procedure Exit_Cb (Data : Process_Data; Status : Integer) is
-      Class : constant Class_Type := New_Class (Data.Kernel, "Process");
+      Class : constant Class_Type := New_Class
+        (Data.Kernel, "Process", New_Class (Data.Kernel, "Command"));
       Inst : constant Class_Instance :=
         Instance_Callback_Data (Data.Callback_Data.all).Inst;
       D    : constant Custom_Action_Access := Convert (Get_Data (Inst, Class));
@@ -224,7 +246,8 @@ package body Expect_Interface is
    ---------------
 
    procedure Output_Cb (Data : Process_Data; Output : String) is
-      Class : constant Class_Type := New_Class (Data.Kernel, "Process");
+      Class : constant Class_Type := New_Class
+        (Data.Kernel, "Process", New_Class (Data.Kernel, "Command"));
       Inst : constant Class_Instance :=
         Instance_Callback_Data (Data.Callback_Data.all).Inst;
       D    : constant Custom_Action_Access := Convert (Get_Data (Inst, Class));
@@ -419,7 +442,8 @@ package body Expect_Interface is
       Kernel        : constant Kernel_Handle :=
         Get_Kernel (Custom_Module_ID.all);
       D             : Custom_Action_Access;
-      Process_Class : constant Class_Type := New_Class (Kernel, "Process");
+      Process_Class : constant Class_Type := New_Class
+        (Kernel, "Process", New_Class (Kernel, "Command"));
       E             : Exit_Type;
       pragma Unreferenced (E);
 
@@ -526,7 +550,8 @@ package body Expect_Interface is
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
-      Process_Class : constant Class_Type := New_Class (Kernel, "Process");
+      Process_Class : constant Class_Type := New_Class
+        (Kernel, "Process", New_Class (Kernel, "Command"));
    begin
       Register_Command
         (Kernel, Constructor_Method,
