@@ -52,7 +52,8 @@ package Commands is
       --  The current activity type
 
       Current  : Natural := 0;
-      --  The current progress indicator
+      --  The current progress indicator. When Current = Total, the command
+      --  is assumed to be finished.
 
       Total    : Natural := 1;
       --  The total progress indicator
@@ -80,7 +81,8 @@ package Commands is
       --  The command terminated and failed
 
       Execute_Again,
-      --  The command should be executed again as soon as possible
+      --  The command should be executed again as soon as possible. This value
+      --  might also means that the command has never been execute.
 
       Lower_Priority,
       --  Same as Execute_Again, and lower the priority of the command
