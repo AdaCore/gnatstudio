@@ -36,7 +36,6 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Main_Window;           use GPS.Main_Window;
-with Task_Manager;              use Task_Manager;
 with Task_Manager.GUI;          use Task_Manager.GUI;
 with Traces;                    use Traces;
 with Commands.Custom;           use Commands.Custom;
@@ -64,10 +63,6 @@ package body GPS.Kernel.Task_Manager is
 
    procedure Destroy (Module : in out Task_Manager_Module_Id_Record);
    --  Called when the module is destroyed.
-
-   function Get_Task_Manager
-     (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access;
-   --  Return the GPS task manager.
 
    function Get_Or_Create_Task_Manager_Interface_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
