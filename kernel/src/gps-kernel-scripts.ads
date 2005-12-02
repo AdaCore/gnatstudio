@@ -32,6 +32,7 @@ with Entities;
 with Projects;
 with GPS.Kernel.Contexts;
 with Interactive_Consoles;
+with Commands;
 
 package GPS.Kernel.Scripts is
 
@@ -857,6 +858,17 @@ package GPS.Kernel.Scripts is
       Context : GPS.Kernel.Contexts.Entity_Selection_Context_Access)
       return Class_Instance;
    --  Create a new context
+
+   function Get_Command_Instance
+     (Script  : access Scripting_Language_Record'Class;
+      Command : access Commands.Root_Command'Class) return Class_Instance;
+   --  Returns the command instance corresponding to the command and the script
+   --  given in parameter. Create one if needed.
+
+   procedure Delete_Command_Instance
+     (Script  : access Scripting_Language_Record'Class;
+      Command : access Commands.Root_Command'Class);
+   --  Delete the corresponding command instance if any.
 
 private
    Constructor_Method  : constant String := "<@constructor@>";
