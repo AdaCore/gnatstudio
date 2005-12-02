@@ -611,4 +611,43 @@ package body Task_Manager is
       return False;
    end Has_Running_Commands;
 
+   ----------------------------
+   -- Get_Scheduled_Commands --
+   ----------------------------
+
+   function Get_Scheduled_Commands
+     (Manager : Task_Manager_Access) return Command_Array
+   is
+      use Commands.Command_Queues;
+
+      Total : Integer := 0;
+      Empty_Array : Command_Array (1 .. 0);
+   begin
+      if Manager.Queues = null then
+         return Empty_Array;
+      end if;
+
+      for I in Manager.Queues.all'Range loop
+         Total := Total + Length (Manager.Queues (I).Queue);
+      end loop;
+
+      declare
+         Result       : Command_Array (1 .. Total);
+         Node         : Command_Queues.List_Node;
+         Result_Index : Integer := 1;
+      begin
+         for I in Manager.Queues.all'Range loop
+            Node := First (Manager.Queues (I).Queue);
+
+            while Node /= Null_Node loop
+               Result (Result_Index) := Data (Node);
+               Node := Next (Node);
+               Result_Index := Result_Index + 1;
+            end loop;
+         end loop;
+
+         return Result;
+      end;
+   end Get_Scheduled_Commands;
+
 end Task_Manager;
