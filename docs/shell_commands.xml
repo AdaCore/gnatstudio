@@ -2480,7 +2480,7 @@ The action takes a single argument, which is the instance of GPS.Timeout that ca
     ###################################################################-->
 
   <shell_doc name="GPS.Process">
-      <description>Interface to expect-related commands. This class can be used to spawn new processes and communicate with them later on. It is similar to what GPS uses to communicate with gdb</description>
+      <description>Interface to expect-related commands. This class can be used to spawn new processes and communicate with them later on. It is similar to what GPS uses to communicate with gdb. This class is a subclass of GPS.Command.</description>
       <example lang="python">
 The following example launches a gdb process, let is print its welcome message, and kills it as soon as a prompt is seen in the output.
 In addition, it displays debugging messages in a new GPS window.
@@ -2526,6 +2526,7 @@ class My_Gdb (GPS.Process):
 My_Gdb()
       </example>
       <see_also name="GPS.Process.__init__()" />
+      <see_also name="GPS.Command" />
   </shell_doc>
 
   <shell_doc name="GPS.Process.__init__">
@@ -2588,19 +2589,40 @@ This command returns the output of the process up to the point where regexp matc
     ###################################################################-->
 
   <shell_doc name="GPS.Command">
-      <description>Interface to GPS command.</description>
+      <description>Interface to GPS command. This class is abstract, and shall be subclassed.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Command.get">
+      <param name="self">The instance of GPS.Command</param>
+      <param name="name">A string</param>	  
+      <description>Return the list of commands of the name given in parameter, scheduled or running in the task manager</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Command.get_result">
+      <param name="self">The instance of GPS.Command</param>
+      <description>Return the result of the command, if any. Must be overwritten by children</description>
+  </shell_doc>
+  
   <shell_doc name="GPS.Command.interrupt">
       <param name="self">The instance of GPS.Command</param>
-      <description>Interrupts the current command</description>
+      <description>Interrupt the current command</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Process.progress">
+  <shell_doc name="GPS.Command.list">
       <param name="self">The instance of GPS.Command</param>
-      <description>Returns a tuple ['current', 'total'], representing the current progress of the command. If current = total, then the command is finished. </description>
+      <description>Return the list of commands scheduled or running in the task manager</description>
   </shell_doc>
-    
+  
+  <shell_doc name="GPS.Command.name">
+      <param name="self">The instance of GPS.Command</param>
+      <description>Return The name of the command</description>
+  </shell_doc>
+  
+  <shell_doc name="GPS.Command.progress">
+      <param name="self">The instance of GPS.Command</param>
+      <description>Return a tuple ['current', 'total'], representing the current progress of the command. If current = total, then the command is finished. </description>
+  </shell_doc>
+
   <!--#################################################################
     ####   Hook class
     ###################################################################-->
