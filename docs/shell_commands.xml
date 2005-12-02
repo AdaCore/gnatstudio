@@ -405,7 +405,7 @@ The returned list is sorted alphabetically, and the name of the language has bee
 either predefined by GPS or defined by the users through customization files.
 See the GPS documentation for more information on how to create new actions.
 GPS will wait until the command completes to return the control to the caller,
-whether you execute a shell command, or an external process. 
+whether you execute a shell command, or an external process.
 
 The action's name can start with a '/', and be a full menu path. As a result,
 the menu itself will be executed, just as if the user had pressed it. Note that
@@ -452,7 +452,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
 
   <shell_doc name="GPS.save_persistent_properties">
      <description>Forces an immediate save of the persistent properties that GPS maintains for files and projects (for instance the text encoding, the programming language, the debugger breakpoints,...).
-You do not have to call this subprogram explicitly in general, since this is done automatically by GPS on exit.
+You do not have to call this subprogram explicitly in general, since this is done automatically by GPS on exit.</description>
   </shell_doc>
 
   <shell_doc name="GPS.current_context">
@@ -2593,7 +2593,7 @@ This command returns the output of the process up to the point where regexp matc
   </shell_doc>
 
   <shell_doc name="GPS.Command.get">
-      <param name="name">A string</param>	  
+      <param name="name">A string</param>
       <description>Return the list of commands of the name given in parameter, scheduled or running in the task manager</description>
   </shell_doc>
 
@@ -2601,7 +2601,7 @@ This command returns the output of the process up to the point where regexp matc
       <param name="self">The instance of GPS.Command</param>
       <description>Return the result of the command, if any. Must be overriden by children</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.Command.interrupt">
       <param name="self">The instance of GPS.Command</param>
       <description>Interrupt the current command</description>
@@ -2610,12 +2610,12 @@ This command returns the output of the process up to the point where regexp matc
   <shell_doc name="GPS.Command.list">
       <description>Return the list of commands scheduled or running in the task manager</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.Command.name">
       <param name="self">The instance of GPS.Command</param>
       <description>Return The name of the command</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.Command.progress">
       <param name="self">The instance of GPS.Command</param>
       <description>Return a list ['current', 'total'], representing the current progress of the command. If current = total, then the command is finished. </description>
