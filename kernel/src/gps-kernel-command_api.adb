@@ -21,12 +21,12 @@
 with Ada.Unchecked_Conversion;
 
 with Commands;                use Commands;
+with Task_Manager;            use Task_Manager;
+
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 
 package body GPS.Kernel.Command_API is
-
-   Command_Class  : Class_Type;
 
    --  Local subprograms
 
@@ -44,18 +44,71 @@ package body GPS.Kernel.Command_API is
    procedure Command_Cmds
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Data_Command  : Command_Access;
+      Command_Class    : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "Command");
+      Data_Command     : Command_Access;
+      Command_Instance : Class_Instance;
    begin
-      Data_Command := Convert
-        (Get_Data (Nth_Arg (Data, 1, Command_Class), Command_Class));
+      if Command = "list" then
+         declare
+            Commands : constant Command_Array := Get_Scheduled_Commands
+                (GPS.Kernel.Task_Manager.Get_Task_Manager
+                     (Get_Kernel (Data)));
+         begin
+            Set_Return_Value_As_List (Data);
 
-      if Command = "progress" then
+            for I in Commands'Range loop
+               Set_Return_Value
+                 (Data, Get_Command_Instance
+                    (Get_Script (Data), Commands (I)));
+            end loop;
+         end;
+      elsif Command = "get" then
+         declare
+            Commands : constant Command_Array := Get_Scheduled_Commands
+              (GPS.Kernel.Task_Manager.Get_Task_Manager
+                 (Get_Kernel (Data)));
+            Expected_Name : constant String := Nth_Arg (Data, 1, "");
+         begin
+            Set_Return_Value_As_List (Data);
+
+            for I in Commands'Range loop
+               if Name (Commands (I)) = Expected_Name then
+                  Set_Return_Value
+                    (Data, Get_Command_Instance
+                       (Get_Script (Data), Commands (I)));
+               end if;
+            end loop;
+         end;
+      elsif Command = "progress" then
+         Command_Instance := Nth_Arg (Data, 1, Command_Class);
+         Data_Command := Convert
+           (Get_Data (Command_Instance, Command_Class));
+
          Set_Return_Value (Data, Progress (Data_Command).Current);
          Set_Return_Value_Key (Data, "current");
          Set_Return_Value (Data, Progress (Data_Command).Total);
          Set_Return_Value_Key (Data, "total");
       elsif Command = "interrupt" then
+         Command_Instance := Nth_Arg (Data, 1, Command_Class);
+         Data_Command := Convert
+           (Get_Data (Command_Instance, Command_Class));
+
          Interrupt_Queue (Get_Kernel (Data), Data_Command);
+      elsif Command = "name" then
+         Command_Instance := Nth_Arg (Data, 1, Command_Class);
+         Data_Command := Convert
+           (Get_Data (Command_Instance, Command_Class));
+
+         Set_Return_Value (Data, Name (Data_Command));
+      elsif Command = "get_result" then
+         Set_Return_Value
+           (Data,
+            "Error: this primitive should be implemeted by subclasses");
+      end if;
+
+      if Command_Instance /= null then
+         Free (Command_Instance);
       end if;
    end Command_Cmds;
 
@@ -64,13 +117,20 @@ package body GPS.Kernel.Command_API is
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
+      Command_Class  : constant Class_Type := New_Class (Kernel, "Command");
    begin
-      Command_Class := New_Class (Kernel, "Command");
-
+      Register_Command
+        (Kernel, "list", 0, 0, Command_Cmds'Access, Command_Class, True);
+      Register_Command
+        (Kernel, "get", 0, 0, Command_Cmds'Access, Command_Class, True);
       Register_Command
         (Kernel, "progress", 0, 0, Command_Cmds'Access, Command_Class);
       Register_Command
         (Kernel, "interrupt", 0, 0, Command_Cmds'Access, Command_Class);
+      Register_Command
+        (Kernel, "name", 0, 0, Command_Cmds'Access, Command_Class);
+      Register_Command
+        (Kernel, "get_result", 0, 0, Command_Cmds'Access, Command_Class);
    end Register_Commands;
 
 end GPS.Kernel.Command_API;
