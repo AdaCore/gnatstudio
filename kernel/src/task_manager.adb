@@ -627,8 +627,8 @@ package body Task_Manager is
          return Empty_Array;
       end if;
 
-      for I in Manager.Queues.all'Range loop
-         Total := Total + Length (Manager.Queues (I).Queue);
+      for J in Manager.Queues.all'Range loop
+         Total := Total + Length (Manager.Queues (J).Queue);
       end loop;
 
       declare
@@ -636,8 +636,8 @@ package body Task_Manager is
          Node         : Command_Queues.List_Node;
          Result_Index : Integer := 1;
       begin
-         for I in Manager.Queues.all'Range loop
-            Node := First (Manager.Queues (I).Queue);
+         for J in Manager.Queues.all'Range loop
+            Node := First (Manager.Queues (J).Queue);
 
             while Node /= Null_Node loop
                Result (Result_Index) := Data (Node);
