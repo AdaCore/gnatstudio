@@ -304,7 +304,8 @@ procedure GPS.Main is
       FD     : File_Descriptor;
 
    begin
-      if Get_Pref (Splash_Screen)
+      if not Hide_GPS
+        and then Get_Pref (Splash_Screen)
         and then Is_Regular_File (File)
       then
          FD := Open_Read (File, Binary);
