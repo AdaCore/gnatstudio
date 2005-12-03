@@ -22,7 +22,7 @@ with Ada.Calendar;          use Ada.Calendar;
 with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;           use GNAT;
-with GNAT.Dynamic_Tables;
+with GNAT.HTable;
 with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 
 with Glib.Xml_Int;          use Glib.Xml_Int;
@@ -43,26 +43,43 @@ package body VCS_Activities is
    type Activity_Record is record
       Project      : String_Access;
       Name         : String_Access;
-      Id           : String_Access;
+      Id           : Activity_Id;
       VCS          : VCS_Access;
       Group_Commit : Boolean := False;
       Files        : String_List.List;
    end record;
 
-   package Activity_Table is new GNAT.Dynamic_Tables
-     (Activity_Record, Natural, 1, 5, 20);
+   Empty_Activity : constant Activity_Record :=
+                      (null, null, No_Activity,
+                       null, False, String_List.Null_List);
+
+   subtype Hash_Header is Positive range 1 .. 123;
+
+   function Hash (F : Activity_Id) return Hash_Header;
+
+   package Activity_Table is new GNAT.HTable.Simple_HTable
+     (Hash_Header, Activity_Record, Empty_Activity,
+      Activity_Id, Hash, "=");
    use Activity_Table;
 
-   Set : Activity_Table.Instance;
+   function Hash is new HTable.Hash (Hash_Header);
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (F : Activity_Id) return Hash_Header is
+   begin
+      return Hash (String (F));
+   end Hash;
 
    -----------
    -- Image --
    -----------
 
    function Image (Activity : Activity_Id) return String is
-      Id : constant String := Activity_Id'Image (Activity);
    begin
-      return Id (Id'First + 1 .. Id'Last);
+      return String (Activity);
    end Image;
 
    -----------
@@ -71,7 +88,11 @@ package body VCS_Activities is
 
    function Value  (Str : String) return Activity_Id is
    begin
-      return Activity_Id'Value (Str);
+      if Str'Length = Activity_Id'Length then
+         return Activity_Id (Str);
+      else
+         return No_Activity;
+      end if;
    end Value;
 
    ---------------------
@@ -100,7 +121,7 @@ package body VCS_Activities is
          Child        : Node_Ptr := Node.Child;
          Item         : Activity_Record;
       begin
-         Item := (new String'(Project), new String'(Name), new String'(Id),
+         Item := (new String'(Project), new String'(Name), Value (Id),
                   null, Group_Commit, String_List.Null_List);
 
          while Child /= null loop
@@ -113,7 +134,7 @@ package body VCS_Activities is
             Child := Child.Next;
          end loop;
 
-         Append (Set, Item);
+         Set (Activity_Id (Id), Item);
       end Parse_Activity;
 
       File, Child : Node_Ptr;
@@ -170,6 +191,7 @@ package body VCS_Activities is
       File, Ada_Child : Node_Ptr;
       Child, F_Child  : Node_Ptr;
       F_Iter          : String_List.List_Node;
+      Item            : Activity_Record;
    begin
       File     := new Node;
       File.Tag := new String'("custom_section");
@@ -178,35 +200,35 @@ package body VCS_Activities is
       Ada_Child.Tag := new String'("activities");
       Add_Child (File, Ada_Child);
 
-      for K in 1 .. Last (Set) loop
-         declare
-            Item : constant Activity_Record := Set.Table (K);
-         begin
-            Child     := new Node;
-            Child.Tag := new String'("activity");
+      Item := Get_First;
 
-            Set_Attribute (Child, "name", Item.Name.all);
-            Set_Attribute (Child, "project", Item.Project.all);
-            Set_Attribute (Child, "id", Item.Id.all);
+      while Item /= Empty_Activity loop
+         Child     := new Node;
+         Child.Tag := new String'("activity");
 
-            Add_Child (Ada_Child, Child);
+         Set_Attribute (Child, "name", Item.Name.all);
+         Set_Attribute (Child, "project", Item.Project.all);
+         Set_Attribute (Child, "id", String (Item.Id));
 
-            if not String_List.Is_Empty (Item.Files) then
-               --  Append all files to this child
+         Add_Child (Ada_Child, Child);
 
-               F_Iter := String_List.First (Item.Files);
+         if not String_List.Is_Empty (Item.Files) then
+            --  Append all files to this child
 
-               for K in 1 .. String_List.Length (Item.Files) loop
-                  F_Child       := new Node;
-                  F_Child.Tag   := new String'("file");
-                  F_Child.Value := new String'(String_List.Data (F_Iter));
+            F_Iter := String_List.First (Item.Files);
 
-                  Add_Child (Child, F_Child);
+            for K in 1 .. String_List.Length (Item.Files) loop
+               F_Child       := new Node;
+               F_Child.Tag   := new String'("file");
+               F_Child.Value := new String'(String_List.Data (F_Iter));
 
-                  F_Iter := String_List.Next (F_Iter);
-               end loop;
-            end if;
-         end;
+               Add_Child (Child, F_Child);
+
+               F_Iter := String_List.Next (F_Iter);
+            end loop;
+         end if;
+
+         Item := Get_Next;
       end loop;
 
       Trace (Me, "Saving " & Filename);
@@ -228,33 +250,25 @@ package body VCS_Activities is
    begin
       New_Id : loop
          declare
-            UID   : constant String :=
-                      Image (Clock, Picture_String'("%Y%m%d%H%M%S%i"));
-            Found : Boolean := False;
+            UID   : constant Activity_Id :=
+                      Activity_Id
+                        (Image (Clock, Picture_String'("%Y%m%d%H%M%S%i")));
          begin
-            for K in 1 .. Last (Set) loop
-               if Set.Table (K).Id.all = UID then
-                  Found := True;
-                  exit;
-               end if;
-            end loop;
-
-            if not Found then
+            if Get (UID) = Empty_Activity then
                --  Retreive the current root project name
-               Append
-                 (Set,
-                  (new String'(Project_Path
-                                 (Get_Root_Project
-                                    (Get_Registry (Kernel).all))),
-                   new String'("New Activity"),
-                   new String'(UID),
-                   null,
-                   False,
-                   String_List.Null_List));
+               Set (UID,
+                 (new String'(Project_Path
+                  (Get_Root_Project
+                     (Get_Registry (Kernel).all))),
+                  new String'("New Activity"),
+                  UID,
+                  null,
+                  False,
+                  String_List.Null_List));
 
                Save_Activities (Kernel);
 
-               return Activity_Id (Last (Set));
+               return UID;
             end if;
          end;
       end loop New_Id;
@@ -268,7 +282,7 @@ package body VCS_Activities is
      (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return VCS_Access
    is
-      VCS   : VCS_Access := Set.Table (Natural (Activity)).VCS;
+      VCS   : VCS_Access := Get (Activity).VCS;
       Files : String_List.List;
    begin
       if VCS = null or else VCS.all in Unknown_VCS_Record then
@@ -277,7 +291,7 @@ package body VCS_Activities is
          --  that all current files are using the same VCS otherwise they won't
          --  have been append.
 
-         Files := Set.Table (Natural (Activity)).Files;
+         Files := Get (Activity).Files;
 
          if not String_List.Is_Empty (Files)then
             declare
@@ -286,12 +300,16 @@ package body VCS_Activities is
                Project : constant Project_Type :=
                            Get_Project_From_File
                              (Get_Registry (Kernel).all, File);
-
             begin
                if Project /= No_Project then
                   VCS := Get_VCS_From_Id
                     (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
-                  Set.Table (Natural (Activity)).VCS := VCS;
+                  declare
+                     Item : Activity_Record := Get (Activity);
+                  begin
+                     Item.VCS := VCS;
+                     Set (Activity, Item);
+                  end;
                end if;
             end;
          end if;
@@ -306,7 +324,7 @@ package body VCS_Activities is
 
    function Get_Project_Path (Activity : Activity_Id) return String is
    begin
-      return Set.Table (Natural (Activity)).Project.all;
+      return Get (Activity).Project.all;
    end Get_Project_Path;
 
    ---------------------
@@ -319,24 +337,18 @@ package body VCS_Activities is
       Logs_Dir  : constant String := Get_Home_Dir (Kernel) & "log_files";
       File_Name : constant String :=
                     Logs_Dir & OS_Lib.Directory_Separator &
-                    Set.Table (Natural (Activity)).Id.all & "$log";
-      K         : constant Natural := Natural (Activity);
+                    String (Activity) & "$log";
       Success   : Boolean;
    begin
       declare
-         Item : Activity_Record := Set.Table (K);
+         Item : Activity_Record := Get (Activity);
       begin
          String_List.Free (Item.Files);
          Free (Item.Project);
          Free (Item.Name);
-         Free (Item.Id);
       end;
 
-      for I in K .. Last (Set) - 1 loop
-         Set.Table (K) := Set.Table (K + 1);
-      end loop;
-
-      Set_Last (Set, Last (Set) - 1);
+      Remove (Activity);
 
       Save_Activities (Kernel);
 
@@ -348,13 +360,13 @@ package body VCS_Activities is
    ----------------------------
 
    function Get_Activity_From_Name (Name : String) return Activity_Id is
+      Item : Activity_Record := Get_First;
    begin
-      for K in 1 .. Last (Set) loop
-         if Set.Table (K).Name.all = Name
-           or else Set.Table (K).Id.all = Name
-         then
-            return Activity_Id (K);
+      while Item /= Empty_Activity loop
+         if String (Item.Id) = Name then
+            return Item.Id;
          end if;
+         Item := Get_Next;
       end loop;
       return No_Activity;
    end Get_Activity_From_Name;
@@ -370,7 +382,7 @@ package body VCS_Activities is
       Logs_Dir  : constant String := Get_Home_Dir (Kernel) & "log_files";
       File_Name : constant String :=
                     Logs_Dir & OS_Lib.Directory_Separator &
-                    Set.Table (Natural (Activity)).Id.all & "$log";
+                    String (Activity) & "$log";
       Log_File : constant Virtual_File :=
                     Create (Full_Filename => File_Name);
    begin
@@ -388,7 +400,7 @@ package body VCS_Activities is
       Logs_Dir  : constant String := Get_Home_Dir (Kernel) & "log_files";
       File_Name : constant String :=
                     Logs_Dir & OS_Lib.Directory_Separator &
-                    Set.Table (Natural (Activity)).Id.all & "$log";
+                    String (Activity) & "$log";
       File      : constant Virtual_File := Create (File_Name);
       F         : OS_Lib.File_Descriptor;
    begin
@@ -435,24 +447,16 @@ package body VCS_Activities is
 
    function First return Activity_Id is
    begin
-      if Last (Set) = 0 then
-         return No_Activity;
-      else
-         return 1;
-      end if;
+      return Get_First.Id;
    end First;
 
    ----------
    -- Next --
    ----------
 
-   function Next (Activity : Activity_Id) return Activity_Id is
+   function Next return Activity_Id is
    begin
-      if Natural (Activity) = Last (Set) then
-         return No_Activity;
-      else
-         return Activity + 1;
-      end if;
+      return Get_Next.Id;
    end Next;
 
    --------------
@@ -464,7 +468,7 @@ package body VCS_Activities is
       if Activity = No_Activity then
          return "";
       else
-         return Set.Table (Natural (Activity)).Name.all;
+         return Get (Activity).Name.all;
       end if;
    end Get_Name;
 
@@ -473,9 +477,11 @@ package body VCS_Activities is
    --------------
 
    procedure Set_Name (Activity : Activity_Id; Name : String) is
+      Item : Activity_Record := Get (Activity);
    begin
-      Free (Set.Table (Natural (Activity)).Name);
-      Set.Table (Natural (Activity)).Name := new String'(Name);
+      Free (Item.Name);
+      Item.Name := new String'(Name);
+      Set (Activity, Item);
    end Set_Name;
 
    -----------------------
@@ -483,15 +489,14 @@ package body VCS_Activities is
    -----------------------
 
    function Get_File_Activity (File : VFS.Virtual_File) return Activity_Id is
+      Item : Activity_Record := Get_First;
    begin
-      for K in 1 .. Last (Set) loop
-         declare
-            Item : constant Activity_Record := Set.Table (K);
-         begin
-            if Is_In_List (Item.Files, Full_Name (File, True).all) then
-               return Activity_Id (K);
-            end if;
-         end;
+      while Item /= Empty_Activity loop
+         if Is_In_List (Item.Files, Full_Name (File, True).all) then
+            return Item.Id;
+         end if;
+
+         Item := Get_Next;
       end loop;
 
       return No_Activity;
@@ -504,7 +509,7 @@ package body VCS_Activities is
    function Get_Files_In_Activity
      (Activity : Activity_Id) return String_List.List is
    begin
-      return Set.Table (Natural (Activity)).Files;
+      return Get (Activity).Files;
    end Get_Files_In_Activity;
 
    --------------
@@ -521,7 +526,7 @@ package body VCS_Activities is
       VCS     : constant VCS_Access :=
                   Get_VCS_From_Id
                     (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
-      Item    : constant Activity_Record := Set.Table (Natural (Activity));
+      Item    : Activity_Record := Get (Activity);
    begin
       --  ??? check that File is not yet present
 
@@ -533,10 +538,11 @@ package body VCS_Activities is
          return;
       end if;
 
-      Set.Table (Natural (Activity)).VCS := VCS;
+      Item.VCS := VCS;
 
-      String_List.Append
-        (Set.Table (Natural (Activity)).Files, Full_Name (File, True).all);
+      String_List.Append (Item.Files, Full_Name (File, True).all);
+
+      Set (Activity, Item);
 
       Save_Activities (Kernel);
    end Add_File;
@@ -548,10 +554,12 @@ package body VCS_Activities is
    procedure Remove_File
      (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id;
-      File     : Virtual_File) is
+      File     : Virtual_File)
+   is
+      Item : Activity_Record := Get (Activity);
    begin
-      Remove_From_List
-        (Set.Table (Natural (Activity)).Files, Full_Name (File, True).all);
+      Remove_From_List (Item.Files, Full_Name (File, True).all);
+      Set (Activity, Item);
       Save_Activities (Kernel);
    end Remove_File;
 
@@ -561,7 +569,7 @@ package body VCS_Activities is
 
    function Get_Group_Commit (Activity : Activity_Id) return Boolean is
    begin
-      return Set.Table (Natural (Activity)).Group_Commit;
+      return Get (Activity).Group_Commit;
    end Get_Group_Commit;
 
    -------------------------
@@ -569,11 +577,9 @@ package body VCS_Activities is
    -------------------------
 
    procedure Toggle_Group_Commit (Activity : Activity_Id) is
+      Item : Activity_Record := Get (Activity);
    begin
-      Set.Table (Natural (Activity)).Group_Commit :=
-        not Set.Table (Natural (Activity)).Group_Commit;
+      Item.Group_Commit := not Item.Group_Commit;
    end Toggle_Group_Commit;
 
-begin
-   Init (Set);
 end VCS_Activities;
