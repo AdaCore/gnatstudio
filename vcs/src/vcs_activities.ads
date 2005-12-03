@@ -56,7 +56,7 @@ package VCS_Activities is
    function First return Activity_Id;
    --  Returns the first activity or No_Activity if there is no activity
 
-   function Next (Activity : Activity_Id) return Activity_Id;
+   function Next return Activity_Id;
    --  Returns the next activity or No_Activity if we have reached the last
 
    function Get_Name (Activity : Activity_Id) return String;
@@ -119,8 +119,9 @@ package VCS_Activities is
 
 private
 
-   type Activity_Id is new Integer;
+   type Activity_Id is new String (1 .. 17);
+   --  17 is the length of the time-stamp id used in the implementation
 
-   No_Activity : constant Activity_Id := Activity_Id'First;
+   No_Activity : constant Activity_Id := (others => ' ');
 
 end VCS_Activities;
