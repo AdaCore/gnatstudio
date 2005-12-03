@@ -509,7 +509,7 @@ package body VCS_View_API is
                   Set_Sensitive (Item, Section_Active);
                end if;
 
-               Activity := Next (Activity);
+               Activity := Next;
             end loop;
 
             Set_Sensitive (Menu_Item, Found);
