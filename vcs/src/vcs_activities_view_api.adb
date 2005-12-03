@@ -692,7 +692,7 @@ package body VCS_Activities_View_API is
             end if;
          end if;
 
-         Activity := Next (Activity);
+         Activity := Next;
       end loop;
    end Query_Activities_Files;
 
