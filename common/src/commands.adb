@@ -502,13 +502,18 @@ package body Commands is
 
    procedure Free_Consequence_Actions
      (Item      : access Root_Command'Class;
-      Free_Data : Boolean)
+      Free_Data : Boolean;
+      Free_List : Boolean)
    is
       Empty : Command_Queues.List;
    begin
       if Free_Data then
          Command_Queues.Free (Item.Next_Commands);
       else
+         if Free_List then
+            Command_Queues.Free (Item.Next_Commands, False);
+         end if;
+
          Item.Next_Commands := Empty;
       end if;
    end Free_Consequence_Actions;
@@ -519,13 +524,18 @@ package body Commands is
 
    procedure Free_Alternate_Actions
      (Item      : access Root_Command'Class;
-      Free_Data : Boolean)
+      Free_Data : Boolean;
+      Free_List : Boolean)
    is
       Empty : Command_Queues.List;
    begin
       if Free_Data then
          Command_Queues.Free (Item.Alternate_Commands);
       else
+         if Free_List then
+            Command_Queues.Free (Item.Alternate_Commands, False);
+         end if;
+
          Item.Alternate_Commands := Empty;
       end if;
    end Free_Alternate_Actions;

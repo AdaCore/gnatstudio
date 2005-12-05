@@ -155,14 +155,21 @@ package Commands is
 
    procedure Free_Consequence_Actions
      (Item      : access Root_Command'Class;
-      Free_Data : Boolean);
+      Free_Data : Boolean;
+      Free_List : Boolean);
    procedure Free_Alternate_Actions
      (Item      : access Root_Command'Class;
-      Free_Data : Boolean);
+      Free_Data : Boolean;
+      Free_List : Boolean);
    --  Free memory associated to the consequence/alternate commands of Item.
-   --  If Free_Data is False, the command will be marked as having no
-   --  consequence/alternate actions, but the actual commands will not be
+   --  If Free_List is False, the command will be marked as having no
+   --  consequence/alternate actions, but the actual list will not be
    --  freed.
+   --  If Free_Data is False, the command will be marked as having no
+   --  consequence/alternate actions, but the actual list will not be
+   --  freed, nor its data.
+   --  Note that if Free_Data is true, then Free_List has no effect (e.g.
+   --  we assume that when we free the data, we always free the list too).
 
    -------------------------
    -- Executing a command --
