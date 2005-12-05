@@ -237,8 +237,8 @@ package body Task_Manager is
                         Command_Queues.Concat (Queue.Queue, New_Queue);
                      end;
 
-                     Free_Alternate_Actions (Command, True);
-                     Free_Consequence_Actions (Command, False);
+                     Free_Alternate_Actions (Command, True, False);
+                     Free_Consequence_Actions (Command, False, False);
                   else
                      declare
                         New_Queue : constant Command_Queues.List :=
@@ -250,8 +250,8 @@ package body Task_Manager is
                         Command_Queues.Concat (Queue.Queue, New_Queue);
                      end;
 
-                     Free_Consequence_Actions (Command, True);
-                     Free_Alternate_Actions (Command, False);
+                     Free_Consequence_Actions (Command, True, False);
+                     Free_Alternate_Actions (Command, False, False);
                   end if;
 
                   Command_Queues.Next (Queue.Queue);
