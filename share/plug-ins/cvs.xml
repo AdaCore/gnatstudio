@@ -306,6 +306,7 @@
       <status label="Needs update" stock="gps-vcs-needs-update" />
       <status label="Contains merge conflicts" stock="gps-vcs-has-conflicts" />
       <status label="Removed" stock="gps-vcs-removed" />
+      <status label="Added" stock="gps-vcs-added" />
 
       <status_parser>
          <regexp>File: (no file )?([^\s]*)\s*Status: (.*?)\n\n *Working revision:\s*([^\s]*).*\n *Repository revision:\s*([^\s]*).*</regexp>
