@@ -32,7 +32,6 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Main_Window;           use GPS.Main_Window;
@@ -73,19 +72,9 @@ package body GPS.Kernel.Task_Manager is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->Task Manager.
 
-   type Wrapper_Command is new Root_Command with record
-      Command : Command_Access;
-   end record;
-   type Wrapper_Command_Access is access all Wrapper_Command'Class;
-   function Execute
-     (Command : access Wrapper_Command) return Command_Return_Type;
-   function Name (Command : access Wrapper_Command) return String;
-   function Progress (Command : access Wrapper_Command) return Progress_Record;
-   procedure Interrupt (Command : in out Wrapper_Command);
-   --  A wrapper for commands, so that they are not destroyed on exit.
-
    function Create_Wrapper
-     (Command : access Root_Command'Class) return Command_Access;
+     (Command         : access Root_Command'Class;
+      Destroy_On_Exit : Boolean) return Command_Access;
    --  Create a new wrapper
 
    function On_Exit_Hook
@@ -274,7 +263,7 @@ package body GPS.Kernel.Task_Manager is
    -------------
 
    function Execute
-     (Command : access Wrapper_Command) return Command_Return_Type is
+     (Command : access Scheduled_Command) return Command_Return_Type is
    begin
       return Execute (Command.Command);
    end Execute;
@@ -283,7 +272,7 @@ package body GPS.Kernel.Task_Manager is
    -- Name --
    ----------
 
-   function Name (Command : access Wrapper_Command) return String is
+   function Name (Command : access Scheduled_Command) return String is
    begin
       return Name (Command.Command);
    end Name;
@@ -293,30 +282,108 @@ package body GPS.Kernel.Task_Manager is
    --------------
 
    function Progress
-     (Command : access Wrapper_Command) return Progress_Record is
+     (Command : access Scheduled_Command) return Progress_Record is
    begin
       return Progress (Command.Command);
    end Progress;
+
+   ------------------
+   -- Set_Progress --
+   ------------------
+
+   procedure Set_Progress (Command : access Scheduled_Command;
+                           Progress : Progress_Record) is
+   begin
+      Set_Progress (Command.Command, Progress);
+   end Set_Progress;
 
    ---------------
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Command : in out Wrapper_Command) is
+   procedure Interrupt (Command : in out Scheduled_Command) is
    begin
       Interrupt (Command.Command.all);
    end Interrupt;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Command : in out Scheduled_Command) is
+   begin
+      if Command.Destroy_On_Exit then
+         Destroy (Command.Command);
+      end if;
+   end Free;
+
+   ----------
+   -- Undo --
+   ----------
+
+   function Undo (This : access Scheduled_Command) return Boolean is
+   begin
+      return Undo (This.Command);
+   end Undo;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Item : in out Instance_Item) is
+   begin
+      Free (Item.Instance);
+   end Free;
 
    --------------------
    -- Create_Wrapper --
    --------------------
 
    function Create_Wrapper
-     (Command : access Root_Command'Class) return Command_Access
+     (Command : access Root_Command'Class; Destroy_On_Exit : Boolean)
+      return Command_Access
    is
-      C : constant Wrapper_Command_Access := new Wrapper_Command;
+      C     : constant Scheduled_Command_Access := new Scheduled_Command;
+      Queue : Command_Queues.List;
+      Node  : Command_Queues.List_Node;
    begin
       C.Command := Command_Access (Command);
+      C.Destroy_On_Exit := Destroy_On_Exit;
+
+      Queue := Get_Consequence_Actions (Command);
+
+      Node := First (Queue);
+
+      while Node /= Command_Queues.Null_Node loop
+         if Data (Node) /= null then
+            Add_Consequence_Action
+              (C, Create_Wrapper (Data (Node), Destroy_On_Exit));
+         end if;
+
+         Node := Next (Node);
+      end loop;
+
+      Queue := Get_Alternate_Actions (Command);
+
+      Node := First (Queue);
+
+      while Node /= Command_Queues.Null_Node loop
+         if Data (Node) /= null then
+            Add_Alternate_Action
+              (C, Create_Wrapper (Data (Node), Destroy_On_Exit));
+         end if;
+
+         Node := Next (Node);
+      end loop;
+
+      --  We have to free those lists, otherwise in the case of incremental
+      --  execution, a call to destroy will free all these.
+
+      Free_Consequence_Actions
+        (Command, Free_Data => False, Free_List => True);
+      Free_Alternate_Actions
+        (Command, Free_Data => False, Free_List => True);
+
       return Command_Access (C);
    end Create_Wrapper;
 
@@ -334,13 +401,10 @@ package body GPS.Kernel.Task_Manager is
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
    begin
-      if Destroy_On_Exit then
-         Add_Command
-           (Manager, Command_Access (Command), Active, Show_Bar, Queue_Id);
-      else
-         Add_Command
-           (Manager, Create_Wrapper (Command), Active, Show_Bar, Queue_Id);
-      end if;
+      Add_Command
+        (Manager,
+         Create_Wrapper
+           (Command, Destroy_On_Exit), Active, Show_Bar, Queue_Id);
    end Launch_Background_Command;
 
    ---------------------------
@@ -420,5 +484,48 @@ package body GPS.Kernel.Task_Manager is
    begin
       Destroy (Get_Task_Manager (Get_Kernel (Module)));
    end Destroy;
+
+   ------------------
+   -- Get_Instance --
+   ------------------
+
+   function Get_Instance
+     (Command  : access Scheduled_Command'Class;
+      Language : access Scripting_Language_Record'Class)
+      return Class_Instance
+   is
+      Node     : Instance_List.List_Node;
+   begin
+      Node := First (Command.Instances);
+
+      while Node /= Instance_List.Null_Node loop
+         if Data (Node).Script = Scripting_Language (Language) then
+            return Data (Node).Instance;
+         end if;
+
+         Node := Next (Node);
+      end loop;
+
+      --  If no instance is found, then create one
+
+      declare
+         Instance : Class_Instance;
+         Command_Class : constant Class_Type :=
+           New_Class (Get_Kernel (Language), "Command");
+
+         function Convert is new Ada.Unchecked_Conversion
+           (Command_Access, System.Address);
+      begin
+         Instance := New_Instance (Language, Command_Class);
+         Set_Data
+           (Instance, Command_Class, Convert (Command_Access (Command)));
+         Append
+           (Command.Instances,
+            (Script   => Scripting_Language (Language),
+             Instance => Instance));
+
+         return Instance;
+      end;
+   end Get_Instance;
 
 end GPS.Kernel.Task_Manager;
