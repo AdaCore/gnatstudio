@@ -62,9 +62,9 @@ package body Remote_Connections is
    procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
    pragma Import (C, C_Free, "free");
 
-   procedure Do_Nothing (Factory : in out Remote_Connection);
+   procedure Free (Factory : in out Remote_Connection);
    package Factory_Hash is new String_Hash
-     (Remote_Connection, Do_Nothing, null);
+     (Remote_Connection, Free, null);
    use Factory_Hash.String_Hash_Table;
 
    type Connection_List_Record;
@@ -84,15 +84,34 @@ package body Remote_Connections is
    Longest_Protocol : Natural := 0;
    --  Length of the longest registered protocol
 
+   -------------------------------
+   -- Free_Registered_Protocols --
+   -------------------------------
+
+   procedure Free_Registered_Protocols is
+   begin
+      Factory_Hash.String_Hash_Table.Reset (Factories);
+   end Free_Registered_Protocols;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Connection : in out Remote_Connection_Record) is
+   begin
+      Free (Connection.Remote_User);
+      Free (Connection.Remote_Host);
+      Free (Connection.Passwd);
+   end Free;
+
    ----------------
    -- Do_Nothing --
    ----------------
 
-   procedure Do_Nothing (Factory : in out Remote_Connection) is
-      pragma Unreferenced (Factory);
+   procedure Free (Factory : in out Remote_Connection) is
    begin
-      null;
-   end Do_Nothing;
+      Free (Factory.all);
+   end Free;
 
    --------------
    -- Get_User --

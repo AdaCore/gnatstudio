@@ -41,6 +41,10 @@ package Remote_Connections is
    --  connecting to two different hosts through ssh for instance, you get
    --  asked the password twice, once for each host.
 
+   procedure Free (Connection : in out Remote_Connection_Record);
+   --  Free the memory occupied by the remote connection. You must call the
+   --  parent's Free as well
+
    function Get_Protocol
      (Connection : access Remote_Connection_Record) return String is abstract;
    --  Return the name of the protocol (this is the part that should be used
@@ -206,6 +210,9 @@ package Remote_Connections is
    --  Register a new connection factory. When a file starting with
    --  "protocol_name://" is seen, and if we do not have such a connection
    --  already, Factory is returned so that a new connection is initialized.
+
+   procedure Free_Registered_Protocols;
+   --  Free all registered protocols
 
    function Get_Connection
      (Protocol, User, Host : String;
