@@ -20,63 +20,6 @@
 
 --  This package implements a general support for hooks.
 --  See the GPS documentation on how to use hooks from the scripting languages.
---  The following paragraphs describe how interaction between the shell and
---  Ada is done.
---
---  Adding callbacks to existing hooks
---  ----------------------------------
---
---  If a user adds a new callback to an existing hook through a call to
---     GPS.add_hook ("hook_name", "python function")
---  then we create internally a tagged object that wraps "python function"
---  through the interface expected for GPS.Kernel.Hooks.Add_Hook.
---  This wrapper will basically execute this function in the same scripting
---  language that the call to GPS.add_hook was done from, and will specify the
---  arguments from the arguments given to GPS.Kernel.Hooks.Run_Hook by the
---  user.
---
---  Creating new hook types and new hooks
---  --------------------------------------
---
---  Hooks have types, which describe what parameters they expect. This types
---  are named with any string that the user provides through Create_Hook_Type.
---  Any time the latter is called, a new shell function is created:
---     __run_hook__<type_name>
---  This function's implementation has to be provided by the caller of
---  Create_Hook_Type. Its role is to convert the arguments as sent by the
---  scripting language (a Callback_Data) into the actual Hooks_Data type that
---  Ada uses internally), and then to call the appropriate form of Run_Hook.
---
---  New hooks can be created by the user through calls to Register_Hook. This
---  immediately creates a new shell function:
---     __run_hook__<hook_name>
---  Internally, this is bound to the exact same code as __run_hook__<type_name>
---
---  As a result, any time the user executes the call
---     GPS.run_hook ("hook_name", arg1, arg2);
---  the following actions take place:
---    - Calls __run_hook__<hook_name> ("hook_name", arg1, arg2)
---    - Which is the same as __run_hook__<hook_type> ("hook_name", arg1, arg2)
---    - Which calls at the Ada level:
---      GPS.Kernel.Hooks.Run_Hook ("hook_name", Hooks_Data'(Arg1, Arg2));
---
---  The reason we need the __run_hook__<hook_type> step is so that the user
---  can also create new hooks for an existing type directly from the scripting
---  language. This is done by calling (in python for instance):
---      register_hook ("hook_name", "description", "hook_type")
---  which creates __run_hook__<hook_name> with the same implementation as
---  __run_hook__<hook_type>, except that the latter is done in Ada and can
---  therefore create Ada structures at will.
---
---  The user can also create new hook types directly from the scripting
---  language. These hooks can take any number of parameter. This is done by
---  calling
---     GPS.register_hook ("hook_name", "description", "general")
---  This special hook type "general" indicates at the Ada level that the hooks
---  will directly receive a Callback_Data argument instead of a
---  Hooks_Data'Class argument. This is implemented through the
---     __run_hook__general
---  function, exported by Ada.
 
 with GPS.Kernel.Scripts;
 with Glib.Object;
@@ -92,59 +35,6 @@ package GPS.Kernel.Hooks is
       return String;
    --  Return the name of the hook instance stored in Data
 
-   -----------------------------
-   -- Hooks with no arguments --
-   -----------------------------
-
-   type Hook_No_Args_Record
-      is abstract new GPS.Kernel.Hook_Function_Record with null record;
-   type Hook_No_Args is access all Hook_No_Args_Record'Class;
-
-   procedure Execute
-     (Hook   : Hook_No_Args_Record;
-      Kernel : access Kernel_Handle_Record'Class) is abstract;
-   --  Execute the hook
-
-   type No_Args_Execute is access procedure
-     (Kernel : access Kernel_Handle_Record'Class);
-
-   procedure Add_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String;
-      Hook   : access Hook_No_Args_Record'Class;
-      Watch  : Glib.Object.GObject := null);
-   procedure Add_Hook
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name      : String;
-      Hook      : No_Args_Execute;
-      Watch     : Glib.Object.GObject := null;
-      Func_Name : String := "");
-   --  Add a callback to be called when the hook is executed. The hook must
-   --  have been registered first.
-   --  The second version is provided for ease of use, so that users do not
-   --  have to systematically create a new tagged type. However, such a hook
-   --  can never be removed from the list.
-   --  When Watch is destroyed, Hook is automatically cancelled, and
-   --  destroyed if it isn't associated with another hook list.
-   --  Func_Name is used when listing the functions associated with the hook
-
-   procedure Remove_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String;
-      Hook   : access Hook_No_Args_Record'Class);
-   --  Remove Hook from the list of functions to be called when the hook Name
-   --  is executed.
-
-   procedure Run_Hook
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Set_Busy : Boolean := True);
-   --  Call all functions that were added to the hook.
-   --  The functions are executed in the reverse order in which they were
-   --  registered.
-   --  Set_Busy indicates whether the busy cursor should be displayed while
-   --  processing the hook
-
    ----------------
    -- Hooks data --
    ----------------
@@ -153,216 +43,240 @@ package GPS.Kernel.Hooks is
    --  circularities in the kernel, and it is easier to access non-generic
    --  packages from the various scripting languages
 
-   type Hooks_Data is abstract tagged record
-      Kernel : GPS.Kernel.Kernel_Handle;
-   end record;
-   --  If you need to destroy memory stored in Hooks_Data, you should do that
-   --  after calling Run_Hook
+   type Hooks_Data is abstract tagged private;
 
-   function Get_Name (Data : Hooks_Data) return String is abstract;
-   --  Return the name of that type. This should be unique in the application,
-   --  and will be used to identify this type of hooks from the shell
+   procedure Destroy (Data : in out Hooks_Data);
+   --  Free the memory used by Data. By default, this does nothing
 
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Hooks_Data) return Boolean is abstract;
-   --  Execute the shell command Command, passing it the arguments contained
-   --  in Data. The idea is to create a Callback_Data, and then call
-   --  directly Execute_Command.
-   --  Should return True in case of success.
-   --  This typically looks like:
-   --      D : Callback_Data'Class := Create (Script, 2);
+      Data      : access Hooks_Data)
+      return GPS.Kernel.Scripts.Callback_Data_Access is abstract;
+   --  Create the callback_data to be passed to a shell command. The data
+   --  itself will be freed automatically later on. However, when you add a
+   --  class instance to the data, you must free it before returning from the
+   --  function.
+   --  Code typically looks like
+   --      D : constant Callback_Data'Class := Create (Script, 2);
+   --      F : constant Class_Instance := ...;
    --      Set_Nth_Arg (D, 1, Hook_Name);
-   --      Set_Nth_Arg (D, 2, ...);
-   --      Tmp := Execute (Command, D);
-   --      Free whatever is needed in D
-   --      return Tmp;
+   --      Set_Nth_Arg (D, 2, F);
+   --      Free (F);
+   --      return D;
+   --  This function is called when a hook is called and the callback is
+   --  written in shell.
+   --
+   --  ??? Why set the hooks_name here, that could be done automatically
+
+   type From_Callback_Data_Function is access function
+     (Data : GPS.Kernel.Scripts.Callback_Data'Class)
+      return Hooks_Data'Class;
+   --  Create a hooks data from the arguments pass from the shell. This
+   --  function is used when run_hook is called from the shell.
+   --  Code typically looks like
+   --     D : constant .._Hook_Data;
+   --     Inst : Class_Instance := Nth_Arg (Data, 2, Klass);
+   --     D.Field1 := Inst;
+   --     Free (Inst);
+   --     return D;
+   --  The contents of Hooks_Data matches was is created by
+   --  Create_Callback_Data, ie the first argument is the hook name.
+
+   procedure Register_Hook_Data_Type
+     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data_Type_Name : String;
+      Args_Creator   : From_Callback_Data_Function);
+   --  Register a new possible parameters profile for hooks. Calling this
+   --  procedure is mandatory to make this type of hooks visible from the
+   --  shell scripts, so that scripts can create their own hook types.
 
    ----------------
    -- Hook types --
    ----------------
 
-   type Hook_Type is (Unknown, Hook_Without_Args, Hook_With_Args,
-                      Hook_With_Shell_Args, Hook_With_Args_And_Return);
+   procedure Register_Hook_No_Return
+     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name           : String;
+      Data_Type_Name : String);
+   --  Create a new hook. Associated callbacks will take the parameters
+   --  described by Parameters_Profile (which must be the same name given to
+   --  Register_Hook_Data_Type). Such callbacks are not expected to return any
+   --  value.
 
-   procedure Create_Hook_Type
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Type_Name        : String;
-      Profile          : Hook_Type;
-      Run_Hook_Handler : GPS.Kernel.Scripts.Module_Command_Function);
-   --  Create a new type of hooks with a specific kind of parameters. This
-   --  type of parameters is described by Type_Name, which should be the same
-   --  value as returned by Get_Name (Hooks_Data).
-   --  Command_Handler will get two kinds of commands in argument:
-   --         "__run_hook__" & Get_Name (Data)
-   --      or "__run_hook__" & Hook_Name
-   --  This depends on where the hook is called from.
-   --  In both cases, the behavior must be the same:
-   --  Create a Hooks_Data from its Callback_Data parameter, and then call
-   --  Run_Hook by passing the created Hooks_Data. The name of the hook to be
-   --  run is the first argument of the Callback_Data.
-   --
-   --  The code for Run_Hook_Handler typically looks like:
-   --     Args : aliased Foo_Hooks_Data :=
-   --         (Kernel => Get_Kernel (Data),
-   --          ...    => ...);
-   --     Set_Return_Value
-   --      (Data, Run_Hook (Get_Kernel (Data), Get_Hook_Name (Data, 1),
-   --                       Args'Unchecked_Access));
+   procedure Register_Hook_Return_Boolean
+     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name           : String;
+      Data_Type_Name : String);
+   --  Same as above, except the callbacks are expected to return a boolean
 
-   procedure Register_Hook
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name      : String;
-      Type_Name : String := "");
-   --  Register a new hook in the kernel.
-   --  Type_Name described the type of parameters for that hook. This should be
-   --  the same value as given to Create_Hook_Type. The default value indicates
-   --  that the hook doesn't have any argument.
+   procedure Register_Hook_Return_String
+     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name           : String;
+      Data_Type_Name : String);
+   --  Same as above, except the callbacks are expected to return a string
 
-   --------------------------------
-   -- Hooks with shell arguments --
-   --------------------------------
-   --  This type of hooks are used when a hook is created from a scripting
-   --  language directly
+   procedure Register_Hook_No_Args
+     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name           : String);
+   --  Same as above, except the callbacks take no arguments and return nothing
 
-   type Hook_Shell_Args_Record
-      is abstract new GPS.Kernel.Hook_Function_Record with null record;
-   type Hook_Shell_Args is access all Hook_Shell_Args_Record;
-
-   procedure Execute
-     (Hook   : Hook_Shell_Args_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Scripts.Callback_Data'Class) is abstract;
-   --  First argument in Data is the name of the hook
-
-   type Shell_Args_Execute is access procedure
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Scripts.Callback_Data'Class);
-   --  First argument in Data is the name of the hook
+   ---------------------------------
+   -- Manipulating hook functions --
+   ---------------------------------
 
    procedure Add_Hook
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Hook   : String;
+      Func   : access GPS.Kernel.Hook_Function_Record'Class;
       Name   : String;
-      Hook   : access Hook_Shell_Args_Record'Class;
       Watch  : Glib.Object.GObject := null);
-   procedure Add_Hook
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name      : String;
-      Hook      : Shell_Args_Execute;
-      Watch     : Glib.Object.GObject := null;
-      Func_Name : String := "");
-   --  See doc for Add_Hook above
+   --  Add a new function callback to the hook. The callback is automatically
+   --  cancelled when Watch is destroyed.
+   --  Name is used to describe the function when the user lists all functions
+   --  attached to a hook from a scripting language
 
    procedure Remove_Hook
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String;
-      Hook   : access Hook_Shell_Args_Record'Class);
-   --  See doc for Remove_Hook above
+      Hook   : String;
+      Func   : access GPS.Kernel.Hook_Function_Record'Class);
+   --  Remove Func from the list of functions calle when the hook is run.
+
+   --------------------------------------
+   -- Hook functions with no arguments --
+   --------------------------------------
+
+   type Function_No_Args
+      is abstract new GPS.Kernel.Hook_Function_Record with null record;
+   type Function_No_Args_Access is access all Function_No_Args'Class;
+   procedure Execute
+     (Func   : Function_No_Args;
+      Kernel : access Kernel_Handle_Record'Class) is abstract;
+   --  Execute the function
+
+   type Function_No_Args_Callback is access procedure
+     (Kernel : access Kernel_Handle_Record'Class);
+   function Wrapper
+     (Callback : Function_No_Args_Callback)
+      return Function_No_Args_Access;
+   --  Provides a tagged object wrapper around the callback.
+   --  We expose this function, instead of having another version of Add_Hook,
+   --  so that the returned value can be kept and the function removed from the
+   --  hook when it is no longer needed.
 
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Data     : access GPS.Kernel.Scripts.Callback_Data'Class;
+      Hook     : String;
       Set_Busy : Boolean := True);
-   --  See doc for Run_Hook above.
-   --  It is your responsability to destroy data on exit
+   --  Call all functions that were added to the hook.
+   --  The functions are executed in the reverse order in which they were
+   --  registered.
+   --  Set_Busy indicates whether the busy cursor should be displayed while
+   --  processing the hook
 
-   --------------------------
-   -- Hooks with arguments --
-   --------------------------
+   -----------------------------------
+   -- Hook functions with arguments --
+   -----------------------------------
 
-   type Hook_Args_Record
+   type Function_With_Args
       is abstract new GPS.Kernel.Hook_Function_Record with null record;
-   type Hook_Args is access all Hook_Args_Record;
-
+   type Function_With_Args_Access is access all Function_With_Args'Class;
    procedure Execute
-     (Hook   : Hook_Args_Record;
+     (Func   : Function_With_Args;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) is abstract;
+   --  Execute the action associated with the Hook Function.
 
-   type Args_Execute is access procedure
+   type Function_With_Args_Callback is access procedure
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-
-   procedure Add_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String;
-      Hook   : access Hook_Args_Record'Class;
-      Watch  : Glib.Object.GObject := null);
-   procedure Add_Hook
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name      : String;
-      Hook      : Args_Execute;
-      Watch     : Glib.Object.GObject := null;
-      Func_Name : String := "");
-   --  See doc for Add_Hook above
-
-   procedure Remove_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String;
-      Hook   : access Hook_Args_Record'Class);
-   --  See doc for Remove_Hook above
+   function Wrapper
+     (Callback : Function_With_Args_Callback)
+      return Function_With_Args_Access;
+   --  See doc above for Wrapper.
 
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
+      Hook     : String;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True);
-   --  See doc for Run_Hook above
+   --  See doc above for Run_Hook
+   --  It is your responsability to Destroy Data afterward.
 
-   -------------------------------------------
-   -- Hooks with arguments and return value --
-   -------------------------------------------
+   ------------------------------------------------------
+   -- Hook functions with arguments, returning boolean --
+   ------------------------------------------------------
 
-   type Hook_Args_Return_Record
+   type Function_With_Args_Return_Boolean
       is abstract new GPS.Kernel.Hook_Function_Record with null record;
-   type Hook_Args_Return is access all Hook_Args_Return_Record;
-
+   type Function_With_Args_Return_Boolean_Access is
+     access all Function_With_Args_Return_Boolean'Class;
    function Execute
-     (Hook   : Hook_Args_Return_Record;
+     (Func   : Function_With_Args_Return_Boolean;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean is abstract;
+   --  Execute the action associated with the Hook Function.
 
-   type Args_Return_Execute is access function
+   type Function_With_Args_Return_Boolean_Callback is access function
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-      return Boolean;
-
-   procedure Add_Hook
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Hook     : access Hook_Args_Return_Record'Class;
-      Watch    : Glib.Object.GObject := null);
-   procedure Add_Hook
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name      : String;
-      Hook      : Args_Return_Execute;
-      Watch     : Glib.Object.GObject := null;
-      Func_Name : String := "");
-   --  See doc for Add_Hook above
-
-   procedure Remove_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String;
-      Hook   : access Hook_Args_Return_Record'Class);
-   --  See doc for Remove_Hook above
+      Data   : access Hooks_Data'Class) return Boolean;
+   function Wrapper
+     (Callback : Function_With_Args_Return_Boolean_Callback)
+      return Function_With_Args_Return_Boolean_Access;
+   --  See doc above for wrapper
 
    function Run_Hook_Until_Success
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
+      Hook     : String;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean;
    --  Same as Run_Doc above, but stops executing the functions as soon
    --  as one of the functions returns True.
+   --  It is your responsability to Destroy Data afterward
    --  Return the value returned by the last function executed
 
    function Run_Hook_Until_Failure
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
+      Hook     : String;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean;
-   --  Same as above except stops as soon as a function returns False
+   --  Same as above except stops as soon as a function returns False.
+   --  It is your responsability to Destroy Data afterward
 
+   -----------------------------------------------------
+   -- Hook functions with arguments, returning string --
+   -----------------------------------------------------
+
+   type Function_With_Args_Return_String
+      is abstract new GPS.Kernel.Hook_Function_Record with null record;
+   type Function_With_Args_Return_String_Access is
+     access all Function_With_Args_Return_String'Class;
+   function Execute
+     (Func   : Function_With_Args_Return_String;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return String is abstract;
+   --  Execute the action associated with the Hook Function.
+
+   type Function_With_Args_Return_String_Callback is access function
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return String;
+   function Wrapper
+     (Callback : Function_With_Args_Return_String_Callback)
+      return Function_With_Args_Return_String_Access;
+   --  See doc above for wrapper
+
+   function Run_Hook_Until_Not_Empty
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Hook     : String;
+      Data     : access Hooks_Data'Class;
+      Set_Busy : Boolean := True) return String;
+   --  Same as Run_Doc above, but stops executing the functions as soon
+   --  as one of the functions returns a non-empty string.
+   --  Return the value returned by the last function executed
+   --  It is your responsability to Destroy Data afterward
+
+private
+   type Hooks_Data is abstract tagged record
+      Data : GPS.Kernel.Scripts.Callback_Data_List;
+   end record;
 end GPS.Kernel.Hooks;
