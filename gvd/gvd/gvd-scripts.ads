@@ -45,11 +45,11 @@ package GVD.Scripts is
       Name     : String);
    --  Run a hook and passes Debugger as a parameter to it
 
-   function Run_Debugger_Action_Hook
+   function Run_Debugger_Hook_Until_Not_Empty
      (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
       Hook_Name : String;
-      Command   : String) return Boolean;
-   --  Run a action hook
+      Command   : String) return String;
+   --  Execute the hook until one of the callbacks return a non-empty string
 
    function Get_Process
      (Data : access GPS.Kernel.Hooks.Hooks_Data'Class)
@@ -101,25 +101,33 @@ package GVD.Scripts is
    --  console. This hooks gives a chance to scripts to implement their own
    --  debugger commands.
 
+   Debugger_Question_Action_Hook : constant String :=
+     "debugger_question_action_hook";
+   --  Action hook called just before displaying an interactive dialog, when
+   --  the underlying debugger is asking a question to the user. This hook
+   --  can be used to disable the dialog (and send the reply directly to the
+   --  debugger instead). It should return a non-empty string to pass to the
+   --  debugger if the dialog should not be displayed.
+   --  You cannot send any command to the debugger in this hook.
+   --  The string parameter contains the debugger question
+
 private
    type Debugger_Hooks_Data is new GPS.Kernel.Hooks.Hooks_Data with record
       Debugger : GVD.Process.Visual_Debugger;
    end record;
 
-   function Get_Name (Data : Debugger_Hooks_Data) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Debugger_Hooks_Data) return Boolean;
+      Data      : access Debugger_Hooks_Data)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited documentation
 
-   function Get_Name (Data : Debugger_String_Hooks_Data) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Debugger_String_Hooks_Data) return Boolean;
+      Data      : access Debugger_String_Hooks_Data)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited documentation
 
 end GVD.Scripts;
