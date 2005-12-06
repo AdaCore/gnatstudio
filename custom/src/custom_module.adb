@@ -63,6 +63,8 @@ package body Custom_Module is
    Me : constant Debug_Handle := Create ("custom_module");
 
    type Custom_Module_ID_Record is new Module_ID_Record with null record;
+   procedure Destroy (Module : in out Custom_Module_ID_Record);
+   --  See inherited documentation
 
    Path_Cst        : aliased constant String := "path";
    On_Activate_Cst : aliased constant String := "on_activate";
@@ -103,6 +105,16 @@ package body Custom_Module is
    procedure Contextual_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all shell commands for GPS.Contextual
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Module : in out Custom_Module_ID_Record) is
+      pragma Unreferenced (Module);
+   begin
+      Remote_Connections.Custom.Free_Registered_Regexps;
+   end Destroy;
 
    ---------------
    -- Customize --
