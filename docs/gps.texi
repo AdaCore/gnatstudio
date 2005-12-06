@@ -13848,7 +13848,7 @@ so on. You can define your own commands to be executed in such cases.
 You can find out the list of hooks that GPS currently knows about by calling
 the @b{Hook.list} function, which takes no argument, and returns a list of
 hook names that you can use. More advanced description for each hook is
-available through the @b{describe_hook} command.
+available through the @code{Help->Python Extensions}.
 
 @smallexample
 GPS> Hook.list
@@ -13856,27 +13856,15 @@ project_changed
 open_file_action_hook
 preferences_changed
 [...]
-
-GPS> hook preferences_changed
-GPS> Hook.describe %1
-Hook called when a file needs to be opened or closed
-This hook is of type "open_file" -- see describe_hook_type
 @end smallexample
 
 @ifset python
-Python> GPS.Hook ("preferences_changed").describe()
+Python> GPS.Hook.list()
 @end ifset
 
-@cindex hooks, Hook.describe_type
+@cindex hooks, type
 The description of each hooks includes a pointer to the type of the hook, that
 is what parameters the subprograms in this hook will receive. For instance:
-
-@smallexample
-GPS> Hook.describe_type "open_file"
-Common type for all hooks related to opening files.
-Arguments are the following: (file, line, column,
-column_end, enable_navigation, new_file, force_reload)
-@end smallexample
 
 @cindex hooks, Hook.list_types
 The list of all known hook types can be found through the @b{Hook.list_types}
@@ -13917,7 +13905,7 @@ GPS> Hook.add %1 "my_action"
 @ifset python
 @item Python
 
-The command must be the name of a subprogram to execute. The arguments for the
+The command must be a subprogram to execute. The arguments for the
 hook will be passed to this subprogram. In the following example, the
 message "The hook project_changed was executed by GPS" will be displayed in the
 Python console whenever the project changes.
@@ -13978,6 +13966,9 @@ execution of the action hooks stops as soon as one of the subprograms returns
 a True value ("1" or "true"). The subprograms associated with that hook are
 executed one after the other. If any such subprogram knows how to act for that
 hook, it should do the appropriate action and return "1".
+
+Other action hooks expect a string as a return value instead of a boolean. The
+execution will stop when a subprogram returns a non-empty string.
 
 This mechanism is used extensively by GPS internally. For instance, whenever
 a file needs to be opened in an editor, GPS executes the
@@ -14085,17 +14076,15 @@ secure; or they can be of a general type, which allows basically any kind
 of parameters. In the latter case, checks are done at runtime to ensure that
 the subprogram that is called as a result of running the hook has the right
 number of parameters. If this isn't the case, GPS will complain and display
-error messages.
+error messages. Such general hooks will also not pass their parameters to
+other scripting languages.
 
 Creating new hooks is done through a call to @b{Hook.register}. This function
-takes three arguments: the name of the hook you are creating, a description
-of when the hook is executed for the interactive help, and the type of the
-hook.
+takes two arguments: the name of the hook you are creating, 
+and the type of the hook.
 
 The name of the hook is left to you. Any character is allowed in that name,
-although using only alphanumerical characters.
-
-The description is displayed when the user calls @b{Hook.describe}.
+although using only alphanumerical characters is recommended.
 
 The type of the hook must be one of the following:
 
@@ -14103,22 +14092,24 @@ The type of the hook must be one of the following:
 @item "" (the empty string)
 
 This indicates that the hook doesn't take any argument. None should be given
-to @b{Hook.run}, apart of course from the hook name, and none should be
-expected by the various commands connected to that hook, once again apart from
+to @b{Hook.run}, and none should be
+expected by the various commands connected to that hook, apart from
 the hook name itself.
 
 @item one of the values returned by @b{Hook.list_types}
 
 This indicates that the hook is of one of the types exported by GPS itself. The
 advantage of using such explicit types as opposed to "general" is that GPS
-is able to make more tests for the validity of the parameters.
+is able to make more tests for the validity of the parameters. Such hooks can
+also be connected to from other scripting languages.
 
 @item "general"
 
 This indicates that the hook is of the general type that allows any number of
-parameter, of any type. Other script will be able to connect to it, but will
+parameter, of any type. Other scripts will be able to connect to it, but will
 not be executed when the hook is run if they do not expect the same number of
-parameters that was given to @b{Hook.run}
+parameters that was given to @b{Hook.run}. Other scripts in other language will
+only receive the hook name in parameter, not the full list of parameters.
 
 @end itemize
 
@@ -14142,7 +14133,7 @@ def trace (name, *args):
 def trace2 (name, arg1, arg2=100):
    print "hook=" + str (arg1) + str (arg2)
 
-Hook.register ("my_custom_hook", "some description", "general")
+Hook.register ("my_custom_hook", "general")
 Hook ("my_custom_hook").add (trace2)
 Hook ("my_custom_hook").run (1, 2) ## Prints 1 2
 Hook ("my_custom_hook").run (1)    ## Prints 1 100

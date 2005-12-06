@@ -305,7 +305,7 @@ It isn't recommended to do any direct graphical action before this hook has been
      <param name="debugger">An instance of GPS.Debugger</param>
      <param name="command">A string, the command the user wants to execute</param>
      <return>A boolean</return>
-     <description>This hook is emitted when the user types a command in the debugger console, or emits the console through the GPS.Debugger API. It gives you a chance to override the behavior for the command, or even define your own commands. Note that you must ensure that any debugger command you execute this way does finish with a prompt. The function should return True if you have handled the command</description>
+     <description>This hook is emitted when the user types a command in the debugger console, or emits the console through the GPS.Debugger API. It gives you a chance to override the behavior for the command, or even define your own commands. Note that you must ensure that any debugger command you execute this way does finish with a prompt. The function should return the output of your custom command</description>
      <example lang="python">
 ## The following example implements a new gdb command, "hello". When the
 ## user types this command in the console, we end up executing "print A"
@@ -314,10 +314,9 @@ It isn't recommended to do any direct graphical action before this hook has been
 
 def debugger_commands (hook, debugger, command):
    if command == "hello":
-      debugger.send ("print A")
-      return True
+      return 'A=' + debugger.send ("print A", False)
    else:
-      return False
+      return ""
 
 GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
      </example>
@@ -2995,22 +2994,6 @@ GPS.Hook ("debugger_process_stopped").add (debugger_stopped)
      <return>An instance of GPS.Debugger</return>
      <description>This command starts a new debugger. It will debug file. When file is executed, the extra arguments args are passed</description>
    </shell_doc>
-
-   <shell_doc name="GPS.Debugger.set_output">
-     <param name="self">An instance of GPS.Debugger</param>
-     <param name="output">A string</param>
-     <description>Simulate the output of the debugger. This function should really only be used in the context of the "debugger_command_action_hook" hook, after you have executed various commands. It sets the output of your custom command. In particular, this means that your new command can be used in a "graph display `command`" command</description>
-     <example lang="python">
-       def debugger_commands (hook, debugger, command):
-         if command == "hello":
-            value = debugger.send ("print A", False)
-            debugger.set_output ("Value of A is " + value)
-            return True
-         else:
-            return False
-       GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
-     </example>
-  </shell_doc>
 
   <!--#################################################################
     ####   Preference class
