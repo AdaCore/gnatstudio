@@ -137,15 +137,21 @@ package body Project_Properties is
       end case;
    end record;
 
+   procedure Free (Typ : in out Attribute_Type);
+   --  Free the memory occupied by Typ
+
    type Indexed_Attribute_Type is record
       Typ         : Attribute_Type;
       Index_Value : GNAT.OS_Lib.String_Access;  --  null for the general case
    end record;
-   type Indexed_Attribute_Type_Array
+      type Indexed_Attribute_Type_Array
      is array (Natural range <>) of Indexed_Attribute_Type;
    type Indexed_Attribute_Type_List is access Indexed_Attribute_Type_Array;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Indexed_Attribute_Type_Array, Indexed_Attribute_Type_List);
+
+   procedure Free (Index : in out Indexed_Attribute_Type_List);
+   --  Free the memory occupied by Index
 
    type Attribute_Description (Indexed : Boolean := False) is record
       Name                 : GNAT.OS_Lib.String_Access;
@@ -179,7 +185,14 @@ package body Project_Properties is
             Non_Index_Type  : Attribute_Type;
       end case;
    end record;
+
+   procedure Free (Attribute : in out Attribute_Description);
+   --  Free the memory occupied by Attribute
+
    type Attribute_Description_Access is access all Attribute_Description;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Attribute_Description, Attribute_Description_Access);
+
    type Attribute_Description_Array
      is array (Natural range <>) of Attribute_Description_Access;
    type Attribute_Description_List is access Attribute_Description_Array;
@@ -193,6 +206,10 @@ package body Project_Properties is
       Name       : GNAT.OS_Lib.String_Access;  --  "" for unnamed sections
       Attributes : Attribute_Description_List;
    end record;
+
+   procedure Free (Section : in out Attribute_Page_Section);
+   --  Free the memory occupied by Section
+
    type Attribute_Page_Section_Array
      is array (Natural range <>) of Attribute_Page_Section;
    type Attribute_Page_Section_List is access Attribute_Page_Section_Array;
@@ -203,6 +220,10 @@ package body Project_Properties is
       Name     : GNAT.OS_Lib.String_Access;
       Sections : Attribute_Page_Section_List;
    end record;
+
+   procedure Free (Page : in out Attribute_Page);
+   --  Free the memory occupied by Page
+
    type Attribute_Page_Array is array (Natural range <>) of Attribute_Page;
    type Attribute_Page_List is access Attribute_Page_Array;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -246,6 +267,7 @@ package body Project_Properties is
      is access all Properties_Module_ID_Record'Class;
    Properties_Module_ID : Properties_Module_ID_Access;
 
+   procedure Destroy (Module : in out Properties_Module_ID_Record);
    procedure Customize
      (Module : access Properties_Module_ID_Record;
       File   : VFS.Virtual_File;
@@ -688,6 +710,110 @@ package body Project_Properties is
    procedure Create_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handle shell commands
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Module : in out Properties_Module_ID_Record) is
+   begin
+      if Module.Pages /= null then
+         for P in Module.Pages'Range loop
+            Free (Module.Pages (P));
+         end loop;
+         Unchecked_Free (Module.Pages);
+      end if;
+   end Destroy;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Page : in out Attribute_Page) is
+   begin
+      Free (Page.Name);
+      if Page.Sections /= null then
+         for S in Page.Sections'Range loop
+            Free (Page.Sections (S));
+         end loop;
+         Unchecked_Free (Page.Sections);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Section : in out Attribute_Page_Section) is
+   begin
+      Free (Section.Name);
+      if Section.Attributes /= null then
+         for A in Section.Attributes'Range loop
+            Free (Section.Attributes (A).all);
+            Unchecked_Free (Section.Attributes (A));
+         end loop;
+         Unchecked_Free (Section.Attributes);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Attribute : in out Attribute_Description) is
+   begin
+      Free (Attribute.Name);
+      Free (Attribute.Pkg);
+      Free (Attribute.Description);
+      Free (Attribute.Label);
+      Free (Attribute.Hide_In);
+      Free (Attribute.Disable);
+      if Attribute.Indexed then
+         Free (Attribute.Index_Attribute);
+         Free (Attribute.Index_Package);
+         Free (Attribute.Index_Types);
+      else
+         Free (Attribute.Non_Index_Type);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Index : in out Indexed_Attribute_Type_List) is
+   begin
+      if Index /= null then
+         for J in Index'Range loop
+            Free (Index (J).Index_Value);
+            Free (Index (J).Typ);
+         end loop;
+         Unchecked_Free (Index);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Typ : in out Attribute_Type) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Boolean_Array, Boolean_List);
+   begin
+      case Typ.Typ is
+         when Attribute_As_String
+            | Attribute_As_Filename
+            | Attribute_As_Directory =>
+            Free (Typ.Default);
+         when Attribute_As_Static_List =>
+            Free (Typ.Static_List);
+            Unchecked_Free (Typ.Static_Default);
+         when Attribute_As_Dynamic_List =>
+            Free (Typ.Dynamic_List_Lang);
+            Free (Typ.Dynamic_List_Cmd);
+            Free (Typ.Dynamic_Default);
+      end case;
+   end Free;
 
    -------------------------------
    -- On_Indexed_Editor_Destroy --
