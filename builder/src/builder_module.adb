@@ -1032,7 +1032,8 @@ package body Builder_Module is
                Show_Command         => not Quiet,
                Show_Output          => False,
                Success              => Success,
-               Callback_Data        => Callback_Data_Access (Cb_Data),
+               Callback_Data        =>
+                 GPS.Kernel.Timeout.Callback_Data_Access (Cb_Data),
                Line_By_Line         => False,
                Exit_Cb              => Free_Temporary_Files'Access,
                Callback             => Parse_Compiler_Output'Access,
@@ -2082,7 +2083,9 @@ package body Builder_Module is
         (Kernel, Tools, -"_Interrupt", Stock_Stop, On_Tools_Interrupt'Access,
          null, GDK_C, Control_Mask + Shift_Mask);
 
-      Add_Hook (Kernel, Project_View_Changed_Hook, On_View_Changed'Access);
+      Add_Hook (Kernel, Project_View_Changed_Hook,
+                Wrapper (On_View_Changed'Access),
+                Name => "builder_module.on_view_changed");
 
       Register_Command
         (Kernel, "compile",

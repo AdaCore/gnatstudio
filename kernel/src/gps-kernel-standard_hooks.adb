@@ -37,15 +37,10 @@ package body GPS.Kernel.Standard_Hooks is
    Me : constant Debug_Handle := Create ("Standard_Hooks");
 
    Open_File_Hook_Type     : constant String := "open_file_action_hooks";
-   Before_Exit_Hook_Type   : constant String := "before_exit_action_hooks";
-   File_Line_Hook_Type     : constant String := "location_action_hooks";
+   File_Line_Hook_Type     : constant String := "file_line_hooks";
    Location_Hook_Type      : constant String := "location_action_hooks";
    Html_Hook_Type          : constant String := "html_action_hooks";
    Diff_Hook_Type          : constant String := "diff_hooks";
-   File_Hook_Type          : constant String := "file_hooks";
-   Context_Hook_Type       : constant String := "context_hooks";
-   Compilation_Hook_Type   : constant String := "compilation_hooks";
-   File_Location_Hook_Type : constant String := "file_location_hooks";
    --  The various names to describe the hook types defined in this package
 
    procedure General_Line_Information
@@ -59,39 +54,40 @@ package body GPS.Kernel.Standard_Hooks is
    --  and send it.
    --  If File is an empty string, send the Mime for all open buffers.
 
-   procedure Before_Exit_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   procedure Open_File_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   procedure String_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   procedure Project_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   procedure Line_Information_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   procedure Location_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   procedure Html_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   procedure Diff_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   procedure File_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   procedure Context_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   procedure Location_Changed_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   --  Handles calls to run_hook from the shell for the various hooks
+   function From_Callback_Data_Open_File
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_String
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Project
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Line_Info
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Before_Exit
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Location
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Html
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Diff
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_File
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Context
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_File_Location
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   --  Convert some shell arguments into suitable hooks_data
 
    ---------------------------
    -- Compute_Parent_Entity --
    ---------------------------
 
    function Compute_Parent_Entity
-     (Data : access File_Location_Hooks_Args)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access File_Location_Hooks_Args)
       return Entities.Entity_Information
    is
-      pragma Unreferenced (Data);
+      pragma Unreferenced (Kernel, Data);
    begin
       return null;
    end Compute_Parent_Entity;
@@ -136,7 +132,7 @@ package body GPS.Kernel.Standard_Hooks is
       Normalize      : Boolean := True)
    is
       Data : aliased File_Line_Hooks_Args :=
-        (Kernel            => Kernel_Handle (Kernel),
+        (Hooks_Data with
          Identifier_Length => Identifier'Length,
          Identifier        => Identifier,
          File              => File,
@@ -265,7 +261,7 @@ package body GPS.Kernel.Standard_Hooks is
       Action        : Action_Item)
    is
       Data : aliased Location_Hooks_Args :=
-        (Kernel       => Kernel_Handle (Kernel),
+        (Hooks_Data with
          Ident_Length => Identifier'Length,
          Identifier   => Identifier,
          Cat_Length   => Category'Length,
@@ -339,7 +335,7 @@ package body GPS.Kernel.Standard_Hooks is
         Gtkada.MDI.Position_Automatic)
    is
       Data : aliased Source_File_Hooks_Args :=
-        (Kernel            => Kernel_Handle (Kernel),
+        (Hooks_Data with
          File              => Filename,
          Line              => Line,
          Column            => Column,
@@ -367,7 +363,7 @@ package body GPS.Kernel.Standard_Hooks is
       Filename : Virtual_File)
    is
       Data : aliased Source_File_Hooks_Args :=
-        (Kernel            => Kernel_Handle (Kernel),
+        (Hooks_Data with
          File              => Filename,
          Line              => -1,
          Column            => 0,
@@ -404,7 +400,7 @@ package body GPS.Kernel.Standard_Hooks is
 
       declare
          Data : aliased Html_Hooks_Args :=
-           (Kernel            => Kernel_Handle (Kernel),
+           (Hooks_Data with
             Anchor_Length     => Integer'Max (0, Full'Last - Anchor),
             File              => Create (Full (Full'First .. Anchor - 1)),
             Enable_Navigation => Enable_Navigation,
@@ -429,7 +425,7 @@ package body GPS.Kernel.Standard_Hooks is
       Diff_File : Virtual_File)
    is
       Data : aliased Diff_Hooks_Args :=
-        (Kernel_Handle (Kernel), Orig_File, New_File, Diff_File);
+        (Hooks_Data with Orig_File, New_File, Diff_File);
    begin
       if not Run_Hook_Until_Success
         (Kernel, Diff_Action_Hook, Data'Unchecked_Access)
@@ -438,53 +434,17 @@ package body GPS.Kernel.Standard_Hooks is
       end if;
    end Display_Differences;
 
-   --------------------------------
-   -- Open_File_Run_Hook_Handler --
-   --------------------------------
+   ------------------------------------
+   -- From_Callback_Data_Before_Exit --
+   ------------------------------------
 
-   procedure Open_File_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   function From_Callback_Data_Before_Exit
+     (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Name   : constant String := Get_Hook_Name (Data, 1);
-      Args   : aliased Source_File_Hooks_Args;
-      pragma Unreferenced (Command);
+      pragma Unreferenced (Data);
    begin
-      Args := (Kernel            => Kernel,
-               File              => Get_File
-                 (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
-               Line              => Nth_Arg (Data, 3),
-               Column            => Nth_Arg (Data, 4),
-               Column_End        => Nth_Arg (Data, 5),
-               Enable_Navigation => Nth_Arg (Data, 6),
-               New_File          => Nth_Arg (Data, 7),
-               Force_Reload      => Nth_Arg (Data, 8),
-               Focus             => Nth_Arg (Data, 9, True),
-               Group             => Gtkada.MDI.Child_Group
-                  (Nth_Arg (Data, 11, Natural (Gtkada.MDI.Group_Default))),
-               Initial_Position   => Gtkada.MDI.Child_Position'Val
-                  (Nth_Arg (Data, 10,
-                   Gtkada.MDI.Child_Position'Pos
-                     (Gtkada.MDI.Position_Automatic))));
-      Set_Return_Value
-        (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
-   end Open_File_Run_Hook_Handler;
-
-   ----------------------------------
-   -- Before_Exit_Run_Hook_Handler --
-   ----------------------------------
-
-   procedure Before_Exit_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Name   : constant String := Get_Hook_Name (Data, 1);
-      Args   : aliased Exit_Before_Action_Hooks_Args := (Kernel => Kernel);
-      pragma Unreferenced (Command);
-   begin
-      Set_Return_Value
-        (Data, Run_Hook_Until_Failure (Kernel, Name, Args'Unchecked_Access));
-   end Before_Exit_Run_Hook_Handler;
+      return Exit_Before_Action_Hooks_Args'(Hooks_Data with null record);
+   end From_Callback_Data_Before_Exit;
 
    --------------
    -- Exit_GPS --
@@ -494,7 +454,7 @@ package body GPS.Kernel.Standard_Hooks is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Data : aliased Exit_Before_Action_Hooks_Args :=
-         (Kernel => Kernel_Handle (Kernel));
+         (Hooks_Data with null record);
    begin
       if Run_Hook_Until_Failure
         (Kernel, Before_Exit_Action_Hook, Data'Unchecked_Access)
@@ -503,643 +463,466 @@ package body GPS.Kernel.Standard_Hooks is
       end if;
    end Exit_GPS;
 
-   ---------------------------------------
-   -- Line_Information_Run_Hook_Handler --
-   ---------------------------------------
+   ----------------------------------
+   -- From_Callback_Data_Line_Info --
+   ----------------------------------
 
-   procedure Line_Information_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   function From_Callback_Data_Line_Info
+     (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Name       : constant String := Get_Hook_Name (Data, 1);
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Identifier : constant String := Nth_Arg (Data, 2);
-      Args       : aliased  File_Line_Hooks_Args :=
-                     (Kernel            => Kernel,
-                      Identifier_Length => Identifier'Length,
-                      Identifier        => Identifier,
-                      File              => Get_File
-                        (Get_Data
-                           (Nth_Arg (Data, 3, Get_File_Class (Kernel)))),
-                      Info              => null,
-                      Every_Line        => Nth_Arg (Data, 4),
-                      Normalize         => Nth_Arg (Data, 5));
-      pragma Unreferenced (Command);
    begin
-      Set_Return_Value
-        (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
-   end Line_Information_Run_Hook_Handler;
+      return File_Line_Hooks_Args'
+        (Hooks_Data with
+         Identifier_Length => Identifier'Length,
+         Identifier        => Identifier,
+         File              => Get_File
+           (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel)))),
+         Info              => null,
+         Every_Line        => Nth_Arg (Data, 4),
+         Normalize         => Nth_Arg (Data, 5));
+   end From_Callback_Data_Line_Info;
 
-   -------------------------------
-   -- Location_Run_Hook_Handler --
-   -------------------------------
+   ---------------------------------
+   -- From_Callback_Data_Location --
+   ---------------------------------
 
-   procedure Location_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   function From_Callback_Data_Location
+     (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Name       : constant String := Get_Hook_Name (Data, 1);
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Identifier : constant String := Nth_Arg (Data, 2);
       Category   : constant String := Nth_Arg (Data, 3);
       Message    : constant String := Nth_Arg (Data, 7);
-      Args       : aliased Location_Hooks_Args :=
-                     (Kernel            => Kernel,
-                      Ident_Length      => Identifier'Length,
-                      Identifier        => Identifier,
-                      Cat_Length        => Category'Length,
-                      Category          => Category,
-                      File              => Get_File
-                        (Get_Data
-                           (Nth_Arg (Data, 4, Get_File_Class (Kernel)))),
-                      Line              => Nth_Arg (Data, 5),
-                      Column            => Nth_Arg (Data, 6),
-                      Mes_Length        => Message'Length,
-                      Message           => Message,
-                      Action            => null);
-      pragma Unreferenced (Command);
    begin
-      Set_Return_Value
-        (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
-   end Location_Run_Hook_Handler;
+      return Location_Hooks_Args'
+        (Hooks_Data with
+         Ident_Length      => Identifier'Length,
+         Identifier        => Identifier,
+         Cat_Length        => Category'Length,
+         Category          => Category,
+         File              => Get_File
+           (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel)))),
+         Line              => Nth_Arg (Data, 5),
+         Column            => Nth_Arg (Data, 6),
+         Mes_Length        => Message'Length,
+         Message           => Message,
+         Action            => null);
+   end From_Callback_Data_Location;
 
-   ---------------------------
-   -- Html_Run_Hook_Handler --
-   ---------------------------
+   -----------------------------
+   -- From_Callback_Data_Html --
+   -----------------------------
 
-   procedure Html_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   function From_Callback_Data_Html
+     (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Anchor : constant String := Nth_Arg (Data, 4);
-      Args   : aliased Html_Hooks_Args :=
-                 (Kernel            => Kernel,
-                  File              => Get_File
-                    (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
-                  Enable_Navigation => Nth_Arg (Data, 3),
-                  Anchor_Length     => Anchor'Length,
-                  Anchor            => Anchor);
-      pragma Unreferenced (Command);
    begin
-      Set_Return_Value
-        (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
-   end Html_Run_Hook_Handler;
+      return Html_Hooks_Args'
+        (Hooks_Data with
+         File              => Get_File
+           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
+         Enable_Navigation => Nth_Arg (Data, 3),
+         Anchor_Length     => Anchor'Length,
+         Anchor            => Anchor);
+   end From_Callback_Data_Html;
 
-   ---------------------------
-   -- Diff_Run_Hook_Handler --
-   ---------------------------
+   -----------------------------
+   -- From_Callback_Data_Diff --
+   -----------------------------
 
-   procedure Diff_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   function From_Callback_Data_Diff
+     (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Args   : aliased Diff_Hooks_Args;
-      pragma Unreferenced (Command);
    begin
-      Args :=
-        (Kernel    => Kernel,
+      return Diff_Hooks_Args'
+        (Hooks_Data with
          Orig_File => Get_File
            (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
          New_File  => Get_File
            (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel), True))),
          Diff_File => Get_File
            (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel), True))));
-      Set_Return_Value
-        (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
-   end Diff_Run_Hook_Handler;
+   end From_Callback_Data_Diff;
 
-   ---------------------------
-   -- File_Run_Hook_Handler --
-   ---------------------------
+   -----------------------------
+   -- From_Callback_Data_File --
+   -----------------------------
 
-   procedure File_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   function From_Callback_Data_File
+     (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Args   : aliased File_Hooks_Args :=
-                 (Kernel => Kernel,
-                  File   => Get_File
-                    (Get_Data
-                       (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))));
-      pragma Unreferenced (Command);
    begin
-      Run_Hook (Kernel, Name, Args'Unchecked_Access);
-   end File_Run_Hook_Handler;
+      return File_Hooks_Args'
+        (Hooks_Data with
+         File   => Get_File
+           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))));
+   end From_Callback_Data_File;
 
-   --------------------------
-   -- Project_Hook_Handler --
-   --------------------------
+   --------------------------------
+   -- From_Callback_Data_Project --
+   --------------------------------
 
-   procedure Project_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Name   : constant String := Get_Hook_Name (Data, 1);
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Args   : aliased Project_Hooks_Args :=
-                 (Kernel  => Kernel,
-                  Project => Get_Data (Data, 2));
-      pragma Unreferenced (Command);
+   function From_Callback_Data_Project
+     (Data : Callback_Data'Class) return Hooks_Data'Class is
    begin
-      Run_Hook (Kernel, Name, Args'Unchecked_Access);
-   end Project_Hook_Handler;
+      return Project_Hooks_Args'
+        (Hooks_Data with Project => Get_Data (Data, 2));
+   end From_Callback_Data_Project;
 
-   -------------------------
-   -- String_Hook_Handler --
-   -------------------------
+   -------------------------------
+   -- From_Callback_Data_String --
+   -------------------------------
 
-   procedure String_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   function From_Callback_Data_String
+     (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Name   : constant String := Get_Hook_Name (Data, 1);
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Value  : constant String := Nth_Arg (Data, 2);
-      Args   : aliased String_Hooks_Args :=
-                 (Kernel => Kernel,
-                  Length => Value'Length,
-                  Value  => Value);
-      pragma Unreferenced (Command);
    begin
-      Run_Hook (Kernel, Name, Args'Unchecked_Access);
-   end String_Hook_Handler;
+      return String_Hooks_Args'(Hooks_Data with
+                                Length => Value'Length,
+                                Value  => Value);
+   end From_Callback_Data_String;
 
-   ------------------------------
-   -- Context_Run_Hook_Handler --
-   ------------------------------
+   --------------------------------
+   -- From_Callback_Data_Context --
+   --------------------------------
 
-   procedure Context_Run_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   function From_Callback_Data_Context
+     (Data : Callback_Data'Class) return Hooks_Data'Class is
+   begin
+      return Context_Hooks_Args'(Hooks_Data with
+                                 Context => Get_Data (Data, 2));
+   end From_Callback_Data_Context;
+
+   --------------------------------------
+   -- From_Callback_Data_File_Location --
+   --------------------------------------
+
+   function From_Callback_Data_File_Location
+     (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Args   : aliased Context_Hooks_Args :=
-                 (Kernel, Context =>  Get_Data (Data, 2));
-      pragma Unreferenced (Command);
    begin
-      Run_Hook (Kernel, Name, Args'Unchecked_Access);
-   end Context_Run_Hook_Handler;
+      return File_Location_Hooks_Args'
+        (Hooks_Data with
+         File   => Get_File
+           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
+         Line   => Nth_Arg (Data, 3),
+         Column => Nth_Arg (Data, 4));
+   end From_Callback_Data_File_Location;
 
-   -----------------------------------
-   -- Location_Changed_Hook_Handler --
-   -----------------------------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   procedure Location_Changed_Hook_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Name   : constant String := Get_Hook_Name (Data, 1);
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Args   : aliased File_Location_Hooks_Args :=
-                 (Kernel => Kernel,
-                  File   => Get_File
-                    (Get_Data
-                       (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
-                  Line   => Nth_Arg (Data, 3),
-                  Column => Nth_Arg (Data, 4));
-      pragma Unreferenced (Command);
-   begin
-      Run_Hook (Kernel, Name, Args'Unchecked_Access);
-   end Location_Changed_Hook_Handler;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name (Data : Context_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return Context_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Context_Hooks_Args) return Boolean
+      Data      : access Context_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
       C   : constant Class_Instance := Create_Context (Script, Data.Context);
-      D   : Callback_Data'Class := Create (Script, 2);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, C);
-      Tmp := Execute (Command, D);
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, C);
       Free (C);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      return D;
+   end Create_Callback_Data;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Get_Name (Data : String_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return String_Hook_Type;
-   end Get_Name;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name (Data : Project_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return Project_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access String_Hooks_Args) return Boolean
+      Data      : access String_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
-      D   : Callback_Data'Class := Create (Script, 2);
-      Tmp : Boolean;
+      D : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, Data.Value);
-      Tmp := Execute (Command, D);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, Data.Value);
+      return D;
+   end Create_Callback_Data;
 
-   -------------------
-   -- Execute_Shell --
-   -------------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Project_Hooks_Args) return Boolean
+      Data      : access Project_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
       P   : constant Class_Instance := Create_Project (Script, Data.Project);
-      D   : Callback_Data'Class := Create (Script, 2);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, P);
-      Tmp := Execute (Command, D);
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, P);
       Free (P);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      return D;
+   end Create_Callback_Data;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Get_Name (Data : File_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return File_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access File_Hooks_Args) return Boolean
+      Data      : access File_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
       F   : constant Class_Instance := Create_File (Script, Data.File);
-      D   : Callback_Data'Class := Create (Script, 2);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, F);
-      Tmp := Execute (Command, D);
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, F);
       Free (F);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      return D;
+   end Create_Callback_Data;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Get_Name (Data : Source_File_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return Open_File_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Source_File_Hooks_Args) return Boolean
+      Data      : access Source_File_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
       F   : constant Class_Instance := Create_File (Script, Data.File);
-      D   : Callback_Data'Class := Create (Script, 8);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 8));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, F);
-      Set_Nth_Arg (D, 3, Data.Line);
-      Set_Nth_Arg (D, 4, Data.Column);
-      Set_Nth_Arg (D, 5, Data.Column_End);
-      Set_Nth_Arg (D, 6, Data.Enable_Navigation);
-      Set_Nth_Arg (D, 7, Data.New_File);
-      Set_Nth_Arg (D, 8, Data.Force_Reload);
-
-      Tmp := Execute (Command, D);
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, F);
+      Set_Nth_Arg (D.all, 3, Data.Line);
+      Set_Nth_Arg (D.all, 4, Data.Column);
+      Set_Nth_Arg (D.all, 5, Data.Column_End);
+      Set_Nth_Arg (D.all, 6, Data.Enable_Navigation);
+      Set_Nth_Arg (D.all, 7, Data.New_File);
+      Set_Nth_Arg (D.all, 8, Data.Force_Reload);
       Free (F);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      return D;
+   end Create_Callback_Data;
 
-   --------------
-   -- Get_Name --
-   --------------
+   ----------------------------------
+   -- From_Callback_Data_Open_File --
+   ----------------------------------
 
-   function Get_Name (Data : File_Line_Hooks_Args) return String is
-      pragma Unreferenced (Data);
+   function From_Callback_Data_Open_File
+     (Data : Callback_Data'Class) return Hooks_Data'Class
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
-      return File_Line_Hook_Type;
-   end Get_Name;
+      return Source_File_Hooks_Args'
+        (Hooks_Data with
+         File => Get_File
+           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
+         Line              => Nth_Arg (Data, 3),
+         Column            => Nth_Arg (Data, 4),
+         Column_End        => Nth_Arg (Data, 5),
+         Enable_Navigation => Nth_Arg (Data, 6),
+         New_File          => Nth_Arg (Data, 7),
+         Force_Reload      => Nth_Arg (Data, 8),
+         Focus             => Nth_Arg (Data, 9, True),
+         Group             => Gtkada.MDI.Child_Group
+           (Nth_Arg (Data, 11, Natural (Gtkada.MDI.Group_Default))),
+         Initial_Position   => Gtkada.MDI.Child_Position'Val
+           (Nth_Arg (Data, 10,
+            Gtkada.MDI.Child_Position'Pos
+              (Gtkada.MDI.Position_Automatic))));
+   end From_Callback_Data_Open_File;
 
-   -------------------
-   -- Execute_Shell --
-   -------------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access File_Line_Hooks_Args) return Boolean
+      Data      : access File_Line_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
       F   : constant Class_Instance := Create_File (Script, Data.File);
-      D   : Callback_Data'Class := Create (Script, 5);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 5));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, Data.Identifier);
-      Set_Nth_Arg (D, 3, F);
-      Set_Nth_Arg (D, 4, Data.Every_Line);
-      Set_Nth_Arg (D, 5, Data.Normalize);
-
-      Tmp := Execute (Command, D);
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, Data.Identifier);
+      Set_Nth_Arg (D.all, 3, F);
+      Set_Nth_Arg (D.all, 4, Data.Every_Line);
+      Set_Nth_Arg (D.all, 5, Data.Normalize);
       Free (F);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      return D;
+   end Create_Callback_Data;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Get_Name (Data : Location_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return Location_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Location_Hooks_Args) return Boolean
+      Data      : access Location_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
       F   : constant Class_Instance := Create_File (Script, Data.File);
-      D   : Callback_Data'Class := Create (Script, 7);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 7));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, Data.Identifier);
-      Set_Nth_Arg (D, 3, Data.Category);
-      Set_Nth_Arg (D, 4, F);
-      Set_Nth_Arg (D, 5, Data.Line);
-      Set_Nth_Arg (D, 6, Data.Column);
-      Set_Nth_Arg (D, 7, Data.Message);
-
-      Tmp := Execute (Command, D);
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, Data.Identifier);
+      Set_Nth_Arg (D.all, 3, Data.Category);
+      Set_Nth_Arg (D.all, 4, F);
+      Set_Nth_Arg (D.all, 5, Data.Line);
+      Set_Nth_Arg (D.all, 6, Data.Column);
+      Set_Nth_Arg (D.all, 7, Data.Message);
       Free (F);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      return D;
+   end Create_Callback_Data;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Get_Name (Data : Html_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return Html_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Html_Hooks_Args) return Boolean
+      Data      : access Html_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
       F   : constant Class_Instance := Create_File (Script, Data.File);
-      D   : Callback_Data'Class := Create (Script, 4);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 4));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, F);
-      Set_Nth_Arg (D, 3, Data.Enable_Navigation);
-      Set_Nth_Arg (D, 4, Data.Anchor);
-
-      Tmp := Execute (Command, D);
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, F);
+      Set_Nth_Arg (D.all, 3, Data.Enable_Navigation);
+      Set_Nth_Arg (D.all, 4, Data.Anchor);
       Free (F);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      return D;
+   end Create_Callback_Data;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Get_Name (Data : File_Location_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return File_Location_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access File_Location_Hooks_Args) return Boolean
+      Data      : access File_Location_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
       F   : constant Class_Instance := Create_File (Script, Data.File);
-      D   : Callback_Data'Class := Create (Script, 4);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 4));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, F);
-      Set_Nth_Arg (D, 3, Data.Line);
-      Set_Nth_Arg (D, 4, Data.Column);
-
-      Tmp := Execute (Command, D);
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, F);
+      Set_Nth_Arg (D.all, 3, Data.Line);
+      Set_Nth_Arg (D.all, 4, Data.Column);
       Free (F);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      return D;
+   end Create_Callback_Data;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Get_Name (Data : Diff_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return Diff_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Diff_Hooks_Args) return Boolean
+      Data      : access Diff_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
       F1  : constant Class_Instance := Create_File (Script, Data.Orig_File);
       F2  : constant Class_Instance := Create_File (Script, Data.New_File);
       F3  : constant Class_Instance := Create_File (Script, Data.Diff_File);
-      D   : Callback_Data'Class := Create (Script, 4);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 4));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, F1);
-      Set_Nth_Arg (D, 3, F2);
-      Set_Nth_Arg (D, 4, F3);
-
-      Tmp := Execute (Command, D);
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, F1);
+      Set_Nth_Arg (D.all, 3, F2);
+      Set_Nth_Arg (D.all, 4, F3);
       Free (F1);
       Free (F2);
       Free (F3);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      return D;
+   end Create_Callback_Data;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Get_Name (Data : Compilation_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return Compilation_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Compilation_Hooks_Args) return Boolean
+      Data      : access Compilation_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
       F   : constant Class_Instance := Create_File (Script, Data.File);
-      D   : Callback_Data'Class := Create (Script, 3);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 3));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, F);
-      Set_Nth_Arg (D, 3, Data.Category);
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, F);
+      Set_Nth_Arg (D.all, 3, Data.Category);
+      Free (F);
+      return D;
+   end Create_Callback_Data;
 
-      Tmp := Execute (Command, D);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name (Data : Exit_Before_Action_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return Before_Exit_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Exit_Before_Action_Hooks_Args) return Boolean
+      Data      : access Exit_Before_Action_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
-      D   : Callback_Data'Class := Create (Script, 1);
-      Tmp : Boolean;
       pragma Unreferenced (Data);
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 1));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Tmp := Execute (Command, D);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      return D;
+   end Create_Callback_Data;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
 
-   function Get_Name (Data : Marker_Hooks_Args) return String is
-      pragma Unreferenced (Data);
-   begin
-      return Marker_Hook_Type;
-   end Get_Name;
-
-   -------------------
-   -- Execute_Shell --
-   -------------------
-
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Marker_Hooks_Args) return Boolean
+      Data      : access Marker_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
    is
-      D   : Callback_Data'Class := Create (Script, 2);
-      Tmp : Boolean;
+      D   : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, To_String (Data.Marker));
-      Tmp := Execute (Command, D);
-      Free (D);
-      return Tmp;
-   end Execute_Shell;
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, To_String (Data.Marker));
+      return D;
+   end Create_Callback_Data;
 
    ---------------------------
    -- Register_Action_Hooks --
@@ -1148,59 +931,57 @@ package body GPS.Kernel.Standard_Hooks is
    procedure Register_Action_Hooks
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Create_Hook_Type
+      Register_Hook_Data_Type
         (Kernel, Open_File_Hook_Type,
-         Hook_With_Args_And_Return, Open_File_Run_Hook_Handler'Access);
-      Register_Hook (Kernel, Open_File_Action_Hook,
-                     Type_Name => Open_File_Hook_Type);
+         Args_Creator => From_Callback_Data_Open_File'Access);
+      Register_Hook_No_Return
+        (Kernel, Open_File_Action_Hook, Open_File_Hook_Type);
 
-      Create_Hook_Type
+      Register_Hook_Data_Type
         (Kernel, String_Hook_Type,
-         Hook_With_Args, String_Hook_Handler'Access);
+         Args_Creator => From_Callback_Data_String'Access);
 
-      Create_Hook_Type
+      Register_Hook_Data_Type
         (Kernel, Project_Hook_Type,
-         Hook_With_Args, Project_Hook_Handler'Access);
+         Args_Creator => From_Callback_Data_Project'Access);
 
-      Create_Hook_Type
-        (Kernel, Before_Exit_Hook_Type,
-         Hook_With_Args_And_Return, Before_Exit_Run_Hook_Handler'Access);
-      Register_Hook (Kernel, Before_Exit_Action_Hook,
-                     Type_Name => Before_Exit_Hook_Type);
+      Register_Hook_Data_Type
+        (Kernel, Before_Exit_Action_Hook,
+         Args_Creator => From_Callback_Data_Before_Exit'Access);
+      Register_Hook_Return_Boolean
+        (Kernel, Before_Exit_Action_Hook, Before_Exit_Action_Hook);
 
-      Create_Hook_Type
+      Register_Hook_Data_Type
         (Kernel, File_Line_Hook_Type,
-         Hook_With_Args_And_Return, Line_Information_Run_Hook_Handler'Access);
-      Register_Hook (Kernel, File_Line_Action_Hook,
-                     Type_Name => File_Line_Hook_Type);
+         Args_Creator => From_Callback_Data_Line_Info'Access);
+      Register_Hook_No_Return
+        (Kernel, File_Line_Action_Hook, File_Line_Hook_Type);
 
-      Create_Hook_Type
+      Register_Hook_Data_Type
         (Kernel, Location_Hook_Type,
-         Hook_With_Args_And_Return, Location_Run_Hook_Handler'Access);
-      Register_Hook (Kernel, Location_Action_Hook,
-                     Type_Name => Location_Hook_Type);
+         Args_Creator => From_Callback_Data_Location'Access);
+      Register_Hook_Return_Boolean
+        (Kernel, Location_Action_Hook, Location_Hook_Type);
 
-      Create_Hook_Type
+      Register_Hook_Data_Type
         (Kernel, Html_Hook_Type,
-         Hook_With_Args_And_Return, Html_Run_Hook_Handler'Access);
-      Register_Hook (Kernel, Html_Action_Hook,
-                     Type_Name => Html_Hook_Type);
+         Args_Creator => From_Callback_Data_Html'Access);
+      Register_Hook_Return_Boolean (Kernel, Html_Action_Hook, Html_Hook_Type);
 
-      Create_Hook_Type
+      Register_Hook_Data_Type
         (Kernel, Diff_Hook_Type,
-         Hook_With_Args_And_Return, Diff_Run_Hook_Handler'Access);
-      Register_Hook (Kernel, Diff_Action_Hook,
-                     Type_Name => Diff_Hook_Type);
+         Args_Creator => From_Callback_Data_Diff'Access);
+      Register_Hook_Return_Boolean (Kernel, Diff_Action_Hook, Diff_Hook_Type);
 
-      Create_Hook_Type
+      Register_Hook_Data_Type
         (Kernel, File_Hook_Type,
-         Hook_With_Args, File_Run_Hook_Handler'Access);
-      Create_Hook_Type
+         Args_Creator => From_Callback_Data_File'Access);
+      Register_Hook_Data_Type
         (Kernel, Context_Hook_Type,
-         Hook_With_Args, Context_Run_Hook_Handler'Access);
-      Create_Hook_Type
+         Args_Creator => From_Callback_Data_Context'Access);
+      Register_Hook_Data_Type
         (Kernel, File_Location_Hook_Type,
-         Hook_With_Args, Location_Changed_Hook_Handler'Access);
+         Args_Creator => From_Callback_Data_File_Location'Access);
    end Register_Action_Hooks;
 
 end GPS.Kernel.Standard_Hooks;

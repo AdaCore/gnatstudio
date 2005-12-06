@@ -358,7 +358,7 @@ package body Project_Explorers is
    --  This procedure tries to keep as many things as possible in the current
    --  state (expanded nodes,...)
 
-   type Refresh_Hook_Record is new Hook_No_Args_Record with record
+   type Refresh_Hook_Record is new Function_No_Args with record
       Explorer : Project_Explorer;
    end record;
    type Refresh_Hook is access all Refresh_Hook_Record'Class;
@@ -367,7 +367,7 @@ package body Project_Explorers is
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project view has changed
 
-   type Project_Changed_Hook_Record is new Hook_No_Args_Record with record
+   type Project_Changed_Hook_Record is new Function_No_Args with record
       Explorer : Project_Explorer;
    end record;
    type Project_Hook is access all Project_Changed_Hook_Record'Class;
@@ -678,14 +678,16 @@ package body Project_Explorers is
 
       --  Automatic update of the tree when the project changes
       H1 := new Refresh_Hook_Record'
-        (Hook_No_Args_Record with Explorer => Project_Explorer (Explorer));
+        (Function_No_Args with Explorer => Project_Explorer (Explorer));
       Add_Hook
-        (Kernel, Project_View_Changed_Hook, H1, Watch => GObject (Explorer));
+        (Kernel, Project_View_Changed_Hook, H1,
+         Name => "explorer.project_view_changed", Watch => GObject (Explorer));
 
       H2 := new Project_Changed_Hook_Record'
-        (Hook_No_Args_Record with Explorer => Project_Explorer (Explorer));
+        (Function_No_Args with Explorer => Project_Explorer (Explorer));
       Add_Hook
-        (Kernel, Project_Changed_Hook, H2, Watch => GObject (Explorer));
+        (Kernel, Project_Changed_Hook, H2,
+         Name => "explorer.project_changed", Watch => GObject (Explorer));
 
       --  The explorer (project view) is automatically refreshed when the
       --  project view is changed.

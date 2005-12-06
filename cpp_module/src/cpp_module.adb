@@ -182,7 +182,9 @@ package body Cpp_Module is
          Unchecked_Free (LI);
       else
          Add_Hook
-           (Kernel, Project_View_Changed_Hook, Project_View_Changed'Access);
+           (Kernel, Project_View_Changed_Hook,
+            Wrapper (Project_View_Changed'Access),
+            Name => "cpp_module.project_view_changed");
          On_Project_View_Changed (LI);
       end if;
 
@@ -217,7 +219,9 @@ package body Cpp_Module is
         (Kernel, Param_Spec (C_Indentation_Level), -"Editor:C/C++");
 
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, On_Preferences_Changed'Access);
+        (Kernel, Preferences_Changed_Hook,
+         Wrapper (On_Preferences_Changed'Access),
+         Name => "cpp_module.preferences_changed");
       On_Preferences_Changed (Kernel);
 
       Register_Naming_Scheme_Editor

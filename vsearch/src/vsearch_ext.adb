@@ -1413,11 +1413,15 @@ package body Vsearch_Ext is
          Select_Window_Hist_Key,
          Vsearch.Select_Editor_Check);
 
-      Add_Hook (Handle, Search_Reset_Hook, Set_First_Next_Mode_Cb'Access);
+      Add_Hook (Handle, Search_Reset_Hook,
+                Wrapper (Set_First_Next_Mode_Cb'Access),
+                Name => "vsearch.search_reset");
       Add_Hook (Handle, Search_Functions_Changed_Hook,
-                Search_Functions_Changed'Access);
+                Wrapper (Search_Functions_Changed'Access),
+                Name => "vsearch.search_functions");
       Add_Hook (Handle, Search_Regexps_Changed_Hook,
-                New_Predefined_Regexp'Access);
+                Wrapper (New_Predefined_Regexp'Access),
+                Name => "vsearch.search_regexps");
    end Initialize;
 
    ---------------
@@ -1879,7 +1883,9 @@ package body Vsearch_Ext is
 
       Register_Default_Search (Kernel);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "vsearch.preferences_changed");
    end Register_Module;
 
    ----------

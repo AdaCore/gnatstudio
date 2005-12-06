@@ -223,7 +223,7 @@ package body Src_Editor_View is
      (View : access Source_View_Record'Class);
    --  Restore the stored cursor position
 
-   type Preferences_Hook_Record is new Hook_No_Args_Record with record
+   type Preferences_Hook_Record is new Function_No_Args with record
       View : Source_View;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
@@ -232,7 +232,7 @@ package body Src_Editor_View is
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
-   type File_Hook_Record is new Hook_Args_Record with record
+   type File_Hook_Record is new Function_With_Args with record
       View : Source_View;
    end record;
    type File_Hook is access all File_Hook_Record'Class;
@@ -1395,14 +1395,18 @@ package body Src_Editor_View is
       end if;
 
       Hook := new Preferences_Hook_Record'
-        (Hook_No_Args_Record with View => Source_View (View));
+        (Function_No_Args with View => Source_View (View));
       Execute (Hook.all, Kernel);
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, Hook, Watch => GObject (View));
+        (Kernel, Preferences_Changed_Hook, Hook,
+         Name => "src_editor_view.preferences_changed",
+         Watch => GObject (View));
 
       F_Hook := new File_Hook_Record'
-        (Hook_Args_Record with View => Source_View (View));
-      Add_Hook (Kernel, File_Saved_Hook, F_Hook, Watch => GObject (View));
+        (Function_With_Args with View => Source_View (View));
+      Add_Hook (Kernel, File_Saved_Hook, F_Hook,
+                Name => "src_editor_view.file_saved",
+                Watch => GObject (View));
 
       --  Connect in an idle callback, otherwise the lines-with-code in the
       --  debugger are recomputed all at once (before the editor has a size).

@@ -2661,11 +2661,15 @@ package body Src_Editor_Module is
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
-      Add_Hook (Kernel, Open_File_Action_Hook, Source_File_Hook'Access);
-      Add_Hook (Kernel, File_Line_Action_Hook, File_Line_Hook'Access);
-      Add_Hook
-        (Kernel, Src_Editor_Buffer.Hooks.Word_Added_Hook,
-         Word_Added_Hook'Access);
+      Add_Hook (Kernel, Open_File_Action_Hook,
+                Wrapper (Source_File_Hook'Access),
+                Name => "src_editor.open_file");
+      Add_Hook (Kernel, File_Line_Action_Hook,
+                Wrapper (File_Line_Hook'Access),
+                Name => "src_editor.file_line");
+      Add_Hook (Kernel, Src_Editor_Buffer.Hooks.Word_Added_Hook,
+                Wrapper (Word_Added_Hook'Access),
+                Name => "src_editor.word_added");
 
       --  Menus
 
@@ -2880,15 +2884,24 @@ package body Src_Editor_Module is
       Kernel_Callback.Connect
         (Button, "clicked", On_Save'Access, Kernel_Handle (Kernel));
 
-      Add_Hook (Kernel, File_Saved_Hook, File_Saved_Cb'Access);
-      Add_Hook (Kernel, Location_Changed_Hook, Cursor_Stopped_Cb'Access);
+      Add_Hook (Kernel, File_Saved_Hook,
+                Wrapper (File_Saved_Cb'Access),
+                Name => "src_editor.file_saved");
+      Add_Hook (Kernel, Location_Changed_Hook,
+                Wrapper (Cursor_Stopped_Cb'Access),
+                Name => "src_editor.location_changed");
 
       Undo_Redo_Data.Set (Kernel, UR, Undo_Redo_Id);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
-      Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access);
-      Add_Hook
-        (Kernel, File_Changed_On_Disk_Hook, File_Changed_On_Disk_Cb'Access);
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "src_editor.preferences_changed");
+      Add_Hook (Kernel, File_Edited_Hook,
+                Wrapper (File_Edited_Cb'Access),
+                Name => "src_editor.file_edited");
+      Add_Hook (Kernel, File_Changed_On_Disk_Hook,
+                Wrapper (File_Changed_On_Disk_Cb'Access),
+                Name => "src_editor.file_changed_on_disk");
 
       Register_Commands (Kernel);
 

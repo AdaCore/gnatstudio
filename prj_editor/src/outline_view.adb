@@ -203,7 +203,7 @@ package body Outline_View is
          Unselect_All (Get_Selection (Outline.Tree));
 
          Subprogram := Compute_Parent_Entity
-           (File_Location_Hooks_Args_Access (Data));
+           (Kernel, File_Location_Hooks_Args_Access (Data));
 
          if Subprogram /= null then
             declare
@@ -740,19 +740,25 @@ package body Outline_View is
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
 
          Data := Context_Hooks_Args'
-           (Kernel  => Kernel_Handle (Kernel),
-            Context => Get_Current_Context (Kernel));
+           (Hooks_Data with Context => Get_Current_Context (Kernel));
 
          On_Context_Changed (Kernel, Data'Unchecked_Access);
 
-         Add_Hook (Kernel, Context_Changed_Hook, On_Context_Changed'Access,
+         Add_Hook (Kernel, Context_Changed_Hook,
+                   Wrapper (On_Context_Changed'Access),
+                   Name => "outline.context_changed",
                    Watch => GObject (Outline));
          Add_Hook (Kernel, Preferences_Changed_Hook,
-                   Preferences_Changed'Access,
+                   Wrapper (Preferences_Changed'Access),
+                   Name => "outline.preferences_changed",
                    Watch => GObject (Outline));
-         Add_Hook (Kernel, Location_Changed_Hook, Location_Changed'Access,
+         Add_Hook (Kernel, Location_Changed_Hook,
+                   Wrapper (Location_Changed'Access),
+                   Name  => "outline.location_changed",
                    Watch => GObject (Outline));
-         Add_Hook (Kernel, File_Saved_Hook, File_Saved'Access,
+         Add_Hook (Kernel, File_Saved_Hook,
+                   Wrapper (File_Saved'Access),
+                   Name => "outline.file_saved",
                    Watch => GObject (Outline));
       end if;
 

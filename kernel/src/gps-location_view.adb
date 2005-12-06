@@ -375,7 +375,7 @@ package body GPS.Location_View is
    -- Hooks --
    -----------
 
-   type File_Edited_Hook_Record is new Hook_Args_Record with record
+   type File_Edited_Hook_Record is new Function_With_Args with record
       View : Location_View;
    end record;
    type File_Edited_Hook is access File_Edited_Hook_Record'Class;
@@ -1518,9 +1518,12 @@ package body GPS.Location_View is
         (View.Kernel,
          GPS.Kernel.File_Edited_Hook,
          File_Hook,
+         Name => "location_view.file_edited",
          Watch => GObject (View));
 
-      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access,
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "location_view.preferences_changed",
                 Watch => GObject (View));
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
    end Initialize;
@@ -2196,7 +2199,9 @@ package body GPS.Location_View is
          Kernel      => Kernel,
          Module_Name => Module_Name);
 
-      Add_Hook (Kernel, Location_Action_Hook, Location_Hook'Access);
+      Add_Hook (Kernel, Location_Action_Hook,
+                Wrapper (Location_Hook'Access),
+                Name => "location_view.location");
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 

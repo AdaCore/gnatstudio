@@ -640,7 +640,8 @@ package body Bookmark_Views is
          Context_Func    => View_Context_Factory'Access);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
-                On_Preferences_Changed'Access,
+                Wrapper (On_Preferences_Changed'Access),
+                Name  => "bookmark_views.preferences_changed",
                 Watch => GObject (View));
       Refresh (View);
 
@@ -756,7 +757,7 @@ package body Bookmark_Views is
       Generic_View.Register_Module
         (Kernel, Module_ID (Bookmark_Views_Module));
 
-      Register_Hook (Kernel, Bookmark_Added_Hook);
+      Register_Hook_No_Args (Kernel, Bookmark_Added_Hook);
 
       Load_Bookmarks (Kernel);
 

@@ -318,10 +318,12 @@ package body GVD.Generic_View is
       begin
          GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
            (Save_Desktop'Access, Load_Desktop'Access);
-         Add_Hook (Kernel, Debugger_Process_Stopped_Hook, On_Update'Access,
-                  Func_Name => "Update_" & Module_Name);
-         Add_Hook (Kernel, Debugger_Context_Changed_Hook, On_Update'Access,
-                   Func_Name => "Update_" & Module_Name);
+         Add_Hook (Kernel, Debugger_Process_Stopped_Hook,
+                   Wrapper (On_Update'Access),
+                   Name => Module_Name & ".process_stopped");
+         Add_Hook (Kernel, Debugger_Context_Changed_Hook,
+                   Wrapper (On_Update'Access),
+                   Name => Module_Name & ".context_changed");
       end Register_Desktop_Functions;
 
    end Simple_Views;

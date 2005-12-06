@@ -63,7 +63,9 @@ package body Vdiff2_Module is
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).List_Diff := new Diff_Head_List.List;
 
-      Add_Hook (Kernel, File_Closed_Hook, File_Closed_Cb'Access);
+      Add_Hook (Kernel, File_Closed_Hook,
+                Wrapper (File_Closed_Cb'Access),
+                Name => "vdiff2.file_closed");
 
       Register_Module
         (Module      => Vdiff_Module_ID,
@@ -167,8 +169,13 @@ package body Vdiff2_Module is
         (Kernel, Param_Spec (Diff_Fine_Change_Color), -"Visual diff");
 
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, On_Preferences_Changed'Access);
-      Add_Hook (Kernel, Diff_Action_Hook, Diff_Hook'Access);
+        (Kernel, Preferences_Changed_Hook,
+         Wrapper (On_Preferences_Changed'Access),
+         Name => "vdiff2.preferences_changed");
+      Add_Hook
+        (Kernel, Diff_Action_Hook,
+         Wrapper (Diff_Hook'Access),
+         Name => "vdiff2.diff");
 
       Register_Menu
         (Kernel, '/' & (-"Tools") & '/', (-"Visual Diff"),

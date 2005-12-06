@@ -473,7 +473,9 @@ package body GPS.Kernel.Task_Manager is
          Callback => On_Task_Manager'Access,
          Ref_Item => -"Interrupt", Add_Before => True);
 
-      Add_Hook (Kernel, Before_Exit_Action_Hook, On_Exit_Hook'Access);
+      Add_Hook (Kernel, Before_Exit_Action_Hook,
+                Wrapper (On_Exit_Hook'Access),
+                Name => "task_manager.on_exit");
    end Register_Module;
 
    -------------

@@ -406,7 +406,9 @@ package body VCS_Module is
       Standard.VCS.Unknown_VCS.Register_Module (Kernel);
       Standard.VCS.Generic_VCS.Register_Module (Kernel);
 
-      Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access);
+      Add_Hook (Kernel, File_Edited_Hook,
+                Wrapper (File_Edited_Cb'Access),
+                Name => "vcs.file_edited");
 
       --  Register VCS commands
 

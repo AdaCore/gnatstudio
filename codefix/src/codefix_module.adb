@@ -692,7 +692,9 @@ package body Codefix_Module is
       end if;
 
       Add_Hook
-        (Kernel, Compilation_Finished_Hook, Compilation_Finished_Cb'Access);
+        (Kernel, Compilation_Finished_Hook,
+         Wrapper (Compilation_Finished_Cb'Access),
+         Name => "codefix.compilation_finished");
 
       Codefix_Module_ID.Codefix_Class := New_Class (Kernel, "Codefix");
       Codefix_Module_ID.Codefix_Error_Class := New_Class

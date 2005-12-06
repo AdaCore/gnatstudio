@@ -855,9 +855,13 @@ package body External_Editor_Module is
          Kernel                  => Kernel,
          Module_Name             => External_Editor_Module_Name,
          Priority                => Default_Priority + 1);
-      Add_Hook (Kernel, Open_File_Action_Hook, Open_File_Hook'Access);
+      Add_Hook (Kernel, Open_File_Action_Hook,
+                Wrapper (Open_File_Hook'Access),
+                Name => "external_editor.open_file");
 
-      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "external_editor.preferences_changed");
    end Register_Module;
 
 end External_Editor_Module;

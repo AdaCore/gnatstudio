@@ -1400,7 +1400,7 @@ procedure GPS.Main is
 
       --  Create a hook for when GPS is started
 
-      Register_Hook (GPS_Main.Kernel, GPS_Started_Hook);
+      Register_Hook_No_Args (GPS_Main.Kernel, GPS_Started_Hook);
 
       --  Load the customization files before loading the actual projects,
       --  so that the usual hooks are taken into account right from the

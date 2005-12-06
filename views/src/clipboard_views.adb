@@ -478,10 +478,14 @@ package body Clipboard_Views is
          ID              => Generic_View.Get_Module,
          Context_Func    => View_Context_Factory'Access);
 
-      Add_Hook (Kernel, Clipboard_Changed_Hook, On_Clipboard_Changed'Access,
+      Add_Hook (Kernel, Clipboard_Changed_Hook,
+                Wrapper (On_Clipboard_Changed'Access),
+                Name => "clipboard_views.on_clipboard_changed",
                 Watch => GObject (View));
       Add_Hook (Kernel, Preferences_Changed_Hook,
-                On_Preferences_Changed'Access, Watch => GObject (View));
+                Wrapper (On_Preferences_Changed'Access),
+                Name  => "clipboard_views.preferences_changed",
+                Watch => GObject (View));
       Refresh (View);
 
       --  Initialize tooltips

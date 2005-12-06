@@ -355,7 +355,8 @@ package body Vdiff_Module is
          Kernel      => Kernel,
          Module_Name => Vdiff_Module_Name,
          Priority    => Default_Priority);
-      Add_Hook (Kernel, Diff_Action_Hook, Diff_Hook'Access);
+      Add_Hook (Kernel, Diff_Action_Hook,
+                Wrapper (Diff_Hook'Access), Name => "vidff.diff");
       Register_Menu
         (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions

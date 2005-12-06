@@ -256,7 +256,7 @@ package body Project_Viewers is
      return Boolean;
    --  Callback when a row/column has been selected in the clist
 
-   type Context_Hook_Record is new Hook_Args_Record with record
+   type Context_Hook_Record is new Function_With_Args with record
       Viewer : Project_Viewer;
    end record;
    type Context_Hook is access all Context_Hook_Record'Class;
@@ -348,7 +348,7 @@ package body Project_Viewers is
    --  Subprogram for Parse_Switches_Page, this is used to handle both the
    --  <switches> and the <popup> tags
 
-   type Preferences_Hook_Record is new Hook_No_Args_Record with record
+   type Preferences_Hook_Record is new Function_No_Args with record
       Viewer : Project_Viewer;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
@@ -357,7 +357,7 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class);
    --  Hook called when the preferences change
 
-   type Project_View_Hook_Record is new Hook_No_Args_Record with record
+   type Project_View_Hook_Record is new Function_No_Args with record
       Viewer : Project_Viewer;
    end record;
    type Project_View_Hook is access all Project_View_Hook_Record'Class;
@@ -801,21 +801,26 @@ package body Project_Viewers is
          Return_Callback.To_Marshaller (Select_Row'Access), Viewer);
 
       Hook3 := new Context_Hook_Record'
-        (Hook_Args_Record with Viewer => Project_Viewer (Viewer));
+        (Function_With_Args with Viewer => Project_Viewer (Viewer));
       Add_Hook
-        (Kernel, Context_Changed_Hook, Hook3, Watch => GObject (Viewer));
+        (Kernel, Context_Changed_Hook, Hook3,
+         Name => "project_viewer.context_changed", Watch => GObject (Viewer));
 
       Hook2 := new Project_View_Hook_Record'
-        (Hook_No_Args_Record with Viewer => Project_Viewer (Viewer));
+        (Function_No_Args with Viewer => Project_Viewer (Viewer));
       Add_Hook
-        (Kernel, Project_View_Changed_Hook, Hook2, Watch => GObject (Viewer));
+        (Kernel, Project_View_Changed_Hook, Hook2,
+         Name => "project_viewer.project_view_changed",
+         Watch => GObject (Viewer));
 
       Hook := new Preferences_Hook_Record'
-        (Hook_No_Args_Record with Viewer => Project_Viewer (Viewer));
+        (Function_No_Args with Viewer => Project_Viewer (Viewer));
       Execute (Hook.all, Kernel);
       Add_Hook
         (Kernel, Preferences_Changed_Hook,
-         Hook, Watch => GObject (Viewer));
+         Hook,
+         Name => "project_viewer.preferences_changed",
+         Watch => GObject (Viewer));
 
       Show_All (Viewer);
    end Initialize;

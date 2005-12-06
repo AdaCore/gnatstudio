@@ -215,7 +215,7 @@ package body VCS_View_Pkg is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal, connected before
 
-   type File_Hook_Record is new Hook_Args_Record with record
+   type File_Hook_Record is new Function_With_Args with record
       Explorer : VCS_View_Access;
    end record;
    type File_Hook is access all File_Hook_Record'Class;
@@ -1328,8 +1328,10 @@ package body VCS_View_Pkg is
         (VCS_View, "destroy", On_Destroy'Access, VCS_View);
 
       Hook := new File_Hook_Record'
-        (Hook_Args_Record with Explorer => VCS_View_Access (VCS_View));
-      Add_Hook (Kernel, File_Edited_Hook, Hook, Watch => GObject (VCS_View));
+        (Function_With_Args with Explorer => VCS_View_Access (VCS_View));
+      Add_Hook (Kernel, File_Edited_Hook, Hook,
+                Name => "vcs_view.file_edited",
+                Watch => GObject (VCS_View));
 
       --  Can't do this through the Focus_Widget parameter to Gtkada.MDI.Put,
       --  since the focus child is dynamic.

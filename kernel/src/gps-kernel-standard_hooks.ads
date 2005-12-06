@@ -38,15 +38,15 @@ package GPS.Kernel.Standard_Hooks is
    -- Hooks --
    -----------
 
+   File_Hook_Type : constant String := "file_hooks";
    type File_Hooks_Args is new Hooks_Data with record
       File : VFS.Virtual_File := VFS.No_File;
    end record;
-   function Get_Name (Data : File_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access File_Hooks_Args) return Boolean;
+      Data      : access File_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  Base type for hooks that take a single file in parameter
    --  See inherited doc
 
@@ -54,12 +54,11 @@ package GPS.Kernel.Standard_Hooks is
    type String_Hooks_Args (Length : Natural) is new Hooks_Data with record
       Value   : String (1 .. Length);
    end record;
-   function Get_Name (Data : String_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access String_Hooks_Args) return Boolean;
+      Data      : access String_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  Hooks that take a single string as a parameter.
    --  To create such hooks, use GPS.Kernel.Hooks.Register_Hook with a
    --  Type_Name parameter of String_Hook_Type
@@ -69,17 +68,17 @@ package GPS.Kernel.Standard_Hooks is
    type Project_Hooks_Args is new Hooks_Data with record
       Project : Projects.Project_Type;
    end record;
-   function Get_Name (Data : Project_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Project_Hooks_Args) return Boolean;
+      Data      : access Project_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  Hooks that take a single project as a parameter.
    --  To create such hooks, use GPS.Kernel.Hooks.Register_Hook with a
    --  Type_Name parameter of Project_Hook_Type.
    --  See inherited documentation
 
+   Context_Hook_Type : constant String := "context_hooks";
    type Context_Hooks_Args is new Hooks_Data with record
       Context : GPS.Kernel.Selection_Context_Access;
    end record;
@@ -106,6 +105,8 @@ package GPS.Kernel.Standard_Hooks is
    --  File_Location_Hooks --
    --------------------------
 
+   File_Location_Hook_Type : constant String := "file_location_hooks";
+
    type File_Location_Hooks_Args is new File_Hooks_Args with record
       Line   : Natural;
       Column : Natural;
@@ -115,7 +116,8 @@ package GPS.Kernel.Standard_Hooks is
    --  These hooks contains a location inside a source editor.
 
    function Compute_Parent_Entity
-     (Data : access File_Location_Hooks_Args)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access File_Location_Hooks_Args)
       return Entities.Entity_Information;
    --  Return the name of the entity enclosing the location. This is either
    --  a subprogram, a package, ...
@@ -147,8 +149,8 @@ package GPS.Kernel.Standard_Hooks is
    -----------------
 
    type Exit_Before_Action_Hooks_Args is new Hooks_Data with null record;
-
    Before_Exit_Action_Hook : constant String := "before_exit_action_hook";
+   --  Hook functions return a boolean
 
    procedure Exit_GPS
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -404,84 +406,74 @@ package GPS.Kernel.Standard_Hooks is
    --  diff file.
 
 private
-   function Get_Name (Data : Context_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Context_Hooks_Args) return Boolean;
+      Data      : access Context_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Get_Name (Data : File_Line_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access File_Line_Hooks_Args) return Boolean;
+      Data      : access File_Line_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Get_Name (Data : Source_File_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Source_File_Hooks_Args) return Boolean;
+      Data      : access Source_File_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Get_Name (Data : Compilation_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Compilation_Hooks_Args) return Boolean;
+      Data      : access Compilation_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Get_Name (Data : Location_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Location_Hooks_Args) return Boolean;
+      Data      : access Location_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Get_Name (Data : Diff_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Diff_Hooks_Args) return Boolean;
+      Data      : access Diff_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Get_Name (Data : Html_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Html_Hooks_Args) return Boolean;
+      Data      : access Html_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Get_Name (Data : Exit_Before_Action_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Exit_Before_Action_Hooks_Args) return Boolean;
+      Data      : access Exit_Before_Action_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Get_Name (Data : File_Location_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access File_Location_Hooks_Args) return Boolean;
+      Data      : access File_Location_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Get_Name (Data : Marker_Hooks_Args) return String;
-   function Execute_Shell
+   function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : access Marker_Hooks_Args) return Boolean;
+      Data      : access Marker_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited subprograms
 
 end GPS.Kernel.Standard_Hooks;

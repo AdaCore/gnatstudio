@@ -1019,7 +1019,7 @@ package body Navigation_Module is
          Accel_Key  => GDK_greater,
          Accel_Mods => Control_Mask);
 
-      Register_Hook (Kernel, Marker_Added_In_History_Hook);
+      Register_Hook_No_Args (Kernel, Marker_Added_In_History_Hook);
 
       Register_Menu
         (Kernel, Navigate, -"Bac_k", Stock_Go_Back,
@@ -1028,7 +1028,8 @@ package body Navigation_Module is
         (Kernel, Navigate, -"For_ward", Stock_Go_Forward,
          On_Forward'Access);
       Add_Hook (Kernel, Marker_Added_In_History_Hook,
-                On_Marker_Added_In_History'Access);
+                Wrapper (On_Marker_Added_In_History'Access),
+                Name => "navigation.maker_added");
 
       Append_Space (Toolbar);
 

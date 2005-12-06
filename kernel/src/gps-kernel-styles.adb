@@ -123,7 +123,9 @@ package body GPS.Kernel.Styles is
             -"Color used to highlight the build errors in background builds",
             Bg => "light grey");
 
-      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "styles.preferences_changed");
    end Initialize_Predefined_Styles;
 
    -------------------------

@@ -273,7 +273,9 @@ package body Ada_Module is
         (Kernel, Param_Spec (Ada_Align_Decl_On_Colon), -"Editor:Ada");
 
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, On_Preferences_Changed'Access);
+        (Kernel, Preferences_Changed_Hook,
+         Wrapper (On_Preferences_Changed'Access),
+         "ada_module_preferences_changed");
       On_Preferences_Changed (Kernel);
 
       Register_Naming_Scheme_Editor

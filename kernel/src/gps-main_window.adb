@@ -573,7 +573,8 @@ package body GPS.Main_Window is
       Widget_Callback.Connect (Main_Window, "destroy", On_Destroy'Access);
 
       Add_Hook (Main_Window.Kernel, Preferences_Changed_Hook,
-                Preferences_Changed'Access);
+                Wrapper (Preferences_Changed'Access),
+                Name => "main_window.preferences_changed");
       Preferences_Changed (Main_Window.Kernel);
 
       --  Make sure we don't display the toolbar until we have actually loaded
@@ -584,7 +585,8 @@ package body GPS.Main_Window is
       Hide_All (Main_Window.Toolbar_Box);
 
       Add_Hook (Main_Window.Kernel, Project_Changed_Hook,
-                On_Project_Changed'Access);
+                Wrapper (On_Project_Changed'Access),
+                Name => "main_window.projet_changed");
 
       Return_Callback.Object_Connect
         (Main_Window, "delete_event",

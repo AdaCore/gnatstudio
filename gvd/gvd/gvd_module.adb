@@ -115,7 +115,7 @@ package body GVD_Module is
 
    type Bp_Array is array (Integer range <>) of Breakpoint_Identifier;
 
-   type File_Edited_Hook_Record is new Hook_Args_Record with record
+   type File_Edited_Hook_Record is new Function_With_Args with record
       Top : GPS_Window;
    end record;
    type File_Edited_Hook is access File_Edited_Hook_Record'Class;
@@ -125,7 +125,7 @@ package body GVD_Module is
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_edited" hook.
 
-   type Lines_Revealed_Hook_Record is new Hook_Args_Record with null record;
+   type Lines_Revealed_Hook_Record is new Function_With_Args with null record;
    type Lines_Revealed_Hook is access Lines_Revealed_Hook_Record'Class;
    procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
@@ -2048,12 +2048,14 @@ package body GVD_Module is
          GVD_Module_ID.Lines_Hook := new Lines_Revealed_Hook_Record;
          Add_Hook
            (Kernel, Source_Lines_Revealed_Hook, GVD_Module_ID.Lines_Hook,
+            Name  => "gvd.lines_revealed",
             Watch => GObject (Top));
 
          GVD_Module_ID.File_Hook := new File_Edited_Hook_Record;
          GVD_Module_ID.File_Hook.Top := Top;
          Add_Hook
            (Kernel, GPS.Kernel.File_Edited_Hook, GVD_Module_ID.File_Hook,
+            Name  => "gvd.file_edited",
             Watch => GObject (Top));
 
          --  Add columns for debugging information to all the files that
@@ -2667,7 +2669,9 @@ package body GVD_Module is
       Set_Submenu (Mitem, Menu);
       GVD_Module_ID.Initialize_Menu := Menu;
 
-      Add_Hook (Kernel, Project_View_Changed_Hook, On_View_Changed'Access);
+      Add_Hook (Kernel, Project_View_Changed_Hook,
+                Wrapper (On_View_Changed'Access),
+                Name => "gvd.project_view_changed");
 
       --  Add debugger menus
 
@@ -2745,9 +2749,11 @@ package body GVD_Module is
       Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
-                Preferences_Changed'Access);
+                Wrapper (Preferences_Changed'Access),
+                Name => "gvd.preferences_changed");
       Add_Hook (Kernel, Debugger_Executable_Changed_Hook,
-                On_Executable_Changed'Access);
+                Wrapper (On_Executable_Changed'Access),
+                Name => "gvd.debugger_ext_changed");
 
       Init_Graphics;
    end Register_Module;

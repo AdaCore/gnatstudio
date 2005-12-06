@@ -1176,7 +1176,9 @@ package body Help_Module is
          Priority     => GPS.Kernel.Modules.Default_Priority - 20);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
-      Add_Hook (Kernel, Html_Action_Hook, Open_Help_Hook'Access);
+      Add_Hook (Kernel, Html_Action_Hook,
+                Wrapper (Open_Help_Hook'Access),
+                Name => "help.html");
 
       --  Add help menus
 

@@ -161,7 +161,7 @@ package body Browsers.Canvas is
    procedure Destroyed (Browser : access Gtk_Widget_Record'Class);
    --  Called when the browser is destroyed
 
-   type Preferences_Hook_Record is new Hook_No_Args_Record with record
+   type Preferences_Hook_Record is new Function_No_Args with record
       Browser : General_Browser;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
@@ -400,7 +400,8 @@ package body Browsers.Canvas is
       Hook := new Preferences_Hook_Record;
       Hook.Browser := General_Browser (Browser);
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, Hook, Watch => GObject (Browser));
+        (Kernel, Preferences_Changed_Hook, Hook,
+         Name => "browsers.preferences_changed", Watch => GObject (Browser));
       Execute (Hook.all, Kernel);
    end Initialize;
 

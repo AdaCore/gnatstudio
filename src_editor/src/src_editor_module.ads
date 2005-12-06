@@ -206,7 +206,7 @@ private
    -- Source_Editor_Module --
    --------------------------
 
-   type Lines_Revealed_Hook_Record is new GPS.Kernel.Hooks.Hook_Args_Record
+   type Lines_Revealed_Hook_Record is new GPS.Kernel.Hooks.Function_With_Args
       with null record;
    type Lines_Revealed_Hook is access Lines_Revealed_Hook_Record'Class;
    procedure Execute

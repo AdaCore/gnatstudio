@@ -265,7 +265,7 @@ package body Src_Editor_Buffer is
    --  If Internal is True, do not emit kernel signals. This is used notably
    --  for automatic saves.
 
-   type Preferences_Changed_Hook_Record is new Hook_No_Args_Record with record
+   type Preferences_Changed_Hook_Record is new Function_No_Args with record
       Buffer : Source_Buffer;
    end record;
    type Preferences_Hook is access all Preferences_Changed_Hook_Record'Class;
@@ -2174,9 +2174,11 @@ package body Src_Editor_Buffer is
       --  Preference changed hook
 
       P_Hook := new Preferences_Changed_Hook_Record'
-        (Hook_No_Args_Record with Buffer => Source_Buffer (Buffer));
+        (Function_No_Args with Buffer => Source_Buffer (Buffer));
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, P_Hook, Watch => GObject (Buffer));
+        (Kernel, Preferences_Changed_Hook, P_Hook,
+         Name => "src_editor_buffer.preferences_changed",
+         Watch => GObject (Buffer));
       Execute (P_Hook.all, Kernel);
 
       for Entity_Kind in Standout_Language_Entity'Range loop

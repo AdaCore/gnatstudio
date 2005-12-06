@@ -107,7 +107,7 @@ package body GPS.Kernel.Clipboard is
          Register_Property
            (Kernel, Param_Spec (Clipboard_Size_Pref), -"General");
 
-         Register_Hook (Kernel, Clipboard_Changed_Hook);
+         Register_Hook_No_Args (Kernel, Clipboard_Changed_Hook);
       end if;
 
       Clipboard.Kernel := Kernel_Handle (Kernel);
@@ -144,7 +144,8 @@ package body GPS.Kernel.Clipboard is
       Kernel.Clipboard := Convert (Clipboard);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
-                Preferences_Changed'Access);
+                Wrapper (Preferences_Changed'Access),
+                Name => "clipboard.preferences_changed");
    end Create_Clipboard;
 
    -----------------------

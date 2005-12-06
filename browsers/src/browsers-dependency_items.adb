@@ -106,7 +106,7 @@ package body Browsers.Dependency_Items is
    end record;
    type Dependency_Browser is access all Dependency_Browser_Record'Class;
 
-   type Project_Changed_Hook_Record is new Hook_No_Args_Record with record
+   type Project_Changed_Hook_Record is new Function_No_Args with record
       Browser : Dependency_Browser;
    end record;
    type Project_Changed_Hook is access all Project_Changed_Hook_Record'Class;
@@ -527,11 +527,13 @@ package body Browsers.Dependency_Items is
          Set_Focus_Child (Child);
 
          Hook := new Project_Changed_Hook_Record'
-           (Hook_No_Args_Record with
+           (Function_No_Args with
             Browser         => Browser);
          Add_Hook
            (Kernel, GPS.Kernel.Project_Changed_Hook,
-            Hook, Watch => GObject (Browser));
+            Hook,
+            Name  => "browsers.dependency_items.project_changed",
+            Watch => GObject (Browser));
       end if;
 
       Add_Navigation_Location (Kernel, Title);

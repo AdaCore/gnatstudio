@@ -1035,7 +1035,9 @@ package body Docgen_Module is
          -"Documentation");
 
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, On_Preferences_Changed'Access);
+        (Kernel, Preferences_Changed_Hook,
+         Wrapper (On_Preferences_Changed'Access),
+         Name => "docgen.on_preferences_changed");
       On_Preferences_Changed (Kernel);
 
       Register_Menu

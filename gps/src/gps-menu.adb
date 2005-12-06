@@ -367,7 +367,9 @@ package body GPS.Menu is
                  Reopen_Menu,
                  new On_Reopen'(Menu_Callback_Record with
                                 Kernel => Kernel_Handle (Kernel)));
-      Add_Hook (Kernel, Project_Changed_Hook, On_Project_Changed'Access);
+      Add_Hook (Kernel, Project_Changed_Hook,
+                Wrapper (On_Project_Changed'Access),
+                Name => "menu.project_changed");
 
       Register_Menu
         (Kernel, Project, -"R_ecompute Project", "",

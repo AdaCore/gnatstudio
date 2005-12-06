@@ -115,7 +115,7 @@ package body Scenario_Views is
    package View_Callback is new Gtk.Handlers.User_Callback_With_Setup
      (Gtk_Widget_Record, Variable_User_Data, Setup);
 
-   type Refresh_Hook_Record is new Hook_No_Args_Record with record
+   type Refresh_Hook_Record is new Function_No_Args with record
       View : Scenario_View;
    end record;
    type Refresh_Hook is access all Refresh_Hook_Record'Class;
@@ -222,10 +222,13 @@ package body Scenario_Views is
       --  emitted at the same time as a "project_view_changed", and we do the
       --  same thing in both cases.
       Hook := new Refresh_Hook_Record'
-           (Hook_No_Args_Record with View => Scenario_View (View));
+           (Function_No_Args with View => Scenario_View (View));
       Add_Hook
-        (Kernel, Project_View_Changed_Hook,    Hook, Watch => GObject (View));
-      Add_Hook (Kernel, Variable_Changed_Hook, Hook, Watch => GObject (View));
+        (Kernel, Project_View_Changed_Hook, Hook,
+         Name => "scenario.project_view_changed",
+         Watch => GObject (View));
+      Add_Hook (Kernel, Variable_Changed_Hook, Hook,
+                Name => "scenario.variable_changed", Watch => GObject (View));
 
       --  Update the viewer with the current project
       Execute (Hook.all, Kernel);
