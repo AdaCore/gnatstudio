@@ -37,6 +37,7 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Widget;                 use Gtk.Widget;
+with Gtkada.Handlers;            use Gtkada.Handlers;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Traces;                     use Traces;
@@ -203,6 +204,9 @@ package body Help_Module is
       Shell_Lang : GNAT.OS_Lib.String_Access;
    end record;
    type String_Menu_Item is access all String_Menu_Item_Record'Class;
+
+   procedure On_Destroy (Item : access Gtk_Widget_Record'Class);
+   --  Called when a String_Menu_Item is destroyed
 
    type On_Recent is new Menu_Callback_Record with record
       Kernel : Kernel_Handle;
@@ -475,18 +479,24 @@ package body Help_Module is
    begin
       if Command = Constructor_Method then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
-         XML  := Initialize_XML_Doc (Kernel);
          Set_Data (Inst, Help_Module_ID.Help_Class,
-                   Set_Data (XML), On_Destroy_Html_Class'Access);
+                   System.Null_Address, On_Destroy_Html_Class'Access);
          Free (Inst);
 
       elsif Command = "getdoc" then
          Name_Parameters (Data, Getdoc_Parameters);
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
 
+         XML := Get_Data (Get_Data (Inst, Help_Module_ID.Help_Class));
+         if XML = null then
+            XML  := Initialize_XML_Doc (Kernel);
+            Set_Data (Inst, Help_Module_ID.Help_Class,
+                      Set_Data (XML), On_Destroy_Html_Class'Access);
+         end if;
+
          declare
             Doc : constant String := Get_Shell_Documentation
-              (Get_Data (Get_Data (Inst, Help_Module_ID.Help_Class)),
+              (XML,
                Get_Name (Get_Script (Data)), Nth_Arg (Data, 2),
                HTML_Format => Nth_Arg (Data, 3, False));
          begin
@@ -586,6 +596,8 @@ package body Help_Module is
 
    procedure Free (Data : in out Help_File_Record) is
    begin
+      Free (Data.Shell_Cmd);
+      Free (Data.Shell_Lang);
       Free (Data.Descr);
    end Free;
 
@@ -672,6 +684,16 @@ package body Help_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Load_HTML;
 
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Item : access Gtk_Widget_Record'Class) is
+   begin
+      Free (String_Menu_Item (Item).Shell);
+      Free (String_Menu_Item (Item).Shell_Lang);
+   end On_Destroy;
+
    -------------------
    -- Register_Help --
    -------------------
@@ -727,6 +749,7 @@ package body Help_Module is
                Item        => Gtk_Menu_Item (Item));
          end if;
 
+         Widget_Callback.Connect (Item, "destroy", On_Destroy'Access);
          Kernel_Callback.Connect
            (Item, "activate", On_Load_HTML'Access, Kernel_Handle (Kernel));
       end if;
