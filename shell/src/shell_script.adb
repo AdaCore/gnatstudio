@@ -248,6 +248,9 @@ package body Shell_Script is
    function Execute
      (Subprogram : access Shell_Subprogram_Record;
       Args       : Callback_Data'Class) return Boolean;
+   function Execute
+     (Subprogram : access Shell_Subprogram_Record;
+      Args       : Callback_Data'Class) return String;
    procedure Free (Subprogram : in out Shell_Subprogram_Record);
    function Get_Name
      (Subprogram : access Shell_Subprogram_Record) return String;
@@ -268,6 +271,7 @@ package body Shell_Script is
       Return_As_Error : Boolean := False;
    end record;
 
+   function Clone (Data : Shell_Callback_Data) return Callback_Data'Class;
    function Get_Script (Data : Shell_Callback_Data) return Scripting_Language;
    function Number_Of_Arguments (Data : Shell_Callback_Data) return Natural;
    procedure Name_Parameters
@@ -1193,6 +1197,8 @@ package body Shell_Script is
       Shell    : Shell_Scripting;
 
    begin
+      Trace (Me, "Executing command " & Command);
+
       Shell := Shell_Scripting
         (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
       if Shell.Blocked then
@@ -1207,8 +1213,6 @@ package body Shell_Script is
          Errors.all := True;
          return -"Shell module not initialized";
       end if;
-
-      Trace (Me, "Executing command " & Command);
 
       Data := Get (Shell_Module_Id.Commands_List, Command);
 
@@ -1367,7 +1371,7 @@ package body Shell_Script is
       Quoted        : Boolean;
       Triple_Quoted : Boolean;
    begin
-      Trace (Me, "Execute_GPS_Shell_Command: " & Command & "--");
+      Trace (Me, "Execute_GPS_Shell_Command: " & Command);
 
       Errors.all := False;
 
@@ -1508,8 +1512,28 @@ package body Shell_Script is
 
    procedure Free (Data : in out Shell_Callback_Data) is
    begin
+      if Data.Args /= null then
+         Trace (Me, "MANU Freeing shell_callback_Data "
+                & System.Address_Image (Data.Args.all'Address));
+      end if;
       Free (Data.Args);
    end Free;
+
+   -----------
+   -- Clone --
+   -----------
+
+   function Clone (Data : Shell_Callback_Data) return Callback_Data'Class is
+   begin
+      return Shell_Callback_Data'
+        (Callback_Data with
+         Args        => new Argument_List'(String_Utils.Clone (Data.Args.all)),
+         Script      => Data.Script,
+         Return_Value    => null,
+         Return_Dict     => null,
+         Return_As_List  => False,
+         Return_As_Error => False);
+   end Clone;
 
    ------------
    -- Create --
@@ -2081,6 +2105,19 @@ package body Shell_Script is
      (Subprogram : access Shell_Subprogram_Record;
       Args       : Callback_Data'Class) return Boolean
    is
+   begin
+      return Equal (Execute (Subprogram, Args), "true",
+                    Case_Sensitive => False);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Subprogram : access Shell_Subprogram_Record;
+      Args       : Callback_Data'Class) return String
+   is
       D    : constant Shell_Callback_Data := Shell_Callback_Data (Args);
       Custom : Command_Access;
       A    : constant Action_Record_Access := Lookup_Action
@@ -2104,7 +2141,7 @@ package body Shell_Script is
          Destroy_On_Exit => True);
 
       --  ??? Should evaluate output properly, but we are in asynchronous mode
-      return True;
+      return "";
    end Execute;
 
    --------------
