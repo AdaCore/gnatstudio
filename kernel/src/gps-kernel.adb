@@ -87,6 +87,7 @@ with Language_Handlers;         use Language_Handlers;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects.Registry;         use Projects, Projects.Registry;
+with Remote_Connections;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
@@ -238,7 +239,9 @@ package body GPS.Kernel is
       Create_Clipboard (Handle);
 
       Add_Hook
-        (Handle, Preferences_Changed_Hook, On_Preferences_Changed'Access);
+        (Handle, Preferences_Changed_Hook,
+         Wrapper (On_Preferences_Changed'Access),
+         Name => "kernel.preferences_changed");
    end Gtk_New;
 
    ----------------------------
@@ -315,7 +318,7 @@ package body GPS.Kernel is
    is
       C    : Selection_Context_Access := Selection_Context_Access (Context);
       Data : aliased Context_Hooks_Args :=
-        (Kernel  => Kernel_Handle (Handle), Context => C);
+        (Hooks_Data with Context => C);
    begin
       Ref (C);
       Run_Hook (Handle, Source_Lines_Revealed_Hook, Data'Unchecked_Access);
@@ -344,8 +347,7 @@ package body GPS.Kernel is
          end if;
 
          Handle.Open_Files (Handle.Open_Files'Last) := File;
-         Data := File_Hooks_Args'
-           (Kernel => Kernel_Handle (Handle), File => File);
+         Data := File_Hooks_Args'(Hooks_Data with File => File);
          Run_Hook (Handle, File_Edited_Hook, Data'Unchecked_Access);
       end if;
    end File_Edited;
@@ -358,8 +360,7 @@ package body GPS.Kernel is
      (Handle : access Kernel_Handle_Record;
       File   : VFS.Virtual_File)
    is
-      Data : aliased File_Hooks_Args :=
-        (Kernel => Kernel_Handle (Handle), File => File);
+      Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
    begin
       Run_Hook (Handle, File_Saved_Hook, Data'Unchecked_Access);
    end File_Saved;
@@ -373,8 +374,7 @@ package body GPS.Kernel is
       File   : VFS.Virtual_File)
    is
       Files : File_Array_Access := Handle.Open_Files;
-      Data  : aliased File_Hooks_Args :=
-        (Kernel => Kernel_Handle (Handle), File => File);
+      Data  : aliased File_Hooks_Args := (Hooks_Data with File => File);
    begin
       if Files /= null then
          for F in Files'Range loop
@@ -402,8 +402,7 @@ package body GPS.Kernel is
      (Handle : access Kernel_Handle_Record;
       File   : VFS.Virtual_File)
    is
-      Data : aliased File_Hooks_Args :=
-        (Kernel => Kernel_Handle (Handle), File => File);
+      Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
    begin
       Run_Hook (Handle, File_Changed_On_Disk_Hook, Data'Unchecked_Access);
    end File_Changed_On_Disk;
@@ -418,10 +417,10 @@ package body GPS.Kernel is
       Category : String)
    is
       Data : aliased Compilation_Hooks_Args :=
-        (Kernel => Kernel_Handle (Handle),
-            Category_Length => Category'Length,
-            File            => File,
-            Category        => Category);
+        (Hooks_Data with
+         Category_Length => Category'Length,
+         File            => File,
+         Category        => Category);
    begin
       Run_Hook (Handle, Compilation_Finished_Hook, Data'Unchecked_Access);
    end Compilation_Finished;
@@ -465,8 +464,7 @@ package body GPS.Kernel is
 
    procedure Context_Changed (Handle  : access Kernel_Handle_Record) is
       C : Selection_Context_Access := Get_Current_Context (Handle);
-      Data : aliased Context_Hooks_Args :=
-        (Kernel => Kernel_Handle (Handle), Context => C);
+      Data : aliased Context_Hooks_Args := (Hooks_Data with Context => C);
    begin
       Ref (C);
       Run_Hook (Handle, Context_Changed_Hook, Data'Unchecked_Access);
@@ -1252,8 +1250,11 @@ package body GPS.Kernel is
          Unref (Handle.Last_Context_For_Contextual);
       end if;
 
+      Remote_Connections.Free_Registered_Protocols;
+
       Reset (Handle.Actions);
       Reset (Handle.Styles);
+      Hooks_Hash.String_Hash_Table.Reset (Handle.Hooks);
       Tools_Htable.String_Hash_Table.Reset (Handle.Tools);
       GPS.Kernel.Scripts.Finalize (Handle);
 
