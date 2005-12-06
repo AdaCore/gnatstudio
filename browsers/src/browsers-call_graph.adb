@@ -72,6 +72,9 @@ with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with Traces;                        use Traces;
 with VFS;                           use VFS;
+with Generic_List;
+with Ada.Unchecked_Conversion;
+with System;
 
 package body Browsers.Call_Graph is
 
@@ -95,8 +98,10 @@ package body Browsers.Call_Graph is
    --  each idle processing.
 
    Include_Implicit_Cst : aliased constant String := "include_implicit";
+   Synchronous_Cst      : aliased constant String := "synchronous";
    References_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Include_Implicit_Cst'Access);
+     (1 => Include_Implicit_Cst'Access,
+      2 => Synchronous_Cst'Access);
 
    type Filters_Buttons is array (Reference_Kind) of Gtk_Check_Button;
    type References_Filter_Dialog_Record is new Gtk_Dialog_Record with record
@@ -184,6 +189,23 @@ package body Browsers.Call_Graph is
    function Execute
      (Command : access Edit_Spec_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
+
+   procedure Free (This : in out File_Location);
+   package Location_List is new Generic_List (File_Location);
+   use Location_List;
+
+   type References_Command is new Root_Command with record
+      Iter      : Entity_Reference_Iterator;
+      Locations : Location_List.List;
+   end record;
+
+   type References_Command_Access is access all
+     References_Command'Class;
+
+   function Execute
+     (Command : access References_Command)
+      return Command_Return_Type;
+   --
 
    ------------------
    -- Entity items --
@@ -423,6 +445,16 @@ package body Browsers.Call_Graph is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Handle shell commands related to the xref database as a whole
+
+   procedure References_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Handle shell commands related of ReferencesCommand class
+
+   procedure Put_Locations_In_Return
+     (Command : access References_Command'Class;
+      Data    : in out Callback_Data'Class);
+   --  Put on the result of Data the list of entities found in the command
 
    procedure Examine_Ancestors_Call_Graph
      (Item : access Arrow_Item_Record'Class);
@@ -966,6 +998,49 @@ package body Browsers.Call_Graph is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access References_Command)
+      return Command_Return_Type
+   is
+      Loc : File_Location;
+      Ref : Entity_Reference;
+   begin
+      for I in 1 .. 15 loop
+         exit when At_End (Command.Iter);
+
+         Ref := Get (Command.Iter);
+
+         if Ref /= No_Entity_Reference then
+            Loc := Get_Location (Ref);
+            Append (Command.Locations, Loc);
+         end if;
+
+         Next (Command.Iter);
+      end loop;
+
+      Set_Progress
+        (Command,
+         (Activity => Unknown,
+          Current  => Get_Current_Progress (Command.Iter),
+          Total    => Get_Total_Progress (Command.Iter)));
+
+      if At_End (Command.Iter) then
+         Set_Progress
+           (Command,
+            (Activity => Unknown,
+             Current  => Get_Total_Progress (Command.Iter),
+             Total    => Get_Total_Progress (Command.Iter)));
+
+         return Success;
+      else
+         return Execute_Again;
+      end if;
+   end Execute;
+
    ------------------
    -- Destroy_Idle --
    ------------------
@@ -1372,39 +1447,65 @@ package body Browsers.Call_Graph is
 
       elsif Command = "references" then
          Name_Parameters (Data, References_Cmd_Parameters);
+
          declare
-            Iter : Entity_Reference_Iterator;
-            Loc  : File_Location;
-            Ref  : Entity_Reference;
+            Synchronous : Boolean;
+
+            Ref_Command : constant References_Command_Access :=
+              new References_Command;
+
+            ReferencesCommand_Class : constant Class_Type := New_Class
+              (Get_Kernel (Data),
+               "ReferencesCommand",
+               New_Class (Get_Kernel (Data), "Command"));
+
+            function Convert is new Ada.Unchecked_Conversion
+              (References_Command_Access, System.Address);
          begin
             Filter := Real_References_Filter;
             Filter (Implicit) := Nth_Arg (Data, 2, False);
+            Synchronous := Nth_Arg (Data, 3, True);
 
-            Set_Return_Value_As_List (Data);
             Find_All_References
-              (Iter,
+              (Ref_Command.Iter,
                Entity                => Entity,
                Filter                => Filter,
-               File_Has_No_LI_Report => null);
+               File_Has_No_Li_Report => null);
 
-            while not At_End (Iter) loop
-               Ref := Get (Iter);
-               if Ref /= No_Entity_Reference then
-                  Loc := Get_Location (Ref);
-                  Set_Return_Value
-                    (Data,
-                     Create_File_Location
-                       (Script => Get_Script (Data),
-                        File   => Create_File
-                          (Script => Get_Script (Data),
-                           File   => Get_Filename (Get_File (Loc))),
-                        Line   => Get_Line (Loc),
-                        Column => Get_Column (Loc)));
-               end if;
-               Next (Iter);
-            end loop;
+            if Synchronous then
+               --  Synchronous, return directly the result
+
+               Launch_Synchronous (Ref_Command);
+               Put_Locations_In_Return (Ref_Command, Data);
+
+            else
+               --  Not synchronous, return a command
+
+               declare
+                  Command_Instance : constant Class_Instance := New_Instance
+                    (Get_Script (Data), ReferencesCommand_Class);
+               begin
+                  Launch_Background_Command
+                    (Kernel,
+                     Ref_Command,
+                     False,
+                     False,
+                     Destroy_On_Exit => False);
+
+                  Set_Progress
+                    (Ref_Command,
+                     (Activity => Unknown,
+                      Current  => Get_Current_Progress (Ref_Command.Iter),
+                      Total    => Get_Total_Progress (Ref_Command.Iter)));
+
+                  Set_Data
+                    (Command_Instance,
+                     ReferencesCommand_Class,
+                     Convert (Ref_Command));
+                  Set_Return_Value (Data, Command_Instance);
+               end;
+            end if;
          end;
-
       elsif Command = "calls" then
          --  The following unchecked_access is safe since
          --  Examine_Ancestors_Call_Graph is called synchronously
@@ -1487,6 +1588,65 @@ package body Browsers.Call_Graph is
          Entities.Reset (Get_Database (Get_Kernel (Data)));
       end if;
    end Xref_Command_Handler;
+
+   --------------------------------
+   -- References_Command_Handler --
+   --------------------------------
+
+   procedure References_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      ReferencesCommand_Class : constant Class_Type := New_Class
+        (Get_Kernel (Data),
+         "ReferencesCommand",
+         New_Class (Get_Kernel (Data), "Command"));
+
+      Data_Command            : References_Command_Access;
+
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, References_Command_Access);
+
+   begin
+      Data_Command := Convert
+        (Get_Data (Nth_Arg (Data, 1, ReferencesCommand_Class),
+         ReferencesCommand_Class));
+
+      if Command = "get_result" then
+         Put_Locations_In_Return (Data_Command, Data);
+      end if;
+   end References_Command_Handler;
+
+   -----------------------------
+   -- Put_Locations_In_Return --
+   -----------------------------
+
+   procedure Put_Locations_In_Return
+     (Command : access References_Command'Class;
+      Data    : in out Callback_Data'Class) is
+   begin
+      Set_Return_Value_As_List (Data);
+
+      declare
+         Node : Location_List.List_Node :=
+           First (Command.Locations);
+      begin
+         while Node /= Location_List.Null_Node loop
+            Set_Return_Value
+              (Data,
+               Create_File_Location
+                 (Script => Get_Script (Data),
+                  File   => Create_File
+                    (Script => Get_Script (Data),
+                     File   => Get_Filename
+                       (Get_File (Location_List.Data (Node)))),
+                  Line   => Get_Line (Location_List.Data (Node)),
+                  Column => Get_Column (Location_List.Data (Node))));
+
+            Node := Next (Node);
+         end loop;
+      end;
+   end Put_Locations_In_Return;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -1957,7 +2117,11 @@ package body Browsers.Call_Graph is
       Navigate : constant String := "/_" & (-"Navigate");
       Find_All : constant String := -"Find _All References";
       Command  : Interactive_Command_Access;
+
       Filter   : Action_Filter;
+
+      ReferencesCommand_Class : constant Class_Type := New_Class
+        (Kernel, "ReferencesCommand", New_Class (Kernel, "Command"));
 
    begin
       Call_Graph_Module_Id := new Callgraph_Module_Record;
@@ -2046,7 +2210,7 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel, "references",
          Class        => Get_Entity_Class (Kernel),
-         Maximum_Args => 1,
+         Maximum_Args => 2,
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "calls",
@@ -2068,6 +2232,11 @@ package body Browsers.Call_Graph is
          Handler      => Xref_Command_Handler'Access);
 
       Browsers.Canvas.Register_Actions (Kernel);
+
+      Register_Command
+        (Kernel, "get_result",
+         Class        => ReferencesCommand_Class,
+         Handler      => References_Command_Handler'Access);
    end Register_Module;
 
    ------------------
@@ -2229,5 +2398,15 @@ package body Browsers.Call_Graph is
 
       return "<text>" & ASCII.LF & To_String (Output) & "</text>";
    end Output_SVG_Item_Content;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out File_Location) is
+      pragma Unreferenced (This);
+   begin
+      null;
+   end Free;
 
 end Browsers.Call_Graph;
