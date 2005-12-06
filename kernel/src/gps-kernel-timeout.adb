@@ -334,7 +334,11 @@ package body GPS.Kernel.Timeout is
         (System.Address, Console_Process);
       Process : constant Console_Process := Convert (User_Data);
    begin
-      if not Process.Died then
+      if not Process.Died
+        and then Process.D.Descriptor /= null
+      then
+         --  ??? If Process.D.Descriptor is null then Process.Died should be
+         --  True. This is being investigated under EC06-004.
          Send (Process.D.Descriptor.all, Input);
       end if;
 
