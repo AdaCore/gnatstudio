@@ -42,6 +42,7 @@ package GPS.Kernel.Scripts is
    type Cst_Argument_List is array (Natural range <>) of Cst_String_Access;
 
    type Callback_Data is abstract tagged private;
+   type Callback_Data_Access is access all Callback_Data'Class;
    --  Data used to communicate with the scripting language engine, to marshall
    --  the parameters and return values.
 
@@ -73,6 +74,12 @@ package GPS.Kernel.Scripts is
       Args       : Callback_Data'Class) return Boolean is abstract;
    --  Execute the subprogram with the given arguments, and evaluate its output
    --  as a boolean
+
+   function Execute
+     (Subprogram : access Subprogram_Record;
+      Args       : Callback_Data'Class) return String is abstract;
+   --  Execute the subprogram with the given arguments, and evaluate its output
+   --  as a string
 
    function Get_Name
      (Subprogram : access Subprogram_Record) return String is abstract;
@@ -129,8 +136,13 @@ package GPS.Kernel.Scripts is
    --  each of these arguments before using the return value
 
    procedure Free (Data : in out Callback_Data) is abstract;
+   procedure Free (Data : in out Callback_Data_Access);
    --  Free the memory occupied by Data. This needs to be called only if Data
    --  was created through Create
+
+   function Clone (Data : Callback_Data) return Callback_Data'Class
+      is abstract;
+   --  Clone Data. The result value must be freed by the caller
 
    procedure Set_Nth_Arg
      (Data : Callback_Data; N : Positive; Value : String) is abstract;
@@ -422,6 +434,69 @@ package GPS.Kernel.Scripts is
    procedure Print_Refcount
      (Instance : access Class_Instance_Record; Msg : String) is abstract;
    --  Debug only: print the reference counting for this instance
+
+   --------------------
+   -- Instance lists --
+   --------------------
+   --  Most internal objects, when exported to a shell, should reuse the same
+   --  class instance whenever the same physical object is referenced. This is
+   --  so that the user can store user data within the instance, and get it
+   --  back easily the next time the same object is referenced.
+   --  For types derived from GObject_Record, we provide appropriate Set_Data
+   --  and Get_Data subprograms. For other types, the instance_list type can
+   --  be used to store the instances (of which there is one per scripting
+   --  language).
+
+   type Instance_List is private;
+   --  Stores the instance created for some GPS internal data, so that the same
+   --  script instance is reused every time we reference the same Ada object.
+
+   procedure Free (List : in out Instance_List);
+   --  Free the instances stored in the list
+
+   function Get
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : Instance_List;
+      Script : Scripting_Language) return Class_Instance;
+   --  Return the instance for a given script. Return value needs to be Ref'ed
+   --  by the caller if it keeps a reference to it.
+
+   procedure Set
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : in out Instance_List;
+      Script : Scripting_Language;
+      Inst   : Class_Instance);
+   --  Set the instance for a specific language
+
+   -------------------------
+   -- Callback_Data lists --
+   -------------------------
+   --  This type's goal is similar to the one for the instance lists, since the
+   --  callback_data are also language-specific
+
+   type Callback_Data_List is private;
+   --  Stores a list of callback_data, each associated with a different
+   --  scripting language
+
+   procedure Free (List : in out Callback_Data_List);
+   --  Free the instances stored in the list
+
+   function Get
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : Callback_Data_List;
+      Script : access Scripting_Language_Record'Class)
+      return Callback_Data_Access;
+   --  Return the data for a given script.
+   --  The returned value should not be freed by the caller, it is the
+   --  responsability of the callback_data_list to do so.
+
+   procedure Set
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : in out Callback_Data_List;
+      Script : access Scripting_Language_Record'Class;
+      Data   : Callback_Data_Access);
+   --  Set the data for a specific language. Data should not be freed by the
+   --  caller.
 
    -------------------------
    -- Scripting languages --
@@ -886,5 +961,12 @@ private
    type Class_Instance_Record is abstract tagged null record;
    type Callback_Data is abstract tagged null record;
    type Scripting_Language_Record is abstract tagged null record;
+
+   type Instance_Array is array (Natural range <>) of Class_Instance;
+   type Instance_List  is access Instance_Array;
+
+   type Callback_Data_Array is
+     array (Natural range <>) of Callback_Data_Access;
+   type Callback_Data_List  is access Callback_Data_Array;
 
 end GPS.Kernel.Scripts;

@@ -53,6 +53,7 @@ with Projects.Registry;       use Projects.Registry;
 with Projects;                use Projects;
 with String_Utils;            use String_Utils;
 with System;                  use System;
+with System.Address_Image;
 with Traces;                  use Traces;
 with Types;                   use Types;
 with VFS;                     use VFS;
@@ -71,28 +72,6 @@ package body GPS.Kernel.Scripts is
    procedure Free (Class : in out Class_Type);
    package Classes_Hash is new String_Hash (Class_Type, Free, No_Class);
    use Classes_Hash.String_Hash_Table;
-
-   type Instance_Array is array (Natural range <>) of Class_Instance;
-   type Instance_List  is access Instance_Array;
-   --  Stores the instance created for some GPS internal data, so that the same
-   --  script instance is reused every time we reference the same Ada object.
-
-   procedure Free (List : in out Instance_List);
-   --  Free the instances stored in the list
-
-   function Get
-     (Kernel : access Kernel_Handle_Record'Class;
-      List   : Instance_List;
-      Script : Scripting_Language) return Class_Instance;
-   --  Return the instance for a given script. Return value needs to be Ref'ed
-   --  by the caller if it keeps a reference to it.
-
-   procedure Set
-     (Kernel : access Kernel_Handle_Record'Class;
-      List   : in out Instance_List;
-      Script : Scripting_Language;
-      Inst   : Class_Instance);
-   --  Set the instance for a specific language
 
    type Scripting_Data_Record is new Kernel_Scripting_Data_Record with record
       Scripting_Languages  : Scripting_Language_List :=
@@ -268,6 +247,8 @@ package body GPS.Kernel.Scripts is
    ----------
 
    procedure Free (List : in out Instance_List) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Instance_Array, Instance_List);
    begin
       if List /= null then
          for L in List'Range loop
@@ -276,6 +257,7 @@ package body GPS.Kernel.Scripts is
                List (L) := null;
             end if;
          end loop;
+         Unchecked_Free (List);
       end if;
    end Free;
 
@@ -335,9 +317,97 @@ package body GPS.Kernel.Scripts is
    -- Free --
    ----------
 
+   procedure Free (List : in out Callback_Data_List) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Callback_Data_Array, Callback_Data_List);
+   begin
+      if List /= null then
+         for L in List'Range loop
+            if List (L) /= null then
+               Free (List (L));
+            end if;
+         end loop;
+         Unchecked_Free (List);
+      end if;
+   end Free;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : Callback_Data_List;
+      Script : access Scripting_Language_Record'Class)
+      return Callback_Data_Access
+   is
+      Tmp : constant Scripting_Language_Array :=
+        Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
+   begin
+      if List /= null then
+         for T in Tmp'Range loop
+            if Tmp (T) = Scripting_Language (Script) then
+               return List (T);
+            end if;
+         end loop;
+      end if;
+      return null;
+   end Get;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : in out Callback_Data_List;
+      Script : access Scripting_Language_Record'Class;
+      Data   : Callback_Data_Access)
+   is
+      Tmp : constant Scripting_Language_Array :=
+        Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
+   begin
+      if List = null then
+         List := new Callback_Data_Array (Tmp'Range);
+      end if;
+
+      for T in Tmp'Range loop
+         if Tmp (T) = Scripting_Language (Script) then
+            if List (T) /= null
+              and then List (T) /= Data
+            then
+               Free (List (T));
+            end if;
+
+            List (T) := Data;
+            exit;
+         end if;
+      end loop;
+   end Set;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (Class : in out Class_Type) is
    begin
       Free (Class.Name);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Data : in out Callback_Data_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Callback_Data'Class, Callback_Data_Access);
+   begin
+      if Data /= null then
+         Trace (Me, "MANU Free Callback_Data: "
+                & System.Address_Image (Data.all'Address));
+         Free (Data.all);
+         Unchecked_Free (Data);
+      end if;
    end Free;
 
    ---------------------------------
