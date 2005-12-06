@@ -87,6 +87,9 @@ package Remote_Connections.Custom is
    type Custom_Connection is new Remote_Connection_Record with private;
    type Custom_Connection_Access is access all Custom_Connection'Class;
 
+   procedure Free (Connection : in out Custom_Connection);
+   --  See inherited procedure
+
    procedure Initialize
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Connection : access Custom_Connection'Class;
@@ -152,10 +155,16 @@ package Remote_Connections.Custom is
       Passwd     : String := "";
       Reuse      : Boolean := False) return Remote_Connection;
 
+   procedure Free_Registered_Regexps;
+   --  Free all regular expressions read from the configuration files
+
 private
 
    type Regexp_Record;
    type Regexp_Access is access all Regexp_Record;
+
+   procedure Free (Regexp : in out Regexp_Access);
+   --  Free the memory occupied by Regexp
 
    type Regexp_Record is record
       Id     : String_Ptr;
@@ -171,13 +180,22 @@ private
    type Action_Record (kind : Action_Enum);
    type Action_Access is access all Action_Record;
 
+   procedure Free (Action : in out Action_Access);
+   --  Free the memory occupied by Action
+
    type Expect_Record;
    type Expect_Access is access all Expect_Record;
+
+   procedure Free (Expect : in out Expect_Access);
+   --  Free the memory occupied by Expect
 
    type Expect_Timeout_Record is record
       Timeout : Integer;
       Actions : Action_Access;
    end record;
+
+   procedure Free (Timeout : in out Expect_Timeout_Record);
+   --  Free the memory occupied by Timeout
 
    Default_Timeout_Record : constant Expect_Timeout_Record :=
      (Timeout => 10_000,
@@ -262,7 +280,14 @@ private
       --  Command used to list the files in a directory
      );
 
-   type Command_Array is array (Cmd_Enum) of Action_Access;
+   type Command_Action is record
+      Action    : Action_Access;
+      Inherited : Boolean := False;
+      --  Whether the action was defined for the parent protocol, as opposed
+      --  to defined specifically for the current protocol
+   end record;
+
+   type Command_Array is array (Cmd_Enum) of Command_Action;
 
    type TTY_Process_Descriptor_Access is access all TTY_Process_Descriptor;
 

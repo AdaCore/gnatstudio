@@ -219,8 +219,8 @@ package body Remote_Connections.Custom is
    -- Get_Regexp_Array --
    ----------------------
 
-   function Get_Regexp_Array (Action : in Action_Access)
-                              return Compiled_Regexp_Array
+   function Get_Regexp_Array
+     (Action : in Action_Access) return Compiled_Regexp_Array
    is
       Expect   : Expect_Access;
       Nb_Items : Natural;
@@ -270,9 +270,10 @@ package body Remote_Connections.Custom is
            Min_Delay_Between_Attempts
          then
             Connection.Last_Connection_Attempt := Clock;
-            Result := Execute_Cmd (Connection,
-                                   Connection.Commands (Open_Session_Cmd),
-                                   Is_Mount => True);
+            Result := Execute_Cmd
+              (Connection,
+               Connection.Commands (Open_Session_Cmd).Action,
+               Is_Mount => True);
          else
             Result := NOK;
          end if;
@@ -1365,6 +1366,9 @@ package body Remote_Connections.Custom is
                Tmp_Connect := Tmp_Connect.Next;
             end loop;
          end;
+         for C in Connection.Commands'Range loop
+            Connection.Commands (C).Inherited := True;
+         end loop;
       end if;
 
       --  Get Commands node
@@ -1378,13 +1382,106 @@ package body Remote_Connections.Custom is
 
             if Cmd /= null then
                Trace (Full_Me, "Initialize: " & To_Lower (Cmd_Enum'Image (C)));
-               Connection.Commands (C) := Cmd;
+               Connection.Commands (C) := (Cmd, Inherited => False);
             end if;
          end loop;
       end if;
 
       Remote_Connections.Register_Protocol (Connection);
    end Initialize;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Timeout : in out Expect_Timeout_Record) is
+   begin
+      Free (Timeout.Actions);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Expect : in out Expect_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Expect_Record, Expect_Access);
+   begin
+      if Expect /= null then
+         --  regexps are shared, do not free Expect.Regexp
+         Free (Expect.Actions);
+         Free (Expect.Next);
+         Unchecked_Free (Expect);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Action : in out Action_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Action_Record, Action_Access);
+   begin
+      if Action /= null then
+         Free (Action.Expects);
+         Free (Action.Timeout);
+         Free (Action.Next);
+         case Action.Kind is
+            when Spawn | Return_Value | Send | List_Files =>
+               Glib.Free (Action.Param);
+            when others =>
+               null;
+         end case;
+
+         Unchecked_Free (Action);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Connection : in out Custom_Connection) is
+   begin
+      Glib.Free (Connection.Description);
+      Glib.Free (Connection.Name);
+      Free (Connection.Buffer);
+      Free (Connection.File_List);
+
+      for C in Connection.Commands'Range loop
+         if not Connection.Commands (C).Inherited then
+            Free (Connection.Commands (C).Action);
+         end if;
+      end loop;
+      Free (Remote_Connection_Record (Connection));
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Regexp : in out Regexp_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Pattern_Matcher, Pattern_Matcher_Access);
+      Tmp : Regexp_Access;
+   begin
+      while Regexp /= null loop
+         Tmp := Regexp.Next;
+         Glib.Free (Regexp.Id);
+         Unchecked_Free (Regexp.Regexp);
+         Regexp := Tmp;
+      end loop;
+   end Free;
+
+   -----------------------------
+   -- Free_Registered_Regexps --
+   -----------------------------
+
+   procedure Free_Registered_Regexps is
+   begin
+      Free (Regexp_Root);
+   end Free_Registered_Regexps;
 
    ------------------
    -- Get_Protocol --
@@ -1438,7 +1535,7 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "Is_Regular_File " & Local_Full_Name);
 
-      if Connection.Commands (Is_Regular_File_Cmd) = null then
+      if Connection.Commands (Is_Regular_File_Cmd).Action = null then
          declare
             Base : constant String := Base_Name (Local_Full_Name);
          begin
@@ -1456,9 +1553,10 @@ package body Remote_Connections.Custom is
          end;
 
       else
-         Result := Execute_Cmd (Connection,
-                                Connection.Commands (Is_Regular_File_Cmd),
-                                Local_Full_Name);
+         Result := Execute_Cmd
+           (Connection,
+            Connection.Commands (Is_Regular_File_Cmd).Action,
+            Local_Full_Name);
          return Result = OK;
       end if;
    end Is_Regular_File;
@@ -1473,13 +1571,13 @@ package body Remote_Connections.Custom is
    is
       Result : Return_Enum;
    begin
-      if Connection.Commands (Delete_File_Cmd) = null then
+      if Connection.Commands (Delete_File_Cmd).Action = null then
          --  Don't do anything
          return False;
       else
          Trace (Me, "Delete " & Local_Full_Name);
          Result := Execute_Cmd (Connection,
-                                Connection.Commands (Delete_File_Cmd),
+                                Connection.Commands (Delete_File_Cmd).Action,
                                 Local_Full_Name);
          return Result = OK;
       end if;
@@ -1497,11 +1595,11 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "Is_Writable " & Local_Full_Name);
 
-      if Connection.Commands (Is_Writable_Cmd) = null then
-         return Connection.Commands (Write_File_Cmd) /= null;
+      if Connection.Commands (Is_Writable_Cmd).Action = null then
+         return Connection.Commands (Write_File_Cmd).Action /= null;
       else
          Result := Execute_Cmd (Connection,
-                                Connection.Commands (Is_Writable_Cmd),
+                                Connection.Commands (Is_Writable_Cmd).Action,
                                 Local_Full_Name);
          return Result = OK;
       end if;
@@ -1519,7 +1617,7 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "Is_Directory " & Local_Full_Name);
 
-      if Connection.Commands (Is_Directory_Cmd) = null then
+      if Connection.Commands (Is_Directory_Cmd).Action = null then
          --  Assume it is a directory only if it ends with a directory
          --  separator
          return Local_Full_Name (Local_Full_Name'Last) = '/'
@@ -1527,7 +1625,7 @@ package body Remote_Connections.Custom is
 
       else
          Result := Execute_Cmd (Connection,
-                                Connection.Commands (Is_Directory_Cmd),
+                                Connection.Commands (Is_Directory_Cmd).Action,
                                 Local_Full_Name);
          return Result = OK;
       end if;
@@ -1546,11 +1644,11 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "File_Time_Stamp " & Local_Full_Name);
 
-      if Connection.Commands (Timestamp_Cmd) = null then
+      if Connection.Commands (Timestamp_Cmd).Action = null then
          return VFS.No_Time;
       else
          Result := Execute_Cmd (Connection,
-                                Connection.Commands (Timestamp_Cmd),
+                                Connection.Commands (Timestamp_Cmd).Action,
                                 Local_Full_Name);
          return Connection.Timestamp;
       end if;
@@ -1569,11 +1667,11 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "Read_File " & Local_Full_Name);
 
-      if Connection.Commands (Read_File_Cmd) = null then
+      if Connection.Commands (Read_File_Cmd).Action = null then
          return null;
       else
          Result := Execute_Cmd (Connection,
-                                Connection.Commands (Read_File_Cmd),
+                                Connection.Commands (Read_File_Cmd).Action,
                                 Local_Full_Name);
 
          if Result = OK then
@@ -1598,11 +1696,11 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "Write " & Local_Full_Name & " - " & Temporary_File);
 
-      if Connection.Commands (Write_File_Cmd) = null then
+      if Connection.Commands (Write_File_Cmd).Action = null then
          return;
       else
          Result := Execute_Cmd (Connection,
-                                Connection.Commands (Write_File_Cmd),
+                                Connection.Commands (Write_File_Cmd).Action,
                                 Local_Full_Name,
                                 Temporary_File);
       end if;
@@ -1624,19 +1722,21 @@ package body Remote_Connections.Custom is
              "Set_Writable " & Local_Full_Name &
              " " & Boolean'Image (Writable));
 
-      if Connection.Commands (Set_Writable_Cmd) = null then
+      if Connection.Commands (Set_Writable_Cmd).Action = null then
          --  Nothing to do
          null;
 
       else
          if Writable then
-            Result := Execute_Cmd (Connection,
-                                   Connection.Commands (Set_Writable_Cmd),
-                                   Local_Full_Name);
+            Result := Execute_Cmd
+              (Connection,
+               Connection.Commands (Set_Writable_Cmd).Action,
+               Local_Full_Name);
          else
-            Result := Execute_Cmd (Connection,
-                                   Connection.Commands (Set_Unwritable_Cmd),
-                                   Local_Full_Name);
+            Result := Execute_Cmd
+              (Connection,
+               Connection.Commands (Set_Unwritable_Cmd).Action,
+               Local_Full_Name);
          end if;
       end if;
    end Set_Writable;
@@ -1656,19 +1756,21 @@ package body Remote_Connections.Custom is
       Trace (Me, "Set_Readable " & Local_Full_Name &
             " (" & Boolean'Image (Readable) & ")");
 
-      if Connection.Commands (Set_Readable_Cmd) = null then
+      if Connection.Commands (Set_Readable_Cmd).Action = null then
          --  Nothing to do
          null;
 
       else
          if Readable then
-            Result := Execute_Cmd (Connection,
-                                   Connection.Commands (Set_Readable_Cmd),
-                                   Local_Full_Name);
+            Result := Execute_Cmd
+              (Connection,
+               Connection.Commands (Set_Readable_Cmd).Action,
+               Local_Full_Name);
          else
-            Result := Execute_Cmd (Connection,
-                                   Connection.Commands (Set_Unreadable_Cmd),
-                                   Local_Full_Name);
+            Result := Execute_Cmd
+              (Connection,
+               Connection.Commands (Set_Unreadable_Cmd).Action,
+               Local_Full_Name);
          end if;
       end if;
    end Set_Readable;
@@ -1686,13 +1788,13 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "Make_Dir " & Local_Dir_Name);
 
-      if Connection.Commands (Make_Dir_Cmd) = null then
+      if Connection.Commands (Make_Dir_Cmd).Action = null then
          --  Nothing to do
          return False;
 
       else
          Result := Execute_Cmd (Connection,
-                                Connection.Commands (Make_Dir_Cmd),
+                                Connection.Commands (Make_Dir_Cmd).Action,
                                 Local_Dir_Name);
          return Result = OK;
       end if;
@@ -1712,19 +1814,20 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "Remove_Dir " & Local_Dir_Name);
 
-      if Connection.Commands (Remove_Dir_Recursive_Cmd) /= null
+      if Connection.Commands (Remove_Dir_Recursive_Cmd).Action /= null
         and then Recursive
       then
-         Result := Execute_Cmd (Connection,
-                                Connection.Commands (Remove_Dir_Recursive_Cmd),
-                                Local_Dir_Name);
+         Result := Execute_Cmd
+           (Connection,
+            Connection.Commands (Remove_Dir_Recursive_Cmd).Action,
+            Local_Dir_Name);
          return Result = OK;
 
-      elsif Connection.Commands (Remove_Dir_Cmd) /= null
+      elsif Connection.Commands (Remove_Dir_Cmd).Action /= null
         and then not Recursive
       then
          Result := Execute_Cmd (Connection,
-                                Connection.Commands (Remove_Dir_Cmd),
+                                Connection.Commands (Remove_Dir_Cmd).Action,
                                 Local_Dir_Name);
          return Result = OK;
       end if;
@@ -1749,9 +1852,9 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "Read_Dir " & Local_Dir_Name);
 
-      if Connection.Commands (Ls_Dir_Cmd) /= null then
+      if Connection.Commands (Ls_Dir_Cmd).Action /= null then
          Result := Execute_Cmd (Connection,
-                                Connection.Commands (Ls_Dir_Cmd),
+                                Connection.Commands (Ls_Dir_Cmd).Action,
                                 Local_Dir_Name);
 
          if Result = OK and then Connection.File_List /= null then
