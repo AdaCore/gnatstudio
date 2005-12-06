@@ -1009,7 +1009,7 @@ package body Browsers.Call_Graph is
       Loc : File_Location;
       Ref : Entity_Reference;
    begin
-      for I in 1 .. 15 loop
+      for J in 1 .. 15 loop
          exit when At_End (Command.Iter);
 
          Ref := Get (Command.Iter);
