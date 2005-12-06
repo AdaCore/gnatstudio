@@ -136,6 +136,14 @@ package body Python_Module is
    function Execute_Command
      (Script  : access Python_Scripting_Record'Class;
       Command : PyObject;
+      Args    : Callback_Data'Class) return String;
+   function Execute_Command
+     (Script  : access Python_Scripting_Record'Class;
+      Command : PyObject;
+      Args    : Callback_Data'Class) return PyObject;
+   function Execute_Command
+     (Script  : access Python_Scripting_Record'Class;
+      Command : PyObject;
       Args    : Callback_Data'Class) return Boolean;
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
@@ -163,6 +171,9 @@ package body Python_Module is
    function Execute
      (Subprogram : access Python_Subprogram_Record;
       Args       : Callback_Data'Class) return Boolean;
+   function Execute
+     (Subprogram : access Python_Subprogram_Record;
+      Args       : Callback_Data'Class) return String;
    procedure Free (Subprogram : in out Python_Subprogram_Record);
    function Get_Name
      (Subprogram : access Python_Subprogram_Record) return String;
@@ -192,6 +203,7 @@ package body Python_Module is
    --  Kw_Params is used to handle keyword parameters. They map from positional
    --  index to the actual object.
 
+   function Clone (Data : Python_Callback_Data) return Callback_Data'Class;
    function Get_Script (Data : Python_Callback_Data) return Scripting_Language;
    function Number_Of_Arguments (Data : Python_Callback_Data) return Natural;
    procedure Name_Parameters
@@ -1365,7 +1377,9 @@ package body Python_Module is
 
    procedure Free (Data : in out Python_Callback_Data) is
    begin
-      Py_DECREF (Data.Args);
+      if Data.Args /= null then
+         Py_DECREF (Data.Args);
+      end if;
 
       if Data.Kw /= null then
          Py_DECREF (Data.Kw);
@@ -1376,6 +1390,28 @@ package body Python_Module is
 
       Unchecked_Free (Data.Kw_Params);
    end Free;
+
+   -----------
+   -- Clone --
+   -----------
+
+   function Clone (Data : Python_Callback_Data) return Callback_Data'Class is
+      D : Python_Callback_Data := Data;
+   begin
+      if D.Args /= null then
+         D.Args := PyTuple_New (PyTuple_Size (D.Args));
+         for T in 0 .. PyTuple_Size (D.Args) - 1 loop
+            PyTuple_SetItem (D.Args, T, PyTuple_GetItem (Data.Args, T));
+         end loop;
+      end if;
+      if D.Kw /= null then
+         Py_INCREF (D.Kw);
+      end if;
+      D.Return_Value := null;
+      D.Return_Dict  := null;
+      D.Kw_Params    := null;
+      return D;
+   end Clone;
 
    ------------
    -- Create --
@@ -1812,7 +1848,7 @@ package body Python_Module is
    function Execute_Command
      (Script  : access Python_Scripting_Record'Class;
       Command : PyObject;
-      Args    : Callback_Data'Class) return Boolean
+      Args    : Callback_Data'Class) return PyObject
    is
       Obj   : PyObject;
       Args2 : PyObject;
@@ -1821,7 +1857,7 @@ package body Python_Module is
    begin
       if Script.Blocked then
          Insert (Script.Kernel, "A command is already executing");
-         return False;
+         return null;
       end if;
 
       --  Bound methods: we need to explicitly pass the instance as the first
@@ -1865,6 +1901,40 @@ package body Python_Module is
          PyErr_Print;
       end if;
 
+      return Obj;
+   end Execute_Command;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Script  : access Python_Scripting_Record'Class;
+      Command : PyObject;
+      Args    : Callback_Data'Class) return String
+   is
+      Obj : constant PyObject := Execute_Command (Script, Command, Args);
+   begin
+      if Obj /= null
+        and then PyString_Check (Obj)
+      then
+         return PyString_AsString (Obj);
+      else
+         return "";
+      end if;
+   end Execute_Command;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Script  : access Python_Scripting_Record'Class;
+      Command : PyObject;
+      Args    : Callback_Data'Class) return Boolean
+   is
+      Obj : constant PyObject := Execute_Command (Script, Command, Args);
+   begin
       return Obj /= null
         and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
                   or else
@@ -2734,15 +2804,26 @@ package body Python_Module is
 
    function Execute
      (Subprogram : access Python_Subprogram_Record;
-      Args       : Callback_Data'Class) return Boolean
-   is
-      Tmp : Boolean;
+      Args       : Callback_Data'Class) return Boolean is
    begin
-      Tmp := Execute_Command
+      return Execute_Command
         (Script  => Python_Module_Id.Script,
          Command => Subprogram.Subprogram,
          Args    => Args);
-      return Tmp;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Subprogram : access Python_Subprogram_Record;
+      Args       : Callback_Data'Class) return String is
+   begin
+      return Execute_Command
+        (Script => Python_Module_Id.Script,
+         Command => Subprogram.Subprogram,
+         Args    => Args);
    end Execute;
 
    ----------
