@@ -193,13 +193,6 @@ package GVD.Process is
    function Get_Num (Tab : Visual_Debugger) return Glib.Gint;
    --  Return the number identifying the debugger associated with a process tab
 
-   procedure Set_Output
-     (Process : access Visual_Debugger_Record'Class;
-      Output  : String);
-   --  Set the current output of the debugger. This should be used with care,
-   --  since the output is generally set automatically when parsing the
-   --  output of the debugger
-
    function Get_Console
      (Process : access Visual_Debugger_Record'Class)
       return Gtk.Widget.Gtk_Widget;
