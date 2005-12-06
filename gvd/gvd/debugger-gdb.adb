@@ -317,6 +317,28 @@ package body Debugger.Gdb is
       Last  : Positive := Matched (0).First;
 
    begin
+      --  Always call the hook, even in invisible mode. This is in particular
+      --  useful for the automatic testsuite
+
+      declare
+         Result : constant String := Run_Debugger_Hook_Until_Not_Empty
+           (Process, Debugger_Question_Action_Hook, Str);
+      begin
+         if Result /= "" then
+            Send (Debugger, Result,
+                  Mode            => Internal,
+                  Empty_Buffer    => False,
+                  Wait_For_Prompt => False);
+            return;
+         end if;
+      end;
+
+      --  ??? An issue occurs if the hook returned True, but in fact no reply
+      --  was sent to the debugger. In this case, the debugger stays blocked
+      --  waiting for input. Since this is visible in the console, that means
+      --  the user will have to type (though it still fails in automatic tests,
+      --  since commands are sent in invisible mode)
+
       --  If we are processing an internal command, we cancel any question
       --  dialog we might have, and silently fail
       --  ??? For some reason, we can not use Interrupt here, and we have
@@ -391,9 +413,25 @@ package body Debugger.Gdb is
       Mode     : Command_Type;
 
    begin
+      --  Always call the hook, even in invisible mode. This is in particular
+      --  useful for the automatic testsuite
+
+      declare
+         Output : constant String := Run_Debugger_Hook_Until_Not_Empty
+           (Process, Debugger_Question_Action_Hook, Str);
+      begin
+         if Output /= "" then
+            Send (Debugger, Output,
+                  Mode            => Internal,
+                  Empty_Buffer    => False,
+                  Wait_For_Prompt => False);
+            return;
+         end if;
+      end;
+
       Mode := Get_Command_Mode (Get_Process (Debugger));
 
-      --  For an invisible command, we also cannot afford to wait, so send an
+      --  For an invisible command, we cannot afford to wait, so send an
       --  answer automatically.
 
       if Mode in Invisible_Command then
@@ -403,6 +441,8 @@ package body Debugger.Gdb is
                Wait_For_Prompt => False);
          return;
       end if;
+
+      --  Should we display the dialog or not ?
 
       Choices (1).Choice := new String'("n");
       Choices (1).Description := new String'("No");
