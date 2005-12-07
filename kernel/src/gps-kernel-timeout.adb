@@ -273,32 +273,38 @@ package body GPS.Kernel.Timeout is
                end if;
             end;
          end if;
+      else
+         raise Process_Died;
       end if;
 
       return True;
 
    exception
       when Process_Died =>
-         declare
-            Output : constant String := Strip_CR (Expect_Out (Fd.all));
-         begin
-            if Data.D.Callback /= null then
-               Data.D.Process_Died := True;
-               Data.D.Callback (Data.D, Output);
-            end if;
-
-            if Data.Console /= null then
-               --  Display all remaining output
-
-               Insert (Data.Console, Output, Add_LF => False);
-               Highlight_Child
-                 (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
-
-               if Data.Console /= Get_Console (Data.D.Kernel) then
-                  Enable_Prompt_Display (Data.Console, False);
+         if Fd /= null then
+            declare
+               Output : constant String := Strip_CR (Expect_Out (Fd.all));
+            begin
+               if Data.D.Callback /= null then
+                  Data.D.Process_Died := True;
+                  Data.D.Callback (Data.D, Output);
                end if;
-            end if;
-         end;
+
+               if Data.Console /= null then
+                  --  Display all remaining output
+
+                  Insert (Data.Console, Output, Add_LF => False);
+                  Highlight_Child
+                    (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
+               end if;
+            end;
+         end if;
+
+         if Data.Console /= null
+           and then Data.Console /= Get_Console (Data.D.Kernel)
+         then
+            Enable_Prompt_Display (Data.Console, False);
+         end if;
 
          if Data.Delete_Id.Signal /= Null_Signal_Id then
             Gtk.Handlers.Disconnect (Data.Console, Data.Delete_Id);
@@ -334,9 +340,7 @@ package body GPS.Kernel.Timeout is
         (System.Address, Console_Process);
       Process : constant Console_Process := Convert (User_Data);
    begin
-      if not Process.Died
-        and then Process.D.Descriptor /= null
-      then
+      if not Process.Died then
          --  ??? If Process.D.Descriptor is null then Process.Died should be
          --  True. This is being investigated under EC06-004.
          Send (Process.D.Descriptor.all, Input);
