@@ -224,9 +224,9 @@ package body Creation_Wizard.Selector is
       Pack_Start (Box, Page.From_Library, Expand => False);
       Gtk_New
         (Label,
-         -("Create a new project file, that creates a library as a result"
+         -("Create a new project file, defining a library rather than an"
            & ASCII.LF
-           & "of the a build, instead of an executable"));
+           & "executable"));
       Set_Padding (Label, 20, 5);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
