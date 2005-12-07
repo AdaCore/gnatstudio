@@ -316,8 +316,8 @@ click on the @code{Debugger} item on the left; set the button
 breakpoint every time an exception is raised. Click on @code{OK} to confirm your
 change.
 
-Now select the menu @code{Debug->Initialize->sdc}: two new windows are
-created, a data window and a debugger console.
+Now select the menu @code{Debug->Initialize->sdc}: a new window is
+created: this is the debugger console.
 You can also look at the various debug menu item and tool bar buttons which are
 now activated.
 
@@ -341,9 +341,9 @@ displayed showing the value of @code{T}. You have probably noticed that
 tool tips, like menus, are contextual: depending on the current session and
 on the entity selected, different information is displayed.
 
-Select the contextual menu @code{Debug->Display T}: this displays in the data
-window a box containing the different fields of @code{T}, each clearly
-separated.
+Select the contextual menu @code{Debug->Display T}: this will open a new
+window: the data window, with a box displaying graphically the contents
+of the different fields of @code{T}, each clearly separated.
 
 On @code{T} data display, select the contextual menu
 @code{Display->Show Value + Type}: this displays for all fields both their
@@ -389,8 +389,11 @@ Now go back to the file @file{sdc.adb}, move the mouse over the procedure
 @code{References->Sdc calls (in browser)}: this will open a new window titled
 @i{Call graph browser}.
 
-Click on the right arrow of @code{Process} (one of the first items on
-the right). Also click on the right arrow of @code{error_msg}.
+Note that there is also another menu (@code{References->Sdc calls (in tree)})
+which provides a tree view of the callers/callees.
+
+In the call graph, click on the right arrow of @code{Process} (one of the
+first items on the left). Also click on the right arrow of @code{error_msg}.
 
 Select @code{Orthogonal links} in the contextual menu of the graph to change the
 way links are displayed in the graph.
@@ -407,9 +410,11 @@ Click on right arrow of @code{process} (@code{(Decl) instructions.ads:12}).
 
 The items can also be moved: move e.g @code{msg} item around.
 
+You can also recompute a nice layout of all the current items by using
+the contextual menu @code{Refresh layout}.
+
 Click on left arrow of @code{msg}
-to display who is calling @code{msg}. Notice that @code{view} (on the left
-of the graph) calls @code{msg}.
+to display who is calling @code{msg}. Notice that @code{view} calls @code{msg}.
 
 Click on left arrow of @code{view}: the arrow disappears, and no
 new items are created, which means that @code{view} isn't called by anyone,
@@ -624,8 +629,8 @@ Back to our project, let's now examine the dependencies between sources.
 @section Source dependencies
 @noindent
 
-Select @file{sdc.adb} in the explorer and then the contextual menu item
-@code{Show dependencies for sdc.adb}: this will open a new graph showing
+Select @file{sdc.adb} in the @code{Project View} and then the contextual menu
+item @code{Show dependencies for sdc.adb}: this will open a new graph showing
 the dependencies between sources of the project.
 
 Click on the right arrow of @file{tokens.ads} to display the files that
