@@ -31,5 +31,10 @@ if [ "$GDK_USE_XFT" = "" -a "$DISPLAY" != ":0.0" ]; then
   export GDK_USE_XFT
 fi
 
+if [ "$CHARSET" = "" ]; then
+  CHARSET=ISO-8859-1
+  export CHARSET
+fi
+
 export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH
 exec $root/bin/${prog}_exe "$@"
