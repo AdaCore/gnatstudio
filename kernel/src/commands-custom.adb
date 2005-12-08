@@ -937,7 +937,7 @@ package body Commands.Custom is
          Num := Safe_Value (Param, Default => 0);
 
          --  Remove surrounding quotes if any. This is needed so that
-         --  for instance of the function get_attributes_as_string
+         --  for instance the function get_attributes_as_string
          --  from Python can be used to call an external tool with
          --  switches propertly interpreted.
 
