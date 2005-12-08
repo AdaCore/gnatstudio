@@ -40,6 +40,13 @@ package body Layouts is
    Min_Node_Dist : constant Natural := 10;
    --  Minimum distance between two nodes on the same layer.
 
+   Min_Node_Simple_Dist : constant Natural := 2 * Min_Node_Dist;
+   --  Minimum distance between two nodes on the same layer used by the
+   --  simple layout algorithm.
+   --  ??? Would be good to merge the two Min_Node constants, but apparently
+   --  Layer_Layout takes Min_Node_Dist twice into account, while Simple_Layout
+   --  tkes it into acocunt once.
+
    Layer_Align : constant Float := 0.0;
    --  Alignment of items in each layer. This should be a number between 0.0
    --  (0%) and 1.0 (100%)
@@ -1078,7 +1085,8 @@ package body Layouts is
                return Min_Y;
             end if;
          else
-            return Parent / Ancestors_Count - (Current - Min_Node_Dist) / 2;
+            return Parent / Ancestors_Count
+              - (Current - Min_Node_Simple_Dist) / 2;
          end if;
       end Compute_Columns_Start;
 
@@ -1099,10 +1107,12 @@ package body Layouts is
                   Rect  := Get_Coord (Item);
                   if Vertical_Layout then
                      Move_To (Canvas, Item, Gint (Coord), Gint (Align_On));
-                     Coord := Coord + Natural (Rect.Width) + Min_Node_Dist;
+                     Coord :=
+                       Coord + Natural (Rect.Width) + Min_Node_Simple_Dist;
                   else
                      Move_To (Canvas, Item, Gint (Align_On), Gint (Coord));
-                     Coord := Coord + Natural (Rect.Height) + Min_Node_Dist;
+                     Coord :=
+                       Coord + Natural (Rect.Height) + Min_Node_Simple_Dist;
                   end if;
                end if;
             end if;
