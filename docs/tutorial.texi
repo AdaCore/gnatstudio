@@ -393,7 +393,7 @@ Note that there is also another menu (@code{References->Sdc calls (in tree)})
 which provides a tree view of the callers/callees.
 
 In the call graph, click on the right arrow of @code{Process} (one of the
-first items on the left). Also click on the right arrow of @code{error_msg}.
+first items on the top). Also click on the right arrow of @code{error_msg}.
 
 Select @code{Orthogonal links} in the contextual menu of the graph to change the
 way links are displayed in the graph.
@@ -410,7 +410,7 @@ Click on right arrow of @code{process} (@code{(Decl) instructions.ads:12}).
 
 The items can also be moved: move e.g @code{msg} item around.
 
-You can also recompute a nice layout of all the current items by using
+You can also recompute the layout of all the current items by using
 the contextual menu @code{Refresh layout}.
 
 Click on left arrow of @code{msg}
