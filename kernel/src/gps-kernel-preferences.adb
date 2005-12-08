@@ -778,7 +778,7 @@ package body GPS.Kernel.Preferences is
 
       Browsers_Vertical_Layout := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Browsers-Vertical-Layout",
-         Default => True,
+         Default => False,
          Blurb   => -("If enabled, the boxes in the browsers will be"
              & " organized into layers displayed one below the other. The"
              & " graph will tend to grow vertically when you open new boxes"),
