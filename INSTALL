@@ -4,8 +4,8 @@ Building/Installing from sources
 To build GPS from sources, you need to have GNU make available as
 a prerequisite.
 
-You need to use a recent version of the GNAT compiler (version >= GNAT 3.15, or
-GCC >= 3.4).
+You need to use a recent version of the GNAT compiler (e.g. GNAT 5.04a
+or GNAT GPL 2005).
 
 You then need to install the Gtk+ 2.x suite (e.g 2.4.14).
 To download and build Gtk+, follow the instructions given at www.gtk.org
@@ -16,7 +16,10 @@ See GtkAda-2.4.x/INSTALL for instructions.
 Then make sure that your PATH and LD_LIBRARY_PATH environment variables point
 to the GtkAda installation
 
-Once GtkAda has been installed, extract the GPS sources:
+Then you need to install the latest version of XML/Ada, and set the
+ADA_PROJECT_PATH environment variable to point to <xml-install>/lib/gnat
+
+Once XML/Ada has been installed, extract the GPS sources:
 
   $ gzip -dc gps-*-src.tgz | tar xvf -
   $ cd gps*
@@ -46,8 +49,4 @@ above, with a few additional steps:
   gcc/gcc/ada from the gcc CVS HEAD sources available at gcc.gnu.org
 
 - You need to use the CVS version of GtkAda matching GPS sources (same date/tag)
-
-- If you are building using GNAT 3.15, you need to apply the patch
-  distrib/gps-1.0-gnat-3.15a1.diff
-  This step isn't needed if you are using GCC 3.4 or GNAT 5
 
