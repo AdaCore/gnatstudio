@@ -45,7 +45,7 @@ package body Layouts is
    --  simple layout algorithm.
    --  ??? Would be good to merge the two Min_Node constants, but apparently
    --  Layer_Layout takes Min_Node_Dist twice into account, while Simple_Layout
-   --  tkes it into acocunt once.
+   --  takes it into account once.
 
    Layer_Align : constant Float := 0.0;
    --  Alignment of items in each layer. This should be a number between 0.0
