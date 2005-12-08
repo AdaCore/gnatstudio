@@ -782,7 +782,10 @@ package body Browsers.Call_Graph is
          --  Refresh the item, since we might have added links to it
          Refresh (Data.Item);
 
-         Layout (Data.Browser, Force => False);
+         if not Data.Link_From_Item then
+            Layout (Data.Browser, Force => False);
+         end if;
+
          Refresh_Canvas (Get_Canvas (Data.Browser));
          Show_Item (Get_Canvas (Data.Browser), Data.Item);
       end if;
