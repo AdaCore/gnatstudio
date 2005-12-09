@@ -22,6 +22,15 @@ EB30-005 Saving the contents of the Data Window (2005-11-30)
 
   Keywords: Debugger
 
+EB29-004 Editing project with no sources
+
+  When you open a project that contains no sources for one of its languages,
+  a warning is displayed in the Messages window. Editing the project properties
+  of this project no longer displays an intermediate dialog warning you about
+  potential errors in the project
+
+  Keywords: Project
+
 EB25-007 Full shell/python interface for accessing the debugger (2005-11-25)
 
   A new set of constructors and methods are available to create, access
