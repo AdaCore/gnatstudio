@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.2.0
 
+- EC07-009 Leave focus on selected window in the bookmarks view
+  Problem:    When you select an existing bookmark in the bookmarks view, the
+              focus should go to the associated editor, and not remain on the
+              bookmarks view itself
+  Workaround: Select the bookmark and then the editor
+
 - EB22-005 Reset switches for a file to default leaves the attribute in project
   Problem:    If you open the Project->Edit File Switches, and reset the
               switches for one of the files to the default value, an entry is
