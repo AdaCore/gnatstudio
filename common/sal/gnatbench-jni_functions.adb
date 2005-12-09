@@ -33,7 +33,7 @@ with System.Address_Image;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
-package body GDT.JNI_Functions is
+package body GNATbench.JNI_Functions is
 
    procedure Db (Str : String) is
    begin
@@ -492,4 +492,4 @@ package body GDT.JNI_Functions is
       return Jint (Location.Index);
    end Java_SourceLocation_getIndexInt;
 
-end GDT.JNI_Functions;
+end GNATbench.JNI_Functions;

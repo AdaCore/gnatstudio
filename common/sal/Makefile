@@ -10,4 +10,4 @@ endif
 main:
 	cd obj; $(CC) -fPIC -I$(JAVA_SDK)/include -I$(JAVA_SDK)/include/$(JAVA_OS_DIR) -c ../jni_wrappers.c 
 	$(RM) lib/*gps_utils*
-	gnatmake -Psal
+	gnatmake -Psal 

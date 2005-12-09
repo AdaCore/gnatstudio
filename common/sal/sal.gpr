@@ -24,16 +24,16 @@ project Sal is
       "string_hash.ads",
       "string_utils.adb",
       "string_utils.ads",
-      "gdt.ads",
-      "gdt-jni_functions.ads",
-      "gdt-jni_functions.adb",
+      "gnatbench.ads",
+      "gnatbench-jni_functions.ads",
+      "gnatbench-jni_functions.adb",
       "jni.ads",
       "jni_wrappers.c");
    for Object_Dir use "obj";
    for Library_Dir use "lib";
    for Library_Name use "gps_utils";
    for Library_Kind use "dynamic";
-   for Library_Interface use ("JNI", "GDT", "GDT.Jni_Functions");
+   for Library_Interface use ("JNI", "GNATbench", "GNATbench.Jni_Functions");
    for Languages use ("Ada");
 
    case Shared.OS is
@@ -44,6 +44,5 @@ project Sal is
    package Binder is
       for Default_Switches ("ada") use ("-shared");
    end Binder;
-
 end Sal;
 
