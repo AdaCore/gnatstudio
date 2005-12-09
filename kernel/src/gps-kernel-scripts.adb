@@ -1915,6 +1915,11 @@ package body GPS.Kernel.Scripts is
          Class        => Get_GUI_Class (Kernel),
          Handler      => GUI_Command_Handler'Access);
       Register_Command
+        (Kernel, "is_sensitive",
+         Maximum_Args => 0,
+         Class        => Get_GUI_Class (Kernel),
+         Handler      => GUI_Command_Handler'Access);
+      Register_Command
         (Kernel, "destroy",
          Class        => Get_GUI_Class (Kernel),
          Handler      => GUI_Command_Handler'Access);
@@ -2732,7 +2737,8 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Class : constant Class_Type := Get_GUI_Class (Get_Kernel (Data));
-      Inst : constant Class_Instance := Nth_Arg (Data, 1, Class);
+      Inst  : constant Class_Instance := Nth_Arg (Data, 1, Class);
+      W     : Gtk_Widget;
    begin
       if Command = Constructor_Method then
          Set_Error_Msg
@@ -2740,13 +2746,12 @@ package body GPS.Kernel.Scripts is
                     & " by other functions"));
       elsif Command = "set_sensitive" then
          Name_Parameters (Data, Set_Sensitive_Parameters);
-         declare
-            Value : constant Boolean := Nth_Arg (Data, 2, True);
-            W     : constant Gtk_Widget := Gtk_Widget
-              (GObject'(Get_Data (Inst)));
-         begin
-            Set_Sensitive (W, Value);
-         end;
+         W := Gtk_Widget (GObject'(Get_Data (Inst)));
+         Set_Sensitive (W, Nth_Arg (Data, 2, True));
+
+      elsif Command = "is_sensitive" then
+         W := Gtk_Widget (GObject'(Get_Data (Inst)));
+         Set_Return_Value (Data, Gtk.Widget.Is_Sensitive (W));
 
       elsif Command = "destroy" then
          if Get_Data (Inst) /= null then
