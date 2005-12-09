@@ -28,12 +28,12 @@ def compile_recursive (to_file=''):
        out = file (to_file, 'w')
 
    for p in GPS.Project.root().dependencies (recursive=True):
+      GPS.Console('').write (`p.get_attribute_as_list ("main")`)
       for main in p.get_attribute_as_list ("main"):
-        if main != '': ## GPS currently returns [''] when there are no mains
-           if to_file != '':
-              out.write ("gnatmake -P" + p.name() + " " + main + "\n");
-           else:
-              GPS.File (main).make()
+        if to_file != '':
+           out.write ("gnatmake -P" + p.name() + " " + main + "\n");
+        else:
+           GPS.File (main).make()
 
    if to_file != '':
       out.close()
