@@ -27,6 +27,7 @@ with Interfaces.C; use Interfaces.C;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Ada_Analyzer; use Ada_Analyzer;
 with Basic_Types; use Basic_Types;
+with Case_Handling; use Case_Handling;
 
 with Ada.Text_IO; use Ada.Text_IO;
 with System.Address_Image;
@@ -152,6 +153,22 @@ package body GNATbench.JNI_Functions is
          Free (C_Replace);
       end Callback;
 
+      GNATbench_Indent_Parameters : constant
+        Indent_Parameters :=
+          (Indent_Level        => 3,
+           Indent_Continue     => 2,
+           Indent_Decl         => 0,
+           Tab_Width           => 8,
+           Indent_Case_Extra   => Automatic,
+           Casing_Policy       => Case_Handling.Disabled,
+           Reserved_Casing     => Case_Handling.Unchanged,
+           Ident_Casing        => Case_Handling.Unchanged,
+           Format_Operators    => False,
+           Use_Tabs            => False,
+           Align_On_Colons     => False,
+           Align_On_Arrows     => False,
+           Align_Decl_On_Colon => False);
+
    begin
       Id := GetMethodID
         (Env,
@@ -160,7 +177,7 @@ package body GNATbench.JNI_Functions is
          C_Profile);
       Analyze_Ada_Source
         (Buffer            => Ada_Str (1 .. Integer (Strlen (C_Str))),
-         Indent_Params     => Default_Indent_Parameters,
+         Indent_Params     => GNATbench_Indent_Parameters,
          Format            => True,
          From              => Integer (Line_From),
          To                => Integer (Line_To),
