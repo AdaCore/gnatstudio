@@ -3056,6 +3056,14 @@ GPS.Hook ("debugger_process_stopped").add (debugger_stopped)
      <param name="self">The instance of GPS.GUI</param>
      <param name="sensitive" default="True">A boolean</param>
      <description>Indicate whether the associated graphical element should respond to user interaction or not. If the element is not sensitive, then the user will not be able to click on it</description>
+     <see_also name="GPS.GUI.is_sensitive()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.GUI.is_sensitive">
+     <param name="self">The instance of GPS.GUI</param>
+     <return>A boolean</return>
+     <description>Return False if the widget is currently greyed out, and is not clickable by users</description>
+     <see_also name="GPS.GUI.set_sensitive()" />
   </shell_doc>
 
   <shell_doc name="GPS.GUI.destroy">
