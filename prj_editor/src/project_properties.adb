@@ -1326,18 +1326,9 @@ package body Project_Properties is
                     (Project, Build (Pkg, Attr), Index);
                begin
                   Set_Return_Value_As_List (Data);
-
-                  --  If the attribute was a string in fact
-                  if List'Length = 0 then
-                     Set_Return_Value
-                       (Data, Get_Attribute_Value
-                          (Project, Build (Pkg, Attr), "", Index));
-                  else
-                     for L in List'Range loop
-                        Set_Return_Value (Data, List (L).all);
-                     end loop;
-                  end if;
-
+                  for L in List'Range loop
+                     Set_Return_Value (Data, List (L).all);
+                  end loop;
                   Basic_Types.Free (List);
                end;
             else
@@ -1345,18 +1336,7 @@ package body Project_Properties is
                   Val : constant String := Get_Attribute_Value
                     (Project, Build (Pkg, Attr), "", Index);
                begin
-                  if Val /= "" then
-                     Set_Return_Value (Data, Val);
-                  else
-                     declare
-                        List : Argument_List := Get_Attribute_Value
-                          (Project, Build (Pkg, Attr), Index);
-                     begin
-                        Set_Return_Value
-                          (Data, Argument_List_To_String (List, True));
-                        Basic_Types.Free (List);
-                     end;
-                  end if;
+                  Set_Return_Value (Data, Val);
                end;
             end if;
             return;
@@ -1370,17 +1350,9 @@ package body Project_Properties is
                  (Kernel, Project, Descr, Index);
             begin
                Set_Return_Value_As_List (Data);
-
-               --  If the attribute was a string in fact
-               if List'Length = 0 then
-                  Set_Return_Value
-                    (Data, Get_Current_Value (Project, Descr, Index));
-               else
-                  for L in List'Range loop
-                     Set_Return_Value (Data, List (L).all);
-                  end loop;
-               end if;
-
+               for L in List'Range loop
+                  Set_Return_Value (Data, List (L).all);
+               end loop;
                Basic_Types.Free (List);
             end;
          else
@@ -1388,18 +1360,7 @@ package body Project_Properties is
                Val : constant String := Get_Current_Value
                    (Project, Descr, Index);
             begin
-               if Val /= "" then
-                  Set_Return_Value (Data, Val);
-               else
-                  declare
-                     List : GNAT.OS_Lib.String_List := Get_Current_Value
-                       (Kernel, Project, Descr, Index);
-                  begin
-                     Set_Return_Value
-                       (Data, Argument_List_To_String (List, True));
-                     Basic_Types.Free (List);
-                  end;
-               end if;
+               Set_Return_Value (Data, Val);
             end;
          end if;
       end Set_Return_Attribute;
