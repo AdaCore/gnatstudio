@@ -663,8 +663,11 @@ package body Projects.Registry is
             P := Get_Project_From_Name
               (Registry, Tree.Projects.Table (Project).Name);
 
-            if Set_As_Incomplete_When_Errors then
-               Set_View_Is_Complete (P, False);
+            --  Unless we have a warning...
+            if Index (S, "Warning") < S'First then
+               if Set_As_Incomplete_When_Errors then
+                  Set_View_Is_Complete (P, False);
+               end if;
             end if;
          end if;
 
@@ -729,7 +732,8 @@ package body Projects.Registry is
          Registry.Data.Root.Node,
          Registry.Data.Tree,
          Report_Error'Unrestricted_Access,
-         Follow_Links => not Registry.Data.Trusted_Mode);
+         Follow_Links => not Registry.Data.Trusted_Mode,
+         When_No_Sources => Warning);
 
       --  Lower case the languages attribute
 
