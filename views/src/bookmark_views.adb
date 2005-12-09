@@ -465,6 +465,7 @@ package body Bookmark_Views is
          --  Always return True to prevent the selection
          if Marker /= null then
             Result := Go_To (Marker.Marker, View.Kernel);
+            return True;
          end if;
       end if;
       return False;
