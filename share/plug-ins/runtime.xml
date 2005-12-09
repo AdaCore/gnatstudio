@@ -22,6 +22,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-chacon.ads"</shell>
+   <descr>Ada.Characters.Conversions</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Characters/Conversions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-chahan.ads"</shell>
    <descr>Ada.Characters.Handling</descr>
    <menu>/Help/GNAT Runtime/Ada/Characters/Handling</menu>
@@ -52,6 +58,18 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-chzla1.ads"</shell>
+   <descr>Ada.Characters.Wide_Wide_Latin_1</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Characters/Wide__Wide__Latin__1</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-chzla9.ads"</shell>
+   <descr>Ada.Characters.Wide_Wide_Latin_9</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Characters/Wide__Wide__Latin__9</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-comlin.ads"</shell>
    <descr>Ada.Command_Line</descr>
    <menu>/Help/GNAT Runtime/Ada/Command__Line/&lt;Command__Line&gt;</menu>
@@ -67,6 +85,12 @@
    <shell>Editor.edit "a-colire.ads"</shell>
    <descr>Ada.Command_Line.Remove</descr>
    <menu>/Help/GNAT Runtime/Ada/Command__Line/Remove</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-coteio.ads"</shell>
+   <descr>Ada.Complex_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Complex__Text__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -97,24 +121,6 @@
    <shell>Editor.edit "a-cgcaso.ads"</shell>
    <descr>Ada.Containers.Generic_Constrained_Array_Sort</descr>
    <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Generic__Constrained__Array__Sort</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-cohata.ads"</shell>
-   <descr>Ada.Containers.Hash_Tables</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Hash__Tables/&lt;Hash__Tables&gt;</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-chtgke.ads"</shell>
-   <descr>Ada.Containers.Hash_Tables.Generic_Keys</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Hash__Tables/Generic__Keys</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-chtgop.ads"</shell>
-   <descr>Ada.Containers.Hash_Tables.Generic_Operations</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Hash__Tables/Generic__Operations</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -190,36 +196,6 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-coprnu.ads"</shell>
-   <descr>Ada.Containers.Prime_Numbers</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Prime__Numbers</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-crbltr.ads"</shell>
-   <descr>Ada.Containers.Red_Black_Trees</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Red__Black__Trees/&lt;Red__Black__Trees&gt;</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-crbtgk.ads"</shell>
-   <descr>Ada.Containers.Red_Black_Trees.Generic_Keys</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Red__Black__Trees/Generic__Keys</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-crbtgo.ads"</shell>
-   <descr>Ada.Containers.Red_Black_Trees.Generic_Operations</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Red__Black__Trees/Generic__Operations</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-rbtgso.ads"</shell>
-   <descr>Ada.Containers.Red_Black_Trees.Generic_Set_Operations</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Red__Black__Trees/Generic__Set__Operations</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "a-convec.ads"</shell>
    <descr>Ada.Containers.Vectors</descr>
    <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Vectors</menu>
@@ -265,6 +241,12 @@
    <shell>Editor.edit "a-einuoc.ads"</shell>
    <descr>Ada.Exceptions.Is_Null_Occurrence</descr>
    <menu>/Help/GNAT Runtime/Ada/Exceptions/Is__Null__Occurrence</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-elchha.ads"</shell>
+   <descr>Ada.Exceptions.Last_Chance_Handler</descr>
+   <menu>/Help/GNAT Runtime/Ada/Exceptions/Last__Chance__Handler</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -328,6 +310,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-lcteio.ads"</shell>
+   <descr>Ada.Long_Complex_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Long__Complex__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-lfteio.ads"</shell>
    <descr>Ada.Long_Float_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Long__Float__Text__IO</menu>
@@ -337,6 +325,12 @@
    <shell>Editor.edit "a-lfwtio.ads"</shell>
    <descr>Ada.Long_Float_Wide_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Long__Float__Wide__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-lfztio.ads"</shell>
+   <descr>Ada.Long_Float_Wide_Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Long__Float__Wide__Wide__Text__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -352,9 +346,21 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-liztio.ads"</shell>
+   <descr>Ada.Long_Integer_Wide_Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Long__Integer__Wide__Wide__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-nllcef.ads"</shell>
    <descr>Ada.Long_Long_Complex_Elementary_Functions</descr>
    <menu>/Help/GNAT Runtime/Ada/Long__Long__Complex__Elementary__Functions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-llctio.ads"</shell>
+   <descr>Ada.Long_Long_Complex_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Long__Long__Complex__Text__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -370,6 +376,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-llfzti.ads"</shell>
+   <descr>Ada.Long_Long_Float_Wide_Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Long__Long__Float__Wide__Wide__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-llitio.ads"</shell>
    <descr>Ada.Long_Long_Integer_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Long__Long__Integer__Text__IO</menu>
@@ -379,6 +391,12 @@
    <shell>Editor.edit "a-lliwti.ads"</shell>
    <descr>Ada.Long_Long_Integer_Wide_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Long__Long__Integer__Wide__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-llizti.ads"</shell>
+   <descr>Ada.Long_Long_Integer_Wide_Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Long__Long__Integer__Wide__Wide__Text__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -496,6 +514,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-scteio.ads"</shell>
+   <descr>Ada.Short_Complex_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Short__Complex__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-sfteio.ads"</shell>
    <descr>Ada.Short_Float_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Short__Float__Text__IO</menu>
@@ -505,6 +529,12 @@
    <shell>Editor.edit "a-sfwtio.ads"</shell>
    <descr>Ada.Short_Float_Wide_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Short__Float__Wide__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-sfztio.ads"</shell>
+   <descr>Ada.Short_Float_Wide_Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Short__Float__Wide__Wide__Text__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -520,6 +550,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-siztio.ads"</shell>
+   <descr>Ada.Short_Integer_Wide_Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Short__Integer__Wide__Wide__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-ssitio.ads"</shell>
    <descr>Ada.Short_Short_Integer_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Short__Short__Integer__Text__IO</menu>
@@ -529,6 +565,12 @@
    <shell>Editor.edit "a-ssiwti.ads"</shell>
    <descr>Ada.Short_Short_Integer_Wide_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Short__Short__Integer__Wide__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ssizti.ads"</shell>
+   <descr>Ada.Short_Short_Integer_Wide_Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Short__Short__Integer__Wide__Wide__Text__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -664,9 +706,9 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-swunha.ads"</shell>
-   <descr>Ada.Strings.Wide_Unbounded.Hash</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Unbounded/Hash</menu>
+   <shell>Editor.edit "a-swuwha.ads"</shell>
+   <descr>Ada.Strings.Wide_Unbounded.Wide_Hash</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Unbounded/Wide__Hash</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -676,27 +718,51 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-swwibo.ads"</shell>
+   <shell>Editor.edit "a-stzbou.ads"</shell>
    <descr>Ada.Strings.Wide_Wide_Bounded</descr>
    <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Bounded</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-swwifi.ads"</shell>
+   <shell>Editor.edit "a-stzfix.ads"</shell>
    <descr>Ada.Strings.Wide_Wide_Fixed</descr>
    <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Fixed</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-swwima.ads"</shell>
-   <descr>Ada.Strings.Wide_Wide_Maps</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Maps</menu>
+   <shell>Editor.edit "a-stzhas.ads"</shell>
+   <descr>Ada.Strings.Wide_Wide_Hash</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Hash</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-swwiun.ads"</shell>
+   <shell>Editor.edit "a-stzmap.ads"</shell>
+   <descr>Ada.Strings.Wide_Wide_Maps</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Maps/&lt;Wide__Wide__Maps&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-szmzco.ads"</shell>
+   <descr>Ada.Strings.Wide_Wide_Maps.Wide_Wide_Constants</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Maps/Wide__Wide__Constants</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-stzunb.ads"</shell>
    <descr>Ada.Strings.Wide_Wide_Unbounded</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Unbounded</menu>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Unbounded/&lt;Wide__Wide__Unbounded&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-szuzha.ads"</shell>
+   <descr>Ada.Strings.Wide_Wide_Unbounded.Wide_Wide_Hash</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Unbounded/Wide__Wide__Hash</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-szuzti.ads"</shell>
+   <descr>Ada.Strings.Wide_Wide_Unbounded.Wide_Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Unbounded/Wide__Wide__Text__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -708,7 +774,13 @@
 <documentation_file>
    <shell>Editor.edit "a-tags.ads"</shell>
    <descr>Ada.Tags</descr>
-   <menu>/Help/GNAT Runtime/Ada/Tags</menu>
+   <menu>/Help/GNAT Runtime/Ada/Tags/&lt;Tags&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-tgdico.ads"</shell>
+   <descr>Ada.Tags.Generic_Dispatching_Constructor</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Tags/Generic__Dispatching__Constructor</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -730,9 +802,21 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-taster.ads"</shell>
+   <descr>Ada.Task_Termination</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Task__Termination</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-textio.ads"</shell>
    <descr>Ada.Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Text__IO/&lt;Text__IO&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-tiboio.ads"</shell>
+   <descr>Ada.Text_IO.Bounded_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Text__IO/Bounded__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -796,6 +880,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-tiunio.ads"</shell>
+   <descr>Ada.Text_IO.Unbounded_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Text__IO/Unbounded__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-unccon.ads"</shell>
    <descr>Ada.Unchecked_Conversion</descr>
    <menu>/Help/GNAT Runtime/Ada/Unchecked__Conversion</menu>
@@ -805,6 +895,18 @@
    <shell>Editor.edit "a-uncdea.ads"</shell>
    <descr>Ada.Unchecked_Deallocation</descr>
    <menu>/Help/GNAT Runtime/Ada/Unchecked__Deallocation</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-widcha.ads"</shell>
+   <descr>Ada.Wide_Characters</descr>
+   <menu>/Help/GNAT Runtime/Ada/Wide__Characters/&lt;Wide__Characters&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-wichun.ads"</shell>
+   <descr>Ada.Wide_Characters.Unicode</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Characters/Unicode</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -874,9 +976,129 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-wwboio.ads"</shell>
+   <descr>Ada.Wide_Text_IO.Wide_Bounded_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Text__IO/Wide__Bounded__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-wwunio.ads"</shell>
+   <descr>Ada.Wide_Text_IO.Wide_Unbounded_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Text__IO/Wide__Unbounded__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-zchara.ads"</shell>
+   <descr>Ada.Wide_Wide_Characters</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Characters/&lt;Wide__Wide__Characters&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-zchuni.ads"</shell>
+   <descr>Ada.Wide_Wide_Characters.Unicode</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Characters/Unicode</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ztexio.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/&lt;Wide__Wide__Text__IO&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ztcstr.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.C_Streams</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/C__Streams</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ztdeio.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Decimal_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Decimal__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ztenio.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Enumeration_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Enumeration__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ztfiio.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Fixed_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Fixed__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ztflio.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Float_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Float__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ztinio.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Integer_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Integer__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ztmoio.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Modular_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Modular__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-zttest.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Text_Streams</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Text__Streams</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-zzboio.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Wide_Wide_Bounded_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Wide__Wide__Bounded__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-zzunio.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Wide_Wide_Unbounded_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Wide__Wide__Unbounded__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "g-awk.ads"</shell>
    <descr>GNAT.AWK</descr>
    <menu>/Help/GNAT Runtime/GNAT/AWK</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-altive.ads"</shell>
+   <descr>GNAT.Altivec</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Altivec/&lt;Altivec&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-altcon.ads"</shell>
+   <descr>GNAT.Altivec.Conversions</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Altivec/Conversions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-alveop.ads"</shell>
+   <descr>GNAT.Altivec.Vector_Operations</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Altivec/Vector__Operations</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-alvety.ads"</shell>
+   <descr>GNAT.Altivec.Vector_Types</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Altivec/Vector__Types</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-alvevi.ads"</shell>
+   <descr>GNAT.Altivec.Vector_Views</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Altivec/Vector__Views</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1243,6 +1465,12 @@
    <shell>Editor.edit "g-trasym.ads"</shell>
    <descr>GNAT.Traceback.Symbolic</descr>
    <menu>/Help/GNAT Runtime/GNAT/Traceback/Symbolic</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-utf_32.ads"</shell>
+   <descr>GNAT.UTF_32</descr>
+   <menu>/Help/GNAT Runtime/GNAT/UTF__32</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
