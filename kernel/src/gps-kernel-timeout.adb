@@ -487,7 +487,11 @@ package body GPS.Kernel.Timeout is
                    & ' ' & Argument_List_To_String (Args.all));
          end if;
 
-         Non_Blocking_Spawn (Fd.all, Exec.all, Args.all, Err_To_Out => True);
+         --  Use buffer_size=0 here to use unlimited size buffer (dynamically
+         --  allocated)
+         Non_Blocking_Spawn (Fd.all, Exec.all, Args.all,
+                             Buffer_Size => 0,
+                             Err_To_Out  => True);
 
          if Directory /= "" then
             Change_Dir (Old_Dir.all);
