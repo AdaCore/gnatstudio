@@ -93,7 +93,7 @@
 
       <read_file_cmd>
         <action kind="send" param="cat %F">
-          <expect regexp_id="common_shell_prompt">
+          <expect regexp_id="gps_shell_prompt">
             <action kind="read_file"/>
             <action kind="return_value" param="ok"/>
           </expect>
