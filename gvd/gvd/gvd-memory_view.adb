@@ -38,16 +38,15 @@ with Gtk.Text_Mark;            use Gtk.Text_Mark;
 with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
 with Gtk.Text_View;            use Gtk.Text_View;
 
-
 with Pango.Font;               use Pango.Font;
 
 with Debugger;                 use Debugger;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GUI_Utils;                use GUI_Utils;
-with GVD.Canvas;               use GVD.Canvas;
 with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
+with GVD.Scripts;              use GVD.Scripts;
 with String_Utils;             use String_Utils;
 
 package body GVD.Memory_View is
@@ -721,7 +720,9 @@ package body GVD.Memory_View is
       end loop;
 
       Display_Memory (View, View.Starting_Address);
-      Refresh_Data_Window (Get_Current_Process (View.Window));
+      Run_Debugger_Hook
+        (Get_Current_Process (View.Window),
+         Debugger_Process_Stopped_Hook);
    end Apply_Changes;
 
    -------------
