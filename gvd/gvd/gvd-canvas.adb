@@ -711,7 +711,9 @@ package body GVD.Canvas is
    procedure Refresh_Data_Window
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class) is
    begin
-      Refresh_Canvas (GVD_Canvas (Debugger.Data).Canvas);
+      if Debugger.Data /= null then
+         Refresh_Canvas (GVD_Canvas (Debugger.Data).Canvas);
+      end if;
    end Refresh_Data_Window;
 
    -------------------
