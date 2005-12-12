@@ -66,10 +66,6 @@ package body Remote_Connections.Custom is
    Ls_Year_Parens  : constant := 10;
    --  Regexp to match the output of ls, and extract the required fields
 
-   Line_Regexp : constant Pattern_Matcher_Access :=
-     new Pattern_Matcher'(Compile ("^.+$", Multiple_Lines));
-   --  Regexp matching any new line
-
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -337,12 +333,11 @@ package body Remote_Connections.Custom is
       Ret_Value       : out Return_Enum)
    is
       Regexps    : constant Compiled_Regexp_Array :=
-        Get_Regexp_Array (Action) & Line_Regexp;
+        Get_Regexp_Array (Action);
       Args       : Argument_List_Access;
       L_Action   : Action_Access;
       Expect_Ptr : Expect_Access;
       Tmp        : String_Access;
-      Outstr     : String_Access := null;
       Matched    : Match_Array (0 .. 0);
       Exp_Result : Expect_Match;
       Success    : Boolean;
@@ -570,7 +565,7 @@ package body Remote_Connections.Custom is
 
       --  Once the action executed, wait for Expects (if any)
 
-      if Regexps'Length > 1 then
+      if Regexps'Length > 0 then
          while Ret_Value = No_Statement loop
             Trace (Full_Me, "Execute_Action: expecting" &
                    Natural'Image (Regexps'Length) & " Expect(s)");
@@ -606,16 +601,6 @@ package body Remote_Connections.Custom is
                   end loop;
                end if;
 
-            elsif Integer (Exp_Result) = Regexps'Last then
-
-               if Outstr = null then
-                  Outstr := new String'(Expect_Out (L_Pd.all));
-               else
-                  Tmp := Outstr;
-                  Outstr := new String'(Tmp.all & Expect_Out (L_Pd.all));
-                  Free (Tmp);
-               end if;
-
             else
 
                Expect_Ptr := Action.Expects;
@@ -641,30 +626,15 @@ package body Remote_Connections.Custom is
                      L_Action := Expect_Ptr.Actions;
 
                      while Ret_Value = No_Statement and L_Action /= null loop
-                        if Outstr = null then
-                           Execute_Action_Recursive
-                             (Connection,
-                              L_Action,
-                              Local_Full_Name,
-                              WriteTmpFile,
-                              ReadTmpBase,
-                              Output (Output'First .. Matched (0).First - 2),
-                              L_Pd,
-                              Ret_Value);
-                        else
-                           Execute_Action_Recursive
-                             (Connection,
-                              L_Action,
-                              Local_Full_Name,
-                              WriteTmpFile,
-                              ReadTmpBase,
-                              Outstr.all &
-                               Output (Output'First .. Matched (0).First - 2),
-                              L_Pd,
-                              Ret_Value);
-                           Free (Outstr);
-                        end if;
-
+                        Execute_Action_Recursive
+                          (Connection,
+                           L_Action,
+                           Local_Full_Name,
+                           WriteTmpFile,
+                           ReadTmpBase,
+                           Output (Output'First .. Matched (0).First - 2),
+                           L_Pd,
+                           Ret_Value);
                         L_Action := L_Action.Next;
                      end loop;
                   end;
