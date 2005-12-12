@@ -722,8 +722,15 @@ package body GVD.Memory_View is
 
       Display_Memory (View, View.Starting_Address);
 
-      Refresh_Canvas
-        (Interactive_Canvas (Get_Current_Process (View.Window).Data_Canvas));
+      declare
+         Debugger : constant Visual_Debugger :=
+                      Get_Current_Process (View.Window);
+      begin
+         if Debugger.Data_Canvas /= null then
+            Refresh_Canvas
+              (Interactive_Canvas (Debugger.Data_Canvas));
+         end if;
+      end;
    end Apply_Changes;
 
    -------------
