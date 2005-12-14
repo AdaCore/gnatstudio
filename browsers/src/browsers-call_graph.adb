@@ -125,6 +125,10 @@ package body Browsers.Call_Graph is
      is new Commands_User_Data_Record with
       record
          Data : Callback_Data_Access;
+
+         Use_Parent_For_Key : Boolean := True;
+         --  If this is True, then Parent should be used as the key for entries
+         --  in the list. Otherwise, Entity will be used.
       end record;
    type Add_To_List_User_Data_Access is access all Add_To_List_User_Data'Class;
    function On_Entity_Found
@@ -1398,7 +1402,6 @@ package body Browsers.Call_Graph is
       Ref         : Entities.Entity_Reference;
       Is_Renaming : Boolean) return Boolean
    is
-      pragma Unreferenced (Entity);
       Loc : File_Location;
    begin
       if not Is_Renaming then
@@ -1415,9 +1418,15 @@ package body Browsers.Call_Graph is
          Set_Return_Value (D.Data.all, -"<renaming>");
       end if;
 
-      Set_Return_Value_Key
-        (D.Data.all,
-         Create_Entity (Get_Script (D.Data.all), Parent), Append => True);
+      if D.Use_Parent_For_Key then
+         Set_Return_Value_Key
+           (D.Data.all,
+            Create_Entity (Get_Script (D.Data.all), Parent), Append => True);
+      else
+         Set_Return_Value_Key
+           (D.Data.all,
+            Create_Entity (Get_Script (D.Data.all), Entity), Append => True);
+      end if;
       return True;
    end On_Entity_Found;
 
@@ -1514,6 +1523,7 @@ package body Browsers.Call_Graph is
          --  Examine_Ancestors_Call_Graph is called synchronously
          User_Data := new Add_To_List_User_Data;
          User_Data.Data := Data'Unchecked_Access;
+         User_Data.Use_Parent_For_Key := False;
          Examine_Entity_Call_Graph
            (Kernel          => Kernel,
             User_Data       => User_Data,
