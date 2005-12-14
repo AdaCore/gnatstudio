@@ -802,8 +802,8 @@ package body Language is
         (Buffer : String;
          Index  : Natural)
          return Boolean;
-      --  Return True if there are only blanks characters fore the one pointed
-      --  by Index in Buffer.
+      --  Return True if there are only blanks characters before the one
+      --  pointed by Index in Buffer.
       --  Return False otherwise.
 
       ------------------------
@@ -823,8 +823,10 @@ package body Language is
 
    begin
       --  Are we in a multi-line comment ?
+
       if Context.Comment_End_Length /= 0 then
          Tmp := Line_End (Buffer, Index);
+
          if Tmp - Context.Comment_End_Length + 1 >= Index
            and then Buffer
              (Tmp - Context.Comment_End_Length + 1 .. Tmp) =
@@ -847,7 +849,9 @@ package body Language is
       end if;
 
       --  Check for single line comments
+
       Tmp := Initial_Index;
+
       loop
          while Tmp <= Buffer'Last
            and then (Buffer (Tmp) = ' ' or else Buffer (Tmp) = ASCII.HT)
@@ -864,6 +868,7 @@ package body Language is
 
          Skip_Lines (Buffer, -1, Tmp);
       end loop;
+
       if Looking_At_Start_Of_Comment (Context, Buffer, Index) = No_Comment then
          Index := 0;
       end if;
