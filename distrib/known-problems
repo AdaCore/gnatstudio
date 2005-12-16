@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.2.0
 
+- EC15-014 Freeze when comparing files using the VCS
+  Problem:    On Windows, GPS was sometimes freezing when launching multiple
+              VCS diff operations.
+  Workaround: Use the VCS from the command line
+
 - EC07-009 Leave focus on selected window in the bookmarks view
   Problem:    When you select an existing bookmark in the bookmarks view, the
               focus remains on the bookmark view instead of going to the
@@ -11,5 +16,4 @@ Known Problems fixed in GPS 3.2.0
               switches for one of the files to the default value, an entry is
               still left in the project file. Further changes to the default
               switches are not reflected for this file
-  Workaround: edit the project file manually
-
+  Workaround: Edit the project file manually
