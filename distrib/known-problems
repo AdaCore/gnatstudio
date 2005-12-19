@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.2.0
 
+- EC19-008 Keyboard focus on notebook tab prevents compilation of current file
+  Problem:    When you select the notebook tab associated with an editor, the
+              menu Build->Make->Compile File no longer works for the select
+              file.
+  Workaround: Select the file by clicking anywhere inside the editor first
+
 - EC15-014 Freeze when comparing files using the VCS
   Problem:    On Windows, GPS was sometimes freezing when launching multiple
               VCS diff operations.
