@@ -1053,9 +1053,9 @@ package body Debugger.Gdb is
 
       else
          if Debugger.Remote_Target = null then
-            Cmd := new String'("file " & Translate_Path (Executable) & '"');
+            Cmd := new String'("file " & Translate_Path (Executable));
          else
-            Cmd := new String'("load " & Translate_Path (Executable) & '"');
+            Cmd := new String'("load " & Translate_Path (Executable));
          end if;
       end if;
 
