@@ -1007,6 +1007,18 @@ package body Debugger.Gdb is
       Process             : Visual_Debugger;
       Exec_Has_Spaces     : constant Boolean := Index (Executable, " ") /= 0;
 
+      function Translate_Path (S : String) return String;
+      --  If using a remote host, unixify S, otherwise return S.
+
+      function Translate_Path (S : String) return String is
+      begin
+         if Debugger.Remote_Host = null then
+            return S;
+         else
+            return To_Unix_Pathname (S);
+         end if;
+      end Translate_Path;
+
    begin
       Free (Debugger.Executable);
 
@@ -1018,9 +1030,21 @@ package body Debugger.Gdb is
       end if;
 
       if Exec_Has_Spaces then
-         Cmd := new String'("file """ & Debugger.Executable.all & '"');
+         if Debugger.Remote_Target = null then
+            Cmd := new String'("file """ &
+                               Translate_Path (Debugger.Executable.all) & '"');
+         else
+            Cmd := new String'("load """ &
+                               Translate_Path (Debugger.Executable.all) & '"');
+         end if;
       else
-         Cmd := new String'("file " & Debugger.Executable.all);
+         if Debugger.Remote_Target = null then
+            Cmd := new String'("file " &
+                               Translate_Path (Debugger.Executable.all));
+         else
+            Cmd := new String'("load " &
+                               Translate_Path (Debugger.Executable.all));
+         end if;
       end if;
 
       if Debugger.Window /= null then
