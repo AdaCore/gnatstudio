@@ -48,6 +48,7 @@ pragma Warnings (Off, Gtk.Image_Menu_Item);
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Selection;             use Gtk.Selection;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -393,11 +394,24 @@ package body GPS.Kernel.Modules is
       else
          --  We have an explicit widget with the keyboard focus. Check whether
          --  it belongs to an MDI child. If not, it is probably part of some
-         --  popup dialog, and therefore there is no module
+         --  popup dialog, and therefore there is no module.
+         --  As a special case, if the focus widget's parent is a notebook,
+         --  we check whether the associated page is a MDI child, and behave
+         --  as if that child had the focus (EC19-008)
 
          while W /= null loop
             if W.all in MDI_Child_Record'Class then
                C := MDI_Child (W);
+               exit;
+
+            elsif W.all in Gtk_Notebook_Record'Class
+              and then Get_Nth_Page
+                (Gtk_Notebook (W), Get_Current_Page (Gtk_Notebook (W))).all
+                in MDI_Child_Record'Class
+            then
+               C := MDI_Child
+                 (Get_Nth_Page
+                    (Gtk_Notebook (W), Get_Current_Page (Gtk_Notebook (W))));
                exit;
             end if;
             W := Get_Parent (W);
