@@ -1,3 +1,21 @@
+Known Problems fixed in GPS 3.1.1
+
+- EC20-017 Loading an application on the debugger under VxWorks does not work
+  Problem:    When using Debug->Initialize-><main unit> using a VxWorks,
+              the executable associated with the main unit is not loaded.
+  Workaround: Use the menu Debug->Debug->Load File... to load the file manually
+
+- EC19-008 Keyboard focus on notebook tab prevents compilation of current file
+  Problem:    When you select the notebook tab associated with an editor, the
+              menu Build->Make->Compile File no longer works for the select
+              file.
+  Workaround: Select the file by clicking anywhere inside the editor first
+
+- EC15-014 Freeze when comparing files using the VCS
+  Problem:    On Windows, GPS was sometimes freezing when launching multiple
+              VCS diff operations.
+  Workaround: Use the VCS from the command line
+
 Known Problems fixed in GPS 3.1.0
 
 - EB22-001 Replace does not work well on files containing TABs
