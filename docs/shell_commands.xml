@@ -121,12 +121,13 @@ when the GPS window is fully visible to the user:
 
   <shell_doc name="@hook@ project_view_changed">
      <param name="hook">A string, the name of the hook</param>
-     <description>Hook called when the project view has been changed, for instance because one of the environment variables has changed. This means that the list of directories, files or switches might now be different.</description>
+     <description>Hook called when the project view has been changed, for instance because one of the environment variables has changed. This means that the list of directories, files or switches might now be different. In the callbacks for this hook, you can safely query the new attribute values.</description>
   </shell_doc>
 
   <shell_doc name="@hook@ project_changed">
      <param namae="hook">A string, the name of the hook</param>
-     <description>Hook called when the project has changed. A new project has been loaded, and all previous settings and caches are now obsolete.</description>
+     <description>Hook called when the project has changed. A new project has been loaded, and all previous settings and caches are now obsolete. In the callbacks for this hook, the attribute values have not been computed from the project yet, and will only return the default values. Connect to the project_view_changed hook instead to query the actual values</description>
+     <see_also name="@hook@ project_view_changed" />
   </shell_doc>
 
   <shell_doc name="@hook@ project_saved">
