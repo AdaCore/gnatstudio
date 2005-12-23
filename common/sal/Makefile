@@ -4,7 +4,11 @@ CC=gcc
 ifeq ($(OS),Windows_NT)
 	JAVA_OS_DIR=win32
 else
-	JAVA_OS_DIR=linux
+	ifeq ($(OSTYPE),solaris)
+		JAVA_OS_DIR=solaris
+	else
+		JAVA_OS_DIR=linux
+	endif
 endif
 
 main:
