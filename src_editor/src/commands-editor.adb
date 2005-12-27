@@ -18,12 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Src_Editor_Box;           use Src_Editor_Box;
-with Src_Editor_Module;        use Src_Editor_Module;
-with Src_Editor_View;          use Src_Editor_View;
+with Interfaces.C;
+
+with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Module;         use Src_Editor_Module;
+with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Interfaces.C;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 package body Commands.Editor is
 
