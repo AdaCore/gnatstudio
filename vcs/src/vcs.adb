@@ -47,8 +47,7 @@ package body VCS is
    begin
       Result.File := F.File;
       Result.Working_Revision := Copy_String_List (F.Working_Revision);
-      Result.Repository_Revision
-        := Copy_String_List (F.Repository_Revision);
+      Result.Repository_Revision := Copy_String_List (F.Repository_Revision);
       Result.Tags := Copy_String_List (F.Tags);
       Result.Users := Copy_String_List (F.Users);
       Result.Status := F.Status;

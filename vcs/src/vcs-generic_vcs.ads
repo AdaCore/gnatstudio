@@ -37,21 +37,20 @@ package VCS.Generic_VCS is
    procedure Free (Ref : access Generic_VCS_Record);
 
    procedure Get_Status
-     (Rep         : access Generic_VCS_Record;
-      Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False;
-      Local       : Boolean := False);
+     (Rep        : access Generic_VCS_Record;
+      Filenames  : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False);
 
    procedure Get_Status_Dirs
-     (Rep         : access Generic_VCS_Record;
-      Dirs        : String_List.List;
-      Clear_Logs  : Boolean := False;
-      Local       : Boolean := False);
+     (Rep        : access Generic_VCS_Record;
+      Dirs       : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False);
 
    function Local_Get_Status
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List)
-      return File_Status_List.List;
+      Filenames : String_List.List) return File_Status_List.List;
 
    procedure Open
      (Rep       : access Generic_VCS_Record;
@@ -127,9 +126,9 @@ package VCS.Generic_VCS is
       Dir        : String);
 
    procedure Parse_Annotations
-     (Rep   : access Generic_VCS_Record;
-      File  : VFS.Virtual_File;
-      Text  : String);
+     (Rep  : access Generic_VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String);
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -155,8 +154,7 @@ private
    procedure Free (X : in out Regexp_Status_Record);
    --  Free memory associated to X
 
-   package Status_Parser is new Generic_List
-     (Regexp_Status_Record);
+   package Status_Parser is new Generic_List (Regexp_Status_Record);
 
    type Status_Parser_Record is record
       Regexp               : Pattern_Matcher_Access;
