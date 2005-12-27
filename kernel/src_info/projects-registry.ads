@@ -175,14 +175,13 @@ package Projects.Registry is
    --  This function is only needed for internal use in the projects hierarchy.
 
    function Get_Root_Project
-     (Registry : Project_Registry)
-      return Projects.Project_Type;
+     (Registry : Project_Registry) return Projects.Project_Type;
    --  Return the root project of the hierarchy
 
    procedure Pretty_Print
      (Project              : Project_Type;
-      Increment            : Positive      := 3;
-      Minimize_Empty_Lines : Boolean       := False;
+      Increment            : Positive             := 3;
+      Minimize_Empty_Lines : Boolean              := False;
       W_Char               : Prj.PP.Write_Char_Ap := null;
       W_Eol                : Prj.PP.Write_Eol_Ap  := null;
       W_Str                : Prj.PP.Write_Str_Ap  := null);
