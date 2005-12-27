@@ -85,7 +85,7 @@ package body Projects.Registry is
    type Directory_Dependency is (Direct, As_Parent, None);
    --  The way a directory belongs to the project: either as a direct
    --  dependency, or because one of its subdirs belong to the project, or
-   --  doesn't belong at all
+   --  doesn't belong at all.
 
    procedure Do_Nothing (Dep : in out Directory_Dependency);
 
@@ -461,10 +461,10 @@ package body Projects.Registry is
      (Registry     : Project_Registry;
       Project_Path : String) return Project_Type
    is
-      P : Project_Type;
-      Node : Project_Node_Id;
       Path : constant String :=
-        Base_Name (Project_Path, Project_File_Extension);
+               Base_Name (Project_Path, Project_File_Extension);
+      P    : Project_Type;
+      Node : Project_Node_Id;
    begin
       Name_Len := Path'Length;
       Name_Buffer (1 .. Name_Len) := Path;
@@ -624,9 +624,9 @@ package body Projects.Registry is
      (Registry : in out Project_Registry;
       Errors   : Projects.Error_Report)
    is
-      Set_As_Incomplete_When_Errors : Boolean := True;
       Language : constant Name_Id :=
-        Get_String (String (Languages_Attribute));
+                   Get_String (String (Languages_Attribute));
+      Set_As_Incomplete_When_Errors : Boolean := True;
 
       procedure Report_Error
         (S : String; Project : Project_Id; Tree : Project_Tree_Ref);
@@ -644,7 +644,7 @@ package body Projects.Registry is
       procedure Report_Error
         (S : String; Project : Project_Id; Tree : Project_Tree_Ref)
       is
-         P    : Project_Type;
+         P : Project_Type;
       begin
          if Project = Prj.No_Project then
             if Set_As_Incomplete_When_Errors then
@@ -690,12 +690,12 @@ package body Projects.Registry is
       --------------------
 
       procedure Normalize_View (Project : Project_Type) is
-         Var : constant Variable_Id :=
-           Registry.Data.View_Tree.Projects.Table
-             (Get_View (Project)).Decl.Attributes;
+         Var   : constant Variable_Id :=
+                   Registry.Data.View_Tree.Projects.Table
+                     (Get_View (Project)).Decl.Attributes;
          Value : constant Variable_Value :=
-           Value_Of (Language, Var, Registry.Data.View_Tree);
-         Lang : String_List_Id;
+                   Value_Of (Language, Var, Registry.Data.View_Tree);
+         Lang  : String_List_Id;
       begin
          if Value /= Nil_Variable_Value then
             Lang := Value.Values;
@@ -800,9 +800,9 @@ package body Projects.Registry is
          end loop;
       end Register_Directory;
 
-      Iter : Imported_Project_Iterator := Start (Registry.Data.Root, True);
-      Gnatls : constant String := Get_Attribute_Value
-        (Registry.Data.Root, Gnatlist_Attribute);
+      Gnatls  : constant String :=
+                  Get_Attribute_Value (Registry.Data.Root, Gnatlist_Attribute);
+      Iter    : Imported_Project_Iterator := Start (Registry.Data.Root, True);
       Sources : String_List_Id;
       P       : Project_Type;
 
@@ -915,12 +915,12 @@ package body Projects.Registry is
    procedure Add_Runtime_Files
      (Registry : in out Project_Registry; Path : String)
    is
-      Iter   : Path_Iterator := Start (Path);
-      Dir    : Dir_Type;
-      File   : String (1 .. 1024);
-      Last   : Natural;
+      Iter      : Path_Iterator := Start (Path);
+      Dir       : Dir_Type;
+      File      : String (1 .. 1024);
+      Last      : Natural;
       Directory : Name_Id;
-      Info   : Source_File_Data;
+      Info      : Source_File_Data;
    begin
       while not At_End (Path, Iter) loop
          declare
@@ -1009,7 +1009,7 @@ package body Projects.Registry is
       end Process_List;
 
       Naming : constant Naming_Data :=
-        Projects_Table (Registry)(Get_View (P)).Naming;
+                 Projects_Table (Registry) (Get_View (P)).Naming;
    begin
       Process_List (Naming.Implementation_Exceptions);
       Process_List (Naming.Specification_Exceptions);
@@ -1073,7 +1073,7 @@ package body Projects.Registry is
       Project  : Project_Type;
       Errors   : Put_Line_Access)
    is
-      Sources_Specified : Boolean := False;
+      Sources_Specified       : Boolean := False;
       Specified_Sources_Count : Natural := 0;
 
       procedure Record_Source
@@ -1437,7 +1437,7 @@ package body Projects.Registry is
    function Get_Project_From_Name
      (Registry : Project_Registry; Name : Types.Name_Id) return Project_Type
    is
-      P : Project_Type;
+      P    : Project_Type;
       Node : Project_Node_Id;
    begin
       if Registry.Data = null then
@@ -1496,7 +1496,7 @@ package body Projects.Registry is
       return Project_Type
    is
       P : constant Project_Type :=
-        Get (Registry.Data.Sources, Base_Name).Project;
+            Get (Registry.Data.Sources, Base_Name).Project;
    begin
       if P = No_Project and then Root_If_Not_Found then
          return Registry.Data.Root;
@@ -1514,7 +1514,7 @@ package body Projects.Registry is
    is
       Base_Name : constant String := VFS.Base_Name (Source_Filename);
       S         : constant Source_File_Data :=
-        Get (Registry.Data.Sources, Base_Name);
+                    Get (Registry.Data.Sources, Base_Name);
 
    begin
       if S = No_Source_File_Data then
@@ -1595,9 +1595,9 @@ package body Projects.Registry is
      (Registry      : Project_Registry;
       Language_Name : String) return GNAT.OS_Lib.Argument_List
    is
-      Lang : constant Name_Id := Get_String (To_Lower (Language_Name));
-      Iter : Languages_Htable.String_Hash_Table.Iterator;
-      Name : Name_Id;
+      Lang  : constant Name_Id := Get_String (To_Lower (Language_Name));
+      Iter  : Languages_Htable.String_Hash_Table.Iterator;
+      Name  : Name_Id;
       Count : Natural := 0;
    begin
       Get_First (Registry.Data.Extensions, Iter);
@@ -1638,7 +1638,7 @@ package body Projects.Registry is
    -------------
 
    procedure Destroy (Registry : in out Project_Registry) is
-      Naming : Naming_Scheme_Access;
+      Naming  : Naming_Scheme_Access;
       Naming2 : Naming_Scheme_Access;
    begin
       Unload_Project (Registry);
@@ -1663,8 +1663,8 @@ package body Projects.Registry is
 
    procedure Pretty_Print
      (Project              : Project_Type;
-      Increment            : Positive      := 3;
-      Minimize_Empty_Lines : Boolean       := False;
+      Increment            : Positive             := 3;
+      Minimize_Empty_Lines : Boolean              := False;
       W_Char               : Prj.PP.Write_Char_Ap := null;
       W_Eol                : Prj.PP.Write_Eol_Ap  := null;
       W_Str                : Prj.PP.Write_Str_Ap  := null) is
@@ -1982,7 +1982,7 @@ package body Projects.Registry is
       Direct_Only : Boolean := True) return Boolean
    is
       Belong : constant Directory_Dependency :=
-        Get (Registry.Data.Directories, Directory);
+                 Get (Registry.Data.Directories, Directory);
    begin
       return Belong = Direct
         or else (not Direct_Only and then Belong = As_Parent);

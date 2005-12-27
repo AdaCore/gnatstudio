@@ -171,10 +171,10 @@ package body Src_Editor_Module is
    end record;
 
    function Location_Callback (D : Location_Idle_Data) return Boolean;
-   --  Idle callback used to scroll the source editors.
+   --  Idle callback used to scroll the source editors
 
    function File_Edit_Callback (D : Location_Idle_Data) return Boolean;
-   --  Emit the File_Edited signal.
+   --  Emit the File_Edited signal
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -583,7 +583,7 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D    : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
    begin
       --  Insert the saved file in the Recent menu.
 
@@ -607,9 +607,9 @@ package body Src_Editor_Module is
       Data   : access Hooks_Data'Class)
    is
       D      : constant File_Location_Hooks_Args_Access :=
-        File_Location_Hooks_Args_Access (Data);
+                 File_Location_Hooks_Args_Access (Data);
       Id     : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+                 Source_Editor_Module (Src_Editor_Module_Id);
       Box    : Source_Editor_Box;
 
    begin
@@ -967,7 +967,7 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Current : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
       Box     : Source_Editor_Box;
       pragma Unreferenced (Box);
 
@@ -987,8 +987,8 @@ package body Src_Editor_Module is
       Mode   : Save_Function_Mode) return Boolean
    is
       pragma Unreferenced (Module);
-      Success      : Boolean;
-      Box          : constant Source_Editor_Box := Source_Editor_Box (Child);
+      Success : Boolean;
+      Box     : constant Source_Editor_Box := Source_Editor_Box (Child);
    begin
       case Mode is
          when Query =>
