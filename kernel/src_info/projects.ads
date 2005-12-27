@@ -55,7 +55,7 @@ package Projects is
 
    Ada_String : constant String := "ada";  --  See also Snames.Name_Ada
    C_String   : constant String := "c";    --  See also Snames.Name_C
-   Cpp_String : constant String := "c++";  --  See also Name_C_Plus_Plus.
+   Cpp_String : constant String := "c++";  --  See also Name_C_Plus_Plus
 
    Name_C_Plus_Plus : Types.Name_Id;
    --  The equivalent of Cpp_String. You should never use Name_CPP, which
@@ -74,7 +74,7 @@ package Projects is
 
    function Get_Registry (Project : Project_Type)
       return Abstract_Registry'Class;
-   --  Return the registry that Project belongs to.
+   --  Return the registry that Project belongs to
 
    -----------
    -- Files --
@@ -170,7 +170,7 @@ package Projects is
    function Directory_Contains_Files
      (Project   : Project_Type;
       Directory : String) return Boolean;
-   --  True if Directory contains at least one source file of Project.
+   --  True if Directory contains at least one source file of Project
 
    ------------------
    -- Source files --
@@ -343,7 +343,7 @@ package Projects is
    function Get_Attribute_Value
      (Project   : Project_Type;
       Attribute : Attribute_Pkg) return Associative_Array;
-   --  Same as above when the attribute is an associative array.
+   --  Same as above when the attribute is an associative array
 
    function Get_Languages
      (Project : Project_Type; Recursive : Boolean := False)
@@ -451,7 +451,7 @@ package Projects is
    --  Project are returned
 
    function Has_Imported_Projects (Project : Project_Type) return Boolean;
-   --  Return True if Project has at least one directly imported project.
+   --  Return True if Project has at least one directly imported project
 
    procedure Project_Imports
      (Parent           : Project_Type;
@@ -532,11 +532,11 @@ package Projects is
 
    procedure Set_Paths_Type
      (Project : Project_Type; Paths : Paths_Type_Information);
-   --  Indicate how the types should be stored internally for the project.
+   --  Indicate how the types should be stored internally for the project
 
    function Get_Paths_Type (Project : Project_Type)
       return Paths_Type_Information;
-   --  Indicate how the types are stored internally for the project.
+   --  Indicate how the types are stored internally for the project
 
    function Is_Normalized (Project : Project_Type) return Boolean;
    --  Return the empy string if Project is normalized, or an error message if
@@ -626,13 +626,13 @@ private
    --  Indicate whether the view for the project was correctly computed.
 
    function Is_External_Variable
-     (Var     : Prj.Tree.Project_Node_Id;
-      Tree    : Prj.Tree.Project_Node_Tree_Ref) return Boolean;
+     (Var  : Prj.Tree.Project_Node_Id;
+      Tree : Prj.Tree.Project_Node_Tree_Ref) return Boolean;
    --  Return True if Var is a reference to an external variable
 
    function External_Reference_Of
-     (Var     : Prj.Tree.Project_Node_Id;
-      Tree    : Prj.Tree.Project_Node_Tree_Ref) return Types.Name_Id;
+     (Var  : Prj.Tree.Project_Node_Id;
+      Tree : Prj.Tree.Project_Node_Tree_Ref) return Types.Name_Id;
    --  Returns the name of the external variable referenced by Var.
    --  No_String is returned if Var doesn't reference an external variable.
 

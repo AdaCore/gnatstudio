@@ -28,7 +28,7 @@ package GPS.Kernel.Hooks is
 
    procedure Register_Standard_Hooks
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Register all predefined hooks.
+   --  Register all predefined hooks
 
    function Get_Hook_Name
      (Data : GPS.Kernel.Scripts.Callback_Data'Class; Nth : Natural)
@@ -117,8 +117,8 @@ package GPS.Kernel.Hooks is
    --  Same as above, except the callbacks are expected to return a string
 
    procedure Register_Hook_No_Args
-     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name           : String);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name   : String);
    --  Same as above, except the callbacks take no arguments and return nothing
 
    ---------------------------------

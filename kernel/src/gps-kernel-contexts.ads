@@ -195,8 +195,8 @@ package GPS.Kernel.Contexts is
    --  Set_File_Information
 
    procedure Set_Entity_Information
-     (Context       : access Entity_Selection_Context;
-      Entity        : access Entities.Entity_Information_Record'Class);
+     (Context : access Entity_Selection_Context;
+      Entity  : access Entities.Entity_Information_Record'Class);
    --  Same as above, but we provide directly the entity itself. This is more
    --  efficient when you already know the entity.
    --  This doesn't change the File_Information stored in the context, so that
