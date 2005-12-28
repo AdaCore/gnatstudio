@@ -21,6 +21,7 @@
 with String_List_Utils; use String_List_Utils;
 with GPS.Kernel;        use GPS.Kernel;
 with VCS;               use VCS;
+with VFS;               use VFS;
 
 package VCS_Utils is
 
@@ -37,5 +38,22 @@ package VCS_Utils is
       Save_Logs : Boolean := False) return Boolean;
    --  Ask the user whether he wants to save the file editors for Files.
    --  Return False if the user has cancelled the action.
+
+   function Get_Current_Dir
+     (Context : Selection_Context_Access) return String;
+   --  Convenience function to get the current directory
+
+   function Get_Current_File
+     (Context : Selection_Context_Access) return VFS.Virtual_File;
+   --  Convenience function to get the current file
+
+   procedure Update_Files_Status
+     (Kernel         : Kernel_Handle;
+      Status         : File_Status_List.List;
+      VCS_Identifier : VCS_Access;
+      Clear_Logs     : Boolean;
+      Up_To_Date     : File_Status);
+   --  For all files in Status, remove the log file if Clear_Logs is set and
+   --  the file has the Up_To_Date status. Also update the editor status.
 
 end VCS_Utils;

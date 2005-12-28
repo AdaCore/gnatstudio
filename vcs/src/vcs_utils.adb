@@ -18,15 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
+
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 with Gtkada.MDI;                use Gtkada.MDI;
 
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VCS_Module;                use VCS_Module;
 with Basic_Types;               use Basic_Types;
-with VFS;                       use VFS;
 with Log_Utils;                 use Log_Utils;
+with Traces;                    use Traces;
 
 package body VCS_Utils is
 
@@ -94,6 +99,48 @@ package body VCS_Utils is
       Free (Revision_Label);
    end Display_Editor_Status;
 
+   ---------------------
+   -- Get_Current_Dir --
+   ---------------------
+
+   function Get_Current_Dir
+     (Context : Selection_Context_Access) return String
+   is
+      File : File_Selection_Context_Access;
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
+         File := File_Selection_Context_Access (Context);
+
+         if Has_Directory_Information (File) then
+            return Directory_Information (File);
+         end if;
+      end if;
+
+      return Get_Current_Dir;
+   end Get_Current_Dir;
+
+   ----------------------
+   -- Get_Current_File --
+   ----------------------
+
+   function Get_Current_File
+     (Context : Selection_Context_Access) return Virtual_File
+   is
+      File : File_Selection_Context_Access;
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
+         File := File_Selection_Context_Access (Context);
+
+         return File_Information (File);
+      end if;
+
+      return VFS.No_File;
+   end Get_Current_File;
+
    ----------------
    -- Save_Files --
    ----------------
@@ -129,5 +176,58 @@ package body VCS_Utils is
            (Kernel, Children, Force => Get_Pref (Auto_Save));
       end if;
    end Save_Files;
+
+   -------------------------
+   -- Update_Files_Status --
+   -------------------------
+
+   procedure Update_Files_Status
+     (Kernel         : Kernel_Handle;
+      Status         : File_Status_List.List;
+      VCS_Identifier : VCS_Access;
+      Clear_Logs     : Boolean;
+      Up_To_Date     : VCS.File_Status)
+   is
+      use type File_Status_List.List_Node;
+      Iter : File_Status_List.List_Node := File_Status_List.First (Status);
+   begin
+      while Iter /= File_Status_List.Null_Node loop
+         declare
+            S       : constant File_Status_Record :=
+                        File_Status_List.Data (Iter);
+            File    : constant Virtual_File := S.File;
+            Success : Boolean;
+         begin
+            --  Clear the logs
+
+            if Clear_Logs and then S.Status = Up_To_Date then
+               declare
+                  Log : constant Virtual_File :=
+                          Get_Log_From_File (Kernel, File, False);
+               begin
+                  if Log /= VFS.No_File and then Is_Regular_File (Log) then
+                     Delete (Log, Success);
+                     Close_File_Editors (Kernel, Log);
+                  end if;
+
+                  Remove_File_From_Mapping (Kernel, File);
+               end;
+            end if;
+
+            --  Display the editor status
+
+            if Is_Open (Kernel, File) and then VCS_Identifier /= null then
+               Display_Editor_Status (Kernel, VCS_Identifier, S);
+            end if;
+
+         exception
+            when E : others =>
+               Trace (Exception_Handle, "Unexpected exception: "
+                      & Exception_Information (E));
+         end;
+
+         Iter := File_Status_List.Next (Iter);
+      end loop;
+   end Update_Files_Status;
 
 end VCS_Utils;
