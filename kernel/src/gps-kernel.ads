@@ -664,6 +664,9 @@ package GPS.Kernel is
    --  Called when a new marker has been added in the history. For now, this
    --  marker isn't exported to the shell
 
+   File_Status_Changed_Hook      : constant String := "file_status_changed";
+   --  Called when the status of a file is changed : Modified, Unmodified...
+
 private
 
    type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);
