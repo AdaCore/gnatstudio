@@ -42,9 +42,9 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Generic_List;
 with Traces;                    use Traces;
 with VCS_Activities;            use VCS_Activities;
-with VCS_Activities_View;       use VCS_Activities_View;
+with VCS_View.Activities;       use VCS_View.Activities;
+with VCS_View.Explorer;         use VCS_View.Explorer;
 with VCS_Module;                use VCS_Module;
-with VCS_View_Pkg;              use VCS_View_Pkg;
 with VFS;                       use VFS;
 
 package body VCS.Generic_VCS is
