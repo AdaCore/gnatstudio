@@ -40,7 +40,7 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with OS_Utils;                  use OS_Utils;
 with String_Utils;              use String_Utils;
 with VCS_Module;                use VCS_Module;
-with VCS_View_Pkg;              use VCS_View_Pkg;
+with VCS_View.Explorer;         use VCS_View.Explorer;
 with VFS;                       use VFS;
 
 package body VCS.ClearCase is
