@@ -46,11 +46,13 @@ with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
-with VCS_Activities_View;       use VCS_Activities_View;
+with VCS_View.Activities;       use VCS_View.Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
+with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
-with VCS_View_Pkg;              use VCS_View_Pkg;
+with VCS_View;                  use VCS_View;
+with VCS_View.Explorer;         use VCS_View.Explorer;
 with VFS;                       use VFS;
 
 package body VCS_View_API is
@@ -84,7 +86,7 @@ package body VCS_View_API is
    --  as well.
 
    procedure Query_Project_Files
-     (Explorer   : VCS_View_Access;
+     (Explorer   : VCS_Explorer_View_Access;
       Kernel     : Kernel_Handle;
       Project    : Project_Type;
       Real_Query : Boolean;
@@ -96,7 +98,7 @@ package body VCS_View_API is
    --  Calling this does NOT open the VCS Explorer.
 
    procedure Change_Context
-     (Explorer : VCS_View_Access;
+     (Explorer : VCS_Explorer_View_Access;
       Context  : Selection_Context_Access);
    --  Fill the explorer with files that correspond to Context.
    --  Context might be null, in which case the contents of the root project is
@@ -137,6 +139,56 @@ package body VCS_View_API is
      (Context : Selection_Context_Access;
       One_Rev : Boolean);
    --  Factorize code between On_Menu_Diff_Specific and On_Menu_Diff2
+
+   procedure On_Menu_Clear_Explorer
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Clear the VCS Explorer view
+
+   ----------------------------
+   -- On_Menu_Remove_Project --
+   ----------------------------
+
+   procedure On_Menu_Remove_Project
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
+      Explorer  : constant VCS_Explorer_View_Access := Get_Explorer (Kernel);
+      P_Context : constant File_Selection_Context_Access :=
+                    File_Selection_Context_Access (Context);
+   begin
+      if Has_Project_Information (P_Context) then
+         On_Remove_Project
+           (Explorer, Project_Name (Project_Information (P_Context)));
+      else
+         On_Remove_Project (Explorer, "No project");
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Remove_Project;
+
+   ----------------------------
+   -- On_Menu_Clear_Explorer --
+   ----------------------------
+
+   procedure On_Menu_Clear_Explorer
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Explorer : constant VCS_Explorer_View_Access := Get_Explorer (Kernel);
+   begin
+      Clear (Explorer);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Clear_Explorer;
 
    ---------------------
    -- Get_Current_Ref --
@@ -317,6 +369,33 @@ package body VCS_View_API is
          end;
       end if;
 
+      if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID) then
+         Items_Inserted := True;
+         Gtk_New (Item, Label => -"Expand all");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate", On_Menu_Expand_All'Access, Context);
+         Set_Sensitive (Item, True);
+
+         Gtk_New (Item, Label => -"Collapse all");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate", On_Menu_Collapse_All'Access, Context);
+         Set_Sensitive (Item, True);
+
+         if Context.all not in Activity_Context'Class then
+            Gtk_New (Item, Label => -"Clear view");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate", On_Menu_Clear_Explorer'Access, Context);
+            Set_Sensitive (Item, True);
+         end if;
+
+         if File_Section or else Project_Section or else Dir_Section then
+            Add_Separator;
+         end if;
+      end if;
+
       --  Fill the section relative to files
 
       Section_Active := File_Section;
@@ -473,6 +552,7 @@ package body VCS_View_API is
         and then First /= No_Activity
         and then Context.all not in Activity_Context'Class
       then
+         Items_Inserted := True;
          Gtk_New (Menu_Item, Label => -"Add to Activity");
          Append (Menu, Menu_Item);
          Gtk_New (Submenu);
@@ -497,7 +577,9 @@ package body VCS_View_API is
                     (A_Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
                   Set_Activity_Information (A_Context, Image (Activity));
 
-                  if Log_File then
+                  if Get_Creator (Context) /=
+                    Abstract_Module_ID (VCS_Module_ID)
+                  then
                      --  In this case record the original file
                      Set_File_Information
                        (A_Context, File_Information (File_Name));
@@ -616,6 +698,8 @@ package body VCS_View_API is
             Submenu := Gtk_Menu (Menu);
          end if;
 
+         Items_Inserted := True;
+
          Gtk_New (Item, Label => -"List all files in project");
          Append (Submenu, Item);
          Context_Callback.Connect
@@ -676,6 +760,19 @@ package body VCS_View_API is
             Set_Sensitive (Menu_Item, Section_Active);
          end if;
       end if;
+
+      if File_Section or else Project_Section then
+         Add_Separator;
+      end if;
+
+      if File_Section then
+         Gtk_New (Item, Label => -"Select files same status");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate",
+            On_Menu_Select_Files_Same_Status'Access, Context);
+         Set_Sensitive (Item, True);
+      end if;
    end VCS_Contextual_Menu;
 
    --------------------
@@ -683,14 +780,13 @@ package body VCS_View_API is
    --------------------
 
    procedure Change_Context
-     (Explorer : VCS_View_Access;
+     (Explorer : VCS_Explorer_View_Access;
       Context  : Selection_Context_Access)
    is
-      File   : File_Selection_Context_Access;
-      Status : File_Status_List.List;
-      Dirs   : String_List.List;
-      Ref    : VCS_Access;
-
+      File      : File_Selection_Context_Access;
+      Status    : File_Status_List.List;
+      Dirs      : String_List.List;
+      Ref       : VCS_Access;
       use String_List;
    begin
       if Explorer = null then
@@ -708,7 +804,6 @@ package body VCS_View_API is
 
       Ref := Get_Current_Ref (Context);
       Set_Current_Context (Explorer, Context);
-      Clear (Explorer);
 
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
@@ -751,7 +846,7 @@ package body VCS_View_API is
      (Kernel  : Kernel_Handle;
       Context : Selection_Context_Access)
    is
-      Explorer : VCS_View_Access;
+      Explorer : VCS_Explorer_View_Access;
    begin
       Explorer := Get_Explorer (Kernel, True, True);
       Change_Context (Explorer, Context);
@@ -765,7 +860,7 @@ package body VCS_View_API is
      (Context : Selection_Context_Access) return String_List.List
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Explorer : VCS_View_Access;
+      Explorer : VCS_Explorer_View_Access;
       List     : String_List.List;
       File     : File_Selection_Context_Access;
    begin
@@ -773,11 +868,11 @@ package body VCS_View_API is
          if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID) then
             if Context.all in Activity_Context'Class then
                --  This is a selection from the Activities Explorer
-               List := VCS_Activities_View.Get_Selected_Files (Kernel);
+               List := VCS_View.Activities.Get_Selected_Files (Kernel);
 
             else
                Explorer := Get_Explorer (Kernel, False);
-               List := Get_Selected_Files (Explorer);
+               List := Get_Selected_Files (VCS_View_Access (Explorer));
             end if;
 
          else
@@ -1050,20 +1145,10 @@ package body VCS_View_API is
    function Get_Current_Ref
      (Context : Selection_Context_Access) return VCS_Access
    is
-      File     : File_Selection_Context_Access;
-      Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-
+      File : File_Selection_Context_Access;
    begin
       if Context = null then
          return Get_VCS_From_Id ("");
-      end if;
-
-      Kernel := Get_Kernel (Context);
-
-      if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID) then
-         Explorer := Get_Explorer (Kernel, False);
-         return Get_Current_Ref (Explorer);
 
       elsif Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
@@ -1073,7 +1158,7 @@ package body VCS_View_API is
          end if;
       end if;
 
-      return Get_Current_Ref (Get_Project (Kernel));
+      return Get_Current_Ref (Get_Project (Get_Kernel (Context)));
    end Get_Current_Ref;
 
    ------------------------
@@ -1090,21 +1175,21 @@ package body VCS_View_API is
       Kernel     : constant Kernel_Handle := Get_Kernel (Context);
       Files      : String_List.List;
       Files_Temp : String_List.List_Node;
-      Explorer   : VCS_View_Access;
+      Explorer   : VCS_Explorer_View_Access;
       A_Explorer : VCS_Activities_View_Access;
 
    begin
       Files := Get_Selected_Files (Context);
-      Explorer := Get_Explorer (Kernel);
-      A_Explorer := Get_Activities_Explorer (Kernel);
+      Explorer := Get_Explorer (Kernel, False);
+      A_Explorer := Get_Activities_Explorer (Kernel, False);
       Files_Temp := First (Files);
 
       while Files_Temp /= Null_Node loop
          declare
-            File  : constant Virtual_File :=
-              Create (Full_Filename => Data (Files_Temp));
-            Log   : constant Virtual_File :=
-              Get_Log_From_File (Kernel, File, False);
+            File    : constant Virtual_File :=
+                        Create (Full_Filename => Data (Files_Temp));
+            Log     : constant Virtual_File :=
+                        Get_Log_From_File (Kernel, File, False);
             Success : Boolean;
          begin
             if Is_Regular_File (Log) then
@@ -1119,7 +1204,9 @@ package body VCS_View_API is
             end if;
 
             if A_Explorer /= null then
-               Refresh_Log (A_Explorer, File);
+               --  ??? revisit when child package implemented
+               VCS_View.Refresh_Log
+                 (VCS_View.VCS_View_Access (A_Explorer), File);
             end if;
          end;
 
@@ -1843,7 +1930,7 @@ package body VCS_View_API is
    -------------------------
 
    procedure Query_Project_Files
-     (Explorer   : VCS_View_Access;
+     (Explorer   : VCS_Explorer_View_Access;
       Kernel     : Kernel_Handle;
       Project    : Project_Type;
       Real_Query : Boolean;
@@ -1907,7 +1994,6 @@ package body VCS_View_API is
       File_Context : File_Selection_Context_Access;
    begin
       Open_Explorer (Get_Kernel (Context), Context);
-      Clear (Get_Explorer (Get_Kernel (Context)));
 
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
@@ -1974,7 +2060,6 @@ package body VCS_View_API is
       File_Context : File_Selection_Context_Access;
    begin
       Open_Explorer (Kernel, Context);
-      Clear (Get_Explorer (Kernel));
 
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
@@ -2182,9 +2267,7 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Ref      : constant VCS_Access := Get_Current_Ref (Context);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Explorer : constant VCS_View_Access := Get_Explorer (Kernel, False);
       Files    : String_List.List;
       Revision : String_Access;
       Status   : File_Status_Record;
@@ -2198,8 +2281,8 @@ package body VCS_View_API is
          return;
       end if;
 
-      Status := Get_Cached_Status
-        (Explorer, Create (String_List.Head (Files)), Ref);
+      Status := Get_Cache
+        (Get_Status_Cache, Create (String_List.Head (Files))).Status;
 
       if String_List.Is_Empty (Status.Working_Revision) then
          Revision := new String'("");
@@ -2288,7 +2371,6 @@ package body VCS_View_API is
 
       Ref        : constant VCS_Access := Get_Current_Ref (Context);
       Kernel     : constant Kernel_Handle := Get_Kernel (Context);
-      Explorer   : constant VCS_View_Access := Get_Explorer (Kernel, False);
       Files      : String_List.List;
       Status     : File_Status_Record;
       Revision_1 : String_Access;
@@ -2309,7 +2391,7 @@ package body VCS_View_API is
          return;
       end if;
 
-      Status := Get_Cached_Status (Explorer, Create (Head (Files)), Ref);
+      Status := Get_Cache (Get_Status_Cache, Create (Head (Files))).Status;
 
       if not One_Rev then
          if Is_Empty (Status.Repository_Revision) then
@@ -2470,11 +2552,10 @@ package body VCS_View_API is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Explorer : VCS_View_Access;
+      Explorer : VCS_Explorer_View_Access;
    begin
       Open_Explorer (Kernel, null);
       Explorer := Get_Explorer (Kernel);
-      Clear (Explorer);
       Query_Project_Files (Explorer, Kernel, Get_Project (Kernel), True, True);
 
    exception
@@ -2514,7 +2595,7 @@ package body VCS_View_API is
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
       pragma Unreferenced (Child);
-      Explorer : VCS_View_Access;
+      Explorer : VCS_Explorer_View_Access;
    begin
       Explorer := Get_Explorer (Kernel_Handle (Kernel), False);
 
