@@ -63,6 +63,8 @@ Boston, MA 02111-1307, USA.
 
 #ifdef WIN32
 #include <windows.h>
+#include <io.h>
+#include <fcntl.h>
 #endif
 
 #ifdef HAVE_PTYS
@@ -118,7 +120,7 @@ struct GVD_Process {
 static int Vprocess_connection_type = 1;
 
 #ifdef WIN32
-#define pipe __gnat_pipe
+#define pipe nt_pipe
 #define HAVE_NTGUI
 #define MAXPATHLEN 1024
 
@@ -332,6 +334,7 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
 	   : CREATE_NEW_CONSOLE);
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
+
   if (!CreateProcess (NULL, cmdline, &sec_attrs, NULL, TRUE,
 		      flags, env, ".", &start, procinfo))
     goto EH_Fail;
@@ -346,6 +349,12 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
 
  EH_Fail:
   return -1;
+}
+
+static int
+nt_pipe (int *fd)
+{
+  return _pipe (fd, 1024, _O_BINARY);
 }
 
 /* The following two routines are used to manipulate stdin, stdout, and
@@ -395,7 +404,7 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
 		       TRUE,
 		       DUPLICATE_SAME_ACCESS))
     report_file_error ("Duplicating output handle for child", Qnil);
-
+  
   if (!DuplicateHandle (parent,
 		       (HANDLE) _get_osfhandle (err),
 		       parent,
@@ -411,7 +420,7 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
 
   if (!SetStdHandle (STD_OUTPUT_HANDLE, newstdout))
     report_file_error ("Changing stdout handle", Qnil);
-
+  
   if (!SetStdHandle (STD_ERROR_HANDLE, newstderr))
     report_file_error ("Changing stderr handle", Qnil);
 }
@@ -2142,6 +2151,14 @@ gvd_waitpid (struct GVD_Process* p)
 
   res = WaitForSingleObject (proc_hand, 0);
   GetExitCodeProcess (proc_hand, &exitcode);
+
+  CloseHandle (p->procinfo.hThread);
+  CloseHandle (p->procinfo.hProcess);
+
+  close (p->infd);
+  close (p->outfd);
+  close (p->forkin);
+  close (p->forkout);
 
   return (int) exitcode;
 }
