@@ -51,6 +51,7 @@ with VCS;                       use VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Utils;                 use VCS_Utils;
+with VCS_View;                  use VCS_View;
 with VCS_View_API;              use VCS_View_API;
 with VFS;                       use VFS;
 
@@ -85,6 +86,11 @@ package body VCS_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_edited" signal
+
+   procedure File_Status_Changed_Cb
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the file status changed hook
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -246,6 +252,7 @@ package body VCS_Module is
    procedure Destroy (Module : in out VCS_Module_ID_Record) is
    begin
       Free (Module.VCS_List);
+      Clear_Cache (Module.Cached_Status);
    end Destroy;
 
    ------------------
@@ -259,7 +266,7 @@ package body VCS_Module is
    is
       pragma Unreferenced (MDI);
       M          : constant VCS_Module_ID_Access := VCS_Module_ID;
-      Explorer   : VCS_View_Access;
+      Explorer   : VCS_Explorer_View_Access;
       A_Explorer : VCS_Activities_View_Access;
       pragma Unreferenced (Explorer, A_Explorer);
    begin
@@ -288,7 +295,7 @@ package body VCS_Module is
       pragma Unreferenced (User);
       N : Node_Ptr;
    begin
-      if Widget.all in VCS_View_Record'Class then
+      if Widget.all in VCS_Explorer_View_Record'Class then
          N := new Node;
          N.Tag := new String'("VCS_View_Record");
          return N;
@@ -409,6 +416,10 @@ package body VCS_Module is
       Add_Hook (Kernel, File_Edited_Hook,
                 Wrapper (File_Edited_Cb'Access),
                 Name => "vcs.file_edited");
+
+      Add_Hook (Kernel, File_Status_Changed_Action_Hook,
+                Wrapper (File_Status_Changed_Cb'Access),
+                Name => "vcs.file_status_changed");
 
       --  Register VCS commands
 
@@ -830,19 +841,18 @@ package body VCS_Module is
    is
       use String_List_Utils.String_List;
       D      : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Ref    : constant VCS_Access :=
+                 Get_Current_Ref
+                   (Get_Project_From_File
+                      (Get_Registry (Kernel).all, D.File, True));
       Files  : List;
-      Ref    : VCS_Access;
       Status : File_Status_Record;
    begin
-      Ref := Get_Current_Ref
-        (Get_Project_From_File (Get_Registry (Kernel).all, D.File, True));
-
       if Ref = null then
          return;
       end if;
 
-      Status := Get_Cached_Status
-        (Get_Explorer (Kernel_Handle (Kernel), False), D.File, Ref);
+      Status := Get_Cache (Get_Status_Cache, D.File).Status;
 
       if Status.File = VFS.No_File then
          Append (Files, Full_Name (D.File).all);
@@ -858,6 +868,83 @@ package body VCS_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end File_Edited_Cb;
 
+   ----------------------------
+   -- File_Status_Changed_Cb --
+   ----------------------------
+
+   procedure File_Status_Changed_Cb
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      D        : constant File_Status_Changed_Hooks_Args :=
+                   File_Status_Changed_Hooks_Args (Data.all);
+      Project  : constant Project_Type :=
+                   Get_Project_From_File
+                     (Get_Registry (Kernel).all, D.File, False);
+      Ref      : VCS_Access;
+      Status   : Line_Record;
+      F_Status : File_Status_List.List;
+   begin
+      if Project /= No_Project then
+         Ref := Get_Current_Ref (Project);
+      end if;
+
+      if Ref = null then
+         return;
+      end if;
+
+      --  First ensure that the file is already in the explorer
+
+      Status := Get_Cache (Get_Status_Cache, D.File);
+
+      if Status = No_Data then
+         --  This is not part of the cache yet
+         Status.Status.File := D.File;
+      end if;
+
+      if Status.Status.Status.Stock_Id.all /= "gps-vcs-added"
+        and then Status.Status.Status.Stock_Id.all /= "gps-vcs-removed"
+      then
+         --  We do not want to change the status of added or removed files
+
+         declare
+            S : constant Status_Array := Get_Registered_Status (Ref);
+         begin
+            --  ??? Status are a bit lousy, a more structured/typed design will
+            --  probably benefit the maintenance.
+            for K in S'Range loop
+               if S (K).Stock_Id.all = "gps-vcs-modified" then
+                  Status.Status.Status := S (K);
+                  exit;
+               end if;
+            end loop;
+         end;
+
+         Set_Cache (Get_Status_Cache, D.File, Status);
+
+         File_Status_List.Append (F_Status, Copy_File_Status (Status.Status));
+
+         Display_File_Status
+           (Kernel_Handle (Kernel), F_Status, Ref, False, True);
+         --  Just ensure that this file is added into the explorer if not yet
+         --  present.
+
+         --  Now refresh both explorers to take into account the new status
+
+         Refresh
+           (Get_Explorer (Kernel_Handle (Kernel), Raise_Child => False));
+
+         Refresh
+           (Get_Activities_Explorer
+              (Kernel_Handle (Kernel), Raise_Child => False));
+
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end File_Status_Changed_Cb;
+
    ------------------
    -- Get_Explorer --
    ------------------
@@ -865,9 +952,9 @@ package body VCS_Module is
    function Get_Explorer
      (Kernel      : Kernel_Handle;
       Raise_Child : Boolean := True;
-      Show        : Boolean := False) return VCS_View_Access
+      Show        : Boolean := False) return VCS_Explorer_View_Access
    is
-      M : constant VCS_Module_ID_Access := VCS_Module_ID;
+      M     : constant VCS_Module_ID_Access := VCS_Module_ID;
       Child : GPS_MDI_Child;
    begin
       if M.Explorer = null then
@@ -920,8 +1007,7 @@ package body VCS_Module is
    function Explorer_Is_Open return Boolean is
       M : constant VCS_Module_ID_Access := VCS_Module_ID;
    begin
-      return M.Explorer /= null
-        and then M.Explorer_Child /= null;
+      return M.Explorer /= null and then M.Explorer_Child /= null;
    end Explorer_Is_Open;
 
    -----------------------------
@@ -989,5 +1075,15 @@ package body VCS_Module is
       return M.Activities /= null
         and then M.Activities_Child /= null;
    end Activities_Explorer_Is_Open;
+
+   ---------------
+   -- Get_Cache --
+   ---------------
+
+   function Get_Status_Cache return Status_Cache is
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
+   begin
+      return M.Cached_Status;
+   end Get_Status_Cache;
 
 end VCS_Module;
