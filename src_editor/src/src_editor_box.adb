@@ -538,6 +538,11 @@ package body Src_Editor_Box is
             Set_Text (Box.Modified_Label, -"Modified");
             Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_modified_xpm));
       end case;
+
+      File_Status_Changed
+        (Get_Kernel (Box),
+         Get_Filename (Box.Source_Buffer),
+         Get_Status (Box.Source_Buffer));
    end Status_Changed_Handler;
 
    --------------------------------
@@ -551,8 +556,8 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Buffer, Params);
 
-      Info : constant Extra_Information_Array_Access
-        := Get_Extra_Information (Box.Source_Buffer);
+      Info : constant Extra_Information_Array_Access :=
+               Get_Extra_Information (Box.Source_Buffer);
       Label : Gtk_Label;
 
       use type Basic_Types.String_Access;
@@ -1196,7 +1201,6 @@ package body Src_Editor_Box is
               Has_Selection
               and then Equal (Entity_Start, Start_Iter)
               and then Equal (Entity_End, End_Iter);
-
 
             --  If we click in the current selection, use this as the context.
             --  However, if the selection is a single entity, we should create
