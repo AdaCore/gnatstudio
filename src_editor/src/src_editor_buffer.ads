@@ -434,7 +434,7 @@ package Src_Editor_Buffer is
    -- Buffer Status --
    -------------------
 
-   type Status_Type is (Unmodified, Modified, Saved);
+   subtype Status_Type is File_Status;
 
    function Get_Status
      (Buffer : access Source_Buffer_Record)
