@@ -161,6 +161,11 @@ package VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Remove_Project
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Remove the project node from the explorer
+
    procedure VCS_Contextual_Menu
      (Kernel          : Kernel_Handle;
       Context         : Selection_Context_Access;
