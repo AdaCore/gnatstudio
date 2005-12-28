@@ -405,6 +405,25 @@ package GPS.Kernel.Standard_Hooks is
    --  case, the contents of the file is computed from the other file and the
    --  diff file.
 
+   -------------------------
+   -- Status_Changed_Hook --
+   -------------------------
+
+   type File_Status is (Modified, Unmodified, Saved);
+
+   type File_Status_Changed_Hooks_Args is new File_Hooks_Args with record
+      Status : File_Status;
+   end record;
+
+   File_Status_Changed_Action_Hook : constant String :=
+                                       "file_status_changed_action_hook";
+
+   procedure File_Status_Changed
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
+      Status : File_Status);
+   --  Call the file_status_changed hook
+
 private
    function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
@@ -473,6 +492,13 @@ private
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Marker_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
+   --  See inherited subprograms
+
+   function Create_Callback_Data
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Hook_Name : String;
+      Data      : access File_Status_Changed_Hooks_Args)
       return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited subprograms
 
