@@ -45,21 +45,12 @@ with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with VCS;                       use VCS;
 with VCS_Activities;            use VCS_Activities;
-with VCS_Activities_View;       use VCS_Activities_View;
 with VCS_Module;                use VCS_Module;
-with VCS_View_Pkg;
+with VCS_View.Explorer;
+with VCS_View;                  use VCS_View;
 with VFS;                       use VFS;
 
 package body VCS_Activities_View_API is
-
-   procedure Query_Activities_Files
-     (Explorer   : VCS_Activities_View_Access;
-      Kernel     : Kernel_Handle;
-      Real_Query : Boolean);
-   --  Query/List the status of files belonging to activities.
-   --  If Real_Query is True, a real VCS query will be made, otherwise
-   --  the files will simply be listed.
-   --  Calling this does NOT open the VCS Explorer.
 
    procedure On_Menu_Create_Activity
      (Widget  : access GObject_Record'Class;
@@ -215,7 +206,7 @@ package body VCS_Activities_View_API is
             declare
                use type String_List.List_Node;
                Files    : String_List.List :=
-                            VCS_View_Pkg.Get_Selected_Files (Kernel);
+                            VCS_View.Explorer.Get_Selected_Files (Kernel);
                File     : Virtual_File;
                Files_It : String_List.List_Node;
             begin
@@ -238,7 +229,7 @@ package body VCS_Activities_View_API is
             Kernel, Real_Query => False);
       end if;
 
-      VCS_View_Pkg.Refresh (Get_Explorer (Kernel, False, False));
+      Refresh (Get_Explorer (Kernel, False, False));
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -262,7 +253,8 @@ package body VCS_Activities_View_API is
       Files    : String_List.List;
       Files_It : String_List.List_Node;
    begin
-      Files := Get_Selected_Files (Get_Activities_Explorer (Kernel, False));
+      Files := Get_Selected_Files
+        (VCS_View_Access (Get_Activities_Explorer (Kernel, False)));
 
       Files_It := String_List.First (Files);
 
@@ -697,8 +689,8 @@ package body VCS_Activities_View_API is
    end Query_Activities_Files;
 
    procedure Query_Activities_Files
-     (Kernel     : Kernel_Handle;
-      Real_Query : Boolean) is
+     (Kernel      : Kernel_Handle;
+      Real_Query  : Boolean) is
    begin
       Query_Activities_Files
         (Get_Activities_Explorer (Kernel), Kernel, Real_Query);
@@ -717,7 +709,6 @@ package body VCS_Activities_View_API is
    begin
       Open_Activities_Explorer (Kernel, null);
       Explorer := Get_Activities_Explorer (Kernel);
-      Clear (Explorer);
       Query_Activities_Files (Explorer, Kernel, True);
 
    exception
