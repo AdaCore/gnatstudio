@@ -18,10 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object; use Glib.Object;
-with Gtk.Menu;    use Gtk.Menu;
+with Glib.Object;         use Glib.Object;
+with Gtk.Menu;            use Gtk.Menu;
 
-with GPS.Kernel;  use GPS.Kernel;
+with GPS.Kernel;          use GPS.Kernel;
+with VCS_View.Activities; use VCS_View.Activities;
 
 package VCS_Activities_View_API is
 
@@ -36,9 +37,18 @@ package VCS_Activities_View_API is
    --  List all files as part of an activity
 
    procedure Query_Activities_Files
-     (Kernel     : Kernel_Handle;
-      Real_Query : Boolean);
+     (Kernel      : Kernel_Handle;
+      Real_Query  : Boolean);
    --  Query status for activities files
+
+   procedure Query_Activities_Files
+     (Explorer   : VCS_Activities_View_Access;
+      Kernel     : Kernel_Handle;
+      Real_Query : Boolean);
+   --  Query/List the status of files belonging to activities.
+   --  If Real_Query is True, a real VCS query will be made, otherwise
+   --  the files will simply be listed.
+   --  Calling this does NOT open the VCS Explorer.
 
    procedure VCS_Activities_Contextual_Menu
      (Kernel  : Kernel_Handle;
