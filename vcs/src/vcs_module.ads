@@ -27,8 +27,9 @@ with Gtkada.MDI;          use Gtkada.MDI;
 
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
-with VCS_View_Pkg;        use VCS_View_Pkg;
-with VCS_Activities_View; use VCS_Activities_View;
+with VCS_View.Explorer;   use VCS_View.Explorer;
+with VCS_View.Activities; use VCS_View.Activities;
+with VCS_Status;          use VCS_Status;
 
 package VCS_Module is
 
@@ -38,7 +39,7 @@ package VCS_Module is
       VCS_List         : Argument_List_Access;
       --  The list of all VCS systems recognized by the kernel
 
-      Explorer         : VCS_View_Access;
+      Explorer         : VCS_Explorer_View_Access;
       --  The VCS Explorer
 
       Explorer_Child   : MDI_Child;
@@ -48,6 +49,8 @@ package VCS_Module is
       --  The VCS Activities explorer
 
       Activities_Child : MDI_Child;
+
+      Cached_Status    : Status_Cache;
    end record;
 
    type VCS_Module_ID_Access is access all VCS_Module_ID_Record'Class;
@@ -76,7 +79,7 @@ package VCS_Module is
    function Get_Explorer
      (Kernel      : Kernel_Handle;
       Raise_Child : Boolean := True;
-      Show        : Boolean := False) return VCS_View_Access;
+      Show        : Boolean := False) return VCS_Explorer_View_Access;
    --  Return the VCS Explorer. If Show is True, place it in the MDI and show
    --  it.
 
@@ -98,5 +101,8 @@ package VCS_Module is
 
    function Activities_Explorer_Is_Open return Boolean;
    --  Return whether the Explorer is open
+
+   function Get_Status_Cache return Status_Cache;
+   --  Return the status cache
 
 end VCS_Module;
