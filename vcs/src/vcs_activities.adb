@@ -580,6 +580,7 @@ package body VCS_Activities is
       Item : Activity_Record := Get (Activity);
    begin
       Item.Group_Commit := not Item.Group_Commit;
+      Set (Activity, Item);
    end Toggle_Group_Commit;
 
 end VCS_Activities;
