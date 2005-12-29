@@ -51,11 +51,6 @@ package VCS_Status is
    procedure Clear_Cache (Cache : Status_Cache);
    --  Clear all recorded file status
 
-   procedure Free (X : in out Line_Record);
-
-   function Copy (X : Line_Record) return Line_Record;
-   --  Return a deep copy of X
-
 private
 
    No_Data : constant Line_Record :=
@@ -63,6 +58,8 @@ private
                 False);
 
    type Header_Num is range 1 .. 5_000;
+
+   procedure Free (X : in out Line_Record);
 
    function Hash (F : Virtual_File) return Header_Num;
 
