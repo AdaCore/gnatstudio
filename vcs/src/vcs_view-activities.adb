@@ -451,19 +451,17 @@ package body VCS_View.Activities is
 
                if Display then
                   declare
-                     New_Status : constant Line_Record := Copy (Line);
-                     Iter       : Gtk_Tree_Iter := Null_Iter;
-                     Success    : Boolean;
+                     Iter    : Gtk_Tree_Iter := Null_Iter;
+                     Success : Boolean;
                   begin
-                     Iter := Get_Iter_From_File
-                       (Explorer, New_Status.Status.File);
+                     Iter := Get_Iter_From_File (Explorer, Line.Status.File);
 
                      if Iter = Null_Iter and then Force_Display then
                         Append (Explorer.Model, Iter, A_Iter);
                      end if;
 
                      if Iter /= Null_Iter then
-                        Fill_Info (Explorer, Iter, New_Status, Success);
+                        Fill_Info (Explorer, Iter, Line, Success);
                      end if;
                   end;
                end if;

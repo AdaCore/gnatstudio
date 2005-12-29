@@ -410,11 +410,10 @@ package body VCS_View.Explorer is
 
          if Display then
             declare
-               New_Status : constant Line_Record := Copy (Line);
-               Iter       : Gtk_Tree_Iter := Null_Iter;
-               Success    : Boolean;
+               Iter    : Gtk_Tree_Iter := Null_Iter;
+               Success : Boolean;
             begin
-               Iter := Get_Iter_From_File (Explorer, New_Status.Status.File);
+               Iter := Get_Iter_From_File (Explorer, Line.Status.File);
 
                if Match_Filter
                  (VCS_Explorer_View_Record (Explorer.all),
@@ -429,7 +428,7 @@ package body VCS_View.Explorer is
                   end if;
 
                   if Iter /= Null_Iter then
-                     Fill_Info (Explorer, Iter, New_Status, Success);
+                     Fill_Info (Explorer, Iter, Line, Success);
                   end if;
 
                else
