@@ -24,6 +24,9 @@ with File_Utils;              use File_Utils;
 
 package body VCS_Status is
 
+   function Copy (X : Line_Record) return Line_Record;
+   --  Return a deep copy of X
+
    -----------------
    -- Clear_Cache --
    -----------------
