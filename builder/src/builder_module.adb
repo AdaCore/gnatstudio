@@ -407,11 +407,11 @@ package body Builder_Module is
       Compile_Only   : Boolean := False;
       Unique_Project : Boolean := False) return Argument_List_Access
    is
+      Remote_Host    : constant String :=
+                         Get_Attribute_Value (Project, Remote_Host_Attribute);
       Project_Str    : GNAT.OS_Lib.String_Access;
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access;
-      Remote_Host    : constant String :=
-        Get_Attribute_Value (Project, Remote_Host_Attribute);
 
    begin
       --  If the compilation is remote, we need to use the unix pathname
@@ -502,7 +502,7 @@ package body Builder_Module is
    procedure Parse_Compiler_Output
      (Data : Process_Data; Output : String)
    is
-      Last_EOL      : Natural;
+      Last_EOL : Natural;
    begin
       if not Data.Process_Died then
          Last_EOL := Index (Output, (1 => ASCII.LF), Backward);
@@ -557,8 +557,8 @@ package body Builder_Module is
      (Data : Process_Data; Status : Integer)
    is
       pragma Unreferenced (Status);
-      Files : constant Files_Callback_Data_Access :=
-        Files_Callback_Data_Access (Data.Callback_Data);
+      Files   : constant Files_Callback_Data_Access :=
+                  Files_Callback_Data_Access (Data.Callback_Data);
       Success : Boolean;
    begin
       if Files /= null and then Files.Files /= null then
@@ -589,6 +589,7 @@ package body Builder_Module is
       Main_Units  : Boolean := False;
       Synchronous : Boolean := False)
    is
+      Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
       Fd      : Process_Descriptor_Access;
       Cmd     : String_Access;
       Args    : Argument_List_Access;
@@ -598,7 +599,6 @@ package body Builder_Module is
       Langs   : Argument_List := Get_Languages
         (Get_Project (Kernel), Recursive => True);
       Syntax  : Command_Syntax;
-      Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
       Success : Boolean;
 
    begin
@@ -812,7 +812,7 @@ package body Builder_Module is
    is
       pragma Unreferenced (Widget);
       Context : Selection_Context_Access :=
-        Get_Current_Context (Kernel);
+                  Get_Current_Context (Kernel);
 
    begin
       if Context = null
@@ -1273,7 +1273,7 @@ package body Builder_Module is
    is
       D            : Compute_Xref_Data_Access renames Xref_Data;
       Handler      : constant Language_Handler :=
-        Language_Handler (Get_Language_Handler (D.Kernel));
+                       Language_Handler (Get_Language_Handler (D.Kernel));
       Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
       Not_Finished : Boolean;
       LI           : LI_Handler;
@@ -1369,7 +1369,7 @@ package body Builder_Module is
    is
       D            : Load_Xref_Data_Access renames Xref_Data;
       Handler      : constant Language_Handler :=
-        Language_Handler (Get_Language_Handler (D.Kernel));
+                       Language_Handler (Get_Language_Handler (D.Kernel));
       Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
       LI           : LI_Handler;
       Count : Integer;
@@ -1409,7 +1409,8 @@ package body Builder_Module is
       pragma Unreferenced (Object);
       C              : Load_Xref_Commands.Generic_Asynchronous_Command_Access;
       Projects_Count : Natural := 0;
-      Iter         : Imported_Project_Iterator := Start (Get_Project (Kernel));
+      Iter           : Imported_Project_Iterator :=
+                         Start (Get_Project (Kernel));
 
    begin
       while Current (Iter) /= No_Project loop
@@ -1421,10 +1422,10 @@ package body Builder_Module is
         (C, -"Load xref info",
          new Load_Xref_Data'
            (Kernel,
-            LI           => 0,
-            Project      => Start (Root_Project => Get_Project (Kernel)),
+            LI               => 0,
+            Project          => Start (Root_Project => Get_Project (Kernel)),
             Current_Progress => 0,
-            Max_Projects => Projects_Count),
+            Max_Projects     => Projects_Count),
          Load_Xref_Iterate'Access);
       Launch_Background_Command
         (Kernel, Command_Access (C), False, True, "");
