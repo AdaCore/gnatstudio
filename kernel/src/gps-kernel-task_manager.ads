@@ -37,14 +37,20 @@ package GPS.Kernel.Task_Manager is
    type Scheduled_Command_Access is access all Scheduled_Command'Class;
 
    function Name (Command : access Scheduled_Command) return String;
+
    procedure Interrupt (Command : in out Scheduled_Command);
-   procedure Set_Progress (Command : access Scheduled_Command;
-                           Progress : Progress_Record);
-   function Progress (Command : access Scheduled_Command)
-                      return Progress_Record;
+
+   procedure Set_Progress
+     (Command : access Scheduled_Command; Progress : Progress_Record);
+
+   function Progress
+     (Command : access Scheduled_Command) return Progress_Record;
+
    function Execute
      (Command : access Scheduled_Command) return Command_Return_Type;
+
    function Undo (This : access Scheduled_Command) return Boolean;
+
    procedure Free (Command : in out Scheduled_Command);
    --  See inhertited documentation
 
