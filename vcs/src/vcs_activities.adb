@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -46,12 +46,13 @@ package body VCS_Activities is
       Id           : Activity_Id;
       VCS          : VCS_Access;
       Group_Commit : Boolean := False;
+      Committed    : Boolean := False;
       Files        : String_List.List;
    end record;
 
    Empty_Activity : constant Activity_Record :=
                       (null, null, No_Activity,
-                       null, False, String_List.Null_List);
+                       null, False, False, String_List.Null_List);
 
    subtype Hash_Header is Positive range 1 .. 123;
 
@@ -118,11 +119,14 @@ package body VCS_Activities is
          Group_Commit : constant Boolean :=
                           Boolean'Value
                             (Get_Attribute (Node, "group_commit", "false"));
+         Committed    : constant Boolean :=
+                          Boolean'Value
+                            (Get_Attribute (Node, "committed", "false"));
          Child        : Node_Ptr := Node.Child;
          Item         : Activity_Record;
       begin
          Item := (new String'(Project), new String'(Name), Value (Id),
-                  null, Group_Commit, String_List.Null_List);
+                  null, Group_Commit, Committed, String_List.Null_List);
 
          while Child /= null loop
             if Child.Tag.all = "file" then
@@ -185,9 +189,8 @@ package body VCS_Activities is
 
    procedure Save_Activities (Kernel : access Kernel_Handle_Record'Class) is
 
-      Filename : constant String :=
-                   Get_Home_Dir (Kernel) & Activities_Filename;
-
+      Filename        : constant String :=
+                          Get_Home_Dir (Kernel) & Activities_Filename;
       File, Ada_Child : Node_Ptr;
       Child, F_Child  : Node_Ptr;
       F_Iter          : String_List.List_Node;
@@ -209,6 +212,10 @@ package body VCS_Activities is
          Set_Attribute (Child, "name", Item.Name.all);
          Set_Attribute (Child, "project", Item.Project.all);
          Set_Attribute (Child, "id", String (Item.Id));
+         Set_Attribute
+           (Child, "group_commit", Boolean'Image (Item.Group_Commit));
+         Set_Attribute
+           (Child, "committed", Boolean'Image (Item.Committed));
 
          Add_Child (Ada_Child, Child);
 
@@ -263,7 +270,7 @@ package body VCS_Activities is
                   new String'("New Activity"),
                   UID,
                   null,
-                  False,
+                  False, False,
                   String_List.Null_List));
 
                Save_Activities (Kernel);
@@ -492,7 +499,9 @@ package body VCS_Activities is
       Item : Activity_Record := Get_First;
    begin
       while Item /= Empty_Activity loop
-         if Is_In_List (Item.Files, Full_Name (File, True).all) then
+         if not Item.Committed
+           and then Is_In_List (Item.Files, Full_Name (File, True).all)
+         then
             return Item.Id;
          end if;
 
@@ -521,30 +530,35 @@ package body VCS_Activities is
       Activity : Activity_Id;
       File     : Virtual_File)
    is
-      Project : constant Project_Type :=
-                  Get_Project_From_File (Get_Registry (Kernel).all, File);
-      VCS     : constant VCS_Access :=
-                  Get_VCS_From_Id
-                    (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
-      Item    : Activity_Record := Get (Activity);
+      Project    : constant Project_Type :=
+                     Get_Project_From_File (Get_Registry (Kernel).all, File);
+      VCS        : constant VCS_Access :=
+                     Get_VCS_From_Id
+                       (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
+      F_Activity : constant Activity_Id := Get_File_Activity (File);
+      Item       : Activity_Record := Get (Activity);
    begin
-      --  ??? check that File is not yet present
+      --  Check that the new file is using the same VCS. Also check that the
+      --  file is not yet part of an open activity.
 
       if (Item.VCS /= null and then VCS /= Item.VCS)
-        or else Get_File_Activity (File) /= No_Activity
+        or else (F_Activity /= No_Activity
+                 and then not Is_Committed (F_Activity))
       then
          --  ??? dialog saying that it is not possible (2 diff VCS)
          --  ??? or file already part of an activity.
          return;
       end if;
 
-      Item.VCS := VCS;
+      if not Is_In_List (Item.Files, Full_Name (File, True).all) then
+         Item.VCS := VCS;
 
-      String_List.Append (Item.Files, Full_Name (File, True).all);
+         String_List.Append (Item.Files, Full_Name (File, True).all);
 
-      Set (Activity, Item);
+         Set (Activity, Item);
 
-      Save_Activities (Kernel);
+         Save_Activities (Kernel);
+      end if;
    end Add_File;
 
    -----------------
@@ -576,11 +590,35 @@ package body VCS_Activities is
    -- Toggle_Group_Commit --
    -------------------------
 
-   procedure Toggle_Group_Commit (Activity : Activity_Id) is
+   procedure Toggle_Group_Commit
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Activity : Activity_Id)
+   is
       Item : Activity_Record := Get (Activity);
    begin
       Item.Group_Commit := not Item.Group_Commit;
       Set (Activity, Item);
+      Save_Activities (Kernel);
    end Toggle_Group_Commit;
+
+   -------------------
+   -- Set_Committed --
+   -------------------
+
+   procedure Set_Committed (Activity : Activity_Id; To : Boolean) is
+      Item : Activity_Record := Get (Activity);
+   begin
+      Item.Committed := To;
+      Set (Activity, Item);
+   end Set_Committed;
+
+   ------------------
+   -- Is_Committed --
+   ------------------
+
+   function Is_Committed (Activity : Activity_Id) return Boolean is
+   begin
+      return Get (Activity).Committed;
+   end Is_Committed;
 
 end VCS_Activities;
