@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -65,6 +65,12 @@ package VCS_Activities is
    procedure Set_Name (Activity : Activity_Id; Name : String);
    --  Set the name of the activity
 
+   procedure Set_Committed (Activity : Activity_Id; To : Boolean);
+   --  Set the committed status for this activity
+
+   function Is_Committed (Activity : Activity_Id) return Boolean;
+   --  Returns the committed status for this activity
+
    function Has_Log
      (Kernel   : Kernel_Handle;
       Activity : Activity_Id) return Boolean;
@@ -114,7 +120,9 @@ package VCS_Activities is
    function Get_Group_Commit (Activity : Activity_Id) return Boolean;
    --  Returns the group-commit status
 
-   procedure Toggle_Group_Commit (Activity : Activity_Id);
+   procedure Toggle_Group_Commit
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Activity : Activity_Id);
    --  Invert the group-commit status
 
 private
