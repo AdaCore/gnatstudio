@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -159,6 +159,8 @@ package body VCS_View.Activities is
       Set_Name (Activity, Get_String (Text_Value));
       Save_Activities (K);
 
+      Refresh (Get_Explorer (K, False, False));
+
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -285,7 +287,8 @@ package body VCS_View.Activities is
    begin
       Remove_File (Kernel, Activity, File);
 
-      Iter := Get_Iter_From_File (Explorer, File);
+      Iter := Get_Iter_From_File
+        (Explorer, File, Get_Iter_From_Activity (Explorer, Activity));
       Remove (Explorer.Model, Iter);
 
       Refresh (Get_Explorer (Kernel, False, False));
@@ -338,11 +341,18 @@ package body VCS_View.Activities is
 
             if A_Iter = Null_Iter then
                Append (Explorer.Model, A_Iter, Null_Iter);
-               Set (Explorer.Model, A_Iter,
-                    Base_Name_Column, Get_Name (Activity));
                Set (Explorer.Model, A_Iter, Activity_Column, Image (Activity));
                Set (Explorer.Model, A_Iter,
                     Has_Log_Column, Has_Log (Kernel, Activity));
+            end if;
+
+            if Is_Committed (Activity) then
+               Set (Explorer.Model, A_Iter,
+                    Base_Name_Column, Get_Name (Activity) & " (committed)");
+               Set (Explorer.Model, A_Iter, Control_Column, False);
+            else
+               Set (Explorer.Model, A_Iter,
+                    Base_Name_Column, Get_Name (Activity));
                Set (Explorer.Model, A_Iter, Control_Column, True);
             end if;
 
@@ -445,16 +455,15 @@ package body VCS_View.Activities is
                   Set_Cache (Get_Status_Cache, File, Line);
                end if;
 
-               --  The info that we want to display is now in Line,
-               --  if it already exists in Page.Stored_Status, we simply modify
-               --  the element, otherwise we add it to the list.
+               --  The info that we want to display is now in Line
 
                if Display then
                   declare
                      Iter    : Gtk_Tree_Iter := Null_Iter;
                      Success : Boolean;
                   begin
-                     Iter := Get_Iter_From_File (Explorer, Line.Status.File);
+                     Iter := Get_Iter_From_File
+                       (Explorer, Line.Status.File, A_Iter);
 
                      if Iter = Null_Iter and then Force_Display then
                         Append (Explorer.Model, Iter, A_Iter);
