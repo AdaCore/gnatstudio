@@ -6637,7 +6637,9 @@ entering a password.
 @cindex version control
 @noindent
 
-The VCS Explorer provides an overview of source files and their status.
+The VCS Explorer provides an overview of source files and their
+status. A file edited in GPS will be automatically added on the VCS
+Explorer with a Modified status (see below).
 
 @iftex
 @cindex screen shot
@@ -6658,12 +6660,18 @@ editors. @xref{The Version Control Contextual Menu}.
 The VCS Explorer contains the following columns:
 
 @table @b
+@item Project / File
+This is a two levels tree, the first level contains the name of the
+project and the second the name of files inside the project. Next to
+the project name the VCS name, if any, is displayed. This is the only
+information available for a project. The columns described below are for
+the files only. This column can be sorted by clicking on the header.
+
 @item Status
 Shows the status of the file. This column can be sorted by clicking on
 the header. The different possible status for files are the following:
 
 @table @code
-
 
 @item Unknown
 @iftex
@@ -6755,10 +6763,6 @@ The file contains conflicts from a previous update operation.
 @item Log
 This column indicates whether a revision log exists for this file.
 
-@item File name
-The name of the file. This column can be sorted by clicking on the
-header.
-
 @item Activity
 The name of the activity the file belongs to. See @ref{The VCS Activities}
 for more details.
@@ -6776,7 +6780,9 @@ line, simply left-click on it. To select a range of lines, select the
 first line in the range, then hold down the @key{Shift} key and select the
 last line in the range. To add or remove single columns from the
 selection, hold down the @key{Control} key and left-click on the
-columns that you want to select/unselect.
+columns that you want to select/unselect. It is also possible to
+select files having the same status using the @code{Select files same status}
+menu entre. See @ref{The Version Control Contextual Menu}.
 
 @cindex interactive search
 The explorer also provides an interactive search capability allowing you to
@@ -6944,6 +6950,19 @@ Depending on the context, some of the items described in this section won't
 be shown, which means that they are not relevant to the current context.
 
 @table @b
+@item Remove project
+Only displayed on a project line. This will remove the selected
+project from the VCS Explorer.
+
+@item Expand all
+Expand all VCS Explorer project nodes.
+
+@item Collapse all
+Collapse all VCS Explorer project nodes.
+
+@item Clear View
+Clear the VCS Explorer.
+
 @item Query status
 Query the status of the selected item. Brings up the VCS Explorer.
 
@@ -7103,6 +7122,9 @@ Update all the source files in the project and all imported
 sub-projects.
 
 @end table
+
+@item Select files same status
+Select the files having the same status as the current selected file.
 
 @item Filters
 Only available from the VCS Explorer. This menu controls filtering of the
