@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -46,6 +46,7 @@ with Traces;                    use Traces;
 with VCS;                       use VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
+with VCS_Status;                use VCS_Status;
 with VCS_View.Explorer;
 with VCS_View;                  use VCS_View;
 with VFS;                       use VFS;
@@ -103,6 +104,18 @@ package body VCS_Activities_View_API is
    function Execute
      (Command : access Edit_Action_Command_Type) return Command_Return_Type;
 
+   --  Activity committed action
+
+   type Activity_Action_Command_Type is new Root_Command with record
+      Kernel   : Kernel_Handle;
+      Activity : Activity_Id;
+   end record;
+   type Activity_Action_Command_Access is access Activity_Action_Command_Type;
+
+   function Execute
+     (Command : access Activity_Action_Command_Type)
+      return Command_Return_Type;
+
    -------------
    -- Execute --
    -------------
@@ -117,6 +130,41 @@ package body VCS_Activities_View_API is
       return Success;
    end Execute;
 
+   function Execute
+     (Command : access Activity_Action_Command_Type)
+      return Command_Return_Type
+   is
+      use type String_List.List_Node;
+      Explorer  : constant VCS_Activities_View_Access :=
+                    Get_Activities_Explorer (Command.Kernel, False, False);
+      VCS_Ref   : constant VCS_Access :=
+                    Get_VCS_For_Activity (Command.Kernel, Command.Activity);
+      Files     : String_List.List :=
+                    Get_Selected_Files (Command.Kernel);
+      Files_It  : String_List.List_Node;
+      Committed : Boolean := True;
+   begin
+      --  Set the committed status if all files are up-to-date
+
+      Files_It := String_List.First (Files);
+
+      while Files_It /= String_List.Null_Node loop
+         Committed := Committed
+           and Has_Status
+             (Get_Status_Cache,
+              Create (Full_Filename => String_List.Data (Files_It)),
+              VCS_Ref, Up_To_Date_Id);
+
+         Files_It := String_List.Next (Files_It);
+      end loop;
+
+      String_List.Free (Files);
+
+      Set_Committed (Command.Activity, To => Committed);
+      Refresh (Explorer);
+      return Success;
+   end Execute;
+
    ---------------------------------
    -- On_Menu_Toggle_Group_Commit --
    ---------------------------------
@@ -126,12 +174,13 @@ package body VCS_Activities_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
       A_Context : constant Activity_Context_Access :=
                     Activity_Context_Access (Context);
       Activity  : Activity_Id;
    begin
       Activity := Value (Activity_Information (A_Context));
-      Toggle_Group_Commit (Activity);
+      Toggle_Group_Commit (Kernel, Activity);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -147,7 +196,7 @@ package body VCS_Activities_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       On_Create_Activity (Kernel);
    exception
@@ -224,12 +273,10 @@ package body VCS_Activities_View_API is
             end;
          end if;
 
-         Query_Activities_Files
-           (Get_Activities_Explorer (Kernel, False, False),
-            Kernel, Real_Query => False);
+         Refresh (Get_Activities_Explorer (Kernel, False, False));
+         Refresh (Get_Explorer (Kernel, False, False));
       end if;
 
-      Refresh (Get_Explorer (Kernel, False, False));
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -353,6 +400,7 @@ package body VCS_Activities_View_API is
       Files_Temp     : String_List.List_Node;
       All_Logs_Exist : Boolean := True;
       File           : Virtual_File;
+      Committed      : Activity_Action_Command_Access;
 
       use String_List;
       use type String_List.List_Node;
@@ -389,9 +437,18 @@ package body VCS_Activities_View_API is
       --  If All files have a log, commit the whole lot
 
       if All_Logs_Exist then
-         Log_Action_Files
-           (Kernel, Get_VCS_For_Activity (Kernel, Activity),
-            Commit, Files, Activity);
+         declare
+            VCS : constant VCS_Access :=
+                    Get_VCS_For_Activity (Kernel, Activity);
+         begin
+            Committed := new Activity_Action_Command_Type;
+            Committed.Kernel := Kernel;
+            Committed.Activity := Activity;
+
+            Log_Action_Files (Kernel, VCS, Commit, Files, Activity);
+            Launch_Background_Command
+              (Kernel, Committed, True, True, Name (VCS));
+         end;
       end if;
    exception
       when E : others =>
@@ -446,7 +503,7 @@ package body VCS_Activities_View_API is
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
       List      : String_List.List;
 
-      A_Context : Activity_Context_Access :=
+      A_Context : constant Activity_Context_Access :=
                     Activity_Context_Access (Context);
       Activity  : Activity_Id;
 
@@ -486,12 +543,11 @@ package body VCS_Activities_View_API is
          else
             --  This is an activity line
 
-            A_Context := Activity_Context_Access (Context);
-            Activity  := Value (Activity_Information (A_Context));
+            Activity := Value (Activity_Information (A_Context));
 
             declare
-               Log_File : constant Virtual_File :=
-                            Get_Log_File (Kernel, Activity);
+               Log_File     : constant Virtual_File :=
+                                Get_Log_File (Kernel, Activity);
                Already_Open : Boolean;
             begin
                Already_Open := Is_Open (Kernel, Log_File);
@@ -689,8 +745,8 @@ package body VCS_Activities_View_API is
    end Query_Activities_Files;
 
    procedure Query_Activities_Files
-     (Kernel      : Kernel_Handle;
-      Real_Query  : Boolean) is
+     (Kernel     : Kernel_Handle;
+      Real_Query : Boolean) is
    begin
       Query_Activities_Files
         (Get_Activities_Explorer (Kernel), Kernel, Real_Query);
@@ -728,6 +784,7 @@ package body VCS_Activities_View_API is
    is
       File_Section     : Boolean;
       Activity_Section : Boolean;
+      Active           : Boolean;
       Item             : Gtk_Menu_Item;
       Check            : Gtk_Check_Menu_Item;
       Activity         : Activity_Id;
@@ -743,15 +800,17 @@ package body VCS_Activities_View_API is
            (File_Selection_Context_Access (Context));
          File_Section     := Has_File_Information
            (File_Selection_Context_Access (Context));
+
+         Activity := Value
+           (Activity_Information (Activity_Context_Access (Context)));
+         Active := not Is_Committed (Activity);
+
       else
          Activity_Section := False;
          File_Section     := False;
       end if;
 
       if Activity_Section then
-         Activity := Value
-           (Activity_Information (Activity_Context_Access (Context)));
-
          VCS := Get_VCS_For_Activity (Kernel, Activity);
 
          Gtk_New (Check, Label => -"Group commit");
@@ -763,7 +822,8 @@ package body VCS_Activities_View_API is
            (Check,
             VCS /= null
             and then Absolute_Filenames_Supported (VCS)
-            and then Atomic_Commands_Supported (VCS));
+            and then Atomic_Commands_Supported (VCS)
+            and then not Is_Committed (Activity));
 
          Gtk_New (Item);
          Append (Menu, Item);
@@ -789,31 +849,31 @@ package body VCS_Activities_View_API is
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_Commit_Activity'Access, Context);
-         Set_Sensitive (Item, True);
+         Set_Sensitive (Item, Active);
 
          Gtk_New (Item, Label => -"Query status");
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_Query_Status_Activity'Access, Context);
-         Set_Sensitive (Item, True);
+         Set_Sensitive (Item, Active);
 
          Gtk_New (Item, Label => -"Update");
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_Update_Activity'Access, Context);
-         Set_Sensitive (Item, True);
+         Set_Sensitive (Item, Active);
 
          Gtk_New (Item, Label => -"Compare against head revision");
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_Diff_Activity'Access, Context);
-         Set_Sensitive (Item, True);
+         Set_Sensitive (Item, Active);
 
          Gtk_New (Item, Label => -"Build patch file");
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_Build_Patch_File'Access, Context);
-         Set_Sensitive (Item, True);
+         Set_Sensitive (Item, Active);
       end if;
 
       if Activity_Section or else File_Section then
@@ -826,7 +886,7 @@ package body VCS_Activities_View_API is
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_Remove_From_Activity'Access, Context);
-         Set_Sensitive (Item, File_Section);
+         Set_Sensitive (Item, Active);
       end if;
 
       if Activity_Section then
