@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2005                       --
+--                     Copyright (C) 2004-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -137,7 +137,11 @@ package body Creation_Wizard is
          if Project = "" then
             Display_Message (Wiz, -"Specify a project name",
                              As_Error => False);
-            Grab_Focus (Page.Project_Name);
+
+            if not Has_Focus_Is_Set (Page.Project_Location) then
+               Grab_Focus (Page.Project_Name);
+            end if;
+
             return False;
          end if;
 
@@ -146,7 +150,11 @@ package body Creation_Wizard is
                              -("Invalid name for the project "
                                & "(only letters, digits and underscores)"),
                              As_Error => True);
-            Grab_Focus (Page.Project_Name);
+
+            if not Has_Focus_Is_Set (Page.Project_Location) then
+               Grab_Focus (Page.Project_Name);
+            end if;
+
             return False;
          end if;
       end;
@@ -154,7 +162,11 @@ package body Creation_Wizard is
       if Get_Text (Page.Project_Location) = "" then
          Display_Message (Wiz, -"Specify a directory to store the project in",
                           As_Error => False);
-         Grab_Focus (Page.Project_Location);
+
+         if not Has_Focus_Is_Set (Page.Project_Name) then
+            Grab_Focus (Page.Project_Location);
+         end if;
+
          return False;
       end if;
 
