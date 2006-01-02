@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -276,5 +276,48 @@ package body VCS is
          7 => Needs_Update,
          8 => Not_Registered);
    end Get_Registered_Status;
+
+   ---------------------
+   -- Get_File_Status --
+   ---------------------
+
+   function Get_File_Status
+     (Ref    : access VCS_Record'Class;
+      Status : Status_Id) return File_Status
+   is
+      function Status_For (Status : File_Status) return File_Status;
+      --  Return the File_Status for the corresponding VCS, uses the Stock_Id
+      --  as a key.
+
+      Ref_Status : constant Status_Array := Get_Registered_Status (Ref);
+
+      ----------------
+      -- Status_For --
+      ----------------
+
+      function Status_For (Status : File_Status) return File_Status is
+      begin
+         for K in Ref_Status'Range loop
+            if Ref_Status (K).Stock_Id.all = Status.Stock_Id.all then
+               return Ref_Status (K);
+            end if;
+         end loop;
+         return Ref_Status (Ref_Status'First);
+      end Status_For;
+
+   begin
+      case Status is
+         when Unknown_Id =>
+            return Status_For (Unknown);
+         when Up_To_Date_Id =>
+            return Status_For (Up_To_Date);
+         when Modified_Id =>
+            return Status_For (Modified);
+         when Removed_Id =>
+            return Status_For (Removed);
+         when Added_Id =>
+            return Status_For (Added);
+      end case;
+   end Get_File_Status;
 
 end VCS;
