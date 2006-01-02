@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2005                      --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -47,7 +47,10 @@ with GPS.Location_View;         use GPS.Location_View;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with VFS;                       use VFS;
+with VCS_Module;                use VCS_Module;
+with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
+with VCS_View;                  use VCS_View;
 
 package body Log_Utils is
 
@@ -823,25 +826,40 @@ package body Log_Utils is
                use type GNAT.OS_Lib.String_Access;
 
             begin
-               if File_Check_Script /= "" then
-                  Append (File_Args, Data (Files_Temp));
+               if Has_Status
+                   (Get_Status_Cache,
+                    Create (Data (Files_Temp)), Ref, Removed_Id)
+               then
+                  --  Remove this file from the explorer now, we do not have to
+                  --  check it as it is removed.
 
-                  Create (File_Checks,
-                          Kernel,
-                          File_Check_Script,
-                          "",
-                          File_Args,
-                          Null_List,
-                          Check_Handler'Access,
-                          -"Version Control: Checking files");
+                  Remove_File
+                    (Get_Explorer (Kernel, False, False),
+                     Create (Data (Files_Temp)));
 
-                  if First_Check = null then
-                     First_Check := Command_Access (File_Checks);
-                  else
-                     Add_Consequence_Action (Last_Check, File_Checks);
+               else
+                  --  Record a check command if necessary
+
+                  if File_Check_Script /= "" then
+                     Append (File_Args, Data (Files_Temp));
+
+                     Create (File_Checks,
+                             Kernel,
+                             File_Check_Script,
+                             "",
+                             File_Args,
+                             Null_List,
+                             Check_Handler'Access,
+                             -"Version Control: Checking files");
+
+                     if First_Check = null then
+                        First_Check := Command_Access (File_Checks);
+                     else
+                        Add_Consequence_Action (Last_Check, File_Checks);
+                     end if;
+
+                     Last_Check := Command_Access (File_Checks);
                   end if;
-
-                  Last_Check := Command_Access (File_Checks);
                end if;
 
                if Log_Check_Script /= "" then
