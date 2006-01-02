@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -110,12 +110,24 @@ package VCS_View is
    --  Return the Iter associated with the given File.
    --  Return Null_Iter if no such iter was found.
 
+   function Get_Iter_From_File
+     (Explorer : access VCS_View_Record'Class;
+      File     : VFS.Virtual_File;
+      Parent   : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+   --  Return the Iter associated with the given File under Parent.
+   --  Return Null_Iter if no such iter was found.
+
    function Get_Iter_For_Root_Node
      (Explorer : access VCS_View_Record'Class;
       Column   : Gint;
       Value    : String) return Gtk_Tree_Iter;
    --  Look into the root nodes and return the iterator for the node with the
    --  given Value for the specified column.
+
+   procedure Remove_File
+     (Explorer : access VCS_View_Record'Class;
+      File     : VFS.Virtual_File);
+   --  Remove the given file from the explorer
 
    procedure Refresh (Explorer : access VCS_View_Record'Class);
    --  Redraw the files in the VCS Explorer

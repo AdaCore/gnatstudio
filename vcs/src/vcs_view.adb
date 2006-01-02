@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -393,6 +393,23 @@ package body VCS_View is
    begin
       Check_Files (Explorer, Root_Only => False);
       return Result;
+   end Get_Iter_From_File;
+
+   function Get_Iter_From_File
+     (Explorer : access VCS_View_Record'Class;
+      File     : VFS.Virtual_File;
+      Parent   : Gtk_Tree_Iter) return Gtk_Tree_Iter
+   is
+      Full_Name : constant String := VFS.Full_Name (File, True).all;
+      Iter      : Gtk_Tree_Iter := Children (Explorer.Model, Parent);
+   begin
+      while Iter /= Null_Iter loop
+         if Get_String (Explorer.Model, Iter, Name_Column) = Full_Name then
+            return Iter;
+         end if;
+         Next (Explorer.Model, Iter);
+      end loop;
+      return Null_Iter;
    end Get_Iter_From_File;
 
    ----------------------------
@@ -858,5 +875,20 @@ package body VCS_View is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Select_Files_Same_Status;
+
+   -----------------
+   -- Remove_File --
+   -----------------
+
+   procedure Remove_File
+     (Explorer : access VCS_View_Record'Class;
+      File     : VFS.Virtual_File)
+   is
+      Iter : Gtk_Tree_Iter := Get_Iter_From_File (Explorer, File);
+   begin
+      if Iter /= Null_Iter then
+         Remove (Explorer.Model, Iter);
+      end if;
+   end Remove_File;
 
 end VCS_View;
