@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -132,6 +132,16 @@ package VCS is
      (Unknown_Label'Access, Unknown_Stock'Access);
    --  The status is not yet determined or the VCS repository is not able to
    --  tell (disconnected, locked, broken, etc)
+
+   type Status_Id
+     is (Unknown_Id, Up_To_Date_Id, Modified_Id, Removed_Id, Added_Id);
+
+   function Get_File_Status
+     (Ref    : access VCS_Record'Class;
+      Status : Status_Id) return File_Status;
+   --  Returns the File_Status given one of standard status. This routine uses
+   --  the File_Status Stock_Id as the key. Return the Unknown status if the
+   --  key is not found for the given VCS.
 
    type Status_Array is array (Natural range <>) of File_Status;
    type Status_Array_Access is access Status_Array;
