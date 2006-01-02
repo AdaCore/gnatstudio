@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -91,5 +91,27 @@ package body VCS_Status is
       Status := Copy (Status);
       Status_Hash.Set (Cache.T.all, File, Status);
    end Set_Cache;
+
+   ----------------
+   -- Has_Status --
+   ----------------
+
+   function Has_Status
+     (Cache  : Status_Cache;
+      File   : VFS.Virtual_File;
+      Ref    : VCS_Access;
+      Status : Status_Id) return Boolean
+   is
+      S : constant File_Status := Get_File_Status (Ref, Status);
+      L : constant Line_Record := Status_Hash.Get (Cache.T.all, File);
+   begin
+      if L /= No_Data
+        and then L.Status.Status.Stock_Id.all = S.Stock_Id.all
+      then
+         return True;
+      else
+         return False;
+      end if;
+   end Has_Status;
 
 end VCS_Status;

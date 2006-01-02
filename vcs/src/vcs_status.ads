@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -50,6 +50,13 @@ package VCS_Status is
 
    procedure Clear_Cache (Cache : Status_Cache);
    --  Clear all recorded file status
+
+   function Has_Status
+     (Cache  : Status_Cache;
+      File   : VFS.Virtual_File;
+      Ref    : VCS_Access;
+      Status : Status_Id) return Boolean;
+   --  Returns True if the File status correspond to Status
 
 private
 
