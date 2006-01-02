@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -566,6 +566,7 @@ package body VCS_View_API is
             while Activity /= No_Activity loop
                if Project_Path (Get_Root_Project (Get_Registry (Kernel).all))
                  = Get_Project_Path (Activity)
+                 and then not Is_Committed (Activity)
                then
                   Found := True;
                   Gtk_New (Item, Label => Get_Name (Activity));
