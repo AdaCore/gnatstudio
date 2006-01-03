@@ -6782,7 +6782,7 @@ last line in the range. To add or remove single columns from the
 selection, hold down the @key{Control} key and left-click on the
 columns that you want to select/unselect. It is also possible to
 select files having the same status using the @code{Select files same status}
-menu entre. See @ref{The Version Control Contextual Menu}.
+menu entry. See @ref{The Version Control Contextual Menu}.
 
 @cindex interactive search
 The explorer also provides an interactive search capability allowing you to
