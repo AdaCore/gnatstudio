@@ -40,18 +40,16 @@ def sort_selection (revert):
    to      = ed.selection_end()
    selection = ed.get_chars (start, to)
 
-   if selection == "" and context.__class__ == GPS.EntityContext:
+   if selection == "" or context.__class__ == GPS.EntityContext:
       return;
       
-   if selection != "":
-      lines = string.split (selection,"\n");
-      # strip off extraneous trailing "" line
-      lines = lines[:-1];
-      lines.sort ();
-      if revert:
-         lines.reverse ();
-      ed.start_undo_group()
-      ed.delete (start, to)
-      ed.insert (start, "\n".join (lines) + "\n")
-      ed.finish_undo_group()
-
+   lines = string.split (selection,"\n");
+   # strip off extraneous trailing "" line
+   lines = lines[:-1];
+   lines.sort ();
+   if revert:
+      lines.reverse ();
+   ed.start_undo_group()
+   ed.delete (start, to)
+   ed.insert (start, "\n".join (lines) + "\n")
+   ed.finish_undo_group()
