@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -255,6 +255,16 @@ package Language is
    --  If Stop_At_First_Blank_Line is True and we see an empty line first,
    --  set Index to 0. Likewise if no comment is found before the end of the
    --  buffer.
+
+   procedure Skip_To_Previous_Comment_Start
+     (Context : Language_Context;
+      Buffer  : String;
+      Index   : in out Natural;
+      Stop_At_First_Blank_Line : Boolean := True);
+   --  Skip lines of code (backward) until we find the start of a comment.
+   --  If Stop_At_First_Blank_Line is True and we see an empty line first,
+   --  set Index to 0. Likewise if no comment is found before the beginning
+   --  of the buffer.
 
    ----------------------
    -- Source Analyzing --
