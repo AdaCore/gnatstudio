@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2006                            --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -60,12 +60,13 @@ package body Doc_Utils is
       Current : Integer;
    begin
       Current := Decl_Index;
-      Skip_Lines (Buffer, -1, Current);
       Comment_Start := Current;
-      Skip_To_Current_Comment_Block_Start (Context, Buffer, Comment_Start);
+      Skip_To_Previous_Comment_Start (Context, Buffer, Comment_Start);
 
       if Comment_Start /= 0 then
-         Comment_End := Line_End (Buffer, Current);
+         Comment_End := Comment_Start;
+         Skip_To_Current_Comment_Block_End (Context, Buffer, Comment_End);
+         Comment_End := Line_End (Buffer, Comment_End);
 
          if Active (Me) then
             Trace (Me,
@@ -115,13 +116,14 @@ package body Doc_Utils is
       Declaration_File_Contents : String := "") return String
    is
       Buffer             : String_Access :=
-        Declaration_File_Contents'Unrestricted_Access;
+                             Declaration_File_Contents'Unrestricted_Access;
       Index              : Natural := Declaration_File_Contents'First;
       Declaration_File   : constant Virtual_File :=
-        Get_Filename (Get_Declaration_Of (Entity).File);
-      Lang               : constant Language_Access := Get_Language_From_File
-        (Language_Handler (Lang_Handler),
-         Declaration_File);
+                             Get_Filename (Get_Declaration_Of (Entity).File);
+      Lang               : constant Language_Access :=
+                             Get_Language_From_File
+                               (Language_Handler (Lang_Handler),
+                                Declaration_File);
       Current, Beginning : Natural;
       Context            : Language_Context_Access;
       Location           : File_Location;
