@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -946,20 +946,63 @@ package body Language is
    begin
       while Index < Buffer'Last loop
          Skip_Lines (Buffer, 1, Index);
+
          if Stop_At_First_Blank_Line
            and then Buffer (Index) = ASCII.LF
          then
             Index := 0;
             return;
          end if;
+
          Skip_Blanks (Buffer, Index);
+
          if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
            No_Comment
          then
             return;
          end if;
       end loop;
+
       Index := 0;
    end Skip_To_Next_Comment_Start;
+
+   ------------------------------------
+   -- Skip_To_Previous_Comment_Start --
+   ------------------------------------
+
+   procedure Skip_To_Previous_Comment_Start
+     (Context : Language_Context;
+      Buffer  : String;
+      Index   : in out Natural;
+      Stop_At_First_Blank_Line : Boolean := True)
+   is
+      Index_Save : Natural;
+   begin
+      while Index >= Buffer'First loop
+         Index_Save := Index;
+
+         Skip_Lines (Buffer, -1, Index);
+
+         if Index = Index_Save
+           or else (Stop_At_First_Blank_Line
+                    and then Buffer (Index) = ASCII.LF)
+         then
+            Index := 0;
+            return;
+         end if;
+
+         Skip_Blanks (Buffer, Index);
+
+         if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
+           No_Comment
+         then
+            Skip_To_Current_Comment_Block_Start
+              (Context, Buffer, Index);
+            return;
+         end if;
+      end loop;
+
+      Index := 0;
+   end Skip_To_Previous_Comment_Start;
 
 end Language;
