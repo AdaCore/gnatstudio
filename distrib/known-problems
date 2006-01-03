@@ -16,6 +16,12 @@ Known Problems fixed in GPS 3.1.1
               VCS diff operations.
   Workaround: Use the VCS from the command line
 
+- EC07-015 Sorting Ascending/Descending problem with empty selection
+  Problem:    Where there is no line selected the commands Sort Ascending and
+              Sort Descending are not working properly. In this case, the sort
+              should do nothing instead of swapping some characters.
+  Workaround: Sort the lines manually
+
 Known Problems fixed in GPS 3.1.0
 
 - EB22-001 Replace does not work well on files containing TABs
