@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -127,6 +127,14 @@ package body String_Utils is
          Index := Line_Start (Buffer, Index);
          if Index > 2 then
             Index := Index - 2;
+
+            if Index > 1
+              and then Buffer (Index) = ASCII.CR
+              and then Buffer (Index - 1) /= ASCII.LF
+            then
+               Index := Index - 1;
+            end if;
+
             for Line in 1 .. -Lines loop
                while Index >= Buffer'First
                  and then Buffer (Index) /= ASCII.LF
