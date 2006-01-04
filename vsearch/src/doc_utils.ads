@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
---                             AdaCore                               --
+--                      Copyright (C) 2006                           --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 --  For testing purposes, this file shouldn't depend on gps-kernel.ads
-
 
 with Entities;
 with Language_Handlers;
