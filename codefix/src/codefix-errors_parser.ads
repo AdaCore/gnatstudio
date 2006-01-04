@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -29,7 +29,6 @@
 --  caption should appear in Formal_Errors, in order to minimize problems
 --  following changes in GNAT error system.
 
-
 --  Adding an error parser is quite easy. An error parser is a tagged type
 --  derived from 'Error_Parser'. The two values of the discriminant should be
 --  defined at the derivation. 'Category' is used to know which category of
@@ -44,7 +43,6 @@
 --  'Error_Parser'. That's why you can create more than one regular expression
 --  for a parser.
 
-
 --  After having chosen the two discriminants, you must at least implement the
 --  two abstract functions. The first one is 'Initialize':
 
@@ -56,7 +54,6 @@
 --  in fact an access to Pattern_Matcher (automatically freed in the Free
 --  function of 'Error_Parser'). Basically, the creation of a new regular
 --  expression is ' := new Pattern_Matcher'(Compile (...))'.
-
 
 --  The second procedure, the most important one is the procedure Fix:
 
@@ -103,7 +100,6 @@
 --  Formal_Errors to generate at least one Text_Command and add it in
 --  'Solutions'.
 
-
 --  After having created your own 'Error_Parser', you have to add it in the
 --  parsers list. Nothing easier, just call the function Add_Parser with an
 --  instantiation of your parser. Just a thing to care about: the order of the
@@ -111,7 +107,6 @@
 --  possibility before the other ones (to make structures like 'this one is
 --  possible only if the previous isn't). That's the only case where the order
 --  matters.
-
 
 --  After having created a new parser, you probably have to create a new
 --  function in formal error. There is no real rule, just look at examples and
@@ -671,6 +666,21 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'kw not allowed' etc.
 
+   type Already_Use_Visible is new Error_Parser
+     (new String'("Useless_Statement"), 1)
+   with null record;
+
+   procedure Initialize (This : in out Already_Use_Visible);
+
+   procedure Fix
+     (This         : Already_Use_Visible;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'pckg is already use_visible"
+
    type Should_Be_In is new Error_Parser
      (new String'("Wrong_Indentation"), 1)
    with null record;
@@ -971,6 +981,5 @@ package Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problems like 'non visible declaration at'.
-
 
 end Codefix.Errors_Parser;

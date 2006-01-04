@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2005                      --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1110,6 +1110,30 @@ package body Codefix.Errors_Parser is
       Free (Word_Read);
    end Fix;
 
+   -------------------------
+   -- Already_Use_Visible --
+   -------------------------
+
+   procedure Initialize (This : in out Already_Use_Visible) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("""([\w])+"" is already use_visible")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Already_Use_Visible;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List, Matches);
+   begin
+      Solutions := Remove_Use_Clause (Current_Text, Message);
+   end Fix;
+
    ------------------
    -- Should_Be_In --
    ------------------
@@ -1432,7 +1456,6 @@ package body Codefix.Errors_Parser is
 
             raise Uncorrectable_Message;
       end;
-
 
       if Construct_Info.Category = Cat_Variable
         or else Construct_Info.Category = Cat_Local_Variable
