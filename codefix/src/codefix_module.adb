@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -776,6 +776,7 @@ package body Codefix_Module is
       Add_Parser (new Unexpected_Word);
       Add_Parser (new Kw_Not_Allowed);
       Add_Parser (new Sep_Not_Allowed);
+      Add_Parser (new Already_Use_Visible);
       Add_Parser (new Should_Be_In);
       Add_Parser (new Bad_Column);
       Add_Parser (new Main_With_Missing);
