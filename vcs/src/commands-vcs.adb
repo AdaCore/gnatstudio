@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,10 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Intl;    use GPS.Intl;
-with VFS;         use VFS;
-with Traces;      use Traces;
-with Basic_Types; use Basic_Types;
+with GPS.Intl;            use GPS.Intl;
+with Traces;              use Traces;
+with Basic_Types;         use Basic_Types;
+with VCS_Module;          use VCS_Module;
+with VCS_Status;          use VCS_Status;
+with VCS_View;            use VCS_View;
+with VCS_View.Activities; use VCS_View.Activities;
+with VFS;                 use VFS;
 
 package body Commands.VCS is
 
@@ -69,6 +73,46 @@ package body Commands.VCS is
       Item.Filenames := Copy_String_List (Filenames);
       Item.Logs      := Copy_String_List (Logs);
       Item.Action    := Action;
+   end Create;
+
+   procedure Create
+     (Item      : out Get_Status_Command_Access;
+      Rep       : VCS_Access;
+      Filenames : String_List.List) is
+   begin
+      Item := new Get_Status_Command_Type;
+      Item.Rep       := Rep;
+      Item.Filenames := Copy_String_List (Filenames);
+   end Create;
+
+   procedure Create
+     (Item      : out Update_Files_Command_Access;
+      Kernel    : Kernel_Handle;
+      Filenames : String_List.List) is
+   begin
+      Item := new Update_Files_Command_Type;
+      Item.Kernel    := Kernel;
+      Item.Filenames := Copy_String_List (Filenames);
+   end Create;
+
+   procedure Create
+     (Item      : out Generic_Kernel_Command_Access;
+      Kernel    : Kernel_Handle;
+      Callback  : Context_Callback.Marshallers.Void_Marshaller.Handler) is
+   begin
+      Item := new Generic_Kernel_Command;
+      Item.Kernel   := Kernel;
+      Item.Callback := Callback;
+   end Create;
+
+   procedure Create
+     (Item     : out Check_Activity_Command_Access;
+      Kernel   : Kernel_Handle;
+      Activity : Activity_Id) is
+   begin
+      Item := new Check_Activity_Command_Type;
+      Item.Kernel := Kernel;
+      Item.Activity := Activity;
    end Create;
 
    -------------
@@ -156,44 +200,6 @@ package body Commands.VCS is
          return Failure;
    end Execute;
 
-   ------------
-   -- Create --
-   ------------
-
-   procedure Create
-     (Item      : out Get_Status_Command_Access;
-      Rep       : VCS_Access;
-      Filenames : String_List.List) is
-   begin
-      Item := new Get_Status_Command_Type;
-      Item.Rep       := Rep;
-      Item.Filenames := Copy_String_List (Filenames);
-   end Create;
-
-   procedure Create
-     (Item      : out Update_Files_Command_Access;
-      Kernel    : Kernel_Handle;
-      Filenames : String_List.List) is
-   begin
-      Item := new Update_Files_Command_Type;
-      Item.Kernel    := Kernel;
-      Item.Filenames := Copy_String_List (Filenames);
-   end Create;
-
-   procedure Create
-     (Item      : out Generic_Kernel_Command_Access;
-      Kernel    : Kernel_Handle;
-      Callback  : Context_Callback.Marshallers.Void_Marshaller.Handler) is
-   begin
-      Item := new Generic_Kernel_Command;
-      Item.Kernel   := Kernel;
-      Item.Callback := Callback;
-   end Create;
-
-   -------------
-   -- Execute --
-   -------------
-
    function Execute
      (Command : access Get_Status_Command_Type) return Command_Return_Type is
    begin
@@ -235,6 +241,40 @@ package body Commands.VCS is
       return Success;
    end Execute;
 
+   function Execute
+     (Command : access Check_Activity_Command_Type)
+      return Command_Return_Type
+   is
+      use type String_List.List_Node;
+      Explorer  : constant VCS_Activities_View_Access :=
+                    Get_Activities_Explorer (Command.Kernel, False, False);
+      VCS_Ref   : constant VCS_Access :=
+                    Get_VCS_For_Activity (Command.Kernel, Command.Activity);
+      Files     : constant String_List.List :=
+                    Get_Files_In_Activity (Command.Activity);
+      Files_It  : String_List.List_Node;
+      Committed : Boolean := True;
+   begin
+      --  Set the committed status if all files are up-to-date
+
+      Files_It := String_List.First (Files);
+
+      while Files_It /= String_List.Null_Node loop
+         Committed := Committed
+           and Has_Status
+             (Get_Status_Cache,
+              Create (Full_Filename => String_List.Data (Files_It)),
+              VCS_Ref, Up_To_Date_Id);
+         Files_It := String_List.Next (Files_It);
+      end loop;
+
+      Set_Committed (Command.Kernel, Command.Activity, To => Committed);
+      Refresh (Explorer);
+
+      Command_Finished (Command, True);
+      return Success;
+   end Execute;
+
    ----------
    -- Name --
    ----------
@@ -266,6 +306,12 @@ package body Commands.VCS is
       pragma Unreferenced (X);
    begin
       return -"VCS";
+   end Name;
+
+   function Name (X : access Check_Activity_Command_Type) return String is
+      pragma Unreferenced (X);
+   begin
+      return -"Check Activity";
    end Name;
 
 end Commands.VCS;
