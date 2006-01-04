@@ -110,12 +110,12 @@ EA14-023 Scenario View back in the default desktop (2005-11-18)
 
   Keywords: Desktop, Scenario View
 
-E804-013 Codefix handles "pckg is already use_visible" (2006-01-04)
+E804-013 Fixing "pckg is already use_visible" warnings (2006-01-04)
 
-  Codefix now handles messages like "pckg already use_visible" by removing the
-  redundant use clause.
+  Code fixing now handles messages like "pckg already use_visible" by removing 
+  the redundant use clause.
 
-  Keywords: Codefix
+  Keywords: Code fixing
 
 E512-008 Saving breakpoints between sessions (2005-11-29)
 
