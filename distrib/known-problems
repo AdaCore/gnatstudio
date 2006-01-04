@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.1
 
+- EC29-002 Undesired input focus jumps in project wizard
+  Problem:    In the project wizard, in the first page, if the first entry
+              is empty, typing into the second entry causes the input focus
+              to be given to the first entry.
+  Workaround: Type something in the first entry, or use the "Browse" button
+
 - EC20-019 Comment extraction before entities declarations under Windows
   Problem:    When pointing an entity declared in a file containing Windows
               line terminators, the comment extracted is the first one
