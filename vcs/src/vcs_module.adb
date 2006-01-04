@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -816,7 +816,7 @@ package body VCS_Module is
       Ref    : VCS_Access;
       VCS_Identifier : constant String := Nth_Arg (Data, 1);
       File           : constant VFS.Virtual_File :=
-        Create (Nth_Arg (Data, 2), Kernel);
+                         Create (Nth_Arg (Data, 2), Kernel);
       S              : constant String := Nth_Arg (Data, 3);
    begin
       Ref := Get_VCS_From_Id (VCS_Identifier);

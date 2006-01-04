@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -496,7 +496,7 @@ package body GPS.Kernel.Task_Manager is
       Language : access Scripting_Language_Record'Class)
       return Class_Instance
    is
-      Node     : Instance_List.List_Node;
+      Node : Instance_List.List_Node;
    begin
       Node := First (Command.Instances);
 

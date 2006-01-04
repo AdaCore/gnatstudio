@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2005                      --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -96,7 +96,7 @@ package GPS.Kernel.Task_Manager is
 
    function Get_Task_Manager
      (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access;
-   --  Return the GPS task manager.
+   --  Return the GPS task manager
 
 private
 
@@ -108,7 +108,7 @@ private
    --  a script, for a given command.
 
    procedure Free (Item : in out Instance_Item);
-   --  Free the memory of the class instance in this class item.
+   --  Free the memory of the class instance in this class item
 
    package Instance_List is new Generic_List (Instance_Item);
    use Instance_List;
