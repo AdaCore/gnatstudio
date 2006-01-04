@@ -708,22 +708,23 @@ package body Log_Utils is
          end if;
       end Add_LF_To_Log;
 
-      Logs               : String_List.List;
-      Files_Temp         : List_Node := First (Files);
+      Logs                   : String_List.List;
+      Files_Temp             : List_Node := First (Files);
 
-      Commit_Command     : Log_Action_Command_Access;
-      Get_Status_Command : Get_Status_Command_Access;
+      Commit_Command         : Log_Action_Command_Access;
+      Get_Status_Command     : Get_Status_Command_Access;
+      Check_Activity_Command : Check_Activity_Command_Access;
 
-      Project            : Project_Type;
+      Project                : Project_Type;
 
-      Success            : Boolean;
+      Success                : Boolean;
       pragma Unreferenced (Success);
 
-      Cancel_All         : Boolean := False;
+      Cancel_All             : Boolean := False;
 
-      Log_Checks         : External_Command_Access;
-      File_Checks        : External_Command_Access;
-      File               : Virtual_File;
+      Log_Checks             : External_Command_Access;
+      File_Checks            : External_Command_Access;
+      File                   : Virtual_File;
 
       First_Check, Last_Check : Command_Access := null;
 
@@ -744,6 +745,12 @@ package body Log_Utils is
          end loop;
 
       else
+         --  Create the Check_Activity command
+
+         if Action = Commit then
+            Create (Check_Activity_Command, Kernel, Activity);
+         end if;
+
          if Get_Group_Commit (Activity) then
             declare
                L : Unbounded_String;
@@ -796,6 +803,14 @@ package body Log_Utils is
       Add_Consequence_Action
         (Command_Access (Commit_Command),
          Command_Access (Get_Status_Command));
+
+      --  The Check_Activity command is a consequence of the Get_Status command
+
+      if Activity /= No_Activity and then Action = Commit then
+         Add_Consequence_Action
+           (Command_Access (Get_Status_Command),
+            Command_Access (Check_Activity_Command));
+      end if;
 
       --  Create the file checks and the log checks
 
