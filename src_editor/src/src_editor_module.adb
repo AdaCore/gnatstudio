@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1290,26 +1290,7 @@ package body Src_Editor_Module is
       end if;
 
       Source := Source_Editor_Box (Get_Widget (Child));
-
-      declare
-         Old_Name : constant Virtual_File := Get_Filename (Source);
-      begin
-         --  This call will recompute the project if needed, and update the
-         --  editor's associated language automatically
-
-         Save_To_File (Source, Name, Success);
-
-         declare
-            New_Name : constant Virtual_File := Get_Filename (Source);
-         begin
-            --  Update the title, in case "save as..." was used.
-
-            if Old_Name /= New_Name then
-               Set_Title
-                 (Child, Full_Name (New_Name).all, Base_Name (New_Name));
-            end if;
-         end;
-      end;
+      Save_To_File (Source, Name, Success);
    end Save_To_File;
 
    ------------------
