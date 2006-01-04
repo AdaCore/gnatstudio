@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1414,7 +1414,7 @@ package body VCS.Generic_VCS is
       Command.Dir            := new String'(Dir);
 
       Launch_Background_Command
-        (Rep.Kernel, Command_Access (Command), False, False, "");
+        (Rep.Kernel, Command_Access (Command), True, False, "");
    end Generic_Parse_Status;
 
    ------------------
