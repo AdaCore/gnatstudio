@@ -46,6 +46,16 @@ EB23-004 New attribute in Project Properties: externally_built (2005-11-24)
 
   Keywords: Project
 
+EB21-015 VCS Explorer redesign (2005-12-28)
+
+  The VCS Explorer has been completely redesigned. The new version displays
+  the status in a project hierarchy instead of a flat view. The status are
+  now always added into the explorer instead of replacing the current ones.
+  A set of actions, in the VCS contextual menu, have been added to help manage
+  this new explorer. Also, files edited in GPS are automatically added into
+  the explorer with the Modified status. This helps finding which files have
+  been changed during a GPS session.
+
 EB21-009 Debugger windows not saved in the desktop (2005-11-30)
 
   If you save the desktop while a debugger is running, the saved desktop now
@@ -61,7 +71,7 @@ EB18-009 Status column in the Task Manager was removed (2005-12-01)
 
   Keywords: Task Manager
 
-EB18-006 Size & position of GPS window now specific to each project (2005-11-18)
+EB18-006 Size & position of GPS window specific to each project (2005-11-18)
 
   The size of the GPS main window is now saved as part of each project
   saved. Thus the default desktop can use a size other than the one you
