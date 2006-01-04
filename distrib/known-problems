@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 3.1.1
 
+- EC20-019 Comment extraction before entities declarations under Windows
+  Problem:    When pointing an entity declared in a file containing Windows
+              line terminators, the comment extracted is the first one
+              following the entity declaration which is most of the time not
+              accurate.
+  Workaround: Put the comment associated with an entity right after its
+              declaration.
+
 - EC20-017 Loading an application on the debugger under VxWorks does not work
   Problem:    When using Debug->Initialize-><main unit> using a VxWorks,
               the executable associated with the main unit is not loaded.
