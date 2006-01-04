@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@ with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
 with String_List_Utils;    use String_List_Utils;
 with VCS;                  use VCS;
 with Commands.Interactive; use Commands.Interactive;
+with VCS_Activities;       use VCS_Activities;
 
 package Commands.VCS is
 
@@ -41,6 +42,11 @@ package Commands.VCS is
    end record;
    type Generic_Kernel_Command_Access is access all Generic_Kernel_Command;
 
+   --  Activity committed action (check if activity can be closed)
+
+   type Check_Activity_Command_Type is new Root_Command with private;
+   type Check_Activity_Command_Access is access Check_Activity_Command_Type;
+
    procedure Create
      (Item      : out Generic_Kernel_Command_Access;
       Kernel    : Kernel_Handle;
@@ -58,9 +64,6 @@ package Commands.VCS is
    --  The log files for files that are up-to-date will be erased
    --  after this command completes.
 
-   function Execute
-     (Command : access Log_Action_Command_Type) return Command_Return_Type;
-
    procedure Create
      (Item      : out Get_Status_Command_Access;
       Rep       : VCS_Access;
@@ -75,6 +78,14 @@ package Commands.VCS is
    --  Create a new Update_Files_Command.
    --  The user must free Filenames after calling Create.
 
+   procedure Create
+     (Item     : out Check_Activity_Command_Access;
+      Kernel   : Kernel_Handle;
+      Activity : Activity_Id);
+   --  Create a new Check_Activity_Command.
+
+   function Execute
+     (Command : access Log_Action_Command_Type) return Command_Return_Type;
    function Execute
      (Command : access Get_Status_Command_Type) return Command_Return_Type;
    function Execute
@@ -82,11 +93,15 @@ package Commands.VCS is
    function Execute
      (Command : access Generic_Kernel_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
+   function Execute
+     (Command : access Check_Activity_Command_Type)
+      return Command_Return_Type;
 
    function Name (X : access Log_Action_Command_Type) return String;
    function Name (X : access Get_Status_Command_Type) return String;
    function Name (X : access Update_Files_Command_Type) return String;
    function Name (X : access Generic_Kernel_Command) return String;
+   function Name (X : access Check_Activity_Command_Type) return String;
 
    procedure Free (X : in out Log_Action_Command_Type);
    procedure Free (X : in out Get_Status_Command_Type);
@@ -110,6 +125,11 @@ private
       Action    : VCS_Action;
       Filenames : String_List.List;
       Logs      : String_List.List;
+   end record;
+
+   type Check_Activity_Command_Type is new Root_Command with record
+      Kernel   : Kernel_Handle;
+      Activity : Activity_Id;
    end record;
 
 end Commands.VCS;
