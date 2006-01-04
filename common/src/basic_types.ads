@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -48,6 +48,7 @@ package Basic_Types is
 
    subtype Unchecked_String is String (Positive);
    pragma Suppress (All_Checks, Unchecked_String);
+   --  Do not use this type directly, use Unchecked_String_Access instead.
 
    type Unchecked_String_Access is access all Unchecked_String;
    --  For efficiency reasons, use this type compatible with C char*,
