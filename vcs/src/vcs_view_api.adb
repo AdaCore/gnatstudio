@@ -1115,19 +1115,11 @@ package body VCS_View_API is
          begin
             Get_Log_From_ChangeLog (Kernel, File);
 
-            declare
-               Log_File     : constant Virtual_File :=
-                                Get_Log_From_File (Kernel, File, True);
-               Already_Open : Boolean;
-            begin
-               Already_Open := Is_Open (Kernel, Log_File);
-               Open_File_Editor (Kernel, Log_File);
-
-               if not Already_Open then
-                  Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
-                         Reuse_If_Possible => True, After => True);
-               end if;
-            end;
+            Open_File_Editor
+              (Kernel,
+               Get_Log_From_File (Kernel, File, True),
+               Group            => Group_Consoles,
+               Initial_Position => Position_Bottom);
          end;
 
          String_List.Next (List);
@@ -1314,7 +1306,7 @@ package body VCS_View_API is
             Open_File_Editor
               (Kernel,
                Get_Log_From_File (Kernel, File, True, Suffix),
-               Group    => Group_Consoles,
+               Group            => Group_Consoles,
                Initial_Position => Position_Bottom);
          end if;
 
