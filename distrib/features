@@ -1,7 +1,7 @@
 GPS NEW FEATURES LIST
 =====================
 
-Copyright (c) 2005, AdaCore
+Copyright (c) 2005-2006, AdaCore
 
 This file contains a list of new features introduced in GPS.
 A full description of all GPS features can be found in the GPS
@@ -13,6 +13,14 @@ of the feature.
 
 New features in GPS 3.2.0
 -------------------------
+
+EB804-013 Codefix handles "pckg is already use_visible" (2006-01-04)
+
+  Codefix now handles messages like "pckg already use_visible" by removing the
+  redundant use clause.
+
+  Keywords: Codefix
+
 
 EC29-004 GPS Activities improvement (2006-01-04)
 
