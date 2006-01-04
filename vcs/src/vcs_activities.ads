@@ -65,7 +65,10 @@ package VCS_Activities is
    procedure Set_Name (Activity : Activity_Id; Name : String);
    --  Set the name of the activity
 
-   procedure Set_Committed (Activity : Activity_Id; To : Boolean);
+   procedure Set_Committed
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Activity : Activity_Id;
+      To       : Boolean);
    --  Set the committed status for this activity
 
    function Is_Committed (Activity : Activity_Id) return Boolean;

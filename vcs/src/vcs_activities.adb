@@ -605,11 +605,16 @@ package body VCS_Activities is
    -- Set_Committed --
    -------------------
 
-   procedure Set_Committed (Activity : Activity_Id; To : Boolean) is
+   procedure Set_Committed
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Activity : Activity_Id;
+      To       : Boolean)
+   is
       Item : Activity_Record := Get (Activity);
    begin
       Item.Committed := To;
       Set (Activity, Item);
+      Save_Activities (Kernel);
    end Set_Committed;
 
    ------------------
