@@ -6,12 +6,6 @@ Known Problems fixed in GPS 3.2.0
               to some instabilities after a long run.
   Workaround: Restart GPS from time to time
 
-- EC07-015 Sorting Ascending/Descending problem with empty selection
-  Problem:    Where there is no line selected the commands Sort Ascending and
-              Sort Descending are not working properly. In this case, the sort
-              should do nothing instead of swapping some characters.
-  Workaround: Sort the lines manually
-
 - EC07-009 Leave focus on selected window in the bookmarks view
   Problem:    When you select an existing bookmark in the bookmarks view, the
               focus remains on the bookmark view instead of going to the
