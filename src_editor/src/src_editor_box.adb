@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1769,6 +1769,10 @@ package body Src_Editor_Box is
       Part          : Projects.Unit_Part;
 
       Buffer        : GNAT.OS_Lib.String_Access;
+      Old_Name      : constant Virtual_File := Get_Filename (Editor);
+      Child         : constant MDI_Child := Find_MDI_Child
+        (Get_MDI (Get_Kernel (Editor)), Editor);
+
       use type Basic_Types.String_Access;
    begin
       --  Do not authorize saving a read-only file, unless we save it to
@@ -1904,6 +1908,20 @@ package body Src_Editor_Box is
       if Success then
          Set_Text (Editor.Modified_Label, -"Saved");
       end if;
+
+      declare
+         New_Name : constant Virtual_File := Get_Filename (Editor);
+      begin
+         --  Update the title, in case "save as..." was used, or a new file is
+         --  created
+
+         if Old_Name /= New_Name then
+            Set_Title
+              (Child,
+               Full_Name (New_Name).all,
+               Base_Name (New_Name));
+         end if;
+      end;
    end Save_To_File;
 
    --------------------------------
