@@ -38,6 +38,13 @@ def sort_selection (revert):
    ed      = GPS.EditorBuffer.get (context.file())
    start   = ed.selection_start()
    to      = ed.selection_end()
+
+   # If the end is at the first column we really want to sort the lines
+   # before the current one.
+
+   if to.column() == 1:
+	to = to.forward_char (-1)
+
    selection = ed.get_chars (start, to)
 
    if selection == "" or context.__class__ == GPS.EntityContext:
