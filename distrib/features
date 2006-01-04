@@ -14,6 +14,13 @@ of the feature.
 New features in GPS 3.2.0
 -------------------------
 
+EC29-004 GPS Activities improvement (2006-01-04)
+
+  A VCS activity is now closed if all the files have been properly committed.
+  Files part of a committed (or closed) activity can be assigned to another
+  activity. It is only possible to delete a committed activity, all other
+  actions are disabled.
+
 EB30-005 Saving the contents of the Data Window (2005-11-30)
 
   Whenever you close the debugger data window (for instance when the debugger
