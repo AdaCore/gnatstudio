@@ -22,6 +22,13 @@ Known Problems fixed in GPS 3.1.1
               should do nothing instead of swapping some characters.
   Workaround: Sort the lines manually
 
+- EB22-005 Reset switches for a file to default leaves the attribute in project
+  Problem:    If you open the Project->Edit File Switches, and reset the
+              switches for one of the files to the default value, an entry is
+              still left in the project file. Further changes to the default
+              switches are not reflected for this file
+  Workaround: Edit the project file manually
+
 Known Problems fixed in GPS 3.1.0
 
 - EB22-001 Replace does not work well on files containing TABs
