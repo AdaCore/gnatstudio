@@ -12,9 +12,3 @@ Known Problems fixed in GPS 3.2.0
               associated editor.
   Workaround: Select the bookmark and then the editor
 
-- EB22-005 Reset switches for a file to default leaves the attribute in project
-  Problem:    If you open the Project->Edit File Switches, and reset the
-              switches for one of the files to the default value, an entry is
-              still left in the project file. Further changes to the default
-              switches are not reflected for this file
-  Workaround: Edit the project file manually
