@@ -14,14 +14,6 @@ of the feature.
 New features in GPS 3.2.0
 -------------------------
 
-EB804-013 Codefix handles "pckg is already use_visible" (2006-01-04)
-
-  Codefix now handles messages like "pckg already use_visible" by removing the
-  redundant use clause.
-
-  Keywords: Codefix
-
-
 EC29-004 GPS Activities improvement (2006-01-04)
 
   A VCS activity is now closed if all the files have been properly committed.
@@ -117,6 +109,13 @@ EA14-023 Scenario View back in the default desktop (2005-11-18)
   previous releases is displayed again by default.
 
   Keywords: Desktop, Scenario View
+
+E804-013 Codefix handles "pckg is already use_visible" (2006-01-04)
+
+  Codefix now handles messages like "pckg already use_visible" by removing the
+  redundant use clause.
+
+  Keywords: Codefix
 
 E512-008 Saving breakpoints between sessions (2005-11-29)
 
