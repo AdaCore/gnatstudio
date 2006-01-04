@@ -46,7 +46,6 @@ with Traces;                    use Traces;
 with VCS;                       use VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
-with VCS_Status;                use VCS_Status;
 with VCS_View.Explorer;
 with VCS_View;                  use VCS_View;
 with VFS;                       use VFS;
@@ -104,18 +103,6 @@ package body VCS_Activities_View_API is
    function Execute
      (Command : access Edit_Action_Command_Type) return Command_Return_Type;
 
-   --  Activity committed action
-
-   type Activity_Action_Command_Type is new Root_Command with record
-      Kernel   : Kernel_Handle;
-      Activity : Activity_Id;
-   end record;
-   type Activity_Action_Command_Access is access Activity_Action_Command_Type;
-
-   function Execute
-     (Command : access Activity_Action_Command_Type)
-      return Command_Return_Type;
-
    -------------
    -- Execute --
    -------------
@@ -127,41 +114,6 @@ package body VCS_Activities_View_API is
    begin
       Execute_GPS_Shell_Command
         (Command.Kernel, "Editor.edit", (1 => Filename'Unchecked_Access));
-      return Success;
-   end Execute;
-
-   function Execute
-     (Command : access Activity_Action_Command_Type)
-      return Command_Return_Type
-   is
-      use type String_List.List_Node;
-      Explorer  : constant VCS_Activities_View_Access :=
-                    Get_Activities_Explorer (Command.Kernel, False, False);
-      VCS_Ref   : constant VCS_Access :=
-                    Get_VCS_For_Activity (Command.Kernel, Command.Activity);
-      Files     : String_List.List :=
-                    Get_Selected_Files (Command.Kernel);
-      Files_It  : String_List.List_Node;
-      Committed : Boolean := True;
-   begin
-      --  Set the committed status if all files are up-to-date
-
-      Files_It := String_List.First (Files);
-
-      while Files_It /= String_List.Null_Node loop
-         Committed := Committed
-           and Has_Status
-             (Get_Status_Cache,
-              Create (Full_Filename => String_List.Data (Files_It)),
-              VCS_Ref, Up_To_Date_Id);
-
-         Files_It := String_List.Next (Files_It);
-      end loop;
-
-      String_List.Free (Files);
-
-      Set_Committed (Command.Activity, To => Committed);
-      Refresh (Explorer);
       return Success;
    end Execute;
 
@@ -400,7 +352,6 @@ package body VCS_Activities_View_API is
       Files_Temp     : String_List.List_Node;
       All_Logs_Exist : Boolean := True;
       File           : Virtual_File;
-      Committed      : Activity_Action_Command_Access;
 
       use String_List;
       use type String_List.List_Node;
@@ -437,18 +388,9 @@ package body VCS_Activities_View_API is
       --  If All files have a log, commit the whole lot
 
       if All_Logs_Exist then
-         declare
-            VCS : constant VCS_Access :=
-                    Get_VCS_For_Activity (Kernel, Activity);
-         begin
-            Committed := new Activity_Action_Command_Type;
-            Committed.Kernel := Kernel;
-            Committed.Activity := Activity;
-
-            Log_Action_Files (Kernel, VCS, Commit, Files, Activity);
-            Launch_Background_Command
-              (Kernel, Committed, True, True, Name (VCS));
-         end;
+         Log_Action_Files
+           (Kernel, Get_VCS_For_Activity (Kernel, Activity),
+            Commit, Files, Activity);
       end if;
    exception
       when E : others =>
