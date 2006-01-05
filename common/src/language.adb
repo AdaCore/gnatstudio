@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -802,8 +802,8 @@ package body Language is
         (Buffer : String;
          Index  : Natural)
          return Boolean;
-      --  Return True if there are only blanks characters fore the one pointed
-      --  by Index in Buffer.
+      --  Return True if there are only blanks characters before the one
+      --  pointed by Index in Buffer.
       --  Return False otherwise.
 
       ------------------------
@@ -823,8 +823,10 @@ package body Language is
 
    begin
       --  Are we in a multi-line comment ?
+
       if Context.Comment_End_Length /= 0 then
          Tmp := Line_End (Buffer, Index);
+
          if Tmp - Context.Comment_End_Length + 1 >= Index
            and then Buffer
              (Tmp - Context.Comment_End_Length + 1 .. Tmp) =
@@ -847,7 +849,9 @@ package body Language is
       end if;
 
       --  Check for single line comments
+
       Tmp := Initial_Index;
+
       loop
          while Tmp <= Buffer'Last
            and then (Buffer (Tmp) = ' ' or else Buffer (Tmp) = ASCII.HT)
@@ -864,6 +868,7 @@ package body Language is
 
          Skip_Lines (Buffer, -1, Tmp);
       end loop;
+
       if Looking_At_Start_Of_Comment (Context, Buffer, Index) = No_Comment then
          Index := 0;
       end if;
@@ -941,20 +946,63 @@ package body Language is
    begin
       while Index < Buffer'Last loop
          Skip_Lines (Buffer, 1, Index);
+
          if Stop_At_First_Blank_Line
            and then Buffer (Index) = ASCII.LF
          then
             Index := 0;
             return;
          end if;
+
          Skip_Blanks (Buffer, Index);
+
          if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
            No_Comment
          then
             return;
          end if;
       end loop;
+
       Index := 0;
    end Skip_To_Next_Comment_Start;
+
+   ------------------------------------
+   -- Skip_To_Previous_Comment_Start --
+   ------------------------------------
+
+   procedure Skip_To_Previous_Comment_Start
+     (Context : Language_Context;
+      Buffer  : String;
+      Index   : in out Natural;
+      Stop_At_First_Blank_Line : Boolean := True)
+   is
+      Index_Save : Natural;
+   begin
+      while Index >= Buffer'First loop
+         Index_Save := Index;
+
+         Skip_Lines (Buffer, -1, Index);
+
+         if Index = Index_Save
+           or else (Stop_At_First_Blank_Line
+                    and then Buffer (Index) = ASCII.LF)
+         then
+            Index := 0;
+            return;
+         end if;
+
+         Skip_Blanks (Buffer, Index);
+
+         if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
+           No_Comment
+         then
+            Skip_To_Current_Comment_Block_Start
+              (Context, Buffer, Index);
+            return;
+         end if;
+      end loop;
+
+      Index := 0;
+   end Skip_To_Previous_Comment_Start;
 
 end Language;
