@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -189,7 +189,8 @@ package Src_Editor_Buffer is
    --  Return the current editable cursor position
 
    procedure Get_Delimiters
-     (On_Cursor_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+     (Buffer           : access Source_Buffer_Record;
+      On_Cursor_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
       First_Delim_Iter : out Gtk.Text_Iter.Gtk_Text_Iter;
       Last_Delim_Iter  : out Gtk.Text_Iter.Gtk_Text_Iter;
       Found            : out Natural);
