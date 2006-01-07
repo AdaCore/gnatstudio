@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2005                      --
+--                      Copyright (C) 2004-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,6 +20,8 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
+
+with Glib.Unicode;               use Glib.Unicode;
 
 package body Case_Handling is
 
@@ -47,10 +49,10 @@ package body Case_Handling is
    -- Mixed_Case --
    ----------------
 
-   procedure Mixed_Case (S     : in out String;
-                         Smart : Boolean := False)
-   is
+   procedure Mixed_Case (S : in out UTF8_String; Smart : Boolean := False) is
       Do_Upper : Boolean;
+      Index    : Natural := S'First;
+      Last     : Natural;
    begin
       if S'Length = 0 then
          return;
@@ -58,24 +60,31 @@ package body Case_Handling is
 
       Do_Upper := True;
 
-      for J in S'Range loop
-         if Do_Upper then
-            S (J) := To_Upper (S (J));
-         elsif not Smart then
-            S (J) := To_Lower (S (J));
-         end if;
-
-         if S (J) = '.'
-           or S (J) = '_'
-           or S (J) = ' '
-           or S (J) = ASCII.HT
-           or S (J) = ASCII.LF
-           or S (J) = ASCII.CR
+      while Index <= S'Last loop
+         if S (Index) = '.'
+           or S (Index) = '_'
+           or S (Index) = ' '
+           or S (Index) = ASCII.HT
+           or S (Index) = ASCII.LF
+           or S (Index) = ASCII.CR
          then
             Do_Upper := True;
+
          else
+            if Do_Upper then
+               Unichar_To_UTF8
+                 (To_Upper (UTF8_Get_Char (S (Index .. S'Last))),
+                  S (Index .. S'Last), Last);
+            elsif not Smart then
+               Unichar_To_UTF8
+                 (To_Lower (UTF8_Get_Char (S (Index .. S'Last))),
+                  S (Index .. S'Last), Last);
+            end if;
+
             Do_Upper := False;
          end if;
+
+         Index := UTF8_Next_Char (S, Index);
       end loop;
    end Mixed_Case;
 
@@ -85,7 +94,7 @@ package body Case_Handling is
 
    procedure Set_Case
      (C      : Casing_Exceptions;
-      Word   : in out String;
+      Word   : in out UTF8_String;
       Casing : Casing_Type)
    is
       procedure Set_Substring_Exception
@@ -148,9 +157,7 @@ package body Case_Handling is
 
       --  Set L_Str with the key for Str in the exception hash table
 
-      for J in Word'Range loop
-         L_Word (J) := To_Lower (Word (J));
-      end loop;
+      L_Word := UTF8_Strdown (Word);
 
       --  Now we check for the case exception for this word. If found we
       --  just return the record casing, if not set we set the word casing
@@ -168,9 +175,7 @@ package body Case_Handling is
                null;
 
             when Upper =>
-               for J in Word'Range loop
-                  Word (J) := To_Upper (Word (J));
-               end loop;
+               Word := UTF8_Strup (L_Word);
 
             when Lower =>
                Word := L_Word;
@@ -179,7 +184,7 @@ package body Case_Handling is
                Mixed_Case (Word);
 
             when Smart_Mixed =>
-               Mixed_Case (Word, True);
+               Mixed_Case (Word, Smart => True);
          end case;
 
          --  Check now for substring exceptions
