@@ -552,7 +552,7 @@ package body String_Utils is
       Index    : in out Natural;
       Step     : Integer := 1)
    is
-      Initial  : constant Natural := Index;
+      Initial : constant Natural := Index;
    begin
       while Index <= Type_Str'Last
         and then Index >= Type_Str'First
@@ -610,8 +610,8 @@ package body String_Utils is
    is
       Half          : Integer;
       Ellipsis_UTF8 : constant UTF8_String :=
-        Character'Val (16#E2#) & Character'Val (16#80#)
-        & Character'Val (16#A6#);
+                        Character'Val (16#E2#) & Character'Val (16#80#)
+                        & Character'Val (16#A6#);
       --  UTF8 encoding for the ellipsis character (8230 in Decimal)
 
    begin
@@ -854,7 +854,9 @@ package body String_Utils is
 
    function Is_Entity_Letter (Char : Gunichar) return Boolean is
    begin
-      return Char = Character'Pos ('_') or else Is_Alnum (Char);
+      return Char = Character'Pos ('_') or else Is_Alnum (Char)
+        or else Unichar_Type (Char) = Unicode_Lowercase_Letter
+        or else Unichar_Type (Char) = Unicode_Uppercase_Letter;
    end Is_Entity_Letter;
 
    ------------------------
@@ -1124,9 +1126,9 @@ package body String_Utils is
       Substrings        : Substitution_Array;
       Recursive         : Boolean := False) return String
    is
-      Result : Unbounded_String;
+      Result      : Unbounded_String;
       First, Last : Natural := Str'First;
-      Found : Boolean;
+      Found       : Boolean;
    begin
       while First <= Str'Last loop
          Last := First;
@@ -1176,8 +1178,8 @@ package body String_Utils is
    ------------------------------------
 
    function Argument_List_To_Quoted_String
-     (Args  : GNAT.OS_Lib.Argument_List;
-      Quote : Character := '"';
+     (Args            : GNAT.OS_Lib.Argument_List;
+      Quote           : Character := '"';
       Quote_Backslash : Boolean := True) return String
    is
       Len : Natural := 1;
@@ -1281,11 +1283,11 @@ package body String_Utils is
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Argument_List, Argument_List_Access);
-      Backslashed   : Boolean;
-      Quoted        : Boolean;
-      Triple_Quoted : Boolean;
-      Has_Triple    : Boolean;
-      Start_Idx     : Integer;
+      Backslashed       : Boolean;
+      Quoted            : Boolean;
+      Triple_Quoted     : Boolean;
+      Has_Triple        : Boolean;
+      Start_Idx         : Integer;
       Start_With_Triple : Boolean;
       End_With_Triple   : Boolean;
 
