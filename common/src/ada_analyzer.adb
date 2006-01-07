@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -642,7 +642,6 @@ package body Ada_Analyzer is
       return False;
    end Is_Within_Composite;
 
-
    ------------------------
    -- Analyze_Ada_Source --
    ------------------------
@@ -784,7 +783,7 @@ package body Ada_Analyzer is
       --  Compute proper indentation, taking into account various cases
       --  of simple/continuation/declaration/... lines.
 
-      function Next_Char  (P : Natural) return Natural;
+      function Next_Char (P : Natural) return Natural;
       --  Return the next char in buffer. P is the current character.
       pragma Inline (Next_Char);
 
@@ -1273,37 +1272,19 @@ package body Ada_Analyzer is
          Tmp  : Natural := P;
          Next : Natural;
       begin
-         if Tmp >= Buffer_Last then
-            return Buffer_Last;
-         end if;
-
-         loop
-            --  Manual unrolling for efficiency
-
+         while Tmp <= Buffer_Last loop
             Next := Next_Char (Tmp);
-
-            exit when Tmp >= Buffer_Last
+            exit when Next > Buffer_Last
               or else not Is_Entity_Letter
                 (UTF8_Get_Char (Buffer (Next .. Buffer_Last)));
-
-            Tmp := Next;
-            Next := Next_Char (Tmp);
-
-            exit when Tmp >= Buffer_Last
-              or else not Is_Entity_Letter
-                (UTF8_Get_Char (Buffer (Next .. Buffer_Last)));
-
-            Tmp := Next;
-            Next := Next_Char (Tmp);
-
-            exit when Tmp >= Buffer_Last
-              or else not Is_Entity_Letter
-                (UTF8_Get_Char (Buffer (Next .. Buffer_Last)));
-
             Tmp := Next;
          end loop;
 
-         return Tmp;
+         if Next > Buffer_Last then
+            return Buffer_Last;
+         else
+            return Tmp;
+         end if;
       end End_Of_Word;
 
       -----------------------
@@ -3230,10 +3211,12 @@ package body Ada_Analyzer is
          return;
       end if;
 
-      --  Push a dummy token so that stack will never be empty.
+      --  Push a dummy token so that stack will never be empty
+
       Push (Tokens, Default_Extended);
 
-      --  Push a dummy indentation so that stack will never be empty.
+      --  Push a dummy indentation so that stack will never be empty
+
       Push (Indents, (None, 0, 0));
 
       Next_Word (Prec, Terminated);
@@ -3261,7 +3244,7 @@ package body Ada_Analyzer is
                Index_Ident := End_Of_Identifier (Current + 1);
 
                if Index_Ident /= Current then
-                  --  We have a dotted name, update indexes.
+                  --  We have a dotted name, update indexes
 
                   Str_Len := Index_Ident - Prec + 1;
 
