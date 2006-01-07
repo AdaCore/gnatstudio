@@ -606,11 +606,11 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D      : constant File_Location_Hooks_Args_Access :=
-                 File_Location_Hooks_Args_Access (Data);
-      Id     : constant Source_Editor_Module :=
-                 Source_Editor_Module (Src_Editor_Module_Id);
-      Box    : Source_Editor_Box;
+      D   : constant File_Location_Hooks_Args_Access :=
+              File_Location_Hooks_Args_Access (Data);
+      Id  : constant Source_Editor_Module :=
+              Source_Editor_Module (Src_Editor_Module_Id);
+      Box : Source_Editor_Box;
 
    begin
       if Id.Show_Subprogram_Names then
@@ -879,11 +879,10 @@ package body Src_Editor_Module is
    procedure Update_Cache_On_Focus
      (Child : access Gtk_Widget_Record'Class)
    is
-      Id    : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+      Id  : constant Source_Editor_Module :=
+              Source_Editor_Module (Src_Editor_Module_Id);
       Box : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (MDI_Child (Child));
-
+              Get_Source_Box_From_MDI (MDI_Child (Child));
    begin
       --  Update the cache, so that the view is used when possible, since it
       --  was the last open in any case
@@ -1083,23 +1082,23 @@ package body Src_Editor_Module is
    ---------------
 
    function Open_File
-     (Kernel     : access Kernel_Handle_Record'Class;
-      File       : VFS.Virtual_File := VFS.No_File;
-      Create_New : Boolean := True;
-      Focus      : Boolean := True;
-      Force      : Boolean := False;
-      Group      : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
-      Initial_Position   : Gtkada.MDI.Child_Position :=
+     (Kernel           : access Kernel_Handle_Record'Class;
+      File             : VFS.Virtual_File := VFS.No_File;
+      Create_New       : Boolean := True;
+      Focus            : Boolean := True;
+      Force            : Boolean := False;
+      Group            : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
+      Initial_Position : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Automatic) return Source_Editor_Box
    is
+      Id      : constant Source_Editor_Module :=
+                  Source_Editor_Module (Src_Editor_Module_Id);
       No_Name : constant String := -"Untitled";
       MDI     : constant MDI_Window := Get_MDI (Kernel);
       Editor  : Source_Editor_Box;
       Child   : GPS_MDI_Child;
       Child2  : MDI_Child;
       Dummy   : Boolean;
-      Id      : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
       pragma Unreferenced (Dummy);
 
    begin
@@ -1567,8 +1566,7 @@ package body Src_Editor_Module is
 
       Success : Boolean;
       Source  : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-
+                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          declare
@@ -1637,14 +1635,14 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
       use Pango.Font, Pango.Enums;
 
-      Success          : Boolean;
       Child            : constant MDI_Child := Find_Current_Editor (Kernel);
       Source           : Source_Editor_Box;
       Print_Helper     : constant String := Get_Pref (Print_Command);
       Source_Font      : constant Pango_Font_Description :=
-        Get_Pref_Font (Default_Style);
+                           Get_Pref_Font (Default_Style);
       Source_Font_Name : constant String := Get_Family (Source_Font);
       Source_Font_Size : constant Gint := To_Pixels (Get_Size (Source_Font));
+      Success          : Boolean;
 
    begin
       if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
@@ -1706,7 +1704,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
       Source : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          Select_All (Get_Buffer (Source));
@@ -1727,7 +1725,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
       Source : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          declare
@@ -1786,7 +1784,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
       Editor : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Editor = null then
          return;
@@ -1814,7 +1812,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
       Editor : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Editor = null then
          return;
@@ -1930,7 +1928,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
       Current : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Current /= null then
          Src_Editor_Buffer.Line_Information.Fold_All (Get_Buffer (Current));
@@ -1951,7 +1949,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
       Current : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Current /= null then
          Src_Editor_Buffer.Line_Information.Unfold_All (Get_Buffer (Current));
@@ -2102,7 +2100,7 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean
    is
-      D : constant File_Line_Hooks_Args := File_Line_Hooks_Args (Data.all);
+      D     : constant File_Line_Hooks_Args := File_Line_Hooks_Args (Data.all);
       Child : constant MDI_Child := Find_Editor (Kernel, D.File);
    begin
       if Child /= null then
@@ -2162,7 +2160,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Command);
       File : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
+               File_Selection_Context_Access (Context.Context);
       Line : Natural;
    begin
       Trace (Me, "On_Edit_File: " & Full_Name (File_Information (File)).all);
@@ -2190,18 +2188,18 @@ package body Src_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File_C : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      File   : constant VFS.Virtual_File := File_Information (File_C);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Widget;
-      Label  : Gtk_Label;
-      Lang   : Gtk_Combo;
+      File_C  : constant File_Selection_Context_Access :=
+                  File_Selection_Context_Access (Context.Context);
+      File    : constant VFS.Virtual_File := File_Information (File_C);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Dialog  : Gtk_Dialog;
+      Button  : Gtk_Widget;
+      Label   : Gtk_Label;
+      Lang    : Gtk_Combo;
       Charset : Gtk_Combo;
-      Box    : Gtk_Box;
-      Size   : Gtk_Size_Group;
-      Buffer : Source_Buffer;
+      Box     : Gtk_Box;
+      Size    : Gtk_Size_Group;
+      Buffer  : Source_Buffer;
       pragma Unreferenced (Button);
 
    begin
@@ -2419,7 +2417,7 @@ package body Src_Editor_Module is
       Line_Numbers_Area_Filter : Action_Filter;
 
       Src_Action_Context : constant Action_Filter :=
-        new Src_Editor_Action_Context;
+                             new Src_Editor_Action_Context;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application
 
@@ -3004,12 +3002,12 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Pref_Display_Line_Numbers     : constant Boolean :=
-        Get_Pref (Display_Line_Numbers);
+                                        Get_Pref (Display_Line_Numbers);
       Pref_Display_Subprogram_Names : constant Boolean :=
-        Get_Pref (Display_Subprogram_Names);
+                                        Get_Pref (Display_Subprogram_Names);
 
       Id : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+             Source_Editor_Module (Src_Editor_Module_Id);
 
       Iter  : Child_Iterator;
       Child : MDI_Child;
@@ -3131,11 +3129,11 @@ package body Src_Editor_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child
    is
+      Id    : constant Source_Editor_Module :=
+                Source_Editor_Module (Src_Editor_Module_Id);
       Iter  : Child_Iterator;
       Child : MDI_Child;
       Full  : VFS.Virtual_File;
-      Id    : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
 
    begin
       if File = VFS.No_File then
@@ -3322,7 +3320,7 @@ package body Src_Editor_Module is
 
    function Line_Number_Character_Width return Gint is
       Id : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+             Source_Editor_Module (Src_Editor_Module_Id);
    begin
       if Id = null then
          return 0;
@@ -3337,7 +3335,7 @@ package body Src_Editor_Module is
 
    function Post_It_Note_GC return Gdk.GC.Gdk_GC is
       Id : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+             Source_Editor_Module (Src_Editor_Module_Id);
    begin
       return Id.Post_It_Note_GC;
    end Post_It_Note_GC;
