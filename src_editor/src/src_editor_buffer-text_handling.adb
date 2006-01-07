@@ -276,7 +276,7 @@ package body Src_Editor_Buffer.Text_Handling is
    is
       procedure Replace_Text
         (Ln, F, L : Natural;
-         Replace  : String);
+         Replace  : UTF8_String);
       --  Replace text callback. Note that we do not use Ln, F, L here as these
       --  are values from the parsed buffer which is a single word here. We use
       --  instead the Line, First and Last variable below which represent the
@@ -299,7 +299,7 @@ package body Src_Editor_Buffer.Text_Handling is
 
       procedure Replace_Text
         (Ln, F, L : Natural;
-         Replace  : String)
+         Replace  : UTF8_String)
       is
          pragma Unreferenced (Ln);
          Length : constant Natural := Natural (UTF8_Strlen (Replace));
