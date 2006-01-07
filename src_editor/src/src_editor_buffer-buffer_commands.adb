@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                    Copyright (C) 2003-2005                        --
+--                    Copyright (C) 2003-2006                        --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,14 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Tags;                  use Ada.Tags;
+with Ada.Tags;        use Ada.Tags;
 
-with Gtk;                       use Gtk;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk;             use Gtk;
+with Gtk.Text_Iter;   use Gtk.Text_Iter;
+with Gtk.Widget;      use Gtk.Widget;
 
-with GPS.Kernel;                use GPS.Kernel;
-with Src_Editor_View;           use Src_Editor_View;
+with GPS.Kernel;      use GPS.Kernel;
+with Src_Editor_View; use Src_Editor_View;
 
 package body Src_Editor_Buffer.Buffer_Commands is
 
@@ -61,9 +61,9 @@ package body Src_Editor_Buffer.Buffer_Commands is
       Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
 
       Get_Delimiters
-        (On_Cursor_Iter,
-         First_Highlight_Iter,
-         Last_Highlight_Iter,
+        (Buffer,
+         On_Cursor_Iter,
+         First_Highlight_Iter, Last_Highlight_Iter,
          Found);
 
       if Found > 0 then
