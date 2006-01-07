@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---           Copyright (C) 2000-2005 Ada Core Technologies, Inc.            --
+--           Copyright (C) 2000-2006 Ada Core Technologies, Inc.            --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -57,13 +57,16 @@ package GNAT.Expect.TTY is
    --  to call GNAT.TTY.Close_TTY.
 
    procedure Interrupt (Pid : Integer);
-   --  Interrupt a process given its pid.
+   --  Interrupt a process given its pid
 
 private
 
    procedure Close
      (Descriptor : in out TTY_Process_Descriptor;
       Status     : out Integer);
+
+   procedure Close
+     (Descriptor : in out TTY_Process_Descriptor);
 
    procedure Interrupt (Descriptor : in out TTY_Process_Descriptor);
    --  When we use pseudo-terminals, we do not need to use signals to

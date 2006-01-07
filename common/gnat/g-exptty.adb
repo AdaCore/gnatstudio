@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---           Copyright (C) 2000-2005 Ada Core Technologies, Inc.            --
+--           Copyright (C) 2000-2006 Ada Core Technologies, Inc.            --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -41,7 +41,7 @@ package body GNAT.Expect.TTY is
 
       function Waitpid (Process : System.Address) return Integer;
       pragma Import (C, Waitpid, "gvd_waitpid");
-      --  Wait for a specific process id, and return its exit code.
+      --  Wait for a specific process id, and return its exit code
 
       procedure Free_Process (Process : System.Address);
       pragma Import (C, Free_Process, "gvd_free_process");
@@ -72,6 +72,12 @@ package body GNAT.Expect.TTY is
          GNAT.OS_Lib.Free (Descriptor.Buffer);
          Descriptor.Buffer_Size := 0;
       end if;
+   end Close;
+
+   procedure Close (Descriptor : in out TTY_Process_Descriptor) is
+      Status : Integer;
+   begin
+      Close (Descriptor, Status);
    end Close;
 
    -----------------------------
