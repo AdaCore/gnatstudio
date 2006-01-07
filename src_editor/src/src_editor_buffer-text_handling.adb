@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
---                            AdaCore                                --
+--                     Copyright (C) 2003-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 
 with Ada.Strings.Maps;   use Ada.Strings.Maps;
 
+with Glib.Unicode;       use Glib.Unicode;
 with Gtk.Text_Iter;      use Gtk.Text_Iter;
 
 with Case_Handling;      use Case_Handling;
@@ -276,10 +277,10 @@ package body Src_Editor_Buffer.Text_Handling is
       procedure Replace_Text
         (Ln, F, L : Natural;
          Replace  : String);
-      --  Replace text callback. Note that we do not use Ln, F, L here as
-      --  these are values from the parsed buffer which is a single word here.
-      --  We use insted the Line, First and Last variable below which represent
-      --  the real word position on the line.
+      --  Replace text callback. Note that we do not use Ln, F, L here as these
+      --  are values from the parsed buffer which is a single word here. We use
+      --  instead the Line, First and Last variable below which represent the
+      --  real word position on the line.
 
       Lang          : Language_Access;
       Line          : Editable_Line_Type;
@@ -301,18 +302,19 @@ package body Src_Editor_Buffer.Text_Handling is
          Replace  : String)
       is
          pragma Unreferenced (Ln);
+         Length : constant Natural := Natural (UTF8_Strlen (Replace));
       begin
          if Replace'Length > 0 and then L - F > 0 then
             --  The parser sometimes callback with a null replacement.
             --  Ignore those cases as we do not want to indent the code here.
             Replace_Slice
               (Buffer, Replace, Line, First,
-               Before => 0, After => Replace'Length);
+               Before => 0, After => Length);
 
             --  Compute position of the next insert point. This can happen only
             --  in the case of an attribute. In String'Access for example the
             --  first call is for String and the second for Access.
-            First := First + Replace'Length + 1;
+            First := First + Length + 1;
          end if;
       end Replace_Text;
 
