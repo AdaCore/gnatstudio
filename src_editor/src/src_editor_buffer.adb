@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -684,27 +684,39 @@ package body Src_Editor_Buffer is
    --------------------
 
    procedure Get_Delimiters
-     (On_Cursor_Iter   : Gtk_Text_Iter;
+     (Buffer           : access Source_Buffer_Record;
+      On_Cursor_Iter   : Gtk_Text_Iter;
       First_Delim_Iter : out Gtk_Text_Iter;
       Last_Delim_Iter  : out Gtk_Text_Iter;
       Found            : out Natural)
    is
-      Current              : Gtk_Text_Iter;
+      Lang_Context : constant Language_Context_Access :=
+                       Get_Language_Context (Buffer.Lang);
 
-      Success              : Boolean;
-      Counter              : Natural;
-      Counter_Max          : constant := 4096;
+      Current      : Gtk_Text_Iter;
+
+      Success      : Boolean;
+      Counter      : Natural;
+      Counter_Max  : constant := 4096;
       --  ??? Should that be a preference ?
 
-      Stack                : Natural;
-      String_Tag           : Boolean;
-      C                    : Character;
+      Stack        : Natural;
+      String_Tag   : Boolean;
+      C            : Character;
 
-      Delimiter            : Integer;
+      Delimiter    : Integer;
 
       function Check_Char (Forward : Boolean) return Boolean;
       --  Check current character (C) and update current procedure state.
       --  Returns False if parsing must stop (end of file reached for example)
+
+      function In_Comment return Boolean;
+      --  Returns True if the current position (for a closing or opening
+      --  delimiter) is in a comment. We check only new-line kind of comments.
+
+      ----------------
+      -- Check_Char --
+      ----------------
 
       function Check_Char (Forward : Boolean) return Boolean is
          Val     : constant array (Boolean) of Integer := (1, -1);
@@ -716,6 +728,10 @@ package body Src_Editor_Buffer is
          pragma Inline (Move_Char);
          --  Move one character backward or forward
 
+         ---------------
+         -- Move_Char --
+         ---------------
+
          procedure Move_Char is
          begin
             if Forward then
@@ -725,14 +741,20 @@ package body Src_Editor_Buffer is
             end if;
          end Move_Char;
 
+         Is_In_Comment : constant Boolean :=
+                           Lang_Context.New_Line_Comment_Start /= null
+                           and then In_Comment;
+
       begin
          if C = Delimiters (Delimiter, Closing)
            and then not String_Tag
+           and then not Is_In_Comment
          then
             Stack := Stack + Val (Forward);
 
          elsif C = Delimiters (Delimiter, Opening)
            and then not String_Tag
+           and then not Is_In_Comment
          then
             Stack := Stack - Val (Forward);
 
@@ -765,12 +787,58 @@ package body Src_Editor_Buffer is
          return True;
       end Check_Char;
 
+      ----------------
+      -- In_Comment --
+      ----------------
+
+      function In_Comment return Boolean is
+         Comment : constant String :=
+                     Lang_Context.New_Line_Comment_Start.all;
+         K       : Natural;
+         Iter    : Gtk_Text_Iter;
+         C       : Character;
+         Success : Boolean;
+      begin
+         Copy (Current, Iter);
+
+         K := Comment'Last;
+
+         loop
+            Backward_Char (Iter, Success);
+            exit when not Success;
+
+            C := Get_Char (Iter);
+            exit when C = ASCII.LF;
+
+            if C = Comment (K) then
+               if K = Comment'First then
+                  return True;
+
+               else
+                  K := K - 1;
+               end if;
+
+            else
+               K := Comment'Last;
+            end if;
+         end loop;
+
+         return False;
+      end In_Comment;
+
    begin
       --  Find a closing delimiter.
 
       Found := 0;
       Delimiter := -1;
       Copy (On_Cursor_Iter, Current);
+
+      if Lang_Context.New_Line_Comment_Start /= null
+        and then In_Comment
+      then
+         --  The current character is in comment, nothing to do
+         return;
+      end if;
 
       Backward_Char (Current, Success);
 
@@ -871,9 +939,9 @@ package body Src_Editor_Buffer is
    begin
       Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
       Get_Delimiters
-        (On_Cursor_Iter,
-         First_Highlight_Iter,
-         Last_Highlight_Iter,
+        (Buffer,
+         On_Cursor_Iter,
+         First_Highlight_Iter, Last_Highlight_Iter,
          Found);
 
       if Found >= 1 then
