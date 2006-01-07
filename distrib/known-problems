@@ -1,5 +1,20 @@
 Known Problems fixed in GPS 3.2.0
 
+
+- F106-014 GPS auto-casing does not support unicode characters
+  Problem:    GPS was not properly changing the case of identifiers with
+              unicode characters (like the Greek letter Pi for example).
+  Workaround: Disable the auto-casing in the preferences or press ctrl-q
+              before the space as this disable the auto-casing of last word.
+
+- F104-007 GPS split MDI when opening log files
+  Problem:    The log files are opened by splitting the MDI when using the
+              Edit log file VCS command. When using the command
+              Commit (via revision log) the MDI is not split, the file is
+              placed with the consoles if possible. For consistency, this is
+              now the new behavior for the Edit log file.
+  Workaround: Move the log editor manually
+
 - EC28-009 GPS under Windows leaks some handles
   Problem:    On Windows GPS leaks one file handle, one process handle and one
               thread handle for each external command launched. This can lead
@@ -12,3 +27,7 @@ Known Problems fixed in GPS 3.2.0
               associated editor.
   Workaround: Select the bookmark and then the editor
 
+- EB16-002 Wrong parenthesis highlighting
+  Problem:    Parenthesis in comment are taken into account when doing the
+              highlighting of matching parenthesis.
+  Workaround: None
