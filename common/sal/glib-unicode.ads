@@ -37,6 +37,40 @@
 package Glib.Unicode is
    pragma Preelaborate;
 
+   type G_Unicode_Type is
+     (Unicode_Control,
+      Unicode_Format,
+      Unicode_Unassigned,
+      Unicode_Private_Use,
+      Unicode_Surrogate,
+      Unicode_Lowercase_Letter,
+      Unicode_Modifier_Letter,
+      Unicode_Other_Letter,
+      Unicode_Titlecase_Letter,
+      Unicode_Uppercase_Letter,
+      Unicode_Combining_Mark,
+      Unicode_Enclosing_Mark,
+      Unicode_Non_Spacing_Mark,
+      Unicode_Decimal_Number,
+      Unicode_Letter_Number,
+      Unicode_Other_Number,
+      Unicode_Connect_Punctuation,
+      Unicode_Dash_Punctuation,
+      Unicode_Close_Punctuation,
+      Unicode_Final_Punctuation,
+      Unicode_Initial_Punctuation,
+      Unicode_Other_Punctuation,
+      Unicode_Open_Punctuation,
+      Unicode_Currency_Symbol,
+      Unicode_Modifier_Symbol,
+      Unicode_Math_Symbol,
+      Unicode_Other_Symbol,
+      Unicode_Line_Separator,
+      Unicode_Paragraph_Separator,
+      Unicode_Space_Separator);
+   --  The possible character classifications.
+   --  See http://www.unicode.org/Public/UNIDATA/UnicodeData.html
+
    -----------------------------
    -- Manipulating characters --
    -----------------------------
@@ -46,6 +80,18 @@ package Glib.Unicode is
 
    function Is_Alnum (Char : Gunichar) return Boolean;
    --  True if Char is an alphabetical or numerical character
+
+   function To_Lower (Char : Gunichar) return Gunichar;
+   --  Convert Char to lower cases
+
+   function To_Upper (Char : Gunichar) return Gunichar;
+   --  Convert Char to upper cases
+
+   function Unichar_Type (Char : Gunichar) return G_Unicode_Type;
+   --  Return the unicode character type of a given character. This is a
+   --  limited version that handle only Unicode_Lowercase_Letter,
+   --  Unicode_Uppercase_Letter. It returns Unicode_Other_Symbol for all other
+   --  characters.
 
    --------------------------
    -- Manipulating strings --
@@ -65,6 +111,12 @@ package Glib.Unicode is
    --  Index doesn't need to be on the start of a character.
    --  Index is set to a value smaller than Str'First if there is no
    --  previous character.
+
+   function UTF8_Strdown (Str : UTF8_String) return UTF8_String;
+   --  Convert Str to lower cases
+
+   function UTF8_Strup (Str : UTF8_String) return UTF8_String;
+   --  Convert Str to upper cases
 
    -----------------
    -- Conversions --
