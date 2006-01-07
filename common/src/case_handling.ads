@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2005                      --
+--                      Copyright (C) 2004-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,8 @@
 --  Case support for case insensitive languages. This package has
 --  services to change the casing of a word (identifier or keyword) and
 --  to handle a set of casing exceptions.
+
+with Glib;        use Glib;
 
 with String_Hash;
 
@@ -43,8 +45,7 @@ package Case_Handling is
    --    underscore to upper-case, all other characters are set to lower-case.
    --  - Smart_Mixed: As Mixed but never force an upper-case to lower-case.
 
-   procedure Mixed_Case (S     : in out String;
-                         Smart : Boolean := False);
+   procedure Mixed_Case (S : in out UTF8_String; Smart : Boolean := False);
    --  Return S with a casing matching Ada style: upper case after an
    --  underscore or a dot.
    --  If smart is set, do not change upper-case letters in S
@@ -61,7 +62,7 @@ package Case_Handling is
 
    procedure Set_Case
      (C      : Casing_Exceptions;
-      Word   : in out String;
+      Word   : in out UTF8_String;
       Casing : Casing_Type);
    --  Change the case of Str as specified by Casing. This routine also
    --  checks for case exceptions.
