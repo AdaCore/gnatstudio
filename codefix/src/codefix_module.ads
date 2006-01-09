@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -20,12 +20,15 @@
 
 --  This package defines the module for code fixing.
 
-with Gtk.Menu;               use Gtk.Menu;
-with GPS.Kernel;           use GPS.Kernel;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with Codefix;                use Codefix;
-with Codefix.Errors_Manager; use Codefix.Errors_Manager;
+with Gtk.Menu;                use Gtk.Menu;
+with GPS.Kernel;              use GPS.Kernel;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with Codefix;                 use Codefix;
+with Codefix.Errors_Manager;  use Codefix.Errors_Manager;
 with Codefix.Text_Manager;
+with Glib.Generic_Properties;  use Glib.Generic_Properties;
+with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Codefix.Formal_Errors;    use Codefix.Formal_Errors;
 
 package Codefix_Module is
 
@@ -58,5 +61,22 @@ package Codefix_Module is
       Session      : access Codefix_Session_Record;
       Error        : Error_Id);
    --  Remove from the location box the pixmap of the error.
+
+   procedure Register_Preferences
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Register the codefix-related preferences
+
+   type Codefix_Remove_Policy is
+     (Always_Remove, Always_Comment, Propose_Both_Choices);
+   for Codefix_Remove_Policy'Size use Glib.Gint'Size;
+   pragma Convention (C, Codefix_Remove_Policy);
+
+   package Codefix_Remove_Policy_Properties is new Generic_Enumeration_Property
+     ("Codefix_Remove_Policy", Codefix_Remove_Policy);
+
+   Remove_Policy : Param_Spec_Enum;
+
+   function Policy_To_Operations
+     (Policy : Codefix_Remove_Policy) return Useless_Entity_Operations;
 
 end Codefix_Module;
