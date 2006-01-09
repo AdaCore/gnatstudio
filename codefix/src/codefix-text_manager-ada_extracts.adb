@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2006                    --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -205,6 +205,15 @@ package body Codefix.Text_Manager.Ada_Extracts is
    begin
       Erase (This, This.Start, This.Stop);
    end Remove_Instruction;
+
+   ------------------------
+   -- Comment_Instruction --
+   ------------------------
+
+   procedure Comment_Instruction (This : in out Ada_Instruction) is
+   begin
+      Comment (This, This.Start, This.Stop);
+   end Comment_Instruction;
 
    --------------
    -- Get_Stop --
@@ -604,6 +613,80 @@ package body Codefix.Text_Manager.Ada_Extracts is
            (This, Get_Nth_Element (This, First), Get_Nth_Element (This, Last));
       end if;
    end Remove_Elements;
+
+   ---------------------
+   -- Comment_Elements --
+   ---------------------
+
+   procedure Comment_Elements
+     (This  : in out Ada_List; First : Natural; Last : Natural := 0) is
+
+--        Current_Element          : Tokens_List.List_Node;
+--        Garbage_Node             : Tokens_List.List_Node;
+      Last_Used                : Natural;
+      First_Used               : Natural;
+
+   begin
+      if Last = 0 then
+         Last_Used := First;
+      else
+         Last_Used := Last;
+      end if;
+
+      First_Used := First;
+
+      if First_Used > 1 then
+         First_Used := First_Used - 1;
+         --  -1 comments the previous character, the ','.
+      else
+         Last_Used := Last_Used + 1;
+         --  In this case, there is no previous character, so the next ','
+         --  is deleted.
+      end if;
+
+      if Last_Used - First_Used + 1 >=  Length (This.Elements_List) then
+         Comment_Instruction (This);
+         return;
+      end if;
+
+      declare
+         First_Token : constant Token_Record :=
+           Data (Get_Element (This, First_Used));
+         Last_Token  : constant Token_Record :=
+           Data (Get_Element (This, Last_Used));
+
+         Cursor_Begin : File_Cursor'Class :=
+           Get_Cursor (First_Token.Line.all);
+         Cursor_End : File_Cursor'Class :=
+           Get_Cursor (Last_Token.Line.all);
+      begin
+         Set_Location
+           (Cursor_Begin,
+            Get_Line (Cursor_Begin),
+            First_Token.First_Col);
+         Set_Location
+           (Cursor_End,
+            Get_Line (Cursor_End),
+            Last_Token.Last_Col);
+         Comment (This, Cursor_Begin, Cursor_End);
+      end;
+
+   end Comment_Elements;
+
+   ----------------------
+   -- Comment_Elements --
+   ----------------------
+
+   procedure Comment_Elements
+     (This  : in out Ada_List; First : String; Last : String := "") is
+   begin
+      if Last = "" then
+         Comment_Elements (This, Get_Nth_Element (This, First), 0);
+      else
+         Comment_Elements
+           (This, Get_Nth_Element (This, First), Get_Nth_Element (This, Last));
+      end if;
+   end Comment_Elements;
 
    -----------------
    -- Get_Element --
