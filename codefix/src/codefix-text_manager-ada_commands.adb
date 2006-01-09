@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2004                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -162,6 +162,13 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Remove_Elements_Cmd --
    -------------------------
 
+   procedure Set_Remove_Mode
+     (This : in out Remove_Elements_Cmd; Mode : Remove_Code_Mode)
+   is
+   begin
+      This.Mode := Mode;
+   end Set_Remove_Mode;
+
    procedure Add_To_Remove
      (This         : in out Remove_Elements_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -205,8 +212,16 @@ package body Codefix.Text_Manager.Ada_Commands is
                    Get_Stop (Data (Current_Extract))
                then
                   Extract_Temp := Clone (Data (Current_Extract));
-                  Remove_Elements
-                    (Extract_Temp, Current_Cursor.String_Match.all);
+
+                  case This.Mode is
+                     when Erase =>
+                        Remove_Elements
+                          (Extract_Temp, Current_Cursor.String_Match.all);
+                     when Comment =>
+                        Comment_Elements
+                          (Extract_Temp, Current_Cursor.String_Match.all);
+                  end case;
+
                   Set_Data (Current_Extract, Extract_Temp);
                   Already_Loaded := True;
                   exit;
@@ -221,7 +236,16 @@ package body Codefix.Text_Manager.Ada_Commands is
                Extract_Temp : Ada_List;
             begin
                Get_Unit (Current_Text, Current_Cursor, Extract_Temp);
-               Remove_Elements (Extract_Temp, Current_Cursor.String_Match.all);
+
+               case This.Mode is
+                  when Erase =>
+                     Remove_Elements
+                       (Extract_Temp, Current_Cursor.String_Match.all);
+                  when Comment =>
+                     Comment_Elements
+                       (Extract_Temp, Current_Cursor.String_Match.all);
+               end case;
+
                Append (Remove_Extracts, Extract_Temp);
             end;
          end if;
@@ -433,7 +457,8 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Start_Entity : File_Cursor'Class)
+      Start_Entity : File_Cursor'Class;
+      Mode         : Remove_Code_Mode := Erase)
    is
       Spec_Begin, Spec_End : File_Cursor;
       Body_Begin, Body_End : File_Cursor;
@@ -456,6 +481,8 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Get_New_Mark (Current_Text, Body_Begin));
       This.Body_End := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Body_End));
+
+      This.Mode := Mode;
 
       Free (Spec_Begin);
       Free (Spec_End);
@@ -488,7 +515,12 @@ package body Codefix.Text_Manager.Ada_Commands is
          Line_Cursor.Line := Line_Cursor.Line + 1;
       end loop;
 
-      Erase (Body_Extract, Body_Begin, Body_End);
+      case This.Mode is
+         when Erase =>
+            Erase (Body_Extract, Body_Begin, Body_End);
+         when Comment =>
+            Comment (Body_Extract, Body_Begin, Body_End);
+      end case;
 
       if This.Spec_Begin /= null then
          Spec_Begin := File_Cursor
@@ -504,7 +536,12 @@ package body Codefix.Text_Manager.Ada_Commands is
             Line_Cursor.Line := Line_Cursor.Line + 1;
          end loop;
 
-         Erase (Spec_Extract, Spec_Begin, Spec_End);
+         case This.Mode is
+            when Erase =>
+               Erase (Spec_Extract, Body_Begin, Body_End);
+            when Comment =>
+               Comment (Spec_Extract, Body_Begin, Body_End);
+         end case;
 
          Merge_Extracts
            (New_Extract,
