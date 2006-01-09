@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.1.1
 
+- F109-009 Change in number of arguments to Editor.save
+  Problem:    The obsolescent shell function Editor.save is declared as accepting
+              no parameter, when in fact it accepts two and is documented as such
+  Workaround: use EditorBuffer.save instead 
+
 - EC29-002 Undesired input focus jumps in project wizard
   Problem:    In the project wizard, in the first page, if the first entry
               is empty, typing into the second entry causes the input focus
