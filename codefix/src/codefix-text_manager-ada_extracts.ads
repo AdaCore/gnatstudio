@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2006                    --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -45,6 +45,9 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Remove_Instruction (This : in out Ada_Instruction);
    --  Delete the instruction recored in This.
+
+   procedure Comment_Instruction (This : in out Ada_Instruction);
+   --  Comment the instruction recorded in This.
 
    function Get_Start (This : Ada_Instruction) return File_Cursor;
    --  Return the cursor stands at the beginning of the instruction/
@@ -103,6 +106,16 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  Remove elements form form First to Last. If Last = 0 then only First
    --  will be removed.
 
+   procedure Comment_Elements
+     (This  : in out Ada_List; First : Natural; Last : Natural := 0);
+   --  Comment elements form form First to Last. If Last = 0 then only First
+   --  will be commented.
+
+   procedure Comment_Elements
+     (This  : in out Ada_List; First : String; Last : String := "");
+   --  Comment elements form form First to Last. If Last = 0 then only First
+   --  will be commented.
+
    function Get_Element (This : Ada_List; Num : Natural) return Word_Cursor;
    --  Return one element from the list. Elements can be a name or a ','.
 
@@ -152,5 +165,7 @@ private
 
    procedure Update_Deletion
      (This : in out Ada_List; Token_Deleted : Token_Record);
+   --  This procedures updates all tokens columns contained in the Ada_List, in
+   --  case the deleted token was on the same line.
 
 end Codefix.Text_Manager.Ada_Extracts;
