@@ -3002,7 +3002,7 @@ package body Src_Editor_Module.Shell is
         (Kernel, "close", 1, 1, Edit_Command_Handler'Access, Editor_Class,
          True);
       Register_Command
-        (Kernel, "save", 0, 0, Edit_Command_Handler'Access, Editor_Class,
+        (Kernel, "save", 0, 2, Edit_Command_Handler'Access, Editor_Class,
          True);
       Register_Command
         (Kernel, "set_synchronized_scrolling", 2, 3,
