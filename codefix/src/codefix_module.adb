@@ -39,7 +39,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
 with Codefix.Errors_Parser;     use Codefix.Errors_Parser;
-with Codefix.Formal_Errors;     use Codefix.Formal_Errors;
+with Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 with Codefix.GPS_Io;            use Codefix.GPS_Io;
 with Codefix.Graphics;          use Codefix.Graphics;
@@ -61,6 +61,8 @@ with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
+with Glib;                      use Glib;
+with Glib.Properties.Creation;
 
 package body Codefix_Module is
 
@@ -747,6 +749,8 @@ package body Codefix_Module is
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
 
+      Register_Preferences (Kernel);
+
       Add_Parser (new Agregate_Misspelling);
       Add_Parser (new Double_Misspelling);
       Add_Parser (new Light_Misspelling);
@@ -1176,5 +1180,41 @@ package body Codefix_Module is
       Insert
         (Kernel, -"Fix of current error is no longer relevant");
    end Execute_Corrupted_Cb;
+
+   --------------------------
+   -- Register_Preferences --
+   --------------------------
+
+   procedure Register_Preferences
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+   begin
+      Remove_Policy := Glib.Properties.Creation.Param_Spec_Enum
+        (Codefix_Remove_Policy_Properties.Gnew_Enum
+           (Name  => "Remove-Policy-When-Fixing",
+            Nick  => -"Remove policy when fixing code",
+            Blurb => -("Prefered way to fix code when part have to be " &
+              "removed."),
+            Default => Always_Remove));
+      Register_Property
+        (Kernel, Param_Spec (Remove_Policy), -"General");
+   end Register_Preferences;
+
+   --------------------------
+   -- Policy_To_Operations --
+   --------------------------
+
+   function Policy_To_Operations
+     (Policy : Codefix_Remove_Policy) return Useless_Entity_Operations is
+   begin
+      case Policy is
+         when Always_Remove =>
+            return Remove_Entity;
+         when Always_Comment =>
+            return Comment_Entity;
+         when Propose_Both_Choices =>
+            return Comment_Entity or Remove_Entity;
+      end case;
+   end Policy_To_Operations;
 
 end Codefix_Module;
