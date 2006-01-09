@@ -125,3 +125,10 @@ E512-008 Saving breakpoints between sessions (2005-11-29)
 
   Keywords: Debugger
 
+C502-013 Ability to comment out code when code fixing (2006-01-09)
+
+  A new preference was added that indicates if codefix should propose to
+  remove or comment (or both) code on message such as "sth is not referenced"
+
+  Keywords: Code fixing
+
