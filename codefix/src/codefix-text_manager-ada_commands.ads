@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2006                    --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +22,8 @@ with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with VFS;
 
 package Codefix.Text_Manager.Ada_Commands is
+
+   type Remove_Code_Mode is (Erase, Comment);
 
    ---------------------
    -- Recase_Word_Cmd --
@@ -72,6 +74,13 @@ package Codefix.Text_Manager.Ada_Commands is
    -------------------------
 
    type Remove_Elements_Cmd is new Text_Command with private;
+   --  This type is used to store a list of element that have to be removed.
+   --  The default behavior of this class is to erase the elements, but it can
+   --  be changed to just comment them.
+
+   procedure Set_Remove_Mode
+     (This : in out Remove_Elements_Cmd; Mode : Remove_Code_Mode);
+   --  Sets the mode for the removal of elements.
 
    procedure Add_To_Remove
      (This         : in out Remove_Elements_Cmd;
@@ -106,7 +115,6 @@ package Codefix.Text_Manager.Ada_Commands is
    --  Word.String_Match is null, then the first with after the position
    --  specified by the cursor will be taken.
 
-
    procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -125,7 +133,8 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Start_Entity : File_Cursor'Class);
+      Start_Entity : File_Cursor'Class;
+      Mode         : Remove_Code_Mode := Erase);
    --  Set all the marks that will be needed to remove the entity later.
 
    procedure Execute
@@ -276,6 +285,7 @@ private
 
    type Remove_Elements_Cmd is new Text_Command with record
       Remove_List : Mark_List.List;
+      Mode        : Remove_Code_Mode := Erase;
    end record;
 
    package String_List is new Generic_List (GNAT.OS_Lib.String_Access);
@@ -293,6 +303,7 @@ private
    type Remove_Entity_Cmd is new Text_Command with record
       Spec_Begin, Spec_End : Ptr_Mark;
       Body_Begin, Body_End : Ptr_Mark;
+      Mode                 : Remove_Code_Mode := Erase;
    end record;
 
    type Add_Pragma_Cmd is new Text_Command with record
