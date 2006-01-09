@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2005                      --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -856,6 +856,11 @@ package Codefix.Text_Manager is
       Start, Stop : File_Cursor'Class);
    --  Erase the text from Start to Stop. If a line, after the deletion, is
    --  empty, then this line will be deleted.
+
+   procedure Comment
+     (This        : in out Extract;
+      Start, Stop : File_Cursor'Class);
+   --  Comment from Start to Stop on the given extract
 
    function Get_Files_Names
      (This     : Extract;
