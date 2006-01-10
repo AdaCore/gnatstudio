@@ -23,6 +23,7 @@ with GNAT.Regpat;                       use GNAT.Regpat;
 
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
+with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with GPS.Kernel;                        use GPS.Kernel;
 with String_Utils;                      use String_Utils;
 with Traces;                            use Traces;
