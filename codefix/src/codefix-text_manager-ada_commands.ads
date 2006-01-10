@@ -23,8 +23,6 @@ with VFS;
 
 package Codefix.Text_Manager.Ada_Commands is
 
-   type Remove_Code_Mode is (Erase, Comment);
-
    ---------------------
    -- Recase_Word_Cmd --
    ---------------------
