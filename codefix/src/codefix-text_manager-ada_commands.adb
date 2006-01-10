@@ -212,16 +212,8 @@ package body Codefix.Text_Manager.Ada_Commands is
                    Get_Stop (Data (Current_Extract))
                then
                   Extract_Temp := Clone (Data (Current_Extract));
-
-                  case This.Mode is
-                     when Erase =>
-                        Remove_Elements
-                          (Extract_Temp, Current_Cursor.String_Match.all);
-                     when Comment =>
-                        Comment_Elements
-                          (Extract_Temp, Current_Cursor.String_Match.all);
-                  end case;
-
+                  Remove_Elements
+                    (Extract_Temp, This.Mode, Current_Cursor.String_Match.all);
                   Set_Data (Current_Extract, Extract_Temp);
                   Already_Loaded := True;
                   exit;
@@ -236,16 +228,8 @@ package body Codefix.Text_Manager.Ada_Commands is
                Extract_Temp : Ada_List;
             begin
                Get_Unit (Current_Text, Current_Cursor, Extract_Temp);
-
-               case This.Mode is
-                  when Erase =>
-                     Remove_Elements
-                       (Extract_Temp, Current_Cursor.String_Match.all);
-                  when Comment =>
-                     Comment_Elements
-                       (Extract_Temp, Current_Cursor.String_Match.all);
-               end case;
-
+               Remove_Elements
+                 (Extract_Temp, This.Mode, Current_Cursor.String_Match.all);
                Append (Remove_Extracts, Extract_Temp);
             end;
          end if;
