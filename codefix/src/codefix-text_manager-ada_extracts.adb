@@ -410,18 +410,24 @@ package body Codefix.Text_Manager.Ada_Extracts is
               (Current_Line, Current_Col, Current_Token);
          end loop;
 
-         exit when Current_Token.Content (1) = ':'
-           or else Current_Token.Content (1) = ';';
+         declare
+            Token_Without_Last_Blanks : constant String :=
+              Without_Last_Blanks (Current_Token.Content.all);
+         begin
+            exit when Token_Without_Last_Blanks = ":="
+              or else Token_Without_Last_Blanks = "=>"
+              or else Token_Without_Last_Blanks = ";";
 
-         if To_Lower
-           (Without_Last_Blanks (Current_Token.Content.all)) /= "with"
-           and then To_Lower
-             (Without_Last_Blanks (Current_Token.Content.all)) /= "use"
-         then
-            Append (Destination.Elements_List, Current_Token);
-         else
-            Free (Current_Token);
-         end if;
+            if To_Lower
+              (Token_Without_Last_Blanks) /= "with"
+              and then To_Lower
+                (Token_Without_Last_Blanks) /= "use"
+            then
+               Append (Destination.Elements_List, Current_Token);
+            else
+               Free (Current_Token);
+            end if;
+         end;
 
          Get_Token
            (Current_Line, Current_Col, Current_Token);
@@ -500,7 +506,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
            (Get_Element (This, First),
             Last_Used - First + 1));
 
-      Remove_Elements (This, First, Last_Used);
+      Remove_Elements (This, Erase, First, Last_Used);
 
    end Cut_Off_Elements;
 
@@ -540,13 +546,13 @@ package body Codefix.Text_Manager.Ada_Extracts is
    ---------------------
 
    procedure Remove_Elements
-     (This  : in out Ada_List; First : Natural; Last : Natural := 0) is
-
-      Current_Element : Tokens_List.List_Node;
-      Garbage_Node    : Tokens_List.List_Node;
-      Last_Used       : Natural;
-      First_Used      : Natural;
-
+     (This  : in out Ada_List;
+      Mode  : Remove_Code_Mode;
+      First : Natural;
+      Last  : Natural := 0)
+   is
+      Last_Used  : Natural;
+      First_Used : Natural;
    begin
       if Last = 0 then
          Last_Used := First;
@@ -557,95 +563,40 @@ package body Codefix.Text_Manager.Ada_Extracts is
       First_Used := First;
 
       if First_Used > 1 then
-         First_Used := First_Used - 1;
-         --  -1 deletes the previous character, the ','.
-      else
-         Last_Used := Last_Used + 1;
-         --  In this case, there is no previous character, so the next ','
-         --  is deleted.
-      end if;
-
-      if Last_Used - First_Used + 1 >=  Length (This.Elements_List) then
-         Remove_Instruction (This);
-         return;
-      end if;
-
-      Current_Element := Get_Element (This, First_Used);
-
-      for J in First_Used .. Last_Used loop
-
-         if Is_Alone (Data (Current_Element)) then
-            Data (Current_Element).Line.Context := Unit_Deleted;
-         else
-            Delete
-              (Data (Current_Element).Line.Content,
-               Data (Current_Element).First_Col,
-               Data (Current_Element).Last_Col -
-                 Data (Current_Element).First_Col + 1);
-            Data (Current_Element).Line.Context := Unit_Modified;
+         if Data
+           (Get_Element (This, First_Used - 1)).Content.all (1) = ','
+         then
+            First_Used := First_Used - 1;
+            --  -1 comments the previous character, the ','.
+         elsif To_Lower (Without_Last_Blanks
+           (Data (Get_Element (This, First_Used - 1)).Content.all)) = "when"
+         then
+            Last_Used := Last_Used + 1;
          end if;
-
-         Garbage_Node := Current_Element;
-         Current_Element := Next (Current_Element);
-
-         Update_Deletion (This, Data (Garbage_Node));
-
-         Remove_Nodes
-           (This.Elements_List,
-            Prev (This.Elements_List, Garbage_Node),
-            Garbage_Node);
-
-      end loop;
-
-   end Remove_Elements;
-
-   ---------------------
-   -- Remove_Elements --
-   ---------------------
-
-   procedure Remove_Elements
-     (This  : in out Ada_List; First : String; Last : String := "") is
-   begin
-      if Last = "" then
-         Remove_Elements (This, Get_Nth_Element (This, First), 0);
       else
-         Remove_Elements
-           (This, Get_Nth_Element (This, First), Get_Nth_Element (This, Last));
-      end if;
-   end Remove_Elements;
-
-   ---------------------
-   -- Comment_Elements --
-   ---------------------
-
-   procedure Comment_Elements
-     (This  : in out Ada_List; First : Natural; Last : Natural := 0) is
-
---        Current_Element          : Tokens_List.List_Node;
---        Garbage_Node             : Tokens_List.List_Node;
-      Last_Used                : Natural;
-      First_Used               : Natural;
-
-   begin
-      if Last = 0 then
-         Last_Used := First;
-      else
-         Last_Used := Last;
+         if Data (Get_Element (This, Last_Used + 1)).Content.all (1) = ',' then
+            Last_Used := Last_Used + 1;
+            --  In this case, there is no previous character, so the next ','
+            --  is deleted.
+         end if;
       end if;
 
-      First_Used := First;
+      --  If we are not in the case of an exception and the whole declaration
+      --  has to be removed, then just remove it.
 
-      if First_Used > 1 then
-         First_Used := First_Used - 1;
-         --  -1 comments the previous character, the ','.
-      else
-         Last_Used := Last_Used + 1;
-         --  In this case, there is no previous character, so the next ','
-         --  is deleted.
-      end if;
+      if To_Lower (Without_Last_Blanks
+        (Data (Get_Element (This, 1)).Content.all)) /= "when"
+        and then First_Used = 1
+        and then
+          Data (Get_Element (This, Last_Used + 1)).Content.all (1) = ':'
+      then
+         case Mode is
+            when Erase =>
+               Remove_Instruction (This);
+            when Comment =>
+               Comment_Instruction (This);
+         end case;
 
-      if Last_Used - First_Used + 1 >=  Length (This.Elements_List) then
-         Comment_Instruction (This);
          return;
       end if;
 
@@ -668,25 +619,38 @@ package body Codefix.Text_Manager.Ada_Extracts is
            (Cursor_End,
             Get_Line (Cursor_End),
             Last_Token.Last_Col);
-         Comment (This, Cursor_Begin, Cursor_End);
+
+         case Mode is
+            when Erase =>
+               Erase (This, Cursor_Begin, Cursor_End);
+            when Comment =>
+               Comment (This, Cursor_Begin, Cursor_End);
+         end case;
       end;
 
-   end Comment_Elements;
+      Remove_Nodes (This.Elements_List, Tokens_List.Null_Node);
+   end Remove_Elements;
 
-   ----------------------
-   -- Comment_Elements --
-   ----------------------
+   ---------------------
+   -- Remove_Elements --
+   ---------------------
 
-   procedure Comment_Elements
-     (This  : in out Ada_List; First : String; Last : String := "") is
+   procedure Remove_Elements
+     (This  : in out Ada_List;
+      Mode  : Remove_Code_Mode;
+      First : String;
+      Last  : String := "") is
    begin
       if Last = "" then
-         Comment_Elements (This, Get_Nth_Element (This, First), 0);
+         Remove_Elements (This, Mode, Get_Nth_Element (This, First), 0);
       else
-         Comment_Elements
-           (This, Get_Nth_Element (This, First), Get_Nth_Element (This, Last));
+         Remove_Elements
+           (This,
+            Mode,
+            Get_Nth_Element (This, First),
+            Get_Nth_Element (This, Last));
       end if;
-   end Comment_Elements;
+   end Remove_Elements;
 
    -----------------
    -- Get_Element --
@@ -747,33 +711,5 @@ package body Codefix.Text_Manager.Ada_Extracts is
         and then Is_Blank
           (Content (Content'First + This.Last_Col .. Content'Last));
    end Is_Alone;
-
-   ---------------------
-   -- Update_Deletion --
-   ---------------------
-
-   procedure Update_Deletion
-     (This : in out Ada_List; Token_Deleted : Token_Record)
-   is
-      Current_Node  : Tokens_List.List_Node;
-      Current_Token : Token_Record;
-      Length        : constant Natural :=
-        Token_Deleted.Last_Col - Token_Deleted.First_Col + 1;
-   begin
-      Current_Node := First (This.Elements_List);
-
-      while Current_Node /= Tokens_List.Null_Node loop
-         Current_Token := Clone (Data (Current_Node));
-
-         if Current_Token.Line = Token_Deleted.Line
-           and then Current_Token.First_Col > Token_Deleted.First_Col then
-            Current_Token.First_Col := Current_Token.First_Col - Length;
-            Current_Token.Last_Col := Current_Token.Last_Col - Length;
-            Set_Data (Current_Node, Current_Token);
-         end if;
-
-         Current_Node := Next (Current_Node);
-      end loop;
-   end Update_Deletion;
 
 end Codefix.Text_Manager.Ada_Extracts;
