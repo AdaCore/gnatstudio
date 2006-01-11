@@ -102,7 +102,7 @@ package body Src_Editor_Buffer is
    --  in milliseconds.
 
    Cursor_Stop_Interval      : constant Guint32 := 100;
-   --  The interval after which we consider that the cursor has stopped.
+   --  The interval after which we consider that the cursor has stopped
 
    Buffer_Recompute_Delay    : constant Duration := 1.0;
    --  The delay between the last edit and the re-parsing of the buffer,
@@ -131,7 +131,7 @@ package body Src_Editor_Buffer is
    --------------------
 
    Class_Record : GObject_Class := Uninitialized_Class;
-   --  A pointer to the 'class record'.
+   --  A pointer to the 'class record'
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => New_String ("cursor_position_changed"),
@@ -305,13 +305,13 @@ package body Src_Editor_Buffer is
    --  Number is the number of lines that were inserted.
 
    procedure End_Action_Hook (Buffer : access Source_Buffer_Record'Class);
-   --  Actions that must be executed whenever an action is ended.
+   --  Actions that must be executed whenever an action is ended
 
    procedure Destroy_Hook (Buffer : access Source_Buffer_Record'Class);
-   --  Actions that must be executed when the buffer is destroyed.
+   --  Actions that must be executed when the buffer is destroyed
 
    procedure Initialize_Hook (Buffer : access Source_Buffer_Record'Class);
-   --  Actions that must be executed after initialization.
+   --  Actions that must be executed after initialization
 
    procedure Get_Iter_At_Screen_Position
      (Buffer : access Source_Buffer_Record;
@@ -328,7 +328,7 @@ package body Src_Editor_Buffer is
       Style  : Style_Access;
       Set    : Boolean;
       Highlight_In : Highlight_Location_Array);
-   --  Common function for [Add|Remove]_Line_Highlighting.
+   --  Common function for [Add|Remove]_Line_Highlighting
 
    procedure Register_Cursor_Timeout
      (Buffer : access Source_Buffer_Record'Class);
@@ -336,10 +336,10 @@ package body Src_Editor_Buffer is
    --  registered to call the corresponding "after-timeout" hook.
 
    function Check_Blocks (Buffer : Source_Buffer) return Boolean;
-   --  Timeout that recomputes the blocks if needed.
+   --  Timeout that recomputes the blocks if needed
 
    function Cursor_Stop_Hook (Buffer : Source_Buffer) return Boolean;
-   --  Hook called after the cursor has stopped moving.
+   --  Hook called after the cursor has stopped moving
 
    type Src_String is record
       Contents  : Unchecked_String_Access;
@@ -690,9 +690,6 @@ package body Src_Editor_Buffer is
       Last_Delim_Iter  : out Gtk_Text_Iter;
       Found            : out Natural)
    is
-      Lang_Context : constant Language_Context_Access :=
-                       Get_Language_Context (Buffer.Lang);
-
       Current      : Gtk_Text_Iter;
 
       Success      : Boolean;
@@ -709,10 +706,6 @@ package body Src_Editor_Buffer is
       function Check_Char (Forward : Boolean) return Boolean;
       --  Check current character (C) and update current procedure state.
       --  Returns False if parsing must stop (end of file reached for example)
-
-      function In_Comment return Boolean;
-      --  Returns True if the current position (for a closing or opening
-      --  delimiter) is in a comment. We check only new-line kind of comments.
 
       ----------------
       -- Check_Char --
@@ -741,20 +734,19 @@ package body Src_Editor_Buffer is
             end if;
          end Move_Char;
 
-         Is_In_Comment : constant Boolean :=
-                           Lang_Context.New_Line_Comment_Start /= null
-                           and then In_Comment;
+         In_Comment : constant Boolean :=
+                        Is_In_Comment (Source_Buffer (Buffer), Current);
 
       begin
          if C = Delimiters (Delimiter, Closing)
            and then not String_Tag
-           and then not Is_In_Comment
+           and then not In_Comment
          then
             Stack := Stack + Val (Forward);
 
          elsif C = Delimiters (Delimiter, Opening)
            and then not String_Tag
-           and then not Is_In_Comment
+           and then not In_Comment
          then
             Stack := Stack - Val (Forward);
 
@@ -787,45 +779,6 @@ package body Src_Editor_Buffer is
          return True;
       end Check_Char;
 
-      ----------------
-      -- In_Comment --
-      ----------------
-
-      function In_Comment return Boolean is
-         Comment : constant String :=
-                     Lang_Context.New_Line_Comment_Start.all;
-         K       : Natural;
-         Iter    : Gtk_Text_Iter;
-         C       : Character;
-         Success : Boolean;
-      begin
-         Copy (Current, Iter);
-
-         K := Comment'Last;
-
-         loop
-            Backward_Char (Iter, Success);
-            exit when not Success;
-
-            C := Get_Char (Iter);
-            exit when C = ASCII.LF;
-
-            if C = Comment (K) then
-               if K = Comment'First then
-                  return True;
-
-               else
-                  K := K - 1;
-               end if;
-
-            else
-               K := Comment'Last;
-            end if;
-         end loop;
-
-         return False;
-      end In_Comment;
-
    begin
       --  Find a closing delimiter.
 
@@ -833,9 +786,7 @@ package body Src_Editor_Buffer is
       Delimiter := -1;
       Copy (On_Cursor_Iter, Current);
 
-      if Lang_Context.New_Line_Comment_Start /= null
-        and then In_Comment
-      then
+      if Is_In_Comment (Source_Buffer (Buffer), Current) then
          --  The current character is in comment, nothing to do
          return;
       end if;
@@ -1390,12 +1341,12 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
+      Text   : constant Unchecked_String_Access :=
+                 To_Unchecked_String (Get_Chars (Nth (Params, 2)));
       Length : constant Integer := Integer (Get_Int (Nth (Params, 3)));
       Start  : Buffer_Line_Type;
       Iter   : Gtk_Text_Iter;
       Number : Buffer_Line_Type := 0;
-      Text   : constant Unchecked_String_Access :=
-        To_Unchecked_String (Get_Chars (Nth (Params, 2)));
    begin
       Get_Text_Iter (Nth (Params, 1), Iter);
 
@@ -1431,11 +1382,11 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Pos     : Gtk_Text_Iter;
-      Length  : constant Integer := Integer (Get_Int (Nth (Params, 3)));
-      Command : Editor_Command := Editor_Command (Buffer.Current_Command);
       Text    : constant Unchecked_String_Access :=
-        To_Unchecked_String (Get_Chars (Nth (Params, 2)));
+                  To_Unchecked_String (Get_Chars (Nth (Params, 2)));
+      Length  : constant Integer := Integer (Get_Int (Nth (Params, 3)));
+      Pos     : Gtk_Text_Iter;
+      Command : Editor_Command := Editor_Command (Buffer.Current_Command);
    begin
       Edit_Hook (Buffer);
       Cursor_Move_Hook (Buffer);
@@ -2362,7 +2313,7 @@ package body Src_Editor_Buffer is
                end if;
             end loop;
 
-         else
+         elsif Lang_Context.New_Line_Comment_Start_Regexp /= null then
             for J in S_Line'Range loop
                if GNAT.Regpat.Match
                  (Lang_Context.New_Line_Comment_Start_Regexp.all,
