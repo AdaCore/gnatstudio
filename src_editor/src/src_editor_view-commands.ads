@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -88,6 +88,6 @@ package Src_Editor_View.Commands is
      (Command : access Tab_As_Space_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
-   --  A command that inserts spaces in the current editor.
+   --  A command that inserts spaces in the current editor
 
 end Src_Editor_View.Commands;
