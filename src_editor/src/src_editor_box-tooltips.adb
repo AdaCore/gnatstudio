@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
---                            AdaCore                                --
+--                      Copyright (C) 2005-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -114,14 +114,14 @@ package body Src_Editor_Box.Tooltips is
    is
       use Ada.Strings.Unbounded;
       --  ??? Display should depend on the language
-      Iter       : Subprogram_Iterator;
-      Param      : Entity_Information;
-      Param_Type : Entity_Information;
-      Result     : Unbounded_String;
+      Iter                          : Subprogram_Iterator;
+      Param                         : Entity_Information;
+      Param_Type                    : Entity_Information;
+      Result                        : Unbounded_String;
       Longuest_Param, Longuest_Type : Gint := 0;
-      Layout     : Pango_Layout;
-      Tabs       : Pango_Tab_Array;
-      Char_Width, Char_Height : Gint;
+      Layout                        : Pango_Layout;
+      Tabs                          : Pango_Tab_Array;
+      Char_Width, Char_Height       : Gint;
    begin
       if Is_Subprogram (Entity) then
          Layout := Create_Pango_Layout (Widget, "");
