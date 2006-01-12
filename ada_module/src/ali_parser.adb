@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;
+with Ada.Calendar;              use Ada.Calendar;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Unchecked_Conversion;
+with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with VFS;                       use VFS;
@@ -28,13 +34,6 @@ with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Glib.Convert;              use Glib.Convert;
 with File_Utils;                use File_Utils;
-
-with Ada.Calendar;              use Ada.Calendar;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Unchecked_Conversion;
-with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with ALI;                       use ALI;
 with Types;                     use Types;
@@ -665,17 +664,14 @@ package body ALI_Parser is
       Sfiles                : Sdep_To_Sfile_Table;
       First_Sect, Last_Sect : Nat)
    is
-      Entity         : Entity_Information;
+      File_Num         : constant Sdep_Id :=
+                           Xref_Section.Table (Xref_Sect).File_Num;
+      Kind             : constant E_Kind :=
+                           Char_To_E_Kind (Xref_Entity.Table (Xref_Ent).Etype);
+      Entity           : Entity_Information;
       Instantiation_Of : Entity_Information;
-      Current_Sfile  : Sdep_Id;
-      File_Num       : constant Sdep_Id :=
-                         Xref_Section.Table (Xref_Sect).File_Num;
-      Has_Completion : Boolean := False;
-      Kind : constant E_Kind :=
-         Char_To_E_Kind (Xref_Entity.Table (Xref_Ent).Etype);
-
-      procedure Unchecked_Free (S : Basic_Types.Unchecked_String_Access);
-      pragma Import (C, Unchecked_Free, "free");
+      Current_Sfile    : Sdep_Id;
+      Has_Completion   : Boolean := False;
 
    begin
       --  Ignore labels for now. GNAT no longer outputs them anyway, and they
@@ -691,25 +687,19 @@ package body ALI_Parser is
       Get_Name_String (Xref_Entity.Table (Xref_Ent).Entity);
 
       declare
-         Buffer : Basic_Types.Unchecked_String_Access;
-         Read, Written : aliased Natural;
+         First : Positive := 1;
+         Last  : Positive := Name_Len;
       begin
          if Name_Buffer (1) = '"' then
-            Buffer := Basic_Types.To_Unchecked_String (Locale_To_UTF8
-              (Name_Buffer (2 .. Name_Len - 1),
-               Read'Unchecked_Access, Written'Unchecked_Access));
-         else
-            Buffer := Basic_Types.To_Unchecked_String (Locale_To_UTF8
-              (Name_Buffer (1 .. Name_Len),
-               Read'Unchecked_Access, Written'Unchecked_Access));
+            First := 2;
+            Last := Name_Len - 1;
          end if;
 
          Entity := Get_Or_Create
-           (Name   => Buffer (1 .. Written),
+           (Name   => Name_Buffer (First .. Last),
             File   => Sfiles (File_Num).File,
             Line   => Integer (Xref_Entity.Table (Xref_Ent).Line),
             Column => Integer (Xref_Entity.Table (Xref_Ent).Col));
-         Unchecked_Free (Buffer);
       end;
 
       Set_Kind (Entity, Kind);
@@ -1332,6 +1322,10 @@ package body ALI_Parser is
       --  Move Last so that Short_ALI_Filename (1 .. Last) is the name of the
       --  next file to test. This might be the parent unit
 
+      --------------------
+      -- Next_Candidate --
+      --------------------
+
       procedure Next_Candidate (Last : in out Integer; Dot : String) is
       begin
          while Last > Short_ALI_Filename'First loop
@@ -1680,6 +1674,10 @@ package body ALI_Parser is
 
       procedure Parse_Directory (Project : Project_Type; Directory : String);
       --  Parses a specific directory
+
+      ---------------------
+      -- Parse_Directory --
+      ---------------------
 
       procedure Parse_Directory (Project : Project_Type; Directory : String) is
          Dir     : Dir_Type;
