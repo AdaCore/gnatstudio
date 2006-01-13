@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,28 +18,28 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;            use Ada.Calendar;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Calendar;               use Ada.Calendar;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
+with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort_G;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with Entities.Debug;          use Entities.Debug;
-with File_Utils;              use File_Utils;
-with Glib.Values;             use Glib, Glib.Values;
-with GPS.Intl;                use GPS.Intl;
-with Language;                use Language;
-with Language_Handlers;   use Language_Handlers;
-with Language_Utils;          use Language_Utils;
-with Namet;                   use Namet;
-with Projects.Registry;       use Projects.Registry;
-with Projects;                use Projects;
-with String_Utils;            use String_Utils;
-with System;                  use System;
-with Traces;                  use Traces;
-with VFS;                     use VFS;
+with Entities.Debug;             use Entities.Debug;
+with File_Utils;                 use File_Utils;
+with Glib.Values;                use Glib, Glib.Values;
+with GPS.Intl;                   use GPS.Intl;
+with Language;                   use Language;
+with Language_Handlers;          use Language_Handlers;
+with Language_Utils;             use Language_Utils;
+with Namet;                      use Namet;
+with Projects.Registry;          use Projects.Registry;
+with Projects;                   use Projects;
+with String_Utils;               use String_Utils;
+with System;                     use System;
+with Traces;                     use Traces;
+with VFS;                        use VFS;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -116,14 +116,15 @@ package body Entities is
    --  The references are cleared only if Clear_References is True.
 
    procedure Remove
-     (D      : in out Entities_Hash.HTable;
-      E      : Entity_Information);
+     (D : in out Entities_Hash.HTable;
+      E : Entity_Information);
    --  Remove the information for E in the table. The entity is not Unrefed
    --  explicitly, since this call should only happen as a result of Unref
 
-   procedure Add (Entities         : in out Entities_Hash.HTable;
-                  Entity           : Entity_Information;
-                  Check_Duplicates : Boolean);
+   procedure Add
+     (Entities         : in out Entities_Hash.HTable;
+      Entity           : Entity_Information;
+      Check_Duplicates : Boolean);
    --  Add a new entity, if not already there, to D.
    --  Entity shouldn't have a Shared_Name yet if Name is "".
 
@@ -336,22 +337,22 @@ package body Entities is
    begin
       if D = null then
          return Empty_Cased_String;
+
       else
          if Active (Assert_Me) then
             Assert
               (Assert_Me,
                D.List.Table (Entity_Information_Arrays.First).Ref_Count /= 0,
                "Entity has been freed: "
-               & D.List.Table
-                 (Entity_Information_Arrays.First).Name.all);
+               & D.List.Table (Entity_Information_Arrays.First).Name.all);
          end if;
 
-         return (Str => D.List.Table
-                   (Entity_Information_Arrays.First).Name,
-                 Case_Sensitive => not Case_Insensitive_Identifiers
-                  (D.List.Table
-                     (Entity_Information_Arrays.First)
-                        .Declaration.File.Handler));
+         return
+           (Str => D.List.Table
+              (Entity_Information_Arrays.First).Name,
+            Case_Sensitive => not Case_Insensitive_Identifiers
+              (D.List.Table
+                 (Entity_Information_Arrays.First).Declaration.File.Handler));
       end if;
    end Get_Name;
 
@@ -766,13 +767,13 @@ package body Entities is
    ------------
 
    procedure Remove
-     (D      : in out Entities_Hash.HTable;
-      E      : Entity_Information)
+     (D : in out Entities_Hash.HTable;
+      E : Entity_Information)
    is
       Str : constant Cased_String :=
-        (Str            => E.Name,
-         Case_Sensitive => not Case_Insensitive_Identifiers
-           (E.Declaration.File.Handler));
+              (Str            => E.Name,
+               Case_Sensitive => not Case_Insensitive_Identifiers
+                 (E.Declaration.File.Handler));
       UEI : constant Entity_Informations := Get (D, Str);
       EL  : Entity_Information_List_Access;
    begin
@@ -1101,6 +1102,7 @@ package body Entities is
    -----------
 
    procedure Reset (Db : Entities_Database) is
+
       procedure Fast_Reset (File : Source_File);
       --  Free the memory occupied by File and its entities. No attempt is made
       --  to respect the reference counter of the entities, and therefore all
@@ -1112,9 +1114,9 @@ package body Entities is
       ----------------
 
       procedure Fast_Reset (File : Source_File) is
-         Iter   : Entities_Hash.Iterator;
-         UEI    : Entity_Informations;
-         EL     : Entity_Information_List_Access;
+         Iter : Entities_Hash.Iterator;
+         UEI  : Entity_Informations;
+         EL   : Entity_Information_List_Access;
       begin
          Get_First (File.Entities, Iter);
 
@@ -1323,8 +1325,8 @@ package body Entities is
    ----------
 
    function Find
-     (List   : Entity_Information_List;
-      Loc    : File_Location) return Entity_Information is
+     (List : Entity_Information_List;
+      Loc  : File_Location) return Entity_Information is
    begin
       for L in Entity_Information_Arrays.First .. Last (List) loop
          if List.Table (L).Declaration.File = Loc.File
@@ -1380,13 +1382,14 @@ package body Entities is
       Entity           : Entity_Information;
       Check_Duplicates : Boolean)
    is
-      UEI     : Entity_Informations;
-      Str     : constant Cased_String :=
-        (Str => Entity.Name,
-         Case_Sensitive => not Case_Insensitive_Identifiers
-           (Entity.Declaration.File.Handler));
+      UEI : Entity_Informations;
+      Str : constant Cased_String :=
+              (Str => Entity.Name,
+               Case_Sensitive => not Case_Insensitive_Identifiers
+                 (Entity.Declaration.File.Handler));
    begin
       UEI := Get (Entities, Str);
+
       if UEI = null then
          UEI := new Entity_Informations_Record'
            (List => new Entity_Information_List'
@@ -1396,6 +1399,7 @@ package body Entities is
          Append (UEI.List.all, Entity);
          Set (Entities, UEI);
          Ref (Entity, "Add");
+
       else
          if not Check_Duplicates
            or else Find (UEI.List.all, Entity.Declaration) = null
@@ -1421,9 +1425,9 @@ package body Entities is
    -------------------
 
    function Get_Or_Create
-     (Db        : Entities_Database;
-      File      : VFS.Virtual_File;
-      Project   : Projects.Project_Type) return LI_File
+     (Db      : Entities_Database;
+      File    : VFS.Virtual_File;
+      Project : Projects.Project_Type) return LI_File
    is
       L : LI_File_Item := Get (Db.LIs, Full_Name (File));
    begin
@@ -1713,12 +1717,13 @@ package body Entities is
       Column       : Natural;
       Allow_Create : Boolean := True) return Entity_Information
    is
-      UEI : Entity_Informations;
-      E   : Entity_Information;
+      UEI              : Entity_Informations;
+      E                : Entity_Information;
       Must_Add_To_File : Boolean := False;
-      Str     : constant Cased_String :=
-        (Str => Name'Unrestricted_Access,
-         Case_Sensitive => not Case_Insensitive_Identifiers (File.Handler));
+      Str              : constant Cased_String :=
+                           (Str            => Name'Unrestricted_Access,
+                            Case_Sensitive =>
+                              not Case_Insensitive_Identifiers (File.Handler));
    begin
       Assert (Assert_Me, Name /= "", "No name specified for Get_Or_Create");
       if Active (Ref_Me) then
@@ -1737,6 +1742,7 @@ package body Entities is
                Next => null);
             Must_Add_To_File := True;
          end if;
+
       else
          E := Find (UEI.List.all, (File, Line, Column_Type (Column)));
       end if;
@@ -1805,7 +1811,7 @@ package body Entities is
    -------------------------
 
    function Get_Predefined_File
-     (Db : Entities_Database;
+     (Db      : Entities_Database;
       Handler : access LI_Handler_Record'Class) return Source_File
    is
    begin

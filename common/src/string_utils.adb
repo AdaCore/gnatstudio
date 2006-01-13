@@ -18,14 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with Glib.Unicode;            use Glib, Glib.Unicode;
+with Glib.Unicode;               use Glib, Glib.Unicode;
 
 package body String_Utils is
 
@@ -909,6 +909,7 @@ package body String_Utils is
    begin
       if Case_Sensitive then
          return S1 = S2;
+
       else
          if S1'Length /= S2'Length then
             return False;
@@ -935,7 +936,7 @@ package body String_Utils is
    -----------------------------
 
    function Argument_List_To_String
-     (List : GNAT.OS_Lib.Argument_List;
+     (List           : GNAT.OS_Lib.Argument_List;
       Protect_Quotes : Boolean := True) return String
    is
       Length : Natural := 0;

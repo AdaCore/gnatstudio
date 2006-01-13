@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2005                    --
---                            AdaCore                                --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 
 package body HTables is
 
@@ -317,6 +317,7 @@ package body HTables is
       begin
          E.Next := Next;
       end Set_Next;
+
    end Simple_HTable;
 
    ----------

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -740,7 +740,7 @@ package Entities is
    --  called with the file in parameter
 
    function Case_Insensitive_Identifiers
-     (Handler         : access LI_Handler_Record) return Boolean is abstract;
+     (Handler : access LI_Handler_Record) return Boolean is abstract;
    --  Return True if the language associated with Handler is case-insensitive.
    --  Note that for case insensitive languages, the identifier names must be
    --  storer in lower cases in the LI structure.

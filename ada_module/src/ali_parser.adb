@@ -400,10 +400,10 @@ package body ALI_Parser is
       LI      : LI_File;
       Id      : Unit_Id) return Source_File
    is
-      Base_Name     : constant String :=
-        Locale_To_UTF8 (Get_String (Units.Table (Id).Sfile));
-      File          : Source_File;
-      Unit          : constant String := Get_String (Units.Table (Id).Uname);
+      Base_Name : constant String :=
+                    Locale_To_UTF8 (Get_String (Units.Table (Id).Sfile));
+      File      : Source_File;
+      Unit      : constant String := Get_String (Units.Table (Id).Uname);
    begin
       Assert (Assert_Me, LI /= null, "Null LI file parsed");
 
