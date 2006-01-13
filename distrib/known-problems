@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.1
 
+- F111-008 Seach contextual menu not set to proper context
+  Problem:    When the project explorer is selected and the seach window opened,
+              the look in area is not set to proper value, and has 
+              "Current File" instead of "Project Explorer"
+  Workaround: Set manually "Project Explorer" in the look in area
+
 - F109-009 Change in number of arguments to Editor.save
   Problem:    The obsolescent shell function Editor.save is declared as accepting
               no parameter, when in fact it accepts two and is documented as such
