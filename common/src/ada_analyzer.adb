@@ -763,7 +763,7 @@ package body Ada_Analyzer is
 
       procedure New_Line (Count : in out Natural);
       pragma Inline (New_Line);
-      --  Increment Count and poll if needed (e.g for graphic events).
+      --  Increment Count and poll if needed (e.g for graphic events)
 
       procedure Do_Indent
         (Prec         : Natural;
@@ -773,7 +773,7 @@ package body Ada_Analyzer is
       --  If Continuation is True, Indent_Continue extra spaces are added.
 
       procedure Indent_Function_Return (Prec : Natural);
-      --  Perform special indentation for function return/rename statements.
+      --  Perform special indentation for function return/rename statements
 
       procedure Compute_Indentation
         (Token      : Token_Type;
@@ -784,11 +784,11 @@ package body Ada_Analyzer is
       --  of simple/continuation/declaration/... lines.
 
       function Next_Char (P : Natural) return Natural;
-      --  Return the next char in buffer. P is the current character.
+      --  Return the next char in buffer. P is the current character
       pragma Inline (Next_Char);
 
       function Prev_Char (P : Natural) return Natural;
-      --  Return the previous char in buffer. P is the current character.
+      --  Return the previous char in buffer. P is the current character
       pragma Inline (Prev_Char);
 
       function Compute_Alignment
@@ -811,7 +811,7 @@ package body Ada_Analyzer is
         (First : Natural;
          Last  : Natural;
          Str   : String);
-      --  Wrapper for Replace.all, taking (From, To) into account.
+      --  Wrapper for Replace.all, taking (From, To) into account
 
       --------------------
       -- Stack Routines --
@@ -819,10 +819,10 @@ package body Ada_Analyzer is
 
       procedure Pop
         (Stack : in out Token_Stack.Simple_Stack; Value : out Extended_Token);
-      --  Pop Value on top of Stack.
+      --  Pop Value on top of Stack
 
       procedure Pop (Stack : in out Token_Stack.Simple_Stack);
-      --  Pop Value on top of Stack. Ignore returned value.
+      --  Pop Value on top of Stack. Ignore returned value
 
       ---------------
       -- Next_Char --
@@ -1015,6 +1015,7 @@ package body Ada_Analyzer is
          Found_Align      : Boolean := False;
          J                : Natural;
          Non_Blank        : Natural := 0;
+         Length_Ident     : Natural := 0;
          Local_Num_Parens : Natural := 0;
 
       begin
@@ -1038,10 +1039,14 @@ package body Ada_Analyzer is
          loop
             exit Main_Loop when J >= Buffer'Last;
 
-            if Non_Blank = 0
-              and then not Is_Blank (Buffer (J))
-            then
-               Non_Blank := J;
+            if Non_Blank = 0 then
+               if not Is_Blank (Buffer (J)) then
+                  Non_Blank := J;
+                  Length_Ident := 1;
+               end if;
+
+            else
+               Length_Ident := Length_Ident + 1;
             end if;
 
             exit Main_Loop when Look_For (J, "begin")
@@ -1089,7 +1094,7 @@ package body Ada_Analyzer is
                     and then not Found_Align
                   then
                      Found_Align := True;
-                     New_Align   := J - Non_Blank + 1;
+                     New_Align   := Length_Ident;
 
                      if Format_Operators
                        and then not Is_Blank (Buffer (J - 1))
@@ -1107,7 +1112,7 @@ package body Ada_Analyzer is
                     and then not Found_Align
                   then
                      Found_Align := True;
-                     New_Align   := J - Non_Blank + 2;
+                     New_Align   := Length_Ident + 1;
 
                      if Format_Operators
                        and then not Is_Blank (Buffer (J - 1))
@@ -1132,7 +1137,7 @@ package body Ada_Analyzer is
                   null;
             end case;
 
-            J := J + 1;
+            J := Next_Char (J);
          end loop Main_Loop;
 
          return Alignment;
