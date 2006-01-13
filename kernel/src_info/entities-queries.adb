@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,8 +20,6 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
-
-with Glib.Unicode;            use Glib.Unicode;
 
 with Language_Handlers;   use Language_Handlers;
 with Projects;                use Projects;
@@ -523,13 +521,8 @@ package body Entities.Queries is
          Updated := Get_Source_Info (H, Get_Filename (Source));
 
          if Updated /= null then
-            if Case_Insensitive_Identifiers (H) then
-               Find (Source, UTF8_Strdown (Entity_Name), Line, Column,
-                     Check_Decl_Only, Entity, Closest_Ref, Status);
-            else
-               Find (Source, Entity_Name, Line, Column, Check_Decl_Only,
-                     Entity, Closest_Ref, Status);
-            end if;
+            Find (Source, Entity_Name, Line, Column, Check_Decl_Only,
+                  Entity, Closest_Ref, Status);
          end if;
 
          Trace (Me, "Result=" & Status'Img);
