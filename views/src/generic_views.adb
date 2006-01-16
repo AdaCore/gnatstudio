@@ -198,8 +198,8 @@ package body Generic_Views is
             Module_Name => Module_Name,
             Priority    => GPS.Kernel.Modules.Default_Priority);
          GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
-           (Save_Desktop'Unrestricted_Access,
-            Load_Desktop'Unrestricted_Access);
+           (Generic_Views.Simple_Views.Save_Desktop'Unrestricted_Access,
+            Generic_Views.Simple_Views.Load_Desktop'Unrestricted_Access);
 
          Register_Menu
            (Kernel, "/" & (-"Tools"), View_Name, "",
