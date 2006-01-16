@@ -195,10 +195,10 @@ package body Generic_Views is
             Module_Name => Module_Name,
             Priority    => GPS.Kernel.Modules.Default_Priority);
          GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
-           (Save_Desktop'Access, Load_Desktop'Access);
+           (Save_Desktop_Access, Load_Desktop_Access);
 
          Register_Menu
-           (Kernel, "/" & (-"Tools"), View_Name, "", On_Open_View'Access,
+           (Kernel, "/" & (-"Tools"), View_Name, "", On_Open_View_Access,
             Ref_Item => -"File View", Add_Before => False);
       end Register_Module;
    end Simple_Views;
