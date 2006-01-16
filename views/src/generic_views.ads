@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -103,16 +103,22 @@ package Generic_Views is
       procedure On_Open_View
         (Widget : access Glib.Object.GObject_Record'Class;
          Kernel : GPS.Kernel.Kernel_Handle);
+      On_Open_View_Access : constant
+        GPS.Kernel.Kernel_Callback.Marshallers.Void_Marshaller.Handler :=
+          On_Open_View'Access;
       --  Create a new view if none exists, or raise the existing one
 
       function Load_Desktop
         (MDI  : Gtkada.MDI.MDI_Window;
          Node : Glib.Xml_Int.Node_Ptr;
          User : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child;
+      Load_Desktop_Access : constant
+        GPS.Kernel.Kernel_Desktop.Load_Desktop_Function := Load_Desktop'Access;
       function Save_Desktop
         (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-         User   : GPS.Kernel.Kernel_Handle)
-         return Glib.Xml_Int.Node_Ptr;
+         User   : GPS.Kernel.Kernel_Handle) return Glib.Xml_Int.Node_Ptr;
+      Save_Desktop_Access : constant
+        GPS.Kernel.Kernel_Desktop.Save_Desktop_Function := Save_Desktop'Access;
       --  Support functions for the MDI
    end Simple_Views;
 

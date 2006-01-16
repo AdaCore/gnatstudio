@@ -188,22 +188,17 @@ package body Generic_Views is
             Module := ID;
          end if;
 
-         --  ??? GNAT now flags an error on 'Access applied to subprogram
-         --  outside the generic. Quick and dirty change is to use
-         --  'Unrestricted_Access instead.
-
          Register_Module
            (Module      => Module,
             Kernel      => Kernel,
             Module_Name => Module_Name,
             Priority    => GPS.Kernel.Modules.Default_Priority);
          GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
-           (Generic_Views.Simple_Views.Save_Desktop'Unrestricted_Access,
-            Generic_Views.Simple_Views.Load_Desktop'Unrestricted_Access);
+           (Save_Desktop_Access, Load_Desktop_Access);
 
          Register_Menu
            (Kernel, "/" & (-"Tools"), View_Name, "",
-            On_Open_View'Unrestricted_Access,
+            On_Open_View_Access,
             Ref_Item => -"File View", Add_Before => False);
       end Register_Module;
    end Simple_Views;
