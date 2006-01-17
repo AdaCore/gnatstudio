@@ -1012,7 +1012,13 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "file" then
          Location := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_File (Location));
+
+         declare
+            File : constant Class_Instance := Get_File (Location);
+         begin
+            Ref (File);
+            Set_Return_Value (Data, File);
+         end;
       end if;
    end Create_Location_Command_Handler;
 
