@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 3.1.1
 
+- F117-010 Crash when using "goto declaration or body"
+  Problem:    GPS crashes each time the "goto declaration or body" action is 
+              invoked. A Storage_Error is raised. There is a similar issue with
+              the "goto other file" action.
+  Workaround: Use contextual menus or other actions such as 
+              "/Navigate/Goto Body", "/Navigate/Goto Declaration" or
+              "/Navigate/Goto File Spec<->Body".
+
 - F111-008 Seach contextual menu not set to proper context
   Problem:    When the project explorer is selected and the seach window opened,
               the look in area is not set to proper value, and has 
