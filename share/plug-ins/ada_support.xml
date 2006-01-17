@@ -62,6 +62,12 @@
          <check label="Always generate ALI file" switch="-gnatQ"
                 tip="Don't quit, write ali/tree file even if compile errors" />
 
+         <check label="Separate function sections" switch="-ffunction-sections"
+                tip="Generate each function in a separate section. See also -fdata-sections and --gc-sections linker flag" />
+
+         <check label="Separate data sections" switch="-fdata-sections"
+                tip="Generate each global data in a separate section. See also -ffunction-sections and --gc-sections linker flag" />
+
          <check label="Full errors" switch="-gnatf" line="2" column="1" 
                 tip="Full Errors. Multiple errors per line, all undefined references" />
          <popup label="Warnings" line="2" column="1">
@@ -203,10 +209,15 @@
           <check label="Enable assertions" switch="-gnata" line="2" column="2"
                  tip="Assertions enabled. Pragma Assert and pragma Debug are activated" />
 
+          <!--  Do not use radio buttons here, since this would always generate
+                at least one of the switches, and the default is different for
+                each compiler anyway (GNATPro, GNAT GAP,...) -->
           <check label="Ada 83 mode" switch="-gnat83" line="3" column="2"
-                 tip="Enforces Ada 83 restrictions" />
-          <check label="Ada 05 mode" switch="-gnat05" line="3" column="2"
-                 tip="Activates Ada 2005 language features" />
+                 tip="Override the compiler's default, and enforces Ada 83 restrictions" />
+          <check label="Ada 95 mode" switch="-gnat95" line="3" column="2"
+                 tip="Override the compiler's default, and compile in Ada 95 mode" />
+          <check label="Ada 2005 mode" switch="-gnat05" line="3" column="2"
+                 tip="Override the compiler's default, and activate Ada 2005 language features" />
       </switches>
    </tool>
 
@@ -232,20 +243,13 @@
 
          <check label="Code coverage" switch="-ftest-coverage"
                 tip="Create data files for the gcov code-coverage utility" />
-         <check label="Instrument arcs" switch="-fprofile-arcs"
-                tip="Instrument arcs during compilation. For each function of your program, gcc creates a program flow graph, then finds a spanning tree for the graph. Only arcs that are not on the spanning tree have to be instrumented: the compiler adds code to count the number of times that these arcs are executed" />
-         <dependency master-page="Ada Linker" slave-page="Ada Linker"
-                     master-switch="-ftest-coverage"
-                     slave-switch="-fprofile-arcs"
-                     master-status="off" slave-status="off" />
          <dependency master-page="Ada" slave-page="Ada Linker"
                      master-switch="-ftest-coverage"
                      slave-switch="-ftest-coverage"
                      master-status="on" slave-status="on" />
-         <dependency master-page="Ada" slave-page="Ada Linker"
-                     master-switch="-ftest-coverage"
-                     slave-switch="-fprofile-arcs"
-                     master-status="on" slave-status="on" />
+         <check label="Remove unused sections (GNU ld only)"
+                switch="--gc-sections"
+                tip="Remove all unused sections from the link output. This is a GNU ld switch. See also -ffunction-sections and -fdata-sections compiler flags" />
       </switches>
    </tool>
 
