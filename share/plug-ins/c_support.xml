@@ -32,6 +32,12 @@
                     slave-switch="-fprofile-arcs"
                     master-status="off" slave-status="off" />
 
+        <check label="Separate function sections" switch="-ffunction-sections"
+               tip="Generate each function in a separate section. See also -fdata-sections and --gc-sections linker flag" />
+
+        <check label="Separate data sections" switch="-fdata-sections"
+               tip="Generate each global data in a separate section. See also -ffunction-sections and --gc-sections linker flag" />
+
         <check label="Debug information" switch="-g" column="2"
                 tip="Produce debugging information in the operating system's native format" />
 
@@ -73,6 +79,12 @@
         <check label="Elide constructors" switch="-felide-constructor" />
         <check label="Conserve space" switch="-fconserve-space"
                tip="Put uninitialized or runtime-initialized global variables into the common segment. This saves space in the executable at the cost of not diagnosing duplicate definitions" />
+        <check label="Separate function sections" switch="-ffunction-sections"
+               tip="Generate each function in a separate section. See also -fdata-sections and --gc-sections linker flag" />
+
+        <check label="Separate data sections" switch="-fdata-sections"
+               tip="Generate each global data in a separate section. See also -ffunction-sections and --gc-sections linker flag" />
+
 
         <check label="Debug information" switch="-g" column="2"
                 tip="Produce debugging information in the operating system's native format" />
@@ -89,6 +101,15 @@
       <switches lines="1">
          <check label="Strip symbols" switch="-s" />
          <check label="Debug information" switch="-g" />
+         <check label="Code coverage" switch="-ftest-coverage"
+                tip="Create data files for the gcov code-coverage utility" />
+         <dependency master-page="C" slave-page="C Linker"
+                     master-switch="-ftest-coverage"
+                     slave-switch="-ftest-coverage"
+                     master-status="on" slave-status="on" />
+         <check label="Remove unused sections (GNU ld only)"
+                switch="--gc-sections"
+                tip="Remove all unused sections from the link output. This is a GNU ld switch. See also -ffunction-sections and -fdata-sections compiler flags" />
       </switches>
    </tool>
 
@@ -97,6 +118,15 @@
       <switches lines="1">
          <check label="Strip symbols" switch="-s" />
          <check label="Debug information" switch="-g" />
+         <check label="Code coverage" switch="-ftest-coverage"
+                tip="Create data files for the gcov code-coverage utility" />
+         <dependency master-page="C++" slave-page="C++ Linker"
+                     master-switch="-ftest-coverage"
+                     slave-switch="-ftest-coverage"
+                     master-status="on" slave-status="on" />
+         <check label="Remove unused sections (GNU ld only)"
+                switch="--gc-sections"
+                tip="Remove all unused sections from the link output. This is a GNU ld switch. See also -ffunction-sections and -fdata-sections compiler flags" />
       </switches>
    </tool>
 
