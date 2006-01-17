@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -57,6 +57,8 @@ with System.Address_Image;
 with Traces;                  use Traces;
 with Types;                   use Types;
 with VFS;                     use VFS;
+with Namet;                   use Namet;
+with Prj.Tree;
 
 package body GPS.Kernel.Scripts is
 
@@ -232,6 +234,8 @@ package body GPS.Kernel.Scripts is
      (1 => Sensitive_Cst'Access);
    Set_Scenario_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Value_Cst'Access);
+   Get_Possible_Values : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access);
 
    On_Input_Cst     : aliased constant String := "on_input";
    On_Destroy_Cst   : aliased constant String := "on_destroy";
@@ -941,6 +945,33 @@ package body GPS.Kernel.Scripts is
               (Data, Scenario_Variables_Cmd_Line (Kernel, Prefix));
          end;
 
+      elsif Command = "get_possible_scenario_values" then
+         Name_Parameters (Data, Get_Possible_Values);
+         Set_Return_Value_As_List (Data);
+
+         declare
+            Name : constant String := Nth_Arg (Data, 1);
+            Vars : constant Scenario_Variable_Array :=
+              Scenario_Variables (Kernel);
+         begin
+            for V in Vars'Range loop
+               if External_Reference_Of (Vars (V)) = Name then
+                  declare
+                     Tree : constant Prj.Tree.Project_Node_Tree_Ref :=
+                       Get_Tree (Project_Registry (Get_Registry (Kernel).all));
+                     Iter : String_List_Iterator := Value_Of (Tree, Vars (V));
+                  begin
+                     while not Done (Iter) loop
+                        --  We know this is a list of static strings
+                        Get_Name_String (Projects.Editor.Data (Tree, Iter));
+                        Set_Return_Value
+                          (Data, Name_Buffer (Name_Buffer'First .. Name_Len));
+                        Iter := Next (Tree, Iter);
+                     end loop;
+                  end;
+               end if;
+            end loop;
+         end;
       end if;
    end Default_Command_Handler;
 
@@ -1740,6 +1771,13 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, "scenario_variables_cmd_line",
          Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class         => Get_Project_Class (Kernel),
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_possible_scenario_values",
+         Minimum_Args => 1,
          Maximum_Args => 1,
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
