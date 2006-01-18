@@ -2,7 +2,7 @@
    Adapted from process.c in GNU Emacs.
    Copyright (C) 1985, 86, 87, 88, 93, 94, 95, 96, 1998
       Free Software Foundation, Inc.
-   Copyright (C) 2000, 2002 ACT-Europe.
+   Copyright (C) 2000-2006 AdaCore.
 
 This file is part of GVD.
 
@@ -63,6 +63,8 @@ Boston, MA 02111-1307, USA.
 
 #ifdef WIN32
 #include <windows.h>
+#include <io.h>
+#include <fcntl.h>
 #endif
 
 #ifdef HAVE_PTYS
@@ -118,7 +120,7 @@ struct GVD_Process {
 static int Vprocess_connection_type = 1;
 
 #ifdef WIN32
-#define pipe __gnat_pipe
+#define pipe nt_pipe
 #define HAVE_NTGUI
 #define MAXPATHLEN 1024
 
@@ -332,6 +334,7 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
 	   : CREATE_NEW_CONSOLE);
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
+
   if (!CreateProcess (NULL, cmdline, &sec_attrs, NULL, TRUE,
 		      flags, env, ".", &start, procinfo))
     goto EH_Fail;
@@ -346,6 +349,12 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
 
  EH_Fail:
   return -1;
+}
+
+static int
+nt_pipe (int *fd)
+{
+  return _pipe (fd, 1024, _O_BINARY);
 }
 
 /* The following two routines are used to manipulate stdin, stdout, and
@@ -395,7 +404,7 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
 		       TRUE,
 		       DUPLICATE_SAME_ACCESS))
     report_file_error ("Duplicating output handle for child", Qnil);
-
+  
   if (!DuplicateHandle (parent,
 		       (HANDLE) _get_osfhandle (err),
 		       parent,
@@ -411,7 +420,7 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
 
   if (!SetStdHandle (STD_OUTPUT_HANDLE, newstdout))
     report_file_error ("Changing stdout handle", Qnil);
-
+  
   if (!SetStdHandle (STD_ERROR_HANDLE, newstderr))
     report_file_error ("Changing stderr handle", Qnil);
 }
@@ -1910,8 +1919,8 @@ process_send_signal (p, signo, current_group)
   /* gid may be a pid, or minus a pgrp's number */
 #ifdef TIOCSIGSEND
   if (!NILP (current_group)) {
-    /* On some systems like Solaris 2.9 the ioctl may failed
-       So if if this is the case, send explicitely the SIGINT
+    /* On some systems like Solaris 9 the ioctl may fail,
+       so if this is the case, send explicitely the SIGINT
        signal */
     if (ioctl (XINT (p->infd), TIOCSIGSEND, signo) == -1)
       GVD_KILLPG (gid, signo);
@@ -2128,7 +2137,7 @@ gvd_terminate_process (struct GVD_Process* p)
 }
 
 /* wait for process pid to terminate and return the process status. This
-   implementation is different from the a-adaint.c one for Windows as it uses
+   implementation is different from the adaint.c one for Windows as it uses
    the Win32 API instead of the C one. */
 
 int
@@ -2142,6 +2151,14 @@ gvd_waitpid (struct GVD_Process* p)
 
   res = WaitForSingleObject (proc_hand, 0);
   GetExitCodeProcess (proc_hand, &exitcode);
+
+  CloseHandle (p->procinfo.hThread);
+  CloseHandle (p->procinfo.hProcess);
+
+  close (p->infd);
+  close (p->outfd);
+  close (p->forkin);
+  close (p->forkout);
 
   return (int) exitcode;
 }
