@@ -2137,7 +2137,7 @@ gvd_terminate_process (struct GVD_Process* p)
 }
 
 /* wait for process pid to terminate and return the process status. This
-   implementation is different from the a-adaint.c one for Windows as it uses
+   implementation is different from the adaint.c one for Windows as it uses
    the Win32 API instead of the C one. */
 
 int
