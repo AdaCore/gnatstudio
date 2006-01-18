@@ -2,7 +2,7 @@
    Adapted from process.c in GNU Emacs.
    Copyright (C) 1985, 86, 87, 88, 93, 94, 95, 96, 1998
       Free Software Foundation, Inc.
-   Copyright (C) 2000, 2002 ACT-Europe.
+   Copyright (C) 2000, 2006 AdaCore.
 
 This file is part of GVD.
 
