@@ -703,6 +703,8 @@ package body Src_Editor_Buffer is
 
       Delimiter    : Integer;
 
+      Language     : constant Language_Access := Get_Language (Buffer);
+
       function Check_Char (Forward : Boolean) return Boolean;
       --  Check current character (C) and update current procedure state.
       --  Returns False if parsing must stop (end of file reached for example)
@@ -786,8 +788,11 @@ package body Src_Editor_Buffer is
       Delimiter := -1;
       Copy (On_Cursor_Iter, Current);
 
-      if Is_In_Comment (Source_Buffer (Buffer), Current) then
-         --  The current character is in comment, nothing to do
+      if Language /= null
+        and then Language /= Unknown_Lang
+        and then Is_In_Comment (Source_Buffer (Buffer), Current)
+      then
+         --  The current character is in a comment, nothing to do
          return;
       end if;
 
