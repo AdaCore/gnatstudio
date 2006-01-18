@@ -1235,6 +1235,11 @@ If the attribute value is stored as a simple string, a list with a single elemen
        <see_also name="GPS.Project.get_attribute_as_string()"/>
        <see_also name="GPS.Project.get_tool_switches_as_list()"/>
   </shell_doc>
+  
+  <shell_doc name="GPS.Project.scenario_variables_values">
+       <return>A hash table of strings</return>
+       <description>Return a hash table where keys are the various scenario variables defined in the current project and values the different values that this variable can get.</description>
+  </shell_doc>
 
   <shell_doc name="GPS.Project.get_tool_switches_as_list">
        <param name="self">An instance of GPS.Project</param>
