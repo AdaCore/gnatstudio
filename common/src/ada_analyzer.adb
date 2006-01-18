@@ -807,6 +807,10 @@ package body Ada_Analyzer is
       --  closed on the same line.
       --  If a right parenthesis is found before, return 0.
 
+      function Find_Arrow (P : Natural) return Natural;
+      --  Return the location of the first '=>' token on the current line,
+      --  0 if none.
+
       procedure Replace_Text
         (First : Natural;
          Last  : Natural;
@@ -926,6 +930,61 @@ package body Ada_Analyzer is
                  Line_Start (Buffer, Top_Token.Profile_Start) + 1);
          end if;
       end Indent_Function_Return;
+
+      ----------------
+      -- Find_Arrow --
+      ----------------
+
+      function Find_Arrow (P : Natural) return Natural is
+         J : Natural;
+      begin
+         J := P;
+
+         loop
+            exit when J >= Buffer'Last;
+
+            case Buffer (J) is
+               when '>' =>
+                  if Buffer (J - 1) = '=' then
+                     return J - 1;
+                  end if;
+
+               when '"' =>
+                  if Buffer (J - 1) /= ''' then
+                     J := J + 1;
+                     Skip_To_Char (Buffer, J, '"');
+                  end if;
+
+               when '-' =>
+                  if Buffer (J + 1) = '-' then
+                     --  A comment, return
+                     return 0;
+                  end if;
+
+               when '(' =>
+                  if Buffer (J - 1) /= '''
+                    or else Buffer (J + 1) /= '''
+                  then
+                     return 0;
+                  end if;
+
+               when ';' =>
+                  if Buffer (J - 1) /= ''' then
+                     return 0;
+                  end if;
+
+               when ASCII.LF =>
+                  return 0;
+
+               when others =>
+                  null;
+            end case;
+
+            J := J + 1;
+         end loop;
+
+         return 0;
+      end Find_Arrow;
 
       ---------------------------
       -- Find_Multi_Line_Paren --
@@ -2769,6 +2828,7 @@ package body Ada_Analyzer is
                     or else (Format
                              and then Num_Parens = 1
                              and then Find_Multi_Line_Paren (P + 1) = 0)
+                    or else (Format and then Find_Arrow (P + 1) /= 0)
                   then
                      Push
                        (Indents,
