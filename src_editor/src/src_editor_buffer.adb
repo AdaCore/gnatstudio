@@ -2290,7 +2290,7 @@ package body Src_Editor_Buffer is
       --  ??? We do not support all languages here. It needs to be expanded to
       --  have a proper support in every context.
       Traces.Assert
-        (Me,
+        (Exception_Handle,
          not Lang_Context.Case_Sensitive
          and then
            (Lang_Context.Comment_Start_Length = 0
