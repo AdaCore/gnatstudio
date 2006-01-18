@@ -108,7 +108,7 @@
                      slave-switch="-ftest-coverage"
                      master-status="on" slave-status="on" />
          <check label="Remove unused sections (GNU ld only)"
-                switch="--gc-sections"
+                switch="-Wl,--gc-sections"
                 tip="Remove all unused sections from the link output. This is a GNU ld switch. See also -ffunction-sections and -fdata-sections compiler flags" />
       </switches>
    </tool>
@@ -125,7 +125,7 @@
                      slave-switch="-ftest-coverage"
                      master-status="on" slave-status="on" />
          <check label="Remove unused sections (GNU ld only)"
-                switch="--gc-sections"
+                switch="-Wl,--gc-sections"
                 tip="Remove all unused sections from the link output. This is a GNU ld switch. See also -ffunction-sections and -fdata-sections compiler flags" />
       </switches>
    </tool>
