@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                    Copyright (C) 2003 - 2005                      --
---                            AdaCore                                --
+--                     Copyright (C) 2003-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -50,6 +50,11 @@ package Src_Editor_Buffer.Line_Information is
       Info       : GPS.Kernel.Standard_Hooks.Line_Information_Data);
    --  Add the line information to the Buffer.
    --  User must not free Info.
+
+   function Get_Side_Information
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type) return Line_Info_Width_Array_Access;
+   --  ??
 
    procedure Draw_Line_Info
      (Buffer      : access Source_Buffer_Record'Class;
