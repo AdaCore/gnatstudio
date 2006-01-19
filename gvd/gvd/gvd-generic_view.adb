@@ -195,7 +195,8 @@ package body GVD.Generic_View is
                if Get_Console (Process) /= null then
                   Widget_Callback.Object_Connect
                     (Get_Console (Process), "destroy",
-                     On_Debugger_Terminate'Access, Slot_Object => View);
+                     On_Debugger_Terminate'Unrestricted_Access,
+                     Slot_Object => View);
                end if;
 
                Set_Process (View, Visual_Debugger (Process));
@@ -226,7 +227,8 @@ package body GVD.Generic_View is
                   Update (View);
                end if;
 
-               Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
+               Widget_Callback.Connect
+                 (View, "destroy", On_Destroy'Unrestricted_Access);
             end if;
          else
             Child := Find_MDI_Child (MDI, View);
@@ -317,12 +319,13 @@ package body GVD.Generic_View is
         (Kernel : access Kernel_Handle_Record'Class) is
       begin
          GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
-           (Save_Desktop'Access, Load_Desktop'Access);
+           (Simple_Views.Save_Desktop'Unrestricted_Access,
+            Simple_Views.Load_Desktop'Unrestricted_Access);
          Add_Hook (Kernel, Debugger_Process_Stopped_Hook,
-                   Wrapper (On_Update'Access),
+                   Wrapper (On_Update'Unrestricted_Access),
                    Name => Module_Name & ".process_stopped");
          Add_Hook (Kernel, Debugger_Context_Changed_Hook,
-                   Wrapper (On_Update'Access),
+                   Wrapper (On_Update'Unrestricted_Access),
                    Name => Module_Name & ".context_changed");
       end Register_Desktop_Functions;
 
