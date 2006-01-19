@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -118,6 +118,7 @@ package body GPS.Kernel.Standard_Hooks is
    procedure Free (X : in out Line_Information_Record) is
    begin
       Free (X.Text);
+      Free (X.Tooltip_Text);
 
       if X.Associated_Command /= null then
          Destroy (X.Associated_Command);
