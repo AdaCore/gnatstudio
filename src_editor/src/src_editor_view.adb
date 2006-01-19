@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -104,7 +104,7 @@ package body Src_Editor_View is
    --  Connect Expose_Event_Cb to the expose event. Emit an expose event.
 
    function Idle_Column_Redraw (View : Source_View) return Boolean;
-   --  Redraw the side columns in an idle loop.
+   --  Redraw the side columns in an idle loop
 
    procedure Realize_Cb (Widget : access Gtk_Widget_Record'Class);
    --  This procedure is invoked when the Source_View widget is realized.
@@ -134,22 +134,22 @@ package body Src_Editor_View is
    function Button_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Callback for the "button_press_event" signal.
+   --  Callback for the "button_press_event" signal
 
    function Button_Release_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Callback for the "button_release_event" signal.
+   --  Callback for the "button_release_event" signal
 
    function Speed_Bar_Button_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Callback for the "button_press_event" signal on the speed bar.
+   --  Callback for the "button_press_event" signal on the speed bar
 
    function Speed_Bar_Button_Release_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Callback for the "button_press_event" signal on the speed bar.
+   --  Callback for the "button_press_event" signal on the speed bar
 
    function Key_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
@@ -162,43 +162,43 @@ package body Src_Editor_View is
    --  for instance.
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
-   --  Called when the view is destroyed.
+   --  Called when the view is destroyed
 
    procedure Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
       User   : Source_View);
-   --  Callback for the "changed" signal.
+   --  Callback for the "changed" signal
 
    procedure Buffer_Information_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
       User   : Source_View);
-   --  Callback for the "buffer_information_changed" signal.
+   --  Callback for the "buffer_information_changed" signal
 
    procedure Side_Columns_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
       User   : Source_View);
-   --  Callback for the "side_columns_changed" signal.
+   --  Callback for the "side_columns_changed" signal
 
    procedure Side_Columns_Config_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
       User   : Source_View);
-   --  Callback for the "side_columns_configuration_changed" signal.
+   --  Callback for the "side_columns_configuration_changed" signal
 
    procedure Invalidate_Window (User : Source_View);
-   --  Redraw the buffer window.
+   --  Redraw the buffer window
 
    procedure Line_Highlight_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
       User   : Source_View);
-   --  Callback for the "line_highlight_change" signal.
+   --  Callback for the "line_highlight_change" signal
 
    procedure Redraw_Columns (View : access Source_View_Record'Class);
-   --  Redraw the left area.
+   --  Redraw the left area
 
    procedure Redraw_Speed_Column (View : access Source_View_Record'Class);
    --  Redraw the speed column
@@ -227,8 +227,9 @@ package body Src_Editor_View is
       View : Source_View;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
-   procedure Execute (Hook : Preferences_Hook_Record;
-                      Kernel : access Kernel_Handle_Record'Class);
+   procedure Execute
+     (Hook   : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
@@ -376,9 +377,9 @@ package body Src_Editor_View is
    procedure Restore_Cursor_Position
      (View : access Source_View_Record'Class)
    is
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Insert_Iter : Gtk_Text_Iter;
       Cursor_Iter : Gtk_Text_Iter;
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
       Get_Iter_At_Mark (Buffer, Insert_Iter, View.Saved_Cursor_Mark);
 
@@ -514,7 +515,7 @@ package body Src_Editor_View is
 
    procedure Invalidate_Window (User : Source_View) is
       Win           : Gdk.Window.Gdk_Window :=
-        Get_Window (User, Text_Window_Text);
+                        Get_Window (User, Text_Window_Text);
       X, Y, W, H, D : Gint;
 
    begin
@@ -759,7 +760,7 @@ package body Src_Editor_View is
    procedure Speed_Bar_Size_Allocate_Cb
      (Widget : access Gtk_Widget_Record'Class)
    is
-      View   : constant Source_View := Source_View (Widget);
+      View : constant Source_View := Source_View (Widget);
    begin
       if View.Speed_Column_Buffer /= null then
          Gdk.Pixmap.Unref (View.Speed_Column_Buffer);
@@ -780,7 +781,7 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View   : constant Source_View := Source_View (Widget);
+      View : constant Source_View := Source_View (Widget);
       pragma Unreferenced (Event);
 
    begin
@@ -808,7 +809,8 @@ package body Src_Editor_View is
       Window : constant Gdk.Window.Gdk_Window := Get_Window (Event);
 
       Window_Type : constant Gtk_Text_Window_Type :=
-        Get_Window_Type (View, Window);
+                      Get_Window_Type (View, Window);
+
       X, Y, Width, Height, Depth : Gint;
 
       procedure Redraw_Side_Info;
@@ -869,7 +871,7 @@ package body Src_Editor_View is
          else
             View.Side_Columns_Up_To_Date := True;
          end if;
-         --  If necessary, emit the Source_Lines_Revealed signal.
+         --  If necessary, emit the Source_Lines_Revealed signal
 
          if Bottom_Line >= Top_Line then
             Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
@@ -899,11 +901,9 @@ package body Src_Editor_View is
          Top_In_Buffer    : Gint;
          Bottom_In_Buffer : Gint;
          GC               : Gdk.GC.Gdk_GC;
-         Buffer           : constant Source_Buffer :=
-           Source_Buffer (Get_Buffer (View));
 
          procedure Draw_Block (B : in out Block_Record);
-         --  Draw block B at line L.
+         --  Draw block B at line L
 
          ----------------
          -- Draw_Block --
@@ -911,10 +911,10 @@ package body Src_Editor_View is
 
          procedure Draw_Block (B : in out Block_Record) is
             Bracket_Length : constant := 15;
-            --  The length of upper and lower parts of the bracket.
+            --  The length of upper and lower parts of the bracket
 
             Bracket_Offset : constant := 2;
-            --  The distance between brackets and text.
+            --  The distance between brackets and text
 
             Block_Begin_Y  : Gint;
             Block_End_Y    : Gint;
@@ -932,7 +932,7 @@ package body Src_Editor_View is
             Calculate_Screen_Offset (Buffer, B);
             Offset := B.Stored_Offset;
 
-            --  Do not draw blocks that are on the first column.
+            --  Do not draw blocks that are on the first column
 
             if Offset <= 1 then
                return;
@@ -992,7 +992,7 @@ package body Src_Editor_View is
          Buffer_To_Window_Coords
            (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
 
-         --  Get the window coordinates.
+         --  Get the window coordinates
 
          Get_Geometry (Window, X, Y, Width, Height, Depth);
 
@@ -1036,7 +1036,7 @@ package body Src_Editor_View is
 
          Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
 
-         --  Highlight the line that contains the cursor.
+         --  Highlight the line that contains the cursor
 
          if View.Highlight_Current then
             Buffer_To_Window_Coords
@@ -1047,7 +1047,7 @@ package body Src_Editor_View is
                Rect.Width, Line_Height);
          end if;
 
-         --  Highlight the current block.
+         --  Highlight the current block
 
          if View.Highlight_Blocks then
             View.Current_Block := Get_Block
@@ -1186,8 +1186,7 @@ package body Src_Editor_View is
       Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
 
       if Success then
-         Set_Foreground
-           (View.Side_Background_GC, Color);
+         Set_Foreground (View.Side_Background_GC, Color);
       else
          Set_Foreground
            (View.Side_Background_GC,
@@ -1430,7 +1429,7 @@ package body Src_Editor_View is
 
    function Connect_Expose (View : Source_View) return Boolean is
       Win           : constant Gdk.Window.Gdk_Window :=
-        Get_Window (View, Text_Window_Left);
+                        Get_Window (View, Text_Window_Left);
       X, Y, W, H, D : Gint;
 
    begin
@@ -1662,8 +1661,7 @@ package body Src_Editor_View is
 
    procedure Get_Cursor_Position
      (View : access Source_View_Record'Class;
-      Iter : out Gtk.Text_Iter.Gtk_Text_Iter)
-   is
+      Iter : out Gtk.Text_Iter.Gtk_Text_Iter) is
    begin
       if Has_Focus_Is_Set (View) then
          Get_Cursor_Position (Source_Buffer (Get_Buffer (View)), Iter);
@@ -1762,10 +1760,10 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View       : constant Source_View := Source_View (Widget);
-      Dummy_Gint : Gint;
-      W, H, D    : Gint;
-      Button_Y   : Gint;
+      View         : constant Source_View := Source_View (Widget);
+      Dummy_Gint   : Gint;
+      W, H, D      : Gint;
+      Button_Y     : Gint;
       Lower, Upper : Gdouble;
       Adj          : Gtk_Adjustment;
    begin
@@ -1838,7 +1836,7 @@ package body Src_Editor_View is
    is
       View        : constant Source_View := Source_View (Widget);
       Left_Window : constant Gdk.Window.Gdk_Window :=
-        Get_Window (View, Text_Window_Left);
+                      Get_Window (View, Text_Window_Left);
 
    begin
       if Get_Event_Type (Event) = Button_Release
@@ -1865,7 +1863,7 @@ package body Src_Editor_View is
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
 
       Left_Window : constant Gdk.Window.Gdk_Window :=
-        Get_Window (View, Text_Window_Left);
+                      Get_Window (View, Text_Window_Left);
 
       Window : Gdk.Window.Gdk_Window;
 
@@ -1888,12 +1886,13 @@ package body Src_Editor_View is
                      X, Y               : Gint;
 
                   begin
-                     --  Get the coordinates of the click.
+                     --  Get the coordinates of the click
 
                      Button_X := Gint (Get_X (Event));
                      Button_Y := Gint (Get_Y (Event));
 
-                     --  Find the line number.
+                     --  Find the line number
+
                      Window_To_Buffer_Coords
                        (View, Text_Window_Left,
                         Window_X => Button_X, Window_Y => Button_Y,
@@ -1905,6 +1904,7 @@ package body Src_Editor_View is
                      Set_Focus_Child (View.Child);
                      On_Click (Buffer, Line, Button_X);
                   end;
+
                else
                   if not View.Button_Pressed then
                      View.Button_Pressed := True;
