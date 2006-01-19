@@ -18,8 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Unbounded;
+
+with GNAT.Strings;
 
 with Glib;                      use Glib;
 with Gdk.Color;                 use Gdk, Gdk.Color;
@@ -49,6 +51,8 @@ with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
+with Src_Editor_Buffer.Line_Information;
+use Src_Editor_Buffer.Line_Information;
 
 package body Src_Editor_Box.Tooltips is
    Me : constant Debug_Handle := Create ("Editor.Tooltips");
@@ -306,6 +310,8 @@ package body Src_Editor_Box.Tooltips is
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
+      use Ada.Strings.Unbounded;
+      use type GNAT.Strings.String_Access;
       Box                   : constant Source_Editor_Box := Tooltip.Box;
       Widget                : constant Source_View := Get_View (Tooltip.Box);
       Line, Col, Cursor_Col : Gint;
@@ -338,6 +344,72 @@ package body Src_Editor_Box.Tooltips is
         (Window, Win_X, Win_Y, Window_Width, Window_Height, Window_Depth);
       Get_Pointer
         (Window, Mouse_X, Mouse_Y, Mask, Win);
+
+      if Mouse_X < Win_X
+        and then Mouse_Y > Win_Y
+        and then Win_X + Window_Width > Mouse_X
+        and then Win_Y + Window_Height > Mouse_Y
+      then
+         --  In the side column, see if a tooltip information is to be
+         --  displayed.
+         Window_To_Buffer_Coords
+           (Widget, Win_X, Mouse_Y, Line, Col, Out_Of_Bounds);
+
+         declare
+            Line_Info     : constant Line_Info_Width_Array_Access :=
+                              Get_Side_Information
+                                (Box.Source_Buffer,
+                                 Editable_Line_Type (Line + 1));
+            Content       : Unbounded_String;
+            Font          : constant Pango_Font_Description :=
+                              Get_Pref (Default_Font);
+            Layout        : Pango_Layout;
+            Width, Height : Gint := 0;
+            GC            : Gdk.Gdk_GC;
+            Has_Info      : Boolean := False;
+         begin
+            --  Catenate the tooltip information for all columns
+
+            for K in Line_Info'Range loop
+               if Line_Info (K).Info /= null
+                 and then Line_Info (K).Info.Tooltip_Text /= null
+               then
+                  if Content /= Null_Unbounded_String then
+                     Append (Content, ASCII.LF);
+                  end if;
+
+                  Append (Content, Line_Info (K).Info.Tooltip_Text.all);
+                  Has_Info := True;
+               end if;
+            end loop;
+
+            if Has_Info then
+               Layout := Create_Pango_Layout (Widget, "");
+               Set_Font_Description (Layout, Font);
+               Set_Markup (Layout, To_String (Content));
+
+               Get_Pixel_Size (Layout, Width, Height);
+
+               Width := Width + 6;
+               Height := Height + 4;
+
+               Gdk_New (GC, Get_Window (Widget));
+               Set_Foreground (GC, Get_Pref (Tooltip_Color));
+
+               Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
+               Draw_Rectangle (Pixmap, GC, True, 0, 0, Width - 1, Height - 1);
+
+               Set_Foreground (GC, Black (Get_Default_Colormap));
+               Draw_Rectangle (Pixmap, GC, False, 0, 0, Width - 1, Height - 1);
+
+               Draw_Layout (Pixmap, GC, 2, 0, Layout);
+               Unref (Layout);
+
+               Unref (GC);
+            end if;
+         end;
+         return;
+      end if;
 
       if Mouse_X < Win_X
         or else Mouse_Y < Win_Y
