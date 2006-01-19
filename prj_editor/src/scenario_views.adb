@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               GPS                                 --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
@@ -51,12 +51,10 @@ with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
-with Projects.Registry;  use Projects.Registry;
 with Variable_Editors;     use Variable_Editors;
 with GPS.Intl;           use GPS.Intl;
-with Prj.Tree;           use Prj.Tree;
+with String_List_Utils;
 
-with Namet;    use Namet;
 with Traces;   use Traces;
 
 package body Scenario_Views is
@@ -271,23 +269,26 @@ package body Scenario_Views is
 
    procedure Add_Possible_Values
      (Kernel : access Kernel_Handle_Record'Class;
-      List : access Gtk_List_Record'Class;
-      Var  : Scenario_Variable)
+      List   : access Gtk_List_Record'Class;
+      Var    : Scenario_Variable)
    is
-      Tree : constant Prj.Tree.Project_Node_Tree_Ref :=
-        Get_Tree (Project_Registry (Get_Registry (Kernel).all));
-      Iter : String_List_Iterator := Value_Of (Tree, Var);
+      use String_List_Utils.String_List;
+
+      Values : String_List_Utils.String_List.List :=
+        Enum_Values_Of (Var, Get_Registry (Kernel).all);
+      Iter   : String_List_Utils.String_List.List_Node :=
+        First (Values);
       Item : Gtk_List_Item;
    begin
-      while not Done (Iter) loop
-         --  We know this is a list of static strings
-         Get_Name_String (Data (Tree, Iter));
+      while Iter /= String_List_Utils.String_List.Null_Node loop
          Gtk_New (Item, Locale_To_UTF8
-                    (Name_Buffer (Name_Buffer'First .. Name_Len)));
+                  (String_List_Utils.String_List.Data (Iter)));
          Add (List, Item);
-         Iter := Next (Tree, Iter);
+         Iter := Next (Iter);
       end loop;
+
       Show_All (List);
+      Free (Values);
    end Add_Possible_Values;
 
    -------------------
