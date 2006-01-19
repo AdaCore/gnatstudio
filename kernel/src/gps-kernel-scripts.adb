@@ -51,14 +51,13 @@ with Prj.Ext;                 use Prj.Ext;
 with Projects.Editor;         use Projects.Editor;
 with Projects.Registry;       use Projects.Registry;
 with Projects;                use Projects;
+with String_List_Utils;
 with String_Utils;            use String_Utils;
 with System;                  use System;
 with System.Address_Image;
 with Traces;                  use Traces;
 with Types;                   use Types;
 with VFS;                     use VFS;
-with Namet;                   use Namet;
-with Prj.Tree;
 
 package body GPS.Kernel.Scripts is
 
@@ -950,19 +949,22 @@ package body GPS.Kernel.Scripts is
          begin
             for V in Vars'Range loop
                declare
+                  use String_List_Utils.String_List;
+
                   Name : constant String := External_Reference_Of (Vars (V));
-                  Tree : constant Prj.Tree.Project_Node_Tree_Ref :=
-                    Get_Tree (Project_Registry (Get_Registry (Kernel).all));
-                  Iter : String_List_Iterator := Value_Of (Tree, Vars (V));
+                  Values : String_List_Utils.String_List.List :=
+                    Enum_Values_Of (Vars (V), Get_Registry (Kernel).all);
+                  Iter   : String_List_Utils.String_List.List_Node :=
+                    First (Values);
                begin
-                  while not Done (Iter) loop
-                     --  We know this is a list of static strings
-                     Get_Name_String (Projects.Editor.Data (Tree, Iter));
+                  while Iter /= String_List_Utils.String_List.Null_Node loop
                      Set_Return_Value
-                       (Data, Name_Buffer (Name_Buffer'First .. Name_Len));
+                       (Data, String_List_Utils.String_List.Data (Iter));
                      Set_Return_Value_Key (Data, Name, True);
-                     Iter := Next (Tree, Iter);
+                     Iter := Next (Iter);
                   end loop;
+
+                  Free (Values);
                end;
             end loop;
          end;
