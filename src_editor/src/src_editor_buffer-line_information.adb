@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                    Copyright (C) 2003-2005                        --
---                            AdaCore                                --
+--                     Copyright (C) 2003-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -170,7 +170,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       else
          declare
-            A         : Line_Info_Display_Array
+            A : Line_Info_Display_Array
               (Columns_Config.all'First .. Columns_Config.all'Last + 1);
          begin
             A (Columns_Config.all'Range) := Columns_Config.all.all;
@@ -229,14 +229,26 @@ package body Src_Editor_Buffer.Line_Information is
       end loop;
    end Get_Column_For_Identifier;
 
+   --------------------------
+   -- Get_Side_Information --
+   --------------------------
+
+   function Get_Side_Information
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type)
+      return Line_Info_Width_Array_Access is
+   begin
+      return Buffer.Editable_Lines (Line).Side_Info_Data;
+   end Get_Side_Information;
+
    ------------------------------------
    -- Create_Line_Information_Column --
    ------------------------------------
 
    procedure Create_Line_Information_Column
-     (Buffer        : access Source_Buffer_Record'Class;
-      Identifier    : String;
-      Every_Line    : Boolean) is
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String;
+      Every_Line : Boolean) is
    begin
       Get_Column_For_Identifier (Buffer, Identifier, -1, Every_Line);
       Side_Column_Configuration_Changed (Buffer);
@@ -382,16 +394,17 @@ package body Src_Editor_Buffer.Line_Information is
 
       Columns_Config : Columns_Config_Access;
    begin
-      --  Test if we are adding extra information, or line information.
+      --  Test if we are adding extra information, or line information
 
       if Info'First < 0 then
-         --  Look for an existing entry.
+         --  Look for an existing entry
 
          if Buffer.Extra_Information = null then
             Buffer.Extra_Information := new Extra_Information_Array'
               (1 => new Extra_Information_Record'
                  (Identifier => new String'(Identifier),
-                  Info => new Line_Information_Record'(Info (Info'First))));
+                  Info    => new Line_Information_Record'(Info (Info'First))));
+
          else
             for J in Buffer.Extra_Information'Range loop
                if Buffer.Extra_Information (J).Identifier.all = Identifier then
@@ -704,11 +717,9 @@ package body Src_Editor_Buffer.Line_Information is
       Line   : Buffer_Line_Type;
       Offset : Gint)
    is
-      BL                     : Columns_Config_Access renames
-        Buffer.Editable_Line_Info_Columns;
-      Result                 : Command_Return_Type;
-      EL                     : constant Editable_Line_Type
-        := Get_Editable_Line (Buffer, Line);
+      BL     : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
+      EL     : constant Editable_Line_Type := Get_Editable_Line (Buffer, Line);
+      Result : Command_Return_Type;
       pragma Unreferenced (Result);
 
    begin
@@ -830,8 +841,7 @@ package body Src_Editor_Buffer.Line_Information is
       --  ??? This should not occur every time.
 
       if Buffer.Block_Highlighting_Column = -1 then
-         Create_Line_Information_Column
-           (Buffer, Block_Info_Column, False);
+         Create_Line_Information_Column (Buffer, Block_Info_Column, False);
          Buffer.Block_Highlighting_Column := BL.all'Last;
       end if;
 
@@ -848,6 +858,7 @@ package body Src_Editor_Buffer.Line_Information is
            (Buffer.Block_Highlighting_Column) :=
            (Info => new Line_Information_Record'
               (Text               => null,
+               Tooltip_Text       => null,
                Image              => Image,
                Associated_Command => Command),
             Width => Width,
