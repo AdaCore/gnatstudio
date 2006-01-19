@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,8 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
 with GNAT.Strings;
 
@@ -501,13 +503,10 @@ package body VCS.Generic_VCS is
             end if;
 
             while Node /= Null_Node loop
-               if (not Ref.Absolute_Names
-                   and then GNAT.Directory_Operations.Dir_Name
-                     (Locale_From_UTF8 (Data (Node))) /= Dir.all)
-                 or else Index - First_Args_Length >= Command_Line_Limit
-               then
-                  exit;
-               end if;
+               exit when (not Ref.Absolute_Names
+                          and then GNAT.Directory_Operations.Dir_Name
+                            (Locale_From_UTF8 (Data (Node))) /= Dir.all)
+                 or else Index - First_Args_Length >= Command_Line_Limit;
 
                if Ref.Absolute_Names then
                   --  The VCS works on absolute names
@@ -1137,6 +1136,43 @@ package body VCS.Generic_VCS is
                  (Parser.Matches_Num, Parser.Repository_Rev_Index);
             end if;
 
+            Field := Get_Field (N, "author_index");
+
+            if Field /= null then
+               Parser.Author_Index := To_Natural (Field.all);
+               Parser.Matches_Num := Natural'Max
+                 (Parser.Matches_Num, Parser.Author_Index);
+            end if;
+
+            Field := Get_Field (N, "date_index");
+
+            if Field /= null then
+               Parser.Date_Index := To_Natural (Field.all);
+               Parser.Matches_Num := Natural'Max
+                 (Parser.Matches_Num, Parser.Date_Index);
+            end if;
+
+            Field := Get_Field (N, "tooltip_pattern");
+
+            if Field /= null then
+               Parser.Pattern := new String'(Field.all);
+
+               declare
+                  K : Natural := Field'First;
+               begin
+                  loop
+                     K := Index (Field (K .. Field'Last), "\");
+                     exit when K = 0
+                       or else K = Field'Last
+                       or else Field (K + 1) not in '0' .. '9';
+                     Parser.Matches_Num := Natural'Max
+                       (Parser.Matches_Num,
+                        Natural'Value ((1 => Field (K + 1))));
+                     K := K + 2;
+                  end loop;
+               end;
+            end if;
+
             return Parser;
          end Parse_Status_Parser;
 
@@ -1448,12 +1484,55 @@ package body VCS.Generic_VCS is
    is
       Kernel  : Kernel_Handle renames Rep.Kernel;
 
+      function Build_Text_Info (Rev, Author, Date : String) return String;
+      --  Returns the text information
+
+      Last_Rev : String (1 .. 10);
+      --  Keep last revision to remove entries for same rev
+
+      ---------------------
+      -- Build_Text_Info --
+      ---------------------
+
+      function Build_Text_Info (Rev, Author, Date : String) return String is
+
+         function Field (Str : String) return String;
+         --  Returns ASCII.HT & Str if Str not empty, otherwise returns ""
+
+         -----------
+         -- Field --
+         -----------
+
+         function Field (Str : String) return String is
+         begin
+            if Str = "" then
+               return "";
+            else
+               return ASCII.HT & Str;
+            end if;
+         end Field;
+
+         N_Rev : constant String (1 .. 10) := ((10 - Rev'Length) * ' ') & Rev;
+
+      begin
+         if N_Rev = Last_Rev then
+            return "   . . .   ";
+
+         else
+            Last_Rev := N_Rev;
+            return "<span size=""small"">" & "<span underline=""single"" "
+              & "foreground=""blue"">"
+              & Rev & "</span>"
+              & Field (Author) & Field (Date) & " </span>";
+         end if;
+      end Build_Text_Info;
+
+      Parser  : constant Status_Parser_Record := Rep.Annotations_Parser;
       Line    : Natural := 1;
       Max     : Natural;
       S       : String renames Text;
-      Matches : Match_Array (0 .. 4);
+      Matches : Match_Array (0 .. Parser.Matches_Num);
       Start   : Integer := S'First;
-      Parser  : constant Status_Parser_Record := Rep.Annotations_Parser;
       Script  : Scripting_Language;
 
    begin
@@ -1482,6 +1561,7 @@ package body VCS.Generic_VCS is
       end;
 
       declare
+         use Ada.Strings.Unbounded;
          A : Line_Information_Array (1 .. Max);
       begin
          loop
@@ -1493,24 +1573,55 @@ package body VCS.Generic_VCS is
                declare
                   Command : Custom_Command_Access;
                   Rev     : constant String :=
-                    S (Matches (Parser.Repository_Rev_Index).First
-                       .. Matches (Parser.Repository_Rev_Index).Last);
+                             S (Matches (Parser.Repository_Rev_Index).First
+                                .. Matches (Parser.Repository_Rev_Index).Last);
+                  Author  : Unbounded_String;
+                  Date    : Unbounded_String;
                begin
+                  if Parser.Author_Index /= 0 then
+                     Author := To_Unbounded_String
+                       (S (Matches (Parser.Author_Index).First
+                        .. Matches (Parser.Author_Index).Last));
+                  end if;
+
+                  if Parser.Date_Index /= 0 then
+                     Date := To_Unbounded_String
+                       (S (Matches (Parser.Date_Index).First
+                        .. Matches (Parser.Date_Index).Last));
+                  end if;
+
                   A (Line).Text := new String'
-                    (S (Matches (0).First
-                        .. Matches (Parser.Repository_Rev_Index).First - 1)
-                     & "<span underline=""single"" foreground=""blue"">"
-                     & Rev
-                     & "</span>"
-                     & S (Matches (Parser.Repository_Rev_Index).Last + 1
-                          .. Matches (Parser.File_Index).First));
+                    (Build_Text_Info
+                       (Rev, To_String (Author), To_String (Date)));
+
+                  if Parser.Pattern /= null then
+                     declare
+                        Str : Unbounded_String :=
+                                To_Unbounded_String (Parser.Pattern.all);
+                        K   : Natural;
+                        N   : Natural;
+                     begin
+                        loop
+                           K := Index (Str, "\");
+                           exit when K = 0
+                             or else K = Length (Str)
+                             or else Element (Str, K + 1) not in '0' .. '9';
+
+                           N := Natural'Value ((1 => Element (Str, K + 1)));
+
+                           Replace_Slice
+                             (Str, K, K + 1,
+                              "<b>" &
+                              S (Matches (N).First .. Matches (N).Last)
+                              & "</b>");
+                        end loop;
+                        A (Line).Tooltip_Text := new String'(To_String (Str));
+                     end;
+                  end if;
 
                   Create
                     (Command, -"query log", Kernel,
-                     "VCS.log "
-                     & Full_Name (File).all
-                     & " """
-                     & Rev & """",
+                     "VCS.log " & Full_Name (File).all & " """ & Rev & """",
                      Script);
 
                   A (Line).Associated_Command := Command_Access (Command);
