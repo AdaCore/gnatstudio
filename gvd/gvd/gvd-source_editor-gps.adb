@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Pixbuf;
 with Basic_Types;               use Basic_Types;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -142,11 +141,7 @@ package body GVD.Source_Editor.GPS is
             Editor.Current_File,
             "Current Line",
             --  ??? we should get that from elsewhere.
-            new Line_Information_Array'
-              (Line => Line_Information_Record'
-                 (Text  => null,
-                  Image => Gdk.Pixbuf.Null_Pixbuf,
-                  Associated_Command => null)));
+            new Line_Information_Array'(Line => Empty_Line_Information));
       end if;
 
       declare
@@ -236,9 +231,9 @@ package body GVD.Source_Editor.GPS is
    --------------
 
    procedure Set_Line
-     (Editor      : access GEdit_Record;
-      Line        : Natural;
-      Process     : Glib.Object.GObject)
+     (Editor  : access GEdit_Record;
+      Line    : Natural;
+      Process : Glib.Object.GObject)
    is
       Kernel  : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
       Tab     : constant Visual_Debugger := Visual_Debugger (Process);
@@ -255,10 +250,7 @@ package body GVD.Source_Editor.GPS is
             "Current Line",
             --  ??? we should get that from elsewhere.
             new Line_Information_Array'
-              (Prev_Current_Line => Line_Information_Record'
-                 (Text  => null,
-                  Image => Gdk.Pixbuf.Null_Pixbuf,
-                  Associated_Command => null)));
+              (Prev_Current_Line => Empty_Line_Information));
       end if;
 
       if Editor.Current_File = VFS.No_File then
@@ -281,11 +273,7 @@ package body GVD.Source_Editor.GPS is
          Editor.Current_File,
          "Current Line",
          --  ??? we should get that from elsewhere.
-         new Line_Information_Array'
-           (Line => Line_Information_Record'
-              (Text  => null,
-               Image => Current_Line_Pixbuf,
-               Associated_Command => null)));
+         new Line_Information_Array'(Line => Empty_Line_Information));
       Set_Current_Source_Location (Tab, Editor.Current_File, Line);
    end Set_Line;
 
