@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2005                      --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -227,11 +227,15 @@ package GPS.Kernel.Standard_Hooks is
 
    type Line_Information_Record is record
       Text               : GNAT.OS_Lib.String_Access := null;
+      Tooltip_Text       : GNAT.OS_Lib.String_Access := null;
+      --  A text to be displayed in a tooltip
       Image              : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
       Associated_Command : Commands.Command_Access := null;
    end record;
    --  Text must be a valid UTF8 string, which may contain markups in the pango
    --  markup format.
+
+   Empty_Line_Information : constant Line_Information_Record;
 
    type Line_Information_Array is array (Integer range <>)
      of Line_Information_Record;
@@ -242,11 +246,11 @@ package GPS.Kernel.Standard_Hooks is
    type File_Line_Hooks_Args (Identifier_Length : Natural)
      is new Hooks_Data with
    record
-      File          : VFS.Virtual_File := VFS.No_File;
-      Info          : Line_Information_Data;
-      Every_Line    : Boolean := True;
-      Normalize     : Boolean := True;
-      Identifier    : String (1 .. Identifier_Length);
+      File       : VFS.Virtual_File := VFS.No_File;
+      Info       : Line_Information_Data;
+      Every_Line : Boolean := True;
+      Normalize  : Boolean := True;
+      Identifier : String (1 .. Identifier_Length);
    end record;
    --  Identifier is the identity of the emitted
    --  If Every_Line is set to True, then the editor will emit a line_revealed
@@ -258,11 +262,11 @@ package GPS.Kernel.Standard_Hooks is
    --  Requests dealing with the column on the side of the editors
 
    procedure Create_Line_Information_Column
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File          : VFS.Virtual_File;
-      Identifier    : String;
-      Every_Line    : Boolean := True;
-      Normalize     : Boolean := True);
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File       : VFS.Virtual_File;
+      Identifier : String;
+      Every_Line : Boolean := True;
+      Normalize  : Boolean := True);
    --  Request the creation of a column on the side of some editors.
    --  See File_Line_Action_Hook
 
@@ -297,7 +301,7 @@ package GPS.Kernel.Standard_Hooks is
    --  See File_Line_Action_Hook
 
    procedure Free (X : in out Line_Information_Record);
-   --  Free memory associated with X.
+   --  Free memory associated with X
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Information_Array, Line_Information_Data);
@@ -425,6 +429,10 @@ package GPS.Kernel.Standard_Hooks is
    --  Call the file_status_changed hook
 
 private
+
+   Empty_Line_Information : constant Line_Information_Record :=
+                              (null, null, Gdk.Pixbuf.Null_Pixbuf, null);
+
    function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
