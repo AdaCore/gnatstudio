@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -165,6 +165,9 @@ private
       Status_Index         : Natural := 0;
       Local_Rev_Index      : Natural := 0;
       Repository_Rev_Index : Natural := 0;
+      Author_Index         : Natural := 0;
+      Date_Index           : Natural := 0;
+      Pattern              : String_Access;
    end record;
 
    type Generic_VCS_Record is new VCS_Record with record
