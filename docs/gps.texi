@@ -14378,13 +14378,27 @@ It accepts the following child nodes:
   @item @code{<regexp>} (mandatory)
 Indicates the regular expression to match.
 
-  @item @code{<repository_revision_index>}
+  @item @code{<repository_revision_index>} (mandatory)
 An index of a parenthesized expression in @code{regexp} that contains the
 repository revision of the line.
+
+  @item @code{<author_index>} (mandatory)
+An index of a parenthesized expression in @code{regexp} that contains the
+author of the line.
+
+  @item @code{<date_index>} (mandatory)
+An index of a parenthesized expression in @code{regexp} that contains the
+date of the line.
 
   @item @code{<file_index>}
 An index of a parenthesized expression in @code{regexp} that indicates the
 part of the line that belongs to the file.
+
+  @item @code{<tooltip_pattern>}
+A template pattern that will be used to format the tooltip information.
+It can contain text and reference parenthesized expressions in
+@code{regexp} using \@code{n} (where @code{n} represents the nth
+expression in @code{regexp}).
 
 @end table
 @end table
