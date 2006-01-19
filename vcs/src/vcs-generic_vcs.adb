@@ -1496,19 +1496,28 @@ package body VCS.Generic_VCS is
 
       function Build_Text_Info (Rev, Author, Date : String) return String is
 
-         function Field (Str : String) return String;
-         --  Returns ASCII.HT & Str if Str not empty, otherwise returns ""
+         function Field (Str : String; Width : Natural := 0) return String;
+         --  Returns ASCII.HT & Str if Str not empty, otherwise returns "". If
+         --  Width is set the returned string will have exactly Width
+         --  characters (padding to the left with spaces).
 
          -----------
          -- Field --
          -----------
 
-         function Field (Str : String) return String is
+         function Field (Str : String; Width : Natural := 0) return String is
          begin
             if Str = "" then
                return "";
+
+            elsif Width = 0 then
+               return Str;
+
+            elsif Str'Length >= Width then
+               return Str (Str'First .. Str'First + Width - 1);
+
             else
-               return ASCII.HT & Str;
+               return (Width - Str'Length) * ' ' & Str;
             end if;
          end Field;
 
@@ -1522,8 +1531,8 @@ package body VCS.Generic_VCS is
             Last_Rev := N_Rev;
             return "<span size=""small"">" & "<span underline=""single"" "
               & "foreground=""blue"">"
-              & Rev & "</span>"
-              & Field (Author) & Field (Date) & " </span>";
+              & Rev & "</span>" & ASCII.HT
+              & Field (Author, 10) & ' ' & Field (Date) & " </span>";
          end if;
       end Build_Text_Info;
 
