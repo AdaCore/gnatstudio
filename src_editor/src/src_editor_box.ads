@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                            AdaCore                                --
+--                     Copyright (C) 2001-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -446,7 +446,7 @@ private
       Label_Box            : Gtk.Box.Gtk_Hbox;
 
       Current_Line         : Editable_Line_Type;
-      --  Cache for the current line.
+      --  Cache for the current line
 
       --  The status bar
       Function_Label       : Gtk.Label.Gtk_Label;

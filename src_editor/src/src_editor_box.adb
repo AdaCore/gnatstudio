@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -986,7 +986,7 @@ package body Src_Editor_Box is
          if not Check_Timestamp_And_Reload
            (B, Interactive => True, Always_Reload => False)
          then
-            --  We'll ask again next time the user wants to modify the file.
+            --  We'll ask again next time the user wants to modify the file
             B.Timestamp_Mode := Check_At_Modify;
             return False;
          end if;
@@ -1024,7 +1024,7 @@ package body Src_Editor_Box is
            Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
       end if;
 
-      --  Connect the Undo/Redo buttons to the buffer.
+      --  Connect the Undo/Redo buttons to the buffer
       if B.Writable then
          Add_Controls (B.Source_Buffer);
       end if;
@@ -1039,7 +1039,7 @@ package body Src_Editor_Box is
    function Focus_Out (Box : access GObject_Record'Class) return Boolean is
       B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
-      --  Disconnect the Undo/Redo buttons from the buffer.
+      --  Disconnect the Undo/Redo buttons from the buffer
 
       Remove_Controls (B.Source_Buffer);
       return False;

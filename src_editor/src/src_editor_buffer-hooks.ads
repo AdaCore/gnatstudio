@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                        Copyright (C) 2004                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2004-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,7 @@
 
 package Src_Editor_Buffer.Hooks is
 
-   Word_Added_Hook     : constant String := "word_added";
+   Word_Added_Hook : constant String := "word_added";
 
    procedure Location_Changed (Buffer : Source_Buffer);
    --  Emit the hook Cursor_Stopped_Hook

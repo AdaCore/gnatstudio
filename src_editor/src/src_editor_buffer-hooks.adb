@@ -1,8 +1,8 @@
-
+-----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                        Copyright (C) 2004-2005                    --
---                            AdaCore                                --
+--                     Copyright (C) 2004-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -52,7 +52,7 @@ package body Src_Editor_Buffer.Hooks is
 
    function Compute_Parent_Entity
      (Kernel : access Kernel_Handle_Record'Class;
-      Data : access Src_File_Location_Hooks_Args)
+      Data   : access Src_File_Location_Hooks_Args)
       return Entity_Information
    is
       Box : Source_Editor_Box;
@@ -76,11 +76,11 @@ package body Src_Editor_Buffer.Hooks is
 
    procedure Location_Changed (Buffer : Source_Buffer) is
       Data : aliased Src_File_Location_Hooks_Args :=
-        (Hooks_Data with
-         File          => Buffer.Filename,
-         Line          => 0,
-         Column        => 0,
-         Parent_Entity => null);
+               (Hooks_Data with
+                File          => Buffer.Filename,
+                Line          => 0,
+                Column        => 0,
+                Parent_Entity => null);
       Box : constant Source_Editor_Box := Get_Source_Box_From_MDI
         (Find_Editor (Get_Kernel (Buffer), Buffer.Filename));
    begin
@@ -98,7 +98,7 @@ package body Src_Editor_Buffer.Hooks is
 
    procedure Word_Added (Buffer : Source_Buffer) is
       Data : aliased  File_Hooks_Args :=
-        (Hooks_Data with File   => Buffer.Filename);
+               (Hooks_Data with File => Buffer.Filename);
    begin
       Run_Hook (Buffer.Kernel, Word_Added_Hook, Data'Unchecked_Access, False);
    end Word_Added;
