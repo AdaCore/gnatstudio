@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2427,6 +2427,30 @@ package body Projects is
       return Get_String
         (Prj.Ext.Value_Of (Var.Name, With_Default => Var.Default));
    end Value_Of;
+
+   --------------------
+   -- Enum_Values_Of --
+   --------------------
+
+   function Enum_Values_Of
+     (Var : Scenario_Variable; Registery : Abstract_Registry'Class)
+      return String_List_Utils.String_List.List
+   is
+      Values : String_List_Utils.String_List.List;
+      Tree : constant Prj.Tree.Project_Node_Tree_Ref :=
+        Get_Tree (Project_Registry (Registery));
+      Iter : String_List_Iterator := Value_Of (Tree, Var);
+   begin
+      while not Done (Iter) loop
+         --  We know this is a list of static strings
+         Get_Name_String (Projects.Editor.Data (Tree, Iter));
+         String_List_Utils.String_List.Append
+           (Values, Name_Buffer (Name_Buffer'First .. Name_Len));
+         Iter := Next (Tree, Iter);
+      end loop;
+
+      return Values;
+   end Enum_Values_Of;
 
    ----------------
    -- Get_String --

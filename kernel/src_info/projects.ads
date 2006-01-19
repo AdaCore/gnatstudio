@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,7 @@
 with Basic_Types;
 with GNAT.OS_Lib;
 with Prj.Tree;
+with String_List_Utils;
 with Types;
 with VFS;
 with Glib;
@@ -497,6 +498,11 @@ package Projects is
 
    function Value_Of (Var : Scenario_Variable) return String;
    --  Return the current value of the external variable
+
+   function Enum_Values_Of
+     (Var : Scenario_Variable; Registery : Abstract_Registry'Class)
+      return String_List_Utils.String_List.List;
+   --  Return all the possible values for the variable given in parameter
 
    procedure Set_Value (Var : Scenario_Variable; Value : String);
    --  Set the value of the external variable. You need to call Recompute_View
