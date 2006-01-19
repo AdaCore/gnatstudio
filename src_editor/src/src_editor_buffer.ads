@@ -438,8 +438,7 @@ package Src_Editor_Buffer is
    subtype Status_Type is File_Status;
 
    function Get_Status
-     (Buffer : access Source_Buffer_Record)
-      return Status_Type;
+     (Buffer : access Source_Buffer_Record) return Status_Type;
    --  Return the status of the buffer.
    --  Calculate the status from the queue position.
 
@@ -448,8 +447,7 @@ package Src_Editor_Buffer is
    --  Emit the "status_changed" signal
 
    function Get_Last_Status
-     (Buffer : access Source_Buffer_Record'Class)
-      return Status_Type;
+     (Buffer : access Source_Buffer_Record'Class) return Status_Type;
    --  Return the last calculated status
 
    procedure Set_Last_Status
@@ -489,11 +487,10 @@ package Src_Editor_Buffer is
      (Extra_Information_Array, Extra_Information_Array_Access);
 
    function Get_Extra_Information
-     (Buffer : Source_Buffer)
-      return Extra_Information_Array_Access;
-   --  Return the extra information associated with the buffer.
+     (Buffer : Source_Buffer) return Extra_Information_Array_Access;
+   --  Return the extra information associated with the buffer
 
-   --  The following is related to information to be put in the side column.
+   --  The following is related to information to be put in the side column
 
    type Line_Info_Width is record
       Info  : Line_Information_Access;
@@ -501,22 +498,21 @@ package Src_Editor_Buffer is
       Set   : Boolean := False;
    end record;
 
-   type Line_Info_Width_Array is array (Natural range <>) of
-     Line_Info_Width;
+   type Line_Info_Width_Array is array (Natural range <>) of Line_Info_Width;
    type Line_Info_Width_Array_Access is access Line_Info_Width_Array;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
     (Line_Info_Width_Array, Line_Info_Width_Array_Access);
 
    type Line_Info_Display_Record is record
       Identifier    : String_Access;
-      --  This identifies the column.
+      --  This identifies the column
 
       Starting_X    : Integer;
       --  The pixel distance between the left border of the column and
       --  the left border of the left window.
 
       Width         : Integer;
-      --  The pixel width of the column.
+      --  The pixel width of the column
 
       Every_Line : Boolean;
       --  If Every_Line is True, then there must be data at every line in
@@ -830,7 +826,7 @@ private
       --  The corresponding line in the file corresponding to Buffer.
       --  0 if the line is not in the file.
 
-      Highlight_In : Highlight_Location_Array;
+      Highlight_In       : Highlight_Location_Array;
       --  Where the highlighting should take place
       --  ??? Should be part of the highlight category, since otherwise we do
       --  not know for sure what category this applies to if the line is
@@ -849,10 +845,10 @@ private
      (Line_Data_Array, Line_Data_Array_Access);
 
    type Line_Terminator_Style is (Unknown, LF, CR, CR_LF);
-   --  The line terminator style of the given buffer.
+   --  The line terminator style of the given buffer
 
    procedure Free (X : in out Line_Info_Width);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    --------------------
    -- Editable lines --
@@ -893,15 +889,15 @@ private
       Kernel          : GPS.Kernel.Kernel_Handle;
       Filename        : VFS.Virtual_File;
       File_Identifier : VFS.Virtual_File;
-      --  This identifier is used to identify buffers for untitled files.
+      --  This identifier is used to identify buffers for untitled files
 
       Lang          : Language.Language_Access;
       Syntax_Tags   : Src_Highlighting.Highlighting_Tags;
       Delimiter_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
-      --  A tag used when highlighting delimiters (e.g. parens).
+      --  A tag used when highlighting delimiters (e.g. parens)
 
       Non_Editable_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
-      --  A tag for text that cannot be interactively deleted.
+      --  A tag for text that cannot be interactively deleted
 
       Insert_Mark      : Gtk.Text_Mark.Gtk_Text_Mark;
       --  This is a copy of the "insert" mark.
@@ -910,7 +906,7 @@ private
       --  This must always be a valid text mark.
 
       Inserting : Boolean := False;
-      --  Used to avoid recursion, when using commands.
+      --  Used to avoid recursion, when using commands
 
       Do_Not_Move_Cursor : Boolean := False;
       --  Used to disable functions moving the cursor or emit the
@@ -918,13 +914,13 @@ private
       --  move the cursor a lot.
 
       Queue           : Command_Queue;
-      --  Contains the queue of editor commands for this editor.
+      --  Contains the queue of editor commands for this editor
 
       Saved_Position  : Integer := 0;
-      --  The saved position in the command queue.
+      --  The saved position in the command queue
 
       Current_Command : Command_Access := null;
-      --  The current editor command. Belongs to Queue, defined above.
+      --  The current editor command. Belongs to Queue, defined above
 
       Current_Status  : Status_Type := Unmodified;
       --  The current buffer status.
@@ -937,16 +933,16 @@ private
       --  The number of objects viewing the buffer.
 
       Modified_Auto : Boolean := False;
-      --  Whether the buffer has been modified since last auto save.
+      --  Whether the buffer has been modified since last auto save
 
       Line_Terminator : Line_Terminator_Style := Unknown;
 
       Timeout_Id         : Gtk.Main.Timeout_Handler_Id := 0;
       Timeout_Registered : Boolean := False;
-      --  Whether Timeout corresponds to a registered timeout.
+      --  Whether Timeout corresponds to a registered timeout
 
       Setting_Mark : Boolean := False;
-      --  Used to prevent recursion when creating text marks.
+      --  Used to prevent recursion when creating text marks
 
       Has_Delimiters_Highlight   : Boolean := False;
       --  Whether delimiters are currently highlighted
@@ -968,7 +964,7 @@ private
       --  Must never be null.
 
       Editable_Lines : Editable_Line_Array_Access;
-      --  Reference array for editable lines.
+      --  Reference array for editable lines
 
       Last_Editable_Line : Editable_Line_Type := 1;
       --  The last editable line in the buffer (corresponds to an index in
@@ -994,7 +990,7 @@ private
       Original_Text_Inserted : Boolean := False;
 
       Extra_Information : Extra_Information_Array_Access;
-      --  Extra information concerning the buffer.
+      --  Extra information concerning the buffer
 
       First_Removed_Line, Last_Removed_Line : Buffer_Line_Type;
       --  These line indicate the lines that have just been removed in the
