@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -49,8 +49,8 @@ package GVD.Source_Editor.GPS is
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Show_Message
-     (Editor      : access GEdit_Record;
-      Message     : String);
+     (Editor  : access GEdit_Record;
+      Message : String);
    --  Display a message in the editor.
    --  This deletes the currently displayed file.
 
@@ -71,9 +71,9 @@ package GVD.Source_Editor.GPS is
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Set_Line
-     (Editor      : access GEdit_Record;
-      Line        : Natural;
-      Process     : Glib.Object.GObject);
+     (Editor  : access GEdit_Record;
+      Line    : Natural;
+      Process : Glib.Object.GObject);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    function Get_Line (Editor : access GEdit_Record) return Natural;
