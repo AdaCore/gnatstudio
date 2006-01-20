@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Command_Line;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -469,7 +470,8 @@ package body GPS.Kernel.Standard_Hooks is
    --------------
 
    procedure Exit_GPS
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Status : Integer := 0)
    is
       Data : aliased Exit_Before_Action_Hooks_Args :=
                (Hooks_Data with null record);
@@ -477,6 +479,8 @@ package body GPS.Kernel.Standard_Hooks is
       if Run_Hook_Until_Failure
         (Kernel, Before_Exit_Action_Hook, Data'Unchecked_Access)
       then
+         Ada.Command_Line.Set_Exit_Status
+           (Ada.Command_Line.Exit_Status (Status));
          Gtk.Main.Main_Quit;
       end if;
    end Exit_GPS;

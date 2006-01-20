@@ -153,9 +153,11 @@ package GPS.Kernel.Standard_Hooks is
    --  Hook functions return a boolean
 
    procedure Exit_GPS
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Status : Integer := 0);
    --  Run the hook Exit_Before_Action_Hook, and exit GPS if the hook
    --  terminates.
+   --  Status is the exit status
 
    -----------------------------
    -- Source_File_Action_Hook --
