@@ -15,12 +15,6 @@ Known Problems fixed in GPS 3.2.0
               now the new behavior for the Edit log file.
   Workaround: Move the log editor manually
 
-- EC28-009 GPS under Windows leaks some handles
-  Problem:    On Windows GPS leaks one file handle, one process handle and one
-              thread handle for each external command launched. This can lead
-              to some instabilities after a long run.
-  Workaround: Restart GPS from time to time
-
 - EC07-009 Leave focus on selected window in the bookmarks view
   Problem:    When you select an existing bookmark in the bookmarks view, the
               focus remains on the bookmark view instead of going to the
