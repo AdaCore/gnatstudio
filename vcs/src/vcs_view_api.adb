@@ -762,17 +762,20 @@ package body VCS_View_API is
          end if;
       end if;
 
-      if File_Section or else Project_Section then
+      if (File_Section
+          and then Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID))
+        or else Show_Everything
+      then
          Add_Separator;
-      end if;
-
-      if File_Section then
          Gtk_New (Item, Label => -"Select files same status");
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate",
             On_Menu_Select_Files_Same_Status'Access, Context);
          Set_Sensitive (Item, True);
+
+      elsif Project_Section then
+         Add_Separator;
       end if;
    end VCS_Contextual_Menu;
 
