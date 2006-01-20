@@ -160,6 +160,10 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all GUI class commands
 
+   procedure Logger_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for all Logger class commands
+
    procedure Set_Data
      (Instance : access Class_Instance_Record'Class; File : File_Info);
    procedure Set_Data
@@ -1681,6 +1685,55 @@ package body GPS.Kernel.Scripts is
       Free (Inst);
    end Console_Command_Handler;
 
+   --------------------
+   -- Logger_Handler --
+   --------------------
+
+   procedure Logger_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Debug_Handle);
+      Kernel        : constant Kernel_Handle := Get_Kernel (Data);
+      Name_Cst            : aliased constant String := "name";
+      Message_Cst         : aliased constant String := "message";
+      Active_Cst          : aliased constant String := "active";
+      Condition_Cst       : aliased constant String := "condition";
+      Error_Message_Cst   : aliased constant String := "error_message";
+      Success_Message_Cst : aliased constant String := "success_message";
+      Logger_Class       : constant Class_Type := New_Class (Kernel, "Logger");
+      Inst        : constant Class_Instance := Nth_Arg (Data, 1, Logger_Class);
+      Handle      : Debug_Handle;
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, (1 => Name_Cst'Unchecked_Access));
+         Handle := Create (Nth_Arg (Data, 2));
+         Set_Data (Inst, Logger_Class, Handle.all'Address);
+
+      elsif Command = "log" then
+         Name_Parameters (Data, (1 => Message_Cst'Unchecked_Access));
+         Handle := Convert (Get_Data (Inst, Logger_Class));
+         Trace (Handle, Nth_Arg (Data, 2));
+
+      elsif Command = "set_active" then
+         Name_Parameters (Data, (1 => Active_Cst'Unchecked_Access));
+         Handle := Convert (Get_Data (Inst, Logger_Class));
+         Set_Active (Handle, Nth_Arg (Data, 2));
+
+      elsif Command = "assert" then
+         Name_Parameters (Data, (1 => Condition_Cst'Unchecked_Access,
+                                 2 => Error_Message_Cst'Unchecked_Access,
+                                 3 => Success_Message_Cst'Unchecked_Access));
+         Handle := Convert (Get_Data (Inst, Logger_Class));
+         Assert (Handle,
+                 Condition          => Nth_Arg (Data, 2),
+                 Error_Message      => Nth_Arg (Data, 3),
+                 Message_If_Success => Nth_Arg (Data, 4, ""));
+      end if;
+
+      Free (Inst);
+   end Logger_Handler;
+
    --------------------------------------
    -- Register_Default_Script_Commands --
    --------------------------------------
@@ -1690,7 +1743,17 @@ package body GPS.Kernel.Scripts is
    is
       Console_Class : constant Class_Type :=
         New_Class (Kernel, "Console", Base => Get_GUI_Class (Kernel));
+      Logger  : constant Class_Type := New_Class (Kernel, "Logger");
    begin
+      Register_Command
+        (Kernel, Constructor_Method, 1, 1, Logger_Handler'Access, Logger);
+      Register_Command
+        (Kernel, "log", 1, 1, Logger_Handler'Access, Logger);
+      Register_Command
+        (Kernel, "set_active", 1, 1, Logger_Handler'Access, Logger);
+      Register_Command
+        (Kernel, "assert", 2, 3, Logger_Handler'Access, Logger);
+
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 0,
