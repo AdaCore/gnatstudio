@@ -83,8 +83,10 @@ package body GPS.Main_Window is
    Force_Cst      : aliased constant String := "force";
    Msg_Cst        : aliased constant String := "msg";
    Param1_Cst     : aliased constant String := "param1";
+   Exit_Status_Cst : aliased constant String := "status";
    Exit_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Force_Cst'Access);
+     (1 => Force_Cst'Access,
+      2 => Exit_Status_Cst'Access);
    Save_Windows_Parameters : constant Cst_Argument_List :=
      (1 => Force_Cst'Access);
    Dialog_Cmd_Parameters   : constant Cst_Argument_List :=
@@ -270,10 +272,11 @@ package body GPS.Main_Window is
 
    procedure Quit
      (Main_Window : access GPS_Window_Record'Class;
-      Force       : Boolean := False) is
+      Force       : Boolean := False;
+      Status      : Integer := 0) is
    begin
       if Force or else Save_MDI_Children (Main_Window.Kernel) then
-         Exit_GPS (Main_Window.Kernel);
+         Exit_GPS (Main_Window.Kernel, Status => Status);
       end if;
    end Quit;
 
@@ -716,7 +719,7 @@ package body GPS.Main_Window is
          Handler       => Default_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "exit",
-         Minimum_Args => Exit_Cmd_Parameters'Length - 1,
+         Minimum_Args => 0,
          Maximum_Args => Exit_Cmd_Parameters'Length,
          Handler      => Default_Command_Handler'Access);
 
@@ -898,7 +901,8 @@ package body GPS.Main_Window is
       if Command = "exit" then
          Name_Parameters (Data, Exit_Cmd_Parameters);
          Quit (GPS_Window (Get_Main_Window (Kernel)),
-               Force => Nth_Arg (Data, 1, False));
+               Force => Nth_Arg (Data, 1, False),
+               Status => Nth_Arg (Data, 2, 0));
       elsif Command = "save_all" then
          Name_Parameters (Data, Save_Windows_Parameters);
 
