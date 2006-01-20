@@ -1223,41 +1223,45 @@ package body Ada_Analyzer is
 
          function Is_Continuation_Line return Boolean is
          begin
-            return Top_Tok /= No_Token
-              and then
-                ((Token not in Reserved_Token_Type
-                  and then Prev_Token not in Token_Class_No_Cont
-                  and then
-                    (Prev_Token /= Tok_Arrow
-                     or else (Top_Tok /= Tok_Case
-                              and then not Top (Tokens).Declaration
-                              and then Top_Tok /= Tok_When
-                              and then Top_Tok /= Tok_Select
-                              and then Top_Tok /= Tok_Exception)))
-                 or else (Prev_Token = Tok_Is
-                          and then (Token = Tok_New
-                                    or else Token = Tok_Access
-                                    or else Token = Tok_Separate
-                                    or else (Top_Tok = Tok_Subtype
-                                             and then Token /= Tok_Subtype)))
-                 or else Token = Tok_Array
-                 or else Prev_Token = Tok_Colon_Equal
-                 or else Prev_Token = Tok_Access
-                 or else Prev_Token = Tok_Of
-                 or else (Prev_Token = Tok_Exit and then Token = Tok_When)
-                 or else (Prev_Token = Tok_With and then Token = Tok_Private)
-                 or else (Prev_Token = Tok_Null and then Token = Tok_Record)
-                 or else
-                   (Prev_Prev_Token = Tok_Raise and then Token = Tok_With)
-                 or else
-                   (Top_Tok = Tok_If
-                    and then Token /= Tok_If
-                    and then
-                      (Prev_Token = Tok_Then or else Prev_Token = Tok_Else))
-                 or else
-                   (Top_Tok = Tok_Type
-                    and then (Token = Tok_Null or else Token = Tok_Tagged))
-                 or else (Token = Tok_When and then Top_Tok = Tok_Entry));
+            return (Prev_Token = Tok_Is and then In_Generic)
+              or else
+                (Top_Tok /= No_Token
+                 and then
+                   ((Token not in Reserved_Token_Type
+                     and then Prev_Token not in Token_Class_No_Cont
+                     and then
+                       (Prev_Token /= Tok_Arrow
+                        or else (Top_Tok /= Tok_Case
+                                 and then not Top (Tokens).Declaration
+                                 and then Top_Tok /= Tok_When
+                                 and then Top_Tok /= Tok_Select
+                                 and then Top_Tok /= Tok_Exception)))
+                    or else (Prev_Token = Tok_Is
+                             and then (Token = Tok_New
+                                       or else Token = Tok_Access
+                                       or else Token = Tok_Separate
+                                       or else
+                                         (Top_Tok = Tok_Subtype
+                                          and then Token /= Tok_Subtype)))
+                    or else Token = Tok_Array
+                    or else Prev_Token = Tok_Colon_Equal
+                    or else Prev_Token = Tok_Access
+                    or else Prev_Token = Tok_Of
+                    or else (Prev_Token = Tok_Exit and then Token = Tok_When)
+                    or else (Prev_Token = Tok_With
+                             and then Token = Tok_Private)
+                    or else (Prev_Token = Tok_Null and then Token = Tok_Record)
+                    or else (Prev_Prev_Token = Tok_Raise
+                             and then Token = Tok_With)
+                    or else
+                      (Top_Tok = Tok_If
+                       and then Token /= Tok_If
+                       and then
+                         (Prev_Token = Tok_Then or else Prev_Token = Tok_Else))
+                    or else
+                      (Top_Tok = Tok_Type
+                       and then (Token = Tok_Null or else Token = Tok_Tagged))
+                    or else (Token = Tok_When and then Top_Tok = Tok_Entry)));
          end Is_Continuation_Line;
 
       begin
