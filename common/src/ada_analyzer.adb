@@ -1753,13 +1753,14 @@ package body Ada_Analyzer is
             end if;
 
          elsif Prev_Token = Tok_Is
+           and then not In_Generic
            and then Top_Token.Token /= Tok_Type
            and then Top_Token.Token /= Tok_Task
            and then Top_Token.Token /= Tok_Protected
            and then Top_Token.Token /= Tok_Subtype
            and then (Reserved = Tok_New
-             or else Reserved = Tok_Abstract
-             or else Reserved = Tok_Separate)
+                     or else Reserved = Tok_Abstract
+                     or else Reserved = Tok_Separate)
          then
             --  Handle indentation of e.g.
             --
@@ -1779,13 +1780,7 @@ package body Ada_Analyzer is
                Num_Spaces := Num_Spaces + Indent_Level;
             end if;
 
-            --  Nothing to pop if we are inside a generic definition, e.g:
-            --  generic
-            --     with package ... is new ...;
-
-            if not In_Generic then
-               Pop (Tokens);
-            end if;
+            Pop (Tokens);
 
             --  unindent since this is a declaration, e.g:
             --  package ... is new ...;
@@ -1950,7 +1945,7 @@ package body Ada_Analyzer is
          then
             Push (Tokens, Temp);
 
-         elsif     Reserved = Tok_Is
+         elsif    (Reserved = Tok_Is and then not In_Generic)
            or else Reserved = Tok_Declare
            or else Reserved = Tok_Begin
            or else Reserved = Tok_Do
