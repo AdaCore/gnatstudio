@@ -3808,15 +3808,58 @@ If ref and add_before are specified, they specify the name of another item in th
   </shell_doc>
 
   <shell_doc name="GPS.XMLViewer.__init__">
-      <param name="self">An instance of GPS.XMLViewer</param>
-      <param name="name">A string</param>
-      <description>Create a new XMLViewer, with the given name</description>
+     <param name="self">An instance of GPS.XMLViewer</param>
+     <param name="name">A string</param>
+     <description>Create a new XMLViewer, with the given name</description>
   </shell_doc>
 
   <shell_doc name="GPS.XMLViewer.parse">
-      <param name="self">An instance of GPS.XMLViewer</param>
-      <param name="file">An XML file</param>
+     <param name="self">An instance of GPS.XMLViewer</param>
+     <param name="file">An XML file</param>
      <description>Adds the contents of an XML file (in the format of a gnatmetric result) to the XMLViewer</description>
+  </shell_doc>
+
+  <!--#################################################################
+      ## Logger class
+      #################################################################-->
+
+  <shell_doc name="GPS.Logger">
+     <description>This class provides an interface to the GPS logging mechanism. This can be used when debugging scripts, or even be left in production scripts for post-mortem analysis for instance. All output through this class is done in the GPS log file, in $HOME/.gps/log.
+GPS comes with some predefined logging streams, which can be used to configure the format of the log file, such as whether colors should be used, whether timestamps should be logged with each message,...</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Logger.__init__">
+     <param name="self">An instance of GPS.Logger</param>
+     <param name="name">A string</param>
+     <description>Create a new logging stream. Each stream is associated with a name, which is displayed before each line in the GPS log file, and is used to distinguish between various parts of GPS. Calling this constructor with the same name multiple times will create a new class instance.</description>
+     <example language="python">
+         log = GPS.Logger ("my_script")
+         log.log ("A message")
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Logger.log">
+     <param name="self">An instance of GPS.Logger</param>
+     <param name="message">A string</param>
+     <description>Logs a message in the GPS log file</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Logger.set_active">
+     <param name="self">An instance of GPS.Logger</param>
+     <param name="active">A boolean</param>
+     <description>Activate or deactivate a logging stream. The default for a sttream depends on the file $HOME/.gps/traces.cfg, and will generally be active. When a stream is inactive, no message is sent to the log file</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Logger.assert">
+     <param name="self">An instance of GPS.Logger</param>
+     <param name="condition">A boolean</param>
+     <param name="error_message">A string</param>
+     <param name="success_message" default="">A string</param>
+     <description>If condition evaluates to False, then error_message will be logged in the log file. If the condition evaluates to True, then success_message is logged if it was specified</description>
+     <example language="python">
+         log=GPS.Logger ("my_script")
+         log.assert (1 == 2, "Invalid addition")
+     </example>
   </shell_doc>
 
 </docs>
