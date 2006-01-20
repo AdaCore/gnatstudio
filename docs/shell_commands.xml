@@ -338,7 +338,10 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
   </shell_doc>
 
   <shell_doc name="GPS.exit">
-      <description>Exit GPS, asking for confirmation if any file is currently modified and unsaved</description>
+      <param name="force" default="False">A boolean</param>
+      <param name="status" default="0">An integer</param>  
+      <description>Exit GPS, asking for confirmation if any file is currently modified and unsaved. If force is True, no check is done.
+Status is the exit status to return to the calling shell. 0 will generally mean success on all architectures.</description>
   </shell_doc>
 
   <shell_doc name="GPS.get_system_dir">
