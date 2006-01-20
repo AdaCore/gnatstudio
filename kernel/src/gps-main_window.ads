@@ -90,10 +90,12 @@ package GPS.Main_Window is
 
    procedure Quit
      (Main_Window : access GPS_Window_Record'Class;
-      Force       : Boolean := False);
+      Force       : Boolean := False;
+      Status      : Integer := 0);
    --  Exit GPS. Ask for confirmation if there are unsaved files and Force is
    --  False. If Force is True, nothing is saved, and GPS exists immediately.
    --  Save the desktop if needed.
+   --  Status is the exit status (0 is success)
 
    procedure Load_Desktop (Window : access GPS_Window_Record'Class);
    --  Load a saved desktop, if any, and create the console if needed
