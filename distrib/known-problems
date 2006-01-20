@@ -1,29 +1,36 @@
 Known Problems fixed in GPS 3.1.1
 
 - F117-010 Crash when using "goto declaration or body"
-  Problem:    GPS crashes each time the "goto declaration or body" action is 
+  Problem:    GPS crashes each time the "goto declaration or body" action is
               invoked. A Storage_Error is raised. There is a similar issue with
               the "goto other file" action.
-  Workaround: Use contextual menus or other actions such as 
+  Workaround: Use contextual menus or other actions such as
               "/Navigate/Goto Body", "/Navigate/Goto Declaration" or
               "/Navigate/Goto File Spec<->Body".
 
 - F111-008 Seach contextual menu not set to proper context
   Problem:    When the project explorer is selected and the seach window opened,
-              the look in area is not set to proper value, and has 
+              the look in area is not set to proper value, and has
               "Current File" instead of "Project Explorer"
   Workaround: Set manually "Project Explorer" in the look in area
 
 - F109-009 Change in number of arguments to Editor.save
-  Problem:    The obsolescent shell function Editor.save is declared as accepting
-              no parameter, when in fact it accepts two and is documented as such
-  Workaround: use EditorBuffer.save instead 
+  Problem:    The obsolescent shell function Editor.save is declared as
+              accepting no parameter, when in fact it accepts two and is
+              documented as such.
+  Workaround: use EditorBuffer.save instead
 
 - EC29-002 Undesired input focus jumps in project wizard
   Problem:    In the project wizard, in the first page, if the first entry
               is empty, typing into the second entry causes the input focus
               to be given to the first entry.
   Workaround: Type something in the first entry, or use the "Browse" button
+
+- EC28-009 GPS under Windows leaks some handles
+  Problem:    On Windows GPS leaks one file handle, one process handle and one
+              thread handle for each external command launched. This can lead
+              to some instabilities after a long run.
+  Workaround: Restart GPS from time to time
 
 - EC20-019 Comment extraction before entities declarations under Windows
   Problem:    When pointing an entity declared in a file containing Windows
