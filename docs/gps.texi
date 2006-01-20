@@ -14382,11 +14382,11 @@ Indicates the regular expression to match.
 An index of a parenthesized expression in @code{regexp} that contains the
 repository revision of the line.
 
-  @item @code{<author_index>} (mandatory)
+  @item @code{<author_index>}
 An index of a parenthesized expression in @code{regexp} that contains the
 author of the line.
 
-  @item @code{<date_index>} (mandatory)
+  @item @code{<date_index>}
 An index of a parenthesized expression in @code{regexp} that contains the
 date of the line.
 
