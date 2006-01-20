@@ -2264,13 +2264,11 @@ package body Src_Editor_Buffer is
       --  ??? We do not support all languages here. It needs to be expanded to
       --  have a proper support in every context.
       Traces.Assert
-        (Me,
-         not Lang_Context.Case_Sensitive
-         and then
-           (Lang_Context.Comment_Start_Length = 0
-            or else Lang_Context.Comment_Start_Length = 0
-            or else Lang_Context.New_Line_Comment_Start /= null
-            or else Lang_Context.New_Line_Comment_Start_Regexp /= null),
+        (Exception_Handle,
+         Lang_Context.Comment_Start_Length = 0
+           or else Lang_Context.Comment_Start_Length = 0
+           or else Lang_Context.New_Line_Comment_Start /= null
+           or else Lang_Context.New_Line_Comment_Start_Regexp /= null,
          "Is_In_Comment not supported for multi-line comments");
 
       Get_Iter_Position (Buffer, Iter, Line, Column);
