@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -41,6 +41,7 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -617,7 +618,7 @@ package body GVD_Module is
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
 
    begin
-      if GVD_Module_ID.Cont_Button /= null then
+      if Toolbar /= null and then GVD_Module_ID.Cont_Button /= null then
          Remove (Toolbar, GVD_Module_ID.Cont_Button);
          Remove (Toolbar, GVD_Module_ID.Step_Button);
          Remove (Toolbar, GVD_Module_ID.Next_Button);
@@ -1976,36 +1977,51 @@ package body GVD_Module is
       Debug     : constant String := '/' & (-"Debug") & '/';
       Available : constant Boolean := State = Debug_Available;
       Sensitive : constant Boolean := State /= Debug_None;
+      Item      : Gtk_Menu_Item;
 
    begin
-      if State = Debug_Available then
-         Add_Debug_Buttons (Kernel);
-      elsif State = Debug_None then
-         Remove_Debug_Buttons (Kernel);
+      if Get_Main_Window (Kernel) /= null
+        and then not Gtk.Object.In_Destruction_Is_Set
+          (Get_Main_Window (Kernel))
+      then
+         if State = Debug_Available then
+            Add_Debug_Buttons (Kernel);
+         elsif State = Debug_None then
+            Remove_Debug_Buttons (Kernel);
+         end if;
+
+         --  The menu might not exist if GPS is being destroyed at this point,
+         --  or it could have been destroyed from a python script
+         Item := Find_Menu_Item (Kernel, Debug & (-"Debug"));
+         if Item /= null then
+            Set_Sensitive (Item, Available);
+            Set_Sensitive
+              (Find_Menu_Item (Kernel, Debug & (-"Data")), Available);
+            Set_Sensitive
+              (Find_Menu_Item (Kernel, Debug & (-"Run...")), Available);
+            Set_Sensitive
+              (Find_Menu_Item (Kernel, Debug & (-"Step")), Sensitive);
+            Set_Sensitive (Find_Menu_Item
+              (Kernel, Debug & (-"Step Instruction")), Sensitive);
+            Set_Sensitive
+              (Find_Menu_Item (Kernel, Debug & (-"Next")), Sensitive);
+            Set_Sensitive
+              (Find_Menu_Item
+                 (Kernel, Debug & (-"Next Instruction")), Sensitive);
+            Set_Sensitive
+              (Find_Menu_Item (Kernel, Debug & (-"Finish")), Sensitive);
+            Set_Sensitive
+              (Find_Menu_Item (Kernel, Debug & (-"Continue")), Sensitive);
+            Set_Sensitive
+              (Find_Menu_Item
+                 (Kernel, Debug & (-"Interrupt")), State = Debug_Busy);
+            Set_Sensitive
+              (Find_Menu_Item
+                 (Kernel, Debug & (-"Terminate Current")), Sensitive);
+            Set_Sensitive (Find_Menu_Item
+                           (Kernel, Debug & (-"Terminate")), Sensitive);
+         end if;
       end if;
-
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Debug & (-"Debug")), Available);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Debug & (-"Data")), Available);
-
-      Set_Sensitive (Find_Menu_Item (Kernel, Debug & (-"Run...")), Available);
-      Set_Sensitive (Find_Menu_Item (Kernel, Debug & (-"Step")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug & (-"Step Instruction")), Sensitive);
-      Set_Sensitive (Find_Menu_Item (Kernel, Debug & (-"Next")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug & (-"Next Instruction")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug & (-"Finish")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug & (-"Continue")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug & (-"Interrupt")), State = Debug_Busy);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug & (-"Terminate Current")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug & (-"Terminate")), Sensitive);
    end Set_Sensitive;
 
    ----------------
@@ -2134,7 +2150,6 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
    begin
       Close_Debugger (Get_Current_Process (Get_Main_Window (Kernel)));
 
