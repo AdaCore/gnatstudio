@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2005                      --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -728,22 +728,33 @@ package body Python_Module is
          Real_Console := Get_Console (Python_Module_Id.Script.Kernel);
       end if;
 
-      Inst := Get_Instance (Python_Module_Id.Script, Real_Console);
-      if Inst = null then
-         Inst := New_Instance
-           (Python_Module_Id.Script,
-            New_Class (Python_Module_Id.Script.Kernel, "Console"));
-         Set_Data (Inst, Widget => GObject (Real_Console));
+      if Real_Console /= null then
+         Inst := Get_Instance (Python_Module_Id.Script, Real_Console);
+         if Inst = null then
+            Inst := New_Instance
+              (Python_Module_Id.Script,
+               New_Class (Python_Module_Id.Script.Kernel, "Console"));
+            Set_Data (Inst, Widget => GObject (Real_Console));
+         end if;
+
+         PyDict_SetItemString
+           (PyModule_GetDict (PyImport_ImportModule ("sys")),
+            "stdout", Python_Class_Instance (Inst).Data);
+         PyDict_SetItemString
+           (PyModule_GetDict (PyImport_ImportModule ("sys")),
+            "stderr", Python_Class_Instance (Inst).Data);
+
+         Free (Inst);
+      else
+         Py_INCREF (Py_None);
+         Py_INCREF (Py_None);
+         PyDict_SetItemString
+           (PyModule_GetDict (PyImport_ImportModule ("sys")),
+            "stdout", Py_None);
+         PyDict_SetItemString
+           (PyModule_GetDict (PyImport_ImportModule ("sys")),
+            "stderr", Py_None);
       end if;
-
-      PyDict_SetItemString
-        (PyModule_GetDict (PyImport_ImportModule ("sys")),
-         "stdout", Python_Class_Instance (Inst).Data);
-      PyDict_SetItemString
-        (PyModule_GetDict (PyImport_ImportModule ("sys")),
-         "stderr", Python_Class_Instance (Inst).Data);
-
-      Free (Inst);
    end Override_Default_IO;
 
    ---------------------
