@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -163,6 +163,11 @@ package GVD.Process is
    procedure Close_Debugger (Process : access Visual_Debugger_Record);
    --  Close the given debugger and terminate the debugging session if this
    --  is the last one.
+
+   function Get_Kernel
+     (Process : access Visual_Debugger_Record'Class)
+      return GPS.Kernel.Kernel_Handle;
+   --  Return the GPS kernel
 
    procedure Load_Project_From_Executable
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
