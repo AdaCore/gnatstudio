@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -161,6 +161,12 @@ package body GVD.Process is
    --  Remote_Protocol and Debugger_Name.
    --
    --  Success is set to true is the debugger could be successfully started.
+
+   procedure On_Console_Destroy
+     (Process : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+   --  Called when the debugger console is destroyed, which also terminates the
+   --  debugger itself
 
    ----------------
    -- Properties --
@@ -431,6 +437,17 @@ package body GVD.Process is
          Update_Breakpoints (Process, Force => True);
       end if;
    end Load_Breakpoints_From_Property;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel
+     (Process : access Visual_Debugger_Record'Class)
+      return GPS.Kernel.Kernel_Handle is
+   begin
+      return Process.Window.Kernel;
+   end Get_Kernel;
 
    ----------------------------
    -- Set_Command_In_Process --
@@ -887,6 +904,21 @@ package body GVD.Process is
       end if;
    end Initialize;
 
+   ------------------------
+   -- On_Console_Destroy --
+   ------------------------
+
+   procedure On_Console_Destroy
+     (Process : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Kernel);
+      Proc : constant Visual_Debugger := Visual_Debugger (Process);
+   begin
+      Proc.Debugger_Text := null;
+      Close_Debugger (Proc);
+   end On_Console_Destroy;
+
    ---------------
    -- Configure --
    ---------------
@@ -914,6 +946,16 @@ package body GVD.Process is
    begin
       Set_Busy (Process, True);
       Attach_To_Debugger_Console (Process, Create_If_Necessary => True);
+
+      --  Destroying the console should kill the debugger
+      if Process.Debugger_Text /= null then
+         Kernel_Callback.Object_Connect
+           (Process.Debugger_Text, "destroy",
+            On_Console_Destroy'Access,
+            After       => True,
+            User_Data   => null,
+            Slot_Object => Process);
+      end if;
 
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String'(Remote_Host);
@@ -1034,7 +1076,6 @@ package body GVD.Process is
       end if;
 
       Traces.Trace (Me, "Closing Debugger");
-
       while Debugger_List /= null
         and then Debugger_List.Debugger /= GObject (Process)
       loop
