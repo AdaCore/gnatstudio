@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1150,12 +1150,16 @@ package body GPS.Kernel.Modules is
      (Kernel : access Kernel_Handle_Record'Class;
       Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item is
    begin
-      return Find_Or_Create_Menu_Tree
-        (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
-         Menu         => null,
-         Path         => Path,
-         Accelerators => Get_Default_Accelerators (Kernel),
-         Allow_Create => False);
+      if Kernel.Main_Window = null then
+         return null;
+      else
+         return Find_Or_Create_Menu_Tree
+           (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
+            Menu         => null,
+            Path         => Path,
+            Accelerators => Get_Default_Accelerators (Kernel),
+            Allow_Create => False);
+      end if;
    end Find_Menu_Item;
 
    -------------------
