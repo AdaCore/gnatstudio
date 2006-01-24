@@ -71,14 +71,21 @@ generic
      (Process : access Visual_Debugger_Record'Class) return Boolean is <>;
    --  Whether a command is currently being processed by the debugger
 
-package GVD.Generic_View is
+   with function Get_Kernel
+     (Process : access Visual_Debugger_Record'Class)
+     return GPS.Kernel.Kernel_Handle is <>;
+   --  Return the kernel
 
+package GVD.Generic_View is
    type Process_View_Record is abstract new Base_Type with private;
 
    function Get_Process
      (View : access Process_View_Record) return Visual_Debugger;
    --  Return the debugger associated with that view, or null if the view
    --  is not associated currently
+
+   procedure Unset_Process (View : access Process_View_Record);
+   --  Disconnect View from any process
 
    procedure On_Attach
      (View    : access Process_View_Record;
