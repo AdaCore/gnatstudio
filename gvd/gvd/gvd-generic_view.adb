@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                         Copyright (C) 2005-2006                   --
 --                             AdaCore                               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -26,7 +26,9 @@ with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Intl;           use GPS.Intl;
+with Gtk.Object;         use Gtk.Object;
 with Gtk.Widget;         use Gtk.Widget;
+with Gtk.Window;         use Gtk.Window;
 with Gtkada.Dialogs;     use Gtkada.Dialogs;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtkada.MDI;         use Gtkada.MDI;
@@ -98,6 +100,15 @@ package body GVD.Generic_View is
       return View.Process;
    end Get_Process;
 
+   -------------------
+   -- Unset_Process --
+   -------------------
+
+   procedure Unset_Process (View : access Process_View_Record) is
+   begin
+      View.Process := null;
+   end Unset_Process;
+
    ------------
    -- Update --
    ------------
@@ -124,6 +135,7 @@ package body GVD.Generic_View is
       begin
          if Get_Process (V) /= null then
             Set_View (Get_Process (V), null);
+            Unset_Process (V);
          end if;
       end On_Destroy;
 
@@ -132,9 +144,31 @@ package body GVD.Generic_View is
       ---------------------------
 
       procedure On_Debugger_Terminate
-        (View : access Gtk_Widget_Record'Class) is
+        (View : access Gtk_Widget_Record'Class)
+      is
+         V : constant Formal_View_Access := Formal_View_Access (View);
+         P : constant Visual_Debugger := Get_Process (V);
       begin
-         Destroy (View);
+         if P /= null then
+            --  Do not destroy the view when we are in the process of
+            --  destroying the main window. What might happen otherwise is the
+            --  following: we have the debugger console and debuggee console in
+            --  the same notebook. The first is destroyed as a result of
+            --  destroying the notebook. When that first is destroyed, it also
+            --  calls this On_Debugger_Terminate for the debuggee console. If
+            --  we were to destroy the latter, this means that
+            --  gtk_notebook_destroy's loop would then point to an invalid
+            --  location.
+            if Get_Main_Window (Get_Kernel (P)) /= null
+              and then not Gtk.Object.In_Destruction_Is_Set
+                (Get_Main_Window (Get_Kernel (P)))
+            then
+               Destroy (View);
+            else
+               Set_View (Get_Process (V), null);
+               Unset_Process (V);
+            end if;
+         end if;
       end On_Debugger_Terminate;
 
       --------------------
