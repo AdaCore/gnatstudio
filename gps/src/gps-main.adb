@@ -1625,6 +1625,17 @@ procedure GPS.Main is
                    "Unexpected exception: " & Exception_Information (E));
       end;
 
+      --  Destroy the GUI before the modules, otherwise if some package tries
+      --  to access their local module_id, they will generate storage_error.
+      --  No module should need to access its GUI anyway when it is destroyed,
+      --  since the desktop has already been saved, histories and properties
+      --  are handled separately,...
+      --  Since the call to destroy below will free the animation at some
+      --  point, we no longer want to access/update it past this point.
+
+      GPS_Main.Animation_Image := null;
+      Destroy (GPS_Main);
+
       Free_Modules (Kernel);
 
       --  Call Handlers_Destroy after Free_Modules and Destroy (GPS),
@@ -1632,13 +1643,9 @@ procedure GPS.Main is
       --  only Handlers_Destroy know what handlers are still left and need to
       --  be disconnected.
 
+      --  ??? Is this still needed, since we are destroying Kernel anyway
       Handlers_Destroy (Kernel);
 
-      --  Since the call to destroy below will free the animation at some
-      --  point, we no longer want to access/update it past this point.
-
-      GPS_Main.Animation_Image := null;
-      Destroy (GPS_Main);
       Destroy (Kernel);
 
       Projects.Registry.Finalize;
