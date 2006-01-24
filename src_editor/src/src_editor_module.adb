@@ -3136,7 +3136,9 @@ package body Src_Editor_Module is
       Full  : VFS.Virtual_File;
 
    begin
-      if File = VFS.No_File then
+      if File = VFS.No_File
+        or else Get_MDI (Kernel) = null
+      then
          return null;
       end if;
 
