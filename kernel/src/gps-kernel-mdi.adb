@@ -136,7 +136,11 @@ package body GPS.Kernel.MDI is
    is
       Top : constant GPS_Window := GPS_Window (Handle.Main_Window);
    begin
-      return Top.MDI;
+      if Top = null then
+         return null;
+      else
+         return Top.MDI;
+      end if;
    end Get_MDI;
 
    ---------------------------
