@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
@@ -131,6 +131,12 @@ package body GPS.Kernel is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences change
 
+   procedure On_Main_Window_Destroyed
+     (Kernel : System.Address; Main_Window : System.Address);
+   pragma Convention (C, On_Main_Window_Destroyed);
+   --  Called when the main window is destroyed, so that the kernel no longer
+   --  points to an invalid window
+
    --------------------------
    -- Get_Language_Handler --
    --------------------------
@@ -167,6 +173,20 @@ package body GPS.Kernel is
       end if;
    end GNAT_Version;
 
+   ------------------------------
+   -- On_Main_Window_Destroyed --
+   ------------------------------
+
+   procedure On_Main_Window_Destroyed
+     (Kernel : System.Address; Main_Window : System.Address)
+   is
+      pragma Unreferenced (Main_Window);
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Kernel_Handle);
+   begin
+      Convert (Kernel).Main_Window := null;
+   end On_Main_Window_Destroyed;
+
    -------------
    -- Gtk_New --
    -------------
@@ -183,6 +203,10 @@ package body GPS.Kernel is
       Glib.Object.Initialize (Handle);
 
       Handle.Main_Window  := Main_Window;
+      Weak_Ref (Handle.Main_Window,
+                On_Main_Window_Destroyed'Access,
+                Handle.all'Address);
+
       Handle.Home_Dir     := new String'(Name_As_Directory (Home_Dir));
       Handle.Prefix       := new String'(Name_As_Directory (Prefix_Directory));
 
@@ -862,7 +886,11 @@ package body GPS.Kernel is
    function Get_Toolbar
      (Handle : access Kernel_Handle_Record) return Gtk.Toolbar.Gtk_Toolbar is
    begin
-      return GPS_Window (Handle.Main_Window).Toolbar;
+      if Handle.Main_Window /= null then
+         return GPS_Window (Handle.Main_Window).Toolbar;
+      else
+         return null;
+      end if;
    end Get_Toolbar;
 
    ------------------
@@ -897,7 +925,9 @@ package body GPS.Kernel is
 
       Window := GPS_Window (Handle.Main_Window);
 
-      if Gtk.Object.In_Destruction_Is_Set (Window) then
+      if Window = null
+        or else Gtk.Object.In_Destruction_Is_Set (Window)
+      then
          return;
       end if;
 
@@ -932,7 +962,9 @@ package body GPS.Kernel is
 
       Window := GPS_Window (Handle.Main_Window);
 
-      if Gtk.Object.In_Destruction_Is_Set (Window) then
+      if Window = null
+        or else Gtk.Object.In_Destruction_Is_Set (Window)
+      then
          return;
       end if;
 
