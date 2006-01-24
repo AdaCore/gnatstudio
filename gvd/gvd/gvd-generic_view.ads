@@ -132,7 +132,12 @@ package GVD.Generic_View is
         (Process : access Visual_Debugger_Record'Class;
          View    : Base_Type_Access) is <>;
       --  Get or set the view in the visual debugger structure, so that it is
-      --  closely associated with that process
+      --  closely associated with that process.
+      --  The function Set_View is a good place to save the current state of
+      --  the view in the properties if need be. It always occurs before the
+      --  widget is actually destroyed, and while the debugger still exists
+      --  (you should save the contents of the current view, before setting the
+      --  new one).
 
       with procedure Initialize
         (View   : access Formal_View_Record'Class;
