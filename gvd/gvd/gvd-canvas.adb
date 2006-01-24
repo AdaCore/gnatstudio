@@ -342,10 +342,6 @@ package body GVD.Canvas is
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the contexual menu is destroyed.
 
-   procedure On_Data_Canvas_Destroy
-     (Canvas : access Gtk_Widget_Record'Class);
-   --  Called when the data canvas is destroyed
-
    procedure On_Data_Refresh (Canvas : access Gtk_Widget_Record'Class);
    --  "Refresh" contextual menu
 
@@ -491,8 +487,57 @@ package body GVD.Canvas is
 
    procedure Set_Canvas
      (Process : access Visual_Debugger_Record'Class;
-      Canvas  : Gtk_Scrolled_Window) is
+      Canvas  : Gtk_Scrolled_Window)
+   is
+      Old      : constant GVD_Canvas := GVD_Canvas (Process.Data);
+      Iter     : Item_Iterator;
+      Property : GVD_Items_Property;
+      Count    : Natural := 0;
    begin
+      --  Save the currently displayed items, if any
+
+      if Old /= null then
+         if Get_Pref (Preserve_State_On_Exit) then
+            Iter := Start (Old.Canvas);
+            while Get (Iter) /= null loop
+               if Get_Graph_Cmd (Display_Item (Get (Iter))) /= "" then
+                  Count := Count + 1;
+               end if;
+               Next (Iter);
+            end loop;
+
+            if Count = 0 then
+               Remove_Property
+                 (File => Get_Executable (Process.Debugger),
+                  Name => "debugger_items");
+            else
+               Property := new GVD_Items_Property_Record;
+               Property.Items := new GNAT.Strings.String_List (1 .. Count);
+               Count := Property.Items'First;
+
+               Iter := Start (Old.Canvas);
+               while Get (Iter) /= null loop
+                  if Get_Graph_Cmd (Display_Item (Get (Iter))) /= "" then
+                     Property.Items (Count) :=
+                       new String'(Get_Graph_Cmd (Display_Item (Get (Iter))));
+                     Count := Count + 1;
+                  end if;
+                  Next (Iter);
+               end loop;
+
+               Traces.Trace (Me, "Saving debugger canvas properties");
+               Set_Property
+                 (File       => Get_Executable (Process.Debugger),
+                  Name       => "debugger_items",
+                  Property   => Property,
+                  Persistent => True);
+            end if;
+         end if;
+
+         Old.Selected_Item := null;
+         Old.Selected_Component := null;
+      end if;
+
       Process.Data := Gtk_Widget (Canvas);
    end Set_Canvas;
 
@@ -753,62 +798,6 @@ package body GVD.Canvas is
                        "Unexpected exception: " & Exception_Information (E));
    end On_Data_Refresh;
 
-   ----------------------------
-   -- On_Data_Canvas_Destroy --
-   ----------------------------
-
-   procedure On_Data_Canvas_Destroy
-     (Canvas : access Gtk_Widget_Record'Class)
-   is
-      Process : constant Visual_Debugger := Get_Process (GVD_Canvas (Canvas));
-      Iter   : Item_Iterator;
-      Property : GVD_Items_Property;
-      Count    : Natural := 0;
-   begin
-      Traces.Trace (Me, "On_Data_Canvas_Destroy");
-      if Process /= null then
-         if Get_Pref (Preserve_State_On_Exit) then
-            Iter := Start (GVD_Canvas (Canvas).Canvas);
-            while Get (Iter) /= null loop
-               if Get_Graph_Cmd (Display_Item (Get (Iter))) /= "" then
-                  Count := Count + 1;
-               end if;
-               Next (Iter);
-            end loop;
-
-            if Count = 0 then
-               Remove_Property
-                 (File => Get_Executable (Process.Debugger),
-                  Name => "debugger_items");
-            else
-               Property := new GVD_Items_Property_Record;
-               Property.Items := new GNAT.Strings.String_List (1 .. Count);
-               Count := Property.Items'First;
-
-               Iter := Start (GVD_Canvas (Canvas).Canvas);
-               while Get (Iter) /= null loop
-                  if Get_Graph_Cmd (Display_Item (Get (Iter))) /= "" then
-                     Property.Items (Count) :=
-                       new String'(Get_Graph_Cmd (Display_Item (Get (Iter))));
-                     Count := Count + 1;
-                  end if;
-                  Next (Iter);
-               end loop;
-
-               Set_Property
-                 (File       => Get_Executable (Process.Debugger),
-                  Name       => "debugger_items",
-                  Property   => Property,
-                  Persistent => True);
-            end if;
-         end if;
-
-         Process.Data := null;
-         GVD_Canvas (Canvas).Selected_Item := null;
-         GVD_Canvas (Canvas).Selected_Component := null;
-      end if;
-   end On_Data_Canvas_Destroy;
-
    ------------------
    -- Unselect_All --
    ------------------
@@ -1051,9 +1040,6 @@ package body GVD.Canvas is
         (Canvas.Canvas, "background_click",
          Object_Callback.To_Marshaller (On_Background_Click'Access),
          Canvas);
-      Widget_Callback.Object_Connect
-        (Canvas, "destroy",
-         On_Data_Canvas_Destroy'Access, Canvas);
       Widget_Callback.Object_Connect
         (Canvas.Canvas, "realize", On_Realize'Access, Canvas);
 
