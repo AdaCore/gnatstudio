@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -992,6 +992,63 @@ package body Browsers.Dependency_Items is
          Examine_Dependencies (Kernel, File => Get_File (File));
       elsif Command = "used_by" then
          Examine_From_Dependencies (Kernel, File => Get_File (File));
+      elsif Command = "imports" then
+         declare
+            Iter      : File_Dependency_Iterator;
+            Intern    : Source_File;
+            Source    : Source_File;
+            Recursive : constant Boolean := Nth_Arg (Data, 2);
+         begin
+            Set_Return_Value_As_List (Data);
+            Source := Get_Or_Create (Get_Database (Kernel), Get_File (File));
+            Find_Dependencies
+              (Iter => Iter,
+               File => Source);
+
+            while not At_End (Iter) loop
+               Intern := Get (Iter);
+
+               if Intern /= null
+                 and then Filter
+                   (Kernel, Recursive or else Is_Explicit (Iter), Intern)
+               then
+                  Set_Return_Value
+                    (Data,
+                     Create_File (Get_Script (Data), Get_Filename (Intern)));
+               end if;
+
+               Next (Iter);
+            end loop;
+         end;
+      elsif Command = "imported_by" then
+         declare
+            Iter      : Dependency_Iterator;
+            Intern    : Source_File;
+            Source    : Source_File;
+            Recursive : constant Boolean := Nth_Arg (Data, 2);
+         begin
+            Set_Return_Value_As_List (Data);
+            Source := Get_Or_Create (Get_Database (Kernel), Get_File (File));
+            Find_Ancestor_Dependencies
+              (Iter         => Iter,
+               File         => Source,
+               Include_Self => False);
+
+            while not At_End (Iter) loop
+               Intern := Get (Iter);
+
+               if Intern /= null
+                 and then Filter
+                   (Kernel, Recursive or else Is_Explicit (Iter), Intern)
+               then
+                  Set_Return_Value
+                    (Data,
+                     Create_File (Get_Script (Data), Get_Filename (Intern)));
+               end if;
+
+               Next (Iter);
+            end loop;
+         end;
       end if;
    end Depends_On_Command_Handler;
 
@@ -1052,6 +1109,18 @@ package body Browsers.Dependency_Items is
          Handler      => Depends_On_Command_Handler'Access);
       Register_Command
         (Kernel, "used_by",
+         Class        => Get_File_Class (Kernel),
+         Handler      => Depends_On_Command_Handler'Access);
+      Register_Command
+        (Kernel, "imports",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Get_File_Class (Kernel),
+         Handler      => Depends_On_Command_Handler'Access);
+      Register_Command
+        (Kernel, "imported_by",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => Depends_On_Command_Handler'Access);
    end Register_Module;
