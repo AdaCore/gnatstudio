@@ -1753,6 +1753,8 @@ package body GVD.Process is
          return;
       end if;
 
+      Exec := Get_Executable (Debugger.Debugger);
+
       declare
          List : Argument_List := Get_Attribute_Value
            (Project, Main_Attribute);
