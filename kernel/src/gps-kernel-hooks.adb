@@ -244,6 +244,15 @@ package body GPS.Kernel.Hooks is
       return Hook_Description_Access;
    --  Get the hook information contained in the nth-arg of Data
 
+   procedure Add_Hook
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Info   : Hook_Description_Access;
+      Func   : access GPS.Kernel.Hook_Function_Record'Class;
+      Name   : String;
+      Watch  : Glib.Object.GObject := null);
+   --  Same as Add_Hook, but directly with the hook description. This saves a
+   --  look up in a hash table
+
    ------------------------
    -- Get_Or_Create_Hook --
    ------------------------
@@ -530,6 +539,36 @@ package body GPS.Kernel.Hooks is
 
    procedure Add_Hook
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Info   : Hook_Description_Access;
+      Func   : access GPS.Kernel.Hook_Function_Record'Class;
+      Name   : String;
+      Watch  : Glib.Object.GObject := null)
+   is
+   begin
+      if Active (Me) then
+         Trace
+           (Me, "Adding function to hook " & Info.Name.all & ": " & Name);
+      end if;
+      Prepend (Info.Funcs,
+               (Func => Hook_Function (Func), Name => new String'(Name)));
+      Func.Ref_Count := Func.Ref_Count + 1;
+
+      if Watch /= null then
+         Func.Ref_Count := Func.Ref_Count + 1;
+         Weak_Ref
+           (Watch, Remove_Hook_Cb'Access,
+            Convert (new Hook_User_Data'(Kernel_Handle (Kernel),
+                     new String'(Info.Name.all),
+                     Hook_Function (Func))));
+      end if;
+   end Add_Hook;
+
+   --------------
+   -- Add_Hook --
+   --------------
+
+   procedure Add_Hook
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook   : String;
       Func   : access GPS.Kernel.Hook_Function_Record'Class;
       Name   : String;
@@ -541,19 +580,7 @@ package body GPS.Kernel.Hooks is
       --  is not know yet, it will be set later when calling Register_Hook_*
    begin
       if Info /= null then
-         Trace (Me, "Adding function to hook " & Info.Name.all & ": " & Name);
-         Prepend (Info.Funcs,
-           (Func => Hook_Function (Func), Name => new String'(Name)));
-         Func.Ref_Count := Func.Ref_Count + 1;
-
-         if Watch /= null then
-            Func.Ref_Count := Func.Ref_Count + 1;
-            Weak_Ref
-              (Watch, Remove_Hook_Cb'Access,
-               Convert (new Hook_User_Data'(Kernel_Handle (Kernel),
-                        new String'(Hook),
-                        Hook_Function (Func))));
-         end if;
+         Add_Hook (Kernel, Info, Func, Name, Watch);
       end if;
    end Add_Hook;
 
@@ -1209,6 +1236,22 @@ package body GPS.Kernel.Hooks is
                  (Data, "Invalid number of parameters in call to Hook.run");
          end;
 
+      elsif Command = "add" then
+         Name_Parameters (Data, Add_Hook_Args);
+         Info := Get_Data (Data, 1);
+         declare
+            Func : constant Subprogram_Type := Nth_Arg (Data, 2);
+         begin
+            if Info = null then
+               Set_Error_Msg (Data, "Unknown hook");
+            else
+               Add_Hook (Kernel => Get_Kernel (Data),
+                         Info   => Info,
+                         Func   => Info.Create_Subprogram_Wrapper (Func, Info),
+                         Name   => Get_Name (Func));
+            end if;
+         end;
+
       elsif Command = "register" then
          Name_Parameters (Data, Register_Hook_Args);
          declare
@@ -1291,22 +1334,6 @@ package body GPS.Kernel.Hooks is
 
                Get_Next (Get_Kernel (Data).Hooks, Iter);
             end loop;
-         end;
-
-      elsif Command = "add" then
-         Name_Parameters (Data, Add_Hook_Args);
-         Info := Get_Data (Data, 1);
-         declare
-            Func : constant Subprogram_Type := Nth_Arg (Data, 2);
-         begin
-            if Info = null then
-               Set_Error_Msg (Data, "Unknown hook");
-            else
-               Add_Hook (Kernel => Get_Kernel (Data),
-                         Hook   => Info.Name.all,
-                         Func   => Info.Create_Subprogram_Wrapper (Func, Info),
-                         Name   => Get_Name (Func));
-            end if;
          end;
 
       else
