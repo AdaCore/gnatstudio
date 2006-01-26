@@ -25,8 +25,10 @@ EC29-004 GPS Activities improvement (2006-01-04)
 
 EC05-011 Major speed improvement in processing of GPS.Hook (2006-01-26)
 
-  Using the GPS.Hook class in a python script is now faster by orders of
-  magnitude (up to 20 times faster)
+  Using the GPS.Hook class in a python script is now faster up to a factor
+  of 20.
+
+  Keywords: Python, Hook
 
 EB30-005 Saving the contents of the Data Window (2005-11-30)
 
