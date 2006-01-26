@@ -1,8 +1,8 @@
 /*-------------------------------------------------------------------
                                G P S                               --
                                                                    --
-                     Copyright (C) 2003                            --
-                            ACT-Europe                             --
+                     Copyright (C) 2003-2006                       --
+                            AdaCore                                --
                                                                    --
  GPS is free  software; you can  redistribute it and/or modify  it --
  under the terms of the GNU General Public License as published by --
@@ -22,7 +22,7 @@
 #include <gtk/gtk.h>
 
 #undef DEBUG
-//  #define DEBUG
+/* #define DEBUG */
 
 PyObject * ada_Py_InitModule4
     (char *name, PyMethodDef *methods,
@@ -114,7 +114,7 @@ PyObject* ada_pyfunction_get_defaults (PyObject* obj) {
 }
 
 PyObject* ada_PyEval_EvalCodeEx
-  (PyObject *co,
+  (PyCodeObject *co,
    PyObject *globals,
    PyObject *locals,
    PyObject *args,
@@ -122,6 +122,8 @@ PyObject* ada_PyEval_EvalCodeEx
    PyObject *defs,
    PyObject *closure)
 {
+   /* Code copied from funcobject.c::function_call() */
+
   PyObject **k, **d;
   PyObject* result;
   int nk, nd;
