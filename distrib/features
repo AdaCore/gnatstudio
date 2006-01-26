@@ -23,6 +23,11 @@ EC29-004 GPS Activities improvement (2006-01-04)
 
   Keywords: VCS
 
+EC05-011 Major speed improvement in processing of GPS.Hook (2006-01-26)
+
+  Using the GPS.Hook class in a python script is now faster by orders of
+  magnitude (up to 20 times faster)
+
 EB30-005 Saving the contents of the Data Window (2005-11-30)
 
   Whenever you close the debugger data window (for instance when the debugger
