@@ -54,7 +54,7 @@ with Projects;                use Projects;
 with String_List_Utils;
 with String_Utils;            use String_Utils;
 with System;                  use System;
-with System.Address_Image;
+with System.Assertions;
 with Traces;                  use Traces;
 with Types;                   use Types;
 with VFS;                     use VFS;
@@ -408,8 +408,6 @@ package body GPS.Kernel.Scripts is
         (Callback_Data'Class, Callback_Data_Access);
    begin
       if Data /= null then
-         Trace (Me, "MANU Free Callback_Data: "
-                & System.Address_Image (Data.all'Address));
          Free (Data.all);
          Unchecked_Free (Data);
       end if;
@@ -1720,15 +1718,20 @@ package body GPS.Kernel.Scripts is
          Handle := Convert (Get_Data (Inst, Logger_Class));
          Set_Active (Handle, Nth_Arg (Data, 2));
 
-      elsif Command = "assert" then
+      elsif Command = "check" then
          Name_Parameters (Data, (1 => Condition_Cst'Unchecked_Access,
                                  2 => Error_Message_Cst'Unchecked_Access,
                                  3 => Success_Message_Cst'Unchecked_Access));
          Handle := Convert (Get_Data (Inst, Logger_Class));
-         Assert (Handle,
-                 Condition          => Nth_Arg (Data, 2),
-                 Error_Message      => Nth_Arg (Data, 3),
-                 Message_If_Success => Nth_Arg (Data, 4, ""));
+         begin
+            Assert (Handle,
+                    Condition          => Nth_Arg (Data, 2),
+                    Error_Message      => Nth_Arg (Data, 3),
+                    Message_If_Success => Nth_Arg (Data, 4, ""));
+         exception
+            when System.Assertions.Assert_Failure =>
+               Set_Error_Msg (Data, "Assertion error: " & Nth_Arg (Data, 3));
+         end;
       end if;
 
       Free (Inst);
@@ -1752,7 +1755,7 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, "set_active", 1, 1, Logger_Handler'Access, Logger);
       Register_Command
-        (Kernel, "assert", 2, 3, Logger_Handler'Access, Logger);
+        (Kernel, "check", 2, 3, Logger_Handler'Access, Logger);
 
       Register_Command
         (Kernel, Constructor_Method,
