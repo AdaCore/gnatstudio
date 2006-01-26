@@ -3868,7 +3868,7 @@ GPS comes with some predefined logging streams, which can be used to configure t
      <description>Activate or deactivate a logging stream. The default for a sttream depends on the file $HOME/.gps/traces.cfg, and will generally be active. When a stream is inactive, no message is sent to the log file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Logger.assert">
+  <shell_doc name="GPS.Logger.check">
      <param name="self">An instance of GPS.Logger</param>
      <param name="condition">A boolean</param>
      <param name="error_message">A string</param>
@@ -3876,7 +3876,7 @@ GPS comes with some predefined logging streams, which can be used to configure t
      <description>If condition evaluates to False, then error_message will be logged in the log file. If the condition evaluates to True, then success_message is logged if it was specified</description>
      <example language="python">
          log=GPS.Logger ("my_script")
-         log.assert (1 == 2, "Invalid addition")
+         log.check (1 == 2, "Invalid addition")
      </example>
   </shell_doc>
 
