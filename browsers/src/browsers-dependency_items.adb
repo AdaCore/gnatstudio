@@ -994,10 +994,10 @@ package body Browsers.Dependency_Items is
          Examine_From_Dependencies (Kernel, File => Get_File (File));
       elsif Command = "imports" then
          declare
-            Iter        : File_Dependency_Iterator;
-            Dependencie : Source_File;
-            Source      : Source_File;
-            Recursive   : constant Boolean := Nth_Arg (Data, 2);
+            Iter       : File_Dependency_Iterator;
+            Dependency : Source_File;
+            Source     : Source_File;
+            Recursive  : constant Boolean := Nth_Arg (Data, 2);
          begin
             Set_Return_Value_As_List (Data);
             Source := Get_Or_Create (Get_Database (Kernel), Get_File (File));
@@ -1006,16 +1006,16 @@ package body Browsers.Dependency_Items is
                File => Source);
 
             while not At_End (Iter) loop
-               Dependencie := Get (Iter);
+               Dependency := Get (Iter);
 
-               if Dependencie /= null
+               if Dependency /= null
                  and then Filter
-                   (Kernel, Recursive or else Is_Explicit (Iter), Dependencie)
+                   (Kernel, Recursive or else Is_Explicit (Iter), Dependency)
                then
                   Set_Return_Value
                     (Data,
                      Create_File (Get_Script (Data),
-                       Get_Filename (Dependencie)));
+                       Get_Filename (Dependency)));
                end if;
 
                Next (Iter);
@@ -1023,10 +1023,10 @@ package body Browsers.Dependency_Items is
          end;
       elsif Command = "imported_by" then
          declare
-            Iter        : Dependency_Iterator;
-            Dependencie : Source_File;
-            Source      : Source_File;
-            Recursive   : constant Boolean := Nth_Arg (Data, 2);
+            Iter       : Dependency_Iterator;
+            Dependency : Source_File;
+            Source     : Source_File;
+            Recursive  : constant Boolean := Nth_Arg (Data, 2);
          begin
             Set_Return_Value_As_List (Data);
             Source := Get_Or_Create (Get_Database (Kernel), Get_File (File));
@@ -1036,16 +1036,16 @@ package body Browsers.Dependency_Items is
                Include_Self => False);
 
             while not At_End (Iter) loop
-               Dependencie := Get (Iter);
+               Dependency := Get (Iter);
 
-               if Dependencie /= null
+               if Dependency /= null
                  and then Filter
-                   (Kernel, Recursive or else Is_Explicit (Iter), Dependencie)
+                   (Kernel, Recursive or else Is_Explicit (Iter), Dependency)
                then
                   Set_Return_Value
                     (Data,
                      Create_File
-                       (Get_Script (Data), Get_Filename (Dependencie)));
+                       (Get_Script (Data), Get_Filename (Dependency)));
                end if;
 
                Next (Iter);
