@@ -71,11 +71,15 @@ package Python is
    --  Compute the string representation of Obj.  Returns the string
    --  representation on success, NULL on failure.  This is the equivalent of
    --  the Python expression "str(obj)".
+   --  This is the equivalent of the python call str(obj), and is used by
+   --  python in print statements.
    --  Returned value must be Py_DECREF
 
    function PyObject_Repr (Obj : PyObject) return PyObject;
-   --  Similar to PyObject_Str.
-   --  ???
+   --  Similar to PyObject_Str, ie provides a displayable version of Obj. This
+   --  is the equivalent of the python call repr(obj), and is used by python
+   --  in backquotes.
+   --  Returned value must be Py_DECREF
 
    function PyObject_CallMethod
      (Object : PyObject; Name : String) return PyObject;
@@ -92,6 +96,13 @@ package Python is
    --    result = PyObject_CallMethod (object, "method", "(Oi)", other_obj, 1);
    --
    --  format has the same form as in the calls to Py_BuildValue
+
+   function PyObject_Call
+     (Object : PyObject; Args : PyObject; Kw : PyObject) return PyObject;
+   --  Call a callable Python object, Object, with
+   --  arguments and keywords arguments.  The 'args' argument can not be
+   --  NULL, but the 'kw' argument can be NULL.
+   --  The returned object must be DECREF
 
    function PyObject_SetAttrString
      (Object : PyObject;
@@ -115,14 +126,16 @@ package Python is
       Name   : Interfaces.C.Strings.chars_ptr) return PyObject;
    pragma Import (C, PyObject_GetAttrString, "PyObject_GetAttrString");
    --  Lookup an attribute in the object's dictionnary.
-   --  No need to Py_DECREF the return type, this is a borrowed reference.
+   --  The returned object *must* be DECREF
 
    function PyObject_GetAttrString
      (Object : PyObject; Name : String) return PyObject;
-   --  Same as above
+   --  Same as above.
+   --  The returned object must be DECREF
 
    function PyObject_Dir (Object : PyObject) return PyObject;
-   --  A list of strings for all entries in Object's dictionary.
+   --  A list of strings for all entries in Object's dictionary..
+   --  The returned object must be DECREF
 
    --------------
    -- Integers --
@@ -353,7 +366,8 @@ package Python is
    --  Whether Func is a function object
 
    function PyFunction_Get_Code (Func : PyObject) return PyCodeObject;
-   --  Return the code of the function (see PyEval_EvalCodeEx)
+   --  Return the code of the function (see PyEval_EvalCodeEx).
+   --  Refcount for the code is not increased.
 
    function PyFunction_Get_Globals (Func : PyObject) return PyObject;
    --  Return the globals dictionary the function belongs to
@@ -581,6 +595,7 @@ private
    pragma Import (C, Py_XDECREF, "ada_py_xdecref");
    pragma Import (C, PyErr_Print, "PyErr_Print");
    pragma Import (C, PyObject_Str, "PyObject_Str");
+   pragma Import (C, PyObject_Call, "PyObject_Call");
    pragma Import (C, PyEval_EvalCode, "PyEval_EvalCode");
    pragma Import (C, PyEval_EvalCodeEx, "ada_PyEval_EvalCodeEx");
    pragma Import (C, PyErr_SetInterrupt, "PyErr_SetInterrupt");
