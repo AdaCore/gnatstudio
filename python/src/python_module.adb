@@ -137,10 +137,13 @@ package body Python_Module is
      (Script  : access Python_Scripting_Record'Class;
       Command : PyObject;
       Args    : Callback_Data'Class) return String;
+
    function Execute_Command
      (Script  : access Python_Scripting_Record'Class;
       Command : PyObject;
       Args    : Callback_Data'Class) return PyObject;
+   --  Need to unref the returned value
+
    function Execute_Command
      (Script  : access Python_Scripting_Record'Class;
       Command : PyObject;
@@ -256,6 +259,7 @@ package body Python_Module is
       return PyObject;
    --  Return the N-th command line parameter, taking into account the keywords
    --  if any.
+   --  The returned value is a borrowed reference and must not be DECREF'd
 
    procedure Free (Data : in out Python_Callback_Data);
    function Create
@@ -1407,12 +1411,15 @@ package body Python_Module is
    -----------
 
    function Clone (Data : Python_Callback_Data) return Callback_Data'Class is
-      D : Python_Callback_Data := Data;
+      D    : Python_Callback_Data := Data;
+      Item : PyObject;
    begin
       if D.Args /= null then
          D.Args := PyTuple_New (PyTuple_Size (D.Args));
          for T in 0 .. PyTuple_Size (D.Args) - 1 loop
-            PyTuple_SetItem (D.Args, T, PyTuple_GetItem (Data.Args, T));
+            Item := PyTuple_GetItem (Data.Args, T);
+            Py_INCREF (Item);
+            PyTuple_SetItem (D.Args, T, Item);
          end loop;
       end if;
       if D.Kw /= null then
@@ -1697,19 +1704,16 @@ package body Python_Module is
 --              if Module = null
 --                or else Module = Py_None
 --              then
---                 Trace (Me, "MANU ERROR 1");
 --                 raise Constraint_Error;
 --              end if;
 --
 --              Dict := PyModule_GetDict (Module);
 --              if Dict = null or else Dict = Py_None then
---                 Trace (Me, "MANU ERROR 2");
 --                 raise Constraint_Error;
 --              end if;
 --
 --              Obj := PyDict_GetItemString (Dict, "object");
 --              if Obj = null or else Obj = Py_None then
---                 Trace (Me, "MANU ERROR 3");
 --                 raise Constraint_Error;
 --              end if;
 --
@@ -1864,7 +1868,8 @@ package body Python_Module is
       Obj   : PyObject;
       Args2 : PyObject;
       Size  : Integer;
-      Item, Cmd  : PyObject;
+      Item  : PyObject;
+
    begin
       if Script.Blocked then
          Insert (Script.Kernel, "A command is already executing");
@@ -1875,38 +1880,38 @@ package body Python_Module is
       --  argument.
       if PyMethod_Check (Command) then
          if PyMethod_Self (Command) /= null then
-            Size := PyTuple_Size (Python_Callback_Data (Args).Args);
+            --  See code in classobject.c::instancemethod_call()
+            Size  := PyTuple_Size (Python_Callback_Data (Args).Args);
             Args2 := PyTuple_New (Size => Size + 1);
             Py_INCREF (PyMethod_Self (Command));
             PyTuple_SetItem (Args2, 0, PyMethod_Self (Command));
             for T in 0 .. Size - 1 loop
                Item := PyTuple_GetItem (Python_Callback_Data (Args).Args, T);
-               PyTuple_SetItem (Args2, T  + 1, Item);
                Py_INCREF (Item);
+               PyTuple_SetItem (Args2, T  + 1, Item);
             end loop;
-
-            Cmd := PyMethod_Function (Command);
          else
+            --  The "self" argument is the first in Args, nothing special to do
             Args2 := Python_Callback_Data (Args).Args;
             Py_INCREF (Args2);
-            Cmd := PyMethod_Function (Command);
          end if;
+
+         Obj := PyObject_Call
+           (Object => PyMethod_Function (Command),
+            Args   => Args2,
+            Kw     => Python_Callback_Data (Args).Kw);
+         Py_DECREF (Args2);
+
       else
-         Cmd := Command;
-         Args2 := Python_Callback_Data (Args).Args;
-         Py_INCREF (Args2);
+         Obj := PyEval_EvalCodeEx
+           (PyFunction_Get_Code (Command),
+            Globals  => PyFunction_Get_Globals (Command),
+            Locals   => null,
+            Args     => Python_Callback_Data (Args).Args,
+            Kwds     => Python_Callback_Data (Args).Kw,
+            Defaults => PyFunction_Get_Defaults (Command),
+            Closure  => PyFunction_Get_Closure (Command));
       end if;
-
-      Obj := PyEval_EvalCodeEx
-        (PyFunction_Get_Code (Cmd),
-         Globals  => PyFunction_Get_Globals (Cmd),
-         Locals   => null,
-         Args     => Args2,
-         Kwds     => Python_Callback_Data (Args).Kw,
-         Defaults => PyFunction_Get_Defaults (Cmd),
-         Closure  => PyFunction_Get_Closure (Cmd));
-
-      Py_DECREF (Args2);
 
       if Obj = null then
          PyErr_Print;
@@ -1929,8 +1934,16 @@ package body Python_Module is
       if Obj /= null
         and then PyString_Check (Obj)
       then
-         return PyString_AsString (Obj);
+         declare
+            Str : constant String := PyString_AsString (Obj);
+         begin
+            Py_DECREF (Obj);
+            return Str;
+         end;
       else
+         if Obj /= null then
+            Py_DECREF (Obj);
+         end if;
          return "";
       end if;
    end Execute_Command;
@@ -1945,12 +1958,18 @@ package body Python_Module is
       Args    : Callback_Data'Class) return Boolean
    is
       Obj : constant PyObject := Execute_Command (Script, Command, Args);
+      Result : Boolean;
    begin
-      return Obj /= null
-        and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
-                  or else
-                    (PyString_Check (Obj)
-                     and then PyString_AsString (Obj) = "true"));
+      if Obj = null then
+         return False;
+      else
+         Result := ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
+                    or else
+             (PyString_Check (Obj)
+              and then PyString_AsString (Obj) = "true"));
+         Py_DECREF (Obj);
+         return Result;
+      end if;
    end Execute_Command;
 
    ------------------
@@ -2136,7 +2155,6 @@ package body Python_Module is
       if Obj = null then
          raise No_Such_Parameter;
       elsif Obj = Py_None then
-         Py_DECREF (Obj);
          raise No_Such_Parameter;
       end if;
       return Obj;
@@ -2233,8 +2251,10 @@ package body Python_Module is
         (Data.Script.GPS_Module, Get_Name (Class));
       Item_Class : PyObject;
       Inst : Class_Instance;
+
    begin
-      Item := Get_Param (Data, N);
+      Item := Get_Param (Data, N);  --  Item is a borrowed reference
+
       if not PyInstance_Check (Item) then
          Raise_Exception
            (Invalid_Parameter'Identity,
@@ -2243,16 +2263,21 @@ package body Python_Module is
       end if;
 
       Item_Class := PyObject_GetAttrString (Item, "__class__");
+      --  Item_Class must be DECREF'd
+
       if Item_Class = null then
          Trace (Me, "Nth_Arg: Couldn't find class of instance");
       end if;
 
       if not PyClass_IsSubclass (Item_Class, Base => C) then
+         Py_DECREF (Item_Class);
          Raise_Exception
            (Invalid_Parameter'Identity,
             "Parameter" & Integer'Image (N) & " should be an instance of "
             & Get_Name (Class));
       end if;
+
+      Py_DECREF (Item_Class);
 
       --  The following call doesn't modify the refcounf of Item.
       Inst := new Python_Class_Instance_Record'
@@ -2591,6 +2616,7 @@ package body Python_Module is
          raise Invalid_Data;
       end if;
       Result := PyCObject_AsVoidPtr (Item);
+
       Py_DECREF (Item);
 
       return Result;
