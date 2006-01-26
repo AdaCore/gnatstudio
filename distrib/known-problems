@@ -1,3 +1,11 @@
+Known Problems fixed in GPS 3.1.2
+
+- Hooks created in python cannot be run
+  Problem:    If you use GPS.Hook.register in a python script to create a new hook,
+              you cannot call GPS.Hook.run for this hook afterward, and GPS complains
+              that the first argument must be a string.
+  Workaround: Use standard function calls instead of hooks
+
 Known Problems fixed in GPS 3.1.1
 
 - F117-010 Crash when using "goto declaration or body"
