@@ -1221,7 +1221,7 @@ package body GPS.Kernel.Hooks is
      (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
-      Name : constant String := Nth_Arg (Data, 1);
+      Name : constant String := Get_Hook_Name (Data, 1);
    begin
       Run_Hook (Get_Kernel (Data), Name, Data'Access);
    end General_Command_Handler;
