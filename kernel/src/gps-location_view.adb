@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -106,8 +106,7 @@ package body GPS.Location_View is
    Highlight_Column          : constant := 11;
    Highlight_Category_Column : constant := 12;
    Number_Of_Items_Column    : constant := 13;
-   Total_Column              : constant := 14;
-   Category_Line_Column      : constant := 15;
+   Category_Line_Column      : constant := 14;
 
    Output_Cst        : aliased constant String := "output";
    Category_Cst      : aliased constant String := "category";
@@ -459,15 +458,33 @@ package body GPS.Location_View is
       ---------------
 
       procedure Set_Total (Iter : Gtk_Tree_Iter; Nb_Items : Integer) is
-         Img   : constant String := Image (Nb_Items);
+         Img     : constant String := Image (Nb_Items);
+         Matcher : constant Pattern_Matcher := Compile
+           ("( \([0-9]+ item[s]?\))$");
+         Matches : Match_Array (0 .. 1);
+         Cut     : Integer;
+         Message : constant String := Get_String
+           (View.Tree.Model, Iter, Base_Name_Column);
       begin
-         if Nb_Items = 1 then
-            Set (View.Tree.Model, Iter, Total_Column,
-                 " (" & Img & (-" item") & ")");
+         Match (Matcher, Message, Matches);
+
+         if Matches (0) /= No_Match then
+            Cut := Matches (1).First - 1;
          else
-            Set (View.Tree.Model, Iter, Total_Column,
-                 " (" & Img & (-" items") & ")");
+            Cut := Message'Last;
          end if;
+
+         declare
+            Base_Message : constant String := Message (1 .. Cut);
+         begin
+            if Nb_Items = 1 then
+               Set (View.Tree.Model, Iter, Base_Name_Column,
+                    Base_Message & " (" & Img & (-" item") & ")");
+            else
+               Set (View.Tree.Model, Iter, Base_Name_Column,
+                    Base_Message & " (" & Img & (-" items") & ")");
+            end if;
+         end;
       end Set_Total;
 
    begin
@@ -1232,10 +1249,6 @@ package body GPS.Location_View is
       Add_Attribute (Col, Text_Rend, "markup", Base_Name_Column);
       Add_Attribute (Col, Text_Rend, "foreground_gdk", Color_Column);
 
-      Gtk_New (Text_Rend);
-      Pack_Start (Col, Text_Rend, False);
-      Add_Attribute (Col, Text_Rend, "markup", Total_Column);
-
       Dummy := Append_Column (Tree, Col);
       Set_Expander_Column (Tree, Col);
 
@@ -1267,7 +1280,6 @@ package body GPS.Location_View is
          Highlight_Column          => GType_Boolean,
          Highlight_Category_Column => GType_Pointer,
          Number_Of_Items_Column    => GType_Int,
-         Total_Column              => GType_String,
          Category_Line_Column      => GType_String);
    end Columns_Types;
 
