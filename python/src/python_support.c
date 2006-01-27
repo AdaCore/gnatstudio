@@ -114,7 +114,7 @@ PyObject* ada_pyfunction_get_defaults (PyObject* obj) {
 }
 
 PyObject* ada_PyEval_EvalCodeEx
-  (PyCodeObject *co,
+  (PyObject *co,
    PyObject *globals,
    PyObject *locals,
    PyObject *args,
