@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -120,8 +120,7 @@ package VFS is
    function Dir (File : Virtual_File) return Virtual_File;
    --  Return the virtual file corresponding to the directory of the file.
 
-   procedure Delete (File    : Virtual_File;
-                     Success : out Boolean);
+   procedure Delete (File : Virtual_File; Success : out Boolean);
    --  Remove file from the disk. This also works for remote files
 
    function Is_Writable (File : Virtual_File) return Boolean;
@@ -143,8 +142,7 @@ package VFS is
    procedure Set_Readable (File : VFS.Virtual_File; Readable : Boolean);
    --  If Readable is True, make File readable, otherwise make File unreadable.
 
-   function File_Time_Stamp
-     (File : Virtual_File) return Ada.Calendar.Time;
+   function File_Time_Stamp (File : Virtual_File) return Ada.Calendar.Time;
    --  Return the timestamp for this file.
    --  Note: we do not return GNAT.OS_Lib.OS_Time, since the latter cannot be
    --  created by anyone, and is just a private type.
@@ -192,8 +190,7 @@ package VFS is
    --  Create recursively a new directory named Dir_Name. Raises
    --  Directory_Error if Dir_Name cannot be created.
 
-   procedure Remove_Dir (Dir : Virtual_File;
-                         Recursive : Boolean := False);
+   procedure Remove_Dir (Dir : Virtual_File; Recursive : Boolean := False);
    --  Remove the directory named Dir_Name. If Recursive is set to True, then
    --  Remove_Dir removes all the subdirectories and files that are in
    --  Dir_Name. Raises Directory_Error if Dir_Name cannot be removed.
@@ -210,10 +207,9 @@ package VFS is
    Invalid_Dir : constant Virtual_Dir;
 
    function Open_Dir (Dir : Virtual_File) return Virtual_Dir;
-   --  Opens for reading a file.
+   --  Opens for reading a file
 
-   procedure Read (VDir : in out Virtual_Dir;
-                   File :    out Virtual_File);
+   procedure Read (VDir : in out Virtual_Dir; File : out Virtual_File);
    --  Returns next file or No_File is no file is left for current directory
 
    procedure Close (VDir : in out Virtual_Dir);
@@ -232,7 +228,7 @@ package VFS is
    type Writable_File is private;
 
    Invalid_File : constant Writable_File;
-   --  Used when a file couldn't be open.
+   --  Used when a file couldn't be open
 
    function Write_File
      (File   : Virtual_File;
