@@ -18,8 +18,8 @@
         </Notebook>
       </Pane>
       <Pane Orientation="ORIENTATION_VERTICAL" >
-        <Notebook default="true" Height=" 374" Width=" 515" />
-        <Notebook Height=" 132" Width=" 515" >
+        <Notebook default="true" Height=" 361" Width=" 515" />
+        <Notebook Height=" 128" Width=" 515" >
           <Child Raised="True" Group=" 107" State="NORMAL" >
             <Message_Window />
           </Child>
