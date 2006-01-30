@@ -1297,9 +1297,6 @@ package body Vsearch_Ext is
         (Vsearch.Context_Entry, "changed",
          On_Context_Entry_Changed'Access, Vsearch);
 
-      Widget_Callback.Object_Connect
-        (Vsearch, "map", On_Options_Toggled'Access, Vsearch);
-
       Gtk_New_From_Stock (Vsearch.Search_Next_Button, Stock_Find);
       Set_First_Next_Mode (Vsearch, Find_Next => False);
       Pack_Start
@@ -1422,6 +1419,16 @@ package body Vsearch_Ext is
       Add_Hook (Handle, Search_Regexps_Changed_Hook,
                 Wrapper (New_Predefined_Regexp'Access),
                 Name => "vsearch.search_regexps");
+
+      --  Initialize visibility status of the Options frame
+
+      Set_Child_Visible (Vsearch.Options_Frame,
+                         Get_Active (Vsearch.Options_Toggle));
+      if Get_Active (Vsearch.Options_Toggle) then
+         Show (Vsearch.Options_Frame);
+      else
+         Hide (Vsearch.Options_Frame);
+      end if;
    end Initialize;
 
    ---------------
