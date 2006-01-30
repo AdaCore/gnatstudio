@@ -51,6 +51,7 @@ with Prj.Proc;                  use Prj.Proc;
 with Prj.Tree;                  use Prj.Tree;
 with Prj;                       use Prj;
 with Projects.Editor;           use Projects.Editor;
+with Scans;                     use Scans;
 with Snames;                    use Snames;
 with Stringt;
 with String_Hash;
@@ -70,6 +71,10 @@ package body Projects.Registry is
    Unknown_Language : Name_Id;
    --  Constant used to mark source files set in the project, but for which no
    --  matching language has been found.
+
+   Keywords_Initialized : Boolean := False;
+   --  Whether we have already initialized the Ada keywords list. This is only
+   --  used by Is_Valid_Project_Name
 
    procedure Do_Nothing (Project : in out Project_Type);
    --  Do not free the project (in the hash tables), since it shared by several
@@ -326,6 +331,15 @@ package body Projects.Registry is
             return False;
          end if;
       end loop;
+
+      if not Keywords_Initialized then
+         Scans.Initialize_Ada_Keywords;
+         Keywords_Initialized := True;
+      end if;
+
+      if Is_Keyword_Name (Get_String (Name)) then
+         return False;
+      end if;
 
       return True;
    end Is_Valid_Project_Name;
