@@ -579,7 +579,7 @@ package body Bookmark_Views is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       View : constant Bookmark_View_Access :=
-        Generic_View.Get_Or_Create_View (Kernel);
+        Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
    end On_Preferences_Changed;
