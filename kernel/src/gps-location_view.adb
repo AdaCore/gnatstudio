@@ -107,6 +107,7 @@ package body GPS.Location_View is
    Highlight_Category_Column : constant := 12;
    Number_Of_Items_Column    : constant := 13;
    Category_Line_Column      : constant := 14;
+   Message_Column            : constant := 15;
 
    Output_Cst        : aliased constant String := "output";
    Category_Cst      : aliased constant String := "category";
@@ -464,7 +465,7 @@ package body GPS.Location_View is
          Matches : Match_Array (0 .. 1);
          Cut     : Integer;
          Message : constant String := Get_String
-           (View.Tree.Model, Iter, Base_Name_Column);
+           (View.Tree.Model, Iter, Message_Column);
       begin
          Match (Matcher, Message, Matches);
 
@@ -478,10 +479,10 @@ package body GPS.Location_View is
             Base_Message : constant String := Message (1 .. Cut);
          begin
             if Nb_Items = 1 then
-               Set (View.Tree.Model, Iter, Base_Name_Column,
+               Set (View.Tree.Model, Iter, Message_Column,
                     Base_Message & " (" & Img & (-" item") & ")");
             else
-               Set (View.Tree.Model, Iter, Base_Name_Column,
+               Set (View.Tree.Model, Iter, Message_Column,
                     Base_Message & " (" & Img & (-" items") & ")");
             end if;
          end;
@@ -843,15 +844,21 @@ package body GPS.Location_View is
    begin
       if Base_Name = "" then
          Set (Model, Iter, Base_Name_Column, VFS.Base_Name (Absolute_Name));
+         Set (Model, Iter, Message_Column, VFS.Base_Name (Absolute_Name));
       else
          if Message = "" then
             Set (Model, Iter, Base_Name_Column, Base_Name);
+            Set (Model, Iter, Message_Column, Base_Name);
          else
             declare
                Padding : constant String (1 .. Messages_Padding) :=
                  (others => ' ');
             begin
                Set (Model, Iter, Base_Name_Column,
+                    "<b>" & Base_Name & "</b>"
+                    & Padding (1 .. Messages_Padding - Base_Name'Length)
+                    & Glib.Convert.Locale_To_UTF8 (Message));
+               Set (Model, Iter, Message_Column,
                     "<b>" & Base_Name & "</b>"
                     & Padding (1 .. Messages_Padding - Base_Name'Length)
                     & Glib.Convert.Locale_To_UTF8 (Message));
@@ -1246,7 +1253,7 @@ package body GPS.Location_View is
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, False);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
-      Add_Attribute (Col, Text_Rend, "markup", Base_Name_Column);
+      Add_Attribute (Col, Text_Rend, "markup", Message_Column);
       Add_Attribute (Col, Text_Rend, "foreground_gdk", Color_Column);
 
       Dummy := Append_Column (Tree, Col);
@@ -1280,7 +1287,8 @@ package body GPS.Location_View is
          Highlight_Column          => GType_Boolean,
          Highlight_Category_Column => GType_Pointer,
          Number_Of_Items_Column    => GType_Int,
-         Category_Line_Column      => GType_String);
+         Category_Line_Column      => GType_String,
+         Message_Column            => GType_String);
    end Columns_Types;
 
    ----------------
