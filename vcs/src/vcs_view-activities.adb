@@ -309,10 +309,9 @@ package body VCS_View.Activities is
       Display        : Boolean := True)
    is
       Explorer     : constant VCS_Activities_View_Access :=
-                       Get_Activities_Explorer (Kernel, False, False);
-      Root_Project : constant String :=
-                       Project_Path
-                         (Get_Root_Project (Get_Registry (Kernel).all));
+        Get_Activities_Explorer (Kernel, False, False);
+      Root_Project : constant Virtual_File :=
+        Project_Path (Get_Root_Project (Get_Registry (Kernel).all));
 
       function Get_Activity_Iter (File : Virtual_File) return Gtk_Tree_Iter;
       --  Return the activity tree iter for the given file. Use Activity if set

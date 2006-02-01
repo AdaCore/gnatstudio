@@ -89,7 +89,7 @@ package VCS_Activities is
       Activity : Activity_Id) return String;
    --  Returns the Log for the activity
 
-   function Get_Project_Path (Activity : Activity_Id) return String;
+   function Get_Project_Path (Activity : Activity_Id) return VFS.Virtual_File;
    --  Retruns the project full pathname for this activity
 
    function Get_File_Activity (File : VFS.Virtual_File) return Activity_Id;

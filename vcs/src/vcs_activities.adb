@@ -41,7 +41,7 @@ package body VCS_Activities is
    Activities_Filename : constant String := "activities.xml";
 
    type Activity_Record is record
-      Project      : String_Access;
+      Project      : Virtual_File;
       Name         : String_Access;
       Id           : Activity_Id;
       VCS          : VCS_Access;
@@ -51,7 +51,7 @@ package body VCS_Activities is
    end record;
 
    Empty_Activity : constant Activity_Record :=
-                      (null, null, No_Activity,
+                      (VFS.No_File, null, No_Activity,
                        null, False, False, String_List.Null_List);
 
    subtype Hash_Header is Positive range 1 .. 123;
@@ -125,7 +125,8 @@ package body VCS_Activities is
          Child        : Node_Ptr := Node.Child;
          Item         : Activity_Record;
       begin
-         Item := (new String'(Project), new String'(Name), Value (Id),
+         Item := (Create (Project),
+                  new String'(Name), Value (Id),
                   null, Group_Commit, Committed, String_List.Null_List);
 
          while Child /= null loop
@@ -210,7 +211,7 @@ package body VCS_Activities is
          Child.Tag := new String'("activity");
 
          Set_Attribute (Child, "name", Item.Name.all);
-         Set_Attribute (Child, "project", Item.Project.all);
+         Set_Attribute (Child, "project", Full_Name (Item.Project).all);
          Set_Attribute (Child, "id", String (Item.Id));
          Set_Attribute
            (Child, "group_commit", Boolean'Image (Item.Group_Commit));
@@ -264,9 +265,8 @@ package body VCS_Activities is
             if Get (UID) = Empty_Activity then
                --  Retreive the current root project name
                Set (UID,
-                 (new String'(Project_Path
-                  (Get_Root_Project
-                     (Get_Registry (Kernel).all))),
+                 (Project_Path
+                    (Get_Root_Project (Get_Registry (Kernel).all)),
                   new String'("New Activity"),
                   UID,
                   null,
@@ -329,9 +329,9 @@ package body VCS_Activities is
    -- Get_Project_Path --
    ----------------------
 
-   function Get_Project_Path (Activity : Activity_Id) return String is
+   function Get_Project_Path (Activity : Activity_Id) return Virtual_File is
    begin
-      return Get (Activity).Project.all;
+      return Get (Activity).Project;
    end Get_Project_Path;
 
    ---------------------
@@ -351,7 +351,6 @@ package body VCS_Activities is
          Item : Activity_Record := Get (Activity);
       begin
          String_List.Free (Item.Files);
-         Free (Item.Project);
          Free (Item.Name);
       end;
 
