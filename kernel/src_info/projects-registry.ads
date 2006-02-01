@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2006                       --
 --                               AdaCore                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -112,7 +112,7 @@ package Projects.Registry is
 
    procedure Load
      (Registry           : in out Project_Registry;
-      Root_Project_Path  : String;
+      Root_Project_Path  : VFS.Virtual_File;
       Errors             : Projects.Error_Report;
       New_Project_Loaded : out Boolean);
    --  Load a new project tree.
@@ -120,6 +120,14 @@ package Projects.Registry is
    --  On exit, New_Project_Loaded is set to True if a new project, different
    --  from the current one, was loaded.
    --  Recompute_View should be called afterward
+
+   procedure Reload_If_Needed
+     (Registry : in out Project_Registry;
+      Errors   : Projects.Error_Report;
+      Reloaded : out Boolean);
+   --  Reload the current project if any of the project files on the disk have
+   --  changed. Recompute_View should be called afterward.
+   --  Reloaded is set to true if the project was actually reloaded.
 
    procedure Load_Custom_Project
      (Registry  : Project_Registry;
@@ -131,7 +139,7 @@ package Projects.Registry is
 
    procedure Load_Default_Project
      (Registry  : in out Project_Registry;
-      Directory : String);
+      Directory : VFS.Virtual_File);
    --  Load the default project for Directory.
    --  Recompute_View must be called afterwards.
    --  Use the function GPS.Kernel.Project.Load_Default_Project instead, so

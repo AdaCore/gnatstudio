@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
@@ -175,6 +176,9 @@ package body Projects.Registry is
 
       Extensions : Languages_Htable.String_Hash_Table.HTable;
       --  The extensions registered for each language.
+
+      Timestamp : Ada.Calendar.Time;
+      --  Time when we last parsed the project from the disk
 
       Trusted_Mode : Boolean := True;
       --  Whether we are in trusted mode when recomputing the project view:
@@ -522,11 +526,13 @@ package body Projects.Registry is
 
    procedure Load
      (Registry           : in out Project_Registry;
-      Root_Project_Path  : String;
+      Root_Project_Path  : VFS.Virtual_File;
       Errors             : Projects.Error_Report;
       New_Project_Loaded : out Boolean)
    is
       Project : Project_Node_Id;
+      Iter    : Imported_Project_Iterator;
+      Timestamp : Time;
 
       procedure Fail (S1, S2, S3 : String);
       --  Replaces Osint.Fail
@@ -544,10 +550,12 @@ package body Projects.Registry is
 
    begin
       if not Is_Regular_File (Root_Project_Path) then
-         Trace (Me, "Load: " & Root_Project_Path & " is not a regular file");
+         Trace (Me, "Load: " & Full_Name (Root_Project_Path).all
+                & " is not a regular file");
 
          if Errors /= null then
-            Errors (Root_Project_Path & (-" is not a regular file"));
+            Errors (Full_Name (Root_Project_Path).all
+                    & (-" is not a regular file"));
          end if;
 
          New_Project_Loaded := False;
@@ -570,7 +578,7 @@ package body Projects.Registry is
       Prj.Com.Fail := Fail'Unrestricted_Access;
 
       Prj.Part.Parse
-        (Registry.Data.Tree, Project, Root_Project_Path, True,
+        (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all, True,
          Store_Comments => True);
       Prj.Com.Fail := null;
 
@@ -578,7 +586,8 @@ package body Projects.Registry is
 
       if Project = Empty_Node then
          if Errors /= null then
-            Errors (-"Couldn't parse the project " & Root_Project_Path
+            Errors (-"Couldn't parse the project "
+                    & Full_Name (Root_Project_Path).all
                     & ASCII.LF & (-"Using default project instead"));
          end if;
          Load_Default_Project (Registry, Get_Current_Dir);
@@ -592,6 +601,19 @@ package body Projects.Registry is
       Set_Status (Registry.Data.Root, From_File);
       Output.Set_Special_Output (null);
 
+      --  We cannot simply use Clock here, since this returns local time, and
+      --  the file timestamps will be returned in GMT, therefore we won't be
+      --  able to compare
+      Registry.Data.Timestamp := VFS.No_Time;
+      Iter := Start (Registry.Data.Root);
+      while Current (Iter) /= No_Project loop
+         Timestamp := File_Time_Stamp (Project_Path (Current (Iter)));
+         if Timestamp > Registry.Data.Timestamp then
+            Registry.Data.Timestamp := Timestamp;
+         end if;
+         Next (Iter);
+      end loop;
+
       Trace (Me, "End of Load project");
 
    exception
@@ -601,6 +623,46 @@ package body Projects.Registry is
          Output.Set_Special_Output (null);
          raise;
    end Load;
+
+   ----------------------
+   -- Reload_If_Needed --
+   ----------------------
+
+   procedure Reload_If_Needed
+     (Registry : in out Project_Registry;
+      Errors   : Projects.Error_Report;
+      Reloaded : out Boolean)
+   is
+      Modified : Boolean := False;
+      Iter     : Imported_Project_Iterator;
+      New_Project_Loaded : Boolean;
+   begin
+      if Status (Registry.Data.Root) = From_File then
+         Iter := Start (Registry.Data.Root);
+         while Current (Iter) /= No_Project loop
+            if File_Time_Stamp (Project_Path (Current (Iter))) >
+              Registry.Data.Timestamp
+            then
+               Trace (Me, "Reload_If_Needed: timestamp has changed for "
+                      & Project_Name (Current (Iter)));
+               Modified := True;
+               exit;
+            end if;
+            Next (Iter);
+         end loop;
+
+         if Modified then
+            Load
+              (Registry           => Registry,
+               Root_Project_Path  => Project_Path (Registry.Data.Root),
+               Errors             => Errors,
+               New_Project_Loaded => New_Project_Loaded);
+         else
+            Trace (Me, "Reload_If_Needed: nothing to do");
+         end if;
+      end if;
+      Reloaded := Modified;
+   end Reload_If_Needed;
 
    -------------------------
    -- Load_Custom_Project --
@@ -621,7 +683,7 @@ package body Projects.Registry is
 
    procedure Load_Default_Project
      (Registry  : in out Project_Registry;
-      Directory : String) is
+      Directory : VFS.Virtual_File) is
    begin
       Reset (Registry, View_Only => False);
       Prj.Tree.Initialize (Registry.Data.Tree);
@@ -1870,7 +1932,8 @@ package body Projects.Registry is
                  Filename
                then
                   declare
-                     S : constant String := Project_Path (Project2);
+                     S : constant String :=
+                       Full_Name (Project_Path (Project2)).all;
                   begin
                      Name_Len := S'Length;
                      Name_Buffer (1 .. Name_Len) := S;
