@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2005                       --
+--                     Copyright (C) 2004-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -25,6 +25,7 @@ with GPS.Kernel;
 with Projects;
 with Gtk.Widget;
 with Gtk.Handlers;
+with VFS;
 
 package Creation_Wizard is
 
@@ -73,7 +74,8 @@ package Creation_Wizard is
       Project           : Projects.Project_Type := Projects.No_Project);
    --  Initialize a new project wizard.
 
-   function Run (Wiz : access Project_Wizard_Record) return String;
+   function Run
+     (Wiz : access Project_Wizard_Record) return VFS.Virtual_File;
    --  Display the dialog, let the user interact with it, and return the name
    --  of the project that was created (and not loaded).
    --  The empty string is returned if the user pressed Cancel.
@@ -116,7 +118,6 @@ package Creation_Wizard is
 
    package Page_Handlers is new Gtk.Handlers.User_Callback
      (Gtk.Widget.Gtk_Widget_Record, Project_Wizard_Page);
-
 
 private
 

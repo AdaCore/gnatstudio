@@ -332,10 +332,10 @@ package body Creation_Wizard is
       then
          Project := Create_Project
            (Get_Registry (Kernel).all,
-            Name => Name (Name'First .. Name'Last - 4), Path => Dir);
+            Name => Name (Name'First .. Name'Last - 4), Path => Create (Dir));
       else
          Project := Create_Project
-           (Get_Registry (Kernel).all, Name => Name, Path => Dir);
+           (Get_Registry (Kernel).all, Name => Name, Path => Create (Dir));
       end if;
 
       if Relative_Paths then
@@ -360,7 +360,8 @@ package body Creation_Wizard is
                Error := Add_Imported_Project
                  (Root_Project => Get_Project (Kernel),
                   Project      => Project,
-                  Imported_Project_Location => Name (Name'First .. J - 1),
+                  Imported_Project_Location =>
+                    Create (Name (Name'First .. J - 1)),
                   Use_Relative_Path => True);
             end if;
 
@@ -435,25 +436,25 @@ package body Creation_Wizard is
    -- Run --
    ---------
 
-   function Run (Wiz : access Project_Wizard_Record) return String is
+   function Run
+     (Wiz : access Project_Wizard_Record) return VFS.Virtual_File
+   is
+      Name : VFS.Virtual_File;
    begin
       Show_All (Wiz);
 
       if Run (Wiz) = Gtk_Response_Apply then
          if Wiz.Project = No_Project then
             Destroy (Wiz);
-            return "";
+            return VFS.No_File;
          else
-            declare
-               Name : constant String := Project_Path (Wiz.Project);
-            begin
-               Destroy (Wiz);
-               return Name;
-            end;
+            Name := Project_Path (Wiz.Project);
+            Destroy (Wiz);
+            return Name;
          end if;
       else
          Destroy (Wiz);
-         return "";
+         return VFS.No_File;
       end if;
 
    exception
@@ -461,7 +462,7 @@ package body Creation_Wizard is
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
          Destroy (Wiz);
-         return "";
+         return VFS.No_File;
    end Run;
 
    ---------------------
