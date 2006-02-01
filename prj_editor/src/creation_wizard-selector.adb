@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2005                       --
+--                     Copyright (C) 2004-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -38,6 +38,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with Traces;                    use Traces;
+with VFS;                       use VFS;
 with Wizards;                   use Wizards;
 
 package body Creation_Wizard.Selector is
@@ -132,6 +133,7 @@ package body Creation_Wizard.Selector is
    is
       Wiz  : Project_Wizard;
       P    : Wizard_Selector_Page_Access;
+      Name : Virtual_File;
    begin
       Gtk_New (Wiz, Kernel, -"Create New Project");
       P := new Wizard_Selector_Page;
@@ -143,14 +145,11 @@ package body Creation_Wizard.Selector is
 
       P.Name_And_Loc := Add_Name_And_Location_Page (Wiz);
 
-      declare
-         Name : constant String := Run (Wiz);
-      begin
-         if Name /= "" then
-            Load_Project (Kernel, Name);
-            return True;
-         end if;
-      end;
+      Name := Run (Wiz);
+      if Name /= VFS.No_File then
+         Load_Project (Kernel, Name);
+         return True;
+      end if;
 
       return False;
 
