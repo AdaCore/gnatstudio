@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2005                       --
+--                     Copyright (C) 2004-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -174,7 +174,7 @@ package body Creation_Wizard.Dependencies is
          Parse_File_Locations (Kernel, S, -"Project add dependency");
       end Report_Error;
 
-      Base : constant String := Project_Directory (Importing_Project);
+      Base : constant Virtual_File := Project_Directory (Importing_Project);
       Use_Relative_Path : constant Boolean :=
         Get_Paths_Type (Importing_Project) = Projects.Relative
         or else (Get_Paths_Type (Importing_Project) = From_Pref
@@ -189,8 +189,9 @@ package body Creation_Wizard.Dependencies is
          Changed := Add_Imported_Project
            (Root_Project              => Get_Project (Kernel),
             Project                   => Importing_Project,
-            Imported_Project_Location =>
-              Normalize_Pathname (Imported_Project_Path, Base),
+            Imported_Project_Location => Create
+              (Normalize_Pathname
+                 (Imported_Project_Path, Full_Name (Base).all)),
             Report_Errors     => Report_Error'Unrestricted_Access,
             Use_Relative_Path => Use_Relative_Path,
             Limited_With      => Limited_With);
@@ -282,7 +283,8 @@ package body Creation_Wizard.Dependencies is
                         --  If the project is already in the tree, do not
                         --  duplicate its entry.
                         if Imported_Prj = No_Project
-                          or else Project_Directory (Imported_Prj) /=
+                          or else Full_Name
+                            (Project_Directory (Imported_Prj)).all /=
                           Name_As_Directory (Directory)
                         then
                            Append (Model, Iter, Null_Iter);
@@ -390,7 +392,8 @@ package body Creation_Wizard.Dependencies is
             Set (Model, Iter, Column_Project_Name,   Project_Name (Imported));
             Set (Model, Iter, Column_Is_Limited,     Is_Limited
                  or else Must_Be_Limited);
-            Set (Model, Iter, Column_Full_Path,      Project_Path (Imported));
+            Set (Model, Iter, Column_Full_Path,
+                 Full_Name (Project_Path (Imported)).all);
 
             if Column_Can_Change_Limited /= -1 then
                Set (Model, Iter, Column_Can_Change_Limited,
@@ -399,7 +402,7 @@ package body Creation_Wizard.Dependencies is
 
             if Column_Directory /= -1 then
                Set (Model, Iter, Column_Directory,
-                    Project_Directory (Imported));
+                    Full_Name (Project_Directory (Imported)).all);
             end if;
 
             if Column_Selected /= -1 then
@@ -587,22 +590,20 @@ package body Creation_Wizard.Dependencies is
                 Gtk_Tree_Store (Get_Model (B.Tree));
       Wiz   : Creation_Wizard.Project_Wizard;
       Iter  : Gtk_Tree_Iter;
+      Name  : Virtual_File;
    begin
       Creation_Wizard.Gtk_New (Wiz, B.Kernel, -"Add New Project");
       Add_Full_Wizard_Pages
         (Wiz, Creation_Wizard.Add_Name_And_Location_Page (Wiz), "wizard");
 
-      declare
-         Name : constant String := Creation_Wizard.Run (Wiz);
-      begin
-         if Name /= "" then
-            Append (Model, Iter, Null_Iter);
-            Set (Model, Iter, Project_Name_Column, Base_Name (Name));
-            Set (Model, Iter, Is_Limited_Column, False);
-            Set (Model, Iter, Can_Change_Limited_Column, True);
-            Set (Model, Iter, Full_Path_Column, Name);
-         end if;
-      end;
+      Name := Creation_Wizard.Run (Wiz);
+      if Name /= VFS.No_File then
+         Append (Model, Iter, Null_Iter);
+         Set (Model, Iter, Project_Name_Column, Base_Name (Name));
+         Set (Model, Iter, Is_Limited_Column, False);
+         Set (Model, Iter, Can_Change_Limited_Column, True);
+         Set (Model, Iter, Full_Path_Column, Full_Name (Name).all);
+      end if;
    end Add_New_Project_From_Wizard;
 
    ---------------------
