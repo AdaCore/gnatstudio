@@ -2355,11 +2355,11 @@ package body Src_Editor_Module is
                    Root_If_Not_Found => True));
 
             when 'P' =>
-               return Expansion & Project_Path
+               return Expansion & Full_Name (Project_Path
                  (Get_Project_From_File
                   (Get_Registry (Kernel).all,
                    Get_Filename (Box),
-                   Root_If_Not_Found => True));
+                   Root_If_Not_Found => True))).all;
 
             when others =>
                return Invalid_Expansion;

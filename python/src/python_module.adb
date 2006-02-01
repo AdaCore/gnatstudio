@@ -1186,13 +1186,13 @@ package body Python_Module is
          Set_Return_Value (Data, Project_Name (Project));
 
       elsif Command = "__repr__" then
-         Set_Return_Value (Data, Project_Path (Project));
+         Set_Return_Value (Data, Full_Name (Project_Path (Project)).all);
 
       elsif Command = "__cmp__" then
          declare
             Project2 : constant Project_Type := Get_Data (Data, 2);
-            Name  : constant String := Project_Path (Project);
-            Name2 : constant String := Project_Path (Project2);
+            Name  : constant Virtual_File := Project_Path (Project);
+            Name2 : constant Virtual_File := Project_Path (Project2);
          begin
             if Name < Name2 then
                Set_Return_Value (Data, -1);
@@ -1204,7 +1204,8 @@ package body Python_Module is
          end;
 
       elsif Command = "__hash__" then
-         Set_Return_Value (Data, Integer (Hash (Project_Path (Project))));
+         Set_Return_Value
+           (Data, Integer (Hash (Full_Name (Project_Path (Project)).all)));
       end if;
 
    exception
