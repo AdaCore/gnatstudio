@@ -373,7 +373,7 @@ package body GPS.Menu is
                 Name => "menu.project_changed");
 
       Register_Menu
-        (Kernel, Project, -"R_ecompute Project", "",
+        (Kernel, Project, -"R_eload Project", "",
          On_Project_Recompute'Access);
 
       Register_Menu
