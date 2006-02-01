@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -352,7 +352,7 @@ package body GPS.Kernel.Properties is
       Persistent : Boolean := False) is
    begin
       Set_Resource_Property
-        (Project_Path (Project), "project", Name,
+        (Full_Name (Project_Path (Project)).all, "project", Name,
          Property_Description'(Value      => Property_Access (Property),
                                Unparsed   => null,
                                Persistent => Persistent));
@@ -383,7 +383,8 @@ package body GPS.Kernel.Properties is
       Found    : out Boolean) is
    begin
       Get_Resource_Property
-        (Property, Project_Path (Project), "project", Name, Found);
+        (Property, Full_Name (Project_Path (Project)).all,
+         "project", Name, Found);
    end Get_Property;
 
    ---------------------
@@ -405,7 +406,8 @@ package body GPS.Kernel.Properties is
      (Project  : Projects.Project_Type;
       Name     : String) is
    begin
-      Remove_Resource_Property (Project_Path (Project), "project", Name);
+      Remove_Resource_Property
+        (Full_Name (Project_Path (Project)).all, "project", Name);
    end Remove_Property;
 
    -----------------------------

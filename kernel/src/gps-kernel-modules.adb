@@ -1664,7 +1664,7 @@ package body GPS.Kernel.Modules is
 
                   if Is_Regular_File (File) then
                      if File_Extension (File) = Project_File_Extension then
-                        Load_Project (Kernel, Full_Name (File).all);
+                        Load_Project (Kernel, File);
                      else
                         Open_File_Editor (Kernel, File, New_File => False);
                      end if;

@@ -566,13 +566,13 @@ package body GPS.Kernel is
      (Handle             : access Kernel_Handle_Record;
       As_Default_Desktop : Boolean := False)
    is
-      function Get_Project_Name return String;
+      function Get_Project_Name return Virtual_File;
       --  Return the project name to match in the file
 
-      function Get_Project_Name return String is
+      function Get_Project_Name return Virtual_File is
       begin
          if As_Default_Desktop then
-            return "";
+            return VFS.No_File;
          else
             return Project_Path (Get_Project (Handle));
          end if;
@@ -580,7 +580,7 @@ package body GPS.Kernel is
 
       MDI          : constant MDI_Window := Get_MDI (Handle);
       File_Name    : constant String := Handle.Home_Dir.all & Desktop_Name;
-      Project_Name : constant String := Get_Project_Name;
+      Project_Name : constant Virtual_File := Get_Project_Name;
       N            : Node_Ptr;
       M            : Node_Ptr;
       Old          : Node_Ptr;
@@ -589,7 +589,7 @@ package body GPS.Kernel is
         Get_Window (Handle.Main_Window);
 
    begin
-      if Project_Name = "" and then not As_Default_Desktop then
+      if Project_Name = VFS.No_File and then not As_Default_Desktop then
          Trace (Me, "not saving the default desktop");
          return;
       end if;
@@ -598,7 +598,7 @@ package body GPS.Kernel is
       --  other projects
 
       Trace (Me, "saving desktop file " & File_Name
-             & " for project " & Project_Name);
+             & " for project " & Full_Name (Project_Name).all);
 
       if Main_Window = null then
          return;
@@ -629,7 +629,8 @@ package body GPS.Kernel is
          while M /= null loop
             if M.Tag /= null
               and then M.Tag.all = "MDI"
-              and then Get_Attribute (M, "project") /= Project_Name
+              and then Get_Attribute (M, "project") /=
+                 Full_Name (Project_Name).all
             then
                Add_Child (N, Deep_Copy (M));
             end if;
@@ -644,7 +645,7 @@ package body GPS.Kernel is
 
       M := GPS.Kernel.Kernel_Desktop.Save_Desktop
         (MDI, Kernel_Handle (Handle));
-      Set_Attribute (M, "project", Project_Name);
+      Set_Attribute (M, "project", Full_Name (Project_Name).all);
       Add_Child (N, M);
 
       Print (N, File_Name);
@@ -672,7 +673,7 @@ package body GPS.Kernel is
       Node                 : Node_Ptr;
       File                 : constant String :=
         Handle.Home_Dir.all & Desktop_Name;
-      Project_Name         : constant String :=
+      Project_Name         : constant Virtual_File :=
         Project_Path (Get_Project (Handle));
       Child                : Node_Ptr;
       Desktop_Node         : Node_Ptr;
@@ -697,7 +698,7 @@ package body GPS.Kernel is
       loop
          if Try_User_Desktop and then Is_Regular_File (File) then
             Trace (Me, "loading desktop file " & File
-                   & " Project=" & Project_Name);
+                   & " Project=" & Full_Name (Project_Name).all);
             XML_Parsers.Parse (File, Node, Err);
          elsif Is_Regular_File (Predefined_Desktop) then
             Trace (Me, "loading predefined desktop");
@@ -722,7 +723,9 @@ package body GPS.Kernel is
                if Child.Tag.all = "MDI" then
                   if Get_Attribute (Child, "project") = "" then
                      Default_Desktop_Node := Child;
-                  elsif Get_Attribute (Child, "project") = Project_Name then
+                  elsif Get_Attribute (Child, "project") =
+                    Full_Name (Project_Name).all
+                  then
                      Desktop_Node := Child;
                   end if;
                end if;
@@ -738,7 +741,7 @@ package body GPS.Kernel is
          Success_Loading_Desktop := False;
 
          if Desktop_Node /= null then
-            Trace (Me, "loading desktop for " & Project_Name);
+            Trace (Me, "loading desktop for " & Full_Name (Project_Name).all);
             Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
               (MDI, Desktop_Node, Kernel_Handle (Handle));
          elsif Default_Desktop_Node /= null then

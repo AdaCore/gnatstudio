@@ -1206,7 +1206,8 @@ package body GPS.Kernel.Scripts is
    begin
       if Command = "load" then
          Name_Parameters (Data, Open_Cmd_Parameters);
-         Load_Project (Kernel, Normalize_Pathname (Nth_Arg (Data, 1)),
+         Load_Project (Kernel,
+                       Create (Normalize_Pathname (Nth_Arg (Data, 1))),
                        No_Save => Nth_Arg (Data, 2, False));
          Set_Return_Value
            (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
@@ -1241,8 +1242,7 @@ package body GPS.Kernel.Scripts is
             Project := Get_Data (Data, 1);
             Set_Return_Value
               (Data,
-               Create_File
-                 (Get_Script (Data), Create (Project_Path (Project))));
+               Create_File (Get_Script (Data), Project_Path (Project)));
 
          elsif Command = "ancestor_deps" then
             declare

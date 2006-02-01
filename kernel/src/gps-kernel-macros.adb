@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -229,7 +229,9 @@ package body GPS.Kernel.Macros is
                return "";
             else
                return String_Utils.Protect
-                 ("-P" & Project_Path (Project), Protect_Quotes => Quoted);
+                 ("-P"
+                  & Full_Name (Project_Path (Project)).all,
+                  Protect_Quotes => Quoted);
             end if;
          end if;
 
@@ -243,7 +245,8 @@ package body GPS.Kernel.Macros is
 
          elsif Param = "pp" or else Param = "PP" then
             return String_Utils.Protect
-              (Project_Path (Project), Protect_Quotes => Quoted);
+              (Full_Name (Project_Path (Project)).all,
+               Protect_Quotes => Quoted);
 
          else
             Recurse := Param (Param'First + 1) = 'r';
