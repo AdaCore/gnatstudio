@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -46,6 +46,7 @@
 
 with GNAT.OS_Lib;
 with Projects.Registry;
+with VFS;
 
 package GPS.Kernel.Project is
 
@@ -55,7 +56,7 @@ package GPS.Kernel.Project is
 
    procedure Load_Project
      (Kernel  : access Kernel_Handle_Record'Class;
-      Project : String;
+      Project : VFS.Virtual_File;
       No_Save : Boolean := False);
    --  Load project Project as the current project.
    --  This emits the "project_changed" and "project_view_changed" signals.
@@ -65,11 +66,17 @@ package GPS.Kernel.Project is
 
    procedure Load_Default_Project
      (Kernel               : access Kernel_Handle_Record'Class;
-      Directory            : String;
+      Directory            : VFS.Virtual_File;
       Load_Default_Desktop : Boolean := True);
    --  Create and load a default project in Directory.
    --  If Load_Desktop is true, then all current MDI children are removed, and
-   --  the default desktop is reloaded.
+   --  the default desktop is reloaded. The "project_changed" hook is run if
+   --  needed.
+
+   procedure Reload_Project_If_Needed
+     (Kernel               : access Kernel_Handle_Record'Class);
+   --  If any of the project files on the disk have been modified, reload the
+   --  project. This doesn't recompute the view, though.
 
    function Save_Project
      (Kernel    : access Kernel_Handle_Record'Class;

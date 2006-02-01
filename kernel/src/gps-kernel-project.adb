@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Unchecked_Deallocation;
 
 with Projects;                  use Projects;
@@ -28,6 +27,7 @@ with Projects.Registry;         use Projects.Registry;
 with Basic_Types;
 with Prj;
 with Entities;
+with VFS;                       use VFS;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -38,6 +38,10 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 
 package body GPS.Kernel.Project is
+
+   Location_Category : constant String := "Project";
+   --  Category uses in the Location window for errors related to loading the
+   --  project file
 
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class);
@@ -108,7 +112,7 @@ package body GPS.Kernel.Project is
 
    procedure Load_Default_Project
      (Kernel               : access Kernel_Handle_Record'Class;
-      Directory            : String;
+      Directory            : VFS.Virtual_File;
       Load_Default_Desktop : Boolean := True)
    is
       Had_Project_Desktop : Boolean;
@@ -128,9 +132,7 @@ package body GPS.Kernel.Project is
 
       Entities.Reset (Get_Database (Kernel));
 
-      Load_Default_Project
-        (Kernel.Registry.all,
-         Normalize_Pathname (Directory, Resolve_Links => False));
+      Load_Default_Project (Kernel.Registry.all, Directory);
 
       --  For all registered tool that contain default switches, set these up
 
@@ -177,17 +179,51 @@ package body GPS.Kernel.Project is
       Pop_State (Kernel_Handle (Kernel));
    end Load_Default_Project;
 
+   ------------------------------
+   -- Reload_Project_If_Needed --
+   ------------------------------
+
+   procedure Reload_Project_If_Needed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      procedure Report_Error (S : String);
+      --  Output error messages from the project parser to the console.
+
+      procedure Report_Error (S : String) is
+         Old_Pref : constant Boolean := Get_Pref (Auto_Jump_To_First);
+      begin
+         --  Temporarily unset this, to handle the following case:
+         --  the project file contains errors and couldn't be loaded, but it
+         --  was also saved in the desktop. If that is the case, the project
+         --  would be open several times otherwise
+         Set_Pref (Kernel, Auto_Jump_To_First, False);
+         Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
+         Parse_File_Locations (Kernel, S, Location_Category);
+         Set_Pref (Kernel, Auto_Jump_To_First, Old_Pref);
+      end Report_Error;
+
+      Reloaded : Boolean;
+   begin
+      Push_State (Kernel_Handle (Kernel), Busy);
+      Reload_If_Needed
+        (Kernel.Registry.all,
+         Report_Error'Unrestricted_Access,
+         Reloaded);
+      if Reloaded then
+         Run_Hook (Kernel, Project_Changed_Hook);
+      end if;
+      Pop_State (Kernel_Handle (Kernel));
+   end Reload_Project_If_Needed;
+
    ------------------
    -- Load_Project --
    ------------------
 
    procedure Load_Project
      (Kernel  : access Kernel_Handle_Record'class;
-      Project : String;
+      Project : VFS.Virtual_File;
       No_Save : Boolean := False)
    is
-      Location_Category : constant String := "Project";
-
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console.
 
@@ -237,7 +273,7 @@ package body GPS.Kernel.Project is
       if Is_Regular_File (Project) then
          Push_State (Kernel_Handle (Kernel), Busy);
 
-         Change_Dir (Dir_Name (Project));
+         Change_Dir (Dir (Project));
 
          --  When loading a new project, we need to reset the cache containing
          --  LI information, otherwise this cache might contain dangling
@@ -274,7 +310,8 @@ package body GPS.Kernel.Project is
          Pop_State (Kernel_Handle (Kernel));
 
       elsif not Same_Project then
-         Console.Insert (Kernel, (-"Cannot find project file ") & Project,
+         Console.Insert (Kernel, (-"Cannot find project file ")
+                         & Full_Name (Project).all,
                          Mode => Console.Error, Add_Lf => False);
          Load_Default_Project (Kernel, Directory => Get_Current_Dir);
       end if;
