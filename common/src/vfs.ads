@@ -143,7 +143,7 @@ package VFS is
    --  If Readable is True, make File readable, otherwise make File unreadable.
 
    function File_Time_Stamp (File : Virtual_File) return Ada.Calendar.Time;
-   --  Return the timestamp for this file.
+   --  Return the timestamp for this file. This is GMT time, not local time.
    --  Note: we do not return GNAT.OS_Lib.OS_Time, since the latter cannot be
    --  created by anyone, and is just a private type.
    --  If the file doesn't exist, No_Time is returned.
