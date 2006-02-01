@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -28,7 +28,6 @@ with Projects.Registry;
 --  before editing, and mark them as modified afterwards. However, you should
 --  always send a Recompute_View request to the kernel to force a recomputation
 --  after a series of modifications.
-
 
 package Projects.Editor is
 
@@ -63,15 +62,16 @@ package Projects.Editor is
 
    function Create_Project
      (Registry : Projects.Registry.Project_Registry'Class;
-      Name, Path : String) return Project_Type;
+      Name     : String;
+      Path     : VFS.Virtual_File) return Project_Type;
    --  Create a new empty project and its declaration.
    --  The project is also registered, so that it can be retrieved from one of
    --  its view.
 
    function Create_Default_Project
      (Registry : Projects.Registry.Project_Registry'Class;
-      Name, Path : String)
-      return Project_Type;
+      Name     : String;
+      Path     : VFS.Virtual_File) return Project_Type;
    --  Create a new project, whose source directory and object directory are is
    --  Path.
 
@@ -79,7 +79,7 @@ package Projects.Editor is
      (Root_Project  : Project_Type;
       Project       : Project_Type;
       New_Name      : String;
-      New_Path      : String;
+      New_Path      : VFS.Virtual_File;
       Report_Errors : Output.Output_Proc := null);
    --  Rename Project to New_Name. All the nodes in the project tree starting
    --  at Root_Project, that reference Project, are also updated accordingly.
@@ -104,7 +104,7 @@ package Projects.Editor is
    function Add_Imported_Project
      (Root_Project              : Project_Type;
       Project                   : Project_Type;
-      Imported_Project_Location : String;
+      Imported_Project_Location : VFS.Virtual_File;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
       Limited_With              : Boolean := False)
@@ -503,6 +503,5 @@ private
    --  this case, it is put just before the first N_Case_Construction node is
    --  encountered (i.e the last position in the common section of a normalized
    --  project).
-
 
 end Projects.Editor;
