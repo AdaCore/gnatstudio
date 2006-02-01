@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -255,7 +255,6 @@ package body Creation_Wizard.Extending is
          Files (P)(Count (P)) := File;
       end Add_File;
 
-
    begin
       --  The new project will expand the root project. However, if the latter
       --  is itself an expanding project, we prefer to expand the original
@@ -393,9 +392,10 @@ package body Creation_Wizard.Extending is
 
       if Copy_Files then
          for S in Files'Range loop
-            Copy_File (Name     => Full_Name (Files (S)).all,
-                       Pathname => Project_Directory (Extended),
-                       Success  => Success);
+            Copy_File
+              (Name     => Full_Name (Files (S)).all,
+               Pathname => Full_Name (Project_Directory (Extended)).all,
+               Success  => Success);
          end loop;
       end if;
 
@@ -427,7 +427,7 @@ package body Creation_Wizard.Extending is
       Button := Message_Dialog
         (-"Should GPS copy the file in the extending project's directory ?"
          & ASCII.LF
-         & Project_Directory (Get_Project (Kernel)),
+         & Full_Name (Project_Directory (Get_Project (Kernel))).all,
          Dialog_Type => Confirmation,
          Buttons     => Button_Yes or Button_No,
          Title       => -"Copy files ?",
