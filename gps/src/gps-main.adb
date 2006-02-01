@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -75,6 +75,7 @@ with Remote_Connections;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_Utils;
 with Traces;                    use Traces;
+with VFS;                       use VFS;
 with Welcome;                   use Welcome;
 with Welcome_Page;              use Welcome_Page;
 
@@ -184,8 +185,7 @@ procedure GPS.Main is
    Str                    : String (1 .. 1024);
    Last                   : Natural;
    Home                   : String_Access;
-   Project_Name           : String_Access;
-   Prj                    : String_Access;
+   Project_Name           : Virtual_File := VFS.No_File;
    Prefix                 : String_Access;
    Dir                    : String_Access;
    Batch_File             : String_Access;
@@ -766,17 +766,14 @@ procedure GPS.Main is
                end case;
 
             when 'P' =>
-               Project_Name := new String'
-                 (Normalize_Pathname (Parameter));
+               Project_Name := Create (Normalize_Pathname (Parameter));
 
-               if not Is_Regular_File (Project_Name.all)
+               if not Is_Regular_File (Project_Name)
                  and then Is_Regular_File
-                   (Project_Name.all & Project_File_Extension)
+                   (Full_Name (Project_Name).all & Project_File_Extension)
                then
-                  Prj := Project_Name;
-                  Project_Name :=
-                    new String'(Prj.all & Project_File_Extension);
-                  Free (Prj);
+                  Project_Name := Create
+                    (Full_Name (Project_Name).all & Project_File_Extension);
                end if;
 
                Trace (Me, "Found project: " & Parameter);
@@ -978,10 +975,8 @@ procedure GPS.Main is
          File_Opened := True;
          Auto_Load_Project := False;
 
-         if Project_Name /= null
-           and then Is_Regular_File (Project_Name.all)
-         then
-            Load_Project (GPS_Main.Kernel, Project_Name.all);
+         if Is_Regular_File (Project_Name) then
+            Load_Project (GPS_Main.Kernel, Project_Name);
             Project := Get_Project (GPS_Main.Kernel);
          else
             Load_Default_Project
@@ -1052,9 +1047,9 @@ procedure GPS.Main is
             exit when Last = 0;
 
             if File_Extension (Str (1 .. Last)) = Project_File_Extension then
-               if Project_Name = null then
+               if Project_Name = VFS.No_File then
                   Auto_Load_Project := True;
-                  Project_Name := new String'(Str (1 .. Last));
+                  Project_Name := Create (Str (1 .. Last));
                else
                   Auto_Load_Project := False;
                   exit;
@@ -1087,11 +1082,7 @@ procedure GPS.Main is
 
          --  Load the project selected by the user
 
-         if Project_Name = null then
-            Gtk_New (Screen, GPS_Main.Kernel);
-         else
-            Gtk_New (Screen, GPS_Main.Kernel, Project_Name.all);
-         end if;
+         Gtk_New (Screen, GPS_Main.Kernel, Project_Name);
 
          --  Remove the splash screen, since it conflicts with the
          --  welcome dialog.
@@ -1434,7 +1425,7 @@ procedure GPS.Main is
 
          Setup_Debug;
 
-      elsif Project_Name = null then
+      elsif Project_Name = VFS.No_File then
          if Server_Mode then
             Auto_Load_Project := True;
             Load_Default_Project (GPS_Main.Kernel, Get_Current_Dir);
@@ -1447,8 +1438,8 @@ procedure GPS.Main is
          end if;
       end if;
 
-      if Auto_Load_Project and then Project_Name /= null then
-         Load_Project (GPS_Main.Kernel, Project_Name.all);
+      if Auto_Load_Project and then Project_Name /= VFS.No_File then
+         Load_Project (GPS_Main.Kernel, Project_Name);
          Load_Sources;
       end if;
 
