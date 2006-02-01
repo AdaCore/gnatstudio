@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2064,7 +2064,7 @@ package body Project_Properties is
 
       Gtk_New (Editor.Path);
       Set_Width_Chars (Editor.Path, 0);
-      Set_Text (Editor.Path, Project_Directory (Project));
+      Set_Text (Editor.Path, Full_Name (Project_Directory (Project)).all);
       Pack_Start (Hbox, Editor.Path, Expand => True);
 
       Gtk_New (Button2, -"Browse");
@@ -4173,7 +4173,8 @@ package body Project_Properties is
          --  notebook, and thus is improperly handled by the nested notebooks.
 
          Editor.Pages (E) := Widget_Factory
-           (Page, Project, Project_Path (Project), Editor.Kernel);
+           (Page, Project,
+            Full_Name (Project_Path (Project)).all, Editor.Kernel);
 
          if Editor.Pages (E) /= null then
             Gtk_New (Label, Get_Label (Page));
@@ -4557,9 +4558,7 @@ package body Project_Properties is
                return;
 
             when Edit_File =>
-               Open_File_Editor
-                 (Kernel,
-                  Create (Full_Filename => Project_Path (Project)));
+               Open_File_Editor (Kernel, Project_Path (Project));
                return;
 
             when Edit_Properties =>
@@ -4602,7 +4601,8 @@ package body Project_Properties is
                  Name_As_Directory (Get_Text (Editor.Path));
             begin
                if (New_Name /= Project_Name (Project)
-                   or else New_Path /= Project_Directory (Project))
+                   or else New_Path /=
+                     Full_Name (Project_Directory (Project)).all)
                  and then Is_Regular_File
                  (New_Path & New_File & Projects.Project_File_Extension)
                then
@@ -4722,7 +4722,7 @@ package body Project_Properties is
               Name_As_Directory (Get_Text (Editor.Path));
          begin
             if New_Name /= Project_Name (Project)
-              or else New_Path /= Project_Directory (Project)
+              or else New_Path /= Full_Name (Project_Directory (Project)).all
             then
                Project_Renamed_Or_Moved := True;
 
@@ -4730,7 +4730,7 @@ package body Project_Properties is
                  (Root_Project  => Get_Project (Kernel),
                   Project       => Project,
                   New_Name      => New_Name,
-                  New_Path      => New_Path,
+                  New_Path      => Create (New_Path),
                   Report_Errors => Report_Error'Unrestricted_Access);
 
                --  Since we actually changed the project hierarchy (all modules

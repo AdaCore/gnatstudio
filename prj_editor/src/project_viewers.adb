@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -120,7 +120,6 @@ package body Project_Viewers is
       return Switches_Editors.Switches_Editor_Page;
    procedure Destroy (Creator : in out XML_Switches_Record);
    --  See inherited subprograms
-
 
    type Pages_Array is array (Natural range <>) of Switches_Page_Creator_Data;
    type Page_Array_Access is access Pages_Array;
@@ -365,7 +364,6 @@ package body Project_Viewers is
      (Hook : Project_View_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class);
    --  Hook called when the project view changes
-
 
    --------------------------
    -- Project editor pages --
@@ -1079,10 +1077,7 @@ package body Project_Viewers is
       File_C   : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context.Context);
    begin
-      Open_File_Editor
-        (Kernel,
-         Create
-           (Full_Filename => Project_Path (Project_Information (File_C))));
+      Open_File_Editor (Kernel, Project_Path (Project_Information (File_C)));
       return Success;
    end Execute;
 
@@ -1434,13 +1429,13 @@ package body Project_Viewers is
          declare
             Name : constant String := Nth_Arg (Data, 2);
             Path : constant String :=
-              Nth_Arg (Data, 3, Project_Directory (Project));
+              Nth_Arg (Data, 3, Full_Name (Project_Directory (Project)).all);
          begin
             Rename_And_Move
               (Root_Project  => Get_Project (Kernel),
                Project       => Project,
                New_Name      => Name,
-               New_Path      => Name_As_Directory (Path),
+               New_Path      => Create (Path),
                Report_Errors => Set_Error'Unrestricted_Access);
             Run_Hook (Kernel, Project_Changed_Hook);
          end;
@@ -1468,7 +1463,7 @@ package body Project_Viewers is
             Error := Add_Imported_Project
               (Root_Project              => Get_Project (Kernel),
                Project                   => Project,
-               Imported_Project_Location => Project2,
+               Imported_Project_Location => Create (Project2),
                Report_Errors             => Set_Error'Unrestricted_Access,
                Use_Relative_Path         => Relative);
          end;
@@ -1538,7 +1533,8 @@ package body Project_Viewers is
          declare
             Dir     : constant String := Name_As_Directory
               (Normalize_Pathname
-                 (Nth_Arg (Data, 2), Directory => Project_Directory (Project),
+                 (Nth_Arg (Data, 2),
+                  Directory => Full_Name (Project_Directory (Project)).all,
                   Resolve_Links => False));
             Dirs    : Argument_List := (1 => new String'(Dir));
             Sources : String_Array_Access :=

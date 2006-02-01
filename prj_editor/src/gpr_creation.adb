@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2005                       --
+--                     Copyright (C) 2004-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -25,6 +25,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
+with VFS;                       use VFS;
 
 package body GPR_Creation is
 
@@ -685,7 +686,7 @@ package body GPR_Creation is
          --  Ignore all other object directories but the first one.
          --  The other directories do not contain any object file anyway
 
-         Trace (Me, "Creating " & Project_Path (Root_Project));
+         Trace (Me, "Creating " & Full_Name (Project_Path (Root_Project)).all);
          Project := Root_Project;
          Process_List (Project, Source_Dirs_Attribute, Source_Dirs);
 
@@ -741,7 +742,8 @@ package body GPR_Creation is
 
             for P in 0 .. Object_Dirs'Length - 1 loop
                Trace
-                 (Me, "Manipulating " & Project_Path (Projects (P)));
+                 (Me, "Manipulating "
+                  & Full_Name (Project_Path (Projects (P))).all);
 
                Generate_Withs
                  (Projects          => Projects,

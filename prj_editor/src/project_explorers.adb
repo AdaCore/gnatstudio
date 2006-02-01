@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 
 with Glib;                      use Glib;
@@ -950,7 +949,7 @@ package body Project_Explorers is
       end if;
 
       Set (Explorer.Tree.Model, N, Absolute_Name_Column,
-           Project_Path (Project));
+           Full_Name (Project_Path (Project)).all);
 
       if Extending_Project (Project) /= No_Project then
          --  ??? We could use a different icon instead
@@ -993,7 +992,7 @@ package body Project_Explorers is
       else
          Set (Explorer.Tree.Model, Node, Base_Name_Column,
               Relative_Path_Name
-                (Node_Text, Dir_Name (Project_Path (Project))));
+                (Node_Text, Dir_Name (Project_Path (Project)).all));
       end if;
    end Update_Directory_Node_Text;
 
@@ -2559,8 +2558,7 @@ package body Project_Explorers is
             if Match (C, Project_Name (Current (Iter))) /= -1 then
                Project_Marked := False;
                Mark_File_And_Projects
-                 (File           => Create
-                    (Full_Filename => Project_Path (Current (Iter))),
+                 (File           => Project_Path (Current (Iter)),
                   Project_Marked => Project_Marked,
                   Project        => Current (Iter),
                   Mark_File      => Unknown,
