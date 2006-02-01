@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;         use Ada.Exceptions;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
 with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 with Gdk.Types;              use Gdk.Types;
@@ -229,7 +228,7 @@ package body GPS.Menu is
 
    procedure Activate (Callback : access On_Reopen; Item : String) is
    begin
-      Load_Project (Callback.Kernel, Item);
+      Load_Project (Callback.Kernel, Create (Item));
 
    exception
       when E : others =>
@@ -242,11 +241,12 @@ package body GPS.Menu is
    ------------------------
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
-      Filename : constant String := Normalize_Pathname
-        (Project_Path (Get_Project (Kernel)), Resolve_Links => False);
+      Path : constant Virtual_File := Project_Path (Get_Project (Kernel));
    begin
-      if Filename /= "" then
-         Add_To_History (Kernel, Project_History_Key, Filename);
+      if Path /= VFS.No_File then
+         Add_To_History
+           (Kernel, Project_History_Key,
+            Full_Name (Path, Normalize => False).all);
       end if;
 
    exception
@@ -284,6 +284,7 @@ package body GPS.Menu is
    is
       pragma Unreferenced (Widget);
    begin
+      Reload_Project_If_Needed (Kernel);
       Recompute_View (Kernel);
    end On_Project_Recompute;
 
@@ -309,7 +310,7 @@ package body GPS.Menu is
               History           => Get_History (Kernel));
       begin
          if Filename /= VFS.No_File then
-            Load_Project (Kernel, Full_Name (Filename).all);
+            Load_Project (Kernel, Filename);
          end if;
       end;
 
