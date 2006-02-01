@@ -298,22 +298,25 @@ package body Projects is
         or else Project_Modified (Project)
       then
          if Is_Regular_File (Project_Path (Project))
-           and then not Is_Writable_File (Project_Path (Project))
+           and then not Is_Writable (Project_Path (Project))
          then
             if Report_Error /= null then
-               Report_Error ("The file " & Project_Path (Project)
-                             & " is not writable. Project not saved");
+               Report_Error
+                 ("The file " & Full_Name (Project_Path (Project)).all
+                  & " is not writable. Project not saved");
             end if;
-            Trace (Me, "Project file not writable: " & Project_Path (Project));
+            Trace (Me, "Project file not writable: "
+                   & Full_Name (Project_Path (Project)).all);
             return False;
          end if;
 
          declare
-            Filename : constant String := Project_Path (Project);
-            Dirname  : constant String := Dir_Name (Filename);
+            Filename : constant Virtual_File := Project_Path (Project);
+            Dirname  : constant String := Dir_Name (Filename).all;
 
          begin
-            Trace (Me, "Save_Project: Creating new file " & Filename);
+            Trace (Me, "Save_Project: Creating new file "
+                   & Full_Name (Filename).all);
 
             begin
                Make_Dir_Recursive (Dirname);
@@ -330,7 +333,7 @@ package body Projects is
 
             Normalize_Cases (Project);
 
-            Create (File, Mode => Out_File, Name => Filename);
+            Create (File, Mode => Out_File, Name => Full_Name (Filename).all);
             Pretty_Print
               (Project => Project,
                W_Char  => Internal_Write_Char'Unrestricted_Access,
@@ -344,10 +347,11 @@ package body Projects is
 
          exception
             when Ada.Text_IO.Name_Error =>
-               Trace (Me, "Couldn't create " & Filename);
+               Trace (Me, "Couldn't create " & Full_Name (Filename).all);
 
                if Report_Error /= null then
-                  Report_Error ("Couldn't create file " & Filename);
+                  Report_Error ("Couldn't create file "
+                                & Full_Name (Filename).all);
                end if;
                return False;
          end;
@@ -389,17 +393,18 @@ package body Projects is
    -- Project_Path --
    ------------------
 
-   function Project_Path (Project : Project_Type) return String is
+   function Project_Path (Project : Project_Type) return VFS.Virtual_File is
       View : constant Project_Id := Get_View (Project);
    begin
       if Status (Project) /= From_File then
-         return "";
+         return VFS.No_File;
       elsif View = Prj.No_Project then
          --  Still needed for the project wizard
-         return Get_String
-           (Path_Name_Of (Project.Node, Project.Tree));
+         return Create
+           (Get_String (Path_Name_Of (Project.Node, Project.Tree)));
       else
-         return Get_String (Projects_Table (Project)(View).Display_Path_Name);
+         return Create
+           (Get_String (Projects_Table (Project)(View).Display_Path_Name));
       end if;
    end Project_Path;
 
@@ -407,9 +412,10 @@ package body Projects is
    -- Project_Directory --
    -----------------------
 
-   function Project_Directory (Project : Project_Type) return String is
+   function Project_Directory
+     (Project : Project_Type) return VFS.Virtual_File is
    begin
-      return Name_As_Directory (Dir_Name (Project_Path (Project)));
+      return Dir (Project_Path (Project));
    end Project_Directory;
 
    -----------------

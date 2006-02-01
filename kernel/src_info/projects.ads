@@ -109,15 +109,13 @@ package Projects is
    --  The empty string is returned if the project is the default project or
    --  No_Project.
 
-   function Project_Path (Project : Project_Type) return String;
+   function Project_Path (Project : Project_Type) return VFS.Virtual_File;
    --  Return the full path name to the project file
-   --  The empty string is returned if the project is the default project or
-   --  No_Project.
+   --  No_File is returned if the project is the default project or No_Project.
 
-   function Project_Directory (Project : Project_Type) return String;
+   function Project_Directory (Project : Project_Type) return VFS.Virtual_File;
    --  Return the directory that contains the project file.
-   --  The empty string is returned if the project is No_Project.
-   --  The directory always ends up with a directory separator.
+   --  No_File is returned if the project is No_Project.
 
    function Parent_Project (Project : Project_Type) return Project_Type;
    --  Return the project that Project is extending, or No_Project is there are
