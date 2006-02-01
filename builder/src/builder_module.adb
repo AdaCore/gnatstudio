@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -421,14 +421,15 @@ package body Builder_Module is
          --  using a remote unix host from Windows.
 
          if Path = "" then
-            Project_Str :=
-              new String'(To_Unix_Pathname (Project_Path (Project)));
+            Project_Str := new String'
+              (To_Unix_Pathname (Full_Name (Project_Path (Project)).all));
          else
             Project_Str := new String'(To_Unix_Pathname (Path));
          end if;
 
       elsif Path = "" then
-         Project_Str := new String'(Project_Path (Project));
+         Project_Str := new String'(Full_Name (Project_Path (Project)).all);
+
       else
          Project_Str := new String'(Path);
       end if;
@@ -724,7 +725,7 @@ package body Builder_Module is
                Unique_Project => not Main_Units);
          end if;
 
-         Change_Dir (Dir_Name (Project_Path (Project)));
+         Change_Dir (Dir_Name (Project_Path (Project)).all);
       end if;
 
       if Builder_Module_ID.Build_Count = 0 then
@@ -969,7 +970,8 @@ package body Builder_Module is
                Writable := Write_File (Temp_Project);
                Write
                  (Writable,
-                  "project ext extends """ & Project_Path (Prj) & """ is"
+                  "project ext extends """
+                  & Full_Name (Project_Path (Prj)).all & """ is"
                   & ASCII.LF & "end ext;",
                   False);
                Close (Writable);
@@ -993,7 +995,7 @@ package body Builder_Module is
 
       else
          Local_File := new String'(Locale_Full_Name (File));
-         Change_Dir (Dir_Name (Project_Path (Prj)));
+         Change_Dir (Dir_Name (Project_Path (Prj)).all);
          Shadow_Path := new String'("");
       end if;
 
