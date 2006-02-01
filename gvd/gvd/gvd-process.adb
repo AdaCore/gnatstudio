@@ -1788,13 +1788,11 @@ package body GVD.Process is
          if Exec /= VFS.No_File then
             Project := Create_Project
               (Project_Registry (Get_Registry (Kernel).all),
-               "debugger_" & Base_Name (Exec),
-               GNAT.Directory_Operations.Get_Current_Dir);
+               "debugger_" & Base_Name (Exec), Get_Current_Dir);
          else
             Project := Create_Project
               (Project_Registry (Get_Registry (Kernel).all),
-               "debugger_no_file",
-               GNAT.Directory_Operations.Get_Current_Dir);
+               "debugger_no_file", Get_Current_Dir);
          end if;
 
          if Debugger_Name /= "" then
