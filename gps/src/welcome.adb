@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -90,7 +90,7 @@ package body Welcome is
    procedure Gtk_New
      (Screen       : out Welcome_Screen;
       Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project_Name : String := "")
+      Project_Name : VFS.Virtual_File := VFS.No_File)
    is
       Box, Hbox    : Gtk_Box;
       Sep          : Gtk_Separator;
@@ -196,10 +196,8 @@ package body Welcome is
       Pack_Start (Hbox, Screen.Open_Project, Expand => True, Fill => True);
       --  Synchronize the name of the key with gps-menu.adb
 
-      if Project_Name /= "" then
-         Set_Text (Get_Entry (Screen.Open_Project),
-                   Normalize_Pathname (Project_Name, Resolve_Links => False));
-      end if;
+      Set_Text (Get_Entry (Screen.Open_Project),
+                Full_Name (Project_Name, Normalize => False).all);
 
       Gtk_New (Screen.Open_Browse, -"Browse");
       Add_Widget (Size, Screen.Open_Browse);
@@ -311,7 +309,7 @@ package body Welcome is
    procedure On_Default_Project (Screen : access Gtk_Widget_Record'Class) is
       S : constant Welcome_Screen := Welcome_Screen (Screen);
    begin
-      Load_Default_Project (S.Kernel, Get_Text (S.Default_Dir));
+      Load_Default_Project (S.Kernel, Create (Get_Text (S.Default_Dir)));
       Response (S, Gtk_Response_OK);
 
    exception
@@ -328,34 +326,28 @@ package body Welcome is
      (Screen : access Gtk_Widget_Record'Class) return Boolean
    is
       S            : constant Welcome_Screen := Welcome_Screen (Screen);
-      Project_Name : constant String := Normalize_Pathname
-        (Get_Text (Get_Entry (S.Open_Project)), Resolve_Links => False);
+      Project_Name : Virtual_File := Create
+        (Get_Text (Get_Entry (S.Open_Project)));
       Button       : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
    begin
       Response (S, Gtk_Response_OK);
 
-      if File_Extension (Project_Name) = Project_File_Extension then
-         if not Is_Regular_File (Project_Name) then
-            Button := Message_Dialog
-              ((-"Project file ") & Project_Name & (-" doesn't exist"),
-               Error, Button_OK, Parent => Gtk_Window (S));
-            return False;
-         end if;
-
-         Load_Project (S.Kernel, Project_Name);
-
-      else
-         if not Is_Regular_File (Project_Name & Project_File_Extension) then
-            Button := Message_Dialog
-              ((-"Project file ") & Project_Name & (-" doesn't exist"),
-               Error, Button_OK, Parent => Gtk_Window (S));
-            return False;
-         end if;
-
-         Load_Project (S.Kernel, Project_Name & Project_File_Extension);
+      if File_Extension (Project_Name) /= Project_File_Extension then
+         Project_Name := Create
+           (Full_Name (Project_Name).all & Project_File_Extension);
       end if;
+
+      if not Is_Regular_File (Project_Name) then
+         Button := Message_Dialog
+           ((-"Project file ")
+            & Full_Name (Project_Name).all & (-" doesn't exist"),
+            Error, Button_OK, Parent => Gtk_Window (S));
+         return False;
+      end if;
+
+      Load_Project (S.Kernel, Project_Name);
 
       return True;
 
@@ -364,7 +356,8 @@ package body Welcome is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
          Button := Message_Dialog
-           ((-"Project file ") & Project_Name & (-" couldn't be loaded"),
+           ((-"Project file ")
+            & Full_Name (Project_Name).all & (-" couldn't be loaded"),
             Error, Button_OK, Parent => Gtk_Window (S));
          return False;
    end On_Load_Project;
