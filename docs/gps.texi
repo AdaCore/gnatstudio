@@ -3831,16 +3831,15 @@ new window in GPS, listing all the source files for this project,
 along with the switches that will be used to compile them, @xref{The
 Switches Editor}.
 
-@item Recompute Project
-@cindex recompute project
+@item Reload Project
+@cindex reload project
 @cindex C
 @cindex C++
-Recompute the contents of the project after modifications outside of GPS. In
+Reload the project from the disk, to take into account modifications done
+outside of GPS. In
 particular, it will take into account new files added externally to the source
 directories.
-This isn't needed for modifications made through GPS. Note also that
-this doesn't re-parse the physical project file on disk. Instead, you can
-reopen the project if you have done manual modifications to it.
+This isn't needed for modifications made through GPS.
 
 @item Project View
 Open (or raise if it is already open) the project explorer on the left side
