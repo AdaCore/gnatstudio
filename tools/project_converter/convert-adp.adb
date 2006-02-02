@@ -2,7 +2,8 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
-with Adp_Converter;            use Adp_Converter;
+with Adp_Converter;             use Adp_Converter;
+with VFS;                       use VFS;
 
 package body Convert.Adp is
 
@@ -20,12 +21,12 @@ package body Convert.Adp is
       pragma Unreferenced (Tmp);
    begin
       Projects.Registry.Initialize;
-      Load_Default_Project (Registry, ".");
+      Load_Default_Project (Registry, Create ("./"));
 
       Project := Create_Project
         (Registry,
          Name => Base_Name (Adp_Filename, ".adp"),
-         Path => Dir_Name (Adp_Filename));
+         Path => Create (Dir_Name (Adp_Filename)));
       Set_Paths_Type (Project, Absolute);
       Convert_Adp_File (Adp_Filename,
                         Registry       => Registry,
