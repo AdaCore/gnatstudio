@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -17,7 +17,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
 
 with Ada.Calendar;             use Ada.Calendar;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -80,11 +79,9 @@ with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel;               use GPS.Kernel;
-with GUI_Utils;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
 with String_Hash;
@@ -1124,7 +1121,6 @@ package body Aliases_Module is
                  Get_String (Editor.Variables_Model, Iter, 1);
                From_Env : constant Boolean :=
                  Get_Boolean (Editor.Variables_Model, Iter, 3);
-
 
             begin
                P := new Param_Record'
