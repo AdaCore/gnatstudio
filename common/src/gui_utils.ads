@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -42,12 +42,10 @@ with Gtk.Container;
 with Gtk.Enums;
 with Gtk.Event_Box;
 with Gtk.Handlers;
-with Gtk.Handlers;
 with Gtk.Label;
 with Gtk.List;
 with Gtk.List_Item;
 with Gtk.Menu;
-with Gtk.Menu_Item;
 with Gtk.Menu_Bar;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
@@ -293,7 +291,6 @@ package GUI_Utils is
    --
    --  Limitations:
    --     Radio buttons not supported,
-
 
    -------------------------
    -- Full_Path_Menu_Item --

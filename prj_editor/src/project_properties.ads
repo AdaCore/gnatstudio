@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                          G P S                                    --
 --                                                                   --
---                        Copyright (C) 2002-2004                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2006                    --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,6 @@
 with Gtk.Box;
 with Gtk.GEntry;
 with GPS.Kernel;
-with Gtk.Box;
 with Projects;
 with GNAT.OS_Lib;
 with Commands.Interactive;
@@ -99,7 +98,6 @@ package Project_Properties is
    --  The returned value must be freed by the caller.
    --  ??? Relies on global variables, would be nice to eliminate through the
    --  use of the Project_Wizard_Page.
-
 
 private
    type Root_Attribute_Editor_Record is abstract new Gtk.Box.Gtk_Box_Record
