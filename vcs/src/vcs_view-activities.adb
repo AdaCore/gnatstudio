@@ -47,7 +47,6 @@ with Log_Utils;                 use Log_Utils;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
-with VCS;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;

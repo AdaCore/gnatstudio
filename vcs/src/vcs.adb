@@ -24,7 +24,6 @@ with Commands.VCS;            use Commands.VCS;
 with Commands;                use Commands;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with Generic_List;
 
 package body VCS is
 

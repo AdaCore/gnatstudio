@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,7 +20,6 @@
 
 with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
-with Ada.Unchecked_Deallocation;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;

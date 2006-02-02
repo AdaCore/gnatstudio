@@ -29,7 +29,6 @@ with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Widget;              use Gtk.Widget;
 
-with Basic_Types;
 with Basic_Types;             use Basic_Types;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with Entities.Queries;        use Entities, Entities.Queries;

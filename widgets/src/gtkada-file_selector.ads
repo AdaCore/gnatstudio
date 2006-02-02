@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                  Copyright (C) 2001-2005 AdaCore                  --
+--                  Copyright (C) 2001-2006 AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -75,7 +75,6 @@ with Gtk.Main;            use Gtk.Main;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Tree_Store;      use Gtk.Tree_Store;
 with Gtk.Tree_View;       use Gtk.Tree_View;
-with Gtk.Widget;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Window;          use Gtk.Window;
 

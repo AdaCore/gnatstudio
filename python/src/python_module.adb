@@ -53,7 +53,6 @@ with Projects;                   use Projects;
 with Entities;                   use Entities;
 with VFS;                        use VFS;
 with File_Utils;                 use File_Utils;
-with Interactive_Consoles;
 with HTables;
 
 package body Python_Module is

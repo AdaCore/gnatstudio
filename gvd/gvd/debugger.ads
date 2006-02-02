@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -28,7 +28,6 @@ with Gtk.Window;
 with GVD.Types;
 with Basic_Types;
 with GVD.Proc_Utils;
-with GVD.Types;
 with VFS;
 with Ada.Unchecked_Deallocation;
 

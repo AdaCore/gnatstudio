@@ -25,7 +25,6 @@ with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
 pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
-with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System;

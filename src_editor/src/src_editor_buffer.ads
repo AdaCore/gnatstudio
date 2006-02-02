@@ -36,7 +36,6 @@ with Gtk.Main;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
-with Gtk.Text_Iter;
 with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
 
 with Commands;                  use Commands;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2004-2005                    --
+--                        Copyright (C) 2004-2006                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,7 +23,6 @@ with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with Case_Handling.IO;        use Case_Handling.IO;
-with Case_Handling;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;

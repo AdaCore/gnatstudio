@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2006                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;            use Ada.Text_IO;
-with Ada.Unchecked_Deallocation;
 
 with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
@@ -31,7 +30,6 @@ with Basic_Types;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with Generic_List;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 with VFS;                    use VFS;

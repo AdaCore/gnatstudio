@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -38,7 +38,6 @@ with Gtk.Window;               use Gtk.Window;
 
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
-with Gtkada.MDI;
 
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;

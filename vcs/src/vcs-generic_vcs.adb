@@ -20,7 +20,6 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;

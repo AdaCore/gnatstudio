@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -29,7 +29,6 @@ with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Pango.Enums;        use Pango.Enums;
 with Pango.Font;         use Pango.Font;
-with Ada.Unchecked_Deallocation;
 
 with Logo_Boxes;               use Logo_Boxes;
 with GPS.Kernel;               use GPS.Kernel;
@@ -504,6 +503,5 @@ package body Wizards is
    begin
       return Page.Content;
    end Get_Content;
-
 
 end Wizards;

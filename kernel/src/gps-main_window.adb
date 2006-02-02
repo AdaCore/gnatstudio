@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -28,20 +28,15 @@ with Glib.Error;                use Glib.Error;
 with Glib.Generic_Properties;   use Glib.Generic_Properties;
 with Glib.Object;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;
-with Glib.Values;
 with Glib.Values;               use Glib.Values;
 
-with Gtk.Box;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
@@ -49,11 +44,9 @@ with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;
 with Gtkada.Types;
 
 with Pango.Font;                use Pango.Font;

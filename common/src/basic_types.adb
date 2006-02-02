@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,7 +20,6 @@
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Unchecked_Deallocation;
 
 package body Basic_Types is
 

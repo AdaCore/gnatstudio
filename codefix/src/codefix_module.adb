@@ -30,7 +30,6 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Glib.Object;               use Glib.Object;
 
-with Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -39,8 +38,6 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
 with Codefix.Errors_Parser;     use Codefix.Errors_Parser;
-with Codefix.Formal_Errors;
-use Codefix.Formal_Errors.Command_List;
 with Codefix.GPS_Io;            use Codefix.GPS_Io;
 with Codefix.Graphics;          use Codefix.Graphics;
 with Codefix.Text_Manager;      use Codefix.Text_Manager;
@@ -62,9 +59,10 @@ with Projects;                  use Projects;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 with Glib;                      use Glib;
-with Glib.Properties.Creation;
 
 package body Codefix_Module is
+
+   use Codefix.Formal_Errors.Command_List;
 
    Codefix_Answer_Xpm : aliased Pixmap_Array;
    pragma Import (C, Codefix_Answer_Xpm, "codefix_answer_xpm");

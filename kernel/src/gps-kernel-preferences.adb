@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -33,7 +33,6 @@ with Pango.Font;              use Pango.Font;
 
 with Case_Handling;           use Case_Handling;
 with Config;
-with Default_Preferences;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Charsets;      use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;

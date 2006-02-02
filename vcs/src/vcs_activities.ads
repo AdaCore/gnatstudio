@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel;        use GPS.Kernel;
-with VFS;
 with String_List_Utils; use String_List_Utils;
 with VFS;               use VFS;
 with VCS;               use VCS;

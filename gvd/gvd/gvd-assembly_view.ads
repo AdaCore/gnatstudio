@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -31,7 +31,6 @@ with Gtk.Text_View;
 with Basic_Types;
 with Pango.Font;
 
-with Basic_Types;
 with GVD.Types;
 
 package GVD.Assembly_View is

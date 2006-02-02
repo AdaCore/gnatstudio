@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -61,7 +61,6 @@ with OS_Utils;                  use OS_Utils;
 with Traces;                    use Traces;
 
 with Unchecked_Deallocation;
-with Generic_List;
 
 package body Directory_Tree is
 

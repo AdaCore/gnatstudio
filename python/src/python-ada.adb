@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2006                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,6 @@
 --  written in Ada.
 
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
-with Ada.Unchecked_Conversion;
 
 package body Python.Ada is
 

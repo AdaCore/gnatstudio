@@ -68,7 +68,6 @@ with Completion_Module;                 use Completion_Module;
 with Default_Preferences;
 with File_Utils;                        use File_Utils;
 with Find_Utils;                        use Find_Utils;
-with Generic_List;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Charsets;               use GPS.Kernel.Charsets;

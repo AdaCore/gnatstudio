@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -50,7 +50,6 @@ with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with Traces;                    use Traces;
-with VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;

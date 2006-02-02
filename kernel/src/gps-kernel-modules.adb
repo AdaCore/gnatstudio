@@ -25,7 +25,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
-with Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
 
 with Glib.Convert;              use Glib.Convert;
@@ -57,7 +56,6 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with Commands.Interactive;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -69,7 +67,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
-with Generic_List;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with System;                    use System;

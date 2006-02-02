@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,7 +27,6 @@ with Gdk.Font;                use Gdk.Font;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Glib;                    use Glib;
 
-with Gtk.Box;
 with Gtk.Container;           use Gtk.Container;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
