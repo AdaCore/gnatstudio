@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -136,7 +136,7 @@ package body VFS is
       end if;
       while Last >= Full_Filename'First loop
          exit when Full_Filename (Last) /= ASCII.LF
-           and Full_Filename (Last) /= ASCII.CR;
+           and then Full_Filename (Last) /= ASCII.CR;
          Last := Last - 1;
       end loop;
       First := Full_Filename'First;
@@ -225,8 +225,9 @@ package body VFS is
          --  If the user didn't create a file with a full name, no need to
          --  spend time now trying to find the file.
 
-         if File.Value.Connection = null and then
-           not Is_Absolute_Path (File.Value.Full_Name.all) then
+         if File.Value.Connection = null
+           and then not Is_Absolute_Path (File.Value.Full_Name.all)
+         then
             File.Value.Normalized_Full :=
               new UTF8_String'(File.Value.Full_Name.all);
 
@@ -432,6 +433,7 @@ package body VFS is
    begin
       if File.Value = null then
          return Empty_String;
+
       else
          if File.Value.Dir_Name = null then
             File.Value.Dir_Name :=
