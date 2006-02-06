@@ -41,7 +41,7 @@ with Gtk.Combo;                         use Gtk.Combo;
 with Gtk.Dialog;                        use Gtk.Dialog;
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.GEntry;                        use Gtk.GEntry;
-with Gtk.Handlers;
+with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Label;                         use Gtk.Label;
 with Gtk.Main;                          use Gtk.Main;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
@@ -425,7 +425,7 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
    begin
       UR := Undo_Redo_Data.Get (Kernel, Undo_Redo_Id);
-      UR.Undo_Button_Handler_ID.Signal := Null_Signal_Id;
+      UR.Undo_Button_Handler_ID.Id := Null_Handler_Id;
       UR.Undo_Button := null;
       UR.Redo_Button := null;
       UR.Undo_Menu_Item := null;
