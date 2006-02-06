@@ -143,7 +143,7 @@ package body GVD_Module is
 
       Initialize_Menu                : Gtk_Menu;
 
-      Delete_Id                      : Handler_Id := (Null_Signal_Id, null);
+      Delete_Id                      : Handler_Id := (Null_Handler_Id, null);
       File_Hook                      : File_Edited_Hook;
       Lines_Hook                     : Lines_Revealed_Hook;
 
