@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@ with Ada.Exceptions; use Ada.Exceptions;
 with Glib;           use Glib;
 with Glib.Values;    use Glib.Values;
 
+with Gtk.Handlers;   use Gtk.Handlers;
 with Gtk.Widget;     use Gtk.Widget;
 
 with Traces;         use Traces;
@@ -210,7 +211,7 @@ package body Commands.Controls is
 
       Command := Queue_Change_Access (The_Command);
 
-      if Command.UR.Undo_Button_Handler_ID.Signal /= Null_Signal_Id then
+      if Command.UR.Undo_Button_Handler_ID.Id /= Null_Handler_Id then
          Disconnect
            (Command.UR.Undo_Button, Command.UR.Undo_Button_Handler_ID);
          Disconnect
@@ -219,7 +220,7 @@ package body Commands.Controls is
            (Command.UR.Undo_Menu_Item, Command.UR.Undo_Menu_Item_Handler_ID);
          Disconnect
            (Command.UR.Redo_Menu_Item, Command.UR.Redo_Menu_Item_Handler_ID);
-         Command.UR.Undo_Button_Handler_ID.Signal := Null_Signal_Id;
+         Command.UR.Undo_Button_Handler_ID.Id := Null_Handler_Id;
       end if;
 
       if Command.UR.Undo_Button /= null then
