@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,11 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  New Visual Diff module.
+--  New Visual Diff module
 
 with Glib;                     use Glib;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Gtk.Handlers;             use Gtk.Handlers;
 
 with Default_Preferences;
 with Diff_Utils2;              use Diff_Utils2;
@@ -48,8 +47,6 @@ package Vdiff2_Module is
    --  Register the module in the list
 
 private
-
-   No_Handler : constant Handler_Id := (Null_Signal_Id, null);
 
    type VDiff2_Module_Record is new GPS.Kernel.Modules.Module_ID_Record with
       record
