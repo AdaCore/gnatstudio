@@ -32,6 +32,7 @@ with System;                     use System;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;
 
+with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Main;                   use Gtk.Main;
 
 with Gtkada.MDI;                 use Gtkada.MDI;
@@ -305,7 +306,7 @@ package body GPS.Kernel.Timeout is
             Enable_Prompt_Display (Data.Console, False);
          end if;
 
-         if Data.Delete_Id.Signal /= Null_Signal_Id then
+         if Data.Delete_Id.Id /= Null_Handler_Id then
             Gtk.Handlers.Disconnect (Data.Console, Data.Delete_Id);
          end if;
 
@@ -524,7 +525,7 @@ package body GPS.Kernel.Timeout is
             GObject (Data),
             After => False);
       else
-         Data.Delete_Id.Signal := Null_Signal_Id;
+         Data.Delete_Id.Id := Null_Handler_Id;
       end if;
 
       Data.Console := Console;
