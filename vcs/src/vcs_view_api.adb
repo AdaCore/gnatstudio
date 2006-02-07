@@ -639,13 +639,13 @@ package body VCS_View_API is
          if not File_Section then
             --  Add or remove a directory
 
-            Gtk_New (Item, "Add/No commit");
+            Gtk_New (Item, -"Add/No commit");
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate",
                On_Menu_Add_Directory_No_Commit'Access, Context);
 
-            Gtk_New (Item, "Remove/No commit");
+            Gtk_New (Item, -"Remove/No commit");
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate",
@@ -656,7 +656,7 @@ package body VCS_View_API is
                   --  Add Commit and Add to Activity menu entry only if
                   --  directories as handled by the underlying VCS.
 
-                  Gtk_New (Item, "Commit");
+                  Gtk_New (Item, -"Commit");
                   Append (Submenu, Item);
                   Context_Callback.Connect
                     (Item, "activate", On_Menu_Commit'Access, Context);
