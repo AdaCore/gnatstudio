@@ -194,7 +194,9 @@ package body VCS_Activities_View_API is
 
          Activity := Value (Activity_Information (A_Context));
 
-         if Has_File_Information (A_Context) then
+         if Has_File_Information (A_Context)
+           or else Has_Directory_Information (A_Context)
+         then
             --  If we have a file information, then there is a single file to
             --  handle.
             Add_File (Kernel, Activity, File_Information (A_Context));
@@ -718,14 +720,19 @@ package body VCS_Activities_View_API is
       if Context /= null
         and then Context.all in File_Selection_Context'Class
       then
-         Activity_Section := not Has_File_Information
-           (File_Selection_Context_Access (Context));
-         File_Section     := Has_File_Information
-           (File_Selection_Context_Access (Context));
+         declare
+            F_Context : constant File_Selection_Context_Access :=
+                          File_Selection_Context_Access (Context);
+         begin
+            Activity_Section := not Has_File_Information (F_Context)
+              and then not Has_Directory_Information (F_Context);
+            File_Section     := Has_File_Information (F_Context)
+              or else Has_Directory_Information (F_Context);
 
-         Activity := Value
-           (Activity_Information (Activity_Context_Access (Context)));
-         Active := not Is_Committed (Activity);
+            Activity := Value
+              (Activity_Information (Activity_Context_Access (Context)));
+            Active := not Is_Committed (Activity);
+         end;
 
       else
          Activity_Section := False;
