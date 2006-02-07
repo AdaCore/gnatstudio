@@ -14,6 +14,14 @@ of the feature.
 New features in GPS 3.2.0
 -------------------------
 
+F128-002 VCS supports directories (2006-02-07)
+
+  It is now possible to add, remove directories via the VCS contextual
+  menu. If the underlying VCS supports commit for directories then it is also
+  possible to commit a directory or add a directory to an activity.
+
+  Keywords: VCS
+
 EC29-004 GPS Activities improvement (2006-01-04)
 
   A VCS activity is now closed if all the files have been properly committed.
