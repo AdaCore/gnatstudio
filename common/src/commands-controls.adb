@@ -23,7 +23,7 @@ with Ada.Exceptions; use Ada.Exceptions;
 with Glib;           use Glib;
 with Glib.Values;    use Glib.Values;
 
-with Gtk.Handlers;   use Gtk.Handlers;
+with Gtk.Handlers;
 with Gtk.Widget;     use Gtk.Widget;
 
 with Traces;         use Traces;
