@@ -253,7 +253,7 @@ package body VCS_View_API is
       --  Add a separator in the menu if needed
 
       function Create_Activity_Menu (Menu : Gtk_Menu) return Boolean;
-      --  Returns True if some activities have been added into Menu
+      --  Return True if some activities have been added into Menu
 
       ----------------
       -- Add_Action --
