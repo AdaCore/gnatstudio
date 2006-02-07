@@ -476,7 +476,7 @@ package body VCS.Generic_VCS is
 
       while Node /= Null_Node loop
          declare
-            Args    : GNAT.OS_Lib.String_List_Access;
+            Args : GNAT.OS_Lib.String_List_Access;
             --  Set to True when the current working directory already part of
             --  the command line.
          begin
@@ -1195,6 +1195,8 @@ package body VCS.Generic_VCS is
            (Get_Attribute (M, "absolute_names", "FALSE"));
          Ref.Atomic_Commands := Boolean'Value
            (Get_Attribute (M, "atomic_commands", "FALSE"));
+         Ref.Commit_Directory := Boolean'Value
+           (Get_Attribute (M, "commit_directory", "FALSE"));
          Ref.Dir_Sep := Path_Style'Value
            (Get_Attribute (M, "dir_sep", "System_Default"));
 
