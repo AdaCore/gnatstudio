@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  ??? missing description
+
 with Glib.Object;        use Glib.Object;
 with Gtk.Widget;
 with Gtk.Menu;           use Gtk.Menu;
@@ -36,138 +38,172 @@ package VCS_View_API is
    procedure On_Menu_Get_Status
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Open
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Add
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Add_No_Commit
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Add_Directory_No_Commit
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Remove
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Remove_No_Commit
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Remove_Directory_No_Commit
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Revert
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Resolved
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Annotate
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Remove_Annotate
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Diff
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Diff_Working
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Diff_Base_Head
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Diff_Specific
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Diff2
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_View_Log
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_View_Log_Rev
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Update
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Edit_ChangeLog
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Edit_Log
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Commit
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Remove_Log
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Get_Status_Dir
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Update_Dir
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Get_Status_Dir_Recursive
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Update_Dir_Recursive
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_List_Project_Files
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_List_Project_Files_Recursive
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Get_Status_Project
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Get_Status_Project_Recursive
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Update_Project
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Update_Project_Recursive
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+   --  ???
 
    procedure On_Menu_Remove_Project
      (Widget  : access GObject_Record'Class;
