@@ -104,9 +104,11 @@ package VCS is
      (Ref : access VCS_Record) return Boolean;
    --  Returns True if the external VCS supports absolute filenames
 
-   function Atomic_Commands_Supported
-     (Ref : access VCS_Record) return Boolean;
+   function Atomic_Commands_Supported (Ref : access VCS_Record) return Boolean;
    --  Returns True if the external VCS handles atomic commands
+
+   function Commit_Directory (Ref : access VCS_Record) return Boolean;
+   --  Returns True if an added/removed directories needs to be committed
 
    type File_Status is record
       Label    : String_Access;
@@ -438,10 +440,11 @@ private
    --  The file is unknown of the VCS repository.
 
    type VCS_Record is abstract tagged limited record
-      Kernel          : GPS.Kernel.Kernel_Handle;
-      Absolute_Names  : Boolean    := False;
-      Atomic_Commands : Boolean    := False;
-      Dir_Sep         : Path_Style := System_Default;
+      Kernel           : GPS.Kernel.Kernel_Handle;
+      Absolute_Names   : Boolean    := False;
+      Atomic_Commands  : Boolean    := False;
+      Commit_Directory : Boolean    := False;
+      Dir_Sep          : Path_Style := System_Default;
    end record;
 
 end VCS;
