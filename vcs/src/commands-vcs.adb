@@ -142,16 +142,8 @@ package body Commands.VCS is
             when Add =>
                Add (Command.Rep, Command.Filenames, Data (Log));
 
-            when Add_No_Commit =>
-               Add (Command.Rep, Command.Filenames, Data (Log),
-                    Commit => False);
-
             when Remove =>
                Remove (Command.Rep, Command.Filenames, Data (Log));
-
-            when Remove_No_Commit =>
-               Remove (Command.Rep, Command.Filenames, Data (Log),
-                       Commit => False);
 
             when others =>
                raise Program_Error;
@@ -172,14 +164,8 @@ package body Commands.VCS is
                when Add =>
                   Add (Command.Rep, File, Data (Log));
 
-               when Add_No_Commit =>
-                  Add (Command.Rep, File, Data (Log), Commit => False);
-
                when Remove =>
                   Remove (Command.Rep, File, Data (Log));
-
-               when Remove_No_Commit =>
-                  Remove (Command.Rep, File, Data (Log), Commit => False);
 
                when others =>
                   raise Program_Error;
