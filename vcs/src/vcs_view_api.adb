@@ -132,8 +132,10 @@ package body VCS_View_API is
 
    procedure On_Log_Action
      (Context : Selection_Context_Access;
-      Action  : VCS_Action);
-   --  Generic callback for an action that requires associated logs
+      Action  : VCS_Action;
+      Files   : in out String_List.List);
+   --  Generic callback for an action that requires associated logs. Files will
+   --  be freed.
 
    procedure Comparison
      (Context : Selection_Context_Access;
@@ -250,6 +252,9 @@ package body VCS_View_API is
       procedure Add_Separator;
       --  Add a separator in the menu if needed
 
+      function Create_Activity_Menu (Menu : Gtk_Menu) return Boolean;
+      --  Returns True if some activities have been added into Menu
+
       ----------------
       -- Add_Action --
       ----------------
@@ -297,6 +302,51 @@ package body VCS_View_API is
             Items_Inserted := False;
          end if;
       end Add_Separator;
+
+      --------------------------
+      -- Create_Activity_Menu --
+      --------------------------
+
+      function Create_Activity_Menu (Menu : Gtk_Menu) return Boolean is
+         Activity  : Activity_Id := First;
+         A_Context : Activity_Context_Access;
+         Item      : Gtk_Menu_Item;
+         Found     : Boolean := False;
+      begin
+         while Activity /= No_Activity loop
+            if Project_Path (Get_Root_Project (Get_Registry (Kernel).all))
+              = Get_Project_Path (Activity)
+              and then not Is_Committed (Activity)
+            then
+               Found := True;
+               Gtk_New (Item, Label => Get_Name (Activity));
+               Append (Menu, Item);
+
+               A_Context := new Activity_Context;
+
+               Set_Context_Information
+                 (A_Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
+               Set_Activity_Information (A_Context, Image (Activity));
+
+               if Get_Creator (Context) /=
+                 Abstract_Module_ID (VCS_Module_ID)
+               then
+                  --  In this case record the original file or directory
+                  Set_File_Information
+                    (A_Context, File_Information (File_Name));
+               end if;
+
+               Context_Callback.Connect
+                 (Item, "activate", On_Menu_Add_To_Activity'Access,
+                  Selection_Context_Access (A_Context));
+               Set_Sensitive (Item, Section_Active);
+            end if;
+
+            Activity := Next;
+         end loop;
+
+         return Found;
+      end Create_Activity_Menu;
 
       Log_File   : Boolean := False;
       Log_Action : VCS_Action;
@@ -460,6 +510,7 @@ package body VCS_View_API is
 
             --  Removed for files belonging to activities as we only want
             --  group commit here.
+
             if Context.all not in Activity_Context'Class then
                Add_Action (Commit, On_Menu_Commit'Access, not Log_Exists);
             end if;
@@ -515,22 +566,23 @@ package body VCS_View_API is
 
             Add_Separator;
 
-            --  Removed for files inside activities. See previous comments.
+            --  Removed for files inside activities. See previous comments
+
             if Context.all not in Activity_Context'Class then
                Add_Action (Add, On_Menu_Add'Access, not Log_Exists);
             end if;
 
             Add_Action
-              (Add_No_Commit, On_Menu_Add_No_Commit'Access, not Log_Exists);
+              (Add_No_Commit, On_Menu_Add_No_Commit'Access, False);
 
-            --  Removed for files inside activities. See previous comments.
+            --  Removed for files inside activities. See previous comments
+
             if Context.all not in Activity_Context'Class then
                Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
             end if;
 
             Add_Action
-              (Remove_No_Commit, On_Menu_Remove_No_Commit'Access,
-               not Log_Exists);
+              (Remove_No_Commit, On_Menu_Remove_No_Commit'Access, False);
             Add_Action (Revert, On_Menu_Revert'Access);
             Add_Action (Resolved, On_Menu_Resolved'Access);
          end if;
@@ -559,42 +611,9 @@ package body VCS_View_API is
          Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
 
          declare
-            Activity  : Activity_Id := First;
-            A_Context : Activity_Context_Access;
-            Found     : Boolean := False;
+            Found : Boolean := False;
          begin
-            while Activity /= No_Activity loop
-               if Project_Path (Get_Root_Project (Get_Registry (Kernel).all))
-                 = Get_Project_Path (Activity)
-                 and then not Is_Committed (Activity)
-               then
-                  Found := True;
-                  Gtk_New (Item, Label => Get_Name (Activity));
-                  Append (Submenu, Item);
-
-                  A_Context := new Activity_Context;
-
-                  Set_Context_Information
-                    (A_Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
-                  Set_Activity_Information (A_Context, Image (Activity));
-
-                  if Get_Creator (Context) /=
-                    Abstract_Module_ID (VCS_Module_ID)
-                  then
-                     --  In this case record the original file
-                     Set_File_Information
-                       (A_Context, File_Information (File_Name));
-                  end if;
-
-                  Context_Callback.Connect
-                    (Item, "activate", On_Menu_Add_To_Activity'Access,
-                     Selection_Context_Access (A_Context));
-                  Set_Sensitive (Item, Section_Active);
-               end if;
-
-               Activity := Next;
-            end loop;
-
+            Found := Create_Activity_Menu (Submenu);
             Set_Sensitive (Menu_Item, Found);
          end;
       end if;
@@ -615,6 +634,55 @@ package body VCS_View_API is
             Set_Sensitive (Menu_Item, Section_Active);
          else
             Submenu := Gtk_Menu (Menu);
+         end if;
+
+         if not File_Section then
+            --  Add or remove a directory
+
+            Gtk_New (Item, "Add/No commit");
+            Append (Submenu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               On_Menu_Add_Directory_No_Commit'Access, Context);
+
+            Gtk_New (Item, "Remove/No commit");
+            Append (Submenu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               On_Menu_Remove_Directory_No_Commit'Access, Context);
+
+            if Context.all not in Activity_Context'Class then
+               if Commit_Directory (Ref) then
+                  --  Add Commit and Add to Activity menu entry only if
+                  --  directories as handled by the underlying VCS.
+
+                  Gtk_New (Item, "Commit");
+                  Append (Submenu, Item);
+                  Context_Callback.Connect
+                    (Item, "activate", On_Menu_Commit'Access, Context);
+
+                  declare
+                     A_Menu    : Gtk_Menu;
+                     Menu_Item : Gtk_Menu_Item;
+                  begin
+                     Gtk_New (Menu_Item, Label => -"Add to Activity");
+                     Append (Submenu, Menu_Item);
+                     Gtk_New (A_Menu);
+                     Set_Submenu (Menu_Item, Gtk_Widget (A_Menu));
+
+                     declare
+                        Found : Boolean := False;
+                     begin
+                        Found := Create_Activity_Menu (A_Menu);
+                        Set_Sensitive (Menu_Item, Found);
+                     end;
+                  end;
+               end if;
+            end if;
+
+            Items_Inserted := True;
+            Gtk_New (Item);
+            Append (Submenu, Item);
          end if;
 
          if Actions (Status_Files) /= null then
@@ -773,9 +841,6 @@ package body VCS_View_API is
            (Item, "activate",
             On_Menu_Select_Files_Same_Status'Access, Context);
          Set_Sensitive (Item, True);
-
-      elsif Project_Section then
-         Add_Separator;
       end if;
    end VCS_Contextual_Menu;
 
@@ -1226,8 +1291,29 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+      F_Context : constant File_Selection_Context_Access :=
+                    File_Selection_Context_Access (Context);
+      Files : String_List.List;
    begin
-      On_Log_Action (Context, Commit);
+      if Has_Directory_Information (F_Context)
+        and then not Has_File_Information (F_Context)
+      then
+         --  This is a directory, to commit we need to remove the trailing
+         --  directory separator.
+
+         declare
+            Dir : constant String :=
+                    Directory_Information
+                      (File_Selection_Context_Access (Context));
+         begin
+            String_List.Append (Files, Dir (Dir'First .. Dir'Last - 1));
+         end;
+
+      else
+         Files := Get_Selected_Files (Context);
+      end if;
+
+      On_Log_Action (Context, Commit, Files);
 
    exception
       when E : others =>
@@ -1241,11 +1327,11 @@ package body VCS_View_API is
 
    procedure On_Log_Action
      (Context : Selection_Context_Access;
-      Action  : VCS_Action)
+      Action  : VCS_Action;
+      Files   : in out String_List.List)
    is
       Kernel         : constant Kernel_Handle := Get_Kernel (Context);
       Suffix         : constant String := Action_To_Log_Suffix (Action);
-      Files          : String_List.List;
       Real_Files     : String_List.List;
       Files_Temp     : String_List.List_Node;
       All_Logs_Exist : Boolean := True;
@@ -1254,9 +1340,7 @@ package body VCS_View_API is
       use String_List;
       use type String_List.List_Node;
    begin
-      Real_Files := Get_Selected_Files (Context);
-
-      if String_List.Is_Empty (Real_Files) then
+      if String_List.Is_Empty (Files) then
          Console.Insert
            (Kernel, -"VCS: No file selected, cannot commit", Mode => Error);
          return;
@@ -1265,7 +1349,7 @@ package body VCS_View_API is
       --  Add all files in Files, if we have a log selected then we add the
       --  corresponding file.
 
-      Files_Temp := String_List.First (Real_Files);
+      Files_Temp := String_List.First (Files);
 
       while Files_Temp /= Null_Node loop
          declare
@@ -1280,22 +1364,20 @@ package body VCS_View_API is
                     Get_File_From_Log (Kernel, Create (Full_Filename => S));
                begin
                   if L /= VFS.No_File then
-                     Append (Files, Full_Name (L).all);
+                     Append (Real_Files, Full_Name (L).all);
                   end if;
                end;
 
             else
                --  Not a log file
-               Append (Files, S);
+               Append (Real_Files, S);
             end if;
          end;
 
          Files_Temp := Next (Files_Temp);
       end loop;
 
-      Free (Real_Files);
-
-      Files_Temp := String_List.First (Files);
+      Files_Temp := String_List.First (Real_Files);
 
       --  Open log editors for files that don't have a log
 
@@ -1320,9 +1402,11 @@ package body VCS_View_API is
 
       if All_Logs_Exist then
          Log_Action_Files
-           (Kernel, Get_Current_Ref (Context), Action, Files, No_Activity);
+           (Kernel, Get_Current_Ref (Context),
+            Action, Real_Files, No_Activity);
       end if;
 
+      String_List.Free (Real_Files);
       String_List.Free (Files);
    end On_Log_Action;
 
@@ -1369,14 +1453,47 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+      Files : String_List.List := Get_Selected_Files (Context);
    begin
-      On_Log_Action (Context, Add);
+      On_Log_Action (Context, Add, Files);
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Add;
+
+   -------------------------------------
+   -- On_Menu_Add_Directory_No_Commit --
+   -------------------------------------
+
+   procedure On_Menu_Add_Directory_No_Commit
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Files : String_List.List;
+      Ref   : VCS_Access;
+      Dir   : constant String :=
+                Directory_Information
+                  (File_Selection_Context_Access (Context));
+   begin
+      --  Do not pass the ending directory separator as we really want the last
+      --  part to be the name we add.
+
+      String_List.Append (Files, Dir (Dir'First .. Dir'Last - 1));
+
+      Ref := Get_Current_Ref (Context);
+
+      Add (Ref, Files, Log => "", Commit => False);
+
+      String_List.Free (Files);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Add_Directory_No_Commit;
 
    ---------------------------
    -- On_Menu_Add_No_Commit --
@@ -1387,8 +1504,24 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+      Files : String_List.List;
+      Ref   : VCS_Access;
    begin
-      On_Log_Action (Context, Add_No_Commit);
+      Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot remove file",
+            Mode => Error);
+         return;
+      end if;
+
+      Ref := Get_Current_Ref (Context);
+
+      Add (Ref, Files, Log => "", Commit => False);
+      Get_Status (Ref, Files);
+
+      String_List.Free (Files);
 
    exception
       when E : others =>
@@ -1474,14 +1607,47 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+      Files : String_List.List := Get_Selected_Files (Context);
    begin
-      On_Log_Action (Context, Remove);
+      On_Log_Action (Context, Remove, Files);
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Remove;
+
+   ----------------------------------------
+   -- On_Menu_Remove_Directory_No_Commit --
+   ----------------------------------------
+
+   procedure On_Menu_Remove_Directory_No_Commit
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Files : String_List.List;
+      Ref   : VCS_Access;
+      Dir   : constant String :=
+                Directory_Information
+                  (File_Selection_Context_Access (Context));
+   begin
+      --  Do not pass the ending directory separator as we really want the last
+      --  part to be the name we add.
+
+      String_List.Append (Files, Dir (Dir'First .. Dir'Last - 1));
+
+      Ref := Get_Current_Ref (Context);
+
+      Remove (Ref, Files, Log => "", Commit => False);
+
+      String_List.Free (Files);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Remove_Directory_No_Commit;
 
    ------------------------------
    -- On_Menu_Remove_No_Commit --
@@ -1492,8 +1658,24 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+      Files : String_List.List;
+      Ref   : VCS_Access;
    begin
-      On_Log_Action (Context, Remove_No_Commit);
+      Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot remove file",
+            Mode => Error);
+         return;
+      end if;
+
+      Ref := Get_Current_Ref (Context);
+
+      Remove (Ref, Files, Log => "", Commit => False);
+      Get_Status (Ref, Files);
+
+      String_List.Free (Files);
 
    exception
       when E : others =>
