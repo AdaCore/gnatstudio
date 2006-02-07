@@ -32,6 +32,7 @@ with Projects;              use Projects;
 with Projects.Registry;     use Projects.Registry;
 with Traces;                use Traces;
 with VCS.Unknown_VCS;       use VCS.Unknown_VCS;
+with VCS_View;              use VCS_View;
 with XML_Parsers;
 
 package body VCS_Activities is
@@ -499,7 +500,7 @@ package body VCS_Activities is
    begin
       while Item /= Empty_Activity loop
          if not Item.Committed
-           and then Is_In_List (Item.Files, Full_Name (File, True).all)
+           and then Is_In_List (Item.Files, File_Key (File))
          then
             return Item.Id;
          end if;
@@ -529,13 +530,34 @@ package body VCS_Activities is
       Activity : Activity_Id;
       File     : Virtual_File)
    is
+      F_Activity : constant Activity_Id := Get_File_Activity (File);
+      Item       : Activity_Record := Get (Activity);
       Project    : constant Project_Type :=
                      Get_Project_From_File (Get_Registry (Kernel).all, File);
       VCS        : constant VCS_Access :=
                      Get_VCS_From_Id
                        (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
-      F_Activity : constant Activity_Id := Get_File_Activity (File);
-      Item       : Activity_Record := Get (Activity);
+
+      procedure Add (Name : String);
+      --  Add Name (a file or directory) into the VCS Activities
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add (Name : String) is
+      begin
+         if not Is_In_List (Item.Files, Name) then
+            Item.VCS := VCS;
+
+            String_List.Append (Item.Files, Name);
+
+            Set (Activity, Item);
+
+            Save_Activities (Kernel);
+         end if;
+      end Add;
+
    begin
       --  Check that the new file is using the same VCS. Also check that the
       --  file is not yet part of an open activity.
@@ -545,19 +567,11 @@ package body VCS_Activities is
                  and then not Is_Committed (F_Activity))
       then
          --  ??? dialog saying that it is not possible (2 diff VCS)
-         --  ??? or file already part of an activity.
+         --  ??? or activity is already committed.
          return;
       end if;
 
-      if not Is_In_List (Item.Files, Full_Name (File, True).all) then
-         Item.VCS := VCS;
-
-         String_List.Append (Item.Files, Full_Name (File, True).all);
-
-         Set (Activity, Item);
-
-         Save_Activities (Kernel);
-      end if;
+      Add (File_Key (File));
    end Add_File;
 
    -----------------
@@ -571,7 +585,8 @@ package body VCS_Activities is
    is
       Item : Activity_Record := Get (Activity);
    begin
-      Remove_From_List (Item.Files, Full_Name (File, True).all);
+      Remove_From_List (Item.Files, File_Key (File));
+
       Set (Activity, Item);
       Save_Activities (Kernel);
    end Remove_File;
