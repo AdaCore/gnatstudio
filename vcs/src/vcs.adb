@@ -36,6 +36,15 @@ package body VCS is
    --  Global variable to store all the registered handlers.
 
    ----------------------
+   -- Commit_Directory --
+   ----------------------
+
+   function Commit_Directory (Ref : access VCS_Record) return Boolean is
+   begin
+      return Ref.Commit_Directory;
+   end Commit_Directory;
+
+   ----------------------
    -- Copy_File_Status --
    ----------------------
 
