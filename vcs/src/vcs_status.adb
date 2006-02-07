@@ -18,9 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-
-with File_Utils;              use File_Utils;
+with VCS_View; use VCS_View;
 
 package body VCS_Status is
 
@@ -72,11 +70,7 @@ package body VCS_Status is
    function Hash (F : Virtual_File) return Header_Num is
       function Hash is new HTables.Hash (Header_Num);
    begin
-      if Filenames_Are_Case_Sensitive then
-         return Hash (Full_Name (F).all);
-      else
-         return Hash (To_Lower (Full_Name (F).all));
-      end if;
+      return Hash (File_Key (F));
    end Hash;
 
    ---------------
