@@ -194,6 +194,9 @@ package VCS_View is
       Context : Selection_Context_Access);
    --  Select all files having the same status as the current selection
 
+   function File_Key (File : VFS.Virtual_File) return String;
+   --  Returns the key used for the file or directory in the view
+
 private
 
    Base_Name_Column          : constant := 0;
