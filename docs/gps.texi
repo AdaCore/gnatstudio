@@ -7079,6 +7079,20 @@ the current file to this activity.
 Only available when the current context contains directory information
 
 @table @i
+@item Add/No commit
+Add the selected directory into the VCS.
+
+@item Remove/No commit
+Remove the selected directory from the VCS.
+
+@item Commit
+Commit the selected directory into the VCS. This action is available
+only if the VCS supports commit on directories, @pxref{The VCS node}.
+
+@item Add to Activity
+Add the selected directory into the VCS. This action is available
+only if the VCS supports commit on directories, @pxref{The VCS node}.
+
 @item Query status for directory
 Query status for the files contained in the selected directory.
 
@@ -14253,9 +14267,14 @@ is supported by the VCS and can take the values @code{UNIX},
 value. With this attribute it is possible to control the directory
 separator to use when specifying files to the VCS.
 
+The attribute @code{commit_directory} specifies if the VCS supports
+commit on directories and can take the values @code{TRUE} or @code{FALSE}.
+If it is set to @code{TRUE} it means that the VCS supports commit on
+directories this is the case for @code{Subversion} for example.
+
 Note that to support group commit with shared log on GPS both
-absolute_name and atomic_commands must be true. This is the case for
-the Subversion VCS for example.
+@code{absolute_name} and @code{atomic_commands} must be true. This is
+the case for the Subversion VCS for example.
 
 Here is an example, adapted to the use of CVS:
 
