@@ -2383,7 +2383,7 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
   <shell_doc name="GPS.Toolbar.append">
      <param name="self">The instance of GPS.Toolbar</param>
      <param name="widget">An instance of GPS.GUI</param>
-     <param name="tooltip">A string</param>
+     <param name="tooltip" default="">A string</param>
      <description>Add a new widget in the toolbar. This should generally be an instance of GPS.Combo for proper rendering on the screen</description>
   </shell_doc>
 
