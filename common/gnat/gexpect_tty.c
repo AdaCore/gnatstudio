@@ -1518,18 +1518,20 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
       /* I wonder: would just ioctl (0, TIOCNOTTY, 0) work here?
 	 I can't test it since I don't have 4.3.  */
       int j = gvd_open ("/dev/tty", O_RDWR, 0);
-      ioctl (j, TIOCNOTTY, 0);
-      gvd_close (j);
+      if (j != -1) {
+         ioctl (j, TIOCNOTTY, 0);
+         gvd_close (j);
 #ifndef USG
       /* In order to get a controlling terminal on some versions
 	 of BSD, it is necessary to put the process in pgrp 0
 	 before it opens the terminal.  */
 #ifdef HAVE_SETPGID
-      setpgid (0, 0);
+         setpgid (0, 0);
 #else
-      setpgrp (0, 0);
+         setpgrp (0, 0);
 #endif
 #endif
+       }
     }
 #endif /* TIOCNOTTY */
 
