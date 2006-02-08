@@ -32,7 +32,9 @@ PyObject * ada_Py_InitModule4
   return Py_InitModule4 (name, methods, doc, self, apiver);
 }
 
-PyObject * ada_pycfunction_newex (PyMethodDef *ml, PyObject* self, PyObject* module) {
+PyObject * ada_pycfunction_newex
+  (PyMethodDef *ml, PyObject* self, PyObject* module)
+{
   PyObject* method = PyCFunction_New (ml, self);
 
 #if (PY_MAJOR_VERSION > 2 \
@@ -50,10 +52,20 @@ int ada_pyget_refcount (PyObject* obj) {
    return obj->ob_refcnt;
 }
 
+char* ada_py_refcount_msg (PyObject* obj) {
+   static char msg[200];
+   if (obj) {
+      snprintf (msg, 199, "%p (%s, rc=%d)",
+                obj, obj->ob_type->tp_name, obj->ob_refcnt);
+   } else {
+      msg[0] = '\0';
+   }
+   return msg;
+}
+
 void ada_py_print_refcount (PyObject* obj, char* msg) {
   if (obj) {
-    printf ("DEBUG %s obj=%p (%s) refcont=%d\n",
-	    msg, obj, obj->ob_type->tp_name, obj->ob_refcnt);
+    printf ("DEBUG %s %s\n", msg, ada_py_refcount_msg (obj));
   }
 }
 
