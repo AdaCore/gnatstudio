@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -36,7 +36,7 @@ with Unchecked_Deallocation;
 
 package body Traces is
 
-   --  Note: rev 1.5 of this file have a (disabled) support for symbolic
+   --  Note: rev 1.5 of this file has a (disabled) support for symbolic
    --  tracebacks.
 
    --  ??? We could display the stack pointer with
@@ -237,7 +237,10 @@ package body Traces is
       Location : String := GNAT.Source_Info.Source_Location;
       Entity   : String := GNAT.Source_Info.Enclosing_Entity) is
    begin
-      if Debug_Mode and then Handle.Active then
+      if Debug_Mode
+        and then Handles_List /= null  --  module not terminated
+        and then Handle.Active
+      then
          Log (Handle, Message, Location, Entity);
       end if;
    end Trace;
@@ -255,7 +258,7 @@ package body Traces is
       Location           : String := GNAT.Source_Info.Source_Location;
       Entity             : String := GNAT.Source_Info.Enclosing_Entity) is
    begin
-      if Debug_Mode and then Handle.Active then
+      if Debug_Mode and then Handles_List /= null and then Handle.Active then
          if not Condition then
             Log (Handle, Error_Message, Location, Entity, Red_Bg & Default_Fg);
 
@@ -286,7 +289,12 @@ package body Traces is
 
    function Active (Handle : Debug_Handle) return Boolean is
    begin
-      if Handle = null then
+      if Handles_List = null then
+         --  If this module has been finalized, we always display the traces.
+         --  These traces are generally when GNAT finalizes controlled types...
+         return True;
+
+      elsif Handle = null then
          --  In case Handle hasn't been initialized yet
          return False;
 
@@ -764,6 +772,8 @@ package body Traces is
 
          Tmp := Next;
       end loop;
+
+      Handles_List := null;
 
       if Default_Output /= Convert (Ada.Text_IO.Standard_Output) then
          Close (Default_Output.all);
