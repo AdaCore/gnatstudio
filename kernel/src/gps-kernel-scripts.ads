@@ -398,7 +398,12 @@ package GPS.Kernel.Scripts is
    --  expecting its own user data set in the constructor.
    --  When associating a GObject, the Class_Instance will exists as long as
    --  the object exists. However, if the object is destroyed, the
-   --  Class_Instance is not necessarily destroyed.
+   --  Class_Instance is not necessarily destroyed, although calling any of its
+   --  functions at the script level will result in exceptions.
+   --  Therefore, the following code works:
+   --      e = GPS.MDI.get ("Scenario View")
+   --      e.destroy()  ## widget destroyed, but e is still valid
+   --      e.hide()     ## error, since e is no longer associated with a widget
 
    function Get_Instance
      (Script : access Scripting_Language_Record'Class;
