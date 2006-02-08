@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -964,7 +964,7 @@ package body Custom_Module is
                Set_Error_Msg (Data, -"No such menu: " & Path);
             else
                Inst := Get_Instance (Get_Script (Data), Widget => Menu);
-               if Inst = null then
+               if Inst = No_Class_Instance then
                   Inst := New_Instance (Get_Script (Data), Menu_Class);
                   Set_Data (Inst, Widget => GObject (Menu));
                end if;
@@ -1015,7 +1015,6 @@ package body Custom_Module is
                Add (Menu, Label);
                Show_All (Label);
             end if;
-            Free (Inst);
          end;
       end if;
 
@@ -1042,19 +1041,16 @@ package body Custom_Module is
          Inst := Nth_Arg (Data, 1, Contextual_Class);
          Set_Data (Inst, Contextual_Class,
                    Value => String'(Nth_Arg (Data, 2)));
-         Free (Inst);
 
       elsif Command = "show" then
          Inst := Nth_Arg (Data, 1, Contextual_Class);
          Set_Contextual_Menu_Visible
            (Kernel, String'(Get_Data (Inst, Contextual_Class)), True);
-         Free (Inst);
 
       elsif Command = "hide" then
          Inst := Nth_Arg (Data, 1, Contextual_Class);
          Set_Contextual_Menu_Visible
            (Kernel, String'(Get_Data (Inst, Contextual_Class)), False);
-         Free (Inst);
 
       elsif Command = "set_sensitive" then
          Inst := Nth_Arg (Data, 1, Contextual_Class);
@@ -1062,7 +1058,6 @@ package body Custom_Module is
            (Kernel,
             String'(Get_Data (Inst, Contextual_Class)),
             Nth_Arg (Data, 2));
-         Free (Inst);
 
       elsif Command = "list" then
          Set_Return_Value_As_List (Data);

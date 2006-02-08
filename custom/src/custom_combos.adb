@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2005                       --
+--                     Copyright (C) 2004-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -325,7 +325,7 @@ package body Custom_Combos is
             User_Data   => On_Changed,
             After       => True);
 
-         Set_Data (Instance, GObject (Combo));
+         Set_Data (Instance, Widget => GObject (Combo));
       end if;
       return Combo;
    end Create_Combo;
@@ -400,12 +400,12 @@ package body Custom_Combos is
             Set_Error_Msg (Data, -"Component not found: " & Nth_Arg (Data, 2));
          else
             Inst := Get_Instance (Get_Script (Data), Widget);
-            if Inst /= null then
+            if Inst /= No_Class_Instance then
                Set_Return_Value (Data, Inst);
             else
                Inst := New_Instance
                  (Get_Script (Data), Get_GUI_Class (Kernel));
-               Set_Data (Inst, GObject (Widget));
+               Set_Data (Inst, Widget => GObject (Widget));
                Set_Return_Value (Data, Inst);
             end if;
          end if;
@@ -419,7 +419,6 @@ package body Custom_Combos is
             Append_Widget (Get_Toolbar (Kernel),
                            Gtk_Widget (GObject'(Get_Data (EntInst))),
                            Tooltip_Text => Nth_Arg (Data, 3, ""));
-            Free (EntInst);
          end;
       end if;
    end Custom_Toolbar_Handler;
@@ -477,8 +476,6 @@ package body Custom_Combos is
            (Get_Entry (Custom_Combo (GObject'(Get_Data (Inst))).Combo),
             Nth_Arg (Data, 2));
       end if;
-
-      Free (Inst);
    end Custom_Entry_Handler;
 
    --------------------
@@ -497,7 +494,7 @@ package body Custom_Combos is
          Name_Parameters (Data, Create_Button_Args);
          Gtk_New (Button, Nth_Arg (Data, 3));
          Set_Name (Button, Nth_Arg (Data, 2));
-         Set_Data (Inst, GObject (Button));
+         Set_Data (Inst, Widget => GObject (Button));
          Show_All (Button);
          Subprogram_Callback.Connect
            (Button, "clicked", On_Button_Clicked'Access,
@@ -509,8 +506,6 @@ package body Custom_Combos is
                        Gtk.Button.Label_Property,
                        Nth_Arg (Data, 2));
       end if;
-
-      Free (Inst);
    end Button_Handler;
 
    -----------------------

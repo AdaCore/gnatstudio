@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005                           --
+--                      Copyright (C) 2005-2006                      --
 --                               AdaCore                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -71,7 +71,6 @@ package body GVD.Scripts is
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Inst);
-      Free (Inst);
       return D;
    end Create_Callback_Data;
 
@@ -88,7 +87,6 @@ package body GVD.Scripts is
    begin
       Inst := Nth_Arg (Data, 2, New_Class (Get_Kernel (Data), "Debugger"));
       Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-      Free (Inst);
       return Debugger_Hooks_Data'(Hooks_Data with Debugger => Process);
    end From_Callback_Data_Debugger;
 
@@ -110,7 +108,6 @@ package body GVD.Scripts is
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Inst);
       Set_Nth_Arg (D.all, 3, Data.Command);
-      Free (Inst);
       return D;
    end Create_Callback_Data;
 
@@ -131,7 +128,6 @@ package body GVD.Scripts is
          Process  => Visual_Debugger (GObject'(Get_Data (Inst))),
          Command  => Debugger_Cmd);
    begin
-      Free (Inst);
       return Args;
    end From_Callback_Data_Debugger_String;
 
@@ -197,7 +193,7 @@ package body GVD.Scripts is
    is
       Inst : Class_Instance := Get_Instance (Script, Process);
    begin
-      if Inst = null then
+      if Inst = No_Class_Instance then
          Inst := New_Instance
            (Script, New_Class (Get_Kernel (Script), "Debugger"));
          Set_Data (Inst, GObject (Process));
@@ -254,7 +250,6 @@ package body GVD.Scripts is
                File_Inst := Nth_Arg
                  (Data, 1, Get_File_Class (Kernel), Allow_Null => False);
                File := Get_File (Get_Data (File_Inst));
-               Free (File_Inst);
 
                while List /= null loop
                   Process := Visual_Debugger (List.Debugger);
@@ -297,7 +292,6 @@ package body GVD.Scripts is
                Command        => GPS.Kernel.Scripts.Nth_Arg (Data, 2),
                Output_Command => Nth_Arg (Data, 3, True),
                Mode           => GVD.Types.Hidden));
-         Free (Inst);
 
       elsif Command = "get_executable" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -305,25 +299,21 @@ package body GVD.Scripts is
          Set_Return_Value
            (Data, Create_File
               (Get_Script (Data), Get_Executable (Process.Debugger)));
-         Free (Inst);
 
       elsif Command = "get_num" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Set_Return_Value (Data, Integer (Get_Num (Process)));
-         Free (Inst);
 
       elsif Command = "is_busy" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Set_Return_Value (Data, Command_In_Process (Process));
-         Free (Inst);
 
       elsif Command = "close" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Close_Debugger (Process);
-         Free (Inst);
 
       elsif Command = "spawn" then
          Name_Parameters (Data, (1 => Arg_Exec'Unchecked_Access,
@@ -333,7 +323,6 @@ package body GVD.Scripts is
               (Data, 1, Get_File_Class (Kernel), Allow_Null => False);
             File : constant Virtual_File := Get_File (Get_Data (File_Inst));
          begin
-            Free (File_Inst);
             Process := Spawn
               (Kernel => Kernel,
                File   => File,

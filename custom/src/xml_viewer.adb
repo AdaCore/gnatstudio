@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
+--                        Copyright (C) 2005-2006                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -385,8 +385,6 @@ package body XML_Viewer is
 
          Set_Data (Inst, XML_Viewer_Class,
                    Value => View.all'Address);
-
-         Free (Inst);
 
       elsif Command = "parse" then
          Value := Nth_Arg_Data (Data, 1, XML_Viewer_Class);
