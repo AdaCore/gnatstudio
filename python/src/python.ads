@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2006                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -322,7 +322,8 @@ package Python is
 
    procedure PyDict_SetItemString
      (Dict : PyDictObject; Key : String; Obj : PyObject);
-   --  Same as above
+   --  Same as above. Refcounting for Obj is automatically increased, you do
+   --  not need to do it yourself.
 
    function PyDict_SetItem
      (Dict  : PyDictObject;
