@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -30,7 +30,6 @@ with GNAT.Debug_Utilities;      use GNAT.Debug_Utilities;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
-with Gtkada.Types;              use Gtkada.Types;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -73,85 +72,27 @@ package body Shell_Script is
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Kernel_Handle);
 
-   -------------------
-   -- Instance_Data --
-   -------------------
-
-   type Instance_Data_Type is (Strings, Object, Addresses, Integers);
-   type Instance_Data (Data : Instance_Data_Type := Object) is record
-      case Data is
-         when Strings =>
-            Str : GNAT.OS_Lib.String_Access;
-         when Object =>
-            Obj : Glib.Object.GObject;
-         when Addresses =>
-            Addr       : System.Address;
-            On_Destroy : Destroy_Handler;
-         when Integers =>
-            Int : Integer;
-      end case;
-   end record;
-
    --------------------------
    -- Shell_Class_Instance --
    --------------------------
 
    type Shell_Class_Instance_Record is new Class_Instance_Record with record
       Class  : Class_Type;
-      Script : Scripting_Language;
-      Data   : Instance_Data;
    end record;
    type Shell_Class_Instance is access all Shell_Class_Instance_Record'Class;
 
-   function Get_Data
+   function Print_Refcount
+     (Instance : access Shell_Class_Instance_Record) return String;
+   function Is_Subclass
      (Instance : access Shell_Class_Instance_Record;
-      Class    : Class_Type) return String;
-   function Get_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Class    : Class_Type) return System.Address;
-   function Get_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Class    : Class_Type) return Integer;
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Class    : Class_Type;
-      Value    : String);
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Class    : Class_Type;
-      Value    : Integer);
-   procedure Set_Data
-     (Instance   : access Shell_Class_Instance_Record;
-      Class      : Class_Type;
-      Value      : System.Address;
-      On_Destroy : Destroy_Handler := null);
-   function Get_Script (Instance : access Shell_Class_Instance_Record)
-      return Scripting_Language;
-   procedure Primitive_Free
-     (Instance     : in out Shell_Class_Instance_Record;
-      Free_Pointer : out Boolean);
-   procedure Print_Refcount
-     (Instance : access Shell_Class_Instance_Record; Msg : String);
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Widget   : Glib.Object.GObject);
-   function Get_Data
-     (Instance : access Shell_Class_Instance_Record)
-      return Glib.Object.GObject;
+      Base     : Class_Type) return Boolean;
    --  See doc from inherited subprogram
 
-   procedure Internal_Free
-     (Instance : in out Shell_Class_Instance_Record'Class);
-   --  Free the contents of Instance, but not Instance itself
-
-   procedure Free_Instance (Instance : in out Shell_Class_Instance);
+   procedure Free_Instance (Inst : in out Shell_Class_Instance);
    package Instances_List is new Generic_List
      (Shell_Class_Instance, Free_Instance);
    use Instances_List;
    --  ??? Would be faster to use a hash-table...
-
-   package Widget_User_Data is new Glib.Object.User_Data
-     (Data_Type => Shell_Class_Instance);
 
    ---------------------
    -- Shell_scripting --
@@ -219,17 +160,9 @@ package body Shell_Script is
       Hide_Output   : Boolean := False;
       Errors        : out Boolean);
    function Get_Name (Script : access Shell_Scripting_Record) return String;
-   function Is_Subclass
-     (Script   : access Shell_Scripting_Record;
-      Instance : access Class_Instance_Record'Class;
-      Base     : Class_Type) return Boolean;
    function Get_Kernel
      (Script : access Shell_Scripting_Record)
       return Kernel_Handle;
-   function Get_Instance
-     (Script : access Shell_Scripting_Record;
-      Widget : access Glib.Object.GObject_Record'Class)
-      return Class_Instance;
    --  See doc from inherited subprograms
 
    function New_Instance
@@ -384,8 +317,7 @@ package body Shell_Script is
       Kernel  : System.Address) return String;
    --  Launch the command interpreter for Input and return the output.
 
-   function Name_From_Instance
-     (Instance : access Class_Instance_Record'Class) return String;
+   function Name_From_Instance (Instance : Class_Instance) return String;
    --  Return the string to display to report the instance in the shell
 
    function Instance_From_Name
@@ -436,6 +368,16 @@ package body Shell_Script is
      (Console : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the console is destroyed
 
+   -------------------
+   -- Free_Instance --
+   -------------------
+
+   procedure Free_Instance (Inst : in out Shell_Class_Instance) is
+      pragma Unreferenced (Inst);
+   begin
+      null;
+   end Free_Instance;
+
    --------------------
    -- Block_Commands --
    --------------------
@@ -450,11 +392,10 @@ package body Shell_Script is
    -- Name_From_Instance --
    ------------------------
 
-   function Name_From_Instance
-     (Instance : access Class_Instance_Record'Class) return String is
+   function Name_From_Instance (Instance : Class_Instance) return String is
    begin
-      return '<' & Get_Name (Shell_Class_Instance (Instance).Class)
-        & "_0x" & System.Address_Image (Instance.all'Address)
+      return '<' & Get_Name (Shell_Class_Instance (Get_CIR (Instance)).Class)
+        & "_0x" & System.Address_Image (Get_CIR (Instance).all'Address)
         & '>';
    end Name_From_Instance;
 
@@ -506,15 +447,6 @@ package body Shell_Script is
       end loop;
       return null;
    end Instance_From_Address;
-
-   -------------------
-   -- Free_Instance --
-   -------------------
-
-   procedure Free_Instance (Instance : in out Shell_Class_Instance) is
-   begin
-      Free (Instance);
-   end Free_Instance;
 
    ----------------------
    -- Commands_As_List --
@@ -583,11 +515,10 @@ package body Shell_Script is
    -----------------
 
    function Is_Subclass
-     (Script   : access Shell_Scripting_Record;
-      Instance : access Class_Instance_Record'Class;
+     (Instance : access Shell_Class_Instance_Record;
       Base     : Class_Type) return Boolean
    is
-      pragma Unreferenced (Script, Instance, Base);
+      pragma Unreferenced (Instance, Base);
    begin
       --  ??? Not checked
       return True;
@@ -1487,16 +1418,6 @@ package body Shell_Script is
       return Script.Kernel;
    end Get_Kernel;
 
-   ----------------
-   -- Get_Script --
-   ----------------
-
-   function Get_Script (Instance : access Shell_Class_Instance_Record)
-      return Scripting_Language is
-   begin
-      return Instance.Script;
-   end Get_Script;
-
    -------------------------
    -- Number_Of_Arguments --
    -------------------------
@@ -1680,16 +1601,14 @@ package body Shell_Script is
         (Data.Script, Nth_Arg (Data, N));
    begin
       if Ins = null and then Allow_Null then
-         return null;
+         return No_Class_Instance;
       end if;
 
-      if Ins = null
-        or else not Is_Subclass (Data.Script, Ins, Class)
-      then
+      if Ins = null or else not Is_Subclass (Ins, Class) then
          Trace (Me, "Instance not found: " & Nth_Arg (Data, N));
          raise Invalid_Parameter;
       else
-         return Class_Instance (Ins);
+         return From_Instance (Data.Script, Ins);
       end if;
    end Nth_Arg;
 
@@ -1841,7 +1760,7 @@ package body Shell_Script is
    procedure Set_Return_Value
      (Data : in out Shell_Callback_Data; Value : Class_Instance) is
    begin
-      if Value = null then
+      if Value = No_Class_Instance then
          Set_Return_Value (Data, "null");
       else
          Set_Return_Value (Data, Name_From_Instance (Value));
@@ -1858,219 +1777,22 @@ package body Shell_Script is
    is
       Instance : Shell_Class_Instance;
    begin
-      Instance := new Shell_Class_Instance_Record'
-        (Class_Instance_Record
-         with Script => Scripting_Language (Script),
-              Class  => Class,
-              Data   => (Data => Strings, Str => null));
+      Instance := new Shell_Class_Instance_Record;
+      Instance.Class := Class;
       Instances_List.Prepend (Script.Instances, Instance);
-      return Class_Instance (Instance);
+      return From_Instance (Script, Instance);
    end New_Instance;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Class    : Class_Type) return Integer
-   is
-      pragma Unreferenced (Class);
-   begin
-      if Instance.Data.Data /= Integers then
-         raise Invalid_Data;
-      else
-         return Instance.Data.Int;
-      end if;
-   end Get_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Class    : Class_Type) return System.Address
-   is
-      pragma Unreferenced (Class);
-   begin
-      if Instance.Data.Data = Addresses then
-         return Instance.Data.Addr;
-      end if;
-      raise Invalid_Data;
-   end Get_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Class    : Class_Type) return String
-   is
-      pragma Unreferenced (Class);
-   begin
-      if Instance.Data.Data /= Strings
-        or else Instance.Data.Str = null
-      then
-         raise Invalid_Data;
-      else
-         return Instance.Data.Str.all;
-      end if;
-   end Get_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Class    : Class_Type;
-      Value    : Integer)
-   is
-      pragma Unreferenced (Class);
-   begin
-      Internal_Free (Instance.all);
-      Instance.Data := (Data => Integers, Int => Value);
-   end Set_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance   : access Shell_Class_Instance_Record;
-      Class      : Class_Type;
-      Value      : System.Address;
-      On_Destroy : Destroy_Handler := null)
-   is
-      pragma Unreferenced (Class);
-   begin
-      Internal_Free (Instance.all);
-      Instance.Data := (Data       => Addresses,
-                        Addr       => Value,
-                        On_Destroy => On_Destroy);
-   end Set_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Widget   : Glib.Object.GObject) is
-   begin
-      if Widget = null then
-         Set_Data (Instance, No_Class, System.Null_Address);
-      else
-         Set_Data (Instance, No_Class, Widget.all'Address);
-         Ref (Instance);
-         Widget_User_Data.Set
-           (Widget, Shell_Class_Instance (Instance), "GPS-shell-instance");
-      end if;
-   end Set_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : access Shell_Class_Instance_Record)
-      return Glib.Object.GObject
-   is
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, GObject);
-   begin
-      return Convert (Get_Data (Instance, No_Class));
-   end Get_Data;
-
-   ------------------
-   -- Get_Instance --
-   ------------------
-
-   function Get_Instance
-     (Script : access Shell_Scripting_Record;
-      Widget : access Glib.Object.GObject_Record'Class)
-      return Class_Instance
-   is
-      pragma Unreferenced (Script);
-   begin
-      return Class_Instance
-        (Widget_User_Data.Get (Widget, "GPS-shell-instance"));
-   exception
-      when Gtkada.Types.Data_Error =>
-         return null;
-   end Get_Instance;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Class    : Class_Type;
-      Value    : String)
-   is
-      pragma Unreferenced (Class);
-   begin
-      Internal_Free (Instance.all);
-      Instance.Data := (Data => Strings, Str => new String'(Value));
-   end Set_Data;
-
-   -------------------
-   -- Internal_Free --
-   -------------------
-
-   procedure Internal_Free
-     (Instance : in out Shell_Class_Instance_Record'Class) is
-   begin
-      case Instance.Data.Data is
-         when Object =>
-            if Instance.Data.Obj /= null then
-               Unref (Instance.Data.Obj);
-            end if;
-
-         when Strings =>
-            Free (Instance.Data.Str);
-
-         when Integers =>
-            null;
-
-         when Addresses =>
-            if Instance.Data.On_Destroy /= null
-              and then Instance.Data.Addr /= System.Null_Address
-            then
-               Instance.Data.On_Destroy (Instance.Data.Addr);
-            end if;
-            Instance.Data.Addr := System.Null_Address;
-      end case;
-   end Internal_Free;
-
-   --------------------
-   -- Primitive_Free --
-   --------------------
-
-   procedure Primitive_Free
-     (Instance     : in out Shell_Class_Instance_Record;
-      Free_Pointer : out Boolean)
-   is
-      pragma Unreferenced (Instance);
-   begin
-      --  Do not free the pointer, since the instance is kept in a list
-      --  anyway.
-      Free_Pointer := False;
-   end Primitive_Free;
 
    --------------------
    -- Print_Refcount --
    --------------------
 
-   procedure Print_Refcount
-     (Instance : access Shell_Class_Instance_Record; Msg : String)
+   function Print_Refcount
+     (Instance : access Shell_Class_Instance_Record) return String
    is
-      pragma Unreferenced (Instance, Msg);
+      pragma Unreferenced (Instance);
    begin
-      null;
+      return "";
    end Print_Refcount;
 
    ---------------------
