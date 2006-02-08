@@ -26,6 +26,11 @@ Known Problems fixed in GPS 3.2.0
               associated editor.
   Workaround: Select the bookmark and then the editor
 
+- EB28-007 Segmentation fault when closing a debug item
+  Problem:    Each time an item is closed, a segmentation fault is raised.
+  Workaround: The problem shouldn't crash GPS, so closing an item is OK before
+              the fix.
+
 - EB16-002 Wrong parenthesis highlighting
   Problem:    Parenthesis in comment are taken into account when doing the
               highlighting of matching parenthesis.
