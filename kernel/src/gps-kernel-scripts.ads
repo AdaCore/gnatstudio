@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,6 +24,7 @@
 --  GPS, and so that the core of GPS and all the various modules remain as
 --  independant as possible from the specific language.
 
+with Ada.Finalization;
 with System;
 with GNAT.OS_Lib;
 with Gtk.Handlers;
@@ -34,6 +35,9 @@ with GPS.Kernel.Contexts;
 with Interactive_Consoles;
 
 package GPS.Kernel.Scripts is
+
+   GUI_Class_Name : constant String := "GUI";
+   --  Name for the GPS.GUI class
 
    type Scripting_Language_Record is abstract tagged private;
    type Scripting_Language is access all Scripting_Language_Record'Class;
@@ -102,9 +106,11 @@ package GPS.Kernel.Scripts is
    --  primary way to make new subprograms available to the user, while
    --  organizing them into namespaces.
 
-   type Class_Instance_Record is abstract tagged private;
-   type Class_Instance is access all Class_Instance_Record'Class;
-   --  The instance of a class, which embeds some Ada data.
+   type Class_Instance is private;
+   No_Class_Instance : constant Class_Instance;
+   --  The instance of a class, which embeds some Ada data. This type is
+   --  reference counted, and will automatically take care of memory management
+   --  issues.
 
    function New_Class
      (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -297,13 +303,6 @@ package GPS.Kernel.Scripts is
    --  list. For languages that do not support lists, the append is only
    --  performed for strings (newline-separated). Other data types simply
    --  replace the current return value.
-   --
-   --  When storing a Class_Instance, the Callback_Data takes control of the
-   --  instance, and will be in charge of freeing it. Therefore, the code
-   --  would look like:
-   --    Inst := <any call that creates the instance>  (New_Instance (...))
-   --    Set_Return_Value (Data, Inst);
-   --    --  No call to Free (Inst), this is an error
 
    procedure Set_Return_Value_Key
      (Data : in out Callback_Data; Key : String; Append : Boolean := False)
@@ -346,94 +345,114 @@ package GPS.Kernel.Scripts is
       return Class_Instance is abstract;
    --  Create a new instance of the class.
    --  No data is stored in the object.
-   --  Data is used as a dispatcher, since each instance is specific to a given
-   --  programming language.
    --  This call should generally be the result of the user calling a
    --  function, which acts as a constructor for the class.
-   --  The result must be freed, unless you assign it to a Callback_Data with a
-   --  call to Set_Return_Value. In this case, it is adopted by the
-   --  Callback_Data.
 
-   function Get_Script (Instance : access Class_Instance_Record)
-      return Scripting_Language is abstract;
-   --  Return the scripting language that creates this instance
+   function Is_Subclass
+     (Instance : Class_Instance; Base : Class_Type) return Boolean;
+   --  Whether Instance is a Base or from a subclass of Base.
+
+   function Get_Script (Instance : Class_Instance) return Scripting_Language;
+   --  Return the scripting language that created this instance
 
    function Get_Data
-     (Instance : access Class_Instance_Record; Class : Class_Type)
-      return System.Address is abstract;
+     (Instance : Class_Instance; Name : Class_Type) return System.Address;
    function Get_Data
-     (Instance : access Class_Instance_Record; Class : Class_Type)
-      return Integer is abstract;
+     (Instance : Class_Instance; Name : Class_Type) return Integer;
    function Get_Data
-     (Instance : access Class_Instance_Record; Class : Class_Type)
-      return String is abstract;
+     (Instance : Class_Instance; Name : Class_Type) return String;
+   function Get_Data
+     (Instance : Class_Instance;
+      Name     : String := GUI_Class_Name) return Glib.Object.GObject;
    --  Get the data embedded in the class.
-   --  Invalid_Data is raised if no such data was stored in the instance
+   --  Invalid_Data is raised if no such data was stored in the instance.
+   --  Class is used to differentiate the data for instances that inherit from
+   --  several GPS classes, as in:
+   --     class Foo (GPS.Console, GPS.Process):
+   --        def __init__ (self):
+   --           GPS.Console.__init__ (self,..)
+   --           GPS.Process.__init__ (self,...)
+   --  since both internal classes expect different data stored internally
 
    type Destroy_Handler is access procedure (Value : System.Address);
-   pragma Convention (C, Destroy_Handler);
    --  Called when the data stored in an instance is no longer needed for this
    --  instance.
 
    procedure Set_Data
-     (Instance   : access Class_Instance_Record;
-      Class      : Class_Type;
-      Value      : String) is abstract;
+     (Instance : Class_Instance; Name : Class_Type; Value : String);
    procedure Set_Data
-     (Instance   : access Class_Instance_Record;
-      Class      : Class_Type;
-      Value      : Integer) is abstract;
+     (Instance : Class_Instance; Name : Class_Type; Value : Integer);
    procedure Set_Data
-     (Instance   : access Class_Instance_Record;
-      Class      : Class_Type;
+     (Instance : Class_Instance;
+      Widget   : Glib.Object.GObject;
+      Name     : String := GUI_Class_Name);  --  default matches GPS.GUI class
+   procedure Set_Data
+     (Instance   : Class_Instance;
+      Name       : Class_Type;
       Value      : System.Address;
-      On_Destroy : Destroy_Handler := null) is abstract;
+      On_Destroy : Destroy_Handler := null);
    --  Associate some data with the instance.
-   --  In the case of a GObject, the reference counting for the object is
-   --  increased or decreased as appropriate.
    --  The class name is required to handle multiple inheritance: if we were
    --  always using the same internal identifier to associated data with the
    --  instance, then we couldn't have a class with multiple ancestors, each
-   --  expecting its own user data set in the constructor
+   --  expecting its own user data set in the constructor.
+   --  When associating a GObject, the Class_Instance will exists as long as
+   --  the object exists. However, if the object is destroyed, the
+   --  Class_Instance is not necessarily destroyed.
 
-   procedure Set_Data
-     (Instance : access Class_Instance_Record;
-      Widget   : Glib.Object.GObject) is abstract;
-   function Get_Data
-     (Instance : access Class_Instance_Record)
-      return Glib.Object.GObject is abstract;
    function Get_Instance
-     (Script : access Scripting_Language_Record;
+     (Script : access Scripting_Language_Record'Class;
       Widget : access Glib.Object.GObject_Record'Class)
-      return Class_Instance is abstract;
+      return Class_Instance;
    --  Associate an instance and a widget. The two are then closely associated:
    --  The instance will exists as long as the widget itself exists so that we
    --  always get the user data stored in the instance every time we work with
    --  the same widget.
 
-   procedure Primitive_Free
-     (Instance     : in out Class_Instance_Record;
-      Free_Pointer : out Boolean)
-      is abstract;
-   --  Primitive operation for Free. Do not call directly, only through Free
-   --  below.
-   --  If Free_Pointer is set to True, the point to the Class_Instance should
-   --  also be freed. This should only be set to False for shell languages that
-   --  keep the instances in their own table.
+   ----------------------------
+   -- Class_Instance_Record --
+   ---------------------------
+   --  This type encapsulate some language specific data. It is overriden by
+   --  each of the scripting languages. Do not use directly unless you are
+   --  implementing a new scripting language
 
-   procedure Free (Instance : access Class_Instance_Record'Class);
-   --  Free the class instance.
+   type Class_Instance_Record is abstract tagged limited private;
+   type Class_Instance_Record_Access is access all Class_Instance_Record'Class;
+   --  A type overriden by each of the scripting languages
 
-   procedure Ref (Instance : access Class_Instance_Record);
-   --  This increments the reference counting on Instance. Use Free to
-   --  decrement. This should be called to make sure that the underlying shell
-   --  doesn't destroy the object while the instance is stored in some data
-   --  structure in the program.
-   --  By default, this does nothing
+   function From_Instance
+     (Script : access Scripting_Language_Record'Class;
+      Inst   : access Class_Instance_Record'Class) return Class_Instance;
+   --  Return a class instance wrapping Inst.
+   --  For internal use by scripting languages only.
 
-   procedure Print_Refcount
-     (Instance : access Class_Instance_Record; Msg : String) is abstract;
-   --  Debug only: print the reference counting for this instance
+   function Is_Subclass
+     (Instance : access Class_Instance_Record;
+      Base     : Class_Type) return Boolean is abstract;
+   --  Whether Instance is a Base or from a subclass of Base. Do not use
+   --  directly, use the version that takes a Class_Instance instead
+
+   procedure Incref (Inst : access Class_Instance_Record);
+   procedure Decref (Inst : access Class_Instance_Record);
+   --  Change the reference counting of Inst.
+   --  These subprograms should only be called by Class_Instance itself, not
+   --  from your own code.
+   --  These subprogram should be overriden by each scripting language that
+   --  needs to manage low-level objects, like a PyObject in python for
+   --  instance.
+   --  They should always call the inherited operation as the last part of
+   --  their code (and not as the first call, since otherwise Decref cannot
+   --  properly free the allocated memory).
+
+   function Get_CIR
+     (Inst : Class_Instance) return Class_Instance_Record_Access;
+   --  For internal use only.
+
+   function Print_Refcount
+     (Instance : access Class_Instance_Record) return String;
+   --  Debug only: print the reference counting for this instance.
+   --  Implementations are encourage to concatenate with the inherited
+   --  method's result
 
    --------------------
    -- Instance lists --
@@ -615,12 +634,6 @@ package GPS.Kernel.Scripts is
       return Kernel_Handle is abstract;
    --  Return the kernel in which Script is registered
 
-   function Is_Subclass
-     (Script   : access Scripting_Language_Record;
-      Instance : access Class_Instance_Record'Class;
-      Base     : Class_Type) return Boolean is abstract;
-   --  Whether Class is a Base or a subclass of Base.
-
    --------------------------
    -- Commands and methods --
    --------------------------
@@ -767,7 +780,7 @@ package GPS.Kernel.Scripts is
    --  Entity_Information.
 
    procedure Set_Data
-     (Instance : access Class_Instance_Record'Class;
+     (Instance : Class_Instance;
       Entity   : Entities.Entity_Information);
    function Get_Data (Data : Callback_Data; N : Positive)
       return Entities.Entity_Information;
@@ -953,12 +966,66 @@ private
       Line, Column : Natural;
    end record;
 
+   type User_Data_Type is (Strings, Objects, Addresses, Integers);
+
+   type User_Data;
+   type User_Data_List is access User_Data;
+   type User_Data (Length : Natural; Typ : User_Data_Type) is record
+      Next  : User_Data_List;
+      Name  : String (1 .. Length);
+      --  Discriminant for use when a class inherits from several base classes
+      --  excepting different data types.
+
+      case Typ is
+         when Strings =>
+            Str : GNAT.OS_Lib.String_Access;
+         when Objects =>
+            Obj : Glib.Object.GObject;
+         when Addresses =>
+            Addr       : System.Address;
+            On_Destroy : Destroy_Handler;
+         when Integers =>
+            Int : Integer;
+      end case;
+   end record;
+
+   type Class_Instance_Record is abstract tagged limited record
+      Refcount  : Natural := 1;
+      Script    : Scripting_Language;
+      User_Data : User_Data_List;
+   end record;
+
+   type Class_Instance_Data is new Ada.Finalization.Controlled with record
+      Data : Class_Instance_Record_Access;
+   end record;
+
+   type Class_Instance (Initialized : Boolean := False) is record
+      case Initialized is
+         when True  => Data : Class_Instance_Data;
+         when False => null;
+      end case;
+   end record;
+   --  A Class_Instance cannot be a visibly tagged type if declared in this
+   --  package, since otherwise we have operations dispatching on multiple
+   --  types.
+   --  We use a discriminated type so that we can declare No_Class_Instance.
+   --  Otherwise, Adjust is called before its body is seen.
+
+   procedure Adjust   (CI : in out Class_Instance_Data);
+   procedure Finalize (CI : in out Class_Instance_Data);
+   function "="       (CI1, CI2 : Class_Instance_Data) return Boolean;
+   --  Takes care of the reference counting for a Class_Instance
+
+   No_Class_Instance_Data : constant Class_Instance_Data :=
+     (Ada.Finalization.Controlled with Data => null);
+   No_Class_Instance : constant Class_Instance :=
+     (Initialized => False);
+
    No_File  : constant File_Info := (File => VFS.No_File);
    No_Class : constant Class_Type := (Name => null);
-   No_File_Location : constant File_Location_Info := (null, 0, 0);
+   No_File_Location : constant File_Location_Info := (No_Class_Instance, 0, 0);
 
    type Subprogram_Record is abstract tagged null record;
-   type Class_Instance_Record is abstract tagged null record;
    type Callback_Data is abstract tagged null record;
    type Scripting_Language_Record is abstract tagged null record;
 
