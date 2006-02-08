@@ -1012,7 +1012,7 @@ to a generic instantiation in Ada. If synchronous is True, then the result will 
       <return>A list of strings</return>
       <description>Returns the references that have been found so far by the command.</description>
       <see_also name="GPS.Entity.references()" />
-  <shell_doc>
+  </shell_doc>
       
   <!--#################################################################
     ####   FileLocation class
