@@ -253,8 +253,6 @@ package body GPS.Kernel.Preferences is
                       & Exception_Information (E));
          end;
       end if;
-
-      Free (Inst);
    end Get_Command_Handler;
 
    ---------------------------------

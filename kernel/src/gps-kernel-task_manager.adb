@@ -331,8 +331,9 @@ package body GPS.Kernel.Task_Manager is
    ----------
 
    procedure Free (Item : in out Instance_Item) is
+      pragma Unreferenced (Item);
    begin
-      Free (Item.Instance);
+      null;
    end Free;
 
    --------------------

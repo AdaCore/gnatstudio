@@ -1220,7 +1220,6 @@ package body GPS.Kernel.Hooks is
             else
                Instance := Nth_Arg (Data, 1, Class);
                Set_Data (Instance, Class, Info.all'Address);
-               Free (Instance);
             end if;
          end;
 

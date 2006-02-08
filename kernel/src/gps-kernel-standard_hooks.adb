@@ -665,7 +665,6 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, C);
-      Free (C);
       return D;
    end Create_Callback_Data;
 
@@ -703,7 +702,6 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, P);
-      Free (P);
       return D;
    end Create_Callback_Data;
 
@@ -723,7 +721,6 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, F);
-      Free (F);
       return D;
    end Create_Callback_Data;
 
@@ -749,7 +746,6 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 6, Data.Enable_Navigation);
       Set_Nth_Arg (D.all, 7, Data.New_File);
       Set_Nth_Arg (D.all, 8, Data.Force_Reload);
-      Free (F);
       return D;
    end Create_Callback_Data;
 
@@ -800,7 +796,6 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 3, F);
       Set_Nth_Arg (D.all, 4, Data.Every_Line);
       Set_Nth_Arg (D.all, 5, Data.Normalize);
-      Free (F);
       return D;
    end Create_Callback_Data;
 
@@ -825,7 +820,6 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 5, Data.Line);
       Set_Nth_Arg (D.all, 6, Data.Column);
       Set_Nth_Arg (D.all, 7, Data.Message);
-      Free (F);
       return D;
    end Create_Callback_Data;
 
@@ -847,7 +841,6 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, Data.Enable_Navigation);
       Set_Nth_Arg (D.all, 4, Data.Anchor);
-      Free (F);
       return D;
    end Create_Callback_Data;
 
@@ -869,7 +862,6 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, Data.Line);
       Set_Nth_Arg (D.all, 4, Data.Column);
-      Free (F);
       return D;
    end Create_Callback_Data;
 
@@ -893,9 +885,6 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 2, F1);
       Set_Nth_Arg (D.all, 3, F2);
       Set_Nth_Arg (D.all, 4, F3);
-      Free (F1);
-      Free (F2);
-      Free (F3);
       return D;
    end Create_Callback_Data;
 
@@ -916,7 +905,6 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, Data.Category);
-      Free (F);
       return D;
    end Create_Callback_Data;
 
@@ -973,7 +961,6 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, File_Status'Image (Data.Status));
-      Free (F);
       return D;
    end Create_Callback_Data;
 
