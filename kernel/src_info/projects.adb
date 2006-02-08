@@ -397,7 +397,10 @@ package body Projects is
       View : constant Project_Id := Get_View (Project);
    begin
       if Status (Project) /= From_File then
-         return VFS.No_File;
+         --  Still return a path, since some modules might depend on knowing
+         --  the project path (for instance the builder module)
+         return Create
+           (Get_String (Path_Name_Of (Project.Node, Project.Tree)));
       elsif View = Prj.No_Project then
          --  Still needed for the project wizard
          return Create
