@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -243,7 +243,6 @@ package body Help_Module is
    --  corresponding to the XML documentation file
 
    procedure On_Destroy_Html_Class (Value : System.Address);
-   pragma Convention (C, On_Destroy_Html_Class);
    --  Called when an instance of the HTML class is destroyed
 
    -----------------
@@ -481,7 +480,6 @@ package body Help_Module is
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
          Set_Data (Inst, Help_Module_ID.Help_Class,
                    System.Null_Address, On_Destroy_Html_Class'Access);
-         Free (Inst);
 
       elsif Command = "getdoc" then
          Name_Parameters (Data, Getdoc_Parameters);
@@ -508,8 +506,6 @@ package body Help_Module is
             end if;
          end;
 
-         Free (Inst);
-
       elsif Command = "file" then
          Set_Return_Value
            (Data, Get_System_Dir (Kernel)
@@ -518,7 +514,6 @@ package body Help_Module is
       elsif Command = "reset" then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
          Set_Data (Inst, Help_Module_ID.Help_Class, System.Null_Address);
-         Free (Inst);
 
       elsif Command = "browse" then
          Name_Parameters (Data, Browse_Cmd_Parameters);
