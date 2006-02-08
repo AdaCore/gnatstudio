@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
+--                        Copyright (C) 2005-2006                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -235,7 +235,6 @@ package body Src_Editor_Module.Shell is
      (Location_Info, Location_Info_Access);
 
    procedure On_Location_Info_Destroyed (Info : System.Address);
-   pragma Convention (C, On_Location_Info_Destroyed);
    --  Called when an instance of EditorLocation is destroyed
 
    procedure On_Buffer_Destroyed_For_Location (Data, Obj : System.Address);
@@ -324,7 +323,6 @@ package body Src_Editor_Module.Shell is
       Inst   : constant Class_Instance := Nth_Arg (Data, Arg, EditorView);
    begin
       Box := Source_Editor_Box (GObject'(Get_Data (Inst)));
-      Free (Inst);
       if Box = null then
          Set_Error_Msg (Data, "No associated view");
       end if;
@@ -344,7 +342,6 @@ package body Src_Editor_Module.Shell is
       Inst   : constant Class_Instance := Nth_Arg (Data, Arg, EditorBuffer);
    begin
       Buffer := Source_Buffer (GObject'(Get_Data (Inst)));
-      Free (Inst);
       if Buffer = null then
          Set_Error_Msg (Data, "No associated buffer");
       end if;
@@ -365,11 +362,10 @@ package body Src_Editor_Module.Shell is
       Inst   : Class_Instance;
    begin
       Inst := Nth_Arg (Data, Arg, EditorOverlay, Allow_Null => Allow_Null);
-      if Inst = null then
+      if Inst = No_Class_Instance then
          Tag := null;
       else
          Tag := Gtk_Text_Tag (GObject'(Get_Data (Inst)));
-         Free (Inst);
          if Tag = null and then not Allow_Null then
             Set_Error_Msg (Data, "No associated overlay");
          end if;
@@ -392,8 +388,8 @@ package body Src_Editor_Module.Shell is
       Info     : Location_Info_Access;
    begin
       Loc_Inst := Nth_Arg
-        (Data, Arg, Class, Allow_Null => True, Default => null);
-      if Loc_Inst = null then
+        (Data, Arg, Class, Allow_Null => True, Default => No_Class_Instance);
+      if Loc_Inst = No_Class_Instance then
          Copy (Source => Default, Dest => Iter);
       else
          Info := Convert (Get_Data (Loc_Inst, Class));
@@ -463,12 +459,10 @@ package body Src_Editor_Module.Shell is
       Inst  : Class_Instance;
    begin
       Inst := Get_Instance (Script, Tag);
-      if Inst = null then
+      if Inst = No_Class_Instance then
          Inst := New_Instance
            (Script, New_Class (Get_Kernel (Script), "EditorOverlay"));
          Set_Data (Inst, GObject (Tag));
-      else
-         Ref (Inst);
       end if;
       return Inst;
    end Create_Editor_Overlay;
@@ -484,13 +478,11 @@ package body Src_Editor_Module.Shell is
       Inst  : Class_Instance;
    begin
       Inst := Get_Instance (Script, Mark);
-      if Inst = null then
+      if Inst = No_Class_Instance then
          Ref (Mark);
          Inst := New_Instance
            (Script, New_Class (Get_Kernel (Script), "EditorMark"));
          Set_Data (Inst, GObject (Mark));
-      else
-         Ref (Inst);
       end if;
       return Inst;
    end Create_Editor_Mark;
@@ -509,7 +501,6 @@ package body Src_Editor_Module.Shell is
       Inst   : constant Class_Instance := Nth_Arg (Data, Arg, EditorMark);
    begin
       Mark := Gtk_Text_Mark (GObject'(Get_Data (Inst)));
-      Free (Inst);
 
       if Mark /= null and then Get_Buffer (Mark) = null then
          --  The buffer was destroyed, so we might as well destroy the mark
@@ -529,6 +520,13 @@ package body Src_Editor_Module.Shell is
    procedure On_Location_Info_Destroyed (Info : System.Address) is
       Inf : Location_Info_Access := Convert (Info);
    begin
+      --  Make sure we will not get a signal when the buffer is destroyed later
+      --  since we are no longer interested in it
+      if Inf.Buffer /= null then
+         Weak_Unref
+           (Inf.Buffer, On_Buffer_Destroyed_For_Location'Access,
+            Data => Info);
+      end if;
       Unchecked_Free (Inf);
    end On_Location_Info_Destroyed;
 
@@ -559,7 +557,7 @@ package body Src_Editor_Module.Shell is
    begin
       Set_Data
         (Inst,
-         Class      => EditorLoc,
+         Name       => EditorLoc,
          Value      => Convert (Info),
          On_Destroy => On_Location_Info_Destroyed'Access);
       Weak_Ref (Buffer, On_Buffer_Destroyed_For_Location'Access,
@@ -595,15 +593,13 @@ package body Src_Editor_Module.Shell is
       Inst  : Class_Instance;
    begin
       if Buffer = null then
-         return null;
+         return No_Class_Instance;
       else
          Inst := Get_Instance (Script, Buffer);
-         if Inst = null then
+         if Inst = No_Class_Instance then
             Inst := New_Instance
               (Script, New_Class (Get_Kernel (Script), "EditorBuffer"));
             Set_Data (Inst, GObject (Buffer));
-         else
-            Ref (Inst);
          end if;
          return Inst;
       end if;
@@ -620,15 +616,13 @@ package body Src_Editor_Module.Shell is
       Inst : Class_Instance;
    begin
       if View = null then
-         return null;
+         return No_Class_Instance;
       else
          Inst := Get_Instance (Script, View);
-         if Inst = null then
+         if Inst = No_Class_Instance then
             Inst := New_Instance
               (Script, New_Class (Get_Kernel (Script), "EditorView"));
             Set_Data (Inst, GObject (View));
-         else
-            Ref (Inst);
          end if;
          return Inst;
       end if;
@@ -1728,14 +1722,13 @@ package body Src_Editor_Module.Shell is
          Name_Parameters (Data, (1 => File_Cst'Access));
          File_Inst := Nth_Arg
            (Data, 1, Get_File_Class (Kernel),
-            Default => null, Allow_Null => True);
+            Default => No_Class_Instance, Allow_Null => True);
 
-         if File_Inst = null then
+         if File_Inst = No_Class_Instance then
             Child := Find_Current_Editor (Kernel);
          else
             File := Get_File (Get_Data (File_Inst));
             Child := Find_Editor (Kernel, File);
-            Free (File_Inst);
          end if;
 
          if Child = null then
@@ -1839,9 +1832,10 @@ package body Src_Editor_Module.Shell is
                                  2 => File_Cst'Access));
          Get_Buffer (Buffer, Data, 1);
          if Buffer /= null then
-            File_Inst := Nth_Arg (Data, 3, Get_File_Class (Kernel),
-                                  Default => null, Allow_Null => True);
-            if File_Inst = null then
+            File_Inst := Nth_Arg
+              (Data, 3, Get_File_Class (Kernel),
+               Default => No_Class_Instance, Allow_Null => True);
+            if File_Inst = No_Class_Instance then
                File := Get_Filename (Buffer);
                Success := Save_MDI_Children
                  (Get_Kernel (Data),
@@ -2154,7 +2148,6 @@ package body Src_Editor_Module.Shell is
             Buffer,
             Line   => Gint (Integer'(Nth_Arg (Data, 3))) - 1,
             Offset => Gint (Integer'(Nth_Arg (Data, 4))) - 1);
-         Free (Inst);
 
       elsif Command = Comparison_Method then
          Get_Location (Iter, Data, 1, Default => Iter);
@@ -2460,7 +2453,6 @@ package body Src_Editor_Module.Shell is
             begin
                Box := New_View (Get_Kernel (Data), Views (Views'First));
                Set_Data (Inst, GObject (Box));
-               Free (Inst);
             end;
          end if;
 

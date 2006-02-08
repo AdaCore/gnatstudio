@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -422,8 +422,6 @@ package body Socket_Module is
             Timeout_Remove (Read_Data.Timeout);
          end if;
       end if;
-
-      Free (Inst);
 
    exception
       when Socket_Error | End_Error =>
