@@ -214,11 +214,8 @@ package body Codefix_Module is
    --  Find the codefix session associated with the given category, or null
    --  if there is none.
 
-   procedure Set_Data
-     (Instance : access Class_Instance_Record'Class;
-      Session  : Codefix_Session);
-   function Get_Data
-     (Instance : access Class_Instance_Record'Class) return Codefix_Session;
+   procedure Set_Data (Instance : Class_Instance; Session  : Codefix_Session);
+   function Get_Data (Instance : Class_Instance) return Codefix_Session;
    --  Set or retrieve the session from an instance of Codefix
 
    type Codefix_Error_Data is record
@@ -227,11 +224,8 @@ package body Codefix_Module is
    end record;
    type Codefix_Error_Data_Access is access Codefix_Error_Data;
 
-   procedure Set_Data
-     (Instance : access Class_Instance_Record'Class;
-      Error    : Codefix_Error_Data);
-   function Get_Data
-     (Instance : access Class_Instance_Record'Class) return Codefix_Error_Data;
+   procedure Set_Data (Instance : Class_Instance; Error : Codefix_Error_Data);
+   function Get_Data (Instance : Class_Instance) return Codefix_Error_Data;
    --  Set or retrieve the error from an instance of CodefixError
 
    function Convert is new Ada.Unchecked_Conversion
@@ -240,7 +234,6 @@ package body Codefix_Module is
      (Codefix_Error_Data, Codefix_Error_Data_Access);
 
    procedure On_Destroy_Error (Value : System.Address);
-   pragma Convention (C, On_Destroy_Error);
    --  Destroy a Codefix_Error_Data_Access
 
    -------------
@@ -977,20 +970,16 @@ package body Codefix_Module is
    --------------
 
    procedure Set_Data
-     (Instance : access Class_Instance_Record'Class;
-      Session  : Codefix_Session)
-   is
+     (Instance : Class_Instance; Session  : Codefix_Session) is
    begin
       if not Is_Subclass
-        (Get_Script (Instance),
-         Instance,
-         Codefix_Module_ID.Codefix_Class)
+        (Instance, Codefix_Module_ID.Codefix_Class)
       then
          raise Invalid_Data;
       end if;
 
       Set_Data (Instance,
-                Class => Codefix_Module_ID.Codefix_Class,
+                Codefix_Module_ID.Codefix_Class,
                 Value => Session.all'Address);
    end Set_Data;
 
@@ -998,9 +987,7 @@ package body Codefix_Module is
    -- Get_Data --
    --------------
 
-   function Get_Data
-     (Instance : access Class_Instance_Record'Class) return Codefix_Session
-   is
+   function Get_Data (Instance :  Class_Instance) return Codefix_Session is
       pragma Warnings (Off);
       --  This UC is safe aliasing-wise, so kill warning
       function Convert is new Ada.Unchecked_Conversion
@@ -1009,9 +996,7 @@ package body Codefix_Module is
 
    begin
       if not Is_Subclass
-        (Get_Script (Instance),
-         Instance,
-         Codefix_Module_ID.Codefix_Class)
+        (Instance, Codefix_Module_ID.Codefix_Class)
       then
          raise Invalid_Data;
       end if;
@@ -1025,15 +1010,12 @@ package body Codefix_Module is
    --------------
 
    procedure Set_Data
-     (Instance : access Class_Instance_Record'Class;
-      Error    : Codefix_Error_Data)
+     (Instance : Class_Instance; Error : Codefix_Error_Data)
    is
       Err : Codefix_Error_Data_Access;
    begin
       if not Is_Subclass
-        (Get_Script (Instance),
-         Instance,
-         Codefix_Module_ID.Codefix_Error_Class)
+        (Instance, Codefix_Module_ID.Codefix_Error_Class)
       then
          raise Invalid_Data;
       end if;
@@ -1041,7 +1023,7 @@ package body Codefix_Module is
       Err := new Codefix_Error_Data'(Error);
       Set_Data
         (Instance,
-         Class      => Codefix_Module_ID.Codefix_Error_Class,
+         Codefix_Module_ID.Codefix_Error_Class,
          Value      => Err.all'Address,
          On_Destroy => On_Destroy_Error'Access);
    end Set_Data;
@@ -1061,13 +1043,10 @@ package body Codefix_Module is
    --------------
 
    function Get_Data
-     (Instance : access Class_Instance_Record'Class)
-      return Codefix_Error_Data is
+     (Instance : Class_Instance) return Codefix_Error_Data is
    begin
       if not Is_Subclass
-        (Get_Script (Instance),
-         Instance,
-         Codefix_Module_ID.Codefix_Error_Class)
+        (Instance, Codefix_Module_ID.Codefix_Error_Class)
       then
          raise Invalid_Data;
       end if;
