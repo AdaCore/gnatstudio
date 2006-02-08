@@ -52,7 +52,7 @@ package GPS.Main_Window is
       Animation         : Gdk_Pixbuf_Animation;
       Animation_Iter    : Gdk_Pixbuf_Animation_Iter;
       Animation_Image   : Gtk_Image;
-      Animation_Timeout : Gtk.Main.Timeout_Handler_Id;
+      Animation_Timeout : Gtk.Main.Timeout_Handler_Id := 0;
 
       State_Level       : Integer := 0;
       Busy_Level        : Integer := 0;
