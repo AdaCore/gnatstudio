@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2006                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,9 +27,6 @@ package Python_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
-   procedure Initialize_IO;
-   --  Initialize the redirection of stdin, stdout and stderr.
-
    procedure Override_Default_IO
      (Console : Interactive_Consoles.Interactive_Console);
    --  Override the console to which Python should write through "print"
@@ -47,4 +44,3 @@ package Python_Module is
    --  registered
 
 end Python_Module;
-
