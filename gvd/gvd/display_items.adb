@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1276,12 +1276,17 @@ package body Display_Items is
       Free (Item.Entity);
       Free (Item.Name);
       Free (Item.Id);
-      Remove (Canvas, Item);
-      --  Warning: the memory has been freed after Remove.
 
-      if Remove_Aliases then
-         Recompute_All_Aliases (Item.Debugger, Recompute_Values => False);
-      end if;
+      declare
+         Debugger : constant GVD.Process.Visual_Debugger := Item.Debugger;
+      begin
+         Remove (Canvas, Item);
+         --  Warning: the memory has been freed after Remove.
+
+         if Remove_Aliases then
+            Recompute_All_Aliases (Debugger, Recompute_Values => False);
+         end if;
+      end;
    end Free;
 
    -----------------------
