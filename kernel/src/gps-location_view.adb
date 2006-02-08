@@ -71,6 +71,9 @@ package body GPS.Location_View is
    Non_Leaf_Color_Name : constant String := "blue";
    --  <preference> color to use for category and file names
 
+   Items_Count_Matcher : constant Pattern_Matcher := Compile
+     ("( \([0-9]+ item[s]?\))$");
+
    type Location_View_Module is new Module_ID_Record with null record;
    Location_View_Module_Id : Module_ID;
 
@@ -107,7 +110,6 @@ package body GPS.Location_View is
    Highlight_Category_Column : constant := 12;
    Number_Of_Items_Column    : constant := 13;
    Category_Line_Column      : constant := 14;
-   Message_Column            : constant := 15;
 
    Output_Cst        : aliased constant String := "output";
    Category_Cst      : aliased constant String := "category";
@@ -460,14 +462,12 @@ package body GPS.Location_View is
 
       procedure Set_Total (Iter : Gtk_Tree_Iter; Nb_Items : Integer) is
          Img     : constant String := Image (Nb_Items);
-         Matcher : constant Pattern_Matcher := Compile
-           ("( \([0-9]+ item[s]?\))$");
          Matches : Match_Array (0 .. 1);
          Cut     : Integer;
          Message : constant String := Get_String
-           (View.Tree.Model, Iter, Message_Column);
+           (View.Tree.Model, Iter, Base_Name_Column);
       begin
-         Match (Matcher, Message, Matches);
+         Match (Items_Count_Matcher, Message, Matches);
 
          if Matches (0) /= No_Match then
             Cut := Matches (1).First - 1;
@@ -479,10 +479,10 @@ package body GPS.Location_View is
             Base_Message : constant String := Message (1 .. Cut);
          begin
             if Nb_Items = 1 then
-               Set (View.Tree.Model, Iter, Message_Column,
+               Set (View.Tree.Model, Iter, Base_Name_Column,
                     Base_Message & " (" & Img & (-" item") & ")");
             else
-               Set (View.Tree.Model, Iter, Message_Column,
+               Set (View.Tree.Model, Iter, Base_Name_Column,
                     Base_Message & " (" & Img & (-" items") & ")");
             end if;
          end;
@@ -844,21 +844,15 @@ package body GPS.Location_View is
    begin
       if Base_Name = "" then
          Set (Model, Iter, Base_Name_Column, VFS.Base_Name (Absolute_Name));
-         Set (Model, Iter, Message_Column, VFS.Base_Name (Absolute_Name));
       else
          if Message = "" then
             Set (Model, Iter, Base_Name_Column, Base_Name);
-            Set (Model, Iter, Message_Column, Base_Name);
          else
             declare
                Padding : constant String (1 .. Messages_Padding) :=
                  (others => ' ');
             begin
                Set (Model, Iter, Base_Name_Column,
-                    "<b>" & Base_Name & "</b>"
-                    & Padding (1 .. Messages_Padding - Base_Name'Length)
-                    & Glib.Convert.Locale_To_UTF8 (Message));
-               Set (Model, Iter, Message_Column,
                     "<b>" & Base_Name & "</b>"
                     & Padding (1 .. Messages_Padding - Base_Name'Length)
                     & Glib.Convert.Locale_To_UTF8 (Message));
@@ -1006,9 +1000,22 @@ package body GPS.Location_View is
 
    function Get_Category_Name
      (Model    : access Gtk_Tree_Store_Record'Class;
-      Category : Gtk_Tree_Iter) return String is
+      Category : Gtk_Tree_Iter) return String
+   is
+      Matches : Match_Array (0 .. 1);
+      Cut     : Integer;
+      Message : constant String := Get_String
+        (Model, Category, Base_Name_Column);
    begin
-      return Get_String (Model, Category, Base_Name_Column);
+      Match (Items_Count_Matcher, Message, Matches);
+
+      if Matches (0) /= No_Match then
+         Cut := Matches (1).First - 1;
+      else
+         Cut := Message'Last;
+      end if;
+
+      return Message (1 .. Cut);
    end Get_Category_Name;
 
    -----------------------
@@ -1253,7 +1260,7 @@ package body GPS.Location_View is
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, False);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
-      Add_Attribute (Col, Text_Rend, "markup", Message_Column);
+      Add_Attribute (Col, Text_Rend, "markup", Base_Name_Column);
       Add_Attribute (Col, Text_Rend, "foreground_gdk", Color_Column);
 
       Dummy := Append_Column (Tree, Col);
@@ -1287,8 +1294,7 @@ package body GPS.Location_View is
          Highlight_Column          => GType_Boolean,
          Highlight_Category_Column => GType_Pointer,
          Number_Of_Items_Column    => GType_Int,
-         Category_Line_Column      => GType_String,
-         Message_Column            => GType_String);
+         Category_Line_Column      => GType_String);
    end Columns_Types;
 
    ----------------
