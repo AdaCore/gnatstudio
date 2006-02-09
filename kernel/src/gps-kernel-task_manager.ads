@@ -23,7 +23,6 @@
 
 with Commands;           use Commands;
 with Task_Manager;       use Task_Manager;
-with Generic_List;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 package GPS.Kernel.Task_Manager is
@@ -53,13 +52,6 @@ package GPS.Kernel.Task_Manager is
 
    procedure Free (Command : in out Scheduled_Command);
    --  See inhertited documentation
-
-   function Get_Instance
-     (Command  : access Scheduled_Command'Class;
-      Language : access Scripting_Language_Record'Class)
-      return Class_Instance;
-   --  Returns the class instance associated to this command for the given
-   --  scripting language. Create one when needed.
 
    procedure Launch_Background_Command
      (Kernel          : access Kernel_Handle_Record'Class;
@@ -98,28 +90,30 @@ package GPS.Kernel.Task_Manager is
      (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access;
    --  Return the GPS task manager
 
+   -------------------------------------
+   -- Support for scripting languages --
+   -------------------------------------
+
+   function Get_Instance
+     (Command  : access Scheduled_Command'Class;
+      Language : access Scripting_Language_Record'Class)
+      return Class_Instance;
+   --  Returns the class instance associated to this command for the given
+   --  scripting language. Create one when needed. The instance is from the
+   --  class GPS.Command.
+
+   function Get_Data
+     (Instance : GPS.Kernel.Scripts.Class_Instance)
+      return Scheduled_Command_Access;
+   --  Return the command stored in Instance. Instance must be of the class
+   --  GPS.Command
+
 private
-
-   type Instance_Item is record
-      Script   : GPS.Kernel.Scripts.Scripting_Language;
-      Instance : GPS.Kernel.Scripts.Class_Instance;
-   end record;
-   --  This type is used to store the association between a instance item and
-   --  a script, for a given command.
-
-   procedure Free (Item : in out Instance_Item);
-   --  Free the memory of the class instance in this class item
-
-   package Instance_List is new Generic_List (Instance_Item);
-   use Instance_List;
 
    type Scheduled_Command is new Root_Command with record
       Command         : Command_Access;
       Destroy_On_Exit : Boolean;
-
-      Instances       : Instance_List.List;
-      --  List of instances for the given command, created only when needed,
-      --  one per script language.
+      Instances       : GPS.Kernel.Scripts.Instance_List;
    end record;
 
 end GPS.Kernel.Task_Manager;

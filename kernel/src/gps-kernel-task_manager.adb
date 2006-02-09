@@ -47,6 +47,12 @@ package body GPS.Kernel.Task_Manager is
 
    Task_Manager_Module_Id   : Task_Manager_Module_Id_Access;
    Task_Manager_Module_Name : constant String := "GPS.Kernel.Task_Manager";
+   Command_Class_Name       : constant String := "Command";
+
+   type Command_Property is new GPS.Kernel.Scripts.Instance_Property_Record
+   with record
+      Command : Scheduled_Command_Access;
+   end record;
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -326,16 +332,6 @@ package body GPS.Kernel.Task_Manager is
       return Undo (This.Command);
    end Undo;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Item : in out Instance_Item) is
-      pragma Unreferenced (Item);
-   begin
-      null;
-   end Free;
-
    --------------------
    -- Create_Wrapper --
    --------------------
@@ -497,38 +493,34 @@ package body GPS.Kernel.Task_Manager is
       Language : access Scripting_Language_Record'Class)
       return Class_Instance
    is
-      Node : Instance_List.List_Node;
+      Inst : Class_Instance := Get (Command.Instances, Language);
    begin
-      Node := First (Command.Instances);
+      if Inst = No_Class_Instance then
+         declare
+            Command_Class : constant Class_Type :=
+              New_Class (Get_Kernel (Language), Command_Class_Name);
+         begin
+            Inst := New_Instance (Language, Command_Class);
+            Set_Property
+              (Inst, Command_Class_Name, Command_Property'
+                 (Command => Scheduled_Command_Access (Command)));
+            Set (Command.Instances, Language, Inst);
+         end;
+      end if;
 
-      while Node /= Instance_List.Null_Node loop
-         if Data (Node).Script = Scripting_Language (Language) then
-            return Data (Node).Instance;
-         end if;
-
-         Node := Next (Node);
-      end loop;
-
-      --  If no instance is found, then create one
-
-      declare
-         Instance : Class_Instance;
-         Command_Class : constant Class_Type :=
-           New_Class (Get_Kernel (Language), "Command");
-
-         function Convert is new Ada.Unchecked_Conversion
-           (Command_Access, System.Address);
-      begin
-         Instance := New_Instance (Language, Command_Class);
-         Set_Data
-           (Instance, Command_Class, Convert (Command_Access (Command)));
-         Append
-           (Command.Instances,
-            (Script   => Scripting_Language (Language),
-             Instance => Instance));
-
-         return Instance;
-      end;
+      return Inst;
    end Get_Instance;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Instance : GPS.Kernel.Scripts.Class_Instance)
+      return Scheduled_Command_Access is
+   begin
+      return Command_Property
+        (Get_Property (Instance, Command_Class_Name)).Command;
+   end Get_Data;
 
 end GPS.Kernel.Task_Manager;
