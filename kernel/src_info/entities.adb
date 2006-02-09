@@ -176,6 +176,7 @@ package body Entities is
       Entry_Or_Entry_Family => True,
       Task_Kind             => True,
       Package_Kind          => True,
+      Enumeration_Kind      => True,
       Overloaded_Entity     => True,
       --  ??? Should we check that at least one of the possible
       --  completions is a subprogram
