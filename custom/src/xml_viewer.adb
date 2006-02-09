@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                    use Glib;
+with Glib.Object;             use Glib.Object;
 with Glib.Xml_Int;            use Glib.Xml_Int;
 
 with Gdk.Event;               use Gdk.Event;
@@ -49,8 +50,6 @@ with XML_Parsers;             use XML_Parsers;
 
 with VFS;                     use VFS;
 
-with System;                  use System;
-with Ada.Unchecked_Conversion;
 with Ada.Exceptions;          use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
@@ -85,9 +84,6 @@ package body XML_Viewer is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  Called on a click on the tree view
-
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, XML_Viewer);
 
    procedure XML_Commands_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -374,21 +370,16 @@ package body XML_Viewer is
       XML_Viewer_Class : constant Class_Type := New_Class
         (Kernel, "XMLViewer");
       Inst             : Class_Instance;
-      Value            : System.Address;
       View             : XML_Viewer;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, XML_Constructor_Params);
          Inst := Nth_Arg (Data, 1, XML_Viewer_Class);
-
          View := Create_XML_Viewer (Kernel, Nth_Arg (Data, 2));
-
-         Set_Data (Inst, XML_Viewer_Class,
-                   Value => View.all'Address);
+         Set_Data (Inst, Widget => GObject (View));
 
       elsif Command = "parse" then
-         Value := Nth_Arg_Data (Data, 1, XML_Viewer_Class);
-         View := Convert (Value);
+         View := XML_Viewer (GObject'(Get_Data (Inst)));
          Set_Error_Msg (Data, Parse_Metrix (View, Nth_Arg (Data, 2)));
 
       end if;

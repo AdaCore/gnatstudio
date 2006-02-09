@@ -21,10 +21,8 @@
 --  This package defines the module for code fixing.
 
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
-with System;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
@@ -75,7 +73,9 @@ package body Codefix_Module is
    Codefix_GUI : constant Debug_Handle := Create ("Codefix_GUI", Off);
    --  ??? Disabled by default, as the UI is not ready yet.
 
-   Location_Button_Name : constant String := "Codefix";
+   Location_Button_Name     : constant String := "Codefix";
+   Codefix_Class_Name       : constant String := "Codefix";
+   Codefix_Error_Class_Name : constant String := "CodefixError";
 
    Output_Cst        : aliased constant String := "output";
    Category_Cst      : aliased constant String := "category";
@@ -123,6 +123,10 @@ package body Codefix_Module is
    Codefix_Module_Name : constant String := "Code_Fixing";
 
    procedure Destroy (Id : in out Codefix_Module_ID_Record);
+
+   type Codefix_Properties is new Instance_Property_Record with record
+      Session : Codefix_Session;
+   end record;
 
    type Codefix_Menu_Item_Record is new Gtk_Menu_Item_Record with record
       Fix_Command  : Ptr_Command;
@@ -222,19 +226,14 @@ package body Codefix_Module is
       Error   : Error_Id;
       Session : Codefix_Session;
    end record;
-   type Codefix_Error_Data_Access is access Codefix_Error_Data;
 
    procedure Set_Data (Instance : Class_Instance; Error : Codefix_Error_Data);
    function Get_Data (Instance : Class_Instance) return Codefix_Error_Data;
    --  Set or retrieve the error from an instance of CodefixError
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Codefix_Error_Data_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Codefix_Error_Data, Codefix_Error_Data_Access);
-
-   procedure On_Destroy_Error (Value : System.Address);
-   --  Destroy a Codefix_Error_Data_Access
+   type Codefix_Error_Property is new Instance_Property_Record with record
+      Error : Codefix_Error_Data;
+   end record;
 
    -------------
    -- Destroy --
@@ -689,9 +688,10 @@ package body Codefix_Module is
          Wrapper (Compilation_Finished_Cb'Access),
          Name => "codefix.compilation_finished");
 
-      Codefix_Module_ID.Codefix_Class := New_Class (Kernel, "Codefix");
+      Codefix_Module_ID.Codefix_Class :=
+        New_Class (Kernel, Codefix_Class_Name);
       Codefix_Module_ID.Codefix_Error_Class := New_Class
-        (Kernel, "CodefixError");
+        (Kernel, Codefix_Error_Class_Name);
 
       Register_Command
         (Kernel, "parse",
@@ -821,7 +821,7 @@ package body Codefix_Module is
             File    : constant Class_Instance := Get_File (Location);
             Error   : constant Error_Id := Search_Error
               (Session.Corrector.all,
-               Get_File (Get_Data (File)),
+               Get_Data (File),
                Get_Line (Location),
                Get_Column (Location), Message);
          begin
@@ -978,9 +978,9 @@ package body Codefix_Module is
          raise Invalid_Data;
       end if;
 
-      Set_Data (Instance,
-                Codefix_Module_ID.Codefix_Class,
-                Value => Session.all'Address);
+      Set_Property
+        (Instance, Codefix_Class_Name,
+         Codefix_Properties'(Session => Session));
    end Set_Data;
 
    --------------
@@ -988,21 +988,13 @@ package body Codefix_Module is
    --------------
 
    function Get_Data (Instance :  Class_Instance) return Codefix_Session is
-      pragma Warnings (Off);
-      --  This UC is safe aliasing-wise, so kill warning
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Codefix_Session);
-      pragma Warnings (On);
-
    begin
-      if not Is_Subclass
-        (Instance, Codefix_Module_ID.Codefix_Class)
-      then
+      if not Is_Subclass (Instance, Codefix_Module_ID.Codefix_Class) then
          raise Invalid_Data;
       end if;
 
-      return Convert
-        (Get_Data (Instance, Codefix_Module_ID.Codefix_Class));
+      return Codefix_Properties
+        (Get_Property (Instance, Codefix_Class_Name)).Session;
    end Get_Data;
 
    --------------
@@ -1010,9 +1002,7 @@ package body Codefix_Module is
    --------------
 
    procedure Set_Data
-     (Instance : Class_Instance; Error : Codefix_Error_Data)
-   is
-      Err : Codefix_Error_Data_Access;
+     (Instance : Class_Instance; Error : Codefix_Error_Data) is
    begin
       if not Is_Subclass
         (Instance, Codefix_Module_ID.Codefix_Error_Class)
@@ -1020,23 +1010,11 @@ package body Codefix_Module is
          raise Invalid_Data;
       end if;
 
-      Err := new Codefix_Error_Data'(Error);
-      Set_Data
+      Set_Property
         (Instance,
-         Codefix_Module_ID.Codefix_Error_Class,
-         Value      => Err.all'Address,
-         On_Destroy => On_Destroy_Error'Access);
+         Codefix_Error_Class_Name,
+         Codefix_Error_Property'(Error => Error));
    end Set_Data;
-
-   ----------------------
-   -- On_Destroy_Error --
-   ----------------------
-
-   procedure On_Destroy_Error (Value : System.Address) is
-      Err : Codefix_Error_Data_Access := Convert (Value);
-   begin
-      Unchecked_Free (Err);
-   end On_Destroy_Error;
 
    --------------
    -- Get_Data --
@@ -1045,14 +1023,12 @@ package body Codefix_Module is
    function Get_Data
      (Instance : Class_Instance) return Codefix_Error_Data is
    begin
-      if not Is_Subclass
-        (Instance, Codefix_Module_ID.Codefix_Error_Class)
-      then
+      if not Is_Subclass (Instance, Codefix_Module_ID.Codefix_Error_Class) then
          raise Invalid_Data;
       end if;
 
-      return Convert
-        (Get_Data (Instance, Codefix_Module_ID.Codefix_Error_Class)).all;
+      return Codefix_Error_Property
+        (Get_Property (Instance, Codefix_Error_Class_Name)).Error;
    end Get_Data;
 
    ------------------------

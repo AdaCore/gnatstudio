@@ -47,13 +47,11 @@ with File_Utils;                 use File_Utils;
 with String_Utils;               use String_Utils;
 with Generic_List;
 with Ada.Unchecked_Deallocation;
-with Ada.Unchecked_Conversion;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Histories;                  use Histories;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with VFS;                        use VFS;
-with System;                     use System;
 with Welcome_Page;               use Welcome_Page;
 
 package body Help_Module is
@@ -62,6 +60,7 @@ package body Help_Module is
 
    Template_Index   : constant String := "help_index.html";
    Index_File       : constant String := "gps_index.xml";
+   Help_Class_Name  : constant String := "Help";
 
    Url_Cst          : aliased constant String := "URL";
    Anchor_Cst       : aliased constant String := "anchor";
@@ -84,6 +83,12 @@ package body Help_Module is
       Shell_Lang : GNAT.OS_Lib.String_Access;
       Descr      : GNAT.OS_Lib.String_Access;
    end record;
+
+   type XML_Property is new Instance_Property_Record with record
+      XML : Node_Ptr;
+   end record;
+   procedure Destroy (Property : in out XML_Property);
+   --  See inherited documentation
 
    procedure Free (Data : in out Help_File_Record);
    package Help_File_List is new Generic_List (Help_File_Record, Free);
@@ -234,16 +239,6 @@ package body Help_Module is
    function Initialize_XML_Doc
      (Kernel : access Kernel_Handle_Record'Class) return Glib.Xml_Int.Node_Ptr;
    --  Parse and return the XML documentation file
-
-   function Get_Data is new Ada.Unchecked_Conversion
-     (System.Address, Glib.Xml_Int.Node_Ptr);
-   function Set_Data is new Ada.Unchecked_Conversion
-     (Glib.Xml_Int.Node_Ptr, System.Address);
-   --  The data stored in an instance of the Help class (this is the XML tree
-   --  corresponding to the XML documentation file
-
-   procedure On_Destroy_Html_Class (Value : System.Address);
-   --  Called when an instance of the HTML class is destroyed
 
    -----------------
    -- Create_Html --
@@ -452,18 +447,17 @@ package body Help_Module is
       return Tmp;
    end Initialize_XML_Doc;
 
-   ---------------------------
-   -- On_Destroy_Html_Class --
-   ---------------------------
+   -------------
+   -- Destroy --
+   -------------
 
-   procedure On_Destroy_Html_Class (Value : System.Address) is
-      XML : Node_Ptr := Get_Data (Value);
+   procedure Destroy (Property : in out XML_Property) is
    begin
-      if XML /= null then
+      if Property.XML /= null then
          Trace (Me, "Freeing XML file");
-         Glib.Xml_Int.Free (XML);
+         Glib.Xml_Int.Free (Property.XML);
       end if;
-   end On_Destroy_Html_Class;
+   end Destroy;
 
    ---------------------
    -- Command_Handler --
@@ -478,18 +472,18 @@ package body Help_Module is
    begin
       if Command = Constructor_Method then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
-         Set_Data (Inst, Help_Module_ID.Help_Class,
-                   System.Null_Address, On_Destroy_Html_Class'Access);
+         Set_Property
+           (Inst, Help_Class_Name, XML_Property'(XML => null));
 
       elsif Command = "getdoc" then
          Name_Parameters (Data, Getdoc_Parameters);
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
 
-         XML := Get_Data (Get_Data (Inst, Help_Module_ID.Help_Class));
+         XML := XML_Property (Get_Property (Inst, Help_Class_Name)).XML;
          if XML = null then
             XML  := Initialize_XML_Doc (Kernel);
-            Set_Data (Inst, Help_Module_ID.Help_Class,
-                      Set_Data (XML), On_Destroy_Html_Class'Access);
+            Set_Property
+              (Inst, Help_Class_Name, XML_Property'(XML => XML));
          end if;
 
          declare
@@ -513,7 +507,8 @@ package body Help_Module is
 
       elsif Command = "reset" then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
-         Set_Data (Inst, Help_Module_ID.Help_Class, System.Null_Address);
+         Set_Property
+           (Inst, Help_Class_Name, XML_Property'(XML => null));
 
       elsif Command = "browse" then
          Name_Parameters (Data, Browse_Cmd_Parameters);
@@ -1183,7 +1178,7 @@ package body Help_Module is
       --  Register commands
 
       Help_Module_ID.Html_Class := New_Class (Kernel, "HTML");
-      Help_Module_ID.Help_Class := New_Class (Kernel, "Help");
+      Help_Module_ID.Help_Class := New_Class (Kernel, Help_Class_Name);
 
       Register_Command
         (Kernel,

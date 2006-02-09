@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -73,12 +73,13 @@ with String_Utils;                  use String_Utils;
 with Traces;                        use Traces;
 with VFS;                           use VFS;
 with Generic_List;
-with Ada.Unchecked_Conversion;
-with System;
 
 package body Browsers.Call_Graph is
 
    Me : constant Debug_Handle := Create ("Browsers.Call_Graph");
+
+   References_Command_Class_Name : constant String := "ReferencesCommand";
+   --  Name of the class for shell commands associated with this package
 
    type Callgraph_Module_Record is new Module_ID_Record with null record;
    Call_Graph_Module_Id : Module_ID;
@@ -202,14 +203,14 @@ package body Browsers.Call_Graph is
       Iter      : Entity_Reference_Iterator;
       Locations : Location_List.List;
    end record;
-
-   type References_Command_Access is access all
-     References_Command'Class;
-
+   type References_Command_Access is access all References_Command'Class;
    function Execute
-     (Command : access References_Command)
-      return Command_Return_Type;
-   --
+     (Command : access References_Command) return Command_Return_Type;
+
+   type References_Command_Properties is new Instance_Property_Record with
+      record
+         Command : References_Command_Access;
+      end record;
 
    ------------------
    -- Entity items --
@@ -1461,23 +1462,15 @@ package body Browsers.Call_Graph is
          Name_Parameters (Data, References_Cmd_Parameters);
 
          declare
-            Synchronous : Boolean;
-
             Ref_Command : constant References_Command_Access :=
               new References_Command;
-
-            ReferencesCommand_Class : constant Class_Type := New_Class
-              (Get_Kernel (Data),
-               "ReferencesCommand",
-               New_Class (Get_Kernel (Data), "Command"));
-
-            function Convert is new Ada.Unchecked_Conversion
-              (References_Command_Access, System.Address);
+            References_Command_Class : constant Class_Type := New_Class
+              (Get_Kernel (Data), References_Command_Class_Name);
+            Synchronous : constant Boolean := Nth_Arg (Data, 3, True);
+            Instance    : Class_Instance;
          begin
             Filter := Real_References_Filter;
             Filter (Implicit) := Nth_Arg (Data, 2, False);
-            Synchronous := Nth_Arg (Data, 3, True);
-
             Find_All_References
               (Ref_Command.Iter,
                Entity                => Entity,
@@ -1492,30 +1485,28 @@ package body Browsers.Call_Graph is
 
             else
                --  Not synchronous, return a command
+               Instance :=
+                 New_Instance (Get_Script (Data), References_Command_Class);
+               Launch_Background_Command
+                 (Kernel,
+                  Ref_Command,
+                  False,
+                  False,
+                  Destroy_On_Exit => False);
 
-               declare
-                  Command_Instance : constant Class_Instance := New_Instance
-                    (Get_Script (Data), ReferencesCommand_Class);
-               begin
-                  Launch_Background_Command
-                    (Kernel,
-                     Ref_Command,
-                     False,
-                     False,
-                     Destroy_On_Exit => False);
+               Set_Progress
+                 (Ref_Command,
+                  (Activity => Unknown,
+                   Current  => Get_Current_Progress (Ref_Command.Iter),
+                   Total    => Get_Total_Progress (Ref_Command.Iter)));
 
-                  Set_Progress
-                    (Ref_Command,
-                     (Activity => Unknown,
-                      Current  => Get_Current_Progress (Ref_Command.Iter),
-                      Total    => Get_Total_Progress (Ref_Command.Iter)));
-
-                  Set_Data
-                    (Command_Instance,
-                     ReferencesCommand_Class,
-                     Convert (Ref_Command));
-                  Set_Return_Value (Data, Command_Instance);
-               end;
+               Set_Property
+                 (Instance,
+                  References_Command_Class_Name,
+                  References_Command_Properties'
+                    (Instance_Property_Record with
+                     Command => Ref_Command));
+               Set_Return_Value (Data, Instance);
             end if;
          end;
       elsif Command = "calls" then
@@ -1611,20 +1602,13 @@ package body Browsers.Call_Graph is
       Command : String)
    is
       ReferencesCommand_Class : constant Class_Type := New_Class
-        (Get_Kernel (Data),
-         "ReferencesCommand",
-         New_Class (Get_Kernel (Data), "Command"));
-
-      Data_Command            : References_Command_Access;
-
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, References_Command_Access);
-
+        (Get_Kernel (Data), References_Command_Class_Name);
+      Inst : constant Class_Instance :=
+        Nth_Arg (Data, 1, ReferencesCommand_Class);
+      Data_Command : constant References_Command_Access :=
+        References_Command_Properties
+          (Get_Property (Inst, References_Command_Class_Name)).Command;
    begin
-      Data_Command := Convert
-        (Get_Data (Nth_Arg (Data, 1, ReferencesCommand_Class),
-         ReferencesCommand_Class));
-
       if Command = "get_result" then
          Put_Locations_In_Return (Data_Command, Data);
       end if;

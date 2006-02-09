@@ -69,6 +69,8 @@ with Traces;                    use Traces;
 package body Src_Editor_Module.Shell is
    Me : constant Debug_Handle := Create ("Editor.Shell");
 
+   Editor_Location_Class_Name : constant String := "EditorLocation";
+
    Filename_Cst          : aliased constant String := "filename";
    File_Cst              : aliased constant String := "file";
    Line_Cst              : aliased constant String := "line";
@@ -227,6 +229,11 @@ package body Src_Editor_Module.Shell is
    end record;
    type Location_Info_Access is access Location_Info;
 
+   type Location_Property is new Instance_Property_Record with record
+      Location : Location_Info_Access;
+   end record;
+   procedure Destroy (Property : in out Location_Property);
+
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Location_Info_Access);
    function Convert is new Ada.Unchecked_Conversion
@@ -234,17 +241,13 @@ package body Src_Editor_Module.Shell is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Location_Info, Location_Info_Access);
 
-   procedure On_Location_Info_Destroyed (Info : System.Address);
-   --  Called when an instance of EditorLocation is destroyed
-
    procedure On_Buffer_Destroyed_For_Location (Data, Obj : System.Address);
    pragma Convention (C, On_Buffer_Destroyed_For_Location);
    --  Called when the buffer stored in an instance of EditorLocation is
    --  destroyed
 
    procedure Set_Location_Data
-     (EditorLoc : Class_Type;
-      Inst      : Class_Instance;
+     (Inst      : Class_Instance;
       Buffer    : Source_Buffer;
       Line      : Gint;
       Offset    : Gint);
@@ -383,7 +386,7 @@ package body Src_Editor_Module.Shell is
       Default : Gtk_Text_Iter)
    is
       Class : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "EditorLocation");
+        New_Class (Get_Kernel (Data), Editor_Location_Class_Name);
       Loc_Inst : Class_Instance;
       Info     : Location_Info_Access;
    begin
@@ -392,7 +395,8 @@ package body Src_Editor_Module.Shell is
       if Loc_Inst = No_Class_Instance then
          Copy (Source => Default, Dest => Iter);
       else
-         Info := Convert (Get_Data (Loc_Inst, Class));
+         Info := Location_Property
+           (Get_Property (Loc_Inst, Editor_Location_Class_Name)).Location;
          if Info.Buffer = null then
             Copy (Source => Default, Dest => Iter);
          else
@@ -513,22 +517,21 @@ package body Src_Editor_Module.Shell is
       end if;
    end Get_Mark;
 
-   --------------------------------
-   -- On_Location_Info_Destroyed --
-   --------------------------------
+   -------------
+   -- Destroy --
+   -------------
 
-   procedure On_Location_Info_Destroyed (Info : System.Address) is
-      Inf : Location_Info_Access := Convert (Info);
+   procedure Destroy (Property : in out Location_Property) is
    begin
       --  Make sure we will not get a signal when the buffer is destroyed later
       --  since we are no longer interested in it
-      if Inf.Buffer /= null then
+      if Property.Location.Buffer /= null then
          Weak_Unref
-           (Inf.Buffer, On_Buffer_Destroyed_For_Location'Access,
-            Data => Info);
+           (Property.Location.Buffer, On_Buffer_Destroyed_For_Location'Access,
+            Data => Convert (Property.Location));
       end if;
-      Unchecked_Free (Inf);
-   end On_Location_Info_Destroyed;
+      Unchecked_Free (Property.Location);
+   end Destroy;
 
    --------------------------------------
    -- On_Buffer_Destroyed_For_Location --
@@ -546,8 +549,7 @@ package body Src_Editor_Module.Shell is
    -----------------------
 
    procedure Set_Location_Data
-     (EditorLoc : Class_Type;
-      Inst      : Class_Instance;
+     (Inst      : Class_Instance;
       Buffer    : Source_Buffer;
       Line      : Gint;
       Offset    : Gint)
@@ -555,11 +557,9 @@ package body Src_Editor_Module.Shell is
       Info : constant Location_Info_Access := new Location_Info'
         (Buffer => Buffer, Line => Line, Offset => Offset);
    begin
-      Set_Data
-        (Inst,
-         Name       => EditorLoc,
-         Value      => Convert (Info),
-         On_Destroy => On_Location_Info_Destroyed'Access);
+      Set_Property
+        (Inst, Editor_Location_Class_Name,
+         Location_Property'(Location => Info));
       Weak_Ref (Buffer, On_Buffer_Destroyed_For_Location'Access,
                 Convert (Info));
    end Set_Location_Data;
@@ -573,11 +573,11 @@ package body Src_Editor_Module.Shell is
       Location : Gtk_Text_Iter) return Class_Instance
    is
       EditorLoc : constant Class_Type :=
-        New_Class (Get_Kernel (Script), "EditorLocation");
+        New_Class (Get_Kernel (Script), Editor_Location_Class_Name);
       Inst : constant Class_Instance := New_Instance (Script, EditorLoc);
    begin
       Set_Location_Data
-        (EditorLoc, Inst, Source_Buffer (Get_Buffer (Location)),
+        (Inst, Source_Buffer (Get_Buffer (Location)),
          Get_Line (Location), Get_Line_Offset (Location));
       return Inst;
    end Create_Editor_Location;
@@ -773,7 +773,7 @@ package body Src_Editor_Module.Shell is
 
       Inst    : constant Class_Instance :=
                   Nth_Arg (Data, 1, Get_File_Class (Kernel));
-      File    : constant Virtual_File := Get_File (Get_Data (Inst));
+      File    : constant Virtual_File := Get_Data (Inst);
       Pattern : constant String := Nth_Arg (Data, 2);
       Casing  : constant Boolean := Nth_Arg (Data, 3, False);
       Regexp  : constant Boolean := Nth_Arg (Data, 4, False);
@@ -838,11 +838,10 @@ package body Src_Editor_Module.Shell is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Inst   : constant Class_Instance :=
                  Nth_Arg (Data, 1, Get_File_Class (Kernel));
-      Info   : constant File_Info := Get_Data (Inst);
+      Info   : constant Virtual_File := Get_Data (Inst);
    begin
       Name_Parameters (Data, File_Search_Parameters);
-      Common_Search_Command_Handler
-        (Data, new File_Array'(1 => Get_File (Info)));
+      Common_Search_Command_Handler (Data, new File_Array'(1 => Info));
    end File_Search_Command_Handler;
 
    ------------------------------------
@@ -1727,7 +1726,7 @@ package body Src_Editor_Module.Shell is
          if File_Inst = No_Class_Instance then
             Child := Find_Current_Editor (Kernel);
          else
-            File := Get_File (Get_Data (File_Inst));
+            File := Get_Data (File_Inst);
             Child := Find_Editor (Kernel, File);
          end if;
 
@@ -1843,7 +1842,7 @@ package body Src_Editor_Module.Shell is
                                  (Get_Kernel (Data), Get_Filename (Buffer))),
                   Force    => not Nth_Arg (Data, 2, False));
             else
-               File := Get_File (Get_Data (File_Inst));
+               File := Get_Data (File_Inst);
                Save_To_File (Buffer,
                              Filename => File,
                              Success  => Success);
@@ -2126,7 +2125,7 @@ package body Src_Editor_Module.Shell is
      (Data : in out Callback_Data'Class; Command : String)
    is
       EditorLoc : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "EditorLocation");
+        New_Class (Get_Kernel (Data), Editor_Location_Class_Name);
       Buffer          : Source_Buffer;
       Inst            : Class_Instance;
       Iter, Iter2     : Gtk_Text_Iter;
@@ -2143,8 +2142,7 @@ package body Src_Editor_Module.Shell is
          Inst := Nth_Arg (Data, 1, EditorLoc);
          Get_Buffer (Buffer, Data, 2);
          Set_Location_Data
-           (EditorLoc,
-            Inst,
+           (Inst,
             Buffer,
             Line   => Gint (Integer'(Nth_Arg (Data, 3))) - 1,
             Offset => Gint (Integer'(Nth_Arg (Data, 4))) - 1);
@@ -2666,7 +2664,8 @@ package body Src_Editor_Module.Shell is
    procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      EditorLoc  : constant Class_Type := New_Class (Kernel, "EditorLocation");
+      EditorLoc  : constant Class_Type :=
+        New_Class (Kernel, Editor_Location_Class_Name);
       Editor_Class : constant Class_Type := New_Class (Kernel, "Editor");
       EditorBuffer : constant Class_Type := New_Class (Kernel, "EditorBuffer");
       EditorMark   : constant Class_Type := New_Class (Kernel, "EditorMark");

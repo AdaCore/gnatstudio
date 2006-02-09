@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2005                      --
+--                      Copyright (C) 2004-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -19,9 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;     use Ada.Exceptions;
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with System;
 
 with Glib;               use Glib;
 
@@ -40,6 +38,8 @@ package body Custom_Timeout is
    Constructor_Args    : constant Cst_Argument_List :=
      (Timeout_Cst'Access, Action_Cst'Access);
 
+   Timeout_Class_Name : constant String := "Timeout";
+
    type Custom_Timeout is record
       Handler  : Timeout_Handler_Id;
       Instance : Class_Instance;
@@ -51,6 +51,10 @@ package body Custom_Timeout is
      (Custom_Timeout, Custom_Timeout_Access);
 
    package Action_Timeout is new Timeout (Custom_Timeout_Access);
+
+   type Timeout_Property is new Instance_Property_Record with record
+      Timeout : Custom_Timeout_Access;
+   end record;
 
    -----------------------
    -- Local subprograms --
@@ -66,9 +70,6 @@ package body Custom_Timeout is
    function Get_Data
      (Data : Callback_Data'Class; N : Positive) return Custom_Timeout_Access;
    --  Get or store some data in an instance of GPS.Process
-
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Custom_Timeout_Access);
 
    procedure Free (X : in out Custom_Timeout_Access);
    --  Free memory associated to X.
@@ -91,11 +92,11 @@ package body Custom_Timeout is
      (Data : Callback_Data'Class; N : Positive) return Custom_Timeout_Access
    is
       Timeout_Class : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "Timeout");
-      Value : constant System.Address := Nth_Arg_Data
-        (Data, N, Timeout_Class);
+        New_Class (Get_Kernel (Data), Timeout_Class_Name);
+      Inst : constant Class_Instance := Nth_Arg (Data, N, Timeout_Class);
    begin
-      return Convert (Value);
+      return Timeout_Property
+        (Get_Property (Inst, Timeout_Class_Name)).Timeout;
    end Get_Data;
 
    --------------
@@ -127,7 +128,8 @@ package body Custom_Timeout is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Custom_Module_ID.all);
-      Timeout_Class : constant Class_Type := New_Class (Kernel, "Timeout");
+      Timeout_Class : constant Class_Type :=
+        New_Class (Kernel, Timeout_Class_Name);
       D             : Custom_Timeout_Access;
    begin
       if Command = Constructor_Method then
@@ -157,7 +159,8 @@ package body Custom_Timeout is
             D.Handler := Action_Timeout.Add
               (Guint32 (Timeout), Callback'Access, D);
 
-            Set_Data (Inst, Timeout_Class, D.all'Address);
+            Set_Property
+              (Inst, Timeout_Class_Name, Timeout_Property'(Timeout => D));
          end;
 
       elsif Command = "remove" then

@@ -39,6 +39,8 @@ package body GPS.Kernel.Hooks is
    No_Args_Data_Type_Name : constant String := "<no_args>";
    --  Data type for hooks with no arguments
 
+   Hook_Class_Name : constant String := "Hook";
+
    Name_Cst     : aliased constant String := "name";
    Descr_Cst    : aliased constant String := "description";
    Type_Cst     : aliased constant String := "type";
@@ -64,6 +66,10 @@ package body GPS.Kernel.Hooks is
 
    type Hook_Description;
    type Hook_Description_Access is access all Hook_Description'Class;
+
+   type Hook_Property is new Instance_Property_Record with record
+      Hook : Hook_Description_Access;
+   end record;
 
    type Subprogram_Wrapper_Creator is access function
      (Subprogram : Subprogram_Type;
@@ -1188,12 +1194,10 @@ package body GPS.Kernel.Hooks is
    function Get_Data
      (Data : Callback_Data'Class; Nth : Natural) return Hook_Description_Access
    is
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Hook_Description_Access);
-      Value : constant System.Address :=
-                Nth_Arg_Data (Data, Nth, Get_Hook_Class (Get_Kernel (Data)));
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, Nth, Get_Hook_Class (Get_Kernel (Data)));
    begin
-      return Hook_Description_Access'(Convert (Value));
+      return Hook_Property (Get_Property (Instance, Hook_Class_Name)).Hook;
    end Get_Data;
 
    -----------------------------
@@ -1219,7 +1223,8 @@ package body GPS.Kernel.Hooks is
                Set_Error_Msg (Data, -"No such hook: " & Name);
             else
                Instance := Nth_Arg (Data, 1, Class);
-               Set_Data (Instance, Class, Info.all'Address);
+               Set_Property
+                 (Instance, Hook_Class_Name, Hook_Property'(Hook => Info));
             end if;
          end;
 

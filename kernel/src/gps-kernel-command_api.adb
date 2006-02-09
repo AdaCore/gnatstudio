@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Conversion;
-
 with Commands;                use Commands;
 with Task_Manager;            use Task_Manager;
 
@@ -29,9 +27,6 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 package body GPS.Kernel.Command_API is
 
    --  Local subprograms
-
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Command_Access);
 
    procedure Command_Cmds
      (Data : in out Callback_Data'Class; Command : String);
@@ -46,7 +41,7 @@ package body GPS.Kernel.Command_API is
    is
       Command_Class    : constant Class_Type :=
         New_Class (Get_Kernel (Data), "Command");
-      Data_Command     : Command_Access;
+      Data_Command     : Scheduled_Command_Access;
       Command_Instance : Class_Instance;
    begin
       if Command = "list" then
@@ -86,27 +81,25 @@ package body GPS.Kernel.Command_API is
                end if;
             end loop;
          end;
+
       elsif Command = "progress" then
          Command_Instance := Nth_Arg (Data, 1, Command_Class);
-         Data_Command := Convert
-           (Get_Data (Command_Instance, Command_Class));
-
+         Data_Command := Get_Data (Command_Instance);
          Set_Return_Value (Data, Progress (Data_Command).Current);
          Set_Return_Value_Key (Data, "current");
          Set_Return_Value (Data, Progress (Data_Command).Total);
          Set_Return_Value_Key (Data, "total");
+
       elsif Command = "interrupt" then
          Command_Instance := Nth_Arg (Data, 1, Command_Class);
-         Data_Command := Convert
-           (Get_Data (Command_Instance, Command_Class));
+         Data_Command := Get_Data (Command_Instance);
+         Interrupt_Queue (Get_Kernel (Data), Command_Access (Data_Command));
 
-         Interrupt_Queue (Get_Kernel (Data), Data_Command);
       elsif Command = "name" then
          Command_Instance := Nth_Arg (Data, 1, Command_Class);
-         Data_Command := Convert
-           (Get_Data (Command_Instance, Command_Class));
-
+         Data_Command := Get_Data (Command_Instance);
          Set_Return_Value (Data, Name (Data_Command));
+
       elsif Command = "get_result" then
          Set_Return_Value
            (Data,

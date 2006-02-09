@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2005                       --
+--                     Copyright (C) 2004-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,12 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Expect;        use GNAT.Expect;
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with GNAT.Regpat;        use GNAT.Regpat;
-with System;
 
 with Gtk.Main;           use Gtk.Main;
 
@@ -38,6 +36,8 @@ with Commands;           use Commands;
 package body Expect_Interface is
 
    Me : constant Debug_Handle := Create ("Expect", Off);
+
+   Process_Class_Name : constant String := "Process";
 
    Command_Cst         : aliased constant String := "command";
    Regexp_Cst          : aliased constant String := "regexp";
@@ -87,6 +87,10 @@ package body Expect_Interface is
       Inst : Class_Instance;
    end record;
 
+   type Action_Property is new Instance_Property_Record with record
+      Action : Custom_Action_Access;
+   end record;
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -105,14 +109,12 @@ package body Expect_Interface is
 
    function Get_Data
      (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access;
+   function Get_Data (Inst : Class_Instance) return Custom_Action_Access;
    --  Get or store some data in an instance of GPS.Process
 
    procedure Custom_Spawn_Handler
      (Data    : in out Callback_Data'Class; Command : String);
    --  Interactive command handler for the expect interface.
-
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Custom_Action_Access);
 
    type Exit_Type is (Matched, Timed_Out, Died);
    function Interactive_Expect
@@ -165,16 +167,23 @@ package body Expect_Interface is
    -- Get_Data --
    --------------
 
+   function Get_Data (Inst : Class_Instance) return Custom_Action_Access is
+   begin
+      return Action_Property (Get_Property (Inst, Process_Class_Name)).Action;
+   end Get_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
    function Get_Data
      (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access
    is
       Process_Class : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "Process",
-                   New_Class (Get_Kernel (Data), "Command"));
-      Value : constant System.Address := Nth_Arg_Data
-        (Data, N, Process_Class);
+        New_Class (Get_Kernel (Data), Process_Class_Name);
+      Inst : constant Class_Instance := Nth_Arg (Data, N, Process_Class);
    begin
-      return Convert (Value);
+      return Get_Data (Inst);
    end Get_Data;
 
    ---------------
@@ -213,11 +222,9 @@ package body Expect_Interface is
    -------------
 
    procedure Exit_Cb (Data : Process_Data; Status : Integer) is
-      Class : constant Class_Type := New_Class
-        (Data.Kernel, "Process", New_Class (Data.Kernel, "Command"));
       Inst : constant Class_Instance :=
         Instance_Callback_Data (Data.Callback_Data.all).Inst;
-      D    : constant Custom_Action_Access := Convert (Get_Data (Inst, Class));
+      D    : constant Custom_Action_Access := Get_Data (Inst);
       Tmp  : Boolean;
       pragma Unreferenced (Tmp);
    begin
@@ -246,11 +253,9 @@ package body Expect_Interface is
    ---------------
 
    procedure Output_Cb (Data : Process_Data; Output : String) is
-      Class : constant Class_Type := New_Class
-        (Data.Kernel, "Process", New_Class (Data.Kernel, "Command"));
       Inst : constant Class_Instance :=
         Instance_Callback_Data (Data.Callback_Data.all).Inst;
-      D    : constant Custom_Action_Access := Convert (Get_Data (Inst, Class));
+      D    : constant Custom_Action_Access := Get_Data (Inst);
       Matches   : Match_Array (0 .. Max_Paren_Count);
       Beg_Index : Natural;
       End_Index : Natural;
@@ -443,7 +448,7 @@ package body Expect_Interface is
         Get_Kernel (Custom_Module_ID.all);
       D             : Custom_Action_Access;
       Process_Class : constant Class_Type := New_Class
-        (Kernel, "Process", New_Class (Kernel, "Command"));
+        (Kernel, Process_Class_Name);
       E             : Exit_Type;
       pragma Unreferenced (E);
 
@@ -491,7 +496,8 @@ package body Expect_Interface is
                Fd            => D.Fd);
 
             if Success then
-               Set_Data (Inst, Process_Class, D.all'Address);
+               Set_Property
+                 (Inst, Process_Class_Name, Action_Property'(Action => D));
             else
                Free (D);
                Set_Error_Msg
@@ -551,7 +557,7 @@ package body Expect_Interface is
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
       Process_Class : constant Class_Type := New_Class
-        (Kernel, "Process", New_Class (Kernel, "Command"));
+        (Kernel, Process_Class_Name, New_Class (Kernel, "Command"));
    begin
       Register_Command
         (Kernel, Constructor_Method,
