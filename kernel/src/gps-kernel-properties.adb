@@ -568,7 +568,7 @@ package body GPS.Kernel.Properties is
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       File_Class : constant Class_Type := New_Class (Kernel, "File");
       Inst       : constant Class_Instance := Nth_Arg (Data, 1, File_Class);
-      File       : constant Virtual_File := Get_File (Get_Data (Inst));
+      File       : constant Virtual_File := Get_Data (Inst);
 
       Name       : aliased constant String := "name";
       Value      : aliased constant String := "value";

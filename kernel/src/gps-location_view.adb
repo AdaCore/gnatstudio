@@ -2322,8 +2322,8 @@ package body GPS.Location_View is
             Insert_Location
               (Get_Kernel (Data),
                Category           => Nth_Arg (Data, 1),
-               File               => Get_File (Get_Data
-                 (Nth_Arg (Data, 2, (Get_File_Class (Get_Kernel (Data)))))),
+               File               => Get_Data
+                 (Nth_Arg (Data, 2, (Get_File_Class (Get_Kernel (Data))))),
                Line               => Nth_Arg (Data, 3),
                Column             => Nth_Arg (Data, 4),
                Text               => Nth_Arg (Data, 5),

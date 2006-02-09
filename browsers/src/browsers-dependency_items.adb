@@ -985,12 +985,12 @@ package body Browsers.Dependency_Items is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Instance : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_File_Class (Kernel));
-      File     : constant File_Info := Get_Data (Instance);
+      File     : constant Virtual_File := Get_Data (Instance);
    begin
       if Command = "uses" then
-         Examine_Dependencies (Kernel, File => Get_File (File));
+         Examine_Dependencies (Kernel, File => File);
       elsif Command = "used_by" then
-         Examine_From_Dependencies (Kernel, File => Get_File (File));
+         Examine_From_Dependencies (Kernel, File => File);
       elsif Command = "imports" then
          declare
             Iter       : File_Dependency_Iterator;
@@ -999,7 +999,7 @@ package body Browsers.Dependency_Items is
             Recursive  : constant Boolean := Nth_Arg (Data, 2);
          begin
             Set_Return_Value_As_List (Data);
-            Source := Get_Or_Create (Get_Database (Kernel), Get_File (File));
+            Source := Get_Or_Create (Get_Database (Kernel), File);
             Find_Dependencies
               (Iter => Iter,
                File => Source);
@@ -1028,7 +1028,7 @@ package body Browsers.Dependency_Items is
             Recursive  : constant Boolean := Nth_Arg (Data, 2);
          begin
             Set_Return_Value_As_List (Data);
-            Source := Get_Or_Create (Get_Database (Kernel), Get_File (File));
+            Source := Get_Or_Create (Get_Database (Kernel), File);
             Find_Ancestor_Dependencies
               (Iter         => Iter,
                File         => Source,

@@ -1103,24 +1103,23 @@ package body Builder_Module is
    is
       use String_List_Utils.String_List;
       Node   : List_Node;
-      Info   : File_Info;
+      Info   : Virtual_File;
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       C      : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
       if Command = "compile" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Compile_File (Get_Kernel (Data), Get_File (Info),
-                       Synchronous => True);
+         Compile_File (Get_Kernel (Data), Info, Synchronous => True);
 
       elsif Command = "check_syntax" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Compile_File (Get_Kernel (Data), Get_File (Info),
+         Compile_File (Get_Kernel (Data), Info,
                        Synchronous => True,
                        Syntax_Only => True);
 
       elsif Command = "shadow_check_syntax" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Compile_File (Get_Kernel (Data), Get_File (Info),
+         Compile_File (Get_Kernel (Data), Info,
                        Synchronous => False,
                        Syntax_Only => True,
                        Quiet       => True,
@@ -1130,16 +1129,15 @@ package body Builder_Module is
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
 
          declare
-            Main    : constant Virtual_File := Get_File (Info);
             Project : constant Project_Type := Get_Project_From_File
               (Registry => Project_Registry
                  (Get_Registry (Get_Kernel (Data)).all),
-               Source_Filename   => Main,
+               Source_Filename   => Info,
                Root_If_Not_Found => True);
          begin
             On_Build
               (Get_Kernel (Data),
-               File        => Main,
+               File        => Info,
                Project     => Project,
                Synchronous => True);
          end;

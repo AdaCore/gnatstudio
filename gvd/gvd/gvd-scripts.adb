@@ -249,7 +249,7 @@ package body GVD.Scripts is
                --  We got pass a file as Id
                File_Inst := Nth_Arg
                  (Data, 1, Get_File_Class (Kernel), Allow_Null => False);
-               File := Get_File (Get_Data (File_Inst));
+               File := Get_Data (File_Inst);
 
                while List /= null loop
                   Process := Visual_Debugger (List.Debugger);
@@ -321,7 +321,7 @@ package body GVD.Scripts is
          declare
             File_Inst : constant Class_Instance := Nth_Arg
               (Data, 1, Get_File_Class (Kernel), Allow_Null => False);
-            File : constant Virtual_File := Get_File (Get_Data (File_Inst));
+            File : constant Virtual_File := Get_Data (File_Inst);
          begin
             Process := Spawn
               (Kernel => Kernel,

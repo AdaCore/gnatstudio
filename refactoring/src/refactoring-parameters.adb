@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -219,12 +219,12 @@ package body Refactoring.Parameters is
          declare
             Entity   : constant Entity_Information := Get_Data (Data, 1);
             Location : constant File_Location_Info := Get_Data (Data, 2);
-            File     : constant File_Info := Get_Data (Get_File (Location));
+            File     : constant Virtual_File := Get_Data (Get_File (Location));
          begin
             if Name_Parameters
               (Kernel => Get_Kernel (Data),
                Entity => Entity,
-               File   => Get_File (File),
+               File   => File,
                Line   => Get_Line (Location),
                Column => Get_Column (Location)) /= Success
             then
