@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.2.0
 
+- F207-016 Examine Entity missing some values for enumerations
+  Problem:    If you click on an enumeration type, and select "Examine Entity"
+              in the contextual menu, the enumeration literals defined on the
+              same line as the closing parenthesis are ignored
+  Workaround: put the closing parenthesis on a line of its own
+
 - F128-008 GPS does not always color lines correctly
   Problem:    After some characters have been added on a line, the line is
               not always correctly re-highlighted. This happens when inserting
