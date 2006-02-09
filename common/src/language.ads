@@ -568,7 +568,7 @@ package Language is
       Partial_Entity : Boolean) return Boolean;
    --  Callback during parsing of entities.
    --  Partial_Entity is True if parsing is at the end of the string with a
-   --  non terminated entity (e.g String or Comment).
+   --  non terminated entity (e.g string or multi-line comment).
    --  If Callback returns True, the parsing should be stopped.
 
    procedure Parse_Entities
