@@ -211,8 +211,6 @@ package body Python_Module is
    function Nth_Arg
      (Data : Python_Callback_Data; N : Positive) return Subprogram_Type;
    function Nth_Arg
-     (Data : Python_Callback_Data; N : Positive) return System.Address;
-   function Nth_Arg
      (Data : Python_Callback_Data; N : Positive; Class : Class_Type;
       Allow_Null : Boolean := False)
       return Class_Instance;
@@ -225,8 +223,6 @@ package body Python_Module is
      (Data   : in out Python_Callback_Data; Value : String);
    procedure Set_Return_Value
      (Data   : in out Python_Callback_Data; Value : Boolean);
-   procedure Set_Return_Value
-     (Data   : in out Python_Callback_Data; Value : System.Address);
    procedure Set_Return_Value
      (Data   : in out Python_Callback_Data; Value : Class_Instance);
    procedure Set_Return_Value_Key
@@ -983,18 +979,17 @@ package body Python_Module is
       Kernel   : constant Kernel_Handle  := Get_Kernel (Data);
       Instance : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_File_Class (Kernel));
-      Info     : constant File_Info := Get_Data (Instance);
+      Info     : constant Virtual_File := Get_Data (Instance);
    begin
       if Command = "__str__" or else Command = "__repr__" then
-         Set_Return_Value (Data, Full_Name (Get_File (Info)).all);
+         Set_Return_Value (Data, Full_Name (Info).all);
 
       elsif Command = "__cmp__" then
          declare
             Inst2 : constant Class_Instance := Nth_Arg
               (Data, 2, Get_File_Class (Kernel));
-            Info2 : constant File_Info := Get_Data (Inst2);
-            Name  : constant String := Full_Name (Get_File (Info)).all;
-            Name2 : constant String := Full_Name (Get_File (Info2)).all;
+            Name  : constant String := Full_Name (Info).all;
+            Name2 : constant String := Full_Name (Get_Data (Inst2)).all;
          begin
             if Name < Name2 then
                Set_Return_Value (Data, -1);
@@ -1007,7 +1002,7 @@ package body Python_Module is
 
       elsif Command = "__hash__" then
          Set_Return_Value
-           (Data, Integer (Hash (Full_Name (Get_File (Info)).all)));
+           (Data, Integer (Hash (Full_Name (Info).all)));
       end if;
 
    exception
@@ -1188,30 +1183,30 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Info     : constant File_Location_Info := Get_Data (Data, 1);
-      Fileinfo : constant File_Info := Get_Data (Get_File (Info));
+      Fileinfo : constant Virtual_File := Get_Data (Get_File (Info));
    begin
       if Command = "__str__"
         or else Command = "__repr__"
       then
          Set_Return_Value (Data,
-                           Base_Name (Get_File (Fileinfo)) & ':'
+                           Base_Name (Fileinfo) & ':'
                            & Image (Get_Line (Info)) & ':'
                            & Image (Get_Column (Info)));
 
       elsif Command = "__hash__" then
          Set_Return_Value
            (Data, Integer
-            (Hash (Full_Name (Get_File (Fileinfo)).all
+            (Hash (Full_Name (Fileinfo).all
                    & Image (Get_Line (Info))
                    & Image (Get_Column (Info)))));
 
       elsif Command = "__cmp__" then
          declare
             Info2 : constant File_Location_Info := Get_Data (Data, 2);
-            Fileinfo2 : constant File_Info := Get_Data (Get_File (Info2));
+            Fileinfo2 : constant Virtual_File := Get_Data (Get_File (Info2));
             Line1, Line2 : Integer;
-            Name1 : constant String := Full_Name (Get_File (Fileinfo)).all;
-            Name2 : constant String := Full_Name (Get_File (Fileinfo2)).all;
+            Name1 : constant String := Full_Name (Fileinfo).all;
+            Name2 : constant String := Full_Name (Fileinfo2).all;
          begin
             if Name1 < Name2 then
                Set_Return_Value (Data, -1);
@@ -2106,24 +2101,6 @@ package body Python_Module is
    -------------
 
    function Nth_Arg
-     (Data : Python_Callback_Data; N : Positive) return System.Address
-   is
-      Item : constant PyObject := Get_Param (Data, N);
-   begin
-      if not PyCObject_Check (Item) then
-         Raise_Exception
-           (Invalid_Parameter'Identity,
-            "Parameter" & Integer'Image (N) & " should be an address");
-      else
-         return PyCObject_AsVoidPtr (Item);
-      end if;
-   end Nth_Arg;
-
-   -------------
-   -- Nth_Arg --
-   -------------
-
-   function Nth_Arg
      (Data : Python_Callback_Data; N : Positive; Class : Class_Type;
       Allow_Null : Boolean := False)
       return Class_Instance
@@ -2467,25 +2444,6 @@ package body Python_Module is
       else
          Setup_Return_Value (Data);
          Data.Return_Value := PyString_FromString (Value);
-      end if;
-   end Set_Return_Value;
-
-   ----------------------
-   -- Set_Return_Value --
-   ----------------------
-
-   procedure Set_Return_Value
-     (Data : in out Python_Callback_Data; Value : System.Address)
-   is
-      Num : Integer;
-      pragma Unreferenced (Num);
-   begin
-      if Data.Return_As_List then
-         Num := PyList_Append
-           (Data.Return_Value, PyCObject_FromVoidPtr (Value));
-      else
-         Setup_Return_Value (Data);
-         Data.Return_Value := PyCObject_FromVoidPtr (Value);
       end if;
    end Set_Return_Value;
 
