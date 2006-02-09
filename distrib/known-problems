@@ -20,6 +20,13 @@ Known Problems fixed in GPS 3.2.0
               now the new behavior for the Edit log file.
   Workaround: Move the log editor manually
 
+- F103-012 Loading new project breaks the desktop
+  Problem:    If you load a project through the menu Project->Recent or
+              Project->Load, the desktop is improperly updated, and some
+              windows have unexpected sizes
+  Workaround: Use the -P command line parameter to GPS to specify the
+              project directly on the command line.
+
 - EC29-006 Wrong indentation of default generic procedures
   Problem:    The Ada editor does not correctly indent constructs such as
               generic
