@@ -1880,8 +1880,8 @@ package body Src_Editor_Buffer is
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
    is
       Highlight_Complete : Boolean := False;
-      Entity_Start, Entity_Start_Save : Gtk_Text_Iter;
-      Entity_End, Entity_End_Save     : Gtk_Text_Iter;
+      Entity_Start       : Gtk_Text_Iter;
+      Entity_End         : Gtk_Text_Iter;
       Tags               : Highlighting_Tags renames Buffer.Syntax_Tags;
       Slice_Offset_Line  : Buffer_Line_Type;
       --  Offset between the beginning of the Source_Buffer and the beginning
@@ -2036,7 +2036,7 @@ package body Src_Editor_Buffer is
          Length : constant Integer := Integer (Strlen (UTF8));
 
       begin
-         Slice := To_Unchecked_String (UTF8);
+         Slice               := To_Unchecked_String (UTF8);
          Highlight_Complete  := True;
          Slice_Offset_Line   := Buffer_Line_Type (Get_Line (Entity_Start));
          Slice_Offset_Column := Get_Line_Index (Entity_Start);
@@ -2069,24 +2069,13 @@ package body Src_Editor_Buffer is
          Copy (Source => Start_Iter, Dest => Entity_Start);
       end if;
 
-      Copy (Entity_End,   Entity_End_Save);
-      Copy (Entity_Start, Entity_Start_Save);
+      --  Highlight to the end of line, to avoid missing most of the
+      --  partial entities (strings, characters, ...).
+      --  In case we have started typing a string for instance, that
+      --  provides a nice optimization over rehighlighting the whole buffer.
 
-      --  First try to highlight the exact region itself
-
+      Forward_To_Line_End (Entity_End, Result);
       Local_Highlight;
-
-      if not Highlight_Complete then
-         --  Highlight to the end of line, to avoid missing most of the
-         --  partial entities (strings, characters, ...).
-         --  In case we have started typing a string for instance, that
-         --  provides a nice optimization over rehighlighting the whole buffer.
-
-         Copy (Entity_End_Save, Entity_End);
-         Copy (Entity_Start_Save, Entity_Start);
-         Forward_Line (Entity_End, Result);
-         Local_Highlight;
-      end if;
 
       if not Highlight_Complete then
          --  In this case, we are in the middle of e.g a multi-line comment,
