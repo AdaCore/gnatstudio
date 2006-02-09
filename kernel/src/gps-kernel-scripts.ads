@@ -25,7 +25,7 @@
 --  independant as possible from the specific language.
 
 with Ada.Finalization;
-with System;
+--  with System;
 with GNAT.OS_Lib;
 with Gtk.Handlers;
 with Gtk.Widget;
@@ -121,7 +121,10 @@ package GPS.Kernel.Scripts is
    --  then simply be made available directly in the shell.
    --  If a class with the same name was created, it is returned, and no class
    --  is created anew.
-   --  Base is the base class, or parent class.
+   --  Base is the base class, or parent class. It only need be specified the
+   --  first time the class is created (typically just before the matching
+   --  calls to Register_Command), and can be left to its default value
+   --  afterward.
    --  Description of the new class must be put in the file shell_commands.xml,
    --  which is read dynamically when generating the documentation.
 
@@ -208,8 +211,6 @@ package GPS.Kernel.Scripts is
      (Data : Callback_Data; N : Positive) return Integer is abstract;
    function Nth_Arg
      (Data : Callback_Data; N : Positive) return Boolean is abstract;
-   function Nth_Arg
-     (Data : Callback_Data; N : Positive) return System.Address is abstract;
    --  Get the nth argument to the function, starting from 1.
    --  If there is not enough parameters, No_Such_Parameter is raised
    --  If the parameters doesn't have the right type, Invalid_Parameter is
@@ -232,16 +233,6 @@ package GPS.Kernel.Scripts is
    --  parameter. If it is false, passing a null instance will raise
    --  Invalid_Parameter.
 
-   function Nth_Arg_Data
-     (Data       : Callback_Data;
-      N          : Positive;
-      Class      : Class_Type;
-      Allow_Null : Boolean := False) return System.Address;
-   --  Same as above, but return directly the data contained in the class
-   --  instance. This avoids the need for freeing the instance itself. This
-   --  is not the same as Nth_Arg returning a System.Address.
-   --  See also the Get_Data subprograms below, which simplify this handling
-
    function Nth_Arg
      (Data : Callback_Data; N : Positive; Default : String)
       return String;
@@ -252,21 +243,12 @@ package GPS.Kernel.Scripts is
      (Data : Callback_Data; N : Positive; Default : Boolean)
       return Boolean;
    function Nth_Arg
-     (Data : Callback_Data; N : Positive; Default : System.Address)
-      return System.Address;
-   function Nth_Arg
      (Data    : Callback_Data;
       N       : Positive;
       Class   : Class_Type;
       Default : Class_Instance;
       Allow_Null : Boolean := False)
       return Class_Instance;
-   function Nth_Arg_Data
-     (Data       : Callback_Data;
-      N          : Positive;
-      Class      : Class_Type;
-      Default    : System.Address;
-      Allow_Null : Boolean := False) return System.Address;
    function Nth_Arg
      (Data    : Callback_Data;
       N       : Positive;
@@ -294,8 +276,6 @@ package GPS.Kernel.Scripts is
      (Data : in out Callback_Data; Value : String) is abstract;
    procedure Set_Return_Value
      (Data : in out Callback_Data; Value : Boolean) is abstract;
-   procedure Set_Return_Value
-     (Data : in out Callback_Data; Value : System.Address) is abstract;
    procedure Set_Return_Value
      (Data : in out Callback_Data; Value : Class_Instance) is abstract;
    --  Set the return value of Data.
@@ -355,8 +335,29 @@ package GPS.Kernel.Scripts is
    function Get_Script (Instance : Class_Instance) return Scripting_Language;
    --  Return the scripting language that created this instance
 
-   function Get_Data
-     (Instance : Class_Instance; Name : Class_Type) return System.Address;
+   type Instance_Property_Record is abstract tagged null record;
+   type Instance_Property is access all Instance_Property_Record'Class;
+   procedure Destroy (Prop : in out Instance_Property_Record);
+   --  Type of data that can be associated with a class_instance. This is a
+   --  general type, but simpler types are provided already
+
+   procedure Set_Property
+     (Instance : Class_Instance;
+      Name     : String;
+      Property : Instance_Property_Record'Class);
+   --  Associate user data with Instance. Multiple data can be stored in a
+   --  given instance, each associated with a different Name. Typically, GPS
+   --  classes use the class name as the property name to avoid conflicts.
+   --  When the property is no longer needed (either because it is replaced by
+   --  another one with the same name, or because Instance is destroyed), the
+   --  Destroy operation is called on Property.
+   --  Note that a copy of Property is stored, not Property itself.
+
+   function Get_Property
+     (Instance : Class_Instance;
+      Name     : String) return Instance_Property_Record'Class;
+   --  Return a general property associated with the widget.
+
    function Get_Data
      (Instance : Class_Instance; Name : Class_Type) return Integer;
    function Get_Data
@@ -365,7 +366,9 @@ package GPS.Kernel.Scripts is
      (Instance : Class_Instance;
       Name     : String := GUI_Class_Name) return Glib.Object.GObject;
    --  Get the data embedded in the class.
+   --  These are specialized cases of Get_Property.
    --  Invalid_Data is raised if no such data was stored in the instance.
+   --  Constraint_Error is raised if the data is not of the appropriate type.
    --  Class is used to differentiate the data for instances that inherit from
    --  several GPS classes, as in:
    --     class Foo (GPS.Console, GPS.Process):
@@ -374,28 +377,21 @@ package GPS.Kernel.Scripts is
    --           GPS.Process.__init__ (self,...)
    --  since both internal classes expect different data stored internally
 
-   type Destroy_Handler is access procedure (Value : System.Address);
-   --  Called when the data stored in an instance is no longer needed for this
-   --  instance.
-
    procedure Set_Data
      (Instance : Class_Instance; Name : Class_Type; Value : String);
    procedure Set_Data
      (Instance : Class_Instance; Name : Class_Type; Value : Integer);
-   procedure Set_Data
-     (Instance : Class_Instance;
-      Widget   : Glib.Object.GObject;
-      Name     : String := GUI_Class_Name);  --  default matches GPS.GUI class
-   procedure Set_Data
-     (Instance   : Class_Instance;
-      Name       : Class_Type;
-      Value      : System.Address;
-      On_Destroy : Destroy_Handler := null);
    --  Associate some data with the instance.
+   --  These are specialized cases of Set_Property.
    --  The class name is required to handle multiple inheritance: if we were
    --  always using the same internal identifier to associated data with the
    --  instance, then we couldn't have a class with multiple ancestors, each
    --  expecting its own user data set in the constructor.
+
+   procedure Set_Data
+     (Instance : Class_Instance;
+      Widget   : Glib.Object.GObject;
+      Name     : String := GUI_Class_Name);
    --  When associating a GObject, the Class_Instance will exists as long as
    --  the object exists. However, if the object is destroyed, the
    --  Class_Instance is not necessarily destroyed, although calling any of its
@@ -479,16 +475,13 @@ package GPS.Kernel.Scripts is
    --  Free the instances stored in the list
 
    function Get
-     (Kernel : access Kernel_Handle_Record'Class;
-      List   : Instance_List;
-      Script : Scripting_Language) return Class_Instance;
-   --  Return the instance for a given script. Return value needs to be Ref'ed
-   --  by the caller if it keeps a reference to it.
+     (List   : Instance_List;
+      Script : access Scripting_Language_Record'Class) return Class_Instance;
+   --  Return the instance for a given script.
 
    procedure Set
-     (Kernel : access Kernel_Handle_Record'Class;
-      List   : in out Instance_List;
-      Script : Scripting_Language;
+     (List   : in out Instance_List;
+      Script : access Scripting_Language_Record'Class;
       Inst   : Class_Instance);
    --  Set the instance for a specific language
 
@@ -664,14 +657,6 @@ package GPS.Kernel.Scripts is
    --  This subprogram should be called only after all scripting languages
    --  have been registered.
 
-   function Parameter_Names_To_Usage
-     (Parameters            : Cst_Argument_List;
-      Optional_Params_Count : Natural := 0) return String;
-   --  From the list of parameters used for Name_Parameters, create a suitable
-   --  Usage string for Register_Command.
-   --  Optional_Params_Count is the number of parameters in Parameters that are
-   --  optional. These have to be the last entries in Parameters.
-
    procedure Register_Command
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command       : String;
@@ -785,10 +770,9 @@ package GPS.Kernel.Scripts is
    --  Entity_Information.
 
    procedure Set_Data
-     (Instance : Class_Instance;
-      Entity   : Entities.Entity_Information);
-   function Get_Data (Data : Callback_Data; N : Positive)
-      return Entities.Entity_Information;
+     (Instance : Class_Instance; Entity : Entities.Entity_Information);
+   function Get_Data
+     (Data : Callback_Data; N : Positive) return Entities.Entity_Information;
    --  The Entity class stores some Entity_Information data in Instance
    --  You should destroy the entity passed to Set_Data, but not the value
    --  returned by Get_Data
@@ -807,14 +791,10 @@ package GPS.Kernel.Scripts is
       return Class_Type;
    --  Return the class to use for file types. This encapsulates a File_Info
 
-   type File_Info is private;
-   No_File : constant File_Info;
-
-   function Get_File (File : File_Info) return VFS.Virtual_File;
-   --  Return the name of File
-
-   function Get_Data (Data : Callback_Data; N : Positive) return File_Info;
-   function Get_Data (Instance : Class_Instance) return File_Info;
+   function Get_Data
+     (Data : Callback_Data; N : Positive) return VFS.Virtual_File;
+   function Get_Data
+     (Instance : Class_Instance) return VFS.Virtual_File;
    --  Retrieve the file information from an instance
 
    function Create_File
@@ -904,6 +884,8 @@ package GPS.Kernel.Scripts is
 
    function Get_Data (Data : Callback_Data; N : Positive)
       return GPS.Kernel.Selection_Context_Access;
+   function Get_Data (Instance : Class_Instance)
+      return GPS.Kernel.Selection_Context_Access;
    --  Retrieve some context information from instance
 
    function Get_Area_Context_Class
@@ -917,18 +899,10 @@ package GPS.Kernel.Scripts is
       return Class_Instance;
    --  Return an instance of an area context
 
-   function Get_Data (Data : Callback_Data; N : Positive)
-      return GPS.Kernel.Contexts.File_Area_Context_Access;
-   --  Retrieve some context information from instance
-
    function Get_File_Context_Class
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return a class for a File_Selection_Context
-
-   function Get_Data (Data : Callback_Data; N : Positive)
-      return GPS.Kernel.Contexts.File_Selection_Context_Access;
-   --  Retrieve some context information from instance
 
    function Create_File_Context
      (Script  : access Scripting_Language_Record'Class;
@@ -940,10 +914,6 @@ package GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return a class for an Entity_Selection_Context
-
-   function Get_Data (Data : Callback_Data; N : Positive)
-     return GPS.Kernel.Contexts.Entity_Selection_Context_Access;
-   --  Retrieve some context information from instance
 
    function Create_Entity_Context
      (Script  : access Scripting_Language_Record'Class;
@@ -962,36 +932,17 @@ private
       Name : GNAT.OS_Lib.String_Access;
    end record;
 
-   type File_Info is record
-      File : VFS.Virtual_File;
-   end record;
-
    type File_Location_Info is record
       File         : Class_Instance;
       Line, Column : Natural;
    end record;
 
-   type User_Data_Type is (Strings, Objects, Addresses, Integers);
-
    type User_Data;
    type User_Data_List is access User_Data;
-   type User_Data (Length : Natural; Typ : User_Data_Type) is record
-      Next  : User_Data_List;
-      Name  : String (1 .. Length);
-      --  Discriminant for use when a class inherits from several base classes
-      --  excepting different data types.
-
-      case Typ is
-         when Strings =>
-            Str : GNAT.OS_Lib.String_Access;
-         when Objects =>
-            Obj : Glib.Object.GObject;
-         when Addresses =>
-            Addr       : System.Address;
-            On_Destroy : Destroy_Handler;
-         when Integers =>
-            Int : Integer;
-      end case;
+   type User_Data (Length : Natural) is record
+      Next : User_Data_List;
+      Name : String (1 .. Length);
+      Prop : Instance_Property;
    end record;
 
    type Class_Instance_Record is abstract tagged limited record
@@ -1026,7 +977,6 @@ private
    No_Class_Instance : constant Class_Instance :=
      (Initialized => False);
 
-   No_File  : constant File_Info := (File => VFS.No_File);
    No_Class : constant Class_Type := (Name => null);
    No_File_Location : constant File_Location_Info := (No_Class_Instance, 0, 0);
 
