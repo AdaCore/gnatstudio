@@ -213,8 +213,6 @@ package body Shell_Script is
    function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return Integer;
    function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return Boolean;
    function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive) return System.Address;
-   function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive) return Subprogram_Type;
    function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive; Class : Class_Type;
@@ -229,8 +227,6 @@ package body Shell_Script is
      (Data   : in out Shell_Callback_Data; Value : Boolean);
    procedure Set_Return_Value
      (Data   : in out Shell_Callback_Data; Value : String);
-   procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data; Value : System.Address);
    procedure Set_Return_Value
      (Data   : in out Shell_Callback_Data; Value : Class_Instance);
    procedure Set_Return_Value_Key
@@ -1577,20 +1573,6 @@ package body Shell_Script is
    -------------
 
    function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive) return System.Address
-   is
-      S : constant String := Nth_Arg (Data, N);
-      Add : constant System.Address := GNAT.Debug_Utilities.Value
-        ("16#" & S (S'First + 2 .. S'Last) & '#');
-   begin
-      return Add;
-   end Nth_Arg;
-
-   -------------
-   -- Nth_Arg --
-   -------------
-
-   function Nth_Arg
      (Data       : Shell_Callback_Data;
       N          : Positive;
       Class      : Class_Type;
@@ -1741,16 +1723,6 @@ package body Shell_Script is
          Free (Data.Return_Value);
          Data.Return_Value := new String'(Value);
       end if;
-   end Set_Return_Value;
-
-   ----------------------
-   -- Set_Return_Value --
-   ----------------------
-
-   procedure Set_Return_Value
-     (Data : in out Shell_Callback_Data; Value : System.Address) is
-   begin
-      Set_Return_Value (Data, "0x" & System.Address_Image (Value));
    end Set_Return_Value;
 
    ----------------------
