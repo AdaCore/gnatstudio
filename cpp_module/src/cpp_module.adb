@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -160,20 +160,6 @@ package body Cpp_Module is
         Set_Executables (Get_System_Dir (Kernel), LI);
 
    begin
-      Register_Language (Handler, C_Lang, LI => LI);
-      Register_Default_Language_Extension
-        (Get_Registry (Kernel).all,
-         Language_Name       => "c",
-         Default_Spec_Suffix => ".h",
-         Default_Body_Suffix => ".c");
-
-      Register_Language (Handler, Cpp_Lang, LI => LI);
-      Register_Default_Language_Extension
-        (Get_Registry (Kernel).all,
-         Language_Name       => "c++",
-         Default_Spec_Suffix => ".hh",
-         Default_Body_Suffix => ".cpp");
-
       if Msg /= "" then
          --  No parser will be available. However, we still want the
          --  highlighting for C and C++ files
@@ -187,6 +173,20 @@ package body Cpp_Module is
             Name => "cpp_module.project_view_changed");
          On_Project_View_Changed (LI);
       end if;
+
+      Register_Language (Handler, C_Lang, LI => LI);
+      Register_Default_Language_Extension
+        (Get_Registry (Kernel).all,
+         Language_Name       => "c",
+         Default_Spec_Suffix => ".h",
+         Default_Body_Suffix => ".c");
+
+      Register_Language (Handler, Cpp_Lang, LI => LI);
+      Register_Default_Language_Extension
+        (Get_Registry (Kernel).all,
+         Language_Name       => "c++",
+         Default_Spec_Suffix => ".hh",
+         Default_Body_Suffix => ".cpp");
 
       C_Automatic_Indentation := Param_Spec_Enum
         (Indentation_Properties.Gnew_Enum
