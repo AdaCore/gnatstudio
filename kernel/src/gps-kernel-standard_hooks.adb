@@ -495,8 +495,7 @@ package body GPS.Kernel.Standard_Hooks is
         (Hooks_Data with
          Identifier_Length => Identifier'Length,
          Identifier        => Identifier,
-         File              => Get_File
-           (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel)))),
+         File         => Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel))),
          Info              => null,
          Every_Line        => Nth_Arg (Data, 4),
          Normalize         => Nth_Arg (Data, 5));
@@ -520,8 +519,7 @@ package body GPS.Kernel.Standard_Hooks is
          Identifier        => Identifier,
          Cat_Length        => Category'Length,
          Category          => Category,
-         File              => Get_File
-           (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel)))),
+         File         => Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel))),
          Line              => Nth_Arg (Data, 5),
          Column            => Nth_Arg (Data, 6),
          Mes_Length        => Message'Length,
@@ -541,8 +539,7 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       return Html_Hooks_Args'
         (Hooks_Data with
-         File              => Get_File
-           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
+         File         => Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel))),
          Enable_Navigation => Nth_Arg (Data, 3),
          Anchor_Length     => Anchor'Length,
          Anchor            => Anchor);
@@ -559,12 +556,12 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       return Diff_Hooks_Args'
         (Hooks_Data with
-         Orig_File => Get_File
-           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
-         New_File  => Get_File
-           (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel), True))),
-         Diff_File => Get_File
-           (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel), True))));
+         Orig_File =>
+           Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True)),
+         New_File  =>
+           Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel), True)),
+         Diff_File =>
+           Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel), True)));
    end From_Callback_Data_Diff;
 
    -----------------------------
@@ -578,8 +575,7 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       return File_Hooks_Args'
         (Hooks_Data with
-         File => Get_File
-           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))));
+         File => Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True)));
    end From_Callback_Data_File;
 
    --------------------------------
@@ -628,8 +624,7 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       return File_Location_Hooks_Args'
         (Hooks_Data with
-         File   => Get_File
-           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
+         File   => Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True)),
          Line   => Nth_Arg (Data, 3),
          Column => Nth_Arg (Data, 4));
    end From_Callback_Data_File_Location;
@@ -644,8 +639,8 @@ package body GPS.Kernel.Standard_Hooks is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
       return File_Status_Changed_Hooks_Args'
-        (Hooks_Data with Get_File
-           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
+        (Hooks_Data with
+         Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True)),
          Status => File_Status'Value (Nth_Arg (Data, 3)));
    end From_Callback_Data_File_Status_Changed;
 
@@ -760,8 +755,7 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       return Source_File_Hooks_Args'
         (Hooks_Data with
-         File => Get_File
-           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
+         File         => Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel))),
          Line              => Nth_Arg (Data, 3),
          Column            => Nth_Arg (Data, 4),
          Column_End        => Nth_Arg (Data, 5),
