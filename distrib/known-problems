@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.2.0
 
+- F128-008 GPS does not redo the one line highlighting correctly
+  Problem:    After some characters have been added on a line, the line is
+              not completely re-highlighted. This happens when inserting a
+              single line comment mark or a string delimiter for example.
+  Workaround: None
+
 - F106-014 GPS auto-casing does not support unicode characters
   Problem:    GPS was not properly changing the case of identifiers with
               unicode characters (like the Greek letter Pi for example).
