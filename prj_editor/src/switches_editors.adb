@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -853,17 +853,29 @@ package body Switches_Editors is
 
          --  Remove from current all switches that have been coalesced
          for Cur in Current'Range loop
-            for C in P.Coalesce_Switches'Range loop
-               if Current (Cur) /= null
-                 and then Current (Cur)'Length >=
+            if Current (Cur) /= null then
+               for C in P.Coalesce_Switches'Range loop
+                  if Current (Cur)'Length >=
                     P.Coalesce_Switches (C)'Length
-                 and then P.Coalesce_Switches (C).all = Current (Cur)
-                 (Current (Cur)'First ..
-                  Current (Cur)'First + P.Coalesce_Switches (C)'Length - 1)
-               then
-                  Free (Current (Cur));
-               end if;
-            end loop;
+                    and then P.Coalesce_Switches (C).all = Current (Cur)
+                    (Current (Cur)'First ..
+                      Current (Cur)'First + P.Coalesce_Switches (C)'Length - 1)
+                  then
+                     --  Check if we have a check button with this switch...
+                     --  If not, leave the switch as is on the command line.
+                     --  This is the case for instance if the user puts
+                     --  -gnatwY on the command line, but we do not have a
+                     --  check button for it.
+                     for S in P.Switches'Range loop
+                        if P.Switches (S).Switch = Current (Cur).all then
+                           Free (Current (Cur));
+                           exit;
+                        end if;
+                     end loop;
+                     exit;
+                  end if;
+               end loop;
+            end if;
          end loop;
 
          --  Remove the old instances of common switch from the command line,
