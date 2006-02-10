@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 3.2.0
 
+- F209-018 Manually added -gnatw? switches are silently removed
+  Problem:    In the project properties editor, if you manually add some
+              switches that start with -gnatw for the Ada compiler (for
+              instance -gnatwY), they might be silently deleted the next
+              time the project properties are edited
+  Workaround: Edit manually the file ada_support.xml in the GPS installation
+              to add the switch you want (this should be done for instance by
+              copying the line for "-gnatwv")
+
 - F207-016 Examine Entity missing some values for enumerations
   Problem:    If you click on an enumeration type, and select "Examine Entity"
               in the contextual menu, the enumeration literals defined on the
