@@ -875,7 +875,7 @@ package body Help_Module is
            (-") hosted on ") & Config.Target & LF &
          (-"GNAT ") & GNAT_Version (Kernel) & LF & LF &
          (-"the GNAT Programming Studio") & LF & Contents.all & LF &
-         "(c) 2001-2005 AdaCore",
+         "(c) 2001-2006 AdaCore",
          Buttons => Button_OK,
          Title   => -"About...",
          Parent  => Get_Current_Window (Kernel));
