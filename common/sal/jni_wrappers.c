@@ -57,7 +57,7 @@ jint Java_com_adacore_gnatbench_core_SystemHandler_getSEGVHandlerInt (JNIEnv * E
    
    sigaction (SIGSEGV, NULL, handler);
    
-   return jint (handler);
+   return (jint) handler;
 }
 
 void Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_setSEGVHandlerInt (JNIEnv * Env, jclass * this, jint addr)
