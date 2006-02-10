@@ -35,6 +35,7 @@ project Sal is
    for Library_Kind use "dynamic";
    for Library_Interface use ("JNI", "GNATbench", "GNATbench.Jni_Functions");
    for Languages use ("Ada");
+   for Library_Auto_Init use "false";
 
    case Shared.OS is
       when "unix" =>
