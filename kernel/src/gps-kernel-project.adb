@@ -244,7 +244,9 @@ package body GPS.Kernel.Project is
       New_Project_Loaded : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
       Same_Project : constant Boolean :=
-        Project = Project_Path (Get_Root_Project (Kernel.Registry.all));
+        Status (Get_Root_Project (Kernel.Registry.all)) = From_File
+        and then
+           Project = Project_Path (Get_Root_Project (Kernel.Registry.all));
 
    begin
       --  Unless we are reloading the same project
