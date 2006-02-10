@@ -1385,7 +1385,7 @@ package body GPS.Kernel.Scripts is
               (Data,
                Create_Project (Get_Script (Data), Project_Information (File)));
          elsif Has_File_Information (File) then
-         --  Since the editor doesn't provide the project, we emulate it
+            --  Since the editor doesn't provide the project, we emulate it
             --  here
             Set_Return_Value
               (Data,
