@@ -51,7 +51,7 @@ void W_CallVoidMethodIIIS
 
 #include <signal.h>
 
-jint Java_com_adacore_gnatbench_core_SystemHandler_getSEGVHandlerInt (JNIEnv * Env, jclass * this)
+jint Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_getSEGVHandlerInt (JNIEnv * Env, jclass * this)
 {
    struct sigaction * handler = malloc (sizeof (sigaction));
    
@@ -67,7 +67,7 @@ void Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_setSEGVHandlerInt (JNI
    sigaction (SIGSEGV, handler, NULL);
 }
 
-void java_com_adacore_gnatbench_core_gpsjni_SystemHandler_freeSEGVHandlerInt (JNIEnv * Env, jclass * this, jint addr)
+void Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_freeSEGVHandlerInt (JNIEnv * Env, jclass * this, jint addr)
 {
    struct sigaction * handler = (struct sigaction *) addr;
    free (handler);
