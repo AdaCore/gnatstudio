@@ -164,8 +164,6 @@ package GPS.Kernel.Scripts is
    procedure Set_Nth_Arg
      (Data : Callback_Data; N : Positive; Value : Subprogram_Type) is abstract;
    --  Set the nth argument of Data
-   --  For the last case (Class_Instance), Value needs to be freed explicitely
-   --  by the user, since a copy is stored in Data.
 
    function Number_Of_Arguments
      (Data : Callback_Data) return Natural is abstract;
