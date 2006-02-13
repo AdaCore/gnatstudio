@@ -1075,7 +1075,10 @@ package body GPS.Kernel.Modules is
       --  Override the previous value. No Ref is taken explicitly, so we do not
       --  need to Unref either. This field is automatically reset to null when
       --  the last holder of a ref calls Unref.
+
       Trace (Me, "Set Last_Context_For_Contextual");
+
+      Unref (User.Kernel.Last_Context_For_Contextual);
       User.Kernel.Last_Context_For_Contextual := Context;
 
       if User.Kernel.Last_Event_For_Contextual /= null then
