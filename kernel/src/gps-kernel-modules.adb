@@ -856,8 +856,9 @@ package body GPS.Kernel.Modules is
                   Gtk_New (Menu);
 
                   if C.Submenu /= null then
-                     C.Submenu
-                       (Object  => Object,
+                     Append_To_Menu
+                       (Factory => C.Submenu,
+                        Object  => Object,
                         Context => Context,
                         Menu    => Menu);
                   end if;

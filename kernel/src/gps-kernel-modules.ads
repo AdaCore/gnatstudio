@@ -475,10 +475,15 @@ package GPS.Kernel.Modules is
    --  substituted.
    --  A separator is inserted if Action is null and the Filter matches
 
-   type Submenu_Factory is access procedure
-     (Object  : access Glib.Object.GObject_Record'Class;
+   type Submenu_Factory_Record is abstract tagged null record;
+   type Submenu_Factory is access all Submenu_Factory_Record'Class;
+   procedure Append_To_Menu
+     (Factory : access Submenu_Factory_Record;
+      Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class) is abstract;
+   --  Object is the object on which the contextual menu is displayed.
+   --  New entries should be appended to Menu.
 
    procedure Register_Contextual_Submenu
      (Kernel     : access Kernel_Handle_Record'Class;
@@ -522,7 +527,7 @@ package GPS.Kernel.Modules is
       Context : Selection_Context_Access;
       Menu    : in out Gtk.Menu.Gtk_Menu);
    --  Creates a menu from context and object.
-   --  The Gtk_Menu shall be created before calling this procedure.
+   --  The Gtk_Menu must be created before calling this procedure.
 
    --------------
    -- Tooltips --
