@@ -184,6 +184,9 @@ package body Shell_Script is
    function Execute
      (Subprogram : access Shell_Subprogram_Record;
       Args       : Callback_Data'Class) return String;
+   function Execute
+     (Subprogram : access Shell_Subprogram_Record;
+      Args       : Callback_Data'Class) return GNAT.OS_Lib.String_List;
    procedure Free (Subprogram : in out Shell_Subprogram_Record);
    function Get_Name
      (Subprogram : access Shell_Subprogram_Record) return String;
@@ -1835,7 +1838,24 @@ package body Shell_Script is
          Destroy_On_Exit => True);
 
       --  ??? Should evaluate output properly, but we are in asynchronous mode
+      --  ??? In fact, this is no longer true if we use Active set to False
+      --  above, since we now know how to execute external actions
+      --  synchronously
       return "";
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Subprogram : access Shell_Subprogram_Record;
+      Args       : Callback_Data'Class) return GNAT.OS_Lib.String_List
+   is
+      pragma Unreferenced (Subprogram, Args);
+   begin
+      --  ??? We are in asynchronous mode, see Execute for String above.
+      return (1 .. 0 => null);
    end Execute;
 
    --------------
