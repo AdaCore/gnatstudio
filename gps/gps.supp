@@ -1,0 +1,34 @@
+{
+   Errors in Xserver
+   Memcheck:Param
+   writev(vector[...])
+   fun:do_writev
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_X11TransWritev
+   fun:_XSend
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XPutImage
+   fun:XcursorImageLoadCursor
+   fun:XcursorImagesLoadCursors
+   fun:XcursorImagesLoadCursor
+   fun:XcursorTryShapeCursor
+   fun:XCreateGlyphCursor
+   fun:XCreateFontCursor
+}
+{
+   Errors in Xserver
+   Memcheck:Cond
+   fun:XInitImage
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   fun:cairo_fill_preserve
+}
+
