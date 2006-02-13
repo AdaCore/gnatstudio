@@ -280,7 +280,7 @@ package body Debugger is
                pragma Unreferenced (Buttons);
             begin
                Buttons := Message_Dialog
-                 ((-"Could not spawn the remote process: ") & ASCII.LF
+                 ((-"Could not spawn the process: ") & ASCII.LF
                   & (-"  debugger: ") & Debugger_Name,
                   Error,
                   Button_OK,
