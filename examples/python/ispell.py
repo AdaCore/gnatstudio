@@ -30,8 +30,8 @@ def find_current_word (context):
       cursor = cursor.forward_char(1)
 
    context.ispell_module_start = start
-   context.ispell_module_end   = cursor - 1
-   context.ispell_module_word  = view.buffer().get_chars(start, cursor - 1)
+   context.ispell_module_end   = cursor 
+   context.ispell_module_word  = view.buffer().get_chars(start, cursor)
 
 def read_ispell (context):
    """Run ispell to find out the possible completions for the word stored in
@@ -89,7 +89,7 @@ def contextual_label (contextual):
    context = GPS.contextual_context()
    return "Spell Check " + context.ispell_module_word
 
-GPS.Contextual  ("Spell Check").create \
+GPS.Contextual  ("Spell Check Static").create \
    (on_activate=on_contextual,
     filter=contextual_filter,
     label=contextual_label)
