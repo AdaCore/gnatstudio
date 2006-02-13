@@ -802,6 +802,10 @@ package body GPS.Kernel is
             Destroy (Context.all);
             Internal (Context);
          end if;
+
+         --  Force it to null, since it would be an error for the caller to
+         --  rely on it anyway
+         Context := null;
       end if;
    end Unref;
 
@@ -1274,13 +1278,8 @@ package body GPS.Kernel is
       Destroy (Handle.Registry.all);
       Unchecked_Free (Handle.Registry);
 
-      if Handle.Current_Context /= null then
-         Unref (Handle.Current_Context);
-      end if;
-
-      if Handle.Last_Context_For_Contextual /= null then
-         Unref (Handle.Last_Context_For_Contextual);
-      end if;
+      Unref (Handle.Current_Context);
+      Unref (Handle.Last_Context_For_Contextual);
 
       Remote_Connections.Free_Registered_Protocols;
 
@@ -1298,6 +1297,7 @@ package body GPS.Kernel is
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
       --  reclaiming the associated memory.
+      Trace (Me, "Destroying the GPS kernel");
       Unref (Handle);
 
       Kernel_Desktop.Free_Registered_Desktop_Functions;
