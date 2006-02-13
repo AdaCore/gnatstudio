@@ -788,17 +788,6 @@ package body GPS.Kernel is
          Context.Ref_Count := Context.Ref_Count - 1;
 
          if Context.Ref_Count = 0 then
-            if Context.Kernel /= null then
-               if Context = Context.Kernel.Last_Context_For_Contextual then
-                  Trace (Me, "Setting Last_Context_For_Contextual to null");
-                  Context.Kernel.Last_Context_For_Contextual := null;
-               end if;
-
-               if Context = Context.Kernel.Current_Context then
-                  Context.Kernel.Current_Context := null;
-               end if;
-            end if;
-
             Destroy (Context.all);
             Internal (Context);
          end if;
