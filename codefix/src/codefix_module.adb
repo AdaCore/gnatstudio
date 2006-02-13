@@ -153,8 +153,10 @@ package body Codefix_Module is
       Error_Message : String);
    --  Handles error messages when an error can no longer be corrected.
 
-   procedure Codefix_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
+   type Codefix_Contextual_Menu is new Submenu_Factory_Record with null record;
+   procedure Append_To_Menu
+     (Factory : access Codefix_Contextual_Menu;
+      Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  ??? Will be removed soon
@@ -602,16 +604,17 @@ package body Codefix_Module is
          Action        => New_Action);
    end Create_Pixmap_And_Category;
 
-   -----------------------------
-   -- Codefix_Contextual_Menu --
-   -----------------------------
+   --------------------
+   -- Append_To_Menu --
+   --------------------
 
-   procedure Codefix_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
+   procedure Append_To_Menu
+     (Factory : access Codefix_Contextual_Menu;
+      Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Object);
+      pragma Unreferenced (Factory, Object);
       Location      : Message_Context_Access;
       Session       : Codefix_Session;
       Error         : Error_Id;
@@ -654,7 +657,7 @@ package body Codefix_Module is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Codefix_Contextual_Menu;
+   end Append_To_Menu;
 
    ---------------------
    -- Register_Module --
@@ -673,7 +676,7 @@ package body Codefix_Module is
       Register_Contextual_Submenu
         (Kernel,
          Name    => "Code Fixing",
-         Submenu => Codefix_Contextual_Menu'Access);
+         Submenu => new Codefix_Contextual_Menu);
 
       if Active (Codefix_GUI) then
          Register_Menu

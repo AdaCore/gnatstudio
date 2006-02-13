@@ -243,12 +243,17 @@ package body Builder_Module is
       Mains   : Argument_List);
    --  Same as Add_Build_Menu, but for the Run menu
 
-   procedure Builder_Contextual
-     (Object  : access GObject_Record'Class;
+   type Builder_Contextual is new Submenu_Factory_Record with null record;
+   procedure Append_To_Menu
+     (Builder : access Builder_Contextual;
+      Object  : access GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   procedure Run_Contextual
-     (Object  : access GObject_Record'Class;
+
+   type Run_Contextual is new Submenu_Factory_Record with null record;
+   procedure Append_To_Menu
+     (Factory : access Run_Contextual;
+      Object  : access GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu for Build/ or Run/
@@ -1876,16 +1881,17 @@ package body Builder_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
 
-   ------------------------
-   -- Builder_Contextual --
-   ------------------------
+   --------------------
+   -- Append_To_Menu --
+   --------------------
 
-   procedure Builder_Contextual
-     (Object  : access GObject_Record'Class;
+   procedure Append_To_Menu
+     (Builder : access Builder_Contextual;
+      Object  : access GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Object);
+      pragma Unreferenced (Object, Builder);
       File_Context : constant File_Selection_Context_Access :=
                        File_Selection_Context_Access (Context);
       --  The filter garantees we are on a File_Selection_Context
@@ -1904,18 +1910,19 @@ package body Builder_Module is
             Mains        => Mains);
       end if;
       Free (Mains);
-   end Builder_Contextual;
+   end Append_To_Menu;
 
    --------------------
-   -- Run_Contextual --
+   -- Append_To_Menu --
    --------------------
 
-   procedure Run_Contextual
-     (Object  : access GObject_Record'Class;
+   procedure Append_To_Menu
+     (Factory : access Run_Contextual;
+      Object  : access GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Object);
+      pragma Unreferenced (Factory, Object);
       File_Context : constant File_Selection_Context_Access :=
                        File_Selection_Context_Access (Context);
       --  The filter garantees we are on a File_Selection_Context
@@ -1931,7 +1938,7 @@ package body Builder_Module is
          Kernel  => Get_Kernel (Context),
          Mains   => Mains);
       Free (Mains);
-   end Run_Contextual;
+   end Append_To_Menu;
 
    ---------------------
    -- Register_Module --
@@ -1964,12 +1971,12 @@ package body Builder_Module is
         (Kernel,
          Name    => "Build",
          Filter  => Lookup_Filter (Kernel, "Project only"),
-         Submenu => Builder_Contextual'Access);
+         Submenu => new Builder_Contextual);
       Register_Contextual_Submenu
         (Kernel,
          Name    => "Run",
          Filter  => Lookup_Filter (Kernel, "Project only"),
-         Submenu => Run_Contextual'Access);
+         Submenu => new Run_Contextual);
 
       --  Dynamic make menu
 
