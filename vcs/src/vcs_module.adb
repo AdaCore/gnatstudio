@@ -65,8 +65,10 @@ package body VCS_Module is
       Context : access Selection_Context'Class) return Boolean;
    --  True when the current context is associated with a known VCS
 
-   procedure VCS_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
+   type VCS_Contextual_Menu is new Submenu_Factory_Record with null record;
+   procedure Append_To_Menu
+     (Factory : access VCS_Contextual_Menu;
+      Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Fill Menu with the contextual menu for the VCS module,
@@ -173,23 +175,24 @@ package body VCS_Module is
                     "Source_Editor");
    end Filter_Matches_Primitive;
 
-   -------------------------
-   -- VCS_Contextual_Menu --
-   -------------------------
+   --------------------
+   -- Append_To_Menu --
+   --------------------
 
-   procedure VCS_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
+   procedure Append_To_Menu
+     (Factory : access VCS_Contextual_Menu;
+      Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Object);
+      pragma Unreferenced (Factory, Object);
    begin
       VCS_View_API.VCS_Contextual_Menu
         (Get_Kernel (Context),
          Selection_Context_Access (Context),
          Menu,
          False);
-   end VCS_Contextual_Menu;
+   end Append_To_Menu;
 
    ------------------
    -- Get_VCS_List --
@@ -406,7 +409,7 @@ package body VCS_Module is
         (Kernel  => Kernel,
          Name    => "Version Control",
          Filter  => Filter,
-         Submenu => VCS_Contextual_Menu'Access);
+         Submenu => new VCS_Contextual_Menu);
 
       Log_Utils.Initialize (Kernel);
 
