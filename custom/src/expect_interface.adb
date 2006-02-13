@@ -487,7 +487,7 @@ package body Expect_Interface is
             Launch_Process
               (Kernel        => Kernel,
                Command       => D.Command (D.Command'First).all,
-               Arguments => D.Command (D.Command'First + 1 .. D.Command'Last),
+               Arguments  => D.Command (D.Command'First + 1 .. D.Command'Last),
                Console       => null,
                Callback      => Output_Cb'Access,
                Exit_Cb       => Exit_Cb'Access,
@@ -495,7 +495,8 @@ package body Expect_Interface is
                Show_Command  => False,
                Callback_Data => new Instance_Callback_Data'(Inst => Inst),
                Line_By_Line  => False,
-               Directory     => "");
+               Directory     => "",
+               Fd            => D.Fd);
 
             if Success then
                Set_Property
