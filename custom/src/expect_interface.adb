@@ -387,21 +387,24 @@ package body Expect_Interface is
       Result : Expect_Match;
       T      : Integer := Integer'Min (Timeout, 200);
       Iter   : Integer := 1;
+      Regexp : constant Pattern_Matcher := Compile (Pattern, Multiple_Lines);
       Dead   : Boolean;
       pragma Unreferenced (Dead);
-      Patt : constant Pattern_Matcher := Compile (Pattern, Multiple_Lines);
+
    begin
       Block_Commands (Kernel, True);
       if Timeout < 0 then
          T := 200;
       end if;
 
-      Trace (Me, "Expect " & Pattern & " Timeout=" & Timeout'Img);
+      if Active (Me) then
+         Trace (Me, "Expect " & Pattern & " Timeout=" & Timeout'Img);
+      end if;
 
       while Action.Fd /= null loop
          Expect (Descriptor => Action.Fd.all,
                  Result     => Result,
-                 Regexp     => Patt,
+                 Regexp     => Regexp,
                  Timeout    => T);
 
          if Result = Expect_Timeout then
@@ -409,9 +412,12 @@ package body Expect_Interface is
               and then Timeout /= -1
               and then Iter * T >= Timeout
             then
-               Trace (Me, "Interactive_Expect: Timeout after "
-                      & Integer'Image (T * Iter) & " >= "
-                      & Integer'Image (Timeout));
+               if Active (Me) then
+                  Trace (Me, "Interactive_Expect: Timeout after "
+                         & Integer'Image (T * Iter) & " >= "
+                         & Integer'Image (Timeout));
+               end if;
+
                Block_Commands (Kernel, False);
                return Exit_Type'(Timed_Out);
             end if;
@@ -421,7 +427,10 @@ package body Expect_Interface is
             end loop;
 
          elsif not Till_End then
-            Trace (Me, "Interactive_Expect: Matched " & Pattern);
+            if Active (Me) then
+               Trace (Me, "Interactive_Expect: Matched " & Pattern);
+            end if;
+
             Block_Commands (Kernel, False);
             return Exit_Type'(Matched);
          end if;
