@@ -89,10 +89,10 @@ def contextual_label (contextual):
    context = GPS.contextual_context()
    return "Spell Check " + context.ispell_module_word
 
-#GPS.Contextual  ("Spell Check").create \
-#   (on_activate=on_contextual,
-#    filter=contextual_filter,
-#    label=contextual_label)
+GPS.Contextual  ("Spell Check").create \
+   (on_activate=on_contextual,
+    filter=contextual_filter,
+    label=contextual_label)
 
 ###################################
 ### Dynamic contextual menu
@@ -111,7 +111,7 @@ def replace_with (contextual, choice):
    context.ispell_module_start.buffer().delete (context.ispell_module_start, context.ispell_module_end)
    context.ispell_module_start.buffer().insert (context.ispell_module_start, choice)
   
-GPS.Contextual ("Spell Check Dyn").create_dynamic \
+GPS.Contextual ("Spell Check").create_dynamic \
    (on_activate =replace_with,
     factory     =build_contextual,
     filter      =contextual_filter)
