@@ -85,6 +85,14 @@ package GPS.Kernel.Scripts is
    --  Execute the subprogram with the given arguments, and evaluate its output
    --  as a string
 
+   function Execute
+     (Subprogram : access Subprogram_Record;
+      Args       : Callback_Data'Class)
+      return GNAT.OS_Lib.String_List is abstract;
+   --  Returned value must be freed by the caller.
+   --  Some items in the result value might be left to null if the
+   --  corresponding element from the shell is not a string.
+
    function Get_Name
      (Subprogram : access Subprogram_Record) return String is abstract;
    --  Return the name of the subprogram, as a string that can be displayed for
