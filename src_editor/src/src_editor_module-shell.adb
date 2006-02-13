@@ -2232,11 +2232,11 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "starts_word" then
          Get_Location (Iter, Data, 1, Default => Iter);
-         Set_Return_Value (Data, Starts_Word (Iter));
+         Set_Return_Value (Data, Src_Editor_Buffer.Starts_Word (Iter));
 
       elsif Command = "ends_word" then
          Get_Location (Iter, Data, 1, Default => Iter);
-         Set_Return_Value (Data, Ends_Word (Iter));
+         Set_Return_Value (Data, Src_Editor_Buffer.Ends_Word (Iter));
 
       elsif Command = "forward_line" then
          Name_Parameters (Data, (1 => Count_Cst'Access));
