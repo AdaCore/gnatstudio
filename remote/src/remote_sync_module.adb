@@ -74,18 +74,22 @@ package body Remote_Sync_Module is
    begin
       if Is_Local (Rsync_Data.Src) then
          Src_Path := new String'(To_Unix_Path (Rsync_Data.Src_Path,
-                                               Rsync_Data.Src));
+                                               Rsync_Data.Src,
+                                               Use_Cygwin_Style => True));
          Dest_Path := new String'
            (Get_Network_Name (Rsync_Data.Dest) & ":" &
             To_Unix_Path (Rsync_Data.Dest_Path,
-                          Rsync_Data.Dest));
+                          Rsync_Data.Dest,
+                          Use_Cygwin_Style => True));
       else
          Src_Path := new String'
            (Get_Network_Name (Rsync_Data.Src) & ":" &
             To_Unix_Path (Rsync_Data.Src_Path,
-                          Rsync_Data.Src));
+                          Rsync_Data.Src,
+                          Use_Cygwin_Style => True));
          Dest_Path := new String'(To_Unix_Path (Rsync_Data.Dest_Path,
-                                                Rsync_Data.Dest));
+                                                Rsync_Data.Dest,
+                                                Use_Cygwin_Style => True));
       end if;
       Launch_Process
         (Kernel_Handle (Kernel),
