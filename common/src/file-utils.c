@@ -1,8 +1,8 @@
 /*********************************************************************
  *                               G P S                               *
  *                                                                   *
- *                    Copyright (C) 2002-2003                        *
- *                            ACT-Europe                             *
+ *                    Copyright (C) 2002-2006                        *
+ *                            AdaCore                                *
  *                                                                   *
  * GPS is free  software;  you can redistribute it and/or modify  it *
  * under the terms of the GNU General Public License as published by *
@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -148,17 +149,17 @@ user_login_name (void)
 #endif
   char* result;
 
-  result = (char*) getenv ("LOGNAME");
+  result = getenv ("LOGNAME");
   if (result) {
     return strdup (result);
   }
 
-  result = (char*) getenv ("USERNAME");  /* mostly windows users */
+  result = getenv ("USERNAME");  /* mostly windows users */
   if (result) {
      return strdup (result);
   }
 
-  result = (char*) getenv ("USER");
+  result = getenv ("USER");
   if (result) {
      return strdup (result);
   }
