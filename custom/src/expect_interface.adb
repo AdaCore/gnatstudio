@@ -389,16 +389,19 @@ package body Expect_Interface is
       Iter   : Integer := 1;
       Dead   : Boolean;
       pragma Unreferenced (Dead);
+      Patt : constant Pattern_Matcher := Compile (Pattern, Multiple_Lines);
    begin
       Block_Commands (Kernel, True);
       if Timeout < 0 then
          T := 200;
       end if;
 
+      Trace (Me, "Expect " & Pattern & " Timeout=" & Timeout'Img);
+
       while Action.Fd /= null loop
          Expect (Descriptor => Action.Fd.all,
                  Result     => Result,
-                 Regexp     => Pattern,
+                 Regexp     => Patt,
                  Timeout    => T);
 
          if Result = Expect_Timeout then
