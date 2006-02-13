@@ -156,6 +156,27 @@ package GPS.Kernel.Timeout is
    --  and should not be freed by the caller of Launch_Process (although it is
    --  of course authorized to Interrupt the Cmd).
 
+   procedure Launch_Process
+     (Kernel               : Kernel_Handle;
+      Command              : String;
+      Arguments            : GNAT.OS_Lib.Argument_List;
+      Console              : Interactive_Consoles.Interactive_Console := null;
+      Callback             : Output_Callback := null;
+      Exit_Cb              : Exit_Callback := null;
+      Success              : out Boolean;
+      Use_Ext_Terminal     : Boolean := False;
+      Show_Command         : Boolean := True;
+      Show_Output          : Boolean := True;
+      Callback_Data        : Callback_Data_Access := null;
+      Line_By_Line         : Boolean := False;
+      Directory            : String := "";
+      Show_In_Task_Manager : Boolean := True;
+      Queue_Id             : String := "";
+      Show_Exit_Status     : Boolean := False;
+      Fd                   : out GNAT.Expect.Process_Descriptor_Access);
+   --  Same as above, and returns the created File_Descriptor.
+   --  This process is necessarily launched locally.
+
 private
 
 end GPS.Kernel.Timeout;

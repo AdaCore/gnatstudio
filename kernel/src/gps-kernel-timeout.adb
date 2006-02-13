@@ -562,6 +562,66 @@ package body GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
+      Console              : Interactive_Consoles.Interactive_Console := null;
+      Callback             : Output_Callback := null;
+      Exit_Cb              : Exit_Callback := null;
+      Success              : out Boolean;
+      Use_Ext_Terminal     : Boolean := False;
+      Show_Command         : Boolean := True;
+      Show_Output          : Boolean := True;
+      Callback_Data        : Callback_Data_Access := null;
+      Line_By_Line         : Boolean := False;
+      Directory            : String := "";
+      Show_In_Task_Manager : Boolean := True;
+      Queue_Id             : String := "";
+      Show_Exit_Status     : Boolean := False;
+      Fd                   : out GNAT.Expect.Process_Descriptor_Access)
+   is
+      C             : Command_Access;
+   begin
+      Launch_Process
+        (Kernel               => Kernel,
+         Command              => Command,
+         Arguments            => Arguments,
+         Server               => GPS_Server,
+         Console              => Console,
+         Callback             => Callback,
+         Exit_Cb              => Exit_Cb,
+         Success              => Success,
+         Use_Ext_Terminal     => Use_Ext_Terminal,
+         Show_Command         => Show_Command,
+         Show_Output          => Show_Output,
+         Callback_Data        => Callback_Data,
+         Line_By_Line         => Line_By_Line,
+         Directory            => Directory,
+         Show_In_Task_Manager => Show_In_Task_Manager,
+         Queue_Id             => Queue_Id,
+         Synchronous          => False,
+         Show_Exit_Status     => Show_Exit_Status,
+         Cmd                  => C);
+      if Success
+        and then Execute (Monitor_Command_Access (C)) = Execute_Again
+      then
+         Fd := Monitor_Command (C.all).Data.D.Descriptor;
+      else
+         Fd := null;
+         Success := False;
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         Success := False;
+   end Launch_Process;
+
+   --------------------
+   -- Launch_Process --
+   --------------------
+
+   procedure Launch_Process
+     (Kernel               : Kernel_Handle;
+      Command              : String;
+      Arguments            : GNAT.OS_Lib.Argument_List;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
