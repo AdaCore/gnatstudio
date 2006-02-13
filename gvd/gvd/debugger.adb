@@ -43,7 +43,7 @@ with GVD.Process;                use GVD.Process;
 with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Scripts;                use GVD.Scripts;
 with GVD.Types;                  use GVD.Types;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with GPS.Intl;                   use GPS.Intl;
 with Items;                      use Items;
 with Language;                   use Language;
@@ -230,29 +230,33 @@ package body Debugger is
    -------------------
 
    procedure General_Spawn
-     (Debugger       : access Debugger_Root'Class;
+     (Kernel         : Kernel_Handle;
+      Debugger       : access Debugger_Root'Class;
       Arguments      : GNAT.OS_Lib.Argument_List;
       Debugger_Name  : String;
-      Proxy          : Process_Proxies.Process_Proxy_Access;
-      Remote_Machine : String := "")
+      Proxy          : Process_Proxies.Process_Proxy_Access)
    is
       Descriptor : Process_Descriptor_Access;
+      Success    : Boolean;
+      The_Args   : Argument_List := (new String'(Debugger_Name) &
+                                     Arguments);
    begin
-      Descriptor := new TTY_Process_Descriptor;
-
       --  Start the external debugger.
       --  Note that there is no limitation on the buffer size, since we can
       --  not control the length of what gdb will return...
 
       Debugger.Process := Proxy;
 
-      if Remote_Machine = "" then
-         if Locate_Exec_On_Path (Debugger_Name) /= null then
-            Non_Blocking_Spawn
-              (Descriptor.all, Debugger_Name, Arguments,
-               Buffer_Size => 0,
-               Err_To_Out => True);
-         else
+      begin
+         GPS.Kernel.Remote.Spawn
+           (Kernel,
+            Arguments => The_Args,
+            Server    => Debug_Server,
+            Pd        => Descriptor,
+            Success   => Success);
+         Free (The_Args (The_Args'First));
+
+         if not Success then
             declare
                Buttons : Message_Dialog_Buttons;
                pragma Unreferenced (Buttons);
@@ -260,7 +264,7 @@ package body Debugger is
                Buttons :=
                  Message_Dialog
                    (-("Could not find executable ") &
-                      '"' & Debugger_Name & '"' & (-" in path."),
+                    '"' & Debugger_Name & '"' & (-" in path."),
                     Error,
                     Button_OK,
                     Button_OK);
@@ -268,54 +272,23 @@ package body Debugger is
                raise Spawn_Error;
             end;
          end if;
-      else
-         declare
-            Remote_Args : Argument_List_Access :=
-              Argument_String_To_List (Get_Pref (Remote_Protocol));
-            Real_Arguments : Argument_List
-              (1 .. Arguments'Length + 1 + Remote_Args'Length);
-         begin
-            Real_Arguments (1 .. Remote_Args'Length - 1) :=
-              Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last);
-            Real_Arguments (Remote_Args'Length) := new String'(Remote_Machine);
-            Real_Arguments (Remote_Args'Length + 1) :=
-              new String'(Debugger_Name);
-            Real_Arguments (Remote_Args'Length + 2 .. Real_Arguments'Last) :=
-              Arguments;
 
-            Non_Blocking_Spawn
-              (Descriptor.all,
-               Remote_Args (Remote_Args'First).all,
-               Real_Arguments,
-               Buffer_Size => 0,
-               Err_To_Out => True);
+      exception
+         when Invalid_Process =>
+            declare
+               Buttons : Message_Dialog_Buttons;
+               pragma Unreferenced (Buttons);
+            begin
+               Buttons := Message_Dialog
+                 ((-"Could not spawn the remote process: ") & ASCII.LF
+                  & (-"  debugger: ") & Debugger_Name,
+                  Error,
+                  Button_OK,
+                  Button_OK);
 
-            for J in Remote_Args'Length .. Remote_Args'Length + 1 loop
-               Free (Real_Arguments (J));
-            end loop;
-
-            Free (Remote_Args);
-
-         exception
-            when Invalid_Process =>
-               declare
-                  Buttons : Message_Dialog_Buttons;
-                  pragma Unreferenced (Buttons);
-               begin
-                  Buttons := Message_Dialog
-                    ((-"Could not spawn the remote process: ") & ASCII.LF
-                     & (-"  debugger: ") & Debugger_Name & ASCII.LF
-                     & (-"  machine: ") & Remote_Machine & ASCII.LF
-                     & (-"  using protocol: ")
-                     & Get_Pref (Remote_Protocol),
-                     Error,
-                     Button_OK,
-                     Button_OK);
-
-                  raise Spawn_Error;
-               end;
-         end;
-      end if;
+               raise Spawn_Error;
+            end;
+      end;
 
       if Get_Pid (Descriptor.all) = GNAT.Expect.Invalid_Pid then
          raise Spawn_Error;
@@ -1020,11 +993,7 @@ package body Debugger is
 
    procedure Open_Processes (Debugger : access Debugger_Root) is
    begin
-      if Debugger.Remote_Host = null then
-         Open_Processes (Debugger.Handle);
-      else
-         Open_Processes (Debugger.Handle, Debugger.Remote_Host.all);
-      end if;
+      Open_Processes (Debugger.Handle, Debugger.Kernel);
    end Open_Processes;
 
    ------------------

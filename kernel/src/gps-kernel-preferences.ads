@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -213,7 +213,6 @@ package GPS.Kernel.Preferences is
 
    -- External Commands --
    List_Processes                : Param_Spec_String;
-   Remote_Protocol               : Param_Spec_String;
    Remote_Copy                   : Param_Spec_String;
    Html_Browser                  : Param_Spec_String;
    Execute_Command               : Param_Spec_String;

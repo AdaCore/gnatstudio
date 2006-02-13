@@ -1057,15 +1057,6 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (List_Processes), -"External Command");
 
-      Remote_Protocol := Param_Spec_String (Gnew_String
-         (Name    => "Helpers-Remote-Protocol",
-          Nick    => -"Remote shell",
-          Blurb   => -"Program used to run a process on a remote machine",
-          Default => "rsh"));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Remote_Protocol), -"External Command");
-
       Remote_Copy := Param_Spec_String (Gnew_String
          (Name    => "Helpers-Remote-Copy",
           Nick    => -"Remote copy",

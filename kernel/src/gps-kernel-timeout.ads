@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,7 +24,9 @@ with GNAT.OS_Lib;
 
 with Gtk.Main;
 with Interactive_Consoles;
-with Commands;
+with Commands;          use Commands;
+
+with GPS.Kernel.Remote; use GPS.Kernel.Remote;
 
 package GPS.Kernel.Timeout is
 
@@ -73,27 +75,23 @@ package GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
+      Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;
       Success              : out Boolean;
+      Use_Ext_Terminal     : Boolean := False;
       Show_Command         : Boolean := True;
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
-      Remote_Host          : String := "";
-      Remote_Protocol      : String := "";
-      Show_In_Task_Manager : Boolean := False;
+      Show_In_Task_Manager : Boolean := True;
+      Queue_Id             : String := "";
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False);
-   --  Launch a given command with arguments.
+   --  Launch a given command with arguments on server 'Server'.
    --  Arguments must be freed by the user.
-   --
-   --  If (Remote_Host, Remote_Protocol) is specified, the process will be
-   --  started on a remote machine. Otherwise it is started on the local host.
-   --  It is currently assumed that the command to start a process on the
-   --  remote machine is  "protocol host command", as in "ssh paris ls"
    --
    --  Set Success to True if the command could be spawned.
    --  Callback will be called asynchronousely when some new data is
@@ -119,6 +117,9 @@ package GPS.Kernel.Timeout is
    --  and change back to the current directory once the command is spawned.
    --  This applies to the local host, not the remote host.
    --
+   --  If Use_Ext_Terminal is true, then the command is launched on an external
+   --  terminal instead of an interactive_console
+   --
    --  If Show_In_Task_Manager is true, then a Command wrapper will be set up
    --  so that the process appears in the task manager and can be interrupted
    --  by the user. In this case, Synchronous is taken into account to know
@@ -134,25 +135,26 @@ package GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
+      Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;
       Success              : out Boolean;
+      Use_Ext_Terminal     : Boolean := False;
       Show_Command         : Boolean := True;
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
-      Remote_Host          : String := "";
-      Remote_Protocol      : String := "";
-      Show_In_Task_Manager : Boolean := False;
+      Show_In_Task_Manager : Boolean := True;
+      Queue_Id             : String := "";
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
-      Fd                   : out GNAT.Expect.Process_Descriptor_Access);
-   --  Same as above, and returns the created Process_Descriptor.
-   --  Fd is allocated by this procedure, and will be cleaned automatically,
+      Cmd                  : out Command_Access);
+   --  Same as above, and returns the created Command_Access.
+   --  Cmd is allocated by this procedure, and will be cleaned automatically,
    --  and should not be freed by the caller of Launch_Process (although it is
-   --  of course authorized to Close Fd).
+   --  of course authorized to Interrupt the Cmd).
 
 private
 

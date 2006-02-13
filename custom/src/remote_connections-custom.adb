@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005                           --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -400,8 +400,7 @@ package body Remote_Connections.Custom is
                Callback_Data        => new Callback_Data'
                  ((Connection => Custom_Connection_Access (Connection))),
                Success              => Success,
-               Show_In_Task_Manager => False,
-               Fd                   => L_Pd);
+               Show_In_Task_Manager => False);
 
             if Success then
                Add_Filter (L_Pd.all, Console_Filter_Output'Access, Output,

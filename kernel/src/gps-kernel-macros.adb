@@ -20,6 +20,7 @@
 
 with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
+with GPS.Kernel.Remote;     use GPS.Kernel.Remote;
 with String_Utils;          use String_Utils;
 with Entities;              use Entities;
 with Projects;              use Projects;
@@ -130,7 +131,9 @@ package body GPS.Kernel.Macros is
      (Param   : String;
       Context : GPS.Kernel.Selection_Context_Access;
       Quoted  : Boolean;
-      Done    : access Boolean) return String
+      Done    : access Boolean;
+      Server  : GPS.Kernel.Remote.Server_Type := GPS.Kernel.Remote.GPS_Server)
+      return String
    is
       File    : File_Selection_Context_Access;
       Project : Project_Type := No_Project;
@@ -155,19 +158,22 @@ package body GPS.Kernel.Macros is
               (Base_Name (File_Information (File)), Protect_Quotes => Quoted));
          else
             return String_Utils.Protect
-              (Full_Name (File_Information (File)).all,
+              (Convert (Full_Name (File_Information (File)).all,
+                        GPS_Server, Server),
                Protect_Quotes => Quoted);
          end if;
 
       elsif Param = "d" then
          File := File_Selection_Context_Access (Context);
          return String_Utils.Protect
-           (Directory_Information (File), Protect_Quotes => Quoted);
+           (Convert (Directory_Information (File), GPS_Server, Server),
+            Protect_Quotes => Quoted);
 
       elsif Param = "dk" then
          File := File_Selection_Context_Access (Context);
          return Krunch (String_Utils.Protect
-           (Directory_Information (File), Protect_Quotes => Quoted));
+             (Convert (Directory_Information (File), GPS_Server, Server),
+              Protect_Quotes => Quoted));
 
       elsif Param = "e" then
          Entity := Get_Entity (Entity_Selection_Context_Access (Context));
@@ -229,8 +235,8 @@ package body GPS.Kernel.Macros is
                return "";
             else
                return String_Utils.Protect
-                 ("-P"
-                  & Full_Name (Project_Path (Project)).all,
+                 ("-P" & Convert (Full_Name (Project_Path (Project)).all,
+                                  GPS_Server, Server),
                   Protect_Quotes => Quoted);
             end if;
          end if;
@@ -245,7 +251,8 @@ package body GPS.Kernel.Macros is
 
          elsif Param = "pp" or else Param = "PP" then
             return String_Utils.Protect
-              (Full_Name (Project_Path (Project)).all,
+              (Convert (Full_Name (Project_Path (Project)).all,
+                        GPS_Server, Server),
                Protect_Quotes => Quoted);
 
          else
@@ -274,7 +281,8 @@ package body GPS.Kernel.Macros is
                         List := Source_Dirs (Project, Recurse);
                         if List /= null then
                            for K in List'Range loop
-                              Put_Line (File, List (K).all);
+                              Put_Line (File, Convert (List (K).all,
+                                                       GPS_Server, Server));
                            end loop;
                            Free (List);
                         end if;
@@ -285,14 +293,18 @@ package body GPS.Kernel.Macros is
                         if Files_List /= null then
                            for K in Files_List'Range loop
                               Put_Line
-                                (File, Full_Name (Files_List (K)).all);
+                                (File,
+                                 Convert
+                                   (Full_Name (Files_List (K)).all,
+                                    GPS_Server, Server));
                            end loop;
                            Unchecked_Free (Files_List);
                         end if;
                      end if;
 
                      declare
-                        N : constant String := Name (File);
+                        N : constant String := Convert (Name (File),
+                                                        GPS_Server, Server);
                      begin
                         Close (File);
                         return String_Utils.Protect
@@ -310,7 +322,10 @@ package body GPS.Kernel.Macros is
                         List := Source_Dirs (Project, Recurse);
                         if List /= null then
                            for K in List'Range loop
-                              Append (Result, '"' & List (K).all & """ ");
+                              Append (Result, '"' &
+                                      Convert (List (K).all,
+                                               GPS_Server, Server) &
+                                      """ ");
                            end loop;
                            Free (List);
                         end if;
@@ -322,8 +337,10 @@ package body GPS.Kernel.Macros is
                            for K in Files_List'Range loop
                               Append
                                 (Result,
-                                    '"'
-                                 & Full_Name (Files_List (K)).all & """ ");
+                                '"' &
+                                 Convert (Full_Name (Files_List (K)).all,
+                                          GPS_Server, Server) &
+                                 """ ");
                            end loop;
                            Unchecked_Free (Files_List);
                         end if;

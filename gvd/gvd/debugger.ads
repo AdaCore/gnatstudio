@@ -24,10 +24,13 @@ with Items;
 with GNAT.OS_Lib;
 with Process_Proxies;
 with GNAT.Regpat;
+
 with Gtk.Window;
+
 with GVD.Types;
 with Basic_Types;
 with GVD.Proc_Utils;
+with GPS.Kernel; use GPS.Kernel;
 with VFS;
 with Ada.Unchecked_Deallocation;
 
@@ -41,12 +44,12 @@ package Debugger is
 
    procedure Spawn
      (Debugger        : access Debugger_Root;
+      Kernel          : Kernel_Handle;
       Executable      : VFS.Virtual_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
       Window          : Gtk.Window.Gtk_Window;
-      Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "") is abstract;
@@ -80,11 +83,11 @@ package Debugger is
    --  Should raise Spawn_Error if the debugger could not be spawned.
 
    procedure General_Spawn
-     (Debugger       : access Debugger_Root'Class;
+     (Kernel         : Kernel_Handle;
+      Debugger       : access Debugger_Root'Class;
       Arguments      : GNAT.OS_Lib.Argument_List;
       Debugger_Name  : String;
-      Proxy          : Process_Proxies.Process_Proxy_Access;
-      Remote_Machine : String := "");
+      Proxy          : Process_Proxies.Process_Proxy_Access);
    --  Convenience function to start a debugger.
    --  This command modifies the argument list so that the debugger can also
    --  be run on a remote machine.
@@ -916,6 +919,7 @@ private
    end record;
 
    type Debugger_Root is abstract tagged record
+      Kernel       : Kernel_Handle;
       Process      : Process_Proxies.Process_Proxy_Access := null;
       Window       : Gtk.Window.Gtk_Window;
       The_Language : Language.Language_Access;
@@ -931,7 +935,6 @@ private
       Continuation_Line : Boolean := False;
       --  Whether the debugger is currently handling a multiple line command.
 
-      Remote_Host     : GNAT.OS_Lib.String_Access;
       Remote_Target   : GNAT.OS_Lib.String_Access;
       Remote_Protocol : GNAT.OS_Lib.String_Access;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2002-2005                      --
+--                      Copyright (C) 2002-2006                      --
 --                             AdaCore                               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -25,8 +25,8 @@ pragma Warnings (On);
 
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Remote;      use GPS.Kernel.Remote;
 with String_Utils;           use String_Utils;
-with Config;                 use Config;
 with Ada.Unchecked_Deallocation;
 
 package body GVD.Proc_Utils is
@@ -105,70 +105,30 @@ package body GVD.Proc_Utils is
    -- Open_Processes --
    --------------------
 
-   procedure Open_Processes (Handle : out Process_Handle) is
+   procedure Open_Processes (Handle : out Process_Handle;
+                             Kernel : Kernel_Handle)
+   is
       Args          : Argument_List_Access;
       Match         : Expect_Match := 0;
-
+      Success       : Boolean;
    begin
       Handle := new Process_Record;
-      Handle.Descriptor := new TTY_Process_Descriptor;
 
-      if Host = Windows then
-         Args := new Argument_List'
-           (1 => new String'("/c "),
-            2 => new String'(Get_Pref (List_Processes)));
-
-         Non_Blocking_Spawn (Handle.Descriptor.all, "cmd", Args.all);
-
-      else
-         declare
-            New_Args : Argument_List_Access :=
-              Argument_String_To_List (Exec_Command);
-         begin
-            Args := new Argument_List'
-              (New_Args.all
-               & (1 => new String'(Get_Pref (List_Processes))));
-            Free (New_Args);
-         end;
-
-         Non_Blocking_Spawn
-           (Handle.Descriptor.all, Args (Args'First).all,
-            Args (Args'First + 1 .. Args'Last));
+      --  ??? Get_Pref is not fine here, as this can be a remote call
+      Args := Argument_String_To_List (Get_Pref (List_Processes));
+      Spawn (Kernel,
+             Args.all,
+             Debug_Server,
+             Handle.Descriptor,
+             Success);
+      if Success then
+         Expect (Handle.Descriptor.all, Match, "\n");
       end if;
-
-      Expect (Handle.Descriptor.all, Match, "\n");
       Free (Args);
 
    exception
       when Process_Died =>
          Free (Args);
-   end Open_Processes;
-
-   procedure Open_Processes (Handle : out Process_Handle; Host : String) is
-      Match       : Expect_Match := 0;
-      Remote_Args : Argument_List_Access :=
-        Argument_String_To_List (Get_Pref (Remote_Protocol));
-      New_Args    : Argument_List (1 .. 1 + Remote_Args'Length);
-
-   begin
-      Handle := new Process_Record;
-      Handle.Descriptor := new TTY_Process_Descriptor;
-
-      New_Args (1 .. Remote_Args'Length - 1) :=
-        Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last);
-      New_Args (Remote_Args'Length) := new String'(Host);
-      New_Args (Remote_Args'Length + 1) :=
-        new String'(Get_Pref (List_Processes));
-      Non_Blocking_Spawn
-        (Handle.Descriptor.all,
-         Remote_Args (Remote_Args'First).all, New_Args);
-      Expect (Handle.Descriptor.all, Match, "\n");
-      Free (New_Args (Remote_Args'Length));
-      Free (New_Args (Remote_Args'Length + 1));
-      Free (Remote_Args);
-
-   exception
-      when Process_Died => null;
    end Open_Processes;
 
 end GVD.Proc_Utils;

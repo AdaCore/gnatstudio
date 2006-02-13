@@ -492,8 +492,7 @@ package body Expect_Interface is
                Show_Command  => False,
                Callback_Data => new Instance_Callback_Data'(Inst => Inst),
                Line_By_Line  => False,
-               Directory     => "",
-               Fd            => D.Fd);
+               Directory     => "");
 
             if Success then
                Set_Property

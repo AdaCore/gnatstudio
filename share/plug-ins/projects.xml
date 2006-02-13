@@ -6,7 +6,7 @@
 
 <GPS>
    <project_attribute
-       name="languages" 
+       name="languages"
        editor_page="Languages"
        editor_section="Languages"
        label=""
@@ -122,7 +122,7 @@
        <choice>erc32-elf-gdb</choice>
        <string />
    </project_attribute>
-       
+
    <project_attribute
        name="global_configuration_pragmas"
        package="Builder"
@@ -132,7 +132,7 @@
        label="Global pragmas"
        hide_in="wizard library_wizard">
        <string type="file" />
-   </project_attribute> 
+   </project_attribute>
 
    <project_attribute
        name="local_configuration_pragmas"
@@ -143,17 +143,6 @@
        label="Local pragmas"
        hide_in="wizard library_wizard">
        <string type="file" />
-   </project_attribute>
-
-   <project_attribute
-       name="remote_host"
-       package="IDE"
-       editor_page="General"
-       editor_section="Cross environment"
-       description="Name or IP address of the machine on which the application should be compiled, debugged and run. It is recommended that you always start GPS locally, and work remotely on your application. Leave this field blank when working locally"
-       hide_in="wizard library_wizard"
-       label="Tools host">
-       <string />
    </project_attribute>
 
    <project_attribute
@@ -179,11 +168,11 @@
        <choice>vxworks</choice>
        <choice>remote</choice>
        <string />
-   </project_attribute> 
+   </project_attribute>
 
 
    <!--  VCS attributes -->
-       
+
    <project_attribute
        name="vcs_kind"
        package="IDE"
@@ -396,12 +385,12 @@ available, apart of course for the spec files and the bodies of generic packages
        <choice default="true">False</choice>
        <choice>True</choice>
    </project_attribute>
- 
+
    <project_attribute
        name="library_interface"
        editor_page="Library"
        editor_section="Standalone library"
-       label="Interface" 
+       label="Interface"
        hide_in="wizard"
        description="This attribute is optional. If it is defined, it should contain the list of units that are the public interface to the library. All other units will not be accessible by users of the library. If this attribute is defined, the library will be a standalone library."
        list="true">

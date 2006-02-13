@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,8 @@
 --  This package provides handling of the expansion of macros in the
 --  customization file. These are the %f, %e,... special strings that are
 --  substituted dynamically based on the current context.
+
+with GPS.Kernel.Remote;
 
 package GPS.Kernel.Macros is
 
@@ -43,7 +45,9 @@ package GPS.Kernel.Macros is
      (Param   : String;
       Context : GPS.Kernel.Selection_Context_Access;
       Quoted  : Boolean;
-      Done    : access Boolean) return String;
+      Done    : access Boolean;
+      Server  : GPS.Kernel.Remote.Server_Type := GPS.Kernel.Remote.GPS_Server)
+      return String;
    --  Return the replacement suitable for %Param.
    --  This should mostly be used from String_Utils.Substitute.
    --  The empty string "" is returned if Param is not one of the macro
@@ -53,6 +57,8 @@ package GPS.Kernel.Macros is
    --  substitution, and this can be checked with Macro_Filter above.
    --  Substrings that start with '%' but are not one of the macros are left
    --  as is.
+   --  If Server is not GPS_Server, then all paths will be translated into the
+   --  server's file system.
    --  Invalid_Substitution might be raised if the context is still invalid,
    --  although this isn't guaranteed in general and you must check with
    --  Macro_Filter first.

@@ -278,7 +278,6 @@ package Projects is
    Gnatlist_Attribute         : constant Attribute_Pkg;
    Compiler_Command_Attribute : constant Attribute_Pkg;
    Debugger_Command_Attribute : constant Attribute_Pkg;
-   Remote_Host_Attribute      : constant Attribute_Pkg;
    Program_Host_Attribute     : constant Attribute_Pkg;
    Protocol_Attribute         : constant Attribute_Pkg;
    Main_Attribute             : constant Attribute_Pkg;

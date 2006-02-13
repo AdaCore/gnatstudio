@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regpat;               use GNAT.Regpat;
 with System;
 
@@ -46,6 +47,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with Interactive_Consoles;      use Interactive_Consoles;
 with String_Utils;              use String_Utils;
@@ -598,7 +600,9 @@ package body Commands.Custom is
         Safe_Value (Get_Attribute (Command, "progress-final", "2"));
       Progress_Hide : constant Boolean :=
         Get_Attribute (Command, "progress-hide", "true") = "true";
-
+      Server        : constant String :=
+        Get_Attribute (Command, "server", "gps_server");
+      Server_T      : Server_Type;
    begin
       if Show_Task_Manager = "" then
          Show_TM := Default_Show_In_Task_Manager or else Progress_Regexp /= "";
@@ -612,8 +616,14 @@ package body Commands.Custom is
          Outp := new String'(Output);
       end if;
 
+      Server_T := Server_Type'Value (Server);
+      if not Server_T'Valid then
+         Server_T := GPS_Server;
+      end if;
+
       return new External_Component_Record'
         (Command_Component_Record with
+         Server           => Server_T,
          Show_Command     => Show_C,
          Output           => Outp,
          Command          => new String'(Command.Value.all),
@@ -783,7 +793,9 @@ package body Commands.Custom is
      (Command : access Custom_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Success  : Boolean := True;
+      Success        : Boolean := True;
+      Current_Server : Server_Type := GPS_Server;
+      Old_Server     : Server_Type := GPS_Server;
 
       function Dollar_Substitution
         (Param  : String;
@@ -927,8 +939,8 @@ package body Commands.Custom is
          Num   : Integer;
          Done  : aliased Boolean := False;
          Macro : constant String :=
-                   Substitute (Param, Command.Execution.Context,
-                               Quoted, Done'Access);
+           Substitute (Param, Command.Execution.Context,
+                       Quoted, Done'Access, Current_Server);
       begin
          if Done then
             return Macro;
@@ -1000,11 +1012,6 @@ package body Commands.Custom is
             Substitution_Char => '$',
             Callback          => Dollar_Substitution'Unrestricted_Access,
             Recursive         => False);
-         Subst_Cmd_Line  : constant String := Substitute
-           (Subst_Percent,
-            Substitution_Char => GPS.Kernel.Macros.Special_Character,
-            Callback          => Substitution'Unrestricted_Access,
-            Recursive         => False);
          Console         : Interactive_Console;
          Output_Location : GNAT.OS_Lib.String_Access;
 
@@ -1040,6 +1047,13 @@ package body Commands.Custom is
          is
             Errors  : aliased Boolean;
             Old_Dir : GNAT.OS_Lib.String_Access;
+            --  has to be determined here so that Current_Server is
+            --  correctly set:
+            Subst_Cmd_Line  : constant String := Substitute
+              (Subst_Percent,
+               Substitution_Char => GPS.Kernel.Macros.Special_Character,
+               Callback          => Substitution'Unrestricted_Access,
+               Recursive         => False);
          begin
             if Context.Dir /= null then
                Old_Dir := new String'(Get_Current_Dir);
@@ -1089,6 +1103,11 @@ package body Commands.Custom is
          is
             Tmp  : GNAT.OS_Lib.String_Access;
             Args : String_List_Access;
+            Subst_Cmd_Line  : constant String := Substitute
+              (Subst_Percent,
+               Substitution_Char => GPS.Kernel.Macros.Special_Character,
+               Callback          => Substitution'Unrestricted_Access,
+               Recursive         => False);
          begin
             Trace (Me, "Executing external command " & Component.Command.all);
 
@@ -1120,6 +1139,7 @@ package body Commands.Custom is
               (Command.Kernel,
                Command              => Args (Args'First).all,
                Arguments            => Args (Args'First + 1 .. Args'Last),
+               Server               => Component.Server,
                Console              => Console,
                Callback             => Store_Command_Output'Access,
                Exit_Cb              => Exit_Cb'Access,
@@ -1135,8 +1155,9 @@ package body Commands.Custom is
                Show_In_Task_Manager => Component.Show_In_Task_Manager,
                Line_By_Line         => False,
                Synchronous          => Context.Synchronous,
-               Directory            => To_String (Context.Dir),
-               Fd                   => Command.Fd);
+               Directory            => Convert (To_String (Context.Dir),
+                                                GPS_Server, Component.Server),
+               Cmd                  => Command.Sub_Command);
             Free (Args);
 
             Command.Execution.External_Process_Console := Console;
@@ -1168,8 +1189,11 @@ package body Commands.Custom is
             Success := Execute_Shell
               (Shell_Component_Record'Class (Component.all));
          else
+            Old_Server := Current_Server;
+            Current_Server := External_Component_Record (Component.all).Server;
             Success := Execute_External
               (External_Component_Record'Class (Component.all));
+            Current_Server := Old_Server;
          end if;
 
          if not Success then
@@ -1808,8 +1832,7 @@ package body Commands.Custom is
    procedure Interrupt (Command : in out Custom_Command) is
    begin
       Command.Execution.Cmd_Index := Command.Components'First;
-      Interrupt (Command.Fd.all);
-      Close (Command.Fd.all);
+      Interrupt_Queue (Command.Kernel, Command.Sub_Command);
    end Interrupt;
 
 end Commands.Custom;

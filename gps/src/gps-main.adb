@@ -60,6 +60,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
@@ -71,6 +72,7 @@ with OS_Utils;                  use OS_Utils;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
 with Remote_Connections;
+with Remote_Views;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_Utils;
 with Traces;                    use Traces;
@@ -112,6 +114,7 @@ with Project_Properties;
 with Project_Viewers;
 with Python_Module;
 with Refactoring_Module;
+with Remote_Sync_Module;
 with Scenario_Views;
 with Shell_Script;
 with Socket_Module;
@@ -170,6 +173,8 @@ procedure GPS.Main is
    Outline_View_Trace : constant Debug_Handle := Create ("MODULE.OUTLINE", On);
    Call_Graph_View_Trace : constant Debug_Handle :=
      Create ("MODULE.CALL_GRAPH_VIEW", On);
+   Remote_View_Trace : constant Debug_Handle :=
+     Create ("MODULE.REMOTE_VIEW", On);
 
    GPS_Started_Hook : constant String := "gps_started";
 
@@ -188,7 +193,8 @@ procedure GPS.Main is
    Dir                    : String_Access;
    Batch_File             : String_Access;
    Batch_Script           : String_Access;
-   Tools_Host             : String_Access;
+   --  ??? re-enable this...
+   --     Tools_Host             : String_Access;
    Target                 : String_Access;
    Protocol               : String_Access;
    Debugger_Name          : String_Access;
@@ -603,6 +609,10 @@ procedure GPS.Main is
 
       GPS.Menu.Register_Common_Menus (GPS_Main.Kernel);
 
+      --  Initialize remote module
+      GPS.Kernel.Remote.Initialize (GPS_Main.Kernel);
+      Remote_Sync_Module.Register_Module (GPS_Main.Kernel);
+
       Kernel_Callback.Connect
         (Get_MDI (GPS_Main.Kernel), "child_selected",
          Child_Selected'Unrestricted_Access, GPS_Main.Kernel);
@@ -634,7 +644,7 @@ procedure GPS.Main is
       Initialize_Option_Scan;
       loop
          case Getopt ("-version -help P: -server= -hide " &
-                      "-debug? -debugger= -host= -target= -load= -eval= " &
+                      "-debug? -debugger= -target= -load= -eval= " &
                       "-readonly -traceoff= -traceon= -tracefile= -tracelist")
          is
             -- long option names --
@@ -665,10 +675,11 @@ procedure GPS.Main is
                         Help;
                         OS_Exit (0);
 
-                     elsif Full_Switch = "-host" then
-                        --  --host
-                        Free (Tools_Host);
-                        Tools_Host := new String'(Parameter);
+                        --  ??? re-enable this...
+--                       elsif Full_Switch = "-host" then
+--                          --  --host
+--                          Free (Tools_Host);
+--                          Tools_Host := new String'(Parameter);
 
                      else
                         --  --hide
@@ -995,13 +1006,14 @@ procedure GPS.Main is
                Value              => Debugger_Name.all);
          end if;
 
-         if Tools_Host /= null then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Remote_Host_Attribute,
-               Value              => Tools_Host.all);
-         end if;
+         --  ??? re-enable this...
+--           if Tools_Host /= null then
+--              Update_Attribute_Value_In_Scenario
+--                (Project            => Project,
+--                 Scenario_Variables => No_Scenario,
+--                 Attribute          => Remote_Host_Attribute,
+--                 Value              => Tools_Host.all);
+--           end if;
 
          if Target /= null then
             Update_Attribute_Value_In_Scenario
@@ -1248,6 +1260,10 @@ procedure GPS.Main is
       Src_Editor_Module.Register_Module (GPS_Main.Kernel);
 
       Navigation_Module.Register_Module (GPS_Main.Kernel);
+
+      if Active (Remote_View_Trace) then
+         Remote_Views.Register_Module (GPS_Main.Kernel);
+      end if;
 
       if Active (Call_Graph_Trace) then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);

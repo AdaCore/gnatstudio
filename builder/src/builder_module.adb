@@ -55,6 +55,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -70,7 +71,6 @@ with Histories;                 use Histories;
 
 with Basic_Types;
 with Std_Dialogs;               use Std_Dialogs;
-with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
@@ -406,31 +406,20 @@ package body Builder_Module is
       Compile_Only   : Boolean := False;
       Unique_Project : Boolean := False) return Argument_List_Access
    is
-      Remote_Host    : constant String :=
-                         Get_Attribute_Value (Project, Remote_Host_Attribute);
       Project_Str    : GNAT.OS_Lib.String_Access;
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access;
 
    begin
-      --  If the compilation is remote, we need to use the unix pathname
+      --  Convert path to Build_Server style
 
-      if Remote_Host /= "" then
-         --  Convert project path to unix pathname, since this is needed when
-         --  using a remote unix host from Windows.
-
-         if Path = "" then
-            Project_Str := new String'
-              (To_Unix_Pathname (Full_Name (Project_Path (Project)).all));
-         else
-            Project_Str := new String'(To_Unix_Pathname (Path));
-         end if;
-
-      elsif Path = "" then
-         Project_Str := new String'(Full_Name (Project_Path (Project)).all);
-
+      if Path = "" then
+         Project_Str := new String'
+           (Convert (Full_Name (Project_Path (Project)).all,
+                     GPS_Server, Build_Server, True));
       else
-         Project_Str := new String'(Path);
+         Project_Str := new String'
+           (Convert (Path, GPS_Server, Build_Server, True));
       end if;
 
       --  -XVAR1=value1 [-c] -Pproject [-u] main...
@@ -514,7 +503,6 @@ package body Builder_Module is
             Ada.Strings.Unbounded.Append
               (Files_Callback_Data (Data.Callback_Data.all).Buffer,
                Output);
-
             return;
          end if;
       else
@@ -590,7 +578,6 @@ package body Builder_Module is
       Synchronous : Boolean := False)
    is
       Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
-      Fd      : Process_Descriptor_Access;
       Cmd     : String_Access;
       Args    : Argument_List_Access;
 
@@ -708,7 +695,8 @@ package body Builder_Module is
                            In_Pkg   => Builder_Package,
                            Index    => Ada_String,
                            Use_Initial_Value => True)
-                        & new String'(Full_Name (File).all));
+                        & new String'(Convert (Full_Name (File).all,
+                          GPS_Server, Build_Server, True)));
                   end if;
 
                when Make_Syntax =>
@@ -746,12 +734,9 @@ package body Builder_Module is
       Console.Raise_Console (Kernel);
       Launch_Process
         (Kernel,
-         Remote_Protocol      => Get_Pref (Remote_Protocol),
-         Remote_Host          =>
-           Get_Attribute_Value (Prj, Remote_Host_Attribute),
          Command              => Cmd.all,
          Arguments            => Args.all,
-         Fd                   => Fd,
+         Server               => Build_Server,
          Console              => Get_Console (Kernel),
          Show_Command         => True,
          Show_Output          => False,
@@ -775,7 +760,6 @@ package body Builder_Module is
          Change_Dir (Old_Dir);
          Free (Cmd);
          Free (Args);
-         Free (Fd);
 
       when E : others =>
          Trace (Exception_Handle,
@@ -1022,13 +1006,10 @@ package body Builder_Module is
 
             Launch_Process
               (Kernel,
-               Remote_Protocol      => Get_Pref (Remote_Protocol),
-               Remote_Host          =>
-                 Get_Attribute_Value (Prj, Remote_Host_Attribute),
                Command              => Cmd.all,
                Arguments            => Default_Builder_Switches
                  & Common_Args.all & (Unique_Compile'Access, Local_File),
-               Fd                   => Fd,
+               Server               => Build_Server,
                Console              => Get_Console (Kernel),
                Show_Command         => not Quiet,
                Show_Output          => False,
@@ -1059,12 +1040,9 @@ package body Builder_Module is
 
          Launch_Process
            (Kernel,
-            Remote_Protocol      => Get_Pref (Remote_Protocol),
-            Remote_Host          =>
-              Get_Attribute_Value (Prj, Remote_Host_Attribute),
             Command              => Cmd.all,
             Arguments            => Common_Args.all & Args.all,
-            Fd                   => Fd,
+            Server               => Build_Server,
             Console              => Get_Console (Kernel),
             Show_Command         => not Quiet,
             Show_Output          => False,
@@ -1210,7 +1188,6 @@ package body Builder_Module is
          Position => Gtk.Enums.Win_Pos_Mouse,
          History  => Get_History (Kernel),
          Key      => "gps_custom_command");
-      Fd      : Process_Descriptor_Access;
       Success : Boolean;
 
    begin
@@ -1233,14 +1210,12 @@ package body Builder_Module is
       begin
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
          Console.Raise_Console (Kernel);
+         --  ??? Is this always the Build_Server ? Should ask the user ?
          Launch_Process
            (Kernel,
-            Remote_Protocol      => Get_Pref (Remote_Protocol),
-            Remote_Host          => Get_Attribute_Value
-              (Get_Project (Kernel), Remote_Host_Attribute),
             Command              => Args (Args'First).all,
             Arguments            => Args (Args'First + 1 .. Args'Last),
-            Fd                   => Fd,
+            Server               => Build_Server,
             Console              => Get_Console (Kernel),
             Show_Command         => True,
             Show_Output          => False,
@@ -1445,13 +1420,13 @@ package body Builder_Module is
       K       : constant Kernel_Handle := Kernel_Handle (Kernel);
       Active  : aliased Boolean := False;
       Args    : Argument_List_Access;
-      Exec    : String_Access;
       Success : Boolean;
 
       procedure Launch
-        (Command   : String;
-         Arguments : GNAT.OS_Lib.Argument_List;
-         Title     : String);
+        (Command      : String;
+         Arguments    : GNAT.OS_Lib.Argument_List;
+         Ext_Terminal : Boolean;
+         Title        : String);
       --  Launch Command (with Args) locally, or remotely if necessary.
 
       ------------
@@ -1459,69 +1434,24 @@ package body Builder_Module is
       ------------
 
       procedure Launch
-        (Command   : String;
-         Arguments : GNAT.OS_Lib.Argument_List;
-         Title     : String)
+        (Command      : String;
+         Arguments    : GNAT.OS_Lib.Argument_List;
+         Ext_Terminal : Boolean;
+         Title        : String)
       is
-         Remote_Cmd  : constant String := Get_Pref (Remote_Protocol);
-         Remote_Host : constant String :=
-                         Get_Attribute_Value
-                           (Data.Project, Remote_Host_Attribute);
-         Exec        : String_Access;
-         Fd          : Process_Descriptor_Access;
          Console     : Interactive_Console;
 
       begin
-         if Remote_Host = ""
-           or else Remote_Cmd = ""
-         then
-            Exec := Locate_Exec_On_Path (Command);
-
-            if Exec = null then
-               Insert
-                 (K, -"Could not locate executable on path: " & Command,
-                  Mode => Error);
-            else
-               Console := Create_Interactive_Console (K, Title);
-               Launch_Process
-                 (K,
-                  Command              => Exec.all,
-                  Arguments            => Arguments,
-                  Console              => Console,
-                  Success              => Success,
-                  Show_In_Task_Manager => True,
-                  Show_Exit_Status     => True,
-                  Fd                   => Fd);
-            end if;
-
-            Free (Exec);
-
-         else
-            declare
-               Full_Command : constant String :=
-                                To_Unix_Pathname (Command) & " "
-                                & Argument_List_To_String (Arguments);
-               New_Args     : Argument_List_Access :=
-                                Argument_String_To_List
-                                  (Remote_Cmd & " " & Remote_Host);
-               Last_Arg     : String_Access := new String'(Full_Command);
-            begin
-               Console := Create_Interactive_Console (K, Title);
-               Launch_Process
-                 (K,
-                  Command              => New_Args (New_Args'First).all,
-                  Arguments            =>
-                    New_Args (New_Args'First + 1 .. New_Args'Last) & Last_Arg,
-                  Console              => Console,
-                  Success              => Success,
-                  Show_In_Task_Manager => True,
-                  Show_Exit_Status     => True,
-                  Fd                   => Fd);
-
-               Free (Last_Arg);
-               Free (New_Args);
-            end;
-         end if;
+         Console := Create_Interactive_Console (K, Title);
+         Launch_Process
+           (K,
+            Command              => Command,
+            Arguments            => Arguments,
+            Server               => Execution_Server,
+            Console              => Console,
+            Success              => Success,
+            Use_Ext_Terminal     => Ext_Terminal,
+            Show_Exit_Status     => True);
       end Launch;
 
    begin
@@ -1543,18 +1473,13 @@ package body Builder_Module is
             then
                return;
             else
-               if Active then
-                  Args := Argument_String_To_List
-                    (Get_Pref (GPS.Kernel.Preferences.Execute_Command) &
-                     ' ' & Command);
-               else
-                  Args := Argument_String_To_List (Command);
-               end if;
+               Args := Argument_String_To_List (Command);
 
                Launch
                  (Args (Args'First).all,
-                  Args (Args'First + 1 .. Args'Last), -"Run: " & Command);
-               Free (Exec);
+                  Args (Args'First + 1 .. Args'Last), Active,
+                  -"Run on " & Get_Nickname (Execution_Server) & ": " &
+                  Command);
                Free (Args);
             end if;
          end;
@@ -1575,22 +1500,13 @@ package body Builder_Module is
             if Arguments = ""
               or else Arguments (Arguments'First) /= ASCII.NUL
             then
-               if Active then
-                  Args := Argument_String_To_List
-                    (Get_Pref (GPS.Kernel.Preferences.Execute_Command) &
-                     ' ' & Full_Name (Data.File).all & ' ' & Arguments);
-                  Launch
-                    (Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-                     -"Run: " & Base_Name (Data.File) & ' ' &
-                     Krunch (Arguments, 12));
-
-               else
-                  Args := Argument_String_To_List (Arguments);
-                  Launch
-                    (Full_Name (Data.File).all,
-                     Args.all, -"Run: " & Base_Name (Data.File)
-                     & ' ' & Krunch (Arguments, 12));
-               end if;
+               Args := Argument_String_To_List (Arguments);
+               Launch
+                 (Convert (Full_Name (Data.File).all,
+                           GPS_Server, Execution_Server),
+                  Args.all, Active,
+                  -"Run on " & Get_Nickname (Execution_Server) & ": " &
+                  Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
 
                Free (Args);
             end if;

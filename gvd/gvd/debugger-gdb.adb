@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -39,7 +39,7 @@ with Default_Preferences; use Default_Preferences;
 with File_Utils;          use File_Utils;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with GPS.Intl;            use GPS.Intl;
-with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Remote;   use GPS.Kernel.Remote;
 with GPS.Main_Window;     use GPS.Main_Window;
 with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Preferences;     use GVD.Preferences;
@@ -683,12 +683,12 @@ package body Debugger.Gdb is
 
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
+      Kernel          : Kernel_Handle;
       Executable      : VFS.Virtual_File := VFS.No_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
       Window          : Gtk.Window.Gtk_Window;
-      Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
@@ -712,14 +712,13 @@ package body Debugger.Gdb is
 
       if Debugger_Name = "" then
          General_Spawn
-           (Debugger, Local_Arguments, Gdb_Command, Proxy, Remote_Host);
+           (Kernel, Debugger, Local_Arguments, Gdb_Command, Proxy);
       else
          General_Spawn
-           (Debugger, Local_Arguments, Debugger_Name, Proxy, Remote_Host);
+           (Kernel, Debugger, Local_Arguments, Debugger_Name, Proxy);
       end if;
 
       Free (Debugger.Executable_Args);
-      Free (Debugger.Remote_Host);
       Free (Debugger.Remote_Target);
       Free (Debugger.Remote_Protocol);
 
@@ -731,10 +730,6 @@ package body Debugger.Gdb is
 
       if Executable_Args /= "" then
          Debugger.Executable_Args := new String'(Executable_Args);
-      end if;
-
-      if Remote_Host /= "" then
-         Debugger.Remote_Host := new String'(Remote_Host);
       end if;
 
       if Remote_Target /= "" then
@@ -808,7 +803,7 @@ package body Debugger.Gdb is
       Send (Debugger, "set annotate 1", Mode => Internal);
 
       if Get_Pref (Execution_Window)
-        and then Debugger.Remote_Host = null
+        and then not Is_Local (Debug_Server)
       then
          if Host = Windows then
             Send (Debugger, "set new-console", Mode => Internal);
@@ -932,7 +927,6 @@ package body Debugger.Gdb is
             (Get_Process (Debugger)).all) = GNAT.Expect.Invalid_Pid
       then
          Free (Debugger.Process);
-         Free (Debugger.Remote_Host);
          Free (Debugger.Remote_Target);
          Free (Debugger.Remote_Protocol);
          return;
@@ -969,7 +963,6 @@ package body Debugger.Gdb is
       end;
 
       Free (Debugger.Process);
-      Free (Debugger.Remote_Host);
       Free (Debugger.Remote_Target);
       Free (Debugger.Remote_Protocol);
    end Close;
@@ -1034,11 +1027,7 @@ package body Debugger.Gdb is
 
       function Translate_Path (S : VFS.Virtual_File) return String is
       begin
-         if Debugger.Remote_Host = null then
-            return Full_Name (S).all;
-         else
-            return To_Unix_Pathname (Full_Name (S).all);
-         end if;
+         return Convert (Full_Name (S).all, GPS_Server, Debug_Server, True);
       end Translate_Path;
 
    begin
@@ -1492,7 +1481,7 @@ package body Debugger.Gdb is
         and then Is_Started (Debugger)        -- debuggee started
         and then Command_In_Process (Proxy)   -- and likely running
         and then Host = Windows               -- Windows host
-        and then Debugger.Remote_Host = null  -- native debugging
+        and then Is_Local (Debug_Server)      -- no remote debugging
         and then Debugger.Execution_Window    -- external window
       then
          GNAT.Expect.TTY.Interrupt (Debugger.Debuggee_Pid);
@@ -3710,10 +3699,8 @@ package body Debugger.Gdb is
               (Send (Debugger, "tcl activeTaskNameMap", Mode => Internal));
          Debugger.WTX_Index := Debugger.WTX_List'First;
 
-      elsif Debugger.Remote_Host = null then
-         Open_Processes (Debugger.Handle);
       else
-         Open_Processes (Debugger.Handle, Debugger.Remote_Host.all);
+         Open_Processes (Debugger.Handle, Debugger.Kernel);
       end if;
    end Open_Processes;
 

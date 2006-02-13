@@ -141,7 +141,6 @@ package body GVD.Process is
       Executable      : VFS.Virtual_File;
       Debugger_Args   : Argument_List;
       Executable_Args : String;
-      Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "";
@@ -930,7 +929,6 @@ package body GVD.Process is
       Executable      : VFS.Virtual_File;
       Debugger_Args   : Argument_List;
       Executable_Args : String;
-      Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "";
@@ -958,7 +956,6 @@ package body GVD.Process is
       end if;
 
       Process.Descriptor.Debugger := Kind;
-      Process.Descriptor.Remote_Host := new String'(Remote_Host);
 
       if Remote_Protocol = "" then
          Process.Descriptor.Remote_Target := new String'("");
@@ -983,12 +980,12 @@ package body GVD.Process is
 
       Spawn
         (Process.Debugger,
+         GPS_Proxy (Proxy.all).Kernel,
          Executable,
          Debugger_Args,
          Executable_Args,
          Proxy,
          Process.Window.all'Access,
-         Remote_Host,
          Remote_Target,
          Remote_Protocol,
          Debugger_Name);
@@ -1688,8 +1685,6 @@ package body GVD.Process is
             Executable      => Module,
             Debugger_Args   => Args (2 .. Args'Last),
             Executable_Args => Program_Args.all,
-            Remote_Host     =>
-              Get_Attribute_Value (Project, Remote_Host_Attribute),
             Remote_Target   =>
               Get_Attribute_Value (Project, Program_Host_Attribute),
             Remote_Protocol =>

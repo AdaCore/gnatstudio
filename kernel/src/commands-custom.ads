@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2005                    --
+--                        Copyright (C) 2002-2006                    --
 --                              AdaCore                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -58,14 +58,16 @@
 --
 --      %l, %c -> the current line and column in the current file.
 
-with GNAT.Expect;          use GNAT.Expect;
+with GNAT.Expect;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
 with Glib.Xml_Int;
 with Gtk.Widget;
 
+with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
 with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.Remote;    use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 with Interactive_Consoles;
 
@@ -217,6 +219,7 @@ private
    --  A component that executes a shell command
 
    type External_Component_Record is new Custom_Component_Record with record
+      Server               : Server_Type;
       Show_In_Task_Manager : Boolean;
       Progress_Regexp      : String_Access;
       Progress_Current     : Natural;
@@ -280,11 +283,11 @@ private
       Name : GNAT.OS_Lib.String_Access;
       --  The name of the command
 
-      Execution : Custom_Command_Execution;
+      Execution   : Custom_Command_Execution;
       --  The current context for the execution of the command. If this is
       --  null, no command is currently executing
 
-      Fd : Process_Descriptor_Access;
+      Sub_Command : Command_Access;
    end record;
 
    procedure To_XML

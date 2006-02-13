@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -36,12 +36,12 @@ package Debugger.Gdb is
 
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
+      Kernel          : Kernel_Handle;
       Executable      : VFS.Virtual_File := VFS.No_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
       Window          : Gtk.Window.Gtk_Window;
-      Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "");

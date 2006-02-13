@@ -16,7 +16,8 @@
       <shell>Project.root</shell>
       <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
       <external show-command="true"
-                output="">%1 stub "%pps" %3 "%F" "%d"</external>
+                output=""
+                server="build_server">%1 stub "%pps" %3 "%F" "%d"</external>
       <on-failure><shell>Locations.parse """%1 """ gnatstub</shell></on-failure>
       <shell>Project.recompute</shell>
       <shell>File "%F"</shell>

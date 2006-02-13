@@ -27,6 +27,7 @@ with "../refactoring/refactoring";
 with "../action_editor/action_editor";
 with "../socket/socket";
 with "../views/views";
+with "../remote/remote";
 
 project GPS is
 

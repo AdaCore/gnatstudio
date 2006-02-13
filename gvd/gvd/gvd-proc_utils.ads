@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2001                        --
---                             ACT-Europe                            --
+--                       Copyright (C) 2001-2006                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,8 @@
 --  This package provides system specific utilities to get information about
 --  processes.
 
+with GPS.Kernel; use GPS.Kernel;
+
 package GVD.Proc_Utils is
 
    type Process_Handle is private;
@@ -38,13 +40,10 @@ package GVD.Proc_Utils is
    end record;
    --  Individual information concerning a process.
 
-   procedure Open_Processes (Handle : out Process_Handle);
-   --  Initialize a connection to the current machine in order to retrieve
+   procedure Open_Processes (Handle : out Process_Handle;
+                             Kernel : Kernel_Handle);
+   --  Initialize a connection to the debug machine in order to retrieve
    --  process information.
-
-   procedure Open_Processes (Handle : out Process_Handle; Host : String);
-   --  Initialize a connection to a remote host in order to retrieve process
-   --  information.
 
    procedure Next_Process
      (Handle  : Process_Handle;
