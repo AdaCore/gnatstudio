@@ -36,5 +36,5 @@ if [ "$CHARSET" = "" ]; then
   export CHARSET
 fi
 
-export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH
+export LD_LIBRARY_PATH GTK_DATA_PREFIX
 exec $root/bin/${prog}_exe "$@"
