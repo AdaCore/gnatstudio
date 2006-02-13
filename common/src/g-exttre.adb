@@ -35,7 +35,7 @@ with Traces;            use Traces;
 
 package body GNAT.Expect.TTY.Remote is
 
-   Me : Debug_Handler := Create ("GNAT.Expect.TTY.Remote");
+   Me : constant Debug_Handle := Create ("GNAT.Expect.TTY.Remote");
 
    type Compiled_Regexp_Array_Access is access Compiled_Regexp_Array;
 
@@ -256,7 +256,7 @@ package body GNAT.Expect.TTY.Remote is
          Result : String_List (L'Range);
       begin
          for J in Result'Range loop
-            if L (I).all = "%h" then
+            if L (J).all = "%h" then
                Result (J) := new String'(Target_Name);
             elsif L (J).all = "%u" then
                Result (J) := new String'(User_Name);
