@@ -229,6 +229,7 @@ package Python is
 
    function PyList_GetItem (List : PyObject; Index : Integer) return PyObject;
    --  Get the item at a specific location in the list, starting at index 0.
+   --  Do not decref the returned value.
 
    function PyList_Size (List : PyObject) return Integer;
    --  Return the number of items in the list
