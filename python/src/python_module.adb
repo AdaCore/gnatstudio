@@ -171,6 +171,10 @@ package body Python_Module is
    function Execute
      (Subprogram : access Python_Subprogram_Record;
       Args       : Callback_Data'Class) return String;
+   function Execute
+     (Subprogram : access Python_Subprogram_Record;
+      Args       : Callback_Data'Class)
+      return GNAT.OS_Lib.String_List;
    procedure Free (Subprogram : in out Python_Subprogram_Record);
    function Get_Name
      (Subprogram : access Python_Subprogram_Record) return String;
@@ -2569,6 +2573,55 @@ package body Python_Module is
         (Script => Python_Module_Id.Script,
          Command => Subprogram.Subprogram,
          Args    => Args);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Subprogram : access Python_Subprogram_Record;
+      Args       : Callback_Data'Class)
+      return GNAT.OS_Lib.String_List
+   is
+      Obj : constant PyObject := Execute_Command
+        (Script => Python_Module_Id.Script,
+         Command => Subprogram.Subprogram,
+         Args    => Args);
+   begin
+      if Obj = null then
+         return (1 .. 0 => null);
+
+      elsif Obj = Py_None then
+         Py_DECREF (Obj);
+         return (1 .. 0 => null);
+
+      elsif PyString_Check (Obj) then
+         declare
+            Str : constant String := PyString_AsString (Obj);
+         begin
+            Py_DECREF (Obj);
+            return (1 .. 1 => new String'(Str));
+         end;
+
+      elsif PyList_Check (Obj) then
+         declare
+            Result : GNAT.OS_Lib.String_List (1 .. PyList_Size (Obj));
+            Item   : PyObject;
+         begin
+            for J in 0 .. PyList_Size (Obj) - 1 loop
+               Item := PyList_GetItem (Obj, J);
+               if PyString_Check (Item) then
+                  Result (J + 1) := new String'(PyString_AsString (Item));
+               end if;
+            end loop;
+            Py_DECREF (Obj);
+            return Result;
+         end;
+      end if;
+
+      Py_DECREF (Obj);
+      return (1 .. 0 => null);
    end Execute;
 
    ----------
