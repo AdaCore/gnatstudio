@@ -29,14 +29,18 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib;                      use Glib;
 
 with Gtk.Accel_Label;           use Gtk.Accel_Label;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Image;                 use Gtk.Image;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
+with Basic_Types;
 with Commands.Custom;           use Commands.Custom;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
@@ -71,6 +75,9 @@ package body Custom_Module is
    Add_Before_Cst  : aliased constant String := "add_before";
    Ref_Cst         : aliased constant String := "ref";
    Name_Cst        : aliased constant String := "name";
+   Label_Cst       : aliased constant String := "label";
+   Filter_Cst      : aliased constant String := "filter";
+   Factory_Cst     : aliased constant String := "factory";
    Menu_Get_Params : constant Cst_Argument_List :=
      (1 => Path_Cst'Access);
    Menu_Rename_Params : constant Cst_Argument_List :=
@@ -82,6 +89,18 @@ package body Custom_Module is
       4 => Add_Before_Cst'Access);
    Contextual_Constructor_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
+   Contextual_Create_Params : constant Cst_Argument_List :=
+     (1 => On_Activate_Cst'Access,
+      2 => Label_Cst'Access,
+      3 => Filter_Cst'Access,
+      4 => Ref_Cst'Access,
+      5 => Add_Before_Cst'Access);
+   Contextual_Create_Dynamic_Params : constant Cst_Argument_List :=
+     (1 => Factory_Cst'Access,
+      2 => On_Activate_Cst'Access,
+      3 => Filter_Cst'Access,
+      4 => Ref_Cst'Access,
+      5 => Add_Before_Cst'Access);
 
    type Subprogram_Type_Menu_Record is new Gtk_Menu_Item_Record with record
       On_Activate : Subprogram_Type;
@@ -105,6 +124,186 @@ package body Custom_Module is
    procedure Contextual_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all shell commands for GPS.Contextual
+
+   type Contextual_Shell_Cmd is new Interactive_Command with record
+      Contextual  : Class_Instance;
+      On_Activate : Subprogram_Type;
+   end record;
+   type Contextual_Shell_Command is access all Contextual_Shell_Cmd'Class;
+   function Execute
+     (Command : access Contextual_Shell_Cmd;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Type used to define contextual menus from a scripting language
+
+   type Contextual_Shell_Filters is new Action_Filter_Record with record
+      Contextual : Class_Instance;
+      Filter     : Subprogram_Type;
+   end record;
+   type Contextual_Shell_Filter is access all Contextual_Shell_Filters'Class;
+   function Filter_Matches_Primitive
+     (Filter  : access Contextual_Shell_Filters;
+      Context : access Selection_Context'Class) return Boolean;
+   --  Type used to define contextual menus from a scripting language
+
+   type Contextual_Shell_Labels is new Contextual_Menu_Label_Creator_Record
+   with record
+      Contextual : Class_Instance;
+      Label      : Subprogram_Type;
+   end record;
+   type Contextual_Shell_Label is access all Contextual_Shell_Labels'Class;
+   function Get_Label
+     (Creator : access Contextual_Shell_Labels;
+      Context : access Selection_Context'Class) return String;
+   --  Type used to define contextual menus from a scripting language
+
+   type Create_Dynamic_Contextual is new Submenu_Factory_Record with record
+      Contextual  : Class_Instance;
+      On_Activate : Subprogram_Type;
+      Factory     : Subprogram_Type;
+   end record;
+   type Create_Dynamic_Contextual_Access is access all
+     Create_Dynamic_Contextual'Class;
+   procedure Append_To_Menu
+     (Factory : access Create_Dynamic_Contextual;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Create a dynamic contextual menu from a script
+
+   package Factory_Callback is new Gtk.Handlers.User_Callback
+     (Widget_Type => Gtk.Menu_Item.Gtk_Menu_Item_Record,
+      User_Type   => Create_Dynamic_Contextual_Access);
+
+   procedure On_Dynamic_Menu_Activate
+     (Item    : access Gtk_Menu_Item_Record'Class;
+      Factory : Create_Dynamic_Contextual_Access);
+   --  Called when an entry is a dynamic contextual menu created through a
+   --  scripting language was activated.
+
+   ------------------------------
+   -- On_Dynamic_Menu_Activate --
+   ------------------------------
+
+   procedure On_Dynamic_Menu_Activate
+     (Item    : access Gtk_Menu_Item_Record'Class;
+      Factory : Create_Dynamic_Contextual_Access)
+   is
+      C : Callback_Data'Class := Create
+        (Get_Script (Factory.Contextual), Arguments_Count => 2);
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Set_Nth_Arg (C, 1, Factory.Contextual);
+      Set_Nth_Arg
+        (C, 2, Get_Text (Gtk_Label (Get_Child (Item))));
+      Tmp := Execute (Factory.On_Activate, C);
+      Free (C);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Message (E));
+   end On_Dynamic_Menu_Activate;
+
+   --------------------
+   -- Append_To_Menu --
+   --------------------
+
+   procedure Append_To_Menu
+     (Factory : access Create_Dynamic_Contextual;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Object, Context);
+      Contextual_Class : constant Class_Type := New_Class
+        (Get_Kernel (Get_Script (Factory.Contextual)), "Contextual");
+      C : Callback_Data'Class := Create
+        (Get_Script (Factory.Contextual), Arguments_Count => 1);
+      Item : Gtk_Menu_Item;
+   begin
+      Trace (Me, "Append_To_Menu "
+             & String'(Get_Data (Factory.Contextual, Contextual_Class)));
+      Set_Nth_Arg (C, 1, Factory.Contextual);
+
+      declare
+         List : String_List := Execute (Factory.Factory, C);
+      begin
+         for L in List'Range loop
+            if List (L) /= null then
+               Gtk_New (Item, List (L).all);
+               Factory_Callback.Connect
+                 (Item, "activate", On_Dynamic_Menu_Activate'Access,
+                  User_Data => Create_Dynamic_Contextual_Access (Factory));
+               Append (Menu, Item);
+            end if;
+         end loop;
+
+         Basic_Types.Free (List);
+      end;
+
+      Show_All (Menu);
+      Free (C);
+   end Append_To_Menu;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Contextual_Shell_Cmd;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      C : Callback_Data'Class := Create
+        (Get_Script (Command.Contextual), Arguments_Count => 1);
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp, Context);
+   begin
+      Set_Nth_Arg (C, 1, Command.Contextual);
+      Tmp := Execute (Command.On_Activate, C);
+      Free (C);
+      return Success;
+   end Execute;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Contextual_Shell_Filters;
+      Context : access Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Context);
+      C : Callback_Data'Class := Create
+        (Get_Script (Filter.Filter.all), Arguments_Count => 1);
+      Tmp : Boolean;
+   begin
+      Set_Nth_Arg (C, 1, Filter.Contextual);
+      Tmp := Execute (Filter.Filter, C);
+      Free (C);
+      return Tmp;
+   end Filter_Matches_Primitive;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label
+     (Creator : access Contextual_Shell_Labels;
+      Context : access Selection_Context'Class) return String
+   is
+      pragma Unreferenced (Context);
+      C : Callback_Data'Class := Create
+        (Get_Script (Creator.Label.all), Arguments_Count => 1);
+   begin
+      Set_Nth_Arg (C, 1, Creator.Contextual);
+      declare
+         Str : constant String := Execute (Creator.Label, C);
+      begin
+         Free (C);
+         return Str;
+      end;
+   end Get_Label;
 
    -------------
    -- Destroy --
@@ -1035,6 +1234,10 @@ package body Custom_Module is
       Contextual_Class : constant Class_Type :=
         New_Class (Kernel, "Contextual");
       Inst       : Class_Instance;
+      Cmd        : Contextual_Shell_Command;
+      Filter     : Contextual_Shell_Filter;
+      Label      : Contextual_Shell_Label;
+      Subp       : Subprogram_Type;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Contextual_Constructor_Params);
@@ -1058,6 +1261,63 @@ package body Custom_Module is
            (Kernel,
             String'(Get_Data (Inst, Contextual_Class)),
             Nth_Arg (Data, 2));
+
+      elsif Command = "create" then
+         Name_Parameters (Data, Contextual_Create_Params);
+         Inst := Nth_Arg (Data, 1, Contextual_Class);
+
+         Cmd := new Contextual_Shell_Cmd;
+         Cmd.Contextual := Inst;
+         Cmd.On_Activate := Nth_Arg (Data, 2);
+
+         Subp := Nth_Arg (Data, 4, null);
+         if Subp /= null then
+            Filter  := new Contextual_Shell_Filters'
+              (Action_Filter_Record with Contextual => Inst, Filter => Subp);
+         end if;
+
+         Subp := Nth_Arg (Data, 3, null);
+         if Subp /= null then
+            Label := new Contextual_Shell_Labels'
+              (Contextual => Inst, Label => Subp);
+            Register_Contextual_Menu
+              (Kernel,
+               Name       => Get_Data (Inst, Contextual_Class),
+               Action     => Interactive_Command_Access (Cmd),
+               Filter     => Action_Filter (Filter),
+               Label      => Label,
+               Ref_Item   => Nth_Arg (Data, 5, ""),
+               Add_Before => Nth_Arg (Data, 6, True));
+         else
+            Register_Contextual_Menu
+              (Kernel,
+               Name       => Get_Data (Inst, Contextual_Class),
+               Action     => Interactive_Command_Access (Cmd),
+               Filter     => Action_Filter (Filter),
+               Ref_Item   => Nth_Arg (Data, 5, ""),
+               Add_Before => Nth_Arg (Data, 6, True));
+         end if;
+
+      elsif Command = "create_dynamic" then
+         Name_Parameters (Data, Contextual_Create_Dynamic_Params);
+         Inst := Nth_Arg (Data, 1, Contextual_Class);
+
+         Subp := Nth_Arg (Data, 4, null);
+         if Subp /= null then
+            Filter  := new Contextual_Shell_Filters'
+              (Action_Filter_Record with Contextual => Inst, Filter => Subp);
+         end if;
+
+         Register_Contextual_Submenu
+           (Kernel,
+            Name       => Get_Data (Inst, Contextual_Class),
+            Filter     => Action_Filter (Filter),
+            Submenu    => new Create_Dynamic_Contextual'
+              (Contextual  => Inst,
+               Factory     => Nth_Arg (Data, 2),
+               On_Activate => Nth_Arg (Data, 3)),
+            Ref_Item   => Nth_Arg (Data, 5, ""),
+            Add_Before => Nth_Arg (Data, 6, True));
 
       elsif Command = "list" then
          Set_Return_Value_As_List (Data);
@@ -1149,6 +1409,18 @@ package body Custom_Module is
         (Kernel, "set_sensitive",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class => Contextual_Class,
+         Handler => Contextual_Handler'Access);
+      Register_Command
+        (Kernel, "create",
+         Minimum_Args => 1,
+         Maximum_Args => 5,
+         Class => Contextual_Class,
+         Handler => Contextual_Handler'Access);
+      Register_Command
+        (Kernel, "create_dynamic",
+         Minimum_Args => 2,
+         Maximum_Args => 5,
          Class => Contextual_Class,
          Handler => Contextual_Handler'Access);
       Register_Command
