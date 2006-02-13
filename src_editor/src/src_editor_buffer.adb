@@ -3304,64 +3304,61 @@ package body Src_Editor_Buffer is
       Get_Iter_Position (Source_Buffer (Buffer), Iter, Line, Column);
    end Get_Cursor_Position;
 
+   ---------------
+   -- Ends_Word --
+   ---------------
+
+   function Ends_Word (Iter : Gtk_Text_Iter) return Boolean is
+      Next : Gtk_Text_Iter;
+      Res  : Boolean;
+      N    : Character;
+   begin
+      Copy (Iter, Next);
+      Forward_Char (Next, Res);
+
+      if Res then
+         N := Get_Char (Next);
+
+         if N = '_' then
+            return False;
+         else
+            return not Is_Alphanumeric (N);
+         end if;
+      else
+         return True;
+      end if;
+   end Ends_Word;
+
+   -----------------
+   -- Starts_Word --
+   -----------------
+
+   function Starts_Word (Iter : Gtk_Text_Iter) return Boolean is
+      Prev : Gtk_Text_Iter;
+      Res  : Boolean;
+      P    : Character;
+   begin
+      Copy (Iter, Prev);
+      Backward_Char (Prev, Res);
+
+      if Res then
+         P := Get_Char (Prev);
+
+         if P = '_' then
+            return False;
+         else
+            return not Is_Alphanumeric (P);
+         end if;
+      else
+         return True;
+      end if;
+   end Starts_Word;
+
    -------------------------
    -- Select_Current_Word --
    -------------------------
 
    procedure Select_Current_Word (Buffer : access Source_Buffer_Record) is
-      function Ends_Word (Iter : Gtk_Text_Iter) return Boolean;
-      function Starts_Word (Iter : Gtk_Text_Iter) return Boolean;
-
-      ---------------
-      -- Ends_Word --
-      ---------------
-
-      function Ends_Word (Iter : Gtk_Text_Iter) return Boolean is
-         Next : Gtk_Text_Iter;
-         Res  : Boolean;
-         N    : Character;
-      begin
-         Copy (Iter, Next);
-         Forward_Char (Next, Res);
-
-         if Res then
-            N := Get_Char (Next);
-
-            if N = '_' then
-               return False;
-            else
-               return not Is_Alphanumeric (N);
-            end if;
-         else
-            return True;
-         end if;
-      end Ends_Word;
-
-      -----------------
-      -- Starts_Word --
-      -----------------
-
-      function Starts_Word (Iter : Gtk_Text_Iter) return Boolean is
-         Prev : Gtk_Text_Iter;
-         Res  : Boolean;
-         P    : Character;
-      begin
-         Copy (Iter, Prev);
-         Backward_Char (Prev, Res);
-
-         if Res then
-            P := Get_Char (Prev);
-
-            if P = '_' then
-               return False;
-            else
-               return not Is_Alphanumeric (P);
-            end if;
-         else
-            return True;
-         end if;
-      end Starts_Word;
-
       Success : Boolean := True;
       Start_Iter, End_Iter, Iter : Gtk_Text_Iter;
 
