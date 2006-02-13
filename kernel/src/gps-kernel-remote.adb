@@ -635,8 +635,9 @@ package body GPS.Kernel.Remote is
    -- To_Unix_Path --
    ------------------
 
-   function To_Unix_Path (Path   : String;
-                          Server : Server_Type) return String
+   function To_Unix_Path (Path             : String;
+                          Server           : Server_Type;
+                          Use_Cygwin_Style : Boolean := False) return String
    is
       The_Path : String := Path;
       Device_Found : Boolean := False;
@@ -658,7 +659,10 @@ package body GPS.Kernel.Remote is
 
          when Windows =>
             for J in The_Path'Range loop
-               if not Device_Found and then The_Path (J) = ':' then
+               if Cygwin_Style_Path
+                 and then not Device_Found
+                 and then The_Path (J) = ':'
+               then
                   The_Path (The_Path'First .. J + 1) :=
                     '/' & The_Path (The_Path'First .. J - 1) & '/';
                   Device_Found := True;

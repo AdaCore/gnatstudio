@@ -51,9 +51,11 @@ package GPS.Kernel.Remote is
    --  Translate a file/directory path from server 'From' to server 'To'
    --  if Unix_Style is set, the translated path will have a unix style.
 
-   function To_Unix_Path (Path   : String;
-                          Server : Server_Type) return String;
+   function To_Unix_Path (Path             : String;
+                          Server           : Server_Type;
+                          Use_Cygwin_Style : Boolean := False) return String;
    --  Transform a remote path into unix path style.
+   --  If Use_Cygwin_Style is set, windows directory x:\ are translated to /x/
 
    type Sync_Data is tagged null record;
    type Sync_Data_Access is access all Sync_Data'Class;
