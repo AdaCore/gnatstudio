@@ -785,7 +785,8 @@ procedure GPS.Main is
                     (Full_Name (Project_Name).all & Project_File_Extension);
                end if;
 
-               Trace (Me, "Found project: " & Parameter);
+               Trace (Me, "Found project: "
+                      & Full_Name (Project_Name).all);
 
             when ASCII.NUL =>
                exit;
