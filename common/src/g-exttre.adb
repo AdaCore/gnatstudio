@@ -28,13 +28,14 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
-with Ada.Text_IO;
-
 with GNAT.Regpat;       use GNAT.Regpat;
 
 with String_Utils;      use String_Utils;
+with Traces;            use Traces;
 
 package body GNAT.Expect.TTY.Remote is
+
+   Me : Debug_Handler := Create ("GNAT.Expect.TTY.Remote");
 
    type Compiled_Regexp_Array_Access is access Compiled_Regexp_Array;
 
@@ -96,15 +97,15 @@ package body GNAT.Expect.TTY.Remote is
       function Clean_Up (Str : in String) return String is
          Out_S : String := Str;
       begin
-         for I in Str'Range loop
-            if Str (I) = ASCII.NUL then
-               Out_S (I) := '@';
+         for J in Str'Range loop
+            if Str (J) = ASCII.NUL then
+               Out_S (J) := '@';
             end if;
          end loop;
          return Out_S;
       end Clean_Up;
    begin
-      Ada.Text_IO.Put_Line ("(" & Where & "): '" & Clean_Up (What) & "'");
+      Trace (Me, "(" & Where & "): '" & Clean_Up (What) & "'");
    end Log;
 
    ----------------
@@ -254,20 +255,20 @@ package body GNAT.Expect.TTY.Remote is
       function Process_Arg_List (L : String_List) return String_List is
          Result : String_List (L'Range);
       begin
-         for I in Result'Range loop
+         for J in Result'Range loop
             if L (I).all = "%h" then
-               Result (I) := new String'(Target_Name);
-            elsif L (I).all = "%u" then
-               Result (I) := new String'(User_Name);
-            elsif L (I).all = "%s" then
+               Result (J) := new String'(Target_Name);
+            elsif L (J).all = "%u" then
+               Result (J) := new String'(User_Name);
+            elsif L (J).all = "%s" then
                --  Get next args as a single string
-               Result (I) := new String'
+               Result (J) := new String'
                  (Argument_List_To_String
-                    (Process_Arg_List (L (I + 1 .. L'Last)),
+                    (Process_Arg_List (L (J + 1 .. L'Last)),
                      Protect_Quotes => False));
-               return Result (Result'First .. I);
+               return Result (Result'First .. J);
             else
-               Result (I) := new String'(L (I).all);
+               Result (J) := new String'(L (J).all);
             end if;
          end loop;
          return Result;
@@ -427,13 +428,13 @@ package body GNAT.Expect.TTY.Remote is
       --  Send the initialization commands. These commands are sent
       --  before the synchronization with the prompt because they can
       --  affect it.
-      for I in Descriptor.Shell.Init_Cmds'Range loop
+      for J in Descriptor.Shell.Init_Cmds'Range loop
          if Descriptor.Buffer /= null then
             Log ("flush_before", Descriptor.Buffer.all);
          end if;
          Flush (Descriptor);
          Send (Descriptor,
-               Descriptor.Shell.Init_Cmds (I).all);
+               Descriptor.Shell.Init_Cmds (J).all);
          Wait_For_Prompt (True);
       end loop;
 
@@ -545,9 +546,9 @@ package body GNAT.Expect.TTY.Remote is
             Desc.Getting_Status := False;
          end if;
          begin
-            for I in Desc.Shell.Exit_Cmds'Range loop
+            for J in Desc.Shell.Exit_Cmds'Range loop
                Send (Desc.all,
-                     Desc.Shell.Exit_Cmds (I).all);
+                     Desc.Shell.Exit_Cmds (J).all);
                delay 0.1;
             end loop;
          exception
@@ -584,11 +585,11 @@ package body GNAT.Expect.TTY.Remote is
         renames TTY_Process_Descriptor (Descriptor);
    begin
       if not Descriptor.Busy then
-         for I in Descriptor.Shell.Exit_Cmds'Range loop
+         for J in Descriptor.Shell.Exit_Cmds'Range loop
             begin
                Flush (Descriptor);
                Send (Descriptor,
-                     Descriptor.Shell.Exit_Cmds (I).all);
+                     Descriptor.Shell.Exit_Cmds (J).all);
                delay 0.1;
             exception
                when others =>
