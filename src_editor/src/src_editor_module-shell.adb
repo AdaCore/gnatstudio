@@ -2230,6 +2230,14 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value
            (Data, Create_Editor_Location (Get_Script (Data), Iter));
 
+      elsif Command = "starts_word" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Set_Return_Value (Data, Starts_Word (Iter));
+
+      elsif Command = "ends_word" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Set_Return_Value (Data, Ends_Word (Iter));
+
       elsif Command = "forward_line" then
          Name_Parameters (Data, (1 => Count_Cst'Access));
          Get_Location (Iter, Data, 1, Default => Iter);
@@ -2729,6 +2737,10 @@ package body Src_Editor_Module.Shell is
         (Kernel, "block_name", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "block_type", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "starts_word", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "ends_word", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "subprogram_name", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
