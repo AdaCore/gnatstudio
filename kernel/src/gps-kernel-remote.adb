@@ -659,7 +659,7 @@ package body GPS.Kernel.Remote is
 
          when Windows =>
             for J in The_Path'Range loop
-               if Cygwin_Style_Path
+               if Use_Cygwin_Style
                  and then not Device_Found
                  and then The_Path (J) = ':'
                then
