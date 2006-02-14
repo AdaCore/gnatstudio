@@ -941,15 +941,12 @@ package body Language is
    procedure Skip_To_Next_Comment_Start
      (Context : Language_Context;
       Buffer  : String;
-      Index   : in out Natural;
-      Stop_At_First_Blank_Line : Boolean := True) is
+      Index   : in out Natural) is
    begin
       while Index < Buffer'Last loop
          Skip_Lines (Buffer, 1, Index);
 
-         if Stop_At_First_Blank_Line
-           and then Buffer (Index) = ASCII.LF
-         then
+         if Is_Blank_Line (Buffer, Index) then
             Index := 0;
             return;
          end if;
@@ -973,8 +970,7 @@ package body Language is
    procedure Skip_To_Previous_Comment_Start
      (Context : Language_Context;
       Buffer  : String;
-      Index   : in out Natural;
-      Stop_At_First_Blank_Line : Boolean := True)
+      Index   : in out Natural)
    is
       Index_Save : Natural;
    begin
@@ -984,8 +980,7 @@ package body Language is
          Skip_Lines (Buffer, -1, Index);
 
          if Index = Index_Save
-           or else (Stop_At_First_Blank_Line
-                    and then Buffer (Index) = ASCII.LF)
+           or else Is_Blank_Line (Buffer, Index)
          then
             Index := 0;
             return;
