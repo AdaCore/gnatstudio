@@ -772,7 +772,8 @@ package body GPS.Kernel.Remote is
       Args         : Argument_List_Access;
       New_Args     : Argument_List_Access;
       L_Args       : Argument_List_Access := null;
-      In_Use_Error_Manager : Error_Display;
+      Default_Error_Manager : aliased Default_Error_Display_Record;
+      In_Use_Error_Manager  : Error_Display;
 
       function Check_Exec (Exec : String) return String_Access;
       --  checks that executable is on the path, and return the full path if
@@ -797,8 +798,8 @@ package body GPS.Kernel.Remote is
    begin
       --  set the error display manager
       if Error_Manager = null then
-         In_Use_Error_Manager :=
-           new Default_Error_Display_Record'((Kernel => Kernel));
+         Default_Error_Manager.Kernel := Kernel;
+         In_Use_Error_Manager := Default_Error_Manager'Unchecked_Access;
       else
          In_Use_Error_Manager := Error_Manager;
       end if;
