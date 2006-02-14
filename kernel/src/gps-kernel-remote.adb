@@ -737,12 +737,26 @@ package body GPS.Kernel.Remote is
       end loop;
    end Synchronize;
 
+   --------------
+   -- On_Error --
+   --------------
+
+   procedure On_Error (Manager : access Default_Error_Display_Record;
+                       Message : String) is
+   begin
+      if Manager.Kernel /= null then
+         Insert (Manager.Kernel,
+                 Message,
+                 Mode => Error);
+      end if;
+   end On_Error;
+
    -----------
    -- Spawn --
    -----------
 
    procedure Spawn
-     (Kernel           : Kernel_Handle;
+     (Kernel           : Kernel_Handle := null;
       Arguments        : GNAT.OS_Lib.Argument_List;
       Server           : Server_Type;
       Pd               : out GNAT.Expect.Process_Descriptor_Access;
@@ -750,13 +764,16 @@ package body GPS.Kernel.Remote is
       Use_Ext_Terminal : Boolean := False;
       Console          : Interactive_Consoles.Interactive_Console := null;
       Show_Command     : Boolean := True;
-      Directory        : String := "")
+      Directory        : String := "";
+      Error_Manager    : Error_Display := null)
    is
       Exec         : String_Access;
       Old_Dir      : String_Access;
       Args         : Argument_List_Access;
       New_Args     : Argument_List_Access;
       L_Args       : Argument_List_Access := null;
+      In_Use_Error_Manager : Error_Display;
+
       function Check_Exec (Exec : String) return String_Access;
       --  checks that executable is on the path, and return the full path if
       --  found, else null is returned
@@ -770,16 +787,22 @@ package body GPS.Kernel.Remote is
       begin
          Full_Exec := Locate_Exec_On_Path (Exec);
          if Full_Exec = null then
-            Insert
-              (Kernel,
-               -"Could not locate executable on path: " & Exec,
-               Mode => Error);
+            On_Error (In_Use_Error_Manager,
+                      -"Could not locate executable on path: " & Exec);
             return null;
          end if;
          return Full_Exec;
       end Check_Exec;
 
    begin
+      --  set the error display manager
+      if Error_Manager = null then
+         In_Use_Error_Manager :=
+           new Default_Error_Display_Record'((Kernel => Kernel));
+      else
+         In_Use_Error_Manager := Error_Manager;
+      end if;
+
       --  first verify the executable to be launched
       if Is_Local (Server) then
          Exec := Check_Exec (Arguments (Arguments'First).all);
@@ -939,10 +962,11 @@ package body GPS.Kernel.Remote is
    exception
       when E : Invalid_Process | Process_Died =>
          Success := False;
-         GPS.Kernel.Console.Insert
-           (Kernel, -"Invalid command (" &
-            Ada.Exceptions.Exception_Message (E) &
-            ")", Mode => Error);
+
+         On_Error (In_Use_Error_Manager,
+                   -"Invalid command (" &
+                   Ada.Exceptions.Exception_Message (E) &
+                   ")");
    end Spawn;
 
    ----------------
