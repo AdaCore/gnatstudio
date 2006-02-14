@@ -45,9 +45,13 @@ package body Expect_Interface is
    On_Match_Action_Cst : aliased constant String := "on_match";
    On_Exit_Action_Cst  : aliased constant String := "on_exit";
    Add_Lf_Cst          : aliased constant String := "add_lf";
+   Task_Manager_Cst    : aliased constant String := "task_manager";
    Constructor_Args : constant Cst_Argument_List :=
-     (Command_Cst'Access, Regexp_Cst'Access, On_Match_Action_Cst'Access,
-      On_Exit_Action_Cst'Access);
+     (2 => Command_Cst'Access,
+      3 => Regexp_Cst'Access,
+      4 => On_Match_Action_Cst'Access,
+      5 => On_Exit_Action_Cst'Access,
+      6 => Task_Manager_Cst'Access);
    Send_Args : constant Cst_Argument_List :=
      (Command_Cst'Access, Add_Lf_Cst'Access);
    Expect_Args : constant Cst_Argument_List :=
@@ -503,6 +507,7 @@ package body Expect_Interface is
                Success       => Success,
                Show_Command  => False,
                Callback_Data => new Instance_Callback_Data'(Inst => Inst),
+               Show_In_Task_Manager => Nth_Arg (Data, 6, True),
                Line_By_Line  => False,
                Directory     => "",
                Fd            => D.Fd);
