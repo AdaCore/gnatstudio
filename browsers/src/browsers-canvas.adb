@@ -2718,8 +2718,8 @@ package body Browsers.Canvas is
       --  Translation that simulates world coodinates
 
       Put_Line (SVG_File_FD, "<g transform=""translate("
-                & Image (abs Integer (World_X)) & ","
-                & Image (abs Integer (World_Y)) & ")"">");
+                & Image (-Integer (World_X)) & ","
+                & Image (-Integer (World_Y)) & ")"">");
 
       --  Links
 
