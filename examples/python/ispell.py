@@ -9,8 +9,77 @@
 ###   - Dynamic menu: a submenu is created, with one entry per possible
 ###     replacement. When the user selects one of these entries, the current
 ###     word is replaced
+###
+### The menus are implemented as new python classes, since this is the
+### cleanest way to encapsulate data in python. We could have used global
+### function calls instead.
+### This example also demonstrates how to start and monitor an external
+### executable.
+### It also shows how to get the word under the cursor in GPS.
 
 import GPS, re
+
+class Ispell:
+   """Interface to ispell. This takes care of properly starting a process,
+      monitoring it for unexpected termination, and generally interactive with
+      it"""
+
+   def __init__ (self):
+      self.proc = None
+
+   def on_exit (self, proc, exit_status, output):
+      """Called the ispell process has terminated"""
+      self.proc = None
+ 
+   def read (self, word):
+      """Run ispell to find out the possible completions for the word stored in
+         the context. Ispell runs forever, waiting for words to check on its
+         standard input.
+         Note the use of a timeout in the call to expect(). This is so that if
+         for some reason ispell answers something unexpected, we don't keep
+         waiting for ever"""
+
+      if self.proc == None:
+         ## Do not display the process in the task manager, since it will run
+         ## forever in any case.
+         self.proc = GPS.Process ("ispell -S -a", on_exit=self.on_exit, task_manager=False)
+
+      self.proc.send (word + "\n")
+      result = self.proc.expect ("^[&#\*\+\?\-].*", timeout=2000)
+      try:
+         return re.compile ("^([&#*+?-].*)", re.M).search (result).group(1)
+      except:
+         GPS.Console ("Messages").write ("Error while parsing ispell=" + result + "\n")
+
+   def parse (self, word):
+      """Parse the output from ispell, and returns a list of all possible
+         replacements"""
+
+      result = self.read (word)
+      if result[0] == '&':
+         colon = result.find (":")
+         result = result[colon + 2 :].replace (" ","")
+         return result.split (",") 
+      else:
+         return []
+
+   def kill (self):
+      if self.proc != None:
+         self.proc.kill ()
+         self.proc = None
+
+ispell = Ispell()
+
+def before_exit (hook):
+   """Kill the ispell process when GPS exits.
+      We wouldn't get a dialog asking whether the process should be killed,
+      since the call to GPS.Process specified that it shouldn't appear in the
+      task manager. However, it is still cleaner to properly kill it"""
+   global ispell
+   if ispell != None:
+      ispell.kill()
+   return True
+GPS.Hook ("before_exit_action_hook").add (before_exit)
 
 def find_current_word (context):
    """Stores in context the current word start, end and text.
@@ -33,35 +102,6 @@ def find_current_word (context):
    context.ispell_module_end   = cursor 
    context.ispell_module_word  = view.buffer().get_chars(start, cursor)
 
-def read_ispell (context):
-   """Run ispell to find out the possible completions for the word stored in
-      the context. Ispell runs forever, waiting for words to check on its
-      standard input. Therefore, we explicitly kill it when done with it.
-      A different implementation would be to start ispell once the first time
-      it is needed, and then reuse it every time.
-      Note the use of a timeout in the call to expect(). This is so that if
-      for some reason ispell answers something unexpected, we don't keep
-      waiting for ever"""
-
-   proc = GPS.Process ("ispell -S -a")
-   proc.send (context.ispell_module_word + "\n")
-   result = proc.expect ("^[&#\*\+\?\-].*", timeout=2000)
-   proc.kill()
-   # GPS.Console ("Messages").write ("result=" + result + "\n")
-   return re.compile ("^([&#*+?-].*)", re.M).search (result).group(1)
-
-def parse_ispell (context):
-   """Parse the output from ispell, and returns a list of all possible
-      replacements"""
-
-   result = read_ispell (context)
-   if result[0] == '&':
-      colon = result.find (":")
-      result = result[colon + 2 :].replace (" ","")
-      return result.split (",") 
-   else:
-      return []
-
 ###################################
 ### Static contextual menu
 ### The following subprograms deal with the static contextual menu, as
@@ -70,29 +110,32 @@ def parse_ispell (context):
 ### based on the context 
 ###################################
 
-def on_contextual (contextual):
-   """Display in the console the message read from ispell"""
-   context = GPS.contextual_context()
-   GPS.Console ("Messages").write ("Ispell: " + read_ispell (context) + "\n")
+class Static_Contextual (GPS.Contextual):
+   def __init__ (self):
+      """Create a new static contextual menu for spell checking"""
+      GPS.Contextual.__init__ (self, "Spell Check Static") 
+      self.create (on_activate = self.on_activate,
+                   filter      = self.filter,
+                   label       = self.label)
 
-def contextual_filter (contextual):
-   """Decide whether the contextual menu should be made visible"""
-   context = GPS.contextual_context()
-   if isinstance (context, GPS.EntityContext):
-      find_current_word (context)
-      return context.ispell_module_word != ""
-   else:
-      return False
+   def on_activate (self, context): 
+      """Display in the console the message read from ispell"""
+      GPS.Console ("Messages").write \
+         ("Ispell: " + ispell.read (context.ispell_module_word) + "\n")
 
-def contextual_label (contextual):
-   """Return the label to use for the contextual menu entry"""
-   context = GPS.contextual_context()
-   return "Spell Check " + context.ispell_module_word
+   def filter (self, context):
+      """Decide whether the contextual menu should be made visible"""
+      if isinstance (context, GPS.EntityContext):
+         find_current_word (context)
+         return context.ispell_module_word != ""
+      else:
+         return False
 
-GPS.Contextual  ("Spell Check Static").create \
-   (on_activate=on_contextual,
-    filter=contextual_filter,
-    label=contextual_label)
+   def label (self, context):
+      """Return the label to use for the contextual menu entry"""
+      return "Spell Check " + context.ispell_module_word
+
+static = Static_Contextual ()
 
 ###################################
 ### Dynamic contextual menu
@@ -101,17 +144,29 @@ GPS.Contextual  ("Spell Check Static").create \
 ### the current word
 ###################################
 
-def build_contextual (contextual):
-   """Return a list of strings, each of which is the title to use for an
-      entry in the dynamic contextual menu"""
-   return parse_ispell (GPS.contextual_context())
+class Dynamic_Contextual (GPS.Contextual):
+   def __init__ (self):
+      """Create a new dynamic contextual menu for spell checking"""
+      GPS.Contextual.__init__ (self, "Spell Check")
+      self.create_dynamic (on_activate = self.on_activate,
+                           filter      = self.filter,
+                           factory     = self.factory)
 
-def replace_with (contextual, choice):
-   context = GPS.contextual_context()
-   context.ispell_module_start.buffer().delete (context.ispell_module_start, context.ispell_module_end)
-   context.ispell_module_start.buffer().insert (context.ispell_module_start, choice)
-  
-GPS.Contextual ("Spell Check").create_dynamic \
-   (on_activate =replace_with,
-    factory     =build_contextual,
-    filter      =contextual_filter)
+   def filter (self, context):
+      """Decide whether the contextual menu should be made visible"""
+      if isinstance (context, GPS.EntityContext):
+         find_current_word (context)
+         return context.ispell_module_word != ""
+      else:
+         return False
+
+   def factory (self, context):
+      """Return a list of strings, each of which is the title to use for an
+         entry in the dynamic contextual menu"""
+      return ispell.parse (context.ispell_module_word)
+
+   def on_activate (self, context, choice):
+      context.ispell_module_start.buffer().delete (context.ispell_module_start, context.ispell_module_end)
+      context.ispell_module_start.buffer().insert (context.ispell_module_start, choice)
+ 
+dynamic = Dynamic_Contextual() 
