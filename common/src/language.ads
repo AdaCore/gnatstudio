@@ -249,22 +249,18 @@ package Language is
    procedure Skip_To_Next_Comment_Start
      (Context : Language_Context;
       Buffer  : String;
-      Index   : in out Natural;
-      Stop_At_First_Blank_Line : Boolean := True);
+      Index   : in out Natural);
    --  Skip lines of code until we find the beginning of a comment.
-   --  If Stop_At_First_Blank_Line is True and we see an empty line first,
-   --  set Index to 0. Likewise if no comment is found before the end of the
-   --  buffer.
+   --  If we see an empty line first Index is set to 0.
+   --  Likewise if no comment is found before the end of the buffer.
 
    procedure Skip_To_Previous_Comment_Start
      (Context : Language_Context;
       Buffer  : String;
-      Index   : in out Natural;
-      Stop_At_First_Blank_Line : Boolean := True);
+      Index   : in out Natural);
    --  Skip lines of code (backward) until we find the start of a comment.
-   --  If Stop_At_First_Blank_Line is True and we see an empty line first,
-   --  set Index to 0. Likewise if no comment is found before the beginning
-   --  of the buffer.
+   --  If  we see an empty line first Index is set to 0.
+   --  Likewise if no comment is found before the beginning of the buffer.
 
    ----------------------
    -- Source Analyzing --
