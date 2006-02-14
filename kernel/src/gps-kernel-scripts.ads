@@ -886,7 +886,9 @@ package GPS.Kernel.Scripts is
      (Script  : access Scripting_Language_Record'Class;
       Context : GPS.Kernel.Selection_Context_Access) return Class_Instance;
    --  Return an instance of one of the classes derived from
-   --  Context_Class, depending on the type of Context
+   --  Context_Class, depending on the type of Context.
+   --  If Context is already associated with a Class_Instance, the same
+   --  instance is returned.
 
    function Get_Data (Data : Callback_Data; N : Positive)
       return GPS.Kernel.Selection_Context_Access;
