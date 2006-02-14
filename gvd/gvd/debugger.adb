@@ -225,13 +225,36 @@ package body Debugger is
       return Debugger.Process;
    end Get_Process;
 
+   type Error_Display_Manager is new Error_Display_Record with
+     null record;
+   procedure On_Error (Manager : access Error_Display_Manager;
+                       Message : String);
+   --  Displays all error messages
+
+   --------------
+   -- On_Error --
+   --------------
+
+   procedure On_Error (Manager : access Error_Display_Manager;
+                       Message : String)
+   is
+      Buttons : Message_Dialog_Buttons;
+      pragma Unreferenced (Manager, Buttons);
+   begin
+      Buttons :=
+        Message_Dialog
+          (Message,
+           Error,
+           Button_OK,
+           Button_OK);
+   end On_Error;
+
    -------------------
    -- General_Spawn --
    -------------------
 
    procedure General_Spawn
-     (Kernel         : Kernel_Handle;
-      Debugger       : access Debugger_Root'Class;
+     (Debugger       : access Debugger_Root'Class;
       Arguments      : GNAT.OS_Lib.Argument_List;
       Debugger_Name  : String;
       Proxy          : Process_Proxies.Process_Proxy_Access)
@@ -240,6 +263,8 @@ package body Debugger is
       Success    : Boolean;
       The_Args   : Argument_List := (new String'(Debugger_Name) &
                                      Arguments);
+      Error_Mng  : aliased Error_Display_Manager;
+
    begin
       --  Start the external debugger.
       --  Note that there is no limitation on the buffer size, since we can
@@ -249,45 +274,26 @@ package body Debugger is
 
       begin
          GPS.Kernel.Remote.Spawn
-           (Kernel,
-            Arguments => The_Args,
-            Server    => Debug_Server,
-            Pd        => Descriptor,
-            Success   => Success);
+           (Arguments     => The_Args,
+            Server        => Debug_Server,
+            Pd            => Descriptor,
+            Success       => Success,
+            Error_Manager => Error_Mng'Unchecked_Access);
          Free (The_Args (The_Args'First));
 
          if not Success then
-            declare
-               Buttons : Message_Dialog_Buttons;
-               pragma Unreferenced (Buttons);
-            begin
-               Buttons :=
-                 Message_Dialog
-                   (-("Could not find executable ") &
-                    '"' & Debugger_Name & '"' & (-" in path."),
-                    Error,
-                    Button_OK,
-                    Button_OK);
-
-               raise Spawn_Error;
-            end;
+            On_Error (Error_Mng'Access,
+                      -("Could not find executable ") &
+                      '"' & Debugger_Name & '"' & (-" in path."));
+            raise Spawn_Error;
          end if;
 
       exception
          when Invalid_Process =>
-            declare
-               Buttons : Message_Dialog_Buttons;
-               pragma Unreferenced (Buttons);
-            begin
-               Buttons := Message_Dialog
-                 ((-"Could not spawn the process: ") & ASCII.LF
-                  & (-"  debugger: ") & Debugger_Name,
-                  Error,
-                  Button_OK,
-                  Button_OK);
-
-               raise Spawn_Error;
-            end;
+            On_Error (Error_Mng'Access,
+                      (-"Could not spawn the process: ") & ASCII.LF
+                      & (-"  debugger: ") & Debugger_Name);
+            raise Spawn_Error;
       end;
 
       if Get_Pid (Descriptor.all) = GNAT.Expect.Invalid_Pid then
