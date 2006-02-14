@@ -266,14 +266,18 @@ package body GPS.Kernel.Timeout is
          Console := Get_Console (Data.D.Kernel);
       end if;
 
-      if Data.Interrupted then
-         Insert (Console, -"<^C> process interrupted");
-      --  ??? elsif Data.Show_Output or else Data.Show_Command then
-      elsif Data.Show_Exit_Status then
-         if Status = 0 then
-            Insert (Console, -"process terminated successfully");
-         else
-            Insert (Console, -"process exited with status " & Image (Status));
+      --  The console might no longer exists if we are exiting GPS
+      if Console /= null then
+         if Data.Interrupted then
+            Insert (Console, -"<^C> process interrupted");
+            --  ??? elsif Data.Show_Output or else Data.Show_Command then
+         elsif Data.Show_Exit_Status then
+            if Status = 0 then
+               Insert (Console, -"process terminated successfully");
+            else
+               Insert
+                 (Console, -"process exited with status " & Image (Status));
+            end if;
          end if;
       end if;
 
