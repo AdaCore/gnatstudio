@@ -683,7 +683,6 @@ package body Debugger.Gdb is
 
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
-      Kernel          : Kernel_Handle;
       Executable      : VFS.Virtual_File := VFS.No_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
@@ -712,10 +711,10 @@ package body Debugger.Gdb is
 
       if Debugger_Name = "" then
          General_Spawn
-           (Kernel, Debugger, Local_Arguments, Gdb_Command, Proxy);
+           (Debugger, Local_Arguments, Gdb_Command, Proxy);
       else
          General_Spawn
-           (Kernel, Debugger, Local_Arguments, Debugger_Name, Proxy);
+           (Debugger, Local_Arguments, Debugger_Name, Proxy);
       end if;
 
       Free (Debugger.Executable_Args);
