@@ -1,5 +1,17 @@
 Known Problems fixed in GPS 3.2.0
 
+- F207-018 Wrong translation in generated SVG
+  Problem:    In some cases after some items in a graph have been moved
+              (resulting in a change in the scrolling adjustments) the SVG
+              representation of the graph contains a wrong translation.
+              The result is that interesting part of the graph are rendered
+              out of the sreen by an SVG plugin.
+  Workaround: Edit the generated SVG file and change the sign of the x and/or
+              y coordinate of the top level translation. 
+              Another alternative is simply to adjust the zooming level and/or
+              scroll the rendered SVG in order to center interesting parts
+              of the graph on the screen.
+
 - F209-018 Manually added -gnatw? switches are silently removed
   Problem:    In the project properties editor, if you manually add some
               switches that start with -gnatw for the Ada compiler (for
