@@ -2566,6 +2566,7 @@ My_Gdb()
       <param name="regexp" default="">A string</param>
       <param name="on_match" default="None">A subprogram, see the section "Subprogram parameters" in the GPS documentation</param>
       <param name="on_exit" default="None">A subprogram</param>
+      <param name="task_manager" default="True">A boolean</param>
       <description>Spawn specified command. If regexp is not-empty and on_match_action is specified, launch on_match_action when regexp is found in the process output. If on_exit_action is specified, execute it when the process terminates. Return the ID of the spawned process.
 on_match is a subprogram called with the parameters:
   $1 = the instance of GPS.Process
@@ -2575,7 +2576,9 @@ on_match is a subprogram called with the parameters:
 on_exit is a subprogram called with the parameters:
   $1 = the instance of GPS.Process
   $2 = the exit status
-  $3 = the entire output of the process</description>
+  $3 = the entire output of the process
+
+If the parameter task_manager is set to True, the process will be visible in the GPS task manager, and can be interrupted or paused by users. Otherwise, it will simply be running in the background, and never visible to the user. </description>
       <see_also name="GPS.Process"/>
   </shell_doc>
 
@@ -3162,24 +3165,27 @@ After this, the menu will never be displayed again.
 
   <shell_doc name="GPS.Contextual.create">
      <param name="self">The instance of GPS.Contextual</param>
-     <param name="on_activate">A subprogram</param>
+     <param name="on_activate">A subprogram with one parameter context</param>
      <param name="label" default="None">A subprogram</param>
      <param name="filter" default="None">A subprogram</param>
      <param name="ref" default="">A string</param>
      <param name="add_before" default="True">A boolean</param>
-     <description>Create a new contextual menu entry. Whenever this menu entry is selected by the user, GPS will execute on_activate, giving it one parameter which is self, an instance of GPS.Contextual.
-The filter parameter can be used to filter when the entry should be displayed in the menu. It is a subprogram that takes an instance of GPS.Contextual in parameter (same as self above), and returns a boolean. If it returns True, the entry will be displayed, otherwise it is hidden. The current context can be read through a call to GPS.contextual_context().
-The label parameter can be used to control the text displayed in the contextual menu. By default, it is the same as the contextual name (used in the constructor to GPS.Contextual.__init__). If specified, it must be a subprogram that takes an instance of GPS.Contextual in parameter, and returns a string, which will be displayed in the menu.
+     <description>Create a new contextual menu entry.
+Whenever this menu entry is selected by the user, GPS will execute on_activate, passing one parameter which is the context for which the menu is displayed (this is generally the same as GPS.current_contextual()). 
+The filter parameter can be used to filter when the entry should be displayed in the menu. It is a subprogram that receives one parameter, an instance of GPS.Context, and returns a boolean. If it returns True, the entry will be displayed, otherwise it is hidden.
+The label parameter can be used to control the text displayed in the contextual menu. By default, it is the same as the contextual name (used in the constructor to GPS.Contextual.__init__). If specified, it must be a subprogram that takes an instance of GPS.Context in parameter, and returns a string, which will be displayed in the menu.
 The parameters ref and add_before can be used to control the location of the entry within the contextual menu. ref is the name of another contextual menu entry, and add_before indicates whether the new entry is put before or after that second entry.</description>
      <example lang="python">
-def on_contextual (contextual):
+## This example demonstrates how to create a contextual
+## menu with global functions
+
+def on_contextual (context):
    GPS.Console ("Messages").write ("You selected the custom entry\n")
 
-def on_filter (contextual):
-   context = GPS.contextual_context()
+def on_filter (context):
    return isinstance (context, GPS.EntityContext)
 
-def on_label (contextual):
+def on_label (context):
    global count
    count = count + 1
    return "Custom " + count
@@ -3187,6 +3193,27 @@ def on_label (contextual):
 GPS.Contextual  ("Custom").create \
    (on_activate=on_contextual, filter=on_filter, label=on_label)
      </example>
+     <example lang="python">
+## This example is similar to the one above, but uses a python
+## class to encapsulate date.
+## Note how the extra parameter self can be passed to the callbacks
+## thanks to the call to self.create
+
+class My_Context (GPS.Contextual):
+   def on_contextual (self, context):
+       GPS.Console ("Messages").write \
+          ("You selected the custom entry " + self.data)
+   def on_filter (self, context):
+       return isinstance (context, GPS.EntityContext)
+   def on_label (self, context):
+       return self.data
+   def __init__ (self):
+       GPS.Contextual.__init__ (self, "Custom")
+       self.data = "Menu Name"
+       self.create (on_activate=self.on_contextual, 
+                    filter     =self.on_filter,
+                    label      =self.label)
+      </example>
    </shell_doc>
 
    <shell_doc name="GPS.Contextual.create_dynamic">
@@ -3196,21 +3223,45 @@ GPS.Contextual  ("Custom").create \
      <param name="filter" default="None">A subprogram</param>
      <param name="ref" default="">A string</param>
      <param name="add_before" default="True">A boolean</param>
-     <description>Create a new dynamic contextual menu. This is a submenu of a contextual menu, where the entries are generated by the factory parameter. This parameter should return a list of strings, which will be converted to menus by GPS. When any of these entry is selected, GPS calls on_activate, passing self and the string corresponding to the selected menu. filter is a subprogram that takes the contextual menu as a parameter, and returns a boolean indicating whether the submenu should be displayed.
+     <description>Create a new dynamic contextual menu.
+This is a submenu of a contextual menu, where the entries are generated by the factory parameter. This parameter should return a list of strings, which will be converted to menus by GPS. When any of these entry is selected, GPS calls on_activate. filter is a subprogram that takes the GPS.Context as a parameter, and returns a boolean indicating whether the submenu should be displayed.
+on_activate is called whenever any of the entry of the menu is selected, and is passed two parameter, the context in which the contextual menu was displayed, and the string representing the selected entry.
 The parameters ref and add_before can be used to control the location of the entry within the contextual menu. ref is the name of another contextual menu entry, and add_before indicates whether the new entry is put before or after that second entry.</description>
      <example lang="python">
-def build_contextual (contextual):
+## This example shows how to create a contextual menu
+## through global functions
+
+def build_contextual (context):
    return ["Choice1", "Choice2"]
 
-def on_activate (contextual, choice):
+def on_activate (context, choice):
    GPS.Console ("Messages").write ("You selected " + choice)
 
-def filter (contextual):
-   return isinstance (GPS.contextual_context(), GPS.EntityContext)
+def filter (contextl):
+   return isinstance (context, GPS.EntityContext)
 
 GPS.Contextual ("My_Dynamic_Menu").create_dynamic \
    (on_activate=on_activate, factory=build_contextual, filter=filter)
       </example>
+      <example lang="python">
+## This example is similar to the one above, but shows how
+## to create the menu through a python class.
+## Note how self can be passed to the callbacks thanks to the
+## call to self.create_dynamic.
+
+class Dynamic (GPS.Contextual):
+   def __init__ (self):
+      GPS.Contextual.__init__ (self, "My Dynamic Menu")
+      self.create_dynamic (on_activate = self.on_activate,
+                           filter      = self.filter,
+                           factory     = self.factory)
+   def filter (self, context):
+      return isinstance (context, GPS.EntityContext)
+   def on_activate (self, context, choice):
+      GPS.Console ("Messages").write ("You selected " + choice)
+   def factory (self, context):
+      return ["Choice1", "Choice2"]
+       </example>
    </shell_doc>
 
   <!--#################################################################
