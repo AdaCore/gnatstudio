@@ -44,7 +44,6 @@ package Debugger is
 
    procedure Spawn
      (Debugger        : access Debugger_Root;
-      Kernel          : Kernel_Handle;
       Executable      : VFS.Virtual_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
@@ -83,8 +82,7 @@ package Debugger is
    --  Should raise Spawn_Error if the debugger could not be spawned.
 
    procedure General_Spawn
-     (Kernel         : Kernel_Handle;
-      Debugger       : access Debugger_Root'Class;
+     (Debugger       : access Debugger_Root'Class;
       Arguments      : GNAT.OS_Lib.Argument_List;
       Debugger_Name  : String;
       Proxy          : Process_Proxies.Process_Proxy_Access);
