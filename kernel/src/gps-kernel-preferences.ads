@@ -213,7 +213,6 @@ package GPS.Kernel.Preferences is
 
    -- External Commands --
    List_Processes                : Param_Spec_String;
-   Remote_Copy                   : Param_Spec_String;
    Html_Browser                  : Param_Spec_String;
    Execute_Command               : Param_Spec_String;
    Print_Command                 : Param_Spec_String;

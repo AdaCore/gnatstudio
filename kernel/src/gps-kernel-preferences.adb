@@ -1057,14 +1057,6 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (List_Processes), -"External Command");
 
-      Remote_Copy := Param_Spec_String (Gnew_String
-         (Name    => "Helpers-Remote-Copy",
-          Nick    => -"Remote copy",
-          Blurb   => -"Program used to copy a file from a remote machine",
-          Default => "rcp"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Remote_Copy), -"External Command");
-
       Execute_Command := Param_Spec_String (Gnew_String
          (Name    => "Helpers-Execute-Command",
           Nick    => -"Execute command",
