@@ -170,13 +170,18 @@ package body Custom_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Create a dynamic contextual menu from a script
 
+   type Dynamic_Context is record
+      Contextual : Create_Dynamic_Contextual_Access;
+      Context    : Class_Instance;
+   end record;
+
    package Factory_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type => Gtk.Menu_Item.Gtk_Menu_Item_Record,
-      User_Type   => Create_Dynamic_Contextual_Access);
+      User_Type   => Dynamic_Context);
 
    procedure On_Dynamic_Menu_Activate
      (Item    : access Gtk_Menu_Item_Record'Class;
-      Factory : Create_Dynamic_Contextual_Access);
+      Factory : Dynamic_Context);
    --  Called when an entry is a dynamic contextual menu created through a
    --  scripting language was activated.
 
@@ -186,17 +191,17 @@ package body Custom_Module is
 
    procedure On_Dynamic_Menu_Activate
      (Item    : access Gtk_Menu_Item_Record'Class;
-      Factory : Create_Dynamic_Contextual_Access)
+      Factory : Dynamic_Context)
    is
-      C : Callback_Data'Class := Create
-        (Get_Script (Factory.Contextual), Arguments_Count => 2);
+      Script : constant Scripting_Language :=
+        Get_Script (Factory.Contextual.Contextual);
+      C : Callback_Data'Class := Create (Script, Arguments_Count => 2);
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
-      Set_Nth_Arg (C, 1, Factory.Contextual);
-      Set_Nth_Arg
-        (C, 2, Get_Text (Gtk_Label (Get_Child (Item))));
-      Tmp := Execute (Factory.On_Activate, C);
+      Set_Nth_Arg (C, 1, Factory.Context);
+      Set_Nth_Arg (C, 2, Get_Text (Gtk_Label (Get_Child (Item))));
+      Tmp := Execute (Factory.Contextual.On_Activate, C);
       Free (C);
 
    exception
@@ -215,16 +220,20 @@ package body Custom_Module is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Object, Context);
+      pragma Unreferenced (Object);
+      Script : constant Scripting_Language := Get_Script (Factory.Contextual);
       Contextual_Class : constant Class_Type := New_Class
-        (Get_Kernel (Get_Script (Factory.Contextual)), "Contextual");
-      C : Callback_Data'Class := Create
-        (Get_Script (Factory.Contextual), Arguments_Count => 1);
+        (Get_Kernel (Script), "Contextual");
+      C : Callback_Data'Class := Create (Script, Arguments_Count => 1);
       Item : Gtk_Menu_Item;
    begin
       Trace (Me, "Append_To_Menu "
              & String'(Get_Data (Factory.Contextual, Contextual_Class)));
-      Set_Nth_Arg (C, 1, Factory.Contextual);
+
+      Set_Nth_Arg
+        (C, 1, Create_Context
+           (Get_Script (Factory.Contextual),
+            Selection_Context_Access (Context)));
 
       declare
          List : String_List := Execute (Factory.Factory, C);
@@ -234,7 +243,10 @@ package body Custom_Module is
                Gtk_New (Item, List (L).all);
                Factory_Callback.Connect
                  (Item, "activate", On_Dynamic_Menu_Activate'Access,
-                  User_Data => Create_Dynamic_Contextual_Access (Factory));
+                  User_Data =>
+                    (Contextual => Create_Dynamic_Contextual_Access (Factory),
+                     Context    => Create_Context
+                       (Script, Selection_Context_Access (Context))));
                Append (Menu, Item);
             end if;
          end loop;
@@ -257,9 +269,12 @@ package body Custom_Module is
       C : Callback_Data'Class := Create
         (Get_Script (Command.Contextual), Arguments_Count => 1);
       Tmp : Boolean;
-      pragma Unreferenced (Tmp, Context);
+      pragma Unreferenced (Tmp);
    begin
-      Set_Nth_Arg (C, 1, Command.Contextual);
+      Set_Nth_Arg
+        (C, 1, Create_Context
+           (Get_Script (Command.Contextual),
+            Selection_Context_Access (Context.Context)));
       Tmp := Execute (Command.On_Activate, C);
       Free (C);
       return Success;
@@ -273,12 +288,14 @@ package body Custom_Module is
      (Filter  : access Contextual_Shell_Filters;
       Context : access Selection_Context'Class) return Boolean
    is
-      pragma Unreferenced (Context);
       C : Callback_Data'Class := Create
         (Get_Script (Filter.Filter.all), Arguments_Count => 1);
       Tmp : Boolean;
    begin
-      Set_Nth_Arg (C, 1, Filter.Contextual);
+      Set_Nth_Arg
+        (C, 1, Create_Context
+           (Get_Script (Filter.Filter.all),
+            Selection_Context_Access (Context)));
       Tmp := Execute (Filter.Filter, C);
       Free (C);
       return Tmp;
@@ -292,11 +309,13 @@ package body Custom_Module is
      (Creator : access Contextual_Shell_Labels;
       Context : access Selection_Context'Class) return String
    is
-      pragma Unreferenced (Context);
       C : Callback_Data'Class := Create
         (Get_Script (Creator.Label.all), Arguments_Count => 1);
    begin
-      Set_Nth_Arg (C, 1, Creator.Contextual);
+      Set_Nth_Arg
+        (C, 1, Create_Context
+           (Get_Script (Creator.Label.all),
+            Selection_Context_Access (Context)));
       declare
          Str : constant String := Execute (Creator.Label, C);
       begin
