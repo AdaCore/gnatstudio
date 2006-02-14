@@ -36,7 +36,6 @@ package Debugger.Gdb is
 
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
-      Kernel          : Kernel_Handle;
       Executable      : VFS.Virtual_File := VFS.No_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
