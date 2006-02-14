@@ -110,6 +110,21 @@ package body String_Utils is
         or else C = ASCII.CR or else C = ASCII.HT;
    end Is_Blank;
 
+   -------------------
+   -- Is_Blank_Line --
+   -------------------
+
+   function Is_Blank_Line (Buffer : String; Index : Natural) return Boolean is
+   begin
+      for J in Line_Start (Buffer, Index) .. Line_End (Buffer, Index) loop
+         if not Is_Blank (Buffer (J)) then
+            return False;
+         end if;
+      end loop;
+
+      return True;
+   end Is_Blank_Line;
+
    ----------------
    -- Skip_Lines --
    ----------------
