@@ -980,7 +980,6 @@ package body GVD.Process is
 
       Spawn
         (Process.Debugger,
-         GPS_Proxy (Proxy.all).Kernel,
          Executable,
          Debugger_Args,
          Executable_Args,
