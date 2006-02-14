@@ -70,8 +70,28 @@ package GPS.Kernel.Remote is
                           Queue_Id      : String);
    --  Forces a file system synchronisation between the two servers.
 
+   ---------------------------------
+   -- Error display when spawning --
+   ---------------------------------
+
+   type Error_Display_Record is abstract tagged null record;
+   type Error_Display is access all Error_Display_Record'Class;
+
+   procedure On_Error
+     (Manager : access Error_Display_Record;
+      Message : String) is abstract;
+
+   type Default_Error_Display_Record is new Error_Display_Record with record
+      Kernel : Kernel_Handle;
+   end record;
+   --  Displays error on the messages console
+
+   procedure On_Error
+     (Manager : access Default_Error_Display_Record;
+      Message : String);
+
    procedure Spawn
-     (Kernel           : Kernel_Handle;
+     (Kernel           : Kernel_Handle := null;
       Arguments        : GNAT.OS_Lib.Argument_List;
       Server           : Server_Type;
       Pd               : out GNAT.Expect.Process_Descriptor_Access;
@@ -79,7 +99,8 @@ package GPS.Kernel.Remote is
       Use_Ext_Terminal : Boolean := False;
       Console          : Interactive_Consoles.Interactive_Console := null;
       Show_Command     : Boolean := True;
-      Directory        : String := "");
+      Directory        : String := "";
+      Error_Manager    : Error_Display := null);
    --  Launch given arguments on Server. Returns a valid Process
    --  descriptor and success set to true upon success.
    --  If Use_Ext_Terminal is not null, then the program is executed in a
