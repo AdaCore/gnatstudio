@@ -616,10 +616,12 @@ package body Commands.Custom is
          Outp := new String'(Output);
       end if;
 
-      Server_T := Server_Type'Value (Server);
-      if not Server_T'Valid then
-         Server_T := GPS_Server;
-      end if;
+      begin
+         Server_T := Server_Type'Value (Server);
+      exception
+         when Constraint_Error =>
+            Server_T := GPS_Server;
+      end;
 
       return new External_Component_Record'
         (Command_Component_Record with
