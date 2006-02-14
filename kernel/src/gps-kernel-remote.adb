@@ -69,25 +69,25 @@ package body GPS.Kernel.Remote is
 
    type Server_Config_Record is record
       Is_Local         : Boolean := True;
-      --  teells if the server is the local machine or not
+      --  Tells if the server is the local machine or not
       Filesystem       : Filesystem_Type;
-      --  the filesystem on the remote or local machine
+      --  The filesystem on the remote or local machine
       Nickname         : String_Ptr  := null;
-      --  nickname : informative only
+      --  Nickname : informative only
       Network_Name     : String_Ptr  := null;
-      --  used to access the server using the network
+      --  Used to access the server using the network
       Remote_Access    : String_Ptr  := null;
-      --  utility used to remotely access the server
+      --  Utility used to remotely access the server
       Remote_Shell     : String_Ptr  := null;
-      --  shell used on the remote server
+      --  Shell used on the remote server
       User_Name        : String_Ptr  := null;
-      --  user name used for connection
+      --  User name used for connection
       Timeout          : Natural;
-      --  timeout value for shell operations
+      --  Timeout value for shell operations
       Mirror_Path_List : Mirror_Path := null;
-      --  list of remote paths
+      --  List of remote paths
       Next             : Server_Config := null;
-      --  next item in the list
+      --  Next item in the list
    end record;
 
    function Get_Local_Filesystem return Filesystem_Type;
@@ -102,7 +102,7 @@ package body GPS.Kernel.Remote is
       if Host = Windows then
          return Windows;
       else
-         --  unix and windows support only
+         --  Unix and windows support only
          return Unix;
       end if;
    end Get_Local_Filesystem;
@@ -134,11 +134,11 @@ package body GPS.Kernel.Remote is
 
    function Match (Mirror, Path : String;
                    Case_Sensitive : Boolean) return Boolean;
-   --  returns true if path starts with mirror;
+   --  Returns true if path starts with mirror;
 
    procedure Simple_Free is new Ada.Unchecked_Deallocation
      (Object => Argument_List, Name => Argument_List_Access);
-   --  frees the pointer without freeing internal strings
+   --  Frees the pointer without freeing internal strings
 
    function VMS_Wrapper (Cmd : String) return String;
    --  VMS command line sender
@@ -202,8 +202,14 @@ package body GPS.Kernel.Remote is
    function Remote_Access_Selector (Target_Identifier : String)
                                     return String
    is
-      Srv_Type : constant Server_Type := Server_Type'Value (Target_Identifier);
+      Srv_Type : Server_Type;
    begin
+      begin
+         Srv_Type := Server_Type'Value (Target_Identifier);
+      exception
+         when Constraint_Error =>
+            Srv_Type := GPS_Server;
+      end;
       return Servers (Srv_Type).Remote_Access.all;
    end Remote_Access_Selector;
 
@@ -214,8 +220,14 @@ package body GPS.Kernel.Remote is
    function Shell_Selector (Target_Identifier : String)
                             return String
    is
-      Srv_Type : constant Server_Type := Server_Type'Value (Target_Identifier);
+      Srv_Type : Server_Type;
    begin
+      begin
+         Srv_Type := Server_Type'Value (Target_Identifier);
+      exception
+         when Constraint_Error =>
+            Srv_Type := GPS_Server;
+      end;
       return Servers (Srv_Type).Remote_Shell.all;
    end Shell_Selector;
 
@@ -293,6 +305,10 @@ package body GPS.Kernel.Remote is
          Args_Creator => From_Callback_Data_Sync_Hook'Access);
       Register_Hook_Return_Boolean
         (Kernel, Rsync_Action_Hook, Rsync_Hook_Type);
+      --  Set the configuration selector of GNAT.Expect.TTY.Remote
+      Set_Config_Selector
+        (Remote_Access_Selector => Remote_Access_Selector'Access,
+         Shell_Selector         => Shell_Selector'Access);
    end Initialize;
 
    --------------------------
@@ -328,9 +344,8 @@ package body GPS.Kernel.Remote is
    procedure Initialize is
       Success : Boolean;
    begin
-      Set_Config_Selector
-        (Remote_Access_Selector => Remote_Access_Selector'Access,
-         Shell_Selector         => Shell_Selector'Access);
+      --  ??? Note that the whole Initialize procedure here shall go away
+      --  with proper configuration load at startup
 
       Add_Remote_Access_Descriptor
         (Name                      => "ssh",
@@ -371,13 +386,6 @@ package body GPS.Kernel.Remote is
          Get_Status_Ptrn     => "^%X([0-9]*) *$",
          Wrapper             => VMS_Wrapper'Access,
          Echoing             => True);
---        Add_Program_Descriptor
---          ("windshae-windows", "windsh",
---           Start_Command_Args => (1 => new String'("%h")),
---           Start_Timeout      => 300000,
---           Prompt             => "^\[vxKernel\] -> ",
---           Echoing            => True,
---           Output_Processor   => Windsh_Output_Processor'Access);
       Add_Or_Replace_Server_Config
         (Nickname      => "cardiff (x86 linux)",
          Old_Nickname  => "",
@@ -451,7 +459,7 @@ package body GPS.Kernel.Remote is
       end Is_Case_Sensitive;
 
    begin
-      --  if From and To are the same machine (and no unix path translation is
+      --  If From and To are the same machine (and no unix path translation is
       --  needed), just return Path
       if Servers (From) = Servers (To) then
          if Unix_Style then
@@ -461,11 +469,11 @@ package body GPS.Kernel.Remote is
          end if;
       end if;
 
-      --  set case sensitivity
+      --  Set case sensitivity
       Case_Sensitive := Is_Case_Sensitive (Servers (From).Filesystem);
 
       if Servers (From).Is_Local then
-         --  search for mirror path in 'To' config
+         --  Search for mirror path in 'To' config
          Mirror := Servers (To).Mirror_Path_List;
          while Mirror /= null loop
             if Match (Mirror.Local_Path.all, Path, Case_Sensitive) then
@@ -477,7 +485,7 @@ package body GPS.Kernel.Remote is
          end loop;
 
       else
-         --  search for mirror path in 'From' config
+         --  Search for mirror path in 'From' config
          Mirror := Servers (From).Mirror_Path_List;
          while Mirror /= null loop
             if Match (Mirror.Remote_Path.all, Path, Case_Sensitive) then
@@ -487,7 +495,7 @@ package body GPS.Kernel.Remote is
             Mirror := Mirror.Next;
          end loop;
 
-         --  everything's fine as long as To is not a remote server
+         --  Everything's fine as long as To is not a remote server
          if not Servers (To).Is_Local then
             --  Path_To points to local GPS path.
             --  Translate it to remote To path
@@ -497,7 +505,7 @@ package body GPS.Kernel.Remote is
                Path_To := null;
                Mirror := Servers (To).Mirror_Path_List;
                while Mirror /= null loop
-                  --  match in a case insensitive manner as insensitive
+                  --  Match in a case insensitive manner as insensitive
                   --  paths are stored lowercase
                   if Match (Mirror.Local_Path.all, GPS_Path.all, False) then
                      Path_To := Mirror.Remote_Path;
@@ -522,7 +530,7 @@ package body GPS.Kernel.Remote is
            (Path'First + Path_From'Length .. Path'Last);
          First_Slash : Boolean;
       begin
-         --  convert subpath to unix style
+         --  Convert subpath to unix style
          case Servers (From).Filesystem is
          when Unix | Windows_Cygwin =>
             null;
@@ -543,7 +551,7 @@ package body GPS.Kernel.Remote is
             end loop;
          end case;
 
-         --  convert unix style subpath to target style
+         --  Convert unix style subpath to target style
          if not Unix_Style then
             case Servers (To).Filesystem is
             when Unix | Windows_Cygwin =>
@@ -568,7 +576,7 @@ package body GPS.Kernel.Remote is
                end loop;
             end case;
          end if;
-         --  now, we have subpath in target style.
+         --  Now, we have subpath in target style.
          --  Check, if unix style is used, the from path
 
          if not Unix_Style then
@@ -614,7 +622,7 @@ package body GPS.Kernel.Remote is
                      Dir_Index : Natural := 0;
                   begin
                      for J in Base_Dir'Range loop
-                        --  transform device:[foo by /device/foo
+                        --  Transform device:[foo by /device/foo
                         if Dir_Index = 0 and Base_Dir (J) = ':' then
                            Base_Dir (Base_Dir'First .. J + 1) :=
                              "/" & Base_Dir (Base_Dir'First .. J - 1) & "/";
@@ -696,11 +704,11 @@ package body GPS.Kernel.Remote is
       elsif not Is_Local (To) then
          Server := To;
       else
-         --  both servers local. No need to synchronize.
+         --  Both servers local. No need to synchronize.
          return;
       end if;
 
-      --  synchronize with remote host
+      --  Synchronize with remote host
       Mirror := Servers (Server).Mirror_Path_List;
       while Mirror /= null loop
          if Mirror.Need_Sync then
@@ -776,7 +784,7 @@ package body GPS.Kernel.Remote is
       In_Use_Error_Manager  : Error_Display;
 
       function Check_Exec (Exec : String) return String_Access;
-      --  checks that executable is on the path, and return the full path if
+      --  Checks that executable is on the path, and return the full path if
       --  found, else null is returned
 
       ----------------
@@ -796,7 +804,7 @@ package body GPS.Kernel.Remote is
       end Check_Exec;
 
    begin
-      --  set the error display manager
+      --  Set the error display manager
       if Error_Manager = null then
          Default_Error_Manager.Kernel := Kernel;
          In_Use_Error_Manager := Default_Error_Manager'Unchecked_Access;
@@ -804,7 +812,7 @@ package body GPS.Kernel.Remote is
          In_Use_Error_Manager := Error_Manager;
       end if;
 
-      --  first verify the executable to be launched
+      --  First verify the executable to be launched
       if Is_Local (Server) then
          Exec := Check_Exec (Arguments (Arguments'First).all);
          if Exec = null then
@@ -818,10 +826,10 @@ package body GPS.Kernel.Remote is
       end if;
 
       if Servers (Server).Filesystem = VMS then
-         --  in VMS case, -X arguments shall be quoted. Perform a manual deep
+         --  In VMS case, -X arguments shall be quoted. Perform a manual deep
          --  copy.
 
-         --  ??? in some cases (user-defined images), we need to launch MCR
+         --  ??? In some cases (user-defined images), we need to launch MCR
          --  to execute the built program... need to find a way to
          --  automatically do this
          New_Args := new Argument_List'(Args.all);
@@ -915,7 +923,7 @@ package body GPS.Kernel.Remote is
                              GPS_Server,
                              Server);
             begin
-               --  if current_dir matches a remote² directory let's
+               --  If current_dir matches a remote² directory let's
                --  set it as working directory on remote machine
                if R_Dir /= Get_Current_Dir then
                   Old_Dir := new String'(R_Dir);
@@ -1146,7 +1154,7 @@ package body GPS.Kernel.Remote is
 begin
 
    Initialize;
-   --  ??? remove once the Initialize procedure is actually called at
+   --  ??? Remove once the Initialize procedure is actually called at
    --  config time.
 
 end GPS.Kernel.Remote;
