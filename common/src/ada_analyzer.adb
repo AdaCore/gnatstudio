@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -220,6 +220,14 @@ package body Ada_Analyzer is
       Tok_Less_Equal      |
       Tok_Ampersand       => True,
       others              => False);
+
+   Is_Extended_Operator : constant Token_Set :=
+     (Tok_Double_Asterisk .. Tok_Slash     |
+      Tok_Comma .. Tok_Colon_Equal         |
+      Tok_Semicolon                        |
+      Tok_Ampersand .. Tok_Greater_Greater |
+      Tok_Colon .. Tok_Dot_Dot             => True,
+      others                               => False);
 
    Max_Identifier : constant := 256;
    --  Maximum length of an identifier.
@@ -634,7 +642,6 @@ package body Ada_Analyzer is
       return False;
    end Is_Within_Composite;
 
-
    ------------------------
    -- Analyze_Ada_Source --
    ------------------------
@@ -756,7 +763,7 @@ package body Ada_Analyzer is
 
       procedure New_Line (Count : in out Natural);
       pragma Inline (New_Line);
-      --  Increment Count and poll if needed (e.g for graphic events).
+      --  Increment Count and poll if needed (e.g for graphic events)
 
       procedure Do_Indent
         (Prec         : Natural;
@@ -766,7 +773,7 @@ package body Ada_Analyzer is
       --  If Continuation is True, Indent_Continue extra spaces are added.
 
       procedure Indent_Function_Return (Prec : Natural);
-      --  Perform special indentation for function return/rename statements.
+      --  Perform special indentation for function return/rename statements
 
       procedure Compute_Indentation
         (Token      : Token_Type;
@@ -776,12 +783,12 @@ package body Ada_Analyzer is
       --  Compute proper indentation, taking into account various cases
       --  of simple/continuation/declaration/... lines.
 
-      function Next_Char  (P : Natural) return Natural;
-      --  Return the next char in buffer. P is the current character.
+      function Next_Char (P : Natural) return Natural;
+      --  Return the next char in buffer. P is the current character
       pragma Inline (Next_Char);
 
       function Prev_Char (P : Natural) return Natural;
-      --  Return the previous char in buffer. P is the current character.
+      --  Return the previous char in buffer. P is the current character
       pragma Inline (Prev_Char);
 
       function Compute_Alignment
@@ -808,7 +815,7 @@ package body Ada_Analyzer is
         (First : Natural;
          Last  : Natural;
          Str   : String);
-      --  Wrapper for Replace.all, taking (From, To) into account.
+      --  Wrapper for Replace.all, taking (From, To) into account
 
       --------------------
       -- Stack Routines --
@@ -816,10 +823,10 @@ package body Ada_Analyzer is
 
       procedure Pop
         (Stack : in out Token_Stack.Simple_Stack; Value : out Extended_Token);
-      --  Pop Value on top of Stack.
+      --  Pop Value on top of Stack
 
       procedure Pop (Stack : in out Token_Stack.Simple_Stack);
-      --  Pop Value on top of Stack. Ignore returned value.
+      --  Pop Value on top of Stack. Ignore returned value
 
       ---------------
       -- Next_Char --
@@ -1067,6 +1074,7 @@ package body Ada_Analyzer is
          Found_Align      : Boolean := False;
          J                : Natural;
          Non_Blank        : Natural := 0;
+         Length_Ident     : Natural := 0;
          Local_Num_Parens : Natural := 0;
 
       begin
@@ -1090,10 +1098,14 @@ package body Ada_Analyzer is
          loop
             exit Main_Loop when J >= Buffer'Last;
 
-            if Non_Blank = 0
-              and then not Is_Blank (Buffer (J))
-            then
-               Non_Blank := J;
+            if Non_Blank = 0 then
+               if not Is_Blank (Buffer (J)) then
+                  Non_Blank := J;
+                  Length_Ident := 1;
+               end if;
+
+            else
+               Length_Ident := Length_Ident + 1;
             end if;
 
             exit Main_Loop when Look_For (J, "begin")
@@ -1141,7 +1153,7 @@ package body Ada_Analyzer is
                     and then not Found_Align
                   then
                      Found_Align := True;
-                     New_Align   := J - Non_Blank + 1;
+                     New_Align   := Length_Ident;
 
                      if Format_Operators
                        and then not Is_Blank (Buffer (J - 1))
@@ -1159,7 +1171,7 @@ package body Ada_Analyzer is
                     and then not Found_Align
                   then
                      Found_Align := True;
-                     New_Align   := J - Non_Blank + 2;
+                     New_Align   := Length_Ident + 1;
 
                      if Format_Operators
                        and then not Is_Blank (Buffer (J - 1))
@@ -1184,7 +1196,7 @@ package body Ada_Analyzer is
                   null;
             end case;
 
-            J := J + 1;
+            J := Next_Char (J);
          end loop Main_Loop;
 
          return Alignment;
@@ -1211,41 +1223,45 @@ package body Ada_Analyzer is
 
          function Is_Continuation_Line return Boolean is
          begin
-            return Top_Tok /= No_Token
-              and then
-                ((Token not in Reserved_Token_Type
-                  and then Prev_Token not in Token_Class_No_Cont
-                  and then
-                    (Prev_Token /= Tok_Arrow
-                     or else (Top_Tok /= Tok_Case
-                              and then not Top (Tokens).Declaration
-                              and then Top_Tok /= Tok_When
-                              and then Top_Tok /= Tok_Select
-                              and then Top_Tok /= Tok_Exception)))
-                 or else (Prev_Token = Tok_Is
-                          and then (Token = Tok_New
-                                    or else Token = Tok_Access
-                                    or else Token = Tok_Separate
-                                    or else (Top_Tok = Tok_Subtype
-                                             and then Token /= Tok_Subtype)))
-                 or else Token = Tok_Array
-                 or else Prev_Token = Tok_Colon_Equal
-                 or else Prev_Token = Tok_Access
-                 or else Prev_Token = Tok_Of
-                 or else (Prev_Token = Tok_Exit and then Token = Tok_When)
-                 or else (Prev_Token = Tok_With and then Token = Tok_Private)
-                 or else (Prev_Token = Tok_Null and then Token = Tok_Record)
-                 or else
-                   (Prev_Prev_Token = Tok_Raise and then Token = Tok_With)
-                 or else
-                   (Top_Tok = Tok_If
-                    and then Token /= Tok_If
-                    and then
-                      (Prev_Token = Tok_Then or else Prev_Token = Tok_Else))
-                 or else
-                   (Top_Tok = Tok_Type
-                    and then (Token = Tok_Null or else Token = Tok_Tagged))
-                 or else (Token = Tok_When and then Top_Tok = Tok_Entry));
+            return (Prev_Token = Tok_Is and then In_Generic)
+              or else
+                (Top_Tok /= No_Token
+                 and then
+                   ((Token not in Reserved_Token_Type
+                     and then Prev_Token not in Token_Class_No_Cont
+                     and then
+                       (Prev_Token /= Tok_Arrow
+                        or else (Top_Tok /= Tok_Case
+                                 and then not Top (Tokens).Declaration
+                                 and then Top_Tok /= Tok_When
+                                 and then Top_Tok /= Tok_Select
+                                 and then Top_Tok /= Tok_Exception)))
+                    or else (Prev_Token = Tok_Is
+                             and then (Token = Tok_New
+                                       or else Token = Tok_Access
+                                       or else Token = Tok_Separate
+                                       or else
+                                         (Top_Tok = Tok_Subtype
+                                          and then Token /= Tok_Subtype)))
+                    or else Token = Tok_Array
+                    or else Prev_Token = Tok_Colon_Equal
+                    or else Prev_Token = Tok_Access
+                    or else Prev_Token = Tok_Of
+                    or else (Prev_Token = Tok_Exit and then Token = Tok_When)
+                    or else (Prev_Token = Tok_With
+                             and then Token = Tok_Private)
+                    or else (Prev_Token = Tok_Null and then Token = Tok_Record)
+                    or else (Prev_Prev_Token = Tok_Raise
+                             and then Token = Tok_With)
+                    or else
+                      (Top_Tok = Tok_If
+                       and then Token /= Tok_If
+                       and then
+                         (Prev_Token = Tok_Then or else Prev_Token = Tok_Else))
+                    or else
+                      (Top_Tok = Tok_Type
+                       and then (Token = Tok_Null or else Token = Tok_Tagged))
+                    or else (Token = Tok_When and then Top_Tok = Tok_Entry)));
          end Is_Continuation_Line;
 
       begin
@@ -1324,37 +1340,19 @@ package body Ada_Analyzer is
          Tmp  : Natural := P;
          Next : Natural;
       begin
-         if Tmp >= Buffer_Last then
-            return Buffer_Last;
-         end if;
-
-         loop
-            --  Manual unrolling for efficiency
-
+         while Tmp <= Buffer_Last loop
             Next := Next_Char (Tmp);
-
-            exit when Tmp >= Buffer_Last
+            exit when Next > Buffer_Last
               or else not Is_Entity_Letter
                 (UTF8_Get_Char (Buffer (Next .. Buffer_Last)));
-
-            Tmp := Next;
-            Next := Next_Char (Tmp);
-
-            exit when Tmp >= Buffer_Last
-              or else not Is_Entity_Letter
-                (UTF8_Get_Char (Buffer (Next .. Buffer_Last)));
-
-            Tmp := Next;
-            Next := Next_Char (Tmp);
-
-            exit when Tmp >= Buffer_Last
-              or else not Is_Entity_Letter
-                (UTF8_Get_Char (Buffer (Next .. Buffer_Last)));
-
             Tmp := Next;
          end loop;
 
-         return Tmp;
+         if Next > Buffer_Last then
+            return Buffer_Last;
+         else
+            return Tmp;
+         end if;
       end End_Of_Word;
 
       -----------------------
@@ -1759,13 +1757,14 @@ package body Ada_Analyzer is
             end if;
 
          elsif Prev_Token = Tok_Is
+           and then not In_Generic
            and then Top_Token.Token /= Tok_Type
            and then Top_Token.Token /= Tok_Task
            and then Top_Token.Token /= Tok_Protected
            and then Top_Token.Token /= Tok_Subtype
            and then (Reserved = Tok_New
-             or else Reserved = Tok_Abstract
-             or else Reserved = Tok_Separate)
+                     or else Reserved = Tok_Abstract
+                     or else Reserved = Tok_Separate)
          then
             --  Handle indentation of e.g.
             --
@@ -1785,13 +1784,7 @@ package body Ada_Analyzer is
                Num_Spaces := Num_Spaces + Indent_Level;
             end if;
 
-            --  Nothing to pop if we are inside a generic definition, e.g:
-            --  generic
-            --     with package ... is new ...;
-
-            if not In_Generic then
-               Pop (Tokens);
-            end if;
+            Pop (Tokens);
 
             --  unindent since this is a declaration, e.g:
             --  package ... is new ...;
@@ -1956,7 +1949,7 @@ package body Ada_Analyzer is
          then
             Push (Tokens, Temp);
 
-         elsif     Reserved = Tok_Is
+         elsif    (Reserved = Tok_Is and then not In_Generic)
            or else Reserved = Tok_Declare
            or else Reserved = Tok_Begin
            or else Reserved = Tok_Do
@@ -2745,10 +2738,14 @@ package body Ada_Analyzer is
                      Adjust := Indent_Continue + Continuation_Val;
                      Paren_In_Middle := True;
 
+                     --  If Prev_Prev_Token is an operator, it means that
+                     --  spaces have already been inserted.
+
                      if Format_Operators
                        and then not Is_Blank (Char)
                        and then Char /= '('
                        and then Char /= '''
+                       and then not Is_Extended_Operator (Prev_Prev_Token)
                      then
                         Spaces (2) := Buffer (P);
                         Replace_Text (P, P + 1, Spaces (1 .. 2));
@@ -3278,10 +3275,12 @@ package body Ada_Analyzer is
          return;
       end if;
 
-      --  Push a dummy token so that stack will never be empty.
+      --  Push a dummy token so that stack will never be empty
+
       Push (Tokens, Default_Extended);
 
-      --  Push a dummy indentation so that stack will never be empty.
+      --  Push a dummy indentation so that stack will never be empty
+
       Push (Indents, (None, 0, 0));
 
       Next_Word (Prec, Terminated);
@@ -3309,7 +3308,7 @@ package body Ada_Analyzer is
                Index_Ident := End_Of_Identifier (Current + 1);
 
                if Index_Ident /= Current then
-                  --  We have a dotted name, update indexes.
+                  --  We have a dotted name, update indexes
 
                   Str_Len := Index_Ident - Prec + 1;
 
