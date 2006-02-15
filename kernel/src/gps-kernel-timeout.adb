@@ -59,6 +59,7 @@ package body GPS.Kernel.Timeout is
       Show_Output          : Boolean;
       Show_Command         : Boolean;
       Show_Exit_Status     : Boolean;
+      Synchronous          : Boolean;
       Use_Ext_Terminal     : Boolean;
       Directory            : String_Ptr;
 
@@ -219,8 +220,10 @@ package body GPS.Kernel.Timeout is
                 Command.Data.Directory.all);
          Free (Command.Data.Args);
          if Success then
-            Command.Data.Id := Console_Process_Timeout.Add
-              (Timeout, Process_Cb'Access, Command.Data);
+            if not Command.Data.Synchronous then
+               Command.Data.Id := Console_Process_Timeout.Add
+                 (Timeout, Process_Cb'Access, Command.Data);
+            end if;
             Command.Data.Started := True;
             return Execute_Again;
          else
@@ -513,6 +516,7 @@ package body GPS.Kernel.Timeout is
       C.Data.Show_Output          := Show_Output;
       C.Data.Show_Command         := Show_Command;
       C.Data.Show_Exit_Status     := Show_Exit_Status;
+      C.Data.Synchronous          := Synchronous;
       C.Data.Expect_Regexp        := Expect_Regexp;
       C.Data.D                    := (Kernel        => Kernel,
                                       Descriptor    => null,
