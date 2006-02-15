@@ -3,11 +3,9 @@ Known Problems fixed in GPS 3.2.0
 - F210-013 GPS goes in an infinite loop when displaying a tooltip
   Problem:    When trying to display a tooltip if the line just before the
               entity pointed by the mouse is blank but contains several
-              characters (' ', horizontal tabulations, etc.) gps may fall
-              in an infinite loop.
-  Workound:   When using the GPS editor, either use the automatic indentation
-              mode or reformat the line (Control-Tab) before starting a new 
-              one in order to avoid leaving unwanted spaces on blank lines.
+              characters (' ', horizontal tabulations, etc.) gps may end up
+              stuck in an infinite loop.
+  Workaround: Disable the Editor tooltip preference
 
 - F207-018 Wrong translation in generated SVG
   Problem:    In some cases after some items in a graph have been moved
