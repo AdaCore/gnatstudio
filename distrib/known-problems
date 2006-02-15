@@ -1,45 +1,5 @@
 Known Problems fixed in GPS 3.2.0
 
-- F210-013 GPS goes in an infinite loop when displaying a tooltip
-  Problem:    When trying to display a tooltip if the line just before the
-              entity pointed by the mouse is blank but contains several
-              characters (' ', horizontal tabulations, etc.) gps may end up
-              stuck in an infinite loop.
-  Workaround: Disable the Editor tooltip preference
-
-- F207-018 Wrong translation in generated SVG
-  Problem:    In some cases after some items in a graph have been moved
-              (resulting in a change in the scrolling adjustments) the SVG
-              representation of the graph contains a wrong translation.
-              The result is that interesting part of the graph are rendered
-              out of the sreen by an SVG plugin.
-  Workaround: Edit the generated SVG file and change the sign of the x and/or
-              y coordinate of the top level translation. 
-              Another alternative is simply to adjust the zooming level and/or
-              scroll the rendered SVG in order to center interesting parts
-              of the graph on the screen.
-
-- F209-018 Manually added -gnatw? switches are silently removed
-  Problem:    In the project properties editor, if you manually add some
-              switches that start with -gnatw for the Ada compiler (for
-              instance -gnatwY), they might be silently deleted the next
-              time the project properties are edited
-  Workaround: Edit manually the file ada_support.xml in the GPS installation
-              to add the switch you want (this should be done for instance by
-              copying the line for "-gnatwv")
-
-- F207-016 Examine Entity missing some values for enumerations
-  Problem:    If you click on an enumeration type, and select "Examine Entity"
-              in the contextual menu, the enumeration literals defined on the
-              same line as the closing parenthesis are ignored
-  Workaround: put the closing parenthesis on a line of its own
-
-- F128-008 GPS does not always color lines correctly
-  Problem:    After some characters have been added on a line, the line is
-              not always correctly re-highlighted. This happens when inserting
-              a single line comment mark or a string delimiter for example.
-  Workaround: You can ignore this visual glitch
-
 - F106-014 GPS auto-casing does not support unicode characters
   Problem:    GPS was not properly changing the case of identifiers with
               unicode characters (like the Greek letter Pi for example).
@@ -61,23 +21,11 @@ Known Problems fixed in GPS 3.2.0
   Workaround: Use the -P command line parameter to GPS to specify the
               project directly on the command line.
 
-- EC29-006 Wrong indentation of default generic procedures
-  Problem:    The Ada editor does not correctly indent constructs such as
-              generic
-                 with procedure F is Y;
-  Workaround: Fix indentation manually or use the "simple indentation" mode
-
 - EC07-009 Leave focus on selected window in the bookmarks view
   Problem:    When you select an existing bookmark in the bookmarks view, the
               focus remains on the bookmark view instead of going to the
               associated editor.
   Workaround: Select the bookmark and then the editor
-
-- EB28-007 Segmentation fault when closing a debug item
-  Problem:    When closing a graphic item in the debug data window, a
-              segmentation fault might be raised.
-  Workaround: The problem is usually handled transparently by GPS, not
-              causing visible issues.
 
 - EB16-002 Wrong parenthesis highlighting
   Problem:    Parenthesis in comment are taken into account when doing the
