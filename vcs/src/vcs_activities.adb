@@ -259,9 +259,9 @@ package body VCS_Activities is
    begin
       New_Id : loop
          declare
-            UID   : constant Activity_Id :=
-                      Activity_Id
-                        (Image (Clock, Picture_String'("%Y%m%d%H%M%S%i")));
+            UID : constant Activity_Id :=
+                    Activity_Id
+                      (Image (Clock, Picture_String'("%Y%m%d%H%M%S%i")));
          begin
             if Get (UID) = Empty_Activity then
                --  Retreive the current root project name
