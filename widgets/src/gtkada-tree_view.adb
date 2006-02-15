@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                Copyright (C) 2001-2002 ACT-Europe                 --
+--                Copyright (C) 2001-2006 AdaCore                    --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -107,11 +107,10 @@ package body Gtkada.Tree_View is
       Success            : Boolean;
 
       procedure Style_Get
-        (Widget : System.Address;
-         Style  : String;
-         Size   : out Gint;
-         Stop   : System.Address := System.Null_Address);
-      pragma Import (C, Style_Get, "gtk_widget_style_get");
+        (Widget   : System.Address;
+         Property : String;
+         Size     : out Gint);
+      pragma Import (C, Style_Get, "ada_gtk_widget_style_get_int");
 
    begin
       Style_Get (Widget, "expander_size" & ASCII.NUL, Expander_Size);
