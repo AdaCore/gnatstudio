@@ -2634,7 +2634,7 @@ package body Browsers.Canvas is
 
          Put_Line
            (SVG_File_FD,
-            "<line class=""link"" x1=""" & Image (Integer (X1))
+            "<line x1=""" & Image (Integer (X1))
             & """ y1=""" & Image (Integer (Y1)) & """ "
             & "x2=""" & Image (Integer (X2))
             & """ y2=""" & Image (Integer (Y2)) & """ />");
@@ -2703,9 +2703,8 @@ package body Browsers.Canvas is
       Put_Line (SVG_File_FD, "text, tspan {font-family: " & Get_Family (Font)
                 & "; font-size:"
                 & Image (Integer (To_Pixels (Get_Size (Font)))) & "}");
-      Put_Line (SVG_File_FD, "rect.item {fill:white; stroke:black}");
-      Put_Line (SVG_File_FD, "rect.title {fill:silver; stroke:black}");
-      Put_Line (SVG_File_FD, "line.link {stroke: black; stroke-width: 1}");
+      Put_Line (SVG_File_FD, "rect {stroke:black; stroke-width: 1}");
+      Put_Line (SVG_File_FD, "line {stroke: black; stroke-width: 1}");
       Put_Line (SVG_File_FD, "]]>");
       Put_Line (SVG_File_FD, "</style>");
 
@@ -2758,11 +2757,13 @@ package body Browsers.Canvas is
         "<g transform=""translate(" & String_Utils.Image (Integer (Coord.X))
         & "," & String_Utils.Image (Integer (Coord.Y)) & ")"">"
         & ASCII.LF
-        & "<rect width=""" & String_Utils.Image (Integer (Coord.Width)) & """ "
+        & "<rect style=""fill: white"" "
+        & "width=""" & String_Utils.Image (Integer (Coord.Width)) & """ "
         & "height=""" & String_Utils.Image (Integer (Coord.Height)) & """ "
         & "class=""item""" & "/>"
         & ASCII.LF
-        & "<rect width=""" & String_Utils.Image (Integer (Coord.Width)) & """ "
+        & "<rect style=""fill: silver"" "
+        & "width=""" & String_Utils.Image (Integer (Coord.Width)) & """ "
         & "height=""1.3em"" "
         & "class=""title""" & "/>"
         & ASCII.LF
@@ -2813,7 +2814,7 @@ package body Browsers.Canvas is
       X3 := X + Gint (Length * Cos (Angle - Canvas_Arrow_Angle));
       Y3 := Y + Gint (Length * Sin (Angle - Canvas_Arrow_Angle));
 
-      return "<path class=""link"""
+      return "<path"
         & " d=""M " & Image (Integer (X1)) & " " & Image (Integer (Y1))
         & " L " & Image (Integer (X2)) & " " & Image (Integer (Y2))
         & " L " & Image (Integer (X3)) & " " & Image (Integer (Y3))
