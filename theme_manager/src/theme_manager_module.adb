@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
---                             AdaCore                               --
+--                      Copyright (C) 2003-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -359,12 +359,13 @@ package body Theme_Manager_Module is
       Active, Visible : Boolean) return Gtk_Tree_Iter
    is
       procedure Set
-        (Tree, Iter : System.Address; Col1 : Gint; Value1 : String;
+        (Tree, Iter : System.Address;
+         Col1 : Gint; Value1 : String;
          Col2 : Gint; Value2 : Gint;
-         Col3 : Gint; Value3 : Gint;
-         Final : Gint := -1);
-      pragma Import (C, Set, "gtk_tree_store_set");
+         Col3 : Gint; Value3 : Gint);
+      pragma Import (C, Set, "ada_gtk_tree_store_set_ptr_int_int");
       Iter : Gtk_Tree_Iter;
+
    begin
       Append (Model, Iter, Parent);
       Set (Get_Object (Model), Iter'Address,

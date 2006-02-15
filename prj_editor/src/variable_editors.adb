@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -102,21 +102,26 @@ package body Variable_Editors is
       Value       : String;
       Is_Editable : Boolean := False)
    is
-      procedure Internal
+      procedure Set
         (Tree, Iter : System.Address;
          Col1  : Gint; Value1 : Gint;
          Col2  : Gint; Value2 : String;
-         Col3  : Gint; Value3 : Gint;
-         Col4  : Gint; Value4 : String;
-         Final : Gint := -1);
-      pragma Import (C, Internal, "gtk_tree_store_set");
+         Col3  : Gint; Value3 : Gint);
+      pragma Import (C, Set, "ada_gtk_tree_store_set_int_ptr_int");
+
+      procedure Set2
+        (Tree, Iter : System.Address;
+         Col4  : Gint; Value4 : String);
+      pragma Import (C, Set2, "ada_gtk_tree_store_set_ptr");
 
    begin
-      Internal
+      Set
         (Get_Object (Tree_Store), Iter'Address,
          Default_Value_Column,  Boolean'Pos (Is_Default),
          Value_Column,          Locale_To_UTF8 (Value) & ASCII.NUL,
-         Editable_Column,       Boolean'Pos (Is_Editable),
+         Editable_Column,       Boolean'Pos (Is_Editable));
+      Set2
+        (Get_Object (Tree_Store), Iter'Address,
          Initial_Value_Column,  Locale_To_UTF8 (Value) & ASCII.NUL);
    end Variable_Editor_Set;
 

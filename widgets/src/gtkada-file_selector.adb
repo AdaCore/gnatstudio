@@ -646,9 +646,8 @@ package body Gtkada.File_Selector is
       procedure Internal
         (Tree, Iter : System.Address;
          Col   : Gint;
-         Value : Gdk_Color;
-         Final : Gint := -1);
-      pragma Import (C, Internal, "gtk_tree_store_set");
+         Value : Gdk_Color);
+      pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr");
 
    begin
       if Win.Current_Directory = No_File then

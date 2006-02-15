@@ -1669,12 +1669,7 @@ package body Src_Editor_Buffer is
    -----------------------------
 
    procedure Line_Highlights_Changed
-     (Buffer : access Source_Buffer_Record'Class)
-   is
-      procedure Emit_By_Name
-        (Object : System.Address;
-         Name   : String);
-      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+     (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_By_Name
         (Get_Object (Buffer), "line_highlights_changed"
@@ -1686,12 +1681,7 @@ package body Src_Editor_Buffer is
    --------------------------------
 
    procedure Buffer_Information_Changed
-     (Buffer : access Source_Buffer_Record'Class)
-   is
-      procedure Emit_By_Name
-        (Object : System.Address;
-         Name   : String);
-      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+     (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_By_Name
         (Get_Object (Buffer), "buffer_information_changed" & ASCII.NUL);
@@ -1702,12 +1692,7 @@ package body Src_Editor_Buffer is
    --------------------
 
    procedure Status_Changed
-     (Buffer : access Source_Buffer_Record'Class)
-   is
-      procedure Emit_By_Name
-        (Object : System.Address;
-         Name   : String);
-      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+     (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_By_Name (Get_Object (Buffer), "status_changed" & ASCII.NUL);
    end Status_Changed;
@@ -1746,7 +1731,7 @@ package body Src_Editor_Buffer is
          Name   : String;
          Line   : Gint;
          Column : Gint);
-      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+      pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name_int_int");
 
       L, C : Gint;
    begin
@@ -4683,6 +4668,9 @@ package body Src_Editor_Buffer is
         (Lang         => Lang,
          Params       => Indent_Params,
          Indent_Style => Indent_Style);
+
+      --  Allow the "Format selection" command to indent the selected text even
+      --  if the indentation style for normal text entry is Simple or None.
 
       if Force then
          Indent_Style := Extended;

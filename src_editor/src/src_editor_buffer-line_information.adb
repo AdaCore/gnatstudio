@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System;
-
 with Gdk;                      use Gdk;
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Drawable;             use Gdk.Drawable;
@@ -533,12 +531,7 @@ package body Src_Editor_Buffer.Line_Information is
    -------------------------
 
    procedure Side_Column_Changed
-     (Buffer : access Source_Buffer_Record'Class)
-   is
-      procedure Emit_By_Name
-        (Object : System.Address;
-         Name   : String);
-      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+     (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_By_Name (Get_Object (Buffer), "side_column_changed" & ASCII.NUL);
    end Side_Column_Changed;
@@ -548,12 +541,7 @@ package body Src_Editor_Buffer.Line_Information is
    ---------------------------------------
 
    procedure Side_Column_Configuration_Changed
-     (Buffer : access Source_Buffer_Record'Class)
-   is
-      procedure Emit_By_Name
-        (Object : System.Address;
-         Name   : String);
-      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+     (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_By_Name
         (Get_Object (Buffer),

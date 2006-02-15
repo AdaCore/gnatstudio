@@ -1074,11 +1074,16 @@ package body GPS.Kernel is
         (Tree : System.Address;
          Iter : Gtk_Tree_Iter;
          Col1 : Gint; Value1 : String;
-         Col2, Value2, Col3, Value3 : Gint;
-         Col4 : Gint; Value4 : String;
-         Col5 : Gint; Value5 : System.Address;
-         Final : Gint := -1);
-      pragma Import (C, Set, "gtk_tree_store_set");
+         Col2 : Gint; Value2 : Gint;
+         Col3 : Gint; Value3 : Gint);
+      pragma Import (C, Set, "ada_gtk_tree_store_set_ptr_int_int");
+
+      procedure Set2
+        (Tree : System.Address;
+         Iter : Gtk_Tree_Iter;
+         Col1 : Gint; Value1 : String;
+         Col2 : Gint; Value2 : System.Address);
+      pragma Import (C, Set2, "ada_gtk_tree_store_set_ptr_ptr");
 
       pragma Warnings (Off);
       --  This UC is safe aliasing-wise, so kill warning
@@ -1155,13 +1160,14 @@ package body GPS.Kernel is
 
          Append (Model, It, Null_Iter);
          Set (Get_Object (Model), It,
-           0, Base_Name
-             (Get_Filename (Get_File (Get_Declaration_Of (Candidate))))
-           & ASCII.NUL,
-           1, Gint (Get_Line (Get_Declaration_Of (Candidate))),
-           2, Gint (Get_Column (Get_Declaration_Of (Candidate))),
-           3, Entity_Name & ASCII.NUL,
-              4, Candidate.all'Address);
+              0, Base_Name
+                (Get_Filename (Get_File (Get_Declaration_Of (Candidate))))
+              & ASCII.NUL,
+              1, Gint (Get_Line (Get_Declaration_Of (Candidate))),
+              2, Gint (Get_Column (Get_Declaration_Of (Candidate))));
+         Set2 (Get_Object (Model),
+               It, 3, Entity_Name & ASCII.NUL,
+               4, Candidate.all'Address);
 
          if Candidate = Decl then
             Select_Iter (Get_Selection (View), It);

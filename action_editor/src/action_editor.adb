@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004 - 2005                     --
+--                      Copyright (C) 2004-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -589,9 +589,8 @@ package body Action_Editor is
       procedure Internal
         (Tree, Iter : System.Address;
          Col1       : Gint; Value1 : String;
-         Col2       : Gint; Value2 : Boolean;
-         Final      : Gint := -1);
-      pragma Import (C, Internal, "gtk_tree_store_set");
+         Col2       : Gint; Value2 : Gint);
+      pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr_int");
 
       Iter : aliased Gtk_Tree_Iter;
 
@@ -600,7 +599,7 @@ package body Action_Editor is
       Internal
         (Get_Object (Model), Iter'Address,
          Col1 => Action_Column, Value1 => Descr & ASCII.NUL,
-         Col2 => Modified_Column, Value2 => Modified);
+         Col2 => Modified_Column, Value2 => Boolean'Pos (Modified));
       return Iter;
    end Set;
 
@@ -617,9 +616,8 @@ package body Action_Editor is
       procedure Internal
         (Tree, Iter : System.Address;
          Col1       : Gint; Value1 : String;
-         Col2       : Gint; Value2 : Gint;
-         Final      : Gint := -1);
-      pragma Import (C, Internal, "gtk_tree_store_set");
+         Col2       : Gint; Value2 : Gint);
+      pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr_int");
 
       Iter : aliased Gtk_Tree_Iter;
 

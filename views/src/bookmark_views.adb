@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -373,9 +373,8 @@ package body Bookmark_Views is
         (Tree   : System.Address;
          Iter   : Gtk_Tree_Iter;
          Column : Gint;
-         Value  : System.Address;
-         Final  : Gint := -1);
-      pragma Import (C, Internal, "gtk_tree_store_set");
+         Value  : System.Address);
+      pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr");
    begin
       Internal (Get_Object (Tree), Iter, Column, Value);
    end Set;

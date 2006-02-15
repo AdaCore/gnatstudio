@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1133,23 +1133,29 @@ package body KeyManager_Module is
       Key        : String := "";
       Accel_Path : String := "") return Gtk_Tree_Iter
    is
-      procedure Internal
+      procedure Set
         (Tree, Iter : System.Address;
          Col1       : Gint; Value1 : String;
          Col2       : Gint; Value2 : String;
-         Col3       : Gint; Value3 : Gboolean;
-         Col4       : Gint; Value4 : String;
-         Final      : Gint := -1);
-      pragma Import (C, Internal, "gtk_tree_store_set");
+         Col3       : Gint; Value3 : Gboolean);
+      pragma Import (C, Set, "ada_gtk_tree_store_set_ptr_ptr_int");
+
+      procedure Set2
+        (Tree, Iter : System.Address;
+         Col4       : Gint; Value4 : String);
+      pragma Import (C, Set2, "ada_gtk_tree_store_set_ptr");
 
       Iter : Gtk_Tree_Iter;
+
    begin
       Append (Model, Iter, Parent);
-      Internal
+      Set
         (Get_Object (Model), Iter'Address,
          Col1 => Action_Column,     Value1 => Descr & ASCII.NUL,
          Col2 => Key_Column,        Value2 => Key & ASCII.NUL,
-         Col3 => Changed_Column,    Value3 => Boolean'Pos (Changed),
+         Col3 => Changed_Column,    Value3 => Boolean'Pos (Changed));
+      Set2
+        (Get_Object (Model), Iter'Address,
          Col4 => Accel_Path_Column, Value4 => Accel_Path & ASCII.NUL);
       return Iter;
    end Set;

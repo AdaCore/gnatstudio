@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2003                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -488,16 +488,12 @@ package body Ada_Naming_Editors is
       Display_Exceptions : Boolean := True)
    is
       procedure Set_Unit_Spec
-        (Model : System.Address;
-         Iter  : Gtk_Tree_Iter;
-         Col   : Gint := 0;
-         Unit  : String;
-         Col2  : Gint := 1;
-         Spec  : String;
-         Col3  : Gint := 3;
-         Editable : Boolean := True;
-         Last  : Gint := -1);
-      pragma Import (C, Set_Unit_Spec, "gtk_tree_store_set");
+        (Model    : System.Address;
+         Iter     : Gtk_Tree_Iter;
+         Col      : Gint := 0; Unit     : String;
+         Col2     : Gint := 1; Spec     : String;
+         Col3     : Gint := 3; Editable : Gint := 1);
+      pragma Import (C, Set_Unit_Spec, "ada_gtk_tree_store_set_ptr_ptr_int");
 
       pragma Unreferenced (Kernel);
       Dot_Replacement : constant String := Get_Attribute_Value
@@ -516,6 +512,7 @@ package body Ada_Naming_Editors is
         (Project, Spec_Suffix_Attribute,
          Index => Ada_String, Default => Default_Gnat_Spec_Suffix);
       Id : Gint;
+
    begin
       Set_Text (Editor.GUI.Dot_Replacement,                Dot_Replacement);
       Set_Text (Get_Entry (Editor.GUI.Casing),            -Casing);

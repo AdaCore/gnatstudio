@@ -27,6 +27,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Calendar;
+with System;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Gdk.GC;                    use Gdk.GC;
@@ -1076,5 +1077,10 @@ private
       Charset : GNAT.OS_Lib.String_Access;
       --  The charset associated with the buffer.
    end record;
+
+   procedure Emit_By_Name
+     (Object : System.Address;
+      Name   : String);
+   pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
 
 end Src_Editor_Buffer;

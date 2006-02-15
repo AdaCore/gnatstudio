@@ -2,7 +2,7 @@
 --                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2006                       --
---                            AdaCore                                --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -487,9 +487,8 @@ package body Project_Viewers is
       procedure Internal
         (Tree, Iter : System.Address;
          Col2  : Gint; Value2 : String;
-         Col3  : Gint; Value3 : Gdk_Color;
-         Final : Gint := -1);
-      pragma Import (C, Internal, "gtk_tree_store_set");
+         Col3  : Gint; Value3 : Gdk_Color);
+      pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr_ptr");
 
       File_Name  : constant Virtual_File :=
         Create
