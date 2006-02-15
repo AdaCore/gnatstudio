@@ -27,7 +27,6 @@ with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
 with GNAT.Regpat;
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
-with System;
 with System.Address_Image;
 
 with Gdk.Color;                           use Gdk.Color;
