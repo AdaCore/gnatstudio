@@ -46,9 +46,8 @@ package body Widget_Lists is
    --  do not exist. Nothing is done if the page already exists.
    --  The page is returned.
 
-   function G_New (Typ : GType; Last_Args : System.Address := Null_Address)
-      return System.Address;
-   pragma Import (C, G_New, "g_object_new");
+   function G_New (Typ : GType) return System.Address;
+   pragma Import (C, G_New, "ada_g_object_new");
    --  Create a new object, from its type.
 
    function Type_Is_A (Typ : GType; Klass : GType) return Boolean;

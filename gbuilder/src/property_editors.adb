@@ -200,9 +200,9 @@ package body Property_Editors is
       procedure Internal
         (Object   : System.Address;
          Name     : General_Flags_Property;
-         Value    : Flags_Int_Value;
-         Null_Arg : System.Address := System.Null_Address);
-      pragma Import (C, Internal, "g_object_set");
+         Value    : Flags_Int_Value);
+      pragma Import (C, Internal, "ada_g_object_set_int");
+
    begin
       Internal (Get_Object (Object), Name, Value);
    end Set_Property;
