@@ -318,6 +318,7 @@ private
       Value : Contents_Access;
    end record;
 
+   pragma Finalize_Storage_Only (Virtual_File);
    procedure Finalize (File : in out Virtual_File);
    procedure Adjust (File : in out Virtual_File);
 
