@@ -20,10 +20,9 @@
 
 --  This package is the root of the GPS' kernel API.
 
-with Ada.Unchecked_Conversion;
-with System;
-
+with Ada.Finalization;
 with GNAT.OS_Lib;
+with System;
 
 with Glib.Object;  use Glib;
 with Glib.Xml_Int;
@@ -271,50 +270,41 @@ package GPS.Kernel is
    --  the entiy (for instance because the xref info is not up-to-date), an
    --  interactive dialog is opened.
 
+   -------------
+   -- Scripts --
+   -------------
+
+   type Instance_List_Base is abstract tagged null record;
+   --  See gps-kernel-scripts.ads
+
    --------------
    -- Contexts --
    --------------
 
-   type Selection_Context is tagged private;
-   type Selection_Context_Access is access all Selection_Context'Class;
+   type Selection_Context is private;
+   No_Context : constant Selection_Context;
    --  This type contains all the information about the selection in any
    --  module. Note that this is a tagged type, so that it can easily be
    --  extended for modules external to GPS.
 
-   function To_Selection_Context_Access is new
-     Ada.Unchecked_Conversion (System.Address, Selection_Context_Access);
+   function New_Context return Selection_Context;
+   --  Return a new context, no property is set
 
    procedure Set_Context_Information
-     (Context : access Selection_Context;
+     (Context : in out Selection_Context;
       Kernel  : access Kernel_Handle_Record'Class;
       Creator : Abstract_Module_ID);
    --  Set the information in the context
 
-   function Get_Kernel
-     (Context : access Selection_Context) return Kernel_Handle;
+   function Get_Kernel (Context : Selection_Context) return Kernel_Handle;
    --  Return the kernel associated with the context
 
    function Get_Creator
-     (Context : access Selection_Context) return Abstract_Module_ID;
+     (Context : Selection_Context) return Abstract_Module_ID;
    --  Return the module ID for the module that created the context
 
-   procedure Destroy (Context : in out Selection_Context);
-   --  Destroy the information contained in the context, and free the memory.
-   --  Note that implementations of this subprogram should always call the
-   --  parent's Destroy subprogram as well
-
-   procedure Ref (Context : Selection_Context_Access);
-   --  Increments the reference counter for the context
-
-   procedure Unref (Context : in out Selection_Context_Access);
-   --  Free the memory occupied by Context. It automatically calls the
-   --  primitive subprogram Destroy as well. Context is reset to null if it
-   --  was destroyed.
-   --  It in fact decrements the reference counter for Context, and frees the
-   --  memory only if this counter reaches 0.
-
    function Get_Current_Context
-     (Kernel : access Kernel_Handle_Record) return Selection_Context_Access;
+     (Kernel : access Kernel_Handle_Record) return Selection_Context;
    --  Return the context associated with the current MDI child.
    --  The caller should not free the returned value, this is taken care of by
    --  the kernel automatically. If the caller needs to keep the context valid
@@ -329,7 +319,7 @@ package GPS.Kernel is
    --  instance a new child has been selected automatically at that point)
 
    function Get_Context_For_Child
-     (Child : Gtkada.MDI.MDI_Child) return Selection_Context_Access;
+     (Child : Gtkada.MDI.MDI_Child) return Selection_Context;
    --  Return the context associated with Child.
    --  The user should free the returned value.
 
@@ -390,7 +380,7 @@ package GPS.Kernel is
 
    function Filter_Matches_Primitive
      (Filter  : access Action_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean is abstract;
+      Context : Selection_Context) return Boolean is abstract;
    --  Whether the context matches Filter.
    --  Context doesn't need to be Ref-ed or Unref-ed.
 
@@ -400,7 +390,7 @@ package GPS.Kernel is
 
    function Filter_Matches_Primitive
      (Filter  : access Base_Action_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
    --  See docs for inherited subprograms
 
    function Create
@@ -435,8 +425,7 @@ package GPS.Kernel is
    --  display in the key manager GUI
 
    function Filter_Matches
-     (Filter  : Action_Filter;
-      Context : access Selection_Context'Class) return Boolean;
+     (Filter  : Action_Filter; Context : Selection_Context) return Boolean;
    --  Same as Filter_Matches_Primitive, except it matches if Filter is null
 
    procedure Register_Filter
@@ -598,7 +587,7 @@ package GPS.Kernel is
 
    procedure Source_Lines_Revealed
      (Handle  : access Kernel_Handle_Record;
-      Context : access Selection_Context'Class);
+      Context : Selection_Context);
    --  Runs the "source_lines_revealed" hook
 
    procedure File_Edited
@@ -695,11 +684,79 @@ private
       end case;
    end record;
 
-   type Selection_Context is tagged record
+   type Instance_List_Base_Access is access all Instance_List_Base'Class;
+
+   type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
       Creator   : Abstract_Module_ID;
       Ref_Count : Natural := 1;
+
+      Instances : Instance_List_Base_Access;
+
+      File              : VFS.Virtual_File      := VFS.No_File;
+      --  The current file
+
+      Project           : Projects.Project_Type := Projects.No_Project;
+      Importing_Project : Projects.Project_Type := Projects.No_Project;
+      Line, Column      : Integer := 0;
+
+      Category_Name : GNAT.OS_Lib.String_Access := null;
+      Message       : GNAT.OS_Lib.String_Access := null;
+      --  In the location window
+
+      Start_Line : Integer;
+      End_Line   : Integer;
+      Text       : GNAT.OS_Lib.String_Access;
+      --  When several lines are selected in a file. The selection starts
+      --  at Line. Text is the current selection.
+
+      Entity_Name   : GNAT.OS_Lib.String_Access := null;  --  ??? Use Text
+      Entity_Column : Integer := 0;         --  ??? Can we use another field
+      Entity        : Entities.Entity_Information := null;
+      --  The entity on which the user has clicked
+
+      Activity_Id : GNAT.OS_Lib.String_Access := null;
+      --  An activity
+
+      Entity_Resolved : Entities.Queries.Find_Decl_Or_Body_Query_Status :=
+        Entities.Queries.Entity_Not_Found;
+      --  Set to True when we have called Get_Entity at least once. This is
+      --  used to differentiate cases where Entity is null because we have
+      --  never tested and cases where it is null because there is none to be
+      --  found.
+
+      File_Checked      : Boolean               := False;
+      --  The current file is sometimes a virtual file (one temporarily
+      --  generated for a diff for instance). In such cases, it is converted to
+      --  the actual reference file. File_Checked indicates whether this
+      --  conversion already took place
+
+      Creator_Provided_Project : Boolean := False;
+      --  Set to True if the project_view was given by the creator, instead of
+      --  being computed automatically
    end record;
+
+   procedure Free (Data : in out Selection_Context_Data_Record);
+   --  Free memory used by Data
+
+   type Selection_Context_Data is access all Selection_Context_Data_Record;
+   type Selection_Context_Controlled is new Ada.Finalization.Controlled
+      with record
+         Data : Selection_Context_Data;
+      end record;
+   type Selection_Context is record
+      Data : Selection_Context_Controlled;
+   end record;
+   --  Selection_Context should not be visibly tagged, otherwise we would have
+   --  operations dispatching on multiple types above
+
+   pragma Finalize_Storage_Only (Selection_Context_Controlled);
+   procedure Adjust   (Context : in out Selection_Context_Controlled);
+   procedure Finalize (Context : in out Selection_Context_Controlled);
+   --  See inherited documentation
+
+   No_Context : constant Selection_Context :=
+     (Data => (Ada.Finalization.Controlled with null));
 
    type Kernel_Scripting_Data_Record is abstract tagged null record;
    type Kernel_Scripting_Data is access all Kernel_Scripting_Data_Record'Class;
@@ -792,22 +849,14 @@ private
       Preferences : Default_Preferences.Preferences_Manager;
       --  The current setting for the preferences
 
-      Last_Context_For_Contextual : Selection_Context_Access := null;
-      --  The context used in the last contextual menu. Ref_Count isn't
-      --  incremented when this variable is set. However, the variable is
-      --  automatically reset to null when we last unref the context it was
-      --  assigned to.
+      Last_Context_For_Contextual : Selection_Context := No_Context;
+      --  The context used in the last contextual menu.
       --  This variable should remain not null and unchanged while a contextual
       --  menu or standard menu is displayed and executed, so that user scripts
       --  have access to it.
 
       Last_Event_For_Contextual   : Gdk.Event.Gdk_Event;
       --  The event triggering the last contextual menu
-
-      Current_Context : Selection_Context_Access := null;
-      --  The selection for the current MDI child. It is recomputed every time
-      --  Get_Current_Context is called, and is kept only for memory
-      --  management reasons.
 
       Home_Dir : GNAT.OS_Lib.String_Access;
       --  The home directory (e.g ~/.gps)
