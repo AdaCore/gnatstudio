@@ -107,7 +107,7 @@ package GPS.Kernel.Scripts is
 
    type Class_Type is private;
    No_Class : constant Class_Type;
-   --  A class type, which can be used to create new instances. Primite
+   --  A class type, which can be used to create new instances. Primitive
    --  operations (aka methods) can be associated with the class. This is the
    --  primary way to make new subprograms available to the user, while
    --  organizing them into namespaces.
