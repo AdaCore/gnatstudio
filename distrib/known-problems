@@ -21,12 +21,6 @@ Known Problems fixed in GPS 3.2.0
   Workaround: Use the -P command line parameter to GPS to specify the
               project directly on the command line.
 
-- EC07-009 Leave focus on selected window in the bookmarks view
-  Problem:    When you select an existing bookmark in the bookmarks view, the
-              focus remains on the bookmark view instead of going to the
-              associated editor.
-  Workaround: Select the bookmark and then the editor
-
 - EB16-002 Wrong parenthesis highlighting
   Problem:    Parenthesis in comment are taken into account when doing the
               highlighting of matching parenthesis.
