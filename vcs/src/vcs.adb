@@ -197,6 +197,19 @@ package body VCS is
       return Ref.Atomic_Commands;
    end Atomic_Commands_Supported;
 
+   ---------------------
+   -- Ignore_Filename --
+   ---------------------
+
+   function Ignore_Filename (Ref : access VCS_Record) return String is
+   begin
+      if Ref.Ignore_Filename = null then
+         return "";
+      else
+         return Ref.Ignore_Filename.all;
+      end if;
+   end Ignore_Filename;
+
    -----------------
    -- Check_Files --
    -----------------
