@@ -54,6 +54,7 @@ with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View_API;              use VCS_View_API;
+with Ignore_Db;                 use Ignore_Db;
 
 package body VCS_View.Explorer is
 
@@ -394,7 +395,9 @@ package body VCS_View.Explorer is
    begin
       Displayed := False;
 
-      if not VFS.Is_Directory (File) then
+      if not VFS.Is_Directory (File)
+        and then not Ignore_File (VCS_Identifier, File)
+      then
          Line := Get_Cache (Get_Status_Cache, File);
 
          if Line = No_Data or else Override_Cache then
