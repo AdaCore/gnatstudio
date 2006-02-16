@@ -25,13 +25,11 @@
 --  independant as possible from the specific language.
 
 with Ada.Finalization;
---  with System;
 with GNAT.OS_Lib;
 with Gtk.Handlers;
 with Gtk.Widget;
 with Entities;
 with Projects;
-with GPS.Kernel.Contexts;
 with Interactive_Consoles;
 
 package GPS.Kernel.Scripts is
@@ -473,11 +471,16 @@ package GPS.Kernel.Scripts is
    --  be used to store the instances (of which there is one per scripting
    --  language).
 
-   type Instance_List is private;
+   type Instance_List is new Instance_List_Base with private;
    --  Stores the instance created for some GPS internal data, so that the same
    --  script instance is reused every time we reference the same Ada object.
 
+   type Instance_List_Access is access Instance_List;
+   --  This type should be convertible to a System.Address for storage in
+   --  a selection_context
+
    procedure Free (List : in out Instance_List);
+   procedure Free (List : in out Instance_List_Access);
    --  Free the instances stored in the list
 
    function Get
@@ -884,16 +887,16 @@ package GPS.Kernel.Scripts is
 
    function Create_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : GPS.Kernel.Selection_Context_Access) return Class_Instance;
+      Context : GPS.Kernel.Selection_Context) return Class_Instance;
    --  Return an instance of one of the classes derived from
    --  Context_Class, depending on the type of Context.
    --  If Context is already associated with a Class_Instance, the same
    --  instance is returned.
 
    function Get_Data (Data : Callback_Data; N : Positive)
-      return GPS.Kernel.Selection_Context_Access;
+      return GPS.Kernel.Selection_Context;
    function Get_Data (Instance : Class_Instance)
-      return GPS.Kernel.Selection_Context_Access;
+      return GPS.Kernel.Selection_Context;
    --  Retrieve some context information from instance
 
    function Get_Area_Context_Class
@@ -901,33 +904,15 @@ package GPS.Kernel.Scripts is
       return Class_Type;
    --  Return the base class for contexts containing file areas
 
-   function Create_Area_Context
-     (Script  : access Scripting_Language_Record'Class;
-      Context : GPS.Kernel.Contexts.File_Area_Context_Access)
-      return Class_Instance;
-   --  Return an instance of an area context
-
    function Get_File_Context_Class
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return a class for a File_Selection_Context
 
-   function Create_File_Context
-     (Script  : access Scripting_Language_Record'Class;
-      Context : GPS.Kernel.Contexts.File_Selection_Context_Access)
-      return Class_Instance;
-   --  Create a new context
-
    function Get_Entity_Context_Class
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return a class for an Entity_Selection_Context
-
-   function Create_Entity_Context
-     (Script  : access Scripting_Language_Record'Class;
-      Context : GPS.Kernel.Contexts.Entity_Selection_Context_Access)
-      return Class_Instance;
-   --  Create a new context
 
 private
    Constructor_Method  : constant String := "<@constructor@>";
@@ -975,6 +960,7 @@ private
    --  We use a discriminated type so that we can declare No_Class_Instance.
    --  Otherwise, Adjust is called before its body is seen.
 
+   pragma Finalize_Storage_Only (Class_Instance_Data);
    procedure Adjust   (CI : in out Class_Instance_Data);
    procedure Finalize (CI : in out Class_Instance_Data);
    function "="       (CI1, CI2 : Class_Instance_Data) return Boolean;
@@ -985,7 +971,7 @@ private
    No_Class_Instance : constant Class_Instance :=
      (Initialized => False);
 
-   No_Class : constant Class_Type := (Name => null);
+   No_Class         : constant Class_Type := (Name => null);
    No_File_Location : constant File_Location_Info := (No_Class_Instance, 0, 0);
 
    type Subprogram_Record is abstract tagged null record;
@@ -993,7 +979,10 @@ private
    type Scripting_Language_Record is abstract tagged null record;
 
    type Instance_Array is array (Natural range <>) of Class_Instance;
-   type Instance_List  is access Instance_Array;
+   type Instance_Array_Access is access Instance_Array;
+   type Instance_List is new Instance_List_Base with record
+      List : Instance_Array_Access;
+   end record;
 
    type Callback_Data_Array is
      array (Natural range <>) of Callback_Data_Access;
