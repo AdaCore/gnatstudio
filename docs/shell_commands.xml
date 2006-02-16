@@ -735,10 +735,17 @@ GPS.parse_xml ("""
       </example>
   </shell_doc>
 
+  <shell_doc name="GPS.File.directory">
+      <param name="self">The instance of GPS.File</param>
+      <return>A string</return>
+      <description>Return the directory in which the file is found</description>
+  </shell_doc>
+
   <shell_doc name="GPS.File.project">
       <param name="self">The instance of File to which the operation applies</param>
+      <param name="default_to_root" default="true">A boolean</param>
       <return>An instance of GPS.Project</return>
-      <description>Return the project to which file belongs. If file is not one of the souces of the project, the root project is returned.</description>
+      <description>Return the project to which file belongs. If file is not one of the souces of the project, the returned value depends on default_to_none: if false, None is returned. Otherwise, the root project is returned.</description>
       <example lang="python">
          GPS.File ("tokens.ads").project().name()
          will print "/full/path/to/sdc.gpr" in the context of the project file
