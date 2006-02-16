@@ -1197,6 +1197,8 @@ package body VCS.Generic_VCS is
            (Get_Attribute (M, "commit_directory", "FALSE"));
          Ref.Dir_Sep := Path_Style'Value
            (Get_Attribute (M, "dir_sep", "System_Default"));
+         Ref.Ignore_Filename := new String'
+           (Get_Attribute (M, "ignore_file", ""));
 
          --  Find the command descriptions
 
