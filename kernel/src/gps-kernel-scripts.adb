@@ -246,6 +246,7 @@ package body GPS.Kernel.Scripts is
    Force_Cst      : aliased constant String := "force";
    Value_Cst      : aliased constant String := "value";
    Recursive_Cst  : aliased constant String := "recursive";
+   Default_Cst    : aliased constant String := "default_to_root";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -254,6 +255,8 @@ package body GPS.Kernel.Scripts is
      (Name_Cst'Access, File_Cst'Access, Line_Cst'Access, Col_Cst'Access);
    File_Cmd_Parameters     : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
+   File_Project_Parameters : constant Cst_Argument_List :=
+     (1 => Default_Cst'Access);
    Open_Cmd_Parameters     : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
       2 => Force_Cst'Access);
@@ -1131,6 +1134,7 @@ package body GPS.Kernel.Scripts is
          Set_Return_Value (Data, Full_Name (Info).all);
 
       elsif Command = "project" then
+         Name_Parameters (Data, File_Project_Parameters);
          Info := Get_Data (Data, 1);
          Set_Return_Value
            (Data, Create_Project
@@ -1138,7 +1142,11 @@ package body GPS.Kernel.Scripts is
              Get_Project_From_File
              (Registry         => Project_Registry (Get_Registry (Kernel).all),
               Source_Filename   => Info,
-              Root_If_Not_Found => True)));
+              Root_If_Not_Found => Nth_Arg (Data, 2, True))));
+
+      elsif Command = "directory" then
+         Info := Get_Data (Data, 1);
+         Set_Return_Value (Data, Dir_Name (Info).all);
 
       elsif Command = "language" then
          Info := Get_Data (Data, 1);
@@ -1840,11 +1848,17 @@ package body GPS.Kernel.Scripts is
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
       Register_Command
+        (Kernel, "directory",
+         Class        => Get_File_Class (Kernel),
+         Handler      => Create_File_Command_Handler'Access);
+      Register_Command
         (Kernel, "other_file",
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
       Register_Command
         (Kernel, "project",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
 
