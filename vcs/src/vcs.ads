@@ -110,6 +110,10 @@ package VCS is
    function Commit_Directory (Ref : access VCS_Record) return Boolean;
    --  Returns True if an added/removed directories needs to be committed
 
+   function Ignore_Filename (Ref : access VCS_Record) return String;
+   --  Returns the file containing a list of file to ignore. Returns the empty
+   --  string if no such file is set for this VCS.
+
    type File_Status is record
       Label    : String_Access;
       --  The label corresponding to the status
@@ -445,6 +449,7 @@ private
       Atomic_Commands  : Boolean    := False;
       Commit_Directory : Boolean    := False;
       Dir_Sep          : Path_Style := System_Default;
+      Ignore_Filename  : String_Access;
    end record;
 
 end VCS;
