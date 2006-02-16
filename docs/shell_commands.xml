@@ -1972,6 +1972,12 @@ If the line and column are not specified, then the current selection is returned
       <description>Return the current directory in the context</description>
   </shell_doc>
 
+  <shell_doc name="GPS.FileContext.location">
+      <param name="self">The instance of GPS.FileContext</param>
+      <return>An instance of GPS.FileLocation</return>
+      <description>Return the file location stored in the context</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   AreaContext class
     ###################################################################-->
@@ -2016,12 +2022,6 @@ If the line and column are not specified, then the current selection is returned
       <param name="self">The instance of GPS.EntityContext</param>
       <return>An instance of GPS.Entity</return>
       <description>Return the entity stored in the context</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.EntityContext.location">
-      <param name="self">The instance of GPS.EntityContext</param>
-      <return>An instance of GPS.FileLocation</return>
-      <description>Return the file location stored in the context</description>
   </shell_doc>
 
 

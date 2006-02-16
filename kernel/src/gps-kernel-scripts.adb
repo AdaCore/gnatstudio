@@ -1269,31 +1269,8 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Entity : constant Selection_Context := Get_Data (Data, 1);
-      L, C   : Integer := -1;
    begin
-      if Command = "location" then
-         if Has_Line_Information (Entity) then
-            L := Line_Information (Entity);
-         end if;
-
-         if Has_Column_Information (Entity) then
-            C := Column_Information (Entity);
-         end if;
-
-         if Has_File_Information (Entity) then
-            Set_Return_Value
-              (Data,
-               Create_File_Location
-                 (Get_Script (Data),
-                  (Create_File (Get_Script (Data), File_Information (Entity))),
-                  L,
-                  C));
-         else
-            Set_Error_Msg
-              (Data, -"No file information stored in the context");
-         end if;
-
-      elsif Command = "entity" then
+      if Command = "entity" then
          Set_Return_Value
            (Data, Create_Entity (Get_Script (Data), Get_Entity (Entity)));
       end if;
@@ -1381,6 +1358,30 @@ package body GPS.Kernel.Scripts is
                File_Information (Context)));
          else
             Set_Error_Msg (Data, -"No file information stored in the context");
+         end if;
+
+      elsif Command = "location" then
+         Context := Get_Data (Data, 1);
+         if Has_Line_Information (Context) then
+            L := Line_Information (Context);
+         end if;
+
+         if Has_Column_Information (Context) then
+            C := Column_Information (Context);
+         end if;
+
+         if Has_File_Information (Context) then
+            Set_Return_Value
+              (Data,
+               Create_File_Location
+                 (Get_Script (Data),
+                  (Create_File (Get_Script (Data),
+                   File_Information (Context))),
+                  L,
+                  C));
+         else
+            Set_Error_Msg
+              (Data, -"No file information stored in the context");
          end if;
 
       elsif Command = "project" then
@@ -1950,6 +1951,10 @@ package body GPS.Kernel.Scripts is
         (Kernel, "directory",
          Class        => Get_File_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel, "location",
+         Class        => Get_File_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
 
       Register_Command
         (Kernel, Constructor_Method,
@@ -1970,10 +1975,6 @@ package body GPS.Kernel.Scripts is
          Handler      => Context_Command_Handler'Access);
       Register_Command
         (Kernel, "entity",
-         Class        => Get_Entity_Context_Class (Kernel),
-         Handler      => Entity_Context_Command_Handler'Access);
-      Register_Command
-        (Kernel, "location",
          Class        => Get_Entity_Context_Class (Kernel),
          Handler      => Entity_Context_Command_Handler'Access);
 
