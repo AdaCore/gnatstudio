@@ -739,6 +739,15 @@ GPS.parse_xml ("""
       <param name="self">The instance of GPS.File</param>
       <return>A string</return>
       <description>Return the directory in which the file is found</description>
+      <example lang="python">
+         ## Sorting files by TN is easily done with a loop like
+         dirs={}
+         for s in GPS.Project.root().sources():
+           if dirs.has_key (s.directory()):
+              dirs[s.directory()].append (s)
+           else:
+              dirs[s.directory()] = [s]
+      </example>
   </shell_doc>
 
   <shell_doc name="GPS.File.project">
