@@ -43,6 +43,13 @@
    </documentation_file>
 
    <documentation_file>
+      <name>gnathie_ug.html</name>
+      <descr>GNAT Pro User's Guide Supplement for High-Integrity Edition Platforms</descr>
+      <category>GNAT</category>
+      <menu>/Help/GNAT/GNAT HIE User's Guide</menu>
+   </documentation_file>
+
+   <documentation_file>
       <name>gnat_rm.html</name>
       <descr>GNAT Reference Manual</descr>
       <menu>/Help/GNAT/GNAT Reference Manual</menu>
