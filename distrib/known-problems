@@ -46,6 +46,12 @@ Known Problems fixed in GPS 3.1.2
                  with procedure F is Y;
   Workaround: Fix indentation manually or use the "simple indentation" mode
 
+- EC07-009 Leave focus on selected window in the bookmarks view
+  Problem:    When you select an existing bookmark in the bookmarks view, the
+              focus remains on the bookmark view instead of going to the
+              associated editor.
+  Workaround: Select the bookmark and then the editor
+
 - EB28-007 Segmentation fault when closing a debug item
   Problem:    When closing a graphic item in the debug data window, a
               segmentation fault might be raised.
