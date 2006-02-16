@@ -1095,6 +1095,7 @@ package body GVD.Process is
             Traces.Trace (Me, "Saving breakpoints in properties");
             --  Take into account breakpoints that have been set manually
             --  through the console, when the breakpoints window is not shown
+
             Update_Breakpoints (Process, Force => True);
             Property             := new Breakpoint_Property_Record;
             Property.Breakpoints := Process.Breakpoints;
@@ -1269,6 +1270,7 @@ package body GVD.Process is
             if not Command_In_Process (Get_Process (Debugger.Debugger)) then
                Display_Prompt (Debugger.Debugger);
             end if;
+
             return;
          end if;
       end;
@@ -1308,10 +1310,6 @@ package body GVD.Process is
          end if;
       end if;
    end Process_User_Command;
-
-   --------------------------
-   -- Process_User_Command --
-   --------------------------
 
    function Process_User_Command
      (Debugger        : Visual_Debugger;
@@ -1355,6 +1353,7 @@ package body GVD.Process is
                             Set_Position => True);
                Display_Prompt (Debugger.Debugger);
             end if;
+
             return Tmp;
          end if;
       end;
@@ -1380,6 +1379,7 @@ package body GVD.Process is
          else
             Close_Debugger (Debugger);
          end if;
+
          return "";
 
       else
@@ -1390,6 +1390,7 @@ package body GVD.Process is
             if Output_Command then
                Display_Prompt (Debugger.Debugger);
             end if;
+
             return Result;
          end;
       end if;
@@ -1440,6 +1441,13 @@ package body GVD.Process is
       --  We only need to update the list of breakpoints when we have a
       --  temporary breakpoint (since its status might be changed upon
       --  reaching the line).
+
+      if Command_In_Process (Get_Process (Debugger.Debugger)) then
+         --  Will only happen when e.g. exiting and the debuggee
+         --  is still running.
+
+         return;
+      end if;
 
       if Force or else Debugger.Has_Temporary_Breakpoint then
          Free (Debugger.Breakpoints);
