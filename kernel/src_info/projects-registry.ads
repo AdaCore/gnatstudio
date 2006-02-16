@@ -260,12 +260,12 @@ package Projects.Registry is
    --  path. If Use_Object_Path is true, it is also looked for on the object
    --  path.
    --
-   --  If the path is not found because the project doesn't belong to any of
+   --  If the path is not found because the file doesn't belong to any of
    --  the source directories defined in the project hierarchy, then the empty
    --  string is returned.
    --
-   --  This function also works for project files, which are looked among the
-   --  loaded project tree.
+   --  This function also works for project files, which are looked for among
+   --  the loaded project tree.
    --
    --  Project is used to save time. This must be the project to which
    --  filename belongs, if it is known

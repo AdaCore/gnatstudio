@@ -1947,8 +1947,8 @@ package body Projects.Registry is
 
          --  Otherwise we have a source file
 
-         Real_Project :=
-           Get_Project_From_File (Registry, Base_Name => Filename);
+         Real_Project := Get_Project_From_File
+           (Registry, Base_Name => Filename, Root_If_Not_Found => False);
 
          if Project /= No_Project then
             Project2 := Project;
