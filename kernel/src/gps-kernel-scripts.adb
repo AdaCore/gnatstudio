@@ -98,7 +98,7 @@ package body GPS.Kernel.Scripts is
          when Files =>
             File : Virtual_File;
          when Contexts =>
-            Context : Selection_Context_Access;
+            Context : Selection_Context := No_Context;
          when Entities =>
             Entity  : Entity_Information;
          when Projects =>
@@ -143,8 +143,6 @@ package body GPS.Kernel.Scripts is
       Entity_Context_Class : Class_Type := No_Class;
       GUI_Class            : Class_Type := No_Class;
       Hook_Class           : Class_Type := No_Class;
-
-      Context_Instances    : Instance_List;
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
@@ -195,7 +193,7 @@ package body GPS.Kernel.Scripts is
    procedure Set_Data
      (Instance : Class_Instance; Location : File_Location_Info);
    procedure Set_Data
-     (Instance : Class_Instance; Context  : Selection_Context_Access);
+     (Instance : Class_Instance; Context  : Selection_Context);
    --  Set the data for an instance
 
    function On_Console_Input
@@ -210,7 +208,7 @@ package body GPS.Kernel.Scripts is
    function Get_Or_Create_Context
      (Script : access Scripting_Language_Record'Class;
       Class  : Class_Type;
-      Context : access GPS.Kernel.Selection_Context'Class)
+      Context : GPS.Kernel.Selection_Context)
       return Class_Instance;
    --  Create a new instance representing the context. If such an instance
    --  already exists for that context, return the same one so that the user
@@ -299,10 +297,10 @@ package body GPS.Kernel.Scripts is
 
    procedure Free (List : in out Instance_List) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Instance_Array, Instance_List);
+        (Instance_Array, Instance_Array_Access);
    begin
       --  Class_Instance are automatically Finalized by the compiler
-      Unchecked_Free (List);
+      Unchecked_Free (List.List);
    end Free;
 
    ---------
@@ -316,10 +314,10 @@ package body GPS.Kernel.Scripts is
       Tmp : constant Scripting_Language_Array :=
         Scripting_Data (Get_Kernel (Script).Scripts).Scripting_Languages.all;
    begin
-      if List /= null then
+      if List.List /= null then
          for T in Tmp'Range loop
             if Tmp (T) = Scripting_Language (Script) then
-               return List (T);
+               return List.List (T);
             end if;
          end loop;
       end if;
@@ -338,13 +336,13 @@ package body GPS.Kernel.Scripts is
       Tmp : constant Scripting_Language_Array :=
         Scripting_Data (Get_Kernel (Script).Scripts).Scripting_Languages.all;
    begin
-      if List = null then
-         List := new Instance_Array (Tmp'Range);
+      if List.List = null then
+         List.List := new Instance_Array (Tmp'Range);
       end if;
 
       for T in Tmp'Range loop
          if Tmp (T) = Scripting_Language (Script) then
-            List (T) := Inst;
+            List.List (T) := Inst;
             exit;
          end if;
       end loop;
@@ -364,6 +362,20 @@ package body GPS.Kernel.Scripts is
                Free (List (L));
             end if;
          end loop;
+         Unchecked_Free (List);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Instance_List_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Instance_List, Instance_List_Access);
+   begin
+      if List /= null then
+         Free (List.all);
          Unchecked_Free (List);
       end if;
    end Free;
@@ -848,7 +860,7 @@ package body GPS.Kernel.Scripts is
          declare
             Action      : constant Action_Record_Access := Lookup_Action
               (Kernel, Nth_Arg (Data, 1));
-            Context     : constant Selection_Context_Access :=
+            Context     : constant Selection_Context :=
               Get_Current_Context (Kernel);
             Custom      : Command_Access;
             Args        : String_List_Access;
@@ -856,7 +868,7 @@ package body GPS.Kernel.Scripts is
          begin
             if Action = null then
                Set_Error_Msg (Data, -"No such registered action");
-            elsif Context = null
+            elsif Context = No_Context
               or else not Filter_Matches (Action.Filter, Context)
             then
                Set_Error_Msg (Data, -"Invalid context for the action");
@@ -869,7 +881,7 @@ package body GPS.Kernel.Scripts is
                Custom := Create_Proxy
                  (Command => Action.Command,
                   Context => (Event       => null,
-                              Context     => null,
+                              Context     => No_Context,
                               Synchronous => Synchronous,
                               Dir         => null,
                               Args        => Args,
@@ -1256,9 +1268,7 @@ package body GPS.Kernel.Scripts is
    procedure Entity_Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Entity : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access
-          (Selection_Context_Access'(Get_Data (Data, 1)));
+      Entity : constant Selection_Context := Get_Data (Data, 1);
       L, C   : Integer := -1;
    begin
       if Command = "location" then
@@ -1297,9 +1307,7 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      File     : File_Selection_Context_Access;
-      Area     : File_Area_Context_Access;
-      Context  : Selection_Context_Access;
+      Context  : Selection_Context;
       Object   : Glib.Object.GObject;
       Menu     : Gtk.Menu.Gtk_Menu;
       L, C     : Integer := -1;
@@ -1356,35 +1364,33 @@ package body GPS.Kernel.Scripts is
          Set_Error_Msg (Data, -"Cannot create an instance of this class");
 
       elsif Command = "start_line" then
-         Area := File_Area_Context_Access
-           (Selection_Context_Access'(Get_Data (Data, 1)));
-         Get_Area (Area, L, C);
+         Context := Get_Data (Data, 1);
+         Get_Area (Context, L, C);
          Set_Return_Value (Data, L);
 
       elsif Command = "end_line" then
-         Area := File_Area_Context_Access
-           (Selection_Context_Access'(Get_Data (Data, 1)));
-         Get_Area (Area, L, C);
+         Context := Get_Data (Data, 1);
+         Get_Area (Context, L, C);
          Set_Return_Value (Data, C);
 
       elsif Command = "file" then
-         File := File_Selection_Context_Access
-           (Selection_Context_Access'(Get_Data (Data, 1)));
-         if Has_File_Information (File) then
+         Context := Get_Data (Data, 1);
+         if Has_File_Information (Context) then
             Set_Return_Value
-              (Data, Create_File (Get_Script (Data), File_Information (File)));
+              (Data, Create_File (Get_Script (Data),
+               File_Information (Context)));
          else
             Set_Error_Msg (Data, -"No file information stored in the context");
          end if;
 
       elsif Command = "project" then
-         File := File_Selection_Context_Access
-           (Selection_Context_Access'(Get_Data (Data, 1)));
-         if Has_Project_Information (File) then
+         Context := Get_Data (Data, 1);
+         if Has_Project_Information (Context) then
             Set_Return_Value
               (Data,
-               Create_Project (Get_Script (Data), Project_Information (File)));
-         elsif Has_File_Information (File) then
+               Create_Project (Get_Script (Data),
+                 Project_Information (Context)));
+         elsif Has_File_Information (Context) then
             --  Since the editor doesn't provide the project, we emulate it
             --  here
             Set_Return_Value
@@ -1393,39 +1399,38 @@ package body GPS.Kernel.Scripts is
                  (Get_Script (Data),
                   Get_Project_From_File
                     (Project_Registry (Get_Registry (Kernel).all),
-                     File_Information (File),
+                     File_Information (Context),
                      Root_If_Not_Found => False)));
          else
             Set_Error_Msg (Data, -"No project stored in the context");
          end if;
 
       elsif Command = "directory" then
-         File := File_Selection_Context_Access
-           (Selection_Context_Access'(Get_Data (Data, 1)));
-         if Has_Directory_Information (File) then
-            Set_Return_Value (Data, Directory_Information (File));
+         Context := Get_Data (Data, 1);
+         if Has_Directory_Information (Context) then
+            Set_Return_Value (Data, Directory_Information (Context));
          else
             Set_Error_Msg (Data, -"No directory stored in the context");
          end if;
 
       elsif Command = "location" then
-         File := File_Selection_Context_Access
-           (Selection_Context_Access'(Get_Data (Data, 1)));
+         Context := Get_Data (Data, 1);
 
-         if Has_Line_Information (File) then
-            L := Line_Information (File);
+         if Has_Line_Information (Context) then
+            L := Line_Information (Context);
          end if;
 
-         if Has_Column_Information (File) then
-            C := Column_Information (File);
+         if Has_Column_Information (Context) then
+            C := Column_Information (Context);
          end if;
 
-         if Has_File_Information (File) then
+         if Has_File_Information (Context) then
             Set_Return_Value
               (Data,
                Create_File_Location
                  (Get_Script (Data),
-                  (Create_File (Get_Script (Data), File_Information (File))),
+                  (Create_File (Get_Script (Data),
+                   File_Information (Context))),
                   L,
                   C));
          else
@@ -2404,41 +2409,36 @@ package body GPS.Kernel.Scripts is
       return Scripting_Data (Kernel.Scripts).Area_Context_Class;
    end Get_Area_Context_Class;
 
-   -------------------------
-   -- Create_Area_Context --
-   -------------------------
-
-   function Create_Area_Context
-     (Script  : access Scripting_Language_Record'Class;
-      Context : GPS.Kernel.Contexts.File_Area_Context_Access)
-      return Class_Instance is
-   begin
-      return Get_Or_Create_Context
-        (Script,
-         Get_Area_Context_Class (Get_Kernel (Script)),
-         Context);
-   end Create_Area_Context;
-
    --------------------
    -- Create_Context --
    --------------------
 
    function Create_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : GPS.Kernel.Selection_Context_Access) return Class_Instance is
+      Context : GPS.Kernel.Selection_Context) return Class_Instance is
    begin
-      if Context = null then
+      if Context = No_Context then
          Trace (Me, "Null context passed to Create_Context");
          return No_Class_Instance;
-      elsif Context.all in File_Area_Context'Class then
-         return Create_Area_Context
-           (Script, File_Area_Context_Access (Context));
-      elsif Context.all in Entity_Selection_Context'Class then
-         return Create_Entity_Context
-           (Script, Entity_Selection_Context_Access (Context));
-      elsif Context.all in File_Selection_Context'Class then
-         return Create_File_Context
-           (Script, File_Selection_Context_Access (Context));
+
+      elsif Has_Area_Information (Context) then
+         return Get_Or_Create_Context
+           (Script,
+            Get_Area_Context_Class (Get_Kernel (Script)),
+            Context);
+
+      elsif Has_Entity_Name_Information (Context) then
+         return Get_Or_Create_Context
+           (Script,
+            Get_Entity_Context_Class (Get_Kernel (Script)),
+            Context);
+
+      elsif Has_File_Information (Context) then
+         return Get_Or_Create_Context
+           (Script,
+            Get_File_Context_Class (Get_Kernel (Script)),
+            Context);
+
       else
          Trace (Me, "Context type is not supported by GPS");
          return Get_Or_Create_Context
@@ -2453,13 +2453,13 @@ package body GPS.Kernel.Scripts is
    --------------
 
    function Get_Data
-     (Instance : Class_Instance) return GPS.Kernel.Selection_Context_Access
+     (Instance : Class_Instance) return GPS.Kernel.Selection_Context
    is
       Value : constant User_Data_List :=
         Get_Data (Instance, Context_Class_Name);
    begin
       if Value = null then
-         return null;
+         return No_Context;
       else
          return Scalar_Properties (Value.Prop).Context;
       end if;
@@ -2470,7 +2470,7 @@ package body GPS.Kernel.Scripts is
    --------------
 
    function Get_Data (Data : Callback_Data; N : Positive)
-                      return GPS.Kernel.Selection_Context_Access is
+                      return GPS.Kernel.Selection_Context is
    begin
       return Get_Data
         (Nth_Arg (Callback_Data'Class (Data), N,
@@ -2519,7 +2519,7 @@ package body GPS.Kernel.Scripts is
 
    procedure Set_Data
      (Instance : Class_Instance;
-      Context  : Selection_Context_Access)
+      Context  : Selection_Context)
    is
       Script : constant Scripting_Language := Get_Script (Instance);
       Class  : constant Class_Type :=
@@ -2529,7 +2529,6 @@ package body GPS.Kernel.Scripts is
          raise Invalid_Data;
       end if;
 
-      Ref (Context);
       Set_Property
         (Instance, Context_Class_Name,
          Scalar_Properties_Record'(Typ => Contexts, Context => Context));
@@ -2542,65 +2541,28 @@ package body GPS.Kernel.Scripts is
    function Get_Or_Create_Context
      (Script : access Scripting_Language_Record'Class;
       Class  : Class_Type;
-      Context : access GPS.Kernel.Selection_Context'Class)
+      Context : GPS.Kernel.Selection_Context)
       return Class_Instance
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Script);
-      Instance : Class_Instance := Get
-        (Scripting_Data (Kernel.Scripts).Context_Instances, Script);
-      Old_Context : Selection_Context_Access;
+      Instance : Class_Instance;
    begin
-      --  Has the context changed since we stored the instances ?
-      if Instance /= No_Class_Instance then
-         Old_Context := Get_Data (Instance);
-         if Old_Context /= Selection_Context_Access (Context) then
-            Trace (Me, "Context has changed since we created the instances");
-            Free (Scripting_Data (Kernel.Scripts).Context_Instances);
-            Instance := No_Class_Instance;
-         end if;
+      if Context.Data.Data.Instances = null then
+         Context.Data.Data.Instances := new Instance_List'
+           (Instance_List_Base with List => null);
       end if;
 
+      Instance := Get
+        (Instance_List (Context.Data.Data.Instances.all), Script);
       if Instance = No_Class_Instance then
          Trace (Me, "Create a new instance for the current context");
          Instance := New_Instance (Script, Class);
-         Set_Data (Instance, Selection_Context_Access (Context));
-         Set (Scripting_Data (Kernel.Scripts).Context_Instances,
-              Script,
-              Instance);
+         Set_Data (Instance, Context);
+         Set (Instance_List (Context.Data.Data.Instances.all),
+              Script, Instance);
       end if;
 
       return Instance;
    end Get_Or_Create_Context;
-
-   -------------------------
-   -- Create_File_Context --
-   -------------------------
-
-   function Create_File_Context
-     (Script  : access Scripting_Language_Record'Class;
-      Context : GPS.Kernel.Contexts.File_Selection_Context_Access)
-      return Class_Instance is
-   begin
-      return Get_Or_Create_Context
-        (Script,
-         Get_File_Context_Class (Get_Kernel (Script)),
-         Context);
-   end Create_File_Context;
-
-   ---------------------------
-   -- Create_Entity_Context --
-   ---------------------------
-
-   function Create_Entity_Context
-     (Script  : access Scripting_Language_Record'Class;
-      Context : GPS.Kernel.Contexts.Entity_Selection_Context_Access)
-      return Class_Instance is
-   begin
-      return Get_Or_Create_Context
-        (Script,
-         Get_Entity_Context_Class (Get_Kernel (Script)),
-         Context);
-   end Create_Entity_Context;
 
    ----------
    -- Free --
@@ -2736,13 +2698,8 @@ package body GPS.Kernel.Scripts is
                Prop.Obj := null;
             end if;
 
-         when Integers | Files | Projects | Debug_Handles =>
+         when Integers | Files | Projects | Debug_Handles | Contexts =>
             null;
-
-         when Contexts =>
-            if Prop.Context /= null then
-               Unref (Prop.Context);
-            end if;
 
          when Entities =>
             Unref (Prop.Entity);
