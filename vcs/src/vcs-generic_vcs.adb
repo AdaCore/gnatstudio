@@ -92,7 +92,7 @@ package body VCS.Generic_VCS is
 
    function Create_File_Context
      (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Selection_Context_Access;
+      File   : Virtual_File) return Selection_Context;
    --  Create a file context corresponding to File
 
    procedure Generic_Command
@@ -217,12 +217,10 @@ package body VCS.Generic_VCS is
 
    function Create_File_Context
      (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Selection_Context_Access
+      File   : Virtual_File) return Selection_Context
    is
-      Context : File_Selection_Context_Access;
+      Context : Selection_Context := New_Context;
    begin
-      Context := new File_Selection_Context;
-
       Set_Context_Information
         (Context => Context,
          Kernel  => Kernel,
@@ -230,7 +228,7 @@ package body VCS.Generic_VCS is
 
       Set_File_Information (Context, File => File);
 
-      return Selection_Context_Access (Context);
+      return Context;
    end Create_File_Context;
 
    --------------
@@ -372,7 +370,7 @@ package body VCS.Generic_VCS is
             Custom := Create_Proxy
               (The_Action.Command,
                (Event       => null,
-                Context     => null,
+                Context     => No_Context,
                 Synchronous => False,
                 Dir         => Dir,
                 Args        => Args,
@@ -553,7 +551,7 @@ package body VCS.Generic_VCS is
             Custom := Create_Proxy
               (The_Action.Command,
                (Event       => null,
-                Context     => null,
+                Context     => No_Context,
                 Synchronous => False,
                 Dir         => Dir,
                 Args        => Args,

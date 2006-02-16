@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -728,35 +728,31 @@ package body External_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File           : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
       Line           : Integer := 1;
       Column         : Integer := 1;
    begin
-      Push_State (Get_Kernel (File), Busy);
+      Push_State (Get_Kernel (Context.Context), Busy);
       Trace (Me, "Edit file with external editor "
-             & Full_Name (File_Information (File)).all);
+             & Full_Name (File_Information (Context.Context)).all);
 
-      if Context.Context.all in Entity_Selection_Context'Class then
-         Line := Line_Information
-           (Entity_Selection_Context_Access (Context.Context));
-         Column := Entity_Column_Information
-           (Entity_Selection_Context_Access (Context.Context));
+      if Has_Entity_Column_Information (Context.Context) then
+         Line := Line_Information (Context.Context);
+         Column := Entity_Column_Information (Context.Context);
       end if;
 
       Client_Command
-        (Kernel => Get_Kernel (File),
-         File   => Full_Name (File_Information (File)).all,
+        (Kernel => Get_Kernel (Context.Context),
+         File   => Full_Name (File_Information (Context.Context)).all,
          Line   => Line,
          Column => Column);
-      Pop_State (Get_Kernel (File));
+      Pop_State (Get_Kernel (Context.Context));
       return Commands.Success;
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-         Pop_State (Get_Kernel (File));
+         Pop_State (Get_Kernel (Context.Context));
          return Commands.Failure;
    end Execute;
 

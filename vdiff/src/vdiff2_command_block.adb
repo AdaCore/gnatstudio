@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -102,7 +102,7 @@ package body Vdiff2_Command_Block is
      (Command : access Diff_Command_Block)
       return Command_Return_Type
    is
-      Context       : constant Selection_Context_Access
+      Context       : constant Selection_Context
         := Get_Current_Context (Command.Kernel);
       Curr_Node     : Diff_Head_List.List_Node;
       Diff          : Diff_Head := Null_Head;
@@ -110,13 +110,10 @@ package body Vdiff2_Command_Block is
 
    begin
 
-      if Has_File_Information (File_Selection_Context_Access (Context))
-        and then
-          Has_Directory_Information (File_Selection_Context_Access (Context))
+      if Has_File_Information (Context)
+        and then Has_Directory_Information (Context)
       then
-         Selected_File :=
-           File_Information (File_Selection_Context_Access (Context));
-
+         Selected_File := File_Information (Context);
          Curr_Node := Is_In_Diff_List (Selected_File, Command.List_Diff.all);
 
          if Curr_Node /= Diff_Head_List.Null_Node then

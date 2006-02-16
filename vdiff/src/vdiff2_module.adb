@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -37,13 +37,13 @@ package body Vdiff2_Module is
    type In_Diff_List_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access In_Diff_List_Filter;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
    --  ??? See In_Diff_List subprogram
 
    type In_3Diff_List_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access In_3Diff_List_Filter;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
    --  Filter for 3-way diff contextual menus
 
    ---------------------
@@ -223,36 +223,36 @@ package body Vdiff2_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access In_Diff_List_Filter;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      if Context.all in File_Selection_Context'Class
-        and then Has_File_Information (File_Selection_Context_Access (Context))
-        and then Has_Directory_Information
-          (File_Selection_Context_Access (Context))
+      if Has_File_Information (Context)
+        and then Has_Directory_Information (Context)
       then
          return Is_In_Diff_List
-           (File_Information (File_Selection_Context_Access (Context)),
+           (File_Information (Context),
             VDiff2_Module (Vdiff_Module_ID).List_Diff.all) /=
            Diff_Head_List.Null_Node;
       end if;
       return False;
    end Filter_Matches_Primitive;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
    function Filter_Matches_Primitive
      (Filter  : access In_3Diff_List_Filter;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      if Context.all in File_Selection_Context'Class
-        and then Has_File_Information (File_Selection_Context_Access (Context))
-        and then Has_Directory_Information
-          (File_Selection_Context_Access (Context))
+      if Has_File_Information (Context)
+        and then Has_Directory_Information (Context)
       then
          return Is_In_3Diff_List
-           (File_Information (File_Selection_Context_Access (Context)),
+           (File_Information (Context),
             VDiff2_Module (Vdiff_Module_ID).List_Diff.all) /=
            Diff_Head_List.Null_Node;
       end if;

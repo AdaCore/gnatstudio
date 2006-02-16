@@ -160,7 +160,7 @@ package body GPS.Kernel.Modules is
    type Contextual_Label_Param is access Contextual_Label_Parameters'Class;
    function Get_Label
      (Creator : access Contextual_Label_Parameters;
-      Context : access Selection_Context'Class) return String;
+      Context : Selection_Context) return String;
    --  Substitute %p, %f,... in the title to create a suitable contextual menu
    --  title
 
@@ -222,11 +222,6 @@ package body GPS.Kernel.Modules is
    --  Called when a registered menu is displayed, so that we can check whether
    --  it should be made sensitive or not
 
-   procedure Unmap_Menu
-     (Item    : access GObject_Record'Class;
-      Command : Interactive_Action);
-   --  Called when a registered menu is hidden
-
    type Module_List_Access is access Module_List.List;
    function Convert is new Ada.Unchecked_Conversion
      (Module_List_Access, System.Address);
@@ -240,7 +235,7 @@ package body GPS.Kernel.Modules is
    procedure Menu_Handler
      (Module  : access Module_ID_Record;
       Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Module, Object, Context, Menu);
@@ -252,13 +247,14 @@ package body GPS.Kernel.Modules is
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   procedure Default_Context_Factory
+     (Module  : access Module_ID_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget)
    is
-      pragma Unreferenced (Module, Child);
+      pragma Unreferenced (Module, Child, Context);
    begin
-      return null;
+      null;
    end Default_Context_Factory;
 
    -------------------
@@ -281,7 +277,7 @@ package body GPS.Kernel.Modules is
 
    function Tooltip_Handler
      (Module  : access Module_ID_Record;
-      Context : access Selection_Context'Class) return Gdk.Gdk_Pixmap
+      Context : Selection_Context) return Gdk.Gdk_Pixmap
    is
       pragma Unreferenced (Module, Context);
    begin
@@ -492,7 +488,7 @@ package body GPS.Kernel.Modules is
 
    function Get_Label
      (Creator : access Contextual_Label_Parameters;
-      Context : access Selection_Context'Class) return String
+      Context : Selection_Context) return String
    is
       Has_Error : Boolean := False;
 
@@ -522,8 +518,7 @@ package body GPS.Kernel.Modules is
             declare
                Done : aliased Boolean := False;
                Tmp  : constant String := GPS.Kernel.Macros.Substitute
-                 (Param, Selection_Context_Access (Context),
-                  Quoted, Done'Access);
+                 (Param, Context, Quoted, Done'Access);
             begin
                Has_Error := not Done;
                return Tmp;
@@ -560,7 +555,7 @@ package body GPS.Kernel.Modules is
 
    procedure Compute_Tooltip
      (Kernel  : access Kernel_Handle_Record'Class;
-      Context : Selection_Context_Access;
+      Context : Selection_Context;
       Pixmap  : out Gdk.Gdk_Pixmap)
    is
       use type Module_List.List_Node;
@@ -701,11 +696,6 @@ package body GPS.Kernel.Modules is
       Context.Event   := Kernel_Handle (Kernel).Last_Event_For_Contextual;
       --   Get_Current_Event;
 
-      --  This ensure that Context.Context will not be freed while it is needed
-      --  and also that Kernel.Last_Context_For_Contextual is not reset to
-      --  null while the action executes
-      Ref (Context.Context);
-
       case Action.Menu_Type is
          when Type_Action =>
             C := Create_Proxy (Action.Action.Command, Context);
@@ -740,15 +730,10 @@ package body GPS.Kernel.Modules is
       pragma Unreferenced (Object);
       Kernel : constant Kernel_Handle := Convert (Data);
    begin
-      if Kernel.Last_Context_For_Contextual /= null then
+      if Kernel.Last_Context_For_Contextual /= No_Context then
          Trace (Me, "Running Hook " & Contextual_Menu_Close_Hook);
          Run_Hook (Kernel, Contextual_Menu_Close_Hook);
          Trace (Me, "Destroying contextual menu and its context");
-
-         --  This context might still be needed by the action itself, but a ref
-         --  is already created from Contextual_Action and ensures this isn't
-         --  reset to null in that case
-         Unref (Kernel.Last_Context_For_Contextual);
       end if;
    end Contextual_Menu_Destroyed;
 
@@ -759,19 +744,19 @@ package body GPS.Kernel.Modules is
    procedure Create_Contextual_Menu
      (Kernel  : Kernel_Handle;
       Object  : Glib.Object.GObject;
-      Context : Selection_Context_Access;
+      Context : Selection_Context;
       Menu    : in out Gtk.Menu.Gtk_Menu)
    is
       use type Gtk.Widget.Widget_List.Glist;
 
       function Menu_Is_Visible
         (C : Contextual_Menu_Access;
-         Context : Selection_Context_Access) return Boolean;
+         Context : Selection_Context) return Boolean;
       --  Whether the menu C should be made visible
 
       procedure Create_Item
         (C         : Contextual_Menu_Access;
-         Context   : Selection_Context_Access;
+         Context   : Selection_Context;
          Item      : out Gtk_Menu_Item;
          Full_Name : out GNAT.OS_Lib.String_Access);
       --  Create the menu item to use when displaying C.
@@ -779,12 +764,12 @@ package body GPS.Kernel.Modules is
 
       function Label_Name
         (C       : Contextual_Menu_Access;
-         Context : Selection_Context_Access) return String;
+         Context : Selection_Context) return String;
       --  Return the name of the label for C, including parent path
 
       function Has_Explicit_Parent
         (C       : Contextual_Menu_Access;
-         Context : Selection_Context_Access) return Boolean;
+         Context : Selection_Context) return Boolean;
       --  Return True if the parent menu of C was explicitly registered by the
       --  user. In this case, C will be created only when that parent menu is
       --  created, not before.
@@ -795,7 +780,7 @@ package body GPS.Kernel.Modules is
 
       function Menu_Is_Visible
         (C : Contextual_Menu_Access;
-         Context : Selection_Context_Access) return Boolean is
+         Context : Selection_Context) return Boolean is
       begin
          if not C.Visible then
             return False;
@@ -835,7 +820,7 @@ package body GPS.Kernel.Modules is
 
       procedure Create_Item
         (C         : Contextual_Menu_Access;
-         Context   : Selection_Context_Access;
+         Context   : Selection_Context;
          Item      : out Gtk_Menu_Item;
          Full_Name : out GNAT.OS_Lib.String_Access)
       is
@@ -924,7 +909,7 @@ package body GPS.Kernel.Modules is
 
       function Label_Name
         (C       : Contextual_Menu_Access;
-         Context : Selection_Context_Access) return String is
+         Context : Selection_Context) return String is
       begin
          if C.Label = null then
             return C.Name.all;
@@ -939,7 +924,7 @@ package body GPS.Kernel.Modules is
 
       function Has_Explicit_Parent
         (C       : Contextual_Menu_Access;
-         Context : Selection_Context_Access) return Boolean
+         Context : Selection_Context) return Boolean
       is
          Label  : constant String := Label_Name (C, Context);
          Parent : constant String := Dir_Name ('/' & Label);
@@ -1053,23 +1038,23 @@ package body GPS.Kernel.Modules is
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu
    is
-
-      Context     : Selection_Context_Access;
+      Context     : Selection_Context;
       Menu        : Gtk_Menu := null;
    begin
       --  Create the menu and add all the modules information
       Gtk_New (Menu);
 
       Push_State (User.Kernel, Busy);
-      Context := User.Context_Func
-        (Kernel       => User.Kernel,
-         Event_Widget => User.Event_Widget,
-         Object       => User.Object,
-         Event        => Event,
-         Menu         => Menu);
 
-      if Context = null then
-         Context := new Selection_Context;
+      Context.Data.Data := new Selection_Context_Data_Record;
+      if User.Context_Func /= null then
+         User.Context_Func
+           (Context      => Context,
+            Kernel       => User.Kernel,
+            Event_Widget => User.Event_Widget,
+            Object       => User.Object,
+            Event        => Event,
+            Menu         => Menu);
       end if;
 
       --  Override the previous value. No Ref is taken explicitly, so we do not
@@ -1078,7 +1063,6 @@ package body GPS.Kernel.Modules is
 
       Trace (Me, "Set Last_Context_For_Contextual");
 
-      Unref (User.Kernel.Last_Context_For_Contextual);
       User.Kernel.Last_Context_For_Contextual := Context;
 
       if User.Kernel.Last_Event_For_Contextual /= null then
@@ -1248,13 +1232,12 @@ package body GPS.Kernel.Modules is
      (Widget  : access GObject_Record'Class;
       Command : Interactive_Action)
    is
-      Context : constant Selection_Context_Access :=
+      Context : constant Selection_Context :=
         Get_Current_Context (Kernel_Handle (Widget));
    begin
-      if Context /= null
+      if Context /= No_Context
         and then Filter_Matches (Command.Filter, Context)
       then
-         Ref (Context);
          Launch_Background_Command
            (Kernel_Handle (Widget),
             Create_Proxy
@@ -1386,33 +1369,10 @@ package body GPS.Kernel.Modules is
             User_Data   => (Kernel_Handle (Kernel),
                             null,
                             Menu_Filter));
-         Command_Callback.Object_Connect
-           (Get_Toplevel (Item), "unmap", Unmap_Menu'Access,
-            Slot_Object => Item,
-            User_Data   => (Kernel_Handle (Kernel),
-                            null,
-                            null));
       end if;
 
       return Item;
    end Register_Menu;
-
-   ----------------
-   -- Unmap_Menu --
-   ----------------
-
-   procedure Unmap_Menu
-     (Item    : access GObject_Record'Class;
-      Command : Interactive_Action)
-   is
-      pragma Unreferenced (Item);
-   begin
-      if Command.Kernel.Last_Context_For_Contextual /= null then
-         --  This removes the Ref we had taken in Map_Menu for each menu item
-         --  that required a filter
-         Unref (Command.Kernel.Last_Context_For_Contextual);
-      end if;
-   end Unmap_Menu;
 
    --------------
    -- Map_Menu --
@@ -1423,16 +1383,10 @@ package body GPS.Kernel.Modules is
       Command : Interactive_Action)
    is
    begin
-      if Command.Kernel.Last_Context_For_Contextual = null then
+      if Command.Kernel.Last_Context_For_Contextual = No_Context then
          Trace (Me, "Creating last_context_for_contextual (Map_Menu)");
          Command.Kernel.Last_Context_For_Contextual :=
            Get_Current_Context (Command.Kernel);
-      else
-         --  For each call to Map_Menu, there is a call to Unmap_Menu.
-         --  Therefore we take as many Refs as Unmap_Menu will be called.
-         --  In the case above when we created the context, it already has a
-         --  ref_count of 1
-         Ref (Command.Kernel.Last_Context_For_Contextual);
       end if;
 
       Set_Sensitive
@@ -1475,17 +1429,14 @@ package body GPS.Kernel.Modules is
       Ref (Data.Menu);
       Forall (Data.Menu, Remove_Item'Unrestricted_Access);
 
-      --  Override the previous value. Since no explicit Ref is taken, we also
-      --  do not need to free it.
-      Trace (Me, "Menu_Button_Press: Setting Last_Context_For_Contextual");
-      Data.Kernel.Last_Context_For_Contextual :=
-        Get_Current_Context (Data.Kernel);
+      --  Override the previous value.
+--        Trace (Me, "Menu_Button_Press: Setting Last_Context_For_Contextual");
+--        Data.Kernel.Last_Context_For_Contextual :=
+--          Get_Current_Context (Data.Kernel);
 
-      Ref (Data.Kernel.Last_Context_For_Contextual);
       Data.Factory
         (Data.Kernel, Data.Kernel.Last_Context_For_Contextual, Data.Menu);
       Show_All (Data.Menu);
-      Unref (Data.Kernel.Last_Context_For_Contextual);
 
    exception
       when E : others =>

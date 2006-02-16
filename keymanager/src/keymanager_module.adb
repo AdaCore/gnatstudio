@@ -822,7 +822,7 @@ package body KeyManager_Module is
       Command : Action_Record_Access;
       Any_Context_Command : Action_Record_Access := null;
       Has_Secondary : constant Boolean := Handler.Secondary_Keymap /= null;
-      Context : Selection_Context_Access;
+      Context : Selection_Context;
       Context_Computed : Boolean := False;
       Custom  : Command_Access;
 
@@ -870,11 +870,10 @@ package body KeyManager_Module is
                   else
                      if not Context_Computed then
                         Context := Get_Current_Context (Kernel);
-                        Ref (Context);
                         Context_Computed := True;
                      end if;
 
-                     if Context /= null
+                     if Context /= No_Context
                        and then Filter_Matches (Command.Filter, Context)
                      then
                         Trace (Me, "Executing action " & Binding.Action.all);
@@ -907,7 +906,6 @@ package body KeyManager_Module is
 
             if not Context_Computed then
                Context := Get_Current_Context (Kernel);
-               Ref (Context);
                Context_Computed := True;
             end if;
 
@@ -935,10 +933,6 @@ package body KeyManager_Module is
                Show_Bar        => False,
                Queue_Id        => "");
             return True;
-         end if;
-
-         if Context_Computed then
-            Unref (Context);
          end if;
       end if;
 

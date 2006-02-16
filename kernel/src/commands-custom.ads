@@ -191,7 +191,7 @@ private
       Save_Output : Boolean_Array_Access;
       --  Whether we should save the output of the nth-command
 
-      Context  : Selection_Context_Access;
+      Context  : Selection_Context := No_Context;
       --  The context we had at the beginning of the executing
    end record;
    type Custom_Command_Execution is access Custom_Command_Execution_Record;

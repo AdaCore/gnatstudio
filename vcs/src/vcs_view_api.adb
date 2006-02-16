@@ -64,14 +64,14 @@ package body VCS_View_API is
    -----------------------
 
    procedure List_Project_Files
-     (Context   : Selection_Context_Access;
+     (Context   : Selection_Context;
       Recursive : Boolean);
    --  List the files contained in the project relative to Context, if any.
    --  If recursive is True, files in imported subprojects will be listed
    --  as well.
 
    procedure Get_Status_Project
-     (Context   : Selection_Context_Access;
+     (Context   : Selection_Context;
       Recursive : Boolean);
    --  Display the status for the files contained in the project relative
    --  to Context, if any.
@@ -79,7 +79,7 @@ package body VCS_View_API is
    --  as well.
 
    procedure Update_Project
-     (Context   : Selection_Context_Access;
+     (Context   : Selection_Context;
       Recursive : Boolean);
    --  Update the files contained in the project relative to Context, if any.
    --  If recursive is True, files in imported subprojects will be listed
@@ -99,7 +99,7 @@ package body VCS_View_API is
 
    procedure Change_Context
      (Explorer : VCS_Explorer_View_Access;
-      Context  : Selection_Context_Access);
+      Context  : Selection_Context);
    --  Fill the explorer with files that correspond to Context.
    --  Context might be null, in which case the contents of the root project is
    --  shown.
@@ -120,31 +120,31 @@ package body VCS_View_API is
    --  Return the VCS reference corresponding to the current context in Kernel.
 
    function Get_Selected_Files
-     (Context : Selection_Context_Access) return String_List.List;
+     (Context : Selection_Context) return String_List.List;
    --  Return the list of files that are selected, according to Context.
 
    procedure Process_Dirs
-     (Context    : Selection_Context_Access;
+     (Context    : Selection_Context;
       Recursive  : Boolean;
       Update     : Boolean;
       Get_Status : Boolean);
    --  Perform VCS operations on directories contained in Context
 
    procedure On_Log_Action
-     (Context : Selection_Context_Access;
+     (Context : Selection_Context;
       Action  : VCS_Action;
       Files   : in out String_List.List);
    --  Generic callback for an action that requires associated logs. Files will
    --  be freed.
 
    procedure Comparison
-     (Context : Selection_Context_Access;
+     (Context : Selection_Context;
       One_Rev : Boolean);
    --  Factorize code between On_Menu_Diff_Specific and On_Menu_Diff2
 
    procedure On_Menu_Clear_Explorer
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  Clear the VCS Explorer view
 
    ----------------------------
@@ -153,17 +153,15 @@ package body VCS_View_API is
 
    procedure On_Menu_Remove_Project
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
       Explorer  : constant VCS_Explorer_View_Access := Get_Explorer (Kernel);
-      P_Context : constant File_Selection_Context_Access :=
-                    File_Selection_Context_Access (Context);
    begin
-      if Has_Project_Information (P_Context) then
+      if Has_Project_Information (Context) then
          On_Remove_Project
-           (Explorer, Project_Name (Project_Information (P_Context)));
+           (Explorer, Project_Name (Project_Information (Context)));
       else
          On_Remove_Project (Explorer, "No project");
       end if;
@@ -179,7 +177,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Clear_Explorer
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
@@ -208,9 +206,9 @@ package body VCS_View_API is
    ---------------------
 
    function Get_Current_Ref (Kernel : Kernel_Handle) return VCS_Access is
-      C : constant Selection_Context_Access := Get_Current_Context (Kernel);
+      C : constant Selection_Context := Get_Current_Context (Kernel);
    begin
-      if C = null then
+      if C = No_Context then
          return Get_Current_Ref (Get_Project (Kernel));
       else
          return Get_Current_Ref (C);
@@ -223,14 +221,13 @@ package body VCS_View_API is
 
    procedure VCS_Contextual_Menu
      (Kernel          : Kernel_Handle;
-      Context         : Selection_Context_Access;
+      Context         : in out Selection_Context;
       Menu            : access Gtk.Menu.Gtk_Menu_Record'Class;
       Show_Everything : Boolean)
    is
       Item            : Gtk_Menu_Item;
       Menu_Item       : Gtk_Menu_Item;
       Submenu         : Gtk_Menu;
-      File_Name       : File_Selection_Context_Access;
       Ref             : VCS_Access;
       Actions         : Action_Array;
 
@@ -309,9 +306,9 @@ package body VCS_View_API is
 
       function Create_Activity_Menu (Menu : Gtk_Menu) return Boolean is
          Activity  : Activity_Id := First;
-         A_Context : Activity_Context_Access;
          Item      : Gtk_Menu_Item;
          Found     : Boolean := False;
+         A_Context : Selection_Context;
       begin
          while Activity /= No_Activity loop
             if Project_Path (Get_Root_Project (Get_Registry (Kernel).all))
@@ -322,8 +319,7 @@ package body VCS_View_API is
                Gtk_New (Item, Label => Get_Name (Activity));
                Append (Menu, Item);
 
-               A_Context := new Activity_Context;
-
+               A_Context := New_Context;
                Set_Context_Information
                  (A_Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
                Set_Activity_Information (A_Context, Image (Activity));
@@ -333,12 +329,12 @@ package body VCS_View_API is
                then
                   --  In this case record the original file or directory
                   Set_File_Information
-                    (A_Context, File_Information (File_Name));
+                    (A_Context, File_Information (Context));
                end if;
 
                Context_Callback.Connect
                  (Item, "activate", On_Menu_Add_To_Activity'Access,
-                  Selection_Context_Access (A_Context));
+                  A_Context);
                Set_Sensitive (Item, Section_Active);
             end if;
 
@@ -353,7 +349,7 @@ package body VCS_View_API is
       Log_Exists : Boolean;
 
    begin
-      if Context = null then
+      if Context = No_Context then
          Ref := Get_Current_Ref (Get_Project (Kernel));
       else
          Ref := Get_Current_Ref (Context);
@@ -366,27 +362,18 @@ package body VCS_View_API is
 
       Actions := Get_Identified_Actions (Ref);
 
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
-         File_Name := File_Selection_Context_Access (Context);
-      end if;
-
       --  Determine which sections should be displayed
 
-      File_Section := File_Name /= null
-        and then Has_File_Information (File_Name);
-      Dir_Section := File_Name /= null
-        and then Has_Directory_Information (File_Name);
-      Project_Section := File_Name /= null
-        and then Has_Project_Information (File_Name);
+      File_Section := Has_File_Information (Context);
+      Dir_Section := Has_Directory_Information (Context);
+      Project_Section := Has_Project_Information (Context);
 
       --  Look for the special case for handling log files
 
       if File_Section then
          declare
             File_S : constant String :=
-              Full_Name (File_Information (File_Name)).all;
+              Full_Name (File_Information (Context)).all;
          begin
             if File_S'Length > 5
               and then File_S (File_S'Last - 3 .. File_S'Last) = "$log"
@@ -433,7 +420,7 @@ package body VCS_View_API is
            (Item, "activate", On_Menu_Collapse_All'Access, Context);
          Set_Sensitive (Item, True);
 
-         if Context.all not in Activity_Context'Class then
+         if Has_Activity_Information (Context) then
             Gtk_New (Item, Label => -"Clear view");
             Append (Menu, Item);
             Context_Callback.Connect
@@ -447,6 +434,8 @@ package body VCS_View_API is
       end if;
 
       --  Fill the section relative to files
+      --  ??? This should be done when building the context, not when filling
+      --  the contextual menu...
 
       Section_Active := File_Section;
 
@@ -454,13 +443,13 @@ package body VCS_View_API is
          if Log_File then
             declare
                Original : constant Virtual_File :=
-                 Get_File_From_Log (Kernel, File_Information (File_Name));
+                 Get_File_From_Log (Kernel, File_Information (Context));
             begin
                if Original /= VFS.No_File
                  and then Actions (Commit) /= null
                then
                   Set_File_Information
-                    (File_Name,
+                    (Context,
                      Original,
                      Get_Project_From_File
                        (Get_Registry (Kernel).all, Original));
@@ -474,36 +463,35 @@ package body VCS_View_API is
                      when Add =>
                         Context_Callback.Connect
                           (Item, "activate", On_Menu_Add'Access,
-                           Selection_Context_Access (File_Name));
+                           Context);
 
                      when Add_No_Commit =>
                         Context_Callback.Connect
                           (Item, "activate", On_Menu_Add_No_Commit'Access,
-                           Selection_Context_Access (File_Name));
+                           Context);
 
                      when Remove =>
                         Context_Callback.Connect
                           (Item, "activate", On_Menu_Remove'Access,
-                           Selection_Context_Access (File_Name));
+                           Context);
 
                      when Remove_No_Commit =>
                         Context_Callback.Connect
                           (Item, "activate", On_Menu_Remove_No_Commit'Access,
-                           Selection_Context_Access (File_Name));
+                           Context);
 
                      when others =>
                         Context_Callback.Connect
                           (Item, "activate", On_Menu_Commit'Access,
-                           Selection_Context_Access (File_Name));
+                           Context);
                   end case;
                end if;
             end;
 
          else
-            Log_Exists :=
-              File_Name /= null and then
+            Log_Exists := Has_File_Information (Context) and then
               Get_Log_From_File
-                (Kernel, File_Information (File_Name), False) /= VFS.No_File;
+                (Kernel, File_Information (Context), False) /= VFS.No_File;
 
             Add_Action (Status_Files, On_Menu_Get_Status'Access);
             Add_Action (Update, On_Menu_Update'Access);
@@ -511,7 +499,7 @@ package body VCS_View_API is
             --  Removed for files belonging to activities as we only want
             --  group commit here.
 
-            if Context.all not in Activity_Context'Class then
+            if not Has_Activity_Information (Context) then
                Add_Action (Commit, On_Menu_Commit'Access, not Log_Exists);
             end if;
 
@@ -568,7 +556,7 @@ package body VCS_View_API is
 
             --  Removed for files inside activities. See previous comments
 
-            if Context.all not in Activity_Context'Class then
+            if not Has_Activity_Information (Context) then
                Add_Action (Add, On_Menu_Add'Access, not Log_Exists);
             end if;
 
@@ -577,7 +565,7 @@ package body VCS_View_API is
 
             --  Removed for files inside activities. See previous comments
 
-            if Context.all not in Activity_Context'Class then
+            if not Has_Activity_Information (Context) then
                Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
             end if;
 
@@ -602,7 +590,7 @@ package body VCS_View_API is
       --  We shall however display this submenu once it is allowed.
       if (File_Section or else Show_Everything)
         and then First /= No_Activity
-        and then Context.all not in Activity_Context'Class
+        and then not Has_Activity_Information (Context)
       then
          Items_Inserted := True;
          Gtk_New (Menu_Item, Label => -"Add to Activity");
@@ -651,7 +639,7 @@ package body VCS_View_API is
               (Item, "activate",
                On_Menu_Remove_Directory_No_Commit'Access, Context);
 
-            if Context.all not in Activity_Context'Class then
+            if not Has_Activity_Information (Context) then
                if Commit_Directory (Ref) then
                   --  Add Commit and Add to Activity menu entry only if
                   --  directories as handled by the underlying VCS.
@@ -692,7 +680,7 @@ package body VCS_View_API is
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate", On_Menu_Get_Status_Dir'Access,
-               Selection_Context_Access (File_Name));
+               Context);
             Set_Sensitive (Item, Section_Active);
 
             Items_Inserted := True;
@@ -704,7 +692,7 @@ package body VCS_View_API is
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate", On_Menu_Update_Dir'Access,
-               Selection_Context_Access (File_Name));
+               Context);
             Set_Sensitive (Item, Section_Active);
 
             Items_Inserted := True;
@@ -717,7 +705,7 @@ package body VCS_View_API is
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate", On_Menu_Get_Status_Dir_Recursive'Access,
-               Selection_Context_Access (File_Name));
+               Context);
             Set_Sensitive (Item, Section_Active);
 
             Items_Inserted := True;
@@ -730,7 +718,7 @@ package body VCS_View_API is
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate", On_Menu_Update_Dir_Recursive'Access,
-               Selection_Context_Access (File_Name));
+               Context);
             Set_Sensitive (Item, Section_Active);
 
             Items_Inserted := True;
@@ -773,7 +761,7 @@ package body VCS_View_API is
          Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_List_Project_Files'Access,
-            Selection_Context_Access (File_Name));
+            Context);
 
          if Actions (Status_Files) /= null then
             Gtk_New
@@ -781,7 +769,7 @@ package body VCS_View_API is
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate", On_Menu_Get_Status_Project'Access,
-               Selection_Context_Access (File_Name));
+               Context);
             Set_Sensitive (Item, Section_Active);
          end if;
 
@@ -790,7 +778,7 @@ package body VCS_View_API is
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate", On_Menu_Update_Project'Access,
-               Selection_Context_Access (File_Name));
+               Context);
             Set_Sensitive (Item, Section_Active);
          end if;
 
@@ -798,7 +786,7 @@ package body VCS_View_API is
          Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_List_Project_Files_Recursive'Access,
-            Selection_Context_Access (File_Name));
+            Context);
 
          if Actions (Status_Files) /= null then
             Gtk_New
@@ -807,7 +795,7 @@ package body VCS_View_API is
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate", On_Menu_Get_Status_Project_Recursive'Access,
-               Selection_Context_Access (File_Name));
+               Context);
             Set_Sensitive (Item, Section_Active);
          end if;
 
@@ -818,7 +806,7 @@ package body VCS_View_API is
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate", On_Menu_Update_Project_Recursive'Access,
-               Selection_Context_Access (File_Name));
+               Context);
             Set_Sensitive (Item, Section_Active);
          end if;
 
@@ -850,9 +838,8 @@ package body VCS_View_API is
 
    procedure Change_Context
      (Explorer : VCS_Explorer_View_Access;
-      Context  : Selection_Context_Access)
+      Context  : Selection_Context)
    is
-      File      : File_Selection_Context_Access;
       Status    : File_Status_List.List;
       Dirs      : String_List.List;
       Ref       : VCS_Access;
@@ -862,7 +849,7 @@ package body VCS_View_API is
          return;
       end if;
 
-      if Context = null then
+      if Context = No_Context then
          Query_Project_Files
            (Explorer,
             Get_Kernel (Explorer),
@@ -874,36 +861,32 @@ package body VCS_View_API is
       Ref := Get_Current_Ref (Context);
       Set_Current_Context (Explorer, Context);
 
-      if Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
+      if Has_Directory_Information (Context)
+        and then not Has_File_Information (Context)
+      then
+         String_List.Append (Dirs, Directory_Information (Context));
+         Status := Local_Get_Status (Ref, Dirs);
+         String_List.Free (Dirs);
+         Display_File_Status
+           (Get_Kernel (Context), Status, Ref, False, True);
+         File_Status_List.Free (Status);
+         String_List.Free (Dirs);
 
-         if Has_Directory_Information (File)
-           and then not Has_File_Information (File)
-         then
-            String_List.Append (Dirs, Directory_Information (File));
-            Status := Local_Get_Status (Ref, Dirs);
-            String_List.Free (Dirs);
-            Display_File_Status
-              (Get_Kernel (Context), Status, Ref, False, True);
-            File_Status_List.Free (Status);
-            String_List.Free (Dirs);
+      elsif Has_Project_Information (Context)
+        and then not Has_Directory_Information (Context)
+      then
+         Query_Project_Files
+           (Explorer,
+            Get_Kernel (Context),
+            Project_Information (Context),
+            False, False);
 
-         elsif Has_Project_Information (File)
-           and then not Has_Directory_Information (File)
-         then
-            Query_Project_Files
-              (Explorer,
-               Get_Kernel (Context),
-               Project_Information (File),
-               False, False);
-
-         else
-            Query_Project_Files
-              (Explorer,
-               Get_Kernel (Context),
-               Get_Project (Get_Kernel (Context)),
-               False, False);
-         end if;
+      else
+         Query_Project_Files
+           (Explorer,
+            Get_Kernel (Context),
+            Get_Project (Get_Kernel (Context)),
+            False, False);
       end if;
    end Change_Context;
 
@@ -913,7 +896,7 @@ package body VCS_View_API is
 
    procedure Open_Explorer
      (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       Explorer : VCS_Explorer_View_Access;
    begin
@@ -926,16 +909,15 @@ package body VCS_View_API is
    ------------------------
 
    function Get_Selected_Files
-     (Context : Selection_Context_Access) return String_List.List
+     (Context : Selection_Context) return String_List.List
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Explorer : VCS_Explorer_View_Access;
       List     : String_List.List;
-      File     : File_Selection_Context_Access;
    begin
-      if Context.all in File_Selection_Context'Class then
+      if Has_File_Information (Context) then
          if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID) then
-            if Context.all in Activity_Context'Class then
+            if Has_Activity_Information (Context) then
                --  This is a selection from the Activities Explorer
                List := VCS_View.Activities.Get_Selected_Files (Kernel);
 
@@ -945,11 +927,9 @@ package body VCS_View_API is
             end if;
 
          else
-            File := File_Selection_Context_Access (Context);
-
-            if Has_File_Information (File) then
+            if Has_File_Information (Context) then
                String_List.Append
-                 (List, Full_Name (File_Information (File)).all);
+                 (List, Full_Name (File_Information (Context)).all);
             end if;
          end if;
       end if;
@@ -963,7 +943,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Edit_ChangeLog
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -1166,7 +1146,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Edit_Log
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       List   : String_List.List;
@@ -1204,19 +1184,13 @@ package body VCS_View_API is
    ---------------------
 
    function Get_Current_Ref
-     (Context : Selection_Context_Access) return VCS_Access
-   is
-      File : File_Selection_Context_Access;
+     (Context : Selection_Context) return VCS_Access is
    begin
-      if Context = null then
+      if Context = No_Context then
          return Get_VCS_From_Id ("");
 
-      elsif Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_Project_Information (File) then
-            return Get_Current_Ref (Project_Information (File));
-         end if;
+      elsif Has_Project_Information (Context) then
+         return Get_Current_Ref (Project_Information (Context));
       end if;
 
       return Get_Current_Ref (Get_Project (Get_Kernel (Context)));
@@ -1228,7 +1202,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Remove_Log
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -1288,23 +1262,19 @@ package body VCS_View_API is
 
    procedure On_Menu_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      F_Context : constant File_Selection_Context_Access :=
-                    File_Selection_Context_Access (Context);
       Files : String_List.List;
    begin
-      if Has_Directory_Information (F_Context)
-        and then not Has_File_Information (F_Context)
+      if Has_Directory_Information (Context)
+        and then not Has_File_Information (Context)
       then
          --  This is a directory, to commit we need to remove the trailing
          --  directory separator.
 
          declare
-            Dir : constant String :=
-                    Directory_Information
-                      (File_Selection_Context_Access (Context));
+            Dir : constant String := Directory_Information (Context);
          begin
             String_List.Append (Files, Dir (Dir'First .. Dir'Last - 1));
          end;
@@ -1326,7 +1296,7 @@ package body VCS_View_API is
    -------------------
 
    procedure On_Log_Action
-     (Context : Selection_Context_Access;
+     (Context : Selection_Context;
       Action  : VCS_Action;
       Files   : in out String_List.List)
    is
@@ -1416,7 +1386,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Open
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       List : String_List.List;
@@ -1450,7 +1420,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Add
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Files : String_List.List := Get_Selected_Files (Context);
@@ -1469,14 +1439,12 @@ package body VCS_View_API is
 
    procedure On_Menu_Add_Directory_No_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Files : String_List.List;
       Ref   : VCS_Access;
-      Dir   : constant String :=
-                Directory_Information
-                  (File_Selection_Context_Access (Context));
+      Dir   : constant String := Directory_Information (Context);
    begin
       --  Do not pass the ending directory separator as we really want the last
       --  part to be the name we add.
@@ -1501,7 +1469,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Add_No_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Files : String_List.List;
@@ -1535,7 +1503,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Revert
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Files : String_List.List;
@@ -1569,7 +1537,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Resolved
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Files : String_List.List;
@@ -1604,7 +1572,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Remove
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Files : String_List.List := Get_Selected_Files (Context);
@@ -1623,14 +1591,12 @@ package body VCS_View_API is
 
    procedure On_Menu_Remove_Directory_No_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Files : String_List.List;
       Ref   : VCS_Access;
-      Dir   : constant String :=
-                Directory_Information
-                  (File_Selection_Context_Access (Context));
+      Dir   : constant String := Directory_Information (Context);
    begin
       --  Do not pass the ending directory separator as we really want the last
       --  part to be the name we add.
@@ -1655,7 +1621,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Remove_No_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Files : String_List.List;
@@ -1689,7 +1655,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Annotate
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Files : String_List.List;
@@ -1733,7 +1699,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Remove_Annotate
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
@@ -1768,7 +1734,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Update
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -1801,7 +1767,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Get_Status
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -1833,13 +1799,12 @@ package body VCS_View_API is
    ------------------
 
    procedure Process_Dirs
-     (Context    : Selection_Context_Access;
+     (Context    : Selection_Context;
       Recursive  : Boolean;
       Update     : Boolean;
       Get_Status : Boolean)
    is
       Files        : String_List.List;
-      File_Context : File_Selection_Context_Access;
       Status       : File_Status_List.List;
       Ref          : constant VCS_Access := Get_Current_Ref (Context);
       Kernel       : constant Kernel_Handle := Get_Kernel (Context);
@@ -1931,31 +1896,26 @@ package body VCS_View_API is
    begin
       Open_Explorer (Get_Kernel (Context), Context);
 
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
+      if Has_Directory_Information (Context) then
+         String_List.Append (Files, Directory_Information (Context));
+         Add_Directory_Files (Directory_Information (Context));
 
-         if Has_Directory_Information (File_Context) then
-            String_List.Append (Files, Directory_Information (File_Context));
-
-            Add_Directory_Files (Directory_Information (File_Context));
-
-            if Recursive then
-               Add_Directory_Recursively;
-            end if;
-
-            Display_File_Status (Kernel, Status, Ref, False, True, False);
-            File_Status_List.Free (Status);
-
-            if Update then
-               VCS.Update (Ref, Files);
-            end if;
-
-            if Get_Status then
-               VCS.Get_Status_Dirs (Ref, Files);
-            end if;
-
-            String_List.Free (Files);
+         if Recursive then
+            Add_Directory_Recursively;
          end if;
+
+         Display_File_Status (Kernel, Status, Ref, False, True, False);
+         File_Status_List.Free (Status);
+
+         if Update then
+            VCS.Update (Ref, Files);
+         end if;
+
+         if Get_Status then
+            VCS.Get_Status_Dirs (Ref, Files);
+         end if;
+
+         String_List.Free (Files);
       end if;
    end Process_Dirs;
 
@@ -1965,7 +1925,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Update_Dir
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -1985,7 +1945,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Update_Dir_Recursive
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2004,7 +1964,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Get_Status_Dir
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2023,7 +1983,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Get_Status_Dir_Recursive
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2041,22 +2001,19 @@ package body VCS_View_API is
    --------------------
 
    procedure Update_Project
-     (Context   : Selection_Context_Access;
+     (Context   : Selection_Context;
       Recursive : Boolean)
    is
       Files        : String_List.List;
-      File_Context : File_Selection_Context_Access;
       Ref          : constant VCS_Access := Get_Current_Ref (Context);
 
    begin
       Open_Explorer (Get_Kernel (Context), Context);
 
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_Project_Information (File_Context) then
+      if Has_File_Information (Context) then
+         if Has_Project_Information (Context) then
             Files := Get_Files_In_Project
-              (Project_Information (File_Context), Recursive);
+              (Project_Information (Context), Recursive);
          else
             Files := Get_Files_In_Project
               (Get_Project (Get_Kernel (Context)), Recursive);
@@ -2075,7 +2032,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Update_Project
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2092,7 +2049,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Update_Project_Recursive
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2165,22 +2122,19 @@ package body VCS_View_API is
    ------------------------
 
    procedure List_Project_Files
-     (Context   : Selection_Context_Access;
+     (Context   : Selection_Context;
       Recursive : Boolean)
    is
       Kernel       : constant Kernel_Handle := Get_Kernel (Context);
-      File_Context : File_Selection_Context_Access;
    begin
       Open_Explorer (Get_Kernel (Context), Context);
 
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_Project_Information (File_Context) then
+      if Has_File_Information (Context) then
+         if Has_Project_Information (Context) then
             Query_Project_Files
               (Get_Explorer (Kernel),
                Kernel,
-               Project_Information (File_Context),
+               Project_Information (Context),
                False, Recursive);
          else
             Query_Project_Files
@@ -2198,7 +2152,7 @@ package body VCS_View_API is
 
    procedure On_Menu_List_Project_Files
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2215,7 +2169,7 @@ package body VCS_View_API is
 
    procedure On_Menu_List_Project_Files_Recursive
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2231,22 +2185,19 @@ package body VCS_View_API is
    ------------------------
 
    procedure Get_Status_Project
-     (Context   : Selection_Context_Access;
+     (Context   : Selection_Context;
       Recursive : Boolean)
    is
       Kernel       : constant Kernel_Handle := Get_Kernel (Context);
-      File_Context : File_Selection_Context_Access;
    begin
       Open_Explorer (Kernel, Context);
 
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_Project_Information (File_Context) then
+      if Has_File_Information (Context) then
+         if Has_Project_Information (Context) then
             Query_Project_Files
               (Get_Explorer (Kernel),
                Kernel,
-               Project_Information (File_Context),
+               Project_Information (Context),
                True, Recursive);
          else
             Query_Project_Files
@@ -2264,7 +2215,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Get_Status_Project
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2281,7 +2232,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Get_Status_Project_Recursive
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2298,7 +2249,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Diff
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -2335,7 +2286,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Diff_Working
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -2372,7 +2323,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Diff_Base_Head
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -2406,7 +2357,7 @@ package body VCS_View_API is
 
    procedure On_Menu_View_Log
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -2441,7 +2392,7 @@ package body VCS_View_API is
 
    procedure On_Menu_View_Log_Rev
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -2469,10 +2420,6 @@ package body VCS_View_API is
            (Protect (String_List.Head (Status.Working_Revision)));
       end if;
 
-      --  Ref the Context, so that it doesn't get destroyed while displaying
-      --  the input
-      GPS.Kernel.Ref (Context);
-
       declare
          Str : constant String :=
            Execute_GPS_Shell_Command
@@ -2489,11 +2436,6 @@ package body VCS_View_API is
          end if;
       end;
 
-      declare
-         The_Context : Selection_Context_Access := Context;
-      begin
-         GPS.Kernel.Unref (The_Context);
-      end;
       Free (Revision);
       String_List.Free (Files);
 
@@ -2509,7 +2451,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Diff_Specific
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2526,7 +2468,7 @@ package body VCS_View_API is
 
    procedure On_Menu_Diff2
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
    begin
@@ -2542,7 +2484,7 @@ package body VCS_View_API is
    ----------------
 
    procedure Comparison
-     (Context : Selection_Context_Access;
+     (Context : Selection_Context;
       One_Rev : Boolean)
    is
       use String_List;
@@ -2587,10 +2529,6 @@ package body VCS_View_API is
            (Protect (Head (Status.Working_Revision)));
       end if;
 
-      --  Ref the Context, so that it doesn't get destroyed while displaying
-      --  the input
-      GPS.Kernel.Ref (Context);
-
       if One_Rev then
          Str := new String'
            (Execute_GPS_Shell_Command
@@ -2607,12 +2545,6 @@ package body VCS_View_API is
                & " ""Revision 1=" & Revision_1.all & """"
                & " ""Revision 2=" & Revision_2.all & """"));
       end if;
-
-      declare
-         The_Context : Selection_Context_Access := Context;
-      begin
-         GPS.Kernel.Unref (The_Context);
-      end;
 
       if One_Rev then
          if Str'Length /= 0 then
@@ -2732,7 +2664,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
       Explorer : VCS_Explorer_View_Access;
    begin
-      Open_Explorer (Kernel, null);
+      Open_Explorer (Kernel, No_Context);
       Explorer := Get_Explorer (Kernel);
       Query_Project_Files (Explorer, Kernel, Get_Project (Kernel), True, True);
 
@@ -2770,7 +2702,7 @@ package body VCS_View_API is
 
    function Context_Factory
      (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context
    is
       pragma Unreferenced (Child);
       Explorer : VCS_Explorer_View_Access;
@@ -2780,14 +2712,14 @@ package body VCS_View_API is
       if Explorer /= null then
          return Get_Current_Context (Explorer);
       else
-         return null;
+         return No_Context;
       end if;
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-         return null;
+         return No_Context;
    end Context_Factory;
 
    -------------------------
@@ -2856,7 +2788,7 @@ package body VCS_View_API is
       --  Process the command
 
       if Command = "get_status" then
-         Open_Explorer (Kernel, null);
+         Open_Explorer (Kernel, No_Context);
          Get_Status (Ref, Files);
 
       elsif Command = "update" then

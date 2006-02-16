@@ -60,7 +60,7 @@ package VCS_Module is
    procedure Destroy (Module : in out VCS_Module_ID_Record);
    function Default_Context_Factory
      (Module : access VCS_Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context;
    --  See inherited documentation
 
    procedure Register_Module

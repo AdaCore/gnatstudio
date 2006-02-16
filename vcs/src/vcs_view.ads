@@ -98,11 +98,11 @@ package VCS_View is
 
    function Get_Current_Context
      (Explorer : access VCS_View_Record)
-      return Selection_Context_Access;
+      return Selection_Context;
 
    procedure Set_Current_Context
      (Explorer : access VCS_View_Record;
-      Context  : Selection_Context_Access);
+      Context  : Selection_Context);
 
    function Get_Iter_From_File
      (Explorer : access VCS_View_Record'Class;
@@ -181,17 +181,17 @@ package VCS_View is
 
    procedure On_Menu_Expand_All
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  Expand all nodes in the VCS Explorer view
 
    procedure On_Menu_Collapse_All
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  Collapse all nodes in the VCS Explorer view
 
    procedure On_Menu_Select_Files_Same_Status
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  Select all files having the same status as the current selection
 
    function File_Key (File : VFS.Virtual_File) return String;
@@ -215,7 +215,7 @@ private
       Kernel          : Kernel_Handle;
       --  Reference to the kernel that launched the explorer, if any
 
-      Context         : Selection_Context_Access;
+      Context         : Selection_Context;
       --  The current context being shown / selected in the explorer
 
       Tree            : Gtk_Tree_View;

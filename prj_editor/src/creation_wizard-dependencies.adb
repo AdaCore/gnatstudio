@@ -770,12 +770,10 @@ package body Creation_Wizard.Dependencies is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File : constant File_Selection_Context_Access :=
-               File_Selection_Context_Access (Context.Context);
       Wiz  : Project_Wizard;
    begin
-      Gtk_New (Wiz, Get_Kernel (File),
-               Project           => Project_Information (File),
+      Gtk_New (Wiz, Get_Kernel (Context.Context),
+               Project           => Project_Information (Context.Context),
                Title             => -"Project Dependencies",
                Auto_Save_On_Exit => False);
       Add_Project_Dependencies_Page (Wiz);

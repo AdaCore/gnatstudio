@@ -400,8 +400,8 @@ package body GPS.Kernel.Task_Manager is
    begin
       Add_Command
         (Manager,
-         Create_Wrapper
-           (Command, Destroy_On_Exit), Active, Show_Bar, Queue_Id);
+         Create_Wrapper (Command, Destroy_On_Exit),
+         Active, Show_Bar, Queue_Id);
    end Launch_Background_Command;
 
    ---------------------------

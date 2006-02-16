@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -232,12 +232,13 @@ package Project_Explorers_Common is
    --  If Add_Dummy is true, a dummy node will be added to nodes collapsed
    --  by this call.
 
-   function Context_Factory
-     (Kernel : Kernel_Handle;
-      Tree   : access Gtk_Tree_View_Record'Class;
-      Model  : Gtk_Tree_Store;
-      Event  : Gdk_Event;
-      Menu   : Gtk_Menu) return Selection_Context_Access;
+   procedure Context_Factory
+     (Context : in out Selection_Context;
+      Kernel  : Kernel_Handle;
+      Tree    : access Gtk_Tree_View_Record'Class;
+      Model   : Gtk_Tree_Store;
+      Event   : Gdk_Event;
+      Menu    : Gtk_Menu);
    --  Return the context to use for the contextual menu.
 
 private

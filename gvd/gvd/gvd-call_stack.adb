@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                       Copyright (C) 2003-2005                     --
+--                       Copyright (C) 2003-2006                     --
 --                             AdaCore                               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -129,12 +129,13 @@ package body GVD.Call_Stack is
    procedure Set_Column_Types (Tree : access Call_Stack_Record'Class);
    --  Setup the columns.
 
-   function Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk_Menu);
    --  Create the context for the contextual menus
 
    procedure Change_Mask
@@ -244,14 +245,15 @@ package body GVD.Call_Stack is
    -- Context_Factory --
    ---------------------
 
-   function Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Kernel, Event_Widget, Event);
+      pragma Unreferenced (Kernel, Event_Widget, Event, Context);
       Stack : constant Call_Stack := Call_Stack (Object);
       Check : Gtk_Check_Menu_Item;
    begin
@@ -286,8 +288,6 @@ package body GVD.Call_Stack is
          Call_Stack_Cb.Object_Connect
            (Check, "activate", Change_Mask'Access, Stack, File_Location);
       end if;
-
-      return null;
    end Context_Factory;
 
    ----------------------

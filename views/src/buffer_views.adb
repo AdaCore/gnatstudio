@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                         Copyright (C) 2005-2006                   --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -111,12 +111,13 @@ package body Buffer_Views is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Close the selected editors
 
-   function View_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure View_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Context factory when creating contextual menus
 
    -------------
@@ -477,17 +478,17 @@ package body Buffer_Views is
    -- View_Context_Factory --
    --------------------------
 
-   function View_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure View_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Event_Widget);
+      pragma Unreferenced (Event_Widget, Context);
       V       : constant Buffer_View_Access := Buffer_View_Access (Object);
       Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
-      Context : Selection_Context_Access;
       Iter    : Gtk_Tree_Iter;
       Check   : Gtk_Check_Menu_Item;
    begin
@@ -504,8 +505,6 @@ package body Buffer_Views is
       if Iter /= Null_Iter then
          --  Nothing special in the context, just the module itself so that
          --  people can still add information if needed
-         Context := new Selection_Context;
-
          if not Iter_Is_Selected (Get_Selection (V.Tree), Iter) then
             Unselect_All (Get_Selection (V.Tree));
             Select_Iter (Get_Selection (V.Tree), Iter);
@@ -526,8 +525,6 @@ package body Buffer_Views is
          Widget_Callback.Object_Connect
            (Check, "toggled", Refresh'Access, Slot_Object => V);
       end if;
-
-      return Context;
    end View_Context_Factory;
 
    ----------------

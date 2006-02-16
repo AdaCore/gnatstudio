@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                        Copyright (C) 2005-2006                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -130,12 +130,13 @@ package body Bookmark_Views is
       Event : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
 
-   function View_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure View_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Context factory when creating contextual menus
 
    function Get_Selected_From_Event
@@ -417,26 +418,25 @@ package body Bookmark_Views is
    -- View_Context_Factory --
    --------------------------
 
-   function View_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure View_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Kernel, Event_Widget, Menu);
+      pragma Unreferenced (Kernel, Event_Widget, Menu, Context);
       --  Nothing special in the context, just the module itself so that people
       --  can still add information if needed
       V       : constant Bookmark_View_Access := Bookmark_View_Access (Object);
       Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
-      Context : constant Selection_Context_Access := new Selection_Context;
       Iter    : Gtk_Tree_Iter;
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
       if Iter /= Null_Iter then
          Select_Iter (Get_Selection (V.Tree), Iter);
       end if;
-      return Context;
    end View_Context_Factory;
 
    ------------------

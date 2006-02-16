@@ -656,32 +656,32 @@ package body Browsers.Canvas is
    -- Contextual_Factory --
    ------------------------
 
-   function Contextual_Factory
-     (Item  : access Browser_Item_Record;
+   procedure Contextual_Factory
+     (Item    : access Browser_Item_Record;
+      Context : in out GPS.Kernel.Selection_Context;
       Browser : access General_Browser_Record'Class;
-      Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu)
    is
-      pragma Unreferenced (Item, Browser, Event, Menu);
+      pragma Unreferenced (Item, Browser, Event, Menu, Context);
    begin
-      return null;
+      null;
    end Contextual_Factory;
 
    -------------------------------------
    -- Default_Browser_Context_Factory --
    -------------------------------------
 
-   function Default_Browser_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Default_Browser_Context_Factory
+     (Context      : in out GPS.Kernel.Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
-      return GPS.Kernel.Selection_Context_Access
    is
       pragma Unreferenced (Event_Widget);
       B          : constant General_Browser := General_Browser (Object);
-      Context    : Selection_Context_Access;
       Mitem      : Gtk_Menu_Item;
       Zooms_Menu : Gtk_Menu;
       Item       : Canvas_Item;
@@ -722,15 +722,13 @@ package body Browsers.Canvas is
          Ysave := Get_Y (Event);
          Set_X (Event, Get_X (Event) - Gdouble (Get_Coord (Item).X));
          Set_Y (Event, Get_Y (Event) - Gdouble (Get_Coord (Item).Y));
-         Context := Contextual_Factory
-           (Browser_Item (Item), B, Event, Menu);
+         Contextual_Factory
+           (Browser_Item (Item), Context, B, Event, Menu);
          Set_X (Event, Xsave);
          Set_Y (Event, Ysave);
       end if;
 
-      if Context = null then
-         Context := new Selection_Context;
-
+      if Item = null then
          Gtk_New (Mitem, Label => -"Refresh Layout");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
@@ -793,8 +791,6 @@ package body Browsers.Canvas is
       Append (Menu, Mitem);
       Widget_Callback.Object_Connect
         (Mitem, "activate", On_Select_All'Access, B);
-
-      return Context;
    end Default_Browser_Context_Factory;
 
    --------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -87,9 +87,10 @@ package body Browsers.Entities is
    Generic_Item_Box_Height     : constant := Generic_Item_Box_Height_Top + 17;
    --  Height of the top-rigth box for generic items
 
-   function Default_Context_Factory
-     (Module : access Entity_Browser_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Entity_Browser_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
    ------------------
@@ -146,11 +147,12 @@ package body Browsers.Entities is
       Height_Offset    : Glib.Gint;
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class);
-   function Contextual_Factory
+   procedure Contextual_Factory
      (Item    : access Type_Item_Record;
+      Context : in out Selection_Context;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
+      Menu    : Gtk.Menu.Gtk_Menu);
    function Get_Last_Button_Number
      (Item : access Type_Item_Record) return Glib.Gint;
    procedure Redraw_Title_Bar (Item : access Type_Item_Record);
@@ -460,9 +462,7 @@ package body Browsers.Entities is
    begin
       Item := Add_Or_Select_Item
         (Browser => Type_Browser (Get_Widget (Child)),
-         Entity  =>
-           Get_Entity (Entity_Selection_Context_Access (Context.Context),
-                       Ask_If_Overloaded => True));
+         Entity  => Get_Entity (Context.Context, Ask_If_Overloaded => True));
       Layout (Type_Browser (Get_Widget (Child)), Force => False);
       return Commands.Success;
    end Execute;
@@ -698,25 +698,23 @@ package body Browsers.Entities is
    procedure On_Type_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
       Child   : MDI_Child;
       Item    : Type_Item;
+      Entity  : Entity_Information;
       pragma Unreferenced (Widget, Item);
 
    begin
-      Ref (Context);
       Child := Open_Type_Browser_Child (Kernel);
 
-      if Context /= null
-        and then Context.all in Entity_Selection_Context'Class
-      then
-         Item := Add_Or_Select_Item
-           (Browser => Type_Browser (Get_Widget (Child)),
-            Entity  => Get_Entity (Entity_Selection_Context_Access (Context),
-                                   Ask_If_Overloaded => True));
+      if Context /= No_Context then
+         Entity := Get_Entity (Context, Ask_If_Overloaded => True);
+         if Entity /= null then
+            Item := Add_Or_Select_Item
+              (Browser => Type_Browser (Get_Widget (Child)),
+               Entity  => Entity);
+         end if;
       end if;
-
-      Unref (Context);
 
    exception
       when E : others =>
@@ -1677,17 +1675,16 @@ package body Browsers.Entities is
    -- Contextual_Factory --
    ------------------------
 
-   function Contextual_Factory
+   procedure Contextual_Factory
      (Item    : access Type_Item_Record;
+      Context : in out Selection_Context;
       Browser : access General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Menu    : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Event);
-      Context : Entity_Selection_Context_Access;
       Mitem : Gtk_Menu_Item;
    begin
-      Context := new Entity_Selection_Context;
       Set_Entity_Information
         (Context       => Context,
          Entity_Name   => Get_Name (Item.Entity).all,
@@ -1710,31 +1707,28 @@ package body Browsers.Entities is
             Slot_Object => Browser,
             User_Data   => Browser_Item (Item));
       end if;
-
-      return Selection_Context_Access (Context);
    end Contextual_Factory;
 
    -----------------------------
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Entity_Browser_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   procedure Default_Context_Factory
+     (Module  : access Entity_Browser_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget)
    is
       pragma Unreferenced (Module);
       Browser : constant Type_Browser := Type_Browser (Child);
       Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
       --  If there is no selection, or more than one item, nothing we can do
-      if Get (Iter) = null
-        or else Get (Next (Iter)) /= null
+      if Get (Iter) /= null
+        and then Get (Next (Iter)) = null
       then
-         return null;
+         Contextual_Factory
+           (Browser_Item (Get (Iter)), Context, Browser, null, null);
       end if;
-
-      return Contextual_Factory
-        (Browser_Item (Get (Iter)), Browser, null, null);
    end Default_Context_Factory;
 
    ----------------------------

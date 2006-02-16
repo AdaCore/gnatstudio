@@ -169,7 +169,7 @@ package body GVD_Module is
 
    function Tooltip_Handler
      (Module  : access GVD_Module_Record;
-      Context : access Selection_Context'Class) return Gdk.Gdk_Pixmap;
+      Context : Selection_Context) return Gdk.Gdk_Pixmap;
    --  See inherited documentation
 
    GVD_Module_Name : constant String := "Debugger";
@@ -215,7 +215,7 @@ package body GVD_Module is
    --  Initialize the debugger
 
    function Get_Variable_Name
-     (Context     : Selection_Context_Access;
+     (Context     : Selection_Context;
       Dereference : Boolean) return String;
    --  If Context contains an entity, get the entity name.
    --  Dereference the entity if Dereference is True.
@@ -413,23 +413,23 @@ package body GVD_Module is
    type Debugger_Active_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Debugger_Active_Filter;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
 
    type Printable_Variable_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Printable_Variable_Filter;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
 
    type Access_Variable_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Access_Variable_Filter;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
 
    type Subprogram_Variable_Filter
      is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Subprogram_Variable_Filter;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
 
    type Print_Variable_Command is new Interactive_Command with record
       Display     : Boolean := False;
@@ -463,7 +463,7 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    function Custom_Label_Expansion
-     (Context : access Selection_Context'Class) return String;
+     (Context : Selection_Context) return String;
    --  Provide expansion for "$!" in the labels for contextual menus
 
    ----------------------------
@@ -1668,9 +1668,9 @@ package body GVD_Module is
    ----------------------------
 
    function Custom_Label_Expansion
-     (Context : access Selection_Context'Class) return String is
+     (Context : Selection_Context) return String is
    begin
-      return Get_Variable_Name (Selection_Context_Access (Context), True);
+      return Get_Variable_Name (Context, True);
    end Custom_Label_Expansion;
 
    -------------
@@ -1733,9 +1733,7 @@ package body GVD_Module is
       pragma Unreferenced (Command);
       Process : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context.Context)));
-      Entity  : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
-      Variable : constant String := Entity_Name_Information (Entity);
+      Variable : constant String := Entity_Name_Information (Context.Context);
       S        : constant String :=
         Simple_Entry_Dialog
           (Parent   => Process.Window,
@@ -1759,15 +1757,14 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Entity      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
       Memory_View : GVD_Memory_View;
 
    begin
       Gtk_New
-        (Memory_View, Gtk_Widget (Get_Main_Window (Get_Kernel (Entity))));
+        (Memory_View,
+         Gtk_Widget (Get_Main_Window (Get_Kernel (Context.Context))));
       Show_All (Memory_View);
-      Display_Memory (Memory_View, Entity_Name_Information (Entity));
+      Display_Memory (Memory_View, Entity_Name_Information (Context.Context));
       return Commands.Success;
    end Execute;
 
@@ -1779,28 +1776,26 @@ package body GVD_Module is
      (Command : access Set_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Entity   : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
-      Debugger : constant Debugger_Access :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Entity))).Debugger;
+      Debugger : constant Debugger_Access := Get_Current_Process
+        (Get_Main_Window (Get_Kernel (Context.Context))).Debugger;
    begin
       if not Command.On_Line then
          Break_Subprogram
            (Debugger,
-            Entity_Name_Information (Entity),
+            Entity_Name_Information (Context.Context),
             Mode => GVD.Types.Visible);
       elsif Command.Continue_Till then
          Break_Source
            (Debugger,
-            File_Information (Entity),
-            Line_Information (Entity),
+            File_Information (Context.Context),
+            Line_Information (Context.Context),
             Temporary => True);
          Continue (Debugger, Mode => GVD.Types.Visible);
       else
          Break_Source
            (Debugger,
-            File_Information (Entity),
-            Line_Information (Entity),
+            File_Information (Context.Context),
+            Line_Information (Context.Context),
             Mode => GVD.Types.Visible);
       end if;
 
@@ -1813,7 +1808,7 @@ package body GVD_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access Debugger_Active_Filter;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
       Process  : constant Visual_Debugger :=
@@ -1821,8 +1816,8 @@ package body GVD_Module is
    begin
       return Process /= null
         and then Process.Debugger /= null
-        and then (Context.all in File_Selection_Context'Class
-                  or else Context.all in File_Area_Context'Class)
+        and then (Has_File_Information (Context)
+                  or else Has_Area_Information (Context))
         and then not Command_In_Process (Get_Process (Process.Debugger));
    end Filter_Matches_Primitive;
 
@@ -1832,13 +1827,13 @@ package body GVD_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access Subprogram_Variable_Filter;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
       Entity : Entity_Information;
    begin
-      if Context.all in Entity_Selection_Context'Class then
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+      if Has_Entity_Name_Information (Context) then
+         Entity := Get_Entity (Context);
          return Entity = null or else Is_Subprogram (Entity);
       end if;
       return False;
@@ -1850,18 +1845,19 @@ package body GVD_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access Printable_Variable_Filter;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
       Entity : Entity_Information;
    begin
-      if Context.all in Entity_Selection_Context'Class then
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+      if Has_Entity_Name_Information (Context) then
+         Entity := Get_Entity (Context);
 
          return Entity = null
            or else (not Get_Kind (Entity).Is_Type
                     and then Is_Printable_Entity (Get_Kind (Entity).Kind));
-      elsif Context.all in File_Area_Context'Class then
+
+      elsif Has_Area_Information (Context) then
          --  We assume the user knows best
          return True;
       end if;
@@ -1874,17 +1870,18 @@ package body GVD_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access Access_Variable_Filter;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
       Entity : Entity_Information;
    begin
-      if Context.all in Entity_Selection_Context'Class then
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+      if Has_Entity_Name_Information (Context) then
+         Entity := Get_Entity (Context);
          return Entity = null
            or else (not Get_Kind (Entity).Is_Type
                     and then Is_Access_Entity (Get_Kind (Entity).Kind));
-      elsif Context.all in File_Area_Context'Class then
+
+      elsif Has_Area_Information (Context) then
          return True;
       end if;
       return False;
@@ -1896,27 +1893,25 @@ package body GVD_Module is
 
    function Tooltip_Handler
      (Module  : access GVD_Module_Record;
-      Context : access Selection_Context'Class) return Gdk.Gdk_Pixmap
+      Context : Selection_Context) return Gdk.Gdk_Pixmap
    is
       pragma Unreferenced (Module);
       Pixmap    : Gdk.Gdk_Pixmap;
-      Selection : Entity_Selection_Context_Access;
       Debugger  : Visual_Debugger;
       Kernel    : Kernel_Handle;
       Value     : Basic_Types.String_Access;
 
    begin
-      if Context.all not in Entity_Selection_Context'Class then
+      if not Has_Entity_Name_Information (Context) then
          return null;
       end if;
 
       Kernel    := Get_Kernel (Context);
-      Selection := Entity_Selection_Context_Access (Context);
       Debugger  := Get_Current_Process (Get_Main_Window (Kernel));
 
       if Debugger = null
         or else Debugger.Debugger = null
-        or else not Has_Entity_Name_Information (Selection)
+        or else not Has_Entity_Name_Information (Context)
         or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
          return null;
@@ -1926,7 +1921,7 @@ package body GVD_Module is
 
       declare
          Variable_Name : constant String :=
-           Entity_Name_Information (Selection);
+           Entity_Name_Information (Context);
       begin
          if Variable_Name = ""
            or else not Can_Tooltip_On_Entity
@@ -2165,56 +2160,45 @@ package body GVD_Module is
    -----------------------
 
    function Get_Variable_Name
-     (Context     : Selection_Context_Access;
+     (Context     : Selection_Context;
       Dereference : Boolean) return String
    is
-      File   : File_Selection_Context_Access;
-      Entity : Entity_Selection_Context_Access;
       Lang   : Language_Access;
    begin
-      if Context = null then
+      if Context = No_Context then
          return "";
       end if;
 
-      if Context.all in File_Area_Context'Class then
+      if Has_Area_Information (Context) then
          if Dereference then
-            File := File_Selection_Context_Access (Context);
-            if Has_File_Information (File) then
+            if Has_File_Information (Context) then
                Lang := Get_Language_From_File
                  (Get_Language_Handler (Get_Kernel (Context)),
-                  File_Information (File));
+                  File_Information (Context));
 
                if Lang /= null then
-                  return Dereference_Name
-                    (Lang,
-                     Text_Information (File_Area_Context_Access (Context)));
+                  return Dereference_Name (Lang, Text_Information (Context));
                end if;
             end if;
          end if;
 
-         return Text_Information (File_Area_Context_Access (Context));
+         return Text_Information (Context);
       end if;
 
-      if Context.all not in Entity_Selection_Context'Class then
-         return "";
-      end if;
-
-      Entity := Entity_Selection_Context_Access (Context);
-
-      if Has_Entity_Name_Information (Entity) then
+      if Has_Entity_Name_Information (Context) then
          if Dereference then
-            if Has_File_Information (Entity) then
+            if Has_File_Information (Context) then
                Lang := Get_Language_From_File
                  (Get_Language_Handler (Get_Kernel (Context)),
-                  File_Information (Entity));
+                  File_Information (Context));
 
                if Lang /= null then
                   return Dereference_Name
-                    (Lang, Entity_Name_Information (Entity));
+                    (Lang, Entity_Name_Information (Context));
                end if;
             end if;
          else
-            return Entity_Name_Information (Entity);
+            return Entity_Name_Information (Context);
          end if;
       end if;
 
@@ -2356,7 +2340,6 @@ package body GVD_Module is
    is
       pragma Unreferenced (Hook);
       D : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
-      Area_Context : File_Area_Context_Access;
 
       Process      : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (D.Context)));
@@ -2364,19 +2347,17 @@ package body GVD_Module is
    begin
       if Process = null
         or else Process.Debugger = null
-        or else D.Context.all not in File_Area_Context'Class
+        or else not Has_Area_Information (D.Context)
       then
          return;
       end if;
 
-      Area_Context := File_Area_Context_Access (D.Context);
-
       declare
          Line1, Line2 : Integer;
-         File : constant Virtual_File := File_Information (Area_Context);
+         File : constant Virtual_File := File_Information (D.Context);
 
       begin
-         Get_Area (Area_Context, Line1, Line2);
+         Get_Area (D.Context, Line1, Line2);
 
          if GVD_Module_ID.Show_Lines_With_Code
            and then Command_In_Process (Get_Process (Process.Debugger))

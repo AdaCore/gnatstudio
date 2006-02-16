@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -514,8 +514,6 @@ package body Refactoring.Subprograms is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File : constant VFS.Virtual_File := File_Information
-        (File_Selection_Context_Access (Context.Context));
       Line_Start, Line_End : Integer;
       Options : Extract_Method_Options;
 
@@ -569,11 +567,11 @@ package body Refactoring.Subprograms is
          Options := (Use_In_Keyword    => Get_Active (Check),
                      Use_Separate_Decl => Get_Active (Separate_Decl));
 
-         Get_Area
-           (File_Area_Context_Access (Context.Context), Line_Start, Line_End);
+         Get_Area (Context.Context, Line_Start, Line_End);
          Result := Extract_Method
            (Get_Kernel (Context.Context),
-            File, Line_Start, Line_End, Get_Text (Ent), Options);
+            File_Information (Context.Context),
+            Line_Start, Line_End, Get_Text (Ent), Options);
       end if;
 
       Destroy (Dialog);

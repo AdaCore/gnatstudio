@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -525,9 +525,7 @@ package body Vdiff2_Module.Callback is
          Change_Ref_File'Access);
 
       Selected_File :=
-        Create (Get_Ref_Filename
-                  (File_Information
-                     (File_Selection_Context_Access (Context.Context))));
+        Create (Get_Ref_Filename (File_Information (Context.Context)));
 
       Node := Is_In_Diff_List
         (Selected_File,
@@ -572,9 +570,7 @@ package body Vdiff2_Module.Callback is
          Unhighlight_Difference'Access);
 
       Selected_File :=
-        Create (Get_Ref_Filename
-                  (File_Information
-                     (File_Selection_Context_Access (Context.Context))));
+        Create (Get_Ref_Filename (File_Information (Context.Context)));
 
       Node := Is_In_Diff_List
         (Selected_File,
@@ -608,9 +604,7 @@ package body Vdiff2_Module.Callback is
          Reload_Difference'Access);
 
       Selected_File :=
-        Create (Get_Ref_Filename
-                  (File_Information
-                     (File_Selection_Context_Access (Context.Context))));
+        Create (Get_Ref_Filename (File_Information (Context.Context)));
 
       Node := Is_In_Diff_List
         (Selected_File,
@@ -651,9 +645,7 @@ package body Vdiff2_Module.Callback is
          Close_Difference'Access);
 
       Selected_File :=
-        Create (Get_Ref_Filename
-                  (File_Information
-                     (File_Selection_Context_Access (Context.Context))));
+        Create (Get_Ref_Filename (File_Information (Context.Context)));
 
       Node := Is_In_Diff_List
         (Selected_File,

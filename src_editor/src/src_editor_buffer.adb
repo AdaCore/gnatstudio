@@ -3996,10 +3996,9 @@ package body Src_Editor_Buffer is
       Start_Line : Buffer_Line_Type;
       End_Line   : Buffer_Line_Type)
    is
-      Context     : File_Area_Context_Access;
+      Context     : Selection_Context := New_Context;
       First, Last : Editable_Line_Type;
    begin
-      Context := new File_Area_Context;
       Set_Context_Information
         (Context,
          Buffer.Kernel,
@@ -4034,7 +4033,6 @@ package body Src_Editor_Buffer is
 
       Set_Area_Information (Context, "", Integer (First), Integer (Last));
       GPS.Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
-      Unref (Selection_Context_Access (Context));
    end Source_Lines_Revealed;
 
    ---------------------
@@ -5265,7 +5263,7 @@ package body Src_Editor_Buffer is
 
    function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
-      Ctxt    : access Selection_Context'Class) return Boolean
+      Ctxt    : Selection_Context) return Boolean
    is
       pragma Unreferenced (Context);
       Widget : constant Gtk_Widget :=

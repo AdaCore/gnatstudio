@@ -49,7 +49,7 @@ package body VCS_View is
      new Selection_Foreach (VCS_View_Access);
 
    function Copy_Context
-     (Context : Selection_Context_Access) return Selection_Context_Access;
+     (Context : Selection_Context) return Selection_Context;
    --  Copy the information in Context that are relevant to the explorer,
    --  and create a new context containing them.
 
@@ -585,18 +585,19 @@ package body VCS_View is
 
    function Get_Current_Context
      (Explorer : access VCS_View_Record)
-      return Selection_Context_Access is
+      return Selection_Context
+   is
+      Context : Selection_Context;
    begin
-      if Explorer.Context = null then
+      if Explorer.Context = No_Context then
          declare
-            Context : File_Selection_Context_Access;
             Files   : String_List.List;
             First   : VFS.Virtual_File;
          begin
             Files := Get_Selected_Files (VCS_View_Access (Explorer));
 
             if not String_List.Is_Empty (Files) then
-               Context := new File_Selection_Context;
+               Context := New_Context;
                First := Create (String_List.Head (Files));
 
                Set_Context_Information
@@ -604,13 +605,12 @@ package body VCS_View is
                   Abstract_Module_ID (VCS_Module_ID));
                Set_File_Information (Context, File => First);
 
-               Set_Current_Context
-                 (Explorer, Selection_Context_Access (Context));
+               Set_Current_Context (Explorer, Context);
 
                String_List.Free (Files);
-               return Selection_Context_Access (Context);
+               return Context;
             else
-               return null;
+               return No_Context;
             end if;
          end;
 
@@ -625,15 +625,9 @@ package body VCS_View is
 
    procedure Set_Current_Context
      (Explorer : access VCS_View_Record;
-      Context  : Selection_Context_Access) is
+      Context  : Selection_Context) is
    begin
-      if Explorer.Context /= null then
-         Unref (Explorer.Context);
-         Explorer.Context := null;
-      end if;
-
       Explorer.Context := Context;
-      Ref (Explorer.Context);
    end Set_Current_Context;
 
    -----------
@@ -651,46 +645,27 @@ package body VCS_View is
    ------------------
 
    function Copy_Context
-     (Context : Selection_Context_Access)
-      return Selection_Context_Access
+     (Context : Selection_Context)
+      return Selection_Context
    is
-      Result : Selection_Context_Access;
+      Result : Selection_Context;
    begin
-      if Context /= null then
-         if Context.all in Activity_Context'Class then
-            Result := new Activity_Context;
+      if Context /= No_Context then
+         Result := New_Context;
 
-            declare
-               Activity : constant Activity_Context_Access :=
-                            Activity_Context_Access (Context);
-            begin
-               Set_Activity_Information
-                 (Activity_Context_Access (Result),
-                  Activity_Information (Activity));
-            end;
+         if Has_Activity_Information (Context) then
+            Set_Activity_Information (Result, Activity_Information (Context));
          end if;
 
-         if Context.all in File_Selection_Context'Class
-           and then Has_File_Information
-             (File_Selection_Context_Access (Context))
-         then
-            Result := new File_Selection_Context;
-
-            declare
-               File : constant File_Selection_Context_Access :=
-                        File_Selection_Context_Access (Context);
-            begin
-               Set_File_Information
-                 (File_Selection_Context_Access (Result),
-                  File_Information (File),
-                  Project_Information (File));
-            end;
+         if Has_File_Information (Context) then
+            Set_File_Information
+              (Result,
+               File_Information (Context),
+               Project_Information (Context));
          end if;
 
-         if Result /= null then
-            Set_Context_Information
-              (Result, Get_Kernel (Context), Get_Creator (Context));
-         end if;
+         Set_Context_Information
+           (Result, Get_Kernel (Context), Get_Creator (Context));
       end if;
 
       return Result;
@@ -839,12 +814,12 @@ package body VCS_View is
 
    procedure On_Menu_Expand_All
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      if Context.all in Activity_Context'Class then
+      if Has_Activity_Information (Context) then
          Expand_All (Get_Activities_Explorer (Kernel));
       else
          Expand_All (Get_Explorer (Kernel));
@@ -861,12 +836,12 @@ package body VCS_View is
 
    procedure On_Menu_Collapse_All
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      if Context.all in Activity_Context'Class then
+      if Has_Activity_Information (Context) then
          Collapse_All (Get_Activities_Explorer (Kernel));
       else
          Collapse_All (Get_Explorer (Kernel));
@@ -883,12 +858,12 @@ package body VCS_View is
 
    procedure On_Menu_Select_Files_Same_Status
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      if Context.all in Activity_Context'Class then
+      if Has_Activity_Information (Context) then
          Select_Files_Same_Status (Get_Activities_Explorer (Kernel));
       else
          Select_Files_Same_Status (Get_Explorer (Kernel));

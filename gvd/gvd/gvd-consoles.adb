@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                         Copyright (C) 2005-2006                   --
 --                             AdaCore                               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -156,12 +156,13 @@ package body GVD.Consoles is
    procedure On_Grab_Focus (Console : access Gtk_Widget_Record'Class);
    --  Callback for the "grab_focus" signal on the console.
 
-   function Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk_Menu);
    --  Create the context for the contextual menus
 
    --------------------------
@@ -272,14 +273,15 @@ package body GVD.Consoles is
    -- Context_Factory --
    ---------------------
 
-   function Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Kernel, Event_Widget, Event, Object);
+      pragma Unreferenced (Kernel, Event_Widget, Event, Object, Context);
       Mitem : Gtk_Menu_Item;
    begin
       if Menu /= null then
@@ -287,8 +289,6 @@ package body GVD.Consoles is
          Set_State (Mitem, State_Insensitive);
          Append (Menu, Mitem);
       end if;
-
-      return null;
    end Context_Factory;
 
    -------------------------

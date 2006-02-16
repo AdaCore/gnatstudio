@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                         Copyright (C) 2005-2006                   --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -160,12 +160,13 @@ package body Call_Graph_Views is
      (View : access Gtk_Widget_Record'Class; Args : GValues);
    --  Called when a row is expanded by the user
 
-   function View_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure View_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Context factory when creating contextual menus
 
    function Button_Press
@@ -427,18 +428,18 @@ package body Call_Graph_Views is
    -- View_Context_Factory --
    --------------------------
 
-   function View_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure View_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget, Kernel);
       V     : constant Callgraph_View_Access := Callgraph_View_Access (Object);
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter  : Gtk_Tree_Iter;
-      Context : Entity_Selection_Context_Access;
       Entity  : Entity_Information;
       Value   : GValue;
       Check   : Gtk_Check_Menu_Item;
@@ -452,7 +453,6 @@ package body Call_Graph_Views is
          Unset (Value);
 
          if Entity /= null then
-            Context := new Entity_Selection_Context;
             Set_File_Information   (Context, File => VFS.No_File);
             Set_Entity_Information (Context, Entity => Entity);
          end if;
@@ -467,7 +467,6 @@ package body Call_Graph_Views is
          Widget_Callback.Object_Connect
            (Check, "toggled", Hide_Show_Locations'Access, V);
       end if;
-      return Selection_Context_Access (Context);
    end View_Context_Factory;
 
    -----------------
@@ -969,8 +968,7 @@ package body Call_Graph_Views is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       View   : Callgraph_View_Access;
       Entity : constant Entity_Information := Get_Entity
-        (Entity_Selection_Context_Access (Context.Context),
-         Ask_If_Overloaded => True);
+        (Context.Context, Ask_If_Overloaded => True);
       pragma Unreferenced (Command);
    begin
       if Entity /= null then
@@ -994,8 +992,7 @@ package body Call_Graph_Views is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       View   : Callgraph_View_Access;
       Entity : constant Entity_Information := Get_Entity
-        (Entity_Selection_Context_Access (Context.Context),
-         Ask_If_Overloaded => True);
+        (Context.Context, Ask_If_Overloaded => True);
       pragma Unreferenced (Command);
    begin
       if Entity /= null then

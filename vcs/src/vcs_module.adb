@@ -62,14 +62,14 @@ package body VCS_Module is
    type Has_VCS_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Has_VCS_Filter;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
    --  True when the current context is associated with a known VCS
 
    type VCS_Contextual_Menu is new Submenu_Factory_Record with null record;
    procedure Append_To_Menu
      (Factory : access VCS_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Fill Menu with the contextual menu for the VCS module,
    --  if Context is appropriate.
@@ -131,7 +131,7 @@ package body VCS_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      Open_Explorer (Kernel, null);
+      Open_Explorer (Kernel, No_Context);
 
    exception
       when E : others =>
@@ -149,7 +149,7 @@ package body VCS_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      Open_Activities_Explorer (Kernel, null);
+      Open_Activities_Explorer (Kernel, No_Context);
 
    exception
       when E : others =>
@@ -163,14 +163,13 @@ package body VCS_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access Has_VCS_Filter;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Context.all in File_Selection_Context'Class
-        and then Get_Current_Ref (Selection_Context_Access (Context)) /=
-        Unknown_VCS_Reference
-        and then (Context.all not in Entity_Selection_Context'Class
+      return Has_File_Information (Context)
+        and then Get_Current_Ref (Context) /= Unknown_VCS_Reference
+        and then (not Has_Entity_Name_Information (Context)
                   or else Get_Name (Module_ID (Get_Creator (Context))) =
                     "Source_Editor");
    end Filter_Matches_Primitive;
@@ -182,14 +181,20 @@ package body VCS_Module is
    procedure Append_To_Menu
      (Factory : access VCS_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory, Object);
+      C : Selection_Context := Context;
    begin
+      --  ??? C is a workaround for now. For some reason, VCS_Contextual_Menu
+      --  is trying to modify the context, where in fact it should really just
+      --  build the menu. It is too late to modify the context at this stage,
+      --  and this should be done in the context factory instead
+
       VCS_View_API.VCS_Contextual_Menu
         (Get_Kernel (Context),
-         Selection_Context_Access (Context),
+         C,
          Menu,
          False);
    end Append_To_Menu;
@@ -318,7 +323,7 @@ package body VCS_Module is
 
    function Default_Context_Factory
      (Module : access VCS_Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access is
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context is
    begin
       return VCS_View_API.Context_Factory (Get_Kernel (Module.all), Child);
    end Default_Context_Factory;

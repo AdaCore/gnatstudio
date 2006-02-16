@@ -20,6 +20,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -335,15 +336,12 @@ package body GPS.Kernel is
 
    procedure Source_Lines_Revealed
      (Handle  : access Kernel_Handle_Record;
-      Context : access Selection_Context'Class)
+      Context : Selection_Context)
    is
-      C    : Selection_Context_Access := Selection_Context_Access (Context);
       Data : aliased Context_Hooks_Args :=
-        (Hooks_Data with Context => C);
+        (Hooks_Data with Context => Context);
    begin
-      Ref (C);
       Run_Hook (Handle, Source_Lines_Revealed_Hook, Data'Unchecked_Access);
-      Unref (C);
    end Source_Lines_Revealed;
 
    -----------------
@@ -484,12 +482,10 @@ package body GPS.Kernel is
    ---------------------
 
    procedure Context_Changed (Handle  : access Kernel_Handle_Record) is
-      C : Selection_Context_Access := Get_Current_Context (Handle);
+      C    : constant Selection_Context := Get_Current_Context (Handle);
       Data : aliased Context_Hooks_Args := (Hooks_Data with Context => C);
    begin
-      Ref (C);
       Run_Hook (Handle, Context_Changed_Hook, Data'Unchecked_Access);
-      Unref (C);
    end Context_Changed;
 
    -------------------------
@@ -497,40 +493,26 @@ package body GPS.Kernel is
    -------------------------
 
    function Get_Current_Context
-     (Kernel : access Kernel_Handle_Record) return Selection_Context_Access
+     (Kernel : access Kernel_Handle_Record) return Selection_Context
    is
-      Module : Module_ID;
-      Handle : constant Kernel_Handle := Kernel_Handle (Kernel);
+      Module  : Module_ID;
+      Handle  : constant Kernel_Handle := Kernel_Handle (Kernel);
+      Context : Selection_Context := New_Context;
    begin
       --  ??? Shouldn't have to recompute everytime, but this is needed when
       --  in the editor (comment-line for instance relies on accurate info in
       --  the context to get the current line)
-      if Handle.Current_Context /= null then
-         Unref (Handle.Current_Context);
-         Handle.Current_Context := null;
-      end if;
-
       Module := Get_Current_Module (Kernel);
 
+      Set_Context_Information
+        (Context, Handle, Abstract_Module_ID (Module));
+
       if Module /= null then
-         Handle.Current_Context := Default_Context_Factory
-           (Module, Get_Widget (Get_Focus_Child (Get_MDI (Handle))));
-
-         if Handle.Current_Context /= null then
-            Set_Context_Information
-              (Handle.Current_Context, Handle, Abstract_Module_ID (Module));
-         end if;
+         Default_Context_Factory
+           (Module, Context, Get_Widget (Get_Focus_Child (Get_MDI (Handle))));
       end if;
 
-      if Handle.Current_Context = null then
-         Handle.Current_Context := new Selection_Context;
-         Set_Context_Information
-           (Handle.Current_Context,
-            Kernel  => Handle,
-            Creator => Abstract_Module_ID (Module));
-      end if;
-
-      return Kernel.Current_Context;
+      return Context;
    end Get_Current_Context;
 
    ---------------------------
@@ -538,20 +520,23 @@ package body GPS.Kernel is
    ---------------------------
 
    function Get_Context_For_Child
-     (Child  : Gtkada.MDI.MDI_Child) return Selection_Context_Access
+     (Child  : Gtkada.MDI.MDI_Child) return Selection_Context
    is
-      Module : Module_ID;
+      Module  : Module_ID;
+      Context : Selection_Context;
    begin
       if Child = null then
-         return null;
+         return No_Context;
       end if;
 
       Module := Module_ID (Get_Module_From_Child (Child));
 
       if Module /= null then
-         return Default_Context_Factory (Module, Get_Widget (Child));
+         Context.Data.Data := new Selection_Context_Data_Record;
+         Default_Context_Factory (Module, Context, Get_Widget (Child));
+         return Context;
       else
-         return null;
+         return No_Context;
       end if;
    end Get_Context_For_Child;
 
@@ -776,81 +761,116 @@ package body GPS.Kernel is
          return False;
    end Load_Desktop;
 
-   -----------
-   -- Unref --
-   -----------
+   --------------
+   -- Finalize --
+   --------------
 
-   procedure Unref (Context : in out Selection_Context_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Selection_Context'Class, Selection_Context_Access);
+   procedure Finalize (Context : in out Selection_Context_Controlled) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Selection_Context_Data_Record, Selection_Context_Data);
    begin
-      if Context /= null then
-         Context.Ref_Count := Context.Ref_Count - 1;
+      if Context.Data /= null then
+         Context.Data.Ref_Count := Context.Data.Ref_Count - 1;
 
-         if Context.Ref_Count = 0 then
-            Destroy (Context.all);
-            Internal (Context);
+         if Context.Data.Ref_Count = 0 then
+            Free (Context.Data.all);
+            Unchecked_Free (Context.Data);
          end if;
-
-         --  Force it to null, since it would be an error for the caller to
-         --  rely on it anyway
-         Context := null;
       end if;
-   end Unref;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Message (E));
+   end Finalize;
 
-   ---------
-   -- Ref --
-   ---------
+   ------------
+   -- Adjust --
+   ------------
 
-   procedure Ref (Context : Selection_Context_Access) is
+   procedure Adjust (Context : in out Selection_Context_Controlled) is
    begin
-      if Context /= null then
-         Context.Ref_Count := Context.Ref_Count + 1;
+      if Context.Data /= null then
+         Context.Data.Ref_Count := Context.Data.Ref_Count + 1;
       end if;
-   end Ref;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Message (E));
+   end Adjust;
 
    ----------------
    -- Get_Kernel --
    ----------------
 
    function Get_Kernel
-     (Context : access Selection_Context) return Kernel_Handle is
+     (Context : Selection_Context) return Kernel_Handle is
    begin
-      return Context.Kernel;
+      if Context.Data.Data = null then
+         return null;
+      else
+         return Context.Data.Data.Kernel;
+      end if;
    end Get_Kernel;
 
    -----------------
    -- Get_Creator --
    -----------------
 
-   function Get_Creator (Context : access Selection_Context)
+   function Get_Creator (Context : Selection_Context)
       return Abstract_Module_ID is
    begin
-      return Context.Creator;
+      if Context.Data.Data = null then
+         return null;
+      else
+         return Context.Data.Data.Creator;
+      end if;
    end Get_Creator;
+
+   -----------------
+   -- New_Context --
+   -----------------
+
+   function New_Context return Selection_Context is
+   begin
+      return (Data => (Ada.Finalization.Controlled with
+                       Data => new Selection_Context_Data_Record));
+   end New_Context;
 
    -----------------------------
    -- Set_Context_Information --
    -----------------------------
 
    procedure Set_Context_Information
-     (Context : access Selection_Context;
+     (Context : in out Selection_Context;
       Kernel  : access Kernel_Handle_Record'Class;
       Creator : Abstract_Module_ID) is
    begin
-      Context.Kernel := Kernel_Handle (Kernel);
-      Context.Creator := Creator;
+      Context.Data.Data.Kernel := Kernel_Handle (Kernel);
+      Context.Data.Data.Creator := Creator;
    end Set_Context_Information;
 
-   -------------
-   -- Destroy --
-   -------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Destroy (Context : in out Selection_Context) is
-      pragma Unreferenced (Context);
+   procedure Free (Data : in out Selection_Context_Data_Record) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Instance_List_Base'Class, Instance_List_Base_Access);
+      List : Instance_List;
    begin
-      null;
-   end Destroy;
+      Free (Data.Category_Name);
+      Free (Data.Message);
+      Free (Data.Text);
+      Free (Data.Entity_Name);
+      Unref (Data.Entity);
+      Free (Data.Activity_Id);
+
+      if Data.Instances /= null then
+         List := Instance_List (Data.Instances.all);
+         Free (List);
+         Unchecked_Free (Data.Instances);
+      end if;
+   end Free;
 
    ---------------------
    -- Get_Main_Window --
@@ -1273,8 +1293,13 @@ package body GPS.Kernel is
       Destroy (Handle.Registry.all);
       Unchecked_Free (Handle.Registry);
 
-      Unref (Handle.Current_Context);
-      Unref (Handle.Last_Context_For_Contextual);
+      --  Do not free the contexts. They can still be stored as Data in a
+      --  Class_Instance, and this will be finalized later automatically. If
+      --  we call Unref here, this results in a double deallocation.
+      --  This code is left here for reference to avoid doing this error in the
+      --  future.
+      --        Unref (Handle.Current_Context);
+      --        Unref (Handle.Last_Context_For_Contextual);
 
       Remote_Connections.Free_Registered_Protocols;
 
@@ -1285,7 +1310,7 @@ package body GPS.Kernel is
       GPS.Kernel.Scripts.Finalize (Handle);
 
       Destroy (Language_Handler (Handle.Lang_Handler));
-      Destroy (Handle.Database);
+      --  Destroy (Handle.Database);
       Free (Handle.Logs_Mapper);
       Free_Modules (Handle);
       Unref (Handle.Tooltips);
@@ -1293,7 +1318,13 @@ package body GPS.Kernel is
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
       --  reclaiming the associated memory.
       Trace (Me, "Destroying the GPS kernel");
-      Unref (Handle);
+
+      --  ??? Do not free the memory in fact, since there are some controlled
+      --  types like Class_Instance which might in fact be finalized only after
+      --  this point, and they might try to access the kernel. This might show
+      --  up as a minor memory leak, which can safely be ignored anyway. See
+      --  for instance Unref for a context below.
+      --      Unref (Handle);
 
       Kernel_Desktop.Free_Registered_Desktop_Functions;
    end Destroy;
@@ -1716,7 +1747,7 @@ package body GPS.Kernel is
 
    function Filter_Matches_Primitive
      (Filter  : access Base_Action_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Result : Boolean := True;
@@ -1724,19 +1755,16 @@ package body GPS.Kernel is
       case Filter.Kind is
          when Standard_Filter =>
             if Filter.Language /= null then
-               if Context.all not in File_Selection_Context'Class
-                 or else VFS.No_File = File_Information
-                   (File_Selection_Context_Access (Context))
+               if not Has_File_Information (Context)
+                 or else VFS.No_File = File_Information (Context)
                then
                   Result := False;
 
                else
                   declare
-                     File : constant File_Selection_Context_Access :=
-                       File_Selection_Context_Access (Context);
                      Lang : constant String := Get_Language_From_File
                        (Get_Language_Handler (Kernel),
-                        File_Information (File));
+                        File_Information (Context));
                   begin
                      if not Equal (Lang, Filter.Language.all, False) then
                         Result := False;
@@ -1801,15 +1829,10 @@ package body GPS.Kernel is
 
    function Filter_Matches
      (Filter  : Action_Filter;
-      Context : access Selection_Context'Class) return Boolean
-   is
-      Result : Boolean;
-      C      : Selection_Context_Access := Selection_Context_Access (Context);
+      Context : Selection_Context) return Boolean is
    begin
-      Ref (C);
-      Result := Filter = null or else Filter_Matches_Primitive (Filter, C);
-      Unref (C);
-      return Result;
+      return Filter = null
+        or else Filter_Matches_Primitive (Filter, Context);
    end Filter_Matches;
 
    ----------

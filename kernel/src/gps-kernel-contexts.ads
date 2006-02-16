@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -32,16 +32,12 @@ package GPS.Kernel.Contexts is
    --  Register a set of default filters that can be used in user-defined
    --  actions and for contextual menus
 
-   ------------------------
-   -- File_Name contexts --
-   ------------------------
-
-   type File_Selection_Context is new Selection_Context with private;
-   type File_Selection_Context_Access is access all
-     File_Selection_Context'Class;
+   -----------
+   -- Files --
+   -----------
 
    procedure Set_File_Information
-     (Context           : access File_Selection_Context;
+     (Context           : in out Selection_Context;
       File              : VFS.Virtual_File := VFS.No_File;
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
@@ -51,99 +47,84 @@ package GPS.Kernel.Contexts is
    --  File_Name must be UTF8-encoded.
 
    function Has_Directory_Information
-     (Context : access File_Selection_Context) return Boolean;
-   --  True if the context has information about a selected directory.
-
+     (Context : Selection_Context) return Boolean;
    function Directory_Information
-     (Context : access File_Selection_Context) return String;
+     (Context : Selection_Context) return String;
    --  Return the information about the selected project. This is only relevant
    --  if Has_Directory_Information is True.
    --  This directory name always ends with a directory separator.
 
    function Has_File_Information
-     (Context : access File_Selection_Context) return Boolean;
-   --  True if the context has information about a selected file
-
+     (Context : Selection_Context) return Boolean;
    function File_Information
-     (Context  : access File_Selection_Context) return VFS.Virtual_File;
+     (Context  : Selection_Context) return VFS.Virtual_File;
    --  Return the information about the selected file. This is only relevant
    --  if Has_File_Information is True.
    --  This is the base file name for the file. This name is UTF8-encoded.
 
    function Has_Line_Information
-     (Context : access File_Selection_Context) return Boolean;
+     (Context : Selection_Context) return Boolean;
    function Line_Information
-     (Context : access File_Selection_Context) return Integer;
+     (Context : Selection_Context) return Integer;
    --  Check whether there is some line information, and return it. This is the
    --  location of the cursor in the file, when in an editor, or the location
    --  in the file from the messages window or the explorer for instance.
    --  This information will not be set if multiple lines are selected.
 
    function Has_Column_Information
-     (Context : access File_Selection_Context) return Boolean;
+     (Context : Selection_Context) return Boolean;
    function Column_Information
-     (Context : access File_Selection_Context) return Integer;
+     (Context : Selection_Context) return Integer;
    --  Check whether there is some column information, and return it. Same
    --  comment as for Line_Information.
    --  Column is the index of the character in the string representing the
    --  line. This means that tabs only count as one, and are not expanded.
 
    function Has_Project_Information
-     (Context : access File_Selection_Context) return Boolean;
-   --  True if the creator of the context provided information about the
-   --  project.
-
+     (Context : Selection_Context) return Boolean;
    function Project_Information
-     (Context : access File_Selection_Context) return Projects.Project_Type;
+     (Context : Selection_Context) return Projects.Project_Type;
    --  Return the id of the project to which the file belongs. Note that this
    --  is computed automatically and cached otherwise.
    --  This function will return No_Project if the file stored in the context
    --  doesn't belong to any project.
 
    function Has_Importing_Project_Information
-     (Context : access File_Selection_Context) return Boolean;
-   --  True if the context contains the name of the project importing the
-   --  current one.
-
+     (Context : Selection_Context) return Boolean;
    function Importing_Project_Information
-     (Context : access File_Selection_Context) return Projects.Project_Type;
+     (Context : Selection_Context) return Projects.Project_Type;
    --  Return the project that imports the one returned by Project_Information.
    --  This is never computed automatically, and unless provided by the creator
    --  of the project, this will be left empty.
 
-   procedure Destroy (Context : in out File_Selection_Context);
-   --  Free the memory associated with the context
-
-   ------------------------
-   -- File_Area contexts --
-   ------------------------
-   --  This context is used when one or more lines are selected in an editor,
-   --  but more than a single entity.
-
-   type File_Area_Context is new File_Selection_Context with private;
-   type File_Area_Context_Access is access all File_Area_Context'Class;
+   -----------
+   -- Areas --
+   -----------
 
    procedure Set_Area_Information
-     (Context    : access File_Area_Context;
+     (Context    : in out Selection_Context;
       Text       : String;
       Start_Line : Integer := 0;
       End_Line   : Integer := 0);
    --  Set the area information in Context
 
+   function Has_Area_Information (Context : Selection_Context) return Boolean;
+   --  Whether the context contains information about a selected area.
+
    procedure Get_Area
-     (Context    : access File_Area_Context;
+     (Context    : Selection_Context;
       Start_Line : out Integer;
       End_Line   : out Integer);
    --  Return the area information in Context
 
    function Text_Information
-     (Context : access File_Area_Context) return String;
+     (Context : Selection_Context) return String;
    --  Return the text belonging to the selection
 
    type Is_Area_Context is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Is_Area_Context;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
    --  Filter that checks that the user has clicked on a subprogram entity.
    --  This can be used for contextual menus for instance
 
@@ -155,37 +136,30 @@ package GPS.Kernel.Contexts is
    --  the references in the error message.
    --  Line and columns are stored as Line_Information and Column_Information
 
-   type Message_Context is new File_Selection_Context with private;
-   type Message_Context_Access is access all Message_Context;
-
    procedure Set_Message_Information
-     (Context  : access Message_Context;
+     (Context  : in out Selection_Context;
       Category : String := "";
       Message  : String := "");
    --  Set the information in the context
 
    function Has_Category_Information
-     (Context : access Message_Context) return Boolean;
+     (Context : Selection_Context) return Boolean;
    function Category_Information
-     (Context : access Message_Context) return String;
+     (Context : Selection_Context) return String;
    --  Check whether there is some category information, and return it
 
    function Has_Message_Information
-     (Context : access Message_Context) return Boolean;
+     (Context : Selection_Context) return Boolean;
    function Message_Information
-     (Context : access Message_Context) return String;
+     (Context : Selection_Context) return String;
    --  Check whether there is some message information, and return it
 
    ---------------------
    -- Entity Contexts --
    ---------------------
 
-   type Entity_Selection_Context is new File_Selection_Context
-     with private;
-   type Entity_Selection_Context_Access is access all Entity_Selection_Context;
-
    procedure Set_Entity_Information
-     (Context       : access Entity_Selection_Context;
+     (Context       : in out Selection_Context;
       Entity_Name   : String := "";
       Entity_Column : Integer := 0);
    --  Set the information in the context.
@@ -195,7 +169,7 @@ package GPS.Kernel.Contexts is
    --  Set_File_Information
 
    procedure Set_Entity_Information
-     (Context : access Entity_Selection_Context;
+     (Context : in out Selection_Context;
       Entity  : access Entities.Entity_Information_Record'Class);
    --  Same as above, but we provide directly the entity itself. This is more
    --  efficient when you already know the entity.
@@ -204,22 +178,22 @@ package GPS.Kernel.Contexts is
    --  entries.
 
    function Has_Entity_Name_Information
-     (Context : access Entity_Selection_Context) return Boolean;
+     (Context : Selection_Context) return Boolean;
    function Entity_Name_Information
-     (Context : access Entity_Selection_Context) return String;
+     (Context : Selection_Context) return String;
    --  Check whether there is some entity information, and return it. This is
    --  a UTF8-encoded string.
 
    function Has_Entity_Column_Information
-     (Context : access Entity_Selection_Context) return Boolean;
+     (Context : Selection_Context) return Boolean;
    function Entity_Column_Information
-     (Context : access Entity_Selection_Context) return Integer;
+     (Context : Selection_Context) return Integer;
    --  Check whether there is some column information, and return it.
    --  The column returned is the column on which the entity starts, not the
    --  column on which the cursor currently is.
 
    function Get_Entity
-     (Context           : access Entity_Selection_Context;
+     (Context           : Selection_Context;
       Ask_If_Overloaded : Boolean := False)
       return Entities.Entity_Information;
    --  Return the location of the declaration for the entity in Context.
@@ -236,71 +210,20 @@ package GPS.Kernel.Contexts is
    --  the entity, an interactive dialog is opened for the user. Otherwise, the
    --  closest matching entity is returned
 
-   procedure Destroy (Context : in out Entity_Selection_Context);
-   --  Destroy the memory associated with the entity
-
    ----------------------
    -- Activity_Context --
    ----------------------
 
-   type Activity_Context is new File_Selection_Context with private;
-   type Activity_Context_Access is access all Activity_Context;
-
    procedure Set_Activity_Information
-     (Context : access Activity_Context;
-      Id      : String);
+     (Context : in out Selection_Context; Id : String);
 
+   function Has_Activity_Information
+     (Context : Selection_Context) return Boolean;
    function Activity_Information
-     (Context : access Activity_Context) return String;
+     (Context : Selection_Context) return String;
    --  Returns the name of the activity
 
-   procedure Destroy (Context : in out Activity_Context);
-   --  Free the memory associated with the context
-
 private
-
-   procedure Destroy (Context : in out File_Area_Context);
-
-   type File_Selection_Context is new Selection_Context with record
-      File              : VFS.Virtual_File      := VFS.No_File;
-      Checked           : Boolean               := False;
-      --  Set to True if File has already been validated
-      Project           : Projects.Project_Type := Projects.No_Project;
-      Importing_Project : Projects.Project_Type := Projects.No_Project;
-      Line, Column      : Integer := 0;
-
-      Creator_Provided_Project : Boolean := False;
-      --  Set to True if the project_view was given by the creator, instead of
-      --  being computed automatically
-   end record;
-
-   type Message_Context is new File_Selection_Context with record
-      Category_Name : GNAT.OS_Lib.String_Access := null;
-      Message       : GNAT.OS_Lib.String_Access := null;
-   end record;
-
-   type File_Area_Context is new File_Selection_Context with record
-      Start_Line : Integer;
-      End_Line   : Integer;
-      Text       : GNAT.OS_Lib.String_Access;
-   end record;
-
-   type Entity_Selection_Context is new File_Selection_Context with record
-      Entity_Name   : GNAT.OS_Lib.String_Access := null;
-      Entity_Column : Integer := 0;
-      Entity        : Entities.Entity_Information := null;
-
-      Entity_Resolved : Entities.Queries.Find_Decl_Or_Body_Query_Status :=
-        Entities.Queries.Entity_Not_Found;
-      --  Set to True when we have called Get_Entity at least once. This is
-      --  used to differentiate cases where Entity is null because we have
-      --  never tested and cases where it is null because there is none to be
-      --  found.
-   end record;
-
-   type Activity_Context is new File_Selection_Context with record
-      Id : GNAT.OS_Lib.String_Access := null;
-   end record;
 
    pragma Inline (Has_Project_Information);
    pragma Inline (Has_Directory_Information);

@@ -1823,7 +1823,7 @@ package body Shell_Script is
       Custom := Create_Proxy
         (A.Command,
          Context => (Event       => null,
-                     Context     => null,
+                     Context     => No_Context,
                      Synchronous => True,
                      Dir         => null,
                      Args        => new Argument_List'(Clone (D.Args.all)),

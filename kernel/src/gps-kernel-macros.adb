@@ -34,7 +34,7 @@ package body GPS.Kernel.Macros is
 
    function Project_From_Param
      (Param   : String;
-      Context : GPS.Kernel.Selection_Context_Access) return Project_Type;
+      Context : GPS.Kernel.Selection_Context) return Project_Type;
    --  Return the project from the parameter. Parameter is the string
    --  following the '%' sign. No_Project is returned if the context doesn't
    --  contain this information
@@ -129,13 +129,12 @@ package body GPS.Kernel.Macros is
 
    function Substitute
      (Param   : String;
-      Context : GPS.Kernel.Selection_Context_Access;
+      Context : GPS.Kernel.Selection_Context;
       Quoted  : Boolean;
       Done    : access Boolean;
       Server  : GPS.Kernel.Remote.Server_Type := GPS.Kernel.Remote.GPS_Server)
       return String
    is
-      File    : File_Selection_Context_Access;
       Project : Project_Type := No_Project;
       Index   : Integer;
       Recurse, List_Dirs, List_Sources : Boolean;
@@ -148,84 +147,71 @@ package body GPS.Kernel.Macros is
         or else Param = "F"
         or else Param = "fk"
       then
-         File := File_Selection_Context_Access (Context);
-
          if Param = "f" then
             return String_Utils.Protect
-              (Base_Name (File_Information (File)), Protect_Quotes => Quoted);
+              (Base_Name (File_Information (Context)),
+               Protect_Quotes => Quoted);
          elsif Param = "fk" then
             return Krunch (String_Utils.Protect
-              (Base_Name (File_Information (File)), Protect_Quotes => Quoted));
+              (Base_Name (File_Information (Context)),
+               Protect_Quotes => Quoted));
          else
             return String_Utils.Protect
-              (Convert (Full_Name (File_Information (File)).all,
+              (Convert (Full_Name (File_Information (Context)).all,
                         GPS_Server, Server),
                Protect_Quotes => Quoted);
          end if;
 
       elsif Param = "d" then
-         File := File_Selection_Context_Access (Context);
          return String_Utils.Protect
-           (Convert (Directory_Information (File), GPS_Server, Server),
+           (Convert (Directory_Information (Context), GPS_Server, Server),
             Protect_Quotes => Quoted);
 
       elsif Param = "dk" then
-         File := File_Selection_Context_Access (Context);
          return Krunch (String_Utils.Protect
-             (Convert (Directory_Information (File), GPS_Server, Server),
+             (Convert (Directory_Information (Context), GPS_Server, Server),
               Protect_Quotes => Quoted));
 
       elsif Param = "e" then
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+         Entity := Get_Entity (Context);
          if Entity /= null then
             --  Get the name from the context, to have the proper casing
-            return Entity_Name_Information
-              (Entity_Selection_Context_Access (Context));
+            return Entity_Name_Information (Context);
          end if;
 
       elsif Param = "ek" then
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+         Entity := Get_Entity (Context);
          if Entity /= null then
             --  Get the name from the context, to have the proper casing
-            return Krunch (Entity_Name_Information
-                             (Entity_Selection_Context_Access (Context)));
+            return Krunch (Entity_Name_Information (Context));
          end if;
 
       elsif Param = "l" then
-         return Image
-           (Line_Information (File_Selection_Context_Access (Context)));
+         return Image (Line_Information (Context));
 
       elsif Param = "c" then
-         return Image
-           (Column_Information (File_Selection_Context_Access (Context)));
+         return Image (Column_Information (Context));
 
       elsif Param = "a" then
-         return Category_Information
-           (Message_Context_Access (Context));
+         return Category_Information (Context);
 
       elsif Param = "s" then
-         if Context.all in Entity_Selection_Context'Class then
-            return Entity_Name_Information
-              (Entity_Selection_Context_Access (Context));
-         elsif Context.all in File_Area_Context'Class then
-            return Text_Information (File_Area_Context_Access (Context));
+         if Has_Entity_Name_Information (Context) then
+            return Entity_Name_Information (Context);
+         elsif Has_Area_Information (Context) then
+            return Text_Information (Context);
          end if;
 
       elsif Param = "i" then
-         if Importing_Project_Information
-           (File_Selection_Context_Access (Context)) /=
-           Project_Information
-             (File_Selection_Context_Access (Context))
+         if Importing_Project_Information (Context) /=
+           Project_Information (Context)
          then
-            return Project_Name
-              (Importing_Project_Information
-                 (File_Selection_Context_Access (Context)));
+            return Project_Name (Importing_Project_Information (Context));
          end if;
 
       elsif Param = "ek" then
          return Krunch (String_Utils.Protect
-           (Entity_Name_Information
-              (Entity_Selection_Context_Access (Context))));
+           (Entity_Name_Information (Context)));
 
       elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then
          Project := Project_From_Param (Param, Context);
@@ -365,32 +351,22 @@ package body GPS.Kernel.Macros is
 
    function Project_From_Param
      (Param   : String;
-      Context : GPS.Kernel.Selection_Context_Access) return Project_Type
+      Context : GPS.Kernel.Selection_Context) return Project_Type
    is
-      File : File_Selection_Context_Access;
       Project : Project_Type := No_Project;
    begin
       if Param (Param'First) = 'P' then
          Project := Get_Project (Get_Kernel (Context));
 
-      elsif Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_Project_Information
-          (File_Selection_Context_Access (Context))
-      then
-         File := File_Selection_Context_Access (Context);
-         Project := Project_Information (File);
+      elsif Has_Project_Information (Context) then
+         Project := Project_Information (Context);
 
-      elsif Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_File_Information
-          (File_Selection_Context_Access (Context))
-      then
+      elsif Has_File_Information (Context) then
          --  Since the editor doesn't provide the project, we emulate it
          --  here
          Project := Get_Project_From_File
            (Project_Registry (Get_Registry (Get_Kernel (Context)).all),
-            File_Information (File_Selection_Context_Access (Context)),
+            File_Information (Context),
             Root_If_Not_Found => False);
       end if;
 
@@ -403,15 +379,12 @@ package body GPS.Kernel.Macros is
 
    function Filter_Matches_Primitive
      (Filter  : access Macro_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       Project : Project_Type;
-      Is_File_Context : constant Boolean :=
-        Context.all in File_Selection_Context'Class;
       Is_Entity_Context : constant Boolean :=
-        Context.all in Entity_Selection_Context'Class;
-      Is_Area_Context : constant Boolean :=
-        Context.all in File_Area_Context'Class;
+        Has_Entity_Name_Information (Context);
+      Is_Area_Context : constant Boolean := Has_Area_Information (Context);
       Entity  : Entity_Information;
       Start, Last : Integer;
    begin
@@ -419,31 +392,27 @@ package body GPS.Kernel.Macros is
         or else Filter.Requires.Project = 'P'
       then
          Project := Project_From_Param
-           (Filter.Requires.Project & ' ', Selection_Context_Access (Context));
+           (Filter.Requires.Project & ' ', Context);
          if Project = No_Project then
             return False;
          end if;
       end if;
 
       if Filter.Requires.File
-        and then (not Is_File_Context
-                  or else not Has_File_Information
-                    (File_Selection_Context_Access (Context)))
+        and then not Has_File_Information (Context)
       then
          return False;
       end if;
 
       if Filter.Requires.Directory
-        and then (not Is_File_Context
-                  or else not Has_Directory_Information
-                    (File_Selection_Context_Access (Context)))
+        and then not Has_Directory_Information (Context)
       then
          return False;
       end if;
 
       if Filter.Requires.Single_Line then
          if Is_Area_Context then
-            Get_Area (File_Area_Context_Access (Context), Start, Last);
+            Get_Area (Context, Start, Last);
             if Start /= Last then
                return False;
             end if;
@@ -458,40 +427,32 @@ package body GPS.Kernel.Macros is
          end if;
 
          --  Avoid cases where we click on a keyword
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+         Entity := Get_Entity (Context);
          if Entity = null then
             return False;
          end if;
       end if;
 
       if Filter.Requires.Line
-        and then (not Is_File_Context
-                  or else not Has_Line_Information
-                    (File_Selection_Context_Access (Context)))
+        and then not Has_Line_Information (Context)
       then
          return False;
       end if;
 
       if Filter.Requires.Column
-        and then (not Is_File_Context
-                  or else not Has_Column_Information
-                    (File_Selection_Context_Access (Context)))
+        and then not Has_Column_Information (Context)
       then
          return False;
       end if;
 
       if Filter.Requires.Category
-        and then (Context.all not in Message_Context'Class
-                  or else not Has_Category_Information
-                    (Message_Context_Access (Context)))
+        and then not Has_Category_Information (Context)
       then
          return False;
       end if;
 
       if Filter.Requires.Importing
-        and then (not Is_File_Context
-                  or else not Has_Importing_Project_Information
-                    (File_Selection_Context_Access (Context)))
+        and then not Has_Importing_Project_Information (Context)
       then
          return False;
       end if;

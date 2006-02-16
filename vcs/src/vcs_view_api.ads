@@ -37,182 +37,182 @@ package VCS_View_API is
 
    procedure On_Menu_Get_Status
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Open
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Add
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Add_No_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Add_Directory_No_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Remove
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Remove_No_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Remove_Directory_No_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Revert
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Resolved
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Annotate
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Remove_Annotate
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Diff
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Diff_Working
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Diff_Base_Head
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Diff_Specific
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Diff2
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_View_Log
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_View_Log_Rev
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Update
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Edit_ChangeLog
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Edit_Log
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Remove_Log
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Get_Status_Dir
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Update_Dir
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Get_Status_Dir_Recursive
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Update_Dir_Recursive
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_List_Project_Files
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_List_Project_Files_Recursive
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Get_Status_Project
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Get_Status_Project_Recursive
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Update_Project
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Update_Project_Recursive
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  ???
 
    procedure On_Menu_Remove_Project
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  Remove the project node from the explorer
 
    procedure VCS_Contextual_Menu
      (Kernel          : Kernel_Handle;
-      Context         : Selection_Context_Access;
+      Context         : in out Selection_Context;
       Menu            : access Gtk.Menu.Gtk_Menu_Record'Class;
       Show_Everything : Boolean);
    --  Complete Menu with the commands related to the VCS module,
@@ -222,11 +222,11 @@ package VCS_View_API is
 
    procedure Open_Explorer
      (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  If the VCS Explorer is not displayed, display it
 
    function Get_Current_Ref
-     (Context : Selection_Context_Access) return VCS_Access;
+     (Context : Selection_Context) return VCS_Access;
    --  Convenience function to get the current VCS system.
    --  If the creator of the current context is the VCS module, then
    --  the Ref will be obtained from the VCS Explorer, otherwise it
@@ -244,7 +244,7 @@ package VCS_View_API is
 
    function Context_Factory
      (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context;
    --  Return the current context relative to the VCS Explorer.
 
    function Get_Current_Ref (Project : Project_Type) return VCS_Access;

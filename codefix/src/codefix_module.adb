@@ -157,7 +157,7 @@ package body Codefix_Module is
    procedure Append_To_Menu
      (Factory : access Codefix_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  ??? Will be removed soon
 
@@ -611,42 +611,39 @@ package body Codefix_Module is
    procedure Append_To_Menu
      (Factory : access Codefix_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory, Object);
-      Location      : Message_Context_Access;
       Session       : Codefix_Session;
       Error         : Error_Id;
 
    begin
-      if Context.all in Message_Context'Class then
-         Location := Message_Context_Access (Context);
-
-         if not Has_Category_Information (Location)
+      if Has_Message_Information (Context) then
+         if not Has_Category_Information (Context)
            or else Codefix_Module_ID.Sessions = null
          then
             return;
          end if;
 
-         Session := Get_Session_By_Name (Category_Information (Location));
+         Session := Get_Session_By_Name (Category_Information (Context));
 
          if Session = null then
             return;
          end if;
 
-         if not Has_Message_Information (Location)
-           or else not Has_File_Information (Location)
+         if not Has_Message_Information (Context)
+           or else not Has_File_Information (Context)
          then
             return;
          end if;
 
          Error := Search_Error
            (Session.Corrector.all,
-            File    => File_Information (Location),
-            Line    => Line_Information (Location),
-            Column  => Column_Information (Location),
-            Message => Message_Information (Location));
+            File    => File_Information (Context),
+            Line    => Line_Information (Context),
+            Column  => Column_Information (Context),
+            Message => Message_Information (Context));
 
          if Error /= Null_Error_Id and then not Is_Fixed (Error) then
             Create_Submenu (Get_Kernel (Context), Menu, Session, Error);

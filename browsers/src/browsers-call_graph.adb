@@ -85,9 +85,10 @@ package body Browsers.Call_Graph is
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
 
-   function Default_Context_Factory
-     (Module : access Callgraph_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Callgraph_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
    Automatically_Check_To_Dependencies : constant Boolean := True;
@@ -157,7 +158,7 @@ package body Browsers.Call_Graph is
    type Container_Entity_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Container_Entity_Filter;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
 
    type Entity_Calls_Command is new Interactive_Command with null record;
    function Execute
@@ -243,11 +244,12 @@ package body Browsers.Call_Graph is
    --  Free the memory occupied by the item. This is called automatically when
    --  the item is removed from the canvas.
 
-   function Contextual_Factory
+   procedure Contextual_Factory
      (Item    : access Entity_Item_Record;
+      Context : in out Selection_Context;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
+      Menu    : Gtk.Menu.Gtk_Menu);
    --  Return the context to use for this item
 
    procedure Resize_And_Draw
@@ -948,29 +950,28 @@ package body Browsers.Call_Graph is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
       Location : Entities.File_Location;
    begin
       Find_Next_Body
-        (Entity   => Get_Entity (C, Ask_If_Overloaded => True),
+        (Entity   => Get_Entity (Context.Context, Ask_If_Overloaded => True),
          Location => Location);
 
-      Add_Navigation_Location (Get_Kernel (C), -"Call graph Browser");
+      Add_Navigation_Location
+        (Get_Kernel (Context.Context), -"Call graph Browser");
 
       if Location /= Entities.No_File_Location then
          Open_File_Editor
-           (Get_Kernel (C),
+           (Get_Kernel (Context.Context),
             Filename => Get_Filename (Get_File (Location)),
             Line     => Get_Line (Location),
             Column   => Get_Column (Location));
       else
          --  If the body wasn't found then display the specs
          Open_File_Editor
-           (Get_Kernel (C),
-            File_Information (C),
-            Line   => Line_Information (C),
-            Column => Entity_Column_Information (C));
+           (Get_Kernel (Context.Context),
+            File_Information (Context.Context),
+            Line   => Line_Information (Context.Context),
+            Column => Entity_Column_Information (Context.Context));
       end if;
       return Commands.Success;
    end Execute;
@@ -984,15 +985,13 @@ package body Browsers.Call_Graph is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
       Entity : constant Entity_Information :=
-        Get_Entity (C, Ask_If_Overloaded => True);
+        Get_Entity (Context.Context, Ask_If_Overloaded => True);
    begin
       if Entity = null then
          Insert (Get_Kernel (Context.Context),
                  (-"Couldn't find cross-reference information for ")
-                 & '"' & Entity_Name_Information (C) & '"');
+                 & '"' & Entity_Name_Information (Context.Context) & '"');
       else
          Add_Navigation_Location
            (Get_Kernel (Context.Context), -"Call graph Browser");
@@ -1256,35 +1255,31 @@ package body Browsers.Call_Graph is
    -- Contextual_Factory --
    ------------------------
 
-   function Contextual_Factory
+   procedure Contextual_Factory
      (Item    : access Entity_Item_Record;
+      Context : in out Selection_Context;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access
+      Menu    : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Event, Browser, Menu);
-      Context : constant Selection_Context_Access :=
-        new Entity_Selection_Context;
-
    begin
       if not Is_Predefined_Entity (Item.Entity) then
          Set_File_Information
-           (File_Selection_Context_Access (Context),
+           (Context,
             File => Get_Filename (Get_File (Get_Declaration_Of (Item.Entity))),
             Line => Get_Line (Get_Declaration_Of (Item.Entity)));
       end if;
 
       Set_Entity_Information
-        (Entity_Selection_Context_Access (Context),
+        (Context,
          Entity_Name   => Get_Name (Item.Entity).all,
          Entity_Column => Get_Column (Get_Declaration_Of (Item.Entity)));
-      return Context;
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
-         return null;
    end Contextual_Factory;
 
    -------------------
@@ -1297,26 +1292,17 @@ package body Browsers.Call_Graph is
       Child       : MDI_Child;
       pragma Unreferenced (Widget, Child);
 
-      Context     : Selection_Context_Access :=
-                      Get_Current_Context (Kernel);
-      Entity      : Entity_Selection_Context_Access;
+      Context     : constant Selection_Context := Get_Current_Context (Kernel);
       Node_Entity : Entity_Information;
    begin
-      Ref (Context);
       Child := Open_Call_Graph_Browser (Kernel);
 
-      if Context /= null
-        and then Context.all in Entity_Selection_Context'Class
-      then
-         Entity := Entity_Selection_Context_Access (Context);
-         Node_Entity := Get_Entity (Entity, Ask_If_Overloaded => True);
-
+      if Context /= No_Context then
+         Node_Entity := Get_Entity (Context, Ask_If_Overloaded => True);
          if Node_Entity /= null then
             Examine_Entity_Call_Graph (Kernel, Node_Entity);
          end if;
       end if;
-
-      Unref (Context);
 
    exception
       when E : others =>
@@ -1332,27 +1318,25 @@ package body Browsers.Call_Graph is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : constant Selection_Context_Access :=
-                  Get_Current_Context (Kernel);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
       Entity  : Entity_Information;
 
    begin
-      if Context /= null
-        and then Context.all in Entity_Selection_Context'Class
-      then
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context),
-                               Ask_If_Overloaded => True);
-         Find_All_References_Internal
-           (Kernel,
-            Entity,
-            Category_Title   => All_Refs_Category
-              (Entity             => Entity,
-               Local_Only         => False,
-               Local_File         => VFS.No_File,
-               All_From_Same_File => False),
-            Filter           => Read_Reference_Filter
+      if Context /= No_Context then
+         Entity := Get_Entity (Context, Ask_If_Overloaded => True);
+         if Entity /= null then
+            Find_All_References_Internal
+              (Kernel,
+               Entity,
+               Category_Title   => All_Refs_Category
+                 (Entity             => Entity,
+                  Local_Only         => False,
+                  Local_File         => VFS.No_File,
+                  All_From_Same_File => False),
+               Filter           => Read_Reference_Filter
                or Write_Reference_Filter,
-            Show_Caller      => False);
+               Show_Caller      => False);
+         end if;
 
       else
          Console.Insert
@@ -1370,26 +1354,26 @@ package body Browsers.Call_Graph is
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Callgraph_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   procedure Default_Context_Factory
+     (Module  : access Callgraph_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget)
    is
       pragma Unreferenced (Module);
       Browser : constant Call_Graph_Browser := Call_Graph_Browser (Child);
       Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
       --  If there is no selection, or more than one item, nothing we can do
-      if Get (Iter) = null
-        or else Get (Next (Iter)) /= null
+      if Get (Iter) /= null
+        and then Get (Next (Iter)) = null
       then
-         return null;
+         Contextual_Factory
+           (Context => Context,
+            Item    => Browser_Item (Get (Iter)),
+            Browser => Browser,
+            Event   => null,
+            Menu    => null);
       end if;
-
-      return Contextual_Factory
-        (Item    => Browser_Item (Get (Iter)),
-         Browser => Browser,
-         Event   => null,
-         Menu    => null);
    end Default_Context_Factory;
 
    ---------------------
@@ -1651,16 +1635,13 @@ package body Browsers.Call_Graph is
 
    function Filter_Matches_Primitive
      (Filter  : access Container_Entity_Filter;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
       Entity : Entity_Information;
    begin
-      if Context.all in Entity_Selection_Context'Class
-        and then Has_Entity_Name_Information
-          (Entity_Selection_Context_Access (Context))
-      then
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+      if Has_Entity_Name_Information (Context) then
+         Entity := Get_Entity (Context);
          return Entity /= null
            and then Is_Container (Get_Kind (Entity).Kind);
       else
@@ -1677,34 +1658,32 @@ package body Browsers.Call_Graph is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Entity      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
       Node_Entity : Entity_Information;
    begin
-      Push_State (Get_Kernel (Entity), Busy);
-      Node_Entity := Get_Entity (Entity, Ask_If_Overloaded => True);
+      Push_State (Get_Kernel (Context.Context), Busy);
+      Node_Entity := Get_Entity (Context.Context, Ask_If_Overloaded => True);
 
       if Node_Entity /= null then
          --  ??? Should check that Decl.Kind is a subprogram
-         Examine_Entity_Call_Graph (Get_Kernel (Entity), Node_Entity);
+         Examine_Entity_Call_Graph (Get_Kernel (Context.Context), Node_Entity);
       else
-         Insert (Get_Kernel (Entity),
+         Insert (Get_Kernel (Context.Context),
                  -"No call graph available for "
-                 & Entity_Name_Information (Entity));
+                 & Entity_Name_Information (Context.Context));
       end if;
 
-      Pop_State (Get_Kernel (Entity));
+      Pop_State (Get_Kernel (Context.Context));
       return Commands.Success;
 
    exception
       when E : others =>
-         Insert (Get_Kernel (Entity),
+         Insert (Get_Kernel (Context.Context),
                  -"Internal error when creating the call graph for "
-                 & Entity_Name_Information (Entity),
+                 & Entity_Name_Information (Context.Context),
                  Mode => Error);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-         Pop_State (Get_Kernel (Entity));
+         Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;
 
@@ -1717,34 +1696,32 @@ package body Browsers.Call_Graph is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Entity   : constant Entity_Selection_Context_Access :=
-                   Entity_Selection_Context_Access (Context.Context);
       Info : Entity_Information;
    begin
-      Push_State (Get_Kernel (Entity), Busy);
-      Info := Get_Entity (Entity, Ask_If_Overloaded => True);
+      Push_State (Get_Kernel (Context.Context), Busy);
+      Info := Get_Entity (Context.Context, Ask_If_Overloaded => True);
 
       if Info /= null then
-         Examine_Ancestors_Call_Graph (Get_Kernel (Entity), Info);
+         Examine_Ancestors_Call_Graph (Get_Kernel (Context.Context), Info);
       else
-         Insert (Get_Kernel (Entity),
+         Insert (Get_Kernel (Context.Context),
                  -"No information found for the file "
-                   & Full_Name (File_Information (Entity)).all,
+                   & Full_Name (File_Information (Context.Context)).all,
                  Mode => Error);
       end if;
 
-      Pop_State (Get_Kernel (Entity));
+      Pop_State (Get_Kernel (Context.Context));
       return Commands.Success;
 
    exception
       when E : others =>
-         Insert (Get_Kernel (Entity),
+         Insert (Get_Kernel (Context.Context),
                  -"Internal error when creating the call graph for "
-                 & Entity_Name_Information (Entity),
+                 & Entity_Name_Information (Context.Context),
                  Mode => Error);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-         Pop_State (Get_Kernel (Entity));
+         Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;
 
@@ -1881,11 +1858,9 @@ package body Browsers.Call_Graph is
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Entity   : constant Entity_Information := Get_Entity
-        (Entity_Selection_Context_Access (Context.Context),
-         Ask_If_Overloaded => True);
+        (Context.Context, Ask_If_Overloaded => True);
       Filter   : Reference_Kind_Filter := (others => False);
-      File     : constant Virtual_File := File_Information
-        (File_Selection_Context_Access (Context.Context));
+      File     : constant Virtual_File := File_Information (Context.Context);
    begin
       if Command.Reads_Only then
          Filter := Read_Reference_Filter;
@@ -1959,11 +1934,9 @@ package body Browsers.Call_Graph is
       Frame     : Gtk_Frame;
       Widget    : Gtk_Widget;
       Entity    : constant Entity_Information :=
-        Get_Entity
-          (Entity_Selection_Context_Access (Context.Context),
-           Ask_If_Overloaded => True);
-      Current_File     : constant Virtual_File := File_Information
-        (File_Selection_Context_Access (Context.Context));
+        Get_Entity (Context.Context, Ask_If_Overloaded => True);
+      Current_File     : constant Virtual_File :=
+        File_Information (Context.Context);
       Button    : Gtk_Button;
       pragma Unreferenced (Command, Widget);
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2003 - 2005                       --
+--                   Copyright (C) 2003-2006                         --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -248,8 +248,6 @@ package body Commands.Interactive is
 
    procedure Free (X : in out Interactive_Command_Context) is
    begin
-      GPS.Kernel.Unref (X.Context);
-
       if X.Args /= null then
          for J in X.Args'Range loop
             Free (X.Args (J));

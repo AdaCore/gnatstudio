@@ -482,7 +482,6 @@ package body Commands.Custom is
          GNAT.OS_Lib.Free (Execution.Outputs);
          Unchecked_Free   (Execution.Save_Output);
          Unchecked_Free   (Execution.Progress_Matcher);
-         Unref            (Execution.Context);
          Unchecked_Free (Execution);
       end if;
    end Free;
@@ -1300,14 +1299,13 @@ package body Commands.Custom is
          Command.Execution.Save_Output :=
            new Boolean_Array (Command.Components'Range);
 
-         if Context.Context = null then
+         if Context.Context = No_Context then
             Command.Execution.Context := Get_Current_Context (Command.Kernel);
          else
             Command.Execution.Context := Context.Context;
          end if;
 
          Command.Execution.Cmd_Index  := Command.Components'First;
-         Ref (Command.Execution.Context);
 
          Check_Save_Output (Command, Command.Execution.Save_Output.all);
          Clear_Consoles (Command.Kernel, Command);

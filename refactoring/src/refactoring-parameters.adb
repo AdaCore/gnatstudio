@@ -42,7 +42,7 @@ package body Refactoring.Parameters is
    type Is_Subprogram_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Is_Subprogram_Filter;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
    --  Filter that checks that the user has clicked on a subprogram entity
 
    type Name_Parameters_Command is new Interactive_Command with null record;
@@ -69,14 +69,12 @@ package body Refactoring.Parameters is
 
    function Filter_Matches_Primitive
      (Filter  : access Is_Subprogram_Filter;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
       Entity : Entity_Information;
    begin
-      if Context.all in Entity_Selection_Context'Class then
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
-      end if;
+      Entity := Get_Entity (Context);
       return Entity /= null and then Is_Subprogram (Entity);
    end Filter_Matches_Primitive;
 
@@ -196,15 +194,13 @@ package body Refactoring.Parameters is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
    begin
       return Name_Parameters
         (Kernel => Get_Kernel (Context.Context),
-         Entity => Get_Entity (C, Ask_If_Overloaded => True),
-         File   => File_Information (C),
-         Line   => Line_Information (C),
-         Column => Column_Information (C));
+         Entity => Get_Entity (Context.Context, Ask_If_Overloaded => True),
+         File   => File_Information (Context.Context),
+         Line   => Line_Information (Context.Context),
+         Column => Column_Information (Context.Context));
    end Execute;
 
    ----------------------------

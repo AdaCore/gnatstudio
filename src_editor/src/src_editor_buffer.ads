@@ -624,7 +624,7 @@ package Src_Editor_Buffer is
       with null record;
    function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
+      Ctxt    : GPS.Kernel.Selection_Context)
       return Boolean;
    --  A key context that matches if the current widget is a source editor
 

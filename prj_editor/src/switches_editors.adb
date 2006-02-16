@@ -2220,23 +2220,21 @@ package body Switches_Editors is
      (Command : access Edit_Switches_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      File      : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
       Modified : Boolean;
       pragma Unreferenced (Command, Modified);
    begin
-      Assert (Me, Has_Project_Information (File),
+      Assert (Me, Has_Project_Information (Context.Context),
               "Project unknown when editing switches");
 
-      if Has_File_Information (File) then
+      if Has_File_Information (Context.Context) then
          Modified := Edit_Switches_For_Files
-           (Get_Kernel (File),
-            Project_Information (File),
-            (1 => File_Information (File)));
+           (Get_Kernel (Context.Context),
+            Project_Information (Context.Context),
+            (1 => File_Information (Context.Context)));
       else
          Modified := Edit_Switches_For_Files
-           (Get_Kernel (File),
-            Project_Information (File),
+           (Get_Kernel (Context.Context),
+            Project_Information (Context.Context),
             (1 .. 0 => VFS.No_File));
       end if;
       return Success;

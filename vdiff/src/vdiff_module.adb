@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2005                    --
+--                        Copyright (C) 2001-2006                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -49,9 +49,10 @@ package body Vdiff_Module is
 
    type Vdiff_Module_Record is new Module_ID_Record with null record;
 
-   function Default_Context_Factory
-     (Module : access Vdiff_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Vdiff_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
    function Diff_Hook
@@ -306,38 +307,32 @@ package body Vdiff_Module is
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Vdiff_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   procedure Default_Context_Factory
+     (Module  : access Vdiff_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget)
    is
       Vdiff   : constant Vdiff_Access := Vdiff_Access (Child);
-      Context : File_Selection_Context_Access;
    begin
-      if Vdiff = null then
-         return null;
+      if Vdiff /= null then
+         declare
+            Label_1 : constant Virtual_File :=
+              Create (Full_Filename => Get_Text (Vdiff.File_Label1));
+            Label_2 : constant Virtual_File :=
+              Create (Full_Filename => Get_Text (Vdiff.File_Label2));
+         begin
+            Set_Context_Information
+              (Context => Context,
+               Kernel  => Get_Kernel (Module.all),
+               Creator => Abstract_Module_ID (Module));
+
+            if Is_Regular_File (Label_1) then
+               Set_File_Information (Context, File => Label_1);
+            elsif Is_Regular_File (Label_2) then
+               Set_File_Information (Context, File => Label_2);
+            end if;
+         end;
       end if;
-
-      declare
-         Label_1 : constant Virtual_File :=
-           Create (Full_Filename => Get_Text (Vdiff.File_Label1));
-         Label_2 : constant Virtual_File :=
-           Create (Full_Filename => Get_Text (Vdiff.File_Label2));
-      begin
-         Context := new File_Selection_Context;
-
-         Set_Context_Information
-           (Context => Context,
-            Kernel  => Get_Kernel (Module.all),
-            Creator => Abstract_Module_ID (Module));
-
-         if Is_Regular_File (Label_1) then
-            Set_File_Information (Context, File => Label_1);
-         elsif Is_Regular_File (Label_2) then
-            Set_File_Information (Context, File => Label_2);
-         end if;
-
-         return Selection_Context_Access (Context);
-      end;
    end Default_Context_Factory;
 
    ---------------------

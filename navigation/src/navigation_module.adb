@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -667,27 +667,19 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Context : constant Selection_Context_Access :=
+      Context : constant Selection_Context :=
         Get_Current_Context (Kernel);
 
-      File_Context : File_Selection_Context_Access;
-
-      File : Virtual_File;
-
+      File    : Virtual_File;
       Line    : Natural;           -- Current line being processed.
       B_Start : Natural;           -- Block's first line.
       B_Type  : Language_Category; -- Block's category
 
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_File_Information
-          (File_Selection_Context_Access (Context))
-        and then Has_Directory_Information
-          (File_Selection_Context_Access (Context))
+      if Has_File_Information (Context)
+        and then Has_Directory_Information (Context)
       then
-         File_Context := File_Selection_Context_Access (Context);
-         File := File_Information (File_Context);
+         File := File_Information (Context);
 
          Line   := Get_Current_Line (Kernel, File);
          B_Type := Get_Block_Type (Kernel, File, Line);
@@ -718,27 +710,19 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Context : constant Selection_Context_Access :=
+      Context : constant Selection_Context :=
         Get_Current_Context (Kernel);
 
-      File_Context : File_Selection_Context_Access;
-
-      File : Virtual_File;
-
+      File   : Virtual_File;
       Line   : Natural;           -- Current line being processed.
       B_End  : Natural;           -- Block's first line.
       B_Type : Language_Category; -- Block's category
 
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_File_Information
-          (File_Selection_Context_Access (Context))
-        and then Has_Directory_Information
-          (File_Selection_Context_Access (Context))
+      if Has_File_Information (Context)
+        and then Has_Directory_Information (Context)
       then
-         File_Context := File_Selection_Context_Access (Context);
-         File := File_Information (File_Context);
+         File := File_Information (Context);
 
          Line   := Get_Current_Line (Kernel, File);
          B_Type := Get_Block_Type (Kernel, File, Line);
@@ -769,28 +753,20 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Context : constant Selection_Context_Access :=
+      Context : constant Selection_Context :=
         Get_Current_Context (Kernel);
 
-      File_Context : File_Selection_Context_Access;
-
-      File : Virtual_File;
-
+      File      : Virtual_File;
       Line      : Natural;           -- Current line being processed.
       Last_Line : Natural;           -- Last line in the buffer.
       B_Start   : Natural;           -- Block's first line.
       B_Type    : Language_Category; -- Block's category
 
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_File_Information
-          (File_Selection_Context_Access (Context))
-        and then Has_Directory_Information
-          (File_Selection_Context_Access (Context))
+      if Has_File_Information (Context)
+        and then Has_Directory_Information (Context)
       then
-         File_Context := File_Selection_Context_Access (Context);
-         File := File_Information (File_Context);
+         File := File_Information (Context);
 
          Line      := Get_Current_Line (Kernel, File);
          Last_Line := Get_Last_Line (Kernel, File);
@@ -847,27 +823,19 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Context : constant Selection_Context_Access :=
+      Context : constant Selection_Context :=
         Get_Current_Context (Kernel);
 
-      File_Context : File_Selection_Context_Access;
-
-      File : Virtual_File;
-
+      File    : Virtual_File;
       Line    : Natural;           -- Current line being processed.
       B_Start : Natural;           -- Block's first line.
       B_Type  : Language_Category; -- Block's category.
 
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_File_Information
-          (File_Selection_Context_Access (Context))
-        and then Has_Directory_Information
-          (File_Selection_Context_Access (Context))
+      if Has_File_Information (Context)
+        and then Has_Directory_Information (Context)
       then
-         File_Context := File_Selection_Context_Access (Context);
-         File := File_Information (File_Context);
+         File := File_Information (Context);
 
          Line := Get_Current_Line (Kernel, File);
 
@@ -922,29 +890,23 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : constant Selection_Context_Access :=
+      Context : constant Selection_Context :=
         Get_Current_Context (Kernel);
-      File : File_Selection_Context_Access;
    begin
       Push_State (Kernel, Busy);
 
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_File_Information
-          (File_Selection_Context_Access (Context))
-      then
-         File := File_Selection_Context_Access (Context);
+      if Has_File_Information (Context) then
          declare
             Other_File : constant Virtual_File := Create
               (Other_File_Base_Name
-                 (Project_Information (File), File_Information (File)),
-               Project_Information (File));
+                 (Project_Information (Context), File_Information (Context)),
+               Project_Information (Context));
          begin
             if Dir_Name (Other_File).all /= "" then
                Open_File_Editor (Kernel, Other_File, Line => 0);
             else
                Trace (Me, "Other file not found for "
-                      & Full_Name (File_Information (File)).all);
+                      & Full_Name (File_Information (Context)).all);
             end if;
          end;
       else

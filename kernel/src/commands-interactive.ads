@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2003 - 2005                      --
+--                    Copyright (C) 2003-2006                        --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -39,7 +39,7 @@ package Commands.Interactive is
 
    type Interactive_Command_Context is record
       Event   : Gdk.Event.Gdk_Event := null;
-      Context : GPS.Kernel.Selection_Context_Access;
+      Context : GPS.Kernel.Selection_Context;
 
       Synchronous : Boolean := False;
       --  Whether the command should be executed synchronously
@@ -53,7 +53,7 @@ package Commands.Interactive is
 
    Null_Context : constant Interactive_Command_Context :=
      (Event       => null,
-      Context     => null,
+      Context     => GPS.Kernel.No_Context,
       Synchronous => False,
       Dir         => null,
       Args        => null,

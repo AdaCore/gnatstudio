@@ -80,7 +80,7 @@ package GPS.Kernel.Standard_Hooks is
 
    Context_Hook_Type : constant String := "context_hooks";
    type Context_Hooks_Args is new Hooks_Data with record
-      Context : GPS.Kernel.Selection_Context_Access;
+      Context : GPS.Kernel.Selection_Context;
    end record;
    --  Base type for hooks that take a single context in parameter
 

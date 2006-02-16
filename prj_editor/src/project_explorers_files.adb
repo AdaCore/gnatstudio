@@ -79,9 +79,10 @@ package body Project_Explorers_Files is
      "explorers-file-show-project-only";
 
    type Explorer_Module_Record is new Module_ID_Record with null record;
-   function Default_Context_Factory
-     (Module : access Explorer_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Explorer_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
    type Append_Directory_Idle_Data is record
@@ -165,12 +166,13 @@ package body Project_Explorers_Files is
    --  ???
    --  Called by File_Append_Directory.
 
-   function Explorer_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Explorer_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk_Menu);
    --  ??? Unused for now while the files explorer is not a separate module.
    --  Return the context to use for the contextual menu.
    --  It is also used to return the context for
@@ -205,12 +207,13 @@ package body Project_Explorers_Files is
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Explorer_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access is
+   procedure Default_Context_Factory
+     (Module  : access Explorer_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget) is
    begin
-      return Explorer_Context_Factory
-        (Get_Kernel (Module.all), Child, Child, null, null);
+      Explorer_Context_Factory
+        (Context, Get_Kernel (Module.all), Child, Child, null, null);
    end Default_Context_Factory;
 
    --------------------
@@ -662,18 +665,18 @@ package body Project_Explorers_Files is
    -- Explorer_Context_Factory --
    ------------------------------
 
-   function Explorer_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Explorer_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget);
 
       T         : constant Project_Explorer_Files :=
         Project_Explorer_Files (Object);
-      Context   : Selection_Context_Access;
       Iter      : constant Gtk_Tree_Iter :=
         Find_Iter_For_Event (T.File_Tree, T.File_Model, Event);
       Path      : Gtk_Tree_Path;
@@ -694,21 +697,17 @@ package body Project_Explorers_Files is
                File := Create
                  (Full_Filename =>
                     (Get_String (T.File_Model, Iter, Absolute_Name_Column)));
-               Context := new File_Selection_Context;
+               Set_File_Information (Context, File);
 
             when Entity_Node =>
-               Context := new Entity_Selection_Context;
+               --  ??? No entity information was set before, but isn't this
+               --  strange ?
+               null;
 
             when others =>
                null;
 
          end case;
-      end if;
-
-      if File /= VFS.No_File then
-         Set_File_Information
-           (Context   => File_Selection_Context_Access (Context),
-            File      => File);
       end if;
 
       if Menu /= null then
@@ -718,8 +717,6 @@ package body Project_Explorers_Files is
          Append (Menu, Check);
          Widget_Callback.Object_Connect (Check, "toggled", Refresh'Access, T);
       end if;
-
-      return Context;
    end Explorer_Context_Factory;
 
    ----------------------------

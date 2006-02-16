@@ -142,7 +142,7 @@ package body Custom_Module is
    type Contextual_Shell_Filter is access all Contextual_Shell_Filters'Class;
    function Filter_Matches_Primitive
      (Filter  : access Contextual_Shell_Filters;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
    --  Type used to define contextual menus from a scripting language
 
    type Contextual_Shell_Labels is new Contextual_Menu_Label_Creator_Record
@@ -153,7 +153,7 @@ package body Custom_Module is
    type Contextual_Shell_Label is access all Contextual_Shell_Labels'Class;
    function Get_Label
      (Creator : access Contextual_Shell_Labels;
-      Context : access Selection_Context'Class) return String;
+      Context : Selection_Context) return String;
    --  Type used to define contextual menus from a scripting language
 
    type Create_Dynamic_Contextual is new Submenu_Factory_Record with record
@@ -166,7 +166,7 @@ package body Custom_Module is
    procedure Append_To_Menu
      (Factory : access Create_Dynamic_Contextual;
       Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Create a dynamic contextual menu from a script
 
@@ -217,7 +217,7 @@ package body Custom_Module is
    procedure Append_To_Menu
      (Factory : access Create_Dynamic_Contextual;
       Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
@@ -231,9 +231,7 @@ package body Custom_Module is
              & String'(Get_Data (Factory.Contextual, Contextual_Class)));
 
       Set_Nth_Arg
-        (C, 1, Create_Context
-           (Get_Script (Factory.Contextual),
-            Selection_Context_Access (Context)));
+        (C, 1, Create_Context (Get_Script (Factory.Contextual), Context));
 
       declare
          List : String_List := Execute (Factory.Factory, C);
@@ -245,8 +243,7 @@ package body Custom_Module is
                  (Item, "activate", On_Dynamic_Menu_Activate'Access,
                   User_Data =>
                     (Contextual => Create_Dynamic_Contextual_Access (Factory),
-                     Context    => Create_Context
-                       (Script, Selection_Context_Access (Context))));
+                     Context    => Create_Context (Script, Context)));
                Append (Menu, Item);
             end if;
          end loop;
@@ -274,7 +271,7 @@ package body Custom_Module is
       Set_Nth_Arg
         (C, 1, Create_Context
            (Get_Script (Command.Contextual),
-            Selection_Context_Access (Context.Context)));
+            Selection_Context (Context.Context)));
       Tmp := Execute (Command.On_Activate, C);
       Free (C);
       return Success;
@@ -286,16 +283,14 @@ package body Custom_Module is
 
    function Filter_Matches_Primitive
      (Filter  : access Contextual_Shell_Filters;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       C : Callback_Data'Class := Create
         (Get_Script (Filter.Filter.all), Arguments_Count => 1);
       Tmp : Boolean;
    begin
       Set_Nth_Arg
-        (C, 1, Create_Context
-           (Get_Script (Filter.Filter.all),
-            Selection_Context_Access (Context)));
+        (C, 1, Create_Context (Get_Script (Filter.Filter.all), Context));
       Tmp := Execute (Filter.Filter, C);
       Free (C);
       return Tmp;
@@ -307,15 +302,13 @@ package body Custom_Module is
 
    function Get_Label
      (Creator : access Contextual_Shell_Labels;
-      Context : access Selection_Context'Class) return String
+      Context : Selection_Context) return String
    is
       C : Callback_Data'Class := Create
         (Get_Script (Creator.Label.all), Arguments_Count => 1);
    begin
       Set_Nth_Arg
-        (C, 1, Create_Context
-           (Get_Script (Creator.Label.all),
-            Selection_Context_Access (Context)));
+        (C, 1, Create_Context (Get_Script (Creator.Label.all), Context));
       declare
          Str : constant String := Execute (Creator.Label, C);
       begin

@@ -53,43 +53,43 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Create_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
 
    procedure On_Menu_Delete_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
 
    procedure On_Menu_Commit_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
 
    procedure On_Menu_Query_Status_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
 
    procedure On_Menu_Update_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
 
    procedure On_Menu_Diff_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
 
    procedure On_Menu_Remove_From_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
 
    procedure On_Menu_Toggle_Group_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
 
    procedure On_Menu_Edit_Log
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
 
    procedure On_Menu_Build_Patch_File
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
 
    --  Action to open a file
 
@@ -122,15 +122,13 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Toggle_Group_Commit
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      A_Context : constant Activity_Context_Access :=
-                    Activity_Context_Access (Context);
       Activity  : Activity_Id;
    begin
-      Activity := Value (Activity_Information (A_Context));
+      Activity := Value (Activity_Information (Context));
       Toggle_Group_Commit (Kernel, Activity);
    exception
       when E : others =>
@@ -144,7 +142,7 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Create_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
@@ -162,14 +160,12 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Delete_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      A_Context : constant Activity_Context_Access :=
-                    Activity_Context_Access (Context);
    begin
-      On_Delete_Activity (Kernel, Value (Activity_Information (A_Context)));
+      On_Delete_Activity (Kernel, Value (Activity_Information (Context)));
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -182,24 +178,21 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Add_To_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      A_Context : Activity_Context_Access;
       Activity  : Activity_Id;
    begin
-      if Context.all in Activity_Context'Class then
-         A_Context := Activity_Context_Access (Context);
+      if Has_Activity_Information (Context) then
+         Activity := Value (Activity_Information (Context));
 
-         Activity := Value (Activity_Information (A_Context));
-
-         if Has_File_Information (A_Context)
-           or else Has_Directory_Information (A_Context)
+         if Has_File_Information (Context)
+           or else Has_Directory_Information (Context)
          then
             --  If we have a file information, then there is a single file to
             --  handle.
-            Add_File (Kernel, Activity, File_Information (A_Context));
+            Add_File (Kernel, Activity, File_Information (Context));
 
          else
             --  We have no file information, use the selected file in the VCS
@@ -242,7 +235,7 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Remove_From_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -277,14 +270,12 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Query_Status_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      A_Context : constant Activity_Context_Access :=
-                    Activity_Context_Access (Context);
       Activity  : constant Activity_Id :=
-                    Value (Activity_Information (A_Context));
+        Value (Activity_Information (Context));
       Files     : String_List.List;
    begin
       Files := Get_Files_In_Activity (Activity);
@@ -308,14 +299,12 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Update_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      A_Context : constant Activity_Context_Access :=
-                    Activity_Context_Access (Context);
       Activity  : constant Activity_Id :=
-                    Value (Activity_Information (A_Context));
+                    Value (Activity_Information (Context));
       Files     : String_List.List;
    begin
       Files := Get_Files_In_Activity (Activity);
@@ -340,14 +329,12 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Commit_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel         : constant Kernel_Handle := Get_Kernel (Context);
-      A_Context      : constant Activity_Context_Access :=
-                         Activity_Context_Access (Context);
       Activity       : constant Activity_Id :=
-                         Value (Activity_Information (A_Context));
+                         Value (Activity_Information (Context));
       Suffix         : constant String := Action_To_Log_Suffix (Commit);
       Files          : String_List.List;
       Files_Temp     : String_List.List_Node;
@@ -405,14 +392,12 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Diff_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      A_Context : constant Activity_Context_Access :=
-                    Activity_Context_Access (Context);
       Activity  : constant Activity_Id :=
-                    Value (Activity_Information (A_Context));
+                    Value (Activity_Information (Context));
       VCS       : constant VCS_Access :=
                     Get_VCS_For_Activity (Kernel, Activity);
       Files     : constant String_List.List :=
@@ -440,19 +425,16 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Edit_Log
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
       List      : String_List.List;
-
-      A_Context : constant Activity_Context_Access :=
-                    Activity_Context_Access (Context);
       Activity  : Activity_Id;
 
    begin
-      if Context /= null then
-         if Has_File_Information (A_Context) then
+      if Context /= No_Context then
+         if Has_File_Information (Context) then
             --  This is a file
 
             List := Get_Selected_Files (Kernel);
@@ -477,7 +459,7 @@ package body VCS_Activities_View_API is
          else
             --  This is an activity line
 
-            Activity := Value (Activity_Information (A_Context));
+            Activity := Value (Activity_Information (Context));
 
             Open_File_Editor
               (Kernel,
@@ -499,7 +481,7 @@ package body VCS_Activities_View_API is
 
    procedure On_Menu_Build_Patch_File
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
 
@@ -509,10 +491,8 @@ package body VCS_Activities_View_API is
       Tab       : constant String := "        ";
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
       Logs_Dir  : constant String := Get_Home_Dir (Kernel) & "log_files";
-      A_Context : constant Activity_Context_Access :=
-                    Activity_Context_Access (Context);
       Activity  : constant Activity_Id :=
-                    Value (Activity_Information (A_Context));
+                    Value (Activity_Information (Context));
       VCS       : constant VCS_Access :=
                     Get_VCS_For_Activity (Kernel, Activity);
       Files     : constant String_List.List :=
@@ -616,7 +596,7 @@ package body VCS_Activities_View_API is
 
    procedure Open_Activities_Explorer
      (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       pragma Unreferenced (Context);
       Explorer : VCS_Activities_View_Access;
@@ -687,7 +667,7 @@ package body VCS_Activities_View_API is
       pragma Unreferenced (Widget);
       Explorer : VCS_Activities_View_Access;
    begin
-      Open_Activities_Explorer (Kernel, null);
+      Open_Activities_Explorer (Kernel, No_Context);
       Explorer := Get_Activities_Explorer (Kernel);
       Query_Activities_Files (Explorer, Kernel, True);
 
@@ -703,7 +683,7 @@ package body VCS_Activities_View_API is
 
    procedure VCS_Activities_Contextual_Menu
      (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       File_Section     : Boolean;
@@ -717,23 +697,13 @@ package body VCS_Activities_View_API is
    begin
       --  Determine which sections should be displayed
 
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
-         declare
-            F_Context : constant File_Selection_Context_Access :=
-                          File_Selection_Context_Access (Context);
-         begin
-            Activity_Section := not Has_File_Information (F_Context)
-              and then not Has_Directory_Information (F_Context);
-            File_Section     := Has_File_Information (F_Context)
-              or else Has_Directory_Information (F_Context);
-
-            Activity := Value
-              (Activity_Information (Activity_Context_Access (Context)));
-            Active := not Is_Committed (Activity);
-         end;
-
+      if Has_Activity_Information (Context) then
+         Activity_Section := not Has_File_Information (Context)
+           and then not Has_Directory_Information (Context);
+         Activity := Value (Activity_Information (Context));
+         Active := not Is_Committed (Activity);
+         File_Section     := Has_File_Information (Context)
+           or else Has_Directory_Information (Context);
       else
          Activity_Section := False;
          File_Section     := False;

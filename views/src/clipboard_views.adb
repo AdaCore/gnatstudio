@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -94,12 +94,13 @@ package body Clipboard_Views is
       Event : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
 
-   function View_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure View_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Context factory when creating contextual menus
 
    function Get_Selected_From_Event
@@ -267,19 +268,20 @@ package body Clipboard_Views is
    -- View_Context_Factory --
    --------------------------
 
-   function View_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure View_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Kernel, Event_Widget, Object, Event, Menu);
+      pragma Unreferenced
+        (Kernel, Event_Widget, Object, Event, Menu, Context);
       --  Nothing special in the context, just the module itself so that people
       --  can still add information if needed
-      Context : constant Selection_Context_Access := new Selection_Context;
    begin
-      return Context;
+      null;
    end View_Context_Factory;
 
    ------------------

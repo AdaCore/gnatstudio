@@ -247,14 +247,14 @@ package body Builder_Module is
    procedure Append_To_Menu
      (Builder : access Builder_Contextual;
       Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
    type Run_Contextual is new Submenu_Factory_Record with null record;
    procedure Append_To_Menu
      (Factory : access Run_Contextual;
       Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu for Build/ or Run/
 
@@ -586,7 +586,7 @@ package body Builder_Module is
       Cmd     : String_Access;
       Args    : Argument_List_Access;
 
-      Context : Selection_Context_Access;
+      Context : Selection_Context;
       Prj     : Project_Type;
       Langs   : Argument_List := Get_Languages
         (Get_Project (Kernel), Recursive => True);
@@ -638,19 +638,13 @@ package body Builder_Module is
       if File = VFS.No_File and then Project = No_Project then
          Context := Get_Current_Context (Kernel);
 
-         if Context /= null
-           and then Context.all in File_Selection_Context'Class
-           and then Has_File_Information
-             (File_Selection_Context_Access (Context))
-         then
+         if Has_File_Information (Context) then
             declare
-               File_Context : constant File_Selection_Context_Access :=
-                 File_Selection_Context_Access (Context);
-               F : constant Virtual_File := File_Information (File_Context);
+               F : constant Virtual_File := File_Information (Context);
 
             begin
-               if Has_Directory_Information (File_Context) then
-                  Change_Dir (Directory_Information (File_Context));
+               if Has_Directory_Information (Context) then
+                  Change_Dir (Directory_Information (Context));
                end if;
 
                Prj := Get_Project_From_File (Get_Registry (Kernel).all, F);
@@ -800,25 +794,19 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : Selection_Context_Access :=
-                  Get_Current_Context (Kernel);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
 
    begin
-      if Context = null
-        or else not (Context.all in File_Selection_Context'Class)
-      then
+      if Has_File_Information (Context) then
+         Compile_File
+           (Kernel,
+            File_Information (Context),
+            Syntax_Only => True);
+      else
          Console.Insert
            (Kernel, -"No file selected, cannot check syntax",
             Mode => Error);
-         return;
       end if;
-
-      Ref (Context);
-      Compile_File
-        (Kernel,
-         File_Information (File_Selection_Context_Access (Context)),
-         Syntax_Only => True);
-      Unref (Context);
 
    exception
       when E : others =>
@@ -1154,22 +1142,14 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : Selection_Context_Access :=
-                  Get_Current_Context (Kernel);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
    begin
-      if Context = null
-        or else not (Context.all in File_Selection_Context'Class)
-      then
+      if Has_File_Information (Context) then
+         Compile_File (Kernel, File_Information (Context));
+      else
          Console.Insert
            (Kernel, -"No file selected, cannot compile", Mode => Error);
-         return;
       end if;
-
-      Ref (Context);
-      Compile_File
-        (Kernel,
-         File_Information (File_Selection_Context_Access (Context)));
-      Unref (Context);
 
    exception
       when E : others =>
@@ -1888,23 +1868,21 @@ package body Builder_Module is
    procedure Append_To_Menu
      (Builder : access Builder_Contextual;
       Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object, Builder);
-      File_Context : constant File_Selection_Context_Access :=
-                       File_Selection_Context_Access (Context);
       --  The filter garantees we are on a File_Selection_Context
 
       Mains : Argument_List := Get_Attribute_Value
-        (Project_Information (File_Context),
+        (Project_Information (Context),
          Attribute => Main_Attribute);
       M     : Gtk_Menu := Gtk_Menu (Menu);
    begin
       if Mains'Length /= 0 then
          Add_Build_Menu
            (Menu         => M,
-            Project      => Project_Information (File_Context),
+            Project      => Project_Information (Context),
             Kernel       => Get_Kernel (Context),
             Set_Shortcut => False,
             Mains        => Mains);
@@ -1919,22 +1897,20 @@ package body Builder_Module is
    procedure Append_To_Menu
      (Factory : access Run_Contextual;
       Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory, Object);
-      File_Context : constant File_Selection_Context_Access :=
-                       File_Selection_Context_Access (Context);
       --  The filter garantees we are on a File_Selection_Context
 
       Mains : Argument_List := Get_Attribute_Value
-        (Project_Information (File_Context),
+        (Project_Information (Context),
          Attribute => Main_Attribute);
       M     : Gtk_Menu := Gtk_Menu (Menu);
    begin
       Add_Run_Menu
         (Menu    => M,
-         Project => Project_Information (File_Context),
+         Project => Project_Information (Context),
          Kernel  => Get_Kernel (Context),
          Mains   => Mains);
       Free (Mains);

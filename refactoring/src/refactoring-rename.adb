@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -202,14 +202,10 @@ package body Refactoring.Rename is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Ent     : Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
       Dialog  : Entity_Renaming_Dialog;
       Entity  : constant Entity_Information :=
-        Get_Entity (Ent, Ask_If_Overloaded => True);
+        Get_Entity (Context.Context, Ask_If_Overloaded => True);
    begin
-      Ref (Selection_Context_Access (Ent));
-
       if Entity /= null then
          Gtk_New (Dialog, Get_Kernel (Context.Context), Entity);
          Show_All (Dialog);
@@ -236,15 +232,12 @@ package body Refactoring.Rename is
 
          Destroy (Dialog);
       end if;
-
-      Unref (Selection_Context_Access (Ent));
       return Success;
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-         Unref (Selection_Context_Access (Ent));
          Destroy (Dialog);
          return Failure;
    end Execute;

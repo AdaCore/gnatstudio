@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -83,29 +83,28 @@ package body Vdiff_Utils is
       Params : Glib.Values.GValues);
    --  Callback for the "destroy" signal.
 
-   function Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Creates a new context relative to Object.
 
    ---------------------
    -- Context_Factory --
    ---------------------
 
-   function Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk.Menu.Gtk_Menu)
    is
       use Gdk.Event;
-
-      Context : constant File_Selection_Context_Access :=
-        new File_Selection_Context;
       Vdiff   : constant Vdiff_Info_Access := Vdiff_Info_Access (Object);
       List    : constant Gtk_Clist := Gtk_Clist (Event_Widget);
       Row     : Gint;
@@ -116,8 +115,8 @@ package body Vdiff_Utils is
       pragma Unreferenced (Menu);
 
    begin
-      Set_Context_Information (Context, Kernel,
-                               Abstract_Module_ID (Vdiff_Module_ID));
+      Set_Context_Information
+        (Context, Kernel, Abstract_Module_ID (Vdiff_Module_ID));
 
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          Get_Selection_Info
@@ -145,13 +144,10 @@ package body Vdiff_Utils is
          Line   => L,
          Column => C);
 
-      return Selection_Context_Access (Context);
-
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-         return Selection_Context_Access (Context);
    end Context_Factory;
 
    -------------
@@ -592,7 +588,6 @@ package body Vdiff_Utils is
 
       Freeze (List1);
       Freeze (List2);
-
 
       Last_Line_Number := 0;
       Current_Line := First_Line;

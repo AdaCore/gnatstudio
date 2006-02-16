@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -344,7 +344,7 @@ package body Docgen_Module is
    begin
       Generate_Project
         (Get_Kernel (Context.Context),
-         Project_Information (File_Selection_Context_Access (Context.Context)),
+         Project_Information (Context.Context),
          Command.Recursive);
       return Commands.Success;
    end Execute;
@@ -361,7 +361,7 @@ package body Docgen_Module is
    begin
       Generate_File
         (Get_Kernel (Context.Context),
-         File_Information (File_Selection_Context_Access (Context.Context)));
+         File_Information (Context.Context));
       return Commands.Success;
    end Execute;
 
@@ -373,15 +373,13 @@ package body Docgen_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : constant Selection_Context_Access :=
+      Context : constant Selection_Context :=
                   Get_Current_Context (Kernel);
       File    : aliased Virtual_File;
 
    begin
-      if Context.all in File_Selection_Context'Class
-        and then Has_File_Information (File_Selection_Context_Access (Context))
-      then
-         File := File_Information (File_Selection_Context_Access (Context));
+      if Has_File_Information (Context) then
+         File := File_Information (Context);
 
          if File /= VFS.No_File then
             Generate_File (Kernel, File);
@@ -428,7 +426,7 @@ package body Docgen_Module is
       Source_File_List : Type_Source_File_Table.HTable;
       Nb_Files         : Natural;
       P                : Project_Type := Project;
-      Context          : Selection_Context_Access;
+      Context          : Selection_Context;
 
    begin
       if B = null then
@@ -437,11 +435,8 @@ package body Docgen_Module is
 
       if P = No_Project then
          Context := Get_Current_Context (Kernel);
-         if Context.all in File_Selection_Context'Class
-           and then Has_Project_Information
-             (File_Selection_Context_Access (Context))
-         then
-            P := Project_Information (File_Selection_Context_Access (Context));
+         if Has_Project_Information (Context) then
+            P := Project_Information (Context);
          else
             P := Get_Project (Kernel);
          end if;

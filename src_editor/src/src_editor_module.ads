@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -243,9 +243,10 @@ private
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
    procedure Destroy (Id : in out Source_Editor_Module_Record);
-   function Default_Context_Factory
-     (Module : access Source_Editor_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Source_Editor_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    function Save_Function
      (Module : access Source_Editor_Module_Record;
       Child  : Gtk.Widget.Gtk_Widget;

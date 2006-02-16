@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
@@ -168,11 +168,12 @@ package Browsers.Canvas is
    --  If Title is the empty string, no title bar is shown.
    --  Title must be UTF8-encoded.
 
-   function Contextual_Factory
-     (Item  : access Browser_Item_Record;
+   procedure Contextual_Factory
+     (Item    : access Browser_Item_Record;
+      Context : in out GPS.Kernel.Selection_Context;
       Browser : access General_Browser_Record'Class;
-      Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu);
    --  Return the selection context to use when an item is clicked on.
    --  The coordinates in Event are relative to the upper-left corner of the
    --  item.
@@ -513,13 +514,13 @@ package Browsers.Canvas is
    -- Contextual menus --
    ----------------------
 
-   function Default_Browser_Context_Factory
-     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+   procedure Default_Browser_Context_Factory
+     (Context      : in out GPS.Kernel.Selection_Context;
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
-      return GPS.Kernel.Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Return the context to use for a contextual menu in the canvas.
    --  This version takes care of checking whether the user clicked on an item,
    --  and adds the standard menu entries

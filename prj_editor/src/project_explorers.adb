@@ -112,9 +112,10 @@ package body Project_Explorers is
    --  <preference> True if the projects should be displayed, when sorted,
    --  before the directories in the project view.
 
-   function Default_Context_Factory
-     (Module : access Explorer_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Explorer_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
    ---------------
@@ -382,12 +383,13 @@ package body Project_Explorers is
       Target_Node : Gtk_Tree_Iter);
    --  Select Target_Node, and make sure it is visible on the screen
 
-   function Explorer_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Explorer_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk_Menu);
    --  Return the context to use for the contextual menu.
    --  It is also used to return the context for
    --  GPS.Kernel.Get_Current_Context, and thus can be called with a null
@@ -461,16 +463,16 @@ package body Project_Explorers is
       with null record;
    function Filter_Matches_Primitive
      (Context : access Project_Node_Filter_Record;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    function Filter_Matches_Primitive
      (Context : access Directory_Node_Filter_Record;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    function Filter_Matches_Primitive
      (Context : access Entity_Node_Filter_Record;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -478,15 +480,13 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access Project_Node_Filter_Record;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Context);
    begin
-      return Ctxt.all in File_Selection_Context'Class
-        and then Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
-        and then Has_Project_Information (File_Selection_Context_Access (Ctxt))
-        and then not Has_Directory_Information
-           (File_Selection_Context_Access (Ctxt));
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
+        and then Has_Project_Information (Ctxt)
+        and then not Has_Directory_Information (Ctxt);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -495,16 +495,13 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access Directory_Node_Filter_Record;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Context);
    begin
-      return Ctxt.all in File_Selection_Context'Class
-        and then Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
-        and then Has_Directory_Information
-           (File_Selection_Context_Access (Ctxt))
-        and then not Has_File_Information
-           (File_Selection_Context_Access (Ctxt));
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
+        and then Has_Directory_Information (Ctxt)
+        and then not Has_File_Information (Ctxt);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -513,15 +510,13 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Context);
    begin
-      return Ctxt.all in File_Selection_Context'Class
-        and then Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
-        and then Has_File_Information
-           (File_Selection_Context_Access (Ctxt))
-        and then Ctxt.all not in Entity_Selection_Context'Class;
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
+        and then Has_File_Information (Ctxt)
+        and then not Has_Entity_Name_Information (Ctxt);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -530,12 +525,12 @@ package body Project_Explorers is
 
    function Filter_Matches_Primitive
      (Context : access Entity_Node_Filter_Record;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class) return Boolean
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Context);
    begin
       return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
-        and then Ctxt.all in Entity_Selection_Context'Class;
+        and then Has_Entity_Name_Information (Ctxt);
    end Filter_Matches_Primitive;
 
    ----------------------
@@ -809,15 +804,15 @@ package body Project_Explorers is
    -- Explorer_Context_Factory --
    ------------------------------
 
-   function Explorer_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Explorer_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget, Object);
-      Context   : Selection_Context_Access;
 
       --  "Object" is also the explorer, but this way we make sure the current
       --  context is that of the explorer (since it will have the MDI focus)
@@ -838,11 +833,11 @@ package body Project_Explorers is
          Path_Free (Path);
          Node_Type := Get_Node_Type (T.Tree.Model, Iter);
       else
-         return Context;
+         return;
       end if;
 
-      Context := Project_Explorers_Common.Context_Factory
-        (Kernel_Handle (Kernel), T.Tree, T.Tree.Model, Event, Menu);
+      Project_Explorers_Common.Context_Factory
+        (Context, Kernel_Handle (Kernel), T.Tree, T.Tree.Model, Event, Menu);
 
       if Menu /= null then
          Gtk_New (Check, Label => -"Show absolute paths");
@@ -872,11 +867,9 @@ package body Project_Explorers is
            (Item, "activate", On_Parse_Xref'Access, T);
       end if;
 
-      return Context;
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Message (E));
-         return Context;
    end Explorer_Context_Factory;
 
    -------------
@@ -2109,12 +2102,13 @@ package body Project_Explorers is
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Explorer_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access is
+   procedure Default_Context_Factory
+     (Module  : access Explorer_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget) is
    begin
-      return Explorer_Context_Factory
-        (Get_Kernel (Module.all), Child, Child, null, null);
+      Explorer_Context_Factory
+        (Context, Get_Kernel (Module.all), Child, Child, null, null);
    end Default_Context_Factory;
 
    ----------
@@ -2687,9 +2681,7 @@ package body Project_Explorers is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File_C   : constant File_Selection_Context_Access :=
-                   File_Selection_Context_Access (Context.Context);
-      Kernel   : constant Kernel_Handle := Get_Kernel (File_C);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       C        : Search_Context_Access;
       Found    : Boolean;
       Continue : Boolean;
@@ -2703,7 +2695,8 @@ package body Project_Explorers is
       --  the same base name in an extending project...
       Set_Context
         (Context  => C,
-         Look_For => "^" & Base_Name (File_Information (File_C)) & "$",
+         Look_For =>
+           "^" & Base_Name (File_Information (Context.Context)) & "$",
          Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
                       Whole_Word     => True,
                       Regexp         => True));
@@ -2718,7 +2711,7 @@ package body Project_Explorers is
       if not Found then
          Insert (Kernel,
                  -"File not found in the explorer: "
-                 & Base_Name (File_Information (File_C)),
+                 & Base_Name (File_Information (Context.Context)),
                  Mode => GPS.Kernel.Console.Error);
       end if;
 
@@ -2735,9 +2728,7 @@ package body Project_Explorers is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File_C   : constant File_Selection_Context_Access :=
-                   File_Selection_Context_Access (Context.Context);
-      Kernel   : constant Kernel_Handle := Get_Kernel (File_C);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       C        : Search_Context_Access;
       Found    : Boolean;
       Continue : Boolean;
@@ -2748,7 +2739,7 @@ package body Project_Explorers is
          Include_Files    => False);
       Set_Context
         (Context  => C,
-         Look_For => Project_Name (Project_Information (File_C)),
+         Look_For => Project_Name (Project_Information (Context.Context)),
          Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
                       Whole_Word     => True,
                       Regexp         => False));
@@ -2763,7 +2754,7 @@ package body Project_Explorers is
       if not Found then
          Insert (Kernel,
                  -"Project not found in the explorer: "
-                 & Project_Name (Project_Information (File_C)));
+                 & Project_Name (Project_Information (Context.Context)));
       end if;
 
       Free (C);

@@ -119,12 +119,13 @@ package body VCS_View.Explorer is
       File_Data : access Hooks_Data'Class);
    --  Callback for the "file_edited" signal
 
-   function Context_Func
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Func
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Default context factory
 
    function To_History_Key (S : in String) return History_Key;
@@ -724,12 +725,13 @@ package body VCS_View.Explorer is
    -- Context_Func --
    ------------------
 
-   function Context_Func
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Func
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget);
 
@@ -738,7 +740,6 @@ package body VCS_View.Explorer is
 
       Check     : Gtk_Check_Menu_Item;
       Mitem     : Gtk_Menu_Item;
-      Context   : Selection_Context_Access;
       Submenu   : Gtk_Menu;
       Files     : String_List.List;
       Path      : Gtk_Tree_Path;
@@ -752,10 +753,7 @@ package body VCS_View.Explorer is
       Iter := Find_Iter_For_Event
         (Explorer.Tree, Get_Model (Explorer.Tree), Event);
 
-      if Iter = Null_Iter then
-         Context := new Selection_Context;
-
-      else
+      if Iter /= Null_Iter then
          Path := Get_Path (Get_Model (Explorer.Tree), Iter);
 
          if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
@@ -766,8 +764,6 @@ package body VCS_View.Explorer is
          end if;
 
          if Get_Depth (Path) = 1 then
-            Context := new File_Selection_Context;
-
             Iter := Get_Iter (Explorer.Model, Path);
 
             Name_Len := 0;
@@ -778,7 +774,7 @@ package body VCS_View.Explorer is
               (Get_Registry (Kernel).all, Name_Find);
 
             Set_File_Information
-              (File_Selection_Context_Access (Context),
+              (Context,
                File    => No_File,
                Project => Project);
 
@@ -791,8 +787,6 @@ package body VCS_View.Explorer is
                First_File : constant Virtual_File := Create
                  (Full_Filename => String_List.Head (Files));
             begin
-               Context := new File_Selection_Context;
-
                Iter :=
                  Parent (Explorer.Model, Get_Iter (Explorer.Model, Path));
 
@@ -804,17 +798,12 @@ package body VCS_View.Explorer is
                  (Get_Registry (Kernel).all, Name_Find);
 
                Set_File_Information
-                 (File_Selection_Context_Access (Context),
+                 (Context,
                   File => First_File,
                   Project => Project);
             end;
 
             String_List.Free (Files);
-
-         else
-            --  Path is 0, outside the tree view data
-
-            Context := new Selection_Context;
          end if;
 
          Path_Free (Path);
@@ -844,15 +833,11 @@ package body VCS_View.Explorer is
 
       VCS_Contextual_Menu (Kernel_Handle (Kernel), Context, Menu, False);
 
-      if Context = null then
-         Submenu := Menu;
-      else
-         Gtk_New (Mitem, -"Filters");
-         Append (Menu, Mitem);
+      Gtk_New (Mitem, -"Filters");
+      Append (Menu, Mitem);
 
-         Gtk_New (Submenu);
-         Set_Submenu (Mitem, Submenu);
-      end if;
+      Gtk_New (Submenu);
+      Set_Submenu (Mitem, Submenu);
 
       Gtk_New (Mitem, -"Show all status");
       Append (Submenu, Mitem);
@@ -884,20 +869,15 @@ package body VCS_View.Explorer is
          end loop;
       end;
 
-      if Context /= null
-        and then not (Context.all in Selection_Context)
-      then
+      if Has_File_Information (Context) then
          Gtk_New (Mitem);
          Append (Menu, Mitem);
       end if;
-
-      return Context;
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-         return null;
    end Context_Func;
 
    -------------

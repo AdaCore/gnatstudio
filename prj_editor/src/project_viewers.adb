@@ -267,15 +267,16 @@ package body Project_Viewers is
 
    procedure Explorer_Selection_Changed
      (Viewer  : access Project_Viewer_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  Same as above, but work directly on a context.
 
-   function Project_Editor_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Project_Editor_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Return the current context for the contextual menu
 
    procedure On_Edit_Switches
@@ -667,23 +668,18 @@ package body Project_Viewers is
 
    procedure Explorer_Selection_Changed
      (Viewer  : access Project_Viewer_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      File : File_Selection_Context_Access;
+      Context : Selection_Context) is
    begin
       --  If the context is invalid, keep the currently displayed lines, so
       --  that when a new MDI child is selected, the contents of the viewer is
       --  not necessarily reset.
 
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
-         File := File_Selection_Context_Access (Context);
+      if Has_File_Information (Context) then
          Update_Contents
            (Viewer,
-            Project_Information (File),
-            Dir_Name (File_Information (File)).all,
-            File_Information (File));
+            Project_Information (Context),
+            Dir_Name (File_Information (Context)).all,
+            File_Information (Context));
       else
          Update_Contents (Viewer, Get_Project (Viewer.Kernel));
       end if;
@@ -869,11 +865,9 @@ package body Project_Viewers is
       pragma Unreferenced (Widget);
       Child   : GPS_MDI_Child;
       Viewer  : Project_Viewer;
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
 
    begin
-      Ref (Context);
-
       Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Viewer_Record'Tag));
 
@@ -894,7 +888,7 @@ package body Project_Viewers is
       --  The initial contents of the viewer should be read immediately from
       --  the explorer, without forcing the user to do a new selection.
 
-      if Context /= null then
+      if Context /= No_Context then
          Explorer_Selection_Changed (Viewer, Context);
       else
          Update_Contents (Viewer, Get_Project (Kernel));
@@ -902,13 +896,10 @@ package body Project_Viewers is
 
       Set_Focus_Child (Child);
 
-      Unref (Context);
-
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
-         Unref (Context);
    end On_Edit_Switches;
 
    ---------------------------
@@ -920,18 +911,13 @@ package body Project_Viewers is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : constant Selection_Context_Access :=
+      Context : constant Selection_Context :=
         Get_Current_Context (Kernel);
       Project : Project_Type;
 
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_Project_Information
-          (File_Selection_Context_Access (Context))
-      then
-         Project := Project_Information
-           (File_Selection_Context_Access (Context));
+      if Has_Project_Information (Context) then
+         Project := Project_Information (Context);
       else
          Project := Get_Project (Kernel);
       end if;
@@ -1047,10 +1033,8 @@ package body Project_Viewers is
    is
       Tmp     : Boolean := True;
       pragma Unreferenced (Command);
-      File    : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      Kernel  : constant Kernel_Handle := Get_Kernel (File);
-      Project : constant Project_Type := Project_Information (File);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Project : constant Project_Type := Project_Information (Context.Context);
    begin
       if Status (Project) /= From_File then
          Tmp := Read_Project_Name (Kernel, Project);
@@ -1073,10 +1057,9 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File_C   : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
    begin
-      Open_File_Editor (Kernel, Project_Path (Project_Information (File_C)));
+      Open_File_Editor
+        (Kernel, Project_Path (Project_Information (Context.Context)));
       return Success;
    end Execute;
 
@@ -1084,17 +1067,15 @@ package body Project_Viewers is
    -- Project_Editor_Context_Factory --
    ------------------------------------
 
-   function Project_Editor_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Project_Editor_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget, Kernel);
-
-      Context : constant File_Selection_Context_Access :=
-        new File_Selection_Context;
       V       : constant Project_Viewer := Project_Viewer (Object);
       Item    : Gtk_Menu_Item;
       Iter    : Gtk_Tree_Iter;
@@ -1131,13 +1112,10 @@ package body Project_Viewers is
             Slot_Object => V);
       end if;
 
-      return Selection_Context_Access (Context);
-
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
-         return Selection_Context_Access (Context);
    end Project_Editor_Context_Factory;
 
    ----------------------------

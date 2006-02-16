@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                         Copyright (C) 2005-2006                   --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -40,11 +40,11 @@ package VCS_Utils is
    --  Return False if the user has cancelled the action.
 
    function Get_Current_Dir
-     (Context : Selection_Context_Access) return String;
+     (Context : Selection_Context) return String;
    --  Convenience function to get the current directory
 
    function Get_Current_File
-     (Context : Selection_Context_Access) return VFS.Virtual_File;
+     (Context : Selection_Context) return VFS.Virtual_File;
    --  Convenience function to get the current file
 
    procedure Update_Files_Status

@@ -119,12 +119,13 @@ package body VCS_View.Activities is
       File_Data : access Hooks_Data'Class);
    --  Callback for the "file_edited" signal
 
-   function Context_Func
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Func
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Default context factory
 
    ---------------------
@@ -598,19 +599,19 @@ package body VCS_View.Activities is
    -- Context_Func --
    ------------------
 
-   function Context_Func
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Func
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget);
 
       Explorer : constant VCS_Activities_View_Access :=
                    VCS_Activities_View_Access (Object);
       Mitem    : Gtk_Menu_Item;
-      Context  : Selection_Context_Access;
       Files    : String_List.List;
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
@@ -621,10 +622,7 @@ package body VCS_View.Activities is
       Iter := Find_Iter_For_Event
         (Explorer.Tree, Get_Model (Explorer.Tree), Event);
 
-      if Iter = Null_Iter then
-         Context := new Selection_Context;
-
-      else
+      if Iter /= Null_Iter then
          Path := Get_Path (Get_Model (Explorer.Tree), Iter);
 
          if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
@@ -637,13 +635,10 @@ package body VCS_View.Activities is
          --  If Get_Depth (Path) is 1 then we are on an activity node
 
          if Get_Depth (Path) = 1 then
-            Context := new Activity_Context;
-
             Iter := Get_Iter (Explorer.Model, Path);
 
             Set_Activity_Information
-              (Activity_Context_Access (Context),
-               Get_String (Explorer.Model, Iter, Activity_Column));
+              (Context, Get_String (Explorer.Model, Iter, Activity_Column));
 
          elsif Get_Depth (Path) > 1 then
             Files := Get_Selected_Files (VCS_View_Access (Explorer));
@@ -652,25 +647,16 @@ package body VCS_View.Activities is
                First_File : constant Virtual_File := Create
                  (Full_Filename => String_List.Head (Files));
             begin
-               Context := new Activity_Context;
-
                Iter :=
                  Parent (Explorer.Model, Get_Iter (Explorer.Model, Path));
 
                Set_Activity_Information
-                 (Activity_Context_Access (Context),
+                 (Context,
                   Get_String (Explorer.Model, Iter, Activity_Column));
-               Set_File_Information
-                 (File_Selection_Context_Access (Context),
-                  File => First_File);
+               Set_File_Information (Context, File => First_File);
             end;
 
             String_List.Free (Files);
-
-         else
-            --  Path is 0, outside the tree view data
-
-            Context := new Selection_Context;
          end if;
 
          Path_Free (Path);
@@ -682,22 +668,17 @@ package body VCS_View.Activities is
 
       VCS_Activities_Contextual_Menu (Kernel_Handle (Kernel), Context, Menu);
 
-      if Context.all in File_Selection_Context'Class
-        and then Has_File_Information (File_Selection_Context_Access (Context))
-      then
+      if Has_File_Information (Context) then
          --  This is a menu for a file line in the tree view, it is fine to add
          --  a separator.
          Gtk_New (Mitem);
          Append (Menu, Mitem);
       end if;
 
-      return Context;
-
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-         return null;
    end Context_Func;
 
    -------------

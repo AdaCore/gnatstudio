@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -31,36 +31,31 @@ with Language_Handlers;  use Language_Handlers;
 package body GPS.Kernel.Contexts is
    type Filter_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
-     (Filter  : access Filter_File;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
+     (Filter  : access Filter_File; Ctxt : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Directory is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
-     (Filter  : access Filter_Directory;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
+     (Filter  : access Filter_Directory; Ctxt : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Entity is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
-     (Filter  : access Filter_Entity;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
+     (Filter  : access Filter_Entity; Ctxt : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Project_Only is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
-     (Filter  : access Filter_Project_Only;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
+     (Filter  : access Filter_Project_Only; Ctxt : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Project_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
-     (Filter  : access Filter_Project_File;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
+     (Filter  : access Filter_Project_File; Ctxt : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
@@ -68,7 +63,7 @@ package body GPS.Kernel.Contexts is
    with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_In_Project;
-      Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
    --  True if the current file belongs to an opened project
 
    ------------------------------
@@ -77,11 +72,11 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Is_Area_Context;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Context.all in File_Area_Context'Class;
+      return Has_Area_Information (Context);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -90,17 +85,13 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_Only;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
-      return Boolean
+      Ctxt    : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Ctxt.all in File_Selection_Context'Class
-        and then Has_Project_Information (File_Selection_Context_Access (Ctxt))
-        and then not Has_Directory_Information
-          (File_Selection_Context_Access (Ctxt))
-        and then not Has_File_Information
-          (File_Selection_Context_Access (Ctxt));
+      return Has_Project_Information (Ctxt)
+        and then not Has_Directory_Information (Ctxt)
+        and then not Has_File_Information (Ctxt);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -109,16 +100,12 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_File;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
-      return Boolean
+      Ctxt    : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Ctxt.all in File_Selection_Context'Class
-        and then Has_Project_Information
-          (File_Selection_Context_Access (Ctxt))
-        and then Has_File_Information
-          (File_Selection_Context_Access (Ctxt));
+      return Has_Project_Information (Ctxt)
+        and then Has_File_Information (Ctxt);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -127,25 +114,15 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_In_Project;
-      Context : access GPS.Kernel.Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      C      : File_Selection_Context_Access;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      if Context.all in File_Selection_Context'Class then
-         C := File_Selection_Context_Access (Context);
-         declare
-            File       : constant VFS.Virtual_File := File_Information (C);
-            Project    : constant Project_Type := Get_Project_From_File
-              (Get_Registry (Kernel).all, File, False);
-         begin
-            if Project /= No_Project then
-               return True;
-            end if;
-         end;
-      end if;
-      return False;
+      return Has_File_Information (Context)
+        and then Get_Project_From_File
+          (Get_Registry (Kernel).all, File_Information (Context), False) /=
+          No_Project;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -154,14 +131,11 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Entity;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
-      return Boolean
+      Ctxt    : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Ctxt.all in Entity_Selection_Context'Class
-        and then Has_Entity_Name_Information
-          (Entity_Selection_Context_Access (Ctxt));
+      return Has_Entity_Name_Information (Ctxt);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -170,13 +144,11 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_File;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
-      return Boolean
+      Ctxt    : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Ctxt.all in File_Selection_Context'Class
-        and then Has_File_Information (File_Selection_Context_Access (Ctxt));
+      return Has_File_Information (Ctxt);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -185,14 +157,11 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Directory;
-      Ctxt    : access GPS.Kernel.Selection_Context'Class)
-      return Boolean
+      Ctxt    : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Ctxt.all in File_Selection_Context'Class
-        and then Has_Directory_Information
-          (File_Selection_Context_Access (Ctxt));
+      return Has_Directory_Information (Ctxt);
    end Filter_Matches_Primitive;
 
    --------------------------
@@ -200,19 +169,19 @@ package body GPS.Kernel.Contexts is
    --------------------------
 
    procedure Set_File_Information
-     (Context           : access File_Selection_Context;
+     (Context           : in out Selection_Context;
       File              : VFS.Virtual_File := VFS.No_File;
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
       Column            : Integer := 0) is
    begin
-      Context.File                     := File;
-      Context.Line                     := Line;
-      Context.Column                   := Column;
-      Context.Creator_Provided_Project := Project /= No_Project;
-      Context.Project                  := Project;
-      Context.Importing_Project        := Importing_Project;
+      Context.Data.Data.File                     := File;
+      Context.Data.Data.Line                     := Line;
+      Context.Data.Data.Column                   := Column;
+      Context.Data.Data.Creator_Provided_Project := Project /= No_Project;
+      Context.Data.Data.Project                  := Project;
+      Context.Data.Data.Importing_Project        := Importing_Project;
    end Set_File_Information;
 
    -----------------------------
@@ -220,26 +189,27 @@ package body GPS.Kernel.Contexts is
    -----------------------------
 
    function Has_Project_Information
-     (Context : access File_Selection_Context) return Boolean is
+     (Context : Selection_Context) return Boolean is
    begin
-      return Context.Creator_Provided_Project;
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Creator_Provided_Project;
    end Has_Project_Information;
 
    -------------------------
    -- Project_Information --
    -------------------------
 
-   function Project_Information (Context : access File_Selection_Context)
+   function Project_Information (Context : Selection_Context)
       return Projects.Project_Type is
    begin
-      if Context.Project = No_Project
+      if Context.Data.Data.Project = No_Project
         and then Has_File_Information (Context)
       then
-         Context.Project := Get_Project_From_File
+         Context.Data.Data.Project := Get_Project_From_File
            (Get_Registry (Get_Kernel (Context)).all,
             File_Information (Context));
       end if;
-      return Context.Project;
+      return Context.Data.Data.Project;
    end Project_Information;
 
    -------------------------------
@@ -247,9 +217,10 @@ package body GPS.Kernel.Contexts is
    -------------------------------
 
    function Has_Directory_Information
-     (Context : access File_Selection_Context) return Boolean is
+     (Context : Selection_Context) return Boolean is
    begin
-      return Dir_Name (Context.File).all /= "";
+      return Has_File_Information (Context)
+        and then Dir_Name (Context.Data.Data.File).all /= "";
    end Has_Directory_Information;
 
    ---------------------------
@@ -257,9 +228,9 @@ package body GPS.Kernel.Contexts is
    ---------------------------
 
    function Directory_Information
-     (Context : access File_Selection_Context) return String is
+     (Context : Selection_Context) return String is
    begin
-      return Dir_Name (Context.File).all;
+      return Dir_Name (Context.Data.Data.File).all;
    end Directory_Information;
 
    --------------------------
@@ -267,9 +238,10 @@ package body GPS.Kernel.Contexts is
    --------------------------
 
    function Has_File_Information
-     (Context : access File_Selection_Context) return Boolean is
+     (Context : Selection_Context) return Boolean is
    begin
-      return Base_Name (Context.File) /= "";
+      return Context.Data.Data /= null
+        and then Base_Name (Context.Data.Data.File) /= "";
    end Has_File_Information;
 
    ----------------------
@@ -277,33 +249,31 @@ package body GPS.Kernel.Contexts is
    ----------------------
 
    function File_Information
-     (Context  : access File_Selection_Context) return Virtual_File is
+     (Context  : Selection_Context) return Virtual_File is
    begin
-      if Context.Checked then
-         return Context.File;
-
-      else
+      if not Context.Data.Data.File_Checked then
          declare
-            Name : constant String := Base_Name (Context.File);
+            Name : constant String := Base_Name (Context.Data.Data.File);
          begin
-            if Context.Kernel /= null
+            if Context.Data.Data.Kernel /= null
               and then Name'Length > 4
               and then Name (Name'First .. Name'First + 3) = "ref$"
             then
                --  This is a reference file, we have no need of it in the
                --  context. We record then the corresponding file.
-               Context.File := Create
+               Context.Data.Data.File := Create
                  (Get_Full_Path_From_File
-                    (Get_Registry (Context.Kernel).all,
+                    (Get_Registry (Context.Data.Data.Kernel).all,
                      Name (Name'First + 4 .. Name'Last),
                      Use_Source_Path => True,
                      Use_Object_Path => False));
             end if;
          end;
 
-         Context.Checked := True;
-         return Context.File;
+         Context.Data.Data.File_Checked := True;
       end if;
+
+      return Context.Data.Data.File;
    end File_Information;
 
    ---------------------------------------
@@ -311,9 +281,10 @@ package body GPS.Kernel.Contexts is
    ---------------------------------------
 
    function Has_Importing_Project_Information
-     (Context : access File_Selection_Context) return Boolean is
+     (Context : Selection_Context) return Boolean is
    begin
-      return Context.Importing_Project /= No_Project;
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Importing_Project /= No_Project;
    end Has_Importing_Project_Information;
 
    -----------------------------------
@@ -321,9 +292,9 @@ package body GPS.Kernel.Contexts is
    -----------------------------------
 
    function Importing_Project_Information
-     (Context : access File_Selection_Context) return Project_Type is
+     (Context : Selection_Context) return Project_Type is
    begin
-      return Context.Importing_Project;
+      return Context.Data.Data.Importing_Project;
    end Importing_Project_Information;
 
    -----------------------------
@@ -331,20 +302,19 @@ package body GPS.Kernel.Contexts is
    -----------------------------
 
    procedure Set_Message_Information
-     (Context     : access Message_Context;
+     (Context     : in out Selection_Context;
       Category    : String := "";
       Message     : String := "") is
    begin
-      Free (Context.Category_Name);
+      Free (Context.Data.Data.Category_Name);
       if Category /= "" then
-         Context.Category_Name := new String'(Category);
+         Context.Data.Data.Category_Name := new String'(Category);
       end if;
 
-      Free (Context.Message);
+      Free (Context.Data.Data.Message);
       if Message /= "" then
-         Context.Message := new String'(Message);
+         Context.Data.Data.Message := new String'(Message);
       end if;
-
    end Set_Message_Information;
 
    --------------------------
@@ -352,19 +322,19 @@ package body GPS.Kernel.Contexts is
    --------------------------
 
    function Has_Line_Information
-     (Context : access File_Selection_Context) return Boolean is
+     (Context : Selection_Context) return Boolean is
    begin
-      return Context.Line /= 0;
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Line /= 0;
    end Has_Line_Information;
 
    ----------------------
    -- Line_Information --
    ----------------------
 
-   function Line_Information
-     (Context : access File_Selection_Context) return Integer is
+   function Line_Information (Context : Selection_Context) return Integer is
    begin
-      return Context.Line;
+      return Context.Data.Data.Line;
    end Line_Information;
 
    ----------------------------
@@ -372,9 +342,10 @@ package body GPS.Kernel.Contexts is
    ----------------------------
 
    function Has_Column_Information
-     (Context : access File_Selection_Context) return Boolean is
+     (Context : Selection_Context) return Boolean is
    begin
-      return Context.Column /= 0;
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Column /= 0;
    end Has_Column_Information;
 
    ------------------------
@@ -382,9 +353,9 @@ package body GPS.Kernel.Contexts is
    ------------------------
 
    function Column_Information
-     (Context : access File_Selection_Context) return Integer is
+     (Context : Selection_Context) return Integer is
    begin
-      return Context.Column;
+      return Context.Data.Data.Column;
    end Column_Information;
 
    ------------------------------
@@ -392,9 +363,10 @@ package body GPS.Kernel.Contexts is
    ------------------------------
 
    function Has_Category_Information
-     (Context : access Message_Context) return Boolean is
+     (Context : Selection_Context) return Boolean is
    begin
-      return Context.Category_Name /= null;
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Category_Name /= null;
    end Has_Category_Information;
 
    --------------------------
@@ -402,9 +374,9 @@ package body GPS.Kernel.Contexts is
    --------------------------
 
    function Category_Information
-     (Context : access Message_Context) return String is
+     (Context : Selection_Context) return String is
    begin
-      return Context.Category_Name.all;
+      return Context.Data.Data.Category_Name.all;
    end Category_Information;
 
    -----------------------------
@@ -412,9 +384,10 @@ package body GPS.Kernel.Contexts is
    -----------------------------
 
    function Has_Message_Information
-     (Context : access Message_Context) return Boolean is
+     (Context : Selection_Context) return Boolean is
    begin
-      return Context.Message /= null;
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Message /= null;
    end Has_Message_Information;
 
    -------------------------
@@ -422,9 +395,9 @@ package body GPS.Kernel.Contexts is
    -------------------------
 
    function Message_Information
-     (Context : access Message_Context) return String is
+     (Context : Selection_Context) return String is
    begin
-      return Context.Message.all;
+      return Context.Data.Data.Message.all;
    end Message_Information;
 
    ----------------------------
@@ -432,16 +405,17 @@ package body GPS.Kernel.Contexts is
    ----------------------------
 
    procedure Set_Entity_Information
-     (Context       : access Entity_Selection_Context;
+     (Context       : in out Selection_Context;
       Entity_Name   : String := "";
       Entity_Column : Integer := 0) is
    begin
-      Free (Context.Entity_Name);
+      Free (Context.Data.Data.Entity_Name);
       if Entity_Name /= "" then
-         Context.Entity_Name := new String'(Entity_Name);
+         Context.Data.Data.Entity_Name := new String'(Entity_Name);
       end if;
 
-      Context.Entity_Column := Entity_Column;
+      Context.Data.Data.Entity_Column := Entity_Column;
+      Context.Data.Data.Entity_Resolved := Entity_Not_Found;
    end Set_Entity_Information;
 
    ----------------------------
@@ -449,17 +423,17 @@ package body GPS.Kernel.Contexts is
    ----------------------------
 
    procedure Set_Entity_Information
-     (Context       : access Entity_Selection_Context;
+     (Context       : in out Selection_Context;
       Entity        : access Entities.Entity_Information_Record'Class) is
    begin
       Ref (Entity_Information (Entity));
-      Free (Context.Entity_Name);
-      Context.Entity_Name     :=
+      Free (Context.Data.Data.Entity_Name);
+      Context.Data.Data.Entity_Name     :=
         new String'(Get_Name (Entity_Information (Entity)).all);
-      Context.Entity_Column   :=
+      Context.Data.Data.Entity_Column   :=
         Get_Column (Get_Declaration_Of (Entity_Information (Entity)));
-      Context.Entity          := Entity_Information (Entity);
-      Context.Entity_Resolved := Success;
+      Context.Data.Data.Entity          := Entity_Information (Entity);
+      Context.Data.Data.Entity_Resolved := Success;
    end Set_Entity_Information;
 
    ---------------------------------
@@ -467,9 +441,10 @@ package body GPS.Kernel.Contexts is
    ---------------------------------
 
    function Has_Entity_Name_Information
-     (Context : access Entity_Selection_Context) return Boolean is
+     (Context : Selection_Context) return Boolean is
    begin
-      return Context.Entity_Name /= null;
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Entity_Name /= null;
    end Has_Entity_Name_Information;
 
    -----------------------------
@@ -477,12 +452,12 @@ package body GPS.Kernel.Contexts is
    -----------------------------
 
    function Entity_Name_Information
-     (Context : access Entity_Selection_Context) return String is
+     (Context : Selection_Context) return String is
    begin
-      if Context.Entity_Name = null then
+      if Context.Data.Data.Entity_Name = null then
          return "";
       else
-         return Context.Entity_Name.all;
+         return Context.Data.Data.Entity_Name.all;
       end if;
    end Entity_Name_Information;
 
@@ -491,9 +466,10 @@ package body GPS.Kernel.Contexts is
    -----------------------------------
 
    function Has_Entity_Column_Information
-     (Context : access Entity_Selection_Context) return Boolean is
+     (Context : Selection_Context) return Boolean is
    begin
-      return Context.Entity_Column /= 0;
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Entity_Column /= 0;
    end Has_Entity_Column_Information;
 
    -------------------------------
@@ -501,46 +477,49 @@ package body GPS.Kernel.Contexts is
    -------------------------------
 
    function Entity_Column_Information
-     (Context : access Entity_Selection_Context) return Integer is
+     (Context : Selection_Context) return Integer is
    begin
-      return Context.Entity_Column;
+      return Context.Data.Data.Entity_Column;
    end Entity_Column_Information;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Context : in out File_Selection_Context) is
-   begin
-      GPS.Kernel.Destroy (Selection_Context (Context));
-   end Destroy;
 
    --------------------------
    -- Set_Area_Information --
    --------------------------
 
    procedure Set_Area_Information
-     (Context    : access File_Area_Context;
+     (Context    : in out Selection_Context;
       Text       : String;
       Start_Line : Integer := 0;
       End_Line   : Integer := 0) is
    begin
-      Context.Text       := new String'(Text);
-      Context.Start_Line := Start_Line;
-      Context.End_Line   := End_Line;
+      Free (Context.Data.Data.Text);
+      Context.Data.Data.Text       := new String'(Text);
+      Context.Data.Data.Start_Line := Start_Line;
+      Context.Data.Data.End_Line   := End_Line;
    end Set_Area_Information;
+
+   --------------------------
+   -- Has_Area_Information --
+   --------------------------
+
+   function Has_Area_Information
+     (Context : Selection_Context) return Boolean is
+   begin
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Text /= null;
+   end Has_Area_Information;
 
    --------------
    -- Get_Area --
    --------------
 
    procedure Get_Area
-     (Context    : access File_Area_Context;
+     (Context    : Selection_Context;
       Start_Line : out Integer;
       End_Line   : out Integer) is
    begin
-      Start_Line := Context.Start_Line;
-      End_Line   := Context.End_Line;
+      Start_Line := Context.Data.Data.Start_Line;
+      End_Line   := Context.Data.Data.End_Line;
    end Get_Area;
 
    ----------------
@@ -548,20 +527,20 @@ package body GPS.Kernel.Contexts is
    ----------------
 
    function Get_Entity
-     (Context           : access Entity_Selection_Context;
+     (Context           : Selection_Context;
       Ask_If_Overloaded : Boolean := False) return Entity_Information
    is
       File   : Source_File;
       Never_Examined : constant Boolean :=
-        Context.Entity_Resolved = Entity_Not_Found
-        or else (Context.Entity_Resolved = Overloaded_Entity_Found
+        Context.Data.Data.Entity_Resolved = Entity_Not_Found
+        or else (Context.Data.Data.Entity_Resolved = Overloaded_Entity_Found
                  and then Ask_If_Overloaded);
 
    begin
-      if Context.Entity_Resolved = Overloaded_Entity_Found
+      if Context.Data.Data.Entity_Resolved = Overloaded_Entity_Found
         and then not Ask_If_Overloaded
       then
-         return Context.Entity;
+         return Context.Data.Data.Entity;
 
       elsif Never_Examined
         and then Has_Entity_Name_Information (Context)
@@ -576,7 +555,7 @@ package body GPS.Kernel.Contexts is
                File_Information (Context)));
 
          if File = null then
-            Context.Entity_Resolved := Success;
+            Context.Data.Data.Entity_Resolved := Success;
             return null;
          end if;
 
@@ -587,48 +566,38 @@ package body GPS.Kernel.Contexts is
             Line              => Line_Information (Context),
             Column            => Entity_Column_Information (Context),
             Ask_If_Overloaded => Ask_If_Overloaded,
-            Entity            => Context.Entity,
-            Status            => Context.Entity_Resolved);
+            Entity            => Context.Data.Data.Entity,
+            Status            => Context.Data.Data.Entity_Resolved);
 
-         if Context.Entity_Resolved = Fuzzy_Match
-           or else Context.Entity_Resolved = Overloaded_Entity_Found
+         if Context.Data.Data.Entity_Resolved = Fuzzy_Match
+           or else Context.Data.Data.Entity_Resolved = Overloaded_Entity_Found
          then
             if Ask_If_Overloaded then
-               Context.Entity_Resolved := Success;
+               Context.Data.Data.Entity_Resolved := Success;
             end if;
-         elsif Context.Entity_Resolved /= Success then
-            Context.Entity := null;
-            Context.Entity_Resolved := Success;
+         elsif Context.Data.Data.Entity_Resolved /= Success then
+            Context.Data.Data.Entity := null;
+            Context.Data.Data.Entity_Resolved := Success;
          end if;
 
-         Ref (Context.Entity);
+         Ref (Context.Data.Data.Entity);
       else
-         Context.Entity_Resolved := Success;
+         Context.Data.Data.Entity_Resolved := Success;
       end if;
 
-      return Context.Entity;
+      return Context.Data.Data.Entity;
    end Get_Entity;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Context : in out Entity_Selection_Context) is
-   begin
-      Unref (Context.Entity);
-      Destroy (File_Selection_Context (Context));
-      Free (Context.Entity_Name);
-   end Destroy;
 
    ------------------------------
    -- Set_Activity_Information --
    ------------------------------
 
    procedure Set_Activity_Information
-     (Context : access Activity_Context;
+     (Context : in out Selection_Context;
       Id      : String) is
    begin
-      Context.Id := new String'(Id);
+      Free (Context.Data.Data.Activity_Id);
+      Context.Data.Data.Activity_Id := new String'(Id);
    end Set_Activity_Information;
 
    --------------------------
@@ -636,44 +605,35 @@ package body GPS.Kernel.Contexts is
    --------------------------
 
    function Activity_Information
-     (Context : access Activity_Context) return String is
+     (Context : Selection_Context) return String is
    begin
-      return Context.Id.all;
+      return Context.Data.Data.Activity_Id.all;
    end Activity_Information;
 
-   -------------
-   -- Destroy --
-   -------------
+   ------------------------------
+   -- Has_Activity_Information --
+   ------------------------------
 
-   procedure Destroy (Context : in out Activity_Context) is
+   function Has_Activity_Information
+     (Context : Selection_Context) return Boolean is
    begin
-      Destroy (File_Selection_Context (Context));
-      Free (Context.Id);
-   end Destroy;
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Activity_Id /= null;
+   end Has_Activity_Information;
 
    ----------------------
    -- Text_Information --
    ----------------------
 
    function Text_Information
-     (Context : access File_Area_Context) return String is
+     (Context : Selection_Context) return String is
    begin
-      if Context.Text /= null then
-         return Context.Text.all;
+      if Context.Data.Data.Text /= null then
+         return Context.Data.Data.Text.all;
       else
          return "";
       end if;
    end Text_Information;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Context : in out File_Area_Context) is
-   begin
-      Destroy (File_Selection_Context (Context));
-      Free (Context.Text);
-   end Destroy;
 
    ------------------------------
    -- Register_Default_Filters --

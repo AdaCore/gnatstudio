@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -715,12 +715,13 @@ package body Project_Explorers_Common is
    -- Context_Factory --
    ---------------------
 
-   function Context_Factory
-     (Kernel : Kernel_Handle;
+   procedure Context_Factory
+     (Context : in out Selection_Context;
+      Kernel : Kernel_Handle;
       Tree   : access Gtk_Tree_View_Record'Class;
       Model  : Gtk_Tree_Store;
       Event  : Gdk_Event;
-      Menu   : Gtk_Menu) return Selection_Context_Access
+      Menu   : Gtk_Menu)
    is
       pragma Unreferenced (Menu);
 
@@ -746,7 +747,6 @@ package body Project_Explorers_Common is
 
       Iter      : constant Gtk_Tree_Iter := Find_Iter_For_Event
         (Tree, Model, Event);
-      Context   : Selection_Context_Access;
       Node_Type : Node_Types;
       L         : Integer := 0;
 
@@ -754,18 +754,12 @@ package body Project_Explorers_Common is
       if Iter /= Null_Iter then
          Node_Type := Get_Node_Type (Model, Iter);
       else
-         return Context;
-      end if;
-
-      if Node_Type = Entity_Node then
-         Context := new Entity_Selection_Context;
-      else
-         Context := new File_Selection_Context;
+         return;
       end if;
 
       if Node_Type = Entity_Node then
          Set_Entity_Information
-           (Context       => Entity_Selection_Context_Access (Context),
+           (Context       => Context,
             Entity_Name   => Entity_Base
               (Get_String (Model, Iter, Entity_Base_Column)),
             Entity_Column => Integer
@@ -778,21 +772,19 @@ package body Project_Explorers_Common is
         or else Node_Type = Modified_Project_Node
       then
          Set_File_Information
-           (Context      => File_Selection_Context_Access (Context),
+           (Context      => Context,
             Project      => Get_Project_From_Node (Model, Kernel, Iter, False),
             Importing_Project =>
               Get_Project_From_Node (Model, Kernel, Iter, True));
       else
          Set_File_Information
-           (Context      => File_Selection_Context_Access (Context),
+           (Context      => Context,
             File         => Get_File_From_Node (Model, Iter),
             Project      => Get_Project_From_Node (Model, Kernel, Iter, False),
             Importing_Project =>
               Get_Project_From_Node (Model, Kernel, Iter, True),
             Line         => L);
       end if;
-
-      return Context;
    end Context_Factory;
 
 end Project_Explorers_Common;

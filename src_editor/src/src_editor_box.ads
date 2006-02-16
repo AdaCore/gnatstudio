@@ -43,7 +43,6 @@ with Gtk.Text_Mark;
 with Language;
 with Language_Handlers;
 with GPS.Kernel;
-with GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks;
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
@@ -204,7 +203,7 @@ package Src_Editor_Box is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       To_Body : Boolean;
       Editor  : access Source_Editor_Box_Record'Class;
-      Context : access GPS.Kernel.Contexts.Entity_Selection_Context'Class);
+      Context : GPS.Kernel.Selection_Context);
    --  Perform a Declaration-or-Body cross-reference for the entity
    --  located at (Line, Column) in Editor, or in the current editor if
    --  Editor is null. If To_Body is True, then display the next body of the
@@ -298,7 +297,7 @@ package Src_Editor_Box is
       with null record;
    function Filter_Matches_Primitive
      (Filter  : access In_Line_Numbers_Area_Filter;
-      Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the event currently processed was in an editor's line numbers
    --  area
 
@@ -306,21 +305,21 @@ package Src_Editor_Box is
      with null record;
    function Filter_Matches_Primitive
      (Filter  : access Has_Body_Filter;
-      Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current entity has a body
 
    type Has_Type_Filter is new GPS.Kernel.Action_Filter_Record
      with null record;
    function Filter_Matches_Primitive
      (Filter  : access Has_Type_Filter;
-      Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current entity has a type
 
    type Has_Other_File_Filter is new GPS.Kernel.Action_Filter_Record
      with null record;
    function Filter_Matches_Primitive
      (Filter  : access Has_Other_File_Filter;
-      Context : access GPS.Kernel.Selection_Context'Class) return Boolean;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current file has a spec/body
 
    type Goto_Line_Command is new Interactive_Command with record
@@ -354,7 +353,7 @@ package Src_Editor_Box is
      with null record;
    function Get_Label
      (Creator   : access Goto_Body_Menu_Label;
-      Context   : access GPS.Kernel.Selection_Context'Class) return String;
+      Context   : GPS.Kernel.Selection_Context) return String;
    --  Return the label to use for the contextual menu "Goto body"
 
    type Goto_Type_Command is new Interactive_Command with null record;
@@ -363,12 +362,12 @@ package Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the type declaration of the entity in the context
 
-   function Get_Contextual_Menu
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Object : access Glib.Object.GObject_Record'Class;
-      Event  : Gdk.Event.Gdk_Event;
-      Menu   : Gtk.Menu.Gtk_Menu)
-      return GPS.Kernel.Selection_Context_Access;
+   procedure Get_Contextual_Menu
+     (Context : in out GPS.Kernel.Selection_Context;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu);
    --  Return the contextual menu to use for the source box.
    --  This function is also used to create the context for
    --  GPS.Kernel.Get_Current_Context, and might be called with Event and

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -78,9 +78,10 @@ package body Outline_View is
    Mark_Column        : constant := 3;
    Line_Column        : constant := 4;
 
-   function Default_Context_Factory
-     (Module : access Outline_View_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Outline_View_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
    procedure On_Context_Changed
@@ -146,12 +147,13 @@ package body Outline_View is
    --  Return Cat_Unknown if the category should be filtered out, and the
    --  name of the category to use otherwise.
 
-   function Outline_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Outline_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk_Menu);
    --  Context factory when creating contextual menus
 
    procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
@@ -323,14 +325,16 @@ package body Outline_View is
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Outline_View_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   procedure Default_Context_Factory
+     (Module  : access Outline_View_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget)
    is
       Outline : constant Outline_View_Access := Outline_View_Access (Child);
    begin
-      return Outline_Context_Factory
-        (Kernel       => Get_Kernel (Module.all),
+      Outline_Context_Factory
+        (Context      => Context,
+         Kernel       => Get_Kernel (Module.all),
          Event_Widget => Outline.Tree,
          Object       => Outline,
          Event        => null,
@@ -341,20 +345,20 @@ package body Outline_View is
    -- Outline_Context_Factory --
    -----------------------------
 
-   function Outline_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Outline_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk_Menu)
    is
       pragma Unreferenced (Kernel, Event_Widget, Menu);
-      Context : File_Selection_Context_Access;
-      Iter    : Gtk_Tree_Iter;
       Outline : constant Outline_View_Access := Outline_View_Access (Object);
       Model : constant Gtk_Tree_Store :=
         Gtk_Tree_Store (Get_Model (Outline.Tree));
       Path      : Gtk_Tree_Path;
+      Iter      : Gtk_Tree_Iter;
       Line, Column : Integer;
    begin
       Iter := Find_Iter_For_Event (Outline.Tree, Model, Event);
@@ -379,13 +383,10 @@ package body Outline_View is
                  (Outline.Kernel, "Editor.get_column", Args));
          end;
 
-         Context := new Entity_Selection_Context;
          Set_Entity_Information
-           (Context       => Entity_Selection_Context_Access (Context),
+           (Context       => Context,
             Entity_Name   => Get_String (Model, Iter, Entity_Name_Column),
             Entity_Column => Column);
-      else
-         Context := new File_Selection_Context;
       end if;
 
       Set_File_Information
@@ -393,7 +394,6 @@ package body Outline_View is
          Project => Projects.No_Project,
          File    => Outline.File,
          Line    => Line);
-      return Selection_Context_Access (Context);
    end Outline_Context_Factory;
 
    ---------------------
@@ -812,12 +812,9 @@ package body Outline_View is
          if Module /= null
            and then (Get_Name (Module) = "Source_Editor"
                      or else Get_Name (Module) = Outline_View_Module_Name)
-           and then D.Context.all in File_Selection_Context'Class
-           and then Has_File_Information
-             (File_Selection_Context_Access (D.Context))
+           and then Has_File_Information (D.Context)
          then
-            File := File_Information
-              (File_Selection_Context_Access (D.Context));
+            File := File_Information (D.Context);
             if File /= Outline.File then
                Outline.File := File;
                Refresh (Outline);

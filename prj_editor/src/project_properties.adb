@@ -4773,10 +4773,9 @@ package body Project_Properties is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
    begin
-      Edit_Properties (Project_Information (C), Get_Kernel (C));
+      Edit_Properties
+        (Project_Information (Context.Context), Get_Kernel (Context.Context));
       return Commands.Success;
    end Execute;
 

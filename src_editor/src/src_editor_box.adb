@@ -114,13 +114,13 @@ package body Src_Editor_Box is
       Params : Glib.Values.GValues) return Boolean;
    --  Callback for the "delete_event" signal.
 
-   function Get_Contextual_Menu
-     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+   procedure Get_Contextual_Menu
+     (Context      : in out Selection_Context;
+      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
-      return GPS.Kernel.Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Same as the public Get_Contextual_Menu, Event_Widget is ignored.
 
    procedure Show_Cursor_Position
@@ -261,7 +261,7 @@ package body Src_Editor_Box is
      (Kernel  : access Kernel_Handle_Record'Class;
       To_Body : Boolean;
       Editor  : access Source_Editor_Box_Record'Class;
-      Context : access Entity_Selection_Context'Class)
+      Context : Selection_Context)
    is
       Entity   : Entity_Information;
       Location : File_Location;
@@ -1054,16 +1054,17 @@ package body Src_Editor_Box is
    -- Get_Contextual_Menu --
    -------------------------
 
-   function Get_Contextual_Menu
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Get_Contextual_Menu
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget);
    begin
-      return Get_Contextual_Menu (Kernel, Object, Event, Menu);
+      Get_Contextual_Menu (Context, Kernel, Object, Event, Menu);
    end Get_Contextual_Menu;
 
    ------------------------------
@@ -1072,7 +1073,7 @@ package body Src_Editor_Box is
 
    function Filter_Matches_Primitive
      (Filter  : access In_Line_Numbers_Area_Filter;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
       Event  : constant Gdk_Event := Get_Current_Event;
@@ -1091,11 +1092,12 @@ package body Src_Editor_Box is
    -- Get_Contextual_Menu --
    -------------------------
 
-   function Get_Contextual_Menu
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Object : access Glib.Object.GObject_Record'Class;
-      Event  : Gdk.Event.Gdk_Event;
-      Menu   : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access
+   procedure Get_Contextual_Menu
+     (Context : in out GPS.Kernel.Selection_Context;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu)
    is
       Editor        : constant Source_Editor_Box := Source_Editor_Box (Object);
       V             : constant Source_View := Editor.Source_View;
@@ -1109,7 +1111,6 @@ package body Src_Editor_Box is
       End_Iter      : Gtk_Text_Iter;
       Entity_Start  : Gtk_Text_Iter;
       Entity_End    : Gtk_Text_Iter;
-      Context       : File_Selection_Context_Access;
       Has_Selection : Boolean;
       Out_Of_Bounds : Boolean := False;
       Start_Line, End_Line : Integer;
@@ -1147,7 +1148,6 @@ package body Src_Editor_Box is
       if Event /= null
         and then Get_Window (Event) = Get_Window (V, Text_Window_Left)
       then
-         Context := new Entity_Selection_Context;
          Window_To_Buffer_Coords
            (Editor.Source_View, Text_Window_Left,
             Gint (Get_X (Event)), Gint (Get_Y (Event)), X, Y);
@@ -1176,7 +1176,6 @@ package body Src_Editor_Box is
             --  Invalid position: the cursor is outside the text
             Get_Iter_At_Line_Offset
               (Editor.Source_Buffer, Start_Iter, Line, Column);
-            Context := new File_Selection_Context;
 
             Acquire_Focus (Editor.Source_View);
             Place_Cursor (Editor.Source_Buffer, Start_Iter);
@@ -1210,8 +1209,6 @@ package body Src_Editor_Box is
               and then not Selection_Is_Single_Entity
               and then In_Selection (Line, Column, Start_Iter, End_Iter)
             then
-               Context := new File_Area_Context;
-
                Start_Line := To_Box_Line
                  (Editor.Source_Buffer, Get_Line (Start_Iter));
                End_Line   := To_Box_Line
@@ -1236,20 +1233,18 @@ package body Src_Editor_Box is
                Column := Get_Line_Offset (Start_Iter);
 
                Set_Area_Information
-                 (File_Area_Context_Access (Context),
+                 (Context,
                   Get_Text (Start_Iter, End_Iter),
                   Start_Line, End_Line);
 
             else
-               Context := new Entity_Selection_Context;
-
                --  Expand the tabs
 
                Get_Screen_Position
                  (Editor.Source_Buffer, Entity_Start, Line, Entity_Column);
 
                Set_Entity_Information
-                 (Entity_Selection_Context_Access (Context),
+                 (Context,
                   Get_Text (Entity_Start, Entity_End),
                   To_Box_Column (Entity_Column));
 
@@ -1278,20 +1273,16 @@ package body Src_Editor_Box is
             end if;
          end if;
 
-         if Context /= null then
-            Set_File_Information
-              (Context,
-               File   => Filename,
-               Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-               Column => Integer (To_Box_Column (Column)));
-            Set_Context_Information
-              (Context => Context,
-               Kernel  => Kernel,
-               Creator => Abstract_Module_ID (Src_Editor_Module_Id));
-         end if;
+         Set_File_Information
+           (Context,
+            File   => Filename,
+            Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+            Column => Integer (To_Box_Column (Column)));
+         Set_Context_Information
+           (Context => Context,
+            Kernel  => Kernel,
+            Creator => Abstract_Module_ID (Src_Editor_Module_Id));
       end if;
-
-      return Selection_Context_Access (Context);
    end Get_Contextual_Menu;
 
    ---------------
@@ -1300,24 +1291,18 @@ package body Src_Editor_Box is
 
    function Get_Label
      (Creator : access Goto_Body_Menu_Label;
-      Context : access Selection_Context'Class) return String
+      Context : Selection_Context) return String
    is
       pragma Unreferenced (Creator);
       Entity : Entity_Information;
    begin
-      if Context.all in Entity_Selection_Context'Class then
-         Entity := Get_Entity
-           (Entity_Selection_Context_Access (Context));
-         if Entity /= null then
-            if Is_Container (Get_Kind (Entity).Kind) then
-               return -"Goto body of "
-                 & Entity_Name_Information
-                   (Entity_Selection_Context_Access (Context));
-            else
-               return -"Goto full declaration of "
-                 & Entity_Name_Information
-                   (Entity_Selection_Context_Access (Context));
-            end if;
+      Entity := Get_Entity (Context);
+      if Entity /= null then
+         if Is_Container (Get_Kind (Entity).Kind) then
+            return -"Goto body of " & Entity_Name_Information (Context);
+         else
+            return -"Goto full declaration of "
+              & Entity_Name_Information (Context);
          end if;
       end if;
 
@@ -1330,18 +1315,13 @@ package body Src_Editor_Box is
 
    function Filter_Matches_Primitive
      (Filter  : access Has_Type_Filter;
-      Context : access GPS.Kernel.Selection_Context'Class) return Boolean
+      Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      C      : Entity_Selection_Context_Access;
       Entity : Entity_Information;
    begin
-      if Context.all in Entity_Selection_Context'Class then
-         C      := Entity_Selection_Context_Access (Context);
-         Entity := Get_Entity (C);
-         return Entity /= null and then Get_Type_Of (Entity) /= null;
-      end if;
-      return False;
+      Entity := Get_Entity (Context);
+      return Entity /= null and then Get_Type_Of (Entity) /= null;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1350,16 +1330,14 @@ package body Src_Editor_Box is
 
    function Filter_Matches_Primitive
      (Filter  : access Has_Other_File_Filter;
-      Context : access GPS.Kernel.Selection_Context'Class) return Boolean
+      Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      C      : File_Selection_Context_Access;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      if Context.all in File_Selection_Context'Class then
-         C := File_Selection_Context_Access (Context);
+      if Has_File_Information (Context) then
          declare
-            File       : constant VFS.Virtual_File := File_Information (C);
+            File    : constant VFS.Virtual_File := File_Information (Context);
             Project    : constant Project_Type := Get_Project_From_File
               (Get_Registry (Kernel).all, File);
             Other_File : constant String := Other_File_Base_Name
@@ -1379,34 +1357,30 @@ package body Src_Editor_Box is
 
    function Filter_Matches_Primitive
      (Filter  : access Has_Body_Filter;
-      Context : access GPS.Kernel.Selection_Context'Class) return Boolean
+      Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      C                : Entity_Selection_Context_Access;
       Entity           : Entity_Information;
       Location         : Entities.File_Location;
       Current_Location : Entities.File_Location;
    begin
-      if Context.all in Entity_Selection_Context'Class then
-         C := Entity_Selection_Context_Access (Context);
-         Entity := Get_Entity (C);
+      Entity := Get_Entity (Context);
 
-         if Entity /= null then
-            Current_Location :=
-              (File   => Get_Or_Create
-                 (Db   => Get_Database (Get_Kernel (Context)),
-                  File => File_Information (C)),
-               Line   => Contexts.Line_Information (C),
-               Column => Column_Type (Contexts.Entity_Column_Information (C)));
+      if Entity /= null then
+         Current_Location :=
+           (File   => Get_Or_Create
+              (Db   => Get_Database (Get_Kernel (Context)),
+               File => File_Information (Context)),
+            Line   => Contexts.Line_Information (Context),
+            Column => Column_Type (Entity_Column_Information (Context)));
 
-            Find_Next_Body
-              (Entity   => Entity,
-               Current_Location => Current_Location,
-               Location => Location);
+         Find_Next_Body
+           (Entity   => Entity,
+            Current_Location => Current_Location,
+            Location => Location);
 
-            return Location /= Entities.No_File_Location
-              and then Location /= Current_Location;
-         end if;
+         return Location /= Entities.No_File_Location
+           and then Location /= Current_Location;
       end if;
       return False;
    end Filter_Matches_Primitive;
@@ -1420,10 +1394,8 @@ package body Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C          : constant File_Selection_Context_Access :=
-                     File_Selection_Context_Access (Context.Context);
-      Kernel     : constant Kernel_Handle := Get_Kernel (C);
-      File       : constant VFS.Virtual_File := File_Information (C);
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File  : constant VFS.Virtual_File := File_Information (Context.Context);
       Project    : constant Project_Type := Get_Project_From_File
         (Get_Registry (Kernel).all, File);
       Other_File : constant Virtual_File := Create
@@ -1511,8 +1483,6 @@ package body Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C      : constant Entity_Selection_Context_Access :=
-                 Entity_Selection_Context_Access (Context.Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Box    : constant Source_Editor_Box :=
                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
@@ -1521,7 +1491,7 @@ package body Src_Editor_Box is
         (Kernel,
          To_Body => False,
          Editor  => Box,
-         Context => C);
+         Context => Context.Context);
       return Commands.Success;
    end Execute;
 
@@ -1534,8 +1504,6 @@ package body Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C      : constant Entity_Selection_Context_Access :=
-                 Entity_Selection_Context_Access (Context.Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Box    : constant Source_Editor_Box :=
                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
@@ -1544,7 +1512,7 @@ package body Src_Editor_Box is
         (Kernel,
          To_Body => True,
          Editor  => Box,
-         Context => C);
+         Context => Context.Context);
       return Commands.Success;
    end Execute;
 
@@ -1557,12 +1525,11 @@ package body Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C      : constant Entity_Selection_Context_Access :=
-                 Entity_Selection_Context_Access (Context.Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Editor : constant Source_Editor_Box :=
                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      Entity : Entity_Information := Get_Entity (C, Ask_If_Overloaded => True);
+      Entity : Entity_Information :=
+        Get_Entity (Context.Context, Ask_If_Overloaded => True);
    begin
       if Entity = null then
          --  Probably means that we either could not locate the ALI file,

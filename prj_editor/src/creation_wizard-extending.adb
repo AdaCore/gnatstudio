@@ -78,7 +78,7 @@ package body Creation_Wizard.Extending is
    type Can_Add_To_Extended is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Can_Add_To_Extended;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
    --  True if the selected file can be added to an extending project
 
    procedure Add_Source_Files
@@ -417,9 +417,8 @@ package body Creation_Wizard.Extending is
    is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File_C   : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      File     : constant VFS.Virtual_File := File_Information (File_C);
+      File     : constant VFS.Virtual_File :=
+        File_Information (Context.Context);
       Project  : constant Project_Type :=
         Get_Project_From_File (Get_Registry (Kernel).all, File);
       Button : Message_Dialog_Buttons;
@@ -449,7 +448,7 @@ package body Creation_Wizard.Extending is
 
    function Filter_Matches_Primitive
      (Filter  : access Can_Add_To_Extended;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context);
@@ -459,19 +458,16 @@ package body Creation_Wizard.Extending is
       --  If the current root project is an extending all project
 
       if Parent_Project (Get_Project (Kernel)) /= No_Project then
-         if Context.all in File_Selection_Context'Class then
-            File := File_Information
-              (File_Selection_Context_Access (Context));
-            if File /= VFS.No_File then
-               Project := Get_Project_From_File
-                 (Get_Registry (Kernel).all, File);
+         File := File_Information (Context);
+         if File /= VFS.No_File then
+            Project := Get_Project_From_File
+              (Get_Registry (Kernel).all, File);
 
-               --  If the file doesn't already belong to an extending project
-               if Project /= No_Project
-                 and then Parent_Project (Project) = No_Project
-               then
-                  return True;
-               end if;
+            --  If the file doesn't already belong to an extending project
+            if Project /= No_Project
+              and then Parent_Project (Project) = No_Project
+            then
+               return True;
             end if;
          end if;
       end if;

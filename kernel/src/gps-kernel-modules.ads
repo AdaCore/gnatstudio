@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -162,7 +162,7 @@ package GPS.Kernel.Modules is
    procedure Menu_Handler
      (Module  : access Module_ID_Record;
       Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Callback used every time some contextual menu event happens in GPS.
    --
@@ -178,9 +178,10 @@ package GPS.Kernel.Modules is
    --  use GPS.Kernel.Modules.Context_Callback below to connect signals to
    --  the items.
 
-   function Default_Context_Factory
-     (Module : access Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Module_ID_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  A function called when the kernel needs to get the current context for
    --  an MDI child. This is used mostly when generating a context for the
    --  menubar menu items.
@@ -207,7 +208,7 @@ package GPS.Kernel.Modules is
 
    function Tooltip_Handler
      (Module  : access Module_ID_Record;
-      Context : access Selection_Context'Class) return Gdk.Gdk_Pixmap;
+      Context : Selection_Context) return Gdk.Gdk_Pixmap;
    --  Callback used every time some tooltip event happens in GPS.
    --  Context contains all the information about the context of the tooltip.
    --
@@ -261,7 +262,7 @@ package GPS.Kernel.Modules is
    --  See also the types defined in gps-kernel.ads
 
    package Context_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Selection_Context_Access);
+     (Glib.Object.GObject_Record, Selection_Context);
 
    -------------------------
    -- Module manipulation --
@@ -337,13 +338,14 @@ package GPS.Kernel.Modules is
    -- Contextual menus --
    ----------------------
 
-   type Context_Factory is access function
-     (Kernel       : access Kernel_Handle_Record'Class;
+   type Context_Factory is access procedure
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
-   --  This function should return the context associated with the contextual
+      Menu         : Gtk.Menu.Gtk_Menu);
+   --  This function should set the context associated with the contextual
    --  menu, when the mouse event Event happened on Widget.
    --  The mouse event occured in Event_Widget, and the contextual menu was
    --  registered for Object
@@ -378,12 +380,12 @@ package GPS.Kernel.Modules is
      access all Contextual_Menu_Label_Creator_Record'Class;
    function Get_Label
      (Creator   : access Contextual_Menu_Label_Creator_Record;
-      Context   : access Selection_Context'Class) return String is abstract;
+      Context   : Selection_Context) return String is abstract;
    --  Create the name to use for a contextual menu.
    --  If this function returns the empty string, the menu will be filtered out
 
    type Custom_Expansion is access function
-     (Context : access Selection_Context'Class) return String;
+     (Context : Selection_Context) return String;
    --  Provide the custom expansion for %C when expanding a label. If the
    --  empty string is returned, the contextual entry will not be displayed
 
@@ -480,7 +482,7 @@ package GPS.Kernel.Modules is
    procedure Append_To_Menu
      (Factory : access Submenu_Factory_Record;
       Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class) is abstract;
    --  Object is the object on which the contextual menu is displayed.
    --  New entries should be appended to Menu.
@@ -524,7 +526,7 @@ package GPS.Kernel.Modules is
    procedure Create_Contextual_Menu
      (Kernel  : Kernel_Handle;
       Object  : Glib.Object.GObject;
-      Context : Selection_Context_Access;
+      Context : Selection_Context;
       Menu    : in out Gtk.Menu.Gtk_Menu);
    --  Creates a menu from context and object.
    --  The Gtk_Menu must be created before calling this procedure.
@@ -535,7 +537,7 @@ package GPS.Kernel.Modules is
 
    procedure Compute_Tooltip
      (Kernel  : access Kernel_Handle_Record'Class;
-      Context : Selection_Context_Access;
+      Context : Selection_Context;
       Pixmap  : out Gdk.Gdk_Pixmap);
    --  Given a context, pointing to e.g an entity, the kernel will ask
    --  each of the registered modules whether it wants to display a tooltip.
@@ -548,7 +550,7 @@ package GPS.Kernel.Modules is
 
    type Dynamic_Menu_Factory is access procedure
      (Kernel  : access Kernel_Handle_Record'Class;
-      Context : Selection_Context_Access;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Callback that fills Menu according to Context.
 

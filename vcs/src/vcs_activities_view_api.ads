@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                         Copyright (C) 2005-2006                   --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -28,7 +28,7 @@ package VCS_Activities_View_API is
 
    procedure Open_Activities_Explorer
      (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  If the VCS Activities Explorer is not displayed, display it
 
    procedure Query_Status
@@ -52,14 +52,14 @@ package VCS_Activities_View_API is
 
    procedure VCS_Activities_Contextual_Menu
      (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access;
+      Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Complete Menu with the commands related to the VCS Activities,
    --  according to the information in Context.
 
    procedure On_Menu_Add_To_Activity
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Context : Selection_Context);
    --  Add a file to an activity menu callback
 
 end VCS_Activities_View_API;

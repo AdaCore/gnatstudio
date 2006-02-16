@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                         Copyright (C) 2005-2006                   --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -104,20 +104,11 @@ package body VCS_Utils is
    ---------------------
 
    function Get_Current_Dir
-     (Context : Selection_Context_Access) return String
-   is
-      File : File_Selection_Context_Access;
+     (Context : Selection_Context) return String is
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_Directory_Information (File) then
-            return Directory_Information (File);
-         end if;
+      if Has_Directory_Information (Context) then
+         return Directory_Information (Context);
       end if;
-
       return Get_Current_Dir;
    end Get_Current_Dir;
 
@@ -126,18 +117,11 @@ package body VCS_Utils is
    ----------------------
 
    function Get_Current_File
-     (Context : Selection_Context_Access) return Virtual_File
-   is
-      File : File_Selection_Context_Access;
+     (Context : Selection_Context) return Virtual_File is
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
-         File := File_Selection_Context_Access (Context);
-
-         return File_Information (File);
+      if Has_File_Information (Context) then
+         return File_Information (Context);
       end if;
-
       return VFS.No_File;
    end Get_Current_File;
 

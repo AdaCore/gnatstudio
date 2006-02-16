@@ -121,9 +121,10 @@ package body Help_Module is
       File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
-   function Default_Context_Factory
-     (Module : access Help_Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Help_Module_ID_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
    procedure Add_Doc_Directory
@@ -608,21 +609,14 @@ package body Help_Module is
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Help_Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   procedure Default_Context_Factory
+     (Module  : access Help_Module_ID_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget)
    is
-      pragma Unreferenced (Child);
-      Context : URL_Context_Access;
+      pragma Unreferenced (Child, Context, Module);
    begin
-      Context := new URL_Context;
-
-      Set_Context_Information
-        (Context => Context,
-         Kernel  => Get_Kernel (Module.all),
-         Creator => Abstract_Module_ID (Module));
-
-      return Selection_Context_Access (Context);
+      null;
    end Default_Context_Factory;
 
    ------------------
@@ -898,27 +892,6 @@ package body Help_Module is
    begin
       Display_Welcome_Page (Kernel);
    end On_Welcome;
-
-   -------------------------
-   -- Set_URL_Information --
-   -------------------------
-
-   procedure Set_URL_Information
-     (Context : access URL_Context;
-      URL     : String := "") is
-   begin
-      Free (Context.URL);
-      Context.URL := new String'(URL);
-   end Set_URL_Information;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Context : in out URL_Context) is
-   begin
-      Free (Context.URL);
-   end Destroy;
 
    ---------------
    -- Customize --

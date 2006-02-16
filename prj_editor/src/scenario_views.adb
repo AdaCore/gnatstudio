@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Event;       use Gdk.Event;
 with Glib;            use Glib;
 with Glib.Convert;    use Glib.Convert;
 with Glib.Object;     use Glib.Object;
@@ -32,7 +31,6 @@ with Gtk.Image;       use Gtk.Image;
 with Gtk.Label;       use Gtk.Label;
 with Gtk.List;        use Gtk.List;
 with Gtk.List_Item;   use Gtk.List_Item;
-with Gtk.Menu;        use Gtk.Menu;
 with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Table;       use Gtk.Table;
 with Gtk.Tooltips;    use Gtk.Tooltips;
@@ -138,14 +136,6 @@ package body Scenario_Views is
    type Scenario_Module_Record is new Module_ID_Record with null record;
    Scenario_Module_Id : Module_ID;
 
-   function View_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
-   --  Context factory when creating contextual menus
-
    -----------
    -- Setup --
    -----------
@@ -167,24 +157,6 @@ package body Scenario_Views is
       View := new Scenario_View_Record;
       Initialize (View, Kernel);
    end Gtk_New;
-
-   --------------------------
-   -- View_Context_Factory --
-   --------------------------
-
-   function View_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu) return Selection_Context_Access
-   is
-      pragma Unreferenced (Kernel, Event_Widget, Menu, Object, Event);
-      --  Nothing special in the context, just the module itself so that people
-      --  can still add information if needed
-   begin
-      return new Selection_Context;
-   end View_Context_Factory;
 
    ----------------
    -- Initialize --
@@ -235,13 +207,13 @@ package body Scenario_Views is
          Event_On_Widget => View.Table,
          Object          => View,
          ID              => Scenario_Module_Id,
-         Context_Func    => View_Context_Factory'Access);
+         Context_Func    => null);
       Register_Contextual_Menu
         (Kernel          => Kernel,
          Event_On_Widget => View.Empty_Event,
          Object          => View,
          ID              => Scenario_Module_Id,
-         Context_Func    => View_Context_Factory'Access);
+         Context_Func    => null);
    end Initialize;
 
    ----------------------------

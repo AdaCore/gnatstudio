@@ -290,12 +290,6 @@ package body Src_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Close the current window (or all windows if Close_All is True).
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Source_Editor_Box_Record'Class)
-      return Selection_Context_Access;
-   --  Same as above.
-
    procedure New_View
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new view for the current editor and add it in the MDI.
@@ -747,15 +741,12 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Hook);
       D : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
-      Area_Context : File_Area_Context_Access;
       Infos        : Line_Information_Data;
       Line1, Line2 : Integer;
 
    begin
-      if D.Context.all in File_Area_Context'Class then
-         Area_Context := File_Area_Context_Access (D.Context);
-
-         Get_Area (Area_Context, Line1, Line2);
+      if Has_Area_Information (D.Context) then
+         Get_Area (D.Context, Line1, Line2);
 
          --  ??? This is probably unnecessary if not Has_File_Information
          --  (Area_Context), see below.
@@ -765,10 +756,10 @@ package body Src_Editor_Module is
             Infos (J).Text := new String'(Image (J));
          end loop;
 
-         if Has_File_Information (Area_Context) then
+         if Has_File_Information (D.Context) then
             Add_Line_Information
               (Kernel,
-               File_Information (Area_Context),
+               File_Information (D.Context),
                Src_Editor_Module_Name,
                Infos,
                Normalize => False);
@@ -1793,8 +1784,7 @@ package body Src_Editor_Module is
         (Kernel,
          To_Body => False,
          Editor  => Editor,
-         Context => Entity_Selection_Context_Access
-           (Default_Factory (Kernel, Editor)));
+         Context => Get_Current_Context (Kernel));
 
    exception
       when E : others =>
@@ -1821,8 +1811,7 @@ package body Src_Editor_Module is
         (Kernel,
          To_Body => True,
          Editor  => Editor,
-         Context => Entity_Selection_Context_Access
-           (Default_Factory (Kernel, Editor)));
+         Context => Get_Current_Context (Kernel));
 
    exception
       when E : others =>
@@ -1837,40 +1826,26 @@ package body Src_Editor_Module is
    procedure Comment_Uncomment
      (Kernel : Kernel_Handle; Comment : Boolean)
    is
-      Context      : constant Selection_Context_Access :=
+      Context      : constant Selection_Context :=
                        Get_Current_Context (Kernel);
-      Area         : File_Area_Context_Access;
-      File_Context : File_Selection_Context_Access;
       Start_Line   : Integer;
       End_Line     : Integer;
       Buffer       : Source_Buffer;
    begin
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_File_Information
-          (File_Selection_Context_Access (Context))
-        and then Has_Directory_Information
-          (File_Selection_Context_Access (Context))
+      if Has_File_Information (Context)
+        and then Has_Directory_Information (Context)
       then
-         File_Context := File_Selection_Context_Access (Context);
-
          declare
             Lang  : Language_Access;
-            File  : constant Virtual_File := File_Information (File_Context);
+            File  : constant Virtual_File := File_Information (Context);
             Block : Unbounded_String := Null_Unbounded_String;
          begin
-            if Context.all in File_Area_Context'Class then
-               Area := File_Area_Context_Access (Context);
-               Get_Area (Area, Start_Line, End_Line);
+            if Has_Area_Information (Context) then
+               Get_Area (Context, Start_Line, End_Line);
 
-            elsif Context.all in Entity_Selection_Context'Class
-              and then Has_Line_Information
-                (Entity_Selection_Context_Access (Context))
-            then
-               Start_Line := Contexts.Line_Information
-                 (Entity_Selection_Context_Access (Context));
-
-               End_Line := Start_Line;
+            elsif Has_Line_Information (Context) then
+               Start_Line := Contexts.Line_Information (Context);
+               End_Line   := Start_Line;
             else
                return;
             end if;
@@ -2158,23 +2133,22 @@ package body Src_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File : constant File_Selection_Context_Access :=
-               File_Selection_Context_Access (Context.Context);
       Line : Natural;
    begin
-      Trace (Me, "On_Edit_File: " & Full_Name (File_Information (File)).all);
+      Trace (Me, "On_Edit_File: "
+             & Full_Name (File_Information (Context.Context)).all);
 
-      if Has_Line_Information (File) then
-         Line := Contexts.Line_Information (File);
+      if Has_Line_Information (Context.Context) then
+         Line := Contexts.Line_Information (Context.Context);
       else
          Line := 1;
       end if;
 
       Open_File_Editor
         (Get_Kernel (Context.Context),
-         Filename  => File_Information (File),
+         Filename  => File_Information (Context.Context),
          Line      => Line,
-         Column    => Column_Information (File));
+         Column    => Column_Information (Context.Context));
       return Success;
    end Execute;
 
@@ -2187,9 +2161,7 @@ package body Src_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File_C  : constant File_Selection_Context_Access :=
-                  File_Selection_Context_Access (Context.Context);
-      File    : constant VFS.Virtual_File := File_Information (File_C);
+      File   : constant VFS.Virtual_File := File_Information (Context.Context);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dialog  : Gtk_Dialog;
       Button  : Gtk_Widget;
@@ -2286,29 +2258,18 @@ package body Src_Editor_Module is
       return Success;
    end Execute;
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
-
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Source_Editor_Box_Record'Class)
-      return Selection_Context_Access is
-   begin
-      return Get_Contextual_Menu (Kernel, Editor, null, null);
-   end Default_Factory;
-
    -----------------------------
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Source_Editor_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
-   is
+   procedure Default_Context_Factory
+     (Module  : access Source_Editor_Module_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget) is
    begin
-      return Default_Factory
-        (Get_Kernel (Module.all), Source_Editor_Box (Child));
+      Get_Contextual_Menu
+        (Context, Get_Kernel (Module.all),
+         Source_Editor_Box (Child), null, null);
    end Default_Context_Factory;
 
    -----------------------------

@@ -214,15 +214,13 @@ package body Commands.VCS is
      (Command : access Generic_Kernel_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      The_Context : Selection_Context_Access := Context.Context;
+      The_Context : Selection_Context := Context.Context;
    begin
-      if The_Context = null then
+      if The_Context = No_Context then
          The_Context := Get_Current_Context (Command.Kernel);
       end if;
 
-      Ref (The_Context);
       Command.Callback (Command.Kernel, The_Context);
-      Unref (The_Context);
 
       return Success;
    end Execute;

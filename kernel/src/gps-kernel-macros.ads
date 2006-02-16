@@ -43,7 +43,7 @@ package GPS.Kernel.Macros is
 
    function Substitute
      (Param   : String;
-      Context : GPS.Kernel.Selection_Context_Access;
+      Context : GPS.Kernel.Selection_Context;
       Quoted  : Boolean;
       Done    : access Boolean;
       Server  : GPS.Kernel.Remote.Server_Type := GPS.Kernel.Remote.GPS_Server)
@@ -84,7 +84,7 @@ private
 
    function Filter_Matches_Primitive
      (Filter  : access Macro_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
    --  See doc for inherited subprogram.
 
 end GPS.Kernel.Macros;

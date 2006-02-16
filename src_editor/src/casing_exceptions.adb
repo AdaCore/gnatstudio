@@ -56,7 +56,7 @@ package body Casing_Exceptions is
    type Contextual_Label is access all Contextual_Label_Record'Class;
    function Get_Label
      (Creator : access Contextual_Label_Record;
-      Context : access Selection_Context'Class) return String;
+      Context : Selection_Context) return String;
 
    type Change_Case_Command (Casing : Casing_Type) is
      new Interactive_Command with null record;
@@ -73,12 +73,12 @@ package body Casing_Exceptions is
    type Substring_Filter_Record is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Substring_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
 
    type Empty_Filter_Record is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Empty_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean;
+      Context : Selection_Context) return Boolean;
 
    -----------------
    -- Subprograms --
@@ -88,7 +88,7 @@ package body Casing_Exceptions is
    --  Terminate the module and save the casing exceptions on file
 
    procedure Set_Casing
-     (Context  : Selection_Context_Access;
+     (Context  : Selection_Context;
       New_Name : String);
    --  Function used by the following callbacks to set the casing
 
@@ -146,7 +146,7 @@ package body Casing_Exceptions is
    ----------------
 
    procedure Set_Casing
-     (Context  : Selection_Context_Access;
+     (Context  : Selection_Context;
       New_Name : String)
    is
       procedure Set_Casing
@@ -177,34 +177,13 @@ package body Casing_Exceptions is
       end Set_Casing;
 
    begin
-      if Context.all in Entity_Selection_Context'Class then
-         declare
-            C      : constant File_Selection_Context_Access :=
-                       File_Selection_Context_Access (Context);
-            File   : constant Virtual_File :=
-                       Contexts.File_Information (C);
-            Line   : constant Integer      :=
-                       Contexts.Line_Information (C);
-            Column : constant Integer      :=
-                       Entity_Column_Information
-                         (Entity_Selection_Context_Access (C));
-         begin
-            Set_Casing (File, Line, Column);
-         end;
+      if Has_Entity_Column_Information (Context) then
+         Set_Casing (File_Information (Context), Line_Information (Context),
+                     Entity_Column_Information (Context));
 
-      elsif Context.all in File_Area_Context'Class then
-         declare
-            C      : constant File_Selection_Context_Access :=
-                       File_Selection_Context_Access (Context);
-            File   : constant Virtual_File :=
-                       Contexts.File_Information (C);
-            Line   : constant Integer      :=
-                       Contexts.Line_Information (C);
-            Column : constant Integer      :=
-                       Contexts.Column_Information (C);
-         begin
-            Set_Casing (File, Line, Column);
-         end;
+      elsif Has_Area_Information (Context) then
+         Set_Casing (File_Information (Context), Line_Information (Context),
+                     Column_Information (Context));
       end if;
    end Set_Casing;
 
@@ -253,7 +232,7 @@ package body Casing_Exceptions is
 
    function Get_Label
      (Creator : access Contextual_Label_Record;
-      Context : access Selection_Context'Class) return String
+      Context : Selection_Context) return String
    is
       function Get_Label (Str : String) return String;
       --  Returns the label for the given string (Entity or Area)
@@ -280,18 +259,10 @@ package body Casing_Exceptions is
       end Get_Label;
 
    begin
-      if Context.all in Entity_Selection_Context'Class
-        and then Has_Entity_Name_Information
-          (Entity_Selection_Context_Access (Context))
-      then
-         return Get_Label
-           (Entity_Name_Information
-              (Entity_Selection_Context_Access (Context)));
-
-      elsif Context.all in File_Area_Context'Class then
-         return Get_Label
-           (Text_Information
-              (File_Area_Context_Access (Context)));
+      if Has_Entity_Name_Information (Context) then
+         return Get_Label (Entity_Name_Information (Context));
+      elsif Has_Area_Information (Context) then
+         return Get_Label (Text_Information (Context));
       end if;
       return "";
    end Get_Label;
@@ -328,21 +299,17 @@ package body Casing_Exceptions is
       end Execute;
 
    begin
-      if Context.Context.all in Entity_Selection_Context'Class then
+      if Has_Entity_Name_Information (Context.Context) then
          declare
-            C    : constant Entity_Selection_Context_Access :=
-                     Entity_Selection_Context_Access (Context.Context);
-            Name : String := Entity_Name_Information (C);
+            Str : String := Entity_Name_Information (Context.Context);
          begin
-            Execute (Name);
+            Execute (Str);
          end;
-      else
+      elsif Has_Area_Information (Context.Context) then
          declare
-            C    : constant File_Area_Context_Access :=
-                     File_Area_Context_Access (Context.Context);
-            Area : String := Text_Information (C);
+            Str : String := Text_Information (Context.Context);
          begin
-            Execute (Area);
+            Execute (Str);
          end;
       end if;
       return Commands.Success;
@@ -366,13 +333,11 @@ package body Casing_Exceptions is
 
       function Get_Name return String is
       begin
-         if Context.Context.all in Entity_Selection_Context'Class then
-            return Entity_Name_Information
-              (Entity_Selection_Context_Access (Context.Context));
+         if Has_Entity_Name_Information (Context.Context) then
+            return Entity_Name_Information (Context.Context);
          else
             --  An area
-            return Text_Information
-              (File_Area_Context_Access (Context.Context));
+            return Text_Information (Context.Context);
          end if;
       end Get_Name;
 
@@ -401,30 +366,29 @@ package body Casing_Exceptions is
 
    function Filter_Matches_Primitive
      (Filter  : access Substring_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      if Context.all in Entity_Selection_Context'Class then
+      if Has_Entity_Name_Information (Context) then
          --  This is an entity, not a substring
          return  False;
 
-      elsif Context.all in File_Area_Context'Class then
+      elsif Has_Area_Information (Context) then
          declare
-            Selection : constant File_Area_Context_Access :=
-                          File_Area_Context_Access (Context);
-            File      : constant Virtual_File := File_Information (Selection);
-            Area      : constant String := Text_Information (Selection);
+            File      : constant Virtual_File :=
+              File_Information (Context);
+            Area      : constant String := Text_Information (Context);
             W_Seps    : constant Character_Set :=
                           To_Set (" ;.:=(),/'#*+-""><&" &
                                   ASCII.HT & ASCII.CR & ASCII.LF);
             Before    : aliased String := "1";
             After     : aliased String := Integer'Image (Area'Length + 1);
             Line      : aliased String :=
-                          Integer'Image (Line_Information (Selection));
+                          Integer'Image (Line_Information (Context));
             Col       : aliased String :=
-                          Integer'Image (Column_Information (Selection));
+                          Integer'Image (Column_Information (Context));
             Text      : constant String := Execute_GPS_Shell_Command
               (Kernel, "Editor.get_chars",
                (1 => Full_Name (File).all'Unrestricted_Access,
@@ -441,18 +405,21 @@ package body Casing_Exceptions is
       return False;
    end Filter_Matches_Primitive;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
    function Filter_Matches_Primitive
      (Filter  : access Empty_Filter_Record;
-      Context : access Selection_Context'Class) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      if Context.all in Entity_Selection_Context'Class then
-         return Entity_Name_Information
-           (Entity_Selection_Context_Access (Context)) = "";
+      if Has_Entity_Name_Information (Context) then
+         return Entity_Name_Information (Context) = "";
 
-      elsif Context.all in File_Area_Context'Class then
-         return Text_Information (File_Area_Context_Access (Context)) = "";
+      elsif Has_Area_Information (Context) then
+         return Text_Information (Context) = "";
 
       else
          --  Null context, this is empty

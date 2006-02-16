@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2005                      --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -240,31 +240,30 @@ package body VFS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File    : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      Dir     : constant String := Directory_Information (File);
+      Dir     : constant String := Directory_Information (Context.Context);
       Success : Boolean;
 
    begin
-      Push_State (Get_Kernel (File), Busy);
-      Trace (Me, "deleting " & Full_Name (File_Information (File)).all);
+      Push_State (Get_Kernel (Context.Context), Busy);
+      Trace (Me, "deleting "
+             & Full_Name (File_Information (Context.Context)).all);
 
-      if Has_File_Information (File) then
-         Delete (File_Information (File), Success);
+      if Has_File_Information (Context.Context) then
+         Delete (File_Information (Context.Context), Success);
       else
          begin
             Remove_Dir (Dir, True);
          exception
             when Directory_Error =>
                Console.Insert
-                 (Get_Kernel (File),
+                 (Get_Kernel (Context.Context),
                   (-"Cannot remove directory: ") & Dir,
                   Mode => Error);
          end;
       end if;
 
       --  ??? Need also to update project/file views
-      Pop_State (Get_Kernel (File));
+      Pop_State (Get_Kernel (Context.Context));
       return Commands.Success;
    end Execute;
 

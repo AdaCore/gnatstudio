@@ -68,7 +68,7 @@ package body Src_Editor_Box.Tooltips is
 
    procedure Get_Declaration_Info
      (Editor  : access Source_Editor_Box_Record;
-      Context : access Entity_Selection_Context'Class;
+      Context : Selection_Context;
       Entity  : out Entity_Information;
       Ref     : out Entity_Reference;
       Status  : out Find_Decl_Or_Body_Query_Status);
@@ -245,7 +245,7 @@ package body Src_Editor_Box.Tooltips is
 
    procedure Get_Declaration_Info
      (Editor  : access Source_Editor_Box_Record;
-      Context : access Entity_Selection_Context'Class;
+      Context : Selection_Context;
       Entity  : out Entity_Information;
       Ref     : out Entity_Reference;
       Status  : out Find_Decl_Or_Body_Query_Status)
@@ -314,14 +314,14 @@ package body Src_Editor_Box.Tooltips is
       use type GNAT.Strings.String_Access;
       Box                   : constant Source_Editor_Box := Tooltip.Box;
       Widget                : constant Source_View := Get_View (Tooltip.Box);
-      Line, Col, Cursor_Col : Gint;
+      Line, Col             : Gint;
+      Cursor_Col            : Gint;
       Mouse_X, Mouse_Y      : Gint;
       Win_X, Win_Y          : Gint;
       Start_Iter            : Gtk_Text_Iter;
       End_Iter              : Gtk_Text_Iter;
       Mask                  : Gdk.Types.Gdk_Modifier_Type;
       Win                   : Gdk.Gdk_Window;
-      Context               : aliased Entity_Selection_Context;
       Location              : Gdk_Rectangle;
       Filename              : constant Virtual_File := Get_Filename (Box);
       Out_Of_Bounds         : Boolean;
@@ -329,6 +329,7 @@ package body Src_Editor_Box.Tooltips is
       Window_Width          : Gint;
       Window_Height         : Gint;
       Window_Depth          : Gint;
+      Context               : Selection_Context;
 
    begin
       Pixmap := null;
@@ -464,23 +465,23 @@ package body Src_Editor_Box.Tooltips is
          end if;
 
          Trace (Me, "Tooltip on " & Entity_Name);
+
+         Context := New_Context;
          Set_Context_Information
-           (Context'Unchecked_Access, Box.Kernel,
+           (Context, Box.Kernel,
             Abstract_Module_ID (Src_Editor_Module_Id));
          Set_File_Information
-           (Context => Context'Unchecked_Access,
+           (Context => Context,
             File    => Filename,
             Line    => To_Box_Line (Box.Source_Buffer, Line),
             Column  => To_Box_Column (Cursor_Col));
          Set_Entity_Information
-           (Context       => Context'Unchecked_Access,
+           (Context       => Context,
             Entity_Name   => Entity_Name,
             Entity_Column => To_Box_Column (Col));
-         GPS.Kernel.Modules.Compute_Tooltip
-           (Box.Kernel, Context'Unchecked_Access, Pixmap);
+         GPS.Kernel.Modules.Compute_Tooltip (Box.Kernel, Context, Pixmap);
 
          if Pixmap /= null then
-            Destroy (Context);
             return;
          end if;
 
@@ -488,9 +489,7 @@ package body Src_Editor_Box.Tooltips is
          --  tooltip, based on cross references.
 
          Get_Declaration_Info
-           (Box, Context'Unchecked_Access, Entity, Entity_Ref, Status);
-
-         Destroy (Context);
+           (Box, Context, Entity, Entity_Ref, Status);
 
          if Entity = null then
             return;

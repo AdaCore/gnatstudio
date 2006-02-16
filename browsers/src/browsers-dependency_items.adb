@@ -70,9 +70,10 @@ package body Browsers.Dependency_Items is
    Show_System_Files_Key : constant History_Key := "browser_show_system_files";
    Show_Implicit_Key     : constant History_Key := "browser_show_implicit";
 
-   function Default_Context_Factory
-     (Module : access Dependency_Browser_Module;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Dependency_Browser_Module;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
    --------------
@@ -151,11 +152,12 @@ package body Browsers.Dependency_Items is
    procedure Destroy (Item : in out File_Item_Record);
    --  Free the memory associated with the item
 
-   function Contextual_Factory
+   procedure Contextual_Factory
      (Item    : access File_Item_Record;
+      Context : in out Selection_Context;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
+      Menu    : Gtk.Menu.Gtk_Menu);
    --  Return the context to use for this item
 
    procedure Resize_And_Draw
@@ -215,7 +217,7 @@ package body Browsers.Dependency_Items is
 
    procedure Open_File
      (Browser : access Glib.Object.GObject_Record'Class;
-      Context : GPS.Kernel.Selection_Context_Access);
+      Context : GPS.Kernel.Selection_Context);
    --  Open the file described in Context for analysis in the browser.
 
    function Find_File
@@ -247,13 +249,13 @@ package body Browsers.Dependency_Items is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Tools->Dependency Browser
 
-   function Browser_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Browser_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
-      return GPS.Kernel.Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Return the context to use when a contextual menu is displayed in the
    --  browser.
 
@@ -388,22 +390,21 @@ package body Browsers.Dependency_Items is
    -- Browser_Context_Factory --
    -----------------------------
 
-   function Browser_Context_Factory
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Browser_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
-      return GPS.Kernel.Selection_Context_Access
    is
-      Context : Selection_Context_Access;
       Mitem   : Gtk_Menu_Item;
       Check   : Gtk_Check_Menu_Item;
    begin
-      Context := Default_Browser_Context_Factory
-        (Kernel, Event_Widget, Object, Event, Menu);
+      Default_Browser_Context_Factory
+        (Context, Kernel, Event_Widget, Object, Event, Menu);
 
-      if not (Context.all in File_Selection_Context'Class) then
+      if not Has_File_Information (Context) then
          Gtk_New (Mitem, "");
          Append (Menu, Mitem);
 
@@ -431,8 +432,6 @@ package body Browsers.Dependency_Items is
          Widget_Callback.Object_Connect
            (Check, "toggled", Refresh_Browser'Access, Event_Widget);
       end if;
-
-      return Context;
    end Browser_Context_Factory;
 
    -------------------------------
@@ -866,28 +865,21 @@ package body Browsers.Dependency_Items is
       Child : MDI_Child;
       pragma Unreferenced (Widget, Child);
 
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
    begin
-      Ref (Context);
       Child := Open_Dependency_Browser (Kernel);
 
-      if Context /= null
-        and then Context.all in File_Selection_Context'Class
-        and then Has_File_Information (File_Selection_Context_Access (Context))
+      if Context /= No_Context
+        and then Has_File_Information (Context)
       then
-         Examine_Dependencies
-           (Kernel,
-            File_Information (File_Selection_Context_Access (Context)));
+         Examine_Dependencies (Kernel, File_Information (Context));
       end if;
-
-      Unref (Context);
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception in On_Dependency_Browser "
                 & Exception_Information (E));
-         Unref (Context);
    end On_Dependency_Browser;
 
    -------------
@@ -901,8 +893,7 @@ package body Browsers.Dependency_Items is
       pragma Unreferenced (Command);
    begin
       Examine_Dependencies
-        (Get_Kernel (Context.Context),
-         File_Information (File_Selection_Context_Access (Context.Context)));
+        (Get_Kernel (Context.Context), File_Information (Context.Context));
       return Commands.Success;
    end Execute;
 
@@ -917,8 +908,7 @@ package body Browsers.Dependency_Items is
       pragma Unreferenced (Command);
    begin
       Examine_From_Dependencies
-        (Get_Kernel (Context.Context),
-         File_Information (File_Selection_Context_Access (Context.Context)));
+        (Get_Kernel (Context.Context), File_Information (Context.Context));
       return Commands.Success;
    end Execute;
 
@@ -928,7 +918,7 @@ package body Browsers.Dependency_Items is
 
    procedure Open_File
      (Browser : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+      Context : Selection_Context)
    is
       File : constant Virtual_File :=
         Select_File
@@ -952,26 +942,26 @@ package body Browsers.Dependency_Items is
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Dependency_Browser_Module;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   procedure Default_Context_Factory
+     (Module  : access Dependency_Browser_Module;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget)
    is
       pragma Unreferenced (Module);
       Browser : constant Dependency_Browser := Dependency_Browser (Child);
       Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
       --  If there is no selection, or more than one item, nothing we can do
-      if Get (Iter) = null
-        or else Get (Next (Iter)) /= null
+      if Get (Iter) /= null
+        and then Get (Next (Iter)) = null
       then
-         return null;
+         Contextual_Factory
+           (Item    => Browser_Item (Get (Iter)),
+            Context => Context,
+            Browser => Browser,
+            Event   => null,
+            Menu    => null);
       end if;
-
-      return Contextual_Factory
-        (Item    => Browser_Item (Get (Iter)),
-         Browser => Browser,
-         Event   => null,
-         Menu    => null);
    end Default_Context_Factory;
 
    --------------------------------
@@ -1253,20 +1243,19 @@ package body Browsers.Dependency_Items is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C          : constant File_Selection_Context_Access :=
-                     File_Selection_Context_Access (Context.Context);
       B          : constant Dependency_Browser := Dependency_Browser
-        (Get_Widget (Open_Dependency_Browser (Get_Kernel (C))));
+        (Get_Widget (Open_Dependency_Browser (Get_Kernel (Context.Context))));
       Item       : File_Item;
       Other_File : constant Virtual_File := Create
         (Other_File_Base_Name
-           (Project_Information (C), File_Information (C)),
-         Project_Information (C));
+           (Project_Information (Context.Context),
+            File_Information (Context.Context)),
+         Project_Information (Context.Context));
    begin
       if Other_File /= VFS.No_File then
          Item := File_Item (Find_File (B, Other_File));
          if Item = null then
-            Gtk_New (Item, B,  Get_Kernel (C), Other_File);
+            Gtk_New (Item, B,  Get_Kernel (Context.Context), Other_File);
             Put (Get_Canvas (B), Item);
             Refresh (Item);
 
@@ -1285,23 +1274,21 @@ package body Browsers.Dependency_Items is
    -- Contextual_Factory --
    ------------------------
 
-   function Contextual_Factory
+   procedure Contextual_Factory
      (Item    : access File_Item_Record;
+      Context : in out Selection_Context;
       Browser : access General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Menu    : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Browser, Menu, Event);
-      Context  : constant Selection_Context_Access :=
-                   new File_Selection_Context;
       Src      : constant Source_File := Get_Source (Item);
       Filename : constant Virtual_File := Get_Filename (Src);
    begin
       Set_File_Information
-        (File_Selection_Context_Access (Context),
+        (Context,
          File         => Filename,
          Project      => Project_Of (Item));
-      return Context;
    end Contextual_Factory;
 
    ------------------

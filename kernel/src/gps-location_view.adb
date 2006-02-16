@@ -290,12 +290,13 @@ package body GPS.Location_View is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
 
-   function Context_Func
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Func
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+      Menu         : Gtk.Menu.Gtk_Menu);
    --  Default context factory.
 
    function Create_Mark
@@ -1346,12 +1347,13 @@ package body GPS.Location_View is
    -- Context_Func --
    ------------------
 
-   function Context_Func
-     (Kernel       : access Kernel_Handle_Record'Class;
+   procedure Context_Func
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Kernel, Event_Widget, Event);
       Mitem    : Gtk_Menu_Item;
@@ -1360,20 +1362,20 @@ package body GPS.Location_View is
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Model;
-      Location   : Message_Context_Access := null;
       Check    : Gtk_Check_Menu_Item;
+      Created  : Boolean := False;
 
    begin
       Get_Selected (Get_Selection (Explorer.Tree), Model, Iter);
 
       if Model = null then
-         return null;
+         return;
       end if;
 
       Path := Get_Path (Model, Iter);
 
       if Path = null then
-         return null;
+         return;
       end if;
 
       Gtk_New (Check, -"Sort by subcategory");
@@ -1434,26 +1436,25 @@ package body GPS.Location_View is
             Par    : constant Gtk_Tree_Iter := Parent (Model, Iter);
             Granpa : constant Gtk_Tree_Iter := Parent (Model, Par);
          begin
-            Location := new Message_Context;
+            Created := True;
             Set_File_Information
-              (Location,
+              (Context,
                Get_File (Explorer, Par),
                Line   => Line,
                Column => Column);
             Set_Message_Information
-              (Location,
+              (Context,
                Category => Get_String (Model, Granpa, Base_Name_Column),
                Message  => Get_Message (Explorer, Iter));
          end;
       end if;
 
-      if Location /= null then
+      if Created then
          Gtk_New (Mitem);
          Append (Menu, Mitem);
       end if;
 
       Path_Free (Path);
-      return Selection_Context_Access (Location);
    end Context_Func;
 
    -----------------

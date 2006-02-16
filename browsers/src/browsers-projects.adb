@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -55,9 +55,10 @@ package body Browsers.Projects is
    type Browser_Search_Context is new Search_Context with null record;
    type Browser_Search_Context_Access is access all Browser_Search_Context;
 
-   function Default_Context_Factory
-     (Module : access Project_Browser_Module;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   procedure Default_Context_Factory
+     (Module  : access Project_Browser_Module;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
    ---------------------
@@ -90,12 +91,12 @@ package body Browsers.Projects is
       end record;
    type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
 
-   function Contextual_Factory
+   procedure Contextual_Factory
      (Item    : access Browser_Project_Vertex;
+      Context : in out Selection_Context;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu)
-      return GPS.Kernel.Selection_Context_Access;
+      Menu    : Gtk.Menu.Gtk_Menu);
    procedure Resize_And_Draw
      (Item             : access Browser_Project_Vertex;
       Width, Height    : Glib.Gint;
@@ -501,20 +502,16 @@ package body Browsers.Projects is
    -- Contextual_Factory --
    ------------------------
 
-   function Contextual_Factory
+   procedure Contextual_Factory
      (Item    : access Browser_Project_Vertex;
+      Context : in out Selection_Context;
       Browser : access General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Menu    : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Browser, Event, Menu);
-      Context : constant Selection_Context_Access :=
-        new File_Selection_Context;
    begin
-      Set_File_Information
-        (File_Selection_Context_Access (Context),
-         Project => Project_Of (Item));
-      return Context;
+      Set_File_Information (Context, Project => Project_Of (Item));
    end Contextual_Factory;
 
    ----------------------------
@@ -623,26 +620,26 @@ package body Browsers.Projects is
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access Project_Browser_Module;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   procedure Default_Context_Factory
+     (Module  : access Project_Browser_Module;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget)
    is
       pragma Unreferenced (Module);
       Browser : constant Project_Browser := Project_Browser (Child);
       Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
       --  If there is no selection, or more than one item, nothing we can do
-      if Get (Iter) = null
-        or else Get (Next (Iter)) /= null
+      if Get (Iter) /= null
+        and then Get (Next (Iter)) = null
       then
-         return null;
+         Contextual_Factory
+           (Item    => Browser_Item (Get (Iter)),
+            Context => Context,
+            Browser => Browser,
+            Event   => null,
+            Menu    => null);
       end if;
-
-      return Contextual_Factory
-        (Item    => Browser_Item (Get (Iter)),
-         Browser => Browser,
-         Event   => null,
-         Menu    => null);
    end Default_Context_Factory;
 
    ----------------------------
@@ -747,19 +744,17 @@ package body Browsers.Projects is
      (Command : access Imported_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      C : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
       Browser : constant MDI_Child :=
         Open_Project_Browser (Get_Kernel (Context.Context));
    begin
       if Command.Show_Ancestors then
          Examine_Ancestor_Project_Hierarchy
            (Project_Browser (Get_Widget (Browser)),
-            Project_Information (C));
+            Project_Information (Context.Context));
       else
          Examine_Project_Hierarchy
            (Project_Browser (Get_Widget (Browser)),
-            Project_Information (C),
+            Project_Information (Context.Context),
             Recursive        => Command.Recursive);
       end if;
       return Commands.Success;
