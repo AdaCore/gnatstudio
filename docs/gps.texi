@@ -14240,13 +14240,16 @@ reference for implementing new custom VCS interfaces.
 
 @noindent
 The @code{vcs} node is the toplevel node which contains the
-description of the general behavior expected from the VCS. It has two
-attributes.
+description of the general behavior expected from the VCS. It has the
+following attributes:
 
+@table @code
+@item name
 The attribute @code{name} indicates the identifier of the VCS. The
 casing of this name is important, and the same casing must be used in
 the project files.
 
+@item absolute_names
 The attribute @code{absolute_names} indicates the behavior of the
 VCS relative to file names, and can take the values @code{TRUE} or
 @code{FALSE}. If it is set to @code{TRUE}, it means that all
@@ -14255,22 +14258,31 @@ commands in the VCS will work on absolute file names. If it set to
 that GPS will move to the appropriate directory before executing an
 action.
 
+@item ignore_file
+The attribute @code{ignore_file} specifies the name of the file used
+by the VCS Explorer to get the list of files to ignore. By default for
+the CVS mode this is set to @file{.cvsignore}.
+
+@item atomic_commands
 The attribute @code{atomic_commands} specifies if the VCS supports
 atomicity and can take the values @code{TRUE} or @code{FALSE}. If it
 is set to @code{TRUE} it means that the VCS supports atomic
 commands. It is @code{FALSE} by default. This attribute is important
 to trigger the activities group commit feature. See @xref{The VCS Activities}.
 
+@item dir_sep
 The attribute @code{dir_sep} specifies which kind of directory separator
 is supported by the VCS and can take the values @code{UNIX},
 @code{DOS} or @code{System_Default}. The later value is the default
 value. With this attribute it is possible to control the directory
 separator to use when specifying files to the VCS.
 
+@item commit_directory
 The attribute @code{commit_directory} specifies if the VCS supports
 commit on directories and can take the values @code{TRUE} or @code{FALSE}.
 If it is set to @code{TRUE} it means that the VCS supports commit on
 directories this is the case for @code{Subversion} for example.
+@end table
 
 Note that to support group commit with shared log on GPS both
 @code{absolute_name} and @code{atomic_commands} must be true. This is
