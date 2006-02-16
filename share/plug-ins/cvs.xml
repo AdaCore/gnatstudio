@@ -279,7 +279,7 @@
 
    <!-- CVS -->
 
-   <vcs name="CVS" absolute_names="FALSE">
+   <vcs name="CVS" absolute_names="FALSE" ignore_file=".cvsignore">
       <status_files       action="generic_cvs_status"           label="Query status"/>
       <status_dir         action="generic_cvs_status_dir"       label="Query status for directory"/>
       <local_status_files action="generic_cvs_local_status"     label="Local status"/>
