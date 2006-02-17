@@ -591,7 +591,7 @@ package Debugger is
    --  Break on an exception, if the debugger and the language recognize that
    --  feature.
    --  The breakpoint is set on a specific exception Name (or all exceptions
-   --  if Name is "").
+   --  if Name is "" or "all").
    --  The breakpoint is activated only for unhandled exceptions if Unhandled
    --  is True, or for all exceptions if False.
    --  Not all combinations are possible (for instance, Gdb in Ada mode can

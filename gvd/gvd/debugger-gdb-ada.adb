@@ -179,7 +179,7 @@ package body Debugger.Gdb.Ada is
          else
             return "break exception unhandled";
          end if;
-      elsif Name /= "" then
+      elsif Name /= "" and then Name /= "all" then
          if Temporary then
             return "tbreak exception " & Name;
          else
