@@ -857,11 +857,6 @@ package Codefix.Text_Manager is
    --  Erase the text from Start to Stop. If a line, after the deletion, is
    --  empty, then this line will be deleted.
 
-   procedure Comment
-     (This        : in out Extract;
-      Start, Stop : File_Cursor'Class);
-   --  Comment from Start to Stop on the given extract
-
    function Get_Files_Names
      (This     : Extract;
       Size_Max : Natural := 0) return String;

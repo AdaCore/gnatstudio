@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2002-2006                    --
---                              AdaCore                              --
+--                                AdaCore                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,8 +22,6 @@ with Generic_List;
 with GNAT.OS_Lib;
 
 package Codefix.Text_Manager.Ada_Extracts is
-
-   type Remove_Code_Mode is (Erase, Comment);
 
    ----------------------------------------------------------------------------
    --  type Ada_Instruction
@@ -47,9 +45,6 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Remove_Instruction (This : in out Ada_Instruction);
    --  Delete the instruction recored in This.
-
-   procedure Comment_Instruction (This : in out Ada_Instruction);
-   --  Comment the instruction recorded in This.
 
    function Get_Start (This : Ada_Instruction) return File_Cursor;
    --  Return the cursor stands at the beginning of the instruction/
@@ -99,17 +94,12 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  Return the number of token contained in the list, including ','.
 
    procedure Remove_Elements
-     (This  : in out Ada_List;
-      Mode : Remove_Code_Mode;
-      First : Natural; Last : Natural := 0);
+     (This  : in out Ada_List; First : Natural; Last : Natural := 0);
    --  Remove elements form form First to Last. If Last = 0 then only First
    --  will be removed.
 
    procedure Remove_Elements
-     (This  : in out Ada_List;
-      Mode  : Remove_Code_Mode;
-      First : String;
-      Last : String := "");
+     (This  : in out Ada_List; First : String; Last : String := "");
    --  Remove elements form form First to Last. If Last = 0 then only First
    --  will be removed.
 
@@ -159,5 +149,8 @@ private
 
    function Get_Element (This : Ada_List; Num : Natural)
      return Tokens_List.List_Node;
+
+   procedure Update_Deletion
+     (This : in out Ada_List; Token_Deleted : Token_Record);
 
 end Codefix.Text_Manager.Ada_Extracts;

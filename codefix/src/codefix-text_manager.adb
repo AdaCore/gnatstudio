@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util; use GNAT.Case_Util;
 with GNAT.Regpat;    use GNAT.Regpat;
 
@@ -3241,94 +3242,6 @@ package body Codefix.Text_Manager is
          end if;
       end if;
    end Erase;
-
-   -------------
-   -- Comment --
-   -------------
-
-   procedure Comment
-     (This        : in out Extract;
-      Start, Stop : File_Cursor'Class)
-   is
-      Current_Line : Ptr_Extract_Line;
-      Line_Cursor  : File_Cursor := File_Cursor (Start);
-
-      function Back_Of_Line return String;
-      --  Returns the back of the line, assuming that Current_Line is set on
-      --  the last line of the extract. The back of lines begins after the
-      --  last column of the entity.
-
-      function Back_Of_Line return String is
-      begin
-         return To_String (Current_Line.Content)
-           (Stop.Col + 1 .. To_String (Current_Line.Content)'Last);
-      end Back_Of_Line;
-
-   begin
-      Line_Cursor.Col := 1;
-      Current_Line := Get_Line (This, Line_Cursor);
-
-      if Start.Line = Stop.Line then
-         --  Add a new line if there is some text after the entity that has
-         --  not to be commented
-
-         if not Is_Blank (Back_Of_Line) then
-            Add_Indented_Line
-              (This,
-               Stop,
-               Back_Of_Line,
-               To_String (Current_Line.Content) (1 .. Stop.Col));
-            Replace (Current_Line.all, Stop.Col + 1, Back_Of_Line'Length, "");
-         end if;
-
-         --  But proper comment at the begining of the entity
-
-         if Is_Blank (To_String (Current_Line.Content)
-                      (1 .. Start.Col - 1))
-         then
-            Insert (Current_Line.Content, 1, "--  ");
-         else
-            Insert (Current_Line.Content, Start.Col, "--  ");
-         end if;
-
-         Current_Line.Context := Unit_Modified;
-      else
-         --  But proper comment at the begining of the entity
-
-         if Is_Blank (To_String (Current_Line.Content)
-                      (1 .. Start.Col - 1))
-         then
-            Insert (Current_Line.Content, 1, "--  ");
-         else
-            Insert (Current_Line.Content, Start.Col, "--  ");
-         end if;
-
-         Current_Line.Context := Unit_Modified;
-
-         for J in Start.Line + 1 .. Stop.Line - 1 loop
-            Current_Line := Next (Current_Line.all);
-            Insert (Current_Line.Content, 1, "--  ");
-            Current_Line.Context := Unit_Modified;
-         end loop;
-
-         Current_Line := Next (Current_Line.all);
-
-         --  Add a new line if there is some text after the entity that has
-         --  not to be commented
-
-         if not Is_Blank (Back_Of_Line) then
-            Add_Indented_Line
-              (This,
-               Stop,
-               Back_Of_Line,
-               To_String (Current_Line.Content) (1 .. Stop.Col));
-            Replace (Current_Line.all, Stop.Col + 1, Back_Of_Line'Length, "");
-         end if;
-
-         Insert (Current_Line.Content, 1, "--  ");
-         Current_Line.Context := Unit_Modified;
-      end if;
-   end Comment;
 
    ---------------------
    -- Get_Files_Names --

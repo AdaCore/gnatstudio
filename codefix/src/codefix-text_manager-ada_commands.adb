@@ -162,13 +162,6 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Remove_Elements_Cmd --
    -------------------------
 
-   procedure Set_Remove_Mode
-     (This : in out Remove_Elements_Cmd; Mode : Remove_Code_Mode)
-   is
-   begin
-      This.Mode := Mode;
-   end Set_Remove_Mode;
-
    procedure Add_To_Remove
      (This         : in out Remove_Elements_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -213,7 +206,7 @@ package body Codefix.Text_Manager.Ada_Commands is
                then
                   Extract_Temp := Clone (Data (Current_Extract));
                   Remove_Elements
-                    (Extract_Temp, This.Mode, Current_Cursor.String_Match.all);
+                    (Extract_Temp, Current_Cursor.String_Match.all);
                   Set_Data (Current_Extract, Extract_Temp);
                   Already_Loaded := True;
                   exit;
@@ -228,8 +221,7 @@ package body Codefix.Text_Manager.Ada_Commands is
                Extract_Temp : Ada_List;
             begin
                Get_Unit (Current_Text, Current_Cursor, Extract_Temp);
-               Remove_Elements
-                 (Extract_Temp, This.Mode, Current_Cursor.String_Match.all);
+               Remove_Elements (Extract_Temp, Current_Cursor.String_Match.all);
                Append (Remove_Extracts, Extract_Temp);
             end;
          end if;
@@ -441,8 +433,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Start_Entity : File_Cursor'Class;
-      Mode         : Remove_Code_Mode := Erase)
+      Start_Entity : File_Cursor'Class)
    is
       Spec_Begin, Spec_End : File_Cursor;
       Body_Begin, Body_End : File_Cursor;
@@ -465,8 +456,6 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Get_New_Mark (Current_Text, Body_Begin));
       This.Body_End := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Body_End));
-
-      This.Mode := Mode;
 
       Free (Spec_Begin);
       Free (Spec_End);
@@ -499,12 +488,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          Line_Cursor.Line := Line_Cursor.Line + 1;
       end loop;
 
-      case This.Mode is
-         when Erase =>
-            Erase (Body_Extract, Body_Begin, Body_End);
-         when Comment =>
-            Comment (Body_Extract, Body_Begin, Body_End);
-      end case;
+      Erase (Body_Extract, Body_Begin, Body_End);
 
       if This.Spec_Begin /= null then
          Spec_Begin := File_Cursor
@@ -520,12 +504,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             Line_Cursor.Line := Line_Cursor.Line + 1;
          end loop;
 
-         case This.Mode is
-            when Erase =>
-               Erase (Spec_Extract, Body_Begin, Body_End);
-            when Comment =>
-               Comment (Spec_Extract, Body_Begin, Body_End);
-         end case;
+         Erase (Spec_Extract, Spec_Begin, Spec_End);
 
          Merge_Extracts
            (New_Extract,

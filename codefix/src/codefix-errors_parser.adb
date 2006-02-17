@@ -18,16 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;             use GPS.Kernel;
-with Language;               use Language;
-with Traces;                 use Traces;
-with Codefix_Module;         use Codefix_Module;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel; use GPS.Kernel;
+with Language;   use Language;
+with Traces;     use Traces;
 
 package body Codefix.Errors_Parser is
    Me : constant Debug_Handle := Create ("Codefix");
-
-   use Codefix_Module.Codefix_Remove_Policy_Properties;
 
    -------------------
    -- Get_Solutions --
@@ -1326,35 +1322,27 @@ package body Codefix.Errors_Parser is
    begin
       if First_Word = "procedure" then
          Category := Cat_Procedure;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
-           or Add_Pragma_Unreferenced;
+         Operation_Mask := Remove_Entity or Add_Pragma_Unreferenced;
       elsif First_Word = "function" then
          Category := Cat_Function;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
-           or Add_Pragma_Unreferenced;
+         Operation_Mask := Remove_Entity or Add_Pragma_Unreferenced;
       elsif First_Word = "variable" then
          Category := Cat_Variable;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)));
+         Operation_Mask := Remove_Entity or Nothing;
       elsif First_Word = "constant"
         or else First_Word = "named number"
       then
          Category := Cat_Variable;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)));
+         Operation_Mask := Remove_Entity or Nothing;
       elsif First_Word = "parameter" then
          Category := Cat_Parameter;
-         Operation_Mask := Add_Pragma_Unreferenced;
+         Operation_Mask := Add_Pragma_Unreferenced or Nothing;
       elsif First_Word = "literal" then
          Category := Cat_Literal;
-         Operation_Mask := Add_Pragma_Unreferenced;
+         Operation_Mask := Add_Pragma_Unreferenced or Nothing;
       elsif First_Word = "type" then
          Category := Cat_Type;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
-           or Add_Pragma_Unreferenced;
+         Operation_Mask := Add_Pragma_Unreferenced or Remove_Entity;
       end if;
 
       begin
@@ -1404,8 +1392,7 @@ package body Codefix.Errors_Parser is
          Message,
          Cat_With,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-         Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy))));
+         Remove_Entity or Nothing);
    end Fix;
 
    ----------------
@@ -1434,8 +1421,7 @@ package body Codefix.Errors_Parser is
          Message,
          Cat_Variable,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-         Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy))));
+         Add_Pragma_Unreferenced or Nothing);
    end Fix;
 
    --------------------
@@ -1479,8 +1465,7 @@ package body Codefix.Errors_Parser is
             Message,
             Cat_Variable,
             Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            Policy_To_Operations
-              (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy))));
+            Remove_Entity or Nothing);
       else
          raise Uncorrectable_Message;
       end if;

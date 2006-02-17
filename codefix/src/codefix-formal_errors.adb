@@ -23,7 +23,6 @@ with GNAT.Regpat;                       use GNAT.Regpat;
 
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
-with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with GPS.Kernel;                        use GPS.Kernel;
 with String_Utils;                      use String_Utils;
 with Traces;                            use Traces;
@@ -614,10 +613,9 @@ package body Codefix.Formal_Errors is
       case Category is
          when Cat_Variable =>
             declare
-               Delete_Command  : Remove_Elements_Cmd;
-               Pragma_Command  : Add_Pragma_Cmd;
-               Comment_Command : Remove_Elements_Cmd;
-               Var_Cursor      : Word_Cursor;
+               Delete_Command : Remove_Elements_Cmd;
+               Pragma_Command : Add_Pragma_Cmd;
+               Var_Cursor     : Word_Cursor;
             begin
                Set_File (Var_Cursor, Get_File (Cursor));
                Set_Location
@@ -625,19 +623,9 @@ package body Codefix.Formal_Errors is
                Set_Word (Var_Cursor, Name, Text_Ascii);
 
                if Is_Set (Operations, Remove_Entity) then
-                  Set_Remove_Mode (Delete_Command, Erase);
                   Add_To_Remove (Delete_Command, Current_Text, Var_Cursor);
                   Set_Caption (Delete_Command, "Delete """ & Name & """");
                   Append (Result, Delete_Command);
-               end if;
-
-               if Is_Set (Operations, Comment_Entity) then
-                  Set_Remove_Mode (Comment_Command, Comment);
-                  Add_To_Remove (Comment_Command, Current_Text, Var_Cursor);
-                  Set_Caption
-                    (Comment_Command,
-                     "Comment """ & Name & """");
-                  Append (Result, Comment_Command);
                end if;
 
                if Is_Set (Operations, Add_Pragma_Unreferenced) then
@@ -650,25 +638,14 @@ package body Codefix.Formal_Errors is
 
          when Cat_Function | Cat_Procedure =>
             declare
-               Delete_Command  : Remove_Entity_Cmd;
-               Comment_Command : Remove_Entity_Cmd;
-               Pragma_Command  : Add_Pragma_Cmd;
+               Delete_Command : Remove_Entity_Cmd;
+               Pragma_Command : Add_Pragma_Cmd;
             begin
-               if Is_Set (Operations, Remove_Entity) then
-                  Initialize (Delete_Command, Current_Text, Cursor, Erase);
-                  Set_Caption
-                    (Delete_Command,
-                     "Delete subprogram """ & Name & """");
-                  Append (Result, Delete_Command);
-               end if;
-
-               if Is_Set (Operations, Comment_Entity) then
-                  Initialize (Comment_Command, Current_Text, Cursor, Comment);
-                  Set_Caption
-                    (Comment_Command,
-                     "Comment subprogram """ & Name & """");
-                  Append (Result, Comment_Command);
-               end if;
+               Initialize (Delete_Command, Current_Text, Cursor);
+               Set_Caption
+                 (Delete_Command,
+                  "Delete subprogram """ & Name & """");
+               Append (Result, Delete_Command);
 
                Pragma_Command := Add_Pragma;
                Set_Caption
@@ -679,25 +656,14 @@ package body Codefix.Formal_Errors is
 
          when Cat_Type =>
             declare
-               Delete_Command  : Remove_Entity_Cmd;
-               Comment_Command : Remove_Entity_Cmd;
-               Pragma_Command  : Add_Pragma_Cmd;
+               Delete_Command : Remove_Entity_Cmd;
+               Pragma_Command : Add_Pragma_Cmd;
             begin
-               if Is_Set (Operations, Remove_Entity) then
-                  Initialize (Delete_Command, Current_Text, Cursor, Erase);
-                  Set_Caption
-                    (Delete_Command,
-                     "Delete type """ & Name & """");
-                  Append (Result, Delete_Command);
-               end if;
-
-               if Is_Set (Operations, Comment_Entity) then
-                  Initialize (Comment_Command, Current_Text, Cursor, Comment);
-                  Set_Caption
-                    (Comment_Command,
-                     "Comment type """ & Name & """");
-                  Append (Result, Comment_Command);
-               end if;
+               Initialize (Delete_Command, Current_Text, Cursor);
+               Set_Caption
+                 (Delete_Command,
+                  "Delete type """ & Name & """");
+               Append (Result, Delete_Command);
 
                Pragma_Command := Add_Pragma;
                Set_Caption
