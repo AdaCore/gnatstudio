@@ -548,7 +548,15 @@ package body VCS_Activities is
       procedure Add (Name : String) is
       begin
          if not Is_In_List (Item.Files, Name) then
-            Item.VCS := VCS;
+
+            if Item.VCS = null then
+               --  This is the first file added into this activity, set the
+               --  group commit if supported.
+               Item.VCS := VCS;
+
+               Item.Group_Commit := Absolute_Filenames_Supported (VCS)
+                 and then Atomic_Commands_Supported (VCS);
+            end if;
 
             String_List.Append (Item.Files, Name);
 
