@@ -167,7 +167,8 @@ package body VCS_Module is
    is
       pragma Unreferenced (Filter);
    begin
-      return Has_File_Information (Context)
+      return (Has_File_Information (Context)
+              or else Has_Project_Information (Context))
         and then Get_Current_Ref (Context) /= Unknown_VCS_Reference
         and then (not Has_Entity_Name_Information (Context)
                   or else Get_Name (Module_ID (Get_Creator (Context))) =
