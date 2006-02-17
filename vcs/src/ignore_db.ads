@@ -21,8 +21,6 @@
 with VCS; use VCS;
 with VFS; use VFS;
 
-with GPS.Kernel;
-
 package Ignore_Db is
 
    function Ignore_File
