@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;        use GNAT.Regpat;
 
 with Basic_Types;        use Basic_Types;

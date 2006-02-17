@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util; use GNAT.Case_Util;
 with GNAT.Regpat;    use GNAT.Regpat;
 
