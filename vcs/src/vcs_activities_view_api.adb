@@ -335,11 +335,8 @@ package body VCS_Activities_View_API is
       Kernel         : constant Kernel_Handle := Get_Kernel (Context);
       Activity       : constant Activity_Id :=
                          Value (Activity_Information (Context));
-      Suffix         : constant String := Action_To_Log_Suffix (Commit);
       Files          : String_List.List;
-      Files_Temp     : String_List.List_Node;
       All_Logs_Exist : Boolean := True;
-      File           : Virtual_File;
 
       use String_List;
       use type String_List.List_Node;
@@ -352,28 +349,19 @@ package body VCS_Activities_View_API is
          return;
       end if;
 
-      Files_Temp := String_List.First (Files);
+      --  Check if we have a log for the activity
 
-      --  Open log editors for files that don't have a log
+      if not Has_Log (Kernel, Activity) then
+         All_Logs_Exist := False;
 
-      while Files_Temp /= String_List.Null_Node loop
-         File := Create (Full_Filename => String_List.Data (Files_Temp));
+         Open_File_Editor
+           (Kernel,
+            Get_Log_File (Kernel, Activity),
+            Group            => Group_Consoles,
+            Initial_Position => Position_Bottom);
+      end if;
 
-         if Get_Log_From_File (Kernel, File, False) = VFS.No_File then
-            --  There is some missing logs
-            All_Logs_Exist := False;
-
-            Open_File_Editor
-              (Kernel,
-               Get_Log_From_File (Kernel, File, True, Suffix),
-               Group            => Group_Consoles,
-               Initial_Position => Position_Bottom);
-         end if;
-
-         Files_Temp := String_List.Next (Files_Temp);
-      end loop;
-
-      --  If All files have a log, commit the whole lot
+      --  If we have a log, commit the whole lot
 
       if All_Logs_Exist then
          Log_Action_Files
