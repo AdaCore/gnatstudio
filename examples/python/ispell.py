@@ -165,7 +165,7 @@ class Dynamic_Contextual (GPS.Contextual):
          entry in the dynamic contextual menu"""
       return ispell.parse (context.ispell_module_word)
 
-   def on_activate (self, context, choice):
+   def on_activate (self, context, choice, choice_index):
       context.ispell_module_start.buffer().delete (context.ispell_module_start, context.ispell_module_end)
       context.ispell_module_start.buffer().insert (context.ispell_module_start, choice)
  
