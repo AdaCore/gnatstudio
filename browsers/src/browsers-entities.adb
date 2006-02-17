@@ -87,6 +87,10 @@ package body Browsers.Entities is
    Generic_Item_Box_Height     : constant := Generic_Item_Box_Height_Top + 17;
    --  Height of the top-rigth box for generic items
 
+   Include_Inherited : aliased constant String := "include_inherited";
+   Methods_Cmd_Parameters : constant Cst_Argument_List :=
+     (2 => Include_Inherited'Access);
+
    procedure Default_Context_Factory
      (Module  : access Entity_Browser_Module_Record;
       Context : in out Selection_Context;
@@ -510,6 +514,10 @@ package body Browsers.Entities is
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
+        (Kernel, "methods",
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
+      Register_Command
         (Kernel, "return_type",
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
@@ -579,6 +587,23 @@ package body Browsers.Entities is
                     (Data, Create_Entity (Get_Script (Data), Param));
                   Next (Iter);
                end loop;
+            end;
+
+         elsif Command = "methods" then
+            Name_Parameters (Data, Methods_Cmd_Parameters);
+            declare
+               Iter : Primitive_Operations_Iterator;
+            begin
+               Find_All_Primitive_Operations
+                 (Iter, Entity, Include_Inherited => Nth_Arg (Data, 2, False));
+               Set_Return_Value_As_List (Data);
+
+               while not At_End (Iter) loop
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), Get (Iter)));
+                  Next (Iter);
+               end loop;
+               Destroy (Iter);
             end;
 
          elsif Command = "return_type" then
