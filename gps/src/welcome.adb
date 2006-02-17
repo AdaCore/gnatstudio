@@ -196,8 +196,11 @@ package body Welcome is
       Pack_Start (Hbox, Screen.Open_Project, Expand => True, Fill => True);
       --  Synchronize the name of the key with gps-menu.adb
 
-      Set_Text (Get_Entry (Screen.Open_Project),
-                Full_Name (Project_Name, Normalize => False).all);
+      if Project_Name /= No_File then
+         Set_Text
+           (Get_Entry (Screen.Open_Project),
+            Full_Name (Project_Name, Normalize => False).all);
+      end if;
 
       Gtk_New (Screen.Open_Browse, -"Browse");
       Add_Widget (Size, Screen.Open_Browse);
