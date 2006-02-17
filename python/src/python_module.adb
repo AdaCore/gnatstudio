@@ -764,6 +764,13 @@ package body Python_Module is
             Minimum_Args  => 1,
             Maximum_Args  => 3,
             Static_Method => True);
+         Register_Command
+           (Python_Module_Id.Script,
+            Command       => "exec_in_console",
+            Handler       => Python_GUI_Command_Handler'Access,
+            Minimum_Args  => 1,
+            Maximum_Args  => 1);
+
       else
          Trace (Me, "Not loading support for pygtk");
       end if;
@@ -1037,6 +1044,9 @@ package body Python_Module is
       Widget   : Glib.Object.GObject;
 --      Instance : Class_Instance;
       Child    : MDI_Child;
+      Result   : PyObject;
+      pragma Unreferenced (Result);
+      Errors   : aliased Boolean;
    begin
       --  This is only called when pygtk has been loaded properly
 
@@ -1058,6 +1068,11 @@ package body Python_Module is
          Put (Get_MDI (Get_Kernel (Data)), Child,
               Initial_Position => Position_Automatic);
          Set_Focus_Child (Child);
+
+      elsif Command = "exec_in_console" then
+         Result := Run_Command
+           (Python_Module_Id.Script.Interpreter, Nth_Arg (Data, 1),
+            Show_Command => True, Errors => Errors'Unchecked_Access);
       end if;
    end Python_GUI_Command_Handler;
 
@@ -1763,7 +1778,7 @@ package body Python_Module is
 
    begin
       if Script.Blocked then
-         Insert (Script.Kernel, "A command is already executing");
+         Insert (Script.Kernel, "A python command is already executing");
          return null;
       end if;
 
