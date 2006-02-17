@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 3.2.0
 
+- F120-025 Python menu doesn't properly reload scripts
+  Problem:    If you have added Python as a supported language in your
+              project, GPS creates a python menu every time you edit a
+              python file. This menu contains a "Reload" entry, which has no
+              effect on the python console in fact.
+  Workaround: type manually "import ..." or "reload (...)" in the python
+              console
+
 - F106-014 GPS auto-casing does not support unicode characters
   Problem:    GPS was not properly changing the case of identifiers with
               unicode characters (like the Greek letter Pi for example).
