@@ -761,7 +761,13 @@ package body Log_Utils is
 
                   File := Create (Full_Filename => Data (Files_Temp));
                   Append (L, "* " & Base_Name (File) & ":" & ASCII.LF);
-                  Append (L, Add_LF_To_Log (Get_Log (Kernel, File)));
+
+                  if Get_Log_From_File (Kernel, File, False)
+                    /= VFS.No_File
+                  then
+                     Append (L, Add_LF_To_Log (Get_Log (Kernel, File)));
+                  end if;
+
                   Files_Temp := Next (Files_Temp);
 
                   if Files_Temp /= Null_Node then
@@ -781,10 +787,18 @@ package body Log_Utils is
                --  logs.
 
                File := Create (Full_Filename => Data (Files_Temp));
-               Append
-                 (Logs,
-                  Add_LF_To_Log (Get_Log (Kernel, File))
-                  & Get_Log (Kernel, Activity));
+
+               if Get_Log_From_File (Kernel, File, False) = VFS.No_File then
+                  --  No individual logs
+                  Append (Logs, Get_Log (Kernel, Activity));
+
+               else
+                  Append
+                    (Logs,
+                     Add_LF_To_Log (Get_Log (Kernel, File))
+                     & Get_Log (Kernel, Activity));
+               end if;
+
                Files_Temp := Next (Files_Temp);
             end loop;
          end if;
@@ -831,7 +845,7 @@ package body Log_Utils is
                  (Project, Vcs_Log_Check);
                Log_File          : constant Virtual_File :=
                                      Get_Log_From_File
-                                       (Kernel, File, True,
+                                       (Kernel, File, False,
                                         Action_To_Log_Suffix (Action));
                File_Args         : String_List.List;
                Log_Args          : String_List.List;
@@ -877,7 +891,9 @@ package body Log_Utils is
                   end if;
                end if;
 
-               if Log_Check_Script /= "" then
+               if Log_Check_Script /= ""
+                 and then Log_File /= No_File
+               then
                   --  Check that the log file is not empty
 
                   S := Read_File (Log_File);
