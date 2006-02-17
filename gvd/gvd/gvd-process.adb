@@ -378,7 +378,16 @@ package body GVD.Process is
             Created : Boolean := True;
             Id      : Breakpoint_Identifier := Breakpoint_Identifier'Last;
          begin
-            if Br.Line /= 0 and then Br.File /= VFS.No_File then
+            if Br.Except /= null
+              and then Br.Except.all = "all"
+              and then Get_Pref (Break_On_Exception)
+            then
+               --  Ignore breakpoints set on all exceptions in this case, since
+               --  they are set automatically by GPS and would only result in
+               --  duplicates
+               Created := False;
+
+            elsif Br.Line /= 0 and then Br.File /= VFS.No_File then
                Break_Source
                  (Process.Debugger, Br.File, Br.Line,
                   Temporary => Br.Disposition /= Keep, Mode => Internal);
@@ -1041,6 +1050,8 @@ package body GVD.Process is
            Get_Pref (Execution_Window)
            and then Support_TTY (Process.Debugger)
            and then GNAT.TTY.TTY_Supported);
+
+      Grab_Focus (Process.Debugger_Text);
 
       Set_Busy (Process, False);
       Success := True;
