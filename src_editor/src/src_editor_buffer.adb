@@ -432,10 +432,10 @@ package body Src_Editor_Buffer is
 
    procedure Replace_Slice_Real
      (Buffer       : access Source_Buffer_Record;
-      Start_Line   : Editable_Line_Type;
-      Start_Column : Positive;
-      End_Line     : Editable_Line_Type;
-      End_Column   : Positive;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint;
       Text         : String;
       Enable_Undo  : Boolean := True);
    --  Replace the text between the start and end positions by Text.
@@ -3653,10 +3653,10 @@ package body Src_Editor_Buffer is
 
    procedure Replace_Slice_Real
      (Buffer       : access Source_Buffer_Record;
-      Start_Line   : Editable_Line_Type;
-      Start_Column : Positive;
-      End_Line     : Editable_Line_Type;
-      End_Column   : Positive;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint;
       Text         : String;
       Enable_Undo  : Boolean := True)
    is
@@ -3665,6 +3665,11 @@ package body Src_Editor_Buffer is
       Previous_Inserting_Value : constant Boolean := Buffer.Inserting;
 
    begin
+      Assert (Me, Is_Valid_Position (Buffer, Start_Line, Start_Column),
+              "Invalid start position " & Start_Line'Img & Start_Column'Img);
+      Assert (Me, Is_Valid_Position (Buffer, End_Line, End_Column),
+              "Invalid end position " & End_Line'Img & End_Column'Img);
+
       if not Buffer.Inserting then
          End_Action (Buffer);
       end if;
@@ -3673,16 +3678,14 @@ package body Src_Editor_Buffer is
          Buffer.Inserting := True;
       end if;
 
-      Get_Iter_At_Screen_Position
-        (Buffer, Start_Iter, Start_Line, Start_Column);
-      Get_Iter_At_Screen_Position (Buffer, End_Iter, End_Line, End_Column);
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
+      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
 
       --  Currently, Gtk_Text_Buffer does not export a service to replace
       --  some text, so we delete the slice first, then insert the text...
       Delete (Buffer, Start_Iter, End_Iter);
 
-      Get_Iter_At_Screen_Position
-        (Buffer, Start_Iter, Start_Line, Start_Column);
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
 
       Insert (Buffer, Start_Iter, Text);
 
@@ -3702,17 +3705,26 @@ package body Src_Editor_Buffer is
       Text         : String;
       Enable_Undo  : Boolean := True)
    is
+      Buffer_Start_Line, Buffer_End_Line : Buffer_Line_Type;
    begin
       for J in Start_Line .. End_Line loop
          Unfold_Line (Buffer, J);
       end loop;
 
+      Buffer_Start_Line := Get_Buffer_Line (Buffer, Start_Line);
+      Buffer_End_Line := Get_Buffer_Line (Buffer, End_Line);
+
+      if Buffer_Start_Line = 0 or else Buffer_End_Line = 0 then
+         Trace (Me, "invalid buffer line");
+         return;
+      end if;
+
       Replace_Slice_Real
         (Buffer,
-         Start_Line,
-         Start_Column,
-         End_Line,
-         End_Column,
+         Gint (Buffer_Start_Line - 1),
+         Gint (Start_Column - 1),
+         Gint (Buffer_End_Line - 1),
+         Gint (End_Column - 1),
          Text,
          Enable_Undo);
    end Replace_Slice;
@@ -5348,23 +5360,18 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
-      Get_Iter_At_Screen_Position
+      Get_Iter_At_Line_Offset
         (Buffer,
          Start_Iter,
-         Start_Line,
-         Start_Column);
+         Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
+         Gint (Start_Column - 1));
 
       if End_Line /= 0 then
-         if End_Column = 0 then
-            Copy (Start_Iter, End_Iter);
-            Forward_To_Line_End (End_Iter, Result);
-         else
-            Get_Iter_At_Screen_Position
-              (Buffer,
-               End_Iter,
-               End_Line,
-               End_Column);
-         end if;
+         Get_Iter_At_Line_Offset
+           (Buffer,
+            End_Iter,
+            Gint (Get_Buffer_Line (Buffer, End_Line) - 1),
+            Gint (End_Column - 1));
       else
          Real_End_Line := Buffer.Last_Editable_Line;
          Get_End_Iter (Buffer, End_Iter);
