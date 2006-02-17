@@ -145,6 +145,14 @@ E512-008 Saving breakpoints between sessions (2005-11-29)
 
   Keywords: Debugger
 
+D319-023 GPS VCS Explorer supports ignore file (2006-02-16)
+
+  The VCS Explorer will ignore all files listed in a specific file as
+  described in the external VCS XML configuration document. This is set
+  to .cvsignore by default for CVS.
+
+  Keywords: VCS
+
 C502-013 Ability to comment out code when code fixing (2006-01-09)
 
   A new preference was added that indicates if codefix should propose to
