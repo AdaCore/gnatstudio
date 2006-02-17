@@ -291,10 +291,9 @@ GPS gives access to built-in file editing; HTML based help system;
 complete compile/build/run cycle; intelligent source navigation;
 project management; general graph technology giving access to many different
 browsers such as source dependency, project dependency, call graphs,
-etc@dots{}; fully integrated visual debugger, based on the GVD
-technology, and enhanced for inclusion in GPS; generic version control
-system, providing access to CVS, Subversion, ClearCase, and possibly
-others in the future; many other tools such as a visual comparison,
+entitiy view, etc@dots{}; fully integrated visual debugger; generic
+version control system, providing access to CVS, Subversion, ClearCase,
+and any other via xml plug-ins; many other tools such as a visual comparison,
 automatic generation of files, source reformatting.
 
 @cindex customization
@@ -302,14 +301,11 @@ GPS is fully customizable, providing several levels of customizations:
 a first level, available through the preferences and key manager dialogs;
 a second level, which allows you to customize your menu items, tool bar and key
 bindings; a third level, which allows you to automate processing through
-scripts; and a fourth level, which allows any kind of very specific or tight
-integration, due to the open nature of GPS, and to its architecture.
+scripts (via xml and python scripting).
 See @ref{Customizing and Extending GPS} for more details.
 
-@cindex editor
-@cindex emacs
-GPS also integrates with existing editors such as Emacs and Vi, see
-@ref{Using an External Editor}.
+GPS also interacts with most versions of command-line tools such as
+gcc, gdb, gnatmake, etc@dots{}.
 
 @c --------------------------------------------------------------------
 @node Description of the Main Windows
