@@ -22,6 +22,7 @@ with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 pragma Warnings (Off);
 with GNAT.TTY;                   use GNAT.TTY;
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
@@ -190,6 +191,12 @@ package body GVD.Process is
       Property : Breakpoint_Property_Record'Class);
    --  Restore the breakpoints stored in the property
 
+   procedure Save_Breakpoints_In_Properties
+     (Process  : access Visual_Debugger_Record'Class;
+      Property : in out Breakpoint_Property);
+   --  Save the breakpoints currently set in Process into Property.
+   --  Breakpoints that are set automatically by GPS are filtered out
+
    -------------
    -- Destroy --
    -------------
@@ -215,68 +222,58 @@ package body GVD.Process is
             declare
                Br : Breakpoint_Data renames Property.Breakpoints (B);
             begin
-               if Br.Except /= null
-                 and then Br.Except.all = "all"
-                 and then Get_Pref (Break_On_Exception)
-               then
-                  --  This breakpoint was created automatically, so we do not
-                  --  save it. Otherwise, the next time the debugger is started
-                  --  it will be duplicated
-                  null;
-               else
-                  Breaks := new Glib.Xml_Int.Node;
-                  Breaks.Next := Node.Child;
-                  Node.Child := Breaks;
-                  Breaks.Tag := new String'("breakpoint");
-                  if Br.The_Type /= Breakpoint then
-                     Set_Attribute
-                       (Breaks, "type", Breakpoint_Type'Image (Br.The_Type));
-                  end if;
-                  if Br.Disposition /= Keep then
-                     Set_Attribute
-                       (Breaks, "disposition",
-                        Breakpoint_Disposition'Image (Br.Disposition));
-                  end if;
-                  if not Br.Enabled then
-                     Set_Attribute (Breaks, "enabled", "false");
-                  end if;
-                  if Br.Expression /= null then
-                     Set_Attribute (Breaks, "expression", Br.Expression.all);
-                  end if;
-                  if Br.File /= VFS.No_File then
-                     Set_Attribute (Breaks, "file", Full_Name (Br.File).all);
-                  end if;
-                  if Br.Except /= null then
-                     Set_Attribute (Breaks, "exception", Br.Except.all);
-                  end if;
-                  if Br.Subprogram /= null then
-                     Set_Attribute (Breaks, "subprogram", Br.Subprogram.all);
-                  end if;
-                  if Br.Line /= 0 then
-                     Set_Attribute (Breaks, "line", Integer'Image (Br.Line));
-                  end if;
-                  if Br.Address /= Invalid_Address then
-                     Set_Attribute
-                       (Breaks, "address", Address_To_String (Br.Address));
-                  end if;
-                  if Br.Ignore /= 0 then
-                     Set_Attribute
-                       (Breaks, "ignore", Integer'Image (Br.Ignore));
-                  end if;
-                  if Br.Condition /= null then
-                     Set_Attribute (Breaks, "condition", Br.Condition.all);
-                  end if;
-                  if Br.Commands /= null then
-                     Set_Attribute (Breaks, "command", Br.Commands.all);
-                  end if;
-                  if Br.Scope /= No_Scope then
-                     Set_Attribute
-                       (Breaks, "scope", Scope_Type'Image (Br.Scope));
-                  end if;
-                  if Br.Action /= No_Action then
-                     Set_Attribute
-                       (Breaks, "action", Action_Type'Image (Br.Action));
-                  end if;
+               Breaks := new Glib.Xml_Int.Node;
+               Breaks.Next := Node.Child;
+               Node.Child := Breaks;
+               Breaks.Tag := new String'("breakpoint");
+               if Br.The_Type /= Breakpoint then
+                  Set_Attribute
+                    (Breaks, "type", Breakpoint_Type'Image (Br.The_Type));
+               end if;
+               if Br.Disposition /= Keep then
+                  Set_Attribute
+                    (Breaks, "disposition",
+                     Breakpoint_Disposition'Image (Br.Disposition));
+               end if;
+               if not Br.Enabled then
+                  Set_Attribute (Breaks, "enabled", "false");
+               end if;
+               if Br.Expression /= null then
+                  Set_Attribute (Breaks, "expression", Br.Expression.all);
+               end if;
+               if Br.File /= VFS.No_File then
+                  Set_Attribute (Breaks, "file", Full_Name (Br.File).all);
+               end if;
+               if Br.Except /= null then
+                  Set_Attribute (Breaks, "exception", Br.Except.all);
+               end if;
+               if Br.Subprogram /= null then
+                  Set_Attribute (Breaks, "subprogram", Br.Subprogram.all);
+               end if;
+               if Br.Line /= 0 then
+                  Set_Attribute (Breaks, "line", Integer'Image (Br.Line));
+               end if;
+               if Br.Address /= Invalid_Address then
+                  Set_Attribute
+                    (Breaks, "address", Address_To_String (Br.Address));
+               end if;
+               if Br.Ignore /= 0 then
+                  Set_Attribute
+                    (Breaks, "ignore", Integer'Image (Br.Ignore));
+               end if;
+               if Br.Condition /= null then
+                  Set_Attribute (Breaks, "condition", Br.Condition.all);
+               end if;
+               if Br.Commands /= null then
+                  Set_Attribute (Breaks, "command", Br.Commands.all);
+               end if;
+               if Br.Scope /= No_Scope then
+                  Set_Attribute
+                    (Breaks, "scope", Scope_Type'Image (Br.Scope));
+               end if;
+               if Br.Action /= No_Action then
+                  Set_Attribute
+                    (Breaks, "action", Action_Type'Image (Br.Action));
                end if;
             end;
          end loop;
@@ -378,28 +375,19 @@ package body GVD.Process is
             Created : Boolean := True;
             Id      : Breakpoint_Identifier := Breakpoint_Identifier'Last;
          begin
-            if Br.Except /= null
-              and then Br.Except.all = "all"
-              and then Get_Pref (Break_On_Exception)
-            then
-               --  Ignore breakpoints set on all exceptions in this case, since
-               --  they are set automatically by GPS and would only result in
-               --  duplicates
-               Created := False;
-
-            elsif Br.Line /= 0 and then Br.File /= VFS.No_File then
-               Break_Source
-                 (Process.Debugger, Br.File, Br.Line,
-                  Temporary => Br.Disposition /= Keep, Mode => Internal);
-            elsif Br.Subprogram /= null then
-               Break_Subprogram
-                 (Process.Debugger, Br.Subprogram.all,
-                  Temporary => Br.Disposition /= Keep, Mode => Internal);
-            elsif Br.Except /= null then
+            if Br.Except /= null then
                Break_Exception
                  (Process.Debugger, Br.Except.all,
                   Temporary => Br.Disposition /= Keep, Mode => Internal,
                   Unhandled => False);
+            elsif Br.Subprogram /= null then
+               Break_Subprogram
+                 (Process.Debugger, Br.Subprogram.all,
+                  Temporary => Br.Disposition /= Keep, Mode => Internal);
+            elsif Br.Line /= 0 and then Br.File /= VFS.No_File then
+               Break_Source
+                 (Process.Debugger, Br.File, Br.Line,
+                  Temporary => Br.Disposition /= Keep, Mode => Internal);
             elsif Br.Address /= Invalid_Address then
                Break_Address
                  (Process.Debugger, Br.Address,
@@ -1079,6 +1067,67 @@ package body GVD.Process is
          Success := False;
    end Configure;
 
+   ------------------------------------
+   -- Save_Breakpoints_In_Properties --
+   ------------------------------------
+
+   procedure Save_Breakpoints_In_Properties
+     (Process  : access Visual_Debugger_Record'Class;
+      Property : in out Breakpoint_Property)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Breakpoint_Array, Breakpoint_Array_Ptr);
+      Count : Natural := 0;
+   begin
+      --  Filter breakpoints that are created automatically by GPS as a
+      --  result of preferences
+
+      if Get_Pref (Break_On_Exception) then
+         for B in reverse Process.Breakpoints'Range loop
+            declare
+               Br : Breakpoint_Data renames Process.Breakpoints (B);
+            begin
+               if Br.Except = null
+                 or else Br.Except.all /= "all"
+               then
+                  Count := Count + 1;
+               end if;
+            end;
+         end loop;
+
+         Property.Breakpoints := new Breakpoint_Array (1 .. Count);
+         Count := Property.Breakpoints'First;
+
+         for B in reverse Process.Breakpoints'Range loop
+            declare
+               Br : Breakpoint_Data renames Process.Breakpoints (B);
+            begin
+               if Br.Except = null
+                 or else Br.Except.all /= "all"
+               then
+                  Property.Breakpoints (Count) :=  Br;
+                  Count := Count + 1;
+               else
+                  Free (Br);
+               end if;
+            end;
+         end loop;
+
+         Unchecked_Free (Process.Breakpoints);
+
+      else
+         Property.Breakpoints := Process.Breakpoints;
+      end if;
+
+      Process.Breakpoints  := null;
+
+      Set_Property
+        (File       => Get_Executable (Process.Debugger),
+         Name       => "breakpoints",
+         Property   => Property,
+         Persistent => True);
+   end Save_Breakpoints_In_Properties;
+
    --------------------
    -- Close_Debugger --
    --------------------
@@ -1121,13 +1170,7 @@ package body GVD.Process is
 
             Update_Breakpoints (Process, Force => True);
             Property             := new Breakpoint_Property_Record;
-            Property.Breakpoints := Process.Breakpoints;
-            Process.Breakpoints  := null;
-            Set_Property
-              (File       => Get_Executable (Process.Debugger),
-               Name       => "breakpoints",
-               Property   => Property,
-               Persistent => True);
+            Save_Breakpoints_In_Properties (Process, Property);
          else
             Remove_Property
               (File => Get_Executable (Process.Debugger),
