@@ -123,12 +123,12 @@ package GPS.Kernel.Scripts is
       Name        : String;
       Base        : Class_Type := No_Class) return Class_Type;
    --  For some languages, this notion is not supported, and the class will not
-   --  be visible by the user in the shell. Methods create for the class will
+   --  be visible by the user in the shell. Methods created for the class will
    --  then simply be made available directly in the shell.
    --  If a class with the same name was created, it is returned, and no class
    --  is created anew.
-   --  Base is the base class, or parent class. It only need be specified the
-   --  first time the class is created (typically just before the matching
+   --  Base is the base class, or parent class. It only needs to be specified
+   --  the first time the class is created (typically just before the matching
    --  calls to Register_Command), and can be left to its default value
    --  afterward.
    --  Description of the new class must be put in the file shell_commands.xml,
@@ -798,7 +798,10 @@ package GPS.Kernel.Scripts is
    function Get_File_Class
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
-   --  Return the class to use for file types. This encapsulates a File_Info
+   --  Return the class to use for file types. This encapsulates a File_Info.
+   --  This is more efficient than calling directly
+   --  GPS.Kernel.Scripts.New_Class particularly when a File class has already
+   --  been created.
 
    function Get_Data
      (Data : Callback_Data; N : Positive) return VFS.Virtual_File;
