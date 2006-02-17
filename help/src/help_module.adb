@@ -157,12 +157,12 @@ package body Help_Module is
 
    procedure Display_Help
      (Kernel    : access Kernel_Handle_Record'Class;
-      Help_File : VFS.Virtual_File);
+      URL       : String);
    --  Display HTML Help file.
 
    procedure Display_Help
      (Kernel    : access Kernel_Handle_Record'Class;
-      Help_File : VFS.Virtual_File) is separate;
+      URL       : String) is separate;
 
    procedure On_Load_HTML
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -812,10 +812,13 @@ package body Help_Module is
       pragma Unreferenced (Result);
    begin
       Trace (Me, "Open_HTML_File " & Full_Name (File).all & " #" & Anchor);
-      Display_Help (Kernel, File);
 
-      --  ??? should we pass URLs (file://) to the web browser instead of
-      --  files ?
+      if Get_Host (File) = "" then
+         Display_Help (Kernel, URL => "file://" & Full_Name (File, True).all);
+      else
+         --  Assume we have a URL already, let the browser deal with it
+         Display_Help (Kernel, URL => Full_Name (File, True).all);
+      end if;
    end Open_HTML_File;
 
    --------------------

@@ -23,9 +23,8 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 separate (Help_Module)
 procedure Display_Help
   (Kernel    : access Kernel_Handle_Record'Class;
-   Help_File : VFS.Virtual_File)
+   URL       : String)
 is
-   URL : constant String := "file://" & Full_Name (Help_File, True).all;
 
    HTML_Browser : constant String :=
      Get_Pref (GPS.Kernel.Preferences.Html_Browser);
@@ -141,12 +140,6 @@ is
    Args         : Argument_List_Access;
 
 begin
-   if not Is_Regular_File (Help_File) then
-      Insert (Kernel,
-              Full_Name (Help_File).all & (-": File not found"),
-              Mode => Error);
-   end if;
-
    if HTML_Browser = "" then
       Args := new Argument_List'(1 => new String'(URL));
       for J in Browsers'Range loop

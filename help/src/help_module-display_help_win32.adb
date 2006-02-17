@@ -23,10 +23,8 @@ with System;
 separate (Help_Module)
 procedure Display_Help
   (Kernel    : access Kernel_Handle_Record'Class;
-   Help_File : VFS.Virtual_File)
+   URL       : String)
 is
-   File : constant String := Full_Name (Help_File, True).all;
-
    function Shell_Open (File : String) return Boolean;
    --  Open file with the associated command registered under Windows.
    --  Return True in case of success.
@@ -62,11 +60,11 @@ is
    end Shell_Open;
 
 begin
-   if Shell_Open (File) then
+   if Shell_Open (URL) then
       Insert
-        (Kernel, -"Using default browser to view " & File, Mode => Info);
+        (Kernel, -"Using default browser to view " & URL, Mode => Info);
    else
       Insert
-        (Kernel, -"Could not display help file " & File, Mode => Error);
+        (Kernel, -"Could not display help file " & URL, Mode => Error);
    end if;
 end Display_Help;
