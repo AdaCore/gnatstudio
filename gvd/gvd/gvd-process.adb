@@ -215,56 +215,68 @@ package body GVD.Process is
             declare
                Br : Breakpoint_Data renames Property.Breakpoints (B);
             begin
-               Breaks := new Glib.Xml_Int.Node;
-               Breaks.Next := Node.Child;
-               Node.Child := Breaks;
-               Breaks.Tag := new String'("breakpoint");
-               if Br.The_Type /= Breakpoint then
-                  Set_Attribute
-                    (Breaks, "type", Breakpoint_Type'Image (Br.The_Type));
-               end if;
-               if Br.Disposition /= Keep then
-                  Set_Attribute
-                    (Breaks, "disposition",
-                     Breakpoint_Disposition'Image (Br.Disposition));
-               end if;
-               if not Br.Enabled then
-                  Set_Attribute (Breaks, "enabled", "false");
-               end if;
-               if Br.Expression /= null then
-                  Set_Attribute (Breaks, "expression", Br.Expression.all);
-               end if;
-               if Br.File /= VFS.No_File then
-                  Set_Attribute (Breaks, "file", Full_Name (Br.File).all);
-               end if;
-               if Br.Except /= null then
-                  Set_Attribute (Breaks, "exception", Br.Except.all);
-               end if;
-               if Br.Subprogram /= null then
-                  Set_Attribute (Breaks, "subprogram", Br.Subprogram.all);
-               end if;
-               if Br.Line /= 0 then
-                  Set_Attribute (Breaks, "line", Integer'Image (Br.Line));
-               end if;
-               if Br.Address /= Invalid_Address then
-                  Set_Attribute
-                    (Breaks, "address", Address_To_String (Br.Address));
-               end if;
-               if Br.Ignore /= 0 then
-                  Set_Attribute (Breaks, "ignore", Integer'Image (Br.Ignore));
-               end if;
-               if Br.Condition /= null then
-                  Set_Attribute (Breaks, "condition", Br.Condition.all);
-               end if;
-               if Br.Commands /= null then
-                  Set_Attribute (Breaks, "command", Br.Commands.all);
-               end if;
-               if Br.Scope /= No_Scope then
-                  Set_Attribute (Breaks, "scope", Scope_Type'Image (Br.Scope));
-               end if;
-               if Br.Action /= No_Action then
-                  Set_Attribute
-                    (Breaks, "action", Action_Type'Image (Br.Action));
+               if Br.Except /= null
+                 and then Br.Except.all = "all"
+                 and then Get_Pref (Break_On_Exception)
+               then
+                  --  This breakpoint was created automatically, so we do not
+                  --  save it. Otherwise, the next time the debugger is started
+                  --  it will be duplicated
+                  null;
+               else
+                  Breaks := new Glib.Xml_Int.Node;
+                  Breaks.Next := Node.Child;
+                  Node.Child := Breaks;
+                  Breaks.Tag := new String'("breakpoint");
+                  if Br.The_Type /= Breakpoint then
+                     Set_Attribute
+                       (Breaks, "type", Breakpoint_Type'Image (Br.The_Type));
+                  end if;
+                  if Br.Disposition /= Keep then
+                     Set_Attribute
+                       (Breaks, "disposition",
+                        Breakpoint_Disposition'Image (Br.Disposition));
+                  end if;
+                  if not Br.Enabled then
+                     Set_Attribute (Breaks, "enabled", "false");
+                  end if;
+                  if Br.Expression /= null then
+                     Set_Attribute (Breaks, "expression", Br.Expression.all);
+                  end if;
+                  if Br.File /= VFS.No_File then
+                     Set_Attribute (Breaks, "file", Full_Name (Br.File).all);
+                  end if;
+                  if Br.Except /= null then
+                     Set_Attribute (Breaks, "exception", Br.Except.all);
+                  end if;
+                  if Br.Subprogram /= null then
+                     Set_Attribute (Breaks, "subprogram", Br.Subprogram.all);
+                  end if;
+                  if Br.Line /= 0 then
+                     Set_Attribute (Breaks, "line", Integer'Image (Br.Line));
+                  end if;
+                  if Br.Address /= Invalid_Address then
+                     Set_Attribute
+                       (Breaks, "address", Address_To_String (Br.Address));
+                  end if;
+                  if Br.Ignore /= 0 then
+                     Set_Attribute
+                       (Breaks, "ignore", Integer'Image (Br.Ignore));
+                  end if;
+                  if Br.Condition /= null then
+                     Set_Attribute (Breaks, "condition", Br.Condition.all);
+                  end if;
+                  if Br.Commands /= null then
+                     Set_Attribute (Breaks, "command", Br.Commands.all);
+                  end if;
+                  if Br.Scope /= No_Scope then
+                     Set_Attribute
+                       (Breaks, "scope", Scope_Type'Image (Br.Scope));
+                  end if;
+                  if Br.Action /= No_Action then
+                     Set_Attribute
+                       (Breaks, "action", Action_Type'Image (Br.Action));
+                  end if;
                end if;
             end;
          end loop;
