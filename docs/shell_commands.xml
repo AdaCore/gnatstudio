@@ -390,6 +390,16 @@ be dynamically loaded</description>
      <see_also name="GPS.insmod()" />
   </shell_doc>
 
+  <shell_doc name="GPS.exec_in_console">
+     <param>A string</param>
+     <description>This function is specific to python. It executes the string given in argument in the context of the GPS Python console. If you use the standard python's exec() function instead, the latter will only modify the current context, which generally will have no impact on the GPS console itself.</description>
+     <example lang="python">
+     ### Import a new module transparently in the console, so that users can
+     ### immediately use it
+     GPS.exec_in_console ("import time")
+     </example>
+  </shell_doc>
+
   <shell_doc name="GPS.supported_languages">
      <return>List of strings</return>
      <description>Return the list of languages for which GPS has special handling. Any file can be open in GPS, but some extensions are recognized specially by GPS to provide syntax highlighting, cross-references, or other special handling. See the GPS documentation on how to add support for new languages in GPS.
