@@ -98,9 +98,10 @@ package body Custom_Module is
    Contextual_Create_Dynamic_Params : constant Cst_Argument_List :=
      (1 => Factory_Cst'Access,
       2 => On_Activate_Cst'Access,
-      3 => Filter_Cst'Access,
-      4 => Ref_Cst'Access,
-      5 => Add_Before_Cst'Access);
+      3 => Label_Cst'Access,
+      4 => Filter_Cst'Access,
+      5 => Ref_Cst'Access,
+      6 => Add_Before_Cst'Access);
 
    type Subprogram_Type_Menu_Record is new Gtk_Menu_Item_Record with record
       On_Activate : Subprogram_Type;
@@ -170,6 +171,12 @@ package body Custom_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Create a dynamic contextual menu from a script
 
+   type Python_Menu_Item_Record is new Gtk_Menu_Item_Record with record
+      Index : Natural;
+   end record;
+   type Python_Menu_Item is access all Python_Menu_Item_Record'Class;
+   --  A special kind of menu item associated with an index
+
    type Dynamic_Context is record
       Contextual : Create_Dynamic_Contextual_Access;
       Context    : Class_Instance;
@@ -195,12 +202,13 @@ package body Custom_Module is
    is
       Script : constant Scripting_Language :=
         Get_Script (Factory.Contextual.Contextual);
-      C : Callback_Data'Class := Create (Script, Arguments_Count => 2);
+      C : Callback_Data'Class := Create (Script, Arguments_Count => 3);
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
       Set_Nth_Arg (C, 1, Factory.Context);
       Set_Nth_Arg (C, 2, Get_Text (Gtk_Label (Get_Child (Item))));
+      Set_Nth_Arg (C, 3, Python_Menu_Item (Item).Index);
       Tmp := Execute (Factory.Contextual.On_Activate, C);
       Free (C);
 
@@ -225,7 +233,7 @@ package body Custom_Module is
       Contextual_Class : constant Class_Type := New_Class
         (Get_Kernel (Script), "Contextual");
       C : Callback_Data'Class := Create (Script, Arguments_Count => 1);
-      Item : Gtk_Menu_Item;
+      Item : Python_Menu_Item;
    begin
       Trace (Me, "Append_To_Menu "
              & String'(Get_Data (Factory.Contextual, Contextual_Class)));
@@ -238,7 +246,9 @@ package body Custom_Module is
       begin
          for L in List'Range loop
             if List (L) /= null then
-               Gtk_New (Item, List (L).all);
+               Item := new Python_Menu_Item_Record;
+               Gtk.Menu_Item.Initialize (Item, List (L).all);
+               Item.Index := L - List'First;
                Factory_Callback.Connect
                  (Item, "activate", On_Dynamic_Menu_Activate'Access,
                   User_Data =>
@@ -1314,7 +1324,7 @@ package body Custom_Module is
          Name_Parameters (Data, Contextual_Create_Dynamic_Params);
          Inst := Nth_Arg (Data, 1, Contextual_Class);
 
-         Subp := Nth_Arg (Data, 4, null);
+         Subp := Nth_Arg (Data, 5, null);
          if Subp /= null then
             Filter  := new Contextual_Shell_Filters'
               (Action_Filter_Record with Contextual => Inst, Filter => Subp);
@@ -1324,12 +1334,13 @@ package body Custom_Module is
            (Kernel,
             Name       => Get_Data (Inst, Contextual_Class),
             Filter     => Action_Filter (Filter),
+            Label      => Nth_Arg (Data, 4, ""),
             Submenu    => new Create_Dynamic_Contextual'
               (Contextual  => Inst,
                Factory     => Nth_Arg (Data, 2),
                On_Activate => Nth_Arg (Data, 3)),
-            Ref_Item   => Nth_Arg (Data, 5, ""),
-            Add_Before => Nth_Arg (Data, 6, True));
+            Ref_Item   => Nth_Arg (Data, 6, ""),
+            Add_Before => Nth_Arg (Data, 7, True));
 
       elsif Command = "list" then
          Set_Return_Value_As_List (Data);
@@ -1432,7 +1443,7 @@ package body Custom_Module is
       Register_Command
         (Kernel, "create_dynamic",
          Minimum_Args => 2,
-         Maximum_Args => 5,
+         Maximum_Args => 6,
          Class => Contextual_Class,
          Handler => Contextual_Handler'Access);
       Register_Command
