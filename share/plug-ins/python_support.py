@@ -21,68 +21,89 @@ import GPS, sys, os.path
 
 pydoc_proc = None
 pydoc_port = 9432
+python_menu = None
 
 def create_python_menu():
-  try:
-     menu = GPS.Menu.get ("/Python/")
-  except:
-     GPS.Menu.create ("/P_ython/", ref="Help", add_before=1)
-     GPS.Menu.create ("/Python/reload file", on_activate=reload_file)
+  global python_menu
+  if not python_menu:
+     python_menu = GPS.Menu.create ("/Python", ref="Help", add_before=1)
+     GPS.Menu.create ("/Python/Import & Reload", on_activate=reload_file)
      GPS.parse_xml ("""
   <documentation_file>
-     <name>http://www.python.org/doc/2.3.4/tut/tut.html</name>
+     <name>http://www.python.org/doc/2.4.2/tut/tut.html</name>
      <descr>Python tutorial</descr>
      <menu>/Python/Python Tutorial</menu>
      <category>Scripts</category>
   </documentation_file>
-
   <documentation_file>
      <shell lang="python">python_support.show_python_library()</shell>
      <descr>Python Library</descr>
      <menu>/Python/Python Library</menu>
      <category>Scripts</category>
-  </documentation_file>
-""")
+  </documentation_file>""")
 
 def destroy_python_menu():
-  try:
-     GPS.Menu.get ("/Python/").destroy()
-  except:
-     pass
+  global python_menu
+  if python_menu:
+     python_menu.destroy()
+     python_menu = None
 
 def reload_file (menu):
-  """Reload the currently edited file in python"""
+  """Reload the currently edited file in python.
+If the file has not been imported yet, import it initially.
+Otherwise, reload the current version of the file."""
   try:
      file = GPS.current_context().file()
      module=os.path.splitext (os.path.basename (file.name()))[0]
 
-     try:
-        reload (sys.modules[module])
-     except KeyError:
-        import module
+     ## The actual import and reload must be done in the context of the
+     ## GPS console so that they are visible there. The current function
+     ## executes in a different context, and would not impact the GPS
+     ## console as a result otherwise.
+
+     ## We cannot use  execfile(...), since that would be the equivalent
+     ## of "from ... import *", not of "import ..."
+
+     if sys.modules.has_key (module):
+        GPS.exec_in_console ("reload (sys.modules[\"" + module + "\"])")
+
+     else:
+        try:
+           sys.path.index (os.path.dirname (file.name()))
+        except:
+           sys.path = [os.path.dirname (file.name())] + sys.path
+        mod = __import__ (module)
+
+        # This would import in the current context, not what we want
+        # exec (compile ("import " + module, "<cmdline>", "exec"))
+
+        ## The proper solution is to execute in the context of the GPS console
+        GPS.exec_in_console ("import " + module)
+        
   except:
      pass   ## Current context is not a file
 
-def project_recomputed (hook_name):
-  """Setup GPS for python support"""
-
-  GPS.Project.add_predefined_paths \
-    (sources=GPS.get_home_dir() + "plug-ins")
-
+def context_changed (hook_name, context):
+  """Called when a new context is activated in GPS"""
   try:
-    GPS.Project.root().languages (recursive=True).index ("python")
-
-    # The rest is done only if we support python
-    create_python_menu()
-    list=[]
-    for p in sys.path:
-      for root, dirs, files in os.walk ("/usr/local/lib/python2.3"):
-         list += [os.path.join (root, d) for d in dirs]
-      
-    GPS.Project.add_predefined_paths (sources=os.pathsep.join (list))
-
+    if context.file().language() == "python":
+       create_python_menu()
+    else:
+       destroy_python_menu()
   except:
     destroy_python_menu()
+
+def project_recomputed (hook_name):
+  """if python is one of the supported language for the project, add various
+     predefined directories that may contain python files, so that shift-F3
+     works to open these files as it does for the Ada runtime"""
+  GPS.Project.add_predefined_paths (sources=GPS.get_home_dir() + "plug-ins")
+  try:
+    GPS.Project.root().languages (recursive=True).index ("python")
+    # The rest is done only if we support python
+    GPS.Project.add_predefined_paths (sources=os.pathsep.join (sys.path))
+  except:
+    pass
 
 def show_python_library ():
   """Open a navigator to show the help on the python library"""
@@ -110,10 +131,9 @@ def before_exit (hook_name):
 ### Do not call create_python_menu yet, since keeping a hidden toplevel menu
 ### triggers bugs in gtk+, for instance leaving an empty space in the menubar
 
-# create_python_menu()
-
 GPS.Hook ("project_view_changed").add (project_recomputed)
 GPS.Hook ("before_exit_action_hook").add (before_exit)
+GPS.Hook ("context_changed").add (context_changed)
 
 GPS.parse_xml ("""
   <Language>
