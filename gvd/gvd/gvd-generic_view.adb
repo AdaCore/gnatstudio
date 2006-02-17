@@ -218,7 +218,6 @@ package body GVD.Generic_View is
                Child := MDI_Child (Child2);
                Set_Title (Child, View_Name);
                Put (MDI, Child, Initial_Position => Position);
-               Set_Focus_Child (Child);
             end if;
 
             if Child /= null then
