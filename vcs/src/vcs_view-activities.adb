@@ -324,6 +324,49 @@ package body VCS_View.Activities is
       --  otherwise. It returns the tree iterator for the newly created
       --  activity or Null_Iter otherwise.
 
+      procedure Push (Node : Gtk_Tree_Iter);
+      --  Add Node into the list of node to expand. Does nothing if there is no
+      --  more space in the table.
+
+      procedure Expand_Nodes;
+      --  Expand nodes found in To_Expand tree
+
+      To_Expand : array (1 .. 50) of Gtk_Tree_Iter;
+      --  A table of node to expand. The hard-coded limit is large enough to
+      --  handle most cases and past this limit the nodes are not handled. This
+      --  means that the node won't be expanded by default. Note that this will
+      --  happen only when redrawing the Activites Explorer which is rare.
+
+      Index     : Natural := 0;
+
+      ----------
+      -- Push --
+      ----------
+
+      procedure Push (Node : Gtk_Tree_Iter) is
+      begin
+         if Index < To_Expand'Last then
+            Index := Index + 1;
+            To_Expand (Index) := Node;
+         end if;
+      end Push;
+
+      ------------------
+      -- Expand_Nodes --
+      ------------------
+
+      procedure Expand_Nodes is
+         Path   : Gtk_Tree_Path;
+         Result : Boolean;
+         pragma Unreferenced (Result);
+      begin
+         for K in 1 .. Index loop
+            Path := Get_Path (Explorer.Model, To_Expand (Index));
+            Result := Expand_Row (Explorer.Tree, Path, False);
+            Path_Free (Path);
+         end loop;
+      end Expand_Nodes;
+
       -------------------------------
       -- Create_Or_Remove_Activity --
       -------------------------------
@@ -343,6 +386,10 @@ package body VCS_View.Activities is
                Set (Explorer.Model, A_Iter, Activity_Column, Image (Activity));
                Set (Explorer.Model, A_Iter,
                     Has_Log_Column, Has_Log (Kernel, Activity));
+
+               if not Is_Committed (Activity) then
+                  Push (A_Iter);
+               end if;
             end if;
 
             if Is_Committed (Activity) then
@@ -466,6 +513,10 @@ package body VCS_View.Activities is
 
                      if Iter = Null_Iter and then Force_Display then
                         Append (Explorer.Model, Iter, A_Iter);
+
+                        if not Is_Committed (Activity) then
+                           Push (A_Iter);
+                        end if;
                      end if;
 
                      if Iter /= Null_Iter then
@@ -479,7 +530,7 @@ package body VCS_View.Activities is
          end;
       end loop;
 
-      Expand_All (Explorer.Tree);
+      Expand_Nodes;
 
       Thaw_Sort (Explorer.Model, Sort_Id);
       Pop_State (Kernel);
