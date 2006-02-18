@@ -219,8 +219,7 @@ package body GPS.Kernel.Contexts is
    function Has_Directory_Information
      (Context : Selection_Context) return Boolean is
    begin
-      return Has_File_Information (Context)
-        and then Dir_Name (Context.Data.Data.File).all /= "";
+      return Dir_Name (Context.Data.Data.File).all /= "";
    end Has_Directory_Information;
 
    ---------------------------
