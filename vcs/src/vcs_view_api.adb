@@ -2010,20 +2010,18 @@ package body VCS_View_API is
    begin
       Open_Explorer (Get_Kernel (Context), Context);
 
-      if Has_File_Information (Context) then
-         if Has_Project_Information (Context) then
-            Files := Get_Files_In_Project
-              (Project_Information (Context), Recursive);
-         else
-            Files := Get_Files_In_Project
-              (Get_Project (Get_Kernel (Context)), Recursive);
-         end if;
-
-         Update (Ref, Files);
-         Get_Status (Ref, Files);
-
-         String_List.Free (Files);
+      if Has_Project_Information (Context) then
+         Files := Get_Files_In_Project
+           (Project_Information (Context), Recursive);
+      else
+         Files := Get_Files_In_Project
+           (Get_Project (Get_Kernel (Context)), Recursive);
       end if;
+
+      Update (Ref, Files);
+      Get_Status (Ref, Files);
+
+      String_List.Free (Files);
    end Update_Project;
 
    ----------------------------
@@ -2125,24 +2123,22 @@ package body VCS_View_API is
      (Context   : Selection_Context;
       Recursive : Boolean)
    is
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       Open_Explorer (Get_Kernel (Context), Context);
 
-      if Has_File_Information (Context) then
-         if Has_Project_Information (Context) then
-            Query_Project_Files
-              (Get_Explorer (Kernel),
-               Kernel,
-               Project_Information (Context),
-               False, Recursive);
-         else
-            Query_Project_Files
-              (Get_Explorer (Kernel),
-               Kernel,
-               Get_Project (Kernel),
-               False, Recursive);
-         end if;
+      if Has_Project_Information (Context) then
+         Query_Project_Files
+           (Get_Explorer (Kernel),
+            Kernel,
+            Project_Information (Context),
+            False, Recursive);
+      else
+         Query_Project_Files
+           (Get_Explorer (Kernel),
+            Kernel,
+            Get_Project (Kernel),
+            False, Recursive);
       end if;
    end List_Project_Files;
 
@@ -2188,24 +2184,22 @@ package body VCS_View_API is
      (Context   : Selection_Context;
       Recursive : Boolean)
    is
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       Open_Explorer (Kernel, Context);
 
-      if Has_File_Information (Context) then
-         if Has_Project_Information (Context) then
-            Query_Project_Files
-              (Get_Explorer (Kernel),
-               Kernel,
-               Project_Information (Context),
-               True, Recursive);
-         else
-            Query_Project_Files
-              (Get_Explorer (Kernel),
-               Kernel,
-               Get_Project (Kernel),
-               True, Recursive);
-         end if;
+      if Has_Project_Information (Context) then
+         Query_Project_Files
+           (Get_Explorer (Kernel),
+            Kernel,
+            Project_Information (Context),
+            True, Recursive);
+      else
+         Query_Project_Files
+           (Get_Explorer (Kernel),
+            Kernel,
+            Get_Project (Kernel),
+            True, Recursive);
       end if;
    end Get_Status_Project;
 
@@ -2413,11 +2407,17 @@ package body VCS_View_API is
       Status := Get_Cache
         (Get_Status_Cache, Create (String_List.Head (Files))).Status;
 
-      if String_List.Is_Empty (Status.Working_Revision) then
-         Revision := new String'("");
+      if String_List.Is_Empty (Status.Repository_Revision) then
+         if String_List.Is_Empty (Status.Working_Revision) then
+            Revision := new String'("");
+         else
+            Revision := new String'
+              (Protect (String_List.Head (Status.Working_Revision)));
+         end if;
+
       else
          Revision := new String'
-           (Protect (String_List.Head (Status.Working_Revision)));
+           (Protect (String_List.Head (Status.Repository_Revision)));
       end if;
 
       declare
