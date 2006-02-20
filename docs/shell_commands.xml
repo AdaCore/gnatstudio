@@ -944,8 +944,10 @@ This is different than setting instance properties through Python's standard mec
 
   <shell_doc name="GPS.Entity.body">
       <param name="self">The instance of GPS.Entity</param>
+      <param name="nth" default="1">An integer</param>
       <return>An instance of GPS.FileLocation</return>
-      <description>Return the location at which the implementation of the entity is found. For Ada subprograms and packages, this corresponds to the body of the entity. For Ada private types, this is the location of the full declaration for the type. For entities which do not have a notion of body, this returns the location of the declaration for the entity.</description>
+      <description>Return the location at which the implementation of the entity is found. For Ada subprograms and packages, this corresponds to the body of the entity. For Ada private types, this is the location of the full declaration for the type. For entities which do not have a notion of body, this returns the location of the declaration for the entity.
+Some entities have several bodies. This is for instance the case of a separate subprogram in Ada, where the first body just indicates the subprogram is separate, and the second body provides the actual implementation. The nth parameter gives access to the other bodies. An exception is raised when there are not at least nth bodies.</description>
       <example lang="python">
            entity = GPS.Entity ("bar", GPS.File ("a.adb"), 10, 23)
            body = entity.body()
