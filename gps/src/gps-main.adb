@@ -173,8 +173,9 @@ procedure GPS.Main is
    Outline_View_Trace : constant Debug_Handle := Create ("MODULE.OUTLINE", On);
    Call_Graph_View_Trace : constant Debug_Handle :=
      Create ("MODULE.CALL_GRAPH_VIEW", On);
+   --  ??? Set to off by default until the remote functionality is ready.
    Remote_View_Trace : constant Debug_Handle :=
-     Create ("MODULE.REMOTE_VIEW", On);
+     Create ("MODULE.REMOTE_VIEW", Off);
 
    GPS_Started_Hook : constant String := "gps_started";
 
