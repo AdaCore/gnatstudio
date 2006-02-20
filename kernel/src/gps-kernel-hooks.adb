@@ -22,6 +22,7 @@ with Traces;       use Traces;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with Glib.Object;  use Glib.Object;
 with System;       use System;
+with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Generic_List;
@@ -962,6 +963,10 @@ package body GPS.Kernel.Hooks is
             Pop_State (Kernel_Handle (Kernel));
          end if;
       end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end Run_Hook;
 
    ----------------------------
