@@ -648,7 +648,7 @@ package body GPS.Kernel.Scripts is
    is
       Class : constant Class_Type := Get_Entity_Class (Get_Kernel (Data));
       Inst  : constant Class_Instance := Nth_Arg
-        (Callback_Data'Class (Data), N, Class);
+        (Callback_Data'Class (Data), N, Class, Allow_Null => True);
       D     : User_Data_List;
    begin
       if Inst = No_Class_Instance then
