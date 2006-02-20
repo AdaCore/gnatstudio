@@ -965,8 +965,8 @@ package body GPS.Kernel.Hooks is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Run_Hook;
 
    ----------------------------

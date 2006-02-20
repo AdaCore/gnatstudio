@@ -779,8 +779,8 @@ package body GPS.Kernel is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Message (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Message (E));
    end Finalize;
 
    ------------
@@ -794,8 +794,8 @@ package body GPS.Kernel is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Message (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Message (E));
    end Adjust;
 
    ----------------
@@ -1220,7 +1220,7 @@ package body GPS.Kernel is
    exception
       when E : others =>
          Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+                "Unexpected exception: " & Exception_Information (E));
 
          if Dialog /= null then
             Destroy (Dialog);
