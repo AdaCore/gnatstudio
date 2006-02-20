@@ -52,12 +52,6 @@ Known Problems fixed in GPS 3.1.2
               associated editor.
   Workaround: Select the bookmark and then the editor
 
-- EB28-007 Segmentation fault when closing a debug item
-  Problem:    When closing a graphic item in the debug data window, a
-              segmentation fault might be raised.
-  Workaround: The problem is usually handled transparently by GPS, not
-              causing visible issues.
-
 - Hooks created in python cannot be run
   Problem:    If you use GPS.Hook.register in a python script to create a new
               hook, you cannot call GPS.Hook.run for this hook afterward, and
