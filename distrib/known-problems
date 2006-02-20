@@ -8,6 +8,10 @@ Known Problems fixed in GPS 3.2.0
   Workaround: click in another window, and then back in the editor to force
               a refresh
 
+- F128-007 Project view: No direct response on expand sub item
+  Problem:    Expanding a category needs two consecutive clicks.
+  Workaround: Click two times on the category to expand it.
+
 - F120-025 Python menu doesn't properly reload scripts
   Problem:    If you have added Python as a supported language in your
               project, GPS creates a python menu every time you edit a
