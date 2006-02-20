@@ -1306,17 +1306,12 @@ package body Display_Items is
       Free (Item.Entity);
       Free (Item.Name);
       Free (Item.Id);
+      Remove (Canvas, Item);
+      --  Warning: the memory has been freed after Remove.
 
-      declare
-         Debugger : constant GVD.Process.Visual_Debugger := Item.Debugger;
-      begin
-         Remove (Canvas, Item);
-         --  Warning: the memory has been freed after Remove.
-
-         if Remove_Aliases then
-            Recompute_All_Aliases (Debugger, Recompute_Values => False);
-         end if;
-      end;
+      if Remove_Aliases then
+         Recompute_All_Aliases (Canvas, Recompute_Values => False);
+      end if;
    end Free;
 
    -------------------------
