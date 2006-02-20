@@ -933,7 +933,9 @@ package body GPS.Kernel.Modules is
          if Parent /= "/" then
             C2 := Convert (Kernel.Contextual);
             while C2 /= null loop
-               if '/' & Label_Name (C2, Context) & '/' = Parent then
+               if C2.Filter_Matched
+                 and then '/' & Label_Name (C2, Context) & '/' = Parent
+               then
                   return True;
                end if;
                C2 := C2.Next;
