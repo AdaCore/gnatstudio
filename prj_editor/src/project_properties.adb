@@ -1290,12 +1290,33 @@ package body Project_Properties is
       Package_Cst   : aliased constant String := "package";
       Index_Cst     : aliased constant String := "index";
       Tool_Cst      : aliased constant String := "tool";
+      Value_Cst     : aliased constant String := "value";
       Get_Attributes_Parameters : constant Cst_Argument_List :=
         (1 => Attribute_Cst'Unchecked_Access,
          2 => Package_Cst'Unchecked_Access,
          3 => Index_Cst'Unchecked_Access);
       Tool_Parameters : constant Cst_Argument_List :=
         (1 => Tool_Cst'Unchecked_Access);
+      Set_Attribute_Parameters : constant Cst_Argument_List :=
+        (1 => Attribute_Cst'Unchecked_Access,
+         2 => Package_Cst'Unchecked_Access,
+         3 => Index_Cst'Unchecked_Access,
+         4 => Value_Cst'Unchecked_Access);
+      Add_Attribute_Values_Parameters : constant Cst_Argument_List :=
+        (1 => Attribute_Cst'Unchecked_Access,
+         2 => Package_Cst'Unchecked_Access,
+         3 => Index_Cst'Unchecked_Access,
+         4 => Value_Cst'Unchecked_Access);
+      Remove_Attribute_Values_Parameters : constant Cst_Argument_List :=
+        (1 => Attribute_Cst'Unchecked_Access,
+         2 => Package_Cst'Unchecked_Access,
+         3 => Index_Cst'Unchecked_Access,
+         4 => Value_Cst'Unchecked_Access);
+      Clear_Attribute_Values_Parameters : constant Cst_Argument_List :=
+        (1 => Attribute_Cst'Unchecked_Access,
+         2 => Package_Cst'Unchecked_Access,
+         3 => Index_Cst'Unchecked_Access,
+         4 => Value_Cst'Unchecked_Access);
 
       procedure Set_Return_Attribute
         (Project          : Project_Type;
@@ -1398,6 +1419,137 @@ package body Project_Properties is
                   As_List => Command = "get_tool_switches_as_list");
             end if;
          end;
+      elsif Command = "set_attribute_as_string" then
+         Name_Parameters (Data, Set_Attribute_Parameters);
+         declare
+            Project        : constant Project_Type := Get_Data (Data, 1);
+            Attribute_Name : constant String := Nth_Arg (Data, 2);
+            Package_Name   : constant String := Nth_Arg (Data, 3);
+            Index          : constant String := Nth_Arg (Data, 4);
+            Value          : constant String := Nth_Arg (Data, 5);
+         begin
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          =>
+                 Build (Package_Name, Attribute_Name),
+               Value              => Value,
+               Attribute_Index    => Index);
+         end;
+
+         Recompute_View (Get_Kernel (Data));
+      elsif Command = "add_attribute_values" then
+         Name_Parameters (Data, Add_Attribute_Values_Parameters);
+         declare
+            Project        : constant Project_Type := Get_Data (Data, 1);
+            Attribute_Name : constant String := Nth_Arg (Data, 2);
+            Package_Name   : constant String := Nth_Arg (Data, 3);
+            Index          : constant String := Nth_Arg (Data, 4);
+            Values         : GNAT.OS_Lib.Argument_List
+              (1 .. Number_Of_Arguments (Data) - 4);
+            Attribute      : constant Attribute_Pkg :=
+              Build (Package_Name, Attribute_Name);
+         begin
+            for J in 5 .. Number_Of_Arguments (Data) loop
+               Values (J - 4) := new String'(Nth_Arg (Data, J));
+            end loop;
+
+            if Attribute_Is_Defined (Project, Attribute, Index) then
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Scenario_Variables => No_Scenario,
+                  Attribute          => Attribute,
+                  Values             => Values,
+                  Attribute_Index    => Index,
+                  Prepend            => True);
+            else
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Scenario_Variables => No_Scenario,
+                  Attribute          => Attribute,
+                  Values             => Values,
+                  Attribute_Index    => Index,
+                  Prepend            => False);
+            end if;
+
+            for J in Values'Range loop
+               Free (Values (J));
+            end loop;
+         end;
+
+         Recompute_View (Get_Kernel (Data));
+      elsif Command = "remove_attribute_values" then
+         Name_Parameters (Data, Remove_Attribute_Values_Parameters);
+         declare
+            Project        : constant Project_Type := Get_Data (Data, 1);
+            Attribute_Name : constant String := Nth_Arg (Data, 2);
+            Package_Name   : constant String := Nth_Arg (Data, 3);
+            Index          : constant String := Nth_Arg (Data, 4);
+            Values         : GNAT.OS_Lib.Argument_List
+              (1 .. Number_Of_Arguments (Data) - 4);
+            Attribute      : constant Attribute_Pkg :=
+              Build (Package_Name, Attribute_Name);
+            List           : constant Argument_List := Get_Attribute_Value
+              (Project, Attribute, Index);
+            Found          : Boolean := False;
+            First_Added    : Boolean := False;
+         begin
+            for J in 5 .. Number_Of_Arguments (Data) loop
+               Values (J - 4) := new String'(Nth_Arg (Data, J));
+            end loop;
+
+            Delete_Attribute
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Attribute,
+               Attribute_Index    => Index);
+
+            for J in reverse List'Range loop
+               Found := False;
+
+               for K in Values'Range loop
+                  if List (J).all = Values (K).all then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Found then
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Project,
+                     Scenario_Variables => No_Scenario,
+                     Attribute          => Attribute,
+                     Values             => (1 => List (J)),
+                     Attribute_Index    => Index,
+                     Prepend            => First_Added);
+
+                  First_Added := True;
+               end if;
+            end loop;
+
+            for J in Values'Range loop
+               Free (Values (J));
+            end loop;
+         end;
+
+         Recompute_View (Get_Kernel (Data));
+      elsif Command = "clear_attribute_values" then
+         Name_Parameters (Data, Clear_Attribute_Values_Parameters);
+         declare
+            Project        : constant Project_Type := Get_Data (Data, 1);
+            Attribute_Name : constant String := Nth_Arg (Data, 2);
+            Package_Name   : constant String := Nth_Arg (Data, 3, "");
+            Index          : constant String := Nth_Arg (Data, 4, "");
+         begin
+            Delete_Attribute
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Build
+                 (Package_Name, Attribute_Name),
+               Attribute_Index    => Index);
+         end;
+
+         Recompute_View (Get_Kernel (Data));
       end if;
    end Create_Project_Command_Handler;
 
@@ -1437,6 +1589,30 @@ package body Project_Properties is
         (Kernel, "get_tool_switches_as_string",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "set_attribute_as_string",
+         Minimum_Args => 4,
+         Maximum_Args => 4,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "add_attribute_values",
+         Minimum_Args => 4,
+         Maximum_Args => Natural'Last,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "remove_attribute_values",
+         Minimum_Args => 4,
+         Maximum_Args => Natural'Last,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "clear_attribute_values",
+         Minimum_Args => 1,
+         Maximum_Args => 3,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
    end Register_Module;
