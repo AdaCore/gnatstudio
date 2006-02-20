@@ -1295,6 +1295,47 @@ If the attribute value is stored as a simple string, a list with a single elemen
        <see_also name="GPS.Project.get_attribute_as_string()"/>
        <see_also name="GPS.Project.get_tool_switches_as_list()"/>
   </shell_doc>
+
+  <shell_doc name = "GPS.Project.set_attribute_as_string">
+       <param name="self">An instance of GPS.Project</param>
+       <param name="attribute">A string, the name of the attribute</param>
+       <param name="package">A string, the name of the attribute's package</param>
+       <param name="index">A string, the name of the index for the specific value of this attribute</param>
+       <param name="value">A string, the name of the value to set</param>
+       <description>Sets the value of an attribute.</description>
+  </shell_doc>
+
+  <shell_doc name = "GPS.Project.add_attribute_values">
+       <param name="self">An instance of GPS.Project</param>
+       <param name="attribute">A string, the name of the attribute</param>
+       <param name="package">A string, the name of the attribute's package</param>
+       <param name="index">A string, the name of the index for the specific value of this attribute</param>
+       <param name="value">A string, the name of the first value to add</param>
+       <description> Add some values to an attribute. You can add as much as many values you need at the end of the param list.</description>
+       <example lang="python">
+	       GPS.Project.root().add_attribute_values ("Default_Switches", "Compiler", "ada", "-gnatwa", "-gnatwe");
+       </example>	  
+  </shell_doc>
+
+  <shell_doc name = "GPS.Project.remove_attribute_values">
+       <param name="self">An instance of GPS.Project</param>
+       <param name="attribute">A string, the name of the attribute</param>
+       <param name="package">A string, the name of the attribute's package</param>
+       <param name="index">A string, the name of the index for the specific value of this attribute</param>
+       <param name="value">A string, the name of the first value to remove</param>
+       <description> Removes some specific values from an attribute. You can Set as much as many values you need at the end of the param list.</description>
+       <example lang="python">
+	       GPS.Project.root().remove_attribute_values ("Default_Switches", "Compiler", "ada", "-gnatwa", "-gnatwe");
+       </example>
+  </shell_doc>
+
+  <shell_doc name = "GPS.Project.clear_attribute_values">
+       <param name="self">An instance of GPS.Project</param>
+       <param name="attribute">A string, the name of the attribute</param>
+       <param name="package">A string, the name of the attribute's package</param>
+       <param name="index">A string, the name of the index for the specific value of this attribute</param>
+       <description> Clear the values list of an attribute.</description>
+  </shell_doc>
   
   <shell_doc name="GPS.Project.scenario_variables_values">
        <return>A hash table of strings</return>
