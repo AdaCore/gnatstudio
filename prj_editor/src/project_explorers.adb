@@ -580,11 +580,16 @@ package body Project_Explorers is
    is
       T : constant Project_Explorer := Project_Explorer (Explorer);
    begin
-      return On_Button_Press
-        (T.Kernel,
-         MDI_Explorer_Child (Find_MDI_Child (Get_MDI (T.Kernel), T)),
-         T.Tree, T.Tree.Model, Event, False);
-
+      --  If expanding/collapsing, don't handle  button clicks
+      if T.Expanding then
+         T.Expanding := False;
+         return False;
+      else
+         return On_Button_Press
+           (T.Kernel,
+            MDI_Explorer_Child (Find_MDI_Child (Get_MDI (T.Kernel), T)),
+            T.Tree, T.Tree.Model, Event, True);
+      end if;
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1454,7 +1459,8 @@ package body Project_Explorers is
          end if;
       end if;
 
-      T.Expanding := False;
+      --  Set back the cursor to the parent node.
+      Set_Cursor (T.Tree, Path, null, False);
 
    exception
       when E : others =>
@@ -1475,6 +1481,9 @@ package body Project_Explorers is
       Node : constant Gtk_Tree_Iter := Get_Iter (E.Tree.Model, Path);
 
    begin
+      --  Set expanding state to prevent automatic drag & drop start
+      E.Expanding := True;
+
       --  Redraw the pixmap.
 
       Set_Node_Type
