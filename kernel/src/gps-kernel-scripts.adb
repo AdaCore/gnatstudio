@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
@@ -2770,6 +2771,10 @@ package body GPS.Kernel.Scripts is
          Trace (Ref_Me, "After Decref "
                 & Print_Refcount (Class_Instance_Record_Access (Inst)));
       end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end Decref;
 
    ------------
