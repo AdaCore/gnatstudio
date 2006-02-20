@@ -87,7 +87,7 @@ package body Browsers.Projects is
 
    type Browser_Project_Vertex is new Browsers.Canvas.Arrow_Item_Record with
       record
-         Name    : Types.Name_Id;
+         Name : Types.Name_Id;
       end record;
    type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
 
@@ -173,8 +173,8 @@ package body Browsers.Projects is
    --  Add a new item for Project if there is currently none in the browser
 
    procedure Examine_Ancestor_Project_Hierarchy
-     (Browser          : access Project_Browser_Record'Class;
-      Project          : Project_Type);
+     (Browser : access Project_Browser_Record'Class;
+      Project : Project_Type);
    --  Add to the browser all the projects that with Project.
 
    procedure On_Examine_Prj_Hierarchy
@@ -228,8 +228,8 @@ package body Browsers.Projects is
      (Browser : access Project_Browser_Record'Class;
       Project : Project_Type) return Browser_Project_Vertex_Access
    is
-      V : Browser_Project_Vertex_Access := Find_Project
-        (Browser, Project_Name (Project));
+      V : Browser_Project_Vertex_Access :=
+            Find_Project (Browser, Project_Name (Project));
    begin
       if V = null then
          Gtk_New (V, Browser, Project);
@@ -249,7 +249,7 @@ package body Browsers.Projects is
       Src, Dest    : Browser_Project_Vertex_Access;
       Limited_With : Boolean)
    is
-      L : Browser_Link;
+      L      : Browser_Link;
       P1, P2 : Project_Type;
    begin
       if not Has_Link (Get_Canvas (Browser), Src, Dest) then
@@ -296,9 +296,9 @@ package body Browsers.Projects is
    -------------------------------
 
    procedure Examine_Project_Hierarchy
-     (Browser          : access Project_Browser_Record'Class;
-      Project          : Project_Type;
-      Recursive        : Boolean)
+     (Browser   : access Project_Browser_Record'Class;
+      Project   : Project_Type;
+      Recursive : Boolean)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Browser);
 
@@ -314,8 +314,8 @@ package body Browsers.Projects is
       procedure Process_Project
         (Local : Project_Type; Src : Browser_Project_Vertex_Access)
       is
-         Dest        : Browser_Project_Vertex_Access;
-         Iter        : Imported_Project_Iterator;
+         Dest : Browser_Project_Vertex_Access;
+         Iter : Imported_Project_Iterator;
       begin
          Set_Children_Shown (Src, True);
 
@@ -392,12 +392,12 @@ package body Browsers.Projects is
    ----------------------------------------
 
    procedure Examine_Ancestor_Project_Hierarchy
-     (Browser          : access Project_Browser_Record'Class;
-      Project          : Project_Type)
+     (Browser : access Project_Browser_Record'Class;
+      Project : Project_Type)
    is
-      Kernel      : constant Kernel_Handle := Get_Kernel (Browser);
-      Src, Dest   : Browser_Project_Vertex_Access;
-      Iter        : Imported_Project_Iterator;
+      Kernel    : constant Kernel_Handle := Get_Kernel (Browser);
+      Src, Dest : Browser_Project_Vertex_Access;
+      Iter      : Imported_Project_Iterator;
    begin
       Trace (Me, "Examine_Ancestor_Project_Hierarchy for "
              & Project_Name (Project));
@@ -481,7 +481,7 @@ package body Browsers.Projects is
       Examine_Project_Hierarchy
         (Project_Browser (Get_Browser (Item)),
          Project_Of (Browser_Project_Vertex_Access (Item)),
-         Recursive        => False);
+         Recursive => False);
    end On_Examine_Prj_Hierarchy;
 
    -----------------------------------
@@ -494,8 +494,8 @@ package body Browsers.Projects is
       B : constant Project_Browser := Project_Browser (Get_Browser (Item));
    begin
       Examine_Ancestor_Project_Hierarchy
-        (Browser      => B,
-         Project      => Project_Of (Browser_Project_Vertex_Access (Item)));
+        (Browser => B,
+         Project => Project_Of (Browser_Project_Vertex_Access (Item)));
    end On_Examine_Ancestor_Hierarchy;
 
    ------------------------
@@ -745,7 +745,7 @@ package body Browsers.Projects is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Browser : constant MDI_Child :=
-        Open_Project_Browser (Get_Kernel (Context.Context));
+                  Open_Project_Browser (Get_Kernel (Context.Context));
    begin
       if Command.Show_Ancestors then
          Examine_Ancestor_Project_Hierarchy
@@ -767,15 +767,15 @@ package body Browsers.Projects is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Name : constant String := "Project Browser";
+      Name    : constant String := "Project Browser";
       Command : Interactive_Command_Access;
    begin
       Project_Browser_Module_ID := new Project_Browser_Module;
       Register_Module
-        (Module                  => Project_Browser_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => Project_Browser_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Project_Browser_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => Project_Browser_Module_Name,
+         Priority    => Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -784,10 +784,10 @@ package body Browsers.Projects is
       Command := new Imported_By_Command;
       Register_Contextual_Menu
         (Kernel, "Show projects imported",
-         Label  => -"Show projects imported by %p",
+         Label       => -"Show projects imported by %p",
          Stock_Image => Stock_Go_Forward,
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "Project only"));
+         Action      => Command,
+         Filter      => Lookup_Filter (Kernel, "Project only"));
 
       Command := new Imported_By_Command;
       Imported_By_Command (Command.all).Recursive := True;
