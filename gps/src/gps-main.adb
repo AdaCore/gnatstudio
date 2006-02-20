@@ -611,8 +611,10 @@ procedure GPS.Main is
       GPS.Menu.Register_Common_Menus (GPS_Main.Kernel);
 
       --  Initialize remote module
-      GPS.Kernel.Remote.Initialize (GPS_Main.Kernel);
-      Remote_Sync_Module.Register_Module (GPS_Main.Kernel);
+      if Active (Remote_View_Trace) then
+         GPS.Kernel.Remote.Initialize (GPS_Main.Kernel);
+         Remote_Sync_Module.Register_Module (GPS_Main.Kernel);
+      end if;
 
       Kernel_Callback.Connect
         (Get_MDI (GPS_Main.Kernel), "child_selected",
