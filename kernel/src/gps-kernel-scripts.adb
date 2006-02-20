@@ -2771,10 +2771,11 @@ package body GPS.Kernel.Scripts is
          Trace (Ref_Me, "After Decref "
                 & Print_Refcount (Class_Instance_Record_Access (Inst)));
       end if;
+
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Decref;
 
    ------------
