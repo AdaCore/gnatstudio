@@ -247,10 +247,13 @@ package body GPS.Kernel.Scripts is
    Value_Cst      : aliased constant String := "value";
    Recursive_Cst  : aliased constant String := "recursive";
    Default_Cst    : aliased constant String := "default_to_root";
+   Nth_Cst        : aliased constant String := "nth";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
      (1 => Shared_Lib_Cst'Access, 2 => Module_Cst'Access);
+   Body_Cmd_Parameters    : constant Cst_Argument_List :=
+     (1 => Nth_Cst'Access);
    Entity_Cmd_Parameters   : constant Cst_Argument_List :=
      (Name_Cst'Access, File_Cst'Access, Line_Cst'Access, Col_Cst'Access);
    File_Cmd_Parameters     : constant Cst_Argument_List :=
@@ -1088,11 +1091,18 @@ package body GPS.Kernel.Scripts is
          end;
 
       elsif Command = "body" then
+         Name_Parameters (Data, Body_Cmd_Parameters);
          declare
-            Location : File_Location;
+            Location : File_Location := Standard.Entities.No_File_Location;
+            Count    : Integer := Nth_Arg (Data, 2, 1);
          begin
             Entity := Get_Data (Data, 1);
-            Find_Next_Body (Entity, Location => Location);
+            while Count > 0 loop
+               Find_Next_Body
+                 (Entity, Current_Location => Location, Location => Location,
+                  No_Location_If_First => True);
+               Count := Count - 1;
+            end loop;
 
             if Location /= Standard.Entities.No_File_Location then
                Set_Return_Value
@@ -1878,6 +1888,8 @@ package body GPS.Kernel.Scripts is
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
         (Kernel, "body",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
 
