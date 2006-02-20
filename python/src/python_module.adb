@@ -1129,6 +1129,7 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Entity : constant Entity_Information := Get_Data (Data, 1);
+      Entity2 : Entity_Information;
    begin
       if Command = "__str__"
         or else Command = "__repr__"
@@ -1156,32 +1157,42 @@ package body Python_Module is
                    & Image (Get_Column (Get_Declaration_Of (Entity))))));
 
       elsif Command = "__cmp__" then
-         declare
-            Entity2 : constant Entity_Information := Get_Data (Data, 2);
-            Name1 : constant String := Get_Name (Entity).all;
-            Name2 : constant String := Get_Name (Entity2).all;
-         begin
-            if Name1 < Name2 then
-               Set_Return_Value (Data, -1);
-            elsif Name1 = Name2 then
-               declare
-                  File1 : constant Virtual_File := Get_Filename
-                    (Get_File (Get_Declaration_Of (Entity)));
-                  File2 : constant Virtual_File := Get_Filename
-                    (Get_File (Get_Declaration_Of (Entity)));
-               begin
-                  if File1 < File2 then
-                     Set_Return_Value (Data, -1);
-                  elsif File1 = File2 then
-                     Set_Return_Value (Data, 0);
-                  else
-                     Set_Return_Value (Data, 1);
-                  end if;
-               end;
+         Entity2 := Get_Data (Data, 2);
+         if Entity = null then
+            if Entity2 = null then
+               Set_Return_Value (Data, 0);
             else
-               Set_Return_Value (Data, 1);
+               Set_Return_Value (Data, -1);
             end if;
-         end;
+         elsif Entity2 = null then
+            Set_Return_Value (Data, 1);
+         else
+            declare
+               Name1 : constant String := Get_Name (Entity).all;
+               Name2 : constant String := Get_Name (Entity2).all;
+            begin
+               if Name1 < Name2 then
+                  Set_Return_Value (Data, -1);
+               elsif Name1 = Name2 then
+                  declare
+                     File1 : constant Virtual_File := Get_Filename
+                       (Get_File (Get_Declaration_Of (Entity)));
+                     File2 : constant Virtual_File := Get_Filename
+                       (Get_File (Get_Declaration_Of (Entity)));
+                  begin
+                     if File1 < File2 then
+                        Set_Return_Value (Data, -1);
+                     elsif File1 = File2 then
+                        Set_Return_Value (Data, 0);
+                     else
+                        Set_Return_Value (Data, 1);
+                     end if;
+                  end;
+               else
+                  Set_Return_Value (Data, 1);
+               end if;
+            end;
+         end if;
       end if;
 
    exception
