@@ -1101,7 +1101,10 @@ package body Project_Properties is
                   Values (N) := new String'
                     (Get_String (Editor.Model, Iter, 0));
 
-               elsif Get_Boolean (Editor.Model, Iter, 1) then
+               elsif Editor.Attribute.Non_Index_Type.Typ =
+                 Attribute_As_Directory
+                 and then Get_Boolean (Editor.Model, Iter, 1)
+               then
                   if Relative then
                      Values (N) := new String'
                        (Name_As_Directory
@@ -1114,6 +1117,10 @@ package body Project_Properties is
                        (Name_As_Directory (Get_String (Editor.Model, Iter, 0))
                         & "/**");
                   end if;
+
+               elsif Editor.Attribute.Base_Name_Only then
+                  Values (N) := new String'
+                    (Get_String (Editor.Model, Iter, 0));
 
                elsif Relative then
                   Values (N) := new String'
