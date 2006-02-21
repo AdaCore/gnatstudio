@@ -2693,7 +2693,7 @@ This command returns the output of the process up to the point where regexp matc
 
   <shell_doc name="GPS.Process.wait">
       <param name="self">The instance of GPS.Process</param>
-      <description>Block the execution of the script until the process has finished executing</description>
+      <description>Block the execution of the script until the process has finished executing. The exit callback registered when the process was started will be called before returning from this function</description>
   </shell_doc>
 
   <!--#################################################################
