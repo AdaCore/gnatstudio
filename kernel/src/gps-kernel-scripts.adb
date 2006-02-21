@@ -2762,7 +2762,7 @@ package body GPS.Kernel.Scripts is
          end loop;
 
          Ptr := Inst.all'Access;
-         --  The above isn't dangereous: We know there are no more
+         --  The above isn't dangerous: We know there are no more
          --  Class_Instance referencing this pointer, or we wouldn't be
          --  destroying it. As a result, it is safe to free the memory here
 
