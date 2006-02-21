@@ -102,6 +102,9 @@ package body Expect_Interface is
    procedure Exit_Cb (Data : Process_Data; Status : Integer);
    --  Called when an external process has finished running
 
+   procedure Exit_Cb (Inst : Class_Instance; Status : Integer);
+   --  Same as above with different profile
+
    procedure Output_Cb (Data : Process_Data; Output : String);
    --  Called when an external process has produced some output.
 
@@ -225,31 +228,42 @@ package body Expect_Interface is
    -- Exit_Cb --
    -------------
 
-   procedure Exit_Cb (Data : Process_Data; Status : Integer) is
-      Inst : constant Class_Instance :=
-        Instance_Callback_Data (Data.Callback_Data.all).Inst;
-      D    : constant Custom_Action_Access := Get_Data (Inst);
+   procedure Exit_Cb (Inst : Class_Instance; Status : Integer) is
+      Data : constant Custom_Action_Access := Get_Data (Inst);
       Tmp  : Boolean;
       pragma Unreferenced (Tmp);
    begin
-      Trace (Me, "Exited");
-      if D.On_Exit /= null then
-         declare
-            C : Callback_Data'Class := Create
-              (Get_Script (Inst), Arguments_Count => 3);
-         begin
-            Set_Nth_Arg (C, 1, Inst);
-            Set_Nth_Arg (C, 2, Status);
-            Set_Nth_Arg (C, 3, To_String (D.Processed_Output)
-                         & To_String (D.Unmatched_Output));
-            Tmp := Execute (D.On_Exit, C);
-            Free (C);
-         end;
+      if Data.Fd /= null then
+         Trace (Me, "Exited");
+         if Data.On_Exit /= null then
+            declare
+               C : Callback_Data'Class := Create
+                 (Get_Script (Inst), Arguments_Count => 3);
+            begin
+               Set_Nth_Arg (C, 1, Inst);
+               Set_Nth_Arg (C, 2, Status);
+               Set_Nth_Arg (C, 3, To_String (Data.Processed_Output)
+                            & To_String (Data.Unmatched_Output));
+               Tmp := Execute (Data.On_Exit, C);
+               Free (C);
+            end;
+         end if;
+
+         Data.Fd := null;
       end if;
 
-      D.Fd := null;
-
       --  ??? Add exception handler ?
+   end Exit_Cb;
+
+   -------------
+   -- Exit_Cb --
+   -------------
+
+   procedure Exit_Cb (Data : Process_Data; Status : Integer) is
+      Inst : constant Class_Instance :=
+        Instance_Callback_Data (Data.Callback_Data.all).Inst;
+   begin
+      Exit_Cb (Inst, Status);
    end Exit_Cb;
 
    ---------------
@@ -466,6 +480,7 @@ package body Expect_Interface is
       Process_Class : constant Class_Type := New_Class
         (Kernel, Process_Class_Name);
       E             : Exit_Type;
+      Status        : Integer;
       pragma Unreferenced (E);
 
    begin
@@ -544,12 +559,17 @@ package body Expect_Interface is
          end if;
 
       elsif Command = "wait" then
+         D := Get_Data (Data, 1);
          E := Interactive_Expect
            (Kernel   => Get_Kernel (Data),
-            Action   => Get_Data (Data, 1),
+            Action   => D,
             Timeout  => -1,
             Pattern  => "@#$%^&",
             Till_End => True);
+         if D.Fd /= null then
+            Close (D.Fd.all, Status);
+            Exit_Cb (Nth_Arg (Data, 1, Process_Class), Status);
+         end if;
 
       elsif Command = "expect" then
          Name_Parameters (Data, Expect_Args);
