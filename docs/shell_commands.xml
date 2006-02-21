@@ -38,13 +38,13 @@ Some examples are also provides for several functions, to help clarify the use o
 A very useful feature of python is that all class instances can be associated with any number of user data fields. For example, if you create an instance of
 the class GPS.EditorBuffer, you can associate two fields "field1" and "field2" to it (the names and number are purely for demonstration purposes, and you can use your own), as in:</description>
      <example lang="python">
-	ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+	ed = GPS.EditorBuffer.get (GPS.File ("a.adb"))
 	ed.field1 = "value1"
 	ed.field2 = 2
      </example>
      <description>GPS takes great care for most classes of always returning the same python instance for a given GUI object. For instance, if you were to get another instance of GPS.EditorBuffer for the same file as above, you would in fact receive the same Python instance, and thus the two fields are available to you, as in:</description>
      <example lang="python">
-	ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+	ed = GPS.EditorBuffer.get (GPS.File ("a.adb"))
 	# ed.field1 is still "value1"
      </example>
      <description>This is a very convenient way to store your own data associated with the various objects exported by GPS. These data will cease to exist when the GPS object itself is destroyed (for instance when the editor is closed in the example above).
@@ -3433,7 +3433,7 @@ the same line/column even if new lines are added in the buffer. This location is
      <param name="column">An integer</param>
      <description>Initializes a new instance. Creating two instances at the same location will not return the same instance of GPS.EditorLocation, and therefore any user data you have stored in the location will not be available in the second instance</description>
      <example lang="python">
-         ed  = GPS.EditorBuffer (GPS.File ("a.adb"))
+         ed  = GPS.EditorBuffer.get (GPS.File ("a.adb"))
          loc = GPS.EditorLocation (ed, line=4, column=5)
          loc.data = "MY OWN DATA"
          loc2 = GPS.EditorLocation (ed, line=4, column=5)
@@ -3454,7 +3454,7 @@ the same line/column even if new lines are added in the buffer. This location is
      <return>An instance of GPS.EditorLocation</return>
      <description>Return a new location located count characters after self. If count is negative, this moves backward in the buffer. It is more conveniently used through the standard + operator in python</description>
      <example lang="python">
-         ed   = GPS.EditorBuffer (GPS.File ("a.adb"))
+         ed   = GPS.EditorBuffer.get (GPS.File ("a.adb"))
          loc  = GPS.EditorLocation (ed, line=4, column=5)
          loc2 = loc + 3
      </example>
@@ -3666,7 +3666,7 @@ the same line/column even if new lines are added in the buffer. This location is
       <return>An instance of GPS.EditorLocation</return>
       <description>Returns the current location of the mark. This location will vary depending on the changes that take place in the buffer</description>
       <example lang="python">
-         ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+         ed = GPS.EditorBuffer.get (GPS.File ("a.adb"))
          loc = GPS.EditorLocation (ed, 3, 5)
          mark = loc.create_mark()
          # ...
@@ -3872,7 +3872,7 @@ It is possible to close all editors at once using a command like
       <description>Check whether there is a mark with that name in the buffer, and return it. An exception is raised if there is no such mark</description>
       <see_also name="GPS.EditorLocation.create_mark" />
       <example lang="python">
-         ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+         ed = GPS.EditorBuffer.get (GPS.File ("a.adb"))
          loc = GPS.EditorLocation (ed, 4, 5)
          mark = loc.create_mark ("name")
          mark.data = "whatever"
