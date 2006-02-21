@@ -209,7 +209,9 @@ package body Builder_Module is
       Path           : String;
       File           : Virtual_File;
       Compile_Only   : Boolean := False;
-      Unique_Project : Boolean := False) return Argument_List_Access;
+      Unique_Project : Boolean := False;
+      Extra_Args     : Argument_List_Access := null)
+      return Argument_List_Access;
    --  Compute the make arguments compatible with gnatmake/gprmake
    --  given a Project and File name.
    --  It is the responsibility of the caller to free the returned object.
@@ -218,6 +220,9 @@ package body Builder_Module is
    --  If Compile_Only is True, then use compile rather than build syntax.
    --
    --  If Path is not empty, use Path as project path.
+   --
+   --  If Extra_Args is not null, then arguments will be copied just before the
+   --  file name in the argument list.
 
    procedure Add_Build_Menu
      (Menu         : in out Gtk_Menu;
@@ -296,7 +301,8 @@ package body Builder_Module is
       File        : Virtual_File;
       Project     : Project_Type;
       Main_Units  : Boolean := False;
-      Synchronous : Boolean := False);
+      Synchronous : Boolean := False;
+      Extra_Args  : Argument_List_Access := null);
    --  Same as On_Build.
    --  If Synchronous is True, this subprogram will block GPS until the
    --  compilation is finished executing.
@@ -305,6 +311,7 @@ package body Builder_Module is
    --  If Project is not No_Project and File is VFS.No_File, either
    --  the main units of Project are built (Main_Units = True), or all the
    --  files in the project are built.
+   --  Extra_Args will be added at the end of the argument list.
 
    procedure On_Custom
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -341,7 +348,8 @@ package body Builder_Module is
       Synchronous : Boolean := False;
       Syntax_Only : Boolean := False;
       Quiet       : Boolean := False;
-      Shadow      : Boolean := False);
+      Shadow      : Boolean := False;
+      Extra_Args  : Argument_List_Access := null);
    --  Launch a compilation command for File.
    --  If Synchronous is true, then this procedure will not return until the
    --  file is fully compiled; all other GPS operations are blocked while the
@@ -352,6 +360,7 @@ package body Builder_Module is
    --  If Shadow is True, then a new file and an extending project will be
    --  created, and those files will be deleted after the compilation command
    --  ends.
+   --  The Extra_Args passed will be added at the end of the argument list.
 
    procedure Clear_Compilation_Output
      (Kernel : Kernel_Handle;
@@ -409,7 +418,9 @@ package body Builder_Module is
       Path           : String;
       File           : Virtual_File;
       Compile_Only   : Boolean := False;
-      Unique_Project : Boolean := False) return Argument_List_Access
+      Unique_Project : Boolean := False;
+      Extra_Args     : Argument_List_Access := null)
+      return Argument_List_Access
    is
       Project_Str    : GNAT.OS_Lib.String_Access;
       Result         : Argument_List_Access;
@@ -445,6 +456,13 @@ package body Builder_Module is
 
          K := K + 1;
          R_Tmp (K) := new String'("-P" & Project_Str.all);
+
+         if Extra_Args /= null then
+            for J in Extra_Args'Range loop
+               K := K + 1;
+               R_Tmp (K) := new String'(Extra_Args (J).all);
+            end loop;
+         end if;
 
          if File = VFS.No_File then
             if Unique_Project then
@@ -580,7 +598,8 @@ package body Builder_Module is
       File        : Virtual_File;
       Project     : Project_Type;
       Main_Units  : Boolean := False;
-      Synchronous : Boolean := False)
+      Synchronous : Boolean := False;
+      Extra_Args  : Argument_List_Access := null)
    is
       Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
       Cmd     : String_Access;
@@ -592,10 +611,33 @@ package body Builder_Module is
         (Get_Project (Kernel), Recursive => True);
       Syntax  : Command_Syntax;
       Success : Boolean;
+      Common_Args : Argument_List_Access;
+
+      function Copy_Arguments (Arguments : Argument_List)
+        return  Argument_List;
+      --  Create a new argument string with all the data duplicated.
+
+      function Copy_Arguments (Arguments : Argument_List)
+        return  Argument_List
+      is
+         Copy : Argument_List (Arguments'Range);
+      begin
+         for J in Arguments'Range loop
+            Copy (J) := new String'(Arguments (J).all);
+         end loop;
+
+         return Copy;
+      end Copy_Arguments;
 
    begin
       if Langs'Length = 0 then
          return;
+      end if;
+
+      if Extra_Args /= null then
+         Common_Args := new Argument_List'(Extra_Args.all);
+      else
+         Common_Args := new Argument_List (1 .. 0);
       end if;
 
       for F in Langs'Range loop
@@ -660,7 +702,8 @@ package body Builder_Module is
                         In_Pkg   => Builder_Package,
                         Index    => Ada_String,
                         Use_Initial_Value => True)
-                       & new String'(Base_Name (F)));
+                     & Copy_Arguments (Common_Args.all)
+                     & new String'(Base_Name (F)));
                else
                   Args := Compute_Arguments (Kernel, Prj, "", F);
                end if;
@@ -694,6 +737,7 @@ package body Builder_Module is
                            In_Pkg   => Builder_Package,
                            Index    => Ada_String,
                            Use_Initial_Value => True)
+                        & Copy_Arguments (Common_Args.all)
                         & new String'(Convert (Full_Name (File).all,
                           GPS_Server, Build_Server, True)));
                   end if;
@@ -708,7 +752,8 @@ package body Builder_Module is
          else
             Args := Compute_Arguments
               (Kernel, Project, "", File,
-               Unique_Project => not Main_Units);
+               Unique_Project => not Main_Units,
+               Extra_Args => Common_Args);
          end if;
 
          Change_Dir (Dir_Name (Project_Path (Project)).all);
@@ -750,6 +795,7 @@ package body Builder_Module is
 
       Free (Cmd);
       Free (Args);
+      Basic_Types.Unchecked_Free (Common_Args);
 
       Change_Dir (Old_Dir);
 
@@ -824,7 +870,8 @@ package body Builder_Module is
       Synchronous : Boolean := False;
       Syntax_Only : Boolean := False;
       Quiet       : Boolean := False;
-      Shadow      : Boolean := False)
+      Shadow      : Boolean := False;
+      Extra_Args  : Argument_List_Access := null)
    is
       Prj             : constant Project_Type :=
                           Get_Project_From_File
@@ -975,6 +1022,16 @@ package body Builder_Module is
          Shadow_Path := new String'("");
       end if;
 
+      if Extra_Args /= null then
+         declare
+            Garbage_Args : Argument_List_Access := Common_Args;
+         begin
+            Common_Args :=
+              new Argument_List'(Common_Args.all & Extra_Args.all);
+            Basic_Types.Unchecked_Free (Garbage_Args);
+         end;
+      end if;
+
       if not Shadow
         and then (Status (Prj) /= From_File or else Syntax_Only)
       then
@@ -1001,7 +1058,7 @@ package body Builder_Module is
               (Kernel,
                Command              => Cmd.all,
                Arguments            => Default_Builder_Switches
-                 & Common_Args.all & (Unique_Compile'Access, Local_File),
+               & Common_Args.all & (Unique_Compile'Access, Local_File),
                Server               => Build_Server,
                Console              => Get_Console (Kernel),
                Show_Command         => not Quiet,
@@ -1073,14 +1130,20 @@ package body Builder_Module is
       Command : String)
    is
       use String_List_Utils.String_List;
-      Node   : List_Node;
-      Info   : Virtual_File;
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      C      : Xref_Commands.Generic_Asynchronous_Command_Access;
+      Node       : List_Node;
+      Info       : Virtual_File;
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      C          : Xref_Commands.Generic_Asynchronous_Command_Access;
+      Extra_Args : Argument_List_Access;
    begin
       if Command = "compile" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Compile_File (Get_Kernel (Data), Info, Synchronous => True);
+         Extra_Args := Argument_String_To_List (Nth_Arg (Data, 2, ""));
+         Compile_File
+           (Get_Kernel (Data),
+            Info, Synchronous => True,
+            Extra_Args => Extra_Args);
+         Free (Extra_Args);
 
       elsif Command = "check_syntax" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
@@ -1098,6 +1161,7 @@ package body Builder_Module is
 
       elsif Command = "make" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
+         Extra_Args := Argument_String_To_List (Nth_Arg (Data, 2, ""));
 
          declare
             Project : constant Project_Type := Get_Project_From_File
@@ -1110,8 +1174,11 @@ package body Builder_Module is
               (Get_Kernel (Data),
                File        => Info,
                Project     => Project,
-               Synchronous => True);
+               Synchronous => True,
+               Extra_Args  => Extra_Args);
          end;
+
+         Free (Extra_Args);
 
       elsif Command = "get_build_output" then
          Node := First (Builder_Module_ID.Output);
@@ -1988,6 +2055,8 @@ package body Builder_Module is
 
       Register_Command
         (Kernel, "compile",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class   => Get_File_Class (Kernel),
          Handler => Compile_Command'Access);
       Register_Command
@@ -2000,6 +2069,8 @@ package body Builder_Module is
          Handler => Compile_Command'Access);
       Register_Command
         (Kernel, "make",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class   => Get_File_Class (Kernel),
          Handler => Compile_Command'Access);
       Register_Command
