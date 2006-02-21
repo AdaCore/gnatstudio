@@ -251,7 +251,7 @@ package body Src_Editor_Module.Shell is
       Buffer    : Source_Buffer;
       Line      : Gint;
       Offset    : Gint);
-   --  Set the data stored in the instance in EditorLocation
+   --  Set the data stored in the instance of EditorLocation
 
    function Create_Editor_Location
      (Script   : access Scripting_Language_Record'Class;
@@ -2112,6 +2112,14 @@ package body Src_Editor_Module.Shell is
          End_Action (Buffer);
          End_Group (Get_Command_Queue (Buffer));
 
+      elsif Command = "undo" then
+         Get_Buffer (Buffer, Data, 1);
+         Undo (Buffer);
+
+      elsif Command = "redo" then
+         Get_Buffer (Buffer, Data, 1);
+         Redo (Buffer);
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -2817,10 +2825,10 @@ package body Src_Editor_Module.Shell is
         (Kernel, "blocks_fold", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "blocks_unfold", 0, 0, Buffer_Cmds'Access, EditorBuffer);
---        Register_Command
---          (Kernel, "undo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
---        Register_Command
---          (Kernel, "redo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "undo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "redo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
 --        Register_Command
 --          (Kernel, "add_gap", 3, 3, Buffer_Cmds'Access, EditorBuffer);
 --        Register_Command
