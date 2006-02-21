@@ -3919,6 +3919,16 @@ It is possible to close all editors at once using a command like
        <description>Cancels the grouping of commands on the editor. See GPS.EditorBuffer.start_undo_group</description>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorBuffer.undo">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <description>Undo the last command on the editor</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.redo">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <description>Redo the last undone command on the editor</description>
+  </shell_doc>
+
   <!--#################################################################
       ### EditorView class
       #################################################################-->
