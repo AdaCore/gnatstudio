@@ -801,7 +801,8 @@ GPS.parse_xml ("""
 
   <shell_doc name="GPS.File.compile">
       <param name="self">The instance of GPS.File</param>
-      <description>Compile current file. This call will return only once the compilation is completed</description>
+      <param name="extra_args" default="">A string</param>
+      <description>Compile current file. This call will return only once the compilation is completed. Additional arguments can be added to the command line.</description>
       <example lang="python">
           GPS.File ("a.adb").compile()
       </example>
@@ -822,7 +823,8 @@ GPS.parse_xml ("""
 
   <shell_doc name="GPS.File.make">
       <param name="self">The instance of GPS.File</param>
-      <description>Compile and link the file and all its dependencies. This call will return only once the compilation is completed</description>
+      <param name="extra_args" default="">A string</param>
+      <description>Compile and link the file and all its dependencies. This call will return only once the compilation is completed. Additional arguments can be added to the command line.</description>
       <see_also name="GPS.File.compile()"/>
   </shell_doc>
 
