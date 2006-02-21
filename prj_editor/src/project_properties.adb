@@ -2758,8 +2758,10 @@ package body Project_Properties is
                    (Value (V).all,
                     Directory     => Get_Text (Ed.Path_Widget),
                     Resolve_Links => False));
-         else
+         elsif Ed.Attribute.Base_Name_Only then
             Set (Ed.Model, Iter, 0, Base_Name (Value (V).all));
+         else
+            Set (Ed.Model, Iter, 0, Value (V).all);
          end if;
          Set (Ed.Model, Iter, 1, False);
          Set (Ed.Model, Iter, 2, Value (V).all);
