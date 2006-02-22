@@ -472,6 +472,7 @@ package GPS.Kernel.Scripts is
    --  language).
 
    type Instance_List is new Instance_List_Base with private;
+   Null_Instance_List : constant Instance_List;
    --  Stores the instance created for some GPS internal data, so that the same
    --  script instance is reused every time we reference the same Ada object.
 
@@ -986,6 +987,9 @@ private
    type Instance_List is new Instance_List_Base with record
       List : Instance_Array_Access;
    end record;
+
+   Null_Instance_List : constant Instance_List :=
+     (Instance_List_Base with List => null);
 
    type Callback_Data_Array is
      array (Natural range <>) of Callback_Data_Access;
