@@ -72,6 +72,16 @@ package GPS.Kernel.Task_Manager is
    --  after execution, unless Destroy_On_Exit is false.
    --  See comments in task_manager.ads for details.
 
+   function Launch_Background_Command
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Command         : access Root_Command'Class;
+      Active          : Boolean;
+      Show_Bar        : Boolean;
+      Queue_Id        : String := "";
+      Destroy_On_Exit : Boolean := True) return Scheduled_Command_Access;
+   --  Same as above, but returns the command actually inserted in the task
+   --  manager.
+
    procedure Interrupt_Queue
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : Command_Access);
@@ -90,17 +100,25 @@ package GPS.Kernel.Task_Manager is
      (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access;
    --  Return the GPS task manager
 
+   function Get_Command (Command : access Scheduled_Command'Class)
+      return Command_Access;
+   --  Return the command associated to this scheduled command.
+
    -------------------------------------
    -- Support for scripting languages --
    -------------------------------------
 
    function Get_Instance
-     (Command  : access Scheduled_Command'Class;
-      Language : access Scripting_Language_Record'Class)
+     (Command       : access Scheduled_Command'Class;
+      Language      : access Scripting_Language_Record'Class;
+      Command_Class : Class_Type := No_Class)
       return Class_Instance;
    --  Returns the class instance associated to this command for the given
    --  scripting language. Create one when needed. The instance is from the
    --  class GPS.Command.
+   --  Command_Class specify the actual type of the command that have to be
+   --  created if needed. It has to be a child of type Command. If its type is
+   --  No_Class, then default command class will be used.
 
    function Get_Data
      (Instance : GPS.Kernel.Scripts.Class_Instance)
@@ -114,6 +132,7 @@ private
       Command         : Command_Access;
       Destroy_On_Exit : Boolean;
       Instances       : GPS.Kernel.Scripts.Instance_List;
+      Is_Dead         : Boolean := False;
    end record;
 
 end GPS.Kernel.Task_Manager;
