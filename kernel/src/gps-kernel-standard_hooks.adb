@@ -958,6 +958,23 @@ package body GPS.Kernel.Standard_Hooks is
       return D;
    end Create_Callback_Data;
 
+   ---------------------
+   -- Run_String_Hook --
+   ---------------------
+
+   procedure Run_String_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Hook   : String;
+      Data   : String)
+   is
+      Args : aliased String_Hooks_Args :=
+        (Hooks_Data with
+         Length => Data'Length,
+         Value  => Data);
+   begin
+      Run_Hook (Kernel, Hook, Args'Unchecked_Access);
+   end Run_String_Hook;
+
    ---------------------------
    -- Register_Action_Hooks --
    ---------------------------

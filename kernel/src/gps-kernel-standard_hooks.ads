@@ -59,6 +59,10 @@ package GPS.Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : access String_Hooks_Args)
       return GPS.Kernel.Scripts.Callback_Data_Access;
+   procedure Run_String_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Hook   : String;
+      Data   : String);
    --  Hooks that take a single string as a parameter.
    --  To create such hooks, use GPS.Kernel.Hooks.Register_Hook with a
    --  Type_Name parameter of String_Hook_Type
