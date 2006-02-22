@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 3.2.0
 
+- F221-022 Consoles with spaces in their names
+  Problem:    When you create, from python, a new console with a space or
+              other XML special characters in its name, GPS will report a
+              failure loading one of its internal files (history) on the
+              next startup
+  Workaround: remove the incorrect line in the $HOME/.gps/history file, and
+              do not use spaces in the name for the console
+
 - F220-009 Relative paths in project properties on Windows
   Problem:    On Windows, using the system file selection dialog will change
               the current directory. As a result, if you edit the project
