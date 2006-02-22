@@ -58,6 +58,8 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
@@ -74,8 +76,9 @@ package body Bookmark_Views is
    Editable_Column : constant := 3;
 
    type Bookmark_Data is record
-      Marker : Location_Marker;
-      Name   : GNAT.OS_Lib.String_Access;
+      Marker    : Location_Marker;
+      Name      : GNAT.OS_Lib.String_Access;
+      Instances : Instance_List;
    end record;
    type Bookmark_Data_Access is access Bookmark_Data;
 
@@ -99,6 +102,7 @@ package body Bookmark_Views is
       Kernel    : Kernel_Handle;
       Goto_Icon : Gdk_Pixbuf;
    end record;
+   type Bookmark_View is access all Bookmark_View_Record'Class;
 
    procedure Initialize
      (View   : access Bookmark_View_Record'Class;
@@ -120,6 +124,23 @@ package body Bookmark_Views is
 
    procedure Refresh (View : access Bookmark_View_Record'Class);
    --  Refresh the contents of the Bookmark view
+
+   procedure Delete_Bookmark
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Bookmark : Bookmark_Data);
+   --  Delete an existing bookmark
+
+   function Bookmark_From_Name
+     (Name : String) return Bookmark_List.List_Node;
+   --  Return the location marker for the first bookmark named Name.
+   --  null is returned if not found
+
+   function Instance_From_Bookmark
+     (List   : Bookmark_List.List_Node;
+      Class  : Class_Type;
+      Script : access Scripting_Language_Record'Class) return Class_Instance;
+   --  Get or create the class_instance associated with the bookmark described
+   --  in List.
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -160,11 +181,26 @@ package body Bookmark_Views is
       Params : Glib.Values.GValues);
    --  Called when a line is edited in the view
 
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles shell commands for this module
+
    package Bookmark_Idle is new Gtk.Main.Idle (Bookmark_View_Access);
    use Bookmark_Idle;
    function Start_Editing_Idle (View : Bookmark_View_Access) return Boolean;
    --  Function called to start editing the selected line. This is necessary
    --  since any editing is stopped as soon as the tree gains the focus back.
+
+   type Refresh_Hook is new Function_With_Args with record
+      View : Bookmark_View;
+   end record;
+   type Refresh_Hook_Access is access all Refresh_Hook'Class;
+   procedure Execute
+     (Func   : Refresh_Hook;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Function called when a hook has been added or removed, so that we can
+   --  properly refresh the view.
 
    type Delete_Bookmark_Command is new Interactive_Command with null record;
    function Execute
@@ -272,6 +308,35 @@ package body Bookmark_Views is
       Free (Text);
    end Draw;
 
+   ---------------------
+   -- Delete_Bookmark --
+   ---------------------
+
+   procedure Delete_Bookmark
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Bookmark : Bookmark_Data)
+   is
+      Node, Prev  : List_Node;
+   begin
+      Node := First (Bookmark_Views_Module.List);
+      while Node /= Null_Node loop
+         --  Compare pointers to string directly. If they are the same, the
+         --  pointers are the same anyway
+         if Bookmark_List.Data (Node).Name = Bookmark.Name then
+            declare
+               Name : constant String := Bookmark_List.Data (Node).Name.all;
+            begin
+               Remove_Nodes (Bookmark_Views_Module.List, Prev, Node);
+               Run_String_Hook (Kernel, Bookmark_Removed_Hook, Name);
+               exit;
+            end;
+         end if;
+
+         Prev := Node;
+         Node := Next (Node);
+      end loop;
+   end Delete_Bookmark;
+
    -------------
    -- Execute --
    -------------
@@ -284,22 +349,11 @@ package body Bookmark_Views is
       View        : constant Bookmark_View_Access :=
         Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
       Data        : Bookmark_Data_Access;
-      Node, Prev  : List_Node;
    begin
       if Context.Event /= null then
          Data := Get_Selected_From_Event (View, Context.Event);
          if Data /= null then
-            Node := First (Bookmark_Views_Module.List);
-            while Node /= Null_Node loop
-               if Bookmark_List.Data (Node) = Data then
-                  Remove_Nodes (Bookmark_Views_Module.List, Prev, Node);
-                  exit;
-               end if;
-
-               Prev := Node;
-               Node := Next (Node);
-            end loop;
-            Refresh (View);
+            Delete_Bookmark (Get_Kernel (Context.Context), Data.all);
             return Success;
          end if;
       end if;
@@ -497,7 +551,8 @@ package body Bookmark_Views is
          Append (Bookmark_Views_Module.List,
                  new Bookmark_Data'
                    (Marker => Mark,
-                    Name   => new String'(To_String (Mark))));
+                    Name   => new String'(To_String (Mark)),
+                    Instances => Null_Instance_List));
          if Child /= null then
             View  := Bookmark_View_Access (Get_Widget (Child));
             Model := Gtk_Tree_Store (Get_Model (View.Tree));
@@ -521,7 +576,9 @@ package body Bookmark_Views is
                Next (Get_Model (View.Tree), Iter);
             end loop;
          end if;
-         Run_Hook (Kernel, Bookmark_Added_Hook);
+
+         --  ??? Should run the hook only after the name is known
+         Run_String_Hook (Kernel, Bookmark_Added_Hook, To_String (Mark));
          return Success;
       end if;
       return Failure;
@@ -600,7 +657,8 @@ package body Bookmark_Views is
      (View   : access Bookmark_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Tooltip  : Bookmark_View_Tooltips_Access;
+      Tooltip   : Bookmark_View_Tooltips_Access;
+      Refresh_H : Refresh_Hook_Access;
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Scrolled_Window.Initialize (View);
@@ -645,12 +703,37 @@ package body Bookmark_Views is
                 Watch => GObject (View));
       Refresh (View);
 
+      Refresh_H := new Refresh_Hook'
+        (Function_With_Args with View => Bookmark_View (View));
+      Add_Hook (Kernel, Bookmark_Added_Hook,
+                Refresh_H,
+                Name  => "bookmark_views.refresh",
+                Watch => GObject (View));
+      Add_Hook (Kernel, Bookmark_Removed_Hook,
+                Refresh_H,
+                Name  => "bookmark_views.refresh",
+                Watch => GObject (View));
+
       --  Initialize tooltips
 
       Tooltip := new Bookmark_View_Tooltips;
       Tooltip.Bookmark_View := Bookmark_View_Access (View);
       Set_Tooltip (Tooltip, View.Tree, 250);
    end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Func   : Refresh_Hook;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel, Data);
+   begin
+      Refresh (Func.View);
+   end Execute;
 
    -------------
    -- Destroy --
@@ -693,13 +776,15 @@ package body Bookmark_Views is
                      if Name = "" then
                         Append (Bookmark_Views_Module.List,
                                 new Bookmark_Data'
-                                  (Marker => Marker,
+                                  (Marker    => Marker,
+                                   Instances => Null_Instance_List,
                                    Name   => new String'(To_String (Marker))));
                      else
                         Append (Bookmark_Views_Module.List,
                                 new Bookmark_Data'
-                                  (Marker => Marker,
-                                   Name   => new String'(Name)));
+                                  (Marker    => Marker,
+                                   Instances => Null_Instance_List,
+                                   Name      => new String'(Name)));
                      end if;
                   end;
                end if;
@@ -744,6 +829,149 @@ package body Bookmark_Views is
       Free (File);
    end Save_Bookmarks;
 
+   ------------------------
+   -- Bookmark_From_Name --
+   ------------------------
+
+   function Bookmark_From_Name
+     (Name : String) return Bookmark_List.List_Node
+   is
+      List : Bookmark_List.List_Node := First (Bookmark_Views_Module.List);
+   begin
+      while List /= Null_Node loop
+         exit when Data (List).Name.all = Name;
+         List := Next (List);
+      end loop;
+      return List;
+   end Bookmark_From_Name;
+
+   ----------------------------
+   -- Instance_From_Bookmark --
+   ----------------------------
+
+   function Instance_From_Bookmark
+     (List   : Bookmark_List.List_Node;
+      Class  : Class_Type;
+      Script : access Scripting_Language_Record'Class) return Class_Instance
+   is
+      Inst : Class_Instance :=
+        Get (Bookmark_List.Data (List).Instances, Script);
+   begin
+      if Inst = No_Class_Instance then
+         Inst := New_Instance (Script, Class);
+         Set_Data (Inst, Class, Bookmark_List.Data (List).Name.all);
+         Set (Bookmark_List.Data (List).Instances, Script, Inst);
+      end if;
+      return Inst;
+   end Instance_From_Bookmark;
+
+   ---------------------
+   -- Command_Handler --
+   ---------------------
+
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name_Cst       : aliased constant String := "name";
+      Bookmark_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "Bookmark");
+      Inst      : Class_Instance;
+      Bookmark  : Bookmark_List.List_Node;
+      Marker    : Location_Marker;
+      Tmp       : Boolean;
+      List      : Bookmark_List.List_Node;
+      pragma Unreferenced (Tmp);
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg
+           (Data, "Cannot create instances of GPS.Bookmark."
+            & " Use GPS.Bookmark.get() instead");
+
+      elsif Command = "get" then
+         Name_Parameters (Data, (1 => Name_Cst'Unchecked_Access));
+         Bookmark := Bookmark_From_Name (Nth_Arg (Data, 1));
+         if Bookmark = Null_Node then
+            Set_Error_Msg (Data, "No such bookmark");
+         else
+            Inst := Instance_From_Bookmark
+              (Bookmark, Bookmark_Class, Get_Script (Data));
+            Set_Return_Value (Data, Inst);
+         end if;
+
+      elsif Command = "create" then
+         Name_Parameters (Data, (1 => Name_Cst'Unchecked_Access));
+         Marker := Create_Marker (Get_Kernel (Data));
+         if Marker = null then
+            Set_Error_Msg (Data, "Can't create bookmark for this context");
+         else
+            Prepend
+              (Bookmark_Views_Module.List,
+               new Bookmark_Data'
+                 (Marker    => Marker,
+                  Instances => Null_Instance_List,
+                  Name      => new String'(Nth_Arg (Data, 1))));
+            Run_String_Hook
+              (Get_Kernel (Data), Bookmark_Added_Hook, Nth_Arg (Data, 1));
+            Bookmark := First (Bookmark_Views_Module.List);
+            Set_Return_Value
+              (Data, Instance_From_Bookmark
+                 (Bookmark, Bookmark_Class, Get_Script (Data)));
+         end if;
+
+      elsif Command = "name" then
+         Inst := Nth_Arg (Data, 1, Bookmark_Class);
+         Set_Return_Value (Data, String'(Get_Data (Inst, Bookmark_Class)));
+
+      elsif Command = "delete" then
+         Inst := Nth_Arg (Data, 1, Bookmark_Class);
+         Bookmark := Bookmark_From_Name (Get_Data (Inst, Bookmark_Class));
+         if Bookmark = Null_Node then
+            Set_Error_Msg (Data, "Invalid bookmark");
+         else
+            Delete_Bookmark
+              (Get_Kernel (Data), Bookmark_List.Data (Bookmark).all);
+         end if;
+
+      elsif Command = "rename" then
+         Name_Parameters (Data, (2 => Name_Cst'Unchecked_Access));
+         Inst := Nth_Arg (Data, 1, Bookmark_Class);
+         Bookmark := Bookmark_From_Name (Get_Data (Inst, Bookmark_Class));
+         if Bookmark = Null_Node then
+            Set_Error_Msg (Data, "Invalid bookmark");
+         else
+            Run_String_Hook
+              (Get_Kernel (Data), Bookmark_Added_Hook,
+               Bookmark_List.Data (Bookmark).Name.all);
+            Free (Bookmark_List.Data (Bookmark).Name);
+            Bookmark_List.Data (Bookmark).Name :=
+              new String'(Nth_Arg (Data, 2));
+            Set_Data (Inst, Bookmark_Class, String'(Nth_Arg (Data, 2)));
+            Run_String_Hook
+              (Get_Kernel (Data), Bookmark_Added_Hook, Nth_Arg (Data, 2));
+         end if;
+
+      elsif Command = "goto" then
+         Inst := Nth_Arg (Data, 1, Bookmark_Class);
+         Bookmark := Bookmark_From_Name (Get_Data (Inst, Bookmark_Class));
+         if Bookmark = Null_Node
+           or else not Go_To
+             (Bookmark_List.Data (Bookmark).Marker, Get_Kernel (Data))
+         then
+            Set_Error_Msg (Data, "Invalid bookmark");
+         end if;
+
+      elsif Command = "list" then
+         Set_Return_Value_As_List (Data);
+         List := First (Bookmark_Views_Module.List);
+         while List /= Null_Node loop
+            Inst := Instance_From_Bookmark
+              (List, Bookmark_Class, Get_Script (Data));
+            Set_Return_Value (Data, Inst);
+            List := Next (List);
+         end loop;
+      end if;
+   end Command_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -752,12 +980,15 @@ package body Bookmark_Views is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command : Interactive_Command_Access;
+      Bookmark_Class : constant Class_Type := New_Class (Kernel, "Bookmark");
    begin
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
       Generic_View.Register_Module
         (Kernel, Module_ID (Bookmark_Views_Module));
 
-      Register_Hook_No_Args (Kernel, Bookmark_Added_Hook);
+      Register_Hook_No_Return (Kernel, Bookmark_Added_Hook, String_Hook_Type);
+      Register_Hook_No_Return
+        (Kernel, Bookmark_Removed_Hook, String_Hook_Type);
 
       Load_Bookmarks (Kernel);
 
@@ -783,6 +1014,27 @@ package body Bookmark_Views is
       Register_Action
         (Kernel, "Bookmark Create", Command,
          -("Create a bookmark at the current location"));
+
+      Register_Command
+        (Kernel, Constructor_Method, 0, 0, Command_Handler'Access,
+         Bookmark_Class);
+      Register_Command
+        (Kernel, "get", 1, 1, Command_Handler'Access, Bookmark_Class,
+         Static_Method => True);
+      Register_Command
+        (Kernel, "create", 1, 1, Command_Handler'Access, Bookmark_Class,
+         Static_Method => True);
+      Register_Command
+        (Kernel, "list", 0, 0, Command_Handler'Access, Bookmark_Class,
+         Static_Method => True);
+      Register_Command
+        (Kernel, "name", 0, 0, Command_Handler'Access, Bookmark_Class);
+      Register_Command
+        (Kernel, "rename", 1, 1, Command_Handler'Access, Bookmark_Class);
+      Register_Command
+        (Kernel, "delete", 0, 0, Command_Handler'Access, Bookmark_Class);
+      Register_Command
+        (Kernel, "goto", 0, 0, Command_Handler'Access, Bookmark_Class);
    end Register_Module;
 
 end Bookmark_Views;
