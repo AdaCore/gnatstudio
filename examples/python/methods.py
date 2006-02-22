@@ -26,6 +26,13 @@ class Methods_Contextual (GPS.Contextual):
      ## handle overriden methods as well
      if isinstance (context, GPS.EntityContext) and context.entity():
         context.methods_list = context.entity().methods()
+       
+        ## if we have an access to a tagged type, behave as if we had the
+        ## type itself
+        if context.methods_list == [] \
+           and context.entity().pointed_type():
+           context.methods_list = context.entity().pointed_type().methods()
+
         context.methods_list.sort()
         return context.methods_list != []
      else:
