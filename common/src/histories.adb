@@ -214,12 +214,23 @@ package body Histories is
             if Key.Attributes = null
               or else Get_Attribute (Key, "type") = "strings"
             then
-               Value := Create_New_Key_If_Necessary
-                 (Hist, History_Key (Key.Tag.all), Strings);
+               if Key.Tag.all = "key" then
+                  Value := Create_New_Key_If_Necessary
+                    (Hist, History_Key (Get_Attribute (Key, "name")), Strings);
+               else
+                  Value := Create_New_Key_If_Necessary
+                    (Hist, History_Key (Key.Tag.all), Strings);
+               end if;
 
             elsif Get_Attribute (Key, "type") = "booleans" then
-               Value := Create_New_Key_If_Necessary
-                 (Hist, History_Key (Key.Tag.all), Booleans);
+               if Key.Tag.all = "key" then
+                  Value := Create_New_Key_If_Necessary
+                    (Hist, History_Key (Get_Attribute (Key, "name")),
+                     Booleans);
+               else
+                  Value := Create_New_Key_If_Necessary
+                    (Hist, History_Key (Key.Tag.all), Booleans);
+               end if;
 
             else
                Value := null;
@@ -307,7 +318,8 @@ package body Histories is
          exit when Value = Null_History;
 
          Key := new Node;
-         Key.Tag := new String'(Get_Key (Iter));
+         Key.Tag := new String'("key");
+         Set_Attribute (Key, "name", Get_Key (Iter));
 
          case Value.Typ is
             when Strings =>
