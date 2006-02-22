@@ -8,6 +8,12 @@ Known Problems fixed in GPS 3.2.0
   Workaround: remove the incorrect line in the $HOME/.gps/history file, and
               do not use spaces in the name for the console
 
+- F221-012 Crashes when using refactoring
+  Problem:    When using refactoring, if the cross-references are not matching
+              exactly the source files, GPS might crash while applying
+              changes to the source.
+  Workaround: Always fully recompile the project before using refactoring.
+
 - F220-009 Relative paths in project properties on Windows
   Problem:    On Windows, using the system file selection dialog will change
               the current directory. As a result, if you edit the project
