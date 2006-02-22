@@ -978,6 +978,30 @@ Some entities have several bodies. This is for instance the case of a separate s
       <description>Return a list of all the entities that are derived from self. For object-oriented languages, this includes types that extend self. In Ada, this also includes subtypes of self.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Entity.type">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>An instance of GPS.Entity</return>
+      <description>Return the type of the entity. For a variable, it is its type</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Entity.pointed_type">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>An instance of GPS.Entity</return>
+      <description>Return the type pointed to by entity. If self is not a pointer (or an Ada access type), None is returned. This function also applies to variables, and returns the same information as their type would</description>
+      <example lang="python">
+         ## Given the following Ada code:
+         ##    type Int is new Integer;
+         ##    type Ptr is access Int;
+         ##    P : Ptr;
+         ## the following requests would apply:
+
+         f = GPS.File ("file.adb")
+         GPS.Entity ("P", f).type()           # Ptr
+         GPS.Entity ("P", f).pointed_type()   # Int
+         GPS.Entity ("Ptr", f).pointed_type() # Int
+       </example>
+  </shell_doc>
+
   <shell_doc name="GPS.Entity.references">
       <param name="self">The instance of GPS.Entity</param>
       <param name="include_implicit" default="False">A boolean</param>
