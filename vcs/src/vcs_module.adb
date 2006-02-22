@@ -607,14 +607,14 @@ package body VCS_Module is
 
       Register_Action_Menu
         ("Diff between two revisions",
-         -"Compare between two specified revisions of current file",
-         -"Compare between two revisions",
+         -"Compare two specified revisions of current file",
+         -"Compare two revisions",
          File_Filter,
          On_Menu_Diff2'Access);
 
       Register_Action_Menu
         ("Diff base against head",
-         -"Compare between base and head revisions of current file",
+         -"Compare base and head revisions of current file",
          -"Compare base against head",
          File_Filter,
          On_Menu_Diff_Base_Head'Access);
