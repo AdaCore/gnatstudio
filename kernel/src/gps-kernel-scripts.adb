@@ -2883,14 +2883,17 @@ package body GPS.Kernel.Scripts is
    function Get_Data
      (Instance : Class_Instance; Name : String) return User_Data_List
    is
-      D : User_Data_List := Instance.Data.Data.User_Data;
+      D : User_Data_List;
    begin
-      while D /= null loop
-         if D.Name = Name then
-            return D;
-         end if;
-         D := D.Next;
-      end loop;
+      if Instance.Initialized then
+         D := Instance.Data.Data.User_Data;
+         while D /= null loop
+            if D.Name = Name then
+               return D;
+            end if;
+            D := D.Next;
+         end loop;
+      end if;
       return null;
    end Get_Data;
 
