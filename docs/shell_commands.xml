@@ -965,6 +965,12 @@ Some entities have several bodies. This is for instance the case of a separate s
       <see_also name="GPS.Entity.references()"/>
   </shell_doc>
 
+  <shell_doc name="GPS.Entity.derived_types">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>List of GPS.Entity</return>
+      <description>Return a list of all the entities that are derived from self. For object-oriented languages, this includes types that extend self. In Ada, this also includes subtypes of self.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Entity.references">
       <param name="self">The instance of GPS.Entity</param>
       <param name="include_implicit" default="False">A boolean</param>
