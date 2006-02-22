@@ -208,11 +208,6 @@ package body Browsers.Call_Graph is
    function Execute
      (Command : access References_Command) return Command_Return_Type;
 
-   type References_Command_Properties is new Instance_Property_Record with
-      record
-         Command : References_Command_Access;
-      end record;
-
    ------------------
    -- Entity items --
    ------------------
@@ -1446,12 +1441,16 @@ package body Browsers.Call_Graph is
          Name_Parameters (Data, References_Cmd_Parameters);
 
          declare
-            Ref_Command : constant References_Command_Access :=
+            Ref_Command      : constant References_Command_Access :=
               new References_Command;
             References_Command_Class : constant Class_Type := New_Class
-              (Get_Kernel (Data), References_Command_Class_Name);
-            Synchronous : constant Boolean := Nth_Arg (Data, 3, True);
-            Instance    : Class_Instance;
+              (Get_Kernel (Data),
+               References_Command_Class_Name,
+               New_Class (Get_Kernel (Data), "Command"));
+
+            Synchronous      : constant Boolean := Nth_Arg (Data, 3, True);
+            Instance         : Class_Instance;
+            Launched_Command : Scheduled_Command_Access;
          begin
             Filter := Real_References_Filter;
             Filter (Implicit) := Nth_Arg (Data, 2, False);
@@ -1469,9 +1468,8 @@ package body Browsers.Call_Graph is
 
             else
                --  Not synchronous, return a command
-               Instance :=
-                 New_Instance (Get_Script (Data), References_Command_Class);
-               Launch_Background_Command
+
+               Launched_Command := Launch_Background_Command
                  (Kernel,
                   Ref_Command,
                   False,
@@ -1484,12 +1482,11 @@ package body Browsers.Call_Graph is
                    Current  => Get_Current_Progress (Ref_Command.Iter),
                    Total    => Get_Total_Progress (Ref_Command.Iter)));
 
-               Set_Property
-                 (Instance,
-                  References_Command_Class_Name,
-                  References_Command_Properties'
-                    (Instance_Property_Record with
-                     Command => Ref_Command));
+               Instance := Get_Instance
+                 (Launched_Command,
+                  Get_Script (Data),
+                  References_Command_Class);
+
                Set_Return_Value (Data, Instance);
             end if;
          end;
@@ -1590,8 +1587,8 @@ package body Browsers.Call_Graph is
       Inst : constant Class_Instance :=
         Nth_Arg (Data, 1, ReferencesCommand_Class);
       Data_Command : constant References_Command_Access :=
-        References_Command_Properties
-          (Get_Property (Inst, References_Command_Class_Name)).Command;
+        References_Command_Access
+          (Get_Command (GPS.Kernel.Task_Manager.Get_Data (Inst)));
    begin
       if Command = "get_result" then
          Put_Locations_In_Return (Data_Command, Data);
