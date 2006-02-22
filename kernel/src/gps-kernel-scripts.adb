@@ -345,6 +345,7 @@ package body GPS.Kernel.Scripts is
    begin
       if List.List = null then
          List.List := new Instance_Array (Tmp'Range);
+         List.List.all := (others => No_Class_Instance);
       end if;
 
       for T in Tmp'Range loop
@@ -354,6 +355,20 @@ package body GPS.Kernel.Scripts is
          end if;
       end loop;
    end Set;
+
+   -------------------
+   -- Get_Instances --
+   -------------------
+
+   function Get_Instances (List : Instance_List) return Instance_Array is
+      Null_List : Instance_Array (1 .. 0);
+   begin
+      if List.List = null then
+         return Null_List;
+      else
+         return List.List.all;
+      end if;
+   end Get_Instances;
 
    ----------
    -- Free --
