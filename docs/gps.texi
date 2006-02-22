@@ -7006,7 +7006,7 @@ version of that file in the repository.
 Show a visual comparison between the local file and one specific
 version of that file in the repository.
 
-@item Compare between two revisions
+@item Compare two revisions
 @anchor{Compare against revision}
 Show a visual comparison between two specific revisions
 of the file in the repository.
