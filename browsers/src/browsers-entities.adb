@@ -521,6 +521,10 @@ package body Browsers.Entities is
         (Kernel, "return_type",
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "derived_types",
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
    end Register_Module;
 
    ---------------------------------
@@ -640,6 +644,23 @@ package body Browsers.Entities is
 
                Destroy (Iter);
             end;
+
+         elsif Command = "derived_types" then
+            declare
+               Iter : Child_Type_Iterator;
+            begin
+               Set_Return_Value_As_List (Data);
+               Get_Child_Types (Iter, Entity);
+               while not At_End (Iter) loop
+                  if Get (Iter) /= null then
+                     Set_Return_Value
+                       (Data, Create_Entity (Get_Script (Data), Get (Iter)));
+                  end if;
+                  Next (Iter);
+               end loop;
+               Destroy (Iter);
+            end;
+
          end if;
       end if;
 
