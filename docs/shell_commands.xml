@@ -74,7 +74,14 @@ when the GPS window is fully visible to the user:
 
   <shell_doc name="@hook@ bookmark_added">
      <param name="hook">A string, the name of the hook</param>
+     <param name="bookmark_name">A string, the name of the bookmark that has been added</param>
      <description>Hook called when a new bookmark has been created by the user</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ bookmark_removed">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="bookmark_name">A string, the name of the bookmark that has been removed</param>
+     <description>Hook called when a new bookmark has been removed by the user</description>
   </shell_doc>
 
   <shell_doc name="@hook@ preferences_changed">
@@ -4104,4 +4111,70 @@ GPS comes with some predefined logging streams, which can be used to configure t
      </example>
   </shell_doc>
 
+  <!--#################################################################
+      ## Bookmark class
+      #################################################################-->
+
+  <shell_doc name="GPS.Bookmark">
+     <description>This class provides access to the bookmarks of GPS. These are special types of markers that are saved across sessions, and can be used to save a context within GPS. They are generally associated with a specific location in an editor, but can also be used to location special boxes in a graphical browser for instance. </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Bookmark.__init__">
+     <description>This function prevents the creation of a bookmark instance directly. You must use GPS.Bookmark.get() instead, which will always return the same instance for a given bookmark, thus allowing you to save your own custom data with the bookmark</description>
+     <see_also name="GPS.Bookmark.get" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Bookmark.create">
+     <param name="name">A string</param>
+     <return>An instance of GPS.Bookmark</return>
+     <description>This function creates a new bookmark at the current location in GPS. If the current window is an editor, it creates a bookmark that will save the exact line and column, so that the user can go back to them easily. Name is the string that appears in the bookmarks window, and that can be used later to query the same instance using GPS.Bookmark.get. This function emits the hook bookmark_added</description>
+     <see_also name="GPS.Bookmark.get" />
+     <example lang="python">
+         GPS.MDI.get ("file.adb").raise_window()
+         bm = GPS.Bookmark.create ("name")
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Bookmark.get">
+     <param name="name">A string</param>
+     <return>An instance of GPS.Bookmark</return>
+     <description>This function retrieves a bookmark by its name. If no such bookmark exists, an exception is raised. The same instance of GPS.Bookmark is always return for a given bookmark, so that you can store your own user data within the instance. Note however that this custom data will not be automatically preserved across GPS sessions, so you might want to save all your data when GPS exits</description>
+     <see_also name="GPS.Bookmark.create" />
+     <example lang="python">
+          GPS.Bookmark.get ("name").my_own_field = "GPS"
+          print GPS.Bookmark.get ("name").my_own_field  ## prints "GPS"
+     </example>
+   </shell_doc>
+
+   <shell_doc name="GPS.Bookmark.list">
+      <return>A list of GPS.Bookmark instances</return>
+      <description>Return the list of all existing bookmarks</description>
+      <example lang="python">
+          # The following command returns a list with the name of all
+          # existing purposes
+          names = [bm.name() for bm in GPS.Bookmark.list()]
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Bookmark.name">
+      <param name="self">An instance of GPS.Bookmark</param>
+      <return>A string</return>
+      <description>Return the current name of the bookmark. It might not be the same one that was used to create or get the bookmark, since the user might have used the bookmarks view to rename it</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Bookmark.rename">
+      <param name="self">An instance of GPS.Bookmark</param>
+      <param name="name">A string</param>
+      <description>Rename an existing bookmark. This updates the bookmarks view automatically, and emits the hooks bookmark_removed and bookmark_added</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Bookmark.delete">
+      <param name="self">An instance of GPS.Bookmark</param>
+      <description>Delete an existing bookmark. This emits the hook bookmark_removed</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Bookmark.goto">
+      <param name="self">An instance of GPS.Bookmark</param>
+      <description>Change the current context in GPS so that it matches the one saved in the bookmark. In particular, if the bookmark is inside an editor, this editor is raised, and the cursor moved to the correct line and column. You cannot query directly the line and column from the bookmark, since these might not exist, for instance when the editor points inside a browser.</description>
+  </shell_doc>
 </docs>
