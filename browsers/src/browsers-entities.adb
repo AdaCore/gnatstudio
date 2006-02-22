@@ -547,6 +547,7 @@ package body Browsers.Entities is
       Entity : constant Entity_Information := Get_Data (Data, 1);
       Child  : MDI_Child;
       Item   : Type_Item;
+      Result : Entity_Information;
       pragma Unreferenced (Item);
    begin
       if Entity /= null then
@@ -624,8 +625,13 @@ package body Browsers.Entities is
                Create_Entity (Get_Script (Data), Returned_Type (Entity)));
 
          elsif Command = "pointed_type" then
-            Set_Return_Value
-              (Data, Create_Entity (Get_Script (Data), Pointed_Type (Entity)));
+            Result := Pointed_Type (Entity);
+            if Result = null
+              and then Get_Type_Of (Entity) /= null
+            then
+               Result := Pointed_Type (Get_Type_Of (Entity));
+            end if;
+            Set_Return_Value (Data, Create_Entity (Get_Script (Data), Result));
 
          elsif Command = "type" then
             Set_Return_Value
