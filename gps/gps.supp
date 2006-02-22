@@ -1,3 +1,4 @@
+#### Errors in XFree
 {
    Errors in Xserver
    Memcheck:Param
@@ -30,5 +31,834 @@
    obj:/usr/lib/libcairo.so.2.2.3
    obj:/usr/lib/libcairo.so.2.2.3
    fun:cairo_fill_preserve
+}
+{
+   Expected memory leak
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_X11TransConnectDisplay
+   fun:XOpenDisplay
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+   fun:_ada_gps__main
+}
+{
+   Expected memory leak
+   Memcheck:Leak
+   fun:malloc
+   fun:_XrmDefaultInitParseInfo
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_XcursorGetDisplayInfo
+   fun:XcursorGetTheme
+   fun:gdk_x11_display_set_cursor_theme
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:gtk_settings_get_for_screen
+   fun:gtk_settings_get_default
+}
+{
+   Expected memory leak
+   Memcheck:Leak
+   fun:malloc
+   fun:_X11TransConnectDisplay
+   fun:XOpenDisplay
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+   fun:_ada_gps__main
+   fun:main
+}
+{
+   Expected memory leak
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_pre_parse_libgtk_only
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:g_option_context_parse
+}
+{
+   Expected memory leak
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcLocaleDirName
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_pre_parse_libgtk_only
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:g_option_context_parse
+   fun:gtk_parse_args
+}
+{
+   Expected memory leak
+   Memcheck:Leak
+   fun:malloc
+   fun:_XiGetExtensionVersion
+   fun:_XiCheckExtInit
+   fun:XListInputDevices
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+}
+{
+   Expected memory leak
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_pre_parse_libgtk_only
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_pre_parse_libgtk_only
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcDefaultMapModifiers
+   fun:XSetLocaleModifiers
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_pre_parse_libgtk_only
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:g_option_context_parse
+   fun:gtk_parse_args
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_pre_parse_libgtk_only
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   fun:cairo_ft_font_face_create_for_pattern
+   obj:/opt/gnome/lib/libpangocairo-1.0.so.0.1000.0
+   obj:/opt/gnome/lib/libpangocairo-1.0.so.0.1000.0
+   obj:/opt/gnome/lib/libpangocairo-1.0.so.0.1000.0
+   fun:pango_fc_font_lock_face
+   obj:/opt/gnome/lib/pango/1.4.0/modules/pango-basic-fc.so
+   obj:/opt/gnome/lib/libpango-1.0.so.0.1000.0
+   fun:pango_shape
+   obj:/opt/gnome/lib/libpango-1.0.so.0.1000.0
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcBlanksCreate
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   fun:XML_ParseBuffer
+   fun:FcConfigParseAndLoad
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+   fun:FcConfigGetCurrent
+   fun:FcConfigSubstituteWithPat
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcExprCreateField
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   fun:XML_ParseBuffer
+   fun:FcConfigParseAndLoad
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcExprCreateMatrix
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   fun:XML_ParseBuffer
+   fun:FcConfigParseAndLoad
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XextCreateExtension
+   fun:XInput_find_display
+   fun:XListInputDevices
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XAddConnectionWatch
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+   fun:_ada_gps__main
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_pre_parse_libgtk_only
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:g_option_context_parse
+   fun:gtk_parse_args
+   fun:gtk_init_check
+   fun:gtk_init
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_pre_parse_libgtk_only
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XcursorSetTheme
+   fun:gdk_x11_display_set_cursor_theme
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:gtk_settings_get_for_screen
+   fun:gtk_settings_get_default
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:g_type_create_instance
+   obj:/opt/gnome/lib/libgobject-2.0.so.0.800.5
+   fun:g_object_newv
+   fun:g_object_new_valist
+   fun:g_object_new
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XcursorGetDisplayInfo
+   fun:XcursorGetTheme
+   fun:gdk_x11_display_set_cursor_theme
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:gtk_settings_get_for_screen
+   fun:gtk_settings_get_default
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:g_type_create_instance
+   obj:/opt/gnome/lib/libgobject-2.0.so.0.800.5
+   fun:g_object_newv
+   fun:g_object_new_valist
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_XcursorGetDisplayInfo
+   fun:XcursorGetTheme
+   fun:gdk_x11_display_set_cursor_theme
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:gtk_settings_get_for_screen
+   fun:gtk_settings_get_default
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_XcursorGetDisplayInfo
+   fun:XcursorGetTheme
+   fun:gdk_x11_display_set_cursor_theme
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:gtk_settings_get_for_screen
+   fun:gtk_settings_get_default
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:g_type_create_instance
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XRenderFindDisplay
+   fun:XRenderQueryExtension
+   fun:_XcursorGetDisplayInfo
+   fun:XcursorGetTheme
+   fun:gdk_x11_display_set_cursor_theme
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:gtk_settings_get_for_screen
+   fun:gtk_settings_get_default
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:g_type_create_instance
+   obj:/opt/gnome/lib/libgobject-2.0.so.0.800.5
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.1
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_pre_parse_libgtk_only
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_X11TransConnect
+   fun:_X11TransConnectDisplay
+   fun:XOpenDisplay
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+   fun:_ada_gps__main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_X11TransConnect
+   fun:_X11TransConnectDisplay
+   fun:XOpenDisplay
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+   fun:_ada_gps__main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libpython2.4.so.1.0
+   fun:PyUnicodeUCS4_DecodeUTF8Stateful
+   fun:PyUnicodeUCS4_DecodeUTF8
+   obj:/usr/lib/libpython2.4.so.1.0
+   obj:/usr/lib/libpython2.4.so.1.0
+   obj:/usr/lib/libpython2.4.so.1.0
+   obj:/usr/lib/libpython2.4.so.1.0
+   obj:/usr/lib/libpython2.4.so.1.0
+   obj:/usr/lib/libpython2.4.so.1.0
+   obj:/usr/lib/libpython2.4.so.1.0
+   fun:PyMarshal_ReadObjectFromString
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XOpenDevice
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+   fun:_ada_gps__main
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XFixesFindDisplay
+   fun:XFixesQueryExtension
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+   fun:_ada_gps__main
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcCreateLocaleDataBase
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XOpenDisplay
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+   fun:_ada_gps__main
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:XkbGetMap
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_keymap_get_direction
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgobject-2.0.so.0.800.5
+   fun:g_closure_invoke
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   fun:cairo_scaled_font_glyph_extents
+   obj:/opt/gnome/lib/libpangocairo-1.0.so.0.1000.0
+   fun:pango_font_get_glyph_extents
+   obj:/opt/gnome/lib/pango/1.4.0/modules/pango-basic-fc.so
+   obj:/opt/gnome/lib/pango/1.4.0/modules/pango-basic-fc.so
+   obj:/opt/gnome/lib/libpango-1.0.so.0.1000.0
+   fun:pango_shape
+   obj:/opt/gnome/lib/libpango-1.0.so.0.1000.0
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XauFileName
+   fun:XauGetBestAuthByAddr
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_X11TransConnectDisplay
+   fun:XOpenDisplay
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   obj:/usr/lib/libcairo.so.2.2.3
+   fun:cairo_ft_font_face_create_for_pattern
+   obj:/opt/gnome/lib/libpangocairo-1.0.so.0.1000.0
+   obj:/opt/gnome/lib/libpangocairo-1.0.so.0.1000.0
+   obj:/opt/gnome/lib/libpangocairo-1.0.so.0.1000.0
+   fun:pango_fc_font_lock_face
+   obj:/opt/gnome/lib/pango/1.4.0/modules/pango-basic-fc.so
+   obj:/opt/gnome/lib/libpango-1.0.so.0.1000.0
+   fun:pango_shape
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcMatrixCopy
+   fun:FcExprCreateMatrix
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   fun:XML_ParseBuffer
+   fun:FcConfigParseAndLoad
+   fun:FcInitLoadConfig
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FT_New_Memory
+   fun:FT_Init_FreeType
+   obj:/opt/gnome/lib/libpangocairo-1.0.so.0.1000.0
+   fun:g_type_create_instance
+   obj:/opt/gnome/lib/libgobject-2.0.so.0.800.5
+   fun:g_object_newv
+   fun:g_object_new_valist
+   fun:g_object_new
+   fun:pango_cairo_font_map_new
+   fun:pango_cairo_font_map_get_default
+   fun:gdk_pango_context_get_for_screen
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_XcursorGetDisplayInfo
+   fun:XcursorGetTheme
+   fun:gdk_x11_display_set_cursor_theme
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:gtk_settings_get_for_screen
+   fun:gtk_settings_get_default
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   fun:_XlcResolveLocaleName
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XrmInternalStringToQuark
+   fun:XrmStringToQuark
+   fun:_XlcGetCharSet
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_map_object
+   fun:openaux
+   fun:_dl_catch_error
+   fun:_dl_map_object_deps
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.1
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_map_object_deps
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.1
+   fun:_PyImport_GetDynLoadFunc
+   fun:_PyImport_LoadDynamicModule
+   obj:/usr/lib/libpython2.4.so.1.0
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcFontSetCreate
+   fun:FcConfigCreate
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+   fun:FcConfigGetCurrent
+   fun:FcConfigSubstituteWithPat
+   fun:FcConfigSubstitute
+   obj:/opt/gnome/lib/libpangocairo-1.0.so.0.1000.0
+   obj:/opt/gnome/lib/libpangoft2-1.0.so.0.1000.0
+   obj:/opt/gnome/lib/libpangoft2-1.0.so.0.1000.0
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:XOpenDisplay
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+   fun:_ada_gps__main
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcLocaleDirName
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_pre_parse_libgtk_only
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   fun:g_option_context_parse
+   fun:gtk_parse_args
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:XkbGetMap
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_keymap_get_direction
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgobject-2.0.so.0.800.5
+   fun:g_closure_invoke
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_X11TransConnectDisplay
+   fun:XOpenDisplay
+   fun:gdk_display_open
+   fun:gdk_display_open_default_libgtk_only
+   fun:gtk_init_check
+   fun:gtk_init
+   fun:gtk__main__init
+   fun:gps__main__init_settings.8
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XlcCurrentLC
+   fun:XSupportsLocale
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   fun:FcNameParseCharSet
+   fun:FcNameParse
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   fun:FcDirCacheReadDir
+   fun:FcDirScanConfig
+   fun:FcConfigBuildFonts
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+   fun:FcConfigGetCurrent
+   fun:FcConfigSubstituteWithPat
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:_XkbReadGetMapReply
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XkbGetUpdatedMap
+   fun:XkbGetMap
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgdk-x11-2.0.so.0.800.3
+   fun:gdk_keymap_get_direction
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+   obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
+}
+
+
+#### GPS errors that are invalid
+{
+   Displayed when displaying a contextual menu with ispell.py for the first time
+   Memcheck:Cond
+   fun:string_utils__strip_character
+   fun:string_utils__strip_cr
+   fun:gps__kernel__timeout__process_cb
+   fun:gps__kernel__timeout__console_process_timeout__general_cbXnn
+   obj:/opt/gnome/lib/libglib-2.0.so.0.800.5
+   fun:g_main_context_dispatch
+   obj:/opt/gnome/lib/libglib-2.0.so.0.800.5
+   fun:g_main_loop_run
+   fun:gtk_main
+   fun:gps__main__main_processing.85
+   fun:_ada_gps__main
+   fun:main
+}
+
+#### Expected memory leaks
+{
+   Leak on class_record
+   Memcheck:Leak
+   fun:malloc
+   fun:ada_initialize_class_record
+   fun:glib__object__initialize_class_record
+   fun:gtkada__combo__gtk_new
+   fun:scenario_views__execute__2
+   fun:scenario_views__initialize
+   fun:scenario_views__gtk_new
+   fun:scenario_views__on_open_view
+   fun:scenario_views__load_desktop
+   fun:gps__kernel__kernel_desktop__parse_child_node
+   fun:gps__kernel__kernel_desktop__parse_notebook_node
+   fun:gps__kernel__kernel_desktop__parse_pane_node
 }
 
