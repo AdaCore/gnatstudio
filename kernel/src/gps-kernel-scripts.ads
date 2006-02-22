@@ -480,6 +480,9 @@ package GPS.Kernel.Scripts is
    --  This type should be convertible to a System.Address for storage in
    --  a selection_context
 
+   type Instance_Array is array (Natural range <>) of Class_Instance;
+   type Instance_Array_Access is access Instance_Array;
+
    procedure Free (List : in out Instance_List);
    procedure Free (List : in out Instance_List_Access);
    --  Free the instances stored in the list
@@ -494,6 +497,9 @@ package GPS.Kernel.Scripts is
       Script : access Scripting_Language_Record'Class;
       Inst   : Class_Instance);
    --  Set the instance for a specific language
+
+   function Get_Instances (List : Instance_List) return Instance_Array;
+   --  Return the instance array contained in the given list
 
    -------------------------
    -- Callback_Data lists --
@@ -982,8 +988,6 @@ private
    type Callback_Data is abstract tagged null record;
    type Scripting_Language_Record is abstract tagged null record;
 
-   type Instance_Array is array (Natural range <>) of Class_Instance;
-   type Instance_Array_Access is access Instance_Array;
    type Instance_List is new Instance_List_Base with record
       List : Instance_Array_Access;
    end record;
