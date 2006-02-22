@@ -80,7 +80,7 @@ package body GPS.Kernel.Task_Manager is
 
    function Create_Wrapper
      (Command         : access Root_Command'Class;
-      Destroy_On_Exit : Boolean) return Command_Access;
+      Destroy_On_Exit : Boolean) return Scheduled_Command_Access;
    --  Create a new wrapper
 
    function On_Exit_Hook
@@ -264,6 +264,16 @@ package body GPS.Kernel.Task_Manager is
       return Kernel.Tasks;
    end Get_Task_Manager;
 
+   -----------------
+   -- Get_Command --
+   -----------------
+
+   function Get_Command (Command : access Scheduled_Command'Class)
+      return Command_Access is
+   begin
+      return Command.Command;
+   end Get_Command;
+
    -------------
    -- Execute --
    -------------
@@ -318,8 +328,37 @@ package body GPS.Kernel.Task_Manager is
 
    procedure Free (Command : in out Scheduled_Command) is
    begin
-      if Command.Destroy_On_Exit then
+      if Command.Destroy_On_Exit or else Command.Is_Dead then
          Destroy (Command.Command);
+      elsif not Command.Destroy_On_Exit and then not Command.Is_Dead then
+         declare
+            Dead_Command : Scheduled_Command_Access :=
+              new Scheduled_Command;
+            Instances    : constant Instance_Array :=
+              Get_Instances (Command.Instances);
+            Found        : Boolean := False;
+         begin
+            Dead_Command.Command := Command.Command;
+            Dead_Command.Destroy_On_Exit := Command.Destroy_On_Exit;
+            Dead_Command.Instances := Command.Instances;
+            Dead_Command.Is_Dead := True;
+
+            for J in Instances'Range loop
+               if Instances (J) /= No_Class_Instance then
+                  Found := True;
+                  Set_Property
+                    (Instances (J), Command_Class_Name, Command_Property'
+                       (Command => Dead_Command));
+               end if;
+            end loop;
+
+            --  If the command is not referenced by any scipt, then we just
+            --  remove it.
+
+            if not Found then
+               Destroy (Command_Access (Dead_Command));
+            end if;
+         end;
       end if;
    end Free;
 
@@ -338,7 +377,7 @@ package body GPS.Kernel.Task_Manager is
 
    function Create_Wrapper
      (Command : access Root_Command'Class; Destroy_On_Exit : Boolean)
-      return Command_Access
+      return Scheduled_Command_Access
    is
       C     : constant Scheduled_Command_Access := new Scheduled_Command;
       Queue : Command_Queues.List;
@@ -381,7 +420,7 @@ package body GPS.Kernel.Task_Manager is
       Free_Alternate_Actions
         (Command, Free_Data => False, Free_List => True);
 
-      return Command_Access (C);
+      return C;
    end Create_Wrapper;
 
    -------------------------------
@@ -396,12 +435,40 @@ package body GPS.Kernel.Task_Manager is
       Queue_Id        : String := "";
       Destroy_On_Exit : Boolean := True)
    is
+      Wrapper : constant Scheduled_Command_Access := Launch_Background_Command
+        (Kernel,
+         Command,
+         Active,
+         Show_Bar,
+         Queue_Id,
+         Destroy_On_Exit);
+      pragma Unreferenced (Wrapper);
+   begin
+      null;
+   end Launch_Background_Command;
+
+   -------------------------------
+   -- Launch_Background_Command --
+   -------------------------------
+
+   function Launch_Background_Command
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Command         : access Root_Command'Class;
+      Active          : Boolean;
+      Show_Bar        : Boolean;
+      Queue_Id        : String := "";
+      Destroy_On_Exit : Boolean := True) return Scheduled_Command_Access
+   is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+      Wrapper : constant Scheduled_Command_Access :=
+        Create_Wrapper (Command, Destroy_On_Exit);
    begin
       Add_Command
         (Manager,
-         Create_Wrapper (Command, Destroy_On_Exit),
+         Command_Access (Wrapper),
          Active, Show_Bar, Queue_Id);
+
+      return Wrapper;
    end Launch_Background_Command;
 
    ---------------------------
@@ -489,23 +556,30 @@ package body GPS.Kernel.Task_Manager is
    ------------------
 
    function Get_Instance
-     (Command  : access Scheduled_Command'Class;
-      Language : access Scripting_Language_Record'Class)
+     (Command       : access Scheduled_Command'Class;
+      Language      : access Scripting_Language_Record'Class;
+      Command_Class : Class_Type := No_Class)
       return Class_Instance
    is
       Inst : Class_Instance := Get (Command.Instances, Language);
    begin
       if Inst = No_Class_Instance then
-         declare
-            Command_Class : constant Class_Type :=
-              New_Class (Get_Kernel (Language), Command_Class_Name);
-         begin
+
+         if Command_Class = No_Class then
+            declare
+               Root_Command_Class : constant Class_Type :=
+                 New_Class (Get_Kernel (Language), Command_Class_Name);
+            begin
+               Inst := New_Instance (Language, Root_Command_Class);
+            end;
+         else
             Inst := New_Instance (Language, Command_Class);
-            Set_Property
-              (Inst, Command_Class_Name, Command_Property'
-                 (Command => Scheduled_Command_Access (Command)));
-            Set (Command.Instances, Language, Inst);
-         end;
+         end if;
+
+         Set_Property
+           (Inst, Command_Class_Name, Command_Property'
+              (Command => Scheduled_Command_Access (Command)));
+         Set (Command.Instances, Language, Inst);
       end if;
 
       return Inst;
