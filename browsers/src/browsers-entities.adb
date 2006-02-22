@@ -522,7 +522,15 @@ package body Browsers.Entities is
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
+        (Kernel, "pointed_type",
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
+      Register_Command
         (Kernel, "derived_types",
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "type",
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
    end Register_Module;
@@ -611,15 +619,17 @@ package body Browsers.Entities is
             end;
 
          elsif Command = "return_type" then
-            declare
-               Returned : constant Entity_Information :=
-                            Returned_Type (Entity);
-            begin
-               if Returned /= null then
-                  Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), Returned));
-               end if;
-            end;
+            Set_Return_Value
+              (Data,
+               Create_Entity (Get_Script (Data), Returned_Type (Entity)));
+
+         elsif Command = "pointed_type" then
+            Set_Return_Value
+              (Data, Create_Entity (Get_Script (Data), Pointed_Type (Entity)));
+
+         elsif Command = "type" then
+            Set_Return_Value
+              (Data, Create_Entity (Get_Script (Data), Get_Type_Of (Entity)));
 
          elsif Command = "fields" then
             declare
