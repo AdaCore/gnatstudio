@@ -198,8 +198,8 @@ package body GPS.Kernel.Timeout is
       Success : Boolean;
    begin
       if not Command.Data.Started then
-         Trace (Me, "Starting the program " &
-                Command.Name.all);
+         Trace (Me, "Starting the program " & Command.Name.all);
+
          if Command.Data.Console /= null then
             Trace (Me, "Connect the command_handler to the console");
             Set_Command_Handler (Command.Data.Console, Data_Handler'Access,
@@ -208,6 +208,7 @@ package body GPS.Kernel.Timeout is
               (Command.Data.Console, "delete_event",
                Delete_Handler'Access, GObject (Command.Data));
          end if;
+
          Trace (Me, "Spawn the process");
          Spawn (Command.Data.D.Kernel,
                 Command.Data.Args.all,
@@ -219,16 +220,20 @@ package body GPS.Kernel.Timeout is
                 Command.Data.Show_Command,
                 Command.Data.Directory.all);
          Free (Command.Data.Args);
+
          if Success then
             if not Command.Data.Synchronous then
                Command.Data.Id := Console_Process_Timeout.Add
                  (Timeout, Process_Cb'Access, Command.Data);
             end if;
+
             Command.Data.Started := True;
             return Execute_Again;
+
          else
             return Failure;
          end if;
+
       elsif Command.Data.D.Descriptor = null
         or else Command.Data.Died
       then
