@@ -784,27 +784,32 @@ package body GPS.Kernel.Remote is
       In_Use_Error_Manager  : Error_Display;
 
       function Check_Exec (Exec : String) return String_Access;
-      --  Checks that executable is on the path, and return the full path if
-      --  found, else null is returned
+      --  Check that executable is on the path, and return the full path if
+      --  found, return null otherwise.
 
       ----------------
       -- Check_Exec --
       ----------------
-      function Check_Exec (Exec : String) return String_Access
-      is
+
+      function Check_Exec (Exec : String) return String_Access is
          Full_Exec : String_Access;
       begin
          Full_Exec := Locate_Exec_On_Path (Exec);
+
          if Full_Exec = null then
             On_Error (In_Use_Error_Manager,
                       -"Could not locate executable on path: " & Exec);
             return null;
          end if;
+
          return Full_Exec;
       end Check_Exec;
 
    begin
+      Success := False;
+
       --  Set the error display manager
+
       if Error_Manager = null then
          Default_Error_Manager.Kernel := Kernel;
          In_Use_Error_Manager := Default_Error_Manager'Unchecked_Access;
@@ -813,11 +818,14 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  First verify the executable to be launched
+
       if Is_Local (Server) then
          Exec := Check_Exec (Arguments (Arguments'First).all);
+
          if Exec = null then
             return;
          end if;
+
          Args := new Argument_List'
            ((1 => Exec) &
             Clone (Arguments (Arguments'First + 1 .. Arguments'Last)));
@@ -833,23 +841,24 @@ package body GPS.Kernel.Remote is
          --  to execute the built program... need to find a way to
          --  automatically do this
          New_Args := new Argument_List'(Args.all);
-         for I in New_Args'Range loop
-            if New_Args (I) (New_Args (I)'First) = '-' then
-               New_Args (I) := new String'("""" &
-                                           New_Args (I).all & """");
+
+         for J in New_Args'Range loop
+            if New_Args (J) (New_Args (J)'First) = '-' then
+               New_Args (J) := new String'("""" &
+                                           New_Args (J).all & """");
             else
-               New_Args (I) := new String'(New_Args (I).all);
+               New_Args (J) := new String'(New_Args (J).all);
             end if;
          end loop;
+
          Free (Args);
          Args := New_Args;
       end if;
 
       if Servers (GPS_Server).Filesystem = Windows then
          --  Windows commands are launched using "cmd /c the_command"
-         L_Args := new Argument_List'(
-           (new String'("cmd"),
-            new String'("/c")));
+         L_Args :=
+           new Argument_List'( (new String'("cmd"), new String'("/c")));
       end if;
 
       if Console /= null and then Show_Command then
@@ -894,6 +903,7 @@ package body GPS.Kernel.Remote is
 
          --  Set buffer_size to 0 for dynamically allocated buffer (prevents
          --  possible overflow)
+
          if L_Args /= null then
             Non_Blocking_Spawn (Pd.all,
                                 L_Args (L_Args'First).all,
@@ -915,8 +925,8 @@ package body GPS.Kernel.Remote is
          end if;
 
       else
-
          Pd := new Remote_Process_Descriptor;
+
          if Active (Me) then
             Trace (Me, "Remote Spawning " &
                    Argument_List_To_String (Args.all));
@@ -931,6 +941,7 @@ package body GPS.Kernel.Remote is
             begin
                --  If current_dir matches a remote² directory let's
                --  set it as working directory on remote machine
+
                if R_Dir /= Get_Current_Dir then
                   Old_Dir := new String'(R_Dir);
                else
@@ -943,6 +954,7 @@ package body GPS.Kernel.Remote is
 
          --  Set buffer_size to 0 for dynamically allocated buffer
          --  (prevents possible overflow)
+
          if L_Args /= null then
             Remote_Spawn
               (Remote_Process_Descriptor (Pd.all),
@@ -955,6 +967,7 @@ package body GPS.Kernel.Remote is
                Launch_Timeout      => Servers (Server).Timeout,
                Err_To_Out          => True);
             Free (L_Args);
+
          else
             Remote_Spawn
               (Remote_Process_Descriptor (Pd.all),
