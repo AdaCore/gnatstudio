@@ -220,6 +220,9 @@ package body GPS.Kernel.Timeout is
                 Command.Data.Show_Command,
                 Command.Data.Directory.all);
          Free (Command.Data.Args);
+         --  Set Started here so that even if spawn fails we don't pass twice
+         --  here
+         Command.Data.Started := True;
 
          if Success then
             if not Command.Data.Synchronous then
@@ -227,10 +230,11 @@ package body GPS.Kernel.Timeout is
                  (Timeout, Process_Cb'Access, Command.Data);
             end if;
 
-            Command.Data.Started := True;
             return Execute_Again;
 
          else
+            Free (Command.Data.D.Descriptor);
+            Command.Data.Died := True;
             return Failure;
          end if;
 
@@ -619,6 +623,8 @@ package body GPS.Kernel.Timeout is
       else
          Fd := null;
          Success := False;
+         --  Interrupt just launched command because program did not start
+         Interrupt_Queue (Kernel, C);
       end if;
    exception
       when E : others =>
