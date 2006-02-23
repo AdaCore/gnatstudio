@@ -858,7 +858,7 @@ package body GPS.Kernel.Remote is
       if Servers (GPS_Server).Filesystem = Windows then
          --  Windows commands are launched using "cmd /c the_command"
          L_Args :=
-           new Argument_List'( (new String'("cmd"), new String'("/c")));
+           new Argument_List'((new String'("cmd"), new String'("/c")));
       end if;
 
       if Console /= null and then Show_Command then
