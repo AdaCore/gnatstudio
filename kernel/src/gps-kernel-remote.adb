@@ -853,10 +853,16 @@ package body GPS.Kernel.Remote is
       end if;
 
       if Console /= null and then Show_Command then
-         Insert (Console,
-                 Get_Nickname (Server) & "> " &
-                 Argument_List_To_String (Arguments),
-                 Add_LF => True);
+         if Is_Local (Server) then
+            Insert (Console,
+                    Argument_List_To_String (Arguments),
+                    Add_LF => True);
+         else
+            Insert (Console,
+                    Get_Nickname (Server) & "> " &
+                    Argument_List_To_String (Arguments),
+                    Add_LF => True);
+         end if;
       end if;
 
       if Servers (Server).Is_Local then
