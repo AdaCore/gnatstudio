@@ -1527,11 +1527,18 @@ package body Builder_Module is
             else
                Args := Argument_String_To_List (Command);
 
-               Launch
-                 (Args (Args'First).all,
-                  Args (Args'First + 1 .. Args'Last), Active,
-                  -"Run on " & Get_Nickname (Execution_Server) & ": " &
-                  Command);
+               if not Is_Local (Execution_Server) then
+                  Launch
+                    (Args (Args'First).all,
+                     Args (Args'First + 1 .. Args'Last), Active,
+                     -"Run on " & Get_Nickname (Execution_Server) & ": " &
+                     Command);
+               else
+                  Launch
+                    (Args (Args'First).all,
+                     Args (Args'First + 1 .. Args'Last), Active,
+                     -"Run: " & Command);
+               end if;
                Free (Args);
             end if;
          end;
@@ -1553,12 +1560,21 @@ package body Builder_Module is
               or else Arguments (Arguments'First) /= ASCII.NUL
             then
                Args := Argument_String_To_List (Arguments);
-               Launch
-                 (Convert (Full_Name (Data.File).all,
-                           GPS_Server, Execution_Server),
-                  Args.all, Active,
-                  -"Run on " & Get_Nickname (Execution_Server) & ": " &
-                  Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
+               if Is_Local (Execution_Server) then
+                  Launch
+                    (Convert (Full_Name (Data.File).all,
+                     GPS_Server, Execution_Server),
+                     Args.all, Active,
+                     -"Run: " &
+                     Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
+               else
+                  Launch
+                    (Convert (Full_Name (Data.File).all,
+                     GPS_Server, Execution_Server),
+                     Args.all, Active,
+                     -"Run on " & Get_Nickname (Execution_Server) & ": " &
+                     Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
+               end if;
 
                Free (Args);
             end if;
