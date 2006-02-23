@@ -2029,7 +2029,10 @@ package body Projects.Registry is
             end if;
 
             Name_Len := 0;
+         else
+            Name_Len := 0;
          end if;
+
       end if;
    end Get_Full_Path_From_File;
 
