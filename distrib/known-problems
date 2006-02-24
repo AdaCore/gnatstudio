@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 3.2.0
 
+- F223-026 Debugger closes when hitting enter
+  Problem:    When starting the debugger, and hitting 'enter' key in the
+              debugger console, GPS will often close the debugger session.
+  Workaround: Do not press enter before entering a first command
+
+- F221-027 Debugger hangs when typing \ at end of line
+  Problem:    When typing a command ending with \ in the debugger console,
+              GPS hangs.
+  Workaround: Avoid typing backslash
+
 - F221-022 Consoles with spaces in their names
   Problem:    When you create, from python, a new console with a space or
               other XML special characters in its name, GPS will report a
