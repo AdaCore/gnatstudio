@@ -432,10 +432,10 @@ package body Builder_Module is
       if Path = "" then
          Project_Str := new String'
            (Convert (Full_Name (Project_Path (Project)).all,
-                     GPS_Server, Build_Server, True));
+                     GPS_Server, Build_Server));
       else
          Project_Str := new String'
-           (Convert (Path, GPS_Server, Build_Server, True));
+           (Convert (Path, GPS_Server, Build_Server));
       end if;
 
       --  -XVAR1=value1 [-c] -Pproject [-u] main...
@@ -739,7 +739,7 @@ package body Builder_Module is
                            Use_Initial_Value => True)
                         & Copy_Arguments (Common_Args.all)
                         & new String'(Convert (Full_Name (File).all,
-                          GPS_Server, Build_Server, True)));
+                          GPS_Server, Build_Server)));
                   end if;
 
                when Make_Syntax =>
