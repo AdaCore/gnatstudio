@@ -37,7 +37,7 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2001-2005, AdaCore.
+Copyright @copyright{} 2001-2006, AdaCore.
 
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
@@ -54,7 +54,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2001-2005, AdaCore
+Copyright @copyright{} 2001-2006, AdaCore
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
