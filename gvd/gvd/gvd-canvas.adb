@@ -417,7 +417,6 @@ package body GVD.Canvas is
          for Item in reverse Property.Items'Range loop
             Process_User_Command
               (Visual_Debugger (Process), Property.Items (Item).all,
-               Output_Command => True,
                Mode => GVD.Types.Internal);
          end loop;
       end if;
