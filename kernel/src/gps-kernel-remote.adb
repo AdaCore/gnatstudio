@@ -687,12 +687,21 @@ package body GPS.Kernel.Remote is
                   The_Path (The_Path'First .. J + 1) :=
                     '/' & The_Path (The_Path'First .. J - 1) & '/';
                   Device_Found := True;
+
                elsif The_Path (J) = '.' or The_Path (J) = ']' then
                   The_Path (J) := '/';
                end if;
             end loop;
 
          when Windows =>
+            if not Use_Cygwin_Style
+              and then The_Path'Length > 3
+              and then The_Path (The_Path'First .. The_Path'First + 1) = "\\"
+            then
+               --  This is a UNC path, do not touch it
+               return The_Path;
+            end if;
+
             for J in The_Path'Range loop
                if Use_Cygwin_Style
                  and then not Device_Found
@@ -701,6 +710,7 @@ package body GPS.Kernel.Remote is
                   The_Path (The_Path'First .. J + 1) :=
                     '/' & The_Path (The_Path'First .. J - 1) & '/';
                   Device_Found := True;
+
                elsif The_Path (J) = '\' then
                   The_Path (J) := '/';
                end if;
