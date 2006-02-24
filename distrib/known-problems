@@ -41,6 +41,14 @@ Known Problems fixed in GPS 3.2.0
   Workaround: click in another window, and then back in the editor to force
               a refresh
 
+- F131-018 Cannot launch external process when name contains spaces
+  Problem:    When using the Process API in GPS shell or Python, it is not
+              possible to launch processes using their full paths when this
+              path contains spaces.
+  Workaround: Put the executable in your PATH and launch it using its base
+              name, or move the executable to a PATH that doesn't contain
+              spaces.
+
 - F128-007 Project view: No direct response on expand sub item
   Problem:    Expanding a category needs two consecutive clicks.
   Workaround: Click two times on the category to expand it.
