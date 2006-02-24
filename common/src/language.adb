@@ -977,7 +977,7 @@ package body Language is
       while Index_Save > Buffer'First loop
          Skip_Lines (Buffer, -1, Index);
 
-         exit when Index = Index_Save or else Is_Blank_Line (Buffer, Index);
+         exit when Is_Blank_Line (Buffer, Index);
 
          Index_Save := Index;
          Skip_Blanks (Buffer, Index);
