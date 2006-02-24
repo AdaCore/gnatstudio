@@ -718,12 +718,19 @@ package body GVD.Canvas is
             while Index <= Cmd'Last loop
                Last := Index;
                Skip_To_Blank (Cmd, Last);
-               Set_Auto_Refresh
-                 (Find_Item
-                    (GVD_Canvas (Process.Data).Canvas,
-                     Integer'Value (Cmd (Index .. Last - 1))),
-                  Enable,
-                  Update_Value => True);
+               Num := Safe_Value (Cmd (Index .. Last - 1), -1);
+
+               if Num /= -1 then
+                  Item := Find_Item (GVD_Canvas (Process.Data).Canvas, Num);
+
+                  if Item /= null then
+                     Set_Auto_Refresh
+                       (Item,
+                        Auto_Refresh => Enable,
+                        Update_Value => True);
+                  end if;
+               end if;
+
                Index := Last + 1;
                Skip_Blanks (Cmd, Index);
             end loop;
@@ -740,10 +747,17 @@ package body GVD.Canvas is
                while Index <= Cmd'Last loop
                   Last := Index;
                   Skip_To_Blank (Cmd, Last);
-                  Free
-                    (Find_Item
-                      (GVD_Canvas (Process.Data).Canvas,
-                       Integer'Value (Cmd (Index .. Last - 1))));
+                  Num := Safe_Value (Cmd (Index .. Last - 1), -1);
+
+                  if Num /= -1 then
+                     Item :=
+                       Find_Item (GVD_Canvas (Process.Data).Canvas, Num);
+
+                     if Item /= null then
+                        Free (Item);
+                     end if;
+                  end if;
+
                   Index := Last + 1;
                   Skip_Blanks (Cmd, Index);
                end loop;
