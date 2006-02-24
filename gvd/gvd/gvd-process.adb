@@ -117,12 +117,11 @@ package body GVD.Process is
       Window     : System.Address);
    --  Real handler called by First_Text_Output_Filter
 
-   function Process_Graph_Command
-     (Debugger : Visual_Debugger;
-      Command  : String;
-      Mode     : Command_Type) return Boolean;
-   --  Process a "graph ..." command. Return True if Command was such a
-   --  command
+   procedure Process_Graph_Command
+     (Debugger       : Visual_Debugger;
+      Command        : String;
+      Mode           : Command_Type);
+   --  Process a "graph ..." command
 
    function On_Editor_Text_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
@@ -167,6 +166,16 @@ package body GVD.Process is
       Kernel  : Kernel_Handle);
    --  Called when the debugger console is destroyed, which also terminates the
    --  debugger itself
+
+   type String_Access_Access is access all Basic_Types.String_Access;
+
+   procedure Process_User_Command
+     (Debugger        : Visual_Debugger;
+      Command         : String;
+      Output_Command  : Boolean := False;
+      Mode            : Command_Type;
+      Output          : String_Access_Access);
+   --  Wrapper implementing common code for Process_User_Command routines
 
    ----------------
    -- Properties --
@@ -380,13 +389,13 @@ package body GVD.Process is
                  (Process.Debugger, Br.Except.all,
                   Temporary => Br.Disposition /= Keep, Mode => Internal,
                   Unhandled => False);
-            elsif Br.Subprogram /= null then
-               Break_Subprogram
-                 (Process.Debugger, Br.Subprogram.all,
-                  Temporary => Br.Disposition /= Keep, Mode => Internal);
             elsif Br.Line /= 0 and then Br.File /= VFS.No_File then
                Break_Source
                  (Process.Debugger, Br.File, Br.Line,
+                  Temporary => Br.Disposition /= Keep, Mode => Internal);
+            elsif Br.Subprogram /= null then
+               Break_Subprogram
+                 (Process.Debugger, Br.Subprogram.all,
                   Temporary => Br.Disposition /= Keep, Mode => Internal);
             elsif Br.Address /= Invalid_Address then
                Break_Address
@@ -439,6 +448,7 @@ package body GVD.Process is
             end if;
          end;
       end loop;
+
       if Property.Breakpoints /= null
         and then Property.Breakpoints'Length /= 0
       then
@@ -714,10 +724,13 @@ package body GVD.Process is
       Free (Process.Current_Output);
 
       --  Preserve the focus in the console for interactive execution
+
       if Process.Interactive_Command then
-         Set_Focus_Child
-           (Find_MDI_Child
-              (Process.Window.MDI, Process.Debugger_Text));
+         if Process.Debugger_Text /= null then
+            Set_Focus_Child
+              (Find_MDI_Child (Process.Window.MDI, Process.Debugger_Text));
+         end if;
+
          Process.Interactive_Command := False;
       end if;
    end Final_Post_Process;
@@ -1249,33 +1262,59 @@ package body GVD.Process is
    -- Process_Graph_Command --
    ---------------------------
 
-   function Process_Graph_Command
-     (Debugger : Visual_Debugger;
-      Command  : String;
-      Mode     : Command_Type) return Boolean
+   procedure Process_Graph_Command
+     (Debugger       : Visual_Debugger;
+      Command        : String;
+      Mode           : Command_Type)
    is
       Data  : History_Data;
-      First : Integer := Command'First;
+      Index : Natural;
+      Busy  : constant Boolean :=
+                Command_In_Process (Get_Process (Debugger.Debugger));
+
    begin
-      Skip_Blanks (Command, First);
+      Data.Mode := Mode;
+      Data.Command := new String'(Command);
+      Output_Message (Debugger, Command, Mode);
 
-      if Looking_At (Command, First, "graph") then
-         Output_Message (Debugger, Command, Mode);
-         Data.Mode := Mode;
-         Data.Command := new String'(Command);
+      if Mode /= Internal then
          Append (Debugger.Command_History, Data);
-         Set_Busy (Debugger);
+      end if;
 
-         Process_Graph_Cmd (Debugger, Command);
+      if Busy then
+         --  Process graph disable|undisplay commands immediately since
+         --  they do not require access to the underlying debugger, and
+         --  queue other graph commands
 
-         if not Command_In_Process (Get_Process (Debugger.Debugger)) then
-            Display_Prompt (Debugger.Debugger);
-         end if;
+         declare
+            Lowered_Command : constant String := To_Lower (Command);
+         begin
+            Index := Lowered_Command'First;
+            Skip_Blanks (Lowered_Command, Index);
+            Index := Index + 6;  -- Skip "graph "
+            Skip_Blanks (Lowered_Command, Index);
 
-         Set_Busy (Debugger, False);
-         return True;
+            if not (Looking_At (Lowered_Command, Index, "disable")
+                    or else Looking_At (Lowered_Command, Index, "undisplay"))
+            then
+               --  Command requires access to the debugger, queue it
+
+               Send (Debugger.Debugger, Command, Mode => Mode);
+               return;
+            end if;
+         end;
       else
-         return False;
+         Set_Busy (Debugger);
+      end if;
+
+      Process_Graph_Cmd (Debugger, Command);
+
+      if Mode in Visible_Command and then not Busy then
+         Display_Prompt (Debugger.Debugger);
+      end if;
+
+      if not Busy then
+         Set_Busy (Debugger, False);
       end if;
    end Process_Graph_Command;
 
@@ -1284,21 +1323,48 @@ package body GVD.Process is
    --------------------------
 
    procedure Process_User_Command
-     (Debugger       : Visual_Debugger;
-      Command        : String;
-      Output_Command : Boolean := False;
-      Mode           : Command_Type := GVD.Types.Visible)
+     (Debugger        : Visual_Debugger;
+      Command         : String;
+      Output_Command  : Boolean := False;
+      Mode            : Command_Type;
+      Output          : String_Access_Access)
    is
       Quit_String     : constant String := "quit     ";
       Lowered_Command : constant String := To_Lower (Command);
       First           : Natural := Lowered_Command'First;
+      Busy            : Boolean;
+
+      function Check (S : String) return String;
+      --  Check validity of debugger command S, and modify it if needed
+
+      function Check (S : String) return String is
+      begin
+         --  ??? Should forbid commands that modify the configuration of the
+         --  debugger, like "set annotate" for gdb, otherwise we can't be sure
+         --  what to expect from the debugger.
+
+         if S'Length = 0 then
+            return "";
+         elsif S (S'Last) = '\' then
+            --  Strip trailing '\' which will block GPS
+            return S (S'First .. S'Last - 1);
+         else
+            return S;
+         end if;
+      end Check;
 
    begin
+      if Output /= null then
+         Output.all := null;
+      end if;
+
       if Debugger.Debugger = null then
          return;
       end if;
 
-      if Command_In_Process (Get_Process (Debugger.Debugger)) then
+      Busy := Command_In_Process (Get_Process (Debugger.Debugger));
+
+      if Output /= null and then Busy then
          Traces.Trace (Me, "Process_User_Command: Debugger is already busy");
          return;
       end if;
@@ -1307,20 +1373,8 @@ package body GVD.Process is
          Output_Text (Debugger, Command & ASCII.LF, Is_Command => True);
       end if;
 
-      --  ??? Should forbid commands that modify the configuration of the
-      --  debugger, like "set annotate" for gdb, otherwise we can't be sure
-      --  what to expect from the debugger.
-
-      --  Command has been converted to lower-cases, but the new version
-      --  should be used only to compare with our standard list of commands.
-      --  We should pass the original string to the debugger, in case we are
-      --  in a case-sensitive language.
-
-      --  Ignore the blanks at the beginning of lines
-
-      Skip_Blanks (Lowered_Command, First);
-
       --  Is this a command handled by a script ?
+
       declare
          Tmp : constant String := Run_Debugger_Hook_Until_Not_Empty
            (Debugger  => Debugger,
@@ -1333,21 +1387,36 @@ package body GVD.Process is
                             Set_Position => True);
             end if;
 
-            if not Command_In_Process (Get_Process (Debugger.Debugger)) then
+            if not Busy then
                Display_Prompt (Debugger.Debugger);
+            end if;
+
+            if Output /= null then
+               Output.all := new String'(Tmp);
             end if;
 
             return;
          end if;
       end;
 
-      if Process_Graph_Command (Debugger, Command, Mode) then
-         return;
+      --  Command has been converted to lower-cases, but the new version
+      --  should be used only to compare with our standard list of commands.
+      --  We should pass the original string to the debugger, in case we are
+      --  in a case-sensitive language.
 
-      elsif Lowered_Command'Length <= Quit_String'Length
+      --  Ignore the blanks at the beginning of lines
+
+      Skip_Blanks (Lowered_Command, First);
+
+      if Looking_At (Lowered_Command, First, "graph") then
+         Process_Graph_Command (Debugger, Command, Mode);
+
+      elsif Lowered_Command'Length in 4 .. Quit_String'Length
         and then Lowered_Command = Quit_String (1 .. Lowered_Command'Length)
       then
-         if not Separate_Execution_Window (Debugger.Debugger) then
+         if Busy
+           and then not Separate_Execution_Window (Debugger.Debugger)
+         then
             --  If the debugger does not have a separate execution window,
             --  send the command right away.
 
@@ -1365,16 +1434,36 @@ package body GVD.Process is
          --  prompt, since the prompt won't be displayed before the user
          --  answers the question...
 
-         if Continuation_Line (Debugger.Debugger)
-           or else Debugger.Registered_Dialog /= null
+         if Output = null
+           and then (Continuation_Line (Debugger.Debugger)
+                     or else Debugger.Registered_Dialog /= null)
          then
             Send
               (Debugger.Debugger,
                Command, Wait_For_Prompt => False, Mode => Mode);
          else
-            Send (Debugger.Debugger, Command, Mode => Mode);
+            if Output = null then
+               Send (Debugger.Debugger, Check (Command), Mode => Mode);
+            else
+               Output.all :=
+                 new String'(Send
+                   (Debugger.Debugger, Check (Command), Mode => Mode));
+
+               if Output_Command then
+                  Display_Prompt (Debugger.Debugger);
+               end if;
+            end if;
          end if;
       end if;
+   end Process_User_Command;
+
+   procedure Process_User_Command
+     (Debugger       : Visual_Debugger;
+      Command        : String;
+      Output_Command : Boolean := False;
+      Mode           : Command_Type := GVD.Types.Visible) is
+   begin
+      Process_User_Command (Debugger, Command, Output_Command, Mode, null);
    end Process_User_Command;
 
    function Process_User_Command
@@ -1384,80 +1473,19 @@ package body GVD.Process is
       Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String
    is
-      Quit_String     : constant String := "quit     ";
-      Lowered_Command : constant String := To_Lower (Command);
-      First           : Natural := Lowered_Command'First;
+      Result : aliased Basic_Types.String_Access;
    begin
-      --  Command has been converted to lower-cases, but the new version
-      --  should be used only to compare with our standard list of commands.
-      --  We should pass the original string to the debugger, in case we are
-      --  in a case-sensitive language.
+      Process_User_Command
+        (Debugger, Command, Output_Command, Mode, Result'Unchecked_Access);
 
-      if Debugger.Debugger = null then
+      if Result = null then
          return "";
-      end if;
-
-      if Command_In_Process (Get_Process (Debugger.Debugger)) then
-         Traces.Trace (Me, "Process_User_Command: Debugger is already busy");
-         return "";
-      end if;
-
-      if Output_Command then
-         Output_Text (Debugger, Command & ASCII.LF, Is_Command => True);
-      end if;
-
-      --  Is this a command handled by a script ?
-      declare
-         Tmp : constant String := Run_Debugger_Hook_Until_Not_Empty
-           (Debugger  => Debugger,
-            Hook_Name => Debugger_Command_Action_Hook,
-            Command   => Command);
-      begin
-         if Tmp /= "" then
-            if Output_Command then
-               Output_Text (Debugger, Tmp, Is_Command => False,
-                            Set_Position => True);
-               Display_Prompt (Debugger.Debugger);
-            end if;
-
-            return Tmp;
-         end if;
-      end;
-
-      Skip_Blanks (Lowered_Command, First);
-
-      if Process_Graph_Command (Debugger, Command, Mode) then
-         return "";
-
-      elsif Lowered_Command'Length <= Quit_String'Length
-        and then Lowered_Command = Quit_String (1 .. Lowered_Command'Length)
-      then
-         if Command_In_Process (Get_Process (Debugger.Debugger))
-           and then not Separate_Execution_Window (Debugger.Debugger)
-         then
-            --  If the debugger does not have a separate execution window,
-            --  send the command right away.
-
-            Send
-              (Debugger.Debugger,
-               Command, Wait_For_Prompt => False, Mode => Mode);
-
-         else
-            Close_Debugger (Debugger);
-         end if;
-
-         return "";
-
       else
          declare
-            Result : constant String :=
-              Send (Debugger.Debugger, Command, Mode => Mode);
+            S : constant String := Result.all;
          begin
-            if Output_Command then
-               Display_Prompt (Debugger.Debugger);
-            end if;
-
-            return Result;
+            Basic_Types.Free (Result);
+            return S;
          end;
       end if;
    end Process_User_Command;
