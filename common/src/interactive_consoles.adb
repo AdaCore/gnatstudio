@@ -428,7 +428,7 @@ package body Interactive_Consoles is
             end if;
 
             Get_End_Iter (Console.Buffer, Last_Iter);
-            Insert (Console.Buffer, Last_Iter, ASCII.LF & "");
+            Insert (Console.Buffer, Last_Iter, (1 => ASCII.LF));
 
             if Console.Waiting_For_Input then
                Gtk.Main.Main_Quit;
@@ -453,8 +453,14 @@ package body Interactive_Consoles is
                  and then Console.Empty_Equals_Repeat
                  and then Console.History /= null
                then
+                  if not Console.Command_Received then
+                     Display_Prompt (Console);
+                     return True;
+                  end if;
+
                   H := Get_History
                     (Console.History.all, History_Key (Console.Key.all));
+
                   if H /= null
                     and then H (H'First) /= null
                   then
@@ -469,6 +475,7 @@ package body Interactive_Consoles is
                end if;
 
                Execute_Command (Console, Command);
+               Console.Command_Received := True;
             end;
 
             return True;

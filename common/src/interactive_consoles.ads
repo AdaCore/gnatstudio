@@ -247,6 +247,9 @@ private
 
       Waiting_For_Input : Boolean := False;
       --  Whether the console is blocked in a call to readline()
+
+      Command_Received : Boolean := False;
+      --  Whether the console has received a first command yet
    end record;
 
 end Interactive_Consoles;
