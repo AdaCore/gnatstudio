@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                               AdaCore                             --
+--                      Copyright (C) 2000-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -499,10 +499,12 @@ package body GVD.Canvas is
       if Old /= null then
          if Get_Pref (Preserve_State_On_Exit) then
             Iter := Start (Old.Canvas);
+
             while Get (Iter) /= null loop
                if Get_Graph_Cmd (Display_Item (Get (Iter))) /= "" then
                   Count := Count + 1;
                end if;
+
                Next (Iter);
             end loop;
 
@@ -510,18 +512,25 @@ package body GVD.Canvas is
                Remove_Property
                  (File => Get_Executable (Process.Debugger),
                   Name => "debugger_items");
+
             else
                Property := new GVD_Items_Property_Record;
                Property.Items := new GNAT.Strings.String_List (1 .. Count);
                Count := Property.Items'First;
 
                Iter := Start (Old.Canvas);
+
                while Get (Iter) /= null loop
-                  if Get_Graph_Cmd (Display_Item (Get (Iter))) /= "" then
-                     Property.Items (Count) :=
-                       new String'(Get_Graph_Cmd (Display_Item (Get (Iter))));
-                     Count := Count + 1;
-                  end if;
+                  declare
+                     S : constant String :=
+                           Get_Graph_Cmd (Display_Item (Get (Iter)));
+                  begin
+                     if S /= "" then
+                        Property.Items (Count) := new String'(S);
+                        Count := Count + 1;
+                     end if;
+                  end;
+
                   Next (Iter);
                end loop;
 
@@ -631,6 +640,7 @@ package body GVD.Canvas is
          end if;
 
          --  What do we want to display ?
+
          if Matched (Graph_Cmd_Expression_Paren) /= No_Match then
             First  := Matched (Graph_Cmd_Expression_Paren).First;
             Last   := Matched (Graph_Cmd_Expression_Paren).Last;
@@ -667,6 +677,7 @@ package body GVD.Canvas is
             if Link_Name = null then
                Link_Name := new String'(Cmd (First .. Last));
             end if;
+
             Gtk_New
               (Item,
                Graph_Cmd      => Cmd (Matched
@@ -722,9 +733,11 @@ package body GVD.Canvas is
 
          else
             Match (Graph_Cmd_Format3, Cmd, Matched);
+
             if Matched (1) /= No_Match then
                Attach_To_Data_Window (Process, Create_If_Necessary => True);
                Index := Matched (1).First;
+
                while Index <= Cmd'Last loop
                   Last := Index;
                   Skip_To_Blank (Cmd, Last);
