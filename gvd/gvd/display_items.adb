@@ -1022,6 +1022,10 @@ package body Display_Items is
 
       --  Get the selected component
 
+      if Item.Entity = null then
+         return;
+      end if;
+
       Component := Get_Component
         (Item.Entity, Gint (Get_X (Event)),
          Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
@@ -1267,7 +1271,10 @@ package body Display_Items is
          end loop;
       end if;
 
-      Free (Item.Entity);
+      if Item.Entity /= null then
+         Free (Item.Entity);
+      end if;
+
       Free (Item.Name);
       Free (Item.Id);
 
@@ -1570,7 +1577,9 @@ package body Display_Items is
 
    procedure Reset_Recursive (Item : access Display_Item_Record'Class) is
    begin
-      Reset_Recursive (Item.Entity);
+      if Item.Entity /= null then
+         Reset_Recursive (Item.Entity);
+      end if;
    end Reset_Recursive;
 
    -----------------
