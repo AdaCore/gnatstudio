@@ -972,20 +972,14 @@ package body Language is
       Buffer  : String;
       Index   : in out Natural)
    is
-      Index_Save : Natural;
+      Index_Save : Natural := Index;
    begin
-      while Index >= Buffer'First loop
-         Index_Save := Index;
-
+      while Index_Save > Buffer'First loop
          Skip_Lines (Buffer, -1, Index);
 
-         if Index = Index_Save
-           or else Is_Blank_Line (Buffer, Index)
-         then
-            Index := 0;
-            return;
-         end if;
+         exit when Index = Index_Save or else Is_Blank_Line (Buffer, Index);
 
+         Index_Save := Index;
          Skip_Blanks (Buffer, Index);
 
          if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
