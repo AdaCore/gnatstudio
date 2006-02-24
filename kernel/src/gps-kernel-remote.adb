@@ -430,10 +430,11 @@ package body GPS.Kernel.Remote is
    -- Convert --
    -------------
 
-   function Convert (Path       : String;
-                     From       : Server_Type;
-                     To         : Server_Type;
-                     Unix_Style : Boolean := False) return String
+   function Convert
+     (Path       : String;
+      From       : Server_Type;
+      To         : Server_Type;
+      Unix_Style : Boolean := False) return String
    is
       Path_From      : String_Ptr;
       Path_To        : String_Ptr;
@@ -447,20 +448,22 @@ package body GPS.Kernel.Remote is
       -- Is_Case_Sensitive --
       -----------------------
 
-      function Is_Case_Sensitive (Filesystem : Filesystem_Type) return Boolean
+      function Is_Case_Sensitive
+        (Filesystem : Filesystem_Type) return Boolean
       is
       begin
          case Filesystem is
-         when Windows | Windows_Cygwin | VMS =>
-            return False;
-         when Unix =>
-            return True;
+            when Windows | Windows_Cygwin | VMS =>
+               return False;
+            when Unix =>
+               return True;
          end case;
       end Is_Case_Sensitive;
 
    begin
       --  If From and To are the same machine (and no unix path translation is
       --  needed), just return Path
+
       if Servers (From) = Servers (To) then
          if Unix_Style then
             return To_Unix_Path (Path, From);
@@ -474,43 +477,54 @@ package body GPS.Kernel.Remote is
 
       if Servers (From).Is_Local then
          --  Search for mirror path in 'To' config
+
          Mirror := Servers (To).Mirror_Path_List;
+
          while Mirror /= null loop
             if Match (Mirror.Local_Path.all, Path, Case_Sensitive) then
                Path_From := Mirror.Local_Path;
                Path_To   := Mirror.Remote_Path;
                exit;
             end if;
+
             Mirror := Mirror.Next;
          end loop;
 
       else
          --  Search for mirror path in 'From' config
+
          Mirror := Servers (From).Mirror_Path_List;
+
          while Mirror /= null loop
             if Match (Mirror.Remote_Path.all, Path, Case_Sensitive) then
                Path_From := Mirror.Remote_Path;
                Path_To   := Mirror.Local_Path;
             end if;
+
             Mirror := Mirror.Next;
          end loop;
 
          --  Everything's fine as long as To is not a remote server
+
          if not Servers (To).Is_Local then
             --  Path_To points to local GPS path.
             --  Translate it to remote To path
+
             declare
                GPS_Path : constant String_Ptr := Path_To;
             begin
                Path_To := null;
                Mirror := Servers (To).Mirror_Path_List;
+
                while Mirror /= null loop
                   --  Match in a case insensitive manner as insensitive
                   --  paths are stored lowercase
+
                   if Match (Mirror.Local_Path.all, GPS_Path.all, False) then
                      Path_To := Mirror.Remote_Path;
                      exit;
                   end if;
+
                   Mirror := Mirror.Next;
                end loop;
             end;
@@ -529,53 +543,58 @@ package body GPS.Kernel.Remote is
          Subpath : String := Path
            (Path'First + Path_From'Length .. Path'Last);
          First_Slash : Boolean;
+
       begin
          --  Convert subpath to unix style
          case Servers (From).Filesystem is
-         when Unix | Windows_Cygwin =>
-            null;
-         when Windows =>
-            for J in Subpath'Range loop
-               if Subpath (J) = '\' then
-                  Subpath (J) := '/';
-               end if;
-            end loop;
-         when VMS =>
-            for J in Subpath'Range loop
-               if Subpath (J) = '.' then
-                  Subpath (J) := '/';
-               elsif Subpath (J) = ']' then
-                  Subpath (J) := '/';
-                  exit;
-               end if;
-            end loop;
+            when Unix | Windows_Cygwin =>
+               null;
+            when Windows =>
+               for J in Subpath'Range loop
+                  if Subpath (J) = '\' then
+                     Subpath (J) := '/';
+                  end if;
+               end loop;
+
+            when VMS =>
+               for J in Subpath'Range loop
+                  if Subpath (J) = '.' then
+                     Subpath (J) := '/';
+                  elsif Subpath (J) = ']' then
+                     Subpath (J) := '/';
+                     exit;
+                  end if;
+               end loop;
          end case;
 
          --  Convert unix style subpath to target style
          if not Unix_Style then
             case Servers (To).Filesystem is
-            when Unix | Windows_Cygwin =>
-               null;
-            when Windows =>
-               for J in Subpath'Range loop
-                  if Subpath (J) = '/' then
-                     Subpath (J) := '\';
-                  end if;
-               end loop;
-            when VMS =>
-               First_Slash := True;
-               for J in reverse Subpath'Range loop
-                  if Subpath (J) = '/' then
-                     if First_Slash then
-                        First_Slash := False;
-                        Subpath (J) := ']';
-                     else
-                        Subpath (J) := '.';
+               when Unix | Windows_Cygwin =>
+                  null;
+               when Windows =>
+                  for J in Subpath'Range loop
+                     if Subpath (J) = '/' then
+                        Subpath (J) := '\';
                      end if;
-                  end if;
-               end loop;
+                  end loop;
+
+               when VMS =>
+                  First_Slash := True;
+
+                  for J in reverse Subpath'Range loop
+                     if Subpath (J) = '/' then
+                        if First_Slash then
+                           First_Slash := False;
+                           Subpath (J) := ']';
+                        else
+                           Subpath (J) := '.';
+                        end if;
+                     end if;
+                  end loop;
             end case;
          end if;
+
          --  Now, we have subpath in target style.
          --  Check, if unix style is used, the from path
 
@@ -586,6 +605,7 @@ package body GPS.Kernel.Remote is
                --  If we have a VMS path, at this point we get
                --  device:[foo.foo2]bar]file
                --  replace the first closing bracket by a dot
+
                if Servers (To).Filesystem = VMS then
                   for J in Path'Range loop
                      if Path (J) = ']' then
@@ -593,6 +613,7 @@ package body GPS.Kernel.Remote is
                         exit;
                      end if;
                   end loop;
+
                   return Path;
                else
                   return Path;
@@ -612,10 +633,12 @@ package body GPS.Kernel.Remote is
                            Base_Dir (J) := '/';
                         end if;
                      end loop;
+
                      Base_Dir (Base_Dir'First .. Base_Dir'First + 1)
                        := "/" & Base_Dir (Base_Dir'First);
                      return Base_Dir & Subpath;
                   end;
+
                when VMS =>
                   declare
                      Base_Dir : String := Path_To.all;
@@ -623,15 +646,18 @@ package body GPS.Kernel.Remote is
                   begin
                      for J in Base_Dir'Range loop
                         --  Transform device:[foo by /device/foo
+
                         if Dir_Index = 0 and Base_Dir (J) = ':' then
                            Base_Dir (Base_Dir'First .. J + 1) :=
                              "/" & Base_Dir (Base_Dir'First .. J - 1) & "/";
                            Dir_Index := J - 1;
                         end if;
+
                         if Base_Dir (J) = '.' or Base_Dir (J) = ']' then
                            Base_Dir (J) := '/';
                         end if;
                      end loop;
+
                      return Base_Dir & Subpath;
                   end;
             end case;
@@ -643,9 +669,10 @@ package body GPS.Kernel.Remote is
    -- To_Unix_Path --
    ------------------
 
-   function To_Unix_Path (Path             : String;
-                          Server           : Server_Type;
-                          Use_Cygwin_Style : Boolean := False) return String
+   function To_Unix_Path
+     (Path             : String;
+      Server           : Server_Type;
+      Use_Cygwin_Style : Boolean := False) return String
    is
       The_Path : String := Path;
       Device_Found : Boolean := False;
@@ -688,17 +715,20 @@ package body GPS.Kernel.Remote is
    -- Synchronize --
    -----------------
 
-   procedure Synchronize (Kernel   : Kernel_Handle;
-                          From     : Server_Type;
-                          To       : Server_Type;
-                          Queue_Id : String)
+   procedure Synchronize
+     (Kernel   : Kernel_Handle;
+      From     : Server_Type;
+      To       : Server_Type;
+      Queue_Id : String)
    is
       Server    : Server_Type;
       Mirror    : Mirror_Path;
       From_Path : String_Ptr;
       To_Path   : String_Ptr;
+
    begin
       Trace (Me, "Synchronizing paths");
+
       if not Is_Local (From) then
          Server := From;
       elsif not Is_Local (To) then
@@ -710,6 +740,7 @@ package body GPS.Kernel.Remote is
 
       --  Synchronize with remote host
       Mirror := Servers (Server).Mirror_Path_List;
+
       while Mirror /= null loop
          if Mirror.Need_Sync then
             if Is_Local (From) then
@@ -719,6 +750,7 @@ package body GPS.Kernel.Remote is
                From_Path := Mirror.Remote_Path;
                To_Path   := Mirror.Local_Path;
             end if;
+
             declare
                Data : aliased Rsync_Hooks_Args
                  := (Hooks_Data with
@@ -730,9 +762,10 @@ package body GPS.Kernel.Remote is
                      Queue_Id         => Queue_Id,
                      Src_Path         => From_Path.all,
                      Dest_Path        => To_Path.all);
+
             begin
-               Trace (Me, "run sync hook for " &
-                      Data.Src_Path);
+               Trace (Me, "run sync hook for " & Data.Src_Path);
+
                if not Run_Hook_Until_Success
                  (Kernel, Rsync_Action_Hook, Data'Unchecked_Access)
                then
@@ -749,8 +782,9 @@ package body GPS.Kernel.Remote is
    -- On_Error --
    --------------
 
-   procedure On_Error (Manager : access Default_Error_Display_Record;
-                       Message : String) is
+   procedure On_Error
+     (Manager : access Default_Error_Display_Record;
+      Message : String) is
    begin
       if Manager.Kernel /= null then
          Insert (Manager.Kernel,
@@ -840,6 +874,7 @@ package body GPS.Kernel.Remote is
          --  ??? In some cases (user-defined images), we need to launch MCR
          --  to execute the built program... need to find a way to
          --  automatically do this
+
          New_Args := new Argument_List'(Args.all);
 
          for J in New_Args'Range loop
@@ -1019,9 +1054,12 @@ package body GPS.Kernel.Remote is
       --  False in this case
 
       --  Check if the server is already defined
+
       if Old_Nickname /= "" then
          Item := Config_List.Next;
+
          --  Skip the first item which is the local server
+
          while Item /= null loop
             exit when Item.Nickname.all = Old_Nickname;
             Item := Item.Next;
@@ -1029,6 +1067,7 @@ package body GPS.Kernel.Remote is
 
          --  If a server with specified old_nickname could not be found,
          --  return here with appropriate status.
+
          if Item = null then
             Success := False;
             return;
@@ -1038,16 +1077,21 @@ package body GPS.Kernel.Remote is
       --  If Server is null, then it is not already defined
       --  We create a new Server_Item then and add it at the end of the
       --  servers list.
+
       if Item = null then
          Item := Config_List;
+
          while Item.Next /= null loop
             Item := Item.Next;
          end loop;
+
          Item.Next := new Server_Config_Record;
          Nb_Servers  := Nb_Servers + 1;
          Item := Item.Next;
+
       else
          --  Replace Item's values... free previous ones
+
          Free (Item.Nickname);
          Free (Item.Network_Name);
          Free (Item.Remote_Access);
@@ -1055,6 +1099,7 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Let's set the new values of the server
+
       Item.Is_Local      := False;
       Item.Filesystem    := Filesystem;
       Item.Timeout       := Timeout;
@@ -1090,6 +1135,7 @@ package body GPS.Kernel.Remote is
                Next        => Mirror);
             exit;
          end if;
+
          Item := Item.Next;
       end loop;
    end Add_Mirror_Path;
@@ -1111,6 +1157,7 @@ package body GPS.Kernel.Remote is
             Servers (Server) := Item;
             return;
          end if;
+
          Item := Item.Next;
       end loop;
    end Assign;
@@ -1128,14 +1175,14 @@ package body GPS.Kernel.Remote is
    -- Get_Nickname --
    ------------------
 
-   function Get_Nickname (Id : Server_Id) return String
-   is
+   function Get_Nickname (Id : Server_Id) return String is
       Config : Server_Config := Config_List;
    begin
       for J in 2 .. Id loop
          Config := Config.Next;
          exit when Config = null;
       end loop;
+
       if Config = null then
          return "";
       else
@@ -1171,7 +1218,6 @@ package body GPS.Kernel.Remote is
    end Is_Local;
 
 begin
-
    Initialize;
    --  ??? Remove once the Initialize procedure is actually called at
    --  config time.
