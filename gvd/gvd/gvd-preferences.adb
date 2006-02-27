@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -45,6 +45,15 @@ package body GVD.Preferences is
              & " debuggers."),
          Default   => False));
       Register_Property (Prefs, Param_Spec (Break_On_Exception), General);
+
+      Open_Main_Unit := Param_Spec_Boolean (Gnew_Boolean
+        (Name       => XML_Prefix & "Open-Main-Unit",
+         Nick       => -"Always open main unit",
+         Blurb      =>
+         -("Enabled when initializing the debugger should always open the"
+           & " main unit. If disabled, no new editor is opened"),
+         Default    => True));
+      Register_Property (Prefs, Param_Spec (Open_Main_Unit), General);
 
       if Support_Execution_Window then
          Execution_Window := Param_Spec_Boolean (Gnew_Boolean

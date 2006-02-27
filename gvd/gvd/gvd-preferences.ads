@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -37,8 +37,9 @@ package GVD.Preferences is
 
    -- General --
    Break_On_Exception            : Param_Spec_Boolean;
+   Open_Main_Unit                : Param_Spec_Boolean;
    Execution_Window              : Param_Spec_Boolean;
-   Preserve_State_On_Exit      : Param_Spec_Boolean;
+   Preserve_State_On_Exit        : Param_Spec_Boolean;
 
    -- Source Window --
    Editor_Show_Line_With_Code    : Param_Spec_Boolean;
