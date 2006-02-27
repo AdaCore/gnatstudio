@@ -5,6 +5,14 @@ Known Problems fixed in GPS 3.2.0
               debugger console, GPS will often close the debugger session.
   Workaround: Do not press enter before entering a first command
 
+- F223-020 Changing order of source dirs has no effect
+  Problem:    In the project properties editor, if you change the order of
+              the source directories through the Up and Down buttons, without
+              modifying or adding any directory, the change is not saved in
+              the project.
+  Workaround: Edit the project file manually (available through the contextual
+              menu on a project node in the Project View)
+
 - F221-027 Debugger hangs when typing \ at end of line
   Problem:    When typing a command ending with \ in the debugger console,
               GPS hangs.
