@@ -14,6 +14,12 @@ of the feature.
 New features in GPS 3.2.0
 -------------------------
 
+F223-022 New preference for the debugger: "Always open main unit"
+
+  A new preference was added to the debugger support, so that it is now
+  possible to choose whether GPS should automatically open the program's
+  main unit when the debugger is initialized.
+
 F213-017 New python example: spell-checking the current word (2006-02-13)
 
   A new example has been included in the GPS distribution, called
