@@ -887,7 +887,9 @@ package body Debugger.Gdb is
             Send (Debugger, "list main,main", Mode => Internal);
          end if;
 
-         Send (Debugger, "info line", Mode => Internal);
+         if Get_Pref (Open_Main_Unit) then
+            Send (Debugger, "info line", Mode => Internal);
+         end if;
       end if;
 
       if Debugger.Executable_Args /= null then
@@ -1116,46 +1118,48 @@ package body Debugger.Gdb is
          end;
       end if;
 
-      Set_Parse_File_Name (Get_Process (Debugger), False);
+      if Get_Pref (Open_Main_Unit) then
+         Set_Parse_File_Name (Get_Process (Debugger), False);
 
-      declare
-         Str         : constant String :=
-           Send (Debugger, "info line", Mode => Internal);
-         Matched     : Match_Array (0 .. 2);
-         File_First  : Natural := 0;
-         File_Last   : Positive;
-         Line        : Natural := 0;
-         First, Last : Natural;
-         Addr_First,
-         Addr_Last   : Natural;
+         declare
+            Str         : constant String :=
+              Send (Debugger, "info line", Mode => Internal);
+            Matched     : Match_Array (0 .. 2);
+            File_First  : Natural := 0;
+            File_Last   : Positive;
+            Line        : Natural := 0;
+            First, Last : Natural;
+            Addr_First,
+            Addr_Last   : Natural;
 
-      begin
-         Set_Parse_File_Name (Get_Process (Debugger), True);
-         Found_File_Name
-           (Debugger,
-            Str, File_First, File_Last, First, Last, Line,
-            Addr_First, Addr_Last);
+         begin
+            Set_Parse_File_Name (Get_Process (Debugger), True);
+            Found_File_Name
+              (Debugger,
+               Str, File_First, File_Last, First, Last, Line,
+               Addr_First, Addr_Last);
 
-         if First /= 0 then
-            Match
-              (GNAT_Binder_File_Pattern,
-               Str (File_First .. File_Last), Matched);
+            if First /= 0 then
+               Match
+                 (GNAT_Binder_File_Pattern,
+                  Str (File_First .. File_Last), Matched);
 
-            --  If we find a file that looks like a GNAT binder file, load
-            --  the corresponding main file.
+               --  If we find a file that looks like a GNAT binder file, load
+               --  the corresponding main file.
 
-            if Matched (0) /= No_Match then
-               Send
-                 (Debugger,
-                  "info line " &
-                    Str (Matched (0).First + 2 .. Matched (0).Last) & ":1",
-                  Mode => Internal);
-               return;
+               if Matched (0) /= No_Match then
+                  Send
+                    (Debugger,
+                     "info line " &
+                     Str (Matched (0).First + 2 .. Matched (0).Last) & ":1",
+                     Mode => Internal);
+                  return;
+               end if;
             end if;
-         end if;
 
-         Send (Debugger, "info line", Mode => Internal);
-      end;
+            Send (Debugger, "info line", Mode => Internal);
+         end;
+      end if;
    end Set_Executable;
 
    --------------------
