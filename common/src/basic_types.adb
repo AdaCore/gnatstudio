@@ -54,11 +54,20 @@ package body Basic_Types is
    --------------
 
    function Is_Equal
-     (List1, List2   : Argument_List;
-      Case_Sensitive : Boolean := True) return Boolean is
+     (List1, List2   : GNAT.OS_Lib.Argument_List;
+      Case_Sensitive : Boolean := True;
+      Ordered        : Boolean := False) return Boolean is
    begin
       if List1'Length /= List2'Length then
          return False;
+
+      elsif Ordered then
+         for L in List1'Range loop
+            if List1 (L).all /= List2 (L - List1'First + List2'First).all then
+               return False;
+            end if;
+         end loop;
+         return True;
 
       else
          declare

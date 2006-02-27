@@ -79,9 +79,12 @@ package Basic_Types is
 
    function Is_Equal
      (List1, List2   : GNAT.OS_Lib.Argument_List;
-      Case_Sensitive : Boolean := True) return Boolean;
+      Case_Sensitive : Boolean := True;
+      Ordered        : Boolean := False) return Boolean;
    --  Return True if List1 has the same contents of List2 (no matter the order
    --  of the strings in both arrays).
+   --  If Ordered is true, then each item of List1 much match the
+   --  corresponoding item of List2
 
    function Contains
      (List           : GNAT.OS_Lib.Argument_List;
