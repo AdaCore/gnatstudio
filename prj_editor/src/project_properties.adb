@@ -990,7 +990,7 @@ package body Project_Properties is
       Attribute             : constant Attribute_Pkg :=
                                 Build (Attr.Pkg.all, Attr.Name.all);
       Lower_Attribute_Index : String := Attribute_Index;
-      Equal                 : Boolean;
+      Equal                 : Boolean := True;
    begin
       if not Attr.Case_Sensitive_Index then
          To_Lower (Lower_Attribute_Index);
@@ -1003,7 +1003,9 @@ package body Project_Properties is
             Index     => Lower_Attribute_Index);
       begin
          if Old_Values'Length /= 0 then
-            Equal := Is_Equal (Values, Old_Values, Case_Sensitive => False);
+            Equal := Is_Equal
+              (Values, Old_Values, Case_Sensitive => False,
+               Ordered => Attr.Ordered_List);
          else
             declare
                Default : GNAT.OS_Lib.String_List :=
@@ -1014,7 +1016,9 @@ package body Project_Properties is
                     Index        => Lower_Attribute_Index,
                     Default_Only => True);
             begin
-               Equal := Is_Equal (Values, Default, Case_Sensitive => False);
+               Equal := Is_Equal
+                 (Values, Default, Case_Sensitive => False,
+                  Ordered => Attr.Ordered_List);
                Free (Default);
             end;
          end if;
@@ -2535,11 +2539,17 @@ package body Project_Properties is
          Col_Number := Append_Column (View, Col);
          Pack_Start (Col, Toggle, False);
          Add_Attribute (Col, Toggle, "active", 1);
+         Set_Reorderable (Col, False);
 
          Pack_Start (Col, Text, True);
          Add_Attribute (Col, Text, "text", 0);
-         Set_Sort_Column_Id (Col, 0);
-         Clicked (Col);
+
+         if not Description.Ordered_List then
+            Set_Sort_Column_Id (Col, 0);
+            Clicked (Col);
+         else
+            Set_Reorderable (Col, False);
+         end if;
       else
          For_Each_Item_In_List (Kernel, Attr, Value_Cb'Unrestricted_Access);
 
@@ -3985,9 +3995,14 @@ package body Project_Properties is
       Col_Number := Append_Column (Ed.View, Col);
       Pack_Start (Col, Text, True);
       Add_Attribute (Col, Text, "text", Index_Col);
-      Set_Sort_Column_Id (Col, Index_Col);
-      Clicked (Col);
-      Set_Sort_Column_Id (Col, -1);
+
+      if Attr.Ordered_List then
+         Set_Reorderable (Col, False);
+      else
+         Set_Sort_Column_Id (Col, Index_Col);
+         Clicked (Col);
+         Set_Sort_Column_Id (Col, -1);
+      end if;
 
       Gtk_New (Col);
       Set_Resizable (Col, True);
