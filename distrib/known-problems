@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 3.2.0
 
+- F224-007 Crashes when using Search/Replace.
+  Problem:    When using the Search/Replace dialog, GPS might sometimes
+              crash if editions occur between successive searches.
+  Workaround: Instead of using the Search/Replace dialog, use the key
+              shortcut for "Navigate->Find Next" to find the next
+              occurrence, and the shortcut for "Paste" to replace it.
+
 - F223-026 Debugger closes when hitting enter
   Problem:    When starting the debugger, and hitting 'enter' key in the
               debugger console, GPS will often close the debugger session.
