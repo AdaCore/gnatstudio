@@ -715,7 +715,6 @@ package body GPS.Kernel.Remote is
                   The_Path (J) := '/';
                end if;
             end loop;
-
       end case;
 
       return The_Path;
