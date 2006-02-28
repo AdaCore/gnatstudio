@@ -374,7 +374,7 @@ package body Src_Editor_Box.Tooltips is
 
             if Line_Info /= null then
                for K in Line_Info'Range loop
-                     if Line_Info (K).Info /= null
+                  if Line_Info (K).Info /= null
                     and then Line_Info (K).Info.Tooltip_Text /= null
                   then
                      if Content /= Null_Unbounded_String then
