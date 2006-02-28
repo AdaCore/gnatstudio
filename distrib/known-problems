@@ -98,6 +98,7 @@ Known Problems fixed in GPS 3.2.0
               project directly on the command line.
 
 - EB16-002 Wrong parenthesis highlighting
-  Problem:    Parenthesis in comment are taken into account when doing the
+  Problem:    Parentheses in comments are taken into account when doing the
               highlighting of matching parenthesis.
-  Workaround: None
+  Workaround: Use the search dialog to find the next/previous parenthesis
+
