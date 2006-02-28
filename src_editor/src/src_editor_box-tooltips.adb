@@ -368,21 +368,24 @@ package body Src_Editor_Box.Tooltips is
             Width, Height : Gint := 0;
             GC            : Gdk.Gdk_GC;
             Has_Info      : Boolean := False;
+
          begin
             --  Catenate the tooltip information for all columns
 
-            for K in Line_Info'Range loop
-               if Line_Info (K).Info /= null
-                 and then Line_Info (K).Info.Tooltip_Text /= null
-               then
-                  if Content /= Null_Unbounded_String then
-                     Append (Content, ASCII.LF);
-                  end if;
+            if Line_Info /= null then
+               for K in Line_Info'Range loop
+                     if Line_Info (K).Info /= null
+                    and then Line_Info (K).Info.Tooltip_Text /= null
+                  then
+                     if Content /= Null_Unbounded_String then
+                        Append (Content, ASCII.LF);
+                     end if;
 
-                  Append (Content, Line_Info (K).Info.Tooltip_Text.all);
-                  Has_Info := True;
-               end if;
-            end loop;
+                     Append (Content, Line_Info (K).Info.Tooltip_Text.all);
+                     Has_Info := True;
+                  end if;
+               end loop;
+            end if;
 
             if Has_Info then
                Layout := Create_Pango_Layout (Widget, "");
@@ -409,6 +412,7 @@ package body Src_Editor_Box.Tooltips is
                Unref (GC);
             end if;
          end;
+
          return;
       end if;
 
