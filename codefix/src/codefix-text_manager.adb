@@ -358,6 +358,19 @@ package body Codefix.Text_Manager is
         (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor), Len);
    end Get;
 
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (This   : Text_Navigator_Abstr;
+      Cursor : File_Cursor'Class) return Character
+   is
+   begin
+      return Get
+        (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor));
+   end Get;
+
    --------------
    -- Get_Line --
    --------------
@@ -537,6 +550,30 @@ package body Codefix.Text_Manager is
          Step);
    end Search_String;
 
+   --------------------
+   -- Search_Strings --
+   --------------------
+
+   function Search_Strings
+     (This           : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class;
+      Searched       : String_Array;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step)
+      return Word_Cursor'Class is
+   begin
+      return Search_Strings
+        (Get_File (This, Get_File (Cursor)).all,
+         File_Cursor (Cursor),
+         Searched,
+         Escape_Manager,
+         Step);
+   end Search_Strings;
+
+   -----------------
+   -- Search_Unit --
+   -----------------
+
    function Search_Unit
      (This      : Text_Navigator_Abstr'Class;
       File_Name : VFS.Virtual_File;
@@ -623,24 +660,44 @@ package body Codefix.Text_Manager is
          Set_File (Spec_Begin, Get_File (Cursor));
          Set_File (Spec_End,   Get_File (Cursor));
 
-         Body_Begin.Col := Body_Info.Sloc_Start.Column;
+         Body_Begin.Col := 1;
+         Body_End.Col := 1;
          Body_Begin.Line := Body_Info.Sloc_Start.Line;
-         Body_End.Col := Body_Info.Sloc_End.Column;
          Body_End.Line := Body_Info.Sloc_End.Line;
 
-         Spec_Begin.Col := Unit_Info.Sloc_Start.Column;
+         Body_Begin.Col := To_Column_Index
+           (Char_Index (Body_Info.Sloc_Start.Column),
+            Get_Line (Current_Text, Body_Begin));
+         Body_End.Col := To_Column_Index
+           (Char_Index (Body_Info.Sloc_End.Column),
+            Get_Line (Current_Text, Body_End));
+
+         Spec_Begin.Col := 1;
+         Spec_End.Col := 1;
          Spec_Begin.Line := Unit_Info.Sloc_Start.Line;
-         Spec_End.Col := Unit_Info.Sloc_End.Column;
          Spec_End.Line := Unit_Info.Sloc_End.Line;
 
+         Spec_Begin.Col := To_Column_Index
+           (Char_Index (Unit_Info.Sloc_Start.Column),
+            Get_Line (Current_Text, Spec_Begin));
+         Spec_End.Col := To_Column_Index
+           (Char_Index (Unit_Info.Sloc_End.Column),
+            Get_Line (Current_Text, Spec_End));
       else
-         Body_Begin.Col := Unit_Info.Sloc_Start.Column;
-         Body_Begin.Line := Unit_Info.Sloc_Start.Line;
-         Body_End.Col := Unit_Info.Sloc_End.Column;
-         Body_End.Line := Unit_Info.Sloc_End.Line;
-
          Set_File (Body_Begin, Get_File (Cursor));
          Set_File (Body_End,   Get_File (Cursor));
+
+         Body_Begin.Col := 1;
+         Body_End.Col := 1;
+         Body_Begin.Line := Unit_Info.Sloc_Start.Line;
+         Body_End.Line := Unit_Info.Sloc_End.Line;
+
+         Body_Begin.Col := To_Column_Index
+           (Char_Index (Unit_Info.Sloc_Start.Column),
+            Get_Line (Current_Text, Body_Begin));
+         Body_End.Col := To_Column_Index
+           (Char_Index (Unit_Info.Sloc_End.Column),
+            Get_Line (Current_Text, Body_End));
 
          Assign (Spec_Begin, Null_File_Cursor);
          Assign (Spec_End, Null_File_Cursor);
@@ -758,15 +815,20 @@ package body Codefix.Text_Manager is
       function Nearer return Boolean;
       --  Return True when Current_Info is nearer Cursor than Info_Saved.
 
-      Current_Info : Construct_Access;
-      Info_Saved   : Construct_Access;
+      Current_Info      : Construct_Access;
+      Info_Saved        : Construct_Access;
+      Line              : constant String :=
+        Get_Line (Text_Interface'Class (Current_Text), Cursor);
+      Cursor_Char_Index : constant Char_Index :=
+        To_Char_Index (Cursor.Col, Line);
 
       function Nearer return Boolean is
          D_Current_Line, D_Current_Col : Integer;
          D_Old_Line, D_Old_Col : Integer;
       begin
          D_Current_Line := Current_Info.Sloc_Start.Line - Cursor.Line;
-         D_Current_Col := Current_Info.Sloc_Start.Column - Cursor.Col;
+         D_Current_Col := Current_Info.Sloc_Start.Column
+           - Natural (Cursor_Char_Index);
 
          case Position is
             when Before =>
@@ -792,7 +854,8 @@ package body Codefix.Text_Manager is
          end if;
 
          D_Old_Line := Info_Saved.Sloc_Start.Line - Cursor.Line;
-         D_Old_Col := Info_Saved.Sloc_Start.Column - Cursor.Col;
+         D_Old_Col := Info_Saved.Sloc_Start.Column
+           - Natural (Cursor_Char_Index);
 
          return abs (D_Old_Line) > abs (D_Current_Line) or else
            (D_Old_Line = D_Current_Line and then
@@ -811,9 +874,11 @@ package body Codefix.Text_Manager is
            or else Current_Info.Category = Category_2
          then
             if (Current_Info.Sloc_Start.Line = Cursor.Line
-                and then Current_Info.Sloc_Start.Column = Cursor.Col)
+              and then Current_Info.Sloc_Start.Column
+              = Natural (Cursor_Char_Index))
               or else (Current_Info.Sloc_Entity.Line = Cursor.Line
-                       and then Current_Info.Sloc_Entity.Column = Cursor.Col)
+                       and then Current_Info.Sloc_Entity.Column
+                       = Natural (Cursor_Char_Index))
             then
                return Current_Info.all;
             elsif Position /= Specified and then Nearer then
@@ -1051,12 +1116,38 @@ package body Codefix.Text_Manager is
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return File_Cursor'Class
    is
+      Str_Array : String_Array := (1 => new String'(Searched));
+      Result    : Word_Cursor'Class := Search_Strings
+        (This,
+         Cursor,
+         Str_Array,
+         Escape_Manager,
+         Step);
+      Real_Result : File_Cursor := Clone (File_Cursor (Result));
+   begin
+      Free (Str_Array);
+      Free (Result);
+
+      return Real_Result;
+   end Search_String;
+
+   --------------------
+   -- Search_Strings --
+   --------------------
+
+   function Search_Strings
+     (This           : Text_Interface'Class;
+      Cursor         : Text_Cursor'Class;
+      Searched       : String_Array;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step) return Word_Cursor'Class
+   is
       Last, Increment    : Integer;
       Ext_Red            : Extract_Line;
-      New_Cursor, Result : File_Cursor;
+      Result             : Word_Cursor;
+      New_Cursor         : File_Cursor;
       Line_Cursor        : File_Cursor;
-      Old_Col            : Integer;
-
+      Old_Col            : Column_Index;
    begin
       New_Cursor := File_Cursor (Cursor);
       Line_Cursor := New_Cursor;
@@ -1072,21 +1163,25 @@ package body Codefix.Text_Manager is
             Increment := -1;
             Old_Col := New_Cursor.Col;
             New_Cursor.Col := 1;
-            Get (This, Line_Cursor, Old_Col, Ext_Red);
+            --  ??? possible error there, since we used to get only the part of
+            --  the string where we wanted to do the analysis (as in normal
+            --  step), but this operation is not straighforward since we don't
+            --  know at this stage the size of the extract.
+            Get_Line (This, Line_Cursor, Ext_Red);
             New_Cursor.Col := Old_Col;
       end case;
 
       loop
          Result :=
-           File_Cursor
-             (Search_String
-               (Ext_Red,
-                New_Cursor,
-                Searched,
-                Escape_Manager,
-                Step));
+           Word_Cursor
+             (Search_Strings
+                  (Ext_Red,
+                   New_Cursor,
+                   Searched,
+                   Escape_Manager,
+                   Step));
 
-         if Result /= Null_File_Cursor then
+         if Result /= Null_Word_Cursor then
             Result := Clone (Result);
             Free (Ext_Red);
             return Result;
@@ -1106,8 +1201,8 @@ package body Codefix.Text_Manager is
       end loop;
 
       Free (Ext_Red);
-      return Null_File_Cursor;
-   end Search_String;
+      return Null_Word_Cursor;
+   end Search_Strings;
 
    -----------------
    -- Search_Unit --
@@ -1270,15 +1365,17 @@ package body Codefix.Text_Manager is
    is
       Local_Cursor : Text_Cursor := Text_Cursor (Cursor);
       Local_Line   : GNAT.OS_Lib.String_Access := new String'(Current_Line);
+      Local_Cursor_Char_Index : constant Char_Index :=
+        To_Char_Index (Get_Column (Local_Cursor), Local_Line.all);
    begin
       loop
-         if Local_Cursor.Col > Local_Line'Last then
+         if Natural (Local_Cursor_Char_Index) > Local_Line'Last then
             Local_Cursor.Col := 1;
             Local_Cursor.Line := Local_Cursor.Line + 1;
             Assign (Local_Line, Get_Line (This, Local_Cursor));
          end if;
 
-         case Local_Line (Local_Cursor.Col) is
+         case Local_Line (Natural (Local_Cursor_Char_Index)) is
             when '(' =>
                Local_Cursor.Col := Local_Cursor.Col + 1;
 
@@ -1311,44 +1408,54 @@ package body Codefix.Text_Manager is
       Cursor : in out Text_Cursor'Class;
       Word   : out GNAT.OS_Lib.String_Access)
    is
-      Current_Line : GNAT.OS_Lib.String_Access;
-      Line_Cursor  : Text_Cursor := Text_Cursor (Cursor);
-      Begin_Word   : Natural;
+      Current_Line      : GNAT.OS_Lib.String_Access;
+      Line_Cursor       : Text_Cursor := Text_Cursor (Cursor);
+      Begin_Word        : Char_Index;
+      Cursor_Char_Index : Char_Index;
+
    begin
       Line_Cursor.Col := 1;
       Assign (Current_Line, Get_Line (This, Line_Cursor));
+      Cursor_Char_Index := To_Char_Index
+        (Get_Column (Cursor), Current_Line.all);
 
-      while Is_Blank (Current_Line (Cursor.Col .. Current_Line'Last)) loop
-         Cursor.Col := 1;
+      while Is_Blank
+        (Current_Line (Natural (Cursor_Char_Index) .. Current_Line'Last)) loop
+         Cursor_Char_Index := 1;
          Cursor.Line := Cursor.Line + 1;
          Assign (Current_Line, Get_Line (This, Cursor));
       end loop;
 
-      while Is_Blank (Current_Line (Cursor.Col)) loop
-         Cursor.Col := Cursor.Col + 1;
+      while Is_Blank (Current_Line (Natural (Cursor_Char_Index))) loop
+         Cursor_Char_Index := Cursor_Char_Index + 1;
       end loop;
 
-      Begin_Word := Cursor.Col;
+      Begin_Word := Cursor_Char_Index;
 
-      while Cursor.Col < Current_Line'Last
-        and then not Is_Blank (Current_Line (Cursor.Col))
+      while Natural (Cursor_Char_Index) < Current_Line'Last
+        and then not Is_Blank (Current_Line (Natural (Cursor_Char_Index)))
       loop
-         Cursor.Col := Cursor.Col + 1;
+         Cursor_Char_Index := Cursor_Char_Index + 1;
       end loop;
 
-      if Is_Blank (Current_Line (Cursor.Col)) then
-         Word := new String'(Current_Line (Begin_Word .. Cursor.Col - 1));
+      if Is_Blank (Current_Line (Natural (Cursor_Char_Index))) then
+         Word := new String'
+           (Current_Line
+              (Natural (Begin_Word) .. Natural (Cursor_Char_Index) - 1));
       else
-         Word := new String'(Current_Line (Begin_Word .. Cursor.Col));
+         Word := new String'
+           (Current_Line
+              (Natural (Begin_Word) .. Natural (Cursor_Char_Index)));
       end if;
 
-      if Cursor.Col = Current_Line'Last then
-         Cursor.Col := 1;
+      if Cursor_Char_Index = Char_Index (Current_Line'Last) then
+         Cursor_Char_Index := 1;
          Cursor.Line := Cursor.Line + 1;
       else
-         Cursor.Col := Cursor.Col + 1;
+         Cursor_Char_Index := Cursor_Char_Index + 1;
       end if;
 
+      Cursor.Col := To_Column_Index (Cursor_Char_Index, Current_Line.all);
       Free (Current_Line);
    end Next_Word;
 
@@ -1450,10 +1557,14 @@ package body Codefix.Text_Manager is
             end if;
 
             Assign (Current_Line, Get_Line (This, Line_Cursor));
-            Result.Col := Current_Line'Last;
+            Result.Col := To_Column_Index
+              (Char_Index (Current_Line'Last), Current_Line.all);
          end if;
 
-         if not Is_Blank (Current_Line (Result.Col)) then
+         if not Is_Blank
+           (Current_Line
+              (Natural (To_Char_Index (Result.Col, Current_Line.all))))
+         then
             return Result;
          end if;
       end loop;
@@ -1629,32 +1740,43 @@ package body Codefix.Text_Manager is
       --------------------------
 
       procedure Commit_Modified_Line is
-         It      : Mask_Iterator;
-         Len     : Natural;
-         Info    : Merge_Info;
-         Content : constant String := Get_String (This);
+         It                : Mask_Iterator;
+         Len               : Natural;
+         Info              : Merge_Info;
+         Content           : constant String := Get_String (This);
+         Cursor_Char_Index : Char_Index := To_Char_Index (Cursor.Col, Content);
       begin
-         Reset (It);
+         Reset (It, This.Content);
 
          loop
-            Get_Next_Area (This.Content, It, Cursor.Col, Len, Info);
+            Get_Next_Area (This.Content, It, Cursor_Char_Index, Len, Info);
 
             exit when Len = 0;
 
             case Info is
                when Unit_Modified =>
+                  Cursor.Col := To_Column_Index (Cursor_Char_Index, Content);
+
                   Replace
                     (Current_Text,
                      Cursor,
                      Len,
-                     Content (Cursor.Col .. Cursor.Col + Len - 1));
+                     Content
+                       (Natural (Cursor_Char_Index)
+                        .. Natural (Cursor_Char_Index) + Len - 1));
                when Unit_Created =>
+                  Cursor.Col := To_Column_Index (Cursor_Char_Index, Content);
+
                   Replace
                     (Current_Text,
                      Cursor,
                      0,
-                     Content (Cursor.Col .. Cursor.Col + Len - 1));
+                     Content
+                       (Natural (Cursor_Char_Index)
+                        .. Natural (Cursor_Char_Index) + Len - 1));
                when Unit_Deleted =>
+                  Cursor.Col := To_Column_Index (Cursor_Char_Index, Content);
+
                   Replace
                     (Current_Text,
                      Cursor,
@@ -1704,15 +1826,28 @@ package body Codefix.Text_Manager is
       -------------------------
 
       function Count_Modified_Line_Actions return Natural is
-         It             : Mask_Iterator;
-         Len            : Natural;
-         Info           : Merge_Info;
-         Number_Actions : Natural := 0;
+         It                : Mask_Iterator;
+         Len               : Natural;
+         Info              : Merge_Info;
+         Number_Actions    : Natural := 0;
       begin
-         Reset (It);
+         Reset (It, This.Content);
 
          loop
-            Get_Next_Area (This.Content, It, Cursor.Col, Len, Info);
+            declare
+               This_Content : constant String := To_String (This.Content);
+               Cursor_Char_Index : Char_Index;
+            begin
+               Cursor_Char_Index :=
+                 To_Char_Index (Cursor.Col, This_Content);
+               Get_Next_Area
+                 (This.Content,
+                  It,
+                  Cursor_Char_Index,
+                  Len,
+                  Info);
+               Cursor.Col := To_Column_Index (Cursor_Char_Index, This_Content);
+            end;
 
             exit when Len = 0;
 
@@ -1776,23 +1911,27 @@ package body Codefix.Text_Manager is
 
    function Get_Word_Length
      (This   : Extract_Line;
-      Col    : Natural;
+      Col    : Column_Index;
       Format : String) return Natural
    is
       Matches    : Match_Array (0 .. 1);
       Matcher    : constant Pattern_Matcher := Compile (Format);
       Str_Parsed : constant String := To_String (This.Content);
+      Index      : constant Char_Index :=
+        To_Char_Index (Col, Str_Parsed);
 
    begin
-      Match (Matcher, Str_Parsed (Col .. Str_Parsed'Last), Matches);
+      Match
+        (Matcher,
+         Str_Parsed (Natural (Index) .. Str_Parsed'Last), Matches);
 
       if Matches (0) = No_Match then
          Raise_Exception (Codefix_Panic'Identity, "pattern '" & Format &
-                          "' from col" & Integer'Image (Col) & " in '" &
+                          "' from col" & Char_Index'Image (Index) & " in '" &
                             Str_Parsed & "' can't be found");
 
       else
-         return Matches (1).Last - Col + 1;
+         return Matches (1).Last - Natural (Index) + 1;
       end if;
    end Get_Word_Length;
 
@@ -1807,39 +1946,95 @@ package body Codefix.Text_Manager is
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return File_Cursor'Class
    is
-      Result  : File_Cursor := File_Cursor (Cursor);
-      Content : constant String := To_String (This.Content);
+      Str_Array : String_Array := (1 => new String'(Searched));
+      Result    : File_Cursor'Class := Search_Strings
+        (This,
+         Cursor,
+         Str_Array,
+         Escape_Manager,
+         Step);
+      Real_Result : File_Cursor := Clone (File_Cursor (Result));
+   begin
+      Free (Str_Array);
+      Free (Result);
+
+      return Real_Result;
+   end Search_String;
+
+   --------------------
+   -- Search_Strings --
+   --------------------
+
+   function Search_Strings
+     (This           : Extract_Line;
+      Cursor         : File_Cursor'Class;
+      Searched       : String_Array;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step) return Word_Cursor'Class
+   is
+      Result        : Word_Cursor :=
+        (File_Cursor (Cursor) with null, Text_Ascii);
+      Result_String : constant String := To_String (This.Content);
+      Start_Index   : Char_Index;
+
+      function Test_Result
+        (Str : Basic_Types.String_Access; Index : Char_Index)
+        return Boolean;
+      --  Return true if the string given in parameter is on the Index position
+      --  of the content, and set the Result accordingly if needed.
+
+      function Test_Result
+        (Str   : Basic_Types.String_Access;
+         Index : Char_Index)
+        return Boolean
+      is
+      begin
+         if Natural (Index) + Str.all'Last - 1 <= Result_String'Last
+           and then Result_String
+             (Natural (Index) .. Natural (Index) + Str.all'Last - 1) = Str.all
+           and then not
+             Is_In_Escape_Part (Escape_Manager, Result_String, Index)
+         then
+            Result.Col := To_Column_Index (Index, Result_String);
+            Result.String_Match := new String'(Str.all);
+
+            return True;
+         end if;
+
+         return False;
+      end Test_Result;
+
    begin
       if Result.Col = 0 then
-         Result.Col := To_String (This.Content)'Last;
+         Start_Index := Char_Index (Result_String'Last);
+      else
+         Start_Index := To_Char_Index (Result.Col, Result_String);
       end if;
 
       case Step is
          when Normal_Step =>
-            for J in Result.Col .. Content'Last - Searched'Last + 1 loop
-               if Content (J .. J + Searched'Last - 1) = Searched
-                 and then not Is_In_Escape_Part (Escape_Manager, Content, J)
-               then
-                  Result.Col := J;
-                  return Result;
-               end if;
+            for J in Start_Index .. Char_Index (Result_String'Last) loop
+               for K in Searched'Range loop
+                  if Test_Result (Searched (K), J) then
+                     return Result;
+                  end if;
+               end loop;
             end loop;
 
          when Reverse_Step =>
-            for J in reverse Content'First ..
-              Result.Col - Searched'Last + 1
+            for J in reverse
+              Char_Index (Result_String'First) .. Start_Index
             loop
-               if Content (J .. J + Searched'Last - 1) = Searched
-                 and then not Is_In_Escape_Part (Escape_Manager, Content, J)
-               then
-                  Result.Col := J;
-                  return Result;
-               end if;
+               for K in Searched'Range loop
+                  if Test_Result (Searched (K), J) then
+                     return Result;
+                  end if;
+               end loop;
             end loop;
       end case;
 
-      return Null_File_Cursor;
-   end Search_String;
+      return Null_Word_Cursor;
+   end Search_Strings;
 
    ---------
    -- Get --
@@ -2131,16 +2326,23 @@ package body Codefix.Text_Manager is
 
    procedure Replace
      (This       : in out Extract_Line;
-      Start, Len : Natural;
-      New_String : String) is
+      Start      : Column_Index;
+      Len        : Natural;
+      New_String : String)
+   is
+      This_String      : constant String := To_String (This.Content);
+      Start_Char_Index : constant Char_Index :=
+        To_Char_Index (Start, This_String);
    begin
       if Len /= New_String'Length
-        or else To_String (This.Content) (Start .. Start + Len - 1) /=
+        or else This_String
+          (Natural (Start_Char_Index) ..
+             Natural (Start_Char_Index) + Len - 1) /=
           New_String
       then
          This.Context := Unit_Modified;
 
-         Replace (This.Content, Start, Len, New_String);
+         Replace (This.Content, Start_Char_Index, Len, New_String);
       end if;
    end Replace;
 
@@ -2150,7 +2352,7 @@ package body Codefix.Text_Manager is
 
    procedure Replace_To_End
      (This  : in out Extract_Line;
-      Start : Natural;
+      Start : Column_Index;
       Value : String) is
    begin
       Replace (This, Start, To_String (This.Content)'Last, Value);
@@ -2349,7 +2551,8 @@ package body Codefix.Text_Manager is
 
    procedure Replace
      (This          : in out Extract;
-      Start, Length : Natural;
+      Start         : Column_Index;
+      Length        : Natural;
       Value         : String;
       Line_Number   : Natural := 1)
    is
@@ -2408,11 +2611,19 @@ package body Codefix.Text_Manager is
            new String'(Get_Line (Current_Text, Cursor_Source));
       begin
          if Cursor_Source.Line = Source_Stop.Line then
-            Assign (Line, Line (1 .. Source_Stop.Col) & Bottom.all);
+            Assign
+              (Line,
+               Line (1 .. Natural (To_Char_Index (Source_Stop.Col, Line.all)))
+               & Bottom.all);
          end if;
 
          if Cursor_Source.Line = Source_Start.Line then
-            Assign (Line, Head.all & Line (Source_Start.Col .. Line'Last));
+            Assign
+              (Line,
+               Head.all
+               & Line
+                 (Natural (To_Char_Index (Source_Start.Col, Line.all))
+                  .. Line'Last));
          end if;
 
          Cursor_Source.Line := Cursor_Source.Line + 1;
@@ -2420,14 +2631,23 @@ package body Codefix.Text_Manager is
          return Line;
       end Get_Next_Source_Line;
 
+      Dest_String           : constant String :=
+        Get_String (Get_Line (This, Dest_Start).all);
+      Dest_Start_Char_Index : constant Char_Index :=
+        To_Char_Index (Dest_Start.Col, Dest_String);
+
+      Bottom_String        : constant String :=
+        Get_String (Get_Line (This, Dest_Stop).all);
+      Dest_Stop_Char_Index : constant Char_Index :=
+        To_Char_Index (Dest_Stop.Col, Bottom_String);
+
    begin
       Cursor_Source.Col := 1;
 
-      Assign (Head, Get_String (Get_Line (This, Dest_Start).all)
-                (1 .. Dest_Start.Col - 1));
+      Assign (Head, Dest_String (1 .. Natural (Dest_Start_Char_Index) - 1));
 
-      Assign (Bottom, Get_String (Get_Line (This, Dest_Stop).all));
-      Assign (Bottom, Bottom (Dest_Stop.Col + 1 .. Bottom'Last));
+      Assign (Bottom, Bottom_String
+              (Natural (Dest_Stop_Char_Index) + 1 .. Bottom_String'Last));
 
       while Cursor_Source.Line <= Source_Stop.Line loop
          Free (Source_Line);
@@ -2977,8 +3197,10 @@ package body Codefix.Text_Manager is
       Cursor         : File_Cursor'Class := Null_File_Cursor;
       Step           : Step_Way := Normal_Step) return File_Cursor'Class
    is
-      Current, Last_Line     : Ptr_Extract_Line;
-      Result, Current_Cursor : File_Cursor := Null_File_Cursor;
+      Current, Last_Line : Ptr_Extract_Line;
+      Result             : File_Cursor := Null_File_Cursor;
+      Current_Cursor     : File_Cursor := Null_File_Cursor;
+      Real_Result        : File_Cursor;
 
    begin
       if File_Cursor (Cursor) /= Null_File_Cursor then
@@ -2990,7 +3212,10 @@ package body Codefix.Text_Manager is
          else
             Last_Line := Get_Last_Line (This);
             Current_Cursor := File_Cursor (Get_Cursor (Last_Line.all));
-            Current_Cursor.Col := Get_String (Last_Line.all)'Last;
+            Current_Cursor.Col :=
+              To_Column_Index
+                (Char_Index (Get_String (Last_Line.all)'Last),
+                 Get_String (Last_Line.all));
          end if;
       end if;
 
@@ -3001,18 +3226,20 @@ package body Codefix.Text_Manager is
             return Null_File_Cursor;
          end if;
 
-         Result :=
-           File_Cursor
-             (Search_String
-               (Current.all,
-                Current_Cursor,
-                Searched,
-                Escape_Manager,
-                Step));
+         Result := File_Cursor (Search_String
+           (Current.all,
+            Current_Cursor,
+            Searched,
+            Escape_Manager,
+            Step));
 
          if Result /= Null_File_Cursor then
-            Result.Line := Get_Cursor (Current.all).Line;
-            return Result;
+            --  ??? Do I really need this copy ???
+            Real_Result := Clone (Result);
+            Free (Result);
+            Real_Result.Line := Get_Cursor (Current.all).Line;
+
+            return Real_Result;
          end if;
 
          exit when Current = null;
@@ -3201,13 +3428,26 @@ package body Codefix.Text_Manager is
    is
       Current_Line : Ptr_Extract_Line;
       Line_Cursor  : File_Cursor := File_Cursor (Start);
+      Start_Char_Index : Char_Index;
+      Stop_Char_Index  : Char_Index;
    begin
       Line_Cursor.Col := 1;
 
       if Start.Line = Stop.Line then
          Current_Line := Get_Line (This, Line_Cursor);
 
-         Delete (Current_Line.Content, Start.Col, Stop.Col - Start.Col + 1);
+         declare
+            Current_String : constant String :=
+              To_String (Current_Line.Content);
+         begin
+            Start_Char_Index := To_Char_Index (Start.Col, Current_String);
+            Stop_Char_Index := To_Char_Index (Stop.Col, Current_String);
+         end;
+
+         Delete
+           (Current_Line.Content,
+            Start_Char_Index,
+            Natural (Stop_Char_Index - Start_Char_Index + 1));
 
          if Is_Blank (To_String (Current_Line.Content)) then
             Current_Line.Context := Unit_Deleted;
@@ -3217,6 +3457,7 @@ package body Codefix.Text_Manager is
 
       else
          Current_Line := Get_Line (This, Line_Cursor);
+
          Delete (Current_Line.Content, Start.Col);
 
          if Is_Blank (To_String (Current_Line.Content)) then
@@ -3232,7 +3473,15 @@ package body Codefix.Text_Manager is
 
          Current_Line := Next (Current_Line.all);
 
-         Delete (Current_Line.Content, 1, Stop.Col);
+         declare
+            Current_String : constant String :=
+              To_String (Current_Line.Content);
+         begin
+            Delete
+              (Current_Line.Content,
+               Char_Index (1),
+               Natural (To_Char_Index (Stop.Col, Current_String)));
+         end;
 
          if Is_Blank (To_String (Current_Line.Content)) then
             Current_Line.Context := Unit_Deleted;
@@ -3241,6 +3490,126 @@ package body Codefix.Text_Manager is
          end if;
       end if;
    end Erase;
+
+   -------------
+   -- Comment --
+   -------------
+
+   procedure Comment
+     (This        : in out Extract;
+      Start, Stop : File_Cursor'Class)
+   is
+      Current_Line     : Ptr_Extract_Line;
+      Line_Cursor      : File_Cursor := File_Cursor (Start);
+      Stop_Char_Index  : Char_Index;
+      Start_Char_Index : Char_Index;
+
+      function Back_Of_Line return String;
+      --  Returns the back of the line, assuming that Current_Line is set on
+      --  the last line of the extract. The back of lines begins after the
+      --  last column of the entity. Stop_Char_Index has also to be set
+      --  correctly.
+
+      function Back_Of_Line return String is
+      begin
+         return To_String (Current_Line.Content)
+           (Natural (Stop_Char_Index) + 1 ..
+              To_String (Current_Line.Content)'Last);
+      end Back_Of_Line;
+
+   begin
+      Line_Cursor.Col := 1;
+      Current_Line := Get_Line (This, Line_Cursor);
+
+      if Start.Line = Stop.Line then
+         --  Add a new line if there is some text after the entity that has
+         --  not to be commented
+
+         declare
+            Current_String : constant String :=
+              To_String (Current_Line.Content);
+         begin
+            Start_Char_Index := To_Char_Index (Start.Col, Current_String);
+            Stop_Char_Index := To_Char_Index (Stop.Col, Current_String);
+         end;
+
+         if not Is_Blank (Back_Of_Line) then
+            Add_Indented_Line
+              (This,
+               Stop,
+               Back_Of_Line,
+               To_String (Current_Line.Content)
+               (1 .. Natural (Stop_Char_Index)));
+            Replace
+              (Current_Line.all,
+               Stop.Col + 1,
+               Back_Of_Line'Length, "");
+         end if;
+
+         --  But proper comment at the begining of the entity
+
+         if Is_Blank (To_String (Current_Line.Content)
+                      (1 .. Natural (Start_Char_Index) - 1))
+         then
+            Insert (Current_Line.Content, Char_Index (1), "--  ");
+         else
+            Insert (Current_Line.Content, Start_Char_Index, "--  ");
+         end if;
+
+         Current_Line.Context := Unit_Modified;
+      else
+         --  But proper comment at the begining of the entity
+
+         declare
+            Current_String : constant String :=
+              To_String (Current_Line.Content);
+         begin
+            Start_Char_Index := To_Char_Index (Start.Col, Current_String);
+         end;
+
+         if Is_Blank (To_String (Current_Line.Content)
+                      (1 .. Natural (Start_Char_Index) - 1))
+         then
+            Insert (Current_Line.Content, Char_Index (1), "--  ");
+         else
+            Insert (Current_Line.Content, Start.Col, "--  ");
+         end if;
+
+         Current_Line.Context := Unit_Modified;
+
+         for J in Start.Line + 1 .. Stop.Line - 1 loop
+            Current_Line := Next (Current_Line.all);
+            Insert (Current_Line.Content, Char_Index (1), "--  ");
+            Current_Line.Context := Unit_Modified;
+         end loop;
+
+         Current_Line := Next (Current_Line.all);
+
+         --  Add a new line if there is some text after the entity that has
+         --  not to be commented
+
+         declare
+            Current_String : constant String :=
+              To_String (Current_Line.Content);
+         begin
+            Stop_Char_Index := To_Char_Index (Stop.Col, Current_String);
+         end;
+
+         if not Is_Blank (Back_Of_Line) then
+            Add_Indented_Line
+              (This,
+               Stop,
+               Back_Of_Line,
+               To_String
+                 (Current_Line.Content) (1 .. Natural (Stop_Char_Index)));
+            Replace
+              (Current_Line.all, Stop.Col + 1, Back_Of_Line'Length, "");
+         end if;
+
+         Insert (Current_Line.Content, Char_Index (1), "--  ");
+         Current_Line.Context := Unit_Modified;
+      end if;
+   end Comment;
 
    ---------------------
    -- Get_Files_Names --
@@ -3562,12 +3931,13 @@ package body Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
-      New_Str      : GNAT.OS_Lib.String_Access;
-      Line_Cursor  : File_Cursor;
-      Space_Cursor : File_Cursor;
-      Word         : Word_Cursor;
-      Length       : Integer;
-      New_Pos      : Word_Cursor;
+      New_Str         : GNAT.OS_Lib.String_Access;
+      Line_Cursor     : File_Cursor;
+      Space_Cursor    : File_Cursor;
+      Word            : Word_Cursor;
+      Length          : Integer;
+      New_Pos         : Word_Cursor;
+      Word_Char_Index : Char_Index;
    begin
       Make_Word_Cursor (This.Word, Current_Text, Word);
       Make_Word_Cursor (This.New_Position, Current_Text, New_Pos);
@@ -3575,12 +3945,15 @@ package body Codefix.Text_Manager is
       Line_Cursor := Clone (File_Cursor (New_Pos));
       Line_Cursor.Col := 1;
 
+      Word_Char_Index :=
+        To_Char_Index (Word.Col, Get_Line (Current_Text, Line_Cursor));
+
       case Word.Mode is
          when Regular_Expression =>
             Get_Line (Current_Text, File_Cursor (Word), New_Extract);
             declare
                Str : constant String :=
-                 Get_String (New_Extract, Get_Column (Word));
+                 Get_String (New_Extract, Get_Line (Word));
             begin
                Length := Get_Word_Length
                  (New_Extract, Word, Word.String_Match.all);
@@ -3598,18 +3971,17 @@ package body Codefix.Text_Manager is
             Space_Cursor := Clone (File_Cursor (New_Pos));
             Space_Cursor.Col := Space_Cursor.Col - 1;
 
-            if Word.Col > 1
-              and then not Is_Separator
-                (Get (Current_Text, Space_Cursor, 1) (Space_Cursor.Col))
+            if Word_Char_Index > 1
+              and then not Is_Separator (Get (Current_Text, Space_Cursor))
             then
                Assign (New_Str, " " & New_Str.all);
             end if;
 
             Space_Cursor.Col := Space_Cursor.Col + 1;
 
-            if Word.Col < Line_Length (Current_Text, Line_Cursor)
-              and then not Is_Separator
-                (Get (Current_Text, Space_Cursor, 1) (Space_Cursor.Col))
+            if Natural (Word_Char_Index) <
+              Line_Length (Current_Text, Line_Cursor)
+              and then not Is_Separator (Get (Current_Text, Space_Cursor))
             then
                Assign (New_Str, New_Str.all & " ");
             end if;
@@ -3863,7 +4235,7 @@ package body Codefix.Text_Manager is
    -- Get_Column --
    ----------------
 
-   function Get_Column (This : Text_Cursor) return Integer is
+   function Get_Column (This : Text_Cursor) return Column_Index is
    begin
       return This.Col;
    end Get_Column;
@@ -3893,7 +4265,7 @@ package body Codefix.Text_Manager is
    ------------------
 
    procedure Set_Location
-     (This : in out Text_Cursor; Line, Column : Integer) is
+     (This : in out Text_Cursor; Line : Natural; Column : Column_Index) is
    begin
       This.Line := Line;
       This.Col := Column;
@@ -3924,5 +4296,18 @@ package body Codefix.Text_Manager is
       end if;
       Word.Mode := Mode;
    end Set_Word;
+
+   --------------
+   -- Get_Word --
+   --------------
+
+   function Get_Word (Word : Word_Cursor) return String is
+   begin
+      if Word.String_Match = null then
+         return "";
+      else
+         return Word.String_Match.all;
+      end if;
+   end Get_Word;
 
 end Codefix.Text_Manager;
