@@ -681,6 +681,21 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'pckg is already use_visible"
 
+   type Use_Valid_Instead is new Error_Parser
+     (new String'("Useless_Statement"), 1)
+   with null record;
+
+   procedure Initialize (This : in out Use_Valid_Instead);
+
+   procedure Fix
+     (This         : Use_Valid_Instead;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'use 'Valid attribute instead"
+
    type Should_Be_In is new Error_Parser
      (new String'("Wrong_Indentation"), 1)
    with null record;
