@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2002-2006                    --
---                                AdaCore                            --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,11 +23,25 @@ with GNAT.OS_Lib;
 
 package Codefix.Text_Manager.Ada_Extracts is
 
+   type Remove_Code_Mode is (Erase, Comment);
+
    ----------------------------------------------------------------------------
    --  type Ada_Instruction
    ----------------------------------------------------------------------------
 
+   subtype Delimiters_Array is String_Array;
+
+   Default_Delimiters : Delimiters_Array :=
+     (new String'("declare"),
+      new String'("begin"),
+      new String'("is"),
+      new String'(";"),
+      new String'("then"),
+      new String'("loop"));
+
    type Ada_Instruction is new Extract with private;
+   --  This type represents an Ada instruction, or a part of an
+   --  ada instructions.
 
    procedure Free (This : in out Ada_Instruction);
    --  Free the memory associated to an Ada_Instruction.
@@ -35,9 +49,15 @@ package Codefix.Text_Manager.Ada_Extracts is
    procedure Get_Unit
      (Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
-      Destination  : in out Ada_Instruction);
+      Destination  : in out Ada_Instruction;
+      Delimiters   : Delimiters_Array := Default_Delimiters);
    --  Initialise Destination considerate that position is on a random position
-   --  in an instruction.
+   --  in an instruction. If the unit is on one of the delimiters, then it will
+   --  begins at the given position, otherwise it will go backward until it
+   --  finds one. It will then go forward until it finds another delimiter.
+   --  The first delimiter is not store, the last is, and the begining or the
+   --  end of the file stops the analysis and puts all the founded delimiters
+   --  into the instruction.
 
    function Clone (This : Ada_Instruction) return Ada_Instruction;
    --  Duplicate all informations associated to an extract, specially
@@ -45,6 +65,9 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Remove_Instruction (This : in out Ada_Instruction);
    --  Delete the instruction recored in This.
+
+   procedure Comment_Instruction (This : in out Ada_Instruction);
+   --  Comment the instruction recorded in This.
 
    function Get_Start (This : Ada_Instruction) return File_Cursor;
    --  Return the cursor stands at the beginning of the instruction/
@@ -57,6 +80,7 @@ package Codefix.Text_Manager.Ada_Extracts is
    ----------------------------------------------------------------------------
 
    type Ada_List is new Ada_Instruction with private;
+   --  This type is a representation of an Ada_Instruction as a list of Tokens.
 
    procedure Free (This : in out Ada_List);
    --  Free the memory associated to an Ada_List.
@@ -64,7 +88,8 @@ package Codefix.Text_Manager.Ada_Extracts is
    procedure Get_Unit
      (Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
-      Destination  : in out Ada_List);
+      Destination  : in out Ada_List;
+      Delimiters   : Delimiters_Array := Default_Delimiters);
    --  Initialise Destination considerate that position is on a random position
    --  in an list (typically a with / use list or a multiple vars declaration).
 
@@ -93,13 +118,21 @@ package Codefix.Text_Manager.Ada_Extracts is
    function Get_Number_Of_Elements (This : Ada_List) return Natural;
    --  Return the number of token contained in the list, including ','.
 
+   function Get_Number_Of_Declarations (This : Ada_List) return Natural;
+   --  Return the number of entities actually declared in this list.
+
    procedure Remove_Elements
-     (This  : in out Ada_List; First : Natural; Last : Natural := 0);
+     (This  : in out Ada_List;
+      Mode : Remove_Code_Mode;
+      First : Natural; Last : Natural := 0);
    --  Remove elements form form First to Last. If Last = 0 then only First
    --  will be removed.
 
    procedure Remove_Elements
-     (This  : in out Ada_List; First : String; Last : String := "");
+     (This  : in out Ada_List;
+      Mode  : Remove_Code_Mode;
+      First : String;
+      Last : String := "");
    --  Remove elements form form First to Last. If Last = 0 then only First
    --  will be removed.
 
@@ -122,7 +155,8 @@ private
 
    type Token_Record is record
       Line                : Ptr_Extract_Line;
-      First_Col, Last_Col : Natural := 0;
+      First_Char, Last_Char : Char_Index := 0;
+      First_Col, Last_Col : Column_Index := 0;
       Content             : GNAT.OS_Lib.String_Access;
       Is_Separator        : Boolean;
    end record;
@@ -135,9 +169,9 @@ private
    use Tokens_List;
 
    procedure Get_Token
-     (Line      : Ptr_Extract_Line;
-      Col       : in out Integer;
-      Token     : out Token_Record);
+     (Line  : Ptr_Extract_Line;
+      Index : in out Char_Index;
+      Token : out Token_Record);
 
    type Ada_List is new Ada_Instruction with record
       Elements_List : Tokens_List.List;
@@ -149,8 +183,5 @@ private
 
    function Get_Element (This : Ada_List; Num : Natural)
      return Tokens_List.List_Node;
-
-   procedure Update_Deletion
-     (This : in out Ada_List; Token_Deleted : Token_Record);
 
 end Codefix.Text_Manager.Ada_Extracts;
