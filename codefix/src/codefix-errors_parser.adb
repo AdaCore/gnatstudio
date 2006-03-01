@@ -18,12 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel; use GPS.Kernel;
-with Language;   use Language;
-with Traces;     use Traces;
+with GPS.Kernel;             use GPS.Kernel;
+with Language;               use Language;
+with Traces;                 use Traces;
+with Codefix_Module;         use Codefix_Module;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body Codefix.Errors_Parser is
    Me : constant Debug_Handle := Create ("Codefix");
+
+   use Codefix_Module.Codefix_Remove_Policy_Properties;
 
    -------------------
    -- Get_Solutions --
@@ -38,8 +42,27 @@ package body Codefix.Errors_Parser is
    is
       Current_Node : Parser_List.List_Node;
       Success      : Boolean := False;
+
+      --  ??? This is used temporary to workaround tab problems, will be
+      --  removed as soon as GPS commands properly handles tabulations
+      Workaround_Message : Error_Message := Clone (Message);
+      Line_Cursor        : File_Cursor;
    begin
       Current_Node := First (General_Parse_List);
+
+      Set_File (Line_Cursor, Get_File (Message));
+      Set_Location (Line_Cursor, Get_Line (Message), 1);
+
+      Set_Location
+        (Workaround_Message,
+         Get_Line (Message),
+         Column_Index (To_Char_Index_Workaround
+           (Get_Column (Message), Get_Line (Current_Text, Line_Cursor))));
+
+      Put_Line ("MESSAGE IS "
+        & Integer'Image (Get_Line (Workaround_Message))
+                & Column_Index'Image (Get_Column (Workaround_Message))
+                & " " & Get_Message (Workaround_Message));
 
       while Current_Node /= Parser_List.Null_Node loop
          if Get_Error_State
@@ -50,7 +73,7 @@ package body Codefix.Errors_Parser is
               (Data (Current_Node).all,
                Errors_List,
                Current_Text,
-               Message,
+               Workaround_Message,
                Solutions,
                Success);
          end if;
@@ -740,7 +763,7 @@ package body Codefix.Errors_Parser is
       Set_Location
         (Declaration_Cursor,
          Line   => Get_Line (Declaration_Cursor),
-         Column => Col_Matches (1).Last + 1);
+         Column => Column_Index (Col_Matches (1).Last) + 1);
 
       Solutions := Expected (Current_Text, Declaration_Cursor, "all");
 
@@ -858,7 +881,9 @@ package body Codefix.Errors_Parser is
              Get_Line (Current_Text, Line_Cursor),
              Col_Matches);
       Set_Location
-        (New_Message, Get_Line (New_Message), Col_Matches (1).Last + 1);
+        (New_Message,
+         Get_Line (New_Message),
+         Column_Index (Col_Matches (1).Last) + 1);
 
       Solutions := Expected
         (Current_Text,
@@ -1134,6 +1159,64 @@ package body Codefix.Errors_Parser is
       Solutions := Remove_Use_Clause (Current_Text, Message);
    end Fix;
 
+   -----------------------
+   -- Use_Valid_Instead --
+   -----------------------
+
+   procedure Initialize (This : in out Use_Valid_Instead) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("use 'Valid attribute instead")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Use_Valid_Instead;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List, Matches);
+
+      Begin_Cursor : File_Cursor := File_Cursor (Message);
+   begin
+      Set_Location (Begin_Cursor, Get_Line (Begin_Cursor), 1);
+
+      declare
+         Line       : constant String := Get_Line (Current_Text, Begin_Cursor);
+         Real_Begin : Column_Index := Get_Column (Message) - 1;
+         Real_Begin_Char_Index : constant Char_Index :=
+           To_Char_Index (Real_Begin, Line);
+      begin
+         while Real_Begin > 1
+           and then Is_Separator (Line (Natural (Real_Begin_Char_Index)))
+         loop
+            Real_Begin := Real_Begin - 1;
+         end loop;
+
+         if not Is_Separator (Line (Natural (Real_Begin_Char_Index))) then
+            Set_Location
+              (Begin_Cursor,
+               Get_Line (Begin_Cursor),
+               Real_Begin + 1);
+         else
+            Set_Location
+              (Begin_Cursor,
+               Get_Line (Begin_Cursor),
+               Get_Column (Message));
+         end if;
+
+         if Get (Current_Text, Message, 3) /= "not" then
+            Solutions := Replace_Code_By
+              (Begin_Cursor, "^([\s]+in[\s]+([\w\.])+)", "'Valid");
+         else
+            raise Uncorrectable_Message;
+         end if;
+      end;
+   end Fix;
+
    ------------------
    -- Should_Be_In --
    ------------------
@@ -1157,7 +1240,7 @@ package body Codefix.Errors_Parser is
       Solutions := Wrong_Column
         (Current_Text,
          Message,
-         Integer'Value (Get_Message (Message)
+         Column_Index'Value (Get_Message (Message)
                           (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
@@ -1322,27 +1405,35 @@ package body Codefix.Errors_Parser is
    begin
       if First_Word = "procedure" then
          Category := Cat_Procedure;
-         Operation_Mask := Remove_Entity or Add_Pragma_Unreferenced;
+         Operation_Mask := Policy_To_Operations
+           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
+           or Add_Pragma_Unreferenced;
       elsif First_Word = "function" then
          Category := Cat_Function;
-         Operation_Mask := Remove_Entity or Add_Pragma_Unreferenced;
+         Operation_Mask := Policy_To_Operations
+           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
+           or Add_Pragma_Unreferenced;
       elsif First_Word = "variable" then
          Category := Cat_Variable;
-         Operation_Mask := Remove_Entity or Nothing;
+         Operation_Mask := Policy_To_Operations
+           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)));
       elsif First_Word = "constant"
         or else First_Word = "named number"
       then
          Category := Cat_Variable;
-         Operation_Mask := Remove_Entity or Nothing;
+         Operation_Mask := Policy_To_Operations
+           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)));
       elsif First_Word = "parameter" then
          Category := Cat_Parameter;
-         Operation_Mask := Add_Pragma_Unreferenced or Nothing;
+         Operation_Mask := Add_Pragma_Unreferenced;
       elsif First_Word = "literal" then
          Category := Cat_Literal;
-         Operation_Mask := Add_Pragma_Unreferenced or Nothing;
+         Operation_Mask := Add_Pragma_Unreferenced;
       elsif First_Word = "type" then
          Category := Cat_Type;
-         Operation_Mask := Add_Pragma_Unreferenced or Remove_Entity;
+         Operation_Mask := Policy_To_Operations
+           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
+           or Add_Pragma_Unreferenced;
       end if;
 
       begin
@@ -1392,7 +1483,8 @@ package body Codefix.Errors_Parser is
          Message,
          Cat_With,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-         Remove_Entity or Nothing);
+         Policy_To_Operations
+           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy))));
    end Fix;
 
    ----------------
@@ -1421,7 +1513,8 @@ package body Codefix.Errors_Parser is
          Message,
          Cat_Variable,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-         Add_Pragma_Unreferenced or Nothing);
+         Policy_To_Operations
+           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy))));
    end Fix;
 
    --------------------
@@ -1465,7 +1558,8 @@ package body Codefix.Errors_Parser is
             Message,
             Cat_Variable,
             Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            Remove_Entity or Nothing);
+            Policy_To_Operations
+              (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy))));
       else
          raise Uncorrectable_Message;
       end if;
