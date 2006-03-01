@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2005                    --
+--                        Copyright (C) 2002-2006                    --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -50,10 +50,11 @@ package Codefix.Formal_Errors is
    --  Parses an error message from the tool based on the regular expression
 
    procedure Initialize
-     (This      : in out Error_Message;
-      File      : VFS.Virtual_File;
-      Line, Col : Positive;
-      Message   : String);
+     (This    : in out Error_Message;
+      File    : VFS.Virtual_File;
+      Line    : Positive;
+      Col     : Column_Index;
+      Message : String);
    --  Store the contents of an error message, after it has been parsed
 
    function Get_Message (This : Error_Message) return String;
@@ -138,7 +139,7 @@ package Codefix.Formal_Errors is
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : File_Cursor'Class;
-      Column_Expected : Natural := 0) return Solution_List;
+      Column_Expected : Column_Index := 0) return Solution_List;
    --  Try re-indent the line
 
    function With_Clause_Missing
@@ -216,6 +217,16 @@ package Codefix.Formal_Errors is
       Seek_With     : Boolean) return Solution_List;
    --  Propose to add a use or to prefix the object.
 
+   function Replace_Code_By
+     (Start_Cursor : File_Cursor'Class;
+      Replaced_Exp : String;
+      New_String   : String) return Solution_List;
+   --  Propose to replace the Replaced_Exp from Current_Text starting at
+   --  Start_Cursor by New_String
+
+   function Clone (This : Error_Message) return Error_Message;
+   --  Duplicate all the information used in Error_Message, specially the
+   --  object referenced in.
 
 private
 
@@ -223,10 +234,6 @@ private
       Message : GNAT.OS_Lib.String_Access;
       Is_Style, Is_Warning : Boolean := False;
    end record;
-
-   function Clone (This : Error_Message) return Error_Message;
-   --  Duplicate all the information used in Error_Message, specially the
-   --  object referenced in.
 
    Invalid_Error_Message : constant Error_Message :=
       (Null_File_Cursor with null, False, False);
