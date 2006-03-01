@@ -290,7 +290,7 @@ package body Codefix_Module is
          Category      => Session.Category.all,
          File          => Get_File (Err),
          Line          => Get_Line (Err),
-         Column        => Get_Column (Err),
+         Column        => Natural (Get_Column (Err)),
          Message       => Get_Message (Err));
 
    exception
@@ -561,7 +561,7 @@ package body Codefix_Module is
          Category   => Session.Category.all,
          File       => Get_File (Err),
          Line       => Get_Line (Err),
-         Column     => Get_Column (Err),
+         Column     => Natural (Get_Column (Err)),
          Message    => Get_Message (Err));
    end Remove_Pixmap;
 
@@ -599,7 +599,7 @@ package body Codefix_Module is
          Category      => Session.Category.all,
          File          => Get_File (Err),
          Line          => Get_Line (Err),
-         Column        => Get_Column (Err),
+         Column        => Natural (Get_Column (Err)),
          Message       => Get_Message (Err),
          Action        => New_Action);
    end Create_Pixmap_And_Category;
@@ -642,7 +642,7 @@ package body Codefix_Module is
            (Session.Corrector.all,
             File    => File_Information (Context),
             Line    => Line_Information (Context),
-            Column  => Column_Information (Context),
+            Column  => Column_Index (Column_Information (Context)),
             Message => Message_Information (Context));
 
          if Error /= Null_Error_Id and then not Is_Fixed (Error) then
@@ -772,6 +772,7 @@ package body Codefix_Module is
       Add_Parser (new Kw_Not_Allowed);
       Add_Parser (new Sep_Not_Allowed);
       Add_Parser (new Already_Use_Visible);
+      Add_Parser (new Use_Valid_Instead);
       Add_Parser (new Should_Be_In);
       Add_Parser (new Bad_Column);
       Add_Parser (new Main_With_Missing);
@@ -823,7 +824,7 @@ package body Codefix_Module is
               (Session.Corrector.all,
                Get_Data (File),
                Get_Line (Location),
-               Get_Column (Location), Message);
+               Column_Index (Get_Column (Location)), Message);
          begin
             if Error = Null_Error_Id then
                Set_Error_Msg (Data, -"No fixable error at that location");
@@ -893,7 +894,7 @@ package body Codefix_Module is
                  (Get_Script (Data),
                   File   => Create_File (Get_Script (Data), Get_File (Msg)),
                   Line   => Get_Line (Msg),
-                  Column => Get_Column (Msg)));
+                  Column => Natural (Get_Column (Msg))));
          end;
 
       end if;
