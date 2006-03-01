@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2003-2006                    --
+--                                 AdaCore                           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -66,6 +66,12 @@ package Codefix.GPS_Io is
    --  Get Len characters from the file and the position specified by the
    --  cursor.
 
+   function Get
+     (This   : Console_Interface;
+      Cursor : Text_Cursor'Class) return Character;
+   --  Get the character from the file and the position specified by the
+   --  cursor.
+
    function Get_Line
      (This   : Console_Interface;
       Cursor : Text_Cursor'Class) return String;
@@ -119,8 +125,6 @@ package Codefix.GPS_Io is
 
    procedure Constrain_Update (This : in out Console_Interface);
    --  Set the text to modified state.
-
-
 
    type Compilation_Output is new Errors_Interface with private;
    --  This type is an interface to the list of compilation errors that the
