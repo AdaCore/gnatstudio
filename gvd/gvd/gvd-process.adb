@@ -1669,8 +1669,27 @@ package body GVD.Process is
       First           : Natural := Lowered_Command'First;
       Data            : History_Data;
 
+      function Check (S : String) return String;
+      --  Check validity of debugger command S, and modify it if needed
+
       procedure Pre_User_Command;
       --  Handle all the set up for a user command (logs, history, ...)
+
+      function Check (S : String) return String is
+      begin
+         --  ??? Should forbid commands that modify the configuration of the
+         --  debugger, like "set annotate" for gdb, otherwise we can't be sure
+         --  what to expect from the debugger.
+
+         if S'Length = 0 then
+            return "";
+         elsif S (S'Last) = '\' then
+            --  Strip trailing '\' which will block GPS
+            return S (S'First .. S'Last - 1);
+         else
+            return S;
+         end if;
+      end Check;
 
       procedure Pre_User_Command is
       begin
@@ -1716,7 +1735,7 @@ package body GVD.Process is
 
          Set_Busy (Debugger, False);
 
-      elsif Lowered_Command'Length <= Quit_String'Length
+      elsif Lowered_Command'Length in 4 .. Quit_String'Length
         and then Lowered_Command = Quit_String (1 .. Lowered_Command'Length)
       then
          if Command_In_Process (Get_Process (Debugger.Debugger))
@@ -1744,9 +1763,9 @@ package body GVD.Process is
          then
             Send
               (Debugger.Debugger,
-               Command, Wait_For_Prompt => False, Mode => Mode);
+               Check (Command), Wait_For_Prompt => False, Mode => Mode);
          else
-            Send (Debugger.Debugger, Command, Mode => Mode);
+            Send (Debugger.Debugger, Check (Command), Mode => Mode);
          end if;
       end if;
    end Process_User_Command;
