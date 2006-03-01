@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2003                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -178,7 +178,6 @@ package body Codefix.Merge_Utils is
          end if;
       end loop;
 
-
       while not Is_Null (It_1) loop
          Append (Internal_Result, Clone (Data (It_1)));
          It_1 := Next (It_1);
@@ -198,7 +197,7 @@ package body Codefix.Merge_Utils is
    ------------
 
    procedure Delete
-     (This : in out Mergable_String; Start : Natural; Len : Natural := 0)
+     (This : in out Mergable_String; Start : Char_Index; Len : Natural := 0)
    is
       Position   : constant Natural := Get_Array_Position (This, Start);
       Offset     : Natural := 0;
@@ -240,12 +239,19 @@ package body Codefix.Merge_Utils is
       end loop;
    end Delete;
 
+   procedure Delete
+     (This : in out Mergable_String; Start : Column_Index; Len : Natural := 0)
+   is
+   begin
+      Delete (This,  To_Char_Index (Start, To_String (This)), Len);
+   end Delete;
+
    ------------
    -- Insert --
    ------------
 
    procedure Insert
-     (This : in out Mergable_String; Start : Natural; Value : String)
+     (This : in out Mergable_String; Start : Char_Index; Value : String)
    is
       Insertion_Array : constant Merge_Array (Value'Range) :=
         (others => Unit_Created);
@@ -276,12 +282,18 @@ package body Codefix.Merge_Utils is
       This.Infos := New_Infos;
    end Insert;
 
+   procedure Insert
+     (This : in out Mergable_String; Start : Column_Index; Value : String) is
+   begin
+      Insert (This, To_Char_Index (Start, To_String (This)), Value);
+   end Insert;
+
    ------------
    -- Modify --
    ------------
 
    procedure Modify
-     (This : in out Mergable_String; Start : Natural; Value : String)
+     (This : in out Mergable_String; Start : Char_Index; Value : String)
    is
       Position : Natural := Get_Array_Position (This, Start);
    begin
@@ -299,22 +311,44 @@ package body Codefix.Merge_Utils is
       end loop;
    end Modify;
 
+   procedure Modify
+     (This : in out Mergable_String; Start : Column_Index; Value : String) is
+   begin
+      Modify (This, To_Char_Index (Start, To_String (This)), Value);
+   end Modify;
+
    -------------
    -- Replace --
    -------------
 
    procedure Replace
-     (This : in out Mergable_String; Start, Len : Natural; Value : String) is
+     (This  : in out Mergable_String;
+      Start : Char_Index;
+      Len   : Natural;
+      Value : String) is
    begin
       if Len > Value'Length then
          Modify (This, Start, Value);
          Delete (This, Start + Value'Length, Len - Value'Length);
       elsif Len < Value'Length then
          Modify (This, Start, Value (Value'First .. Value'First + Len - 1));
-         Insert (This, Start + Len, Value (Value'First + Len .. Value'Last));
+         Insert
+           (This,
+            Start + Char_Index (Len),
+            Value (Value'First + Len .. Value'Last));
       else
          Modify (This, Start, Value);
       end if;
+   end Replace;
+
+   procedure Replace
+     (This  : in out Mergable_String;
+      Start : Column_Index;
+      Len   : Natural;
+      Value : String)
+   is
+   begin
+      Replace (This, To_Char_Index (Start, To_String (This)), Len, Value);
    end Replace;
 
    ------------------
@@ -573,7 +607,7 @@ package body Codefix.Merge_Utils is
    ------------------------
 
    function Get_Array_Position
-     (Str : Mergable_String; Position : Natural) return Natural
+     (Str : Mergable_String; Position : Char_Index) return Natural
    is
       Existent_Chars : Natural := 0;
    begin
@@ -582,7 +616,7 @@ package body Codefix.Merge_Utils is
             Existent_Chars := Existent_Chars + 1;
          end if;
 
-         if Existent_Chars = Position then
+         if Existent_Chars = Natural (Position) - Str.Infos'First + 1 then
             return J;
          end if;
       end loop;
@@ -628,10 +662,10 @@ package body Codefix.Merge_Utils is
    -- Reset --
    -----------
 
-   procedure Reset (This : in out Mask_Iterator) is
+   procedure Reset (This : in out Mask_Iterator; Str : Mergable_String) is
    begin
-      This.Info_Index := 1;
-      This.Real_Index := 1;
+      This.Info_Index := Str.Infos'First;
+      This.Real_Index := Str.Infos'First;
    end Reset;
 
    -------------------
@@ -641,7 +675,8 @@ package body Codefix.Merge_Utils is
    procedure Get_Next_Area
      (This       : Mergable_String;
       It         : in out Mask_Iterator;
-      Start, Len : out Natural;
+      Start      : out Char_Index;
+      Len        : out Natural;
       Info       : out Merge_Info) is
    begin
 
@@ -651,7 +686,7 @@ package body Codefix.Merge_Utils is
          return;
       end if;
 
-      Start := It.Real_Index;
+      Start := Char_Index (It.Real_Index);
       Info := This.Infos (It.Info_Index);
 
       case Info is
