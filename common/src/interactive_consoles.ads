@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -247,6 +247,9 @@ private
 
       Waiting_For_Input : Boolean := False;
       --  Whether the console is blocked in a call to readline()
+
+      Command_Received : Boolean := False;
+      --  Whether the console has received a first command yet
    end record;
 
 end Interactive_Consoles;
