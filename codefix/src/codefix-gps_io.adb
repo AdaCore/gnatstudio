@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2002-2006                    --
---                                AdaCore                            --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -51,18 +51,32 @@ package body Codefix.GPS_Io is
      (Current_Text : Console_Interface;
       Cursor       : File_Cursor'Class) return Mark_Abstr'Class
    is
-      Result : GPS_Mark;
-      Args   : Argument_List :=
-        (1 => new String'(Full_Name (Get_File (Cursor)).all),
-         2 => new String'(Image (Get_Line (Cursor))),
-         3 => new String'(Image (Get_Column (Cursor))),
-         4 => new String'("0"));
+      Line_Cursor : Text_Cursor;
+      Workaround_Column : Column_Index;
    begin
-      Result.Id := new String'
-        (Execute_GPS_Shell_Command
-           (Current_Text.Kernel, "Editor.create_mark", Args));
-      Free (Args);
-      return Result;
+      --  ??? This is a temporary workaround, this has to be changed as soon
+      --  as GPS shell commands handles tabs properly
+      Set_Location (Line_Cursor, Get_Line (Cursor), 1);
+
+      Workaround_Column := To_Column_Index_Workaround
+        (Char_Index (Get_Column (Cursor)),
+         Get_Line (Current_Text, Line_Cursor));
+
+      declare
+         Result : GPS_Mark;
+         Args   : Argument_List :=
+           (1 => new String'(Full_Name (Get_File (Cursor)).all),
+            2 => new String'(Image (Get_Line (Cursor))),
+--              3 => new String'(Image (Natural (Get_Column (Cursor)))),
+            3 => new String'(Image (Natural (Workaround_Column))),
+            4 => new String'("0"));
+      begin
+         Result.Id := new String'
+           (Execute_GPS_Shell_Command
+              (Current_Text.Kernel, "Editor.create_mark", Args));
+         Free (Args);
+         return Result;
+      end;
    end Get_New_Mark;
 
    ------------------------
@@ -85,9 +99,21 @@ package body Codefix.GPS_Io is
          Line : constant String := Execute_GPS_Shell_Command
            (Current_Text.Kernel, "Editor.get_line", Args);
 
+         Line_Cursor       : Text_Cursor;
+         Workaround_Column : Column_Index;
       begin
+         --  ??? This is a temporary workaround, this has to be changed as soon
+         --  as GPS shell commands handles tabs properly
+         Set_Location (Line_Cursor, Integer'Value (Line), 1);
+         Workaround_Column := Column_Index (To_Char_Index_Workaround
+           (Column_Index'Value (Column),
+            Get_Line (Current_Text, Line_Cursor)));
+
          Set_Location
-           (New_Cursor, Natural'Value (Line), Natural'Value (Column));
+           (New_Cursor,
+            Natural'Value (Line),
+--              Column_Index'Value (Column));
+            Workaround_Column);
 
       exception
          when Constraint_Error =>
@@ -147,10 +173,29 @@ package body Codefix.GPS_Io is
    function Get
      (This   : Console_Interface;
       Cursor : Text_Cursor'Class;
-      Len    : Natural) return String is
+      Len    : Natural) return String
+   is
+      Line : constant String := Get_Recorded_Line (This, Get_Line (Cursor));
+      Char_Ind : constant Char_Index :=
+        To_Char_Index (Get_Column (Cursor), Line);
    begin
-      return Get_Recorded_Line (This, Get_Line (Cursor))
-        (Get_Column (Cursor) .. Get_Column (Cursor) + Len - 1);
+      return Line
+        (Natural (Char_Ind) .. Natural (Char_Ind) + Len - 1);
+   end Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (This   : Console_Interface;
+      Cursor : Text_Cursor'Class) return Character
+   is
+      Line : constant String := Get_Recorded_Line (This, Get_Line (Cursor));
+      Char_Ind : constant Char_Index :=
+        To_Char_Index (Get_Column (Cursor), Line);
+   begin
+      return Line (Natural (Char_Ind));
    end Get;
 
    --------------
@@ -162,8 +207,10 @@ package body Codefix.GPS_Io is
       Cursor : Text_Cursor'Class) return String
    is
       Line : constant String := Get_Recorded_Line (This, Get_Line (Cursor));
+      Char_Ind : constant Char_Index :=
+        To_Char_Index (Get_Column (Cursor), Line);
    begin
-      return Line (Get_Column (Cursor) .. Line'Last);
+      return Line (Natural (Char_Ind) .. Line'Last);
    end Get_Line;
 
    -----------------------
@@ -209,7 +256,7 @@ package body Codefix.GPS_Io is
             Args : Argument_List :=
               (1 => new String'(Full_Name (Get_File_Name (This)).all),
                2 => new String'(Image (Get_Line (Cursor))),
-               3 => new String'(Image (Get_Column (Cursor))),
+               3 => new String'(Image (Natural (Get_Column (Cursor)))),
                4 => new String'(New_Value),
                5 => new String'("0"),           --  before
                6 => new String'(Image (Len)));  --  after
@@ -266,7 +313,9 @@ package body Codefix.GPS_Io is
       else
          Line_Str := new String'(Get_Line (This, Insert_Position));
          Set_Location
-           (Insert_Position, Get_Line (Insert_Position), Line_Str'Last + 1);
+           (Insert_Position,
+            Get_Line (Insert_Position),
+            To_Column_Index (Char_Index (Line_Str'Last), Line_Str.all) + 1);
          Replace (This, Insert_Position, 0, EOL_Str & New_Line);
          Free (Line_Str);
       end if;
@@ -283,7 +332,7 @@ package body Codefix.GPS_Io is
       Args : Argument_List :=
         (1 => new String'(Full_Name (Get_File_Name (This)).all),
          2 => new String'(Image (Get_Line (Cursor))),
-         3 => new String'(Image (Get_Column (Cursor))),
+         3 => new String'(Image (Natural (Get_Column (Cursor)))),
          4 => new String'(""));  --  replacement text
       S : constant String :=
         Execute_GPS_Shell_Command (This.Kernel, "Editor.replace_text", Args);
