@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2002-2006                    --
---                                AdaCore                            --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -72,6 +72,13 @@ package Codefix.Text_Manager.Ada_Commands is
    -------------------------
 
    type Remove_Elements_Cmd is new Text_Command with private;
+   --  This type is used to store a list of element that have to be removed.
+   --  The default behavior of this class is to erase the elements, but it can
+   --  be changed to just comment them.
+
+   procedure Set_Remove_Mode
+     (This : in out Remove_Elements_Cmd; Mode : Remove_Code_Mode);
+   --  Sets the mode for the removal of elements.
 
    procedure Add_To_Remove
      (This         : in out Remove_Elements_Cmd;
@@ -124,7 +131,8 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Start_Entity : File_Cursor'Class);
+      Start_Entity : File_Cursor'Class;
+      Mode         : Remove_Code_Mode := Erase);
    --  Set all the marks that will be needed to remove the entity later.
 
    procedure Execute
@@ -255,6 +263,25 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Get_Visible_Declaration_Cmd);
    --  Free the memory associated to a Get_Visible_Declaration.
 
+   -------------------------
+   -- Replace_Code_By_Cmd --
+   -------------------------
+
+   type Replace_Code_By_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Replace_Code_By_Cmd;
+      Start_Cursor : File_Cursor'Class;
+      Replaced_Exp : String;
+      New_String   : String);
+
+   procedure Execute
+     (This         : Replace_Code_By_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class);
+
+   procedure Free (This : in out Replace_Code_By_Cmd);
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -275,6 +302,7 @@ private
 
    type Remove_Elements_Cmd is new Text_Command with record
       Remove_List : Mark_List.List;
+      Mode        : Remove_Code_Mode := Erase;
    end record;
 
    package String_List is new Generic_List (GNAT.OS_Lib.String_Access);
@@ -292,6 +320,7 @@ private
    type Remove_Entity_Cmd is new Text_Command with record
       Spec_Begin, Spec_End : Ptr_Mark;
       Body_Begin, Body_End : Ptr_Mark;
+      Mode                 : Remove_Code_Mode := Erase;
    end record;
 
    type Add_Pragma_Cmd is new Text_Command with record
@@ -318,6 +347,12 @@ private
       Prefix_Obj          : Insert_Word_Cmd;
       Insert_With_Enabled : Boolean := False;
       Prefix_Obj_Enabled  : Boolean := False;
+   end record;
+
+   type Replace_Code_By_Cmd is new Text_Command with record
+      Start_Cursor : File_Cursor;
+      Replaced_Exp : GNAT.OS_Lib.String_Access;
+      New_String   : GNAT.OS_Lib.String_Access;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;
