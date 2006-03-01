@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2006                    --
+--                                AdaCore                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -46,7 +46,7 @@ package Codefix.Ada_Tools is
    function Is_In_Escape_Part
      (This     : Ada_Escape_Str;
       Text     : String;
-      Position : Natural) return Boolean;
+      Position : Char_Index) return Boolean;
    --  Return True if Position is in comments or between two quotes.
 
    Std_Ada_Escape : constant Ada_Escape_Str;
