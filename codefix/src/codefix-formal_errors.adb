@@ -23,8 +23,8 @@ with GNAT.Regpat;                       use GNAT.Regpat;
 
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
+with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with GPS.Kernel;                        use GPS.Kernel;
-with String_Utils;                      use String_Utils;
 with Traces;                            use Traces;
 with VFS;                               use VFS;
 
@@ -52,7 +52,8 @@ package body Codefix.Formal_Errors is
 
       declare
          Matches : Match_Array (0 .. Max_Index);
-         Line, Col : Integer;
+         Line    : Integer;
+         Col     : Column_Index;
       begin
          Match (Regexp, Error_Line, Matches);
 
@@ -77,7 +78,7 @@ package body Codefix.Formal_Errors is
          end if;
 
          if Matches (Col_Index) /= No_Match then
-            Col := Integer'Value
+            Col := Column_Index'Value
               (Error_Line
                  (Matches (Col_Index).First .. Matches (Col_Index).Last));
          else
@@ -111,10 +112,11 @@ package body Codefix.Formal_Errors is
    ----------------
 
    procedure Initialize
-     (This      : in out Error_Message;
-      File      : VFS.Virtual_File;
-      Line, Col : Positive;
-      Message   : String) is
+     (This    : in out Error_Message;
+      File    : VFS.Virtual_File;
+      Line    : Positive;
+      Col     : Column_Index;
+      Message : String) is
    begin
       Assign (This.Message, Message);
       Set_File (This, File);
@@ -290,7 +292,7 @@ package body Codefix.Formal_Errors is
          Set_Location (Second_Cursor, Line, 1);
       end loop;
 
-      Set_Location (Second_Cursor, Line, Matches (1).First);
+      Set_Location (Second_Cursor, Line, Column_Index (Matches (1).First));
 
       Set_File     (Word1, Get_File (Message));
       Set_Location (Word1, Get_Line (Message), Get_Column (Message));
@@ -380,12 +382,12 @@ package body Codefix.Formal_Errors is
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : File_Cursor'Class;
-      Column_Expected : Natural := 0) return Solution_List
+      Column_Expected : Column_Index := 0) return Solution_List
    is
-      function Closest (Size_Red : Positive) return Positive;
+      function Closest (Size_Red : Column_Index) return Column_Index;
       --  Return the closest indentation modulo Indentation_Width.
 
-      function Closest (Size_Red : Positive) return Positive is
+      function Closest (Size_Red : Column_Index) return Column_Index is
       begin
          case (Size_Red - 1) mod Indentation_Width is
             when 0 =>
@@ -405,7 +407,7 @@ package body Codefix.Formal_Errors is
 
       New_Command   : Replace_Word_Cmd;
       Result        : Solution_List;
-      Column_Chosen : Natural;
+      Column_Chosen : Column_Index;
       Word          : Word_Cursor;
 
    begin
@@ -421,7 +423,9 @@ package body Codefix.Formal_Errors is
       Set_Word (Word, "(^[\s]*)", Regular_Expression);
 
       declare
-         White_String : constant String (1 .. Column_Chosen - 1) :=
+         Char_Ind : constant Char_Index :=
+           To_Char_Index (Column_Chosen, Get_Line (Current_Text, Word));
+         White_String : constant String (1 .. Natural (Char_Ind) - 1) :=
            (others => ' ');
       begin
          Initialize
@@ -433,7 +437,8 @@ package body Codefix.Formal_Errors is
 
       Set_Caption
         (New_Command,
-         "Move begin of instruction to column " & Image (Column_Chosen));
+         "Move begin of instruction to column " &
+         Column_Index'Image (Column_Chosen));
       Append (Result, New_Command);
       Free (Word);
 
@@ -522,20 +527,29 @@ package body Codefix.Formal_Errors is
          New_Command  : Add_Pragma_Cmd;
          New_Position : File_Cursor;
          Declaration  : Construct_Information;
-         Col          : Natural;
+         Char_Ind     : Char_Index;
       begin
          Declaration := Get_Unit (Current_Text, Cursor);
-         Col := Declaration.Sloc_End.Column;
+         Char_Ind := Char_Index (Declaration.Sloc_End.Column);
 
          --  ??? This test is only here because the parser returns sometimes
          --  a Sloc_End.Col equal to 0.
 
-         if Col = 0 then
-            Col := 1;
+         if Char_Ind = 0 then
+            Char_Ind := 1;
          end if;
 
          Set_File (New_Position, Get_File (Cursor));
-         Set_Location (New_Position, Declaration.Sloc_End.Line, Col);
+         Set_Location (New_Position, Declaration.Sloc_End.Line, 1);
+
+         declare
+            Line : constant String := Get_Line (Current_Text, New_Position);
+         begin
+            Set_Location
+              (New_Position,
+               Declaration.Sloc_End.Line,
+               To_Column_Index (Char_Ind, Line));
+         end;
 
          Initialize
            (New_Command, Current_Text, New_Position, "Unreferenced", Name);
@@ -551,17 +565,26 @@ package body Codefix.Formal_Errors is
          New_Command  : Add_Pragma_Cmd;
          New_Position : File_Cursor;
          Declaration  : Construct_Information;
-         Col : Natural;
+         Char_Ind     : Char_Index;
       begin
          Declaration := Get_Unit (Current_Text, Cursor, Before, Cat_Type);
-         Col := Declaration.Sloc_End.Column;
+         Char_Ind := Char_Index (Declaration.Sloc_End.Column);
 
-         if Col = 0 then
-            Col := 1;
+         if Char_Ind = 0 then
+            Char_Ind := 1;
          end if;
 
          Set_File (New_Position, Get_File (Cursor));
-         Set_Location (New_Position, Declaration.Sloc_End.Line, Col);
+         Set_Location (New_Position, Declaration.Sloc_End.Line, 1);
+
+         declare
+            Line : constant String := Get_Line (Current_Text, New_Position);
+         begin
+            Set_Location
+              (New_Position,
+               Declaration.Sloc_End.Line,
+               To_Column_Index (Char_Ind, Line));
+         end;
 
          Initialize
            (New_Command, Current_Text, New_Position, "Unreferenced", Name);
@@ -583,7 +606,16 @@ package body Codefix.Formal_Errors is
 
          Set_File (New_Position, Get_File (Cursor));
          Set_Location (New_Position, Declaration.Sloc_Entity.Line,
-                       Declaration.Sloc_Entity.Column);
+                       1);
+
+         declare
+            Line : constant String := Get_Line (Current_Text, New_Position);
+         begin
+            Set_Location
+              (New_Position, Declaration.Sloc_Entity.Line,
+               To_Column_Index (Char_Index (Declaration.Sloc_Entity.Column),
+                 Line));
+         end;
 
          Garbage := New_Position;
          New_Position := File_Cursor
@@ -613,9 +645,10 @@ package body Codefix.Formal_Errors is
       case Category is
          when Cat_Variable =>
             declare
-               Delete_Command : Remove_Elements_Cmd;
-               Pragma_Command : Add_Pragma_Cmd;
-               Var_Cursor     : Word_Cursor;
+               Delete_Command  : Remove_Elements_Cmd;
+               Pragma_Command  : Add_Pragma_Cmd;
+               Comment_Command : Remove_Elements_Cmd;
+               Var_Cursor      : Word_Cursor;
             begin
                Set_File (Var_Cursor, Get_File (Cursor));
                Set_Location
@@ -623,9 +656,19 @@ package body Codefix.Formal_Errors is
                Set_Word (Var_Cursor, Name, Text_Ascii);
 
                if Is_Set (Operations, Remove_Entity) then
+                  Set_Remove_Mode (Delete_Command, Erase);
                   Add_To_Remove (Delete_Command, Current_Text, Var_Cursor);
                   Set_Caption (Delete_Command, "Delete """ & Name & """");
                   Append (Result, Delete_Command);
+               end if;
+
+               if Is_Set (Operations, Comment_Entity) then
+                  Set_Remove_Mode (Comment_Command, Comment);
+                  Add_To_Remove (Comment_Command, Current_Text, Var_Cursor);
+                  Set_Caption
+                    (Comment_Command,
+                     "Comment """ & Name & """");
+                  Append (Result, Comment_Command);
                end if;
 
                if Is_Set (Operations, Add_Pragma_Unreferenced) then
@@ -638,14 +681,25 @@ package body Codefix.Formal_Errors is
 
          when Cat_Function | Cat_Procedure =>
             declare
-               Delete_Command : Remove_Entity_Cmd;
-               Pragma_Command : Add_Pragma_Cmd;
+               Delete_Command  : Remove_Entity_Cmd;
+               Comment_Command : Remove_Entity_Cmd;
+               Pragma_Command  : Add_Pragma_Cmd;
             begin
-               Initialize (Delete_Command, Current_Text, Cursor);
-               Set_Caption
-                 (Delete_Command,
-                  "Delete subprogram """ & Name & """");
-               Append (Result, Delete_Command);
+               if Is_Set (Operations, Remove_Entity) then
+                  Initialize (Delete_Command, Current_Text, Cursor, Erase);
+                  Set_Caption
+                    (Delete_Command,
+                     "Delete subprogram """ & Name & """");
+                  Append (Result, Delete_Command);
+               end if;
+
+               if Is_Set (Operations, Comment_Entity) then
+                  Initialize (Comment_Command, Current_Text, Cursor, Comment);
+                  Set_Caption
+                    (Comment_Command,
+                     "Comment subprogram """ & Name & """");
+                  Append (Result, Comment_Command);
+               end if;
 
                Pragma_Command := Add_Pragma;
                Set_Caption
@@ -656,14 +710,25 @@ package body Codefix.Formal_Errors is
 
          when Cat_Type =>
             declare
-               Delete_Command : Remove_Entity_Cmd;
-               Pragma_Command : Add_Pragma_Cmd;
+               Delete_Command  : Remove_Entity_Cmd;
+               Comment_Command : Remove_Entity_Cmd;
+               Pragma_Command  : Add_Pragma_Cmd;
             begin
-               Initialize (Delete_Command, Current_Text, Cursor);
-               Set_Caption
-                 (Delete_Command,
-                  "Delete type """ & Name & """");
-               Append (Result, Delete_Command);
+               if Is_Set (Operations, Remove_Entity) then
+                  Initialize (Delete_Command, Current_Text, Cursor, Erase);
+                  Set_Caption
+                    (Delete_Command,
+                     "Delete type """ & Name & """");
+                  Append (Result, Delete_Command);
+               end if;
+
+               if Is_Set (Operations, Comment_Entity) then
+                  Initialize (Comment_Command, Current_Text, Cursor, Comment);
+                  Set_Caption
+                    (Comment_Command,
+                     "Comment type """ & Name & """");
+                  Append (Result, Comment_Command);
+               end if;
 
                Pragma_Command := Add_Pragma;
                Set_Caption
@@ -910,7 +975,18 @@ package body Codefix.Formal_Errors is
 
       Set_Location
         (Internal_Body_Cursor,
-         Body_Info.Sloc_Start.Line, Body_Info.Sloc_Start.Column);
+         Body_Info.Sloc_Start.Line,
+         1);
+
+      declare
+         Line : constant String :=
+           Get_Line (Current_Text, Internal_Body_Cursor);
+      begin
+         Set_Location
+           (Internal_Body_Cursor,
+            Body_Info.Sloc_Start.Line,
+            To_Column_Index (Char_Index (Body_Info.Sloc_Start.Column), Line));
+      end;
 
       Initialize (Command1, Current_Text, Internal_Body_Cursor, Spec_Cursor);
       Initialize (Command2, Current_Text, Spec_Cursor, Internal_Body_Cursor);
@@ -988,6 +1064,24 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Resolve_Unvisible_Declaration;
+
+   ---------------------
+   -- Replace_Code_By --
+   ---------------------
+
+   function Replace_Code_By
+     (Start_Cursor : File_Cursor'Class;
+      Replaced_Exp : String;
+      New_String   : String) return Solution_List
+   is
+      Result   : Solution_List;
+      Solution : Replace_Code_By_Cmd;
+   begin
+      Initialize (Solution, Start_Cursor, Replaced_Exp, New_String);
+      Append (Result, Solution);
+
+      return Result;
+   end Replace_Code_By;
 
    -------------------------
    -- Is_Style_Or_Warning --
