@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2006                    --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -104,20 +104,34 @@ package Codefix.Merge_Utils is
    type Mergable_String is private;
 
    procedure Delete
-     (This : in out Mergable_String; Start : Natural; Len : Natural := 0);
+     (This : in out Mergable_String; Start : Char_Index; Len : Natural := 0);
+   procedure Delete
+     (This : in out Mergable_String; Start : Column_Index; Len : Natural := 0);
    --  Delete len characters from Start. If Len = 0 then all characters from
    --  Start will be deleted.
 
    procedure Insert
-     (This : in out Mergable_String; Start : Natural; Value : String);
+     (This : in out Mergable_String; Start : Char_Index; Value : String);
+   procedure Insert
+     (This : in out Mergable_String; Start : Column_Index; Value : String);
    --  Insert Value on (means 'before') the Start Position.
 
    procedure Modify
-     (This : in out Mergable_String; Start : Natural; Value : String);
+     (This : in out Mergable_String; Start : Char_Index; Value : String);
+   procedure Modify
+     (This : in out Mergable_String; Start : Column_Index; Value : String);
    --  Modify an unresizable portion of text by Value.
 
    procedure Replace
-     (This : in out Mergable_String; Start, Len : Natural; Value : String);
+     (This  : in out Mergable_String;
+      Start : Char_Index;
+      Len   : Natural;
+      Value : String);
+   procedure Replace
+     (This  : in out Mergable_String;
+      Start : Column_Index;
+      Len   : Natural;
+      Value : String);
    --  Replace Len characters from Start column by value.
 
    procedure Merge_String
@@ -144,14 +158,15 @@ package Codefix.Merge_Utils is
 
    type Mask_Iterator is private;
 
-   procedure Reset (This : in out Mask_Iterator);
-   --  Initialize all fields of This at the beginning of mergeables strings>
+   procedure Reset (This : in out Mask_Iterator; Str : Mergable_String);
+   --  Initialize all fields of This at the beginning of mergeables strings
 
    procedure Get_Next_Area
-     (This       : Mergable_String;
-      It         : in out Mask_Iterator;
-      Start, Len : out Natural;
-      Info       : out Merge_Info);
+     (This  : Mergable_String;
+      It    : in out Mask_Iterator;
+      Start : out Char_Index;
+      Len   : out Natural;
+      Info  : out Merge_Info);
    --  Return a text area composed by only one type of information. By using
    --  those informations, it is possible to transform the original string to
    --  the new one. When all areas are gotten, Len will be 0.
@@ -196,8 +211,11 @@ private
       Chronologic_Changes : Boolean);
    function "=" (Left, Right : String_Char) return Boolean;
 
-   function Get_Array_Position (Str : Mergable_String; Position : Natural)
+   function Get_Array_Position (Str : Mergable_String; Position : Char_Index)
      return Natural;
+   --  On a merged string, some caracters may have been removed or added. This
+   --  primitive will return the actual position, skipping the removed indexes
+   --  if any.
 
    procedure Delete_Char
      (This : in out GNAT.OS_Lib.String_Access; Position : Natural);
