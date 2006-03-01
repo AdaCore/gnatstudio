@@ -67,11 +67,11 @@ package Codefix.Text_Manager is
    --  Return True when Left is after or in the same position than Right.
 
    procedure Set_Location
-     (This : in out Text_Cursor; Line, Column : Integer);
+     (This : in out Text_Cursor; Line : Natural; Column : Column_Index);
    --  Set the location information
 
    function Get_Line (This : Text_Cursor) return Integer;
-   function Get_Column (This : Text_Cursor) return Integer;
+   function Get_Column (This : Text_Cursor) return Column_Index;
    --  Return the location
 
    type File_Cursor is new Text_Cursor with private;
@@ -112,6 +112,37 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Ptr_Mark);
    --  Free the memory associated to a Ptr_Mark.
 
+   type Word_Cursor is new File_Cursor with private;
+   --  Word_cursor is an object that describes a specific word in the text. In
+   --  case where it is used to match a word in the text, the mode can be
+   --  'Regular_Expression'. Otherwise, this field is ignored.
+
+   Null_Word_Cursor : constant Word_Cursor;
+
+   type String_Mode is (Text_Ascii, Regular_Expression);
+
+   type Word_Mark is record
+      Mark_Id      : Ptr_Mark;
+      String_Match : GNAT.OS_Lib.String_Access;
+      Mode         : String_Mode := Text_Ascii;
+   end record;
+
+   procedure Set_Word
+     (Word         : in out Word_Cursor;
+      String_Match : String;
+      Mode         : String_Mode := Text_Ascii);
+   --  Change the attributes of Word.
+   --  No String_Match is registered if an empty string is passed
+
+   function Get_Word (Word : Word_Cursor) return String;
+   --  Return the word currently stored by the cursor, "" if none.
+
+   procedure Free (This : in out Word_Mark);
+   --  Free the memory associated to a Word_Mark.
+
+   procedure Free (This : in out Word_Cursor);
+   --  Free the memory associated to a Word_Cursor.
+
    ----------------------------------------------------------------------------
    --  type Escape_Str_Manager
    ----------------------------------------------------------------------------
@@ -125,7 +156,7 @@ package Codefix.Text_Manager is
    function Is_In_Escape_Part
      (This     : Escape_Str_Manager;
       Text     : String;
-      Position : Natural) return Boolean is abstract;
+      Position : Char_Index) return Boolean is abstract;
    --  Returns true if the position given from the string is in an escape part.
 
    ----------------------------------------------------------------------------
@@ -165,6 +196,11 @@ package Codefix.Text_Manager is
       Len    : Natural) return String is abstract;
    --  Get Len characters from the the position specified by the cursor. The
    --  String resultinh must have parameter 'First equal to Cursor.Col.
+
+   function Get
+     (This   : Text_Interface;
+      Cursor : Text_Cursor'Class) return Character is abstract;
+   --  Get the characters from the the position specified by the cursor.
 
    function Get_Line
      (This   : Text_Interface;
@@ -217,6 +253,16 @@ package Codefix.Text_Manager is
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
+   function Search_Strings
+     (This           : Text_Interface'Class;
+      Cursor         : Text_Cursor'Class;
+      Searched       : String_Array;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step) return Word_Cursor'Class;
+   --  Search a string in the text, among serveal possibilities, and returns a
+   --  cursor at the beginning. Cursor is returned on the first matching
+   --  string. If noting is found, then the cursor is Null_Cursor.
+
    function Line_Max (This : Text_Interface) return Natural is abstract;
    --  Return the number of the last line in the text loaded.
 
@@ -241,8 +287,8 @@ package Codefix.Text_Manager is
    --  Return the entire prefix of the first unit of category after the cursor.
 
    function Get_Right_Paren
-     (This   : Text_Interface'Class;
-      Cursor : Text_Cursor'Class;
+     (This         : Text_Interface'Class;
+      Cursor       : Text_Cursor'Class;
       Current_Line : String)
       return Text_Cursor'Class;
    --  Return the right paren corresponding to the one in the cursor.
@@ -343,6 +389,11 @@ package Codefix.Text_Manager is
    --  Get Len characters from the file and the position specified by the
    --  cursor.
 
+   function Get
+     (This   : Text_Navigator_Abstr;
+      Cursor : File_Cursor'Class) return Character;
+   --  Get a caracter at the position specified by the cursor
+
    function Get_Line
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class) return String;
@@ -390,6 +441,16 @@ package Codefix.Text_Manager is
       Step           : Step_Way := Normal_Step) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
+
+   function Search_Strings
+     (This           : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class;
+      Searched       : String_Array;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step) return Word_Cursor'Class;
+   --  Search a string in the text and returns a cursor at the beginning. The
+   --  position of the first matching string is returned. If noting is found,
+   --  then the cursor is Null_Cursor.
 
    function Search_Unit
      (This      : Text_Navigator_Abstr'Class;
@@ -525,6 +586,17 @@ package Codefix.Text_Manager is
    --  noting is found, then the cursor is Null_Cursor. If Cursor.Col = 0, then
    --  the scan in initialized from the end of the content.
 
+   function Search_Strings
+     (This           : Extract_Line;
+      Cursor         : File_Cursor'Class;
+      Searched       : String_Array;
+      Escape_Manager : Escape_Str_Manager'Class;
+      Step           : Step_Way := Normal_Step) return Word_Cursor'Class;
+   --  Search a string in the text and returns a cursor at the beginning. First
+   --  match is returned. If noting is found, then the cursor is Null_Cursor.
+   --  If Cursor.Col = 0, then the scan in initialized from the end of the
+   --  content.
+
    procedure Get_Line
      (This        : Text_Navigator_Abstr'Class;
       Cursor      : File_Cursor'Class;
@@ -569,13 +641,14 @@ package Codefix.Text_Manager is
 
    procedure Replace
      (This       : in out Extract_Line;
-      Start, Len : Natural;
+      Start      : Column_Index;
+      Len        : Natural;
       New_String : String);
    --  Replace 'len' characters from 'start' column with 'New_String'.
 
    procedure Replace_To_End
      (This  : in out Extract_Line;
-      Start : Natural;
+      Start : Column_Index;
       Value : String);
    --  Replace by Value the characters from Start to the end of the line.
 
@@ -640,7 +713,6 @@ package Codefix.Text_Manager is
    --  Add a new line in the line list. The line is always disposed in order
    --  to preserve the internal order of the lines, not just at the end of the
    --  list.
-   type String_Mode is (Text_Ascii, Regular_Expression);
 
    function Clone (This : Extract) return Extract;
    --  Duplicate all informations associated to an extract, specially
@@ -670,7 +742,8 @@ package Codefix.Text_Manager is
 
    procedure Replace
      (This          : in out Extract;
-      Start, Length : Natural;
+      Start         : Column_Index;
+      Length        : Natural;
       Value         : String;
       Line_Number   : Natural := 1);
    --  Replace 'len' characters from 'start' column and 'line_number' line
@@ -857,6 +930,11 @@ package Codefix.Text_Manager is
    --  Erase the text from Start to Stop. If a line, after the deletion, is
    --  empty, then this line will be deleted.
 
+   procedure Comment
+     (This        : in out Extract;
+      Start, Stop : File_Cursor'Class);
+   --  Comment from Start to Stop on the given extract
+
    function Get_Files_Names
      (This     : Extract;
       Size_Max : Natural := 0) return String;
@@ -894,30 +972,6 @@ package Codefix.Text_Manager is
    ----------------------------------------------------------------------------
    --  type Text_Command
    ----------------------------------------------------------------------------
-
-   type Word_Cursor is new File_Cursor with private;
-   --  Word_cursor is an object that describes a specific word in the text. In
-   --  case where it is used to match a word in the text, the mode can be
-   --  'Regular_Expression'. Otherwise, this field is ignored.
-
-   type Word_Mark is record
-      Mark_Id      : Ptr_Mark;
-      String_Match : GNAT.OS_Lib.String_Access;
-      Mode         : String_Mode := Text_Ascii;
-   end record;
-
-   procedure Set_Word
-     (Word : in out Word_Cursor;
-      String_Match : String;
-      Mode         : String_Mode := Text_Ascii);
-   --  Change the attributes of Word.
-   --  No String_Match is registered if an empty string is passed
-
-   procedure Free (This : in out Word_Mark);
-   --  Free the memory associated to a Word_Mark.
-
-   procedure Free (This : in out Word_Cursor);
-   --  Free the memory associated to a Word_Cursor.
 
    procedure Make_Word_Mark
      (Word         : Word_Cursor;
@@ -1221,7 +1275,7 @@ private
 
    function Get_Word_Length
      (This   : Extract_Line;
-      Col    : Natural;
+      Col    : Column_Index;
       Format : String)
      return Natural;
 
@@ -1243,9 +1297,9 @@ private
    end record;
 
    type Insert_Word_Cmd is new Text_Command with record
-      Word       : Word_Mark;
-      Add_Spaces : Boolean := True;
-      Position   : Relative_Position := Specified;
+      Word         : Word_Mark;
+      Add_Spaces   : Boolean := True;
+      Position     : Relative_Position := Specified;
       New_Position : Word_Mark;
    end record;
 
@@ -1274,10 +1328,18 @@ private
    ----------------------------------------------------------------------------
 
    type Text_Cursor is tagged record
-      Line, Col : Natural := 0;
+      Line : Natural := 0;
       --  If Line = 0, indicates a special case to handle the first line
       --  differently. ??? Not quite clear why it is needed to handle it
       --  specially.
+
+      Col  : Column_Index := 0;
+      --  The reason why we store columns rather than char index is that
+      --  converting a column index into a char index may be more expensive.
+      --  When you convert from char to column, you usually already have the
+      --  string to be processed, which is less frequently the case when you
+      --  have a column (because it might come from a GNAT message for
+      --  instance).
    end record;
 
    type File_Cursor is new Text_Cursor with record
@@ -1290,6 +1352,9 @@ private
       String_Match : GNAT.OS_Lib.String_Access;
       Mode         : String_Mode := Text_Ascii;
    end record;
+
+   Null_Word_Cursor : constant Word_Cursor :=
+     (Null_File_Cursor with null, Text_Ascii);
 
    function Normalize (Str : Basic_Types.String_Access) return String;
    --  Change the string in order to make comparaisons between lists of
