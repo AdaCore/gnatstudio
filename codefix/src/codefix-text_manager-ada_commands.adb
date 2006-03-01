@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with GNAT.Regpat;                       use GNAT.Regpat;
 
@@ -95,7 +96,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Cursor_Line.Col := 1;
       Get_Line (Current_Text, Cursor_Line, New_Extract);
       Assign (Line, Get_String (New_Extract));
-      Match (Word_Matcher, Line (Cursor.Col .. Line'Length), Matches);
+      Match
+        (Word_Matcher,
+         Line (Natural (To_Char_Index (Cursor.Col, Line.all)) .. Line'Length),
+         Matches);
 
       Size := Matches (1).Last - Matches (1).First + 1;
 
@@ -162,6 +166,13 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Remove_Elements_Cmd --
    -------------------------
 
+   procedure Set_Remove_Mode
+     (This : in out Remove_Elements_Cmd; Mode : Remove_Code_Mode)
+   is
+   begin
+      This.Mode := Mode;
+   end Set_Remove_Mode;
+
    procedure Add_To_Remove
      (This         : in out Remove_Elements_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -206,7 +217,7 @@ package body Codefix.Text_Manager.Ada_Commands is
                then
                   Extract_Temp := Clone (Data (Current_Extract));
                   Remove_Elements
-                    (Extract_Temp, Current_Cursor.String_Match.all);
+                    (Extract_Temp, This.Mode, Current_Cursor.String_Match.all);
                   Set_Data (Current_Extract, Extract_Temp);
                   Already_Loaded := True;
                   exit;
@@ -221,7 +232,8 @@ package body Codefix.Text_Manager.Ada_Commands is
                Extract_Temp : Ada_List;
             begin
                Get_Unit (Current_Text, Current_Cursor, Extract_Temp);
-               Remove_Elements (Extract_Temp, Current_Cursor.String_Match.all);
+               Remove_Elements
+                 (Extract_Temp, This.Mode, Current_Cursor.String_Match.all);
                Append (Remove_Extracts, Extract_Temp);
             end;
          end if;
@@ -433,7 +445,8 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Start_Entity : File_Cursor'Class)
+      Start_Entity : File_Cursor'Class;
+      Mode         : Remove_Code_Mode := Erase)
    is
       Spec_Begin, Spec_End : File_Cursor;
       Body_Begin, Body_End : File_Cursor;
@@ -456,6 +469,8 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Get_New_Mark (Current_Text, Body_Begin));
       This.Body_End := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Body_End));
+
+      This.Mode := Mode;
 
       Free (Spec_Begin);
       Free (Spec_End);
@@ -488,7 +503,12 @@ package body Codefix.Text_Manager.Ada_Commands is
          Line_Cursor.Line := Line_Cursor.Line + 1;
       end loop;
 
-      Erase (Body_Extract, Body_Begin, Body_End);
+      case This.Mode is
+         when Erase =>
+            Erase (Body_Extract, Body_Begin, Body_End);
+         when Comment =>
+            Comment (Body_Extract, Body_Begin, Body_End);
+      end case;
 
       if This.Spec_Begin /= null then
          Spec_Begin := File_Cursor
@@ -504,7 +524,12 @@ package body Codefix.Text_Manager.Ada_Commands is
             Line_Cursor.Line := Line_Cursor.Line + 1;
          end loop;
 
-         Erase (Spec_Extract, Spec_Begin, Spec_End);
+         case This.Mode is
+            when Erase =>
+               Erase (Spec_Extract, Spec_Begin, Spec_End);
+            when Comment =>
+               Comment (Spec_Extract, Spec_Begin, Spec_End);
+         end case;
 
          Merge_Extracts
            (New_Extract,
@@ -638,7 +663,7 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Get_Current_Cursor (Current_Text, This.Position.all));
       Get_Unit (Current_Text, Cursor, Work_Extract);
 
-      if Get_Number_Of_Elements (Work_Extract) = 1 then
+      if Get_Number_Of_Declarations (Work_Extract) = 1 then
          Replace_Word
            (Work_Extract,
             Search_String (Work_Extract, ":", Std_Ada_Escape),
@@ -690,7 +715,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
-      procedure Right_Paren (Current_Index : in out Integer);
+      procedure Right_Paren (Current_Index : in out Char_Index);
       --  Put Current_Index extactly on the right paren correponding the last
       --  left paren.
 
@@ -698,17 +723,19 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Line  : Ptr_Extract_Line;
       Cursor        : File_Cursor;
       Line_Cursor   : File_Cursor;
-      Current_Index : Natural := 1;
+      Current_Index : Char_Index := 1;
 
-      procedure Right_Paren (Current_Index : in out Integer) is
+      procedure Right_Paren (Current_Index : in out Char_Index) is
       begin
          loop
-            if Current_Index > Get_String (Current_Line.all)'Last then
+            if Natural (Current_Index)
+              > Get_String (Current_Line.all)'Last
+            then
                Current_Index := 1;
                Current_Line := Next (Current_Line.all);
             end if;
 
-            case Get_String (Current_Line.all) (Current_Index) is
+            case Get_String (Current_Line.all) (Natural (Current_Index)) is
                when '(' =>
                   Current_Index := Current_Index + 1;
                   Right_Paren (Current_Index);
@@ -734,12 +761,14 @@ package body Codefix.Text_Manager.Ada_Commands is
          Cursor,
          Search_String (Work_Extract, "(", Std_Ada_Escape, Cursor));
 
-      Current_Index := Cursor.Col;
+      Current_Index := To_Char_Index
+        (Cursor.Col, Get_String (Current_Line.all));
 
       Right_Paren (Current_Index);
 
       Cursor := Current_Line.Cursor;
-      Cursor.Col := Current_Index;
+      Cursor.Col := To_Column_Index
+        (Current_Index, Get_String (Current_Line.all));
 
       Erase
         (Work_Extract,
@@ -1031,6 +1060,59 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Insert_With);
       Free (This.Prefix_Obj);
+   end Free;
+
+   -------------------------
+   -- Replace_Code_By_Cmd --
+   -------------------------
+
+   procedure Initialize
+     (This         : in out Replace_Code_By_Cmd;
+      Start_Cursor : File_Cursor'Class;
+      Replaced_Exp : String;
+      New_String   : String)
+   is
+   begin
+      This.Start_Cursor := File_Cursor (Start_Cursor);
+      This.Replaced_Exp := new String'(Replaced_Exp);
+      This.New_String   := new String'(New_String);
+   end Initialize;
+
+   procedure Execute
+     (This         : Replace_Code_By_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+      Line    : constant String := Get_Line (Current_Text, This.Start_Cursor);
+      Matcher : constant Pattern_Matcher := Compile (This.Replaced_Exp.all);
+      Matches : Match_Array (0 .. Paren_Count (Matcher));
+   begin
+      Match (Matcher, Line, Matches);
+
+      if Matches (0) /= No_Match then
+         Get
+           (Current_Text,
+            This.Start_Cursor,
+            Matches (1).Last - Matches (1).First + 1,
+            New_Extract);
+
+         Replace
+           (New_Extract,
+            To_Column_Index (Char_Index (Matches (1).First), Line),
+            Matches (1).Last - Matches (1).First + 1,
+            This.New_String.all);
+      else
+         Raise_Exception
+           (Codefix_Panic'Identity,
+            "Impossible to match """ &  This.Replaced_Exp.all & """ on " &
+            """" & Line & """.");
+      end if;
+   end Execute;
+
+   procedure Free (This : in out Replace_Code_By_Cmd) is
+   begin
+      Free (This.Replaced_Exp);
+      Free (This.New_String);
    end Free;
 
 end Codefix.Text_Manager.Ada_Commands;
