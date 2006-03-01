@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -114,7 +114,6 @@ package body Codefix.Ada_Tools is
 
       raise Codefix_Panic;
    end Get_Use_Clauses;
-
 
    ----------------------
    -- Get_Parts_Number --
@@ -253,7 +252,19 @@ package body Codefix.Ada_Tools is
             Set_Location
               (New_Clause.Position,
                Line      => Iterator.Sloc_Start.Line,
-               Column    => Iterator.Sloc_Start.Column);
+               Column    => 1);
+
+            declare
+               Line : constant String :=
+                 Get_Line (Current_Text, New_Clause.Position);
+            begin
+               Set_Location
+                 (New_Clause.Position,
+                  Line      => Iterator.Sloc_Start.Line,
+                  Column    => To_Column_Index
+                    (Char_Index (Iterator.Sloc_Start.Column), Line));
+            end;
+
             Append (Result, New_Clause);
          end if;
 
@@ -296,7 +307,7 @@ package body Codefix.Ada_Tools is
    function Is_In_Escape_Part
      (This     : Ada_Escape_Str;
       Text     : String;
-      Position : Natural) return Boolean
+      Position : Char_Index) return Boolean
    is
       pragma Unreferenced (This);
 
@@ -305,11 +316,11 @@ package body Codefix.Ada_Tools is
    begin
       J := Text'First;
 
-      while J <= Position loop
+      while J <= Natural (Position) loop
          case Text (J) is
             when '"' =>
                if Is_In_String
-                 and then J < Position
+                 and then J < Natural (Position)
                  and then Text (J + 1) /= '"'
                then
                   Is_In_String := False;
@@ -318,7 +329,7 @@ package body Codefix.Ada_Tools is
                end if;
             when '-' =>
                if not Is_In_String
-                 and then J < Position
+                 and then J < Natural (Position)
                  and then Text (J + 1) = '-'
                then
                   return True;
@@ -361,8 +372,21 @@ package body Codefix.Ada_Tools is
            and then Current_Info.Category /= Cat_Use;
 
          Found_With := True;
-         Set_Location (Current_Cursor, Current_Info.Sloc_End.Line,
-                       Current_Info.Sloc_End.Column + 1);
+
+         Set_Location
+           (Current_Cursor,
+            Current_Info.Sloc_End.Line,
+            1);
+
+         declare
+            Line : constant String := Get_Line (Current_Text, Current_Cursor);
+         begin
+            Set_Location
+              (Current_Cursor,
+               Current_Info.Sloc_End.Line,
+               To_Column_Index
+                 (Char_Index (Current_Info.Sloc_End.Column) + 1, Line));
+         end;
       end loop;
 
       if not Found_With then
@@ -390,9 +414,20 @@ package body Codefix.Ada_Tools is
            and then Iterator.Name.all = Pkg_Name
          then
             Set_File (Result, File_Name);
+
             Set_Location
               (Result, Iterator.Sloc_Start.Line,
-               Iterator.Sloc_Start.Column);
+               1);
+
+            declare
+               Line : constant String := Get_Line (Current_Text, Result);
+            begin
+               Set_Location
+                 (Result, Iterator.Sloc_Start.Line,
+                  To_Column_Index
+                    (Char_Index (Iterator.Sloc_Start.Column), Line));
+            end;
+
             return Result;
          end if;
 
