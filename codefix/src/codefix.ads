@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2006                    --
+--                                AdaCore                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -42,6 +42,36 @@ package Codefix is
 
    Label_VDiff_Size_Limit : constant Natural := 50;
    --  Limits of the numbers of chars displayed in the VDiff's labels.
+
+   type Column_Index is new Natural;
+   --  Type of a column
+
+   type Char_Index is new Natural;
+   --  Type of an index in a string
+
+   function To_Char_Index (Index : Column_Index; Str : String)
+     return Char_Index;
+   --  Return the char position corresponding to the column given in parameter
+   --  This will handle tabulations
+
+   function To_Column_Index (Index : Char_Index; Str : String)
+     return Column_Index;
+   --  Return the column index corresponding to the char index given in
+   --  parameter. This will handle tablulations.
+
+   function To_Char_Index_Workaround (Index : Column_Index; Str : String)
+     return Char_Index;
+   --  ??? This function is used as a workaround on tab problems in GPS
+   --  commands. It does basically what To_Char_Index, but it's known that as
+   --  soon as commands manage properly tab, all calls to this function should
+   --  be removed.
+
+   function To_Column_Index_Workaround (Index : Char_Index; Str : String)
+     return Column_Index;
+   --  ??? This function is used as a workaround on tab problems in GPS
+   --  commands. It does basically what To_Column_Index, but it's known that as
+   --  soon as commands manage properly tab, all calls to this function should
+   --  be removed.
 
    --------------------------------
    -- String_Access manipulation --

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2006                    --
+--                                AdaCore                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +19,88 @@
 -----------------------------------------------------------------------
 
 package body Codefix is
+
+   -------------------
+   -- To_Char_Index --
+   -------------------
+
+   function To_Char_Index (Index : Column_Index; Str : String)
+                           return Char_Index
+   is
+      pragma Unreferenced (Str);
+   begin
+      --  ??? The actual future implementation is in To_Char_Index_Workaround
+      return Char_Index (Index);
+   end To_Char_Index;
+
+   ---------------------
+   -- To_Column_Index --
+   ---------------------
+
+   function To_Column_Index (Index : Char_Index; Str : String)
+                             return Column_Index
+   is
+      pragma Unreferenced (Str);
+   begin
+      --  ??? The actual future implementation is in To_Column_Index_Workaround
+      return Column_Index (Index);
+   end To_Column_Index;
+
+   ------------------------------
+   -- To_Char_Index_Workaround --
+   ------------------------------
+
+   function To_Char_Index_Workaround (Index : Column_Index; Str : String)
+     return Char_Index
+   is
+      Current_Index : Char_Index := Char_Index (Str'First);
+      Current_Col   : Column_Index := 1;
+   begin
+      loop
+         exit when Current_Col >= Index;
+
+         if Natural (Current_Index) < Str'Last
+           and then Str (Natural (Current_Index)) = ASCII.HT
+         then
+            Current_Col := Current_Col + Column_Index (Tab_Width) -
+              ((Current_Col - 1) mod Column_Index (Tab_Width));
+         else
+            Current_Col := Current_Col + 1;
+         end if;
+
+         Current_Index := Current_Index + 1;
+      end loop;
+
+      return Current_Index;
+   end To_Char_Index_Workaround;
+
+   --------------------------------
+   -- To_Column_Index_Workaround --
+   --------------------------------
+
+   function To_Column_Index_Workaround (Index : Char_Index; Str : String)
+     return Column_Index
+   is
+      Current_Index : Char_Index := Char_Index (Str'First);
+      Current_Col   : Column_Index := 1;
+   begin
+      loop
+         exit when Current_Index >= Index;
+
+         if Natural (Current_Index) <= Str'Last
+           and then Str (Natural (Current_Index)) = ASCII.HT
+         then
+            Current_Col := Current_Col + Column_Index (Tab_Width) -
+              ((Current_Col - 1) mod Column_Index (Tab_Width));
+         else
+            Current_Col := Current_Col + 1;
+         end if;
+
+         Current_Index := Current_Index + 1;
+      end loop;
+
+      return Current_Col;
+   end To_Column_Index_Workaround;
 
    ------------
    -- Assign --
