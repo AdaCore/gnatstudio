@@ -1702,6 +1702,31 @@ package body GVD.Process is
       Property       : Breakpoint_Property_Record;
       Exec           : GNAT.OS_Lib.String_Access;
 
+      procedure Check_Extension (Module : in out Virtual_File);
+      --  Check for a missing extension in module, and add it if needed
+      --  Extensions currently checked in order: .exe, .out, .vxe
+
+      procedure Check_Extension (Module : in out Virtual_File) is
+         type Extension_Array is array (Positive range <>) of String (1 .. 4);
+         Extensions : constant Extension_Array := (".exe", ".out", ".vxe");
+         Tmp        : Virtual_File;
+
+      begin
+         if Module = VFS.No_File or else Is_Regular_File (Module) then
+            return;
+         end if;
+
+         for J in Extensions'Range loop
+            Tmp := Create
+              (Full_Filename => Full_Name (Module).all & Extensions (J));
+
+            if Is_Regular_File (Tmp) then
+               Module := Tmp;
+               return;
+            end if;
+         end loop;
+      end Check_Extension;
+
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
@@ -1720,11 +1745,13 @@ package body GVD.Process is
 
          if Blank_Pos = 0 then
             Exec := Locate_Exec_On_Path (Args);
+
             if Exec /= null then
                Module := Create
                  (Full_Filename =>
                     Normalize_Pathname (Exec.all, Get_Current_Dir));
                Free (Exec);
+
             else
                Module := Create
                  (Full_Filename => Normalize_Pathname (Args, Get_Current_Dir));
@@ -1732,11 +1759,13 @@ package body GVD.Process is
 
          else
             Exec := Locate_Exec_On_Path (Args (Args'First .. Blank_Pos - 1));
+
             if Exec /= null then
                Module := Create
                  (Full_Filename =>
                     Normalize_Pathname (Exec.all, Get_Current_Dir));
                Free (Exec);
+
             else
                Module := Create
                  (Full_Filename =>
@@ -1752,22 +1781,7 @@ package body GVD.Process is
          Module := VFS.No_File;
       end if;
 
-      --  On windows, we should try to debug "file.exe" if "file" is not found
-      if Module /= VFS.No_File and then not Is_Regular_File (Module) then
-         declare
-            Ptr         : GNAT.OS_Lib.String_Access :=
-              GNAT.OS_Lib.Get_Executable_Suffix;
-            Mod2        : Virtual_File;
-         begin
-            Mod2 := Create
-              (Full_Filename => Full_Name (Module).all & Ptr.all);
-            Free (Ptr);
-
-            if Is_Regular_File (Mod2) then
-               Module := Mod2;
-            end if;
-         end;
-      end if;
+      Check_Extension (Module);
 
       declare
          Args : GNAT.OS_Lib.Argument_List_Access :=
