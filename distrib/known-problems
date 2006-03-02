@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.3
 
+- F302-006 Cannot load VxWorks module from GNAT 5.04a in debugger
+  Problem:    When using the GNAT 5.04a VxWorks toolchain,
+              Debug->Initialize-><main unit> does not find the executable
+              with .out extension.
+  Workaround: Use the menu Debug->Debug->Load File... to load the file manually
+
 - F224-007 Crashes when using Search/Replace.
   Problem:    When using the Search/Replace dialog, GPS might sometimes
               crash if editions occur between successive searches.
@@ -126,7 +132,7 @@ Known Problems fixed in GPS 3.1.1
               declaration.
 
 - EC20-017 Loading an application on the debugger under VxWorks does not work
-  Problem:    When using Debug->Initialize-><main unit> using a VxWorks,
+  Problem:    When using Debug->Initialize-><main unit> using a VxWorks target,
               the executable associated with the main unit is not loaded.
   Workaround: Use the menu Debug->Debug->Load File... to load the file manually
 
