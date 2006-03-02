@@ -18,39 +18,40 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Button;           use Gtk.Button;
-with Gtk.Check_Button;     use Gtk.Check_Button;
-with Gtk.Radio_Button;     use Gtk.Radio_Button;
-with Gtk.Combo;            use Gtk.Combo;
-with Gtk.Dialog;           use Gtk.Dialog;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.GEntry;           use Gtk.GEntry;
-with Gtk.Separator;        use Gtk.Separator;
-with Gtk.Size_Group;       use Gtk.Size_Group;
-with Gtk.Stock;            use Gtk.Stock;
-with Gtk.Tooltips;         use Gtk.Tooltips;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtk.Window;           use Gtk.Window;
-with Gtkada.Dialogs;       use Gtkada.Dialogs;
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Ada.Exceptions;            use Ada.Exceptions;
+
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Radio_Button;          use Gtk.Radio_Button;
+with Gtk.Combo;                 use Gtk.Combo;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Separator;             use Gtk.Separator;
+with Gtk.Size_Group;            use Gtk.Size_Group;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Tooltips;              use Gtk.Tooltips;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
 with Config;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Intl;                  use GPS.Intl;
 with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
 with Creation_Wizard.Selector;  use Creation_Wizard.Selector;
 with VFS;                       use VFS;
-
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
-with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Welcome is
 
