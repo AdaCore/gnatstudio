@@ -241,9 +241,10 @@ package body GPS.Menu is
    ------------------------
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
-      Path : constant Virtual_File := Project_Path (Get_Project (Kernel));
+      Project : constant Project_Type := Get_Project (Kernel);
+      Path    : constant Virtual_File := Project_Path (Project);
    begin
-      if Path /= VFS.No_File then
+      if Status (Project) /= Default and then Path /= VFS.No_File then
          Add_To_History
            (Kernel, Project_History_Key,
             Full_Name (Path, Normalize => False).all);
