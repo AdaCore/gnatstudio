@@ -227,6 +227,10 @@ package body GPS.Kernel.Project is
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console.
 
+      ------------------
+      -- Report_Error --
+      ------------------
+
       procedure Report_Error (S : String) is
          Old_Pref : constant Boolean := Get_Pref (Auto_Jump_To_First);
       begin
@@ -241,12 +245,13 @@ package body GPS.Kernel.Project is
       end Report_Error;
 
       Had_Project_Desktop : Boolean;
-      New_Project_Loaded : Boolean;
+      New_Project_Loaded  : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
+
       Same_Project : constant Boolean :=
-        Status (Get_Root_Project (Kernel.Registry.all)) = From_File
+          Status (Get_Root_Project (Kernel.Registry.all)) = From_File
         and then
-           Project = Project_Path (Get_Root_Project (Kernel.Registry.all));
+          Project = Project_Path (Get_Root_Project (Kernel.Registry.all));
 
    begin
       --  Unless we are reloading the same project
