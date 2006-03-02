@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2666,6 +2666,29 @@ package body GVD_Module is
 
       use type GNAT.OS_Lib.String_Access;
 
+      procedure Check_Extension (Module : in out String_Access);
+      --  Check for a missing extension in module, and add it if needed
+      --  Extensions currently checked in order: .exe, .out, .vxe
+
+      procedure Check_Extension (Module : in out String_Access) is
+         type Extension_Array is array (Positive range <>) of String (1 .. 4);
+         Extensions : constant Extension_Array := (".exe", ".out", ".vxe");
+      begin
+         if Module.all = ""
+           or else GNAT.OS_Lib.Is_Regular_File (Module.all)
+         then
+            return;
+         end if;
+
+         for J in Extensions'Range loop
+            if GNAT.OS_Lib.Is_Regular_File (Module.all & Extensions (J)) then
+               Free (Module);
+               Module := new String'(Module.all & Extensions (J));
+               return;
+            end if;
+         end loop;
+      end Check_Extension;
+
    begin
       Push_State (K, Busy);
 
@@ -2694,22 +2717,7 @@ package body GVD_Module is
          Module := new String'("");
       end if;
 
-      declare
-         Ptr         : GNAT.OS_Lib.String_Access :=
-           GNAT.OS_Lib.Get_Executable_Suffix;
-         Module_Exec : constant String := Module.all & Ptr.all;
-
-      begin
-         GNAT.OS_Lib.Free (Ptr);
-
-         if Module'Length > 0
-           and then not GNAT.OS_Lib.Is_Regular_File (Module.all)
-           and then GNAT.OS_Lib.Is_Regular_File (Module_Exec)
-         then
-            Free (Module);
-            Module := new String'(Module_Exec);
-         end if;
-      end;
+      Check_Extension (Module);
 
       declare
          Args : GNAT.OS_Lib.Argument_List_Access :=
