@@ -2127,9 +2127,9 @@ package body GPS.Kernel.Scripts is
    -------------------------------
 
    function Execute_Command_With_Args
-     (Script             : access Scripting_Language_Record;
-      Command            : String;
-      Args               : GNAT.OS_Lib.Argument_List) return String
+     (Script  : access Scripting_Language_Record;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String
    is
       pragma Unreferenced (Script, Command, Args);
    begin
@@ -2205,12 +2205,12 @@ package body GPS.Kernel.Scripts is
    ---------------------
 
    function Execute_Command
-     (Script             : access Scripting_Language_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Show_Command       : Boolean := True;
-      Errors             : access Boolean) return String is
+     (Script       : access Scripting_Language_Record;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output  : Boolean := False;
+      Show_Command : Boolean := True;
+      Errors       : access Boolean) return String is
    begin
       Execute_Command
         (Scripting_Language (Script),
@@ -2280,12 +2280,11 @@ package body GPS.Kernel.Scripts is
    -------------
 
    function Nth_Arg
-     (Data    : Callback_Data;
-      N       : Positive;
-      Class   : Class_Type;
-      Default : Class_Instance;
-      Allow_Null : Boolean := False)
-      return Class_Instance is
+     (Data       : Callback_Data;
+      N          : Positive;
+      Class      : Class_Type;
+      Default    : Class_Instance;
+      Allow_Null : Boolean := False) return Class_Instance is
    begin
       return Nth_Arg (Callback_Data'Class (Data), N, Class, Allow_Null);
    exception
@@ -2566,7 +2565,7 @@ package body GPS.Kernel.Scripts is
    is
       Script : constant Scripting_Language := Get_Script (Instance);
       Class  : constant Class_Type :=
-        Get_Context_Class (Get_Kernel (Script));
+                 Get_Context_Class (Get_Kernel (Script));
    begin
       if not Is_Subclass (Instance, Class) then
          raise Invalid_Data;
@@ -2582,8 +2581,8 @@ package body GPS.Kernel.Scripts is
    ---------------------------
 
    function Get_Or_Create_Context
-     (Script : access Scripting_Language_Record'Class;
-      Class  : Class_Type;
+     (Script  : access Scripting_Language_Record'Class;
+      Class   : Class_Type;
       Context : GPS.Kernel.Selection_Context)
       return Class_Instance
    is

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                               G P S                               --
+--                             G P S                                 --
 --                                                                   --
---                   Copyright (C) 2001-2005                         --
+--                     Copyright (C) 2001-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -48,9 +48,10 @@ package body Projects.Editor.Normalize is
    --  The new project is not independent of the old one, since most of the
    --  nodes are shared between the two for efficiency reasons.
 
-   procedure Add_Value (To   : in out External_Variable_Value_Array_Access;
-                        Last : in out Natural;
-                        V    : External_Variable_Value);
+   procedure Add_Value
+     (To   : in out External_Variable_Value_Array_Access;
+      Last : in out Natural;
+      V    : External_Variable_Value);
    --  Add V to the array To. To is reallocated as necessary.
    --  Last is the index of the last item that was set in To.
 
@@ -89,8 +90,7 @@ package body Projects.Editor.Normalize is
    function External_Variable_Name
      (Tree            : Project_Node_Tree_Ref;
       Current_Project : Project_Node_Id;
-      Ref             : Project_Node_Id)
-      return Name_Id;
+      Ref             : Project_Node_Id) return Name_Id;
    --  Return the name of the external variable referenced by Ref.
    --  The declaration of the variable is looked in Current_Project, unless
    --  another project is specified in the variable reference
@@ -107,9 +107,9 @@ package body Projects.Editor.Normalize is
       Ref             : Project_Node_Id)
       return Name_Id
    is
-      N : constant Name_Id := Prj.Tree.Name_Of (Ref, Tree);
-      Pkg : Project_Node_Id;
-      Variable : Variable_Node_Id;
+      N              : constant Name_Id := Prj.Tree.Name_Of (Ref, Tree);
+      Pkg            : Project_Node_Id;
+      Variable       : Variable_Node_Id;
       Recurse_In_Pkg : Boolean := False;
 
    begin
@@ -184,12 +184,12 @@ package body Projects.Editor.Normalize is
    ---------------
 
    procedure Normalize
-     (Root_Project       : Project_Type;
-      Recurse            : Boolean := False)
+     (Root_Project : Project_Type;
+      Recurse      : Boolean := False)
    is
-      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
-      Values       : External_Variable_Value_Array_Access := null;
-      Last_Values  : Natural;
+      Tree        : constant Project_Node_Tree_Ref := Root_Project.Tree;
+      Values      : External_Variable_Value_Array_Access := null;
+      Last_Values : Natural;
       --  Representation of the state of the case construction that is being
       --  parsed.
       --  Each time a new case item is seen in the original project, an entry
@@ -232,7 +232,7 @@ package body Projects.Editor.Normalize is
 
       procedure Check_Index_Sensitivity (Decl_Item : Project_Node_Id) is
          Current : constant Project_Node_Id :=
-           Current_Item_Node (Decl_Item, Tree);
+                     Current_Item_Node (Decl_Item, Tree);
       begin
          if Kind_Of (Current, Tree) = N_Attribute_Declaration then
             if Case_Insensitive (Current, Tree) then
@@ -249,17 +249,21 @@ package body Projects.Editor.Normalize is
       ------------------------------
 
       procedure Process_Declarative_List (From, To : Project_Node_Id) is
-         Decl_Item, Current : Project_Node_Id := From;
-         Next_Item, Choice : Project_Node_Id;
-         Name      : Name_Id;
-         Case_Item : Project_Node_Id;
-         Index     : Natural;
-         Var_Type  : Project_Node_Id;
+         Decl_Item, Current      : Project_Node_Id := From;
+         Next_Item, Choice       : Project_Node_Id;
+         Name                    : Name_Id;
+         Case_Item               : Project_Node_Id;
+         Index                   : Natural;
+         Var_Type                : Project_Node_Id;
          Already_Have_Var, Match : Boolean;
-         Decl_Item2 : Project_Node_Id;
+         Decl_Item2              : Project_Node_Id;
 
          procedure Add_Decl_Item (To_Case_Item : Project_Node_Id);
          --  Add Decl_Item to To_Case_Item.
+
+         -------------------
+         -- Add_Decl_Item --
+         -------------------
 
          procedure Add_Decl_Item (To_Case_Item : Project_Node_Id) is
          begin
@@ -420,7 +424,6 @@ package body Projects.Editor.Normalize is
 
                      Set_String_Type_Of (Current, Tree, Save_Type);
                   end;
-
 
                when N_String_Type_Declaration =>
                   null;

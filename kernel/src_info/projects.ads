@@ -673,7 +673,7 @@ private
      (others => No_Variable);
 
    No_Project : constant Project_Type :=
-     (Prj.Tree.Empty_Node, null, null, null);
+                  (Prj.Tree.Empty_Node, null, null, null);
 
    All_Languages : constant Name_Id_Array :=
      (1 .. 0 => Types.No_Name);
