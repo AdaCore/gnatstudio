@@ -331,7 +331,7 @@ package body VCS_View.Activities is
       procedure Expand_Nodes;
       --  Expand nodes found in To_Expand tree
 
-      To_Expand : array (1 .. 50) of Gtk_Tree_Iter;
+      To_Expand : array (1 .. 64) of Gtk_Tree_Iter;
       --  A table of node to expand. The hard-coded limit is large enough to
       --  handle most cases and past this limit the nodes are not handled. This
       --  means that the node won't be expanded by default. Note that this will
