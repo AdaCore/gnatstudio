@@ -194,8 +194,8 @@ package body Browsers.Dependency_Items is
       Item             : File_Item;
       Recompute_Layout : Boolean;
    end record;
-   package Dependency_Idle is new Gtk.Main.Idle
-     (Examine_Dependencies_Idle_Data);
+   package Dependency_Idle is
+     new Gtk.Main.Idle (Examine_Dependencies_Idle_Data);
 
    procedure Examine_Dependencies
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -229,8 +229,7 @@ package body Browsers.Dependency_Items is
    function Filter
      (Kernel   : access Kernel_Handle_Record'Class;
       Explicit : Boolean;
-      File     : Source_File)
-      return Boolean;
+      File     : Source_File) return Boolean;
    --  A filter function that decides whether Dep should be displayed in the
    --  canvas. It should return false if Dep should not be displayed.
    --
@@ -364,9 +363,9 @@ package body Browsers.Dependency_Items is
    ---------------------
 
    procedure Refresh_Browser (Browser : access Gtk_Widget_Record'Class) is
-      B         : constant Dependency_Browser := Dependency_Browser (Browser);
-      Iter      : Item_Iterator := Start (Get_Canvas (B));
-      File      : File_Item;
+      B    : constant Dependency_Browser := Dependency_Browser (Browser);
+      Iter : Item_Iterator := Start (Get_Canvas (B));
+      File : File_Item;
    begin
       --  All we do for now is check the currently displayed links, and reset
       --  the title bar buttons. It would be too costly to recompute all the
@@ -398,8 +397,8 @@ package body Browsers.Dependency_Items is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
    is
-      Mitem   : Gtk_Menu_Item;
-      Check   : Gtk_Check_Menu_Item;
+      Mitem : Gtk_Menu_Item;
+      Check : Gtk_Check_Menu_Item;
    begin
       Default_Browser_Context_Factory
         (Context, Kernel, Event_Widget, Object, Event, Menu);
@@ -439,7 +438,7 @@ package body Browsers.Dependency_Items is
    -------------------------------
 
    function Create_Dependency_Browser
-     (Kernel       : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class)
       return Dependency_Browser
    is
       Browser : Dependency_Browser;
@@ -499,7 +498,7 @@ package body Browsers.Dependency_Items is
    -----------------------------
 
    function Open_Dependency_Browser
-     (Kernel       : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child
    is
       Child   : GPS_MDI_Child;
@@ -544,8 +543,8 @@ package body Browsers.Dependency_Items is
    --------------------------
 
    procedure Examine_Dependencies
-     (Kernel       : access Kernel_Handle_Record'Class;
-      File         : Virtual_File;
+     (Kernel           : access Kernel_Handle_Record'Class;
+      File             : Virtual_File;
       Recompute_Layout : Boolean := True)
    is
       Browser       : Dependency_Browser;
@@ -974,13 +973,15 @@ package body Browsers.Dependency_Items is
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_File_Class (Kernel));
+                   Nth_Arg (Data, 1, Get_File_Class (Kernel));
       File     : constant Virtual_File := Get_Data (Instance);
    begin
       if Command = "uses" then
          Examine_Dependencies (Kernel, File => File);
+
       elsif Command = "used_by" then
          Examine_From_Dependencies (Kernel, File => File);
+
       elsif Command = "imports" then
          declare
             Iter       : File_Dependency_Iterator;
@@ -1010,6 +1011,7 @@ package body Browsers.Dependency_Items is
                Next (Iter);
             end loop;
          end;
+
       elsif Command = "imported_by" then
          declare
             Iter       : Dependency_Iterator;
@@ -1053,15 +1055,15 @@ package body Browsers.Dependency_Items is
       Tools   : constant String := '/' & (-"Tools");
       Command : Interactive_Command_Access;
       Filter  : constant Action_Filter :=
-        Action_Filter ((not Lookup_Filter (Kernel, "Entity")) and
-                       Lookup_Filter (Kernel, "In project"));
+                  Action_Filter ((not Lookup_Filter (Kernel, "Entity"))
+                                   and Lookup_Filter (Kernel, "In project"));
    begin
       Dependency_Browser_Module_ID := new Dependency_Browser_Module;
       Register_Module
-        (Module                  => Dependency_Browser_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => Dependency_Browser_Module_Name,
-         Priority                => Default_Priority);
+        (Module       => Dependency_Browser_Module_ID,
+         Kernel       => Kernel,
+         Module_Name  => Dependency_Browser_Module_Name,
+         Priority     => Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -1070,9 +1072,9 @@ package body Browsers.Dependency_Items is
       Command := new Show_Dep_Command;
       Register_Contextual_Menu
         (Kernel, "File dependencies",
-         Action => Command,
-         Label  => -"Show dependencies for %f",
-         Filter => Filter,
+         Action      => Command,
+         Label       => -"Show dependencies for %f",
+         Filter      => Filter,
          Stock_Image => Stock_Go_Forward);
 
       Command := new Show_Depending_On_Command;
@@ -1080,7 +1082,7 @@ package body Browsers.Dependency_Items is
         (Kernel, "File depending on",
          Action      => Command,
          Label       => -"Show files depending on %f",
-         Filter => Filter,
+         Filter      => Filter,
          Stock_Image => Stock_Go_Back);
 
       Command := new Examine_Other_File_Command;
@@ -1096,12 +1098,12 @@ package body Browsers.Dependency_Items is
 
       Register_Command
         (Kernel, "uses",
-         Class        => Get_File_Class (Kernel),
-         Handler      => Depends_On_Command_Handler'Access);
+         Class   => Get_File_Class (Kernel),
+         Handler => Depends_On_Command_Handler'Access);
       Register_Command
         (Kernel, "used_by",
-         Class        => Get_File_Class (Kernel),
-         Handler      => Depends_On_Command_Handler'Access);
+         Class   => Get_File_Class (Kernel),
+         Handler => Depends_On_Command_Handler'Access);
       Register_Command
         (Kernel, "imports",
          Minimum_Args => 1,

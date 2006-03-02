@@ -94,7 +94,7 @@ package body Browsers.Projects is
    procedure Contextual_Factory
      (Item    : access Browser_Project_Vertex;
       Context : in out Selection_Context;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
+      Browser : access General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu);
    procedure Resize_And_Draw
@@ -447,7 +447,7 @@ package body Browsers.Projects is
    is
       --  Project : constant Project_Id :=
       --        Get_Project_View_From_Name (Item.Name);
-      W, H    : Gint;
+      W, H : Gint;
    begin
       --  ??? Why is this code commented out
       --  Set_text (Layout, Project_Path (Project));
@@ -755,7 +755,7 @@ package body Browsers.Projects is
          Examine_Project_Hierarchy
            (Project_Browser (Get_Widget (Browser)),
             Project_Information (Context.Context),
-            Recursive        => Command.Recursive);
+            Recursive => Command.Recursive);
       end if;
       return Commands.Success;
    end Execute;

@@ -220,18 +220,18 @@ package body Browsers.Call_Graph is
    type Entity_Item is access all Entity_Item_Record'Class;
 
    procedure Gtk_New
-     (Item    : out Entity_Item;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Entities.Entity_Information;
+     (Item                     : out Entity_Item;
+      Browser                  : access General_Browser_Record'Class;
+      Entity                   : Entities.Entity_Information;
       May_Have_To_Dependencies : Boolean);
    --  Create a new entity item.
    --  If May_Have_To_Dependencies is False, the right arrow will not be
    --  displayed in the items.
 
    procedure Initialize
-     (Item    : access Entity_Item_Record'Class;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Entities.Entity_Information;
+     (Item                     : access Entity_Item_Record'Class;
+      Browser                  : access General_Browser_Record'Class;
+      Entity                   : Entities.Entity_Information;
       May_Have_To_Dependencies : Boolean);
    --  Internal initialization function
 
@@ -333,14 +333,13 @@ package body Browsers.Call_Graph is
    --  Display the call graph for the node.
 
    procedure Examine_Ancestors_Call_Graph
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Entity     : Entity_Information);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information);
    --  Display the list of subprograms that call Entity
 
    function Find_Entity
      (In_Browser : access General_Browser_Record'Class;
-      Entity     : Entity_Information)
-      return Canvas_Item;
+      Entity     : Entity_Information) return Canvas_Item;
    --  Return the child that shows Item_Name in the browser, or null if
    --  Item_Name is not already displayed in the canvas.
    --  ??? Should also have line and column information
@@ -368,11 +367,11 @@ package body Browsers.Call_Graph is
    --  displayed.
 
    procedure Find_All_References_Internal
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Info           : Entity_Information;
-      Category_Title : String;
-      Show_Caller    : Boolean;
-      Filter         : Reference_Kind_Filter;
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Info               : Entity_Information;
+      Category_Title     : String;
+      Show_Caller        : Boolean;
+      Filter             : Reference_Kind_Filter;
       Include_Overriding : Boolean := False);
    --  Internal implementation for Find_All_References_From_Contextual,
    --  Find_All_Writes_From_Contextual and Find_All_Reads_From_Contextual.
@@ -419,8 +418,7 @@ package body Browsers.Call_Graph is
       User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
+      User   : Kernel_Handle) return Node_Ptr;
    --  Support functions for the MDI
 
    procedure Print_Ref
@@ -478,7 +476,7 @@ package body Browsers.Call_Graph is
       Local_File         : VFS.Virtual_File;
       All_From_Same_File : Boolean) return String
    is
-      Decl  : constant File_Location := Get_Declaration_Of (Entity);
+      Decl : constant File_Location := Get_Declaration_Of (Entity);
    begin
       if All_From_Same_File then
          return -"Entities imported from "
@@ -504,9 +502,9 @@ package body Browsers.Call_Graph is
    -------------
 
    procedure Gtk_New
-     (Item    : out Entity_Item;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Entities.Entity_Information;
+     (Item                     : out Entity_Item;
+      Browser                  : access General_Browser_Record'Class;
+      Entity                   : Entities.Entity_Information;
       May_Have_To_Dependencies : Boolean) is
    begin
       Item := new Entity_Item_Record;
@@ -518,12 +516,12 @@ package body Browsers.Call_Graph is
    ----------------
 
    procedure Initialize
-     (Item    : access Entity_Item_Record'Class;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Entities.Entity_Information;
+     (Item                     : access Entity_Item_Record'Class;
+      Browser                  : access General_Browser_Record'Class;
+      Entity                   : Entities.Entity_Information;
       May_Have_To_Dependencies : Boolean) is
    begin
-      Item.Entity   := Entity;
+      Item.Entity := Entity;
       Ref (Item.Entity);
       Initialize (Item, Browser, Get_Name (Entity).all,
                   Examine_Ancestors_Call_Graph'Access,
@@ -671,7 +669,7 @@ package body Browsers.Call_Graph is
       Entity     : Entity_Information) return Canvas_Item
    is
       Found : Canvas_Item := null;
-      Iter : Item_Iterator := Start (Get_Canvas (In_Browser));
+      Iter  : Item_Iterator := Start (Get_Canvas (In_Browser));
    begin
       loop
          Found := Get (Iter);
@@ -691,9 +689,9 @@ package body Browsers.Call_Graph is
      (Browser : access Call_Graph_Browser_Record'Class;
       Entity  : Entity_Information) return Entity_Item
    is
-      Child  : Entity_Item;
+      Child                    : Entity_Item;
       May_Have_To_Dependencies : Boolean := True;
-      Iter   : Calls_Iterator;
+      Iter                     : Calls_Iterator;
 
    begin
       Child := Entity_Item (Find_Entity (Browser, Entity));
@@ -728,14 +726,14 @@ package body Browsers.Call_Graph is
    -------------------------------
 
    procedure Examine_Entity_Call_Graph
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Entity     : Entity_Information)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information)
    is
       Child_Browser : constant MDI_Child := Open_Call_Graph_Browser (Kernel);
       Browser       : constant Call_Graph_Browser :=
-        Call_Graph_Browser (Get_Widget (Child_Browser));
+                        Call_Graph_Browser (Get_Widget (Child_Browser));
       Item          : constant Entity_Item :=
-        Add_Entity_If_Not_Present (Browser, Entity);
+                        Add_Entity_If_Not_Present (Browser, Entity);
    begin
       if not Children_Shown (Item) then
          declare
@@ -749,10 +747,10 @@ package body Browsers.Call_Graph is
             Set_Children_Shown (Data.Item, True);
             Redraw_Title_Bar (Data.Item);
             Examine_Entity_Call_Graph
-              (Kernel          => Kernel,
-               Entity          => Entity,
-               User_Data       => Data,
-               Get_All_Refs    => True);
+              (Kernel       => Kernel,
+               Entity       => Entity,
+               User_Data    => Data,
+               Get_All_Refs => True);
 
             --  Data is no longer valid now, since it has been destroyed
          end;
@@ -801,9 +799,9 @@ package body Browsers.Call_Graph is
      (Browser        : Call_Graph_Browser;
       Item           : Entity_Item;
       Link_From_Item : Boolean;
-      Entity      : Entity_Information;
-      Ref         : Entity_Reference;
-      Is_Renaming : Boolean)
+      Entity         : Entity_Information;
+      Ref            : Entity_Reference;
+      Is_Renaming    : Boolean)
    is
       Child            : Entity_Item;
       Link             : Browser_Link;
@@ -907,11 +905,11 @@ package body Browsers.Call_Graph is
    ----------------------------------
 
    procedure Examine_Ancestors_Call_Graph
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Entity     : Entity_Information)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information)
    is
       Child_Browser : constant MDI_Child := Open_Call_Graph_Browser (Kernel);
-      Data : Examine_Ancestors_Data_Access;
+      Data          : Examine_Ancestors_Data_Access;
    begin
       Data := new Examine_Ancestors_Data'
         (Commands_User_Data_Record with
@@ -1005,8 +1003,7 @@ package body Browsers.Call_Graph is
    -------------
 
    function Execute
-     (Command : access References_Command)
-      return Command_Return_Type
+     (Command : access References_Command) return Command_Return_Type
    is
       Loc : File_Location;
       Ref : Entity_Reference;
@@ -1070,7 +1067,7 @@ package body Browsers.Call_Graph is
       Col  : Integer := Get_Column (Get_Location (Ref));
       Line : constant Integer      := Get_Line (Get_Location (Ref));
       File : constant Virtual_File :=
-        Get_Filename (Get_File (Get_Location (Ref)));
+               Get_Filename (Get_File (Get_Location (Ref)));
    begin
       if Col <= 0 then
          Col := 1;
@@ -1079,37 +1076,37 @@ package body Browsers.Call_Graph is
       if Show_Caller and then Get_Caller (Ref) /= null then
          Insert_Location
            (Kernel,
-            Category  => Category,
-            File      => File,
-            Text      => "<b>" & Name & "</b> ["
-               & Kind_To_String (Get_Kind (Ref)) & "] in: "
-               & Get_Full_Name (Get_Caller (Ref)),
-            Line      => Line,
-            Column    => Col,
-            Length    => Name'Length,
-            Highlight => True,
-            Has_Markups => True,
+            Category           => Category,
+            File               => File,
+            Text               => "<b>" & Name & "</b> ["
+              & Kind_To_String (Get_Kind (Ref)) & "] in: "
+              & Get_Full_Name (Get_Caller (Ref)),
+            Line               => Line,
+            Column             => Col,
+            Length             => Name'Length,
+            Highlight          => True,
+            Has_Markups        => True,
             Highlight_Category => Search_Results_Style,
-            Remove_Duplicates => False,
-            Enable_Counter    => False,
-            Sort_In_File      => Sort_In_File);
+            Remove_Duplicates  => False,
+            Enable_Counter     => False,
+            Sort_In_File       => Sort_In_File);
 
       else
          Insert_Location
            (Kernel,
-            Category  => Category,
-            File      => File,
-            Text      => "<b>" & Name
-            & "</b> [" & Kind_To_String (Get_Kind (Ref)) & "]",
-            Line      => Line,
-            Column    => Col,
-            Length    => Name'Length,
-            Highlight => True,
+            Category           => Category,
+            File               => File,
+            Text               => "<b>" & Name
+              & "</b> [" & Kind_To_String (Get_Kind (Ref)) & "]",
+            Line               => Line,
+            Column             => Col,
+            Length             => Name'Length,
+            Highlight          => True,
             Highlight_Category => Search_Results_Style,
-            Has_Markups => True,
-            Remove_Duplicates => False,
-            Enable_Counter    => False,
-            Sort_In_File      => Sort_In_File);
+            Has_Markups        => True,
+            Remove_Duplicates  => False,
+            Enable_Counter     => False,
+            Sort_In_File       => Sort_In_File);
       end if;
    end Print_Ref;
 
@@ -1128,9 +1125,9 @@ package body Browsers.Call_Graph is
 
       if not Data.Iter_Started then
          Find_All_References
-           (Iter   => Data.Iter.all,
-            Entity => Data.Entity,
-            Filter => Data.Filter,
+           (Iter               => Data.Iter.all,
+            Entity             => Data.Entity,
+            Filter             => Data.Filter,
             Include_Overriding => Data.Include_Overriding);
 
          Data.Iter_Started := True;
@@ -1159,7 +1156,7 @@ package body Browsers.Call_Graph is
                Get (Data.Iter.all),
                Get_Name (Data.Entity).all,
                Data.Category.all,
-               Show_Caller => Data.Show_Caller,
+               Show_Caller  => Data.Show_Caller,
                Sort_In_File => False);
 
             Count := Count + 1;
@@ -1180,11 +1177,11 @@ package body Browsers.Call_Graph is
    ----------------------------------
 
    procedure Find_All_References_Internal
-     (Kernel           : access Kernel_Handle_Record'Class;
-      Info             : Entity_Information;
-      Category_Title   : String;
-      Show_Caller      : Boolean;
-      Filter           : Reference_Kind_Filter;
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Info               : Entity_Information;
+      Category_Title     : String;
+      Show_Caller        : Boolean;
+      Filter             : Reference_Kind_Filter;
       Include_Overriding : Boolean := False)
    is
       Data : Entity_Idle_Data;
@@ -1418,10 +1415,10 @@ package body Browsers.Call_Graph is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Entity     : constant Entity_Information := Get_Data (Data, 1);
-      Filter     : Reference_Kind_Filter;
-      User_Data  : Add_To_List_User_Data_Access;
+      Kernel    : constant Kernel_Handle := Get_Kernel (Data);
+      Entity    : constant Entity_Information := Get_Data (Data, 1);
+      Filter    : Reference_Kind_Filter;
+      User_Data : Add_To_List_User_Data_Access;
    begin
       if Command = "find_all_refs" then
          Name_Parameters (Data, References_Cmd_Parameters);
@@ -1441,8 +1438,8 @@ package body Browsers.Call_Graph is
          Name_Parameters (Data, References_Cmd_Parameters);
 
          declare
-            Ref_Command      : constant References_Command_Access :=
-              new References_Command;
+            Ref_Command              : constant References_Command_Access :=
+                                         new References_Command;
             References_Command_Class : constant Class_Type := New_Class
               (Get_Kernel (Data),
                References_Command_Class_Name,
@@ -1490,6 +1487,7 @@ package body Browsers.Call_Graph is
                Set_Return_Value (Data, Instance);
             end if;
          end;
+
       elsif Command = "calls" then
          --  The following unchecked_access is safe since
          --  Examine_Ancestors_Call_Graph is called synchronously
@@ -1497,10 +1495,10 @@ package body Browsers.Call_Graph is
          User_Data.Data := Data'Unchecked_Access;
          User_Data.Use_Parent_For_Key := False;
          Examine_Entity_Call_Graph
-           (Kernel          => Kernel,
-            User_Data       => User_Data,
-            Entity          => Entity,
-            Get_All_Refs    => True);
+           (Kernel       => Kernel,
+            User_Data    => User_Data,
+            Entity       => Entity,
+            Get_All_Refs => True);
 
       elsif Command = "called_by" then
          --  The following unchecked_access is safe since
@@ -1584,11 +1582,12 @@ package body Browsers.Call_Graph is
    is
       ReferencesCommand_Class : constant Class_Type := New_Class
         (Get_Kernel (Data), References_Command_Class_Name);
-      Inst : constant Class_Instance :=
-        Nth_Arg (Data, 1, ReferencesCommand_Class);
+      Inst         : constant Class_Instance :=
+                                  Nth_Arg (Data, 1, ReferencesCommand_Class);
       Data_Command : constant References_Command_Access :=
-        References_Command_Access
-          (Get_Command (GPS.Kernel.Task_Manager.Get_Data (Inst)));
+                               References_Command_Access
+                                 (Get_Command
+                                    (GPS.Kernel.Task_Manager.Get_Data (Inst)));
    begin
       if Command = "get_result" then
          Put_Locations_In_Return (Data_Command, Data);
@@ -1607,7 +1606,7 @@ package body Browsers.Call_Graph is
 
       declare
          Node : Location_List.List_Node :=
-           First (Command.Locations);
+                  First (Command.Locations);
       begin
          while Node /= Location_List.Null_Node loop
             Set_Return_Value
@@ -1736,18 +1735,18 @@ package body Browsers.Call_Graph is
       Filter             : Reference_Kind_Filter;
       Include_Overriding : Boolean := False)
    is
-      Iter     : Entity_Reference_Iterator;
-      Iter2    : Entity_Iterator;
-      Entity2  : Entity_Information;
-      Local : constant Source_File :=
-        Get_Or_Create (Get_Database (Kernel), Local_File);
-      Title : constant String := All_Refs_Category
+      Title       : constant String := All_Refs_Category
         (Entity             => Entity,
          Local_Only         => Locals_Only,
          Local_File         => Local_File,
          All_From_Same_File => All_From_Same_File);
+      Local       : constant Source_File :=
+                      Get_Or_Create (Get_Database (Kernel), Local_File);
       Entity_Decl : constant Source_File :=
-        Get_File (Get_Declaration_Of (Entity));
+                      Get_File (Get_Declaration_Of (Entity));
+      Iter        : Entity_Reference_Iterator;
+      Iter2       : Entity_Iterator;
+      Entity2     : Entity_Information;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
@@ -1868,13 +1867,13 @@ package body Browsers.Call_Graph is
       end if;
 
       Parse_All_Refs
-        (Kernel            => Kernel,
-         Entity            => Entity,
-         Locals_Only       => Command.Locals_Only,
-         Local_File        => File,
+        (Kernel             => Kernel,
+         Entity             => Entity,
+         Locals_Only        => Command.Locals_Only,
+         Local_File         => File,
          All_From_Same_File => False,
-         Filter            => Filter,
-         Show_Caller       => False);
+         Filter             => Filter,
+         Show_Caller        => False);
       return Commands.Success;
    end Execute;
 
@@ -1916,25 +1915,27 @@ package body Browsers.Call_Graph is
      (Command : access Find_Specific_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Dialog     : References_Filter_Dialog;
-      Box        : Gtk_Box;
-      Col        : array (1 .. 2) of Gtk_Box;
-      Filter_Box : Gtk_Vbutton_Box;
-      Index      : Integer := Col'First;
+      Kernel             : constant Kernel_Handle :=
+                             Get_Kernel (Context.Context);
+      Dialog             : References_Filter_Dialog;
+      Box                : Gtk_Box;
+      Col                : array (1 .. 2) of Gtk_Box;
+      Filter_Box         : Gtk_Vbutton_Box;
+      Index              : Integer := Col'First;
       Project_And_Recursive,
-      File_Only : Gtk_Radio_Button;
-      Show_Caller : Gtk_Check_Button;
-      From_Same_File : Gtk_Radio_Button;
+      File_Only          : Gtk_Radio_Button;
+      Show_Caller        : Gtk_Check_Button;
+      From_Same_File     : Gtk_Radio_Button;
       Include_Overriding : Gtk_Check_Button;
-      Filter    : Reference_Kind_Filter := (others => False);
-      Frame     : Gtk_Frame;
-      Widget    : Gtk_Widget;
-      Entity    : constant Entity_Information :=
-        Get_Entity (Context.Context, Ask_If_Overloaded => True);
-      Current_File     : constant Virtual_File :=
-        File_Information (Context.Context);
-      Button    : Gtk_Button;
+      Filter             : Reference_Kind_Filter := (others => False);
+      Frame              : Gtk_Frame;
+      Widget             : Gtk_Widget;
+      Entity             : constant Entity_Information :=
+                             Get_Entity
+                               (Context.Context, Ask_If_Overloaded => True);
+      Current_File       : constant Virtual_File :=
+                             File_Information (Context.Context);
+      Button             : Gtk_Button;
       pragma Unreferenced (Command, Widget);
 
    begin
@@ -2093,14 +2094,14 @@ package body Browsers.Call_Graph is
    begin
       Call_Graph_Module_Id := new Callgraph_Module_Record;
       Register_Module
-        (Module                  => Call_Graph_Module_Id,
-         Kernel                  => Kernel,
-         Module_Name             => Call_Graph_Module_Name,
-         Priority                => GPS.Kernel.Modules.Default_Priority);
+        (Module      => Call_Graph_Module_Id,
+         Kernel      => Kernel,
+         Module_Name => Call_Graph_Module_Name,
+         Priority    => GPS.Kernel.Modules.Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
-      Filter  := new Container_Entity_Filter;
+      Filter := new Container_Entity_Filter;
       Register_Filter (Kernel, Filter, "Entity is container");
 
       Command := new Entity_Calls_Command;
@@ -2181,29 +2182,29 @@ package body Browsers.Call_Graph is
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "calls",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Call_Graph_Command_Handler'Access);
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "called_by",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Call_Graph_Command_Handler'Access);
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "called_by_browser",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Call_Graph_Command_Handler'Access);
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "dump_xref_db",
-         Handler      => Xref_Command_Handler'Access);
+         Handler => Xref_Command_Handler'Access);
       Register_Command
         (Kernel, "reset_xref_db",
-         Handler      => Xref_Command_Handler'Access);
+         Handler => Xref_Command_Handler'Access);
 
       Browsers.Canvas.Register_Actions (Kernel);
 
       Register_Command
         (Kernel, "get_result",
-         Class        => ReferencesCommand_Class,
-         Handler      => References_Command_Handler'Access);
+         Class   => ReferencesCommand_Class,
+         Handler => References_Command_Handler'Access);
    end Register_Module;
 
    ------------------
