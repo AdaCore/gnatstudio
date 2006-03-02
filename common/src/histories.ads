@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -126,10 +126,10 @@ package Histories is
    --  Called when the menu associated with callback is destroyed
 
    procedure Associate
-     (Hist      : in out History_Record;
-      Key       : History_Key;
-      Menu      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
-      Callback  : Menu_Callback);
+     (Hist     : in out History_Record;
+      Key      : History_Key;
+      Menu     : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
+      Callback : Menu_Callback);
    --  Associate the menu with Key.
    --  Every time some entry is added to Key, a corresponding entry is added to
    --  the submenu of Menu. Callback is set for all these new entries.
@@ -142,36 +142,36 @@ package Histories is
    --------------
 
    procedure Create_New_Boolean_Key_If_Necessary
-     (Hist     : in out History_Record;
-      Key      : History_Key;
+     (Hist          : in out History_Record;
+      Key           : History_Key;
       Default_Value : Boolean);
    --  Create a new key, if no such one already exists in the internal tables.
    --  In that case, the default_value is assigned to it
 
    procedure Set_History
-     (Hist      : in out History_Record;
-      Key       : History_Key;
-      Value     : Boolean);
+     (Hist  : in out History_Record;
+      Key   : History_Key;
+      Value : Boolean);
    --  Set the value of the history key
 
    function Get_History
-     (Hist      : History_Record;
-      Key       : History_Key) return Boolean;
+     (Hist : History_Record;
+      Key  : History_Key) return Boolean;
    --  Return the current value of Key
 
    procedure Associate
-     (Hist      : in out History_Record;
-      Key       : History_Key;
-      Button    : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class);
+     (Hist   : in out History_Record;
+      Key    : History_Key;
+      Button : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class);
    --  Associate Button with Key.
    --  The status of the button is set to the value of Key.
    --  Every time the button is toggled, the key's value is changed. Thus, its
    --  current value will be saved when Hist is saved.
 
    procedure Associate
-     (Hist      : in out History_Record;
-      Key       : History_Key;
-      Item      : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class);
+     (Hist : in out History_Record;
+      Key  : History_Key;
+      Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class);
    --  Same as above
 
 private

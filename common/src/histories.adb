@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -407,8 +407,8 @@ package body Histories is
      (Hist : History_Record; Key : History_Key)
       return GNAT.OS_Lib.String_List_Access
    is
-      Val : constant History_Key_Access := Create_New_Key_If_Necessary
-        (Hist, Key, Strings);
+      Val : constant History_Key_Access :=
+              Create_New_Key_If_Necessary (Hist, Key, Strings);
    begin
       return Val.List;
    end Get_History;
@@ -418,14 +418,14 @@ package body Histories is
    -----------------
 
    procedure Get_History
-     (Hist  : History_Record;
-      Key   : History_Key;
-      Combo : access Gtk.Combo.Gtk_Combo_Record'Class;
+     (Hist        : History_Record;
+      Key         : History_Key;
+      Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False)
    is
-      Item : Gtk_List_Item;
-      List : constant Gtk_List := Get_List (Combo);
+      Item  : Gtk_List_Item;
+      List  : constant Gtk_List := Get_List (Combo);
       Value : constant String_List_Access := Get_History (Hist, Key);
    begin
       if Clear_Combo then
@@ -452,6 +452,7 @@ package body Histories is
 
          Set_Text (Get_Entry (Combo), Value (Value'First).all);
          Select_Region (Get_Entry (Combo), 0, -1);
+
       else
          Set_Text (Get_Entry (Combo), "");
       end if;
