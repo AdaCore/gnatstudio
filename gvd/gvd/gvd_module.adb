@@ -2673,17 +2673,17 @@ package body GVD_Module is
       procedure Check_Extension (Module : in out String_Access) is
          type Extension_Array is array (Positive range <>) of String (1 .. 4);
          Extensions : constant Extension_Array := (".exe", ".out", ".vxe");
+         Name       : constant String := Module.all;
+
       begin
-         if Module.all = ""
-           or else GNAT.OS_Lib.Is_Regular_File (Module.all)
-         then
+         if Name = "" or else GNAT.OS_Lib.Is_Regular_File (Name) then
             return;
          end if;
 
          for J in Extensions'Range loop
-            if GNAT.OS_Lib.Is_Regular_File (Module.all & Extensions (J)) then
+            if GNAT.OS_Lib.Is_Regular_File (Name & Extensions (J)) then
                Free (Module);
-               Module := new String'(Module.all & Extensions (J));
+               Module := new String'(Name & Extensions (J));
                return;
             end if;
          end loop;
