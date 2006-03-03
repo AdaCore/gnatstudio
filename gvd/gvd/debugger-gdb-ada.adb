@@ -892,8 +892,14 @@ package body Debugger.Gdb.Ada is
             end if;
 
          elsif Bounds.Last < Bounds.First then
-            Bounds.First := 1;
-            Bounds.Last := Lengths (Dim);
+            if Bounds.First = Long_Integer'Last then
+               Bounds.First := 0;
+               Bounds.Last := Lengths (Dim) - 1;
+            else
+               Bounds.First := 1;
+               Bounds.Last := Lengths (Dim);
+            end if;
+
             Set_Dimensions (Result.all, Dim, Bounds);
          end if;
 
@@ -942,9 +948,10 @@ package body Debugger.Gdb.Ada is
                   if Bounds.First = Long_Integer'Last
                     and then Bounds.Last = Long_Integer'First
                   then
-                     --  if we did not find the bound before, this is because
-                     --  it is a 1.
-                     Set_Dimensions (Result.all, Dim, (1, Lengths (Dim)));
+                     --  if we did not find the bound before, it is very
+                     --  likely 0 (e.g. array of enum).
+
+                     Set_Dimensions (Result.all, Dim, (0, Lengths (Dim) - 1));
 
                   elsif Bounds.First = Long_Integer'Last then
                      Set_Dimensions
