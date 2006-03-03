@@ -11,7 +11,7 @@ An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
 
-New features in GPS 3.2.0
+New features in GPS 4.0.0
 -------------------------
 
 F223-022 New preference for the debugger: "Always open main unit"
@@ -20,10 +20,19 @@ F223-022 New preference for the debugger: "Always open main unit"
   possible to choose whether GPS should automatically open the program's
   main unit when the debugger is initialized.
 
+  Keywords: Debugger
+
 F213-017 New python example: spell-checking the current word (2006-02-13)
 
   A new example has been included in the GPS distribution, called
   share/examples/gps/python/ispell.py
+
+  Keywords: Python
+
+F209-010 New port: x86-64 GNU/Linux
+
+  GPS has been ported to the x86-64 GNU/Linux platform, taking full
+  advantage of the 64 bit memory addressing and ABI.
 
 F128-002 VCS supports directories (2006-02-07)
 
