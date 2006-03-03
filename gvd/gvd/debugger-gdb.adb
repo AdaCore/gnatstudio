@@ -2698,13 +2698,16 @@ package body Debugger.Gdb is
                (Lang).Quote_Character = '\');
             Simple := Simple_Type_Access
               (Get_Value (Array_Type (Result.all), Dim.First));
+
             if Simple = null then
                Simple := Simple_Type_Access (New_Simple_Type);
             end if;
+
             Set_Value (Simple.all, S (S'First .. S_Last));
 
             --  The index should always be 0, since we add Dim.First before
             --  displaying it.
+
             Set_Value (Item       => Array_Type (Result.all),
                        Elem_Value => Simple,
                        Elem_Index => 0);
@@ -2739,12 +2742,14 @@ package body Debugger.Gdb is
                Num_Open : Integer := 0;
             begin
                Index := Index + 12;
+
                while Num_Open /= -1 loop
                   if Type_Str (Index) = '(' then
                      Num_Open := Num_Open + 1;
                   elsif Type_Str (Index) = ')' then
                      Num_Open := Num_Open - 1;
                   end if;
+
                   Index := Index + 1;
                end loop;
             end;
@@ -2758,7 +2763,6 @@ package body Debugger.Gdb is
            or else (Index + 5 <= Type_Str'Last
                     and then Type_Str (Index + 1 .. Index + 5) = "<ref>")
          then
-
             --  If we have "(<ref> array (...) of string) @0xbffff5fc: ((null),
             --  (null))", this is still considered as an array, which is
             --  friendlier for the user in the canvas.
@@ -2787,6 +2791,7 @@ package body Debugger.Gdb is
                Free (Result, Only_Value => False);
                Result := New_Access_Type;
             end if;
+
             Internal_Parse_Value
               (Lang, Type_Str, Index, Result, Repeat_Num, Parent => Parent);
 
