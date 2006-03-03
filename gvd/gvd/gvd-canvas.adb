@@ -495,7 +495,7 @@ package body GVD.Canvas is
    begin
       --  Save the currently displayed items, if any
 
-      if Old /= null then
+      if Old /= null and then Process.Debugger /= null then
          if Get_Pref (Preserve_State_On_Exit) then
             Iter := Start (Old.Canvas);
 
