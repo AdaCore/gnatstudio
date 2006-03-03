@@ -1024,7 +1024,7 @@ package body Debugger.Gdb is
         Index (Full_Name (Executable).all, " ") /= 0;
 
       function Translate_Path (S : VFS.Virtual_File) return String;
-      --  If using a remote host, unixify S, otherwise return Full_Name (S).
+      --  Convert full path of S using the debug server settings
 
       function Translate_Path (S : VFS.Virtual_File) return String is
       begin
