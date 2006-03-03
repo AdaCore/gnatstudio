@@ -56,6 +56,13 @@ Known Problems fixed in GPS 4.0.0
   Workaround: click in another window, and then back in the editor to force
               a refresh
 
+- F209-004 Incorrect display and setting of array indexed by enum in debugger
+  Problem:    In the debugger, when displaying graphically the contents of
+              an array indexed by an enumeration, GPS will compute bounds
+              off by one, causing confusion when e.g. modifying the contents
+              of some elements of the array.
+  Workaround: Modifying/display the array in the debugger console
+
 - F131-018 Cannot launch external process when name contains spaces
   Problem:    When using the Process API in GPS shell or Python, it is not
               possible to launch processes using their full paths when this
