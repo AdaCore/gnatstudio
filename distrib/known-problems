@@ -1,4 +1,4 @@
-Known Problems fixed in GPS 3.2.0
+Known Problems fixed in GPS 4.0.0
 
 - F224-007 Crashes when using Search/Replace.
   Problem:    When using the Search/Replace dialog, GPS might sometimes
