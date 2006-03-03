@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005-2006                   --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,7 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;     use Ada.Exceptions;
 with Ada.Tags;           use Ada.Tags;
+
 with Glib;               use Glib;
 with Glib.Xml_Int;       use Glib.Xml_Int;
 with GPS.Kernel;         use GPS.Kernel;
@@ -33,6 +35,7 @@ with Gtkada.Dialogs;     use Gtkada.Dialogs;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtkada.MDI;         use Gtkada.MDI;
 with String_Utils;       use String_Utils;
+with Traces;             use Traces;
 
 package body GVD.Generic_View is
 
@@ -63,6 +66,11 @@ package body GVD.Generic_View is
       pragma Unreferenced (View, Process);
    begin
       null;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Attach;
 
    -----------------
@@ -137,6 +145,11 @@ package body GVD.Generic_View is
             Set_View (Get_Process (V), null);
             Unset_Process (V);
          end if;
+
+      exception
+         when E : others =>
+            Trace (Exception_Handle,
+                   "Unexpected exception: " & Exception_Information (E));
       end On_Destroy;
 
       ---------------------------
@@ -169,6 +182,11 @@ package body GVD.Generic_View is
                Unset_Process (V);
             end if;
          end if;
+
+      exception
+         when E : others =>
+            Trace (Exception_Handle,
+                   "Unexpected exception: " & Exception_Information (E));
       end On_Debugger_Terminate;
 
       --------------------
@@ -187,11 +205,14 @@ package body GVD.Generic_View is
          View    : Formal_View_Access;
          Button  : Message_Dialog_Buttons;
          pragma Unreferenced (Button);
+
       begin
          View := Formal_View_Access (Get_View (Process));
+
          if View = null then
             --  Do we have an existing unattached view ?
             Iter := First_Child (MDI);
+
             loop
                Child := Get (Iter);
                exit when Child = null;
@@ -263,8 +284,10 @@ package body GVD.Generic_View is
                Widget_Callback.Connect
                  (View, "destroy", On_Destroy'Unrestricted_Access);
             end if;
+
          else
             Child := Find_MDI_Child (MDI, View);
+
             if Child /= null then
                Raise_Child (Child);
             else
@@ -291,6 +314,7 @@ package body GVD.Generic_View is
          if Node.Tag.all = Module_Name then
             View := new Formal_View_Record;
             Initialize (View, Kernel);
+
             if Node.Child /= null then
                Load_From_XML (View, Node.Child);
             end if;
@@ -303,6 +327,7 @@ package body GVD.Generic_View is
             Put (MDI, Child, Initial_Position => Position_Right);
             return MDI_Child (Child);
          end if;
+
          return null;
       end Load_Desktop;
 
@@ -323,6 +348,7 @@ package body GVD.Generic_View is
             N.Child := Save_To_XML (Formal_View_Access (Widget));
             return N;
          end if;
+
          return null;
       end Save_Desktop;
 
@@ -336,12 +362,18 @@ package body GVD.Generic_View is
       is
          pragma Unreferenced (Kernel);
          Process : constant Visual_Debugger := Get_Process (Data);
-         View : constant Formal_View_Access :=
+         View    : constant Formal_View_Access :=
            Formal_View_Access (Get_View (Process));
+
       begin
          if View /= null then
             Update (View);
          end if;
+
+      exception
+         when E : others =>
+            Trace (Exception_Handle,
+                   "Unexpected exception: " & Exception_Information (E));
       end On_Update;
 
       --------------------------------
