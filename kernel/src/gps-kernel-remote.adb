@@ -25,26 +25,48 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
-with GNAT.Expect.TTY.Remote;     use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with Glib.Object;                use Glib.Object;
+with Glib.Xml_Int;               use Glib.Xml_Int;
 
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 
 with Config;                     use Config;
+with Filesystem.Unix;            use Filesystem.Unix;
+with Filesystem.Windows;         use Filesystem.Windows;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 
 package body GPS.Kernel.Remote is
 
+   ------------
+   -- Module --
+   ------------
+
    Me : constant Debug_Handle := Create ("GPS.Kernel.Remote");
+
+   type Remote_Module_Record is new Module_ID_Record with record
+      Kernel : Kernel_Handle;
+   end record;
+   type Remote_Module_ID is access all Remote_Module_Record'Class;
+
+   procedure Customize
+     (Module : access Remote_Module_Record;
+      File   : VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   procedure Destroy (Module : in out Remote_Module_Record);
+   --  See doc for inherited subprogram
+
+   Remote_Module : Remote_Module_ID;
 
    ------------------
    -- Mirror_Paths --
@@ -54,182 +76,64 @@ package body GPS.Kernel.Remote is
    type Mirror_Path is access all Mirror_Path_Record;
 
    type Mirror_Path_Record is record
-      Local_Path  : String_Ptr  := null;
-      Remote_Path : String_Ptr  := null;
-      Need_Sync   : Boolean     := False;
-      Next        : Mirror_Path := null;
+      Nickname    : String_Ptr       := null;
+      Local_Path  : String_Ptr       := null;
+      Remote_Path : String_Ptr       := null;
+      Need_Sync   : Boolean          := False;
+      Next        : Mirror_Path      := null;
+      Attribute   : Mirror_Attribute := Project_Specific;
    end record;
+
+   Mirror_Path_List : Mirror_Path := null;
 
    --------------------------
    -- Server Configuration --
    --------------------------
 
-   type Server_Config_Record;
-   type Server_Config is access all Server_Config_Record;
-
-   type Server_Config_Record is record
-      Is_Local         : Boolean := True;
-      --  Tells if the server is the local machine or not
-      Filesystem       : Filesystem_Type;
-      --  The filesystem on the remote or local machine
-      Nickname         : String_Ptr  := null;
-      --  Nickname : informative only
-      Network_Name     : String_Ptr  := null;
-      --  Used to access the server using the network
-      Remote_Access    : String_Ptr  := null;
-      --  Utility used to remotely access the server
-      Remote_Shell     : String_Ptr  := null;
-      --  Shell used on the remote server
-      User_Name        : String_Ptr  := null;
-      --  User name used for connection
-      Timeout          : Natural;
-      --  Timeout value for shell operations
-      Mirror_Path_List : Mirror_Path := null;
-      --  List of remote paths
-      Next             : Server_Config := null;
-      --  Next item in the list
+   type Server_Config is record
+      Is_Local : Boolean := True;
+      --  Is_Local Tells if the server is the local machine or not
+      Nickname : String_Ptr;
+      --  Identifier of the server
    end record;
 
-   function Get_Local_Filesystem return Filesystem_Type;
-   --  Retrieves the local filesystem
-
-   --------------------------
-   -- Get_Local_Filesystem --
-   --------------------------
-
-   function Get_Local_Filesystem return Filesystem_Type is
-   begin
-      if Host = Windows then
-         return Windows;
-      else
-         --  Unix and windows support only
-         return Unix;
-      end if;
-   end Get_Local_Filesystem;
-
-   Config_List : constant Server_Config := new Server_Config_Record'
-     (Is_Local         => True,
-      Filesystem       => Get_Local_Filesystem,
-      Nickname         => new String'("(local)"),
-      Network_Name     => null,
-      Remote_Access    => null,
-      Remote_Shell     => null,
-      User_Name        => null,
-      Timeout          => 0,
-      Mirror_Path_List => null,
-      Next             => null);
-   --  Filesystem is dummy at this point. Initialized at elaboration
-   --  (see end of package).
-
-   Nb_Servers : Server_Id := 1;
-   --  Total number of defined servers
-
    Servers : array (Server_Type) of Server_Config
-           := (others => Config_List);
-   --  Servers currently used. Default to first Config List item (localhost)
+     := (others => (Is_Local => True,
+                    Nickname => new String'(Local_Nickname)));
+   --  Servers currently used. Default is the localhost.
+
+   type Servers_Property is new Property_Record with null record;
+
+   procedure Save
+     (Property : access Servers_Property;
+      Node     : in out Glib.Xml_Int.Node_Ptr);
+
+   procedure Load
+     (Property : in out Servers_Property; From : Glib.Xml_Int.Node_Ptr);
 
    ---------------------
    -- Utility methods --
    ---------------------
 
-   function Match (Mirror, Path : String;
-                   Case_Sensitive : Boolean) return Boolean;
-   --  Returns true if path starts with mirror;
-
    procedure Simple_Free is new Ada.Unchecked_Deallocation
      (Object => Argument_List, Name => Argument_List_Access);
    --  Frees the pointer without freeing internal strings
-
-   function VMS_Wrapper (Cmd : String) return String;
-   --  VMS command line sender
-
-   -----------
-   -- Match --
-   -----------
-
-   function Match (Mirror, Path : String;
-                   Case_Sensitive : Boolean) return Boolean is
-   begin
-      --  Path length shall be greater or equal to mirror length
-      if Mirror'Length > Path'Length then
-         return False;
-      end if;
-
-      --  Do not try to compare last character: on VMS, you will compare
-      --  a closing bracket with a dot (disk:[path] with disk:[path.subpath])
-      return Equal (Path (Path'First .. Path'First + Mirror'Length - 2),
-                    Mirror (Mirror'First .. Mirror'Last - 1),
-                    Case_Sensitive);
-   end Match;
-
-   -----------------
-   -- VMS_Wrapper --
-   -----------------
-
-   function VMS_Wrapper (Cmd : String) return String is
-   begin
-      return Cmd & ASCII.CR;
-   end VMS_Wrapper;
-
-   function Shell_Selector (Target_Identifier : String)
-                            return String;
-   function Remote_Access_Selector (Target_Identifier : String)
-                                    return String;
-   --  Configuration selectors
 
    ---------------
    -- Callbacks --
    ---------------
 
-   procedure On_Servers_Configure
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Remote->Servers configuration
-
-   procedure On_Mirror_Path_Configure
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Remote->File system configuration
+   procedure On_Project_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when project changed
 
    function From_Callback_Data_Sync_Hook
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  retrieve hook data from callback data
 
-   ----------------------------
-   -- Remote_Access_Selector --
-   ----------------------------
-
-   function Remote_Access_Selector (Target_Identifier : String)
-                                    return String
-   is
-      Srv_Type : Server_Type;
-   begin
-      begin
-         Srv_Type := Server_Type'Value (Target_Identifier);
-      exception
-         when Constraint_Error =>
-            Srv_Type := GPS_Server;
-      end;
-      return Servers (Srv_Type).Remote_Access.all;
-   end Remote_Access_Selector;
-
-   --------------------
-   -- Shell_Selector --
-   --------------------
-
-   function Shell_Selector (Target_Identifier : String)
-                            return String
-   is
-      Srv_Type : Server_Type;
-   begin
-      begin
-         Srv_Type := Server_Type'Value (Target_Identifier);
-      exception
-         when Constraint_Error =>
-            Srv_Type := GPS_Server;
-      end;
-      return Servers (Srv_Type).Remote_Shell.all;
-   end Shell_Selector;
+   function From_Callback_Data_Server_Config_Changed_Hook
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   --  retrieve hook data from callback data
 
    ----------------------------------
    -- From_Callback_Data_Sync_Hook --
@@ -241,7 +145,6 @@ package body GPS.Kernel.Remote is
       Src_Server  : Server_Type;
       Dest_Server : Server_Type;
    begin
-
       Src_Server  := Server_Type'Value (String'(Nth_Arg (Data, 2)));
       Dest_Server := Server_Type'Value (String'(Nth_Arg (Data, 3)));
       declare
@@ -273,7 +176,7 @@ package body GPS.Kernel.Remote is
       return GPS.Kernel.Scripts.Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 5));
+        new Callback_Data'Class'(Create (Script, 6));
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Server_Type'Image (Data.Src));
@@ -284,386 +187,301 @@ package body GPS.Kernel.Remote is
       return D;
    end Create_Callback_Data;
 
-   ----------------
-   -- Initialize --
-   ----------------
+   ----------------------------------------------
+   -- From_Callback_Server_Config_Changed_Hook --
+   ----------------------------------------------
 
-   procedure Initialize
+   function From_Callback_Data_Server_Config_Changed_Hook
+     (Data : Callback_Data'Class) return Hooks_Data'Class
+   is
+      Server  : Server_Type;
+   begin
+      Server  := Server_Type'Value (String'(Nth_Arg (Data, 2)));
+      declare
+         Nickname  : constant String := Nth_Arg (Data, 3);
+      begin
+         return Server_Config_Changed_Hooks_Args'
+           (Hooks_Data with
+            Nickname_Length => Nickname'Length,
+            Server          => Server,
+            Nickname        => Nickname);
+      end;
+   end From_Callback_Data_Server_Config_Changed_Hook;
+
+   ---------------------------
+   -- Create_Callbackc_Data --
+   ---------------------------
+
+   function Create_Callback_Data
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Hook_Name : String;
+      Data      : access Server_Config_Changed_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
+   is
+      D : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 3));
+   begin
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, Server_Type'Image (Data.Server));
+      Set_Nth_Arg (D.all, 3, Data.Nickname);
+      return D;
+   end Create_Callback_Data;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Remote : constant String := "/_" & (-"Remote") & '/';
+      Unix_FS    : Unix_Filesystem_Record;
+      Windows_FS : Windows_Filesystem_Record;
    begin
-      Register_Menu
-        (Kernel, Remote, -"Servers _configuration", "",
-         On_Servers_Configure'Access);
-      Register_Menu
-        (Kernel, Remote, -"_File system configuration", "",
-         On_Mirror_Path_Configure'Access);
       --  Register synchronisation hook
       Register_Hook_Data_Type
         (Kernel, Rsync_Hook_Type,
          Args_Creator => From_Callback_Data_Sync_Hook'Access);
       Register_Hook_Return_Boolean
         (Kernel, Rsync_Action_Hook, Rsync_Hook_Type);
-      --  Set the configuration selector of GNAT.Expect.TTY.Remote
-      Set_Config_Selector
-        (Remote_Access_Selector => Remote_Access_Selector'Access,
-         Shell_Selector         => Shell_Selector'Access);
-   end Initialize;
 
-   --------------------------
-   -- On_Servers_Configure --
-   --------------------------
+      --  Register server config changed hook
+      Register_Hook_Data_Type
+        (Kernel, Server_Config_Changed_Hook_Type,
+         Args_Creator => From_Callback_Data_Server_Config_Changed_Hook'Access);
+      Register_Hook_No_Return
+        (Kernel, Server_Config_Changed_Hook, Server_Config_Changed_Hook_Type);
 
-   procedure On_Servers_Configure
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+      --  Register the module
+      Remote_Module := new Remote_Module_Record;
+      Remote_Module.Kernel := Kernel_Handle (Kernel);
+      Register_Module
+        (Remote_Module, Kernel, "remote");
+
+      Initialize_Module (Unix_FS);
+      Initialize_Module (Windows_FS);
+
+      --  Connect to project_changed hook
+      Add_Hook (Kernel, Project_Changed_Hook,
+                Wrapper (On_Project_Changed'Access), "gps.kernel.remote");
+   end Register_Module;
+
+   ----------
+   -- Save --
+   ----------
+
+   procedure Save
+     (Property : access Servers_Property;
+      Node     : in out Glib.Xml_Int.Node_Ptr)
    is
-      pragma Unreferenced (Widget, Kernel);
+      Srv : Node_Ptr;
+      pragma Unreferenced (Property);
    begin
-      null;
-   end On_Servers_Configure;
+      for J in Servers'Range loop
+         if not Servers (J).Is_Local then
+            Srv := new Glib.Xml_Int.Node;
+            Srv.Tag := new String'(Server_Type'Image (J));
+            Srv.Value := new String'(Servers (J).Nickname.all);
+            Add_Child (Node, Srv);
+         end if;
+      end loop;
+   end Save;
 
-   ------------------------------
-   -- On_Mirror_Path_Configure --
-   ------------------------------
+   ----------
+   -- Load --
+   ----------
 
-   procedure On_Mirror_Path_Configure
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   procedure Load
+     (Property : in out Servers_Property; From : Glib.Xml_Int.Node_Ptr)
    is
-      pragma Unreferenced (Widget, Kernel);
+      Srv :  Node_Ptr;
+      pragma Unreferenced (Property);
    begin
-      null;
-   end On_Mirror_Path_Configure;
+      for J in Servers'Range loop
+         if From.Child /= null then
+            Srv := Find_Tag (From.Child, Server_Type'Image (J));
+            if Srv /= null
+              and then Is_Configured (Srv.Value.all)
+            then
+               Servers (J) := (Is_Local => False,
+                               Nickname => new String'(Srv.Value.all));
+            else
+               Servers (J) := (Is_Local => True,
+                               Nickname => new String'(Local_Nickname));
+            end if;
+         end if;
+      end loop;
+   end Load;
+
+   ------------------------
+   -- On_Project_Changed --
+   ------------------------
+
+   procedure On_Project_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Property : Servers_Property;
+      Success  : Boolean;
+   begin
+      Get_Property
+        (Property, Get_Project (Kernel),
+         Name => "servers_config", Found => Success);
+   end On_Project_Changed;
+
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Module : access Remote_Module_Record;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (File, Level);
+      Name                      : String_Ptr;
+      Start_Command             : String_Ptr;
+      Start_Command_Common_Args : String_List_Access;
+      Start_Command_User_Args   : String_List_Access;
+      User_Prompt_Ptrn          : String_Ptr;
+      Password_Prompt_Ptrn      : String_Ptr;
+
+   begin
+      if Node.Tag.all = "remote_connection_config" then
+         Trace (Me, "Initialize_Remote_Config : 'remote_connection_config'");
+
+         Name := new String'(Get_Attribute (Node, "name"));
+
+         if Name.all = "" then
+            Console.Insert
+              (Module.Kernel,
+               " XML Error: remote_connection_config tags shall" &
+               " have a name attribute",
+               Add_LF => True, Mode => Error);
+            return;
+         end if;
+
+         Start_Command := Get_Field (Node, "start_command");
+
+         if Start_Command = null then
+            Console.Insert
+              (Module.Kernel,
+               " XML Error: remote_connection_config tags shall" &
+               " have a start_command field",
+               Add_LF => True, Mode => Error);
+            return;
+         end if;
+
+         Start_Command_Common_Args := Argument_String_To_List
+           (Get_Field (Node, "start_command_common_args").all);
+         Start_Command_User_Args := Argument_String_To_List
+           (Get_Field (Node, "start_command_user_args").all);
+         User_Prompt_Ptrn := Get_Field (Node, "user_prompt_ptrn");
+         Password_Prompt_Ptrn := Get_Field (Node, "password_prompt_ptrn");
+         Add_Remote_Access_Descriptor
+           (Name                      => Name.all,
+            Start_Command             => Start_Command.all,
+            Start_Command_Common_Args => Start_Command_Common_Args.all,
+            Start_Command_User_Args   => Start_Command_User_Args.all,
+            User_Prompt_Ptrn          => User_Prompt_Ptrn.all,
+            Password_Prompt_Ptrn      => Password_Prompt_Ptrn.all);
+         Glib.Xml_Int.Free (Name);
+      end if;
+   end Customize;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Module : in out Remote_Module_Record) is
+      pragma Unreferenced (Module);
+   begin
+      Remote_Module := null;
+      --  ???: save machines configuration in .gps/remote.xml
+   end Destroy;
 
    ----------------
    -- Initialize --
    ----------------
 
+   procedure Initialize;
    procedure Initialize is
-      Success : Boolean;
    begin
       --  ??? Note that the whole Initialize procedure here shall go away
       --  with proper configuration load at startup
 
-      Add_Remote_Access_Descriptor
-        (Name                      => "ssh",
-         Start_Command             => "ssh",
-         Start_Command_Common_Args => (new String'("-Y"),
-                                       new String'("-t"),
-                                       new String'("-t"),
-                                       new String'("%h")),
-         Start_Command_User_Args   => (new String'("-l"),
-                                       new String'("%u")),
-         User_Prompt_Ptrn          => "(.*ogin|Name \([^\)]*\)): *$",
-         Password_Prompt_Ptrn      => "^.*(password|passphrase.*): *$");
-
-      Add_Shell_Descriptor
-        ("bash", "bash",
-         Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
-         Configured_Prompt   => "^---GPSPROMPT--#.*$",
-         Init_Commands       => (new String'("unalias ls"),
-                                 new String'("export COLUMNS=2048"),
-                                 new String'("export PS1=---GPSPROMPT--#")),
-         Exit_Commands       => (1 => new String'("exit")),
-         Cd_Command          => "cd %d",
-         Get_Status_Command  => "echo $?",
-         Get_Status_Ptrn     => "^([0-9]*)$",
-         Echoing             => False);
-      Add_Shell_Descriptor
-        ("vms", "",
-         Generic_Prompt      => "\0[^#$>\n]*[#$%>] *$",
-         Configured_Prompt   => "\0---GPSPROMPT--#.*$",
-         Init_Commands       =>
-           (new String'("SET TERMINAL/WIDTH=255"),
-            new String'("SET TERMINAL/NOWRAP"),
-            new String'("USEINSTALL5"), --  ??? AdaCore specific
-            new String'("SET PROMPT=---GPSPROMPT--#")),
-         Exit_Commands       => (1 => new String'("logout")),
-         Cd_Command          => "SET DEFAULT %d",
-         Get_Status_Command  => "WRITE TERMINAL $STATUS",
-         Get_Status_Ptrn     => "^%X([0-9]*) *$",
-         Wrapper             => VMS_Wrapper'Access,
-         Echoing             => True);
-      Add_Or_Replace_Server_Config
-        (Nickname      => "cardiff (x86 linux)",
-         Old_Nickname  => "",
-         Network_Name  => "cardiff.act-europe.fr",
-         Filesystem    => Unix,
-         Remote_Access => "ssh",
-         Remote_Shell  => "bash",
-         Timeout       => 5000,
-         Success       => Success);
---        Add_Mirror_Path
---          (Nickname    => "cardiff (x86 linux)",
---           GPS_Ref     => "/home/lambourg/cardiff.a/remote/sdc/",
---           Remote_Path => "/alexandria.a/home/lambourg/remote/sdc/",
---           Need_Sync   => True);
       Add_Mirror_Path
-        (Nickname    => "cardiff (x86 linux)",
-         GPS_Ref     => "/home/lambourg/cardiff.a/build/",
-         Remote_Path => "/cardiff.a/lambourg/build/",
-         Need_Sync   => True);
-      Add_Mirror_Path
-        (Nickname    => "cardiff (x86 linux)",
-         GPS_Ref     => "/home/lambourg/cardiff.a/install-cardiff/",
-         Remote_Path => "/cardiff.a/lambourg/install-cardiff/",
-         Need_Sync   => True);
-      Add_Or_Replace_Server_Config
-        (Nickname      => "bars (VMS)",
-         Old_Nickname  => "",
-         Network_Name  => "bars",
-         User_Name     => "gnatmail",
-         Filesystem    => VMS,
-         Remote_Access => "ssh",
-         Remote_Shell  => "vms",
-         Timeout       => 10000,
-         Success       => Success);
-      Add_Mirror_Path
-        (Nickname    => "bars (VMS)",
-         GPS_Ref     => "/alexandria.a/home/lambourg/",
-         Remote_Path => "DNFS1:[HOME.LAMBOURG]");
+        (Nickname           => "cardiff",
+         GPS_Ref            => "h:\",
+         Remote_Path        => "/alexandria.a/home/lambourg/");
    end Initialize;
 
    -------------
    -- Convert --
    -------------
 
-   function Convert
+   function To_Remote
      (Path       : String;
-      From       : Server_Type;
       To         : Server_Type;
       Unix_Style : Boolean := False) return String
    is
       Path_From      : String_Ptr;
       Path_To        : String_Ptr;
       Mirror         : Mirror_Path;
-      Case_Sensitive : Boolean;
-
-      function Is_Case_Sensitive (Filesystem : Filesystem_Type) return Boolean;
-      --  Tells if a specified filesystem is case sensitive
-
-      -----------------------
-      -- Is_Case_Sensitive --
-      -----------------------
-
-      function Is_Case_Sensitive
-        (Filesystem : Filesystem_Type) return Boolean
-      is
-      begin
-         case Filesystem is
-            when Windows | Windows_Cygwin | VMS =>
-               return False;
-            when Unix =>
-               return True;
-         end case;
-      end Is_Case_Sensitive;
 
    begin
       --  If From and To are the same machine (and no unix path translation is
       --  needed), just return Path
-
-      if Servers (From) = Servers (To) then
+      if Is_Local (To) then
          if Unix_Style then
-            return To_Unix_Path (Path, From);
+            return To_Unix (Get_Local_Filesystem, Path);
          else
             return Path;
          end if;
       end if;
 
-      --  Set case sensitivity
-      Case_Sensitive := Is_Case_Sensitive (Servers (From).Filesystem);
-
-      if Servers (From).Is_Local then
-         --  Search for mirror path in 'To' config
-
-         Mirror := Servers (To).Mirror_Path_List;
-
-         while Mirror /= null loop
-            if Match (Mirror.Local_Path.all, Path, Case_Sensitive) then
-               Path_From := Mirror.Local_Path;
-               Path_To   := Mirror.Remote_Path;
-               exit;
-            end if;
-
-            Mirror := Mirror.Next;
-         end loop;
-
-      else
-         --  Search for mirror path in 'From' config
-
-         Mirror := Servers (From).Mirror_Path_List;
-
-         while Mirror /= null loop
-            if Match (Mirror.Remote_Path.all, Path, Case_Sensitive) then
-               Path_From := Mirror.Remote_Path;
-               Path_To   := Mirror.Local_Path;
-            end if;
-
-            Mirror := Mirror.Next;
-         end loop;
-
-         --  Everything's fine as long as To is not a remote server
-
-         if not Servers (To).Is_Local then
-            --  Path_To points to local GPS path.
-            --  Translate it to remote To path
-
-            declare
-               GPS_Path : constant String_Ptr := Path_To;
-            begin
-               Path_To := null;
-               Mirror := Servers (To).Mirror_Path_List;
-
-               while Mirror /= null loop
-                  --  Match in a case insensitive manner as insensitive
-                  --  paths are stored lowercase
-
-                  if Match (Mirror.Local_Path.all, GPS_Path.all, False) then
-                     Path_To := Mirror.Remote_Path;
-                     exit;
-                  end if;
-
-                  Mirror := Mirror.Next;
-               end loop;
-            end;
+      --  Search for mirror path in 'To' config
+      Mirror := Mirror_Path_List;
+      while Mirror /= null loop
+         if Mirror.Nickname.all = Servers (To).Nickname.all
+           and then Is_Subtree (Get_Local_Filesystem,
+                                Mirror.Local_Path.all,
+                                Path)
+         then
+            Path_From := Mirror.Local_Path;
+            Path_To   := Mirror.Remote_Path;
+            exit;
          end if;
-      end if;
+
+         Mirror := Mirror.Next;
+      end loop;
 
       if Path_From = null or Path_To = null then
+         --  Not configured mirror path.
          return Path;
-         --  ??? return error ?
       end if;
 
       --  At this point, we have the from and to moint points. Let's translate
       --  the path
-
       declare
-         Subpath : String := Path
-           (Path'First + Path_From'Length .. Path'Last);
-         First_Slash : Boolean;
-
+         To_Filesystem : Filesystem_Record'Class := Get_Filesystem (To);
+         U_Path     : constant String := To_Unix (Get_Local_Filesystem,
+                                                  Path);
+         --  The input path in unix style
+         U_Frompath : constant String := To_Unix (Get_Local_Filesystem,
+                                                  Path_From.all);
+         --  The local root dir, in unix style
+         U_Subpath  : constant String
+           := U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
       begin
-         --  Convert subpath to unix style
-         case Servers (From).Filesystem is
-            when Unix | Windows_Cygwin =>
-               null;
-            when Windows =>
-               for J in Subpath'Range loop
-                  if Subpath (J) = '\' then
-                     Subpath (J) := '/';
-                  end if;
-               end loop;
-
-            when VMS =>
-               for J in Subpath'Range loop
-                  if Subpath (J) = '.' then
-                     Subpath (J) := '/';
-                  elsif Subpath (J) = ']' then
-                     Subpath (J) := '/';
-                     exit;
-                  end if;
-               end loop;
-         end case;
-
-         --  Convert unix style subpath to target style
-         if not Unix_Style then
-            case Servers (To).Filesystem is
-               when Unix | Windows_Cygwin =>
-                  null;
-               when Windows =>
-                  for J in Subpath'Range loop
-                     if Subpath (J) = '/' then
-                        Subpath (J) := '\';
-                     end if;
-                  end loop;
-
-               when VMS =>
-                  First_Slash := True;
-
-                  for J in reverse Subpath'Range loop
-                     if Subpath (J) = '/' then
-                        if First_Slash then
-                           First_Slash := False;
-                           Subpath (J) := ']';
-                        else
-                           Subpath (J) := '.';
-                        end if;
-                     end if;
-                  end loop;
-            end case;
-         end if;
-
-         --  Now, we have subpath in target style.
-         --  Check, if unix style is used, the from path
-
-         if not Unix_Style then
-            declare
-               Path : String := Path_To.all & Subpath;
-            begin
-               --  If we have a VMS path, at this point we get
-               --  device:[foo.foo2]bar]file
-               --  replace the first closing bracket by a dot
-
-               if Servers (To).Filesystem = VMS then
-                  for J in Path'Range loop
-                     if Path (J) = ']' then
-                        Path (J) := '.';
-                        exit;
-                     end if;
-                  end loop;
-
-                  return Path;
-               else
-                  return Path;
-               end if;
-            end;
+         if Unix_Style then
+            return To_Unix (To_Filesystem, Path_To.all) & U_Subpath;
          else
-            --  Unix style case
-            case Servers (To).Filesystem is
-               when Unix | Windows_Cygwin =>
-                  return Path_To.all & Subpath;
-               when Windows =>
-                  declare
-                     Base_Dir : String := Path_To.all;
-                  begin
-                     for J in Base_Dir'Range loop
-                        if Base_Dir (J) = '\' then
-                           Base_Dir (J) := '/';
-                        end if;
-                     end loop;
-
-                     Base_Dir (Base_Dir'First .. Base_Dir'First + 1)
-                       := "/" & Base_Dir (Base_Dir'First);
-                     return Base_Dir & Subpath;
-                  end;
-
-               when VMS =>
-                  declare
-                     Base_Dir : String := Path_To.all;
-                     Dir_Index : Natural := 0;
-                  begin
-                     for J in Base_Dir'Range loop
-                        --  Transform device:[foo by /device/foo
-
-                        if Dir_Index = 0 and Base_Dir (J) = ':' then
-                           Base_Dir (Base_Dir'First .. J + 1) :=
-                             "/" & Base_Dir (Base_Dir'First .. J - 1) & "/";
-                           Dir_Index := J - 1;
-                        end if;
-
-                        if Base_Dir (J) = '.' or Base_Dir (J) = ']' then
-                           Base_Dir (J) := '/';
-                        end if;
-                     end loop;
-
-                     return Base_Dir & Subpath;
-                  end;
-            end case;
+            return Concat (To_Filesystem,
+                           Path_To.all,
+                           From_Unix (To_Filesystem, U_Subpath));
          end if;
       end;
-   end Convert;
+   end To_Remote;
 
    ------------------
    -- To_Unix_Path --
@@ -671,53 +489,10 @@ package body GPS.Kernel.Remote is
 
    function To_Unix_Path
      (Path             : String;
-      Server           : Server_Type;
-      Use_Cygwin_Style : Boolean := False) return String
+      Server           : Server_Type) return String
    is
-      The_Path : String := Path;
-      Device_Found : Boolean := False;
    begin
-      case Servers (Server).Filesystem is
-         when Unix | Windows_Cygwin =>
-            null;
-
-         when VMS =>
-            for J in The_Path'Range loop
-               if not Device_Found and then The_Path (J) = ':' then
-                  The_Path (The_Path'First .. J + 1) :=
-                    '/' & The_Path (The_Path'First .. J - 1) & '/';
-                  Device_Found := True;
-
-               elsif The_Path (J) = '.' or The_Path (J) = ']' then
-                  The_Path (J) := '/';
-               end if;
-            end loop;
-
-         when Windows =>
-            if not Use_Cygwin_Style
-              and then The_Path'Length > 3
-              and then The_Path (The_Path'First .. The_Path'First + 1) = "\\"
-            then
-               --  This is a UNC path, do not touch it
-               return The_Path;
-            end if;
-
-            for J in The_Path'Range loop
-               if Use_Cygwin_Style
-                 and then not Device_Found
-                 and then The_Path (J) = ':'
-               then
-                  The_Path (The_Path'First .. J + 1) :=
-                    '/' & The_Path (The_Path'First .. J - 1) & '/';
-                  Device_Found := True;
-
-               elsif The_Path (J) = '\' then
-                  The_Path (J) := '/';
-               end if;
-            end loop;
-      end case;
-
-      return The_Path;
+      return To_Unix (Get_Filesystem (Server), Path);
    end To_Unix_Path;
 
    -----------------
@@ -748,10 +523,12 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Synchronize with remote host
-      Mirror := Servers (Server).Mirror_Path_List;
+      Mirror := Mirror_Path_List;
 
       while Mirror /= null loop
-         if Mirror.Need_Sync then
+         if Mirror.Nickname.all = Servers (Server).Nickname.all
+           and then Mirror.Need_Sync
+         then
             if Is_Local (From) then
                From_Path := Mirror.Local_Path;
                To_Path   := Mirror.Remote_Path;
@@ -821,7 +598,7 @@ package body GPS.Kernel.Remote is
       Exec         : String_Access;
       Old_Dir      : String_Access;
       Args         : Argument_List_Access;
-      New_Args     : Argument_List_Access;
+--        New_Args     : Argument_List_Access;
       L_Args       : Argument_List_Access := null;
       Default_Error_Manager : aliased Default_Error_Display_Record;
       In_Use_Error_Manager  : Error_Display;
@@ -848,6 +625,9 @@ package body GPS.Kernel.Remote is
          return Full_Exec;
       end Check_Exec;
 
+      Request_User : Request_User_Object
+        := (Main_Window => null);
+
    begin
       Success := False;
 
@@ -860,9 +640,14 @@ package body GPS.Kernel.Remote is
          In_Use_Error_Manager := Error_Manager;
       end if;
 
+      if Kernel /= null then
+         Request_User.Main_Window := Get_Main_Window (Kernel);
+      end if;
+
       --  First verify the executable to be launched
 
       if Is_Local (Server) then
+--           Filesystem := Get_Local_Filesystem;
          Exec := Check_Exec (Arguments (Arguments'First).all);
 
          if Exec = null then
@@ -873,39 +658,14 @@ package body GPS.Kernel.Remote is
            ((1 => Exec) &
             Clone (Arguments (Arguments'First + 1 .. Arguments'Last)));
       else
+--           Filesystem := Get_Filesystem (Servers (Server).Nickname.all);
          Args := new Argument_List'(Clone (Arguments));
       end if;
 
-      if Servers (Server).Filesystem = VMS then
-         --  In VMS case, -X arguments shall be quoted. Perform a manual deep
-         --  copy.
-
-         --  ??? In some cases (user-defined images), we need to launch MCR
-         --  to execute the built program... need to find a way to
-         --  automatically do this
-
-         New_Args := new Argument_List'(Args.all);
-
-         for J in New_Args'Range loop
-            if New_Args (J) (New_Args (J)'First) = '-' then
-               New_Args (J) := new String'("""" &
-                                           New_Args (J).all & """");
-            else
-               New_Args (J) := new String'(New_Args (J).all);
-            end if;
-         end loop;
-
-         Free (Args);
-         Args := New_Args;
-      end if;
-
-      if Servers (GPS_Server).Filesystem = Windows then
-         --  Windows commands are launched using "cmd /c the_command"
-         L_Args :=
-           new Argument_List'((new String'("cmd"), new String'("/c")));
-      end if;
-
-      if Console /= null and then Show_Command then
+      if Console /= null
+        and then Show_Command
+        and then not Is_Local (Server)
+      then
          if Is_Local (Server) then
             Insert (Console,
                     Argument_List_To_String (Arguments),
@@ -920,6 +680,12 @@ package body GPS.Kernel.Remote is
 
       if Servers (Server).Is_Local then
          Pd := new GNAT.Expect.TTY.TTY_Process_Descriptor;
+
+         if Host = Config.Windows then
+            --  Windows commands are launched using "cmd /c the_command"
+            L_Args :=
+              new Argument_List'((new String'("cmd"), new String'("/c")));
+         end if;
 
          --  If using an external terminal, use Execute_Command preference
          --  ??? incompatible with gnat.expect.tty.remote... needs to be fixed
@@ -955,6 +721,7 @@ package body GPS.Kernel.Remote is
                                 Args.all,
                                 Buffer_Size => 0,
                                 Err_To_Out  => True);
+            Free (L_Args);
          else
             Non_Blocking_Spawn (Pd.all,
                                 Args (Args'First).all,
@@ -969,61 +736,27 @@ package body GPS.Kernel.Remote is
          end if;
 
       else
-         Pd := new Remote_Process_Descriptor;
-
          if Active (Me) then
             Trace (Me, "Remote Spawning " &
                    Argument_List_To_String (Args.all));
          end if;
 
          if Directory = "" then
-            declare
-               R_Dir : constant String
-                 := Convert (Get_Current_Dir,
-                             GPS_Server,
-                             Server);
-            begin
-               --  If current_dir matches a remote² directory let's
-               --  set it as working directory on remote machine
-
-               if R_Dir /= Get_Current_Dir then
-                  Old_Dir := new String'(R_Dir);
-               else
-                  Old_Dir := new String'("");
-               end if;
-            end;
+            Old_Dir := new String'
+              (To_Remote (Get_Current_Dir, Server));
          else
             Old_Dir := new String'(Directory);
          end if;
 
          --  Set buffer_size to 0 for dynamically allocated buffer
          --  (prevents possible overflow)
-
-         if L_Args /= null then
-            Remote_Spawn
-              (Remote_Process_Descriptor (Pd.all),
-               Target_Name         => Servers (Server).Network_Name.all,
-               Target_Identifier   => Server_Type'Image (Server),
-               Args                => Args.all,
-               Local_Args          => L_Args.all,
-               Execution_Directory => Old_Dir.all,
-               User_Name           => Servers (Server).User_Name.all,
-               Launch_Timeout      => Servers (Server).Timeout,
-               Err_To_Out          => True);
-            Free (L_Args);
-
-         else
-            Remote_Spawn
-              (Remote_Process_Descriptor (Pd.all),
-               Target_Name         => Servers (Server).Network_Name.all,
-               Target_Identifier   => Server_Type'Image (Server),
-               Args                => Args.all,
-               Local_Args          => (1 .. 0 => null),
-               Execution_Directory => Old_Dir.all,
-               User_Name           => Servers (Server).User_Name.all,
-               Launch_Timeout      => Servers (Server).Timeout,
-               Err_To_Out          => True);
-         end if;
+         Remote_Spawn
+           (Pd,
+            Target_Nickname       => Servers (Server).Nickname.all,
+            Args                  => Args.all,
+            Execution_Directory   => Old_Dir.all,
+            Err_To_Out            => True,
+            Request_User_Instance => Request_User);
          Free (Old_Dir);
       end if;
 
@@ -1041,86 +774,6 @@ package body GPS.Kernel.Remote is
                    ")");
    end Spawn;
 
-   ----------------
-   -- Add_Server --
-   ----------------
-
-   procedure Add_Or_Replace_Server_Config
-     (Nickname      : String;
-      Old_Nickname  : String;
-      Network_Name  : String;
-      Filesystem    : Filesystem_Type;
-      Remote_Access : String;
-      Remote_Shell  : String;
-      User_Name     : String := "";
-      Timeout       : Natural := 5000;
-      Success       : out Boolean)
-   is
-      Item : Server_Config := null;
-   begin
-      Success := True;
-      --  ??? We should first check that Remote_Access exists and return
-      --  False in this case
-
-      --  Check if the server is already defined
-
-      if Old_Nickname /= "" then
-         Item := Config_List.Next;
-
-         --  Skip the first item which is the local server
-
-         while Item /= null loop
-            exit when Item.Nickname.all = Old_Nickname;
-            Item := Item.Next;
-         end loop;
-
-         --  If a server with specified old_nickname could not be found,
-         --  return here with appropriate status.
-
-         if Item = null then
-            Success := False;
-            return;
-         end if;
-      end if;
-
-      --  If Server is null, then it is not already defined
-      --  We create a new Server_Item then and add it at the end of the
-      --  servers list.
-
-      if Item = null then
-         Item := Config_List;
-
-         while Item.Next /= null loop
-            Item := Item.Next;
-         end loop;
-
-         Item.Next := new Server_Config_Record;
-         Nb_Servers  := Nb_Servers + 1;
-         Item := Item.Next;
-
-      else
-         --  Replace Item's values... free previous ones
-
-         Free (Item.Nickname);
-         Free (Item.Network_Name);
-         Free (Item.Remote_Access);
-         Free (Item.User_Name);
-      end if;
-
-      --  Let's set the new values of the server
-
-      Item.Is_Local      := False;
-      Item.Filesystem    := Filesystem;
-      Item.Timeout       := Timeout;
-      Item.Nickname      := new String'(Nickname);
-      Item.Network_Name  := new String'(Network_Name);
-      Item.Remote_Access := new String'(Remote_Access);
-      Item.Remote_Shell  := new String'(Remote_Shell);
-      Item.User_Name     := new String'(User_Name);
-
-      --  ??? Add Hook concerning the servers list that changed...
-   end Add_Or_Replace_Server_Config;
-
    ---------------------
    -- Add_Mirror_Path --
    ---------------------
@@ -1129,24 +782,19 @@ package body GPS.Kernel.Remote is
      (Nickname    : String;
       GPS_Ref     : String;
       Remote_Path : String;
-      Need_Sync   : Boolean := False)
+      Need_Sync   : Boolean := False;
+      Attribute   : Mirror_Attribute := Project_Specific)
    is
-      Item : Server_Config := Config_List.Next;
       Mirror : Mirror_Path;
    begin
-      while Item /= null loop
-         if Item.Nickname.all = Nickname then
-            Mirror := Item.Mirror_Path_List;
-            Item.Mirror_Path_List := new Mirror_Path_Record'
-              (Local_Path  => new String'(GPS_Ref),
-               Remote_Path => new String'(Remote_Path),
-               Need_Sync   => Need_Sync,
-               Next        => Mirror);
-            exit;
-         end if;
-
-         Item := Item.Next;
-      end loop;
+      Mirror := new Mirror_Path_Record'
+        (Nickname    => new String'(Nickname),
+         Local_Path  => new String'(GPS_Ref),
+         Remote_Path => new String'(Remote_Path),
+         Need_Sync   => Need_Sync,
+         Next        => Mirror_Path_List,
+         Attribute   => Attribute);
+      Mirror_Path_List := Mirror;
    end Add_Mirror_Path;
 
    ------------
@@ -1154,50 +802,36 @@ package body GPS.Kernel.Remote is
    ------------
 
    procedure Assign
-     (Server   : Server_Type;
+     (Kernel   : Kernel_Handle;
+      Server   : Server_Type;
       Nickname : String)
    is
-      Item : Server_Config := Config_List;
+      Data : aliased Server_Config_Changed_Hooks_Args
+        := (Hooks_Data with
+            Nickname_Length => Nickname'Length,
+            Server          => Server,
+            Nickname        => Nickname);
+      Prop : Property_Access;
    begin
-      while Item /= null loop
-         if Item.Nickname.all = Nickname then
-            Trace (Me, "Server " & Server_Type'Image (Server) &
-                   " assigned to config " & Nickname);
-            Servers (Server) := Item;
-            return;
-         end if;
+      Glib.Free (Servers (Server).Nickname);
 
-         Item := Item.Next;
-      end loop;
-   end Assign;
+      Servers (Server) := (Is_Local => Nickname = Local_Nickname,
+                           Nickname => new String'(Nickname));
 
-   ---------------------------------
-   -- Get_Number_Of_Server_Config --
-   ---------------------------------
+      Prop := new Servers_Property;
+      Set_Property
+        (Get_Project (Kernel),
+         Name       => "servers_config",
+         Property   => Prop,
+         Persistent => True);
 
-   function Get_Number_Of_Server_Config return Server_Id is
-   begin
-      return Nb_Servers;
-   end Get_Number_Of_Server_Config;
-
-   ------------------
-   -- Get_Nickname --
-   ------------------
-
-   function Get_Nickname (Id : Server_Id) return String is
-      Config : Server_Config := Config_List;
-   begin
-      for J in 2 .. Id loop
-         Config := Config.Next;
-         exit when Config = null;
-      end loop;
-
-      if Config = null then
-         return "";
-      else
-         return Config.Nickname.all;
+      if Active (Me) then
+         Trace (Me, "run server_changed hook for " &
+                Server_Type'Image (Server) & " => " & Data.Nickname);
       end if;
-   end Get_Nickname;
+
+      Run_Hook (Kernel, Server_Config_Changed_Hook, Data'Unchecked_Access);
+   end Assign;
 
    ------------------
    -- Get_Nickname --
@@ -1214,8 +848,26 @@ package body GPS.Kernel.Remote is
 
    function Get_Network_Name (Server : Server_Type) return String is
    begin
-      return Servers (Server).Network_Name.all;
+      if Is_Local (Server) then
+         return "localhost";
+      else
+         return Get_Network_Name (Get_Nickname (Server));
+      end if;
    end Get_Network_Name;
+
+   --------------------
+   -- Get_Filesystem --
+   --------------------
+
+   function Get_Filesystem (Server : Server_Type)
+                            return Filesystem_Record'Class is
+   begin
+      if Is_Local (Server) then
+         return Get_Local_Filesystem;
+      else
+         return Get_Filesystem (Get_Nickname (Server));
+      end if;
+   end Get_Filesystem;
 
    --------------
    -- Is_Local --

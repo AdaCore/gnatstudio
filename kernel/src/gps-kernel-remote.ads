@@ -19,10 +19,14 @@
 -----------------------------------------------------------------------
 
 with GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;     use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 with GNAT.OS_Lib;
 
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;
+with Filesystem;           use Filesystem;
 with Interactive_Consoles;
 
 package GPS.Kernel.Remote is
@@ -36,33 +40,19 @@ package GPS.Kernel.Remote is
    subtype Remote_Server_Type is Server_Type
      range Build_Server .. Debug_Server;
 
-   procedure Initialize
+   procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Initializes the remote functionality.
+   --  Register the module into the list
 
-   procedure Initialize;
-   --  ??? Dummy procedure for now
-   --  Initializes Remote access module.
-
-   function Convert (Path       : String;
-                     From       : Server_Type;
-                     To         : Server_Type;
-                     Unix_Style : Boolean := False) return String;
-   --  Translate a file/directory path from server 'From' to server 'To'
+   function To_Remote (Path       : String;
+                       To         : Server_Type;
+                       Unix_Style : Boolean := False) return String;
+   --  Translate a local file/directory path to server 'To'
    --  if Unix_Style is set, the translated path will have a unix style.
 
    function To_Unix_Path (Path             : String;
-                          Server           : Server_Type;
-                          Use_Cygwin_Style : Boolean := False) return String;
+                          Server           : Server_Type) return String;
    --  Transform a remote path into unix path style.
-   --  If Use_Cygwin_Style is set, windows directory x:\ are translated to /x/
-
-   type Sync_Data is tagged null record;
-   type Sync_Data_Access is access all Sync_Data'Class;
-
-   type On_Synchronized_procedure is access
-     procedure (Status : Boolean;
-                Data   : Sync_Data_Access);
 
    procedure Synchronize (Kernel        : Kernel_Handle;
                           From          : Server_Type;
@@ -134,24 +124,43 @@ package GPS.Kernel.Remote is
       Data      : access Rsync_Hooks_Args)
       return GPS.Kernel.Scripts.Callback_Data_Access;
 
+   --------------------------------
+   -- Server Config Changed Hook --
+   --------------------------------
+
+   Server_Config_Changed_Hook : constant String := "srv_config_hooks";
+
+   Server_Config_Changed_Hook_Type : constant String := "srv_config_hook";
+
+   type Server_Config_Changed_Hooks_Args
+     (Nickname_Length : Natural)
+     is new Hooks_Data with record
+        Server   : Server_Type;
+        Nickname : String (1 .. Nickname_Length);
+     end record;
+
+   function Create_Callback_Data
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Hook_Name : String;
+      Data      : access Server_Config_Changed_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
+
    ----------------------------
    --  Servers configuration --
    ----------------------------
 
-   type Server_Id is new Positive;
+   type Mirror_Attribute is
+     (System_Defined,
+      User_Defined,
+      Project_Specific);
 
-   type Filesystem_Type is
-     (Unix,
-      Windows,
-      Windows_Cygwin,
-      VMS);
-   --  the shells supported by GPS
+   Local_Nickname : constant String := "(local)";
 
-   function Get_Number_Of_Server_Config return Server_Id;
-   --  Retrieves the total number of defined servers
-
-   function Get_Nickname (Id : Server_Id) return String;
-   --  Gets the nickname of a server
+   procedure Assign
+     (Kernel   : Kernel_Handle;
+      Server   : Server_Type;
+      Nickname : String);
+   --  Assigns a Server to a configuration
 
    function Get_Nickname (Server : Server_Type) return String;
    --  Gets the nickname of a server
@@ -159,40 +168,24 @@ package GPS.Kernel.Remote is
    function Get_Network_Name (Server : Server_Type) return String;
    --  Gets the network name of a server
 
+   function Get_Filesystem (Server : Server_Type)
+                            return Filesystem_Record'Class;
+   --  Get the filesystem of the specified server
+
    function Is_Local (Server : Server_Type) return Boolean;
    --  Tells if the server is the local server or is remote
-
-   procedure Add_Or_Replace_Server_Config
-     (Nickname      : String;
-      Old_Nickname  : String;
-      Network_Name  : String;
-      Filesystem    : Filesystem_Type;
-      Remote_Access : String;
-      Remote_Shell  : String;
-      User_Name     : String := "";
-      Timeout       : Natural := 5000;
-      Success       : out Boolean);
-   --  Shell         : the shell of the remote or local machine
-   --  Nickname      : name displayed to the user
-   --  Network_Name  : used to access the server using the network
-   --  Remote_Access : the medium used to access the server
-   --  Success       : set to True upon success.
 
    procedure Add_Mirror_Path
      (Nickname    : String;
       GPS_Ref     : String;
       Remote_Path : String;
-      Need_Sync   : Boolean := False);
+      Need_Sync   : Boolean := False;
+      Attribute   : Mirror_Attribute := Project_Specific);
    --  Nickname of the server whose fs is mirrored
    --  Path in GPS referential
    --  Path in Remote server referential
    --  If Need_Sync is set, a synchronisation between the two path
    --   will be performed when needed. Else, it is supposed that the
    --   two filesystems are shared.
-
-   procedure Assign
-     (Server   : Server_Type;
-      Nickname : String);
-   --  Assigns a Server to a configuration
 
 end GPS.Kernel.Remote;
