@@ -1028,7 +1028,7 @@ package body Debugger.Gdb is
 
       function Translate_Path (S : VFS.Virtual_File) return String is
       begin
-         return Convert (Full_Name (S).all, GPS_Server, Debug_Server, True);
+         return To_Remote (Full_Name (S).all, Debug_Server, True);
       end Translate_Path;
 
    begin
