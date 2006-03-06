@@ -59,11 +59,6 @@ package body Codefix.Errors_Parser is
          Column_Index (To_Char_Index_Workaround
            (Get_Column (Message), Get_Line (Current_Text, Line_Cursor))));
 
-      Put_Line ("MESSAGE IS "
-        & Integer'Image (Get_Line (Workaround_Message))
-                & Column_Index'Image (Get_Column (Workaround_Message))
-                & " " & Get_Message (Workaround_Message));
-
       while Current_Node /= Parser_List.Null_Node loop
          if Get_Error_State
            (General_Preferences_List,
@@ -1513,8 +1508,7 @@ package body Codefix.Errors_Parser is
          Message,
          Cat_Variable,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-         Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy))));
+         Add_Pragma_Unreferenced);
    end Fix;
 
    --------------------
