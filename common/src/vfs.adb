@@ -30,6 +30,9 @@ with System;
 
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 with GNAT.Heap_Sort;            use GNAT.Heap_Sort;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
@@ -39,9 +42,9 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Unicode;              use Glib.Unicode;
 with Glib.Values;               use Glib.Values;
 
+with Filesystem;                use Filesystem;
 with File_Utils;                use File_Utils;
 with OS_Utils;                  use OS_Utils;
-with Remote_Connections;        use Remote_Connections;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
@@ -59,9 +62,6 @@ package body VFS is
    --  Initialized only the first time this is needed, since we need glib
    --  initialized for this.
    --  ??? Could this be made a local variable
-
-   Working_Dir : GNAT.OS_Lib.String_Access := null;
-   --  Working directory. This can be a remote directory
 
    procedure Ensure_Normalized (File : Virtual_File);
    --  Ensure that the information for the normalized file have been correctly
@@ -86,6 +86,19 @@ package body VFS is
      (System.Address, Contents_Access);
    pragma Warnings (On);
 
+   --------------
+   -- Is_Local --
+   --------------
+
+   function Is_Local (File : Virtual_File) return Boolean is
+   begin
+      if File.Value /= null then
+         return File.Value.Server.all = "";
+      end if;
+
+      return True;
+   end Is_Local;
+
    ---------
    -- "=" --
    ---------
@@ -99,13 +112,17 @@ package body VFS is
          return False;
       elsif File1.Value = File2.Value then
          return True;
-      elsif File1.Value.Connection /= File2.Value.Connection then
+      elsif File1.Value.Server.all /= File2.Value.Server.all then
          return False;
       else
          Ensure_Normalized (File1);
          Ensure_Normalized (File2);
-         Case_Sensitive := Filenames_Are_Case_Sensitive
-           or File1.Value.Connection /= null;
+         if File1.Value.Server.all = "" then
+            Case_Sensitive := Filenames_Are_Case_Sensitive;
+         else
+            Case_Sensitive :=
+              Is_Case_Sensitive (Get_Filesystem (File1.Value.Server.all));
+         end if;
 
          return Equal
            (File2.Value.Normalized_Full.all,
@@ -119,14 +136,22 @@ package body VFS is
    ------------
 
    function Create (Full_Filename : UTF8_String) return Virtual_File is
-      Protocol, User, Host : String_Access;
-      Connection  : Remote_Connection;
-      Start       : Integer;
+
+   begin
+      return Create (Host          => "",
+                     Full_Filename => Full_Filename);
+   end Create;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create (Host          : UTF8_String;
+                    Full_Filename : UTF8_String) return Virtual_File
+   is
       Valid       : Boolean;
       Invalid_Pos : Natural;
-      First       : Natural;
       Last        : Natural;
-
    begin
       UTF8_Validate (Full_Filename, Valid, Invalid_Pos);
       if not Valid then
@@ -139,60 +164,35 @@ package body VFS is
            and then Full_Filename (Last) /= ASCII.CR;
          Last := Last - 1;
       end loop;
-      First := Full_Filename'First;
 
-      Parse_URL (Full_Filename (First .. Last), Protocol, User, Host, Start);
-
-      if Protocol /= null then
-         Connection := Get_Connection (Protocol.all, User.all, Host.all);
-         Free (Protocol);
-         Free (User);
-         Free (Host);
-
-         if Connection /= null then
-            return
-              (Ada.Finalization.Controlled with
-               Value => new Contents_Record'
-                 (Connection      => Connection,
-                  Start_Of_Path   => Start,
-                  Ref_Count       => 1,
-                  Full_Name       => new String'
-                    (Full_Filename (First .. Last)),
-                  Normalized_Full => null,
-                  Dir_Name        => null,
-                  Kind            => Unknown));
-
-         else
-            --  Behave as if we have a local file, although nobody will be
-            --  able to open it
-
-            return
-              (Ada.Finalization.Controlled with
-               Value => new Contents_Record'
-                 (Connection      => null,
-                  Start_Of_Path   => Full_Filename'First,
-                  Ref_Count       => 1,
-                  Full_Name       => new String'
-                    (Full_Filename (First .. Last)),
-                  Normalized_Full => null,
-                  Dir_Name        => null,
-                  Kind            => Unknown));
-         end if;
-
-      else
-         return
-           (Ada.Finalization.Controlled with
-            Value => new Contents_Record'
-              (Connection      => null,
-               Start_Of_Path   => Full_Filename'First,
-               Ref_Count       => 1,
-               Full_Name       => new String'
-                 (Full_Filename (First .. Last)),
-               Normalized_Full => null,
-               Dir_Name        => null,
-               Kind            => Unknown));
-      end if;
+      return
+        (Ada.Finalization.Controlled with
+         Value => new Contents_Record'
+           (Server          => new String'(Host),
+            Ref_Count       => 1,
+            Full_Name       => new String'
+              (Full_Filename (Full_Filename'First .. Last)),
+            Normalized_Full => null,
+            Dir_Name        => null,
+            Kind            => Unknown));
    end Create;
+
+   ---------------------
+   -- Create_From_Dir --
+   ---------------------
+
+   function Create_From_Dir (Dir : Virtual_File;
+                             Base_Name : UTF8_String) return Virtual_File is
+   begin
+      Ensure_Directory (Dir);
+      if Is_Local (Dir) then
+         return Create (Dir.Value.Full_Name.all & Base_Name);
+      else
+         return Create (Get_Host (Dir),
+                        Concat (Get_Filesystem (Get_Host (Dir)),
+                                Dir.Value.Full_Name.all, Base_Name));
+      end if;
+   end Create_From_Dir;
 
    ----------------------
    -- Create_From_Base --
@@ -203,8 +203,7 @@ package body VFS is
       if Base_Name /= "" then
          return (Ada.Finalization.Controlled with
                  Value => new Contents_Record'
-                 (Connection      => null,
-                  Start_Of_Path   => Base_Name'First,
+                 (Server          => new String'(""),
                   Ref_Count       => 1,
                   Full_Name       => new String'(Base_Name),
                   Normalized_Full => null,
@@ -225,72 +224,18 @@ package body VFS is
          --  If the user didn't create a file with a full name, no need to
          --  spend time now trying to find the file.
 
-         if File.Value.Connection = null
+         if Is_Local (File)
            and then not Is_Absolute_Path (File.Value.Full_Name.all)
          then
             File.Value.Normalized_Full :=
               new UTF8_String'(File.Value.Full_Name.all);
 
-         elsif File.Value.Connection /= null then
-            --  Simplified normalization
-            --  ../ and ./ directories handling
+         elsif not Is_Local (File) then
 
-            declare
-               --  Normalized path cannot be greater than initial one.
-               Normalized : UTF8_String (1 .. File.Value.Full_Name'Length);
-               Norm_Index : Natural := 1;
-               Start, Last : Natural;
-
-            begin
-               --  first copy header (i.e. protocol://host/)
-               Last := File.Value.Start_Of_Path;
-               Start := File.Value.Full_Name'First;
-               Norm_Index := Last - Start + 1;
-               Normalized (1 .. Norm_Index) :=
-                 File.Value.Full_Name (Start .. Last);
-               Start := Last + 1;
-               Last  := Start;
-
-               while Last <= File.Value.Full_Name'Last loop
-                  if File.Value.Full_Name (Last) = '/' then
-                     if File.Value.Full_Name (Start .. Last) = "./" then
-                        --  just ignore it
-                        Start := Last + 1;
-
-                     elsif File.Value.Full_Name (Start .. Last) = "../" then
-                        --  remove previous directory
-                        Norm_Index := Norm_Index - 1;
-
-                        while Normalized (Norm_Index) /= '/' loop
-                           Norm_Index := Norm_Index - 1;
-                           exit when Norm_Index = 1;
-                        end loop;
-                        --  and ignore '..'
-                        Start := Last + 1;
-
-                     else
-                        --  new directory. Add it to normalized.
-                        Norm_Index := Norm_Index + 1;
-                        Normalized (Norm_Index ..
-                                      Norm_Index + Last - Start) :=
-                            File.Value.Full_Name (Start .. Last);
-                        Norm_Index := Norm_Index + Last - Start;
-                        Start := Last + 1;
-                     end if;
-
-                  elsif Last = File.Value.Full_Name'Last then
-                     Norm_Index := Norm_Index + 1;
-                     Normalized (Norm_Index .. Norm_Index + Last - Start) :=
-                       File.Value.Full_Name (Start .. Last);
-                     Norm_Index := Norm_Index + Last - Start;
-                  end if;
-
-                  Last := Last + 1;
-               end loop;
-
-               File.Value.Normalized_Full := new UTF8_String'
-                 (Normalized (1 .. Norm_Index));
-            end;
+            --  Simple normalization, no link is resolved
+            File.Value.Normalized_Full := new UTF8_String'
+              (Normalize (Get_Filesystem (File.Value.Server.all),
+                          File.Value.Full_Name.all));
 
          else
             --  To_Host_Pathname is only needed for the debugger: it is done
@@ -346,18 +291,22 @@ package body VFS is
          return "";
       end if;
 
-      if File.Value.Full_Name (File.Value.Full_Name'Last) = '/' or
-        File.Value.Full_Name (File.Value.Full_Name'Last) = '\' then
+      if Is_Local (File) then
 
-         return "";
+         if File.Value.Full_Name (File.Value.Full_Name'Last) = '/' or
+           File.Value.Full_Name (File.Value.Full_Name'Last) = '\' then
+
+            return "";
+         end if;
+
+         --  Since we can't ensure that Prefix will be the same in two
+         --  successive calls, we have to reallocate the string every time.
+
+         return Base_Name (File.Value.Full_Name.all, Suffix);
+      else
+         return Base_Name (Get_Filesystem (File.Value.Server.all),
+                           File.Value.Full_Name.all, Suffix);
       end if;
-
-      --  Since we can't ensure that Prefix will be the same in two
-      --  successive calls, we have to reallocate the string every time.
-
-      return Base_Name
-        (File.Value.Full_Name
-           (File.Value.Start_Of_Path .. File.Value.Full_Name'Last), Suffix);
    end Base_Name;
 
    -------------------
@@ -374,15 +323,17 @@ package body VFS is
          return "";
       end if;
 
-      if File.Value.Full_Name (File.Value.Full_Name'Last) = '/' or
-        File.Value.Full_Name (File.Value.Full_Name'Last) = '\' then
-         return Base_Name
-           (File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last - 1));
+      if Is_Local (File) then
+         if File.Value.Full_Name (File.Value.Full_Name'Last) = '/' or
+           File.Value.Full_Name (File.Value.Full_Name'Last) = '\' then
+            return Base_Name (File.Value.Full_Name
+                (File.Value.Full_Name'First .. File.Value.Full_Name'Last - 1));
+         else
+            return Base_Name (File.Value.Full_Name.all);
+         end if;
       else
-         return Base_Name
-           (File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+         return Base_Dir_Name (Get_Filesystem (File.Value.Server.all),
+                               File.Value.Full_Name.all);
       end if;
    end Base_Dir_Name;
 
@@ -401,8 +352,6 @@ package body VFS is
          Ensure_Normalized (File);
          return Cst_UTF8_String_Access (File.Value.Normalized_Full);
 
-      elsif File.Value.Connection /= null then
-         return Cst_UTF8_String_Access (File.Value.Full_Name);
       else
          return Cst_UTF8_String_Access (File.Value.Full_Name);
       end if;
@@ -417,11 +366,7 @@ package body VFS is
       if File.Value = null then
          return "";
       else
-         if File.Value.Connection /= null then
-            return Get_Host (File.Value.Connection);
-         else
-            return "";
-         end if;
+         return File.Value.Server.all;
       end if;
    end Get_Host;
 
@@ -436,8 +381,15 @@ package body VFS is
 
       else
          if File.Value.Dir_Name = null then
-            File.Value.Dir_Name :=
-              new UTF8_String'(Dir_Name (File.Value.Full_Name.all));
+            if Is_Local (File) then
+               File.Value.Dir_Name :=
+                 new UTF8_String'(Dir_Name (File.Value.Full_Name.all));
+            else
+               File.Value.Dir_Name :=
+                 new UTF8_String'
+                   (Dir_Name (Get_Filesystem (File.Value.Server.all),
+                              File.Value.Full_Name.all));
+            end if;
          end if;
          return Cst_UTF8_String_Access (File.Value.Dir_Name);
       end if;
@@ -459,28 +411,6 @@ package body VFS is
          return The_Dir;
       end if;
    end Dir;
-
-   ------------
-   -- Delete --
-   ------------
-
-   procedure Delete
-     (File    : Virtual_File;
-      Success : out Boolean) is
-   begin
-      if File.Value.Connection = null then
-         Delete_File (Locale_Full_Name (File), Success);
-      else
-         Success := Delete
-           (File.Value.Connection,
-            File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
-      end if;
-
-      if Success then
-         File.Value.Kind := Unknown;
-      end if;
-   end Delete;
 
    ----------------------
    -- Locale_Full_Name --
@@ -516,24 +446,6 @@ package body VFS is
       return Locale_From_UTF8 (Name);
    end Locale_Dir_Name;
 
-   ---------------------
-   -- Is_Regular_File --
-   ---------------------
-
-   function Is_Regular_File (File : Virtual_File) return Boolean is
-   begin
-      if File.Value = null then
-         return False;
-      elsif File.Value.Connection = null then
-         return Is_Regular_File (Locale_Full_Name (File));
-      else
-         return Is_Regular_File
-           (File.Value.Connection,
-            File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
-      end if;
-   end Is_Regular_File;
-
    --------------------
    -- Unchecked_Free --
    --------------------
@@ -545,6 +457,46 @@ package body VFS is
       Internal (Arr);
    end Unchecked_Free;
 
+   ---------------------
+   -- Is_Regular_File --
+   ---------------------
+
+   function Is_Regular_File (File : Virtual_File) return Boolean is
+   begin
+      if File.Value = null then
+         return False;
+      elsif Is_Local (File) then
+         return Is_Regular_File (Locale_Full_Name (File));
+      else
+         return Is_Regular_File
+           (Get_Filesystem (File.Value.Server.all),
+            File.Value.Server.all,
+            Locale_Full_Name (File));
+      end if;
+   end Is_Regular_File;
+
+   ------------
+   -- Delete --
+   ------------
+
+   procedure Delete
+     (File    : Virtual_File;
+      Success : out Boolean) is
+   begin
+      if Is_Local (File) then
+         Delete_File (Locale_Full_Name (File), Success);
+      else
+         Success := Delete
+           (Get_Filesystem (File.Value.Server.all),
+            File.Value.Server.all,
+            Locale_Full_Name (File));
+      end if;
+
+      if Success then
+         File.Value.Kind := Unknown;
+      end if;
+   end Delete;
+
    -----------------
    -- Is_Writable --
    -----------------
@@ -553,14 +505,15 @@ package body VFS is
    begin
       if File.Value = null then
          return False;
-      elsif File.Value.Connection /= null then
-         return Is_Writable
-           (File.Value.Connection,
-            File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+
+      elsif Is_Local (File) then
+         return Is_Writable_File (Locale_Full_Name (File));
 
       else
-         return Is_Writable_File (Locale_Full_Name (File));
+         return Is_Writable
+           (Get_Filesystem (File.Value.Server.all),
+            File.Value.Server.all,
+            Locale_Full_Name (File));
       end if;
    end Is_Writable;
 
@@ -568,25 +521,32 @@ package body VFS is
    -- Is_Directory --
    ------------------
 
-   function Is_Directory (File : Virtual_File) return Boolean is
+   function Is_Directory (VF : Virtual_File) return Boolean is
       Ret : Boolean;
    begin
-      if File.Value = null then
+      if VF.Value = null then
          return False;
 
-      elsif File.Value.Connection /= null then
-         Ret := Is_Directory
-           (File.Value.Connection,
-            File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+      elsif VF.Value.Kind = Directory then
+         return True;
+
+      elsif VF.Value.Kind = File then
+         return False;
+
+      elsif Is_Local (VF) then
+         Ret := Is_Directory (Locale_Full_Name (VF));
 
       else
-         Ret := Is_Directory (Locale_Full_Name (File));
+         Ret := Is_Directory (Get_Filesystem (VF.Value.Server.all),
+                              VF.Value.Server.all,
+                              Locale_Full_Name (VF));
       end if;
 
       if Ret then
-         File.Value.Kind := Directory;
-         Ensure_Directory (File);
+         VF.Value.Kind := Directory;
+         Ensure_Directory (VF);
+      else
+         VF.Value.Kind := File;
       end if;
 
       return Ret;
@@ -601,7 +561,7 @@ package body VFS is
       if File.Value = null then
          return False;
 
-      elsif File.Value.Connection /= null then
+      elsif Is_Local (File) then
          --  ??? for now, no specific remote test for this,
          --  assume the file is not a symbolic link
 
@@ -618,9 +578,12 @@ package body VFS is
 
    function Is_Absolute_Path (File : Virtual_File) return Boolean is
    begin
-      return Is_Absolute_Path
-        (File.Value.Full_Name
-           (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+      if Is_Local (File) then
+         return Is_Absolute_Path (Locale_Full_Name (File));
+      else
+         return Is_Absolute_Path (Get_Filesystem (File.Value.Server.all),
+                                  Locale_Full_Name (File));
+      end if;
    end Is_Absolute_Path;
 
    --------------------
@@ -629,9 +592,12 @@ package body VFS is
 
    function File_Extension (File : Virtual_File) return UTF8_String is
    begin
-      return File_Extension
-        (File.Value.Full_Name
-           (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+      if Is_Local (File) then
+         return File_Extension (File.Value.Full_Name.all);
+      else
+         return File_Extension (Get_Filesystem (File.Value.Server.all),
+                                File.Value.Full_Name.all);
+      end if;
    end File_Extension;
 
    ---------------
@@ -644,13 +610,12 @@ package body VFS is
          return null;
       elsif File.Value.Kind = Directory then
          return null;
-      elsif File.Value.Connection = null then
+      elsif Is_Local (File) then
          return Read_File (Full_Name (File).all);
       else
-         return Read_File
-           (File.Value.Connection,
-            File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+         return Read_File (Get_Filesystem (File.Value.Server.all),
+                           File.Value.Server.all,
+                           Locale_Full_Name (File));
       end if;
    end Read_File;
 
@@ -662,13 +627,13 @@ package body VFS is
      (File   : Virtual_File;
       Append : Boolean := False) return Writable_File
    is
-      Tmp : GNAT.OS_Lib.String_Access;
+      Tmp : GNAT.OS_Lib.String_Access := null;
       Fd  : File_Descriptor;
    begin
       if File.Value = null then
          return Invalid_File;
 
-      elsif File.Value.Connection /= null then
+      elsif not Is_Local (File) then
          declare
             Current_Dir : constant String := Get_Current_Dir;
             Base        : String_Access;
@@ -743,20 +708,18 @@ package body VFS is
    procedure Close (File : in out Writable_File) is
       Success : Boolean;
    begin
-      if File.File.Value.Connection /= null then
-         Write (File.File.Value.Connection,
-                File.File.Value.Full_Name
-                  (File.File.Value.Start_Of_Path
-                   .. File.File.Value.Full_Name'Last),
+      if not Is_Local (File.File) then
+         Write (Get_Filesystem (File.File.Value.Server.all),
+                File.File.Value.Server.all,
+                File.File.Value.Full_Name.all,
                 File.Filename.all);
          Close (File.FD);
          Delete_File (File.Filename.all, Success);
+         Free (File.Filename);
 
       else
          Close (File.FD);
       end if;
-
-      Free (File.Filename);
    end Close;
 
    ------------------
@@ -768,14 +731,14 @@ package body VFS is
       pragma Import (C, Internal, "__gps_set_writable");
 
    begin
-      if File.Value.Connection = null then
+      if Is_Local (File) then
          Internal
            (Locale_Full_Name (File) & ASCII.NUL, Boolean'Pos (Writable));
       else
          Set_Writable
-           (File.Value.Connection,
-            File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last),
+           (Get_Filesystem (File.Value.Server.all),
+            File.Value.Server.all,
+            Locale_Full_Name (File),
             Writable);
       end if;
    end Set_Writable;
@@ -789,14 +752,14 @@ package body VFS is
       pragma Import (C, Internal, "__gps_set_readable");
 
    begin
-      if File.Value.Connection = null then
+      if Is_Local (File) then
          Internal
            (Locale_Full_Name (File) & ASCII.NUL, Boolean'Pos (Readable));
       else
          Set_Readable
-           (File.Value.Connection,
-            File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last),
+           (Get_Filesystem (File.Value.Server.all),
+            File.Value.Server.all,
+            Locale_Full_Name (File),
             Readable);
       end if;
    end Set_Readable;
@@ -808,14 +771,14 @@ package body VFS is
    function File_Time_Stamp
      (File : Virtual_File) return Ada.Calendar.Time is
    begin
-      if File.Value.Connection = null then
+      if Is_Local (File) then
          --  This returns No_Time if the file doesn't exist
          return File_Utils.File_Time_Stamp (Locale_Full_Name (File));
       else
          return File_Time_Stamp
-           (File.Value.Connection,
-            File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+           (Get_Filesystem (File.Value.Server.all),
+            File.Value.Server.all,
+            Locale_Full_Name (File));
       end if;
    end File_Time_Stamp;
 
@@ -826,12 +789,8 @@ package body VFS is
    function Get_Current_Dir return Virtual_File is
       File : Virtual_File;
    begin
-      if Working_Dir = null then
-         File := Create (Locale_To_UTF8
-                          (GNAT.Directory_Operations.Get_Current_Dir));
-      else
-         File := Create (Working_Dir.all);
-      end if;
+      File := Create (Locale_To_UTF8
+                      (GNAT.Directory_Operations.Get_Current_Dir));
       File.Value.Kind := Directory;
       return File;
    end Get_Current_Dir;
@@ -841,30 +800,44 @@ package body VFS is
    ----------------------
 
    procedure Ensure_Directory (Dir : Virtual_File) is
-      Sep : Character;
-      Full : String_Access;
+      Sep     : Character;
+      Full    : String_Access;
+      Changed : Boolean := False;
    begin
       if Dir.Value = null then
          return;
-      end if;
-
-      if Dir.Value.Connection = null then
-         Sep := GNAT.Directory_Operations.Dir_Separator;
-      else
-         Sep := '/';
       end if;
 
       if Dir.Value.Full_Name = null then
          return;
       end if;
 
-      if Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '/'
-        and Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '\'
-      then
-         Full := new String'(Dir.Value.Full_Name.all & Sep);
-         Free (Dir.Value.Full_Name);
-         Dir.Value.Full_Name := Full;
+      if Is_Local (Dir) then
+         Sep := GNAT.Directory_Operations.Dir_Separator;
 
+         if Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '/'
+           and Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '\'
+         then
+            Full := new String'(Dir.Value.Full_Name.all & Sep);
+            Free (Dir.Value.Full_Name);
+            Dir.Value.Full_Name := Full;
+            Changed := True;
+         end if;
+      else
+         declare
+            Dir_Path : constant String := Ensure_Directory
+              (Get_Filesystem (Dir.Value.Server.all),
+               Dir.Value.Full_Name.all);
+         begin
+            if Dir_Path /= Dir.Value.Full_Name.all then
+               Free (Dir.Value.Full_Name);
+               Dir.Value.Full_Name := new String'(Dir_Path);
+               Changed := True;
+            end if;
+         end;
+      end if;
+
+      if Changed then
          if Dir.Value.Normalized_Full /= null then
             Free (Dir.Value.Normalized_Full);
             Ensure_Normalized (Dir);
@@ -884,11 +857,12 @@ package body VFS is
    function Get_Root (File : Virtual_File) return Virtual_File is
       Dir : Virtual_File;
    begin
-      if File.Value = null or else File.Value.Connection = null then
+      if File.Value = null or else Is_Local (File) then
          return Local_Root_Dir;
       else
-         Dir := Create (File.Value.Full_Name
-                     (File.Value.Full_Name'First .. File.Value.Start_Of_Path));
+         --  ??? do we really want "" as filename ?
+         Dir := Create (Host          => File.Value.Server.all,
+                        Full_Filename => "");
          Dir.Value.Kind := Directory;
          return Dir;
       end if;
@@ -904,8 +878,13 @@ package body VFS is
       New_Dir : Virtual_File;
    begin
       Ensure_Directory (Dir);
-      New_Dir := Create (Dir.Value.Full_Name.all & Name);
-      Ensure_Directory (New_Dir);
+      if Is_Local (Dir) then
+         New_Dir := Create (Dir.Value.Full_Name.all & Name);
+         Ensure_Directory (New_Dir);
+      else
+         New_Dir := Create (Concat (Get_Filesystem (Dir.Value.Server.all),
+                                    Dir.Value.Full_Name.all, Name));
+      end if;
 
       if Is_Directory (New_Dir) then
          return New_Dir;
@@ -919,35 +898,29 @@ package body VFS is
    ----------------
 
    procedure Change_Dir (Dir : Virtual_File) is
-      Result : Boolean;
+--        Result : Boolean;
    begin
       if Dir.Value = null then
          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
       end if;
 
-      if Dir.Value.Connection = null then
+      if Is_Local (Dir) then
          GNAT.Directory_Operations.Change_Dir
            (Locale_From_UTF8 (Full_Name (Dir).all));
-
-         if Working_Dir /= null then
-            Free (Working_Dir);
-            Working_Dir := null;
-         end if;
-
-      else
-         Result := Is_Directory (Dir);
-
-         if Result then
-            if Working_Dir /= null then
-               Free (Working_Dir);
-            end if;
-            Working_Dir := new String'(Full_Name (Dir).all);
-         else
-            Raise_Exception (VFS_Directory_Error'Identity,
-                             "Dir is not a directory");
-         end if;
+         --  ??? do we want that in the remote case ?
+--        else
+--           Result := Is_Directory (Dir);
+--
+--           if Result then
+--              if Working_Dir /= null then
+--                 Free (Working_Dir);
+--              end if;
+--              Working_Dir := new String'(Full_Name (Dir).all);
+--           else
+--              Raise_Exception (VFS_Directory_Error'Identity,
+--                               "Dir is not a directory");
+--           end if;
       end if;
-
    exception
       when E : GNAT.Directory_Operations.Directory_Error =>
          Raise_Exception (VFS_Directory_Error'Identity,
@@ -965,14 +938,14 @@ package body VFS is
          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
       end if;
 
-      if Dir.Value.Connection /= null then
+      if Is_Local (Dir) then
          GNAT.Directory_Operations.Make_Dir
            (Locale_From_UTF8 (Full_Name (Dir).all));
       else
          Result := Make_Dir
-           (Dir.Value.Connection,
-            Dir.Value.Full_Name
-              (Dir.Value.Start_Of_Path .. Dir.Value.Full_Name'Last));
+           (Get_Filesystem (Dir.Value.Server.all),
+            Dir.Value.Server.all,
+            Dir.Value.Full_Name.all);
 
          if not Result then
             Raise_Exception (VFS_Directory_Error'Identity,
@@ -988,106 +961,104 @@ package body VFS is
                           Exception_Message (E));
    end Make_Dir;
 
-   ------------------------
-   -- Make_Dir_Recursive --
-   ------------------------
-
-   procedure Make_Dir_Recursive (Dir : Virtual_File) is
-      Result : Boolean;
-   begin
-      if Dir.Value = null then
-         Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
-      end if;
-
-      if Dir.Value.Connection = null then
-         Make_Dir_Recursive (Locale_From_UTF8 (Full_Name (Dir).all));
-      else
-         declare
-            Name : constant String :=
-              Dir.Value.Full_Name
-                (Dir.Value.Start_Of_Path .. Dir.Value.Full_Name'Last);
-            Last : Natural := Name'First + 1;
-
-         begin
-            --  set to true by default (do not raise exception if no
-            --  directory is created)
-
-            Result := True;
-
-            while Last < Name'Last loop
-               while Last <= Name'Last
-                 and then Name (Last) /= '/'
-               loop
-                  Last := Last + 1;
-               end loop;
-
-               if not Is_Directory (Dir.Value.Connection,
-                                    Name (Name'First .. Last)) then
-                  Result := Make_Dir (Dir.Value.Connection,
-                                      Name (Name'First .. Last));
-                  exit when not Result;
-               end if;
-
-               Last := Last + 1;
-            end loop;
-
-            if not Result then
-               Raise_Exception (VFS_Directory_Error'Identity,
-                                "Cannot create " & Name (Name'First .. Last));
-            end if;
-         end;
-      end if;
-
-      Dir.Value.Kind := Directory;
-
-   exception
-      when E : GNAT.Directory_Operations.Directory_Error =>
-         Raise_Exception (VFS_Directory_Error'Identity,
-                          Exception_Message (E));
-   end Make_Dir_Recursive;
-
-   ----------------
-   -- Remove_Dir --
-   ----------------
-
-   procedure Remove_Dir
-     (Dir       : Virtual_File;
-      Recursive : Boolean := False)
-   is
-      Result : Boolean;
-   begin
-      if Dir.Value = null then
-         Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
-      end if;
-
-      if Dir.Value.Connection = null then
-         GNAT.Directory_Operations.Remove_Dir
-           (Locale_From_UTF8 (Full_Name (Dir).all),
-            Recursive);
-
-      else
-         Result := Remove_Dir
-           (Dir.Value.Connection,
-            Dir.Value.Full_Name
-              (Dir.Value.Start_Of_Path .. Dir.Value.Full_Name'Last),
-            Recursive);
-
-         if not Result then
-            Raise_Exception (VFS_Directory_Error'Identity,
-                             "Cannot remove directory " &
-                             Locale_Full_Name (Dir));
-         end if;
-      end if;
-
-      if Result then
-         Dir.Value.Kind := Unknown;
-      end if;
-
-   exception
-      when E : GNAT.Directory_Operations.Directory_Error =>
-         Raise_Exception (VFS_Directory_Error'Identity,
-                          Exception_Message (E));
-   end Remove_Dir;
+--     ------------------------
+--     -- Make_Dir_Recursive --
+--     ------------------------
+--
+--     procedure Make_Dir_Recursive (Dir : Virtual_File) is
+--        Result : Boolean;
+--     begin
+--        if Dir.Value = null then
+--           Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
+--        end if;
+--
+--        if Is_Local then
+--           Make_Dir_Recursive (Locale_From_UTF8 (Full_Name (Dir).all));
+--        else
+--           declare
+--              Name : constant String := Dir.Value.Full_Name.all
+--              Last : Natural := Name'First + 1;
+--
+--           begin
+--              --  set to true by default (do not raise exception if no
+--              --  directory is created)
+--
+--              Result := True;
+--
+--              while Last < Name'Last loop
+--                 while Last <= Name'Last
+--                   and then Name (Last) /= '/'
+--                 loop
+--                    Last := Last + 1;
+--                 end loop;
+--
+--                 if not Is_Directory (Dir.Value.Connection,
+--                                      Name (Name'First .. Last)) then
+--                    Result := Make_Dir (Dir.Value.Connection,
+--                                        Name (Name'First .. Last));
+--                    exit when not Result;
+--                 end if;
+--
+--                 Last := Last + 1;
+--              end loop;
+--
+--              if not Result then
+--                 Raise_Exception (VFS_Directory_Error'Identity,
+--                              "Cannot create " & Name (Name'First .. Last));
+--              end if;
+--           end;
+--        end if;
+--
+--        Dir.Value.Kind := Directory;
+--
+--     exception
+--        when E : GNAT.Directory_Operations.Directory_Error =>
+--           Raise_Exception (VFS_Directory_Error'Identity,
+--                            Exception_Message (E));
+--     end Make_Dir_Recursive;
+--
+--     ----------------
+--     -- Remove_Dir --
+--     ----------------
+--
+--     procedure Remove_Dir
+--       (Dir       : Virtual_File;
+--        Recursive : Boolean := False)
+--     is
+--        Result : Boolean;
+--     begin
+--        if Dir.Value = null then
+--          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
+--        end if;
+--
+--        if Dir.Value.Connection = null then
+--           GNAT.Directory_Operations.Remove_Dir
+--             (Locale_From_UTF8 (Full_Name (Dir).all),
+--              Recursive);
+--
+--        else
+--           Result := Remove_Dir
+--             (Dir.Value.Connection,
+--              Dir.Value.Full_Name
+--                (Dir.Value.Start_Of_Path .. Dir.Value.Full_Name'Last),
+--              Recursive);
+--
+--           if not Result then
+--              Raise_Exception (VFS_Directory_Error'Identity,
+--                               "Cannot remove directory " &
+--                               Locale_Full_Name (Dir));
+--           end if;
+--        end if;
+--
+--        if Result then
+--           Dir.Value.Kind := Unknown;
+--        end if;
+--
+--     exception
+--        when E : GNAT.Directory_Operations.Directory_Error =>
+--           Raise_Exception (VFS_Directory_Error'Identity,
+--                            Exception_Message (E));
+--     end Remove_Dir;
 
    ----------
    -- Read --
@@ -1113,7 +1084,7 @@ package body VFS is
                           "Dir is not a directory");
       end if;
 
-      if Dir.Value.Connection = null then
+      if Is_Local (Dir) then
          GNAT.Directory_Operations.Open
            (Local_Dir,
             Locale_From_UTF8 (Full_Name (Dir).all));
@@ -1133,8 +1104,7 @@ package body VFS is
                Unchecked_Free (Tmp);
             end if;
 
-            F_Array (Nb_Files) := Create (Full_Name (Dir, True).all &
-                                          Name (1 .. Last));
+            F_Array (Nb_Files) := Create_From_Dir (Dir, Name (1 .. Last));
          end loop;
 
          GNAT.Directory_Operations.Close (Local_Dir);
@@ -1147,16 +1117,16 @@ package body VFS is
       else
          declare
             List : GNAT.OS_Lib.String_List := Read_Dir
-              (Dir.Value.Connection,
-               Dir.Value.Full_Name
-                 (Dir.Value.Start_Of_Path .. Dir.Value.Full_Name'Last));
+              (Get_Filesystem (Dir.Value.Server.all),
+               Dir.Value.Server.all,
+               Dir.Value.Full_Name.all);
          begin
             F_Array := new File_Array (1 .. List'Length);
             Nb_Files := List'Length;
 
             for J in List'Range loop
-               F_Array (J) := Create (Full_Name (Dir).all &
-                                      List (List'First + J - 1).all);
+               F_Array (F_Array'First + J - List'First) :=
+                 Create_From_Dir (Dir, List (J).all);
                Free (List (J));
             end loop;
          end;
@@ -1241,10 +1211,7 @@ package body VFS is
          Value.Ref_Count := Value.Ref_Count - 1;
 
          if Value.Ref_Count = 0 then
-            if Value.Connection /= null then
-               Close (Value.Connection, GPS_Termination => False);
-            end if;
-
+            Free (Value.Server);
             Free (Value.Full_Name);
             Free (Value.Dir_Name);
             Free (Value.Normalized_Full);
@@ -1279,6 +1246,7 @@ package body VFS is
 
    function "<" (File1, File2 : Virtual_File) return Boolean is
       C1, C2 : Character;
+      Case_Sensitive : Boolean;
    begin
       if File1 = File2 then
          return False;
@@ -1286,28 +1254,34 @@ package body VFS is
          return True;
       elsif File2.Value = null then
          return False;
-      elsif Filenames_Are_Case_Sensitive
-        or File1.Value.Connection /= null
-        or File2.Value.Connection /= null
-      then
-         return File1.Value.Full_Name.all < File2.Value.Full_Name.all;
       else
-         for C in File1.Value.Full_Name'Range loop
-            if C > File2.Value.Full_Name'Last then
-               return False;
-            end if;
+         if File1.Value.Server.all = "" then
+            Case_Sensitive := Filenames_Are_Case_Sensitive;
+         else
+            Case_Sensitive :=
+              Is_Case_Sensitive (Get_Filesystem (File1.Value.Server.all));
+         end if;
 
-            C1 := To_Lower (File1.Value.Full_Name (C));
-            C2 := To_Lower (File2.Value.Full_Name (C));
+         if Case_Sensitive then
+            return File1.Value.Full_Name.all < File2.Value.Full_Name.all;
+         else
+            for C in File1.Value.Full_Name'Range loop
+               if C > File2.Value.Full_Name'Last then
+                  return False;
+               end if;
 
-            if C1 < C2 then
-               return True;
-            elsif C1 > C2 then
-               return False;
-            end if;
-         end loop;
+               C1 := To_Lower (File1.Value.Full_Name (C));
+               C2 := To_Lower (File2.Value.Full_Name (C));
 
-         return True;
+               if C1 < C2 then
+                  return True;
+               elsif C1 > C2 then
+                  return False;
+               end if;
+            end loop;
+
+            return True;
+         end if;
       end if;
    end "<";
 
@@ -1317,11 +1291,10 @@ package body VFS is
 
    function Is_Parent (Parent, Child : Virtual_File) return Boolean is
       C1, C2 : Character;
-      Case_Sensitive : Boolean;
    begin
       if Parent.Value = null or Child.Value = null then
          return False;
-      elsif Parent.Value.Connection /= Child.Value.Connection then
+      elsif Parent.Value.Server.all /= Child.Value.Server.all then
          return False;
       end if;
 
@@ -1333,28 +1306,26 @@ package body VFS is
          return False;
       end if;
 
-      if Filenames_Are_Case_Sensitive
-        or Parent.Value.Connection /= null then
-         Case_Sensitive := True;
+      if Is_Local (Parent) then
+         for C in Parent.Value.Normalized_Full'Range loop
+            if Filenames_Are_Case_Sensitive then
+               C1 := Parent.Value.Normalized_Full (C);
+               C2 := Child.Value.Normalized_Full (C);
+            else
+               C1 := To_Lower (Parent.Value.Normalized_Full (C));
+               C2 := To_Lower (Child.Value.Normalized_Full (C));
+            end if;
+
+            if C1 /= C2 then
+               return False;
+            end if;
+         end loop;
+         return True;
       else
-         Case_Sensitive := False;
+         return Is_Subtree (Get_Filesystem (Parent.Value.Server.all),
+                            Parent.Value.Normalized_Full.all,
+                            Child.Value.Normalized_Full.all);
       end if;
-
-      for C in Parent.Value.Normalized_Full'Range loop
-         if Case_Sensitive then
-            C1 := Parent.Value.Normalized_Full (C);
-            C2 := Child.Value.Normalized_Full (C);
-         else
-            C1 := To_Lower (Parent.Value.Normalized_Full (C));
-            C2 := To_Lower (Child.Value.Normalized_Full (C));
-         end if;
-
-         if C1 /= C2 then
-            return False;
-         end if;
-      end loop;
-
-      return True;
    end Is_Parent;
 
    ----------

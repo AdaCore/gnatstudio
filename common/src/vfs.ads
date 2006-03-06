@@ -30,8 +30,6 @@ with GNAT.OS_Lib;
 with Glib;               use Glib;
 with Glib.Values;
 
-with Remote_Connections;
-
 package VFS is
 
    VFS_Directory_Error : exception;
@@ -62,6 +60,16 @@ package VFS is
    --  The latter can be found, for source files, through the functions in
    --  projects-registry.ads.
 
+   function Create (Host          : UTF8_String;
+                    Full_Filename : UTF8_String) return Virtual_File;
+   --  Return a file, given its full filename and host name.
+   --  The latter can be found, for source files, through the functions in
+   --  projects-registry.ads.
+
+   function Create_From_Dir (Dir : Virtual_File;
+                             Base_Name : UTF8_String) return Virtual_File;
+   --  Creates a file from its directory and base name.
+
    function Create_From_Base (Base_Name : UTF8_String) return Virtual_File;
    --  Return a file, given its base name.
    --  The full name will never be computable. Consider using Projects.Create
@@ -70,6 +78,9 @@ package VFS is
    --
    --  ??? Currently, this does the same thing as create, but it is
    --  preferable to distinguish both cases just in case.
+
+   function Is_Local (File : Virtual_File) return Boolean;
+   --  Tell if the file is local
 
    function Is_Regular_File (File : Virtual_File) return Boolean;
    --  Whether File corresponds to an actual file on the disk.
@@ -126,7 +137,7 @@ package VFS is
    function Is_Writable (File : Virtual_File) return Boolean;
    --  Return True if File is writable
 
-   function Is_Directory (File : Virtual_File) return Boolean;
+   function Is_Directory (VF : Virtual_File) return Boolean;
    --  Return True if File is in fact a directory
 
    function Is_Symbolic_Link (File : Virtual_File) return Boolean;
@@ -172,7 +183,7 @@ package VFS is
    --  needed.
 
    function Get_Root (File : Virtual_File) return Virtual_File;
-   --  returns root directory on remote host
+   --  returns root directory of the file
 
    function Sub_Dir (Dir : Virtual_File; Name : UTF8_String)
                      return Virtual_File;
@@ -186,11 +197,12 @@ package VFS is
    --  Create a new directory named Dir_Name. Raises Directory_Error if
    --  Dir_Name cannot be created.
 
-   procedure Make_Dir_Recursive (Dir : Virtual_File);
+   --  ??? unused ?
+--     procedure Make_Dir_Recursive (Dir : Virtual_File);
    --  Create recursively a new directory named Dir_Name. Raises
    --  Directory_Error if Dir_Name cannot be created.
 
-   procedure Remove_Dir (Dir : Virtual_File; Recursive : Boolean := False);
+--     procedure Remove_Dir (Dir : Virtual_File; Recursive : Boolean := False);
    --  Remove the directory named Dir_Name. If Recursive is set to True, then
    --  Remove_Dir removes all the subdirectories and files that are in
    --  Dir_Name. Raises Directory_Error if Dir_Name cannot be removed.
@@ -300,8 +312,7 @@ private
       );
 
    type Contents_Record is record
-      Connection      : Remote_Connections.Remote_Connection;
-      Start_Of_Path   : Integer;
+      Server          : GNAT.OS_Lib.String_Access;
       Ref_Count       : Natural := 1;
       Full_Name       : GNAT.OS_Lib.String_Access;
       Normalized_Full : GNAT.OS_Lib.String_Access;
@@ -333,8 +344,7 @@ private
 
    Local_Root_Dir : constant Virtual_File :=
      (Ada.Finalization.Controlled with Value => new Contents_Record'(
-        Connection      => null,
-        Start_Of_Path   => 1,
+        Server          => new String'(""),
         Ref_Count       => 1,
         Full_Name       => new String'(1 => GNAT.OS_Lib.Directory_Separator),
         Normalized_Full => new String'(1 => GNAT.OS_Lib.Directory_Separator),
