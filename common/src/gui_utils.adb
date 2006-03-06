@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -1328,25 +1328,30 @@ package body GUI_Utils is
    -- Query_Password --
    --------------------
 
-   function Query_Password (Prompt : String) return String is
+   function Query_User (Parent        : Gtk.Window.Gtk_Window;
+                        Prompt        : String;
+                        Password_Mode : Boolean) return String
+   is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       Label  : Gtk_Label;
-      Passwd : Gtk_Entry;
+      GEntry : Gtk_Entry;
    begin
       Gtk_New (Dialog,
-               Title => Prompt,
-               Parent => null,
-               Flags => Destroy_With_Parent or Modal);
+               Title  => Prompt,
+               Parent => Parent,
+               Flags  => Destroy_With_Parent or Modal);
 
       Gtk_New (Label, Prompt);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
 
-      Gtk_New (Passwd);
-      Pack_Start (Get_Vbox (Dialog), Passwd, Expand => False);
-      Set_Activates_Default (Passwd, True);
-      Set_Visibility (Passwd, Visible => False);
+      Gtk_New (GEntry);
+      Pack_Start (Get_Vbox (Dialog), GEntry, Expand => False);
+      Set_Activates_Default (GEntry, True);
+      if Password_Mode then
+         Set_Visibility (GEntry, Visible => False);
+      end if;
 
       Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Grab_Default (Button);
@@ -1356,7 +1361,7 @@ package body GUI_Utils is
 
       if Run (Dialog) = Gtk_Response_OK then
          declare
-            Pass : constant String := Get_Text (Passwd);
+            Pass : constant String := Get_Text (GEntry);
          begin
             Destroy (Dialog);
             return Pass;
@@ -1365,7 +1370,7 @@ package body GUI_Utils is
          Destroy (Dialog);
          return "";
       end if;
-   end Query_Password;
+   end Query_User;
 
    ----------------------------
    -- Find_Menu_Item_By_Name --

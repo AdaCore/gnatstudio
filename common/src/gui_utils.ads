@@ -56,14 +56,19 @@ with Gtk.Tree_Model;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
+with Gtk.Window;
 with Pango.Font;
 with String_List_Utils;
 
 package GUI_Utils is
 
-   function Query_Password (Prompt : String) return String;
-   --  Open a new Dialog to query a password.
-   --  Return "" if the user hasn't entered a password
+   function Query_User (Parent        : Gtk.Window.Gtk_Window;
+                        Prompt        : String;
+                        Password_Mode : Boolean) return String;
+   --  Open a new Dialog to query a response to the user.
+   --  If Password_Mode is set, then the query will print * instead of
+   --   the entered characters.
+   --  Return "" if the user hasn't entered anything
 
    ----------------------
    -- Combos and lists --
