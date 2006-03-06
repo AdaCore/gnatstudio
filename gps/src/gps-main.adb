@@ -23,6 +23,9 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Command_Line;         use GNAT.Command_Line;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -60,7 +63,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
+with GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
@@ -71,7 +74,6 @@ with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
-with Remote_Connections;
 with Remote_Views;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_Utils;
@@ -103,7 +105,6 @@ with Docgen_Module;
 with External_Editor_Module;
 with GPS.Location_View;
 with GVD_Module;
-with HTTP_Protocol;
 with Help_Module;
 with KeyManager_Module;
 with Navigation_Module;
@@ -114,6 +115,7 @@ with Project_Properties;
 with Project_Viewers;
 with Python_Module;
 with Refactoring_Module;
+with Remote_Server_List_Config;
 with Remote_Sync_Module;
 with Scenario_Views;
 with Shell_Script;
@@ -162,7 +164,6 @@ procedure GPS.Main is
    Aunit_Trace   : constant Debug_Handle := Create ("MODULE.Aunit", On);
    VFS_Trace     : constant Debug_Handle := Create ("MODULE.VFS", On);
    Help_Trace    : constant Debug_Handle := Create ("MODULE.Help", On);
-   HTTP_Trace    : constant Debug_Handle := Create ("MODULE.HTTP", On);
    Scenario_View_Trace : constant Debug_Handle :=
      Create ("MODULE.SCENARIO", On);
    Project_Viewer_Trace : constant Debug_Handle :=
@@ -173,9 +174,8 @@ procedure GPS.Main is
    Outline_View_Trace : constant Debug_Handle := Create ("MODULE.OUTLINE", On);
    Call_Graph_View_Trace : constant Debug_Handle :=
      Create ("MODULE.CALL_GRAPH_VIEW", On);
-   --  ??? Set to off by default until the remote functionality is ready.
    Remote_View_Trace : constant Debug_Handle :=
-     Create ("MODULE.REMOTE_VIEW", Off);
+     Create ("MODULE.REMOTE_VIEW", On);
 
    GPS_Started_Hook : constant String := "gps_started";
 
@@ -609,12 +609,6 @@ procedure GPS.Main is
       Reset_Title (GPS_Main);
 
       GPS.Menu.Register_Common_Menus (GPS_Main.Kernel);
-
-      --  Initialize remote module
-      if Active (Remote_View_Trace) then
-         GPS.Kernel.Remote.Initialize (GPS_Main.Kernel);
-         Remote_Sync_Module.Register_Module (GPS_Main.Kernel);
-      end if;
 
       Kernel_Callback.Connect
         (Get_MDI (GPS_Main.Kernel), "child_selected",
@@ -1205,19 +1199,23 @@ procedure GPS.Main is
 
       GPS.Kernel.Console.Register_Module (GPS_Main.Kernel);
 
+      --  Register this very early so that other modules can access remote
+      --  files
+
+      GPS.Kernel.Remote.Register_Module (GPS_Main.Kernel);
+      Remote_Server_List_Config.Register_Module (GPS_Main.Kernel);
+      Remote_Sync_Module.Register_Module (GPS_Main.Kernel);
+
+      if Active (Remote_View_Trace) then
+         Remote_Views.Register_Module (GPS_Main.Kernel);
+      end if;
+
       --  Register the locations view before all the modules that register a
       --  highlighting category. Otherwise, when loading the desktop, the
       --  locations view might create highligthting with categories that don't
       --  exist.
 
       GPS.Location_View.Register_Module (GPS_Main.Kernel);
-
-      --  Register the remote protocols early so that other modules can access
-      --  remote files.
-
-      if Active (HTTP_Trace) then
-         HTTP_Protocol.Register_Protocol;
-      end if;
 
       --  Register all modules (scripting languages must be registered first)
 
@@ -1264,10 +1262,6 @@ procedure GPS.Main is
       Src_Editor_Module.Register_Module (GPS_Main.Kernel);
 
       Navigation_Module.Register_Module (GPS_Main.Kernel);
-
-      if Active (Remote_View_Trace) then
-         Remote_Views.Register_Module (GPS_Main.Kernel);
-      end if;
 
       if Active (Call_Graph_Trace) then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);
@@ -1660,7 +1654,7 @@ procedure GPS.Main is
       Projects.Registry.Finalize;
       Traces.Finalize;
 
-      Remote_Connections.Close_All_Connections;
+      GNAT.Expect.TTY.Remote.Close_All;
 
       --  In case of a normal exit, rename log.<pid> as log to avoid
       --  generating a new log file for each session; this way we still
