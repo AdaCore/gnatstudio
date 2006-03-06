@@ -85,7 +85,6 @@ with Language_Handlers;         use Language_Handlers;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects.Registry;         use Projects, Projects.Registry;
-with Remote_Connections;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
@@ -1300,8 +1299,6 @@ package body GPS.Kernel is
       --  future.
       --        Unref (Handle.Current_Context);
       --        Unref (Handle.Last_Context_For_Contextual);
-
-      Remote_Connections.Free_Registered_Protocols;
 
       Reset (Handle.Actions);
       Reset (Handle.Styles);
