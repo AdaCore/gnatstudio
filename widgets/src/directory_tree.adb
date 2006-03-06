@@ -20,6 +20,9 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -55,8 +58,9 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 
 with VFS;                       use VFS;
-with GUI_Utils;                 use GUI_Utils;
 with File_Utils;                use File_Utils;
+with Filesystem;                use Filesystem;
+with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
 with Traces;                    use Traces;
 
@@ -1099,6 +1103,7 @@ package body Directory_Tree is
             Set_File (Value, D.Norm_Dir);
             Set_Value (D.Explorer.File_Model, Iter, File_Column, Value);
          end;
+
          if D.Depth = 1 and then Get_Host (D.Norm_Dir) /= "" then
             Set (D.Explorer.File_Model, Iter, Base_Name_Column,
                  Get_Host (D.Norm_Dir) & ":" & Base_Dir_Name (D.Norm_Dir));
@@ -1701,44 +1706,48 @@ package body Directory_Tree is
       Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
 
-      if Get_Host (Dir) = "" then
-         --  Only look for logical drives if the access is local
+      if Is_Local (Dir) then
          Get_Logical_Drive_Strings (Buffer, Len);
       else
-         Len := 0;
+         Get_Logical_Drives (Get_Filesystem (Get_Host (Dir)),
+                             Get_Host (Dir),
+                             Buffer, Len);
       end if;
 
       if Len = 0 then
          File_Append_Directory
            (Explorer, Get_Root (Dir),
             Null_Iter, 1, Dir, True);
-
+         Dir_Inserted := True;
       else
          Last := 1;
 
          for J in 1 .. Len loop
             if Buffer (J) = ASCII.NUL then
-               if Is_Parent (Create (Buffer (Last .. J - 1)), Dir) then
-                  File_Append_Directory
-                    (Explorer, Create (Buffer (Last .. J - 1)),
-                     Null_Iter, 1, Dir, True);
-                  Dir_Inserted := True;
+               declare
+                  Drive : Virtual_File :=
+                    Create (Get_Host (Dir), Buffer (Last .. J - 1));
+               begin
+                  if Is_Parent (Drive, Dir) then
+                     File_Append_Directory
+                       (Explorer, Drive, Null_Iter, 1, Dir, True);
+                     Dir_Inserted := True;
 
-               else
-                  File_Append_Directory
-                    (Explorer, Create (Buffer (Last .. J - 1)),
-                     Null_Iter, 0, No_File, False, False);
-               end if;
+                  else
+                     File_Append_Directory
+                       (Explorer, Drive, Null_Iter, 0, No_File, False, False);
+                  end if;
+               end;
 
                Last := J + 1;
             end if;
          end loop;
+      end if;
 
-         if not Dir_Inserted then
-            File_Append_Directory
-              (Explorer, Local_Root_Dir,
-               Null_Iter, 0, No_File, False, False);
-         end if;
+      if not Dir_Inserted then
+         File_Append_Directory
+           (Explorer, Local_Root_Dir,
+            Null_Iter, 0, No_File, False, False);
       end if;
 
    exception
