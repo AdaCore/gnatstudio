@@ -57,7 +57,6 @@ with Language.Custom;           use Language.Custom;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
-with Remote_Connections.Custom; use Remote_Connections.Custom;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 with XML_Viewer;
@@ -67,8 +66,6 @@ package body Custom_Module is
    Me : constant Debug_Handle := Create ("custom_module");
 
    type Custom_Module_ID_Record is new Module_ID_Record with null record;
-   procedure Destroy (Module : in out Custom_Module_ID_Record);
-   --  See inherited documentation
 
    Path_Cst        : aliased constant String := "path";
    On_Activate_Cst : aliased constant String := "on_activate";
@@ -326,16 +323,6 @@ package body Custom_Module is
          return Str;
       end;
    end Get_Label;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Module : in out Custom_Module_ID_Record) is
-      pragma Unreferenced (Module);
-   begin
-      Remote_Connections.Custom.Free_Registered_Regexps;
-   end Destroy;
 
    ---------------
    -- Customize --
@@ -1053,7 +1040,6 @@ package body Custom_Module is
 
       procedure Add_Child (Parent_Path : String; Current_Node : Node_Ptr) is
          Lang       : Custom_Language_Access;
-         Connection : Custom_Connection_Access;
       begin
          if Current_Node = null
            or else Current_Node.Tag = null
@@ -1065,14 +1051,6 @@ package body Custom_Module is
             --  ??? Lang is never freed
             Lang := new Language.Custom.Custom_Language;
             Initialize (Lang, Handler, Kernel, Current_Node);
-
-         elsif To_Lower (Current_Node.Tag.all) =
-                "remote_connection_regexps" then
-            Initialize_Regexps (Kernel, Current_Node);
-
-         elsif To_Lower (Current_Node.Tag.all) = "remote_connection" then
-            Connection := new Remote_Connections.Custom.Custom_Connection;
-            Initialize (Kernel, Connection, Current_Node);
 
          elsif Current_Node.Tag.all = "menu" then
             Parse_Menu_Node (Current_Node, Parent_Path);
