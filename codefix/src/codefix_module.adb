@@ -782,7 +782,9 @@ package body Codefix_Module is
       Add_Parser (new Object_Not_Referenced);
       Add_Parser (new Pkg_Not_Referenced);
       Add_Parser (new Never_Read);
-      Add_Parser (new Never_Assigned);
+      --  ??? Temporary removed, since it introduces errors when the variable
+      --  is not assigned but read. Waiting for F302-022
+      --  Add_Parser (new Never_Assigned);
       Add_Parser (new Pragma_Missplaced);
       Add_Parser (new Constant_Expected);
       Add_Parser (new Possible_Interpretation);
