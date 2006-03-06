@@ -431,11 +431,11 @@ package body Builder_Module is
 
       if Path = "" then
          Project_Str := new String'
-           (Convert (Full_Name (Project_Path (Project)).all,
-                     GPS_Server, Build_Server));
+           (To_Remote (Full_Name (Project_Path (Project)).all,
+                       Build_Server));
       else
          Project_Str := new String'
-           (Convert (Path, GPS_Server, Build_Server));
+           (To_Remote (Path, Build_Server));
       end if;
 
       --  -XVAR1=value1 [-c] -Pproject [-u] main...
@@ -738,8 +738,8 @@ package body Builder_Module is
                            Index    => Ada_String,
                            Use_Initial_Value => True)
                         & Copy_Arguments (Common_Args.all)
-                        & new String'(Convert (Full_Name (File).all,
-                          GPS_Server, Build_Server)));
+                        & new String'(To_Remote (Full_Name (File).all,
+                                                 Build_Server)));
                   end if;
 
                when Make_Syntax =>
@@ -1562,15 +1562,13 @@ package body Builder_Module is
                Args := Argument_String_To_List (Arguments);
                if Is_Local (Execution_Server) then
                   Launch
-                    (Convert (Full_Name (Data.File).all,
-                     GPS_Server, Execution_Server),
+                    (To_Remote (Full_Name (Data.File).all, Execution_Server),
                      Args.all, Active,
                      -"Run: " &
                      Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
                else
                   Launch
-                    (Convert (Full_Name (Data.File).all,
-                     GPS_Server, Execution_Server),
+                    (To_Remote (Full_Name (Data.File).all, Execution_Server),
                      Args.all, Active,
                      -"Run on " & Get_Nickname (Execution_Server) & ": " &
                      Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
