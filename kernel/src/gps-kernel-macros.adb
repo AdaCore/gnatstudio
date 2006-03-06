@@ -157,19 +157,18 @@ package body GPS.Kernel.Macros is
                Protect_Quotes => Quoted));
          else
             return String_Utils.Protect
-              (Convert (Full_Name (File_Information (Context)).all,
-                        GPS_Server, Server),
+              (To_Remote (Full_Name (File_Information (Context)).all, Server),
                Protect_Quotes => Quoted);
          end if;
 
       elsif Param = "d" then
          return String_Utils.Protect
-           (Convert (Directory_Information (Context), GPS_Server, Server),
+           (To_Remote (Directory_Information (Context), Server),
             Protect_Quotes => Quoted);
 
       elsif Param = "dk" then
          return Krunch (String_Utils.Protect
-             (Convert (Directory_Information (Context), GPS_Server, Server),
+             (To_Remote (Directory_Information (Context), Server),
               Protect_Quotes => Quoted));
 
       elsif Param = "e" then
@@ -221,8 +220,8 @@ package body GPS.Kernel.Macros is
                return "";
             else
                return String_Utils.Protect
-                 ("-P" & Convert (Full_Name (Project_Path (Project)).all,
-                                  GPS_Server, Server),
+                 ("-P" & To_Remote (Full_Name (Project_Path (Project)).all,
+                                    Server),
                   Protect_Quotes => Quoted);
             end if;
          end if;
@@ -237,8 +236,7 @@ package body GPS.Kernel.Macros is
 
          elsif Param = "pp" or else Param = "PP" then
             return String_Utils.Protect
-              (Convert (Full_Name (Project_Path (Project)).all,
-                        GPS_Server, Server),
+              (To_Remote (Full_Name (Project_Path (Project)).all, Server),
                Protect_Quotes => Quoted);
 
          else
@@ -267,8 +265,8 @@ package body GPS.Kernel.Macros is
                         List := Source_Dirs (Project, Recurse);
                         if List /= null then
                            for K in List'Range loop
-                              Put_Line (File, Convert (List (K).all,
-                                                       GPS_Server, Server));
+                              Put_Line (File,
+                                        To_Remote (List (K).all, Server));
                            end loop;
                            Free (List);
                         end if;
@@ -280,17 +278,15 @@ package body GPS.Kernel.Macros is
                            for K in Files_List'Range loop
                               Put_Line
                                 (File,
-                                 Convert
-                                   (Full_Name (Files_List (K)).all,
-                                    GPS_Server, Server));
+                                 To_Remote
+                                   (Full_Name (Files_List (K)).all, Server));
                            end loop;
                            Unchecked_Free (Files_List);
                         end if;
                      end if;
 
                      declare
-                        N : constant String := Convert (Name (File),
-                                                        GPS_Server, Server);
+                        N : constant String := To_Remote (Name (File), Server);
                      begin
                         Close (File);
                         return String_Utils.Protect
@@ -309,8 +305,7 @@ package body GPS.Kernel.Macros is
                         if List /= null then
                            for K in List'Range loop
                               Append (Result, '"' &
-                                      Convert (List (K).all,
-                                               GPS_Server, Server) &
+                                      To_Remote (List (K).all, Server) &
                                       """ ");
                            end loop;
                            Free (List);
@@ -324,8 +319,8 @@ package body GPS.Kernel.Macros is
                               Append
                                 (Result,
                                 '"' &
-                                 Convert (Full_Name (Files_List (K)).all,
-                                          GPS_Server, Server) &
+                                 To_Remote (Full_Name (Files_List (K)).all,
+                                            Server) &
                                  """ ");
                            end loop;
                            Unchecked_Free (Files_List);
