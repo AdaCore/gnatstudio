@@ -64,40 +64,38 @@ package body Remote_Sync_Module is
       Src_Path   : String_Access;
       Dest_Path  : String_Access;
       Rsync_Args : constant String_List :=
-        (new String'("-az"),
+        (new String'("--rsh=ssh"),
+         new String'("-az"),
          new String'("--progress"),
          new String'("--exclude"),
          new String'("'*.o'"),
-         new String'("--delete"),
-         new String'("--rsh=ssh"));
+         new String'("--delete"));
       Success    : Boolean;
    begin
+
       if Is_Local (Rsync_Data.Src) then
          Src_Path := new String'(To_Unix_Path (Rsync_Data.Src_Path,
-                                               Rsync_Data.Src,
-                                               Use_Cygwin_Style => True));
+                                               Rsync_Data.Src));
          Dest_Path := new String'
            (Get_Network_Name (Rsync_Data.Dest) & ":" &
             To_Unix_Path (Rsync_Data.Dest_Path,
-                          Rsync_Data.Dest,
-                          Use_Cygwin_Style => True));
+                          Rsync_Data.Dest));
       else
          Src_Path := new String'
            (Get_Network_Name (Rsync_Data.Src) & ":" &
             To_Unix_Path (Rsync_Data.Src_Path,
-                          Rsync_Data.Src,
-                          Use_Cygwin_Style => True));
+                          Rsync_Data.Src));
          Dest_Path := new String'(To_Unix_Path (Rsync_Data.Dest_Path,
-                                                Rsync_Data.Dest,
-                                                Use_Cygwin_Style => True));
+                                                Rsync_Data.Dest));
       end if;
+
       Launch_Process
         (Kernel_Handle (Kernel),
          Command              => "rsync",
          Arguments            => Rsync_Args & Src_Path & Dest_Path,
          Console              => Get_Console (Kernel),
          Show_Command         => True,
-         Show_Output          => False,
+         Show_Output          => True,
          Success              => Success,
          Line_By_Line         => True,
          Callback             => Parse_Rsync_Output'Access,
