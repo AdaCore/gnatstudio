@@ -26,11 +26,16 @@
 with GNAT.Expect;     use GNAT.Expect;
 with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
+
+with Gtk.Window;
+
+with Filesystem;      use Filesystem;
 with System;          use System;
 
 package GNAT.Expect.TTY.Remote is
 
-   Invalid_Config_Selector : exception;
+   Invalid_Nickname : exception;
+   No_Session_Available : exception;
 
    Null_String_List : constant String_List (1 .. 0) := (others => null);
    --  Null string list
@@ -39,22 +44,9 @@ package GNAT.Expect.TTY.Remote is
    -- Configuration functions --
    -----------------------------
 
-   type Config_Selector_Function is access
-     function (Identifier    : String) return String;
-
    type Cmd_Wrapper_Function is access
      function (Cmd : String) return String;
    --  Used to format the commands to host format if needed.
-
-   type Output_Processor_Procedure is access
-     procedure (Str : in out String);
-
-   procedure Set_Config_Selector
-     (Remote_Access_Selector : Config_Selector_Function;
-      Shell_Selector         : Config_Selector_Function);
-   --  Set the functions that will be used as Config_Selector. The
-   --  Config_Selector is a function that given the identifier returns a
-   --  shell or Remote access descriptor name.
 
    procedure Add_Remote_Access_Descriptor
      (Name                      : String;
@@ -77,6 +69,7 @@ package GNAT.Expect.TTY.Remote is
       Start_Command       : String             := "";
       Generic_Prompt      : String             := "";
       Configured_Prompt   : String             := "";
+      FS                  : Filesystem_Record'Class;
       Init_Commands       : String_List        := Null_String_List;
       Exit_Commands       : String_List        := Null_String_List;
       Cd_Command          : String             := "";
@@ -84,7 +77,6 @@ package GNAT.Expect.TTY.Remote is
       Get_Status_Ptrn     : String             := "";
       Echoing             : Boolean            := False;
       Wrapper             : Cmd_Wrapper_Function := null;
-      Output_Processor    : Output_Processor_Procedure := null;
       Interrupt_Command   : String             := "");
    --  This function is used to add a new shell descriptor
    --  - Name                : name in the program descriptor table
@@ -116,6 +108,81 @@ package GNAT.Expect.TTY.Remote is
    --
    --  For all Commands, %h is replaced by target host, %d is replaced by
    --  working directory
+
+   type Machine_Descriptor_Record is tagged record
+      Nickname            : String_Access;
+      --  Identifier of the machine
+      Network_Name        : String_Access;
+      --  Used to access the server using the network
+      Access_Name         : String_Access;
+      --  Tool used to remotely access the server
+      Shell_Name          : String_Access;
+      --  Shell used on the remote server
+      Extra_Init_Commands : GNAT.OS_Lib.Argument_List_Access := null;
+      --  User specific init commands
+      User_Name           : String_Access;
+      --  User name used for connection
+      Timeout             : Natural := 5000;
+      --  Timeout value used when connecting to the machine (in ms)
+      Max_Nb_Connections  : Natural := 3;
+      --  Maximum number of simultaneous connections on the machine
+      Ref                 : Natural := 0;
+   end record;
+   type Machine_Descriptor is access all Machine_Descriptor_Record'Class;
+
+   procedure Unref (Desc : in out Machine_Descriptor);
+   --  Does Ref - 1. Free allocated memory for the descriptor if ref=0
+
+   procedure Add_Machine_Descriptor
+     (Desc : Machine_Descriptor);
+   --  Adds a new machine descriptor.
+
+   procedure Remove_Machine_Descriptor
+     (Desc : in out Machine_Descriptor);
+   --  Removes a machine descriptor.
+
+   procedure Remove_All_Machine_Descriptors;
+   --  Removes all machine descriptors.
+
+   function Get_Nb_Shell_Descriptor return Natural;
+   --  Get the total number of shell descriptor configured
+
+   function Get_Shell_Descriptor_Name (N : Natural) return String;
+   --  Get the Nth shell descriptor name
+
+   function Get_Nb_Remote_Access_Descriptor return Natural;
+   --  Get the total number of remote access descriptor configured
+
+   function Get_Remote_Access_Name (N : Natural) return String;
+   --  Get the Nth remote access descriptor name
+
+   function Get_Nb_Machine_Descriptor return Natural;
+   --  Get the total number of Machine Descriptor configured
+
+   function Get_Machine_Descriptor (N : Natural) return Machine_Descriptor;
+   --  Retrieve the descriptor of the Nth configured machine
+
+   function Get_Machine_Descriptor (Nickname : String)
+                                    return Machine_Descriptor;
+   --  Get machine descriptor from nickname
+
+   function Get_Nickname (N : Natural) return String;
+   --  Retrieve the nickname of the Nth configured machine
+   --  Raise Invalid_Nickname if N does not correspond to a server
+
+   function Is_Configured (Nickname : String) return Boolean;
+   --  Tells if server Nickname exists
+
+   function Get_Network_Name (Nickname : String) return String;
+   --  Retrieve the network name of the specified server.
+   --  Raise Invalid_Nickname if Nickname does not correspond to a server
+
+   function Get_Filesystem (Nickname : String) return Filesystem_Record'Class;
+   --  Retrieve the filesystem of the specified server
+   --  Raise Invalid_Nickname if Nickname does not correspond to a server
+
+   function Get_Local_Filesystem return Filesystem_Record'Class;
+   --  Retrieve the local filesystem type
 
    ----------------------
    -- Expect interface --
@@ -164,16 +231,21 @@ package GNAT.Expect.TTY.Remote is
    --  buffer) is first discarded before the command is sent. The output
    --  filters are of course called as usual.
 
+   type Request_User_Object is tagged record
+      Main_Window : Gtk.Window.Gtk_Window;
+   end record;
+
+   function Request_User (Instance      : Request_User_Object;
+                          Query         : String;
+                          Password_Mode : Boolean) return String;
+
    procedure Remote_Spawn
-     (Descriptor          : out Remote_Process_Descriptor;
-      Target_Name         : String;
-      Target_Identifier   : String;
-      Local_Args          : GNAT.OS_Lib.Argument_List;
-      Args                : GNAT.OS_Lib.Argument_List;
-      Execution_Directory : String := "";
-      User_Name           : String := "";
-      Launch_Timeout      : Natural := 5000;
-      Err_To_Out          : Boolean := False);
+     (Descriptor            : out Process_Descriptor_Access;
+      Target_Nickname       : String;
+      Args                  : GNAT.OS_Lib.Argument_List;
+      Execution_Directory   : String := "";
+      Err_To_Out            : Boolean := False;
+      Request_User_Instance : Request_User_Object'Class);
    --  Spawns a process on a remote machine
    --  Target_Name designs the machine on which the process is spawned
    --  Target_Identifier is used to retrieve the descriptors
@@ -182,6 +254,77 @@ package GNAT.Expect.TTY.Remote is
    --  Buffer_Size is the maximum buffer size for process output reception
    --   (set Buffer_Size to 0 for dynamic memory allocation)
    --  Err_To_Out tells if the stderr shall be redirected to stdout
+
+   procedure Close_All;
+   --  Closes all opened connection.
+
+   procedure Expect
+     (Descriptor  : in out Remote_Process_Descriptor;
+      Result      : out Expect_Match;
+      Regexp      : String;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False);
+   --  See parent for description
+
+   procedure Expect
+     (Descriptor  : in out Remote_Process_Descriptor;
+      Result      : out Expect_Match;
+      Regexp      : GNAT.Regpat.Pattern_Matcher;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False);
+   --  See parent for description
+
+   procedure Expect
+     (Descriptor  : in out Remote_Process_Descriptor;
+      Result      : out Expect_Match;
+      Regexp      : String;
+      Matched     : out GNAT.Regpat.Match_Array;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False);
+   --  See parent for description
+
+   procedure Expect
+     (Descriptor  : in out Remote_Process_Descriptor;
+      Result      : out Expect_Match;
+      Regexp      : GNAT.Regpat.Pattern_Matcher;
+      Matched     : out GNAT.Regpat.Match_Array;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False);
+   --  See parent for description
+
+   procedure Expect
+     (Descriptor  : in out Remote_Process_Descriptor;
+      Result      : out Expect_Match;
+      Regexps     : Regexp_Array;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False);
+   --  See parent for description
+
+   procedure Expect
+     (Descriptor  : in out Remote_Process_Descriptor;
+      Result      : out Expect_Match;
+      Regexps     : Compiled_Regexp_Array;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False);
+   --  See parent for description
+
+   procedure Expect
+     (Descriptor  : in out Remote_Process_Descriptor;
+      Result      : out Expect_Match;
+      Regexps     : Regexp_Array;
+      Matched     : out GNAT.Regpat.Match_Array;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False);
+   --  See parent for description
+
+   procedure Expect
+     (Descriptor  : in out Remote_Process_Descriptor;
+      Result      : out Expect_Match;
+      Regexps     : Compiled_Regexp_Array;
+      Matched     : out GNAT.Regpat.Match_Array;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False);
+   --  See parent for description
 
 private
 
@@ -200,23 +343,34 @@ private
 
    type Shell_Descriptor_Access is access all Shell_Descriptor;
 
+   type Machine_Descriptor_Item;
+
+   type Machine_Descriptor_Access is access all Machine_Descriptor_Item;
+
    type Remote_Process_Descriptor is new TTY_Process_Descriptor with record
       Busy                 : Boolean                   := False;
-      --  tells if the remote shell is busy processing a command
+      --  Tells if the remote shell is busy processing a command
+      Connected            : Boolean := False;
+      --  Tells if the connection with the remote machine has
+      --  been performed
       Current_Echo_Skipped : Boolean := False;
-      --  tells if the command we've sent has been echoed or not.
+      --  Tells if the command we've sent has been echoed or not.
       Shell                : Shell_Descriptor_Access   := null;
-      --  what shell is on the remote server
-      Last_Index           : Integer := -1;
-      --  if remote execution finished, points to the last command output
-      Getting_Status       : Boolean := False;
-      --  tells if we are retrieving the status of the finished command
+      --  What shell is on the remote server
+      Machine              : Machine_Descriptor_Access := null;
+      --  What machine this descriptor is connected to
+      Session_Nb           : Natural := 0;
+      --  Session number on this machine
+      Terminated           : Boolean := False;
+      --  Tells if the command has finished
       Status               : Integer := 0;
-      --  records the status of the finished command
+      --  Records the status of the finished command
       R_Filters_Lock       : Integer := 0;
       --  Tells if the filters are locked
       R_Filters            : Filter_List := null;
       --  List of filters. Filter_List is defined in GNAT.Expect
+      Nb_Password_Prompt   : Natural := 0;
+      --  Number of password prompts currently encountered
    end record;
 
 end GNAT.Expect.TTY.Remote;
