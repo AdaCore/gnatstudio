@@ -20,9 +20,14 @@
 
 with Ada.Exceptions;     use Ada.Exceptions;
 
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
+
 with Glib;               use Glib;
 with Glib.Convert;       use Glib.Convert;
 with Glib.Object;        use Glib.Object;
+with Glib.Xml_Int;       use Glib.Xml_Int;
 
 with Gtk.Button;         use Gtk.Button;
 with Gtk.Enums;          use Gtk.Enums;
@@ -39,11 +44,13 @@ with Gtkada.MDI;         use Gtkada.MDI;
 
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Remote;  use GPS.Kernel.Remote;
 
-with Traces;             use Traces;
+with Remote_Server_List_Config; use Remote_Server_List_Config;
+with Traces;                    use Traces;
 
 package body Remote_Views is
 
@@ -51,6 +58,8 @@ package body Remote_Views is
 
    type Remote_View_Module_Record is new Module_ID_Record with null record;
    Remote_View_Module_Id : Module_ID;
+
+   Module_Name : constant String := "Remote_View";
 
    type Remote_View_Record is new Gtk.Table.Gtk_Table_Record with record
       Kernel             : GPS.Kernel.Kernel_Handle;
@@ -61,22 +70,33 @@ package body Remote_Views is
       Build_Combo        : Gtkada_Combo;
       Debug_Combo        : Gtkada_Combo;
       Exec_Combo         : Gtkada_Combo;
+      Config_List_Button : Gtk_Button;
       Simple_View_Button : Gtk_Button;
       Full_View_Button   : Gtk_Button;
+      Combo_Selected     : Boolean := False;
    end record;
    type Remote_View is access all Remote_View_Record'Class;
 
    procedure Gtk_New
      (View            : out Remote_View;
-      Kernel          : access Kernel_Handle_Record'Class;
+      Kernel          : Kernel_Handle;
       Use_Simple_View : Boolean := True);
    --  Create a new remote view associated with Manager.
 
    procedure Initialize
      (View            : access Remote_View_Record'Class;
-      Kernel          : access Kernel_Handle_Record'Class;
+      Kernel          : Kernel_Handle;
       Use_Simple_View : Boolean := True);
    --  Internal function for creating new widgets
+
+   function Load_Desktop
+     (MDI  : Gtkada.MDI.MDI_Window;
+      Node : Glib.Xml_Int.Node_Ptr;
+      User : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child;
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : GPS.Kernel.Kernel_Handle) return Glib.Xml_Int.Node_Ptr;
+   --  Load and save desktop
 
    procedure Set_Servers
      (View  : access Remote_View_Record'Class);
@@ -95,6 +115,23 @@ package body Remote_Views is
    package View_Callback is new Gtk.Handlers.User_Callback_With_Setup
      (Gtk_Widget_Record, Remote_Data, Setup);
 
+   type On_Server_Config_Hook is new Function_With_Args with record
+      View : Remote_View;
+   end record;
+   procedure Execute
+     (Func   : On_Server_Config_Hook;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when server configuration changed
+
+   type On_Server_List_Hook is new Function_No_Args with record
+      View : Remote_View;
+   end record;
+   procedure Execute
+     (Func   : On_Server_List_Hook;
+      Kernel : access Kernel_Handle_Record'Class);
+   --  Called when server list changed
+
    procedure On_Combo_Changed
      (Combo : access Gtk_Widget_Record'Class;
       User  : Remote_Data);
@@ -104,6 +141,11 @@ package body Remote_Views is
      (View : access Gtk_Widget_Record'Class;
       User : Remote_Data);
    --  Called when the view's mode is changed
+
+   procedure On_Config_List_Clicked
+     (View : access Gtk_Widget_Record'Class;
+      User : Remote_Data);
+   --  Called when the config_list button is clicked
 
    procedure On_Show_Remote_View
      (Widget : access GObject_Record'Class;
@@ -116,7 +158,7 @@ package body Remote_Views is
 
    procedure Gtk_New
      (View            : out Remote_View;
-      Kernel          : access Kernel_Handle_Record'Class;
+      Kernel          : Kernel_Handle;
       Use_Simple_View : Boolean := True)
    is
    begin
@@ -130,7 +172,7 @@ package body Remote_Views is
 
    procedure Initialize
      (View            : access Remote_View_Record'Class;
-      Kernel          : access Kernel_Handle_Record'Class;
+      Kernel          : Kernel_Handle;
       Use_Simple_View : Boolean := True)
    is
       Label         : Gtk_Label;
@@ -138,7 +180,7 @@ package body Remote_Views is
    begin
       Gtk.Table.Initialize (View, 2, 1, False);
 
-      View.Kernel := Kernel_Handle (Kernel);
+      View.Kernel := Kernel;
       Gtk_New (View.Simple_Table, 2, 2, False);
       Attach (View, View.Simple_Table, 0, 1, 0, 1,
               Expand or Fill, 0);
@@ -170,14 +212,25 @@ package body Remote_Views is
         (Tooltips, Get_Entry (View.Remote_Combo),
          -"The remote server used to compile, debug and execute your " &
          "project.");
+
+      Gtk_New (View.Config_List_Button, -"List configuration");
+      Set_Tip
+        (Tooltips, View.Config_List_Button,
+         -"Configure the list of available servers.");
+      Attach (View.Simple_Table, View.Config_List_Button,
+              0, 1, 1, 2, 0, 0, 5, 5);
+      View_Callback.Connect
+        (View.Config_List_Button, "clicked", On_Config_List_Clicked'Access,
+         (View => Remote_View (View), Server => GPS_Server));
+
       Gtk_New (View.Simple_View_Button, -"Advanced >>");
-      Attach (View.Simple_Table, View.Simple_View_Button, 0, 2, 1, 2, 0, 0);
+      Attach (View.Simple_Table, View.Simple_View_Button,
+              1, 2, 1, 2, 0, 0, 5, 5);
       View_Callback.Connect
         (View.Simple_View_Button, "clicked", On_View_Mode_Clicked'Access,
-         (View =>  Remote_View (View), Server => GPS_Server));
+         (View => Remote_View (View), Server => GPS_Server));
 
       --  Full view mode
-
       Gtk_New (Label, -("Build:"));
       Set_Alignment (Label, 0.0, 0.5);
       Attach (View.Full_Table, Label, 0, 1, 0, 1, Fill);
@@ -224,8 +277,19 @@ package body Remote_Views is
         (Tooltips, Get_Entry (View.Exec_Combo),
          -"The server used to execute the built executables.");
 
+      Gtk_New (View.Config_List_Button, -"List configuration");
+      Attach (View.Full_Table, View.Config_List_Button,
+              0, 1, 3, 4, 0, 0, 5, 5);
+      Set_Tip
+        (Tooltips, View.Config_List_Button,
+         -"Configure the list of available servers.");
+      View_Callback.Connect
+        (View.Config_List_Button, "clicked", On_Config_List_Clicked'Access,
+         (View => Remote_View (View), Server => GPS_Server));
+
       Gtk_New (View.Full_View_Button, -"Basic <<");
-      Attach (View.Full_Table, View.Full_View_Button, 0, 2, 3, 4, 0, 0);
+      Attach (View.Full_Table, View.Full_View_Button,
+              1, 2, 3, 4, 0, 0, 5, 5);
       View_Callback.Connect
         (View.Full_View_Button, "clicked", On_View_Mode_Clicked'Access,
          (View =>  Remote_View (View), Server => GPS_Server));
@@ -235,7 +299,84 @@ package body Remote_Views is
       Set_Child_Visible (View.Full_Table,
                          not View.Simple_Mode);
       Set_Servers (View);
+
+      declare
+         Hook_Func : constant Function_With_Args_Access
+           := new On_Server_Config_Hook'(Function_With_Args with
+                                         View => Remote_View (View));
+      begin
+         Add_Hook (Kernel, Server_Config_Changed_Hook, Hook_Func,
+                   "remote_views module", Watch => GObject (View));
+      end;
+
+      declare
+         Hook_Func : constant Function_No_Args_Access
+           := new On_Server_List_Hook'(Function_No_Args with
+                                       View => Remote_View (View));
+      begin
+         Add_Hook (Kernel, Server_List_Changed_Hook, Hook_Func,
+                   "remote_views module", Watch => GObject (View));
+      end;
    end Initialize;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+      View   : Remote_View;
+      Child  : GPS_MDI_Child;
+      Mode   : Boolean;
+   begin
+      if Node.Tag.all = Module_Name then
+         declare
+            Mode_Str : constant String
+              := Get_Attribute (Node, "simple_mode", "True");
+         begin
+            Mode := Boolean'Value (Mode_Str);
+         exception
+            when Constraint_Error =>
+               Mode := True;
+         end;
+
+         Gtk_New (View, User, Mode);
+
+         Gtk_New (Child, View,
+                  Default_Width => 215,
+                  Group         => Group_View,
+                  Module        => Remote_View_Module_Id);
+         Set_Title (Child, -"Remote Servers View", -"Remote Servers View");
+         Put (Get_MDI (User), Child, Initial_Position => Position_Left);
+         return MDI_Child (Child);
+      end if;
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr
+   is
+      pragma Unreferenced (User);
+      N : Node_Ptr;
+   begin
+      if Widget.all in Remote_View_Record'Class then
+         N := new Node;
+         N.Tag := new String'(Module_Name);
+         Set_Attribute (N, "simple_mode",
+           Boolean'Image (Remote_View (Widget).Simple_Mode));
+         return N;
+      end if;
+      return null;
+   end Save_Desktop;
 
    -----------
    -- Setup --
@@ -267,7 +408,9 @@ package body Remote_Views is
          Item : Gtk_List_Item;
       begin
          Clear_Items (List, 0, -1);
-         for J in 1 .. Get_Number_Of_Server_Config loop
+         Gtk_New (Item, Locale_To_UTF8 (Local_Nickname));
+         Add (List, Item);
+         for J in 1 .. Get_Nb_Machine_Descriptor loop
             Gtk_New (Item, Locale_To_UTF8
                      (Get_Nickname (J)));
             Add (List, Item);
@@ -311,6 +454,35 @@ package body Remote_Views is
                 Get_Nickname (Execution_Server));
    end Set_Servers;
 
+   -----------------------------------
+   -- On_Server_Config_Changed_Hook --
+   -----------------------------------
+
+   procedure Execute
+     (Func   : On_Server_Config_Hook;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel, Data);
+   begin
+      if not Func.View.Combo_Selected then
+         Set_Servers (Func.View);
+      end if;
+   end Execute;
+
+   -------------------------
+   -- On_Server_List_Hook --
+   -------------------------
+
+   procedure Execute
+     (Func   : On_Server_List_Hook;
+      Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Set_Servers (Func.View);
+   end Execute;
+
    ----------------------
    -- On_Combo_Changed --
    ----------------------
@@ -322,8 +494,11 @@ package body Remote_Views is
       Value : constant String := Get_Text (Get_Entry (Gtkada_Combo (Combo)));
    begin
       if Value /= "" then
-         Assign (User.Server,
+         User.View.Combo_Selected := True;
+         Assign (User.View.Kernel,
+                 User.Server,
                  Value);
+         User.View.Combo_Selected := False;
       end if;
    end On_Combo_Changed;
 
@@ -347,6 +522,19 @@ package body Remote_Views is
       Show (User.View.Full_Table);
       Set_Servers (User.View);
    end On_View_Mode_Clicked;
+
+   ----------------------------
+   -- On_Config_List_Clicked --
+   ----------------------------
+
+   procedure On_Config_List_Clicked
+     (View : access Gtk_Widget_Record'Class;
+      User : Remote_Data)
+   is
+      pragma Unreferenced (View);
+   begin
+      Configure_Server_List (User.View.Kernel);
+   end On_Config_List_Clicked;
 
    -------------------------
    -- On_Show_Remote_View --
@@ -394,7 +582,9 @@ package body Remote_Views is
       Register_Module
         (Module      => Remote_View_Module_Id,
          Kernel      => Kernel,
-         Module_Name => "Remote_View");
+         Module_Name => Module_Name);
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu
         (Kernel, Remote, -"_Show Remote View", "",
