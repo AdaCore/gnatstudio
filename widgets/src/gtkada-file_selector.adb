@@ -29,6 +29,9 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 with GNAT.Regexp;               use GNAT.Regexp;
 with Interfaces.C.Strings;
 with System;
@@ -347,9 +350,8 @@ package body Gtkada.File_Selector is
             if Is_Absolute_Path (File) then
                return File;
             else
-               File := VFS.Create
-                 (Full_Name (Dialog.Current_Directory, True).all &
-                  Filename);
+               File := VFS.Create_From_Dir
+                 (Dialog.Current_Directory, Filename);
                return File;
             end if;
          end;
@@ -1830,7 +1832,12 @@ package body Gtkada.File_Selector is
         (Get_Vbox (File_Selector_Window),
          Hbox2, False, False, 3);
 
-      Gtk_New (Label1, -("Exploring :"));
+      if not Is_Local (Initial_Directory) then
+         Gtk_New (Label1, -("Exploring ") &
+                  Get_Host (Initial_Directory) & ":");
+      else
+         Gtk_New (Label1, -("Exploring :"));
+      end if;
       Pack_Start (Hbox2, Label1, False, False, 3);
 
       Gtk_New (File_Selector_Window.Location_Combo);
