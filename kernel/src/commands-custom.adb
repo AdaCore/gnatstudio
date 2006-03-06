@@ -1156,8 +1156,8 @@ package body Commands.Custom is
                Show_In_Task_Manager => Component.Show_In_Task_Manager,
                Line_By_Line         => False,
                Synchronous          => Context.Synchronous,
-               Directory            => Convert (To_String (Context.Dir),
-                                                GPS_Server, Component.Server),
+               Directory            => To_Remote (To_String (Context.Dir),
+                                                  Component.Server),
                Cmd                  => Command.Sub_Command);
             Free (Args);
 
