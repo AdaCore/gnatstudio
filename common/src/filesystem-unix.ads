@@ -53,6 +53,10 @@ package Filesystem.Unix is
                       Path : String) return String;
    --  Returns the directory name
 
+   function Get_Root (FS   : Unix_Filesystem_Record;
+                      Path : String) return String;
+   --  Returns the root directory of Path
+
    function Ensure_Directory (FS   : Unix_Filesystem_Record;
                               Path : String) return String;
    --  Returns a directory path from furnished path
