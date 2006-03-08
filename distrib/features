@@ -14,7 +14,7 @@ of the feature.
 New features in GPS 4.0.0
 -------------------------
 
-F223-022 New preference for the debugger: "Always open main unit"
+F223-022 New preference for the debugger: "Always open main unit" (2006-02-27)
 
   A new preference was added to the debugger support, so that it is now
   possible to choose whether GPS should automatically open the program's
@@ -29,10 +29,14 @@ F213-017 New python example: spell-checking the current word (2006-02-13)
 
   Keywords: Python
 
-F209-010 New port: x86-64 GNU/Linux
+F209-010 New port: x86-64 GNU/Linux (2006-03-03)
 
   GPS has been ported to the x86-64 GNU/Linux platform, taking full
   advantage of the 64 bit memory addressing and ABI.
+
+F209-003 New port: powerpc AIX (2006-03-08)
+
+  GPS has been ported to the powerpc AIX platform version >= 5.1.
 
 F128-002 VCS supports directories (2006-02-07)
 
