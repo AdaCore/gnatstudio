@@ -193,6 +193,10 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Open From Path menu
 
+   procedure On_Open_Remote_File
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Open Remote menu
+
    procedure On_New_View
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->New View menu
@@ -786,6 +790,11 @@ package body Src_Editor_Module is
       if Widget.all in Source_Editor_Box_Record'Class then
          Editor := Source_Editor_Box (Widget);
 
+         --  ??? for now, save with desktop only local files
+         if not Is_Local (Get_Filename (Editor)) then
+            return null;
+         end if;
+
          declare
             Filename : constant String :=
               Full_Name (Get_Filename (Editor)).all;
@@ -1144,7 +1153,14 @@ package body Src_Editor_Module is
          Raise_Child (Child, Focus);
 
          if File /= VFS.No_File then
-            Set_Title (Child, Full_Name (File).all, Base_Name (File));
+            if Is_Local (File) then
+               Set_Title (Child, Full_Name (File).all, Base_Name (File));
+            else
+               Set_Title (Child,
+                          "(" & Get_Host (File) & "): " & Full_Name (File).all,
+                          Base_Name (File));
+            end if;
+
             File_Edited (Kernel, Get_Filename (MDI_Child (Child)));
 
          else
@@ -1313,6 +1329,39 @@ package body Src_Editor_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Open_File;
+
+   -------------------------
+   -- On_Open_Remote_File --
+   -------------------------
+
+   procedure On_Open_Remote_File
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      declare
+         Filename : constant Virtual_File :=
+           Select_File
+             (Title             => -"Open Remote File",
+              Parent            => Get_Current_Window (Kernel),
+              Remote_Browsing   => True,
+              Use_Native_Dialog => False,
+              Kind              => Open_File,
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
+              History           => Get_History (Kernel));
+
+      begin
+         if Filename /= VFS.No_File then
+            Open_File_Editor (Kernel, Filename);
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Open_Remote_File;
 
    ----------------
    -- Completion --
@@ -1567,6 +1616,7 @@ package body Src_Editor_Module is
                  Parent            => Get_Current_Window (Kernel),
                  Base_Directory    => Dir (Old_Name),
                  Default_Name      => Base_Name (Old_Name),
+                 Remote_Browsing   => not Is_Local (Old_Name),
                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Save_File,
                  File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
@@ -2626,6 +2676,10 @@ package body Src_Editor_Module is
         (Kernel, File, -"Open _From Project...",  Stock_Open,
          On_Open_From_Path'Access, null,
          GDK_F3, Shift_Mask,
+         Ref_Item => -"Save More");
+      Register_Menu
+        (Kernel, File, -"Open From _Remote Host...",  Stock_Open,
+         On_Open_Remote_File'Access, null, GDK_F3, Control_Mask,
          Ref_Item => -"Save More");
 
       Recent_Menu_Item := Register_Menu
