@@ -77,6 +77,7 @@ with Gtk.Tree_Store;      use Gtk.Tree_Store;
 with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Window;          use Gtk.Window;
+with Gtkada.Combo;        use Gtkada.Combo;
 
 with Directory_Tree;      use Directory_Tree;
 with Generic_List;
@@ -95,6 +96,7 @@ package Gtkada.File_Selector is
       Pattern_Name      : String  := "";
       Default_Name      : String  := "";
       Parent            : Gtk_Window := null;
+      Remote_Browsing   : Boolean := False;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
       History           : Histories.History  := null) return VFS.Virtual_File;
@@ -103,6 +105,7 @@ package Gtkada.File_Selector is
    --  Base_Directory is the directory on which the dialog starts. If the
    --  directory is invalid, then the dialog will point to the current
    --  directory.
+   --  Remote_Browsing tells if browsing a remote host is allowed
    --  Parent is the parent window, used for setting the transient attribute.
    --  File_Pattern is a globbing pattern, as described in GNAT.Regexp (e.g.
    --  "*.htm"), or null for no filter. It is possible to pass multiple
@@ -165,6 +168,7 @@ package Gtkada.File_Selector is
    --  This subprogram should be used as a callback for a "browse" button.
    --  It will get its initial directory from the text in the Gtk_Entry, and
    --  put the result there.
+   --  ??? Add a Host parameter ?
 
    function Get_Selection
      (Dialog : access File_Selector_Window_Record) return VFS.Virtual_File;
@@ -242,7 +246,8 @@ package Gtkada.File_Selector is
       Initial_Directory    : VFS.Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
-      History              : Histories.History);
+      History              : Histories.History;
+      Remote_Browsing      : Boolean := False);
    --  Create a new file selector.
    --  Root is the directory shown in the root node of the tree. The user will
    --  not be able to select directories higher up in the hierarchy.
@@ -258,7 +263,8 @@ package Gtkada.File_Selector is
       Initial_Directory    : VFS.Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
-      History              : Histories.History);
+      History              : Histories.History;
+      Remote_Browsing      : Boolean := False);
    --  Internal initialization function
 
 private
@@ -347,6 +353,8 @@ private
       Refresh_Button : Gtk_Widget;
       Refresh_Icon   : Gtk_Image;
 
+      Hosts_Combo    : Gtkada_Combo;
+
       Location_Combo : Gtk_Combo;
       Location_Combo_Entry : Gtk_Entry;
 
@@ -368,6 +376,8 @@ private
       Cancel_Button : Gtk_Button;
 
       History : Histories.History;
+
+      Display_Remote : Boolean;
    end record;
 
 end Gtkada.File_Selector;
