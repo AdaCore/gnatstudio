@@ -154,8 +154,6 @@ package GPS.Kernel.Remote is
       User_Defined,
       Project_Specific);
 
-   Local_Nickname : constant String := "(local)";
-
    procedure Assign
      (Kernel   : Kernel_Handle;
       Server   : Server_Type;
