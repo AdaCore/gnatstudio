@@ -134,10 +134,10 @@ package body Filesystem.Unix is
       Path : String) return String
    is
    begin
-      if Path (Path'Last) = '/' and then Path'Last /= Path'First then
+      if Path'Length > 1 and then Path (Path'Last) = '/' then
          return Base_Name (FS, Path (Path'First .. Path'Last - 1));
       else
-         return "";
+         return Base_Name (FS, Path);
       end if;
    end Base_Dir_Name;
 
@@ -159,6 +159,18 @@ package body Filesystem.Unix is
       end loop;
       return "";
    end Dir_Name;
+
+   --------------
+   -- Get_Root --
+   --------------
+
+   function Get_Root (FS   : Unix_Filesystem_Record;
+                      Path : String) return String
+   is
+      pragma Unreferenced (FS, Path);
+   begin
+      return "/";
+   end Get_Root;
 
    ----------------------
    -- Ensure_Directory --
