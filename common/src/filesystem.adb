@@ -23,17 +23,9 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GNAT.Regpat;            use GNAT.Regpat;
-
 with String_Utils; use String_Utils;
-with Traces;       use Traces;
 
 package body Filesystem is
-
-   Me : constant Debug_Handle := Create ("Filesystem");
-
-   Request_Obj : constant Request_User_Object := (Main_Window => null);
-   --  Used for remote spawn, in case of request to the final user.
 
    ----------------
    -- Is_Subtree --
@@ -87,104 +79,5 @@ package body Filesystem is
    begin
       return Root & Sub;
    end Concat;
-
-   procedure Internal_Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Execution_Directory   : String;
-      Get_Output            : Boolean;
-      Out_Value             : out GNAT.OS_Lib.String_Access;
-      Status                : out Integer;
-      Success               : out Boolean);
-   --  Execute the command synchronously.
-
-   ------------------
-   -- Sync_Execute --
-   ------------------
-
-   procedure Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Out_Value             : out GNAT.OS_Lib.String_Access;
-      Status                : out Boolean;
-      Execution_Directory   : String  := "")
-   is
-      Status_Nb : Integer;
-   begin
-      Internal_Sync_Execute
-        (Host, Args, Execution_Directory, True, Out_Value, Status_Nb, Status);
-   end Sync_Execute;
-
-   ------------------
-   -- Sync_Execute --
-   ------------------
-
-   procedure Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Status                : out Boolean;
-      Execution_Directory   : String  := "")
-   is
-      Out_Value : GNAT.OS_Lib.String_Access;
-      Status_Nb : Integer;
-   begin
-      Internal_Sync_Execute
-        (Host, Args, Execution_Directory, False, Out_Value, Status_Nb, Status);
-   end Sync_Execute;
-
-   ------------------
-   -- Sync_Execute --
-   ------------------
-
-   procedure Internal_Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Execution_Directory   : String;
-      Get_Output            : Boolean;
-      Out_Value             : out GNAT.OS_Lib.String_Access;
-      Status                : out Integer;
-      Success               : out Boolean)
-   is
-      Fd     : Process_Descriptor_Access;
-      Result : Expect_Match;
-      Regexp : constant Pattern_Matcher := Compile (".*$", Single_Line);
-
-   begin
-      Remote_Spawn (Fd,
-                    Host,
-                    Args,
-                    Execution_Directory,
-                    Err_To_Out            => True,
-                    Request_User_Instance => Request_Obj);
-      loop
-         Expect (Fd.all, Result, Regexp, Timeout => 5);
-         if Result /= Expect_Timeout and then Get_Output then
-            declare
-               Output : constant String := Strip_CR (Expect_Out (Fd.all));
-               Tmp    : String_Access;
-            begin
-               if Active (Me) then
-                  Trace (Me, "Output: '" & Output & "'");
-               end if;
-               if Out_Value /= null then
-                  Tmp := new String'(Out_Value.all & Output);
-                  Free (Out_Value);
-                  Out_Value := Tmp;
-               else
-                  Out_Value := new String'(Output);
-               end if;
-            end;
-         end if;
-
-      end loop;
-   exception
-      when Process_Died =>
-         Close (Process_Descriptor'Class (Fd.all), Status);
-         if Status = 0 then
-            Success := True;
-         else
-            Success := False;
-         end if;
-   end Internal_Sync_Execute;
 
 end Filesystem;
