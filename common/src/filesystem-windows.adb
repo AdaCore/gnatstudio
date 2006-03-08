@@ -44,8 +44,8 @@ package body Filesystem.Windows is
          Exit_Commands       => (1 => new String'("exit")),
          Cd_Command          => "cd %d",
          Get_Status_Command  => "echo %errorlevel%",
-         Get_Status_Ptrn     => "^([0-9]*)$",
-         Echoing             => False);
+         Get_Status_Ptrn     => "^([0-9]*)\s*$",
+         Echoing             => True);
    end Initialize_Module;
 
    -------------
@@ -142,10 +142,10 @@ package body Filesystem.Windows is
       Path : String) return String
    is
    begin
-      if Path (Path'Last) = '\' and then Path'Last /= Path'First then
+      if Path'Length > 0 and then Path (Path'Last) = '\' then
          return Base_Name (FS, Path (Path'First .. Path'Last - 1));
       else
-         return "";
+         return Base_Name (FS, Path);
       end if;
    end Base_Dir_Name;
 
@@ -168,6 +168,22 @@ package body Filesystem.Windows is
       return "";
    end Dir_Name;
 
+   --------------
+   -- Get_Root --
+   --------------
+
+   function Get_Root (FS   : Windows_Filesystem_Record;
+                      Path : String) return String
+   is
+      pragma Unreferenced (FS);
+   begin
+      if Path'Length >= 3 and then Path (Path'First + 1) = ':' then
+         return Path (Path'First .. Path'First + 2);
+      else
+         return "C:\";
+      end if;
+   end Get_Root;
+
    ----------------------
    -- Ensure_Directory --
    ----------------------
@@ -177,7 +193,7 @@ package body Filesystem.Windows is
    is
       pragma Unreferenced (FS);
    begin
-      if Path (Path'Last) /= '\' then
+      if Path'Length = 0 or else Path (Path'Last) /= '\' then
          return Path & '\';
       else
          return Path;
@@ -276,7 +292,7 @@ package body Filesystem.Windows is
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("dir"),
          new String'("/a-d"),
-         new String'(Local_Full_Name));
+         new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
    begin
       Sync_Execute
@@ -304,7 +320,7 @@ package body Filesystem.Windows is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("type"),
-         new String'(Local_Full_Name));
+         new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
       Output : String_Access;
    begin
@@ -333,7 +349,7 @@ package body Filesystem.Windows is
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("erase"),
          new String'("/f"),
-         new String'(Local_Full_Name));
+         new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
    begin
       Sync_Execute
@@ -357,23 +373,28 @@ package body Filesystem.Windows is
       Host            : String;
       Local_Full_Name : String) return Boolean
    is
-      pragma Unreferenced (FS);
-      Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("dir"),
-         new String'("/a-r"),
-         new String'(Local_Full_Name));
-      Status : Boolean;
+      --  ??? return always false for now: the Write function is not yet
+      --  operational. Uncomment the following code as soon as the write
+      --  function is ready.
+      pragma Unreferenced (FS, Host, Local_Full_Name);
+--        pragma Unreferenced (FS);
+--        Args : GNAT.OS_Lib.Argument_List :=
+--          (new String'("dir"),
+--           new String'("/a-r"),
+--           new String'("""" & Local_Full_Name & """"));
+--        Status : Boolean;
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
-      return Status;
+--        Sync_Execute
+--          (Host,
+--           Args,
+--           Status);
+--
+--        for J in Args'Range loop
+--           Free (Args (J));
+--        end loop;
+--
+--        return Status;
+      return False;
    end Is_Writable;
 
    ------------------
@@ -389,7 +410,7 @@ package body Filesystem.Windows is
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("dir"),
          new String'("/ad"),
-         new String'(Local_Full_Name));
+         new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
    begin
       Sync_Execute
@@ -419,7 +440,7 @@ package body Filesystem.Windows is
         (new String'("ls"),
          new String'("-l"),
          new String'("--time-style=full-iso"),
-         new String'(Local_Full_Name),
+         new String'("""" & Local_Full_Name & """"),
          new String'("2>"),
          new String'("/dev/null"));
       Status  : Boolean;
@@ -521,7 +542,7 @@ package body Filesystem.Windows is
       Args : GNAT.OS_Lib.Argument_List :=
         (1 => new String'("attrib"),
          2 => new String'("-r"),
-         3 => new String'(Local_Full_Name));
+         3 => new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
    begin
       if not Writable then
@@ -582,8 +603,8 @@ package body Filesystem.Windows is
          end;
 
          if Status then
-            Len := Len + 2;
-            Buffer (Len - 1 .. Len) := Drive & ASCII.NUL;
+            Len := Len + 3;
+            Buffer (Len - 2 .. Len) := Drive & ":" & ASCII.NUL;
          end if;
       end loop;
    end Get_Logical_Drives;
@@ -601,7 +622,7 @@ package body Filesystem.Windows is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("mkdir"),
-         new String'(Local_Dir_Name));
+         new String'("""" & Local_Dir_Name & """"));
       Status : Boolean;
    begin
       Sync_Execute
@@ -631,7 +652,7 @@ package body Filesystem.Windows is
       Args : GNAT.OS_Lib.Argument_List :=
         (1 => new String'("rmdir"),
          2 => new String'("/q"),
-         3 => new String'(Local_Dir_Name));
+         3 => new String'("""" & Local_Dir_Name & """"));
       Status : Boolean;
    begin
       if Recursive then
@@ -664,7 +685,7 @@ package body Filesystem.Windows is
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("dir"),
          new String'("/b"),
-         new String'(Local_Dir_Name));
+         new String'("""" & Local_Dir_Name & """"));
       Status   : Boolean;
       Output   : String_Access;
       Regexp   : constant Pattern_Matcher := Compile ("^(.+)$",
