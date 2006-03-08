@@ -406,7 +406,7 @@ package body VFS is
       if The_Dir_Name = "" then
          return VFS.No_File;
       else
-         The_Dir := Create (The_Dir_Name);
+         The_Dir := Create (Get_Host (File), The_Dir_Name);
          The_Dir.Value.Kind := Directory;
          return The_Dir;
       end if;
@@ -830,8 +830,9 @@ package body VFS is
                Dir.Value.Full_Name.all);
          begin
             if Dir_Path /= Dir.Value.Full_Name.all then
+               Full := new String'(Dir_Path);
                Free (Dir.Value.Full_Name);
-               Dir.Value.Full_Name := new String'(Dir_Path);
+               Dir.Value.Full_Name := Full;
                Changed := True;
             end if;
          end;
@@ -860,9 +861,10 @@ package body VFS is
       if File.Value = null or else Is_Local (File) then
          return Local_Root_Dir;
       else
-         --  ??? do we really want "" as filename ?
-         Dir := Create (Host          => File.Value.Server.all,
-                        Full_Filename => "");
+         Dir := Create
+           (Host          => File.Value.Server.all,
+            Full_Filename => Get_Root (Get_Filesystem (File.Value.Server.all),
+                                       Full_Name (File).all));
          Dir.Value.Kind := Directory;
          return Dir;
       end if;
@@ -898,28 +900,15 @@ package body VFS is
    ----------------
 
    procedure Change_Dir (Dir : Virtual_File) is
---        Result : Boolean;
    begin
       if Dir.Value = null then
          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
       end if;
 
+      --  Only available for local files
       if Is_Local (Dir) then
          GNAT.Directory_Operations.Change_Dir
            (Locale_From_UTF8 (Full_Name (Dir).all));
-         --  ??? do we want that in the remote case ?
---        else
---           Result := Is_Directory (Dir);
---
---           if Result then
---              if Working_Dir /= null then
---                 Free (Working_Dir);
---              end if;
---              Working_Dir := new String'(Full_Name (Dir).all);
---           else
---              Raise_Exception (VFS_Directory_Error'Identity,
---                               "Dir is not a directory");
---           end if;
       end if;
    exception
       when E : GNAT.Directory_Operations.Directory_Error =>
@@ -960,105 +949,6 @@ package body VFS is
          Raise_Exception (VFS_Directory_Error'Identity,
                           Exception_Message (E));
    end Make_Dir;
-
---     ------------------------
---     -- Make_Dir_Recursive --
---     ------------------------
---
---     procedure Make_Dir_Recursive (Dir : Virtual_File) is
---        Result : Boolean;
---     begin
---        if Dir.Value = null then
---           Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
---        end if;
---
---        if Is_Local then
---           Make_Dir_Recursive (Locale_From_UTF8 (Full_Name (Dir).all));
---        else
---           declare
---              Name : constant String := Dir.Value.Full_Name.all
---              Last : Natural := Name'First + 1;
---
---           begin
---              --  set to true by default (do not raise exception if no
---              --  directory is created)
---
---              Result := True;
---
---              while Last < Name'Last loop
---                 while Last <= Name'Last
---                   and then Name (Last) /= '/'
---                 loop
---                    Last := Last + 1;
---                 end loop;
---
---                 if not Is_Directory (Dir.Value.Connection,
---                                      Name (Name'First .. Last)) then
---                    Result := Make_Dir (Dir.Value.Connection,
---                                        Name (Name'First .. Last));
---                    exit when not Result;
---                 end if;
---
---                 Last := Last + 1;
---              end loop;
---
---              if not Result then
---                 Raise_Exception (VFS_Directory_Error'Identity,
---                              "Cannot create " & Name (Name'First .. Last));
---              end if;
---           end;
---        end if;
---
---        Dir.Value.Kind := Directory;
---
---     exception
---        when E : GNAT.Directory_Operations.Directory_Error =>
---           Raise_Exception (VFS_Directory_Error'Identity,
---                            Exception_Message (E));
---     end Make_Dir_Recursive;
---
---     ----------------
---     -- Remove_Dir --
---     ----------------
---
---     procedure Remove_Dir
---       (Dir       : Virtual_File;
---        Recursive : Boolean := False)
---     is
---        Result : Boolean;
---     begin
---        if Dir.Value = null then
---          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
---        end if;
---
---        if Dir.Value.Connection = null then
---           GNAT.Directory_Operations.Remove_Dir
---             (Locale_From_UTF8 (Full_Name (Dir).all),
---              Recursive);
---
---        else
---           Result := Remove_Dir
---             (Dir.Value.Connection,
---              Dir.Value.Full_Name
---                (Dir.Value.Start_Of_Path .. Dir.Value.Full_Name'Last),
---              Recursive);
---
---           if not Result then
---              Raise_Exception (VFS_Directory_Error'Identity,
---                               "Cannot remove directory " &
---                               Locale_Full_Name (Dir));
---           end if;
---        end if;
---
---        if Result then
---           Dir.Value.Kind := Unknown;
---        end if;
---
---     exception
---        when E : GNAT.Directory_Operations.Directory_Error =>
---           Raise_Exception (VFS_Directory_Error'Identity,
---                            Exception_Message (E));
---     end Remove_Dir;
 
    ----------
    -- Read --
