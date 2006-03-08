@@ -76,6 +76,10 @@ package Filesystem is
                       Path : String) return String is abstract;
    --  Returns the directory path
 
+   function Get_Root (FS   : Filesystem_Record;
+                      Path : String) return String is abstract;
+   --  Returns the root directory of the path
+
    function Ensure_Directory (FS   : Filesystem_Record;
                               Path : String) return String is abstract;
    --  Returns a directory path from furnished path
@@ -211,20 +215,5 @@ package Filesystem is
    is abstract;
    --  reads the specified directory and returns a list of filenames
    --  (base names)
-
-private
-
-   procedure Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Status                : out Boolean;
-      Execution_Directory   : String  := "");
-
-   procedure Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Out_Value             : out GNAT.OS_Lib.String_Access;
-      Status                : out Boolean;
-      Execution_Directory   : String  := "");
 
 end Filesystem;
