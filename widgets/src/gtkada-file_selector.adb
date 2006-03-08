@@ -51,6 +51,8 @@ with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Ctree;                 use Gtk.Ctree;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.List;                  use Gtk.List;
+with Gtk.List_Item;             use Gtk.List_Item;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -82,6 +84,7 @@ package body Gtkada.File_Selector is
    Icon_Column       : constant := 3;
 
    Last_Directory : Virtual_File := VFS.Get_Current_Dir;
+   Last_Remote_Directory : Virtual_File := VFS.Get_Current_Dir;
    --  It would be nice to use a user data instead of this global variable,
    --  but this is in any case better than changing the current directory
    --  as we did before.
@@ -89,6 +92,13 @@ package body Gtkada.File_Selector is
    -----------------------
    -- Local subprograms --
    -----------------------
+
+   procedure Set_Location (Location_Combo : Gtk_Combo;
+                           Dir            : Virtual_File);
+   --  Sets the location in the combo
+
+   function Get_Location (Location_Combo : Gtk_Combo) return Virtual_File;
+   --  Gets the location from the combo
 
    function Columns_Types return GType_Array;
    --  Return the types of the columns in the list.
@@ -167,6 +177,9 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class);
    --  ???
 
+   procedure Host_Selected (Object : access Gtk_Widget_Record'Class);
+   --  ???
+
    procedure Directory_Selected (Object : access Gtk_Widget_Record'Class);
    --  ???
 
@@ -228,6 +241,47 @@ package body Gtkada.File_Selector is
 
    procedure Name_Selected (File : access Gtk_Widget_Record'Class);
    --  Called when a new file has been selected.
+
+   ------------------
+   -- Set_Location --
+   ------------------
+
+   procedure Set_Location
+     (Location_Combo : Gtk_Combo;
+      Dir            : Virtual_File)
+   is
+   begin
+      if Is_Local (Dir) then
+         Add_Unique_Combo_Entry (Location_Combo,
+                                 Full_Name (Dir, True).all);
+         Set_Text (Get_Entry (Location_Combo), Full_Name (Dir, True).all);
+      else
+         Add_Unique_Combo_Entry
+           (Location_Combo,
+            "(" & Get_Host (Dir) & "): " & Full_Name (Dir, True).all);
+         Set_Text (Get_Entry (Location_Combo),
+                   "(" & Get_Host (Dir) & "): " & Full_Name (Dir, True).all);
+      end if;
+   end Set_Location;
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location (Location_Combo : Gtk_Combo) return Virtual_File
+   is
+      Str : constant String := Get_Text (Get_Entry (Location_Combo));
+   begin
+      if Str'Length > 0 and then Str (Str'First) = '(' then
+         for J in Str'Range loop
+            if J + 2 <= Str'Last and then Str (J .. J + 2) = "): " then
+               return Create (Str (Str'First + 1 .. J - 1),
+                              Str (J + 3 .. Str'Last));
+            end if;
+         end loop;
+      end if;
+      return Create (Str);
+   end Get_Location;
 
    --------------
    -- Set_Busy --
@@ -346,7 +400,7 @@ package body Gtkada.File_Selector is
             Filename : constant String := Get_Text (Dialog.Selection_Entry);
             File     : Virtual_File;
          begin
-            File := Create (Filename);
+            File := Create (Get_Host (Dialog.Current_Directory), Filename);
             if Is_Absolute_Path (File) then
                return File;
             else
@@ -391,6 +445,7 @@ package body Gtkada.File_Selector is
       Pattern_Name      : String  := "";
       Default_Name      : String  := "";
       Parent            : Gtk_Window := null;
+      Remote_Browsing   : Boolean := False;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
       History           : Histories.History := null) return VFS.Virtual_File
@@ -412,12 +467,15 @@ package body Gtkada.File_Selector is
       Pos_Mouse     : constant := 2;
       File_Selector : File_Selector_Window_Access;
       S             : Chars_Ptr;
-
+      Initial_Dir   : Virtual_File;
       procedure c_free (S : Chars_Ptr);
       pragma Import (C, c_free, "free");
 
    begin
-      if Use_Native_Dialog and then NativeFileSelectionSupported /= 0 then
+      if Use_Native_Dialog
+        and then NativeFileSelectionSupported /= 0
+        and then not Remote_Browsing
+      then
          if Base_Directory = No_File then
             S := NativeFileSelection
               (Title & ASCII.NUL,
@@ -455,14 +513,20 @@ package body Gtkada.File_Selector is
 
       Set_Busy (Parent, True);
 
+      if Remote_Browsing then
+         Initial_Dir := Last_Remote_Directory;
+      else
+         Initial_Dir := Last_Directory;
+      end if;
+
       if Base_Directory = No_File then
          Gtk_New
-           (File_Selector, Get_Root (Last_Directory), Last_Directory,
-            Title, History => History);
+           (File_Selector, Get_Root (Initial_Dir), Initial_Dir,
+            Title, History => History, Remote_Browsing => Remote_Browsing);
       else
          Gtk_New
-           (File_Selector, Get_Root (Base_Directory), Base_Directory,
-            Title, History => History);
+           (File_Selector, Get_Root (Initial_Dir), Initial_Dir,
+            Title, History => History, Remote_Browsing => Remote_Browsing);
       end if;
 
       Set_Position (File_Selector, Win_Pos_Mouse);
@@ -921,25 +985,18 @@ package body Gtkada.File_Selector is
             Win.Moving_Through_History := False;
          else
             Push (Win.Past_History,
-                  Create (Get_Text (Win.Location_Combo_Entry)));
+                  Get_Location (Win.Location_Combo));
             Clear (Win.Future_History);
             Set_Sensitive (Win.Back_Button);
             Set_Sensitive (Win.Forward_Button, False);
 
-            Add_Unique_Combo_Entry (Win.Location_Combo,
-                                    Full_Name (Dir, True).all);
-
-            if Win.History /= null then
+            if Win.History /= null and then Is_Local (Dir) then
                Add_To_History (Win.History.all, "directories",
                                Full_Name (Dir, True).all);
             end if;
          end if;
 
-         if Get_Text (Win.Location_Combo_Entry) /=
-           Full_Name (Dir, True).all
-         then
-            Set_Text (Win.Location_Combo_Entry, Full_Name (Dir, True).all);
-         end if;
+         Set_Location (Win.Location_Combo, Dir);
 
          --  If the new directory is not the one currently shown
          --  in the Explorer_Tree, then update the Explorer_Tree.
@@ -982,9 +1039,9 @@ package body Gtkada.File_Selector is
       end if;
 
       Push (Win.Future_History,
-            Create (Get_Text (Win.Location_Combo_Entry)));
+            Get_Location (Win.Location_Combo));
 
-      Set_Text (Win.Location_Combo_Entry, Full_Name (S, True).all);
+      Set_Location (Win.Location_Combo, S);
       Win.Moving_Through_History := True;
       Show_Directory (Win.Explorer_Tree, S);
 
@@ -1086,7 +1143,7 @@ package body Gtkada.File_Selector is
       Push (Win.Past_History,
             Win.Current_Directory);
 
-      Set_Text (Win.Location_Combo_Entry, Full_Name (S, True).all);
+      Set_Location (Win.Location_Combo, S);
       Win.Moving_Through_History := True;
       Show_Directory (Win.Explorer_Tree, S);
 
@@ -1097,6 +1154,30 @@ package body Gtkada.File_Selector is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Forward_Button_Clicked;
+
+   -------------------
+   -- Host_Selected --
+   -------------------
+
+   procedure Host_Selected (Object : access Gtk_Widget_Record'Class)
+   is
+      Win : constant File_Selector_Window_Access :=
+        File_Selector_Window_Access (Object);
+      Host : constant String := Get_Text (Get_Entry (Win.Hosts_Combo));
+      Dir  : Virtual_File;
+   begin
+      if Host /= Local_Nickname then
+         Dir := Get_Root (Create (Host, ""));
+      else
+         Dir := Local_Root_Dir;
+      end if;
+      Change_Directory (Win, Dir);
+      Set_Location (Win.Location_Combo, Dir);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Host_Selected;
 
    ------------------------
    -- Directory_Selected --
@@ -1109,7 +1190,7 @@ package body Gtkada.File_Selector is
         File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Change_Directory
-        (Win, Create (Get_Text (Win.Location_Combo_Entry)));
+        (Win, Get_Location (Win.Location_Combo));
 
    exception
       when E : others =>
@@ -1142,8 +1223,7 @@ package body Gtkada.File_Selector is
    is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
-      S   : constant Virtual_File :=
-        Create (Get_Text (Win.Location_Combo_Entry));
+      S   : constant Virtual_File := Get_Location (Win.Location_Combo);
    begin
       if Is_Directory (S) then
          Change_Directory (Win, S);
@@ -1215,7 +1295,12 @@ package body Gtkada.File_Selector is
          if Win.Selected_File /= null then
             Win.Selected_File.all := Get_Selection (Win);
          end if;
-         Last_Directory := Win.Current_Directory;
+         if Win.Display_Remote then
+            Last_Remote_Directory := Win.Current_Directory;
+         else
+            Last_Directory := Win.Current_Directory;
+         end if;
+
          Main_Quit;
          Win.Own_Main_Loop := False;
          Destroy (Win);
@@ -1255,7 +1340,12 @@ package body Gtkada.File_Selector is
       if Win.Selected_File /= null then
          Win.Selected_File.all := Get_Selection (Win);
       end if;
-      Last_Directory := Win.Current_Directory;
+      if Win.Display_Remote then
+         Last_Remote_Directory := Win.Current_Directory;
+      else
+         Last_Directory := Win.Current_Directory;
+      end if;
+
       Main_Quit;
       Win.Own_Main_Loop := False;
       Destroy (Win);
@@ -1398,8 +1488,7 @@ package body Gtkada.File_Selector is
    begin
       if Get_Key_Val (Event) = GDK_Return then
          declare
-            S : constant Virtual_File :=
-              Create (Get_Text (Win.Location_Combo_Entry));
+            S : constant Virtual_File := Get_Location (Win.Location_Combo);
          begin
             if Is_Directory (S) then
                Change_Directory (Win, S);
@@ -1503,8 +1592,8 @@ package body Gtkada.File_Selector is
 
             --  Handle the easy part: change to the longest directory available
 
-            File     := Create (S);
-            Sub_File := Create (Full_Name (Win.Current_Directory).all & S);
+            File     := Create (Get_Host (Win.Current_Directory), S);
+            Sub_File := Create_From_Dir (Win.Current_Directory, S);
 
             if Is_Absolute_Path (File)
               and then Is_Directory (VFS.Dir (File))
@@ -1640,7 +1729,8 @@ package body Gtkada.File_Selector is
       Initial_Directory    : Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
-      History              : Histories.History) is
+      History              : Histories.History;
+      Remote_Browsing      : Boolean := False) is
    begin
       File_Selector_Window := new File_Selector_Window_Record;
 
@@ -1649,11 +1739,11 @@ package body Gtkada.File_Selector is
       then
          Initialize
            (File_Selector_Window, Root, Initial_Directory,
-            Dialog_Title, Show_Files, History);
+            Dialog_Title, Show_Files, History, Remote_Browsing);
       else
          Initialize
            (File_Selector_Window, VFS.Get_Current_Dir, Initial_Directory,
-            Dialog_Title, Show_Files, History);
+            Dialog_Title, Show_Files, History, Remote_Browsing);
       end if;
    end Gtk_New;
 
@@ -1702,13 +1792,15 @@ package body Gtkada.File_Selector is
       Initial_Directory    : Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
-      History              : Histories.History)
+      History              : Histories.History;
+      Remote_Browsing      : Boolean := False)
    is
       pragma Suppress (All_Checks);
 
       Toolbar1    : Gtk_Toolbar;
 
       Label1      : Gtk_Label;
+      Item        : Gtk_List_Item;
 
       Hpaned1     : Gtk_Hpaned;
 
@@ -1763,9 +1855,6 @@ package body Gtkada.File_Selector is
       Gtk_New_Hbox (Hbox1, False, 0);
       Pack_Start (Get_Vbox (File_Selector_Window),
                   Hbox1, False, False, 3);
-
-      Gtk_New_Hbox (Hbox3, False, 0);
-      Pack_Start (Hbox1, Hbox3, True, True, 0);
 
       Gtk_New
         (Toolbar1,
@@ -1825,24 +1914,50 @@ package body Gtkada.File_Selector is
         (File_Selector_Window.Home_Button, "clicked",
          On_Home_Button_Clicked'Access);
 
-      Pack_Start (Hbox3, Toolbar1, True, True, 3);
+      Pack_Start (Hbox1, Toolbar1, True, True, 3);
 
-      Gtk_New_Hbox (Hbox2, False, 0);
-      Pack_Start
-        (Get_Vbox (File_Selector_Window),
-         Hbox2, False, False, 3);
+      File_Selector_Window.Display_Remote := Remote_Browsing;
 
-      if not Is_Local (Initial_Directory) then
-         Gtk_New (Label1, -("Exploring ") &
-                  Get_Host (Initial_Directory) & ":");
-      else
-         Gtk_New (Label1, -("Exploring :"));
+      if Remote_Browsing then
+         Gtk_New_Hbox (Hbox2, False, 0);
+         Pack_Start (Get_Vbox (File_Selector_Window), Hbox2, True, True, 0);
+
+         Gtk_New (Label1, -("Host:"));
+         Pack_Start (Hbox2, Label1, False, False, 3);
+
+         Gtk_New (File_Selector_Window.Hosts_Combo);
+         Set_Editable (Get_Entry (File_Selector_Window.Hosts_Combo), False);
+         Gtk_New (Item, Local_Nickname);
+         Add (Get_List (File_Selector_Window.Hosts_Combo), Item);
+
+         for J in 1 .. Get_Nb_Machine_Descriptor loop
+            Gtk_New (Item, Locale_To_UTF8 (Get_Nickname (J)));
+            Add (Get_List (File_Selector_Window.Hosts_Combo), Item);
+         end loop;
+         if Initial_Directory /= No_File
+           and then not Is_Local (Initial_Directory)
+         then
+            Set_Text (Get_Entry (File_Selector_Window.Hosts_Combo),
+                      Get_Host (Initial_Directory));
+         end if;
+
+         Show_All (Get_List (File_Selector_Window.Hosts_Combo));
+         Pack_Start (Hbox2, File_Selector_Window.Hosts_Combo, True, True, 3);
+
+         Widget_Callback.Object_Connect
+           (Get_Entry (File_Selector_Window.Hosts_Combo), "changed",
+            Host_Selected'Access, File_Selector_Window);
       end if;
-      Pack_Start (Hbox2, Label1, False, False, 3);
+
+      Gtk_New_Hbox (Hbox3, False, 0);
+      Pack_Start (Get_Vbox (File_Selector_Window), Hbox3, False, False, 3);
+
+      Gtk_New (Label1, -("Exploring :"));
+      Pack_Start (Hbox3, Label1, False, False, 3);
 
       Gtk_New (File_Selector_Window.Location_Combo);
       Set_Case_Sensitive (File_Selector_Window.Location_Combo, True);
-      Pack_Start (Hbox2,
+      Pack_Start (Hbox3,
                   File_Selector_Window.Location_Combo, True, True, 3);
       Widget_Callback.Object_Connect
         (Get_Popup_Window (File_Selector_Window.Location_Combo),
