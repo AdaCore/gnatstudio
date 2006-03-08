@@ -132,6 +132,7 @@ package body Remote_Server_List_Config is
       Machines              : Item_Access;
       Tree                  : Gtk_Tree_View;
       Add_Machine_Button    : Gtk_Button;
+      Right_Table           : Gtk_Table;
       Nickname_Event        : Gtk_Event_Box;
       Nickname_Label        : Gtk_Label;
       Nickname_Entry        : Gtk_Entry;
@@ -470,7 +471,6 @@ package body Remote_Server_List_Config is
       Nb_Machines : Natural;
       Tips        : Gtk_Tooltips;
       Main_Table  : Gtk_Table;
-      Right_Table : Gtk_Table;
       Frame       : Gtk_Frame;
       Scrolled    : Gtk_Scrolled_Window;
       Model       : Gtk_Tree_Store;
@@ -478,6 +478,7 @@ package body Remote_Server_List_Config is
       Tmp         : Gtk_Widget;
       Label       : Gtk_Label;
       Item        : Gtk_List_Item;
+      Empty_List  : Boolean := True;
       pragma Unreferenced (Tmp);
    begin
       Dialog := new Server_List_Editor_Record;
@@ -520,43 +521,41 @@ package body Remote_Server_List_Config is
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
       Attach (Main_Table, Scrolled, 1, 2, 0, 1);
 
-      Gtk_New (Right_Table, Rows => 6, Columns => 2, Homogeneous => False);
+      Gtk_New (Dialog.Right_Table, Rows => 6, Columns => 2,
+               Homogeneous => False);
 
       Create_Blue_Label (Dialog.Nickname_Label,
                          Dialog.Nickname_Event);
-      Attach (Right_Table, Dialog.Nickname_Event, 0, 2, 0, 1,
+      Attach (Dialog.Right_Table, Dialog.Nickname_Event, 0, 2, 0, 1,
               Fill or Expand, 0, 5, 5);
 
       Gtk_New (Label, -"Network name:");
-      Attach (Right_Table, Label, 0, 1, 1, 2,
+      Attach (Dialog.Right_Table, Label, 0, 1, 1, 2,
               Fill or Expand, 0);
       Gtk_New (Dialog.Network_Name_Entry);
-      Attach (Right_Table, Dialog.Network_Name_Entry, 1, 2, 1, 2,
+      Attach (Dialog.Right_Table, Dialog.Network_Name_Entry, 1, 2, 1, 2,
               Fill or Expand, 0);
 
       Gtk_New (Label, -"Remote access tool:");
-      Attach (Right_Table, Label, 0, 1, 2, 3,
+      Attach (Dialog.Right_Table, Label, 0, 1, 2, 3,
               Fill or Expand, 0);
       Gtk_New (Dialog.Remote_Access_Combo);
       Set_Editable (Get_Entry (Dialog.Remote_Access_Combo), False);
-      Attach (Right_Table, Dialog.Remote_Access_Combo, 1, 2, 2, 3,
+      Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo, 1, 2, 2, 3,
               Fill or Expand, 0);
 
       for J in 1 .. Get_Nb_Remote_Access_Descriptor loop
-         if Active (Me) then
-            Trace (Me, "Add remote access " & Get_Remote_Access_Name (J));
-         end if;
          Gtk_New (Item, Locale_To_UTF8 (Get_Remote_Access_Name (J)));
          Add (Get_List (Dialog.Remote_Access_Combo), Item);
       end loop;
       Show_All (Get_List (Dialog.Remote_Access_Combo));
 
       Gtk_New (Label, -"Shell:");
-      Attach (Right_Table, Label, 0, 1, 3, 4,
+      Attach (Dialog.Right_Table, Label, 0, 1, 3, 4,
               Fill or Expand, 0);
       Gtk_New (Dialog.Remote_Shell_Combo);
       Set_Editable (Get_Entry (Dialog.Remote_Shell_Combo), False);
-      Attach (Right_Table, Dialog.Remote_Shell_Combo, 1, 2, 3, 4,
+      Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo, 1, 2, 3, 4,
               Fill or Expand, 0);
 
       for J in 1 .. Get_Nb_Shell_Descriptor loop
@@ -569,17 +568,17 @@ package body Remote_Server_List_Config is
       Show_All (Get_List (Dialog.Remote_Shell_Combo));
 
       Gtk_New (Dialog.Restore_Button, -"Restore default");
-      Attach (Right_Table, Dialog.Restore_Button, 0, 1, 4, 5,
+      Attach (Dialog.Right_Table, Dialog.Restore_Button, 0, 1, 4, 5,
               Fill or Expand, 0, 10, 10);
 
       Gtk_New (Dialog.Advanced_Button, -"Advanced >>");
       Set_Active (Dialog.Advanced_Button, False);
-      Attach (Right_Table, Dialog.Advanced_Button, 1, 2, 4, 5,
+      Attach (Dialog.Right_Table, Dialog.Advanced_Button, 1, 2, 4, 5,
               Fill or Expand, 0, 10, 10);
 
       Gtk_New (Dialog.Advanced_Table,
                Rows => 4, Columns => 2, Homogeneous => False);
-      Attach (Right_Table, Dialog.Advanced_Table, 0, 2, 6, 7,
+      Attach (Dialog.Right_Table, Dialog.Advanced_Table, 0, 2, 6, 7,
               0, 0);
       Set_Child_Visible (Dialog.Advanced_Table,
                          Get_Mode (Dialog.Advanced_Button));
@@ -615,7 +614,7 @@ package body Remote_Server_List_Config is
       Attach (Dialog.Advanced_Table, Dialog.Extra_Init_Cmds_Text, 1, 2, 3, 4,
               Fill or Expand, 0);
 
-      Add_With_Viewport (Scrolled, Right_Table);
+      Add_With_Viewport (Scrolled, Dialog.Right_Table);
 
       Widget_Callback.Object_Connect
         (Dialog.Network_Name_Entry, "changed", Changed'Access, Dialog);
@@ -655,6 +654,7 @@ package body Remote_Server_List_Config is
       Nb_Machines := Get_Nb_Machine_Descriptor;
 
       for J in 1 .. Nb_Machines loop
+         Empty_List := False;
          Dialog.Machines := new Item_Record'
            (Desc => Get_Machine_Descriptor (J),
             Next => Dialog.Machines);
@@ -675,6 +675,10 @@ package body Remote_Server_List_Config is
                          Iter);
          end if;
       end loop;
+
+      if Empty_List then
+         Set_Child_Visible (Dialog.Right_Table, False);
+      end if;
 
       Tmp := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Tmp := Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply);
@@ -935,6 +939,8 @@ package body Remote_Server_List_Config is
       if Nickname = "" then
          return;
       end if;
+
+      Set_Child_Visible (Dialog.Right_Table, True);
 
       Dialog.Machines := new Item_Record'
         (Desc => new Machine_Descriptor_Record'
