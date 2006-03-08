@@ -24,6 +24,7 @@ pragma Warnings (On);
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Regpat;            use GNAT.Regpat;
 
+with Basic_Types;
 with String_Utils;           use String_Utils;
 with VFS;
 
@@ -54,8 +55,7 @@ package body Filesystem.Windows is
 
    function To_Unix
      (FS   : Windows_Filesystem_Record;
-      Path : String)
-      return String
+      Path : String) return String
    is
       pragma Unreferenced (FS);
       The_Path : String := Path;
@@ -71,6 +71,7 @@ package body Filesystem.Windows is
             The_Path (J) := '/';
          end if;
       end loop;
+
       return The_Path;
    end To_Unix;
 
@@ -80,8 +81,7 @@ package body Filesystem.Windows is
 
    function From_Unix
      (FS   : Windows_Filesystem_Record;
-      Path : String)
-      return String
+      Path : String) return String
    is
       pragma Unreferenced (FS);
       The_Path : String := Path;
@@ -91,6 +91,7 @@ package body Filesystem.Windows is
             The_Path (J) := '\';
          end if;
       end loop;
+
       return The_Path;
    end From_Unix;
 
@@ -98,8 +99,10 @@ package body Filesystem.Windows is
    -- Is_Absolute_Path --
    ----------------------
 
-   function Is_Absolute_Path (FS   : Windows_Filesystem_Record;
-                              Path : String) return Boolean is
+   function Is_Absolute_Path
+     (FS   : Windows_Filesystem_Record;
+      Path : String) return Boolean
+   is
       pragma Unreferenced (FS);
    begin
       return (Path'Length >= 1
@@ -115,9 +118,7 @@ package body Filesystem.Windows is
    function Base_Name
      (FS     : Windows_Filesystem_Record;
       Path   : String;
-      Suffix : String := "")
-      return String
-   is
+      Suffix : String := "") return String is
    begin
       for J in reverse Path'Range loop
          if Path (J) = '\' then
@@ -130,6 +131,7 @@ package body Filesystem.Windows is
             end if;
          end if;
       end loop;
+
       return Path;
    end Base_Name;
 
@@ -139,8 +141,7 @@ package body Filesystem.Windows is
 
    function Base_Dir_Name
      (FS  : Windows_Filesystem_Record;
-      Path : String) return String
-   is
+      Path : String) return String is
    begin
       if Path'Length > 0 and then Path (Path'Last) = '\' then
          return Base_Name (FS, Path (Path'First .. Path'Last - 1));
@@ -155,8 +156,7 @@ package body Filesystem.Windows is
 
    function Dir_Name
      (FS   : Windows_Filesystem_Record;
-      Path : String)
-      return String
+      Path : String) return String
    is
       pragma Unreferenced (FS);
    begin
@@ -165,6 +165,7 @@ package body Filesystem.Windows is
             return Path (Path'First .. J);
          end if;
       end loop;
+
       return "";
    end Dir_Name;
 
@@ -172,8 +173,9 @@ package body Filesystem.Windows is
    -- Get_Root --
    --------------
 
-   function Get_Root (FS   : Windows_Filesystem_Record;
-                      Path : String) return String
+   function Get_Root
+     (FS   : Windows_Filesystem_Record;
+      Path : String) return String
    is
       pragma Unreferenced (FS);
    begin
@@ -188,8 +190,9 @@ package body Filesystem.Windows is
    -- Ensure_Directory --
    ----------------------
 
-   function Ensure_Directory (FS   : Windows_Filesystem_Record;
-                              Path : String) return String
+   function Ensure_Directory
+     (FS   : Windows_Filesystem_Record;
+      Path : String) return String
    is
       pragma Unreferenced (FS);
    begin
@@ -206,14 +209,14 @@ package body Filesystem.Windows is
 
    function Device_Name
      (FS   : Windows_Filesystem_Record;
-      Path : String)
-      return String
+      Path : String) return String
    is
       pragma Unreferenced (FS);
    begin
       if Path'Length > 2 and then Path (Path'First + 1) = ':' then
          return Path (Path'First .. Path'First);
       end if;
+
       return "";
    end Device_Name;
 
@@ -221,12 +224,14 @@ package body Filesystem.Windows is
    -- Normalize --
    ---------------
 
-   function Normalize (FS   : Windows_Filesystem_Record;
-                       Path : String) return String
+   function Normalize
+     (FS   : Windows_Filesystem_Record;
+      Path : String) return String
    is
       Last_Dir : Natural;
    begin
       Last_Dir := Path'First;
+
       for J in Path'Range loop
          if Path (J) = '\' then
             if J < Path'Last - 3 and then Path (J .. J + 3) = "\..\" then
@@ -236,9 +241,11 @@ package body Filesystem.Windows is
                return Normalize (FS, Path (Path'First .. J) &
                                      Path (J + 2 .. Path'Last));
             end if;
+
             Last_Dir := J;
          end if;
       end loop;
+
       return Path;
    end Normalize;
 
@@ -250,8 +257,7 @@ package body Filesystem.Windows is
      (FS : Windows_Filesystem_Record;
       Device : String;
       Dir    : String;
-      File   : String)
-      return String
+      File   : String) return String
    is
       pragma Unreferenced (FS);
    begin
@@ -262,7 +268,8 @@ package body Filesystem.Windows is
    -- Is_Case_Sensitive --
    -----------------------
 
-   function Is_Case_Sensitive (FS : Windows_Filesystem_Record) return Boolean
+   function Is_Case_Sensitive
+     (FS : Windows_Filesystem_Record) return Boolean
    is
       pragma Unreferenced (FS);
    begin
@@ -294,16 +301,10 @@ package body Filesystem.Windows is
          new String'("/a-d"),
          new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Is_Regular_File;
 
@@ -314,8 +315,7 @@ package body Filesystem.Windows is
    function Read_File
      (FS              : Windows_Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String)
-      return GNAT.OS_Lib.String_Access
+      Local_Full_Name : String) return GNAT.OS_Lib.String_Access
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
@@ -323,17 +323,10 @@ package body Filesystem.Windows is
          new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
       Output : String_Access;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Output,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Output, Status);
+      Basic_Types.Free (Args);
       return Output;
    end Read_File;
 
@@ -341,9 +334,10 @@ package body Filesystem.Windows is
    -- Delete --
    ------------
 
-   function Delete (FS              : Windows_Filesystem_Record;
-                    Host            : String;
-                    Local_Full_Name : String) return Boolean
+   function Delete
+     (FS              : Windows_Filesystem_Record;
+      Host            : String;
+      Local_Full_Name : String) return Boolean
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
@@ -351,16 +345,10 @@ package body Filesystem.Windows is
          new String'("/f"),
          new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Delete;
 
@@ -383,16 +371,10 @@ package body Filesystem.Windows is
 --           new String'("/a-r"),
 --           new String'("""" & Local_Full_Name & """"));
 --        Status : Boolean;
+
    begin
---        Sync_Execute
---          (Host,
---           Args,
---           Status);
---
---        for J in Args'Range loop
---           Free (Args (J));
---        end loop;
---
+--        Sync_Execute (Host, Args, Status);
+--        Basic_Types.Free (Args);
 --        return Status;
       return False;
    end Is_Writable;
@@ -412,16 +394,10 @@ package body Filesystem.Windows is
          new String'("/ad"),
          new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Is_Directory;
 
@@ -432,8 +408,7 @@ package body Filesystem.Windows is
    function File_Time_Stamp
      (FS              : Windows_Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String)
-      return Ada.Calendar.Time
+      Local_Full_Name : String) return Ada.Calendar.Time
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
@@ -455,6 +430,7 @@ package body Filesystem.Windows is
       Minute  : Natural;
       Second  : Ada.Calendar.Day_Duration;
       use type Ada.Calendar.Day_Duration;
+
    begin
 --
 --        declare
@@ -467,23 +443,12 @@ package body Filesystem.Windows is
 --           Reg_Match
 --        begin
 --           Sync_Execute (Host, Reg_Query_Args, Output, Status);
---           for J in Reg_Query_Args'Range loop
---              Free (Reg_Query_Args (J));
---           end loop;
+--           Basic_Types.Free (Reg_Query_Args);
 --           Match ("REG_SZ\s+([dMy]+)[^dMy]*([dMy]+)[^dMy]*([dMy]+)$",
---
---
 --        end;
 
-      Sync_Execute
-        (Host,
-         Args,
-         Output,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
+      Sync_Execute (Host, Args, Output, Status);
+      Basic_Types.Free (Args);
 
       if Status then
          Match (Regexp, Output.all, Matched);
@@ -544,18 +509,14 @@ package body Filesystem.Windows is
          2 => new String'("-r"),
          3 => new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
+
    begin
       if not Writable then
          Args (2).all := "+r";
       end if;
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
 
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
    end Set_Writable;
 
    ------------------
@@ -577,29 +538,25 @@ package body Filesystem.Windows is
    -- Get_Logical_Drives --
    ------------------------
 
-   procedure Get_Logical_Drives (FS     : Windows_Filesystem_Record;
-                                 Host   : String;
-                                 Buffer : in out String;
-                                 Len    :    out Integer)
+   procedure Get_Logical_Drives
+     (FS     : Windows_Filesystem_Record;
+      Host   : String;
+      Buffer : in out String;
+      Len    :    out Integer)
    is
       pragma Unreferenced (FS);
       Status : Boolean;
    begin
       Len := Buffer'First - 1;
+
       for Drive in Character'('C') .. Character'('Z') loop
          declare
             Args : GNAT.OS_Lib.Argument_List :=
               (new String'("vol"),
                new String'(Drive & ":"));
          begin
-            Sync_Execute
-              (Host,
-               Args,
-               Status);
-
-            for J in Args'Range loop
-               Free (Args (J));
-            end loop;
+            Sync_Execute (Host, Args, Status);
+            Basic_Types.Free (Args);
          end;
 
          if Status then
@@ -616,24 +573,17 @@ package body Filesystem.Windows is
    function Make_Dir
      (FS             : Windows_Filesystem_Record;
       Host           : String;
-      Local_Dir_Name : String)
-      return Boolean
+      Local_Dir_Name : String) return Boolean
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("mkdir"),
          new String'("""" & Local_Dir_Name & """"));
       Status : Boolean;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Make_Dir;
 
@@ -645,8 +595,7 @@ package body Filesystem.Windows is
      (FS             : Windows_Filesystem_Record;
       Host           : String;
       Local_Dir_Name : String;
-      Recursive      : Boolean)
-      return Boolean
+      Recursive      : Boolean) return Boolean
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
@@ -654,21 +603,15 @@ package body Filesystem.Windows is
          2 => new String'("/q"),
          3 => new String'("""" & Local_Dir_Name & """"));
       Status : Boolean;
+
    begin
       if Recursive then
          Free (Args (2));
          Args (2) := new String'("/q/s");
       end if;
 
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Remove_Dir;
 
@@ -693,16 +636,10 @@ package body Filesystem.Windows is
       Matched  : Match_Array (0 .. 1);
       Index    : Natural;
       Nb_Files : Natural;
-   begin
-      Sync_Execute
-        (Host,
-         Args,
-         Output,
-         Status);
 
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
+   begin
+      Sync_Execute (Host, Args, Output, Status);
+      Basic_Types.Free (Args);
 
       if Status then
          Index    := Output'First;
@@ -745,6 +682,7 @@ package body Filesystem.Windows is
             return List;
          end;
       end if;
+
       return (1 .. 0 => null);
    end Read_Dir;
 

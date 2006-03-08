@@ -24,6 +24,7 @@ pragma Warnings (On);
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Regpat;            use GNAT.Regpat;
 
+with Basic_Types;
 with String_Utils;           use String_Utils;
 with VFS;
 
@@ -67,8 +68,7 @@ package body Filesystem.Unix is
 
    function To_Unix
      (FS   : Unix_Filesystem_Record;
-      Path : String)
-      return String
+      Path : String) return String
    is
       pragma Unreferenced (FS);
    begin
@@ -81,8 +81,7 @@ package body Filesystem.Unix is
 
    function From_Unix
      (FS   : Unix_Filesystem_Record;
-      Path : String)
-      return String
+      Path : String) return String
    is
       pragma Unreferenced (FS);
    begin
@@ -93,8 +92,10 @@ package body Filesystem.Unix is
    -- Is_Absolute_Path --
    ----------------------
 
-   function Is_Absolute_Path (FS   : Unix_Filesystem_Record;
-                              Path : String) return Boolean is
+   function Is_Absolute_Path
+     (FS   : Unix_Filesystem_Record;
+      Path : String) return Boolean
+   is
       pragma Unreferenced (FS);
    begin
       return Path'Length >= 1 and then Path (Path'First) = '/';
@@ -107,9 +108,7 @@ package body Filesystem.Unix is
    function Base_Name
      (FS     : Unix_Filesystem_Record;
       Path   : String;
-      Suffix : String := "")
-      return String
-   is
+      Suffix : String := "") return String is
    begin
       for J in reverse Path'Range loop
          if Path (J) = '/' then
@@ -122,6 +121,7 @@ package body Filesystem.Unix is
             end if;
          end if;
       end loop;
+
       return Path;
    end Base_Name;
 
@@ -131,8 +131,7 @@ package body Filesystem.Unix is
 
    function Base_Dir_Name
      (FS  : Unix_Filesystem_Record;
-      Path : String) return String
-   is
+      Path : String) return String is
    begin
       if Path'Length > 1 and then Path (Path'Last) = '/' then
          return Base_Name (FS, Path (Path'First .. Path'Last - 1));
@@ -147,8 +146,7 @@ package body Filesystem.Unix is
 
    function Dir_Name
      (FS   : Unix_Filesystem_Record;
-      Path : String)
-      return String
+      Path : String) return String
    is
       pragma Unreferenced (FS);
    begin
@@ -157,6 +155,7 @@ package body Filesystem.Unix is
             return Path (Path'First .. J);
          end if;
       end loop;
+
       return "";
    end Dir_Name;
 
@@ -164,8 +163,9 @@ package body Filesystem.Unix is
    -- Get_Root --
    --------------
 
-   function Get_Root (FS   : Unix_Filesystem_Record;
-                      Path : String) return String
+   function Get_Root
+     (FS   : Unix_Filesystem_Record;
+      Path : String) return String
    is
       pragma Unreferenced (FS, Path);
    begin
@@ -176,8 +176,9 @@ package body Filesystem.Unix is
    -- Ensure_Directory --
    ----------------------
 
-   function Ensure_Directory (FS   : Unix_Filesystem_Record;
-                              Path : String) return String
+   function Ensure_Directory
+     (FS   : Unix_Filesystem_Record;
+      Path : String) return String
    is
       pragma Unreferenced (FS);
    begin
@@ -196,8 +197,7 @@ package body Filesystem.Unix is
 
    function Device_Name
      (FS   : Unix_Filesystem_Record;
-      Path : String)
-      return String
+      Path : String) return String
    is
       pragma Unreferenced (Path, FS);
    begin
@@ -208,24 +208,29 @@ package body Filesystem.Unix is
    -- Normalize --
    ---------------
 
-   function Normalize (FS   : Unix_Filesystem_Record;
-                       Path : String) return String
+   function Normalize
+     (FS   : Unix_Filesystem_Record;
+      Path : String) return String
    is
       Last_Dir : Natural;
    begin
       Last_Dir := Path'First;
+
       for J in Path'Range loop
          if Path (J) = '/' then
             if J < Path'Last - 3 and then Path (J .. J + 3) = "/../" then
                return Normalize (FS, Path (Path'First .. Last_Dir) &
                                      Path (J + 3 .. Path'Last));
+
             elsif J < Path'Last - 2 and then Path (J .. J + 2) = "/./" then
                return Normalize (FS, Path (Path'First .. J) &
                                      Path (J + 2 .. Path'Last));
             end if;
+
             Last_Dir := J;
          end if;
       end loop;
+
       return Path;
    end Normalize;
 
@@ -237,8 +242,7 @@ package body Filesystem.Unix is
      (FS : Unix_Filesystem_Record;
       Device : String;
       Dir    : String;
-      File   : String)
-      return String
+      File   : String) return String
    is
       pragma Unreferenced (FS, Device);
    begin
@@ -280,16 +284,10 @@ package body Filesystem.Unix is
          new String'("-r"),
          new String'(Local_Full_Name));
       Status : Boolean;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Is_Regular_File;
 
@@ -300,8 +298,7 @@ package body Filesystem.Unix is
    function Read_File
      (FS              : Unix_Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String)
-      return GNAT.OS_Lib.String_Access
+      Local_Full_Name : String) return GNAT.OS_Lib.String_Access
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
@@ -309,17 +306,10 @@ package body Filesystem.Unix is
          new String'(Local_Full_Name));
       Status : Boolean;
       Output : String_Access;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Output,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Output, Status);
+      Basic_Types.Free (Args);
       return Output;
    end Read_File;
 
@@ -327,9 +317,10 @@ package body Filesystem.Unix is
    -- Delete --
    ------------
 
-   function Delete (FS              : Unix_Filesystem_Record;
-                    Host            : String;
-                    Local_Full_Name : String) return Boolean
+   function Delete
+     (FS              : Unix_Filesystem_Record;
+      Host            : String;
+      Local_Full_Name : String) return Boolean
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
@@ -337,16 +328,10 @@ package body Filesystem.Unix is
          new String'("-f"),
          new String'(Local_Full_Name));
       Status : Boolean;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Delete;
 
@@ -365,16 +350,10 @@ package body Filesystem.Unix is
          new String'("-w"),
          new String'(Local_Full_Name));
       Status : Boolean;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Is_Writable;
 
@@ -393,16 +372,10 @@ package body Filesystem.Unix is
          new String'("-d"),
          new String'(Local_Full_Name));
       Status : Boolean;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Is_Directory;
 
@@ -436,16 +409,10 @@ package body Filesystem.Unix is
       Minute  : Natural;
       Second  : Ada.Calendar.Day_Duration;
       use type Ada.Calendar.Day_Duration;
-   begin
-      Sync_Execute
-        (Host,
-         Args,
-         Output,
-         Status);
 
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
+   begin
+      Sync_Execute (Host, Args, Output, Status);
+      Basic_Types.Free (Args);
 
       if Status then
          Match (Regexp, Output.all, Matched);
@@ -505,18 +472,14 @@ package body Filesystem.Unix is
          2 => new String'("u+w"),
          3 => new String'(Local_Full_Name));
       Status : Boolean;
+
    begin
       if not Writable then
          Args (2).all := "u-w";
       end if;
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
 
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
    end Set_Writable;
 
    ------------------
@@ -535,28 +498,25 @@ package body Filesystem.Unix is
          2 => new String'("u+r"),
          3 => new String'(Local_Full_Name));
       Status : Boolean;
+
    begin
       if not Readable then
          Args (2).all := "u-r";
       end if;
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
 
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
    end Set_Readable;
 
    ------------------------
    -- Get_Logical_Drives --
    ------------------------
 
-   procedure Get_Logical_Drives (FS     : Unix_Filesystem_Record;
-                                 Host   : String;
-                                 Buffer : in out String;
-                                 Len    :    out Integer)
+   procedure Get_Logical_Drives
+     (FS     : Unix_Filesystem_Record;
+      Host   : String;
+      Buffer : in out String;
+      Len    : out Integer)
    is
       pragma Unreferenced (FS, Host);
    begin
@@ -571,24 +531,17 @@ package body Filesystem.Unix is
    function Make_Dir
      (FS             : Unix_Filesystem_Record;
       Host           : String;
-      Local_Dir_Name : String)
-      return Boolean
+      Local_Dir_Name : String) return Boolean
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("mkdir"),
          new String'(Local_Dir_Name));
       Status : Boolean;
+
    begin
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Make_Dir;
 
@@ -600,8 +553,7 @@ package body Filesystem.Unix is
      (FS             : Unix_Filesystem_Record;
       Host           : String;
       Local_Dir_Name : String;
-      Recursive      : Boolean)
-      return Boolean
+      Recursive      : Boolean) return Boolean
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
@@ -609,21 +561,15 @@ package body Filesystem.Unix is
          2 => new String'("-r"),
          3 => new String'(Local_Dir_Name));
       Status : Boolean;
+
    begin
       if Recursive then
          Free (Args (2));
          Args (2) := new String'("-rf");
       end if;
 
-      Sync_Execute
-        (Host,
-         Args,
-         Status);
-
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
-
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
       return Status;
    end Remove_Dir;
 
@@ -648,16 +594,10 @@ package body Filesystem.Unix is
       Matched  : Match_Array (0 .. 1);
       Index    : Integer;
       Nb_Files : Natural;
-   begin
-      Sync_Execute
-        (Host,
-         Args,
-         Output,
-         Status);
 
-      for J in Args'Range loop
-         Free (Args (J));
-      end loop;
+   begin
+      Sync_Execute (Host, Args, Output, Status);
+      Basic_Types.Free (Args);
 
       if Status and then Output /= null then
          Index    := Output'First;
@@ -700,6 +640,7 @@ package body Filesystem.Unix is
             return List;
          end;
       end if;
+
       return (1 .. 0 => null);
    end Read_Dir;
 
