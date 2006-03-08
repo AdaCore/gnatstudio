@@ -1104,13 +1104,8 @@ package body Directory_Tree is
             Set_Value (D.Explorer.File_Model, Iter, File_Column, Value);
          end;
 
-         if D.Depth = 1 and then Get_Host (D.Norm_Dir) /= "" then
-            Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-                 Get_Host (D.Norm_Dir) & ":" & Base_Dir_Name (D.Norm_Dir));
-         else
-            Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-                 Base_Dir_Name (D.Norm_Dir));
-         end if;
+         Set (D.Explorer.File_Model, Iter, Base_Name_Column,
+              Base_Dir_Name (D.Norm_Dir));
 
          if D.Physical_Read then
             Set (D.Explorer.File_Model, Iter, Icon_Column,
