@@ -40,6 +40,9 @@ package GNAT.Expect.TTY.Remote is
    Null_String_List : constant String_List (1 .. 0) := (others => null);
    --  Null string list
 
+   Local_Nickname : constant String := "(local)";
+   --  Used to describe the local machine
+
    -----------------------------
    -- Configuration functions --
    -----------------------------
@@ -254,6 +257,25 @@ package GNAT.Expect.TTY.Remote is
    --  Buffer_Size is the maximum buffer size for process output reception
    --   (set Buffer_Size to 0 for dynamic memory allocation)
    --  Err_To_Out tells if the stderr shall be redirected to stdout
+
+   procedure Sync_Execute
+     (Host                  : String;
+      Args                  : GNAT.OS_Lib.Argument_List;
+      Status                : out Boolean;
+      Execution_Directory   : String  := "");
+   --  Spawns synchronously a remote program and returns its status
+   --  Host : Host on which the program is launched
+   --  Args : The program to launch
+   --  Status : The return status
+   --  Execution_Directory: Where the program is launched.
+
+   procedure Sync_Execute
+     (Host                  : String;
+      Args                  : GNAT.OS_Lib.Argument_List;
+      Out_Value             : out GNAT.OS_Lib.String_Access;
+      Status                : out Boolean;
+      Execution_Directory   : String  := "");
+   --  Same as above, except that the program output is also returned
 
    procedure Close_All;
    --  Closes all opened connection.
