@@ -62,9 +62,10 @@ with String_List_Utils;
 
 package GUI_Utils is
 
-   function Query_User (Parent        : Gtk.Window.Gtk_Window;
-                        Prompt        : String;
-                        Password_Mode : Boolean) return String;
+   function Query_User
+     (Parent        : Gtk.Window.Gtk_Window;
+      Prompt        : String;
+      Password_Mode : Boolean) return String;
    --  Open a new Dialog to query a response to the user.
    --  If Password_Mode is set, then the query will print * instead of
    --   the entered characters.
