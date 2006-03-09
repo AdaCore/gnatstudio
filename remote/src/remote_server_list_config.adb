@@ -379,6 +379,10 @@ package body Remote_Server_List_Config is
             Set_Attribute (Item, "remote_access", Desc.Access_Name.all);
             Set_Attribute (Item, "remote_shell", Desc.Shell_Name.all);
             Child := new Node;
+            Child.Tag := new String'("user_name");
+            Child.Value := new String'(Desc.User_Name.all);
+            Add_Child (Item, Child);
+            Child := new Node;
             Child.Tag := new String'("timeout");
             Child.Value := new String'(Natural'Image (Desc.Timeout));
             Add_Child (Item, Child);
