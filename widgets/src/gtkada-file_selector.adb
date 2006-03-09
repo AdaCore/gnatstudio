@@ -93,8 +93,9 @@ package body Gtkada.File_Selector is
    -- Local subprograms --
    -----------------------
 
-   procedure Set_Location (Location_Combo : Gtk_Combo;
-                           Dir            : Virtual_File);
+   procedure Set_Location
+     (Location_Combo : Gtk_Combo;
+      Dir            : Virtual_File);
    --  Sets the location in the combo
 
    function Get_Location (Location_Combo : Gtk_Combo) return Virtual_File;
@@ -248,8 +249,7 @@ package body Gtkada.File_Selector is
 
    procedure Set_Location
      (Location_Combo : Gtk_Combo;
-      Dir            : Virtual_File)
-   is
+      Dir            : Virtual_File) is
    begin
       if Is_Local (Dir) then
          Add_Unique_Combo_Entry (Location_Combo,
@@ -268,8 +268,7 @@ package body Gtkada.File_Selector is
    -- Get_Location --
    ------------------
 
-   function Get_Location (Location_Combo : Gtk_Combo) return Virtual_File
-   is
+   function Get_Location (Location_Combo : Gtk_Combo) return Virtual_File is
       Str : constant String := Get_Text (Get_Entry (Location_Combo));
    begin
       if Str'Length > 0 and then Str (Str'First) = '(' then
@@ -280,6 +279,7 @@ package body Gtkada.File_Selector is
             end if;
          end loop;
       end if;
+
       return Create (Str);
    end Get_Location;
 
@@ -485,6 +485,7 @@ package body Gtkada.File_Selector is
                Default_Name & ASCII.NUL,
                Pos_Mouse,
                File_Selector_Kind'Pos (Kind));
+
          else
             S := NativeFileSelection
               (Title & ASCII.NUL,
@@ -539,6 +540,7 @@ package body Gtkada.File_Selector is
             Nl     : Natural := Pattern_Name'First;
             Ff, Nf : Natural;                       -- First indexes
             Fo, No : Natural := 0;                  -- Indexes offset
+
          begin
             while Fl < File_Pattern'Last loop
                Ff := Fl;
@@ -1423,6 +1425,7 @@ package body Gtkada.File_Selector is
         File_Selector_Window_Access (Get_Toplevel (Object));
       Event : constant Gdk_Event := To_Event (Params, 1);
       Iter  : Gtk_Tree_Iter;
+
    begin
       declare
          S     : constant String := Locale_From_UTF8 (Get_String (Event));
