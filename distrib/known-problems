@@ -51,7 +51,8 @@ Known Problems fixed in GPS 4.0.0
 - F216-011 Outline view not refreshed properly
   Problem:    It sometimes happens that the outline view indicates there are
               no entities even though an editor is selected. This generally
-              happens either on startup or when a floating search window has
+              happens either on startup when the welcome dialog is used to
+              select a project or when a floating search window has
               just been used
   Workaround: click in another window, and then back in the editor to force
               a refresh
