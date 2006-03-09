@@ -10,6 +10,7 @@
     <start_command_user_args>-l %u</start_command_user_args>
     <user_prompt_ptrn>(.*ogin|Name \([^\)]*\)): *$</user_prompt_ptrn>
     <password_prompt_ptrn>^.*(password|passphrase.*): *$</password_prompt_ptrn>
+    <extra_ptrn auto_answer="true" answer="yes">^.*continue connecting \(yes/no\)\? *</extra_ptrn>
   </remote_connection_config>
 
   <!-- RSH -->
