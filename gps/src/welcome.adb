@@ -267,6 +267,8 @@ package body Welcome is
          end if;
 
          if Response = Gtk_Response_OK then
+            Set_Focus (Screen, null);
+
             if Get_Active (Screen.Default_Project) then
                On_Default_Project (Screen);
                return Project_Loaded;
