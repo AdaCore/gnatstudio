@@ -45,8 +45,7 @@ package body Filesystem.Windows is
          Exit_Commands       => (1 => new String'("exit")),
          Cd_Command          => "cd %d",
          Get_Status_Command  => "echo %errorlevel%",
-         Get_Status_Ptrn     => "^([0-9]*)\s*$",
-         Echoing             => True);
+         Get_Status_Ptrn     => "^([0-9]*)\s*$");
    end Initialize_Module;
 
    -------------
