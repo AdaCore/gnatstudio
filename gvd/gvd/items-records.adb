@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -362,7 +362,12 @@ package body Items.Records is
       for J in Item.Fields'Range loop
          R.Fields (J).Name := new String'(Item.Fields (J).Name.all);
          --  Duplicate the type structure, but not the value itself.
-         R.Fields (J).Value := Items.Clone (Item.Fields (J).Value.all);
+
+         if Item.Fields (J).Value = null then
+            R.Fields (J).Value := null;
+         else
+            R.Fields (J).Value := Items.Clone (Item.Fields (J).Value.all);
+         end if;
 
          if Item.Fields (J).Variant_Part /= null then
             R.Fields (J).Variant_Part :=
