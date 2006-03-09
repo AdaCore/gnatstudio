@@ -20,6 +20,12 @@ Known Problems fixed in GPS 4.0.0
   Workaround: Edit the project file manually (available through the contextual
               menu on a project node in the Project View)
 
+- F223-004 Cannot display complex variant record in debugger
+  Problem:    When trying to display under the debugger a complex data mixing
+              arrays, enumerations and variant records, GPS will sometimes
+              display instead 'Unknown variable'.
+  Workaround: Use the tooltip, or 'print variable' instead of 'graph display'
+
 - F221-027 Debugger hangs when typing \ at end of line
   Problem:    When typing a command ending with \ in the debugger console,
               GPS hangs.
