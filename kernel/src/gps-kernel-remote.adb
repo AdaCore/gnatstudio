@@ -27,6 +27,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Regpat;                use GNAT.Regpat;
 
 with Glib.Xml_Int;               use Glib.Xml_Int;
 
@@ -338,13 +339,14 @@ package body GPS.Kernel.Remote is
       Level  : Customization_Level)
    is
       pragma Unreferenced (File, Level);
+      Child                     : Node_Ptr;
       Name                      : String_Ptr;
       Start_Command             : String_Ptr;
       Start_Command_Common_Args : String_List_Access;
       Start_Command_User_Args   : String_List_Access;
       User_Prompt_Ptrn          : String_Ptr;
       Password_Prompt_Ptrn      : String_Ptr;
-
+      Extra_Ptrn_Length         : Natural;
    begin
       if Node.Tag.all = "remote_connection_config" then
          Trace (Me, "Initialize_Remote_Config : 'remote_connection_config'");
@@ -377,13 +379,61 @@ package body GPS.Kernel.Remote is
            (Get_Field (Node, "start_command_user_args").all);
          User_Prompt_Ptrn := Get_Field (Node, "user_prompt_ptrn");
          Password_Prompt_Ptrn := Get_Field (Node, "password_prompt_ptrn");
-         Add_Remote_Access_Descriptor
-           (Name                      => Name.all,
-            Start_Command             => Start_Command.all,
-            Start_Command_Common_Args => Start_Command_Common_Args.all,
-            Start_Command_User_Args   => Start_Command_User_Args.all,
-            User_Prompt_Ptrn          => User_Prompt_Ptrn.all,
-            Password_Prompt_Ptrn      => Password_Prompt_Ptrn.all);
+
+         Child := Node.Child;
+         Extra_Ptrn_Length := 0;
+         while Child /= null loop
+            if Child.Tag.all = "extra_ptrn" then
+               Extra_Ptrn_Length := Extra_Ptrn_Length + 1;
+            end if;
+            Child := Child.Next;
+         end loop;
+
+         declare
+            Extra_Ptrns : Extra_Prompts (1 .. Extra_Ptrn_Length);
+            Auto_Answer : Boolean;
+            Str_Access  : String_Ptr;
+         begin
+
+            Child := Node.Child;
+            Extra_Ptrn_Length := 0;
+            while Child /= null loop
+               if Child.Tag.all = "extra_ptrn" then
+                  Extra_Ptrn_Length := Extra_Ptrn_Length + 1;
+                  Auto_Answer := Boolean'Value
+                    (Get_Attribute (Child, "auto_answer", "true"));
+                  Str_Access := Child.Value;
+
+                  if Auto_Answer then
+                     Extra_Ptrns (Extra_Ptrn_Length) :=
+                       (Auto_Answer => True,
+                        Ptrn        => new Pattern_Matcher'(Compile
+                          (Str_Access.all, Single_Line or Multiple_Lines)),
+                        Answer      => new String'(Get_Attribute
+                          (Child, "answer", "")));
+                  else
+                     Extra_Ptrns (Extra_Ptrn_Length) :=
+                       (Auto_Answer => False,
+                        Ptrn        => new Pattern_Matcher'(Compile
+                          (Str_Access.all, Single_Line or Multiple_Lines)),
+                        Question    => new String'(Get_Attribute
+                          (Child, "question", "")));
+                  end if;
+               end if;
+
+               Child := Child.Next;
+            end loop;
+
+            Add_Remote_Access_Descriptor
+              (Name                      => Name.all,
+               Start_Command             => Start_Command.all,
+               Start_Command_Common_Args => Start_Command_Common_Args.all,
+               Start_Command_User_Args   => Start_Command_User_Args.all,
+               User_Prompt_Ptrn          => User_Prompt_Ptrn.all,
+               Password_Prompt_Ptrn      => Password_Prompt_Ptrn.all,
+               Extra_Prompt_Array        => Extra_Ptrns);
+         end;
+
          Glib.Xml_Int.Free (Name);
       end if;
    end Customize;
