@@ -47,9 +47,34 @@ package GNAT.Expect.TTY.Remote is
    -- Configuration functions --
    -----------------------------
 
-   type Cmd_Wrapper_Function is access
-     function (Cmd : String) return String;
-   --  Used to format the commands to host format if needed.
+   type Extra_Prompt (Auto_Answer : Boolean := False) is record
+      Ptrn   : Pattern_Matcher_Access;
+      case Auto_Answer is
+         when True =>
+            Answer : String_Access;
+         when False =>
+            Question : String_Access;
+      end case;
+   end record;
+   --  Used to handle extra prompts received from a remote access tool
+   --  Auto_Answer: Tells if we shall automatically send an answer to this
+   --   prompt.
+   --  Ptrn: The pattern to expect
+   --  Answer: The automatic answer to send to the remote access tool.
+   --  Question: The question GPS will ask to the user. The user's response
+   --   will then be sent to the remote access tool.
+
+   Null_Extra_Prompt : constant Extra_Prompt :=
+     (Auto_Answer => True,
+      Ptrn        => null,
+      Answer      => null);
+
+   --  Tool specific prompt. If Auto_Answer is set, then the GPS user will not
+   --  be asked for anything, and Answer will be sent to the tool.
+   --  Else, the User will be asked the User_Question.
+   type Extra_Prompts is array (Natural range <>) of Extra_Prompt;
+   Null_Extra_Prompts : constant Extra_Prompts (1 .. 0)
+     := (others => Null_Extra_Prompt);
 
    procedure Add_Remote_Access_Descriptor
      (Name                      : String;
@@ -57,7 +82,8 @@ package GNAT.Expect.TTY.Remote is
       Start_Command_Common_Args : String_List;
       Start_Command_User_Args   : String_List;
       User_Prompt_Ptrn          : String;
-      Password_Prompt_Ptrn      : String);
+      Password_Prompt_Ptrn      : String;
+      Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts);
    --  Adds a new Remote Access Descriptor
    --  Name : identifier of this descriptor
    --  Start_Command : command used to launch the remote access utility
@@ -66,6 +92,7 @@ package GNAT.Expect.TTY.Remote is
    --   be used (%u replaced by actual user)
    --  User_Prompt_Ptrn          : regular expression for user prompt
    --  Password_Prompt_Ptrn      : regular expression for password prompt
+   --  Extra_Prompt_Array        : extra specific prompts.
 
    procedure Add_Shell_Descriptor
      (Name                : String;
@@ -78,8 +105,6 @@ package GNAT.Expect.TTY.Remote is
       Cd_Command          : String             := "";
       Get_Status_Command  : String             := "";
       Get_Status_Ptrn     : String             := "";
-      Echoing             : Boolean            := False;
-      Wrapper             : Cmd_Wrapper_Function := null;
       Interrupt_Command   : String             := "");
    --  This function is used to add a new shell descriptor
    --  - Name                : name in the program descriptor table
@@ -100,11 +125,6 @@ package GNAT.Expect.TTY.Remote is
    --  - Prompt              : regexp that match the prompt
    --  - Buffer_Size         : size of the expect buffer
    --  - Use_TTY             : if set to true use TTY version of GNAT.Expect
-   --  - Echoing             : if set to true, it means that the shell is
-   --                         echoing so when the output of a command is
-   --                         retrieved the first line just be ignored
-   --  - Wrapper             : when sending a command Cmd the real string that
-   --                          is sent to the process is Wrapper (Cmd)
    --  - Output_Processor    : processing of the output ... (to get for example
    --                          the exit status)
    --  - Interrupt_Command   : string that can be sent to interrupt a command
@@ -385,6 +405,8 @@ private
       --  Session number on this machine
       Terminated           : Boolean := False;
       --  Tells if the command has finished
+      Died                 : Boolean := False;
+      --  Tells if the shell died unexpectedly
       Status               : Integer := 0;
       --  Records the status of the finished command
       R_Filters_Lock       : Integer := 0;
