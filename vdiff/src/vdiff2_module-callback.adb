@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2006                       --
---                              AdaCore                              --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -391,58 +391,56 @@ package body Vdiff2_Module.Callback is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D         : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Diff      : Diff_Head_Access := new Diff_Head;
-      Curr_Node : Diff_Head_List.List_Node;
-      Ref_File  : Virtual_File := VFS.No_File;
+      D    : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Diff : Diff_Head;
+      Node : Diff_Head_List.List_Node;
    begin
       if Vdiff_Module_ID = null then
          return;
       end if;
 
-      Curr_Node := First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+      Node :=
+        Get_Diff_Node
+          (D.File,
+           VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      while Curr_Node /= Diff_Head_List.Null_Node loop
-         Diff.all := Diff_Head_List.Data (Curr_Node);
-         exit when Diff.On_Destruction
-           or else Diff.File1 = D.File
-           or else Diff.File2 = D.File
-           or else Diff.File3 = D.File;
-         Curr_Node := Next (Curr_Node);
-      end loop;
+      if Node = Diff_Head_List.Null_Node then
+         return;
+      end if;
 
-      if Curr_Node /= Diff_Head_List.Null_Node
-        and then not Diff.On_Destruction
-      then
-         Diff.On_Destruction := True;
+      Diff := Diff_Head_List.Data (Node);
 
-         Hide_Differences (Kernel, Diff.all);
+      if not Diff.In_Destruction then
+         Diff.In_Destruction := True;
+
+         Hide_Differences (Kernel, Diff);
 
          Remove_Nodes
            (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-            Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Curr_Node),
-            Curr_Node);
+            Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),
+            Node);
 
-         if Diff.Ref_File /= 0 then
-            if Diff.Ref_File = 1 then
-               Ref_File := Diff.File1;
-            elsif Diff.Ref_File = 2 then
-               Ref_File := Diff.File2;
-            elsif Diff.Ref_File = 3 then
-               Ref_File := Diff.File3;
-            end if;
+         --  Close all temporary files used in the visual diff
 
-            if Ref_File /= VFS.No_File
-              and then Ref_File /= D.File
+         for J in Diff.Files'Range loop
+            if Diff.Files (J) /= No_File
+              and then Diff.Files (J) /= D.File
+              and then not Is_Regular_File (Diff.Files (J))
             then
-               Close_Child (Get_File_Editor (Kernel, Ref_File));
+               declare
+                  Child : constant MDI_Child :=
+                            Get_File_Editor
+                              (Kernel, Diff.Files (J));
+               begin
+                  if Child /= null then
+                     Close_Child (Child);
+                  end if;
+               end;
             end if;
-         end if;
+         end loop;
 
-         Free_All (Diff.all);
+         Free_All (Diff);
       end if;
-
-      Free (Diff);
 
    exception
       when E : others =>
@@ -516,7 +514,7 @@ package body Vdiff2_Module.Callback is
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
       Diff          : Diff_Head;
-      Ref_File      : constant T_Loc := Diff.Ref_File;
+      Ref_File      : constant T_VFile_Index := Diff.Ref_File;
    begin
       Create
         (Cmd,
@@ -527,18 +525,17 @@ package body Vdiff2_Module.Callback is
       Selected_File :=
         Create (Get_Ref_Filename (File_Information (Context.Context)));
 
-      Node := Is_In_Diff_List
+      Node := Get_Diff_Node
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
       Diff := Data (Node);
 
-      if Diff.File1 = Selected_File then
-         Diff.Ref_File := 1;
-      elsif Diff.File2 = Selected_File then
-         Diff.Ref_File := 2;
-      elsif Diff.File3 = Selected_File then
-         Diff.Ref_File := 3;
-      end if;
+      for J in T_VFile_Index loop
+         if Diff.Files (J) = Selected_File then
+            Diff.Ref_File := J;
+            exit;
+         end if;
+      end loop;
 
       if Diff.Ref_File /= Ref_File then
          Set_Data (Node, Diff);
@@ -572,7 +569,7 @@ package body Vdiff2_Module.Callback is
       Selected_File :=
         Create (Get_Ref_Filename (File_Information (Context.Context)));
 
-      Node := Is_In_Diff_List
+      Node := Get_Diff_Node
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
@@ -595,6 +592,7 @@ package body Vdiff2_Module.Callback is
       Cmd           : Diff_Command_Access;
       Arg           : String_Access;
       Success       : Boolean;
+      To_Delete     : array (T_VFile'Range) of Boolean := (others => False);
 
    begin
       Create
@@ -603,22 +601,38 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Reload_Difference'Access);
 
-      Selected_File :=
-        Create (Get_Ref_Filename (File_Information (Context.Context)));
+      Selected_File := File_Information (Context.Context);
 
-      Node := Is_In_Diff_List
+      Node := Get_Diff_Node
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      Arg := new String'(Full_Name (Data (Node).File1).all);
-      Execute_GPS_Shell_Command
-        (Get_Kernel (Vdiff_Module_ID.all),
-         "Editor.save_buffer", (1 => Arg));
-      Free (Arg);
+      for J in Data (Node).Files'Range loop
+         if Data (Node).Files (J) /= VFS.No_File then
+            declare
+               Filename : constant String :=
+                            Full_Name (Data (Node).Files (J)).all;
+            begin
+               if not Is_Regular_File (Filename) then
+                  To_Delete (J) := True;
+               end if;
+
+               Arg := new String'(Filename);
+               Execute_GPS_Shell_Command
+                 (Get_Kernel (Vdiff_Module_ID.all),
+                  "Editor.save_buffer", (1 => Arg));
+               Free (Arg);
+            end;
+         end if;
+      end loop;
 
       Unchecked_Execute (Cmd, Node);
 
-      Delete (Data (Node).File1, Success);
+      for J in To_Delete'Range loop
+         if To_Delete (J) then
+            VFS.Delete (Data (Node).Files (J), Success);
+         end if;
+      end loop;
 
       Free (Root_Command (Cmd.all));
       return Commands.Success;
@@ -647,7 +661,7 @@ package body Vdiff2_Module.Callback is
       Selected_File :=
         Create (Get_Ref_Filename (File_Information (Context.Context)));
 
-      Node := Is_In_Diff_List
+      Node := Get_Diff_Node
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
