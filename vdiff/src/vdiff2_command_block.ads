@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,27 +18,25 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This Package provide the structure for all command for Vdiff2
+--  This Package provide the structure for all the Vdiff2 commands
 
-with GPS.Kernel;         use GPS.Kernel;
 with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
-with Vdiff2_Command;      use Vdiff2_Command;
 with Diff_Utils2;          use Diff_Utils2;
-
+with GPS.Kernel;           use GPS.Kernel;
+with Vdiff2_Command;       use Vdiff2_Command;
 
 package Vdiff2_Command_Block is
 
    type Handler_Action is access procedure
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head);
-      --  Is an access for the action executed by an Diff_Command_block
+   --  Is an access for the action executed by an Diff_Command_block
 
    type Diff_Command_Block is new Diff_Command with record
       Action           : Handler_Action;
       Last_Active_Diff : Diff_Head := Null_Head;
    end record;
-
    type Diff_Command_Access is access all Diff_Command_Block'Class;
 
    procedure Create
@@ -46,7 +44,7 @@ package Vdiff2_Command_Block is
       Kernel    : Kernel_Handle;
       List_Diff : Diff_Head_List_Access;
       Action    : Handler_Action);
-   --  Create a command with all information needed by this
+   --  Create a command with all required information
 
    procedure Unchecked_Execute
      (Command : access Diff_Command_Block;
@@ -61,8 +59,8 @@ package Vdiff2_Command_Block is
    function Execute
      (Command : access Diff_Command_Block) return Command_Return_Type;
    --  Execute the command Command
-   --  Search in the global List of Diff the current diff end apply Action on
-   --  this
+   --  Search in the global List of Diff the current diff and apply Action on
+   --  it
 
    procedure Reload_Difference
      (Kernel : Kernel_Handle;

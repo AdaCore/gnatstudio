@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,11 +20,11 @@
 
 --  This Package provide the structure for all command for Vdiff2
 
-with GPS.Kernel;         use GPS.Kernel;
 with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
-with Vdiff2_Command;       use Vdiff2_Command;
 with Diff_Utils2;          use Diff_Utils2;
+with GPS.Kernel;           use GPS.Kernel;
+with Vdiff2_Command;       use Vdiff2_Command;
 with VFS;                  use VFS;
 
 package Vdiff2_Command_Line is
