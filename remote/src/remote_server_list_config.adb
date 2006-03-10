@@ -724,22 +724,23 @@ package body Remote_Server_List_Config is
    -- Changed --
    -------------
 
-   procedure Changed  (W : access Gtk_Widget_Record'Class)
-   is
+   procedure Changed (W : access Gtk_Widget_Record'Class) is
       Dialog    : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
+
    begin
       if not Dialog.Restoring then
-         Get_Selected (Get_Selection (Dialog.Tree),
-                       Model,
-                       Iter);
+         Get_Selected (Get_Selection (Dialog.Tree), Model, Iter);
          Trace (Me, "Changes detected for current selection");
+
          --  Set this iter as modified
          Set (Gtk_Tree_Store (Model), Iter, Modified_Col, True);
+
          --  User defined item
          Set (Gtk_Tree_Store (Model), Iter, User_Def_Col, True);
+
       else
          Trace (Me, "Changes not from user inputs");
       end if;
@@ -749,8 +750,8 @@ package body Remote_Server_List_Config is
    -- Selection_Changed --
    -----------------------
 
-   procedure Selection_Changed (W : access Gtk_Widget_Record'Class)
-   is
+   procedure Selection_Changed (W : access Gtk_Widget_Record'Class) is
+
       procedure Save
         (Model  : Gtk.Tree_Model.Gtk_Tree_Model;
          Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -855,6 +856,7 @@ package body Remote_Server_List_Config is
                      Ref                 => 1);
                end if;
             end;
+
             --  Set this iter as not modified
             Set (Gtk_Tree_Store (Model), Iter, Modified_Col, False);
          end if;
@@ -869,6 +871,7 @@ package body Remote_Server_List_Config is
       Overriden : Boolean;
       User_Only : Boolean;
       Pos       : Gint;
+
    begin
       --  First save previous selection if needed
       Model := Get_Model (Dialog.Tree);
@@ -880,9 +883,7 @@ package body Remote_Server_List_Config is
       end loop;
 
       --  Now reinit the dialog values
-      Get_Selected (Get_Selection (Dialog.Tree),
-                    Model,
-                    Iter);
+      Get_Selected (Get_Selection (Dialog.Tree), Model, Iter);
 
       if Iter /= Null_Iter then
          declare
@@ -892,6 +893,7 @@ package body Remote_Server_List_Config is
                Trace (Me, "Setting dialog values for new selection " &
                       Nickname);
             end if;
+
             Set_Text (Dialog.Nickname_Label, Nickname);
             Item := Dialog.Machines;
 
@@ -937,9 +939,11 @@ package body Remote_Server_List_Config is
             --  value with default value.
             Overriden := False;
             User_Only := False;
+
             if Get_Boolean (Model, Iter, User_Def_Col) then
                Sys_Item := System_Machine_List;
                User_Only := True;
+
                while Sys_Item /= null loop
                   if Sys_Item.Desc.Nickname.all = Nickname then
                      Overriden := True;
@@ -965,8 +969,7 @@ package body Remote_Server_List_Config is
    -- Add_Machine_Clicked --
    -------------------------
 
-   procedure Add_Machine_Clicked (W : access Gtk_Widget_Record'Class)
-   is
+   procedure Add_Machine_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog   : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
       Nickname : constant String := Query_User
@@ -975,8 +978,8 @@ package body Remote_Server_List_Config is
          Password_Mode => False);
       Model    : Gtk_Tree_Store;
       Iter     : Gtk_Tree_Iter := Null_Iter;
-   begin
 
+   begin
       if Nickname = "" then
          return;
       end if;
@@ -1005,37 +1008,35 @@ package body Remote_Server_List_Config is
       --  User defined item
       Set (Model, Iter, User_Def_Col, True);
 
-      Select_Iter (Get_Selection (Dialog.Tree),
-                   Iter);
+      Select_Iter (Get_Selection (Dialog.Tree), Iter);
    end Add_Machine_Clicked;
 
    ---------------------
    -- Restore_Clicked --
    ---------------------
 
-   procedure Restore_Clicked (W : access Gtk_Widget_Record'Class)
-   is
+   procedure Restore_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
       Model  : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Item   : Item_Access;
+
    begin
       Set_Child_Visible (Dialog.Restore_Button, False);
-      Get_Selected (Get_Selection (Dialog.Tree),
-                    Model,
-                    Iter);
+      Get_Selected (Get_Selection (Dialog.Tree), Model, Iter);
 
       if Iter /= Null_Iter then
          declare
-            Current_Selection : constant String
-              := Get_String (Model, Iter, Name_Col);
+            Current_Selection : constant String :=
+                                  Get_String (Model, Iter, Name_Col);
          begin
             if Active (Me) then
                Trace (Me, "Restoring " & Current_Selection);
             end if;
 
             Item := System_Machine_List;
+
             while Item /= null loop
                if Item.Desc.Nickname.all = Current_Selection then
                   exit;
@@ -1073,23 +1074,21 @@ package body Remote_Server_List_Config is
    -- Remove_Clicked --
    --------------------
 
-   procedure Remove_Clicked (W : access Gtk_Widget_Record'Class)
-   is
+   procedure Remove_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog    : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Item      : Item_Access;
       Prev      : Item_Access;
+
    begin
-      Get_Selected (Get_Selection (Dialog.Tree),
-                    Model,
-                    Iter);
+      Get_Selected (Get_Selection (Dialog.Tree), Model, Iter);
 
       if Iter /= Null_Iter then
          declare
-            Current_Selection : constant String
-              := Get_String (Model, Iter, Name_Col);
+            Current_Selection : constant String :=
+                                  Get_String (Model, Iter, Name_Col);
          begin
             if Active (Me) then
                Trace (Me, "Removing " & Current_Selection);
@@ -1097,6 +1096,7 @@ package body Remote_Server_List_Config is
 
             Item := Dialog.Machines;
             Prev := null;
+
             while Item /= null loop
                if Item.Desc.Nickname.all = Current_Selection then
                   if Prev = null then
@@ -1104,6 +1104,7 @@ package body Remote_Server_List_Config is
                   else
                      Prev.Next := Item.Next;
                   end if;
+
                   Free (Item);
                   exit;
                end if;
@@ -1118,6 +1119,7 @@ package body Remote_Server_List_Config is
 
             Remove (Gtk_Tree_Store (Model), Iter);
             Iter := Get_Iter_First (Model);
+
             if Iter /= Null_Iter then
                Select_Iter (Get_Selection (Dialog.Tree), Iter);
             end if;
@@ -1129,13 +1131,12 @@ package body Remote_Server_List_Config is
    -- Advanced_Clicked --
    ----------------------
 
-   procedure Advanced_Clicked (W : access Gtk_Widget_Record'Class)
-   is
+   procedure Advanced_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog    : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
    begin
-      Set_Child_Visible (Dialog.Advanced_Table,
-                         Get_Active (Dialog.Advanced_Button));
+      Set_Child_Visible
+        (Dialog.Advanced_Table, Get_Active (Dialog.Advanced_Button));
    end Advanced_Clicked;
 
    ---------------------------
@@ -1148,29 +1149,36 @@ package body Remote_Server_List_Config is
       Dialog : Server_List_Editor;
       Resp   : Gtk_Response_Type;
       Item   : Item_Access;
+
    begin
       Gtk_New (Dialog, Kernel);
       loop
          Resp := Run (Dialog);
 
          --  Apply changes
+
          if Resp = Gtk_Response_OK or Resp = Gtk_Response_Apply then
             --  First make sure the last edited machine is saved
+
             Selection_Changed (Dialog);
+
             --  For all config, apply in g-exttre
+
             Item := Dialog.Machines;
-            --  Remove all machine descriptors
             Remove_All_Machine_Descriptors;
+
             while Item /= null loop
                Add_Machine_Descriptor (Item.Desc);
                Item := Item.Next;
             end loop;
+
             Run_Hook (Kernel, Server_List_Changed_Hook);
             Save_Remote_Machine_List (Kernel);
          end if;
 
          exit when Resp /= Gtk_Response_Apply;
       end loop;
+
       Destroy (Dialog);
    end Configure_Server_List;
 
