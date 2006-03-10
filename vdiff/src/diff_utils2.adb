@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003-2006                       --
---                              AdaCore                              --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -410,11 +410,13 @@ package body Diff_Utils2 is
    begin
       Free_List (Item.List);
 
-      if Item.File1 /= VFS.No_File and Item.File2 /= VFS.No_File then
-         if Item.File3 /= VFS.No_File then
-            Item.List := Diff3 (Kernel, Item.File1, Item.File2, Item.File3);
+      if Item.Files (1) /= VFS.No_File and Item.Files (2) /= VFS.No_File then
+         if Item.Files (3) /= VFS.No_File then
+            Item.List :=
+              Diff3 (Kernel, Item.Files (1), Item.Files (2), Item.Files (3));
          else
-            Item.List := Diff (Kernel, Item.File1, Item.File2);
+            Item.List :=
+              Diff (Kernel, Item.Files (1), Item.Files (2));
          end if;
       end if;
    end Diff3;
@@ -691,7 +693,6 @@ package body Diff_Utils2 is
       null;
       --  In the list of Diff_Head the memory is freed manualy
    end Free;
-   --  This procedure must be never used
 
    --------------
    -- Free_All --
