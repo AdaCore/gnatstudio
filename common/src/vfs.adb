@@ -865,7 +865,6 @@ package body VFS is
            (Host          => File.Value.Server.all,
             Full_Filename => Get_Root (Get_Filesystem (File.Value.Server.all),
                                        Full_Name (File).all));
-         Dir.Value.Kind := Directory;
          return Dir;
       end if;
    end Get_Root;
