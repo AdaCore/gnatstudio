@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -33,6 +33,7 @@ package Diff_Utils2 is
 
    type Diff_Action is (Append, Change, Delete, Nothing);
    subtype T_Loc is Natural range 0 .. 3;
+   subtype T_VFile_Index is Natural range 1 .. 3;
    Everywhere : constant T_Loc := 0;
 
    Invalid_Mark : constant Natural := Natural'Last;
@@ -49,7 +50,7 @@ package Diff_Utils2 is
    type   T_VRange  is array (1 .. 3) of Diff_Range;
    type   T_VStr    is array (1 .. 3) of String_Access;
    type   T_VOffset is array (1 .. 3) of Natural;
-   type   T_VFile   is array (1 .. 3) of Virtual_File;
+   type   T_VFile   is array (T_VFile_Index) of Virtual_File;
 
    procedure Free (V : in out T_VStr);
    --  free memory of each element of vector V
@@ -80,43 +81,45 @@ package Diff_Utils2 is
 
    type Diff_Head is tagged record
       List           : Diff_List;
-      File1          : VFS.Virtual_File;
-      File2          : VFS.Virtual_File;
-      File3          : VFS.Virtual_File := VFS.No_File;
+      Files          : T_VFile;
       Current_Node   : Diff_List_Node;
-      Ref_File       : T_Loc := 2;
-      On_Destruction : Boolean := False;
+      Ref_File       : T_VFile_Index := 2;
+      In_Destruction : Boolean := False;
    end record;
    type Diff_Head_Access is access all Diff_Head;
 
    procedure Free (Link : in out Diff_Head);
-   --  Free the memory of this Link.
+   --  Free the memory of this Link
 
    procedure Free_All (Link : in out Diff_Head);
-   --  Free all content of Head of the list.
+   --  Free all content of Head of the list
 
-   procedure Diff3 (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-                    Item   : in out Diff_Head);
+   procedure Diff3
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Item   : in out Diff_Head);
    --  Execute diff on Item
 
    Null_Head : constant Diff_Head :=
-                 (Diff_Chunk_List.Null_List, VFS.No_File, VFS.No_File,
-                  VFS.No_File, Diff_Chunk_List.Null_Node, 2, False);
+                 (List           => Diff_Chunk_List.Null_List,
+                  Files          => (others => VFS.No_File),
+                  Current_Node   => Diff_Chunk_List.Null_Node,
+                  Ref_File       => 2,
+                  In_Destruction => False);
 
    procedure Free is
       new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
-   --  Free the memory associated with the head of the list Link.
+   --  Free the memory associated with the head of the list Link
 
    package Diff_Head_List is new Generic_List (Diff_Head, Free);
    type Diff_Head_List_Access is access all Diff_Head_List.List;
 
    procedure Free_List (List : in out Diff_Head_List.List);
-   --  Free all content of node of the list. overide the standard Free
+   --  Free all content of node of the list
 
    function Diff
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Ref_File, New_File : VFS.Virtual_File) return Diff_List;
-   --  Execute diff on File1 and File2 and return a list of differences.
+   --  Execute diff on File1 and File2 and return a list of differences
 
    function Diff
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -135,7 +138,7 @@ package Diff_Utils2 is
 
    function Simplify
      (Diff : Diff_List; Ref_File : T_Loc) return Diff_List;
-   --  calculate the displayable version of Diff with reference file Ref_File
+   --  Calculate the displayable version of Diff with reference file Ref_File
 
    function Horizontal_Diff
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
