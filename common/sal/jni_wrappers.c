@@ -75,7 +75,7 @@ jint Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_getSEGVHandlerInt
   (JNIEnv * Env, jclass * this)
 {
   struct sigaction * handler =
-  (struct sigaction *) malloc (sizeof (struct sigaction));
+    (struct sigaction *) malloc (sizeof (struct sigaction));
 
   sigaction (SIGSEGV, NULL, handler);
 
