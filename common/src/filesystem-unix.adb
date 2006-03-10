@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
@@ -25,6 +26,7 @@ with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Regpat;            use GNAT.Regpat;
 
 with Basic_Types;
+with OS_Utils;
 with String_Utils;           use String_Utils;
 with VFS;
 
@@ -41,11 +43,11 @@ package body Filesystem.Unix is
          Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
-         Init_Commands       => (new String'("COLUMNS=2048"),
-                                 new String'("unalias ls"),
-                                 new String'("PS1=---GPSPROMPT--#"),
+         Init_Commands       => (new String'("PS1=---GPSPROMPT--#"),
+                                 new String'("COLUMNS=2048"),
                                  new String'("LANG=C"),
-                                 new String'("export LANG COLUMNS")),
+                                 new String'("export LANG COLUMNS"),
+                                 new String'("unalias ls")),
          Exit_Commands       => (1 => new String'("exit")),
          Cd_Command          => "cd %d",
          Get_Status_Command  => "echo $?",
@@ -453,10 +455,43 @@ package body Filesystem.Unix is
       Local_Full_Name : String;
       Temporary_File  : String)
    is
-      pragma Unreferenced (FS, Host, Local_Full_Name, Temporary_File);
+      pragma Unreferenced (FS);
+      Pd : Process_Descriptor_Access;
+      Args : constant GNAT.OS_Lib.Argument_List :=
+        (1 => new String'("cat"),
+         2 => new String'(">"),
+         3 => new String'("""" & Local_Full_Name & """"),
+         4 => new String'("<<"),
+         5 => new String'("GPSEOF"));
+      Request_User : constant Request_User_Object := (Main_Window => null);
+      Regexp       : constant Pattern_Matcher
+        := Compile ("[>] ", Single_Line or Multiple_Lines);
+      Res          : Expect_Match;
    begin
-      null;
-      --  ??? TODO !!!!!!!!!!!!!!!!!!!!!!!!!!
+      Remote_Spawn (Pd,
+                    Target_Nickname       => Host,
+                    Args                  => Args,
+                    Request_User_Instance => Request_User);
+
+      declare
+         Content : String_Access := OS_Utils.Read_File (Temporary_File);
+      begin
+         Send (Pd.all, Content.all);
+         Free (Content);
+      end;
+
+      Send (Pd.all, "GPSEOF");
+      loop
+         Expect (Pd.all, Res, Regexp, 500);
+         if Res = Expect_Timeout then
+            Flush (Pd.all);
+            Close (Pd.all);
+            exit;
+         end if;
+      end loop;
+   exception
+      when Process_Died =>
+         Close (Pd.all);
    end Write;
 
    ------------------
