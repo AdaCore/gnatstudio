@@ -29,6 +29,7 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
@@ -60,6 +61,7 @@ with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Types;              use Gtkada.Types;
@@ -1167,16 +1169,27 @@ package body Gtkada.File_Selector is
         File_Selector_Window_Access (Object);
       Host : constant String := Get_Text (Get_Entry (Win.Hosts_Combo));
       Dir  : Virtual_File;
+      Dead : Message_Dialog_Buttons;
+      pragma Unreferenced (Dead);
    begin
       if Host /= Local_Nickname then
          Dir := Get_Root (Create (Host, ""));
       else
-         Dir := Local_Root_Dir;
+         Dir := Get_Current_Dir;
       end if;
       Change_Directory (Win, Dir);
       Set_Location (Win.Location_Combo, Dir);
 
    exception
+      when Process_Died | Invalid_Process =>
+         Dead := Message_Dialog
+           ("Problem while connecting to " & Host & ASCII.LF &
+            "There might be a problem with Host's configuration",
+            Dialog_Type => Error,
+            Buttons     => Button_OK,
+            Parent      => Gtk_Window (Win));
+         Set_Text (Get_Entry (Win.Hosts_Combo), Local_Nickname);
+         Host_Selected (Object);
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Host_Selected;
