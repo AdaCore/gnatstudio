@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;     use GNAT.Expect.TTY.Remote;
@@ -111,6 +112,9 @@ package body Remote_Server_List_Config is
 
    System_Machine_List : Item_Access := null;
 
+   procedure Free (Item : in out Item_Access);
+   --  Free memory associated with Item.
+
    procedure Parse_Remote_Machine_Descriptor_Node
      (Kernel    : Kernel_Handle;
       Node      : Glib.Xml_Int.Node_Ptr;
@@ -140,6 +144,7 @@ package body Remote_Server_List_Config is
       Remote_Access_Combo   : Gtkada_Combo;
       Remote_Shell_Combo    : Gtkada_Combo;
       Restore_Button        : Gtk_Button;
+      Remove_Button         : Gtk_Button;
       Restoring             : Boolean := False;
       Advanced_Button       : Gtk_Toggle_Button;
       Advanced_Table        : Gtk_Table;
@@ -166,8 +171,23 @@ package body Remote_Server_List_Config is
    procedure Restore_Clicked (W : access Gtk_Widget_Record'Class);
    --  Called when the restore button is clicked.
 
+   procedure Remove_Clicked (W : access Gtk_Widget_Record'Class);
+   --  Called when the remove button is clicked.
+
    procedure Advanced_Clicked (W : access Gtk_Widget_Record'Class);
    --  Called when the advanced button is toggeled.
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Item : in out Item_Access) is
+      procedure Internal is new Ada.Unchecked_Deallocation
+        (Item_Record, Item_Access);
+   begin
+      Unref (Item.Desc);
+      Internal (Item);
+   end Free;
 
    ------------------------------------------
    -- Parse_Remote_Machine_Descriptor_Node --
@@ -440,7 +460,6 @@ package body Remote_Server_List_Config is
       pragma Unreferenced (Module);
    begin
       Server_List_Module := null;
-      --  ???: save machines configuration in .gps/remote.xml
    end Destroy;
 
    ---------------------
@@ -571,8 +590,13 @@ package body Remote_Server_List_Config is
       end loop;
       Show_All (Get_List (Dialog.Remote_Shell_Combo));
 
+      --  Place restore and remove buttons at the same place, because they
+      --  will never appear at the same time.
       Gtk_New (Dialog.Restore_Button, -"Restore default");
       Attach (Dialog.Right_Table, Dialog.Restore_Button, 0, 1, 4, 5,
+              Fill or Expand, 0, 10, 10);
+      Gtk_New (Dialog.Remove_Button, -"Remove the server");
+      Attach (Dialog.Right_Table, Dialog.Remove_Button, 0, 1, 4, 5,
               Fill or Expand, 0, 10, 10);
 
       Gtk_New (Dialog.Advanced_Button, -"Advanced >>");
@@ -649,6 +673,10 @@ package body Remote_Server_List_Config is
          Restore_Clicked'Access,
          Dialog);
       Widget_Callback.Object_Connect
+        (Dialog.Remove_Button, "clicked",
+         Remove_Clicked'Access,
+         Dialog);
+      Widget_Callback.Object_Connect
         (Dialog.Advanced_Button, "toggled",
          Advanced_Clicked'Access,
          Dialog);
@@ -675,8 +703,7 @@ package body Remote_Server_List_Config is
          end if;
 
          if J = 1 then
-            Select_Iter (Get_Selection (Dialog.Tree),
-                         Iter);
+            Select_Iter (Get_Selection (Dialog.Tree), Iter);
          end if;
       end loop;
 
@@ -840,6 +867,7 @@ package body Remote_Server_List_Config is
       Item      : Item_Access;
       Sys_Item  : Item_Access;
       Overriden : Boolean;
+      User_Only : Boolean;
       Pos       : Gint;
    begin
       --  First save previous selection if needed
@@ -908,18 +936,27 @@ package body Remote_Server_List_Config is
             --  same nickname. If found, propose to restore user defined
             --  value with default value.
             Overriden := False;
+            User_Only := False;
             if Get_Boolean (Model, Iter, User_Def_Col) then
                Sys_Item := System_Machine_List;
+               User_Only := True;
                while Sys_Item /= null loop
                   if Sys_Item.Desc.Nickname.all = Nickname then
                      Overriden := True;
+                     User_Only := False;
                      exit;
                   end if;
 
                   Sys_Item := Sys_Item.Next;
                end loop;
             end if;
+
             Set_Child_Visible (Dialog.Restore_Button, Overriden);
+
+            if not Overriden then
+               Set_Child_Visible (Dialog.Remove_Button, True);
+               Set_Sensitive (Dialog.Remove_Button, User_Only);
+            end if;
          end;
       end if;
    end Selection_Changed;
@@ -1031,6 +1068,62 @@ package body Remote_Server_List_Config is
          end;
       end if;
    end Restore_Clicked;
+
+   --------------------
+   -- Remove_Clicked --
+   --------------------
+
+   procedure Remove_Clicked (W : access Gtk_Widget_Record'Class)
+   is
+      Dialog    : Server_List_Editor_Record
+        renames Server_List_Editor_Record (W.all);
+      Model     : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Item      : Item_Access;
+      Prev      : Item_Access;
+   begin
+      Get_Selected (Get_Selection (Dialog.Tree),
+                    Model,
+                    Iter);
+
+      if Iter /= Null_Iter then
+         declare
+            Current_Selection : constant String
+              := Get_String (Model, Iter, Name_Col);
+         begin
+            if Active (Me) then
+               Trace (Me, "Removing " & Current_Selection);
+            end if;
+
+            Item := Dialog.Machines;
+            Prev := null;
+            while Item /= null loop
+               if Item.Desc.Nickname.all = Current_Selection then
+                  if Prev = null then
+                     Dialog.Machines := Item.Next;
+                  else
+                     Prev.Next := Item.Next;
+                  end if;
+                  Free (Item);
+                  exit;
+               end if;
+
+               Prev := Item;
+               Item := Item.Next;
+            end loop;
+
+            if Dialog.Machines = null then
+               Set_Child_Visible (Dialog.Right_Table, False);
+            end if;
+
+            Remove (Gtk_Tree_Store (Model), Iter);
+            Iter := Get_Iter_First (Model);
+            if Iter /= Null_Iter then
+               Select_Iter (Get_Selection (Dialog.Tree), Iter);
+            end if;
+         end;
+      end if;
+   end Remove_Clicked;
 
    ----------------------
    -- Advanced_Clicked --
