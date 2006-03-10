@@ -37,9 +37,13 @@ project Sal is
    for Languages use ("Ada");
    for Library_Auto_Init use "false";
 
+   package Compiler renames Shared.Compiler;
+   package IDE renames Shared.IDE;
+
    case Shared.OS is
       when "unix" =>
          for Library_Options use ("-lgcc_s", "-lgcc_eh");
+      when "Windows_NT" =>
    end case;
 
    package Binder is
