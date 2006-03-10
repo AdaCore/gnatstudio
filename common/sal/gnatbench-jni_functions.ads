@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005                           --
+--                    Copyright (C) 2005 - 2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -29,7 +29,7 @@ package GNATbench.JNI_Functions is
      (Env : JNIEnv; This : Jobject; Str : Jstring) return Jint;
    pragma Export
      (C,
-      Java_GpsJni_analyzeAdaSourceInt,
+      Java_GPSJni_analyzeAdaSourceInt,
       "Java_com_adacore_gnatbench_core_gpsjni_GPSJni_analyseAdaSourceInt");
 
    procedure Java_GPSJni_indentAdaBufferInt
@@ -40,10 +40,10 @@ package GNATbench.JNI_Functions is
       Line_To           : Jint;
       Callback_Object   : Jobject;
       Callback_Class    : Jclass;
-      Callback_Function : JString);
+      Callback_Function : Jstring);
    pragma Export
      (C,
-      Java_GpsJni_indentAdaBufferInt,
+      Java_GPSJni_indentAdaBufferInt,
       "Java_com_adacore_gnatbench_core_gpsjni_GPSJni_indentAdaBufferInt");
 
    function Java_ConstructAccess_getSlocStartInt
@@ -146,7 +146,6 @@ package GNATbench.JNI_Functions is
      (C,
       Java_ConstructList_freeInt,
       "Java_com_adacore_gnatbench_core_gpsjni_ConstructList_freeInt");
-
 
    function Java_SourceLocation_getLineInt
      (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;
