@@ -54,8 +54,6 @@ with Traces;                    use Traces;
 
 package body Remote_Views is
 
---     Me : constant Debug_Handle := Create ("Remote_Views");
-
    type Remote_View_Module_Record is new Module_ID_Record with null record;
    Remote_View_Module_Id : Module_ID;
 
@@ -394,31 +392,31 @@ package body Remote_Views is
    procedure Set_Servers
      (View : access Remote_View_Record'Class)
    is
-      procedure Set_Servers_List
-        (List   : access Gtk_List_Record'Class);
+      procedure Set_Servers_List (List : access Gtk_List_Record'Class);
       --  Sets the list of available servers
 
       ----------------------
       -- Set_Servers_List --
       ----------------------
 
-      procedure Set_Servers_List
-        (List   : access Gtk_List_Record'Class)
-      is
+      procedure Set_Servers_List (List : access Gtk_List_Record'Class) is
          Item : Gtk_List_Item;
       begin
          Clear_Items (List, 0, -1);
          Gtk_New (Item, Locale_To_UTF8 (Local_Nickname));
          Add (List, Item);
+
          for J in 1 .. Get_Nb_Machine_Descriptor loop
             Gtk_New (Item, Locale_To_UTF8
                      (Get_Nickname (J)));
             Add (List, Item);
          end loop;
+
          Show_All (List);
       end Set_Servers_List;
 
       Simple_Config : Boolean;
+
    begin
       Set_Servers_List (Get_List (View.Remote_Combo));
       Set_Servers_List (Get_List (View.Build_Combo));
@@ -431,6 +429,7 @@ package body Remote_Views is
            := Get_Nickname (Remote_Server_Type'First);
       begin
          Simple_Config := True;
+
          for S in Remote_Server_Type'Range loop
             if Get_Nickname (S) /= First_Server then
                Simple_Config := False;
@@ -438,6 +437,7 @@ package body Remote_Views is
             end if;
          end loop;
       end;
+
       if Simple_Config then
          Set_Text (Get_Entry (View.Remote_Combo),
                    Get_Nickname (Build_Server));
@@ -445,6 +445,7 @@ package body Remote_Views is
          Set_Text (Get_Entry (View.Remote_Combo),
                    -"(Advanced configuration)");
       end if;
+
       --  Set server for full view
       Set_Text (Get_Entry (View.Build_Combo),
                 Get_Nickname (Build_Server));
@@ -479,14 +480,11 @@ package body Remote_Views is
       Kernel : access Kernel_Handle_Record'Class) is
    begin
       --  Check for deleted server
+
       for J in Server_Type'Range loop
-         declare
-            Nickname : constant String := Get_Nickname (J);
-         begin
-            if not Is_Configured (Nickname) then
-               Assign (Kernel_Handle (Kernel), J, Local_Nickname);
-            end if;
-         end;
+         if not Is_Configured (Get_Nickname (J)) then
+            Assign (Kernel_Handle (Kernel), J, Local_Nickname);
+         end if;
       end loop;
 
       Set_Servers (Func.View);
@@ -523,10 +521,8 @@ package body Remote_Views is
    begin
       User.View.Simple_Mode := not User.View.Simple_Mode;
 
-      Set_Child_Visible (User.View.Simple_Table,
-                         User.View.Simple_Mode);
-      Set_Child_Visible (User.View.Full_Table,
-                         not User.View.Simple_Mode);
+      Set_Child_Visible (User.View.Simple_Table, User.View.Simple_Mode);
+      Set_Child_Visible (User.View.Full_Table, not User.View.Simple_Mode);
       Show (User.View.Simple_Table);
       Show (User.View.Full_Table);
       Set_Servers (User.View);
