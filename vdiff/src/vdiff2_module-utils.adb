@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -329,7 +329,6 @@ package body Vdiff2_Module.Utils is
    is
       Curr_Node  : Diff_List_Node;
       Curr_Chunk : Diff_Chunk_Access;
-      VFile      : constant T_VFile := (Item.File1, Item.File2, Item.File3);
 
    begin
       Curr_Node := First (Item.List);
@@ -342,19 +341,19 @@ package body Vdiff2_Module.Utils is
          Curr_Node := Next (Curr_Node);
       end loop;
 
-      for J in VFile'Range loop
-         if VFile (J) /= VFS.No_File then
-            Unhighlight_Line (Kernel, VFile (J), 0, Default_Style);
-            Unhighlight_Line (Kernel, VFile (J), 0, Old_Style);
-            Unhighlight_Line (Kernel, VFile (J), 0, Append_Style);
-            Unhighlight_Line (Kernel, VFile (J), 0, Remove_Style);
-            Unhighlight_Line (Kernel, VFile (J), 0, Change_Style);
+      for J in T_VFile'Range loop
+         if Item.Files (J) /= VFS.No_File then
+            Unhighlight_Line (Kernel, Item.Files (J), 0, Default_Style);
+            Unhighlight_Line (Kernel, Item.Files (J), 0, Old_Style);
+            Unhighlight_Line (Kernel, Item.Files (J), 0, Append_Style);
+            Unhighlight_Line (Kernel, Item.Files (J), 0, Remove_Style);
+            Unhighlight_Line (Kernel, Item.Files (J), 0, Change_Style);
             Remove_Line_Information_Column
-              (Kernel, VFile (J), Id_Col_Vdiff);
-            Unhighlight_Range (Kernel, VFile (J), Fine_Change_Style);
+              (Kernel, Item.Files (J), Id_Col_Vdiff);
+            Unhighlight_Range (Kernel, Item.Files (J), Fine_Change_Style);
 
             Remove_Location_Category
-              (Kernel, -"Visual differences", VFile (J));
+              (Kernel, -"Visual differences", Item.Files (J));
          end if;
       end loop;
    end Hide_Differences;
@@ -366,30 +365,33 @@ package body Vdiff2_Module.Utils is
    function Is_In_3Diff_List
      (Selected_File : VFS.Virtual_File;
       List          : Diff_Head_List.List)
-      return Diff_Head_List.List_Node
+      return Boolean
    is
-      Curr_Node : Diff_Head_List.List_Node := First (List);
-      Diff      : Diff_Head;
+      Node : constant Diff_Head_List.List_Node :=
+               Get_Diff_Node (Selected_File, List);
    begin
-      while Curr_Node /= Diff_Head_List.Null_Node loop
-         Diff := Data (Curr_Node);
-         exit when (Diff.File1 = Selected_File
-                    or else Diff.File2 = Selected_File
-                    or else Diff.File3 = Selected_File)
-           and then (Diff.File1 /= No_File
-                     and then Diff.File2 /= No_File
-                     and then Diff.File3 /= No_File);
-         Curr_Node := Next (Curr_Node);
-      end loop;
+      if Node = Diff_Head_List.Null_Node then
+         return False;
+      end if;
 
-      return Curr_Node;
+      declare
+         Diff : constant Diff_Head := Diff_Head_List.Data (Node);
+      begin
+         for J in Diff.Files'Range loop
+            if Diff.Files (J) = No_File then
+               return False;
+            end if;
+         end loop;
+      end;
+
+      return True;
    end Is_In_3Diff_List;
 
-   ---------------------
-   -- Is_In_Diff_List --
-   ---------------------
+   -------------------
+   -- Get_Diff_Node --
+   -------------------
 
-   function Is_In_Diff_List
+   function Get_Diff_Node
      (Selected_File : Virtual_File;
       List          : Diff_Head_List.List) return Diff_Head_List.List_Node
    is
@@ -398,14 +400,14 @@ package body Vdiff2_Module.Utils is
    begin
       while Curr_Node /= Diff_Head_List.Null_Node loop
          Diff := Data (Curr_Node);
-         exit when Diff.File1 = Selected_File
-           or else Diff.File2 = Selected_File
-           or else Diff.File3 = Selected_File;
+         exit when Diff.Files (1) = Selected_File
+           or else Diff.Files (2) = Selected_File
+           or else Diff.Files (3) = Selected_File;
          Curr_Node := Next (Curr_Node);
       end loop;
 
       return Curr_Node;
-   end Is_In_Diff_List;
+   end Get_Diff_Node;
 
    -----------------
    --  Move_Mark  --
@@ -449,7 +451,7 @@ package body Vdiff2_Module.Utils is
    is
       Curr_Node : Diff_Head_List.List_Node;
    begin
-      Curr_Node := Is_In_Diff_List (Item.File1, Diff_List.all);
+      Curr_Node := Get_Diff_Node (Item.Files (1), Diff_List.all);
 
       if Curr_Node /= Diff_Head_List.Null_Node then
          Show_Differences3 (Kernel, Item);
@@ -472,20 +474,20 @@ package body Vdiff2_Module.Utils is
       pragma Unreferenced (Button);
 
    begin
-      if Is_In_Diff_List
-          (Item_Local.File1, Diff_List.all) = Diff_Head_List.Null_Node
-        and then Is_In_Diff_List
-          (Item_Local.File2, Diff_List.all) = Diff_Head_List.Null_Node
+      if Get_Diff_Node
+          (Item_Local.Files (1), Diff_List.all) = Diff_Head_List.Null_Node
+        and then Get_Diff_Node
+          (Item_Local.Files (2), Diff_List.all) = Diff_Head_List.Null_Node
       then
-         if Item_Local.File3 /= VFS.No_File
-           and then Is_In_Diff_List
-             (Item.File3, Diff_List.all) = Diff_Head_List.Null_Node
+         if Item_Local.Files (2) /= VFS.No_File
+           and then Get_Diff_Node
+             (Item.Files (3), Diff_List.all) = Diff_Head_List.Null_Node
          then
             Append (Diff_List.all, Item_Local);
             Show_Differences3 (Kernel, Item_Local);
             return;
 
-         elsif Item_Local.File3 = VFS.No_File then
+         elsif Item_Local.Files (3) = VFS.No_File then
             Append (Diff_List.all, Item_Local);
             Show_Differences3 (Kernel, Item_Local);
             return;
@@ -495,6 +497,48 @@ package body Vdiff2_Module.Utils is
         (Msg     => -"One of these files is already used in VDiff",
          Buttons => Button_OK,
          Parent  => Get_Current_Window (Kernel));
+   end Process_Differences;
+
+   -------------------------
+   -- Process_Differences --
+   -------------------------
+
+   function Process_Differences
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Item      : Diff_Head;
+      Diff_List : Diff_Head_List_Access) return Diff_Head_List.List_Node
+   is
+      Item_Local : Diff_Head := Item;
+      Button     : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
+   begin
+      if Get_Diff_Node
+          (Item_Local.Files (1), Diff_List.all) = Diff_Head_List.Null_Node
+        and then Get_Diff_Node
+          (Item_Local.Files (2), Diff_List.all) = Diff_Head_List.Null_Node
+      then
+         if Item_Local.Files (3) /= VFS.No_File
+           and then Get_Diff_Node
+             (Item.Files (3), Diff_List.all) = Diff_Head_List.Null_Node
+         then
+            Append (Diff_List.all, Item_Local);
+            Show_Differences3 (Kernel, Item_Local);
+            return Last (Diff_List.all);
+
+         elsif Item_Local.Files (3) = VFS.No_File then
+            Append (Diff_List.all, Item_Local);
+            Show_Differences3 (Kernel, Item_Local);
+            return Last (Diff_List.all);
+         end if;
+      end if;
+
+      Button := Message_Dialog
+        (Msg     => -"One of these files is already used in VDiff",
+         Buttons => Button_OK,
+         Parent  => Get_Current_Window (Kernel));
+
+      return Diff_Head_List.Null_Node;
    end Process_Differences;
 
    ------------------
@@ -610,21 +654,21 @@ package body Vdiff2_Module.Utils is
       end if;
 
       if Other = 1 then
-         Highlight_File := Item.File1;
+         Highlight_File := Item.Files (1);
       else
-         Highlight_File := Item.File2;
+         Highlight_File := Item.Files (2);
       end if;
 
       --  Keep the current window configuration, except we split the current
       --  editor. This doesn't lose the user's current setup, and will be
       --  superceded by the use of MDI_Child groups
 
-      Edit (Kernel, Item.File2, Ref = 1);
-      Edit (Kernel, Item.File1, Ref = 2);
+      Edit (Kernel, Item.Files (2), Ref = 1);
+      Edit (Kernel, Item.Files (1), Ref = 2);
 
       --  Synchronize the scrollings
 
-      Synchronize_Scrolling (Kernel, Item.File1, Item.File2);
+      Synchronize_Scrolling (Kernel, Item.Files (1), Item.Files (2));
 
       Split (Get_MDI (Kernel), Orientation_Horizontal,
              Reuse_If_Possible => True);
@@ -634,15 +678,15 @@ package body Vdiff2_Module.Utils is
       --  unopened editors will not create a cascade of refs.
 
       if Ref = 1 then
-         Edit (Kernel, Item.File2, True);
+         Edit (Kernel, Item.Files (2), True);
       else
-         Edit (Kernel, Item.File1, True);
+         Edit (Kernel, Item.Files (3), True);
       end if;
 
       Create_Line_Information_Column
-        (Kernel, Item.File1, Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (1), Id_Col_Vdiff, True, True);
       Create_Line_Information_Column
-        (Kernel, Item.File2, Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (2), Id_Col_Vdiff, True, True);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
@@ -657,17 +701,17 @@ package body Vdiff2_Module.Utils is
 
                Curr_Chunk.Range1.Blank_Lines_Mark :=
                  Add_Line
-                   (Kernel, Item.File1,
+                   (Kernel, Item.Files (1),
                     Curr_Chunk.Range1.First, VStyle (Ref).all,
                     The_Range);
 
                Highlight_Line
-                 (Kernel, Item.File2, Curr_Chunk.Range2.First,
+                 (Kernel, Item.Files (2), Curr_Chunk.Range2.First,
                   VStyle (Other).all,
                   The_Range);
 
                Add_Side_Symbol
-                 (Item.File2,
+                 (Item.Files (2),
                   Curr_Chunk.Range2.First, Curr_Chunk.Range2.Last - 1,
                   "+");
 
@@ -679,39 +723,39 @@ package body Vdiff2_Module.Utils is
                VStyle (Ref)   := new String'(Old_Style);
                Offset1 := Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First;
                Offset2 := Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First;
-               Highlight_Line (Kernel, Item.File1, Curr_Chunk.Range1.First,
+               Highlight_Line (Kernel, Item.Files (1), Curr_Chunk.Range1.First,
                                VStyle (Ref).all, Offset1);
-               Highlight_Line (Kernel, Item.File2, Curr_Chunk.Range2.First,
+               Highlight_Line (Kernel, Item.Files (2), Curr_Chunk.Range2.First,
                                VStyle (Other).all, Offset2);
 
                Add_Side_Symbol
-                 (Item.File2,
+                 (Item.Files (2),
                   Curr_Chunk.Range2.First, Curr_Chunk.Range2.Last - 1,
                   "!");
                Add_Side_Symbol
-                 (Item.File1,
+                 (Item.Files (1),
                   Curr_Chunk.Range1.First, Curr_Chunk.Range1.Last - 1,
                   "!");
 
                if Offset1 < Offset2 then
                   Curr_Chunk.Range2.Blank_Lines_Mark :=
                     Add_Line
-                      (Kernel, Item.File1,
+                      (Kernel, Item.Files (1),
                        Curr_Chunk.Range1.Last, VStyle (Ref).all,
                        Offset2 - Offset1);
 
                elsif Offset1 > Offset2 then
                   Curr_Chunk.Range2.Blank_Lines_Mark :=
                     Add_Line
-                      (Kernel, Item.File2,
+                      (Kernel, Item.Files (2),
                        Curr_Chunk.Range2.Last, VStyle (Other).all,
                        Offset1 - Offset2);
                end if;
 
                Fine_Diff_Block
                  (Kernel_Handle (Kernel),
-                  Item.File1,
-                  Item.File2,
+                  Item.Files (1),
+                  Item.Files (2),
                   Curr_Chunk.Range1,
                   Curr_Chunk.Range2);
 
@@ -722,17 +766,17 @@ package body Vdiff2_Module.Utils is
                VStyle (Other) := new String'(Remove_Style);
                VStyle (Ref)   := new String'(Old_Style);
                Highlight_Line
-                 (Kernel, Item.File1,
+                 (Kernel, Item.Files (1),
                   Curr_Chunk.Range1.First, VStyle (Ref).all,
                   Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
                   Curr_Chunk.Range2.Blank_Lines_Mark :=
                     Add_Line
-                      (Kernel, Item.File2,
+                      (Kernel, Item.Files (2),
                        Curr_Chunk.Range2.First, VStyle (Other).all,
                        Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
 
                Add_Side_Symbol
-                 (Item.File1,
+                 (Item.Files (1),
                   Curr_Chunk.Range1.First, Curr_Chunk.Range1.Last - 1,
                   "-");
 
@@ -781,7 +825,7 @@ package body Vdiff2_Module.Utils is
    begin
       Register_Highlighting (Kernel);
 
-      if Item.File3 = VFS.No_File then
+      if Item.Files (3) = VFS.No_File then
          Show_Differences (Kernel, Item);
          return;
       end if;
@@ -792,32 +836,33 @@ package body Vdiff2_Module.Utils is
       --  editor. This doesn't lose the user's current setup, and will be
       --  superceded by the use of MDI_Child groups
 
-      Edit (Kernel, Item.File2);
-      Edit (Kernel, Item.File1);
+      Edit (Kernel, Item.Files (2));
+      Edit (Kernel, Item.Files (1));
 
       Split (Get_MDI (Kernel), Orientation_Horizontal,
              Reuse_If_Possible => True);
-      Edit (Kernel, Item.File3);
+      Edit (Kernel, Item.Files (3));
       Split (Get_MDI (Kernel), Orientation_Horizontal,
              Reuse_If_Possible => True);
 
       --  Synchronize the scrollings
 
-      Synchronize_Scrolling (Kernel, Item.File1, Item.File2, Item.File3);
+      Synchronize_Scrolling
+        (Kernel, Item.Files (1), Item.Files (2), Item.Files (3));
 
       Info (1) := new Line_Information_Array
-        (1 .. Get_File_Last_Line (Kernel, Item.File1));
+        (1 .. Get_File_Last_Line (Kernel, Item.Files (1)));
       Info (2) := new Line_Information_Array
-        (1 .. Get_File_Last_Line (Kernel, Item.File2));
+        (1 .. Get_File_Last_Line (Kernel, Item.Files (2)));
       Info (3) := new Line_Information_Array
-        (1 .. Get_File_Last_Line (Kernel, Item.File3));
+        (1 .. Get_File_Last_Line (Kernel, Item.Files (3)));
 
       Create_Line_Information_Column
-        (Kernel, Item.File1, Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (1), Id_Col_Vdiff, True, True);
       Create_Line_Information_Column
-        (Kernel, Item.File2, Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (2), Id_Col_Vdiff, True, True);
       Create_Line_Information_Column
-        (Kernel, Item.File3, Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (3), Id_Col_Vdiff, True, True);
 
       Res := Simplify (Item.List, Item.Ref_File);
       Curr_Node := First (Res);
@@ -835,13 +880,13 @@ package body Vdiff2_Module.Utils is
          Unhighlight_Difference'Access);
 
       Add_Line_Information
-        (Kernel, Item.File1, Id_Col_Vdiff,
+        (Kernel, Item.Files (1), Id_Col_Vdiff,
          Info (1));
       Add_Line_Information
-        (Kernel, Item.File2, Id_Col_Vdiff,
+        (Kernel, Item.Files (2), Id_Col_Vdiff,
          Info (2));
       Add_Line_Information
-        (Kernel, Item.File3, Id_Col_Vdiff,
+        (Kernel, Item.Files (3), Id_Col_Vdiff,
          Info (3));
       Move_Mark (Res, Item.List);
       Free_List (Res);
@@ -871,7 +916,7 @@ package body Vdiff2_Module.Utils is
       VRange  : T_VRange :=
         (Curr_Chunk.Range1, Curr_Chunk.Range2, Curr_Chunk.Range3);
       VFile   : constant T_VFile :=
-        (Item.File1, Item.File2, Item.File3);
+        (Item.Files (1), Item.Files (2), Item.Files (3));
       VOffset : constant T_VOffset :=
         ((Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First),
          (Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First),
@@ -1126,13 +1171,51 @@ package body Vdiff2_Module.Utils is
 
       Item :=
         (List           => Result,
-         File1          => File1,
-         File2          => File2,
-         File3          => File3,
+         Files          => (File1, File2, File3),
          Current_Node   => First (Result),
          Ref_File       => 2,
-         On_Destruction => False);
+         In_Destruction => False);
       Process_Differences (Kernel, Item, Id.List_Diff);
+   end Visual_Diff;
+
+   -----------------
+   -- Visual_Diff --
+   -----------------
+
+   function Visual_Diff
+     (File1 : Virtual_File;
+      File2 : Virtual_File;
+      File3 : Virtual_File := VFS.No_File) return Diff_Head_List.List_Node
+   is
+      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
+      Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
+      Result : Diff_List;
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+      Item   : Diff_Head;
+
+   begin
+      if File3 /= VFS.No_File then
+         Result := Diff3 (Kernel, File1, File2, File3);
+      else
+         Result := Diff (Kernel, File1, File2);
+      end if;
+
+      if Result = Diff_Chunk_List.Null_List then
+         Button := Message_Dialog
+           (Msg     => -"No differences found.",
+            Buttons => Button_OK,
+            Parent  => Get_Current_Window (Kernel));
+         return Diff_Head_List.Null_Node;
+      end if;
+
+      Item :=
+        (List           => Result,
+         Files          => (File1, File2, File3),
+         Current_Node   => First (Result),
+         Ref_File       => 2,
+         In_Destruction => False);
+      return Process_Differences (Kernel, Item, Id.List_Diff);
    end Visual_Diff;
 
    ------------------
@@ -1165,12 +1248,10 @@ package body Vdiff2_Module.Utils is
 
       Item :=
         (List           => Result,
-         File1          => Orig_File,
-         File2          => New_File,
-         File3          => VFS.No_File,
+         Files          => (Orig_File, New_File, No_File),
          Current_Node   => First (Result),
          Ref_File       => 1,
-         On_Destruction => False);
+         In_Destruction => False);
       Process_Differences (Kernel, Item, Id.List_Diff);
 
       return True;
