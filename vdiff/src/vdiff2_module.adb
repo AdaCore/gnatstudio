@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2006                       --
---                              AdaCore                              --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with GPS.Intl;                  use GPS.Intl;
@@ -27,8 +29,10 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Vdiff2_Command_Block;      use Vdiff2_Command_Block;
 with Vdiff2_Module.Callback;    use Vdiff2_Module.Callback;
 with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
+with VFS;                       use VFS;
 
 package body Vdiff2_Module is
 
@@ -45,6 +49,130 @@ package body Vdiff2_Module is
      (Filter  : access In_3Diff_List_Filter;
       Context : Selection_Context) return Boolean;
    --  Filter for 3-way diff contextual menus
+
+   type Vdiff_Info is record
+      Node : Diff_Head_List.List_Node;
+   end record;
+   type Vdiff_Info_Access is access Vdiff_Info;
+
+   type Vdiff_Property is new Instance_Property_Record with record
+      Vdiff : Vdiff_Info_Access;
+   end record;
+   procedure Destroy (Property : in out Vdiff_Property);
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Vdiff_Info, Vdiff_Info_Access);
+
+   procedure Set_Vdiff_Data
+     (Instance : Class_Instance;
+      Data     : Diff_Head_List.List_Node);
+      --  Set the data assiociated with an instance of the Vdiff classs
+
+   Vdiff_Class_Name : constant String := "Vdiff";
+
+   File1_Cst : aliased constant String := "file1";
+   File2_Cst : aliased constant String := "file2";
+   File3_Cst : aliased constant String := "File3";
+
+   Vdiff_Cmd_Parameters : constant Cst_Argument_List :=
+                            (1 => File1_Cst'Access,
+                             2 => File2_Cst'Access,
+                             3 => File3_Cst'Access);
+
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
+   --  Register commands specific to the Vdiff2 module
+
+   procedure Vdiff_Cmds
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Command handler for the Vdiff class
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Property : in out Vdiff_Property) is
+   begin
+      Unchecked_Free (Property.Vdiff);
+   end Destroy;
+
+   --------------------
+   -- Set_Vdiff_Data --
+   --------------------
+
+   procedure Set_Vdiff_Data
+     (Instance : Class_Instance;
+      Data     : Diff_Head_List.List_Node)
+   is
+      Info : constant Vdiff_Info_Access := new Vdiff_Info'(Node => Data);
+   begin
+      Set_Property
+        (Instance,
+         Vdiff_Class_Name,
+         Vdiff_Property'(Vdiff => Info));
+   end Set_Vdiff_Data;
+
+   -----------------------
+   -- Register_Commands --
+   -----------------------
+
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
+      Vdiff_Class : constant Class_Type :=
+                      New_Class (Kernel, Vdiff_Class_Name);
+   begin
+      Register_Command
+        (Kernel, Constructor_Method, 2, 3, Vdiff_Cmds'Access, Vdiff_Class);
+      Register_Command
+        (Kernel, "recompute", 0, 0, Vdiff_Cmds'Access, Vdiff_Class);
+   end Register_Commands;
+
+   ----------------
+   -- Vdiff_Cmds --
+   ----------------
+
+   procedure Vdiff_Cmds
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Vdiff_Class : constant Class_Type :=
+                      New_Class (Get_Kernel (Data), Vdiff_Class_Name);
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Vdiff_Cmd_Parameters);
+         declare
+            Instance : constant Class_Instance :=
+                         Nth_Arg (Data, 1, Vdiff_Class);
+            File1    : constant Virtual_File :=
+                         Get_Data (Data, 2);
+            File2    : constant Virtual_File :=
+                         Get_Data (Data, 3);
+            File3    : Virtual_File := No_File;
+         begin
+            if Number_Of_Arguments (Data) > 3 then
+               File3 := Get_Data (Data, 4);
+            end if;
+
+            Set_Vdiff_Data (Instance, Visual_Diff (File1, File2, File3));
+         end;
+      elsif Command = "recompute" then
+         declare
+            Instance      : constant Class_Instance :=
+                              Nth_Arg (Data, 1, Vdiff_Class);
+            Property      : constant Vdiff_Property :=
+                              Vdiff_Property
+                                (Get_Property (Instance, Vdiff_Class_Name));
+            Node          : Diff_Head_List.List_Node :=
+                              Property.Vdiff.Node;
+            Cmd           : Diff_Command_Access;
+         begin
+            Create
+              (Cmd,
+               Get_Kernel (Vdiff_Module_ID.all),
+               VDiff2_Module (Vdiff_Module_ID).List_Diff,
+               Reload_Difference'Access);
+            Unchecked_Execute (Cmd, Node);
+            Free (Root_Command (Cmd.all));
+         end;
+      end if;
+   end Vdiff_Cmds;
 
    ---------------------
    -- Register_Module --
@@ -204,6 +332,8 @@ package body Vdiff2_Module is
          Minimum_Args => 2,
          Maximum_Args => 3,
          Handler      => Diff_Command_Handler'Access);
+
+      Register_Commands (Kernel);
    end Register_Module;
 
    -------------
@@ -230,7 +360,7 @@ package body Vdiff2_Module is
       if Has_File_Information (Context)
         and then Has_Directory_Information (Context)
       then
-         return Is_In_Diff_List
+         return Get_Diff_Node
            (File_Information (Context),
             VDiff2_Module (Vdiff_Module_ID).List_Diff.all) /=
            Diff_Head_List.Null_Node;
@@ -248,15 +378,11 @@ package body Vdiff2_Module is
    is
       pragma Unreferenced (Filter);
    begin
-      if Has_File_Information (Context)
+      return Has_File_Information (Context)
         and then Has_Directory_Information (Context)
-      then
-         return Is_In_3Diff_List
-           (File_Information (Context),
-            VDiff2_Module (Vdiff_Module_ID).List_Diff.all) /=
-           Diff_Head_List.Null_Node;
-      end if;
-      return False;
+        and then Is_In_3Diff_List
+          (File_Information (Context),
+           VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
    end Filter_Matches_Primitive;
 
 end Vdiff2_Module;
