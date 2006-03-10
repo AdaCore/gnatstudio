@@ -476,10 +476,19 @@ package body Remote_Views is
 
    procedure Execute
      (Func   : On_Server_List_Hook;
-      Kernel : access Kernel_Handle_Record'Class)
-   is
-      pragma Unreferenced (Kernel);
+      Kernel : access Kernel_Handle_Record'Class) is
    begin
+      --  Check for deleted server
+      for J in Server_Type'Range loop
+         declare
+            Nickname : constant String := Get_Nickname (J);
+         begin
+            if not Is_Configured (Nickname) then
+               Assign (Kernel_Handle (Kernel), J, Local_Nickname);
+            end if;
+         end;
+      end loop;
+
       Set_Servers (Func.View);
    end Execute;
 
