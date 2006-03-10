@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
---                              AdaCore                              --
+--                     Copyright (C) 2003 - 2006                     --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -42,6 +42,12 @@ package Vdiff2_Module.Utils is
    --  Verify if Item is  not in Diff_List
    --  then show differences and append Item to diff_List
 
+   function Process_Differences
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Item      : Diff_Head;
+      Diff_List : Diff_Head_List_Access) return Diff_Head_List.List_Node;
+   --  ???
+
    procedure Modify_Differences
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item      : in out Diff_Head;
@@ -72,6 +78,12 @@ package Vdiff2_Module.Utils is
       File3 : Virtual_File := VFS.No_File);
    --  Execute Diff and display the result in the editor
 
+   function Visual_Diff
+     (File1 : Virtual_File;
+      File2 : Virtual_File;
+      File3 : Virtual_File := VFS.No_File) return Diff_Head_List.List_Node;
+   --  ???
+
    function Visual_Patch
      (Orig_File : VFS.Virtual_File;
       New_File  : VFS.Virtual_File;
@@ -82,7 +94,7 @@ package Vdiff2_Module.Utils is
    --  If Revert is True, create Orig_File from New_File and Diff_File.
    --  Display the result in the editor
 
-   function Is_In_Diff_List
+   function Get_Diff_Node
      (Selected_File : VFS.Virtual_File;
       List          : Diff_Head_List.List)
       return Diff_Head_List.List_Node;
@@ -91,9 +103,9 @@ package Vdiff2_Module.Utils is
    function Is_In_3Diff_List
      (Selected_File : VFS.Virtual_File;
       List          : Diff_Head_List.List)
-      return Diff_Head_List.List_Node;
-   --  Return the first 3-file Diffs that contains Selected_File.
-
+      return Boolean;
+   --  Return true if Selected_File is used in a 3 files visual diff.
+   --  Return False otherwise.
 
    type Text_Iterator;
 
