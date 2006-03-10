@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -524,8 +524,9 @@ package body Src_Contexts is
          end if;
 
          Buffer := new String'
-           (Get_Text (Get_Buffer (Box), Start_Line, Start_Column));
-         Start := Buffer'First;
+           (Get_Text (Get_Buffer (Box), Start_Line, 1));
+
+         Start := Start_Column;
       end if;
 
       if Start <= Buffer'Last then
