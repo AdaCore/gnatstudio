@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -92,7 +92,7 @@ package body Vdiff2_Command_Line is
       Item.File      := File;
       Item.Line      := Line;
       Item.Action    := Action;
-      Item.Head      := Is_In_Diff_List (File, List_Diff.all);
+      Item.Head      := Get_Diff_Node (File, List_Diff.all);
    end Create;
 
    ---------------------------
@@ -115,16 +115,16 @@ package body Vdiff2_Command_Line is
       loop
          Diff := Data (Curr_Node);
 
-         if Selected_File = Item.File1 then
+         if Selected_File = Item.Files (1) then
             exit when Diff.Range1.First <= Line
               and then Diff.Range1.Last >= Line;
 
-         elsif Selected_File = Item.File2 then
+         elsif Selected_File = Item.Files (2) then
             exit when Diff.Range2.First <= Line
               and then Diff.Range2.Last >= Line;
 
-         elsif Item.File3 /= VFS.No_File
-           and then Selected_File = Item.File3
+         elsif Item.Files (3) /= VFS.No_File
+           and then Selected_File = Item.Files (3)
          then
             exit when Diff.Range3.First <= Line
               and then Diff.Range3.Last >= Line;
@@ -158,9 +158,7 @@ package body Vdiff2_Command_Line is
       VRange (1) := Data (Diff.Current_Node).Range1;
       VRange (2) := Data (Diff.Current_Node).Range2;
       VRange (3) := Data (Diff.Current_Node).Range3;
-      VFile (1) := Diff.File1;
-      VFile (2) := Diff.File2;
-      VFile (3) := Diff.File3;
+      VFile      := Diff.Files;
 
       for J in VFile'Range loop
          if File = VFile (J) then
@@ -221,9 +219,7 @@ package body Vdiff2_Command_Line is
       VRange (1) := Data (Diff.Current_Node).Range1;
       VRange (2) := Data (Diff.Current_Node).Range2;
       VRange (3) := Data (Diff.Current_Node).Range3;
-      VFile (1) := Diff.File1;
-      VFile (2) := Diff.File2;
-      VFile (3) := Diff.File3;
+      VFile      := Diff.Files;
 
       for J in VFile'Range loop
          if File = VFile (J) then
