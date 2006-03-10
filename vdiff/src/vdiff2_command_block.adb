@@ -90,7 +90,9 @@ package body Vdiff2_Command_Block is
    is
       pragma Unreferenced (Context);
    begin
-      Trace (Me, "File1: "& Full_Name (Command.Last_Active_Diff.File1).all);
+      Trace
+        (Me,
+         "Files (1): " & Full_Name (Command.Last_Active_Diff.Files (1)).all);
       return Execute (Command);
    end Execute;
 
@@ -114,7 +116,7 @@ package body Vdiff2_Command_Block is
         and then Has_Directory_Information (Context)
       then
          Selected_File := File_Information (Context);
-         Curr_Node := Is_In_Diff_List (Selected_File, Command.List_Diff.all);
+         Curr_Node := Get_Diff_Node (Selected_File, Command.List_Diff.all);
 
          if Curr_Node /= Diff_Head_List.Null_Node then
             Diff := Data (Curr_Node);
@@ -159,10 +161,10 @@ package body Vdiff2_Command_Block is
    begin
       Unhighlight_Difference (Kernel, Item);
 
-      if Item.File3 = VFS.No_File then
-         Tmp := Diff (Kernel, Item.File1, Item.File2);
+      if Item.Files (3) = VFS.No_File then
+         Tmp := Diff (Kernel, Item.Files (1), Item.Files (2));
       else
-         Tmp := Diff3 (Kernel, Item.File1, Item.File2, Item.File3);
+         Tmp := Diff3 (Kernel, Item.Files (1), Item.Files (2), Item.Files (3));
       end if;
 
       if Tmp = Diff_Chunk_List.Null_List then
@@ -187,22 +189,24 @@ package body Vdiff2_Command_Block is
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head)
    is
-      Args1 : Argument_List := (1 => new String'(Full_Name (Diff.File1).all));
-      Args2 : Argument_List := (1 => new String'(Full_Name (Diff.File2).all));
+      Args1 : Argument_List :=
+                (1 => new String'(Full_Name (Diff.Files (1)).all));
+      Args2 : Argument_List :=
+                (1 => new String'(Full_Name (Diff.Files (2)).all));
       Args3 : Argument_List (1 .. 1);
    begin
 
-      if Diff.File3 /= VFS.No_File then
-         Args3 := (1 => new String'(Full_Name (Diff.File3).all));
-         --  After this call all memory associated with the Diff is Free
+      if Diff.Files (3) /= VFS.No_File then
+         Args3 := (1 => new String'(Full_Name (Diff.Files (3)).all));
          Execute_GPS_Shell_Command (Kernel, "Editor.close", Args3);
+         --  At this point all the memory associated with Diff is freed
       end if;
 
-      if Diff.File1 /= VFS.No_File then
+      if Diff.Files (1) /= VFS.No_File then
          Execute_GPS_Shell_Command (Kernel, "Editor.close", Args1);
       end if;
 
-      if Diff.File2 /= VFS.No_File then
+      if Diff.Files (2) /= VFS.No_File then
          Execute_GPS_Shell_Command (Kernel, "Editor.close", Args2);
       end if;
 
