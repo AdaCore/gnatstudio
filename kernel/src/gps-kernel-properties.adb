@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Exceptions;             use Ada.Exceptions;
+
 with File_Utils;                 use File_Utils;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GPS.Intl;                   use GPS.Intl;
@@ -529,13 +531,17 @@ package body GPS.Kernel.Properties is
       Root, File, Prop, Prop2 : Node_Ptr;
    begin
       Trace (Me, "Loading " & Filename);
+
       if Is_Readable_File (Filename) then
          Root := Parse (Filename);
+
          if Root /= null then
             File := Root.Child;
          end if;
+
          while File /= null loop
             Prop := File.Child;
+
             while Prop /= null loop
                Prop2 := Deep_Copy (Prop);
                Xml_Int.Free (Prop2.Tag);
@@ -556,6 +562,11 @@ package body GPS.Kernel.Properties is
          end loop;
          Free (Root);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Restore_Persistent_Properties;
 
    --------------------------
