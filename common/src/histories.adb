@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;      use Ada.Exceptions;
 with Ada.Text_IO;         use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
@@ -211,33 +212,42 @@ package body Histories is
          Key := File.Child;
 
          while Key /= null loop
+            begin
+               if Key.Attributes = null
+                 or else Get_Attribute (Key, "type") = "strings"
+               then
+                  if Key.Tag.all = "key" then
+                     Value := Create_New_Key_If_Necessary
+                       (Hist,
+                        History_Key (Get_Attribute (Key, "name")),
+                        Strings);
+                  else
+                     Value := Create_New_Key_If_Necessary
+                       (Hist, History_Key (Key.Tag.all), Strings);
+                  end if;
 
-            if Key.Attributes = null
-              or else Get_Attribute (Key, "type") = "strings"
-            then
-               if Key.Tag.all = "key" then
-                  Value := Create_New_Key_If_Necessary
-                    (Hist, History_Key (Get_Attribute (Key, "name")), Strings);
+               elsif Get_Attribute (Key, "type") = "booleans" then
+                  if Key.Tag.all = "key" then
+                     Value := Create_New_Key_If_Necessary
+                       (Hist, History_Key (Get_Attribute (Key, "name")),
+                        Booleans);
+                  else
+                     Value := Create_New_Key_If_Necessary
+                       (Hist, History_Key (Key.Tag.all), Booleans);
+                  end if;
+
                else
-                  Value := Create_New_Key_If_Necessary
-                    (Hist, History_Key (Key.Tag.all), Strings);
+                  Value := null;
+                  Trace (Me, "Invalid data type in " & File_Name
+                         & " : " & Get_Attribute (Key, "type"));
                end if;
 
-            elsif Get_Attribute (Key, "type") = "booleans" then
-               if Key.Tag.all = "key" then
-                  Value := Create_New_Key_If_Necessary
-                    (Hist, History_Key (Get_Attribute (Key, "name")),
-                     Booleans);
-               else
-                  Value := Create_New_Key_If_Necessary
-                    (Hist, History_Key (Key.Tag.all), Booleans);
-               end if;
-
-            else
-               Value := null;
-               Trace (Me, "Invalid data type in " & File_Name
-                      & " : " & Get_Attribute (Key, "type"));
-            end if;
+            exception
+               when E : others =>
+                  Value := null;
+                  Trace (Exception_Handle, "Unexpected exception: "
+                         & Exception_Information (E));
+            end;
 
             if Value /= null then
                N := Key.Child;
