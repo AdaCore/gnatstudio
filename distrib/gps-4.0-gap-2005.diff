@@ -1,0 +1,63 @@
+*** shared.gpr.old	Tue Oct  1 18:21:51 2002
+--- shared.gpr	Tue Oct  1 18:22:03 2002
+***************
+*** 4,10 ****
+     OS : OS_Type := External ("OS", "unix");
+  
+     type Build_Type is ("Debug", "Production");
+!    Build : Build_Type := External ("Build", "Debug");
+  
+     for Source_Dirs use ();
+  
+--- 4,10 ----
+     OS : OS_Type := External ("OS", "unix");
+  
+     type Build_Type is ("Debug", "Production");
+!    Build : Build_Type := External ("Build", "Production");
+  
+     for Source_Dirs use ();
+  
+--- gnat_src/osint.adb	19 Feb 2006 01:36:23 -0000	1.329
++++ gnat_src/osint.adb	13 Mar 2006 08:46:18 -0000
+@@ -750,7 +750,7 @@
+       end if;
+ 
+       Get_Name_String (Name);
+-      Exec_Suffix := Get_Target_Executable_Suffix;
++      Exec_Suffix := Get_Executable_Suffix;
+ 
+       for J in Exec_Suffix'Range loop
+          Name_Len := Name_Len + 1;
+--- gnat_src/osint.ads	20 Nov 2005 20:55:03 -0000	1.141
++++ gnat_src/osint.ads	13 Mar 2006 08:46:19 -0000
+@@ -558,7 +558,7 @@
+    --  No_File, that indicates that the file whose name was returned by the
+    --  last call to Next_Main_Source (and stored here) is to be read.
+ 
+-   Target_Object_Suffix : constant String := Get_Target_Object_Suffix.all;
++   Target_Object_Suffix : constant String := Get_Object_Suffix.all;
+    --  The suffix used for the target object files
+ 
+    Output_FD : File_Descriptor;
+--- gnat_src/prj-nmsc.adb	31 Jan 2006 19:59:48 -0000	1.169
++++ gnat_src/prj-nmsc.adb	13 Mar 2006 08:46:27 -0000
+@@ -60,7 +60,7 @@
+    ALI_Suffix   : constant String := ".ali";
+    --  File suffix for ali files
+ 
+-   Object_Suffix : constant String := Get_Target_Object_Suffix.all;
++   Object_Suffix : constant String := Get_Object_Suffix.all;
+    --  File suffix for object files
+ 
+    type Name_Location is record
+--- gnat_src/prj-util.adb	19 Feb 2006 01:36:15 -0000	1.39
++++ gnat_src/prj-util.adb	13 Mar 2006 08:46:28 -0000
+@@ -180,7 +180,7 @@
+            and then Executable.Value /= Empty_Name
+          then
+             declare
+-               Exec_Suffix : String_Access := Get_Target_Executable_Suffix;
++               Exec_Suffix : String_Access := Get_Executable_Suffix;
+                Result      : Name_Id := Executable.Value;
+ 
+             begin
