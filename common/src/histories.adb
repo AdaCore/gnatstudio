@@ -129,6 +129,7 @@ package body Histories is
       elsif Value.Typ /= Key_Type then
          raise Invalid_Key_Type;
       end if;
+
       return Value;
    end Create_New_Key_If_Necessary;
 
