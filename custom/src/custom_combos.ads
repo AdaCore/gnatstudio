@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2004                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2004-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,7 @@
 
 --  This package is used to define custom combo entries in the GPS toolbar
 
-with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package Custom_Combos is
 
