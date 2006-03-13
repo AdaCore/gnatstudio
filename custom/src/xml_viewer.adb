@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005-2006                    --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,41 +18,38 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                    use Glib;
-with Glib.Object;             use Glib.Object;
-with Glib.Xml_Int;            use Glib.Xml_Int;
-
-with Gdk.Event;               use Gdk.Event;
-
-with Gtk.Box;                 use Gtk.Box;
-
-with Gtk.Tree_Model;          use Gtk.Tree_Model;
-with Gtk.Tree_Store;          use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;    use Gtk.Tree_View_Column;
-with Gtk.Cell_Renderer_Text;  use Gtk.Cell_Renderer_Text;
-with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
-with Gtk.Widget;              use Gtk.Widget;
-
-with Gtkada.Handlers;         use Gtkada.Handlers;
-with Gtkada.MDI;              use Gtkada.MDI;
-with Gtkada.Tree_View;        use Gtkada.Tree_View;
-
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-
-with Custom_Module;           use Custom_Module;
-with GUI_Utils;               use GUI_Utils;
-with Basic_Types;             use Basic_Types;
-with Traces;                  use Traces;
-
-with XML_Parsers;             use XML_Parsers;
-
-with VFS;                     use VFS;
-
-with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
+
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+
+with Gdk.Event;                 use Gdk.Event;
+
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Widget;                use Gtk.Widget;
+
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Tree_View;          use Gtkada.Tree_View;
+
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+
+with Custom_Module;             use Custom_Module;
+with GUI_Utils;                 use GUI_Utils;
+with Basic_Types;               use Basic_Types;
+with Traces;                    use Traces;
+with XML_Parsers;               use XML_Parsers;
+with VFS;                       use VFS;
 
 package body XML_Viewer is
 
@@ -94,9 +91,7 @@ package body XML_Viewer is
       Name   : String) return XML_Viewer;
    --  Create a new XML Viewer.
 
-   function Parse_Metrix
-     (View : XML_Viewer;
-      File : String) return String;
+   function Parse_Metrix (View : XML_Viewer; File : String) return String;
    --  Parse a metrix file and add the contents to View.
    --  Return an error message from the XML parser, if any.
 
@@ -144,11 +139,11 @@ package body XML_Viewer is
      (View : XML_Viewer;
       File : String) return String
    is
-      Error : GNAT.OS_Lib.String_Access;
-      Root  : Node_Ptr;
-      Path  : Gtk_Tree_Path;
-      Dummy : Boolean;
-      Col   : Gint;
+      Error        : GNAT.OS_Lib.String_Access;
+      Root         : Node_Ptr;
+      Path         : Gtk_Tree_Path;
+      Dummy        : Boolean;
+      Col          : Gint;
       Metric_Count : Natural := 1;
       pragma Unreferenced (Dummy);
 
@@ -160,7 +155,11 @@ package body XML_Viewer is
         (N      : Node_Ptr;
          Parent : Gtk_Tree_Iter;
          File   : String);
-      --  Add a metrix node to the tree.
+      --  Add a metrix node to the tree
+
+      -----------------
+      -- Right_Align --
+      -----------------
 
       function Right_Align return String is
          Img : constant String := Metric_Count'Img;
@@ -168,14 +167,18 @@ package body XML_Viewer is
          return (1 .. 7 - Img'Length => ' ') & Img;
       end Right_Align;
 
+      ----------------
+      -- Parse_Node --
+      ----------------
+
       procedure Parse_Node
         (N      : Node_Ptr;
          Parent : Gtk_Tree_Iter;
          File   : String)
       is
-         C : Node_Ptr;
-         I : Gtk_Tree_Iter;
          Name : constant UTF8_String := Get_Attribute (N, "name");
+         C    : Node_Ptr;
+         I    : Gtk_Tree_Iter;
       begin
          if N.Tag.all = "file" then
             Append (View.Tree.Model, I, Parent);
@@ -188,6 +191,7 @@ package body XML_Viewer is
 
          elsif N.Tag.all = "unit" then
             Append (View.Tree.Model, I, Parent);
+
             declare
                Kind : constant UTF8_String := Get_Attribute (N, "kind");
             begin
@@ -199,6 +203,7 @@ package body XML_Viewer is
                        "<b>" & Name & "</b> (" & Kind & ")");
                end if;
             end;
+
             Set (View.Tree.Model, I, Sort_Column, '~' & Name);
             Set (View.Tree.Model, I, Command_Column,
                  "Editor.edit """""""
@@ -367,8 +372,8 @@ package body XML_Viewer is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel           : constant Kernel_Handle := Get_Kernel (Data);
-      XML_Viewer_Class : constant Class_Type := New_Class
-        (Kernel, "XMLViewer");
+      XML_Viewer_Class : constant Class_Type :=
+                           New_Class (Kernel, "XMLViewer");
       Inst             : Class_Instance;
       View             : XML_Viewer;
    begin
@@ -396,17 +401,17 @@ package body XML_Viewer is
    begin
       Register_Command
         (Kernel, Constructor_Method,
-         Class   => XML_Viewer_Class,
+         Class        => XML_Viewer_Class,
          Minimum_Args => 1,
          Maximum_Args => 1,
-         Handler => XML_Commands_Handler'Access);
+         Handler      => XML_Commands_Handler'Access);
 
       Register_Command
         (Kernel, "parse",
-         Class   => XML_Viewer_Class,
+         Class        => XML_Viewer_Class,
          Minimum_Args => 1,
          Maximum_Args => 1,
-         Handler => XML_Commands_Handler'Access);
+         Handler      => XML_Commands_Handler'Access);
    end Register_Commands;
 
 end XML_Viewer;
