@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;           use Ada.Exceptions;
-with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
@@ -989,25 +988,30 @@ package body Default_Preferences is
    procedure Save_Preferences
      (Manager : access Preferences_Manager_Record; File_Name : String)
    is
-      File : File_Type;
+      File, Node : Node_Ptr;
       Info : Pref_Description_Access;
       L    : Param_Spec_List.List_Node := First (Manager.Preferences);
    begin
-      Create (File, Out_File, File_Name);
-      Put_Line (File, "<?xml version=""1.0""?>");
-      Put_Line (File, "<Prefs>");
-
+      File := new Glib.Xml_Int.Node;
+      File.Tag := new String'("Prefs");
       while L /= Param_Spec_List.Null_Node loop
          Info := Get_Description (Data (L));
          if Info.Value /= null then
-            Put_Line (File, "   <pref name=""" & Pspec_Name (Data (L))
-                      & """ >" & Info.Value.all & "</pref>");
+            Node := new Glib.Xml_Int.Node;
+            Node.Tag := new String'("pref");
+            Set_Attribute (Node, "name", Pspec_Name (Data (L)));
+            Node.Value := new String'(Info.Value.all);
+            Add_Child (File, Node);
          end if;
 
          L := Next (L);
       end loop;
 
-      Put_Line (File, "</Prefs>");
+      Print (File, File_Name);
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception: " &
+                Exception_Information (E));
    end Save_Preferences;
 
    ---------------------
