@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Types;
-with Prj.Tree;   use Prj, Prj.Tree;
+with Prj.Tree;          use Prj, Prj.Tree;
 with Output;
 with Projects.Registry;
 
@@ -151,9 +151,9 @@ package Projects.Editor is
    --  This subprogram doesn't apply recursively to imported projects
 
    procedure Set_Extended_Project
-     (Project    : Projects.Project_Type;
-      Extended   : Projects.Project_Type;
-      Extend_All : Boolean := False;
+     (Project            : Projects.Project_Type;
+      Extended           : Projects.Project_Type;
+      Extend_All         : Boolean := False;
       Use_Relative_Paths : Boolean := False);
    --  Set the project that Project extends. If Extend_All is True, then this
    --  is an "extend all" project.
@@ -203,9 +203,9 @@ package Projects.Editor is
    --  Convert a variable value to a list of arguments.
 
    procedure Add_Scenario_Variable_Values
-     (Root_Project           : Project_Type;
-      External_Var           : Scenario_Variable;
-      Values                 : Name_Id_Array);
+     (Root_Project : Project_Type;
+      External_Var : Scenario_Variable;
+      Values       : Name_Id_Array);
    --  Add some values to the list of possible values for the scenario
    --  variables associated with External_Variable_Name. The changes are done
    --  recursively in Root_Project and all its imported projects.
