@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;         use Ada.Exceptions;
-with Ada.Text_IO;            use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 
@@ -281,42 +280,13 @@ package body GPS.Kernel.Styles is
      (Kernel : Kernel_Handle;
       File   : Virtual_File)
    is
+      Main, Node, Child : Node_Ptr;
       Iter : Iterator;
-      F    : File_Type;
       Info : Style_Access;
 
-      procedure Write_Style (Style : Style_Access; Name : String);
-      --  Write XML node for Style with name Name to F.
-
-      procedure Write_Style (Style : Style_Access; Name : String) is
-         function V (S : String_Access) return String;
-         pragma Inline (V);
-
-         function V (S : String_Access) return String is
-         begin
-            if S = null then
-               return "";
-            end if;
-            return S.all;
-         end V;
-
-      begin
-         --  ??? This implies that fields have to be xml-friendly.
-         Put_Line
-           (F, "   <style>"
-            & ASCII.LF & "      <name>" & Name & "</name>"
-            & ASCII.LF & "      <desc>" & V (Style.Description) & "</desc>"
-            & ASCII.LF & "      <fg>" & V (Style.Foreground.Value) & "</fg>"
-            & ASCII.LF & "      <bg>" & V (Style.Background.Value) & "</bg>"
-            & ASCII.LF & "   </style>");
-      end Write_Style;
-
    begin
-      Create (F, Out_File, Full_Name (File).all);
-      Put_Line (F, "<?xml version=""1.0""?>");
-      New_Line (F);
-      Put_Line (F, "<Styles>");
-      New_Line (F);
+      Main := new Glib.Xml_Int.Node;
+      Main.Tag := new String'("Styles");
 
       Get_First (Style_Htable_Access (Kernel.Styles).Table, Iter);
 
@@ -324,13 +294,37 @@ package body GPS.Kernel.Styles is
          Info := Get_Element (Iter);
          exit when Info = null;
 
-         Write_Style (Info, Get_Key (Iter));
+         Node := new Glib.Xml_Int.Node;
+         Node.Tag := new String'("style");
+         Child := new Glib.Xml_Int.Node;
+         Child.Tag := new String'("name");
+         Child.Value := new String'(Get_Key (Iter));
+         Add_Child (Node, Child, True);
+         Child := new Glib.Xml_Int.Node;
+         Child.Tag := new String'("desc");
+         if Info.Description /= null then
+            Child.Value := new String'(Info.Description.all);
+         end if;
+         Add_Child (Node, Child, True);
+         Child := new Glib.Xml_Int.Node;
+         Child.Tag := new String'("fg");
+         if Info.Foreground.Value /= null then
+            Child.Value := new String'(Info.Foreground.Value.all);
+         end if;
+         Add_Child (Node, Child, True);
+         Child := new Glib.Xml_Int.Node;
+         Child.Tag := new String'("bg");
+         if Info.Background.Value /= null then
+            Child.Value := new String'(Info.Background.Value.all);
+         end if;
+         Add_Child (Node, Child, True);
+
+         Add_Child (Main, Node, True);
 
          Get_Next (Style_Htable_Access (Kernel.Styles).Table, Iter);
       end loop;
 
-      New_Line (F);
-      Put_Line (F, "</Styles>");
+      Print (Main, Full_Name (File).all);
    end Save_Styles;
 
    -----------------
