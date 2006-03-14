@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
@@ -97,11 +97,11 @@ package Browsers.Canvas is
    function To_Browser
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class)
       return General_Browser;
-   --  Return the browser that contains Canvas.
+   --  Return the browser that contains Canvas
 
    procedure Layout
      (Browser : access General_Browser_Record;
-      Force : Boolean := False);
+      Force   : Boolean := False);
    --  Recompute the layout of items in the browser.
    --  If Force is true, then even the items that have been moved manually by
    --  the user are recomputed.
@@ -187,7 +187,7 @@ package Browsers.Canvas is
    --  GPS.Kernel.Get_Current_Context.
 
    procedure Refresh
-     (Item           : access Browser_Item_Record'Class);
+     (Item : access Browser_Item_Record'Class);
    --  Non dispatching variant of the Resize_And_Draw.
    --  You need to refresh the screen by calling either Item_Updated or
    --  Refresh_Canvas.
@@ -401,11 +401,11 @@ package Browsers.Canvas is
    --  efficiency issues, to avoid recreating it every time.
 
    procedure Get_Line
-     (List     : Xref_List;
-      Num      : Positive;
+     (List        : Xref_List;
+      Num         : Positive;
       Num_In_Line : Positive := 1;
-      Callback : out Active_Area_Cb;
-      Text     : out GNAT.OS_Lib.String_Access);
+      Callback    : out Active_Area_Cb;
+      Text        : out GNAT.OS_Lib.String_Access);
    --  Return the contents of the Nth line in the list in Text. This is set to
    --  null if there is no such line. Do not free Text.
    --  It also returns the num_in_line-th link in this line in Callback or null
@@ -420,13 +420,13 @@ package Browsers.Canvas is
 
    type Item_Active_Callback is access
      procedure (Event : Gdk.Event.Gdk_Event;
-                User : access Browser_Item_Record'Class);
+                User  : access Browser_Item_Record'Class);
    type Item_Active_Area_Callback is new Active_Area_Callback with private;
    --  A special instanciation of the callback for cases where the user data is
    --  a widget.
 
    function Build
-     (Cb : Item_Active_Callback;
+     (Cb   : Item_Active_Callback;
       User : access Browser_Item_Record'Class)
       return Item_Active_Area_Callback'Class;
    --  Build a new callback
@@ -446,9 +446,9 @@ package Browsers.Canvas is
      (Item : access Arrow_Item_Record'Class);
 
    procedure Initialize
-     (Item    : access Arrow_Item_Record'Class;
-      Browser : access General_Browser_Record'Class;
-      Title   : String;
+     (Item                    : access Arrow_Item_Record'Class;
+      Browser                 : access General_Browser_Record'Class;
+      Title                   : String;
       Parents_Cb, Children_Cb : Arrow_Item_Callback);
    --  Initialize a new item. Title is displayed in the title bar.
    --  Parents_Cb and Children_Cb are called when the two title bar buttons are
@@ -462,7 +462,7 @@ package Browsers.Canvas is
      (Item : access Arrow_Item_Record; All_Shown : Boolean);
    procedure Set_Children_Shown
      (Item : access Arrow_Item_Record; All_Shown : Boolean);
-   --  Inidicate wether all the parents or all the children are shown.
+   --  Inidicate wether all the parents or all the children are shown
 
    -----------
    -- Links --
@@ -541,7 +541,7 @@ package Browsers.Canvas is
    procedure Add_Navigation_Location
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Title  : String);
-   --  Add a location command to open the browser named Title.
+   --  Add a location command to open the browser named Title
 
 private
 
@@ -642,7 +642,7 @@ private
      (Xref_Line_Array, Xref_Line_Array_Access);
 
    type Xref_List is record
-      Lines      : Xref_Line_Array_Access;
+      Lines : Xref_Line_Array_Access;
    end record;
 
    pragma Inline (Get_Canvas);

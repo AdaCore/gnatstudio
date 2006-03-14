@@ -340,15 +340,15 @@ package body Browsers.Canvas is
    ----------------
 
    procedure Initialize
-     (Browser : access General_Browser_Record'Class;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Browser         : access General_Browser_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Create_Toolbar  : Boolean;
       Parents_Pixmap  : String := Stock_Go_Back;
       Children_Pixmap : String := Stock_Go_Forward)
    is
-      Hook : Preferences_Hook;
-      Scrolled : Gtk_Scrolled_Window;
-      Canvas : Image_Canvas;
+      Hook       : Preferences_Hook;
+      Scrolled   : Gtk_Scrolled_Window;
+      Canvas     : Image_Canvas;
    begin
       Gtk.Box.Initialize_Vbox (Browser, Homogeneous => False);
 
@@ -909,21 +909,20 @@ package body Browsers.Canvas is
    procedure On_Export_To_SVG (Browser : access Gtk_Widget_Record'Class) is
       use GNAT.OS_Lib;
 
-      B             : constant General_Browser := General_Browser (Browser);
-      Kernel        : constant Kernel_Handle := Get_Kernel (B);
-      SVG_File_FD   : File_Descriptor;
-      State_Pushed  : Boolean := False;
+      B            : constant General_Browser := General_Browser (Browser);
+      Kernel       : constant Kernel_Handle := Get_Kernel (B);
+      SVG_File_FD  : File_Descriptor;
+      State_Pushed : Boolean := False;
    begin
       declare
-         Name   : constant Virtual_File :=
-           Select_File
-             (Title             => -"Export Browser as SVG",
-              Parent            => Get_Main_Window (Kernel),
-              Default_Name      => "browser.svg",
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              Kind              => Save_File,
-              History           => Get_History (Kernel));
-
+         Name : constant Virtual_File :=
+                  Select_File
+                    (Title             => -"Export Browser as SVG",
+                     Parent            => Get_Main_Window (Kernel),
+                     Default_Name      => "browser.svg",
+                     Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                     Kind              => Save_File,
+                     History           => Get_History (Kernel));
       begin
          if Name /= VFS.No_File then
             Push_State (Get_Kernel (B), Busy);
@@ -942,7 +941,6 @@ package body Browsers.Canvas is
 
             State_Pushed := False;
             Pop_State (Get_Kernel (B));
-
          end if;
       end;
 
@@ -1026,7 +1024,7 @@ package body Browsers.Canvas is
 
    procedure Zoom_Out (Browser : access Gtk_Widget_Record'Class) is
       Canvas : constant Interactive_Canvas := General_Browser (Browser).Canvas;
-      Z : constant Guint := Get_Zoom (Canvas);
+      Z      : constant Guint := Get_Zoom (Canvas);
    begin
       for J in Zoom_Levels'Range loop
          if Zoom_Levels (J) = Z then
@@ -1225,7 +1223,7 @@ package body Browsers.Canvas is
         (Num + 1) * (Margin + Button_Width);
       Y, W, H       : Gint;
       Thick         : constant Gint :=
-        Y_Thickness (Get_Style (Item.Browser.Canvas));
+                        Y_Thickness (Get_Style (Item.Browser.Canvas));
 
       use type Gdk.Gdk_Drawable;
 
@@ -1388,9 +1386,9 @@ package body Browsers.Canvas is
       Num_Buttons   : constant Gint := 1 + Get_Last_Button_Number
         (Browser_Item (Item));  --  dispatching call
       Button_Width  : constant Gint := Get_Width (Item.Browser.Close_Pixmap);
-      W, H  : Gint;
-      Layout_H : Gint := 0;
-      Bg_GC : Gdk_GC;
+      W, H          : Gint;
+      Layout_H      : Gint := 0;
+      Bg_GC         : Gdk_GC;
    begin
       Reset_Active_Areas (Item.all, Title_Bar_Areas => False);
 
@@ -1492,7 +1490,7 @@ package body Browsers.Canvas is
       --  has changed, this will result in a change of background color for
       --  these items.
       Iter : Item_Iterator;
-      It  : Canvas_Item;
+      It   : Canvas_Item;
    begin
       Highlight (Browser_Item (Item));
 
