@@ -21,9 +21,19 @@ export GPS_STARTUP_LD_LIBRARY_PATH GPS_STARTUP_PATH
 LD_LIBRARY_PATH=$root/lib/gps:$LD_LIBRARY_PATH
 GTK_DATA_PREFIX=$root
 
-if [ `uname` != Linux ]; then
+if [ -f $root/etc/fonts/fonts.conf ]; then
   FONTCONFIG_FILE=$root/etc/fonts/fonts.conf
   export FONTCONFIG_FILE
+fi
+
+if [ -f $root/etc/pango/pangorc ]; then
+  PANGO_RC_FILE=$root/etc/pango/pangorc
+  export PANGO_RC_FILE
+fi
+
+if [ -d $root/lib/gtk-2.0 ]; then
+  GTK_PATH=$root/lib/gtk-2.0
+  export GTK_PATH
 fi
 
 if [ "$CHARSET" = "" ]; then
