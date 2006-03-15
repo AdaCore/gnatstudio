@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -121,6 +121,11 @@ package VCS_View_API is
    --  ???
 
    procedure On_Menu_View_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
+   --  ???
+
+   procedure On_Menu_View_Log_Text
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
    --  ???
