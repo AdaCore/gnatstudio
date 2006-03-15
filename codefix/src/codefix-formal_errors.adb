@@ -640,9 +640,16 @@ package body Codefix.Formal_Errors is
       --  begin of Not_Referenced
 
       Result : Solution_List;
+      Actual_Category : Language_Category;
 
    begin
-      case Category is
+      if Category = Cat_Unknown then
+         Actual_Category := Get_Unit (Current_Text, Cursor).Category;
+      else
+         Actual_Category := Category;
+      end if;
+
+      case Actual_Category is
          when Cat_Variable =>
             declare
                Delete_Command  : Remove_Elements_Cmd;
@@ -679,7 +686,7 @@ package body Codefix.Formal_Errors is
 
             end;
 
-         when Cat_Function | Cat_Procedure =>
+         when Cat_Function | Cat_Procedure | Cat_Entry =>
             declare
                Delete_Command  : Remove_Entity_Cmd;
                Comment_Command : Remove_Entity_Cmd;
@@ -780,7 +787,8 @@ package body Codefix.Formal_Errors is
          when others =>
             Raise_Exception
               (Codefix_Panic'Identity,
-               "Wrong category given : " & Language_Category'Image (Category));
+               "Wrong category given : " &
+               Language_Category'Image (Actual_Category));
       end case;
 
       return Result;
