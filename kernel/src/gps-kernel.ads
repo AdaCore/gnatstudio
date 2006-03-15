@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -702,6 +702,7 @@ private
 
       Category_Name : GNAT.OS_Lib.String_Access := null;
       Message       : GNAT.OS_Lib.String_Access := null;
+      Revision      : GNAT.OS_Lib.String_Access := null;
       --  In the location window
 
       Start_Line : Integer;
