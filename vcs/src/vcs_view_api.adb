@@ -41,6 +41,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Log_Utils;                 use Log_Utils;
 with Projects.Registry;         use Projects.Registry;
+with Projects.Editor;           use Projects.Editor;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
@@ -54,6 +55,9 @@ with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 with VFS;                       use VFS;
+with Prj;
+
+with Namet;                     use Namet;
 
 package body VCS_View_API is
 
@@ -506,6 +510,7 @@ package body VCS_View_API is
             Add_Separator;
 
             Add_Action (Open, On_Menu_Open'Access);
+            Add_Action (History_Text, On_Menu_View_Log_Text'Access);
             Add_Action (History, On_Menu_View_Log'Access);
             Add_Action (History_Revision, On_Menu_View_Log_Rev'Access);
 
@@ -2353,9 +2358,103 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context)
    is
+      use Prj;
+
       pragma Unreferenced (Widget);
 
+      procedure Get_Log (VCS : VCS_Access; Filename : String);
+      --  Get log information for the file, handles tags & branches
+
+      -------------
+      -- Get_Log --
+      -------------
+
+      procedure Get_Log (VCS : VCS_Access; Filename : String) is
+
+         procedure Get_Log_For_Root (File : Virtual_File; Root : String);
+         --  Get the log for the file as found in one of the Root
+         --  subdirectories. This is to handle branches and tags stored in a
+         --  separate directory as done by Subversion.
+
+         ----------------------
+         -- Get_Log_For_Root --
+         ----------------------
+
+         procedure Get_Log_For_Root (File : Virtual_File; Root : String) is
+            Dir          : constant Virtual_File := Create (Root);
+            F_Dir        : constant String := Full_Name (Dir, True).all;
+--              B_Dir   : constant String := Base_Dir_Name (Dir);
+            F_File       : constant String := Full_Name (File, True).all;
+            Subdirs      : constant File_Array_Access := Read_Dir (Dir);
+            --  ??? what if Root is not a full pathname ?
+            F_Sep, D_Sep : Natural := 0;
+         begin
+            --  Works only if the branches/tags are sharing the same root as
+            --  trunk.
+
+            --  First look for the root parent directory
+
+            D_Sep := Root'Last - 1;
+
+            while D_Sep > F_Dir'First loop
+               D_Sep := D_Sep - 1;
+               exit when F_Dir (D_Sep) = Dir_Separator;
+            end loop;
+
+            if F_File'Length > D_Sep
+              and then F_File (F_File'First .. F_File'First + D_Sep - 1)
+              = F_Dir (F_Dir'First .. D_Sep)
+            then
+               --  Compute the index for the suffix
+               for K in F_File'First + D_Sep + 1 .. F_File'Last loop
+                  if F_File (K) = Dir_Separator then
+                     F_Sep := K;
+                     exit;
+                  end if;
+               end loop;
+
+               if F_Sep /= 0 then
+                  for K in Subdirs'Range loop
+                     declare
+                        Name   : constant String := Base_Name (Subdirs (K));
+                        R_File : constant Virtual_File :=
+                                   Create (Full_Name (Dir).all & Name &
+                                           F_File (F_Sep .. F_File'Last));
+                     begin
+                        if Is_Regular_File (R_File) then
+                           Log (VCS, R_File, "", As_Text => False);
+                        end if;
+                     end;
+                  end loop;
+               end if;
+            end if;
+         end Get_Log_For_Root;
+
+         File         : Virtual_File := Create (Full_Filename => Filename);
+         Project      : constant Project_Type :=
+                          Get_Project_From_File
+                            (Get_Registry (Get_Kernel (Context)).all, File);
+         Var_Branches : constant Variable_Value :=
+                          Get_Attribute_Value
+                            (Project, Vcs_Branches_Attribute);
+         Var_Tags     : constant Variable_Value :=
+                          Get_Attribute_Value
+                            (Project, Vcs_Tags_Attribute);
+      begin
+         Log (VCS, File, "", As_Text => False);
+
+         if Var_Branches.Kind = Single then
+            Get_Log_For_Root (File, Get_Name_String (Var_Branches.Value));
+         end if;
+
+         if Var_Tags.Kind = Single then
+            Get_Log_For_Root (File, Get_Name_String (Var_Tags.Value));
+         end if;
+      end Get_Log;
+
       Files : String_List.List;
+      VCS   : VCS_Access;
+
    begin
       Files := Get_Selected_Files (Context);
 
@@ -2366,19 +2465,53 @@ package body VCS_View_API is
          return;
       end if;
 
+      VCS := Get_Current_Ref (Context);
+
       while not String_List.Is_Empty (Files) loop
-         Log
-           (Get_Current_Ref (Context),
-            Create (Full_Filename => String_List.Head (Files)),
-            "");
+         Get_Log (VCS, String_List.Head (Files));
          String_List.Next (Files);
       end loop;
-
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_View_Log;
+
+   ---------------------------
+   -- On_Menu_View_Log_Text --
+   ---------------------------
+
+   procedure On_Menu_View_Log_Text
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+      Files : String_List.List;
+      VCS   : VCS_Access;
+   begin
+      Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot view log",
+            Mode => Error);
+         return;
+      end if;
+
+      VCS := Get_Current_Ref (Context);
+
+      while not String_List.Is_Empty (Files) loop
+         Log (VCS,
+              Create (Full_Filename => String_List.Head (Files)),
+              "",
+              As_Text => True);
+         String_List.Next (Files);
+      end loop;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_View_Log_Text;
 
    --------------------------
    -- On_Menu_View_Log_Rev --
