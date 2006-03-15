@@ -93,6 +93,7 @@ with Browsers.Call_Graph;
 with Browsers.Dependency_Items;
 with Browsers.Entities;
 with Browsers.Projects;
+with Browsers.Revisions;
 with Buffer_Views;
 with Builder_Module;
 with Call_Graph_Views;
@@ -147,6 +148,8 @@ procedure GPS.Main is
      Create ("MODULE.Project_Browser", On);
    Entities_Browser_Trace : constant Debug_Handle :=
      Create ("MODULE.Entities_Browser", On);
+   Revisions_Browser_Trace : constant Debug_Handle :=
+     Create ("MODULE.Revisions_Browser", On);
    Aliases_Trace : constant Debug_Handle := Create ("MODULE.Aliases", On);
    Project_Explorer_Trace : constant Debug_Handle :=
      Create ("MODULE.Project_Explorer", On);
@@ -525,8 +528,7 @@ procedure GPS.Main is
 
       declare
          Plug_Ins : constant String :=
-           File_Utils.Name_As_Directory (Dir.all) & "plug-ins";
-
+                      File_Utils.Name_As_Directory (Dir.all) & "plug-ins";
       begin
          User_Directory_Existed := Is_Directory (Dir.all);
 
@@ -971,7 +973,7 @@ procedure GPS.Main is
       --  Return False if set up was aborted and GPS should exit.
 
       procedure Load_Sources;
-      --  Load all the source files given on the command line.
+      --  Load all the source files given on the command line
 
       -----------------
       -- Setup_Debug --
@@ -993,7 +995,7 @@ procedure GPS.Main is
             Set_Status (Project, From_Executable);
          end if;
 
-         --  Project will be overriden when the executable is loaded.
+         --  Project will be overriden when the executable is loaded
          Load_Sources;
 
          if Debugger_Name /= null then
@@ -1100,7 +1102,7 @@ procedure GPS.Main is
             Splash := null;
          end if;
 
-         --  If the user wants to quit immediately, so be it.
+         --  If the user wants to quit immediately, so be it
 
          case Run_Welcome (Screen) is
             when Quit_GPS =>
@@ -1283,6 +1285,10 @@ procedure GPS.Main is
          Browsers.Entities.Register_Module (GPS_Main.Kernel);
       end if;
 
+      if Active (Revisions_Browser_Trace) then
+         Browsers.Revisions.Register_Module (GPS_Main.Kernel);
+      end if;
+
       if Active (Project_Viewer_Trace) then
          Project_Viewers.Register_Module (GPS_Main.Kernel);
       end if;
@@ -1361,7 +1367,7 @@ procedure GPS.Main is
          Docgen_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      --  Register the supported languages and their associated LI handlers.
+      --  Register the supported languages and their associated LI handlers
 
       Ada_Module.Register_Module (GPS_Main.Kernel);
 
