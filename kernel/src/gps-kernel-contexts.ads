@@ -42,7 +42,8 @@ package GPS.Kernel.Contexts is
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
-      Column            : Integer := 0);
+      Column            : Integer := 0;
+      Revision          : String := "");
    --  Set the information in this context.
    --  File_Name must be UTF8-encoded.
 
@@ -57,7 +58,7 @@ package GPS.Kernel.Contexts is
    function Has_File_Information
      (Context : Selection_Context) return Boolean;
    function File_Information
-     (Context  : Selection_Context) return VFS.Virtual_File;
+     (Context : Selection_Context) return VFS.Virtual_File;
    --  Return the information about the selected file. This is only relevant
    --  if Has_File_Information is True.
    --  This is the base file name for the file. This name is UTF8-encoded.
@@ -96,6 +97,13 @@ package GPS.Kernel.Contexts is
    --  Return the project that imports the one returned by Project_Information.
    --  This is never computed automatically, and unless provided by the creator
    --  of the project, this will be left empty.
+
+   function Has_Revision_Information
+     (Context : Selection_Context) return Boolean;
+   function Revision_Information
+     (Context : Selection_Context) return String;
+   --  Return the revision information associated with the file. The revision
+   --  is the number or tag used by the VCS to specify a uniq version of file.
 
    -----------
    -- Areas --
