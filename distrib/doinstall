@@ -113,6 +113,13 @@ install_binaries() {
   # copying junk files
 
   (cd $current_dir; tar cf - bin etc lib share) | tar xf -
+
+  if [ -d etc/pango ]; then
+    for f in etc/pango/*; do
+      sed -e "s^@PREFIX@^$basedir^g" < $f > $f.new
+      mv $f.new $f
+    done
+  fi
 }
 
 ##
