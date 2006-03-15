@@ -14930,7 +14930,7 @@ This file is used to store file-specific properties across GPS sessions. In
 particular, it contains the encoding to use for various files when the
 default encoding isn't appropriate.
 
-   @item $HOME/.gps/history
+   @item $HOME/.gps/histories.xml
 @cindex history
 Contains the state and history of combo boxes (e.g. the
 @code{Run->Custom...} dialog).
