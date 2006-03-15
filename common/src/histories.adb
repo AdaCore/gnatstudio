@@ -216,25 +216,15 @@ package body Histories is
                if Key.Attributes = null
                  or else Get_Attribute (Key, "type") = "strings"
                then
-                  if Key.Tag.all = "key" then
-                     Value := Create_New_Key_If_Necessary
-                       (Hist,
-                        History_Key (Get_Attribute (Key, "name")),
-                        Strings);
-                  else
-                     Value := Create_New_Key_If_Necessary
-                       (Hist, History_Key (Key.Tag.all), Strings);
-                  end if;
+                  Value := Create_New_Key_If_Necessary
+                    (Hist,
+                     History_Key (Get_Attribute (Key, "name")),
+                     Strings);
 
                elsif Get_Attribute (Key, "type") = "booleans" then
-                  if Key.Tag.all = "key" then
-                     Value := Create_New_Key_If_Necessary
-                       (Hist, History_Key (Get_Attribute (Key, "name")),
-                        Booleans);
-                  else
-                     Value := Create_New_Key_If_Necessary
-                       (Hist, History_Key (Key.Tag.all), Booleans);
-                  end if;
+                  Value := Create_New_Key_If_Necessary
+                    (Hist, History_Key (Get_Attribute (Key, "name")),
+                     Booleans);
 
                else
                   Value := null;
