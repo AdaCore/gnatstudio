@@ -930,9 +930,10 @@ package body VCS.Generic_VCS is
    ---------
 
    procedure Log
-     (Rep  : access Generic_VCS_Record;
-      File : VFS.Virtual_File;
-      Rev  : String)
+     (Rep     : access Generic_VCS_Record;
+      File    : VFS.Virtual_File;
+      Rev     : String;
+      As_Text : Boolean := True)
    is
       Args : GNAT.OS_Lib.String_List_Access;
 
@@ -943,8 +944,13 @@ package body VCS.Generic_VCS is
 
          Generic_Command (Rep, File, Args, History_Revision);
          GNAT.Strings.Free (Args);
+
       else
-         Generic_Command (Rep, File, Args, History);
+         if As_Text then
+            Generic_Command (Rep, File, Args, History_Text);
+         else
+            Generic_Command (Rep, File, Args, History);
+         end if;
       end if;
    end Log;
 
@@ -973,7 +979,7 @@ package body VCS.Generic_VCS is
       Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
 
       function Parse_Node (M : Node_Ptr) return Boolean;
-      --  Parse one node that contains VCS information.
+      --  Parse one node that contains VCS information
 
       ----------------
       -- Parse_Node --
@@ -990,10 +996,13 @@ package body VCS.Generic_VCS is
 
          function Parse_Status_Parser
            (N : Node_Ptr) return Status_Parser_Record;
-         --  ???
+         --  Parse and return a status matcher record
 
          function To_Natural (X : String) return Natural;
          --  Safe function to convert a string to a Natural.
+
+         function Parse_Regexp (N : Node_Ptr) return Pattern_Matcher_Access;
+         --  Parse and return a Pattern_Matcher
 
          ----------------
          -- To_Natural --
@@ -1015,8 +1024,31 @@ package body VCS.Generic_VCS is
          function Parse_Status_Parser
            (N : Node_Ptr) return Status_Parser_Record
          is
+            procedure Set_Field
+              (Parser : in out Status_Parser_Record;
+               Value  : String_Ptr;
+               Field  : in out Natural);
+            --  Set field with the value supplied in Value
+
+            ---------------
+            -- Set_Field --
+            ---------------
+
+            procedure Set_Field
+              (Parser : in out Status_Parser_Record;
+               Value  : String_Ptr;
+               Field  : in out Natural) is
+            begin
+               if Value /= null then
+                  Field := To_Natural (Value.all);
+                  Parser.Matches_Num := Natural'Max
+                    (Parser.Matches_Num, Field);
+               end if;
+            end Set_Field;
+
             Parser : Status_Parser_Record;
             M      : Node_Ptr;
+
          begin
             if N = null then
                return Parser;
@@ -1102,52 +1134,28 @@ package body VCS.Generic_VCS is
             end if;
 
             Field := Get_Field (N, "file_index");
-
-            if Field /= null then
-               Parser.File_Index := To_Natural (Field.all);
-               Parser.Matches_Num := Natural'Max
-                 (Parser.Matches_Num, Parser.File_Index);
-            end if;
+            Set_Field (Parser, Field, Parser.File_Index);
 
             Field := Get_Field (N, "status_index");
-
-            if Field /= null then
-               Parser.Status_Index := To_Natural (Field.all);
-               Parser.Matches_Num := Natural'Max
-                 (Parser.Matches_Num, Parser.Status_Index);
-            end if;
+            Set_Field (Parser, Field, Parser.Status_Index);
 
             Field := Get_Field (N, "local_revision_index");
-
-            if Field /= null then
-               Parser.Local_Rev_Index := To_Natural (Field.all);
-               Parser.Matches_Num := Natural'Max
-                 (Parser.Matches_Num, Parser.Local_Rev_Index);
-            end if;
+            Set_Field (Parser, Field, Parser.Local_Rev_Index);
 
             Field := Get_Field (N, "repository_revision_index");
-
-            if Field /= null then
-               Parser.Repository_Rev_Index := To_Natural (Field.all);
-               Parser.Matches_Num := Natural'Max
-                 (Parser.Matches_Num, Parser.Repository_Rev_Index);
-            end if;
+            Set_Field (Parser, Field, Parser.Repository_Rev_Index);
 
             Field := Get_Field (N, "author_index");
-
-            if Field /= null then
-               Parser.Author_Index := To_Natural (Field.all);
-               Parser.Matches_Num := Natural'Max
-                 (Parser.Matches_Num, Parser.Author_Index);
-            end if;
+            Set_Field (Parser, Field, Parser.Author_Index);
 
             Field := Get_Field (N, "date_index");
+            Set_Field (Parser, Field, Parser.Date_Index);
 
-            if Field /= null then
-               Parser.Date_Index := To_Natural (Field.all);
-               Parser.Matches_Num := Natural'Max
-                 (Parser.Matches_Num, Parser.Date_Index);
-            end if;
+            Field := Get_Field (N, "log_index");
+            Set_Field (Parser, Field, Parser.Log_Index);
+
+            Field := Get_Field (N, "sym_index");
+            Set_Field (Parser, Field, Parser.Sym_Index);
 
             Field := Get_Field (N, "tooltip_pattern");
 
@@ -1172,6 +1180,30 @@ package body VCS.Generic_VCS is
 
             return Parser;
          end Parse_Status_Parser;
+
+         ------------------
+         -- Parse_Regexp --
+         ------------------
+
+         function Parse_Regexp (N : Node_Ptr) return Pattern_Matcher_Access is
+         begin
+            if N = null then
+               return null;
+            end if;
+
+            declare
+               Regexp : constant String := Get_Attribute (N, "regexp", "");
+            begin
+               if Regexp = "" then
+                  Insert
+                    (Kernel,
+                     -"No regexp specified for " & N.Tag.all);
+                  return null;
+               else
+                  return new Pattern_Matcher'(Compile (Regexp));
+               end if;
+            end;
+         end Parse_Regexp;
 
       begin
          if Name = "" then
@@ -1260,6 +1292,18 @@ package body VCS.Generic_VCS is
 
          Ref.Annotations_Parser := Parse_Status_Parser
            (Find_Tag (Child, "annotations_parser"));
+
+         Ref.Log_Parser := Parse_Status_Parser
+           (Find_Tag (Child, "log_parser"));
+
+         Ref.Revision_Parser := Parse_Status_Parser
+           (Find_Tag (Child, "revision_parser"));
+
+         Ref.Parent_Revision_Regexp := Parse_Regexp
+           (Find_Tag (Child, "parent_revision"));
+
+         Ref.Branch_Root_Revision_Regexp := Parse_Regexp
+           (Find_Tag (Child, "branch_root_revision"));
 
          Register_VCS (Module_ID (VCS_Module_ID), Name);
 
@@ -1483,7 +1527,7 @@ package body VCS.Generic_VCS is
       File : VFS.Virtual_File;
       Text : String)
    is
-      Kernel  : Kernel_Handle renames Rep.Kernel;
+      Kernel : Kernel_Handle renames Rep.Kernel;
 
       function Build_Text_Info (Rev, Author, Date : String) return String;
       --  Returns the text information
@@ -1649,6 +1693,189 @@ package body VCS.Generic_VCS is
             new Line_Information_Array'(A));
       end;
    end Parse_Annotations;
+
+   ---------------
+   -- Parse_Log --
+   ---------------
+
+   procedure Parse_Log
+     (Rep  : access Generic_VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String)
+   is
+      use Ada.Strings.Unbounded;
+
+      Kernel : Kernel_Handle renames Rep.Kernel;
+      Script : Scripting_Language;
+
+      function Parse
+        (Rev : String; Regexp : Pattern_Matcher_Access)
+         return Unbounded_String;
+      --  Parse Rev using Regexp and return the first match
+
+      procedure Create_Link (P_Rev, Rev : String);
+      --  Create a link between P_Rev and Rev in the revision browser
+
+      -----------------
+      -- Create_Link --
+      -----------------
+
+      procedure Create_Link (P_Rev, Rev : String) is
+         Command : Custom_Command_Access;
+      begin
+         Create
+           (Command, -"add link", Kernel,
+            "Revision.add_link " & Full_Name (File).all &
+            " """ & P_Rev & """ """ & Rev & """", Script);
+
+         Launch_Background_Command
+           (Kernel, Command_Access (Command), True, False, "");
+      end Create_Link;
+
+      -----------
+      -- Parse --
+      -----------
+
+      function Parse
+        (Rev : String; Regexp : Pattern_Matcher_Access)
+         return Unbounded_String
+      is
+         Result  : Unbounded_String;
+         Matches : Match_Array (0 .. 1);
+      begin
+         if Regexp /= null then
+            Match (Regexp.all, Rev, Matches);
+
+            if Matches (0) /= No_Match then
+               Result := To_Unbounded_String
+                 (Rev (Matches (1).First .. Matches (1).Last));
+            end if;
+         end if;
+
+         return Result;
+      end Parse;
+
+      Parser   : constant Status_Parser_Record := Rep.Log_Parser;
+      S        : String renames Text;
+      Matches  : Match_Array (0 .. Parser.Matches_Num);
+      Start    : Integer := S'First;
+      Parent   : Unbounded_String;
+      Branch   : Unbounded_String;
+      P_Branch : Unbounded_String;
+      P_Rev    : Unbounded_String;
+   begin
+      if Parser.Regexp = null then
+         Insert (Rep.Kernel,
+                 -"Error: no log parser defined for " & Rep.Id.all);
+      end if;
+
+      Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+
+      loop
+         Match (Parser.Regexp.all, S, Matches, Start, S'Last);
+
+         exit when Matches (0) = No_Match;
+
+         declare
+            Command : Custom_Command_Access;
+            Rev     : constant String :=
+                        S (Matches (Parser.Repository_Rev_Index).First
+                           .. Matches (Parser.Repository_Rev_Index).Last);
+            Author  : constant String :=
+                        S (Matches (Parser.Author_Index).First
+                           .. Matches (Parser.Author_Index).Last);
+            Date    : constant String :=
+                        S (Matches (Parser.Date_Index).First
+                           .. Matches (Parser.Date_Index).Last);
+            Log     : constant String :=
+                        S (Matches (Parser.Log_Index).First
+                           .. Matches (Parser.Log_Index).Last);
+         begin
+            Create
+              (Command, -"add log", Kernel,
+               "Revision.add_log " & Full_Name (File).all &
+               " """ & Rev & """ """ & Author & """ """ &
+               Date & """ """ & Log & """",
+               Script);
+
+            Launch_Background_Command
+              (Kernel, Command_Access (Command), True, False, "");
+
+            Branch := Parse (Rev, Rep.Branch_Root_Revision_Regexp);
+
+            Parent := Parse (Rev, Rep.Parent_Revision_Regexp);
+
+            --  Set previous depending on the branch information
+
+            if Parent /= Null_Unbounded_String
+              and then Branch /= Null_Unbounded_String
+              and then P_Branch /= Branch
+            then
+               --  This node is a new branch, link to the corresponding parent
+               Create_Link (Rev, To_String (Parent));
+
+            elsif P_Rev /= Null_Unbounded_String then
+               Create_Link (To_String (P_Rev), Rev);
+            end if;
+
+            P_Rev    := To_Unbounded_String (Rev);
+            P_Branch := Branch;
+         end;
+
+         Start := Matches (0).Last + 1;
+      end loop;
+   end Parse_Log;
+
+   --------------------
+   -- Parse_Revision --
+   --------------------
+
+   procedure Parse_Revision
+     (Rep  : access Generic_VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String)
+   is
+      Kernel  : Kernel_Handle renames Rep.Kernel;
+      Parser  : constant Status_Parser_Record := Rep.Revision_Parser;
+      S       : String renames Text;
+      Matches : Match_Array (0 .. Parser.Matches_Num);
+      Script  : Scripting_Language;
+      Start   : Integer := S'First;
+   begin
+      if Parser.Regexp = null then
+         Insert (Rep.Kernel,
+                 -"Error: no revision parser defined for " & Rep.Id.all);
+      end if;
+
+      Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+
+      loop
+         Match (Parser.Regexp.all, S, Matches, Start, S'Last);
+
+         exit when Matches (0) = No_Match;
+
+         declare
+            Command : Custom_Command_Access;
+            Rev     : constant String :=
+                        S (Matches (Parser.Repository_Rev_Index).First
+                           .. Matches (Parser.Repository_Rev_Index).Last);
+            Sym     : constant String :=
+                        S (Matches (Parser.Sym_Index).First
+                           .. Matches (Parser.Sym_Index).Last);
+         begin
+            Create
+              (Command, -"add revision", Kernel,
+               "Revision.add_revision " & Full_Name (File).all &
+               " """ & Rev & """ """ & Sym & """",
+               Script);
+
+            Launch_Background_Command
+              (Rep.Kernel, Command_Access (Command), True, False, "");
+         end;
+
+         Start := Matches (0).Last + 1;
+      end loop;
+   end Parse_Revision;
 
    ----------------------------
    -- Get_Identified_Actions --
