@@ -1377,7 +1377,7 @@ package body Codefix.Errors_Parser is
       This.Matcher :=
         (new Pattern_Matcher'
            (Compile ("(procedure|variable|constant|parameter|type|literal|" &
-                     "named number) ""([\w]+)"" is not referenced")),
+                     "named number|) ""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
            (Compile ("(function) ""(""?[^""]+""?)"" is not referenced")));
    end Initialize;
@@ -1426,6 +1426,11 @@ package body Codefix.Errors_Parser is
          Operation_Mask := Add_Pragma_Unreferenced;
       elsif First_Word = "type" then
          Category := Cat_Type;
+         Operation_Mask := Policy_To_Operations
+           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
+           or Add_Pragma_Unreferenced;
+      elsif First_Word = "" then
+         Category := Cat_Unknown;
          Operation_Mask := Policy_To_Operations
            (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
            or Add_Pragma_Unreferenced;
