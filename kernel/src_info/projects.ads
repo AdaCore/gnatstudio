@@ -285,6 +285,8 @@ package Projects is
    Vcs_Log_Check              : constant Attribute_Pkg;
    Obj_Dir_Attribute          : constant Attribute_Pkg;
    Vcs_Kind_Attribute         : constant Attribute_Pkg;
+   Vcs_Branches_Attribute     : constant Attribute_Pkg;
+   Vcs_Tags_Attribute         : constant Attribute_Pkg;
    Global_Pragmas_Attribute   : constant Attribute_Pkg;
    Local_Pragmas_Attribute    : constant Attribute_Pkg;
    Locally_Removed_Files_Attribute : constant Attribute_Pkg;
@@ -505,8 +507,7 @@ package Projects is
    --  Set the value of the external variable. You need to call Recompute_View
    --  to refresh the project
 
-   function External_Default (Var : Scenario_Variable)
-      return String;
+   function External_Default (Var : Scenario_Variable) return String;
    --  Return the default value for the external variable, computed for the
    --  current view of the project.
 
@@ -700,54 +701,60 @@ private
    Source_Dirs_Attribute      : constant Attribute_Pkg := "source_dirs";
    Source_Files_Attribute     : constant Attribute_Pkg := "source_files";
    Locally_Removed_Files_Attribute : constant Attribute_Pkg :=
-     "locally_removed_files";
+                                       "locally_removed_files";
    Gnatlist_Attribute         : constant Attribute_Pkg := "ide#gnatlist";
    Compiler_Command_Attribute : constant Attribute_Pkg :=
-     "ide#compiler_command";
+                                  "ide#compiler_command";
    Debugger_Command_Attribute : constant Attribute_Pkg :=
-     "ide#debugger_command";
+                                  "ide#debugger_command";
    Remote_Host_Attribute     : constant Attribute_Pkg := "ide#remote_host";
    Program_Host_Attribute    : constant Attribute_Pkg := "ide#program_host";
    Protocol_Attribute        : constant Attribute_Pkg :=
-     "ide#communication_protocol";
+                                 "ide#communication_protocol";
    Main_Attribute            : constant Attribute_Pkg := "main";
    Vcs_File_Check            : constant Attribute_Pkg := "ide#vcs_file_check";
    Vcs_Log_Check             : constant Attribute_Pkg := "ide#vcs_log_check";
    Obj_Dir_Attribute         : constant Attribute_Pkg := "object_dir";
    Vcs_Kind_Attribute        : constant Attribute_Pkg := "ide#vcs_kind";
+   Vcs_Branches_Attribute    : constant Attribute_Pkg :=
+                                 "ide#vcs_branches_root";
+   Vcs_Tags_Attribute        : constant Attribute_Pkg :=
+                                 "ide#vcs_tags_root";
    Global_Pragmas_Attribute  : constant Attribute_Pkg :=
-     "builder#global_configuration_pragmas";
+                                 "builder#global_configuration_pragmas";
    Local_Pragmas_Attribute   : constant Attribute_Pkg :=
-     "compiler#local_configuration_pragmas";
+                                 "compiler#local_configuration_pragmas";
    Builder_Default_Switches_Attribute : constant Attribute_Pkg :=
-     "builder#default_switches";
+                                          "builder#default_switches";
    Compiler_Default_Switches_Attribute : constant Attribute_Pkg :=
-     "compiler#default_switches";
+                                           "compiler#default_switches";
    Linker_Default_Switches_Attribute : constant Attribute_Pkg :=
-     "linker#default_switches";
+                                         "linker#default_switches";
    Binder_Default_Switches_Attribute   : constant Attribute_Pkg :=
-     "binder#default_switches";
+                                           "binder#default_switches";
    Executable_Attribute       : constant Attribute_Pkg :=
-     "builder#executable";
+                                  "builder#executable";
 
    --  Naming package
    Casing_Attribute           : constant Attribute_Pkg := "naming#casing";
    Specification_Suffix_Attribute : constant Attribute_Pkg :=
-     "naming#specification_suffix";    --  Specific to Ada
+                                      "naming#specification_suffix";
+   --  Specific to Ada
    Implementation_Suffix_Attribute : constant Attribute_Pkg :=
-     "naming#implementation_suffix";   --  Specific to Ada
+                                       "naming#implementation_suffix";
+   --  Specific to Ada
    Separate_Suffix_Attribute  : constant Attribute_Pkg :=
-     "naming#separate_suffix";
+                                  "naming#separate_suffix";
    Spec_Suffix_Attribute      : constant Attribute_Pkg := "naming#spec_suffix";
    Impl_Suffix_Attribute      : constant Attribute_Pkg := "naming#body_suffix";
    Dot_Replacement_Attribute  : constant Attribute_Pkg :=
-     "naming#dot_replacement";
+                                  "naming#dot_replacement";
    Specification_Attribute    : constant Attribute_Pkg := "naming#spec";
    Implementation_Attribute   : constant Attribute_Pkg := "naming#body";
    Spec_Exception_Attribute   : constant Attribute_Pkg :=
-     "naming#specification_exceptions";
+                                  "naming#specification_exceptions";
    Impl_Exception_Attribute   : constant Attribute_Pkg :=
-     "naming#implementation_exceptions";
+                                  "naming#implementation_exceptions";
 
    --  The following attributes should be read through specialized subprograms
    --  (Get_Languages,...)
