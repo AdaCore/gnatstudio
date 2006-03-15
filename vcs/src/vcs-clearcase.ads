@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -107,9 +107,10 @@ package VCS.ClearCase is
       File : VFS.Virtual_File);
 
    procedure Log
-     (Rep  : access ClearCase_Record;
-      File : VFS.Virtual_File;
-      Rev  : String);
+     (Rep     : access ClearCase_Record;
+      File    : VFS.Virtual_File;
+      Rev     : String;
+      As_Text : Boolean := True);
 
    procedure Annotate
      (Rep  : access ClearCase_Record;
