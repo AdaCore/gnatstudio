@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
@@ -863,6 +863,7 @@ package body GPS.Kernel is
       Free (Data.Entity_Name);
       Unref (Data.Entity);
       Free (Data.Activity_Id);
+      Free (Data.Revision);
 
       if Data.Instances /= null then
          List := Instance_List (Data.Instances.all);
