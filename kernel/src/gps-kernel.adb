@@ -250,7 +250,7 @@ package body GPS.Kernel is
       On_Preferences_Changed (Handle);
 
       Handle.History := new History_Record;
-      Load (Handle.History.all, Handle.Home_Dir.all & "history");
+      Load (Handle.History.all, Handle.Home_Dir.all & "histories.xml");
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
       GPS.Kernel.Scripts.Initialize (Handle);
@@ -779,7 +779,7 @@ package body GPS.Kernel is
    exception
       when E : others =>
          Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Message (E));
+                "Unexpected exception: " & Exception_Information (E));
    end Finalize;
 
    ------------
@@ -794,7 +794,7 @@ package body GPS.Kernel is
    exception
       when E : others =>
          Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Message (E));
+                "Unexpected exception: " & Exception_Information (E));
    end Adjust;
 
    ----------------
@@ -1279,7 +1279,7 @@ package body GPS.Kernel is
       Save_Persistent_Properties (Handle);
       Reset_Properties (Handle);
 
-      Save (Handle.History.all, Handle.Home_Dir.all & "history");
+      Save (Handle.History.all, Handle.Home_Dir.all & "histories.xml");
       Free (Handle.History.all);
       Unchecked_Free (Handle.History);
 
