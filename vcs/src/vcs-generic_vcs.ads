@@ -110,9 +110,10 @@ package VCS.Generic_VCS is
       File : VFS.Virtual_File);
 
    procedure Log
-     (Rep  : access Generic_VCS_Record;
-      File : VFS.Virtual_File;
-      Rev  : String);
+     (Rep     : access Generic_VCS_Record;
+      File    : VFS.Virtual_File;
+      Rev     : String;
+      As_Text : Boolean := True);
 
    procedure Annotate
      (Rep  : access Generic_VCS_Record;
@@ -126,6 +127,16 @@ package VCS.Generic_VCS is
       Dir        : String);
 
    procedure Parse_Annotations
+     (Rep  : access Generic_VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String);
+
+   procedure Parse_Log
+     (Rep  : access Generic_VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String);
+
+   procedure Parse_Revision
      (Rep  : access Generic_VCS_Record;
       File : VFS.Virtual_File;
       Text : String);
@@ -167,6 +178,8 @@ private
       Repository_Rev_Index : Natural := 0;
       Author_Index         : Natural := 0;
       Date_Index           : Natural := 0;
+      Log_Index            : Natural := 0;
+      Sym_Index            : Natural := 0;
       Pattern              : String_Access;
    end record;
 
@@ -175,16 +188,20 @@ private
       Commands : Action_Array;
       Labels   : Action_Array;
 
-      Current_Query_Files : String_List_Utils.String_List.List;
+      Current_Query_Files         : String_List_Utils.String_List.List;
       --  The files transmitted to the current "query status" command.
       --  It is only needed to store these when the status parser for the
       --  current query cannot locate files (ie File_Index = 0).
 
-      Status              : Status_Array_Access;
+      Status                      : Status_Array_Access;
 
-      Status_Parser       : Status_Parser_Record;
-      Local_Status_Parser : Status_Parser_Record;
-      Annotations_Parser  : Status_Parser_Record;
+      Status_Parser               : Status_Parser_Record;
+      Local_Status_Parser         : Status_Parser_Record;
+      Annotations_Parser          : Status_Parser_Record;
+      Log_Parser                  : Status_Parser_Record;
+      Revision_Parser             : Status_Parser_Record;
+      Parent_Revision_Regexp      : Pattern_Matcher_Access;
+      Branch_Root_Revision_Regexp : Pattern_Matcher_Access;
    end record;
 
 end VCS.Generic_VCS;
