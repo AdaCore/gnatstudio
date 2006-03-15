@@ -60,14 +60,16 @@ package VFS is
    --  The latter can be found, for source files, through the functions in
    --  projects-registry.ads.
 
-   function Create (Host          : UTF8_String;
-                    Full_Filename : UTF8_String) return Virtual_File;
+   function Create
+     (Host          : UTF8_String;
+      Full_Filename : UTF8_String) return Virtual_File;
    --  Return a file, given its full filename and host name.
    --  The latter can be found, for source files, through the functions in
    --  projects-registry.ads.
 
-   function Create_From_Dir (Dir : Virtual_File;
-                             Base_Name : UTF8_String) return Virtual_File;
+   function Create_From_Dir
+     (Dir       : Virtual_File;
+      Base_Name : UTF8_String) return Virtual_File;
    --  Creates a file from its directory and base name.
 
    function Create_From_Base (Base_Name : UTF8_String) return Virtual_File;
@@ -185,8 +187,8 @@ package VFS is
    function Get_Root (File : Virtual_File) return Virtual_File;
    --  returns root directory of the file
 
-   function Sub_Dir (Dir : Virtual_File; Name : UTF8_String)
-                     return Virtual_File;
+   function Sub_Dir
+     (Dir : Virtual_File; Name : UTF8_String) return Virtual_File;
    --  returns sub directory Name if it exists, else No_File is returned.
 
    procedure Change_Dir (Dir : Virtual_File);

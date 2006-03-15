@@ -181,8 +181,9 @@ package body VFS is
    -- Create_From_Dir --
    ---------------------
 
-   function Create_From_Dir (Dir : Virtual_File;
-                             Base_Name : UTF8_String) return Virtual_File is
+   function Create_From_Dir
+     (Dir : Virtual_File;
+      Base_Name : UTF8_String) return Virtual_File is
    begin
       Ensure_Directory (Dir);
       if Is_Local (Dir) then
@@ -1191,7 +1192,8 @@ package body VFS is
       Ensure_Normalized (Child);
 
       if Parent.Value.Normalized_Full'Length >
-        Child.Value.Normalized_Full'Length then
+        Child.Value.Normalized_Full'Length
+      then
          return False;
       end if;
 
@@ -1210,10 +1212,12 @@ package body VFS is
             end if;
          end loop;
          return True;
+
       else
-         return Is_Subtree (Get_Filesystem (Parent.Value.Server.all),
-                            Parent.Value.Normalized_Full.all,
-                            Child.Value.Normalized_Full.all);
+         return Is_Subtree
+           (Get_Filesystem (Parent.Value.Server.all),
+            Parent.Value.Normalized_Full.all,
+            Child.Value.Normalized_Full.all);
       end if;
    end Is_Parent;
 
