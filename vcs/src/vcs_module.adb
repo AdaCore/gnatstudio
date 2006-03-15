@@ -116,6 +116,16 @@ package body VCS_Module is
       Command : String);
    --  Handler for the command "VCS.annotations_parse"
 
+   procedure Log_Parse_Handler
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+      Command : String);
+   --  Handler for the command "VCS.log_parse"
+
+   procedure Revision_Parse_Handler
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+      Command : String);
+   --  Handler for the command "VCS.revision_parse"
+
    procedure VCS_Command_Handler_No_Param
      (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
@@ -508,6 +518,20 @@ package body VCS_Module is
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => Annotations_Parse_Handler'Access);
+      Register_Command
+        (Kernel, "log_parse",
+         Minimum_Args  => 3,
+         Maximum_Args  => 3,
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler       => Log_Parse_Handler'Access);
+      Register_Command
+        (Kernel, "revision_parse",
+         Minimum_Args  => 3,
+         Maximum_Args  => 3,
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler       => Revision_Parse_Handler'Access);
 
       --  Register the main VCS menu and the VCS actions
 
@@ -811,6 +835,10 @@ package body VCS_Module is
       end if;
 
       Parse_Status (Ref, S, Local, Clear_Logs, Dir);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Status_Parse_Handler;
 
    -------------------------------
@@ -839,7 +867,75 @@ package body VCS_Module is
       end if;
 
       Parse_Annotations (Ref, File, S);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Annotations_Parse_Handler;
+
+   -----------------------
+   -- Log_Parse_Handler --
+   -----------------------
+
+   procedure Log_Parse_Handler
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Ref    : VCS_Access;
+      VCS_Identifier : constant String := Nth_Arg (Data, 1);
+      File           : constant VFS.Virtual_File :=
+                         Create (Nth_Arg (Data, 2), Kernel);
+      S              : constant String := Nth_Arg (Data, 3);
+   begin
+      Ref := Get_VCS_From_Id (VCS_Identifier);
+
+      if Ref = null then
+         Insert (Kernel,
+                 -"Could not find registered VCS corresponding to identifier: "
+                 & VCS_Identifier);
+         return;
+      end if;
+
+      Parse_Log (Ref, File, S);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Log_Parse_Handler;
+
+   ----------------------------
+   -- Revision_Parse_Handler --
+   ----------------------------
+
+   procedure Revision_Parse_Handler
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Ref    : VCS_Access;
+      VCS_Identifier : constant String := Nth_Arg (Data, 1);
+      File           : constant VFS.Virtual_File :=
+                         Create (Nth_Arg (Data, 2), Kernel);
+      S              : constant String := Nth_Arg (Data, 3);
+   begin
+      Ref := Get_VCS_From_Id (VCS_Identifier);
+
+      if Ref = null then
+         Insert (Kernel,
+                 -"Could not find registered VCS corresponding to identifier: "
+                 & VCS_Identifier);
+         return;
+      end if;
+
+      Parse_Revision (Ref, File, S);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Revision_Parse_Handler;
 
    --------------------
    -- File_Edited_Cb --
