@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -316,11 +316,12 @@ package body VCS.Unknown_VCS is
    ---------
 
    procedure Log
-     (Rep  : access Unknown_VCS_Record;
-      File : VFS.Virtual_File;
-      Rev  : String)
+     (Rep     : access Unknown_VCS_Record;
+      File    : VFS.Virtual_File;
+      Rev     : String;
+      As_Text : Boolean := True)
    is
-      pragma Unreferenced (Rep, Rev);
+      pragma Unreferenced (Rep, Rev, As_Text);
    begin
       Error (Full_Name (File).all);
    end Log;
