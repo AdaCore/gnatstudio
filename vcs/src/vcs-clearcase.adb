@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1651,16 +1651,18 @@ package body VCS.ClearCase is
    ---------
 
    procedure Log
-     (Rep  : access ClearCase_Record;
-      File : Virtual_File;
-      Rev  : String)
+     (Rep     : access ClearCase_Record;
+      File    : Virtual_File;
+      Rev     : String;
+      As_Text : Boolean := True)
    is
+      pragma Unreferenced (Rev, As_Text);
+      --  ??? Should implement handling of specific revision
+
       C            : External_Command_Access;
       Command_Head : List;
       Args         : List;
 
-      pragma Unreferenced (Rev);
-      --  ??? Should implement handling of specific revision
    begin
       Append (Args, "lshistory");
       Append (Args, Full_Name (File).all);
@@ -1775,7 +1777,8 @@ package body VCS.ClearCase is
          Update             => new String'(-"Update"),
          Resolved           => null,
          Commit             => new String'(-"Commit"),
-         History            => new String'(-"View revision history"),
+         History_Text       => new String'(-"View revision history"),
+         History            => null,
          History_Revision   => null,
          Annotate           => new String'(-"Annotate"),
          Diff_Head          => new String'(-"Diff against head rev."),
