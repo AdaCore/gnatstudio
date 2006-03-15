@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -254,6 +254,34 @@ package body VCS is
    begin
       null;
    end Parse_Annotations;
+
+   ---------------
+   -- Parse_Log --
+   ---------------
+
+   procedure Parse_Log
+     (Rep  : access VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String)
+   is
+      pragma Unreferenced (Rep, File, Text);
+   begin
+      null;
+   end Parse_Log;
+
+   --------------------
+   -- Parse_Revision --
+   --------------------
+
+   procedure Parse_Revision
+     (Rep  : access VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String)
+   is
+      pragma Unreferenced (Rep, File, Text);
+   begin
+      null;
+   end Parse_Revision;
 
    ----------------------------
    -- Get_Identified_Actions --
