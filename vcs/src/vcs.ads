@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -58,6 +58,7 @@ package VCS is
       Resolved,           --  Change file status after conflict resolution
       Commit,             --  Commits one or more files
       History,            --  Get the entire revision history for one file
+      History_Text,       --  As above but result as plain text information
       History_Revision,   --  Get the revision history for specified revision
       Annotate,           --  Get the annotations for one file
       Diff_Patch,         --  Diff current gainst head for building patch file
@@ -323,9 +324,10 @@ package VCS is
    --  Compare base against head revision of File
 
    procedure Log
-     (Rep  : access VCS_Record;
-      File : VFS.Virtual_File;
-      Rev  : String) is abstract;
+     (Rep     : access VCS_Record;
+      File    : VFS.Virtual_File;
+      Rev     : String;
+      As_Text : Boolean := True) is abstract;
    --  Display the changelog for the corresponding file.
    --  Rev is the requested revision. If Rev is empty, return the log for all
    --  revisions on the current branch.
@@ -374,6 +376,19 @@ package VCS is
       File : VFS.Virtual_File;
       Text : String);
    --  Parse the annotations and fill the editor if needed
+
+   procedure Parse_Log
+     (Rep  : access VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String);
+   --  Parse the log and fill the Revision Browser if needed
+
+   procedure Parse_Revision
+     (Rep  : access VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String);
+   --  Parse the log to retreive the revision tag and branches information and
+   --  fill the Revision Browser if needed.
 
    function Get_Identified_Actions
      (Rep : access VCS_Record) return Action_Array;
