@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                      Copyright (C) 2001-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -134,6 +134,7 @@ package GPS.Kernel.Modules is
    Project_Editor_Module_Name     : constant String := "Project_Editor";
    Dependency_Browser_Module_Name : constant String := "Dependency_Browser";
    Project_Browser_Module_Name    : constant String := "Project_Browser";
+   Revision_Browser_Module_Name   : constant String := "Revision_Browser";
    --  Names for the internal modules
 
    ------------------
