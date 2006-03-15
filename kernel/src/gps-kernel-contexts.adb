@@ -174,7 +174,8 @@ package body GPS.Kernel.Contexts is
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
-      Column            : Integer := 0) is
+      Column            : Integer := 0;
+      Revision          : String := "") is
    begin
       Context.Data.Data.File                     := File;
       Context.Data.Data.Line                     := Line;
@@ -182,6 +183,7 @@ package body GPS.Kernel.Contexts is
       Context.Data.Data.Creator_Provided_Project := Project /= No_Project;
       Context.Data.Data.Project                  := Project;
       Context.Data.Data.Importing_Project        := Importing_Project;
+      Context.Data.Data.Revision                 := new String'(Revision);
    end Set_File_Information;
 
    -----------------------------
@@ -274,6 +276,27 @@ package body GPS.Kernel.Contexts is
 
       return Context.Data.Data.File;
    end File_Information;
+
+   ------------------------------
+   -- Has_Revision_Information --
+   ------------------------------
+
+   function Has_Revision_Information
+     (Context : Selection_Context) return Boolean is
+   begin
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Revision /= null;
+   end Has_Revision_Information;
+
+   --------------------------
+   -- Revision_Information --
+   --------------------------
+
+   function Revision_Information
+     (Context : Selection_Context) return String is
+   begin
+      return Context.Data.Data.Revision.all;
+   end Revision_Information;
 
    ---------------------------------------
    -- Has_Importing_Project_Information --
