@@ -176,6 +176,8 @@ Version Control System
 * The VCS Activities::
 * The VCS Menu::
 * The Version Control Contextual Menu::
+* Working with global ChangeLog file::
+* The Revision Browser::
 
 Tools
 * The Tools Menu::
@@ -4409,7 +4411,7 @@ adding dependencies@dots{}
 
 @iftex
 @cindex screen shot
-@image{project-browser, 12.7cm}
+@image{project-browser, 10cm}
 @end iftex
 
 @ifhtml
@@ -6576,6 +6578,7 @@ debugger console, or automatically every time the debugger stops through the
 * The VCS Menu::
 * The Version Control Contextual Menu::
 * Working with global ChangeLog file::
+* The Revision Browser::
 @end menu
 
 GPS offers the possibility for multiple developers to work on the same project,
@@ -6935,6 +6938,7 @@ For a description of the other entries in the VCS menu, see
 
 @node The Version Control Contextual Menu
 @section The Version Control Contextual Menu
+
 @noindent
 This section describes the version control contextual menu displayed when you
 right-click on an entity (e.g. a file, a directory, a project) from various
@@ -7209,6 +7213,44 @@ This @file{ChangeLog} file serve as a repository for revision logs,
 when ready to check-in a file use the standard @b{Edit revision log}
 menu command. This will open the standard revision log buffer with the
 content filled from the global @file{ChangeLog} file.
+
+@node The Revision Browser
+@section The Revision Browser
+
+@noindent
+The revision browser is used to display a revision tree for given
+file. Each node contains information for a specific revision of the
+file. 
+
+@iftex
+@cindex screen shot
+@image{revision-browser, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{revision-browser}
+@end ifhtml
+
+@table @b
+
+@item the filename
+
+@item the revision number
+It is possible to look at the log for each revision by clicking on the
+revision number link.
+
+@item date
+The check-in date for this revision.
+
+@item author
+The author of this revision.
+
+@item tags and branches
+A list of all tags and branches corresponding to this revision are
+listed at the end.
+
+@end table
 
 @c --------------------------------------------------------------------
 @node Tools
@@ -14227,6 +14269,7 @@ reference for implementing new custom VCS interfaces.
 @menu
 * The VCS node::
 * Associating actions to operations::
+* Defining revision information::
 * Defining status::
 * Output parsers::
 @end menu
@@ -14324,6 +14367,40 @@ GPS wants to ask the VCS to perform OPERATION,
    @item NAME OF OPERATION
 is the name that will appear in the GPS menus when working on a file
 under the control of the defined VCS.
+@end table
+
+@node Defining revision information
+@subsubsection Defining revision information
+
+@noindent
+Some VCS reports revisions number from which it is possible to deduce
+the related branches. This is the case in CVS for example where a
+revision number for a branch use as prefix the branch point revision
+number. For such VCS it is possible to specify two regular
+expressions:
+
+@table @b
+
+@item @code{parent_revision}
+
+Parse the revision number and report as first match the parent revision.
+
+@smallexample
+  <parent_revision regexp="..." />
+@end smallexample
+
+For CVS on @b{1.2.4.5} it must match @b{1.2}.
+
+@item @code{branch_root_revision}
+
+Parse the revision number and report as first match the branch root
+revision.
+
+@smallexample
+  <branch_root_revision regexp="..." />
+@end smallexample
+
+For CVS on @b{1.2.4.5} it must match @b{1.2.4}.
 @end table
 
 @node Defining status
@@ -14427,6 +14504,54 @@ It can contain text and reference parenthesized expressions in
 expression in @code{regexp}).
 
 @end table
+
+  @item @code{<log_parser>}
+This parser is used by the command VCS.log_parse, to parse a string for
+revision histories in a file controlled by a VCS.
+
+It accepts the following child nodes:
+
+@table @b
+  @item @code{<regexp>} (mandatory)
+Indicates the regular expression to match.
+
+  @item @code{<repository_revision_index>} (mandatory)
+An index of a parenthesized expression in @code{regexp} that contains the
+repository revision of the log.
+
+  @item @code{<author_index>}
+An index of a parenthesized expression in @code{regexp} that contains the
+author of the log.
+
+  @item @code{<date_index>}
+An index of a parenthesized expression in @code{regexp} that contains the
+date of the log.
+
+  @item @code{<log_index>}
+An index of a parenthesized expression in @code{regexp} that contains the
+actual text of the log.
+@end table
+
+  @item @code{<revision_parser>}
+This parser is used by the command VCS.revision_parse, to parse a string for
+revision tags and branches in a file controlled by a VCS.
+
+It accepts the following child nodes:
+
+@table @b
+  @item @code{<regexp>} (mandatory)
+Indicates the regular expression to match.
+
+  @item @code{<sym_index>} (mandatory)
+An index of a parenthesized expression in @code{regexp} that contains the
+tags or branches symbolic name of the revision.
+
+  @item @code{<repository_revision_index>} (mandatory)
+An index of a parenthesized expression in @code{regexp} that contains the
+repository revision number of the revision.
+
+@end table
+
 @end table
 
 @node Implementing VCS actions
@@ -14502,11 +14627,19 @@ parameters:
   Commit/submit one directory with provided log. The log is passed in
   a file.
 
+@item history_text
+  @table @code
+    @item $1 = file
+  @end table
+  Query the entire changelog history for the specified file. The result
+  is expected to be placed into an editor as plain text.
+
 @item history
   @table @code
     @item $1 = file
   @end table
-  Query the entire changelog history for the specified file.
+  Query the entire changelog history for the specified file. The result
+  is expected to be placed into a Revision Browser.
 
 @item history_revision
   @table @code
