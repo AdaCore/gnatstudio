@@ -146,6 +146,10 @@ package body VCS_View.Explorer is
       Display        : Boolean := True;
       Displayed      : out Boolean);
 
+   procedure Remove_Empty_Root
+     (Explorer : access VCS_Explorer_View_Record'Class);
+   --  Removes root node with no children
+
    --------------------
    -- To_History_Key --
    --------------------
@@ -258,7 +262,49 @@ package body VCS_View.Explorer is
             Get_Next (Explorer.Hidden, Iter);
          end loop;
       end;
+
+      Remove_Empty_Root (Explorer);
    end Do_Refresh;
+
+   -----------------------
+   -- Remove_Empty_Root --
+   -----------------------
+
+   procedure Remove_Empty_Root
+     (Explorer : access VCS_Explorer_View_Record'Class)
+   is
+
+      procedure Check_Iter
+        (Iter : in out Gtk_Tree_Iter;
+         Root : Boolean;
+         Quit : in out Boolean);
+      --  Check if Iter is an empty node, remove it in this case
+
+      ----------------
+      -- Check_Iter --
+      ----------------
+
+      procedure Check_Iter
+        (Iter : in out Gtk_Tree_Iter;
+         Root : Boolean;
+         Quit : in out Boolean)
+      is
+         pragma Unreferenced (Root, Quit);
+      begin
+         if not Has_Child (Explorer.Model, Iter) then
+            Remove (Explorer.Model, Iter);
+         end if;
+      end Check_Iter;
+
+      ----------------------
+      -- Check_Root_Nodes --
+      ----------------------
+
+      procedure Check_Root_Nodes is new For_Every_Nodes (Check_Iter);
+
+   begin
+      Check_Root_Nodes (Explorer, Root_Only => True);
+   end Remove_Empty_Root;
 
    ------------------
    -- Match_Filter --
@@ -463,6 +509,8 @@ package body VCS_View.Explorer is
             Path_Free (Path);
          end;
       end if;
+
+      Remove_Empty_Root (Explorer);
    end Display_File_Status;
 
    procedure Display_File_Status
@@ -542,6 +590,8 @@ package body VCS_View.Explorer is
 
          Status_Temp := File_Status_List.Next (Status_Temp);
       end loop;
+
+      Remove_Empty_Root (Explorer);
 
       Thaw_Sort (Explorer.Model, Sort_Id);
       Pop_State (Kernel);
