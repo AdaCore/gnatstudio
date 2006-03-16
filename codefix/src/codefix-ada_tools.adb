@@ -112,7 +112,7 @@ package body Codefix.Ada_Tools is
          Seek_Node := Next (Seek_Node);
       end loop;
 
-      raise Codefix_Panic;
+      return Result;
    end Get_Use_Clauses;
 
    ----------------------
