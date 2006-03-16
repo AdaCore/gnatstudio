@@ -514,7 +514,7 @@ package body Builder_Module is
    procedure Parse_Compiler_Output
      (Data : Process_Data; Output : String)
    is
-      Last_EOL : Natural;
+      Last_EOL : Natural := 1;
    begin
       if not Data.Process_Died then
          Last_EOL := Index (Output, (1 => ASCII.LF), Backward);
@@ -526,11 +526,12 @@ package body Builder_Module is
             Ada.Strings.Unbounded.Append
               (Files_Callback_Data (Data.Callback_Data.all).Buffer,
                Output);
+
             return;
          end if;
       else
          if Output'Length > 0 then
-            Last_EOL := Output'Length;
+            Last_EOL := Output'Length + 1;
          end if;
       end if;
 
@@ -540,7 +541,7 @@ package body Builder_Module is
             Command => Data.Command,
             Output  => Ada.Strings.Unbounded.To_String
               (Files_Callback_Data (Data.Callback_Data.all).Buffer) &
-              Output (1 .. Last_EOL) & ASCII.LF,
+            Output (1 .. Last_EOL - 1) & ASCII.LF,
             Quiet   => False);
 
          Files_Callback_Data (Data.Callback_Data.all).Buffer :=
@@ -552,7 +553,7 @@ package body Builder_Module is
             Command => Data.Command,
             Output  => Ada.Strings.Unbounded.To_String
               (Files_Callback_Data (Data.Callback_Data.all).Buffer) &
-              ASCII.LF,
+            ASCII.LF,
             Quiet   => False);
 
          Files_Callback_Data (Data.Callback_Data.all).Buffer :=
@@ -1187,6 +1188,7 @@ package body Builder_Module is
          while Node /= Null_Node loop
             Set_Return_Value
               (Data, String_List_Utils.String_List.Data (Node));
+
             Node := Next (Node);
          end loop;
 
