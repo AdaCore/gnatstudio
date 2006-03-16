@@ -784,6 +784,35 @@ package body Codefix.Formal_Errors is
                Free (With_Cursor);
             end;
 
+         when Cat_Package =>
+            declare
+               Remove_Command  : Remove_Entity_Cmd;
+               Comment_Command : Remove_Entity_Cmd;
+               Pragma_Command  : Add_Pragma_Cmd;
+            begin
+               if Is_Set (Operations, Remove_Entity) then
+                  Initialize (Remove_Command, Current_Text, Cursor, Erase);
+                  Set_Caption
+                    (Remove_Command,
+                     "Delete package """ & Name & """");
+                  Append (Result, Remove_Command);
+               end if;
+
+               if Is_Set (Operations, Comment_Entity) then
+                  Initialize (Comment_Command, Current_Text, Cursor, Comment);
+                  Set_Caption
+                    (Comment_Command,
+                     "Comment package """ & Name & """");
+                  Append (Result, Comment_Command);
+               end if;
+
+               Pragma_Command := Add_Pragma;
+               Set_Caption
+                 (Pragma_Command,
+                  "Add pragma Unreferenced to package """ & Name & """");
+               Append (Result, Pragma_Command);
+            end;
+
          when others =>
             Raise_Exception
               (Codefix_Panic'Identity,
