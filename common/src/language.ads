@@ -499,6 +499,8 @@ package Language is
    --  Information needed to define a language construct (e.g procedure,
    --  loop statement, ...).
 
+   Null_Construct_Info : constant Construct_Information;
+
    type Construct_List is record
       First, Current, Last : Construct_Access;
    end record;
@@ -634,5 +636,17 @@ private
    --  Comment_Line (Comment_Line (A), Comment => False) should return A.
    --  If Clean is True, a clean up of of the line should be performed
    --  (e.g. leading spaces are removed).
+
+   Null_Construct_Info : constant Construct_Information :=
+     (Category       => Cat_Unknown,
+      Is_Declaration => False,
+      Visibility     => Visibility_Public,
+      Name           => null,
+      Profile        => null,
+      Sloc_Start     => (0, 0, 0),
+      Sloc_Entity    => (0, 0, 0),
+      Sloc_End       => (0, 0, 0),
+      Prev           => null,
+      Next           => null);
 
 end Language;
