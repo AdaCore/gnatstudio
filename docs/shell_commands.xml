@@ -2052,13 +2052,51 @@ If the line and column are not specified, then the current selection is returned
  Parameter dir indicates the directory in which the files matched in string are located.</description>
   </shell_doc>
 
-  <shell_doc name="GPS.VCS.annotation_parse">
+  <shell_doc name="GPS.VCS.log_parse">
       <param name="vcs_identifier">A string</param>
       <param name="file">A string</param>
       <param name="string">A string</param>
-      <description>Parses string to find vcs annotations in file. This command uses the parser in the XML description node for the VCS corresponding to vcs_identifier.</description>
+      <description>Parses string to find log entries for file. This command uses the parser in the XML description node for the VCS corresponding to vcs_identifier.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.VCS.revision_parse">
+      <param name="vcs_identifier">A string</param>
+      <param name="file">A string</param>
+      <param name="string">A string</param>
+      <description>Parses string to find revisions tags and branches information for file. This command uses the parser in the XML description node for the VCS corresponding to vcs_identifier.</description>
+  </shell_doc>
+
+
+  <!--#################################################################
+    ####  Revision class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Revision">
+      <description>General interface to the revision browser</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Revision.add_log">
+      <param name="file">A string</param>
+      <param name="revision">A string</param>
+      <param name="author">A string</param>
+      <param name="date">A string</param>
+      <param name="log">A string</param>
+      <description>Add a new log entry into the revision browser</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Revision.add_link">
+      <param name="file">A string</param>
+      <param name="revision_1">A string</param>
+      <param name="revision_2">A string</param>
+      <description>Create a link between revision_1 and revision_2 for the given file</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Revision.add_revision">
+      <param name="file">A string</param>
+      <param name="revision">A string</param>
+      <param name="symbolic_name">A string</param>
+      <description>Register a new symbolic name (tag or branches) corresponding to the specified revision of file</description>
+  </shell_doc>
 
   <!--#################################################################
     ####  Context class
