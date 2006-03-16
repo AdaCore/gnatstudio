@@ -2383,7 +2383,6 @@ package body VCS_View_API is
          procedure Get_Log_For_Root (File : Virtual_File; Root : String) is
             Dir          : constant Virtual_File := Create (Root);
             F_Dir        : constant String := Full_Name (Dir, True).all;
---              B_Dir   : constant String := Base_Dir_Name (Dir);
             F_File       : constant String := Full_Name (File, True).all;
             Subdirs      : constant File_Array_Access := Read_Dir (Dir);
             --  ??? what if Root is not a full pathname ?
