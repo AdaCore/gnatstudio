@@ -654,7 +654,11 @@ package body Codefix.Text_Manager is
            (Current_Text,
             Get_File (Cursor),
             Unit_Info);
+      else
+         Body_Info := Null_Construct_Info;
+      end if;
 
+      if Body_Info /= Null_Construct_Info then
          Set_File (Body_Begin, Get_File (Cursor));
          Set_File (Body_End,   Get_File (Cursor));
          Set_File (Spec_Begin, Get_File (Cursor));
@@ -944,7 +948,7 @@ package body Codefix.Text_Manager is
             Current_Node := Next (Current_Node);
          end loop;
 
-         raise Codefix_Panic;
+         return null;
       end Get_Node;
 
       procedure Add_Node
@@ -986,9 +990,15 @@ package body Codefix.Text_Manager is
               and then (Current_Info.Category = Cat_Package
                      or else Current_Info.Category = Cat_Protected)
             then
-               Current_Scope := Get_Node
+               This_Scope := Get_Node
                  (Current_Scope, Current_Info.Name.all);
-               This_Scope := Current_Scope; --  ???  Is it usefull ?
+
+               if This_Scope = null then
+                  Current_Info := Current_Info.Prev;
+                  return;
+               end if;
+
+               Current_Scope := This_Scope;
                Current_Result := Current_Scope.Result;
                Result := Current_Result;
             end if;
@@ -1082,7 +1092,18 @@ package body Codefix.Text_Manager is
       Current_Scope := First_Scope;
       Seeker (Current_Info.Sloc_Start, True);
       Free (First_Scope);
-      return Result.all;
+
+      if Result /= null then
+         return Result.all;
+      else
+         --  This is supposed to happen when there is no associated body to
+         --  the given spec. Most likely, whe are trying to get the body of a
+         --  statement like:
+         --  package Bla renames Other_Bla;
+
+         return Null_Construct_Info;
+      end if;
+
    end Search_Body;
 
    -------------------
