@@ -1384,40 +1384,63 @@ package body Codefix.Text_Manager is
       Cursor       : Text_Cursor'Class;
       Current_Line : String) return Text_Cursor'Class
    is
-      Local_Cursor : Text_Cursor := Text_Cursor (Cursor);
-      Local_Line   : GNAT.OS_Lib.String_Access := new String'(Current_Line);
-      Local_Cursor_Char_Index : constant Char_Index :=
-        To_Char_Index (Get_Column (Local_Cursor), Local_Line.all);
-   begin
-      loop
-         if Natural (Local_Cursor_Char_Index) > Local_Line'Last then
-            Local_Cursor.Col := 1;
-            Local_Cursor.Line := Local_Cursor.Line + 1;
-            Assign (Local_Line, Get_Line (This, Local_Cursor));
-         end if;
 
-         case Local_Line (Natural (Local_Cursor_Char_Index)) is
-            when '(' =>
-               Local_Cursor.Col := Local_Cursor.Col + 1;
+      function Internal_Get_Right_Paren
+        (Cursor       : Text_Cursor'Class;
+         Index        : Char_Index;
+         Current_Line : String) return Text_Cursor'Class;
+      --  This internal function works with a char index. This way, we'll only
+      --  do the conversion to a column when returning the result.
 
-               declare
-                  Stack_Str : constant String := Local_Line.all;
-               begin
+      function Internal_Get_Right_Paren
+        (Cursor : Text_Cursor'Class; Index : Char_Index; Current_Line : String)
+        return Text_Cursor'Class
+      is
+         Local_Cursor : Text_Cursor := Text_Cursor (Cursor);
+         Local_Line   : GNAT.OS_Lib.String_Access := new String'(Current_Line);
+         Local_Cursor_Char_Index : Char_Index := Index;
+      begin
+         loop
+            if Natural (Local_Cursor_Char_Index) > Local_Line'Last then
+               Local_Cursor_Char_Index := 1;
+               Local_Cursor.Col := 1;
+               Local_Cursor.Line := Local_Cursor.Line + 1;
+               Assign (Local_Line, Get_Line (This, Local_Cursor));
+            end if;
+
+            case Local_Line (Natural (Local_Cursor_Char_Index)) is
+               when '(' =>
+                  Local_Cursor_Char_Index := Local_Cursor_Char_Index + 1;
+
+                  declare
+                     Stack_Str : constant String := Local_Line.all;
+                  begin
+                     Free (Local_Line);
+                     return Internal_Get_Right_Paren
+                       (Local_Cursor,
+                        Local_Cursor_Char_Index,
+                        Stack_Str);
+                  end;
+
+               when ')' =>
+                  Local_Cursor.Col := To_Column_Index
+                    (Local_Cursor_Char_Index, Local_Line.all);
                   Free (Local_Line);
-                  return Get_Right_Paren
-                    (This, Local_Cursor, Stack_Str);
-               end;
 
-            when ')' =>
-               Free (Local_Line);
-               return Local_Cursor;
+                  return Local_Cursor;
 
-            when others =>
-               Local_Cursor.Col := Local_Cursor.Col + 1;
-         end case;
-      end loop;
+               when others =>
+                  Local_Cursor_Char_Index := Local_Cursor_Char_Index + 1;
+            end case;
+         end loop;
 
-      raise Codefix_Panic;
+         raise Codefix_Panic;
+      end Internal_Get_Right_Paren;
+
+   begin
+      return Internal_Get_Right_Paren
+        (Cursor,
+         To_Char_Index (Get_Column (Cursor), Current_Line), Current_Line);
    end Get_Right_Paren;
 
    ---------------
