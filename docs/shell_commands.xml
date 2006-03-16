@@ -1341,7 +1341,12 @@ If the attribute value is stored as a simple string, a list with a single elemen
        <param name="package">A string, the name of the attribute's package</param>
        <param name="index">A string, the name of the index for the specific value of this attribute</param>
        <param name="value">A string, the name of the value to set</param>
-       <description>Sets the value of an attribute.</description>
+       <description>Sets the value of an attribute. The attribute has to be stored as a single value.
+If the package is not specified, the attribute at the toplevel of the project is queried.
+The index only needs to be specified if it applies to that attribute.</description>
+       <see_also name="GPS.Project.add_attribute_values()"/>
+       <see_also name="GPS.Project.remove_attribute_values()"/>
+       <see_also name="GPS.Project.clear_attribute_values()"/>
   </shell_doc>
 
   <shell_doc name = "GPS.Project.add_attribute_values">
@@ -1350,10 +1355,15 @@ If the attribute value is stored as a simple string, a list with a single elemen
        <param name="package">A string, the name of the attribute's package</param>
        <param name="index">A string, the name of the index for the specific value of this attribute</param>
        <param name="value">A string, the name of the first value to add</param>
-       <description> Add some values to an attribute. You can add as much as many values you need at the end of the param list.</description>
+       <description> Add some values to an attribute. You can add as much as many values you need at the end of the param list.
+If the package is not specified, the attribute at the toplevel of the project is queried.
+The index only needs to be specified if it applies to that attribute.</description>
        <example lang="python">
 	       GPS.Project.root().add_attribute_values ("Default_Switches", "Compiler", "ada", "-gnatwa", "-gnatwe");
-       </example>	  
+       </example>
+       <see_also name="GPS.Project.set_attribute_as_string()"/>
+       <see_also name="GPS.Project.remove_attribute_values()"/>
+       <see_also name="GPS.Project.clear_attribute_values()"/>
   </shell_doc>
 
   <shell_doc name = "GPS.Project.remove_attribute_values">
@@ -1362,10 +1372,15 @@ If the attribute value is stored as a simple string, a list with a single elemen
        <param name="package">A string, the name of the attribute's package</param>
        <param name="index">A string, the name of the index for the specific value of this attribute</param>
        <param name="value">A string, the name of the first value to remove</param>
-       <description> Removes some specific values from an attribute. You can Set as much as many values you need at the end of the param list.</description>
+       <description> Removes some specific values from an attribute. You can set as much as many values you need at the end of the param list.
+If the package is not specified, the attribute at the toplevel of the project is queried.
+The index only needs to be specified if it applies to that attribute.</description>
        <example lang="python">
 	       GPS.Project.root().remove_attribute_values ("Default_Switches", "Compiler", "ada", "-gnatwa", "-gnatwe");
        </example>
+       <see_also name="GPS.Project.set_attribute_as_string()"/>
+       <see_also name="GPS.Project.add_attribute_values()"/>
+       <see_also name="GPS.Project.clear_attribute_values()"/>
   </shell_doc>
 
   <shell_doc name = "GPS.Project.clear_attribute_values">
@@ -1373,7 +1388,9 @@ If the attribute value is stored as a simple string, a list with a single elemen
        <param name="attribute">A string, the name of the attribute</param>
        <param name="package">A string, the name of the attribute's package</param>
        <param name="index">A string, the name of the index for the specific value of this attribute</param>
-       <description> Clear the values list of an attribute.</description>
+       <description> Clear the values list of an attribute.
+If the package is not specified, the attribute at the toplevel of the project is queried.
+The index only needs to be specified if it applies to that attribute.</description>
   </shell_doc>
   
   <shell_doc name="GPS.Project.scenario_variables_values">
