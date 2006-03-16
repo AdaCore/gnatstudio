@@ -328,8 +328,8 @@
       <status label="Removed" stock="gps-vcs-removed" />
       <status label="Added" stock="gps-vcs-added" />
 
-      <parent_revision regexp="(\d(\.\d)+)\.\d\.\d"/>
-      <branch_root_revision regexp="(\d(\.\d)+)\.\d"/>
+      <parent_revision regexp="(\d+(\.\d+)+)\.\d+\.\d+"/>
+      <branch_root_revision regexp="(\d+(\.\d+)+)\.\d+"/>
 
       <status_parser>
          <regexp>File: (no file )?([^\s]*)\s*Status: (.*?)\n\n *Working revision:\s*([^\s]*).*\n *Repository revision:\s*([^\s]*).*</regexp>
