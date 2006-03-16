@@ -114,12 +114,14 @@ install_binaries() {
 
   (cd $current_dir; tar cf - bin etc lib share) | tar xf -
 
-  if [ -d etc/pango ]; then
-    for f in etc/pango/*; do
-      sed -e "s^@PREFIX@^$basedir^g" < $f > $f.new
-      mv $f.new $f
-    done
-  fi
+  for d in etc/pango etc/gtk-2.0; do
+    if [ -d $d ]; then
+      for f in $d/*; do
+        sed -e "s^@PREFIX@^$basedir^g" < $f > $f.new
+        mv $f.new $f
+      done
+    fi
+  done
 }
 
 ##
