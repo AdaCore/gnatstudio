@@ -20,6 +20,7 @@ export GPS_STARTUP_LD_LIBRARY_PATH GPS_STARTUP_PATH
 
 LD_LIBRARY_PATH=$root/lib/gps:$LD_LIBRARY_PATH
 GTK_DATA_PREFIX=$root
+GTK_EXE_PREFIX=$root
 
 if [ -f $root/etc/fonts/fonts.conf ]; then
   FONTCONFIG_FILE=$root/etc/fonts/fonts.conf
@@ -31,9 +32,9 @@ if [ -f $root/etc/pango/pangorc ]; then
   export PANGO_RC_FILE
 fi
 
-if [ -d $root/lib/gtk-2.0 ]; then
-  GTK_PATH=$root/lib/gtk-2.0
-  export GTK_PATH
+if [ -f $root/etc/gtk-2.0/gdk-pixbuf.loaders ]; then
+  GDK_PIXBUF_MODULE_FILE=$root/etc/gtk-2.0/gdk-pixbuf.loaders
+  export GDK_PIXBUF_MODULE_FILE
 fi
 
 if [ "$CHARSET" = "" ]; then
@@ -41,5 +42,5 @@ if [ "$CHARSET" = "" ]; then
   export CHARSET
 fi
 
-export LD_LIBRARY_PATH GTK_DATA_PREFIX
+export LD_LIBRARY_PATH GTK_DATA_PREFIX GTK_EXE_PREFIX
 exec $root/bin/${prog}_exe "$@"
