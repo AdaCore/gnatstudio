@@ -1388,13 +1388,13 @@ package body Codefix.Text_Manager is
       function Internal_Get_Right_Paren
         (Cursor       : Text_Cursor'Class;
          Index        : Char_Index;
-         Current_Line : String) return Text_Cursor'Class;
+         Current_Line : String) return Text_Cursor;
       --  This internal function works with a char index. This way, we'll only
       --  do the conversion to a column when returning the result.
 
       function Internal_Get_Right_Paren
         (Cursor : Text_Cursor'Class; Index : Char_Index; Current_Line : String)
-        return Text_Cursor'Class
+        return Text_Cursor
       is
          Local_Cursor : Text_Cursor := Text_Cursor (Cursor);
          Local_Line   : GNAT.OS_Lib.String_Access := new String'(Current_Line);
@@ -1412,15 +1412,20 @@ package body Codefix.Text_Manager is
                when '(' =>
                   Local_Cursor_Char_Index := Local_Cursor_Char_Index + 1;
 
+                  Local_Cursor := Internal_Get_Right_Paren
+                    (Local_Cursor,
+                     Local_Cursor_Char_Index,
+                     Local_Line.all);
+
                   declare
-                     Stack_Str : constant String := Local_Line.all;
+                     Cursor_Line : Text_Cursor := Local_Cursor;
                   begin
-                     Free (Local_Line);
-                     return Internal_Get_Right_Paren
-                       (Local_Cursor,
-                        Local_Cursor_Char_Index,
-                        Stack_Str);
+                     Cursor_Line.Col := 1;
+                     Assign (Local_Line, Get_Line (This, Cursor_Line));
                   end;
+
+                  Local_Cursor_Char_Index :=
+                    To_Char_Index (Local_Cursor.Col, Local_Line.all) + 1;
 
                when ')' =>
                   Local_Cursor.Col := To_Column_Index
@@ -1440,7 +1445,7 @@ package body Codefix.Text_Manager is
    begin
       return Internal_Get_Right_Paren
         (Cursor,
-         To_Char_Index (Get_Column (Cursor), Current_Line), Current_Line);
+         To_Char_Index (Get_Column (Cursor), Current_Line) + 1, Current_Line);
    end Get_Right_Paren;
 
    ---------------
