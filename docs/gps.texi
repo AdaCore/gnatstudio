@@ -7218,7 +7218,7 @@ content filled from the global @file{ChangeLog} file.
 @section The Revision Browser
 
 @noindent
-The revision browser is used to display a revision tree for given
+The revision browser is used to display a revision tree for a given
 file. Each node contains information for a specific revision of the
 file. 
 
@@ -14375,7 +14375,7 @@ under the control of the defined VCS.
 @noindent
 Some VCS reports revisions number from which it is possible to deduce
 the related branches. This is the case in CVS for example where a
-revision number for a branch use as prefix the branch point revision
+revision number for a branch uses as prefix the branch point revision
 number. For such VCS it is possible to specify two regular
 expressions:
 
