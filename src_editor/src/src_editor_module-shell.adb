@@ -717,7 +717,7 @@ package body Src_Editor_Module.Shell is
               (Get_Script (Data),
                Create_File (Get_Script (Data), Current_File (Context)),
                Match.Begin_Line,
-               Match.Begin_Column));
+               Match.Visible_Begin_Column));
          return True;
       end Callback;
 
@@ -796,7 +796,7 @@ package body Src_Editor_Module.Shell is
               (Get_Script (Data),
                Create_File (Get_Script (Data), File),
                Match.Begin_Line,
-               Match.Begin_Column));
+               Match.Visible_Begin_Column));
          return True;
       end Callback;
 
@@ -873,7 +873,7 @@ package body Src_Editor_Module.Shell is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Length : Natural := 0;
       Line   : Natural := 1;
-      Column : Natural := 1;
+      Column : Visible_Column_Type := 1;
       Force  : Boolean;
       Marker : File_Marker;
 
@@ -891,7 +891,7 @@ package body Src_Editor_Module.Shell is
             Position : Natural;
          begin
             Line   := Nth_Arg (Data, 2, Default => 1);
-            Column := Nth_Arg (Data, 3, Default => 1);
+            Column := Visible_Column_Type (Nth_Arg (Data, 3, Default => 1));
             Length := Nth_Arg (Data, 4, Default => 0);
 
             if File /= VFS.No_File then
@@ -916,14 +916,18 @@ package body Src_Editor_Module.Shell is
                         File,
                         Line,
                         Column,
-                        Column + Length,
+                        Column + Visible_Column_Type (Length),
                         Enable_Navigation => False,
                         Force_Reload => Force);
                   end if;
 
                elsif Command = "create_mark" then
+                  --  ??? Wrong conversion here?
                   Marker := Create_File_Marker
-                    (Kernel, File, Line, Column, Length);
+                    (Kernel,
+                     File,
+                     Editable_Line_Type (Line),
+                     Column, Length);
                   Set_Return_Value (Data, Get_Id (Marker));
                end if;
             end if;
@@ -1042,9 +1046,9 @@ package body Src_Editor_Module.Shell is
                   Select_Region
                     (Buffer,
                      Editable_Line_Type (First_Line),
-                     Start_Column,
+                     Visible_Column_Type (Start_Column),
                      Editable_Line_Type (Last_Line),
-                     End_Column);
+                     Visible_Column_Type (End_Column));
                end if;
             end if;
          end;
@@ -1114,13 +1118,19 @@ package body Src_Editor_Module.Shell is
             After  : constant Integer := Nth_Arg (Data, 5, Default => -1);
             Child  : constant MDI_Child :=
               Find_Editor (Kernel, Create (File, Kernel));
+
+            Real_Col : Character_Offset_Type;
          begin
+            Real_Col := Collapse_Tabs
+              (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
+               Editable_Line_Type (Line),
+               Visible_Column_Type (Column));
             Set_Return_Value
               (Data,
                Get_Chars
                  (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
                   Editable_Line_Type (Line),
-                  Natural (Column),
+                  Real_Col,
                   Before, After));
          end;
 
@@ -1134,13 +1144,20 @@ package body Src_Editor_Module.Shell is
             After  : constant Integer := Nth_Arg (Data, 6, Default => -1);
             Editor : constant Source_Editor_Box := Open_File
               (Kernel, Create (File, Kernel), Create_New => False);
+
+            Real_Col : Character_Offset_Type;
          begin
             if Editor /= null then
                if Get_Writable (Editor) then
+                  Real_Col := Collapse_Tabs
+                    (Get_Buffer (Editor),
+                     Editable_Line_Type (Line),
+                     Visible_Column_Type (Column));
+
                   Replace_Slice
                     (Get_Buffer (Editor),
                      Text,
-                     Editable_Line_Type (Line), Natural (Column),
+                     Editable_Line_Type (Line), Real_Col,
                      Before, After);
                else
                   Set_Error_Msg
@@ -1159,7 +1176,7 @@ package body Src_Editor_Module.Shell is
             Buffer : Source_Buffer;
             Text   : constant String  := Nth_Arg (Data, 1);
             Line   : Editable_Line_Type;
-            Column : Positive;
+            Column : Character_Offset_Type;
          begin
             if Child /= null then
                Buffer := Get_Buffer (Source_Editor_Box (Get_Widget (Child)));
@@ -1171,11 +1188,11 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "get_line" then
          Marker := Find_Mark (Nth_Arg (Data, 1));
-         Set_Return_Value (Data, Get_Line (Marker));
+         Set_Return_Value (Data, Natural (Get_Line (Marker)));
 
       elsif Command = "get_column" then
          Marker := Find_Mark (Nth_Arg (Data, 1));
-         Set_Return_Value (Data, Get_Column (Marker));
+         Set_Return_Value (Data, Natural (Get_Column (Marker)));
 
       elsif Command = "get_file" then
          Marker := Find_Mark (Nth_Arg (Data, 1));
@@ -1289,7 +1306,7 @@ package body Src_Editor_Module.Shell is
             else
                declare
                   Line   : Editable_Line_Type;
-                  Column : Positive;
+                  Column : Visible_Column_Type;
                begin
                   Get_Cursor_Position
                     (Get_Buffer
@@ -1298,7 +1315,7 @@ package body Src_Editor_Module.Shell is
                   if Command = "cursor_get_line" then
                      Set_Return_Value (Data, Integer (Line));
                   else
-                     Set_Return_Value (Data, Column);
+                     Set_Return_Value (Data, Integer (Column));
                   end if;
                end;
             end if;
@@ -1311,7 +1328,9 @@ package body Src_Editor_Module.Shell is
             Child  : constant MDI_Child := Find_Editor (Kernel, File);
             Line   : constant Editable_Line_Type :=
               Editable_Line_Type (Integer'(Nth_Arg (Data, 2)));
-            Column : Natural := Nth_Arg (Data, 3, Default => 0);
+            Column : Visible_Column_Type :=
+              Visible_Column_Type (Nth_Arg (Data, 3, Default => 0));
+            Real_Col : Character_Offset_Type;
          begin
             if Child = null then
                Set_Error_Msg
@@ -1336,21 +1355,27 @@ package body Src_Editor_Module.Shell is
                      Column := 1;
 
                      for K in Chars'Range loop
-                        Column := K;
+                        Column := Visible_Column_Type (K);
                         exit when Chars (K) /= ' '
                           and then Chars (K) /= ASCII.HT;
                      end loop;
 
                      if Column /= 1 then
                         --  Adjust column number.
-                        Column := Column - Chars'First + 1;
+                        Column := Column - Visible_Column_Type
+                          (Chars'First) + 1;
                      end if;
                   end;
                end if;
 
+               Real_Col := Collapse_Tabs
+                 (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
+                  Line,
+                  Column);
+
                Set_Cursor_Position
                  (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
-                  Line, Column);
+                  Line, Real_Col);
             end if;
          end;
 
@@ -1370,7 +1395,8 @@ package body Src_Editor_Module.Shell is
             File  : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel);
             Child : constant MDI_Child := Find_Editor (Kernel, File);
-            A     : GNAT.OS_Lib.String_Access;
+            A     : Basic_Types.String_Access;
+            B     : GNAT.OS_Lib.String_Access;
 
          begin
             if Child /= null then
@@ -1383,23 +1409,29 @@ package body Src_Editor_Module.Shell is
             else
                --  The buffer is not currently open, read directly from disk.
 
-               A := Read_File (File);
+               B := Read_File (File);
 
-               if A /= null then
+               if B /= null then
                   declare
-                     Length        : constant Integer := A'Length;
+                     Length        : constant Integer := B'Length;
                      Result_String : String (1 .. Length * 2 + 1);
                      Ignore, Bytes : Natural;
+                     To_Charset    : constant String :=
+                       Get_File_Charset (File);
                   begin
-                     Glib.Convert.Convert
-                       (A.all,
-                        "UTF-8",
-                        Get_File_Charset (File),
-                        Ignore, Bytes, Result => Result_String);
-                     Set_Return_Value (Data, Result_String (1 .. Bytes));
+                     if To_Charset = "UTF-8" then
+                        Set_Return_Value (Data, B.all);
+                     else
+                        Glib.Convert.Convert
+                          (B.all,
+                           "UTF-8",
+                           To_Charset,
+                           Ignore, Bytes, Result => Result_String);
+                        Set_Return_Value (Data, Result_String (1 .. Bytes));
+                     end if;
                   end;
 
-                  Free (A);
+                  Free (B);
                else
                   Set_Error_Msg (Data, -"file not found");
                end if;
@@ -1941,11 +1973,11 @@ package body Src_Editor_Module.Shell is
                   Start_Line   =>
                     Editable_Line_Type (Get_Line (Iter) + 1),
                   Start_Column =>
-                    Integer (Get_Line_Offset (Iter) + 1),
+                    Character_Offset_Type (Get_Line_Offset (Iter) + 1),
                   End_Line     =>
                     Editable_Line_Type (Get_Line (Iter2) + 1),
                   End_Column   =>
-                    Integer (Get_Line_Offset (Iter2) + 1)));
+                    Character_Offset_Type (Get_Line_Offset (Iter2) + 1)));
          end if;
 
       elsif Command = "insert" then
@@ -2516,7 +2548,8 @@ package body Src_Editor_Module.Shell is
             Set_Cursor_Location
               (Box,
                Line        => Editable_Line_Type (Get_Line (Iter) + 1),
-               Column      => Integer (Get_Line_Offset (Iter) + 1),
+               Column      => Character_Offset_Type
+                 (Get_Line_Offset (Iter) + 1),
                Force_Focus => False);
          end if;
 
