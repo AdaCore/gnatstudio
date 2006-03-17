@@ -796,6 +796,7 @@ package body Language is
       Index   : in out Natural)
    is
       Initial_Index : constant Natural := Index;
+      Lines_Skipped : Natural;
       Tmp           : Integer;
 
       function Only_Blanks_Before
@@ -866,7 +867,9 @@ package body Language is
 
          exit when Only_Blanks_Before (Buffer, Tmp);
 
-         Skip_Lines (Buffer, -1, Tmp);
+         Skip_Lines (Buffer, -1, Tmp, Lines_Skipped);
+
+         exit when Lines_Skipped /= 1;
       end loop;
 
       if Looking_At_Start_Of_Comment (Context, Buffer, Index) = No_Comment then
@@ -886,6 +889,7 @@ package body Language is
    is
       Last_Comment_Index : Integer := Index;
       Typ                : Comment_Type;
+      Lines_Skipped      : Natural;
    begin
       Block_Iteration : loop
          Typ := Looking_At_Start_Of_Comment (Context, Buffer, Index);
@@ -902,7 +906,10 @@ package body Language is
                Tmp : Integer := Index;
             begin
                loop
-                  Skip_Lines (Buffer, 1, Tmp);
+                  Skip_Lines (Buffer, 1, Tmp, Lines_Skipped);
+
+                  exit when Lines_Skipped /= 1;
+
                   while Tmp <= Buffer'Last
                     and then (Buffer (Tmp) = ' ' or Buffer (Tmp) = ASCII.HT)
                   loop
@@ -924,7 +931,10 @@ package body Language is
 
          if Ignore_Blank_Lines then
             Last_Comment_Index := Index;
-            Skip_Lines (Buffer, 1, Index);
+            Skip_Lines (Buffer, 1, Index, Lines_Skipped);
+
+            exit Block_Iteration when Lines_Skipped /= 1;
+
             Skip_Blanks (Buffer, Index);
          else
             exit Block_Iteration;
@@ -941,15 +951,14 @@ package body Language is
    procedure Skip_To_Next_Comment_Start
      (Context : Language_Context;
       Buffer  : String;
-      Index   : in out Natural) is
+      Index   : in out Natural)
+   is
+      Lines_Skipped : Natural;
    begin
       while Index < Buffer'Last loop
-         Skip_Lines (Buffer, 1, Index);
+         Skip_Lines (Buffer, 1, Index, Lines_Skipped);
 
-         if Is_Blank_Line (Buffer, Index) then
-            Index := 0;
-            return;
-         end if;
+         exit when Lines_Skipped /= 1 or else Is_Blank_Line (Buffer, Index);
 
          Skip_Blanks (Buffer, Index);
 
@@ -972,21 +981,19 @@ package body Language is
       Buffer  : String;
       Index   : in out Natural)
    is
-      Index_Save : Natural := Index;
+      Lines_Skipped : Natural;
    begin
-      while Index_Save > Buffer'First loop
-         Skip_Lines (Buffer, -1, Index);
+      loop
+         Skip_Lines (Buffer, -1, Index, Lines_Skipped);
 
-         exit when Is_Blank_Line (Buffer, Index);
+         exit when Lines_Skipped /= 1 or else Is_Blank_Line (Buffer, Index);
 
-         Index_Save := Index;
          Skip_Blanks (Buffer, Index);
 
          if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
            No_Comment
          then
-            Skip_To_Current_Comment_Block_Start
-              (Context, Buffer, Index);
+            Skip_To_Current_Comment_Block_Start (Context, Buffer, Index);
             return;
          end if;
       end loop;
