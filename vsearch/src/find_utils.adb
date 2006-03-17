@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -115,8 +115,8 @@ package body Find_Utils is
       end Callback;
 
       Index       : Integer := Buffer'First;
-      Line,
-      Column      : Integer := 0;
+      Line        : Natural := 0;
+      Column      : Character_Offset_Type := 0;
       Was_Partial : Boolean;
       Start       : constant Integer :=
                       Integer'Max (Start_Index, Buffer'First);
@@ -139,11 +139,12 @@ package body Find_Utils is
       End_Index   : Natural;
       Callback    : Scan_Callback;
       Ref_Index   : in out Integer;
-      Ref_Line    : in out Integer;
-      Ref_Column  : in out Integer;
+      Ref_Line    : in out Natural;
+      Ref_Column  : in out Character_Offset_Type;
       Was_Partial : out Boolean)
    is
-      Last_Line_Start : Natural;
+      Last_Line_Start    : Natural;
+      Ref_Visible_Column : Visible_Column_Type;
 
       function Pretty_Print_Line
         (Line      : String;
@@ -211,21 +212,24 @@ package body Find_Utils is
 
             Pos := Context.Sub_Matches (0).First;
             Ref_Column := 1;
+            Ref_Visible_Column := 1;
             To_Line_Column
               (Buffer (Last_Line_Start .. Buffer'Last),
-               Pos, Ref_Line, Ref_Column, Last_Line_Start);
+               Pos, Ref_Line, Ref_Column,
+               Ref_Visible_Column,
+               Last_Line_Start);
             Ref_Index := Pos;
 
             declare
-               End_Col : constant Natural := Ref_Column +
-                    Integer (UTF8_Strlen
-                      (Buffer (Context.Sub_Matches (0).First ..
-                          Context.Sub_Matches (0).Last)));
+               End_Col : constant Natural :=
+                 Natural (UTF8_Strlen
+                   (Buffer (Context.Sub_Matches (0).First ..
+                        Context.Sub_Matches (0).Last)));
 
                Line_End : constant Natural := End_Of_Line (Buffer, Pos);
 
                End_Pos  : constant Natural := Natural'Min
-                 (Pos + End_Col - Ref_Column, Line_End);
+                 (Pos + End_Col, Line_End);
 
                Match_Length : constant Natural :=
                  Context.Sub_Matches (0).Last - Pos + 1;
@@ -234,13 +238,14 @@ package body Find_Utils is
                  (Buffer (Last_Line_Start .. Line_End), Pos, End_Pos);
 
                End_Line   : Natural := Ref_Line;
-               End_Column : Natural := 1;
+               End_Column : Character_Offset_Type := 1;
+               End_Visible_Column : Visible_Column_Type := 1;
                Dummy      : Natural := 0;
             begin
                To_Line_Column
                  (Buffer (Last_Line_Start .. Buffer'Last),
-                  Pos + End_Col - Ref_Column,
-                  End_Line, End_Column, Dummy);
+                  Pos + End_Col,
+                  End_Line, End_Column, End_Visible_Column, Dummy);
 
                if not Callback (Match_Result'
                    (Length         => Line'Length,
@@ -249,6 +254,8 @@ package body Find_Utils is
                     Begin_Line     => Ref_Line,
                     End_Line       => End_Line,
                     Begin_Column   => Ref_Column,
+                    Visible_Begin_Column => Ref_Visible_Column,
+                    Visible_End_Column   => End_Visible_Column,
                     End_Column     => End_Column,
                     Text           => Line))
                then
@@ -293,9 +300,11 @@ package body Find_Utils is
                     (Buffer (Pos + Context.Look_For'Length))))
             then
                Ref_Column := 1;
+               Ref_Visible_Column := 1;
                To_Line_Column
                  (Buffer (Last_Line_Start .. Buffer'Last),
-                  Pos, Ref_Line, Ref_Column, Last_Line_Start);
+                  Pos, Ref_Line, Ref_Column, Ref_Visible_Column,
+                  Last_Line_Start);
                Ref_Index := Pos;
 
                declare
@@ -308,13 +317,14 @@ package body Find_Utils is
                        Pos, Pos + Context.Look_For'Length);
 
                   End_Line   : Natural := Ref_Line;
-                  End_Column : Natural := 1;
+                  End_Column : Character_Offset_Type := 1;
+                  End_Visible_Column : Visible_Column_Type := 1;
                   Dummy      : Natural := 0;
                begin
                   To_Line_Column
                     (Buffer (Last_Line_Start .. Buffer'Last),
                      Pos + Context.Look_For'Length,
-                     End_Line, End_Column, Dummy);
+                     End_Line, End_Column, End_Visible_Column, Dummy);
 
                   if not Callback (Match_Result'
                       (Length         => Line'Length,
@@ -324,6 +334,8 @@ package body Find_Utils is
                        End_Line       => End_Line,
                        Begin_Column   => Ref_Column,
                        End_Column     => End_Column,
+                       Visible_Begin_Column => Ref_Visible_Column,
+                       Visible_End_Column   => End_Visible_Column,
                        Text           => Line))
                   then
                      Was_Partial := True;
@@ -378,13 +390,16 @@ package body Find_Utils is
    --------------------
 
    procedure To_Line_Column
-     (Buffer       : Glib.UTF8_String;
-      Pos          : Natural;
-      Line, Column : in out Natural;
-      Line_Start   : in out Natural)
+     (Buffer         : Glib.UTF8_String;
+      Pos            : Natural;
+      Line           : in out Natural;
+      Column         : in out Character_Offset_Type;
+      Visible_Column : in out Visible_Column_Type;
+      Line_Start     : in out Natural)
    is
       J          : Natural := Buffer'First;
-      Tab_Width  : constant Natural := Get_Tab_Width;
+      Tab_Width  : constant Visible_Column_Type :=
+        Visible_Column_Type (Get_Tab_Width);
 
       function At_Line_End return Boolean;
       pragma Inline (At_Line_End);
@@ -402,14 +417,18 @@ package body Find_Utils is
          exit when J > Pos - 1;
 
          if At_Line_End then
-            Line        := Line + 1;
-            Column      := 1;
+            Line           := Line + 1;
+            Column         := 1;
+            Visible_Column := 1;
             Line_Start := J + 1;
          else
+            Column := Column + 1;
+
             if Buffer (J) = ASCII.HT then
-               Column := Column + Tab_Width - (Column mod Tab_Width) + 1;
+               Visible_Column := Visible_Column
+                 + Tab_Width - (Visible_Column mod Tab_Width) + 1;
             else
-               Column := Column + 1;
+               Visible_Column := Visible_Column + 1;
             end if;
          end if;
 
@@ -620,12 +639,12 @@ package body Find_Utils is
    procedure Find_Closest_Match
      (Buffer         : String;
       Line           : in out Natural;
-      Column         : in out Natural;
+      Column         : in out Character_Offset_Type;
       Str            : String;
       Case_Sensitive : Boolean)
    is
       Best_Line     : Integer := 0;
-      Best_Column   : Integer := 0;
+      Best_Column   : Character_Offset_Type := 0;
 
       function Callback (Match : Match_Result) return Boolean;
       --  Called every time a reference to the entity is found
@@ -636,9 +655,11 @@ package body Find_Utils is
 
       function Callback (Match : Match_Result) return Boolean is
          Line_Diff : constant Integer :=
-           abs (Match.Begin_Line - Line) - abs (Best_Line - Line);
+           Integer (abs (Match.Begin_Line - Line)
+                    - abs (Best_Line - Line));
          Col_Diff : constant Integer :=
-           abs (Match.Begin_Column - Column) - abs (Best_Column - Column);
+           Integer (abs (Match.Begin_Column - Column)
+                    - abs (Best_Column - Column));
       begin
          if Line_Diff < 0
            or else (Line_Diff = 0 and then Col_Diff < 0)
@@ -650,10 +671,11 @@ package body Find_Utils is
          return True;
       end Callback;
 
-      Context       : aliased Root_Search_Context;
-      L, C          : Integer := 1;
-      Index         : Integer;
-      Was_Partial   : Boolean;
+      Context     : aliased Root_Search_Context;
+      L           : Integer := 1;
+      C           : Character_Offset_Type := 1;
+      Index       : Integer;
+      Was_Partial : Boolean;
    begin
       Index  := Buffer'First;
 
