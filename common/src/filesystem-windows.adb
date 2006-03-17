@@ -37,7 +37,7 @@ package body Filesystem.Windows is
    procedure Initialize_Module (FS : Windows_Filesystem_Record) is
    begin
       Add_Shell_Descriptor
-        ("Windows", "cmd",
+        ("cmd.exe", "cmd",
          Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
