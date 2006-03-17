@@ -130,36 +130,36 @@ package body String_Utils is
    ----------------
 
    procedure Skip_Lines
-     (Buffer : String;
-      Lines  : Integer;
-      Index  : in out Natural) is
+     (Buffer        : String;
+      Lines         : Integer;
+      Index         : in out Natural;
+      Lines_Skipped : out Natural)
+   is
+      Index_Saved : Natural;
    begin
-      if Lines >= 0 then
-         for Line in 1 .. Lines loop
-            Index := Next_Line (Buffer, Index);
-         end loop;
-      else
-         Index := Line_Start (Buffer, Index);
-         if Index > 2 then
-            Index := Index - 2;
+      Lines_Skipped := 0;
 
-            if Index > 1
-              and then Buffer (Index) = ASCII.CR
-              and then Buffer (Index - 1) /= ASCII.LF
-            then
-               Index := Index - 1;
+      if Lines >= 0 then
+         while Lines_Skipped < Lines loop
+            Index := Next_Line (Buffer, Index);
+
+            if Index = Buffer'Last then
+               Index := Line_Start (Buffer, Index);
+               exit;
             end if;
 
-            for Line in 1 .. -Lines loop
-               while Index >= Buffer'First
-                 and then Buffer (Index) /= ASCII.LF
-                 and then Buffer (Index) /= ASCII.CR
-               loop
-                  Index := Index - 1;
-               end loop;
-            end loop;
-            Index := Index + 1;
-         end if;
+            Lines_Skipped := Lines_Skipped + 1;
+         end loop;
+      else
+         Index_Saved := Line_Start (Buffer, Index);
+
+         while Lines_Skipped < -Lines loop
+            Index := Previous_Line (Buffer, Index);
+
+            exit when Index = Index_Saved;
+
+            Lines_Skipped := Lines_Skipped + 1;
+         end loop;
       end if;
    end Skip_Lines;
 
@@ -168,8 +168,37 @@ package body String_Utils is
    ----------------
 
    function Line_Start (Buffer : String; P : Natural) return Natural is
+      Index : Natural := P;
    begin
-      for J in reverse Buffer'First .. P loop
+      if P <= Buffer'First then
+         return P;
+      end if;
+
+      if Buffer (P) = ASCII.LF then
+         Index := Index - 1;
+
+         if Buffer (Index) = ASCII.LF then
+            return Index + 1;
+         elsif Buffer (Index) = ASCII.CR then
+            if Index > Buffer'First then
+               Index := Index - 1;
+
+               if Buffer (Index) = ASCII.CR then
+                  return Index;
+               end if;
+            else
+               return Buffer'First;
+            end if;
+         end if;
+      elsif Buffer (P) = ASCII.CR then
+         Index := Index - 1;
+
+         if Buffer (Index) = ASCII.CR or else Buffer (Index) = ASCII.LF then
+            return Index + 1;
+         end if;
+      end if;
+
+      for J in reverse Buffer'First .. Index loop
          if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
             if J < Buffer'Last then
                return J + 1;
@@ -211,6 +240,20 @@ package body String_Utils is
 
       return Buffer'Last;
    end Next_Line;
+
+   -------------------
+   -- Previous_Line --
+   -------------------
+
+   function Previous_Line (Buffer : String; P : Natural) return Natural is
+      Index : constant Natural := Line_Start (Buffer, P);
+   begin
+      if Index > Buffer'First then
+         return Line_Start (Buffer, Index - 1);
+      else
+         return Buffer'First;
+      end if;
+   end Previous_Line;
 
    ---------------------
    -- Skip_Hexa_Digit --
