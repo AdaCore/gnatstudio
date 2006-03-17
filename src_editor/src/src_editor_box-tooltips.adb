@@ -315,7 +315,7 @@ package body Src_Editor_Box.Tooltips is
       Box                   : constant Source_Editor_Box := Tooltip.Box;
       Widget                : constant Source_View := Get_View (Tooltip.Box);
       Line, Col             : Gint;
-      Cursor_Col            : Gint;
+      --        Cursor_Col            : Gint;
       Mouse_X, Mouse_Y      : Gint;
       Win_X, Win_Y          : Gint;
       Start_Iter            : Gtk_Text_Iter;
@@ -437,7 +437,7 @@ package body Src_Editor_Box.Tooltips is
          return;
       end if;
 
-      Cursor_Col := Col;
+      --  Cursor_Col := Col;
       Get_Iter_At_Line_Offset (Box.Source_Buffer, Start_Iter, Line, Col);
       Search_Entity_Bounds (Start_Iter, End_Iter);
       Get_Screen_Position (Box.Source_Buffer, Start_Iter, Line, Col);
@@ -462,7 +462,12 @@ package body Src_Editor_Box.Tooltips is
          Entity      : Entity_Information;
          Entity_Ref  : Entity_Reference;
          Status      : Find_Decl_Or_Body_Query_Status;
+         Editable_Line : constant Editable_Line_Type :=
+           Get_Editable_Line (Box.Source_Buffer, Buffer_Line_Type (Line + 1));
 
+         Column      : constant Visible_Column_Type :=
+           Expand_Tabs (Box.Source_Buffer, Editable_Line,
+                        Character_Offset_Type (Col + 1));
       begin
          if Entity_Name = "" then
             return;
@@ -477,12 +482,14 @@ package body Src_Editor_Box.Tooltips is
          Set_File_Information
            (Context => Context,
             File    => Filename,
-            Line    => To_Box_Line (Box.Source_Buffer, Line),
-            Column  => To_Box_Column (Cursor_Col));
+            Line    => Integer (Editable_Line),
+            Column  => Column);
+         --  ??? Should we use the cursor column here ?
+
          Set_Entity_Information
            (Context       => Context,
             Entity_Name   => Entity_Name,
-            Entity_Column => To_Box_Column (Col));
+            Entity_Column => Column);
          GPS.Kernel.Modules.Compute_Tooltip (Box.Kernel, Context, Pixmap);
 
          if Pixmap /= null then
