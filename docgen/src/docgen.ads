@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@
 --  the type All_Options, the type Doc_Info, which will be used to destinguish
 --  which entity type should be processed by the output procedure.
 
+with Basic_Types;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with List_Utils;                use List_Utils;
 with Entities;                  use Entities;
@@ -111,7 +112,7 @@ package Docgen is
 
    type Reference_In_File is record
       Line         : Natural;
-      Column       : Natural;
+      Column       : Basic_Types.Visible_Column_Type;
       Entity       : Entity_Information;
    end record;
    --  Record used to save a reference in a file.

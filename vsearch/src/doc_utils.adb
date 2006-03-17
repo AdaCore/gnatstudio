@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Basic_Types;
+
 with Entities;              use Entities;
 with Entities.Queries;      use Entities.Queries;
 with Language;              use Language;
@@ -128,8 +130,8 @@ package body Doc_Utils is
       Context            : Language_Context_Access;
       Location           : File_Location;
       Must_Free_Buffer   : Boolean := False;
-      Line, Column       : Integer;
-
+      Line               : Integer;
+      Column             : Basic_Types.Character_Offset_Type;
    begin
       if Lang = null then
          if Active (Me) then
@@ -159,7 +161,8 @@ package body Doc_Utils is
       end if;
 
       Line   := Get_Declaration_Of (Entity).Line;
-      Column := Integer (Get_Declaration_Of (Entity).Column);
+      Column := Basic_Types.Character_Offset_Type
+        (Get_Declaration_Of (Entity).Column);
       Find_Closest_Match
         (Buffer.all, Line, Column,
          Get_Name (Entity).all,
