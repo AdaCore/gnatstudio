@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -53,6 +53,8 @@ with GNAT.Regpat;
 with GPS.Kernel;
 with Glib.Object;
 with Gtk.Widget;
+
+with Basic_Types; use Basic_Types;
 
 package Find_Utils is
 
@@ -149,8 +151,14 @@ package Find_Utils is
    --  for constant strings.
 
    type Match_Result (Length : Natural) is record
-      Index, Begin_Line, Begin_Column, End_Line, End_Column : Natural;
-      Pattern_Length : Natural;
+      Index                : Natural;
+      Begin_Line           : Natural;
+      Begin_Column         : Character_Offset_Type;
+      Visible_Begin_Column : Visible_Column_Type;
+      End_Line             : Natural;
+      End_Column           : Character_Offset_Type;
+      Visible_End_Column   : Visible_Column_Type;
+      Pattern_Length       : Natural;
       Text : String (1 .. Length);
    end record;
    --  The result of a match. This is a discriminated type so that we don't
@@ -170,8 +178,8 @@ package Find_Utils is
       End_Index   : Natural;
       Callback    : Scan_Callback;
       Ref_Index   : in out Integer;
-      Ref_Line    : in out Integer;
-      Ref_Column  : in out Integer;
+      Ref_Line    : in out Natural;
+      Ref_Column  : in out Character_Offset_Type;
       Was_Partial : out Boolean);
    --  Find matches of Context in Buffer (Start_Index .. End_Index), and until
    --  either End_Index or Callback returns False.
@@ -191,17 +199,19 @@ package Find_Utils is
    procedure Find_Closest_Match
      (Buffer         : String;
       Line           : in out Natural;
-      Column         : in out Natural;
+      Column         : in out Character_Offset_Type;
       Str            : String;
       Case_Sensitive : Boolean);
    --  Find the occurence of Str in Buffer closest to (Line, Column).
    --  The latter are modified to point to the closest location.
 
    procedure To_Line_Column
-     (Buffer       : Glib.UTF8_String;
-      Pos          : Natural;
-      Line, Column : in out Natural;
-      Line_Start   : in out Natural);
+     (Buffer         : Glib.UTF8_String;
+      Pos            : Natural;
+      Line           : in out Natural;
+      Column         : in out Character_Offset_Type;
+      Visible_Column : in out Visible_Column_Type;
+      Line_Start     : in out Natural);
    --  Set Line and Column to the appropriate for the Pos-th character in
    --  Buffer.
 
@@ -348,7 +358,7 @@ private
 
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
-   No_Result : constant Match_Result := (0, 0, 0, 0, 0, 0, 0, "");
+   No_Result : constant Match_Result := (0, 0, 0, 0, 0, 0, 0, 0, 0, "");
 
    No_Search : constant Search_Module_Data :=
      (Length            => 0,
