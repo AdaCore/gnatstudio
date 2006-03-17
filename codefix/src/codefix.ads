@@ -45,6 +45,8 @@ package Codefix is
 
    type Column_Index is new Natural;
    --  Type of a column
+   --  ??? This should either be a Visible_Column_Type or
+   --  a Character_Offset_Type.
 
    type Char_Index is new Natural;
    --  Type of an index in a string
