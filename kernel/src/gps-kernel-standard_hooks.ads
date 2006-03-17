@@ -23,6 +23,7 @@ with Ada.Unchecked_Deallocation;
 with System;
 
 with GNAT.OS_Lib;
+with Basic_Types;
 
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
@@ -114,6 +115,7 @@ package GPS.Kernel.Standard_Hooks is
    type File_Location_Hooks_Args is new File_Hooks_Args with record
       Line   : Natural;
       Column : Natural;
+      --  ??? What is the meaning of Column here, user column or char offset?
    end record;
    type File_Location_Hooks_Args_Access is access all
      File_Location_Hooks_Args'Class;
@@ -170,8 +172,8 @@ package GPS.Kernel.Standard_Hooks is
    type Source_File_Hooks_Args is new Hooks_Data with record
       File              : VFS.Virtual_File := VFS.No_File;
       Line              : Integer := 1;
-      Column            : Natural := 1;
-      Column_End        : Natural := 0;
+      Column            : Basic_Types.Visible_Column_Type := 1;
+      Column_End        : Basic_Types.Visible_Column_Type := 0;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
@@ -202,8 +204,8 @@ package GPS.Kernel.Standard_Hooks is
      (Kernel            : access Kernel_Handle_Record'Class;
       Filename          : VFS.Virtual_File;
       Line              : Natural := 1;
-      Column            : Natural := 1;
-      Column_End        : Natural := 0;
+      Column            : Basic_Types.Visible_Column_Type := 1;
+      Column_End        : Basic_Types.Visible_Column_Type := 0;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
