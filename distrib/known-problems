@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 4.0.0
 
-- F224-007 Crashes when using Search/Replace.
+- F224-007 Crash when using Search/Replace
   Problem:    When using the Search/Replace dialog, GPS might sometimes
               crash if editions occur between successive searches.
   Workaround: Instead of using the Search/Replace dialog, use the key
@@ -96,7 +96,7 @@ Known Problems fixed in GPS 4.0.0
   Workaround: type manually "import ..." or "reload (...)" in the python
               console
 
-- F118-002 GPS Code fix fails when formal is access procedure.
+- F118-002 GPS Code fix fails when formal is access procedure
   Problem:    With an access to procedure parameter in the Ada 05 fashion,
               fixing a non conformant subprogram profile would give a wrong
               result.
