@@ -42,12 +42,12 @@ package String_Utils is
    --  Skip to the next blank character
 
    procedure Skip_Lines
-     (Buffer : String;
-      Lines  : Integer;
-      Index  : in out Natural);
-   --  Skip Lines forward or backward. In all cases, Index is put to the
-   --  beginning of the line. If the buffer doesn't contain enough lines,
-   --  Index is left on the last valid line encountered.
+     (Buffer        : String;
+      Lines         : Integer;
+      Index         : in out Natural;
+      Lines_Skipped : out Natural);
+   --  Skip Lines forward or backward. Index is set to the beginning of a line.
+   --  Lines_Skipped is the number of lines that have actually been skipped.
 
    procedure Skip_Hexa_Digit
      (Type_Str : String;
@@ -106,7 +106,12 @@ package String_Utils is
    --  Return the end of the line pointed by P.
 
    function Next_Line (Buffer : String; P : Natural) return Natural;
-   --  Return the start of the next line.
+   --  Return the start of the next line or Buffer'Last if the end of the
+   --  buffer is reached.
+
+   function Previous_Line (Buffer : String; P : Natural) return Natural;
+   --  Return the start of the previous line or Buffer'First if P already
+   --  points to the first line of Buffer.
 
    procedure Parse_Num
      (Type_Str : String;
