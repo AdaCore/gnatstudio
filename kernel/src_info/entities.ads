@@ -26,6 +26,7 @@ with VFS;
 with Dynamic_Arrays;
 with Projects.Registry;
 with Language;
+with Basic_Types;
 
 --  This package contains the list of all files and entities used in the
 --  current project.
@@ -458,12 +459,10 @@ package Entities is
    -- File_Location --
    -------------------
 
-   type Column_Type is mod 2 ** 16;
-
    type File_Location is record
       File   : Source_File;
       Line   : Integer;
-      Column : Column_Type;
+      Column : Basic_Types.Visible_Column_Type;
    end record;
    No_File_Location : constant File_Location := (null, 0, 0);
 
@@ -471,7 +470,8 @@ package Entities is
    pragma Inline (Get_File);
    function Get_Line   (Loc : File_Location) return Natural;
    pragma Inline (Get_Line);
-   function Get_Column (Loc : File_Location) return Natural;
+   function Get_Column
+     (Loc : File_Location) return Basic_Types.Visible_Column_Type;
    pragma Inline (Get_Column);
    --  Return the various components of the location
 
@@ -540,14 +540,14 @@ package Entities is
    --  is freed.
 
    Predefined_Line   : constant Natural := 0;
-   Predefined_Column : constant Natural := 0;
+   Predefined_Column : constant Basic_Types.Visible_Column_Type := 0;
    --  Line and column to use for predefined entities
 
    function Get_Or_Create
      (Name         : String;
       File         : Source_File;
       Line         : Natural;
-      Column       : Natural;
+      Column       : Basic_Types.Visible_Column_Type;
       Allow_Create : Boolean := True) return Entity_Information;
    --  Get an existing or create a new declaration for an entity. File, Line
    --  and column are the location of irs declaration.
