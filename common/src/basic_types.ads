@@ -92,6 +92,20 @@ package Basic_Types is
       Case_Sensitive : Boolean := True) return Boolean;
    --  Return True if List contains Str
 
+   ------------------
+   -- Column types --
+   ------------------
+
+   type Visible_Column_Type is new Integer;
+   type Character_Offset_Type is new Integer;
+
+   --  The two types above indicate column types.
+   --  Visible_Column_Type correspond to user perception of the columns, ie,
+   --  after TAB expansion. The first character in the line has a value of 1.
+   --
+   --  Character_Offset_Type indicates the number of characters between the
+   --  beginning of the line and the character. First character has offset 0.
+
    -----------------
    -- File caches --
    -----------------
