@@ -708,6 +708,7 @@ package body VCS_View.Explorer is
 
       for J in S'Range loop
          S (J).Display := True;
+
          Set_History
            (Get_History (E.Kernel).all,
             To_History_Key (S (J).Status.Label.all),
