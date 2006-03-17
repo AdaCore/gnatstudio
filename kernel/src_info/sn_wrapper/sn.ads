@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002 - 2006                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with Basic_Types; use Basic_Types;
 
 package SN is
    --  Types and constants specific to Source Navigator.
@@ -64,12 +66,14 @@ package SN is
 
    type Point is record
       Line   : Integer;
-      Column : Integer;
+      Column : Visible_Column_Type;
+      --  ??? Is this the right type ?
    end record;
    --  Position between symbols in source
 
    Invalid_Point    : constant Point := (-1, -1);
-   Predefined_Point : constant Point := (Integer'Last, Integer'Last);
+   Predefined_Point : constant Point := (Integer'Last,
+                                         Visible_Column_Type'Last);
 
    Invalid_String  : constant String := "";
 
@@ -172,7 +176,6 @@ package SN is
 
    SN_REF_SCOPE_LOCAL    : constant SN_Attributes := 0;
    SN_REF_SCOPE_GLOBAL   : constant SN_Attributes := 1;
-
 
    --  Variable references
    SN_REF_READ           : constant SN_Attributes := 0;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2004                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,6 @@ with Ada.Strings.Fixed;
 with Interfaces.C.Strings;
 with System;               use System;
 with Traces;               use Traces;
-with Basic_Types;          use Basic_Types;
 
 package body SN.DB_Structures is
 
@@ -904,7 +903,8 @@ package body SN.DB_Structures is
          end if;
       end loop;
 
-      Position := (Line => Num1, Column => Num2);
+      Position := (Line => Num1, Column => Visible_Column_Type (Num2));
+      --  ??? Is Num2 really a visible_column_type ?
    end Parse_Position;
 
    -------------

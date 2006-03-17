@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -67,7 +67,7 @@ package Refactoring.Performers is
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       In_File         : VFS.Virtual_File;
       Line            : Integer;
-      Column          : Integer := 1;
+      Column          : Visible_Column_Type := 1;
       Text            : String;
       Indent          : Boolean;
       Replaced_Length : Integer := 0);
@@ -87,7 +87,7 @@ package Refactoring.Performers is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       From_File  : VFS.Virtual_File;
       Line       : Integer;
-      Column     : Integer;
+      Column     : Visible_Column_Type;
       Length     : Integer) return String;
    --  Get the contents of From_File
 

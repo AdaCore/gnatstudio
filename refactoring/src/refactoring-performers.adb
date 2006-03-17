@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -262,13 +262,13 @@ package body Refactoring.Performers is
      (Kernel     : access Kernel_Handle_Record'Class;
       From_File  : VFS.Virtual_File;
       Line       : Integer;
-      Column     : Integer;
+      Column     : Visible_Column_Type;
       Length     : Integer) return String
    is
       Args : Argument_List_Access := new Argument_List'
         (new String'(Full_Name (From_File).all),
          new String'(Integer'Image (Line)),
-         new String'(Integer'Image (Column)),
+         new String'(Visible_Column_Type'Image (Column)),
          new String'("0"),
          new String'(Integer'Image (Length)));
       Text : constant String := Execute_GPS_Shell_Command
@@ -286,7 +286,7 @@ package body Refactoring.Performers is
      (Kernel     : access Kernel_Handle_Record'Class;
       In_File    : VFS.Virtual_File;
       Line       : Integer;
-      Column     : Integer := 1;
+      Column     : Visible_Column_Type := 1;
       Text       : String;
       Indent     : Boolean;
       Replaced_Length : Integer := 0)
@@ -294,7 +294,7 @@ package body Refactoring.Performers is
       Args : Argument_List_Access := new Argument_List'
         (new String'(Full_Name (In_File).all),
          new String'(Integer'Image (Line)),
-         new String'(Integer'Image (Column)),
+         new String'(Visible_Column_Type'Image (Column)),
          new String'(Text),
          new String'("0"),
          new String'(Integer'Image (Replaced_Length)));

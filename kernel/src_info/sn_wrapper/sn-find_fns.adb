@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -508,7 +508,7 @@ package body SN.Find_Fns is
      (P : Point; Str : in out String; Where : in out Integer)
    is
       Line_Img : constant String := Integer'Image (P.Line);
-      Col_Img  : constant String := Integer'Image (P.Column);
+      Col_Img  : constant String := Visible_Column_Type'Image (P.Column);
    begin
       Str (Where .. Where + Position_Length - 1) := Null_Position;
       Str (Where + 5 - Line_Img'Length + 2 .. Where + 5)

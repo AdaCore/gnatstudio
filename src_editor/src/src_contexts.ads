@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,6 +27,7 @@ with Gtk.Widget;
 with Gtk.Combo;
 with Gtk.Frame;
 
+with Basic_Types;
 with Find_Utils;                    use Find_Utils;
 with Files_Extra_Info_Pkg;
 with Generic_List;
@@ -279,7 +280,7 @@ private
       --  is acceptable for a replace operation.
 
       Begin_Line, End_Line     : Editable_Line_Type := 0;
-      Begin_Column, End_Column : Natural := 0;
+      Begin_Column, End_Column : Basic_Types.Character_Offset_Type := 0;
       --  Begin_Line is set to 0 if no match was found
 
       All_Occurrences : Boolean := False;

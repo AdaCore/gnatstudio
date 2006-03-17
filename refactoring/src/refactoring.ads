@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003 - 2006                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,12 +23,14 @@ with Dynamic_Arrays;
 with GPS.Kernel;
 with Gtk.Scrolled_Window;
 
+with Basic_Types; use Basic_Types;
+
 package Refactoring is
 
    type Location_Type is record
       File   : Entities.Source_File;
       Line   : Integer;
-      Column : Integer;
+      Column : Visible_Column_Type;
    end record;
    --  A location in a file. This is light-weight compared to E_Reference,
    --  and can be used for declarations as well.
