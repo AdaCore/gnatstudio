@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005 - 2006                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Basic_Types;               use Basic_Types;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
@@ -557,10 +558,10 @@ package body Completion_Module is
          M.Insert_Buffer,
          Get_Editable_Line
            (M.Insert_Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
-         Natural (Get_Line_Offset (Prev) + 1),
+         Character_Offset_Type (Get_Line_Offset (Prev) + 1),
          Get_Editable_Line
            (M.Insert_Buffer, Buffer_Line_Type (Get_Line (Iter) + 1)),
-         Natural (Get_Line_Offset (Iter) + 1),
+         Character_Offset_Type (Get_Line_Offset (Iter) + 1),
          Text.all,
          True);
 

@@ -22,6 +22,8 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
+with Basic_Types;
+
 with Case_Handling.IO;        use Case_Handling.IO;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
@@ -179,11 +181,11 @@ package body Casing_Exceptions is
    begin
       if Has_Entity_Column_Information (Context) then
          Set_Casing (File_Information (Context), Line_Information (Context),
-                     Entity_Column_Information (Context));
+                     Integer (Entity_Column_Information (Context)));
 
       elsif Has_Area_Information (Context) then
          Set_Casing (File_Information (Context), Line_Information (Context),
-                     Column_Information (Context));
+                     Integer (Column_Information (Context)));
       end if;
    end Set_Casing;
 
@@ -386,9 +388,10 @@ package body Casing_Exceptions is
             Before    : aliased String := "1";
             After     : aliased String := Integer'Image (Area'Length + 1);
             Line      : aliased String :=
-                          Integer'Image (Line_Information (Context));
+              Integer'Image (Line_Information (Context));
             Col       : aliased String :=
-                          Integer'Image (Column_Information (Context));
+              Basic_Types.Visible_Column_Type'Image
+                (Column_Information (Context));
             Text      : constant String := Execute_GPS_Shell_Command
               (Kernel, "Editor.get_chars",
                (1 => Full_Name (File).all'Unrestricted_Access,

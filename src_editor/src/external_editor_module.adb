@@ -251,7 +251,7 @@ package body External_Editor_Module is
      (Kernel         : access Kernel_Handle_Record'Class;
       File           : String := "";
       Line           : Natural := 1;
-      Column         : Natural := 1;
+      Column         : Visible_Column_Type := 1;
       Extended_Lisp  : String := "");
    --  Calls the client with the appropriate parameters
 
@@ -617,12 +617,12 @@ package body External_Editor_Module is
      (Kernel         : access Kernel_Handle_Record'Class;
       File           : String := "";
       Line           : Natural := 1;
-      Column         : Natural := 1;
+      Column         : Visible_Column_Type := 1;
       Extended_Lisp  : String := "")
    is
       Max_Tries : constant := 40;
       Line_Str  : constant String := Natural'Image (Line);
-      Col_Str   : constant String := Natural'Image (Column);
+      Col_Str   : constant String := Visible_Column_Type'Image (Column);
       Result    : Integer := 0;
       Success   : Boolean;
       Path      : GNAT.OS_Lib.String_Access;
@@ -729,7 +729,7 @@ package body External_Editor_Module is
    is
       pragma Unreferenced (Command);
       Line           : Integer := 1;
-      Column         : Integer := 1;
+      Column         : Visible_Column_Type := 1;
    begin
       Push_State (Get_Kernel (Context.Context), Busy);
       Trace (Me, "Edit file with external editor "
@@ -776,7 +776,7 @@ package body External_Editor_Module is
               (Kernel => Kernel,
                File   => Full_Name (D.File).all,
                Line   => Natural (D.Line),
-               Column => Natural (D.Column));
+               Column => D.Column);
             Pop_State (Kernel_Handle (Kernel));
 
             return True;
