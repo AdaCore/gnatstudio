@@ -116,7 +116,6 @@ with Project_Properties;
 with Project_Viewers;
 with Python_Module;
 with Refactoring_Module;
-with Remote_Server_List_Config;
 with Remote_Sync_Module;
 with Scenario_Views;
 with Shell_Script;
@@ -1205,7 +1204,6 @@ procedure GPS.Main is
       --  files
 
       GPS.Kernel.Remote.Register_Module (GPS_Main.Kernel);
-      Remote_Server_List_Config.Register_Module (GPS_Main.Kernel);
       Remote_Sync_Module.Register_Module (GPS_Main.Kernel);
 
       if Active (Remote_View_Trace) then

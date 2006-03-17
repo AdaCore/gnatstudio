@@ -49,7 +49,6 @@ with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Remote;  use GPS.Kernel.Remote;
 
-with Remote_Server_List_Config; use Remote_Server_List_Config;
 with Traces;                    use Traces;
 
 package body Remote_Views is
