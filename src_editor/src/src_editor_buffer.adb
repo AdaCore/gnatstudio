@@ -26,6 +26,7 @@ pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
 with GNAT.Regpat;
+with GNAT.OS_Lib;
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 
@@ -52,7 +53,6 @@ with Gtkada.Types;                        use Gtkada.Types;
 
 with Pango.Font;                          use Pango.Font;
 
-with Basic_Types;                         use Basic_Types;
 with Casing_Exceptions;                   use Casing_Exceptions;
 with Case_Handling;                       use Case_Handling;
 with Commands.Editor;                     use Commands.Editor;
@@ -315,7 +315,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Iter   : out Gtk_Text_Iter;
       Line   : Gint;
-      Column : Gint);
+      Column : Visible_Column_Type);
    --  Return the iter at position (Line, Column), tab expansion included.
    --  ??? This function should be removed in the long term, replaced by
    --  the version of Get_Iter_At_Screen_Position that supports blank lines.
@@ -365,7 +365,7 @@ package body Src_Editor_Buffer is
    function Get_Buffer_Lines
      (Buffer     : access Source_Buffer_Record'Class;
       Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type) return GNAT.OS_Lib.String_Access;
+      End_Line   : Editable_Line_Type) return Basic_Types.String_Access;
    --  Return the text from Start_Line to End_Line, included.
 
    procedure Free_Column_Info
@@ -567,10 +567,10 @@ package body Src_Editor_Buffer is
    end Get_String;
 
    function Get_String
-     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access
+     (Buffer : Source_Buffer) return Basic_Types.String_Access
    is
       Start, The_End : Gtk_Text_Iter;
-      Result         : GNAT.OS_Lib.String_Access;
+      Result         : Basic_Types.String_Access;
       Chars          : Interfaces.C.Strings.chars_ptr;
       C_Str          : Unchecked_String_Access;
 
@@ -598,12 +598,12 @@ package body Src_Editor_Buffer is
    function Get_Buffer_Lines
      (Buffer     : access Source_Buffer_Record'Class;
       Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type) return GNAT.OS_Lib.String_Access
+      End_Line   : Editable_Line_Type) return Basic_Types.String_Access
    is
       A      : array (Start_Line .. End_Line) of Src_String;
       Len    : Integer := 0;
       Index  : Integer := 1;
-      Output : GNAT.OS_Lib.String_Access;
+      Output : Basic_Types.String_Access;
 
    begin
       for J in A'Range loop
@@ -1409,7 +1409,7 @@ package body Src_Editor_Buffer is
             Source_Buffer (Buffer),
             False,
             Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
-            Natural (Get_Line_Offset (Pos) + 1));
+            Character_Offset_Type (Get_Line_Offset (Pos) + 1));
 
          Enqueue (Buffer, Command_Access (Command));
 
@@ -1428,7 +1428,7 @@ package body Src_Editor_Buffer is
                False,
                Get_Editable_Line
                  (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
-               Natural (Get_Line_Offset (Pos) + 1));
+               Character_Offset_Type (Get_Line_Offset (Pos) + 1));
 
             Enqueue (Buffer, Command_Access (Command));
          end if;
@@ -1444,7 +1444,7 @@ package body Src_Editor_Buffer is
             Source_Buffer (Buffer),
             False,
             Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
-            Natural (Get_Line_Offset (Pos) + 1));
+            Character_Offset_Type (Get_Line_Offset (Pos) + 1));
          Enqueue (Buffer, Command_Access (Command));
          Add_Text (Command, Text (1 .. Length));
          Buffer.Current_Command := Command_Access (Command);
@@ -1584,9 +1584,9 @@ package body Src_Editor_Buffer is
                  (Buffer,
                   "",
                   Editable_Line_Start,
-                  Natural (Column_Start + 1),
+                  Character_Offset_Type (Column_Start + 1),
                   Editable_Line_End,
-                  Natural (Column_End + 1));
+                  Character_Offset_Type (Column_End + 1));
                return;
             end if;
          end if;
@@ -1623,10 +1623,10 @@ package body Src_Editor_Buffer is
             Source_Buffer (Buffer),
             True,
             Editable_Line_Start,
-            Natural (Column_Start + 1),
+            Character_Offset_Type (Column_Start + 1),
             Direction,
             Editable_Line_End,
-            Natural (Column + 1));
+            Character_Offset_Type (Column + 1));
 
          Enqueue (Buffer, Command_Access (Command));
 
@@ -1634,14 +1634,14 @@ package body Src_Editor_Buffer is
            (Command,
             Get_Slice (Buffer, Start_Iter, End_Iter),
             Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
-            Natural (Column_Start + 1));
+            Character_Offset_Type (Column_Start + 1));
       else
          if Direction = Forward then
             Add_Text
               (Command,
                Get_Slice (Buffer, Start_Iter, End_Iter),
                Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
-               Natural (Column_Start + 1));
+               Character_Offset_Type (Column_Start + 1));
          else
             Add_Text
               (Command,
@@ -1830,7 +1830,7 @@ package body Src_Editor_Buffer is
    function Is_Valid_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Natural := 1) return Boolean
+      Column : Character_Offset_Type := 1) return Boolean
    is
       Buffer_Line : constant Buffer_Line_Type :=
         Get_Buffer_Line (Buffer, Line);
@@ -1852,6 +1852,15 @@ package body Src_Editor_Buffer is
          return Is_Valid_Position
            (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
       end if;
+   end Is_Valid_Position;
+
+   function Is_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type) return Boolean is
+   begin
+      return Is_Valid_Position
+        (Buffer, Line, Collapse_Tabs (Buffer, Line, Column));
    end Is_Valid_Position;
 
    ---------------------
@@ -2255,7 +2264,7 @@ package body Src_Editor_Buffer is
       Lang_Context : constant Language_Context_Access :=
                        Get_Language_Context (Lang);
       Line         : Editable_Line_Type;
-      Column       : Positive;
+      Column       : Character_Offset_Type;
       Len          : Integer;
 
    begin
@@ -2532,6 +2541,7 @@ package body Src_Editor_Buffer is
       Buttons       : Message_Dialog_Buttons;
       File_Is_New   : constant Boolean := not Buffer.Original_Text_Inserted;
 
+      use GNAT.OS_Lib;
    begin
       Success := True;
 
@@ -3102,7 +3112,7 @@ package body Src_Editor_Buffer is
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Natural;
+      Column : Character_Offset_Type;
       Center : Boolean := True)
    is
       Buffer_Line : Buffer_Line_Type :=
@@ -3132,11 +3142,13 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Iter   : out Gtk_Text_Iter;
       Line   : Gint;
-      Column : Gint)
+      Column : Visible_Column_Type)
    is
       Result  : Boolean := True;
       Current : Gint := 0;
       Tab_Len : constant Gint := Buffer.Tab_Width;
+
+      The_Column : constant Gint := Gint (Column - 1);
    begin
       if Is_Valid_Position (Buffer, Line, 0) then
          Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
@@ -3149,7 +3161,7 @@ package body Src_Editor_Buffer is
       --  We have to test Result, in case Iter was pointing after the end of
       --  the buffer.
 
-      while Result and then Current < Column loop
+      while Result and then Current < The_Column loop
          if Get_Char (Iter) = ASCII.HT then
             Current := Current + Tab_Len - (Current mod Tab_Len);
          else
@@ -3168,7 +3180,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Iter   : out Gtk_Text_Iter;
       Line   : Editable_Line_Type;
-      Column : Positive)
+      Column : Visible_Column_Type)
    is
       Buffer_Line : Buffer_Line_Type;
    begin
@@ -3176,6 +3188,26 @@ package body Src_Editor_Buffer is
 
       if Buffer_Line /= 0 then
          Get_Iter_At_Screen_Position
+           (Buffer, Iter,
+            Gint (Buffer_Line - 1),
+            Column);
+      else
+         Get_Iter_At_Line_Offset (Buffer, Iter, 0, 0);
+      end if;
+   end Get_Iter_At_Screen_Position;
+
+   procedure Get_Iter_At_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type)
+   is
+      Buffer_Line : Buffer_Line_Type;
+   begin
+      Buffer_Line := Get_Buffer_Line (Buffer, Line);
+
+      if Buffer_Line /= 0 then
+         Get_Iter_At_Line_Offset
            (Buffer, Iter,
             Gint (Buffer_Line - 1),
             Gint (Column - 1));
@@ -3248,7 +3280,7 @@ package body Src_Editor_Buffer is
      (Buffer : Source_Buffer;
       Iter   : Gtk_Text_Iter;
       Line   : out Editable_Line_Type;
-      Column : out Positive) is
+      Column : out Character_Offset_Type) is
    begin
       Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
@@ -3259,7 +3291,19 @@ package body Src_Editor_Buffer is
          Line := 1;
       end if;
 
-      Column := Positive (Get_Line_Offset (Iter) + 1);
+      Column := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
+   end Get_Iter_Position;
+
+   procedure Get_Iter_Position
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : out Editable_Line_Type;
+      Column : out Visible_Column_Type)
+   is
+      Col : Character_Offset_Type;
+   begin
+      Get_Iter_Position (Buffer, Iter, Line, Col);
+      Column := Expand_Tabs (Buffer, Line, Col);
    end Get_Iter_Position;
 
    -------------------------
@@ -3280,12 +3324,23 @@ package body Src_Editor_Buffer is
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : out Editable_Line_Type;
-      Column : out Positive)
+      Column : out Character_Offset_Type)
    is
       Iter : Gtk_Text_Iter;
    begin
       Get_Cursor_Position (Buffer, Iter);
       Get_Iter_Position (Source_Buffer (Buffer), Iter, Line, Column);
+   end Get_Cursor_Position;
+
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : out Editable_Line_Type;
+      Column : out Visible_Column_Type)
+   is
+      Col : Character_Offset_Type;
+   begin
+      Get_Cursor_Position (Buffer, Line, Col);
+      Column := Expand_Tabs (Buffer, Line, Col);
    end Get_Cursor_Position;
 
    ---------------
@@ -3408,9 +3463,9 @@ package body Src_Editor_Buffer is
    procedure Get_Selection_Bounds
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : out Editable_Line_Type;
-      Start_Column : out Natural;
+      Start_Column : out Character_Offset_Type;
       End_Line     : out Editable_Line_Type;
-      End_Column   : out Natural;
+      End_Column   : out Character_Offset_Type;
       Found        : out Boolean)
    is
       SL, SC, EL, EC : Gint;
@@ -3419,8 +3474,8 @@ package body Src_Editor_Buffer is
 
       Start_Line := Get_Editable_Line (Buffer, Buffer_Line_Type (SL + 1));
       End_Line := Get_Editable_Line (Buffer, Buffer_Line_Type (EL + 1));
-      Start_Column := Natural (SC + 1);
-      End_Column   := Natural (EC + 1);
+      Start_Column := Character_Offset_Type (SC + 1);
+      End_Column   := Character_Offset_Type (EC + 1);
    end Get_Selection_Bounds;
 
    -------------------
@@ -3528,7 +3583,7 @@ package body Src_Editor_Buffer is
    procedure Insert
      (Buffer      : access Source_Buffer_Record;
       Line        : Editable_Line_Type;
-      Column      : Natural;
+      Column      : Character_Offset_Type;
       Text        : String;
       Enable_Undo : Boolean := True)
    is
@@ -3628,7 +3683,7 @@ package body Src_Editor_Buffer is
    procedure Delete
      (Buffer      : access Source_Buffer_Record;
       Line        : Editable_Line_Type;
-      Column      : Natural;
+      Column      : Character_Offset_Type;
       Length      : Natural;
       Enable_Undo : Boolean := True)
    is
@@ -3699,9 +3754,9 @@ package body Src_Editor_Buffer is
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Natural;
+      Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
-      End_Column   : Natural;
+      End_Column   : Character_Offset_Type;
       Text         : String;
       Enable_Undo  : Boolean := True)
    is
@@ -3757,33 +3812,24 @@ package body Src_Editor_Buffer is
       Start_Line   : Gint;
       Start_Column : Gint;
       End_Line     : Gint;
-      End_Column   : Gint;
-      Expand_Tabs  : Boolean := True)
+      End_Column   : Gint)
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
-      if Expand_Tabs then
-         Get_Iter_At_Screen_Position
-           (Buffer, Start_Iter, Start_Line, Start_Column);
-         Get_Iter_At_Screen_Position (Buffer, End_Iter, End_Line, End_Column);
+      if not Is_Valid_Position (Buffer, Start_Line, Start_Column) then
+         Trace (Me, "invalid start position in Select_Region, aborting:"
+                & Start_Line'Img & Start_Column'Img);
+         return;
 
-      else
-         if not Is_Valid_Position (Buffer, Start_Line, Start_Column) then
-            Trace (Me, "invalid start position in Select_Region, aborting:"
-                   & Start_Line'Img & Start_Column'Img);
-            return;
-
-         elsif not Is_Valid_Position (Buffer, End_Line, End_Column) then
-            Trace (Me, "invalid end position in Select_Region, aborting:"
-                   & End_Line'Img & End_Column'Img);
-            return;
-         end if;
-
-         Get_Iter_At_Line_Offset
-           (Buffer, Start_Iter, Start_Line, Start_Column);
-         Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+      elsif not Is_Valid_Position (Buffer, End_Line, End_Column) then
+         Trace (Me, "invalid end position in Select_Region, aborting:"
+                & End_Line'Img & End_Column'Img);
+         return;
       end if;
+
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
+      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
 
       Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);
       Buffer.Cursor_Set_Explicitely := 2;
@@ -3797,19 +3843,35 @@ package body Src_Editor_Buffer is
    procedure Select_Region
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Natural;
+      Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
-      End_Column   : Natural;
-      Expand_Tabs  : Boolean := True)
-   is
+      End_Column   : Character_Offset_Type) is
    begin
       Select_Region
         (Buffer,
          Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
          Gint (Start_Column - 1),
          Gint (Get_Buffer_Line (Buffer, End_Line) - 1),
-         Gint (End_Column - 1),
-         Expand_Tabs);
+         Gint (End_Column - 1));
+   end Select_Region;
+
+   -------------------
+   -- Select_Region --
+   -------------------
+
+   procedure Select_Region
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Visible_Column_Type;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Visible_Column_Type)
+   is
+      Start_Col, End_Col : Character_Offset_Type;
+   begin
+      Start_Col := Collapse_Tabs (Buffer, Start_Line, Start_Column);
+      End_Col := Collapse_Tabs (Buffer, End_Line, End_Column);
+
+      Select_Region (Buffer, Start_Line, Start_Col, End_Line, End_Col);
    end Select_Region;
 
    --------------------
@@ -4535,7 +4597,7 @@ package body Src_Editor_Buffer is
       Cursor_Offset : Gint;
       Indent_Offset : Integer := 0;
       Result        : Boolean;
-      Buffer_Text   : GNAT.OS_Lib.String_Access;
+      Buffer_Text   : Basic_Types.String_Access;
       Indent_Params : Indent_Parameters;
       From_Line     : Editable_Line_Type;
       To_Line       : Editable_Line_Type;
@@ -4618,8 +4680,8 @@ package body Src_Editor_Buffer is
          Line         : Natural := L;
          Iter         : Gtk_Text_Iter;
          Buffer_Line  : Buffer_Line_Type;
-         Start_Column : Integer;
-         End_Column   : Integer;
+         Start_Column : Character_Offset_Type;
+         End_Column   : Character_Offset_Type;
          Replace_Cmd  : Editor_Replace_Slice;
 
       begin
@@ -4640,9 +4702,9 @@ package body Src_Editor_Buffer is
          Get_Iter_At_Line_Index
            (Buffer, Iter,
             Gint (Buffer_Line - 1), Gint (First - 1));
-         Start_Column := Integer (Get_Line_Offset (Iter) + 1);
+         Start_Column := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
          Set_Line_Index (Iter, Gint (Last - 1));
-         End_Column := Integer (Get_Line_Offset (Iter) + 1);
+         End_Column := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
 
          --  Only replace if needed
 
@@ -5228,9 +5290,9 @@ package body Src_Editor_Buffer is
          else
             --  No selection, get the current position
             declare
-               Column : Positive;
+               Dummy : Character_Offset_Type;
             begin
-               Get_Cursor_Position (Buffer, From_Line, Column);
+               Get_Cursor_Position (Buffer, From_Line, Dummy);
                To_Line := From_Line;
             end;
          end if;
@@ -5304,10 +5366,10 @@ package body Src_Editor_Buffer is
    procedure Forward_Position
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Natural;
+      Start_Column : Character_Offset_Type;
       Length       : Integer;
       End_Line     : out Editable_Line_Type;
-      End_Column   : out Natural)
+      End_Column   : out Character_Offset_Type)
    is
       Iter      : Gtk_Text_Iter;
       Success   : Boolean;
@@ -5333,7 +5395,7 @@ package body Src_Editor_Buffer is
       End_Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
 
-      End_Column := Natural (Get_Line_Offset (Iter) + 1);
+      End_Column := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
    end Forward_Position;
 
    --------------
@@ -5343,9 +5405,9 @@ package body Src_Editor_Buffer is
    function Get_Text
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Natural;
+      Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type := 0;
-      End_Column   : Natural := 0) return String
+      End_Column   : Character_Offset_Type := 0) return String
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
       Start_End, End_Begin : Gtk_Text_Iter;
@@ -5358,6 +5420,14 @@ package body Src_Editor_Buffer is
          if End_Line /= 0 then
             Unfold_Line (Buffer, End_Line);
          end if;
+
+         --  ??? Not sufficient.
+         --  middle lines won't be unfolded in the following case:
+         --     start_line (folded)
+         --     ...
+         --     middle_line (folded)
+         --     ...
+         --     end_line (folded)
       end if;
 
       Get_Iter_At_Line_Offset
@@ -5397,14 +5467,14 @@ package body Src_Editor_Buffer is
          Set_Line_Offset (End_Begin, 0);
 
          declare
-            A : GNAT.OS_Lib.String_Access :=
+            A : Basic_Types.String_Access :=
               Get_Buffer_Lines (Buffer, Start_Line + 1, Real_End_Line - 1);
             S : constant String :=
               Get_Text (Buffer, Start_Iter, Start_End) & ASCII.LF
                 & A.all & ASCII.LF
                 & Get_Text (Buffer, End_Begin, End_Iter);
          begin
-            GNAT.OS_Lib.Free (A);
+            Free (A);
             return S;
          end;
       else
@@ -5629,5 +5699,150 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.Queue;
    end Get_Command_Queue;
+
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert (C : in Natural) return Visible_Column_Type is
+   begin
+      return Visible_Column_Type (C);
+   end Convert;
+
+   function Convert (C : in Natural) return Character_Offset_Type is
+   begin
+      return Character_Offset_Type (C);
+   end Convert;
+
+   function Convert (L : in Natural) return Editable_Line_Type is
+   begin
+      return Editable_Line_Type (L);
+   end Convert;
+
+   function Convert (L : in Editable_Line_Type) return Natural is
+   begin
+      return Natural (L);
+   end Convert;
+
+   function Convert (C : in Character_Offset_Type) return Natural is
+   begin
+      return Natural (C);
+   end Convert;
+
+   -----------------
+   -- Expand_Tabs --
+   -----------------
+
+   function Expand_Tabs
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type) return Visible_Column_Type
+   is
+      Iter    : Gtk_Text_Iter;
+      Count   : Character_Offset_Type := 1;
+      Current : Visible_Column_Type := 1;
+      Result  : Boolean := True;
+      Tab_Len : constant Visible_Column_Type := Visible_Column_Type
+        (Buffer.Tab_Width);
+      J       : Natural;
+   begin
+      case Buffer.Editable_Lines (Line).Where is
+         when In_Buffer =>
+            Get_Iter_At_Line
+              (Buffer, Iter,
+               Gint (Buffer.Editable_Lines (Line).Buffer_Line - 1));
+
+            while Result and then Count < Column loop
+               if Get_Char (Iter) = ASCII.HT then
+                  Current := Current + (Tab_Len - (Current - 1) mod Tab_Len);
+               else
+                  Current := Current + 1;
+               end if;
+
+               Count := Count + 1;
+               Forward_Char (Iter, Result);
+            end loop;
+
+         when In_Mark =>
+            if Buffer.Editable_Lines (Line).Text /= null then
+               J := Buffer.Editable_Lines (Line).Text'First;
+
+               while J <  Buffer.Editable_Lines (Line).Text'Last
+                 and then Count < Column
+               loop
+                  if Buffer.Editable_Lines (Line).Text (J) = ASCII.HT then
+                     Current := Current +
+                       (Tab_Len - (Current - 1) mod Tab_Len);
+                  else
+                     Current := Current + 1;
+                  end if;
+
+                  Count := Count + 1;
+                  J := UTF8_Next_Char
+                    (Buffer.Editable_Lines (Line).Text.all, J);
+               end loop;
+            end if;
+      end case;
+
+      return Current;
+   end Expand_Tabs;
+
+   -------------------
+   -- Collapse_Tabs --
+   -------------------
+
+   function Collapse_Tabs
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type) return Character_Offset_Type
+   is
+      Iter    : Gtk_Text_Iter;
+      Current : Visible_Column_Type := 1;
+      Count   : Character_Offset_Type := 1;
+      Result  : Boolean := True;
+      Tab_Len : constant Visible_Column_Type := Visible_Column_Type
+        (Buffer.Tab_Width);
+      J       : Natural;
+   begin
+      case Buffer.Editable_Lines (Line).Where is
+         when In_Buffer =>
+            Get_Iter_At_Line
+              (Buffer, Iter,
+               Gint (Buffer.Editable_Lines (Line).Buffer_Line - 1));
+
+            while Result and then Current < Column  loop
+               if Get_Char (Iter) = ASCII.HT then
+                  Current := Current + Tab_Len - (Current - 1) mod Tab_Len;
+               else
+                  Current := Current + 1;
+               end if;
+
+               Count := Count + 1;
+               Forward_Char (Iter, Result);
+            end loop;
+
+         when In_Mark =>
+            if Buffer.Editable_Lines (Line).Text /= null then
+               J := Buffer.Editable_Lines (Line).Text'First;
+
+               while J <  Buffer.Editable_Lines (Line).Text'Last
+                 and then Current < Column
+               loop
+                  if Buffer.Editable_Lines (Line).Text (J) = ASCII.HT then
+                     Current := Current +
+                       (Tab_Len - (Current - 1) mod Tab_Len);
+                  else
+                     Current := Current + 1;
+                  end if;
+
+                  Count := Count + 1;
+                  J := UTF8_Next_Char
+                    (Buffer.Editable_Lines (Line).Text.all, J);
+               end loop;
+            end if;
+      end case;
+
+      return Count;
+   end Collapse_Tabs;
 
 end Src_Editor_Buffer;

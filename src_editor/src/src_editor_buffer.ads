@@ -28,8 +28,6 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Calendar;
 with System;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-
 with Gdk.GC;                    use Gdk.GC;
 with Glib;                      use Glib;
 with Gtk;
@@ -39,6 +37,7 @@ with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
 
+with Basic_Types;               use Basic_Types;
 with Commands;                  use Commands;
 with Generic_List;
 with GPS.Kernel;
@@ -70,6 +69,10 @@ package Src_Editor_Buffer is
    --  The following types define the different line types that are involved
    --  in the buffer:
 
+   ----------------
+   -- Line types --
+   ----------------
+
    type Editable_Line_Type is new Natural;
    --  Editable lines are the lines in the buffer that can be edited (ie
    --  all lines except blank lines, post-it notes, etc), plus lines that
@@ -85,6 +88,29 @@ package Src_Editor_Buffer is
    type File_Line_Type is new Natural;
    --  File lines identify lines that were in the file the last time that the
    --  buffer was saved.
+
+   ------------------
+   -- Column types --
+   ------------------
+
+   function Convert (L : in Natural) return Editable_Line_Type;
+   function Convert (C : in Natural) return Visible_Column_Type;
+   function Convert (C : in Natural) return Character_Offset_Type;
+   function Convert (L : in Editable_Line_Type) return Natural;
+   function Convert (C : in Character_Offset_Type) return Natural;
+   --  ??? temporary ?
+
+   function Expand_Tabs
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type) return Visible_Column_Type;
+   --  Return the visible column corresponding to the position.
+
+   function Collapse_Tabs
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type) return Character_Offset_Type;
+   --  Return the character position corresponding to the visible column.
 
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
@@ -147,7 +173,7 @@ package Src_Editor_Buffer is
    function Is_Valid_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Natural := 1) return Boolean;
+      Column : Character_Offset_Type := 1) return Boolean;
    pragma Inline (Is_Valid_Position);
    --  Return True if the given cursor position is valid. If Column is
    --  set to 0, then this function just verifies the given line number
@@ -156,10 +182,17 @@ package Src_Editor_Buffer is
    --  Note that Get_Line_Count (inherited from Gtk_Text_Buffer) is also
    --  available when only the Line number needs to be checked.
 
+   function Is_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type) return Boolean;
+   pragma Inline (Is_Valid_Position);
+   --  Same as above.
+
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Natural;
+      Column : Character_Offset_Type;
       Center : Boolean := True);
    --  Move the insert cursor to the given position.
    --  If, following this call, the cursor location needs to be displayed, the
@@ -185,7 +218,13 @@ package Src_Editor_Buffer is
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : out Editable_Line_Type;
-      Column : out Positive);
+      Column : out Character_Offset_Type);
+   --  Return the current editable cursor position
+
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : out Editable_Line_Type;
+      Column : out Visible_Column_Type);
    --  Return the current editable cursor position
 
    procedure Get_Delimiters
@@ -209,7 +248,14 @@ package Src_Editor_Buffer is
      (Buffer : Source_Buffer;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
       Line   : out Editable_Line_Type;
-      Column : out Positive);
+      Column : out Character_Offset_Type);
+   --  Return the current editable cursor position for Iter
+
+   procedure Get_Iter_Position
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : out Editable_Line_Type;
+      Column : out Visible_Column_Type);
    --  Return the current editable cursor position for Iter
 
    procedure Get_Screen_Position
@@ -221,9 +267,9 @@ package Src_Editor_Buffer is
    procedure Get_Selection_Bounds
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : out Editable_Line_Type;
-      Start_Column : out Natural;
+      Start_Column : out Character_Offset_Type;
       End_Line     : out Editable_Line_Type;
-      End_Column   : out Natural;
+      End_Column   : out Character_Offset_Type;
       Found        : out Boolean);
    --  If a portion of the buffer is currently selected, then return the
    --  position of the beginning and the end of the selection. Otherwise,
@@ -241,26 +287,27 @@ package Src_Editor_Buffer is
    function Get_Text
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Natural;
+      Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type := 0;
-      End_Column   : Natural := 0) return String;
+      End_Column   : Character_Offset_Type := 0) return String;
    --  Return (as UTF-8) the text in range [Start, end).
    --  If End_Line is 0, get the entire range between start position and end
    --  of text.
+   --  ??? Should return UTF-8 string ?
 
    procedure Forward_Position
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Natural;
+      Start_Column : Character_Offset_Type;
       Length       : Integer;
       End_Line     : out Editable_Line_Type;
-      End_Column   : out Natural);
+      End_Column   : out Character_Offset_Type);
    --  Return the position Length characters after Start_Line/Start_Column.
 
    procedure Insert
      (Buffer      : access Source_Buffer_Record;
       Line        : Editable_Line_Type;
-      Column      : Natural;
+      Column      : Character_Offset_Type;
       Text        : String;
       Enable_Undo : Boolean := True);
    --  Insert the given text in at the specified position.
@@ -275,7 +322,7 @@ package Src_Editor_Buffer is
    procedure Delete
      (Buffer      : access Source_Buffer_Record;
       Line        : Editable_Line_Type;
-      Column      : Natural;
+      Column      : Character_Offset_Type;
       Length      : Natural;
       Enable_Undo : Boolean := True);
    --  Delete Length caracters after the specified position.
@@ -290,9 +337,9 @@ package Src_Editor_Buffer is
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Natural;
+      Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
-      End_Column   : Natural;
+      End_Column   : Character_Offset_Type;
       Text         : String;
       Enable_Undo  : Boolean := True);
    --  Replace the text between the start and end positions by Text.
@@ -318,8 +365,7 @@ package Src_Editor_Buffer is
       Start_Line   : Gint;
       Start_Column : Gint;
       End_Line     : Gint;
-      End_Column   : Gint;
-      Expand_Tabs  : Boolean := True);
+      End_Column   : Gint);
    --  Select the given region.
    --  Both start and end positions must be verified before calling this
    --  procedure. An incorrect position will cause an Assertion_Failure
@@ -329,11 +375,18 @@ package Src_Editor_Buffer is
    procedure Select_Region
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Natural;
+      Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
-      End_Column   : Natural;
-      Expand_Tabs  : Boolean := True);
+      End_Column   : Character_Offset_Type);
    --  Select the given region.
+
+   procedure Select_Region
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Visible_Column_Type;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Visible_Column_Type);
+   --  Same as above, working with user columns.
 
    procedure External_End_Action (Buffer : access Source_Buffer_Record);
    --  This procedure should be called every time that an external
@@ -681,7 +734,7 @@ package Src_Editor_Buffer is
    --  (Ie if the text has not been modified since the last computation).
 
    function Get_String
-     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access;
+     (Buffer : Source_Buffer) return String_Access;
    --  Return the entire editable string.
    --  The caller is responsible for freeing the returned value.
 
@@ -743,7 +796,15 @@ private
      (Buffer : access Source_Buffer_Record;
       Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
       Line   : Editable_Line_Type;
-      Column : Positive);
+      Column : Visible_Column_Type);
+   --  Return the iter at position (Line, Column), tab expansion included.
+   --  If Line is not in the text, return the Iter at beginning of text.
+
+   procedure Get_Iter_At_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type);
    --  Return the iter at position (Line, Column), tab expansion included.
    --  If Line is not in the text, return the Iter at beginning of text.
 
@@ -872,6 +933,7 @@ private
 
          when In_Mark =>
             Text : String_Access := null;
+            --  ??? This string is UTF-8, it should be marked as so!
       end case;
    end record;
 
@@ -1074,7 +1136,7 @@ private
       In_Destruction : Boolean := False;
       --  Indicates whether the buffer is currently being destroyed.
 
-      Charset : GNAT.OS_Lib.String_Access;
+      Charset : String_Access;
       --  The charset associated with the buffer.
    end record;
 
