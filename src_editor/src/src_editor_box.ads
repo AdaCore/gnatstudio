@@ -40,6 +40,7 @@ with Gtk.Handlers;
 with Gtk.Separator;
 with Gtk.Text_Mark;
 
+with Basic_Types;           use Basic_Types;
 with Language;
 with Language_Handlers;
 with GPS.Kernel;
@@ -173,20 +174,14 @@ package Src_Editor_Box is
    procedure Set_Cursor_Location
      (Editor      : access Source_Editor_Box_Record;
       Line        : Editable_Line_Type;
-      Column      : Positive := 1;
+      Column      : Character_Offset_Type := 1;
       Force_Focus : Boolean  := True);
    --  Move the insert cursor to the given location. Success is set to False
    --  if the position is outside of the buffer.
    --  If Force_Focus is False, then the editor will not grab the focus
    --  before setting the cursor position.
 
-   procedure Get_Cursor_Location
-     (Editor  : access Source_Editor_Box_Record;
-      Line    : out Positive;
-      Column  : out Positive);
-   --  Get the current cursor position
-
-   procedure Replace_Slice
+   procedure Replace_Sliced
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
       Start_Column : Positive;
@@ -409,7 +404,7 @@ private
    --  from 1 in the Source Box (this is the natural numbering for humans),
    --  whereas it starts from 0 in the Source Box.
 
-   function To_Box_Column (Col : Glib.Gint) return Natural;
+   function To_Box_Column (Col : Glib.Gint) return Character_Offset_Type;
    pragma Inline (To_Box_Column);
    --  Convert a column number in the Source Buffer to a column number
    --  in the Source Box. Same rationale as in To_Box_Line.

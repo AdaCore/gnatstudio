@@ -55,7 +55,6 @@ with Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Types;              use Gtkada.Types;
 
-with Basic_Types;
 with Commands.Editor;           use Commands.Editor;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
@@ -189,8 +188,8 @@ package body Src_Editor_Box is
    procedure Go_To_Closest_Match
      (Kernel   : access Kernel_Handle_Record'Class;
       Filename : Virtual_File;
-      Line     : Natural;
-      Column   : Natural;
+      Line     : Editable_Line_Type;
+      Column   : Visible_Column_Type;
       Entity   : Entity_Information);
    --  Open an editor for Filename. Go to Line, Column, or the nearest
    --  occurrence of Entity close by.
@@ -221,16 +220,17 @@ package body Src_Editor_Box is
      (Source : access Source_Editor_Box_Record'Class)
    is
       Line   : Editable_Line_Type;
-      Column : Positive;
+      Dummy  : Character_Offset_Type;
    begin
-      Get_Cursor_Position (Source.Source_Buffer, Line, Column);
+      Get_Cursor_Position (Source.Source_Buffer, Line, Dummy);
       Push_Marker_In_History
         (Kernel => Source.Kernel,
          Marker => Create_File_Marker
            (Kernel => Source.Kernel,
             File   => Get_Filename (Source.Source_Buffer),
-            Line   => Natural (Line),
+            Line   => Line,
             Column => 1));
+      --  ??? Any reason to throw away the column and putting 1 here?
    end Add_Navigation_Location;
 
    -----------
@@ -265,7 +265,8 @@ package body Src_Editor_Box is
    is
       Entity   : Entity_Information;
       Location : File_Location;
-      L, C     : Natural;
+      L        : Editable_Line_Type;
+      C        : Visible_Column_Type;
       Filename : Virtual_File;
 
    begin
@@ -306,8 +307,8 @@ package body Src_Editor_Box is
                  (Db   => Get_Database (Get_Kernel (Context)),
                   File => File_Information (Context)),
                Line   => GPS.Kernel.Contexts.Line_Information (Context),
-               Column => Column_Type
-                 (GPS.Kernel.Contexts.Entity_Column_Information (Context))),
+               Column =>
+                 GPS.Kernel.Contexts.Entity_Column_Information (Context)),
             Location         => Location);
 
          if Location = Entities.No_File_Location then
@@ -317,7 +318,7 @@ package body Src_Editor_Box is
          --  Open the file, and reset Source to the new editor in order to
          --  highlight the region returned by the Xref query.
 
-         L := Get_Line (Location);
+         L := Convert (Get_Line (Location));
          C := Get_Column (Location);
 
          Filename := Get_Filename (Get_File (Location));
@@ -327,7 +328,7 @@ package body Src_Editor_Box is
          --  Open the file, and reset Source to the new editor in order to
          --  highlight the region returned by the Xref query.
 
-         L := Get_Line (Get_Declaration_Of (Entity));
+         L := Convert (Get_Line (Get_Declaration_Of (Entity)));
          C := Get_Column (Get_Declaration_Of (Entity));
          Filename := Get_Filename (Get_File (Get_Declaration_Of (Entity)));
       end if;
@@ -351,16 +352,18 @@ package body Src_Editor_Box is
    procedure Go_To_Closest_Match
      (Kernel   : access Kernel_Handle_Record'Class;
       Filename : Virtual_File;
-      Line     : Natural;
-      Column   : Natural;
+      Line     : Editable_Line_Type;
+      Column   : Visible_Column_Type;
       Entity   : Entity_Information)
    is
       Length            : constant Natural := Get_Name (Entity).all'Length;
       Source            : Source_Editor_Box;
       File_Up_To_Date   : Boolean;
-      L, C              : Natural;
+      L                 : Natural;
       Is_Case_Sensitive : Boolean;
-      Arg               : String_Access;
+      Arg               : GNAT.OS_Lib.String_Access;
+
+      Char_Column       : Character_Offset_Type;
    begin
       if Dir_Name (Filename).all = "" then
          Insert (Kernel, -"File not found: "
@@ -374,7 +377,8 @@ package body Src_Editor_Box is
       end if;
 
       Open_File_Editor
-        (Kernel, Filename, Line, Column, Column + Length,
+        (Kernel, Filename, Natural (Line), Column,
+         Column + Visible_Column_Type (Length),
          Enable_Navigation => True);
 
       --  Find the correct location for the entity, in case it is in fact
@@ -384,25 +388,30 @@ package body Src_Editor_Box is
       Source := Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
 
       if Source /= null then
+
+         Char_Column := Collapse_Tabs (Source.Source_Buffer, Line, Column);
+
          --  Find the closest match of the entity, in case the LI file wasn't
          --  up-to-date.
 
          File_Up_To_Date := Is_Valid_Position
-             (Source.Source_Buffer, Editable_Line_Type (Line), Column)
+             (Source.Source_Buffer, Line, Char_Column)
            and then Is_Valid_Position
-             (Source.Source_Buffer,
-              Editable_Line_Type (Line), Column + Length);
+             (Source.Source_Buffer, Line,
+              Char_Column + Character_Offset_Type (Length));
 
          Is_Case_Sensitive := Get_Language_Context
            (Get_Language (Source.Source_Buffer)).Case_Sensitive;
 
          File_Up_To_Date := File_Up_To_Date
-           and then Equal (Get_Text
-                             (Source.Source_Buffer,
-                              Editable_Line_Type (Line), Column,
-                              Editable_Line_Type (Line), Column + Length),
-                           Get_Name (Entity).all,
-                           Case_Sensitive => Is_Case_Sensitive);
+           and then Equal
+             (Get_Text
+                  (Source.Source_Buffer,
+                   Line, Char_Column,
+                   Line,
+                   Char_Column + Character_Offset_Type (Length)),
+              Get_Name (Entity).all,
+              Case_Sensitive => Is_Case_Sensitive);
 
          --  Search for the closest reference to the entity if
          --  necessary. Otherwise, there's nothing to be done, since the region
@@ -418,19 +427,25 @@ package body Src_Editor_Box is
             --  appropriate region in the editor.
 
             declare
-               Buffer : GNAT.OS_Lib.String_Access;
+               Buffer : Basic_Types.String_Access;
+               Col    : Visible_Column_Type;
             begin
-               L := Line;
-               C := Column;
+               L := Convert (Line);
                Buffer := Get_String (Source.Source_Buffer);
                Find_Closest_Match
-                 (Buffer.all, L, C, Get_Name (Entity).all,
+                 (Buffer.all, L, Char_Column, Get_Name (Entity).all,
                   Case_Sensitive => Get_Language_Context
                     (Get_Language (Source.Source_Buffer)).Case_Sensitive);
-               GNAT.OS_Lib.Free (Buffer);
-            end;
+               Free (Buffer);
 
-            Open_File_Editor (Kernel, Filename, L, C, C + Length, False);
+               Col := Expand_Tabs
+                 (Source.Source_Buffer, Line, Char_Column);
+               Open_File_Editor
+                 (Kernel, Filename, L, Col,
+                  Col + Visible_Column_Type (Length), False);
+               --  ??? Calcluation for the end column is wrong if there is
+               --  an ASCII.HT within Length distance of Col.
+            end;
          end if;
       end if;
 
@@ -473,9 +488,9 @@ package body Src_Editor_Box is
    -- To_Box_Column --
    -------------------
 
-   function To_Box_Column (Col : Gint) return Natural is
+   function To_Box_Column (Col : Gint) return Character_Offset_Type is
    begin
-      return Natural (Col + 1);
+      return Character_Offset_Type (Col + 1);
    end To_Box_Column;
 
    --------------------------
@@ -1105,7 +1120,6 @@ package body Src_Editor_Box is
                         Get_Filename (Editor.Source_Buffer);
       Line          : Gint := 0;
       Column        : Gint := 0;
-      Entity_Column : Gint;
       X, Y          : Gint;
       Start_Iter    : Gtk_Text_Iter;
       End_Iter      : Gtk_Text_Iter;
@@ -1240,13 +1254,20 @@ package body Src_Editor_Box is
             else
                --  Expand the tabs
 
-               Get_Screen_Position
-                 (Editor.Source_Buffer, Entity_Start, Line, Entity_Column);
+               declare
+                  The_Line   : Editable_Line_Type;
+                  The_Column : Character_Offset_Type;
+               begin
+                  Get_Iter_Position
+                    (Editor.Source_Buffer, Entity_Start,
+                     The_Line, The_Column);
 
-               Set_Entity_Information
-                 (Context,
-                  Get_Text (Entity_Start, Entity_End),
-                  To_Box_Column (Entity_Column));
+                  Set_Entity_Information
+                    (Context,
+                     Get_Text (Entity_Start, Entity_End),
+                     Expand_Tabs
+                       (Editor.Source_Buffer, The_Line, The_Column));
+               end;
 
                if Menu /= null
                  and then not Click_In_Selection
@@ -1277,7 +1298,10 @@ package body Src_Editor_Box is
            (Context,
             File   => Filename,
             Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-            Column => Integer (To_Box_Column (Column)));
+            Column => Expand_Tabs
+              (Get_Buffer (Editor),
+               Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
+               To_Box_Column (Column)));
          Set_Context_Information
            (Context => Context,
             Kernel  => Kernel,
@@ -1372,7 +1396,7 @@ package body Src_Editor_Box is
               (Db   => Get_Database (Get_Kernel (Context)),
                File => File_Information (Context)),
             Line   => Contexts.Line_Information (Context),
-            Column => Column_Type (Entity_Column_Information (Context)));
+            Column => Entity_Column_Information (Context));
 
          Find_Next_Body
            (Entity   => Entity,
@@ -1549,7 +1573,7 @@ package body Src_Editor_Box is
          Go_To_Closest_Match
            (Kernel,
             Filename => Get_Filename (Get_File (Get_Declaration_Of (Entity))),
-            Line     => Get_Line (Get_Declaration_Of (Entity)),
+            Line     => Convert (Get_Line (Get_Declaration_Of (Entity))),
             Column   => Get_Column (Get_Declaration_Of (Entity)),
             Entity   => Entity);
          return Commands.Success;
@@ -1735,7 +1759,7 @@ package body Src_Editor_Box is
       New_Base_Name : GNAT.OS_Lib.String_Access;
       Part          : Projects.Unit_Part;
 
-      Buffer        : GNAT.OS_Lib.String_Access;
+      Buffer        : Basic_Types.String_Access;
       Old_Name      : constant Virtual_File := Get_Filename (Editor);
       Child         : constant MDI_Child := Find_MDI_Child
         (Get_MDI (Get_Kernel (Editor)), Editor);
@@ -1766,7 +1790,7 @@ package body Src_Editor_Box is
 
             Buffer := Get_String (Editor.Source_Buffer);
             Parse_Constructs (Ada_Lang, Buffer.all, Constructs);
-            GNAT.OS_Lib.Free (Buffer);
+            Free (Buffer);
 
             Info := Constructs.Last;
 
@@ -1904,9 +1928,10 @@ package body Src_Editor_Box is
       Button : Gtk_Widget;
       pragma Unreferenced (Button);
 
-      Response     : Gtk_Response_Type;
-      Success      : Boolean;
-      Line, Column : Integer;
+      Response : Gtk_Response_Type;
+      Success  : Boolean;
+      Line     : Editable_Line_Type;
+      Column   : Character_Offset_Type;
    begin
       if Get_Filename (Editor.Source_Buffer) /= VFS.No_File then
          if Always_Reload
@@ -1942,14 +1967,13 @@ package body Src_Editor_Box is
                   null;
 
                when Gtk_Response_No =>
-                  Get_Cursor_Location (Editor, Line, Column);
+                  Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
                   Load_File
                     (Editor.Source_Buffer,
                      Filename        => Get_Filename (Editor.Source_Buffer),
                      Lang_Autodetect => True,
                      Success         => Success);
-                  Set_Cursor_Location
-                    (Editor, Editable_Line_Type (Line), Column, False);
+                  Set_Cursor_Location (Editor, Line, Column, False);
 
                when others =>
                   null;
@@ -1967,7 +1991,7 @@ package body Src_Editor_Box is
    procedure Set_Cursor_Location
      (Editor      : access Source_Editor_Box_Record;
       Line        : Editable_Line_Type;
-      Column      : Positive := 1;
+      Column      : Character_Offset_Type := 1;
       Force_Focus : Boolean  := True)
    is
       Editable_Line : Editable_Line_Type renames Line;
@@ -1982,7 +2006,7 @@ package body Src_Editor_Box is
          Save_Cursor_Position (Editor.Source_View);
          Scroll_To_Cursor_Location (Editor.Source_View, True);
 
-      elsif Is_Valid_Position (Editor.Source_Buffer, Editable_Line, 1) then
+      elsif Is_Valid_Position (Editor.Source_Buffer, Editable_Line) then
          --  We used to generate an error message (Invalid column number),
          --  but this was too intrusive: in the case of e.g. loading the
          --  desktop, if it often the case that the files have been modified
@@ -2008,33 +2032,16 @@ package body Src_Editor_Box is
               (Editor.Kernel,
                -"Invalid source location: " &
                Image (Integer (Line)) &
-               ':' & Image (Column), Mode => Error);
+               ':' & Image (Natural (Column)), Mode => Error);
          end if;
       end if;
    end Set_Cursor_Location;
-
-   -------------------------
-   -- Get_Cursor_Location --
-   -------------------------
-
-   procedure Get_Cursor_Location
-     (Editor : access Source_Editor_Box_Record;
-      Line   : out Positive;
-      Column : out Positive)
-   is
-      Buffer_Line : Gint;
-      Buffer_Col  : Gint;
-   begin
-      Get_Cursor_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
-      Line   := To_Box_Line (Editor.Source_Buffer, Buffer_Line);
-      Column := To_Box_Column (Buffer_Col);
-   end Get_Cursor_Location;
 
    -------------------
    -- Replace_Slice --
    -------------------
 
-   procedure Replace_Slice
+   procedure Replace_Sliced
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
       Start_Column : Positive;
@@ -2048,14 +2055,14 @@ package body Src_Editor_Box is
         (C,
          Editor.Source_Buffer,
          Editable_Line_Type (Start_Line),
-         Natural (Start_Column),
+         Character_Offset_Type (Start_Column),
          Editable_Line_Type (End_Line),
-         Natural (End_Column),
+         Character_Offset_Type (End_Column),
          Text);
 
       External_End_Action (Editor.Source_Buffer);
       Enqueue (Editor.Source_Buffer, Command_Access (C));
-   end Replace_Slice;
+   end Replace_Sliced;
 
    --------------------------
    -- Add_File_Information --
@@ -2138,8 +2145,7 @@ package body Src_Editor_Box is
                Get_Line (Mark_Iter),
                Get_Line_Offset (Mark_Iter),
                Get_Line (Iter),
-               Get_Line_Offset (Iter),
-               Expand_Tabs => False);
+               Get_Line_Offset (Iter));
          end if;
       end if;
    end Scroll_To_Mark;
