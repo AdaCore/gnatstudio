@@ -31,6 +31,7 @@ with VFS;                   use VFS;
 with Language_Handlers; use Language_Handlers;
 
 package body Doc_Utils is
+
    Me : constant Debug_Handle := Create ("Doc_Utils");
 
    procedure Get_Documentation_Before
@@ -130,8 +131,10 @@ package body Doc_Utils is
       Context            : Language_Context_Access;
       Location           : File_Location;
       Must_Free_Buffer   : Boolean := False;
+      Lines_Skipped      : Natural;
       Line               : Integer;
       Column             : Basic_Types.Character_Offset_Type;
+
    begin
       if Lang = null then
          if Active (Me) then
@@ -167,7 +170,11 @@ package body Doc_Utils is
         (Buffer.all, Line, Column,
          Get_Name (Entity).all,
          Case_Sensitive => Context.Case_Sensitive);
-      Skip_Lines (Buffer.all, Line - 1, Index);
+      Skip_Lines (Buffer.all, Line - 1, Index, Lines_Skipped);
+
+      if Lines_Skipped /= Line - 1 then
+         return "";
+      end if;
 
       --  First, look for documentation before the entity's declaration.
 
@@ -232,15 +239,17 @@ package body Doc_Utils is
                Skip_Lines
                  (Buffer.all,
                   Get_Line (Location) - 1,
-                  Index);
-               Index := Line_Start (Buffer.all, Index);
+                  Index,
+                  Lines_Skipped);
 
-               Get_Documentation_After
-                 (Context       => Context.all,
-                  Buffer        => Buffer.all,
-                  Decl_Index    => Index,
-                  Comment_Start => Beginning,
-                  Comment_End   => Current);
+               if Lines_Skipped = Get_Line (Location) - 1 then
+                  Get_Documentation_After
+                    (Context       => Context.all,
+                     Buffer        => Buffer.all,
+                     Decl_Index    => Index,
+                     Comment_Start => Beginning,
+                     Comment_End   => Current);
+               end if;
             end if;
          end;
       end if;
@@ -266,13 +275,17 @@ package body Doc_Utils is
                Must_Free_Buffer := True;
                Index := Buffer'First;
 
-               Skip_Lines (Buffer.all, Location.Line - 1, Index);
-               Get_Documentation_Before
-                 (Context       => Context.all,
-                  Buffer        => Buffer.all,
-                  Decl_Index    => Index,
-                  Comment_Start => Beginning,
-                  Comment_End   => Current);
+               Skip_Lines
+                 (Buffer.all, Location.Line - 1, Index, Lines_Skipped);
+
+               if Lines_Skipped = Location.Line - 1 then
+                  Get_Documentation_Before
+                    (Context       => Context.all,
+                     Buffer        => Buffer.all,
+                     Decl_Index    => Index,
+                     Comment_Start => Beginning,
+                     Comment_End   => Current);
+               end if;
             end if;
          end if;
       end if;
