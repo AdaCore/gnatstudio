@@ -145,14 +145,20 @@ package GPS.Kernel.Remote is
       Data      : access Server_Config_Changed_Hooks_Args)
       return GPS.Kernel.Scripts.Callback_Data_Access;
 
+   ------------------------------
+   -- Server List Changed Hook --
+   ------------------------------
+
+   Server_List_Changed_Hook : constant String := "srv_list_hooks";
+   --  No data hook
+
    ----------------------------
    --  Servers configuration --
    ----------------------------
 
-   type Mirror_Attribute is
-     (System_Defined,
-      User_Defined,
-      Project_Specific);
+   procedure Configure_Server_List
+     (Kernel : GPS.Kernel.Kernel_Handle);
+   --  Runs the server list editor dialog
 
    procedure Assign
      (Kernel   : Kernel_Handle;
@@ -172,18 +178,5 @@ package GPS.Kernel.Remote is
 
    function Is_Local (Server : Server_Type) return Boolean;
    --  Tells if the server is the local server or is remote
-
-   procedure Add_Mirror_Path
-     (Nickname    : String;
-      GPS_Ref     : String;
-      Remote_Path : String;
-      Need_Sync   : Boolean := False;
-      Attribute   : Mirror_Attribute := Project_Specific);
-   --  Nickname of the server whose fs is mirrored
-   --  Path in GPS referential
-   --  Path in Remote server referential
-   --  If Need_Sync is set, a synchronisation between the two path
-   --   will be performed when needed. Else, it is supposed that the
-   --   two filesystems are shared.
 
 end GPS.Kernel.Remote;
