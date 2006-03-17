@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Basic_Types;        use Basic_Types;
+
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Src_Editor_Box;     use Src_Editor_Box;
@@ -132,8 +134,10 @@ package body Src_Editor_Module.Line_Highlighting is
               Create (Nth_Arg (Data, 1), Kernel);
             Style_ID  : constant String  := Nth_Arg (Data, 2);
             Line      : constant Integer := Nth_Arg (Data, 3, Default => 0);
-            Start_Col : constant Integer := Nth_Arg (Data, 4, Default => 0);
-            End_Col   : constant Integer := Nth_Arg (Data, 5, Default => -1);
+            Start_Col : constant Visible_Column_Type :=
+              Visible_Column_Type (Nth_Arg (Data, 4, Default => 0));
+            End_Col   : constant Visible_Column_Type :=
+              Visible_Column_Type (Nth_Arg (Data, 5, Default => -1));
             Style     : constant Style_Access :=
                           Get_Or_Create_Style (Kernel, Style_ID, False);
             Box       : Source_Editor_Box;

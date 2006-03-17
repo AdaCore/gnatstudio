@@ -164,7 +164,7 @@ package body Src_Editor_Module is
    type Location_Idle_Data is record
       Edit  : Source_Editor_Box;
       Line  : Editable_Line_Type;
-      Column, Column_End : Natural;
+      Column, Column_End : Character_Offset_Type;
       Kernel : Kernel_Handle;
       Focus  : Boolean;
    end record;
@@ -671,8 +671,9 @@ package body Src_Editor_Module is
       F      : Virtual_File;
       Str    : Glib.String_Ptr;
       Id     : Idle_Handler_Id;
-      Line   : Positive := 1;
-      Column : Positive := 1;
+      Line   : Editable_Line_Type := 1;
+      Column : Visible_Column_Type := 1;
+      Real_Column : Character_Offset_Type;
       Child  : MDI_Child;
       pragma Unreferenced (Id, MDI);
 
@@ -686,13 +687,13 @@ package body Src_Editor_Module is
             Str := Get_Field (Node, "Line");
 
             if Str /= null then
-               Line := Positive'Value (Str.all);
+               Line := Editable_Line_Type'Value (Str.all);
             end if;
 
             Str := Get_Field (Node, "Column");
 
             if Str /= null then
-               Column := Positive'Value (Str.all);
+               Column := Visible_Column_Type'Value (Str.all);
             end if;
 
             F := Create (Full_Filename => File.all);
@@ -710,10 +711,10 @@ package body Src_Editor_Module is
             end if;
 
             if Src /= null then
+               Real_Column := Collapse_Tabs (Get_Buffer (Src), Line, Column);
                Dummy := File_Edit_Callback
-                 ((Src,
-                   Editable_Line_Type (Line),
-                   Column, 0, User, False));
+                 ((Src, Line,
+                   Real_Column, 0, User, False));
                Push_Marker_In_History
                  (Kernel  => User,
                   Marker  => Create_File_Marker
@@ -782,9 +783,11 @@ package body Src_Editor_Module is
       User   : Kernel_Handle) return Node_Ptr
    is
       pragma Unreferenced (User);
-      N, Child     : Node_Ptr;
-      Line, Column : Positive;
-      Editor       : Source_Editor_Box;
+      N, Child  : Node_Ptr;
+
+      Line      : Editable_Line_Type;
+      Column    : Character_Offset_Type;
+      Editor    : Source_Editor_Box;
 
    begin
       if Widget.all in Source_Editor_Box_Record'Class then
@@ -813,21 +816,21 @@ package body Src_Editor_Module is
             Child.Value := new String'(Filename);
             Add_Child (N, Child);
 
-            Get_Cursor_Location (Editor, Line, Column);
+            Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
 
             Child := new Node;
             Child.Tag := new String'("Line");
-            Child.Value := new String'(Image (Line));
+            Child.Value := new String'(Image (Integer (Line)));
             Add_Child (N, Child);
 
             Child := new Node;
             Child.Tag := new String'("Column");
-            Child.Value := new String'(Image (Column));
+            Child.Value := new String'(Image (Integer (Column)));
             Add_Child (N, Child);
 
             Child := new Node;
             Child.Tag := new String'("Column_End");
-            Child.Value := new String'(Image (Column));
+            Child.Value := new String'(Image (Integer (Column)));
             Add_Child (N, Child);
 
             return N;
@@ -1780,7 +1783,7 @@ package body Src_Editor_Module is
                  History           => Get_History (Kernel));
             Buffer : GNAT.OS_Lib.String_Access;
             Line   : Editable_Line_Type;
-            Column : Natural;
+            Column : Character_Offset_Type;
 
          begin
             if F /= VFS.No_File then
@@ -2038,7 +2041,9 @@ package body Src_Editor_Module is
       Iter        : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child       : MDI_Child;
       No_Location : Boolean := False;
-      Column      : Integer := D.Column;
+      Column      : Visible_Column_Type := D.Column;
+      Real_Column : Character_Offset_Type;
+      Real_Column_End : Character_Offset_Type;
       Source      : Source_Editor_Box;
       Edit        : Source_Editor_Box;
       Tmp         : Boolean;
@@ -2086,7 +2091,7 @@ package body Src_Editor_Module is
                Marker => Create_File_Marker
                  (Kernel => Kernel,
                   File   => D.File,
-                  Line   => D.Line,
+                  Line   => Convert (D.Line),
                   Column => D.Column));
          end if;
 
@@ -2101,13 +2106,20 @@ package body Src_Editor_Module is
          if Edit /= null
            and then not No_Location
          then
+            Real_Column := Collapse_Tabs
+              (Get_Buffer (Edit),
+               Editable_Line_Type (D.Line), Column);
+            Real_Column_End := Collapse_Tabs
+              (Get_Buffer (Edit),
+               Editable_Line_Type (D.Line), D.Column_End);
+
             Trace (Me, "Setup editor to go to line,col="
                    & D.Line'Img & Column'Img);
             Tmp := Location_Callback
               ((Edit,
                 Editable_Line_Type (D.Line),
-                Natural (Column),
-                Natural (D.Column_End),
+                Real_Column,
+                Real_Column_End,
                 Kernel_Handle (Kernel),
                 D.Focus));
          end if;
@@ -2331,9 +2343,10 @@ package body Src_Editor_Module is
       Expansion : String;
       Special   : Character) return String
    is
-      Box          : Source_Editor_Box;
-      W            : Gtk_Widget := Get_Current_Focus_Widget (Kernel);
-      Line, Column : Positive;
+      Box    : Source_Editor_Box;
+      W      : Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type;
    begin
       if W.all in Source_View_Record'Class then
          W := Get_Parent (W);
@@ -2344,12 +2357,12 @@ package body Src_Editor_Module is
 
          case Special is
             when 'l' =>
-               Get_Cursor_Location (Box, Line, Column);
-               return Expansion & Image (Line);
+               Get_Cursor_Position (Get_Buffer (Box), Line, Column);
+               return Expansion & Image (Integer (Line));
 
             when 'c' =>
-               Get_Cursor_Location (Box, Line, Column);
-               return Expansion & Image (Column);
+               Get_Cursor_Position (Get_Buffer (Box), Line, Column);
+               return Expansion & Image (Integer (Column));
 
             when 'f' =>
                return Expansion & Base_Name (Get_Filename (Box));

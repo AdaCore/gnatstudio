@@ -85,7 +85,9 @@ package body Src_Editor_Buffer.Hooks is
         (Find_Editor (Get_Kernel (Buffer), Buffer.Filename));
    begin
       if Box /= null then
-         Get_Cursor_Location (Box, Data.Line, Data.Column);
+         Get_Cursor_Position
+           (Get_Buffer (Box), Editable_Line_Type (Data.Line),
+            Character_Offset_Type (Data.Column));
          Run_Hook (Buffer.Kernel, Location_Changed_Hook,
                    Data'Unchecked_Access, False);
          Destroy (Data);

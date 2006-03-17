@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -17,6 +17,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with Basic_Types;       use Basic_Types;
 
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
 
@@ -224,7 +226,7 @@ package body Src_Editor_View.Commands is
       Tab_Width     : Natural renames Indent_Params.Indent_Level;
 
       Line          : Editable_Line_Type;
-      Column        : Positive;
+      Column        : Character_Offset_Type;
       Num           : Natural;
    begin
       if View = null then
@@ -239,7 +241,7 @@ package body Src_Editor_View.Commands is
       Get_Cursor_Position (Buffer, Line, Column);
 
       --  Compute the number of spaces to insert
-      Num := Tab_Width - ((Column - 1) mod Tab_Width);
+      Num := Tab_Width - (Natural (Column - 1) mod Tab_Width);
 
       --  Insert the spaces
       declare

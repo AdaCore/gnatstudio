@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
+--                     Copyright (C) 2005 - 2006                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,8 @@ with Gtk.Text_Mark;
 
 with GPS.Kernel;
 with VFS;
+with Basic_Types;       use Basic_Types;
+with Src_Editor_Buffer; use Src_Editor_Buffer;
 
 package Src_Editor_Module.Markers is
 
@@ -33,8 +35,8 @@ package Src_Editor_Module.Markers is
    function Create_File_Marker
      (Kernel : access Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File;
-      Line   : Natural;
-      Column : Natural;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type;
       Length : Natural := 0) return File_Marker;
    --  Create a new marker that represents a position inside a file. It isn't
    --  related to a specific editor. The mark will always indicate the same
@@ -64,9 +66,9 @@ package Src_Editor_Module.Markers is
    --  Return the file in which Marker is set
 
    function Get_Line
-     (Marker : access File_Marker_Record'Class) return Integer;
+     (Marker : access File_Marker_Record'Class) return Editable_Line_Type;
    function Get_Column
-     (Marker : access File_Marker_Record'Class) return Integer;
+     (Marker : access File_Marker_Record'Class) return Visible_Column_Type;
    function Get_Mark
      (Marker : access File_Marker_Record'Class)
       return Gtk.Text_Mark.Gtk_Text_Mark;
@@ -90,10 +92,8 @@ private
       record
          Id     : Natural;   --  Needed only for the shell API
          File   : VFS.Virtual_File;
-         Line   : Natural;
-         --  ??? Line here should be an Editable_Line_Type, in order to avoid
-         --  ambiguity.
-         Column : Natural;
+         Line   : Editable_Line_Type;
+         Column : Visible_Column_Type;
          Length : Natural := 1;
          Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
          Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;

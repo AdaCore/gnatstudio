@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib;
+
 with Gdk;                      use Gdk;
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Drawable;             use Gdk.Drawable;
@@ -391,6 +393,8 @@ package body Src_Editor_Buffer.Line_Information is
       Editable_Line : Editable_Line_Type;
 
       Columns_Config : Columns_Config_Access;
+
+      use GNAT.OS_Lib;
    begin
       --  Test if we are adding extra information, or line information
 
@@ -618,6 +622,7 @@ package body Src_Editor_Buffer.Line_Information is
       ---------------
 
       procedure Draw_Info (Starting_X : Gint) is
+         use GNAT.OS_Lib;
       begin
          if Line_Info.Info /= null then
             if Line_Info.Info.Text /= null then
@@ -874,7 +879,7 @@ package body Src_Editor_Buffer.Line_Information is
    function Create_Mark
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type;
-      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
+      Column : Visible_Column_Type) return Gtk.Text_Mark.Gtk_Text_Mark
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -1744,8 +1749,8 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer    : access Source_Buffer_Record'Class;
       Style     : Style_Access;
       Line      : Editable_Line_Type;
-      Start_Col : Integer;
-      End_Col   : Integer;
+      Start_Col : Visible_Column_Type;
+      End_Col   : Visible_Column_Type;
       Remove    : Boolean := False)
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
@@ -1806,8 +1811,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
 
          if Start_Col <= 0
-           or else not Is_Valid_Position
-             (Buffer, The_Line, Gint (Start_Col - 1))
+           or else not Is_Valid_Position (Buffer, Line, Start_Col)
          then
             Get_Iter_At_Line (Buffer, Start_Iter, The_Line);
          else
@@ -1820,7 +1824,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
 
          if End_Col <= 0
-           or else not Is_Valid_Position (Buffer, The_Line, Gint (End_Col - 1))
+           or else not Is_Valid_Position (Buffer, Line, End_Col)
          then
             Copy (Start_Iter, End_Iter);
             Forward_To_Line_End (End_Iter, Result);

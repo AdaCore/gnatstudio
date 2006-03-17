@@ -40,20 +40,22 @@ package body Src_Editor_Buffer.Text_Handling is
      (Buffer : access Source_Buffer_Record'Class;
       Iter   : out Gtk_Text_Iter;
       Line   : Editable_Line_Type;
-      Column : Natural);
+      Column : Character_Offset_Type);
    --  Return the iterator at Line, Col.
    --  Unfold Line if necessary.
+   --  ??? What should be the behavior if Line/Column does not point to a
+   --  valid location ?
 
    procedure Get_Location
      (Buffer       : access Source_Buffer_Record'Class;
       Line         : Editable_Line_Type;
-      Col          : Natural;
+      Col          : Character_Offset_Type;
       Before       : Integer;
       After        : Integer;
       Line_Begin   : out Editable_Line_Type;
-      Column_Begin : out Natural;
+      Column_Begin : out Character_Offset_Type;
       Line_End     : out Editable_Line_Type;
-      Column_End   : out Natural);
+      Column_End   : out Character_Offset_Type);
    --  Get the positions around the given position.
 
    ------------------
@@ -63,13 +65,13 @@ package body Src_Editor_Buffer.Text_Handling is
    procedure Get_Location
      (Buffer       : access Source_Buffer_Record'Class;
       Line         : Editable_Line_Type;
-      Col          : Natural;
+      Col          : Character_Offset_Type;
       Before       : Integer;
       After        : Integer;
       Line_Begin   : out Editable_Line_Type;
-      Column_Begin : out Natural;
+      Column_Begin : out Character_Offset_Type;
       Line_End     : out Editable_Line_Type;
-      Column_End   : out Natural)
+      Column_End   : out Character_Offset_Type)
    is
       Iter   : Gtk_Text_Iter;
       Result : Boolean := True;
@@ -91,7 +93,7 @@ package body Src_Editor_Buffer.Text_Handling is
             exit when not Result;
          end loop;
 
-         Column_Begin := Natural (Get_Line_Offset (Iter)) + 1;
+         Column_Begin := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
 
          if Line_Begin = 0 then
             Line_Begin := 1;
@@ -106,7 +108,7 @@ package body Src_Editor_Buffer.Text_Handling is
             Forward_To_Line_End (Iter, Result);
          end if;
 
-         Column_End := Natural (Get_Line_Offset (Iter)) + 1;
+         Column_End := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
 
          Forward_Char (Iter, Result);
 
@@ -131,7 +133,7 @@ package body Src_Editor_Buffer.Text_Handling is
             exit when not Result;
          end loop;
 
-         Column_End := Natural (Get_Line_Offset (Iter)) + 1;
+         Column_End := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
 
          if Line_End > Buffer.Last_Editable_Line then
             Line_End := Buffer.Last_Editable_Line;
@@ -147,7 +149,7 @@ package body Src_Editor_Buffer.Text_Handling is
      (Buffer : access Source_Buffer_Record'Class;
       Iter   : out Gtk_Text_Iter;
       Line   : Editable_Line_Type;
-      Column : Natural)
+      Column : Character_Offset_Type)
    is
       Buffer_Line : Buffer_Line_Type;
       Col         : Gint := 0;
@@ -170,9 +172,9 @@ package body Src_Editor_Buffer.Text_Handling is
    function Get_Chars
      (Buffer       : access Source_Buffer_Record'Class;
       Line_Begin   : Editable_Line_Type;
-      Column_Begin : Natural;
+      Column_Begin : Character_Offset_Type;
       Line_End     : Editable_Line_Type;
-      Column_End   : Natural) return UTF8_String
+      Column_End   : Character_Offset_Type) return UTF8_String
    is
       Iter_Begin, Iter_End : Gtk_Text_Iter;
    begin
@@ -194,9 +196,9 @@ package body Src_Editor_Buffer.Text_Handling is
      (Buffer       : access Source_Buffer_Record'Class;
       Text         : String;
       Line_Begin   : Editable_Line_Type;
-      Column_Begin : Natural;
+      Column_Begin : Character_Offset_Type;
       Line_End     : Editable_Line_Type;
-      Column_End   : Natural)
+      Column_End   : Character_Offset_Type)
    is
       C : Editor_Replace_Slice;
    begin
@@ -215,12 +217,12 @@ package body Src_Editor_Buffer.Text_Handling is
    function Get_Chars
      (Buffer     : access Source_Buffer_Record'Class;
       Line       : Editable_Line_Type := 0;
-      Column     : Natural := 0;
+      Column     : Character_Offset_Type := 0;
       Before     : Integer := -1;
       After      : Integer := -1) return UTF8_String
    is
       Line_Begin, Line_End     : Editable_Line_Type;
-      Column_Begin, Column_End : Natural;
+      Column_Begin, Column_End : Character_Offset_Type;
       Start_Iter               : Gtk_Text_Iter;
       End_Iter                 : Gtk_Text_Iter;
       Has_Selection            : Boolean;
@@ -252,12 +254,12 @@ package body Src_Editor_Buffer.Text_Handling is
      (Buffer     : access Source_Buffer_Record'Class;
       Text       : String;
       Line       : Editable_Line_Type;
-      Column     : Natural := 0;
+      Column     : Character_Offset_Type := 0;
       Before     : Integer := -1;
       After      : Integer := -1)
    is
       Line_Begin, Line_End     : Editable_Line_Type;
-      Column_Begin, Column_End : Natural;
+      Column_Begin, Column_End : Character_Offset_Type;
    begin
       Get_Location
         (Buffer, Line, Column, Before, After,
@@ -284,8 +286,8 @@ package body Src_Editor_Buffer.Text_Handling is
 
       Lang          : Language_Access;
       Line          : Editable_Line_Type;
-      Column        : Positive;
-      First         : Natural;
+      Column        : Character_Offset_Type;
+      First         : Character_Offset_Type;
       W_End         : Gtk_Text_Iter;
       W_Start       : Gtk_Text_Iter;
       Indent_Params : Indent_Parameters;
@@ -314,7 +316,7 @@ package body Src_Editor_Buffer.Text_Handling is
             --  Compute position of the next insert point. This can happen only
             --  in the case of an attribute. In String'Access for example the
             --  first call is for String and the second for Access.
-            First := First + Length + 1;
+            First := First + Character_Offset_Type (Length) + 1;
          end if;
       end Replace_Text;
 

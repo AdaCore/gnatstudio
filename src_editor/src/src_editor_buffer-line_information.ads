@@ -85,7 +85,7 @@ package Src_Editor_Buffer.Line_Information is
    function Create_Mark
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type;
-      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
+      Column : Visible_Column_Type) return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Create mark at Line, Column
 
    procedure Add_Lines
@@ -160,8 +160,8 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer    : access Source_Buffer_Record'Class;
       Style     : Style_Access;
       Line      : Editable_Line_Type;
-      Start_Col : Integer;
-      End_Col   : Integer;
+      Start_Col : Visible_Column_Type;
+      End_Col   : Visible_Column_Type;
       Remove    : Boolean := False);
    --  Highlight the given range of text with category Category.
    --  If Start_Col <= 0, start at the beginning of line.

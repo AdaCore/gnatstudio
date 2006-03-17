@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings;      use GNAT.Strings;
-with Basic_Types;       use Basic_Types;
 with Language;          use Language;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module; use Src_Editor_Module;
@@ -40,7 +38,7 @@ package body Src_Editor_Buffer.Blocks is
    procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class) is
 
       function Copy
-        (Str : Basic_Types.String_Access) return GNAT.Strings.String_Access;
+        (Str : Basic_Types.String_Access) return Basic_Types.String_Access;
       pragma Inline (Copy);
       --  Return a copy of Str
 
@@ -48,7 +46,7 @@ package body Src_Editor_Buffer.Blocks is
       Current           : Construct_Access;
       Line_Start        : Editable_Line_Type;
       Line_End          : Editable_Line_Type;
-      Text              : GNAT.OS_Lib.String_Access;
+      Text              : Basic_Types.String_Access;
       Block             : Block_Access;
       Buffer_Line       : Buffer_Line_Type;
       First_Buffer_Line : Buffer_Line_Type;
@@ -58,7 +56,7 @@ package body Src_Editor_Buffer.Blocks is
       ----------
 
       function Copy
-        (Str : Basic_Types.String_Access) return GNAT.Strings.String_Access is
+        (Str : Basic_Types.String_Access) return Basic_Types.String_Access is
       begin
          if Str = null then
             return null;
@@ -91,7 +89,7 @@ package body Src_Editor_Buffer.Blocks is
       --  ??? See if we could have a line-by-line version of Parse_Constructs.
 
       Parse_Constructs (Buffer.Lang, Text.all, Constructs);
-      GNAT.OS_Lib.Free (Text);
+      Free (Text);
 
       Current := Constructs.First;
 

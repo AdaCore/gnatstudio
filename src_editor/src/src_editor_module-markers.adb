@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
+--                     Copyright (C) 2005 - 2006                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -29,7 +29,6 @@ with Gtk.Text_Mark;             use Gtk.Text_Mark;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Src_Editor_Box;            use Src_Editor_Box;
-with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with String_Utils;              use String_Utils;
@@ -184,15 +183,13 @@ package body Src_Editor_Module.Markers is
      (Marker : access File_Marker_Record'Class)
    is
       Iter : Gtk_Text_Iter;
-      Line : Gint;
-      Col  : Gint;
    begin
       if Marker.Mark /= null then
          Get_Iter_At_Mark (Marker.Buffer, Iter, Marker.Mark);
-         Get_Screen_Position (Source_Buffer (Marker.Buffer), Iter, Line, Col);
-         Marker.Line   := Integer (Get_Editable_Line
-           (Source_Buffer (Marker.Buffer), Buffer_Line_Type (Line + 1)));
-         Marker.Column := Integer (Col + 1);
+         Get_Iter_Position
+           (Source_Buffer (Marker.Buffer), Iter,
+            Marker.Line,
+            Marker.Column);
       end if;
    end Update_Marker_Location;
 
@@ -277,8 +274,8 @@ package body Src_Editor_Module.Markers is
          Marker.Buffer :=
            Gtk_Text_Buffer (Source_Buffer'(Get_Buffer (Source)));
          Marker.Mark := Create_Mark
-           (Get_Buffer (Source), Editable_Line_Type (Marker.Line),
-            Integer'Max (1, Marker.Column));
+           (Get_Buffer (Source), Marker.Line,
+            Visible_Column_Type'Max (1, Marker.Column));
 
          --  This mark can be destroyed in three different contexts:
          --    1 - explicitly (call to Destroy for File_Marker)
@@ -338,8 +335,8 @@ package body Src_Editor_Module.Markers is
    function Create_File_Marker
      (Kernel : access Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File;
-      Line   : Natural;
-      Column : Natural;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type;
       Length : Natural := 0) return File_Marker
    is
       Marker : File_Marker;
@@ -392,12 +389,13 @@ package body Src_Editor_Module.Markers is
    procedure Push_Current_Editor_Location_In_History
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Child    : constant MDI_Child := Find_Current_Editor (Kernel);
-      Box      : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
-      Line, Column : Integer;
+      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
+      Box    : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type;
    begin
       if Box /= null then
-         Get_Cursor_Location (Box, Line, Column);
+         Get_Cursor_Position (Get_Buffer (Box), Line, Column);
          Push_Marker_In_History
            (Kernel  => Kernel,
             Marker  => Create_File_Marker
@@ -429,9 +427,11 @@ package body Src_Editor_Module.Markers is
          Open_File_Editor
            (Kernel,
             Marker.File,
-            Marker.Line,
+            Integer (Marker.Line),
             Marker.Column,
-            Marker.Column + Marker.Length,
+            Marker.Column + Visible_Column_Type (Marker.Length),
+            --  ??? This is incorrect if there is an ASCII.HT before
+            --  column+length
             Enable_Navigation => False,
             New_File          => False);
       end if;
@@ -443,7 +443,7 @@ package body Src_Editor_Module.Markers is
    --------------
 
    function Get_Line
-     (Marker : access File_Marker_Record'Class) return Integer is
+     (Marker : access File_Marker_Record'Class) return Editable_Line_Type is
    begin
       Update_Marker_Location (Marker);
       return Marker.Line;
@@ -454,7 +454,7 @@ package body Src_Editor_Module.Markers is
    ----------------
 
    function Get_Column
-     (Marker : access File_Marker_Record'Class) return Integer is
+     (Marker : access File_Marker_Record'Class) return Visible_Column_Type is
    begin
       Update_Marker_Location (Marker);
       return Marker.Column;
@@ -491,8 +491,8 @@ package body Src_Editor_Module.Markers is
 
       declare
          Location : constant String := Base_Name (Marker.File)
-           & ":"  & Image (Marker.Line)
-           & ":"  & Image (Marker.Column);
+           & ":"  & Image (Integer (Marker.Line))
+           & ":"  & Image (Integer (Marker.Column));
          Name     : constant String := Get_Subprogram_Name;
       begin
          if Name = "" then
@@ -515,8 +515,9 @@ package body Src_Editor_Module.Markers is
       Update_Marker_Location (Marker);
       Node.Tag := new String'("file_marker");
       Set_Attribute (Node, "file", Full_Name (Marker.File).all);
-      Set_Attribute (Node, "line", Integer'Image (Marker.Line));
-      Set_Attribute (Node, "column", Integer'Image (Marker.Column));
+      Set_Attribute (Node, "line", Editable_Line_Type'Image (Marker.Line));
+      Set_Attribute (Node, "column", Visible_Column_Type'Image
+                     (Marker.Column));
       return Node;
    end Save;
 
@@ -528,8 +529,9 @@ package body Src_Editor_Module.Markers is
      (Kernel   : access Kernel_Handle_Record'Class;
       From_XML : Glib.Xml_Int.Node_Ptr := null) return Location_Marker
    is
-      Source       : Source_Editor_Box;
-      Line, Column : Integer;
+      Source : Source_Editor_Box;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type;
    begin
       if From_XML /= null then
          if From_XML.Tag.all = "file_marker" then
@@ -537,15 +539,17 @@ package body Src_Editor_Module.Markers is
               (Create_File_Marker
                  (Kernel => Kernel,
                   File   => Create (Get_Attribute (From_XML, "file")),
-                  Line   => Integer'Value (Get_Attribute (From_XML, "line")),
+                  Line   => Editable_Line_Type'Value
+                   (Get_Attribute (From_XML, "line")),
                   Column =>
-                    Integer'Value (Get_Attribute (From_XML, "column"))));
+                    Visible_Column_Type'Value
+                      (Get_Attribute (From_XML, "column"))));
          end if;
 
       else
          Source := Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
          if Source /= null then
-            Get_Cursor_Location (Source, Line, Column);
+            Get_Cursor_Position (Get_Buffer (Source), Line, Column);
             return Location_Marker
               (Create_File_Marker
                  (Kernel => Kernel,
