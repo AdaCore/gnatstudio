@@ -1680,19 +1680,35 @@ package body GUI_Utils is
          if Column_Types (ColNum) = GType_Boolean then
             Gtk_New (Toggle_Render);
             Set_Radio (Toggle_Render, False);
-            Tree_Column_Callback.Connect
-              (Toggle_Render, "toggled",
-               Toggle_Callback'Access,
-               User_Data => (Gtk_Tree_Model (Model), Gint (N)));
             Pack_Start (Col, Toggle_Render, False);
             Add_Attribute (Col, Toggle_Render, "active", Gint (N));
+
+            if Integer (ColNum) in Editable_Columns'Range
+              and then Editable_Columns (Integer (ColNum)) >= 0
+            then
+               Add_Attribute
+                 (Col, Toggle_Render, "activatable",
+                  Editable_Columns (Integer (ColNum)));
+               Tree_Column_Callback.Connect
+                 (Toggle_Render, "toggled",
+                  Toggle_Callback'Access,
+                  User_Data => (Gtk_Tree_Model (Model), Gint (N)));
+
+               if Integer (ColNum) in Editable_Callback'Range
+                 and then Editable_Callback (Integer (ColNum)) /= null
+               then
+                  Widget_Callback.Object_Connect
+                    (Toggle_Render, "toggled",
+                     Widget_Callback.Handler
+                       (Editable_Callback (Integer (ColNum))),
+                     Slot_Object => View, After => True);
+               end if;
+            end if;
 
          elsif Column_Types (ColNum) = GType_String
            or else Column_Types (ColNum) = GType_Int
          then
-            if Text_Render = null then
-               Gtk_New (Text_Render);
-            end if;
+            Gtk_New (Text_Render);
             Pack_Start (Col, Text_Render, False);
             Add_Attribute (Col, Text_Render, "text", Gint (N));
 
@@ -1702,6 +1718,9 @@ package body GUI_Utils is
                Add_Attribute
                  (Col, Text_Render, "editable",
                   Editable_Columns (Integer (ColNum)));
+               Tree_Model_Callback.Object_Connect
+                 (Text_Render, "edited", Edited_Callback'Access,
+                  Slot_Object => Model, User_Data => Gint (N));
 
                if Integer (ColNum) in Editable_Callback'Range
                  and then Editable_Callback (Integer (ColNum)) /= null
@@ -1710,11 +1729,8 @@ package body GUI_Utils is
                     (Text_Render, "edited",
                      Widget_Callback.Handler
                        (Editable_Callback (Integer (ColNum))),
-                     Slot_Object => View);
+                     Slot_Object => View, After => True);
                end if;
-
-               Set_Editable_And_Callback
-                 (Model, Text_Render, Gint (ColNum));
             end if;
 
          elsif Is_Icon then
