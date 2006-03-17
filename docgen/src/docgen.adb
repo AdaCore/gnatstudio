@@ -75,7 +75,9 @@ package body Docgen is
    -----------------------------
 
    function Compare_Elements_Column
-     (X, Y : Entity_List_Information) return Boolean is
+     (X, Y : Entity_List_Information) return Boolean
+   is
+      use Basic_Types;
    begin
       return Get_Column (Get_Declaration_Of (X.Entity)) <
         Get_Column (Get_Declaration_Of (Y.Entity));
@@ -86,7 +88,9 @@ package body Docgen is
    -----------------------------
 
    function Compare_Elements_Column
-     (X, Y : Reference_List_Information) return Boolean is
+     (X, Y : Reference_List_Information) return Boolean
+   is
+      use Basic_Types;
    begin
       return Get_Column (Get_Declaration_Of (X.Entity)) <
         Get_Column (Get_Declaration_Of (Y.Entity));
@@ -133,7 +137,9 @@ package body Docgen is
    -----------------------------------------
 
    function Compare_Elements_By_Line_And_Column
-     (X, Y : Reference_In_File) return Boolean is
+     (X, Y : Reference_In_File) return Boolean
+   is
+      use Basic_Types;
    begin
       return X.Line < Y.Line or else
       (X.Line = Y.Line and then X.Column < Y.Column);
