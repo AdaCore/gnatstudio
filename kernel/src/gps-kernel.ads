@@ -37,6 +37,7 @@ with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.MDI;
 
+with Basic_Types;
 with Basic_Mapper;
 with Entities;
 with Entities.Queries;
@@ -261,7 +262,7 @@ package GPS.Kernel is
       File              : Entities.Source_File;
       Entity_Name       : String;
       Line              : Natural;
-      Column            : Natural;
+      Column            : Basic_Types.Visible_Column_Type;
       Ask_If_Overloaded : Boolean;
       Entity            : out Entities.Entity_Information;
       Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
@@ -698,7 +699,8 @@ private
 
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
-      Line, Column      : Integer := 0;
+      Line              : Integer := 0;
+      Column            : Basic_Types.Visible_Column_Type := 0;
 
       Category_Name : GNAT.OS_Lib.String_Access := null;
       Message       : GNAT.OS_Lib.String_Access := null;
@@ -712,7 +714,8 @@ private
       --  at Line. Text is the current selection.
 
       Entity_Name   : GNAT.OS_Lib.String_Access := null;  --  ??? Use Text
-      Entity_Column : Integer := 0;         --  ??? Can we use another field
+      Entity_Column : Basic_Types.Visible_Column_Type := 0;
+
       Entity        : Entities.Entity_Information := null;
       --  The entity on which the user has clicked
 
