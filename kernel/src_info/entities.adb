@@ -26,6 +26,7 @@ with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort_G;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
+with Basic_Types;                use Basic_Types;
 with Entities.Debug;             use Entities.Debug;
 with File_Utils;                 use File_Utils;
 with Glib.Values;                use Glib, Glib.Values;
@@ -295,7 +296,8 @@ package body Entities is
    -- Get_Name --
    --------------
 
-   function Get_Name (Entity : Entity_Information) return String_Access is
+   function Get_Name
+     (Entity : Entity_Information) return GNAT.OS_Lib.String_Access is
    begin
       if Entity = null then
          return null;
@@ -1715,7 +1717,7 @@ package body Entities is
      (Name         : String;
       File         : Source_File;
       Line         : Natural;
-      Column       : Natural;
+      Column       : Basic_Types.Visible_Column_Type;
       Allow_Create : Boolean := True) return Entity_Information
    is
       UEI              : Entity_Informations;
@@ -1745,7 +1747,7 @@ package body Entities is
          end if;
 
       else
-         E := Find (UEI.List.all, (File, Line, Column_Type (Column)));
+         E := Find (UEI.List.all, (File, Line, Column));
       end if;
 
       if E = null and then Allow_Create then
@@ -1753,7 +1755,7 @@ package body Entities is
            (Name                  => new String'(Name),
             Kind                  => Unresolved_Entity_Kind,
             Attributes            => (others => False),
-            Declaration           => (File, Line, Column_Type (Column)),
+            Declaration           => (File, Line, Column),
             Caller_At_Declaration => null,
             End_Of_Scope          => No_E_Reference,
             Parent_Types          => Null_Entity_Information_List,
@@ -1968,9 +1970,9 @@ package body Entities is
    -- Get_Column --
    ----------------
 
-   function Get_Column (Loc : File_Location) return Natural is
+   function Get_Column (Loc : File_Location) return Visible_Column_Type is
    begin
-      return Natural (Loc.Column);
+      return Loc.Column;
    end Get_Column;
 
    -------------------------

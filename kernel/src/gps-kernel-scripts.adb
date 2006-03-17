@@ -995,7 +995,8 @@ package body GPS.Kernel.Scripts is
             File : constant Class_Instance  :=
               Nth_Arg (Data, 2, Get_File_Class (Kernel));
             L    : constant Integer := Nth_Arg (Data, 3);
-            C    : constant Integer := Nth_Arg (Data, 4);
+            C    : constant Visible_Column_Type :=
+              Visible_Column_Type (Nth_Arg (Data, 4, Default => 1));
             Instance : constant Class_Instance :=
               Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
          begin
@@ -1008,7 +1009,7 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "column" then
          Location := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_Column (Location));
+         Set_Return_Value (Data, Natural (Get_Column (Location)));
 
       elsif Command = "file" then
          Location := Get_Data (Data, 1);
@@ -1042,7 +1043,8 @@ package body GPS.Kernel.Scripts is
                        Default    => No_Class_Instance,
                        Allow_Null => True);
             L        : Integer := Nth_Arg (Data, 4, Default => 1);
-            C        : Integer := Nth_Arg (Data, 5, Default => 1);
+            C        : Visible_Column_Type :=
+              Visible_Column_Type (Nth_Arg (Data, 5, Default => 1));
             Status   : Find_Decl_Or_Body_Query_Status;
             F        : Virtual_File;
             Source   : Source_File;
@@ -1401,7 +1403,7 @@ package body GPS.Kernel.Scripts is
          end if;
 
          if Has_Column_Information (Context) then
-            C := Column_Information (Context);
+            C := Integer (Column_Information (Context));
          end if;
 
          if Has_File_Information (Context) then
@@ -1412,7 +1414,7 @@ package body GPS.Kernel.Scripts is
                   (Create_File (Get_Script (Data),
                    File_Information (Context))),
                   L,
-                  C));
+                  Visible_Column_Type (C)));
          else
             Set_Error_Msg
               (Data, -"No file information stored in the context");
@@ -1456,7 +1458,7 @@ package body GPS.Kernel.Scripts is
          end if;
 
          if Has_Column_Information (Context) then
-            C := Column_Information (Context);
+            C := Integer (Column_Information (Context));
          end if;
 
          if Has_File_Information (Context) then
@@ -1467,7 +1469,7 @@ package body GPS.Kernel.Scripts is
                   (Create_File (Get_Script (Data),
                    File_Information (Context))),
                   L,
-                  C));
+                  Visible_Column_Type (C)));
          else
             Set_Error_Msg
               (Data, -"No file information stored in the context");
@@ -2363,7 +2365,7 @@ package body GPS.Kernel.Scripts is
      (Script : access Scripting_Language_Record'Class;
       File   : Class_Instance;
       Line   : Natural;
-      Column : Natural) return Class_Instance
+      Column : Basic_Types.Visible_Column_Type) return Class_Instance
    is
       Instance : constant Class_Instance := New_Instance
         (Script, Get_File_Location_Class (Get_Kernel (Script)));
@@ -2396,7 +2398,8 @@ package body GPS.Kernel.Scripts is
    -- Get_Column --
    ----------------
 
-   function Get_Column (Location : File_Location_Info) return Integer is
+   function Get_Column
+     (Location : File_Location_Info) return Visible_Column_Type is
    begin
       return Location.Column;
    end Get_Column;

@@ -189,7 +189,7 @@ package body GPS.Kernel.Macros is
          return Image (Line_Information (Context));
 
       elsif Param = "c" then
-         return Image (Column_Information (Context));
+         return Image (Integer (Column_Information (Context)));
 
       elsif Param = "a" then
          return Category_Information (Context);

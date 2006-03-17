@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003-2004                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2003-2006                    --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,8 @@ with String_Utils; use String_Utils;
 with VFS;          use VFS;
 with GNAT.Strings; use GNAT.Strings;
 with GNAT.Heap_Sort; use GNAT.Heap_Sort;
+
+with Basic_Types; use Basic_Types;
 
 package body Entities.Debug is
 
@@ -74,7 +76,7 @@ package body Entities.Debug is
    procedure Dump (Instantiation : Entity_Instantiation);
    --  Dump various parts of the system
 
-   function Image (Col : Column_Type) return String;
+   function Image (Col : Visible_Column_Type) return String;
    --  Image of the column number
 
    Reference_Kind_To_Char : constant array (Reference_Kind) of Character :=
@@ -104,8 +106,8 @@ package body Entities.Debug is
    -- Image --
    -----------
 
-   function Image (Col : Column_Type) return String is
-      C : constant String := Column_Type'Image (Col);
+   function Image (Col : Visible_Column_Type) return String is
+      C : constant String := Visible_Column_Type'Image (Col);
    begin
       return C (C'First + 1 .. C'Last);
    end Image;

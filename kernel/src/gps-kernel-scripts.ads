@@ -26,6 +26,7 @@
 
 with Ada.Finalization;
 with GNAT.OS_Lib;
+with Basic_Types;
 with Gtk.Handlers;
 with Gtk.Widget;
 with Entities;
@@ -844,7 +845,8 @@ package GPS.Kernel.Scripts is
 
    function Get_File (Location : File_Location_Info) return Class_Instance;
    function Get_Line (Location : File_Location_Info) return Integer;
-   function Get_Column (Location : File_Location_Info) return Integer;
+   function Get_Column
+     (Location : File_Location_Info) return Basic_Types.Visible_Column_Type;
    --  Return the information stored in the file location
 
    function Get_Data (Data : Callback_Data; N : Positive)
@@ -855,7 +857,7 @@ package GPS.Kernel.Scripts is
      (Script : access Scripting_Language_Record'Class;
       File   : Class_Instance;
       Line   : Natural;
-      Column : Natural) return Class_Instance;
+      Column : Basic_Types.Visible_Column_Type) return Class_Instance;
    --  Return a new file.
    --  File mustn't be destroyed after this call.
 
@@ -937,7 +939,8 @@ private
 
    type File_Location_Info is record
       File         : Class_Instance;
-      Line, Column : Natural;
+      Line         : Natural;
+      Column       : Basic_Types.Visible_Column_Type;
    end record;
 
    type User_Data;

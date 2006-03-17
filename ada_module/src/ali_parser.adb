@@ -35,6 +35,8 @@ with Projects.Registry;         use Projects.Registry;
 with Glib.Convert;              use Glib.Convert;
 with File_Utils;                use File_Utils;
 
+with Basic_Types;               use Basic_Types;
+
 with ALI;                       use ALI;
 with Types;                     use Types;
 with Namet;                     use Namet;
@@ -699,7 +701,7 @@ package body ALI_Parser is
            (Name   => Name_Buffer (First .. Last),
             File   => Sfiles (File_Num).File,
             Line   => Integer (Xref_Entity.Table (Xref_Ent).Line),
-            Column => Integer (Xref_Entity.Table (Xref_Ent).Col));
+            Column => Visible_Column_Type (Xref_Entity.Table (Xref_Ent).Col));
       end;
 
       Set_Kind (Entity, Kind);
@@ -819,7 +821,8 @@ package body ALI_Parser is
 
          Location := (File   => Sfiles (Current_Sfile).File,
                       Line   => Integer (Xref.Table (Current_Ref).Line),
-                      Column => Column_Type (Xref.Table (Current_Ref).Col));
+                      Column => Visible_Column_Type
+                        (Xref.Table (Current_Ref).Col));
 
          if Is_End_Reference (Kind) then
             --  Only insert the end-of-scope is we are parsing the ALI file
@@ -918,7 +921,8 @@ package body ALI_Parser is
                        (Get_String (Xref_Entity.Table (Entity).Entity)),
                      File => Sfiles (File_Num).File,
                      Line => Integer (Line),
-                     Column => Integer (Xref_Entity.Table (Entity).Col));
+                     Column => Visible_Column_Type
+                       (Xref_Entity.Table (Entity).Col));
                end if;
             end loop;
          end if;
@@ -947,7 +951,8 @@ package body ALI_Parser is
                         (Get_String (Xref_Entity.Table (Entity).Entity)),
                      File => Sfiles (Xref_Section.Table (Sect).File_Num).File,
                      Line => Integer (Xref_Entity.Table (Entity).Line),
-                     Column => Integer (Xref_Entity.Table (Entity).Col));
+                     Column => Visible_Column_Type
+                       (Xref_Entity.Table (Entity).Col));
                end if;
             end loop;
          end loop;
@@ -970,7 +975,7 @@ package body ALI_Parser is
          File_Name       => Get_Filename (S),
          Entity_Name     => "",  --  Unknown, we are looking for it
          Line            => Integer (Line),
-         Column          => Integer (Column),
+         Column          => Visible_Column_Type (Column),
          Entity          => Entity,
          Status          => Status,
          Check_Decl_Only => False);
@@ -1211,7 +1216,7 @@ package body ALI_Parser is
       function Convert is new Ada.Unchecked_Conversion
         (GNAT.OS_Lib.String_Access, Text_Buffer_Ptr);
       Full   : constant String := Full_Name (ALI_Filename).all;
-      Buffer : String_Access   := Read_File (ALI_Filename);
+      Buffer : GNAT.OS_Lib.String_Access   := Read_File (ALI_Filename);
    begin
       if Buffer = null then
          Trace (Me, "Couldn't open " & Full);
@@ -1342,7 +1347,7 @@ package body ALI_Parser is
       end Next_Candidate;
 
       Current_Dir_Name   : constant Character := '.';
-      Dir                : String_Access;
+      Dir                : GNAT.OS_Lib.String_Access;
       P                  : Project_Type := Project;
       Extension : constant String := File_Extension (Short_ALI_Filename);
       Is_Parent_LI : Boolean := False;

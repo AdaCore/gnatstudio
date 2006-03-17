@@ -20,7 +20,7 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
-
+with Basic_Types;             use Basic_Types;
 with Language_Handlers;   use Language_Handlers;
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
@@ -64,7 +64,7 @@ package body Entities.Queries is
      (EL              : Entity_Information_List_Access;
       File            : Source_File;
       Line            : Integer;
-      Column          : Integer;
+      Column          : Basic_Types.Visible_Column_Type;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
       Closest         : in out Entity_Information;
@@ -80,7 +80,7 @@ package body Entities.Queries is
      (Source                 : Source_File;
       Normalized_Entity_Name : String := "";
       Line                   : Integer;
-      Column                 : Integer;
+      Column                 : Basic_Types.Visible_Column_Type;
       Check_Decl_Only        : Boolean;
       Entity                 : out Entity_Information;
       Closest_Ref            : out Entity_Reference;
@@ -90,7 +90,7 @@ package body Entities.Queries is
    procedure Find_Any_Entity
      (File            : Source_File;
       Line            : Integer;
-      Column          : Integer;
+      Column          : Basic_Types.Visible_Column_Type;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
       Closest         : in out Entity_Information;
@@ -101,7 +101,7 @@ package body Entities.Queries is
      (Trie            : Entities_Hash.HTable;
       File            : Source_File;
       Line            : Integer;
-      Column          : Integer;
+      Column          : Basic_Types.Visible_Column_Type;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
       Closest         : in out Entity_Information;
@@ -199,7 +199,7 @@ package body Entities.Queries is
      (EL              : Entity_Information_List_Access;
       File            : Source_File;
       Line            : Integer;
-      Column          : Integer;
+      Column          : Basic_Types.Visible_Column_Type;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
       Closest         : in out Entity_Information;
@@ -215,7 +215,7 @@ package body Entities.Queries is
             E := EL.Table (Ent);
 
             if E.Declaration.File = File then
-               Prox := abs (Natural (E.Declaration.Column) - Column) +
+               Prox := Natural (abs (E.Declaration.Column - Column)) +
                abs (E.Declaration.Line - Line) * Num_Columns_Per_Line;
 
                if Prox < Distance then
@@ -235,7 +235,7 @@ package body Entities.Queries is
                   if Is_Real_Reference (Ref.Kind)
                     and then Ref.Location.File = File
                   then
-                     Prox := abs (Natural (Ref.Location.Column) - Column) +
+                     Prox := Natural (abs (Ref.Location.Column - Column)) +
                         abs (Ref.Location.Line - Line) * Num_Columns_Per_Line;
 
                      if Prox < Distance then
@@ -262,7 +262,7 @@ package body Entities.Queries is
      (Trie            : Entities_Hash.HTable;
       File            : Source_File;
       Line            : Integer;
-      Column          : Integer;
+      Column          : Basic_Types.Visible_Column_Type;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
       Closest         : in out Entity_Information;
@@ -292,7 +292,7 @@ package body Entities.Queries is
    procedure Find_Any_Entity
      (File            : Source_File;
       Line            : Integer;
-      Column          : Integer;
+      Column          : Basic_Types.Visible_Column_Type;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
       Closest         : in out Entity_Information;
@@ -317,7 +317,7 @@ package body Entities.Queries is
      (Source                 : Source_File;
       Normalized_Entity_Name : String := "";
       Line                   : Integer;
-      Column                 : Integer;
+      Column                 : Basic_Types.Visible_Column_Type;
       Check_Decl_Only        : Boolean;
       Entity                 : out Entity_Information;
       Closest_Ref            : out Entity_Reference;
@@ -411,7 +411,7 @@ package body Entities.Queries is
       File_Name       : VFS.Virtual_File;
       Entity_Name     : String := "";
       Line            : Natural;
-      Column          : Natural;
+      Column          : Basic_Types.Visible_Column_Type;
       Entity          : out Entity_Information;
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False)
@@ -432,7 +432,7 @@ package body Entities.Queries is
       File_Name       : VFS.Virtual_File;
       Entity_Name     : String := "";
       Line            : Natural;
-      Column          : Natural;
+      Column          : Basic_Types.Visible_Column_Type;
       Entity          : out Entity_Information;
       Closest_Ref     : out Entity_Reference;
       Status          : out Find_Decl_Or_Body_Query_Status;
@@ -467,7 +467,7 @@ package body Entities.Queries is
       Source          : Source_File;
       Entity_Name     : String := "";
       Line            : Natural;
-      Column          : Natural;
+      Column          : Basic_Types.Visible_Column_Type;
       Entity          : out Entity_Information;
       Closest_Ref     : out Entity_Reference;
       Status          : out Find_Decl_Or_Body_Query_Status;

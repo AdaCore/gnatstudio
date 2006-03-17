@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with VFS;
+with Basic_Types;
 
 package Entities.Queries is
 
@@ -45,7 +46,7 @@ package Entities.Queries is
       File_Name       : VFS.Virtual_File;
       Entity_Name     : String := "";
       Line            : Natural;
-      Column          : Natural;
+      Column          : Basic_Types.Visible_Column_Type;
       Entity          : out Entity_Information;
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False);
@@ -54,7 +55,7 @@ package Entities.Queries is
       File_Name       : VFS.Virtual_File;
       Entity_Name     : String := "";
       Line            : Natural;
-      Column          : Natural;
+      Column          : Basic_Types.Visible_Column_Type;
       Entity          : out Entity_Information;
       Closest_Ref     : out Entity_Reference;
       Status          : out Find_Decl_Or_Body_Query_Status;
@@ -64,7 +65,7 @@ package Entities.Queries is
       Source          : Source_File;
       Entity_Name     : String := "";
       Line            : Natural;
-      Column          : Natural;
+      Column          : Basic_Types.Visible_Column_Type;
       Entity          : out Entity_Information;
       Closest_Ref     : out Entity_Reference;
       Status          : out Find_Decl_Or_Body_Query_Status;

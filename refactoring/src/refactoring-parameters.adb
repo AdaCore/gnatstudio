@@ -60,7 +60,7 @@ package body Refactoring.Parameters is
       Entity : Entity_Information;
       File   : VFS.Virtual_File;
       Line   : Integer;
-      Column : Integer) return Command_Return_Type;
+      Column : Visible_Column_Type) return Command_Return_Type;
    --  Name the parameters for the call to Entity at the given location
 
    ------------------------------
@@ -87,7 +87,7 @@ package body Refactoring.Parameters is
       Entity : Entity_Information;
       File   : VFS.Virtual_File;
       Line   : Integer;
-      Column : Integer) return Command_Return_Type
+      Column : Visible_Column_Type) return Command_Return_Type
    is
       --  File needs to be open for get_chars to work, unfortunately
       Args2  : Argument_List_Access :=

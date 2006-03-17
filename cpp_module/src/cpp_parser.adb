@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -28,6 +28,8 @@ with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
+
+with Basic_Types;               use Basic_Types;
 
 with DB_API;                    use DB_API;
 with Entities;                  use Entities;
@@ -141,8 +143,8 @@ package body CPP_Parser is
       Db            : Entities_Database;
       Registry      : Project_Registry;
       SN_Table      : SN_Table_Array;
-      DBIMP_Path    : String_Access;
-      CBrowser_Path : String_Access;
+      DBIMP_Path    : GNAT.OS_Lib.String_Access;
+      CBrowser_Path : GNAT.OS_Lib.String_Access;
    end record;
    type CPP_Handler is access all CPP_Handler_Record'Class;
 
@@ -182,7 +184,7 @@ package body CPP_Parser is
       Process_Running : Boolean := False;
       PD              : GNAT.Expect.TTY.TTY_Process_Descriptor;
       Prj_Iterator    : Projects.Imported_Project_Iterator;
-      List_Filename   : String_Access;
+      List_Filename   : GNAT.OS_Lib.String_Access;
       Current_Files   : VFS.File_Array_Access;
       Current_File    : Natural;
       Lang_Handler    : Language_Handler;
@@ -1112,7 +1114,7 @@ package body CPP_Parser is
            (Entity   => Entity,
             Location => (File   => Source,
                          Line   => G.Start_Position.Line,
-                         Column => Column_Type (G.Start_Position.Column)),
+                         Column => G.Start_Position.Column),
             Kind     => Body_Entity);
 
          --  Also register a new reference for the type (int in "int A::s;").
@@ -1126,7 +1128,7 @@ package body CPP_Parser is
                Location =>
                  (File   => Source,
                   Line   => G.Type_Start_Position.Line,
-                  Column => Column_Type (G.Type_Start_Position.Column)),
+                  Column => G.Type_Start_Position.Column),
                Kind     => Reference);
          end if;
       end if;
@@ -1188,7 +1190,8 @@ package body CPP_Parser is
          --  limitation in SN)
 
          if Length > 0
-           and then Sym.Start_Position.Column - 2 - Length > 0
+           and then Sym.Start_Position.Column - 2 -
+             Visible_Column_Type (Length) > 0
          then
             Class := Lookup_Entity_In_Tables
               (Handler,
@@ -1202,8 +1205,8 @@ package body CPP_Parser is
                   Location =>
                     (File   => Get_File (Get_Declaration_Of (Entity)),
                      Line   => Sym.Start_Position.Line,
-                     Column =>
-                       Column_Type (Sym.Start_Position.Column - 2 - Length)),
+                     Column => Sym.Start_Position.Column - 2 -
+                       Visible_Column_Type (Length)),
                   Kind     => Reference);
             end if;
          end if;
@@ -1285,8 +1288,7 @@ package body CPP_Parser is
                Location =>
                  (File   => Get_File (Get_Declaration_Of (Entity)),
                   Line   => Get_Line (Get_Declaration_Of (Entity)),
-                  Column =>
-                    Column_Type (Get_Column (Get_Declaration_Of (Entity)))),
+                  Column => Get_Column (Get_Declaration_Of (Entity))),
                Kind     => Reference);
          end if;
       end if;
@@ -1374,7 +1376,7 @@ package body CPP_Parser is
            (Entity,
             Location => (File   => Source,
                          Line   => Var.End_Position.Line,
-                         Column => Column_Type (Var.End_Position.Column)),
+                         Column => Var.End_Position.Column),
             Kind     => End_Of_Spec);
 
          Set_Attributes
@@ -1406,13 +1408,13 @@ package body CPP_Parser is
               (Entity   => Entity,
                Location => (File   => S,
                             Line   => M.Start_Position.Line,
-                            Column => Column_Type (M.Start_Position.Column)),
+                            Column => M.Start_Position.Column),
                Kind     => Body_Entity);
             Set_End_Of_Scope
               (Entity   => Entity,
                Location => (File   => S,
                             Line   => M.End_Position.Line,
-                            Column => Column_Type (M.End_Position.Column)),
+                            Column => M.End_Position.Column),
                Kind     => End_Of_Body);
          end if;
       end if;
@@ -1586,7 +1588,7 @@ package body CPP_Parser is
               (Entity   => Entity,
                Location => (File   => Source,
                             Line   => M.Start_Position.Line,
-                            Column => Column_Type (M.Start_Position.Column)),
+                            Column => M.Start_Position.Column),
                Kind     => Body_Entity);
          end if;
 
@@ -1639,7 +1641,8 @@ package body CPP_Parser is
          Class_Length := M.Class.Last - M.Class.First + 1;
 
          if Class /= null
-           and then M.Start_Position.Column - 2 - Class_Length > 0
+           and then M.Start_Position.Column - 2 -
+             Visible_Column_Type (Class_Length) > 0
            and then (M.Start_Position.Line /=
                        Get_Line (Get_Declaration_Of (Entity))
                      or else M.Start_Position.Column /=
@@ -1650,8 +1653,8 @@ package body CPP_Parser is
                Location =>
                  (File   => Source,
                   Line   => M.Start_Position.Line,
-                  Column =>
-                    Column_Type (M.Start_Position.Column - 2 - Class_Length)),
+                  Column => M.Start_Position.Column - 2 -
+                    Visible_Column_Type (Class_Length)),
                Kind     => Reference);
          end if;
 
@@ -1659,7 +1662,7 @@ package body CPP_Parser is
            (Entity,
             Location => (File   => Source,
                          Line   => M.End_Position.Line,
-                         Column => Column_Type (M.End_Position.Column)),
+                         Column => M.End_Position.Column),
             Kind => End_Of_Body);
       end if;
    end Parse_MI_Table;
@@ -1697,7 +1700,7 @@ package body CPP_Parser is
            (Entity   => Entity,
             Location => (File   => Get_File (Get_Declaration_Of (Entity)),
                          Line   => C.End_Position.Line,
-                         Column => Column_Type (C.End_Position.Column)),
+                         Column => C.End_Position.Column),
             Kind     => End_Of_Spec);
 
          --  Add base classes
@@ -1732,7 +1735,7 @@ package body CPP_Parser is
                      Location =>
                        (File   => Get_File (Get_Declaration_Of (Entity)),
                         Line   => Base.Start_Position.Line,
-                        Column => Column_Type (Base.Start_Position.Column)),
+                        Column => Base.Start_Position.Column),
                      Kind => Reference);
                end if;
             end loop;
@@ -1842,7 +1845,7 @@ package body CPP_Parser is
            (Entity   => Entity,
             Location => (File   => Get_File (Get_Declaration_Of (Entity)),
                          Line   => ET.End_Position.Line,
-                         Column => Column_Type (ET.End_Position.Column)),
+                         Column => ET.End_Position.Column),
             Kind     => End_Of_Spec);
       end if;
    end Parse_E_Table;
@@ -2073,13 +2076,13 @@ package body CPP_Parser is
             Location =>
               (File   => Source,
                Line   => F.Start_Position.Line,
-               Column => Column_Type (F.Start_Position.Column)),
+               Column => F.Start_Position.Column),
             Kind     => Body_Entity);
          Set_End_Of_Scope
            (Entity   => Entity,
             Location => (File   => Source,
                          Line   => F.End_Position.Line,
-                         Column => Column_Type (F.End_Position.Column)),
+                         Column => F.End_Position.Column),
             Kind     => End_Of_Body);
       end if;
    end Parse_FU_Table_From_FD;
@@ -2152,7 +2155,7 @@ package body CPP_Parser is
            (Entity   => Entity,
             Location => (File   => S,
                          Line   => C.End_Position.Line,
-                         Column => Column_Type (C.End_Position.Column)),
+                         Column => C.End_Position.Column),
             Kind     => End_Of_Scope_Kind);
 
          Set_Subprogram_Return_Type
@@ -2319,7 +2322,7 @@ package body CPP_Parser is
                         Location =>
                           (File   => Ref_Source,
                            Line   => R.Position.Line,
-                           Column => Column_Type (R.Position.Column)),
+                           Column => R.Position.Column),
                         Kind     => Kind);
                   end if;
                else
@@ -2390,7 +2393,7 @@ package body CPP_Parser is
                         Location =>
                           (File   => Source,
                            Line   => Var.Start_Position.Line,
-                           Column => Column_Type (Var.Start_Position.Column)),
+                           Column => Var.Start_Position.Column),
                         Kind     => Subprogram_In_Parameter);
                   end if;
                end loop;
@@ -2514,7 +2517,7 @@ package body CPP_Parser is
             Location => File_Location'
               (File   => Get_File (Get_Declaration_Of (Entity)),
                Line   => Parent_Reference.Line,
-               Column => Column_Type (Parent_Reference.Column)),
+               Column => Parent_Reference.Column),
             Kind     => Reference);
       end if;
    end Set_Parent;
@@ -3138,7 +3141,7 @@ package body CPP_Parser is
       Handler    : access Entities.LI_Handler_Record'Class) return String
    is
       H           : constant CPP_Handler := CPP_Handler (Handler);
-      Exec_Suffix : String_Access := Get_Executable_Suffix;
+      Exec_Suffix : GNAT.OS_Lib.String_Access := Get_Executable_Suffix;
    begin
       Free (H.DBIMP_Path);
       Free (H.CBrowser_Path);
@@ -3326,13 +3329,13 @@ package body CPP_Parser is
                --  computing it is not simple.
 
                C.Sloc_Start := (Sym.Start_Position.Line,
-                                Sym.Start_Position.Column,
+                                Integer (Sym.Start_Position.Column),
                                 0);
                C.Sloc_End := (Sym.End_Position.Line,
-                              Sym.End_Position.Column,
+                              Integer (Sym.End_Position.Column),
                               0);
                C.Sloc_Entity := (Sym.Start_Position.Line,
-                                 Sym.Start_Position.Column,
+                                 Integer (Sym.Start_Position.Column),
                                  0);
             when others =>
                null;

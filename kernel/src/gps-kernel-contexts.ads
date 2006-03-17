@@ -22,6 +22,7 @@
 --  contexts and selections in GPS.
 
 with VFS;
+with Basic_Types;
 with Entities;
 with Projects;
 
@@ -42,10 +43,11 @@ package GPS.Kernel.Contexts is
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
-      Column            : Integer := 0;
+      Column            : Basic_Types.Visible_Column_Type := 0;
       Revision          : String := "");
    --  Set the information in this context.
    --  File_Name must be UTF8-encoded.
+   --  ??? We should use non-ambiguous types for Line and Column
 
    function Has_Directory_Information
      (Context : Selection_Context) return Boolean;
@@ -75,7 +77,7 @@ package GPS.Kernel.Contexts is
    function Has_Column_Information
      (Context : Selection_Context) return Boolean;
    function Column_Information
-     (Context : Selection_Context) return Integer;
+     (Context : Selection_Context) return Basic_Types.Visible_Column_Type;
    --  Check whether there is some column information, and return it. Same
    --  comment as for Line_Information.
    --  Column is the index of the character in the string representing the
@@ -169,7 +171,7 @@ package GPS.Kernel.Contexts is
    procedure Set_Entity_Information
      (Context       : in out Selection_Context;
       Entity_Name   : String := "";
-      Entity_Column : Integer := 0);
+      Entity_Column : Basic_Types.Visible_Column_Type := 0);
    --  Set the information in the context.
    --  Entity_Column should be the column on which the entity starts, not the
    --  current location of the cursor.
@@ -195,7 +197,7 @@ package GPS.Kernel.Contexts is
    function Has_Entity_Column_Information
      (Context : Selection_Context) return Boolean;
    function Entity_Column_Information
-     (Context : Selection_Context) return Integer;
+     (Context : Selection_Context) return Basic_Types.Visible_Column_Type;
    --  Check whether there is some column information, and return it.
    --  The column returned is the column on which the entity starts, not the
    --  column on which the cursor currently is.

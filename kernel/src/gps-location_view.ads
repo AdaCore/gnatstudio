@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -76,7 +76,7 @@ package GPS.Location_View is
       File               : VFS.Virtual_File;
       Text               : String;
       Line               : Positive;
-      Column             : Positive;
+      Column             : Visible_Column_Type;
       Length             : Natural := 0;
       Highlight          : Boolean := False;
       Highlight_Category : Style_Access := null;
@@ -167,7 +167,7 @@ private
       Category           : String_Access;
       File               : VFS.Virtual_File;
       Line               : Integer;
-      Column             : Integer;
+      Column             : Visible_Column_Type;
       Length             : Integer;
       Highlight          : Boolean;
       Message            : String_Access;

@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
-
+with Basic_Types;        use Basic_Types;
 with Projects;           use Projects;
 with Projects.Registry;  use Projects.Registry;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
@@ -174,7 +174,7 @@ package body GPS.Kernel.Contexts is
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
-      Column            : Integer := 0;
+      Column            : Basic_Types.Visible_Column_Type := 0;
       Revision          : String := "") is
    begin
       Context.Data.Data.File                     := File;
@@ -375,7 +375,7 @@ package body GPS.Kernel.Contexts is
    ------------------------
 
    function Column_Information
-     (Context : Selection_Context) return Integer is
+     (Context : Selection_Context) return Basic_Types.Visible_Column_Type is
    begin
       return Context.Data.Data.Column;
    end Column_Information;
@@ -429,7 +429,7 @@ package body GPS.Kernel.Contexts is
    procedure Set_Entity_Information
      (Context       : in out Selection_Context;
       Entity_Name   : String := "";
-      Entity_Column : Integer := 0) is
+      Entity_Column : Basic_Types.Visible_Column_Type := 0) is
    begin
       Free (Context.Data.Data.Entity_Name);
       if Entity_Name /= "" then
@@ -499,7 +499,7 @@ package body GPS.Kernel.Contexts is
    -------------------------------
 
    function Entity_Column_Information
-     (Context : Selection_Context) return Integer is
+     (Context : Selection_Context) return Basic_Types.Visible_Column_Type is
    begin
       return Context.Data.Data.Entity_Column;
    end Entity_Column_Information;

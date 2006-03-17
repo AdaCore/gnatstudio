@@ -896,7 +896,8 @@ package body Codefix_Module is
                  (Get_Script (Data),
                   File   => Create_File (Get_Script (Data), Get_File (Msg)),
                   Line   => Get_Line (Msg),
-                  Column => Natural (Get_Column (Msg))));
+                  Column => Visible_Column_Type (Get_Column (Msg))));
+            --  ??? Is the conversion to Visible_Column_Type correct ?
          end;
 
       end if;

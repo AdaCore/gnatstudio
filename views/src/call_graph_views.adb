@@ -320,9 +320,11 @@ package body Call_Graph_Views is
               (Kernel,
                Filename   => File,
                Line       => Natural (Get_Int (Model, Iter, Line_Column)),
-               Column     => Natural (Get_Int (Model, Iter, Column_Column)),
-               Column_End => Natural (Get_Int (Model, Iter, Column_Column))
-               + Get_Name (Entity)'Length);
+               Column     => Visible_Column_Type
+                 (Get_Int (Model, Iter, Column_Column)),
+               Column_End => Visible_Column_Type
+                 (Get_Int (Model, Iter, Column_Column)
+                  + Get_Name (Entity)'Length));
             return True;
          end if;
       end if;
@@ -537,7 +539,7 @@ package body Call_Graph_Views is
                      Full_Name (Get_Filename (Get_File (Decl))).all);
                   Set_Attribute (N, "entity_line", Image (Get_Line (Decl)));
                   Set_Attribute
-                    (N, "entity_column", Image (Get_Column (Decl)));
+                    (N, "entity_column", Image (Integer (Get_Column (Decl))));
 
                else
                   Get_Value (Model, Iter, File_Column, Value);
@@ -657,8 +659,8 @@ package body Call_Graph_Views is
                        (Name => Get_Attribute (N, "entity_name"),
                         File => Source,
                         Line => Safe_Value (Get_Attribute (N, "entity_line")),
-                        Column =>
-                          Safe_Value (Get_Attribute (N, "entity_column")));
+                        Column => Basic_Types.Visible_Column_Type
+                          (Safe_Value (Get_Attribute (N, "entity_column"))));
                   else
                      Entity := null;
                   end if;
@@ -844,7 +846,7 @@ package body Call_Graph_Views is
          Set (Model, Iter, Decl_Column,
               Base_Name (Get_Filename (Get_File (Decl)))
               & ':' & Image (Get_Line (Decl))
-              & ':' & Image (Get_Column (Decl)));
+              & ':' & Image (Integer (Get_Column (Decl))));
          Set_Value (Model, Iter, Entity_Column, To_GValue (Entity));
 
          --  Append a dummy child, so that the parent can be expanded to
@@ -887,7 +889,7 @@ package body Call_Graph_Views is
       File   : constant Virtual_File :=
         Get_Filename (Get_File (Get_Location (Ref)));
       Line   : constant Integer := Get_Line (Get_Location (Ref));
-      Column : constant Integer := Get_Column (Get_Location (Ref));
+      Column : constant Integer := Integer (Get_Column (Get_Location (Ref)));
       Value  : GValue;
       L      : constant String := "0000" & Image (Line);
       C      : constant String := "0000" & Image (Column);

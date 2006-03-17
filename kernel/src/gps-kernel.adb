@@ -58,7 +58,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Mapper;              use Basic_Mapper;
-with Basic_Types;
+
 with Default_Preferences;       use Default_Preferences;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
@@ -1239,7 +1239,7 @@ package body GPS.Kernel is
       File              : Entities.Source_File;
       Entity_Name       : String;
       Line              : Natural;
-      Column            : Natural;
+      Column            : Basic_Types.Visible_Column_Type;
       Ask_If_Overloaded : Boolean;
       Entity            : out Entities.Entity_Information;
       Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
