@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2006                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -84,7 +84,7 @@ package body SN.Browse is
       Dir_Entry    : String (1 .. 8192);
       Success      : Boolean;
       Args         : Argument_List_Access;
-      Content      : String_Access;
+      Content      : GNAT.OS_Lib.String_Access;
       Temp_File    : File_Descriptor;
 
    begin
