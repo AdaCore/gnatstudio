@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2005                      --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -51,7 +51,7 @@ package body SN.Xref_Pools is
    ----------
 
    procedure Free is new Ada.Unchecked_Deallocation
-     (String, String_Access);
+     (String, GNAT.OS_Lib.String_Access);
 
    ----------
    -- Free --
@@ -87,7 +87,7 @@ package body SN.Xref_Pools is
    -- Get_Key --
    -------------
 
-   function Get_Key (Xref : Xref_Elmt_Ptr) return String_Access is
+   function Get_Key (Xref : Xref_Elmt_Ptr) return GNAT.OS_Lib.String_Access is
    begin
       return Xref.Source_Filename;
    end Get_Key;
@@ -96,7 +96,7 @@ package body SN.Xref_Pools is
    -- Hash --
    ----------
 
-   function Hash (Key : String_Access) return Hash_Range is
+   function Hash (Key : GNAT.OS_Lib.String_Access) return Hash_Range is
    begin
       return Str_Hash (Key.all);
    end Hash;
@@ -105,7 +105,7 @@ package body SN.Xref_Pools is
    -- Equal --
    -----------
 
-   function Equal (K1, K2 : String_Access) return Boolean is
+   function Equal (K1, K2 : GNAT.OS_Lib.String_Access) return Boolean is
    begin
       return K1.all = K2.all;
    end Equal;
@@ -282,7 +282,8 @@ package body SN.Xref_Pools is
    is
       Data   : Xref_Elmt_Ptr;
       N      : Integer := 0;
-      Source : String_Access := new String'(Full_Name (Source_Filename).all);
+      Source : GNAT.OS_Lib.String_Access :=
+        new String'(Full_Name (Source_Filename).all);
 
    begin
       --  Get hashed value
