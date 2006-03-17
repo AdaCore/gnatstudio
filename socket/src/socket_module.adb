@@ -474,6 +474,8 @@ package body Socket_Module is
       Socket_Class : constant Class_Type := New_Class (Kernel, "Socket");
 
    begin
+      GNAT.Sockets.Initialize;
+
       Socket_Module_ID := new Socket_Module_Record;
       Socket_Module (Socket_Module_ID).Timeout_Handler :=
         Timeout_Add (100, Timeout_Process_Commands'Access);
