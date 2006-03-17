@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,7 @@
 --  This package implements commands related to navigation in any
 --  location viewable by the user: source locations, documentation, etc.
 
+with Basic_Types; use Basic_Types;
 with GPS.Kernel;  use GPS.Kernel;
 with VFS;
 
@@ -35,15 +36,15 @@ package Commands.Locations is
       Kernel         : Kernel_Handle;
       Filename       : VFS.Virtual_File;
       Line           : Natural := 0;
-      Column         : Natural := 0;
-      Column_End     : Natural := 0);
+      Column         : Visible_Column_Type := 0;
+      Column_End     : Visible_Column_Type := 0);
    --  Create a new Source_Location_Command with the specified
    --  coordinates. Filename must be an absolute file name.
 
    procedure Set_Location
      (Item       : access Source_Location_Command_Type;
       New_Line   : Natural;
-      New_Column : Natural);
+      New_Column : Visible_Column_Type);
    --  Set the current location in Item.
 
    function Get_File
@@ -51,7 +52,7 @@ package Commands.Locations is
    function Get_Line
      (Item : access Source_Location_Command_Type) return Natural;
    function Get_Column
-     (Item : access Source_Location_Command_Type) return Natural;
+     (Item : access Source_Location_Command_Type) return Visible_Column_Type;
    --  Basic accessors.
 
    function Execute
@@ -64,8 +65,8 @@ private
       Kernel         : Kernel_Handle;
       Filename       : VFS.Virtual_File;
       Line           : Natural := 0;
-      Column         : Natural := 0;
-      Column_End     : Natural := 0;
+      Column         : Visible_Column_Type := 0;
+      Column_End     : Visible_Column_Type := 0;
    end record;
 
 end Commands.Locations;

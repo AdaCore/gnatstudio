@@ -323,8 +323,8 @@ package body GPS.Kernel.Standard_Hooks is
      (Kernel            : access Kernel_Handle_Record'Class;
       Filename          : VFS.Virtual_File;
       Line              : Natural := 1;
-      Column            : Natural := 1;
-      Column_End        : Natural := 0;
+      Column            : Basic_Types.Visible_Column_Type := 1;
+      Column_End        : Basic_Types.Visible_Column_Type := 0;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
@@ -736,8 +736,8 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, Data.Line);
-      Set_Nth_Arg (D.all, 4, Data.Column);
-      Set_Nth_Arg (D.all, 5, Data.Column_End);
+      Set_Nth_Arg (D.all, 4, Natural (Data.Column));
+      Set_Nth_Arg (D.all, 5, Natural (Data.Column_End));
       Set_Nth_Arg (D.all, 6, Data.Enable_Navigation);
       Set_Nth_Arg (D.all, 7, Data.New_File);
       Set_Nth_Arg (D.all, 8, Data.Force_Reload);
@@ -757,8 +757,10 @@ package body GPS.Kernel.Standard_Hooks is
         (Hooks_Data with
          File         => Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel))),
          Line              => Nth_Arg (Data, 3),
-         Column            => Nth_Arg (Data, 4),
-         Column_End        => Nth_Arg (Data, 5),
+         Column            => Basic_Types.Visible_Column_Type
+           (Nth_Arg (Data, 4, Default => 1)),
+         Column_End        => Basic_Types.Visible_Column_Type
+           (Nth_Arg (Data, 5, Default => 1)),
          Enable_Navigation => Nth_Arg (Data, 6),
          New_File          => Nth_Arg (Data, 7),
          Force_Reload      => Nth_Arg (Data, 8),

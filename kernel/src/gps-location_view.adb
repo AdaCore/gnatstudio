@@ -214,7 +214,7 @@ package body GPS.Location_View is
       Message            : String;
       Mark               : Integer := -1;
       Line               : Integer;
-      Column             : Integer;
+      Column             : Visible_Column_Type;
       Length             : Integer;
       Highlighting       : Boolean;
       Highlight_Category : Style_Access;
@@ -230,7 +230,7 @@ package body GPS.Location_View is
       Category           : Glib.UTF8_String;
       File               : VFS.Virtual_File;
       Line               : Positive;
-      Column             : Positive;
+      Column             : Visible_Column_Type;
       Length             : Natural;
       Highlight          : Boolean;
       Message            : String;
@@ -303,7 +303,7 @@ package body GPS.Location_View is
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename : VFS.Virtual_File;
       Line     : Natural := 1;
-      Column   : Natural := 1;
+      Column   : Visible_Column_Type := 1;
       Length   : Natural := 0) return String;
    --  Create a mark for Filename, at position given by Line, Column, with
    --  length Length.
@@ -313,7 +313,7 @@ package body GPS.Location_View is
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename           : VFS.Virtual_File;
       Line               : Natural;
-      Column             : Natural;
+      Column             : Visible_Column_Type;
       Length             : Natural;
       Highlight_Category : Style_Access;
       Highlight          : Boolean := True);
@@ -424,7 +424,7 @@ package body GPS.Location_View is
                      File,
                      Integer
                        (Get_Int (View.Tree.Model, Line_Iter, Line_Column)),
-                     Integer
+                     Visible_Column_Type
                        (Get_Int (View.Tree.Model, Line_Iter, Column_Column)),
                      Integer
                        (Get_Int (View.Tree.Model, Line_Iter, Length_Column)),
@@ -541,18 +541,18 @@ package body GPS.Location_View is
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename : VFS.Virtual_File;
       Line     : Natural := 1;
-      Column   : Natural := 1;
+      Column   : Visible_Column_Type := 1;
       Length   : Natural := 0) return String
    is
       Args : GNAT.OS_Lib.Argument_List :=
         (1 => new String'(Full_Name (Filename).all),
          2 => new String'(Image (Line)),
-         3 => new String'(Image (Column)),
+         3 => new String'(Image (Integer (Column))),
          4 => new String'(Image (Length)));
       Location : constant String :=
         Execute_GPS_Shell_Command (Kernel, "Editor.create_mark", Args);
    begin
-      Basic_Types.Free (Args);
+      Free (Args);
       return Location;
    end Create_Mark;
 
@@ -564,7 +564,7 @@ package body GPS.Location_View is
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename           : VFS.Virtual_File;
       Line               : Natural;
-      Column             : Natural;
+      Column             : Visible_Column_Type;
       Length             : Natural;
       Highlight_Category : Style_Access;
       Highlight          : Boolean := True)
@@ -573,8 +573,8 @@ package body GPS.Location_View is
         (1 => new String'(Full_Name (Filename).all),
          2 => new String'(Get_Name (Highlight_Category)),
          3 => new String'(Image (Line)),
-         4 => new String'(Image (Column)),
-         5 => new String'(Image (Column + Length)));
+         4 => new String'(Image (Integer (Column))),
+         5 => new String'(Image (Integer (Column) + Length)));
       Command : GNAT.OS_Lib.String_Access;
    begin
       if Highlight_Category = null then
@@ -605,7 +605,7 @@ package body GPS.Location_View is
          end if;
       end if;
 
-      Basic_Types.Free (Args);
+      Free (Args);
       GNAT.OS_Lib.Free (Command);
    end Highlight_Line;
 
@@ -832,7 +832,7 @@ package body GPS.Location_View is
       Message            : String;
       Mark               : Integer := -1;
       Line               : Integer;
-      Column             : Integer;
+      Column             : Visible_Column_Type;
       Length             : Integer;
       Highlighting       : Boolean;
       Highlight_Category : Style_Access;
@@ -1094,7 +1094,7 @@ package body GPS.Location_View is
       Category           : Glib.UTF8_String;
       File               : VFS.Virtual_File;
       Line               : Positive;
-      Column             : Positive;
+      Column             : Visible_Column_Type;
       Length             : Natural;
       Highlight          : Boolean;
       Message            : String;
@@ -1187,7 +1187,7 @@ package body GPS.Location_View is
            (View,
             Model,
             Iter,
-            Image (Line) & ":" & Image (Column), File,
+            Image (Line) & ":" & Image (Integer (Column)), File,
             Message,
             Safe_Value (Output, -1),
             Line, Column, Length, Highlight,
@@ -1431,7 +1431,7 @@ package body GPS.Location_View is
          declare
             Line   : constant Positive := Positive
               (Get_Int (Model, Iter, Line_Column));
-            Column : constant Positive := Positive
+            Column : constant Visible_Column_Type := Visible_Column_Type
               (Get_Int (Model, Iter, Column_Column));
             Par    : constant Gtk_Tree_Iter := Parent (Model, Iter);
             Granpa : constant Gtk_Tree_Iter := Parent (Model, Par);
@@ -1586,7 +1586,7 @@ package body GPS.Location_View is
       File               : VFS.Virtual_File;
       Text               : String;
       Line               : Positive;
-      Column             : Positive;
+      Column             : Visible_Column_Type;
       Length             : Natural := 0;
       Highlight          : Boolean := False;
       Highlight_Category : Style_Access := null;
@@ -2075,7 +2075,7 @@ package body GPS.Location_View is
                            File     => File_Name,
                            Line     => Integer'Value
                              (Get_Attribute (Location, "line", "0")),
-                           Column   => Integer'Value
+                           Column   => Visible_Column_Type'Value
                              (Get_Attribute (Location, "column", "0")),
                            Length   => Integer'Value
                              (Get_Attribute (Location, "length", "0")),
@@ -2326,7 +2326,8 @@ package body GPS.Location_View is
                File               => Get_Data
                  (Nth_Arg (Data, 2, (Get_File_Class (Get_Kernel (Data))))),
                Line               => Nth_Arg (Data, 3),
-               Column             => Nth_Arg (Data, 4),
+               Column             => Visible_Column_Type
+                 (Nth_Arg (Data, 4, Default => 1)),
                Text               => Nth_Arg (Data, 5),
                Length             => Nth_Arg (Data, 7, 0),
                Highlight          => Highlight /= "",
@@ -2429,7 +2430,7 @@ package body GPS.Location_View is
       Last       : Natural;
       Real_Last  : Natural;
       Line       : Natural := 1;
-      Column     : Natural := 1;
+      Column     : Visible_Column_Type := 1;
       Length     : Natural := 0;
       C          : Style_Access;
 
@@ -2490,7 +2491,7 @@ package body GPS.Location_View is
                Last := Matched (Line_Index).Last;
             else
                Last := Matched (Col_Index).Last;
-               Column := Integer'Value
+               Column := Visible_Column_Type'Value
                  (Text (Matched (Col_Index).First ..
                             Matched (Col_Index).Last));
 
@@ -2516,7 +2517,7 @@ package body GPS.Location_View is
                           (File_Index).First .. Matched (File_Index).Last),
                   Kernel),
                Line               => Positive (Line),
-               Column             => Positive (Column),
+               Column             => Column,
                Length             => Length,
                Highlight          => Highlight,
                Message            => Glib.Convert.Escape_Text

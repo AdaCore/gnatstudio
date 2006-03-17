@@ -110,7 +110,8 @@ package body Vdiff_Utils is
       Row     : Gint;
       Column  : Gint;
       Valid   : Boolean := False;
-      L, C    : Integer := 0;
+      L       : Integer := 0;
+      C       : Visible_Column_Type := 0;
 
       pragma Unreferenced (Menu);
 

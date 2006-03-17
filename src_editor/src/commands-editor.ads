@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002 - 2003                      --
---                            ACT-Europe                             --
+--                    Copyright (C) 2002 - 2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,8 +20,8 @@
 
 --  This package implements commands related to the editor.
 
+with Basic_Types;       use Basic_Types;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
-with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
 
 package Commands.Editor is
@@ -94,9 +94,9 @@ package Commands.Editor is
      (Item         : out Editor_Replace_Slice;
       Buffer       : Source_Buffer;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Natural;
+      Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
-      End_Column   : Natural;
+      End_Column   : Character_Offset_Type;
       Text         : String;
       Force_End    : Boolean := False);
    --  Create a new Editor_Replace_Slice command.
@@ -126,10 +126,10 @@ package Commands.Editor is
       Buffer        : Source_Buffer;
       User_Executed : Boolean;
       Line          : Editable_Line_Type;
-      Column        : Natural;
+      Column        : Character_Offset_Type;
       Direction     : Direction_Type := Forward;
       Cursor_Line   : Editable_Line_Type := 0;
-      Cursor_Column : Natural := 0);
+      Cursor_Column : Character_Offset_Type := 0);
    --  Create a new Editor_Command.
    --  Set User_Executed to True if the command is being interactively entered
    --  by the user.
@@ -140,7 +140,7 @@ package Commands.Editor is
      (Item         : Editor_Command;
       UTF8         : String;
       Start_Line   : Editable_Line_Type := 0;
-      Start_Column : Natural := 0);
+      Start_Column : Character_Offset_Type := 0);
    --  Add some text (in UTF-8 format) to the current action.
    --  If values other than -1 are specified, they override the
    --  current values in Item.
@@ -179,24 +179,24 @@ private
       Edition_Mode              : Editor_Command_Mode;
       User_Executed             : Boolean;
       Line                      : Editable_Line_Type;
-      Column                    : Integer;
+      Column                    : Character_Offset_Type;
       Direction                 : Direction_Type;
 
       Cursor_Line               : Editable_Line_Type;
-      Cursor_Column             : Natural;
+      Cursor_Column             : Character_Offset_Type;
    end record;
 
    type Editor_Replace_Slice_Type is new Root_Command with record
       Buffer            : Source_Buffer;
 
       Start_Line        : Editable_Line_Type;
-      Start_Column      : Natural;
+      Start_Column      : Character_Offset_Type;
 
       End_Line_Before   : Editable_Line_Type;
-      End_Column_Before : Natural;
+      End_Column_Before : Character_Offset_Type;
 
       End_Line_After    : Editable_Line_Type := 0;
-      End_Column_After  : Natural := 0;
+      End_Column_After  : Character_Offset_Type := 0;
 
       Text_Before       : String_Access;
       Text_After        : String_Access;

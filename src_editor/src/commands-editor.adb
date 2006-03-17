@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
+--                     Copyright (C) 2003 - 2006                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -152,10 +152,10 @@ package body Commands.Editor is
       Buffer        : Source_Buffer;
       User_Executed : Boolean;
       Line          : Editable_Line_Type;
-      Column        : Natural;
+      Column        : Character_Offset_Type;
       Direction     : Direction_Type := Forward;
       Cursor_Line   : Editable_Line_Type := 0;
-      Cursor_Column : Natural := 0) is
+      Cursor_Column : Character_Offset_Type := 0) is
    begin
       Item := new Editor_Command_Type;
       Item.Buffer := Buffer;
@@ -207,7 +207,7 @@ package body Commands.Editor is
      (Item         : Editor_Command;
       UTF8         : String;
       Start_Line   : Editable_Line_Type := 0;
-      Start_Column : Natural := 0)
+      Start_Column : Character_Offset_Type := 0)
    is
       Text_Length : constant Integer := UTF8'Length;
       First       : Natural := Item.Current_Text'First;
@@ -473,9 +473,9 @@ package body Commands.Editor is
      (Item         : out Editor_Replace_Slice;
       Buffer       : Source_Buffer;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Natural;
+      Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
-      End_Column   : Natural;
+      End_Column   : Character_Offset_Type;
       Text         : String;
       Force_End    : Boolean := False)
    is

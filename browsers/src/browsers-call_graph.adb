@@ -49,6 +49,8 @@ with Gtkada.MDI;                    use Gtkada.MDI;
 
 with Pango.Layout;                  use Pango.Layout;
 
+with Basic_Types;
+
 with Browsers.Canvas;               use Browsers.Canvas;
 with Commands.Generic_Asynchronous; use Commands;
 with Commands.Interactive;          use Commands.Interactive;
@@ -861,7 +863,7 @@ package body Browsers.Call_Graph is
             Expand_Line
               (Changing.Refs, Line,
                " @" & Image (Get_Line (Loc))
-               & ':' & Image (Get_Column (Loc)) & '@',
+               & ':' & Image (Integer (Get_Column (Loc))) & '@',
                (1 => New_Cb));
             return;
          end if;
@@ -873,7 +875,8 @@ package body Browsers.Call_Graph is
         (Changing.Refs,
          Get_Full_Name (Child.Entity)
          & ": @"
-         & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
+         & Image (Get_Line (Loc)) & ':'
+         & Image (Integer (Get_Column (Loc))) & '@',
          Callback => (1 => New_Cb));
    end Add_Entity_And_Link;
 
@@ -1064,7 +1067,10 @@ package body Browsers.Call_Graph is
       Show_Caller  : Boolean;
       Sort_In_File : Boolean)
    is
-      Col  : Integer := Get_Column (Get_Location (Ref));
+      use Basic_Types;
+
+      Col  : Basic_Types.Visible_Column_Type :=
+        Get_Column (Get_Location (Ref));
       Line : constant Integer      := Get_Line (Get_Location (Ref));
       File : constant Virtual_File :=
                Get_Filename (Get_File (Get_Location (Ref)));

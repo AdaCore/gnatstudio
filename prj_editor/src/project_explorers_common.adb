@@ -495,7 +495,7 @@ package body Project_Explorers_Common is
                           (Full_Filename =>
                              Get_String (Model, Iter, Absolute_Name_Column)),
                         Line   => Natural (Line),
-                        Column => Natural (Column));
+                        Column => Visible_Column_Type (Column));
                   end if;
                   return False;
 
@@ -762,7 +762,7 @@ package body Project_Explorers_Common is
            (Context       => Context,
             Entity_Name   => Entity_Base
               (Get_String (Model, Iter, Entity_Base_Column)),
-            Entity_Column => Integer
+            Entity_Column => Visible_Column_Type
               (Get_Int (Model, Iter, Column_Column)));
          L := Integer (Get_Int (Model, Iter, Line_Column));
       end if;

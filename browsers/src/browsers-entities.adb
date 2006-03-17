@@ -51,6 +51,8 @@ with Gtkada.Types;
 
 with Pango.Layout;              use Pango.Layout;
 
+with Basic_Types;
+
 with Browsers.Canvas;           use Browsers.Canvas;
 with Entities.Queries;          use Entities, Entities.Queries;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -1721,6 +1723,8 @@ package body Browsers.Entities is
    is
       B  : constant Type_Browser := Type_Browser (Browser);
       It : constant Type_Item    := Type_Item (Item);
+
+      use Basic_Types;
    begin
       Add_Navigation_Location (Get_Kernel (B), -"Entity Browser");
 
@@ -1730,7 +1734,8 @@ package body Browsers.Entities is
          Line      => Get_Line (Get_Declaration_Of (It.Entity)),
          Column    => Get_Column (Get_Declaration_Of (It.Entity)),
          Column_End => Get_Column (Get_Declaration_Of (It.Entity))
-           + Get_Name (It.Entity).all'Length);
+         + Basic_Types.Visible_Column_Type
+           (Get_Name (It.Entity).all'Length));
    end On_Show_Source;
 
    ------------------------

@@ -28,6 +28,8 @@ with System;                     use System;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
+with Basic_Types;
+
 with Glib.Object;                use Glib.Object;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 with Gtk.Text_View;              use Gtk.Text_View;
@@ -1144,7 +1146,7 @@ package body Python_Module is
                               (Get_File (Get_Declaration_Of (Entity))))
                & ':'
                & Image (Get_Line (Get_Declaration_Of (Entity))) & ':'
-               & Image (Get_Column (Get_Declaration_Of (Entity))));
+               & Image (Integer (Get_Column (Get_Declaration_Of (Entity)))));
          end if;
 
       elsif Command = "__hash__" then
@@ -1154,7 +1156,8 @@ package body Python_Module is
                    & Full_Name (Get_Filename
                        (Get_File (Get_Declaration_Of (Entity)))).all
                    & Image (Get_Line (Get_Declaration_Of (Entity)))
-                   & Image (Get_Column (Get_Declaration_Of (Entity))))));
+               & Image
+                 (Integer (Get_Column (Get_Declaration_Of (Entity)))))));
 
       elsif Command = "__cmp__" then
          Entity2 := Get_Data (Data, 2);
@@ -1218,23 +1221,27 @@ package body Python_Module is
       if Command = "__str__"
         or else Command = "__repr__"
       then
-         Set_Return_Value (Data,
-                           Base_Name (Fileinfo) & ':'
-                           & Image (Get_Line (Info)) & ':'
-                           & Image (Get_Column (Info)));
+         Set_Return_Value
+           (Data,
+            Base_Name (Fileinfo) & ':'
+            & Image (Get_Line (Info)) & ':'
+            & Image (Integer (Get_Column (Info))));
 
       elsif Command = "__hash__" then
          Set_Return_Value
            (Data, Integer
             (Hash (Full_Name (Fileinfo).all
                    & Image (Get_Line (Info))
-                   & Image (Get_Column (Info)))));
+                   & Image (Integer (Get_Column (Info))))));
 
       elsif Command = "__cmp__" then
          declare
+            use Basic_Types;
+
             Info2 : constant File_Location_Info := Get_Data (Data, 2);
             Fileinfo2 : constant Virtual_File := Get_Data (Get_File (Info2));
             Line1, Line2 : Integer;
+            Col1,  Col2  : Visible_Column_Type;
             Name1 : constant String := Full_Name (Fileinfo).all;
             Name2 : constant String := Full_Name (Fileinfo2).all;
          begin
@@ -1248,12 +1255,12 @@ package body Python_Module is
                   Set_Return_Value (Data, -1);
 
                elsif Line1 = Line2 then
-                  Line1 := Get_Column (Info);
-                  Line2 := Get_Column (Info2);
+                  Col1 := Get_Column (Info);
+                  Col2 := Get_Column (Info2);
 
-                  if Line1 < Line2 then
+                  if Col1 < Col2 then
                      Set_Return_Value (Data, -1);
-                  elsif Line1 = Line2 then
+                  elsif Col1 = Col2 then
                      Set_Return_Value (Data, 0);
                   else
                      Set_Return_Value (Data, 1);

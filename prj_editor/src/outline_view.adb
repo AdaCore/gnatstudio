@@ -359,7 +359,8 @@ package body Outline_View is
         Gtk_Tree_Store (Get_Model (Outline.Tree));
       Path      : Gtk_Tree_Path;
       Iter      : Gtk_Tree_Iter;
-      Line, Column : Integer;
+      Line      : Integer;
+      Column    : Visible_Column_Type;
    begin
       Iter := Find_Iter_For_Event (Outline.Tree, Model, Event);
 
@@ -378,9 +379,10 @@ package body Outline_View is
             Line := Safe_Value
               (Execute_GPS_Shell_Command
                  (Outline.Kernel, "Editor.get_line", Args));
-            Column := Safe_Value
-              (Execute_GPS_Shell_Command
-                 (Outline.Kernel, "Editor.get_column", Args));
+            Column := Visible_Column_Type
+              (Safe_Value
+                 (Execute_GPS_Shell_Command
+                    (Outline.Kernel, "Editor.get_column", Args)));
          end;
 
          Set_Entity_Information

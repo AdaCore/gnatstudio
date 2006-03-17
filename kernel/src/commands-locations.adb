@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -30,7 +30,7 @@ package body Commands.Locations is
    procedure Set_Location
      (Item       : access Source_Location_Command_Type;
       New_Line   : Natural;
-      New_Column : Natural) is
+      New_Column : Visible_Column_Type) is
    begin
       Item.Line := New_Line;
       Item.Column := New_Column;
@@ -61,7 +61,7 @@ package body Commands.Locations is
    ----------------
 
    function Get_Column
-     (Item : access Source_Location_Command_Type) return Natural is
+     (Item : access Source_Location_Command_Type) return Visible_Column_Type is
    begin
       return Item.Column;
    end Get_Column;
@@ -75,8 +75,8 @@ package body Commands.Locations is
       Kernel     : Kernel_Handle;
       Filename   : VFS.Virtual_File;
       Line       : Natural := 0;
-      Column     : Natural := 0;
-      Column_End : Natural := 0) is
+      Column     : Visible_Column_Type := 0;
+      Column_End : Visible_Column_Type := 0) is
    begin
       Item := new Source_Location_Command_Type;
       Item.Kernel := Kernel;
