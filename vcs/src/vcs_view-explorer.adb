@@ -702,9 +702,10 @@ package body VCS_View.Explorer is
    is
       E : constant VCS_Explorer_View_Access :=
             VCS_Explorer_View_Access (Explorer);
-      S : constant Status_Array_Access :=
-            Get (E.Status, Name (E.VCS));
+      S : Status_Array_Access;
    begin
+      S := Get (E.Status, Name (E.VCS));
+
       for J in S'Range loop
          S (J).Display := True;
          Set_History
