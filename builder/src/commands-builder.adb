@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
@@ -141,6 +141,10 @@ package body Commands.Builder is
 
          Start := Eol;
       end loop;
+
+      if Output (Output'Last) = ASCII.LF then
+         Append (Buffer, ASCII.LF);
+      end if;
 
       if Length (Buffer) /= 0 then
          Parse_Compiler_Output
