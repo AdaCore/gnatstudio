@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
+--                     Copyright (C) 2005 - 2006                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -457,7 +457,7 @@ package body Docgen.Backend.Text is
          Line : constant String :=
                   Image (Get_Line (Get_Declaration_Of (Entity)));
          Col  : constant String :=
-                  Image (Get_Column (Get_Declaration_Of (Entity)));
+                  Image (Integer (Get_Column (Get_Declaration_Of (Entity))));
       begin
          if Info /= No_Source_File_Information then
             E_Data.Ref_File := E_Data.Ref_File & Info.Doc_File_Name.all;
@@ -681,7 +681,7 @@ package body Docgen.Backend.Text is
       Insert
         (T_Set,
          Assoc ("DECL_COLUMN",
-                Image (Get_Column (Get_Declaration_Of (Entity)))));
+                Image (Integer (Get_Column (Get_Declaration_Of (Entity))))));
 
       Append
         (Result,
