@@ -1053,6 +1053,10 @@ package body Ada_Analyzer is
          end loop Main_Loop;
 
          if Local_Num_Parens > 0 then
+            if J >= Buffer'Last and then Local_Num_Parens = 1 then
+               return 0;
+            end if;
+
             return Found;
          else
             return 0;
