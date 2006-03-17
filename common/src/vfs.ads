@@ -199,16 +199,6 @@ package VFS is
    --  Create a new directory named Dir_Name. Raises Directory_Error if
    --  Dir_Name cannot be created.
 
-   --  ??? unused ?
---     procedure Make_Dir_Recursive (Dir : Virtual_File);
-   --  Create recursively a new directory named Dir_Name. Raises
-   --  Directory_Error if Dir_Name cannot be created.
-
---     procedure Remove_Dir (Dir : Virtual_File; Recursive : Boolean := False);
-   --  Remove the directory named Dir_Name. If Recursive is set to True, then
-   --  Remove_Dir removes all the subdirectories and files that are in
-   --  Dir_Name. Raises Directory_Error if Dir_Name cannot be removed.
-
    function Read_Dir (Dir : Virtual_File) return File_Array_Access;
    --  Reads all entries from the directory and returns a File_Array containing
    --  those entries. The list of files returned
