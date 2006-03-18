@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005-2006                    --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -346,9 +346,9 @@ package body Bookmark_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View        : constant Bookmark_View_Access :=
-        Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Data        : Bookmark_Data_Access;
+      View : constant Bookmark_View_Access :=
+               Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
+      Data : Bookmark_Data_Access;
    begin
       if Context.Event /= null then
          Data := Get_Selected_From_Event (View, Context.Event);
@@ -391,7 +391,7 @@ package body Bookmark_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       View  : constant Bookmark_View_Access :=
-        Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
+                Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
       Model : constant Gtk_Tree_Store :=
                 Gtk_Tree_Store (Get_Model (View.Tree));
       Iter  : Gtk_Tree_Iter;
@@ -483,9 +483,9 @@ package body Bookmark_Views is
       pragma Unreferenced (Kernel, Event_Widget, Menu, Context);
       --  Nothing special in the context, just the module itself so that people
       --  can still add information if needed
-      V       : constant Bookmark_View_Access := Bookmark_View_Access (Object);
-      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
-      Iter    : Gtk_Tree_Iter;
+      V     : constant Bookmark_View_Access := Bookmark_View_Access (Object);
+      Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Iter  : Gtk_Tree_Iter;
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
       if Iter /= Null_Iter then
@@ -635,7 +635,7 @@ package body Bookmark_Views is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       View : constant Bookmark_View_Access :=
-        Generic_View.Get_Or_Create_View (Kernel, Focus => False);
+               Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
    end On_Preferences_Changed;
@@ -771,7 +771,7 @@ package body Bookmark_Views is
                if Marker /= null then
                   declare
                      Name : constant String :=
-                       Get_Attribute (Child, "bookmark_name", "");
+                              Get_Attribute (Child, "bookmark_name", "");
                   begin
                      if Name = "" then
                         Append (Bookmark_Views_Module.List,
@@ -855,7 +855,7 @@ package body Bookmark_Views is
       Script : access Scripting_Language_Record'Class) return Class_Instance
    is
       Inst : Class_Instance :=
-        Get (Bookmark_List.Data (List).Instances, Script);
+               Get (Bookmark_List.Data (List).Instances, Script);
    begin
       if Inst = No_Class_Instance then
          Inst := New_Instance (Script, Class);
@@ -874,12 +874,12 @@ package body Bookmark_Views is
    is
       Name_Cst       : aliased constant String := "name";
       Bookmark_Class : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "Bookmark");
-      Inst      : Class_Instance;
-      Bookmark  : Bookmark_List.List_Node;
-      Marker    : Location_Marker;
-      Tmp       : Boolean;
-      List      : Bookmark_List.List_Node;
+                         New_Class (Get_Kernel (Data), "Bookmark");
+      Inst           : Class_Instance;
+      Bookmark       : Bookmark_List.List_Node;
+      Marker         : Location_Marker;
+      Tmp            : Boolean;
+      List           : Bookmark_List.List_Node;
       pragma Unreferenced (Tmp);
    begin
       if Command = Constructor_Method then
@@ -979,7 +979,7 @@ package body Bookmark_Views is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command : Interactive_Command_Access;
+      Command        : Interactive_Command_Access;
       Bookmark_Class : constant Class_Type := New_Class (Kernel, "Bookmark");
    begin
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
