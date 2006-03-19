@@ -134,7 +134,7 @@ package GPS.Kernel.Modules is
    Project_Editor_Module_Name     : constant String := "Project_Editor";
    Dependency_Browser_Module_Name : constant String := "Dependency_Browser";
    Project_Browser_Module_Name    : constant String := "Project_Browser";
-   Revision_Browser_Module_Name   : constant String := "Revision_Browser";
+   Revision_View_Module_Name      : constant String := "Revision_Views";
    --  Names for the internal modules
 
    ------------------
