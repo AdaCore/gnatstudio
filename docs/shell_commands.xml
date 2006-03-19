@@ -2098,6 +2098,11 @@ If the line and column are not specified, then the current selection is returned
       <description>Register a new symbolic name (tag or branches) corresponding to the specified revision of file</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Revision.clear_view">
+      <param name="file">A string</param>
+      <description>Clear file's revision view</description>
+  </shell_doc>
+
   <!--#################################################################
     ####  Context class
     ###################################################################-->
