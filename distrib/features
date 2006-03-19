@@ -14,6 +14,12 @@ of the feature.
 New features in GPS 4.0.0
 -------------------------
 
+F315-016 New Revision Views (2006-03-19)
+
+  In addition to having the revision log as plain text a revision view
+  has been implemented. This structured view helps browsing large revision
+  tree by showing branches in a clean hierarchy.
+
 F223-022 New preference for the debugger: "Always open main unit" (2006-02-27)
 
   A new preference was added to the debugger support, so that it is now
