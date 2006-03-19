@@ -93,7 +93,7 @@ with Browsers.Call_Graph;
 with Browsers.Dependency_Items;
 with Browsers.Entities;
 with Browsers.Projects;
-with Browsers.Revisions;
+with Revision_Views;
 with Buffer_Views;
 with Builder_Module;
 with Call_Graph_Views;
@@ -140,26 +140,26 @@ procedure GPS.Main is
    Refactor_Trace : constant Debug_Handle := Create ("MODULE.Refactor", On);
    Python_Trace   : constant Debug_Handle := Create ("MODULE.Python", On);
    Call_Graph_Trace       : constant Debug_Handle :=
-     Create ("MODULE.Call_Graph", On);
+                              Create ("MODULE.Call_Graph", On);
    Dependency_Trace       : constant Debug_Handle :=
-     Create ("MODULE.Dependency", On);
+                              Create ("MODULE.Dependency", On);
    Project_Browser_Trace  : constant Debug_Handle :=
-     Create ("MODULE.Project_Browser", On);
+                              Create ("MODULE.Project_Browser", On);
    Entities_Browser_Trace : constant Debug_Handle :=
-     Create ("MODULE.Entities_Browser", On);
-   Revisions_Browser_Trace : constant Debug_Handle :=
-     Create ("MODULE.Revisions_Browser", On);
+                              Create ("MODULE.Entities_Browser", On);
+   Revision_Views_Trace   : constant Debug_Handle :=
+                               Create ("MODULE.Revision_Views", On);
    Aliases_Trace : constant Debug_Handle := Create ("MODULE.Aliases", On);
    Project_Explorer_Trace : constant Debug_Handle :=
-     Create ("MODULE.Project_Explorer", On);
+                              Create ("MODULE.Project_Explorer", On);
    Files_Explorer_Trace   : constant Debug_Handle :=
-     Create ("MODULE.Files_Explorer", On);
+                              Create ("MODULE.Files_Explorer", On);
    External_Editor_Trace  : constant Debug_Handle :=
-     Create ("MODULE.External_Editor", On);
+                              Create ("MODULE.External_Editor", On);
    VCS_Trace     : constant Debug_Handle := Create ("MODULE.VCS", On);
    Custom_Trace  : constant Debug_Handle := Create ("MODULE.Custom", On);
    Action_Editor_Trace : constant Debug_Handle :=
-     Create ("MODULE.Action_Editor", Off);
+                           Create ("MODULE.Action_Editor", Off);
    Codefix_Trace : constant Debug_Handle := Create ("MODULE.Codefix", On);
    Builder_Trace : constant Debug_Handle := Create ("MODULE.Builder", On);
    GVD_Trace     : constant Debug_Handle := Create ("MODULE.GVD", On);
@@ -167,17 +167,17 @@ procedure GPS.Main is
    VFS_Trace     : constant Debug_Handle := Create ("MODULE.VFS", On);
    Help_Trace    : constant Debug_Handle := Create ("MODULE.Help", On);
    Scenario_View_Trace : constant Debug_Handle :=
-     Create ("MODULE.SCENARIO", On);
+                           Create ("MODULE.SCENARIO", On);
    Project_Viewer_Trace : constant Debug_Handle :=
-     Create ("MODULE.Project_Viewer", On);
+                            Create ("MODULE.Project_Viewer", On);
    Project_Properties_Trace : constant Debug_Handle :=
-     Create ("MODULE.Project_Properties", On);
+                                Create ("MODULE.Project_Properties", On);
    CPP_Trace : constant Debug_Handle := Create ("MODULE.CPP", On);
    Outline_View_Trace : constant Debug_Handle := Create ("MODULE.OUTLINE", On);
    Call_Graph_View_Trace : constant Debug_Handle :=
-     Create ("MODULE.CALL_GRAPH_VIEW", On);
+                             Create ("MODULE.CALL_GRAPH_VIEW", On);
    Remote_View_Trace : constant Debug_Handle :=
-     Create ("MODULE.REMOTE_VIEW", On);
+                         Create ("MODULE.REMOTE_VIEW", On);
 
    GPS_Started_Hook : constant String := "gps_started";
 
@@ -1283,8 +1283,8 @@ procedure GPS.Main is
          Browsers.Entities.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Active (Revisions_Browser_Trace) then
-         Browsers.Revisions.Register_Module (GPS_Main.Kernel);
+      if Active (Revision_Views_Trace) then
+         Revision_Views.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Project_Viewer_Trace) then
