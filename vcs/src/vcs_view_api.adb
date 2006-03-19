@@ -31,6 +31,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
+with Commands.Custom;           use Commands; use Commands.Custom;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -39,6 +40,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Log_Utils;                 use Log_Utils;
 with Projects.Registry;         use Projects.Registry;
 with Projects.Editor;           use Projects.Editor;
@@ -2358,9 +2360,9 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context)
    is
-      use Prj;
-
       pragma Unreferenced (Widget);
+
+      use Prj;
 
       procedure Get_Log (VCS : VCS_Access; Filename : String);
       --  Get log information for the file, handles tags & branches
@@ -2429,22 +2431,41 @@ package body VCS_View_API is
             end if;
          end Get_Log_For_Root;
 
+         Kernel       : constant Kernel_Handle := Get_Kernel (Context);
          File         : Virtual_File := Create (Full_Filename => Filename);
          Project      : constant Project_Type :=
                           Get_Project_From_File
-                            (Get_Registry (Get_Kernel (Context)).all, File);
+                            (Get_Registry (Kernel).all, File);
          Var_Branches : constant Variable_Value :=
                           Get_Attribute_Value
                             (Project, Vcs_Branches_Attribute);
          Var_Tags     : constant Variable_Value :=
-                          Get_Attribute_Value
-                            (Project, Vcs_Tags_Attribute);
+                          Get_Attribute_Value (Project, Vcs_Tags_Attribute);
+         Script       : constant Scripting_Language :=
+                          Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+         Command      : Custom_Command_Access;
+
       begin
+         --  Clear the revision view for this file
+
+         Create
+           (Command, -"clear revision view", Kernel,
+            "Revision.clear_view " & Full_Name (File).all, Script);
+
+         Launch_Background_Command
+           (Kernel, Command_Access (Command), True, False, "");
+
+         --  Get information for the trunk
+
          Log (VCS, File, "", As_Text => False);
+
+         --  Get information fro the branches if defined
 
          if Var_Branches.Kind = Single then
             Get_Log_For_Root (File, Get_Name_String (Var_Branches.Value));
          end if;
+
+         --  Get information fro the tags if defined
 
          if Var_Tags.Kind = Single then
             Get_Log_For_Root (File, Get_Name_String (Var_Tags.Value));
