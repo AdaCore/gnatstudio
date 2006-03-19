@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005-2006                   --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,16 +19,13 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;              use Ada.Exceptions;
-with Basic_Types;                 use Basic_Types;
-with Commands.Interactive;        use Commands, Commands.Interactive;
-with Entities.Commands;           use Entities.Commands;
-with Entities.Queries;            use Entities, Entities.Queries;
-with Gdk.Event;                   use Gdk.Event;
-with Generic_Views;
+
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with Gdk.Event;                   use Gdk.Event;
 with Gtk.Check_Menu_Item;         use Gtk.Check_Menu_Item;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
@@ -39,6 +36,12 @@ with Gtk.Tree_Store;              use Gtk.Tree_Store;
 with Gtk.Tree_View;               use Gtk.Tree_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
+
+with Basic_Types;                 use Basic_Types;
+with Commands.Interactive;        use Commands, Commands.Interactive;
+with Entities.Commands;           use Entities.Commands;
+with Entities.Queries;            use Entities, Entities.Queries;
+with Generic_Views;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
@@ -62,7 +65,7 @@ package body Call_Graph_Views is
    Column_Column  : constant := 5;
 
    History_Show_Locations : constant History_Key :=
-     "Call_Graph_Show_Locations";
+                              "Call_Graph_Show_Locations";
 
    Called_At_Label  : constant String := "... called at";
    --  Label used for the locations node in "calls" mode
@@ -479,8 +482,8 @@ package body Call_Graph_Views is
      (View : access Callgraph_View_Record) return Glib.Xml_Int.Node_Ptr
    is
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
-      Root : Node_Ptr;
+                Gtk_Tree_Store (Get_Model (View.Tree));
+      Root  : Node_Ptr;
 
       procedure Recursive_Save
         (Parent_Iter : Gtk_Tree_Iter; Parent : Node_Ptr);
@@ -884,15 +887,15 @@ package body Call_Graph_Views is
       Parent : Gtk_Tree_Iter)
    is
       Model   : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
-      Iter   : Gtk_Tree_Iter;
+                  Gtk_Tree_Store (Get_Model (View.Tree));
       File   : constant Virtual_File :=
-        Get_Filename (Get_File (Get_Location (Ref)));
+                  Get_Filename (Get_File (Get_Location (Ref)));
       Line   : constant Integer := Get_Line (Get_Location (Ref));
       Column : constant Integer := Integer (Get_Column (Get_Location (Ref)));
       Value  : GValue;
       L      : constant String := "0000" & Image (Line);
       C      : constant String := "0000" & Image (Column);
+      Iter   : Gtk_Tree_Iter;
    begin
       Set_File (Value, File);
 
