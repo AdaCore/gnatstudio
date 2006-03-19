@@ -352,8 +352,8 @@
          <regexp>----------\n(r[^ ]+) \| ([^\|]+)\| (....-..-.. ..:..:..)[^\n]+\n((\n|.?.?.?.?.?[^-][^-][^-][^-][^-][^\n]*\n)*)</regexp>
 
          <repository_revision_index>1</repository_revision_index>
-	 <author_index>3</author_index>
-	 <date_index>2</date_index>
+	 <author_index>2</author_index>
+	 <date_index>3</date_index>
 	 <log_index>4</log_index>
       </log_parser>
 
