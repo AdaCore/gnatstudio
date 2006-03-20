@@ -98,7 +98,6 @@ package Basic_Types is
 
    type Visible_Column_Type is new Integer;
    type Character_Offset_Type is new Integer;
-
    --  The two types above indicate column types.
    --  Visible_Column_Type correspond to user perception of the columns, ie,
    --  after TAB expansion. The first character in the line has a value of 1.
