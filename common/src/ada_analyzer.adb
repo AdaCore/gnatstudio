@@ -301,6 +301,16 @@ package body Ada_Analyzer is
    package Token_Stack is new Generic_Stack (Extended_Token);
    use Token_Stack;
 
+   type Construct_Type is
+     (Conditional,
+      Type_Declaration,
+      Function_Call,
+      Aggregate);
+   --  Type used to differentiate different constructs to refine indentation
+
+   package Construct_Stack is new Generic_Stack (Construct_Type);
+   use Construct_Stack;
+
    ----------------------
    -- Local procedures --
    ----------------------
@@ -720,6 +730,7 @@ package body Ada_Analyzer is
       Prev_Token          : Token_Type        := No_Token;
       Prev_Prev_Token     : Token_Type        := No_Token;
       Tokens              : Token_Stack.Simple_Stack;
+      Paren_Stack         : Construct_Stack.Simple_Stack;
       Indents             : Indent_Stack.Stack.Simple_Stack;
       Top_Token           : Token_Stack.Generic_Type_Access;
       Casing              : Casing_Type;
@@ -2277,6 +2288,8 @@ package body Ada_Analyzer is
 
          procedure Close_Parenthesis is
          begin
+            Pop (Paren_Stack);
+
             if Indents = null or else Top (Indents).Level = None then
                --  Syntax error
                null;
@@ -2726,6 +2739,18 @@ package body Ada_Analyzer is
                when '(' =>
                   Prev_Token := Tok_Left_Paren;
 
+                  if not Is_Empty (Paren_Stack) then
+                     Push (Paren_Stack, Top (Paren_Stack).all);
+                  elsif Top_Token.Token = Tok_Type then
+                     Push (Paren_Stack, Type_Declaration);
+                  elsif Prev_Prev_Token in Reserved_Token_Type then
+                     Push (Paren_Stack, Conditional);
+                  elsif Prev_Prev_Token = Tok_Identifier then
+                     Push (Paren_Stack, Function_Call);
+                  else
+                     Push (Paren_Stack, Aggregate);
+                  end if;
+
                   if Continuation_Val > Indent_Continue
                     and then Top (Indents).Level /= None
                   then
@@ -2817,40 +2842,41 @@ package body Ada_Analyzer is
                   end if;
 
                   --  Indent on the left parenthesis for subprogram & type
-                  --  declarations, for constructs that have no nested
-                  --  parenthesis except on the same line and for arrows+paren
-                  --  as in:
+                  --  declarations, and for subprogram calls/aggregates with no
+                  --  nested parenthesis except on the same line and for
+                  --  arrows+paren as in:
                   --     X := (Foo => (Y,
                   --                   Z));
-                  --  In other cases (complex subprogram call or expressions),
+                  --  In other cases (complex subprogram call),
                   --  indent as for continuation lines.
 
-                  if Subprogram_Decl
-                    or else Top_Token.Token = Tok_Type
-                    or else Prev_Prev_Token = Tok_Arrow
-                    or else (Format
-                             and then Num_Parens = 1
-                             and then Find_Multi_Line_Paren (P + 1) = 0)
-                    or else (Format and then Find_Arrow (P + 1) /= 0)
-                  then
-                     Push
-                       (Indents,
-                        (P - Start_Of_Line + Padding + 1, Align, Line_Count));
-                  else
-                     if Top (Indents).Level = None then
-                        Push
-                          (Indents, (Num_Spaces + Adjust, Align, Line_Count));
-                     elsif Prev_Prev_Token = Tok_Left_Paren
-                       or else Top (Indents).Line = Line_Count
+                  declare
+                     Level : Integer;
+                  begin
+                     if Subprogram_Decl
+                       or else Top (Paren_Stack).all = Conditional
+                       or else Top (Paren_Stack).all = Type_Declaration
+                       or else Prev_Prev_Token = Tok_Arrow
+                       or else (Format
+                                and then Num_Parens = 1
+                                and then Find_Multi_Line_Paren (P + 1) = 0)
+                       or else (Format and then Find_Arrow (P + 1) /= 0)
                      then
-                        Push
-                          (Indents, (Top (Indents).Level, Align, Line_Count));
+                        Level := P - Start_Of_Line + Padding + 1;
                      else
-                        Push
-                          (Indents,
-                           (Top (Indents).Level + Adjust, Align, Line_Count));
+                        if Top (Indents).Level = None then
+                           Level := Num_Spaces + Adjust;
+                        elsif Prev_Prev_Token = Tok_Left_Paren
+                          or else Top (Indents).Line = Line_Count
+                        then
+                           Level := Top (Indents).Level;
+                        else
+                           Level := Top (Indents).Level + Adjust;
+                        end if;
                      end if;
-                  end if;
+
+                     Push (Indents, (Level, Align, Line_Count));
+                  end;
 
                   if Continuation_Val > 0 then
                      Continuation_Val := Continuation_Val - Indent_Continue;
