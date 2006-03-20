@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.0.0
 
+- F308-037 Infinite loop when displying a tooltip
+  Problem:    GPS may fall in an infinite loop when displying a tooltip. The
+              problem occurs when GPS tries to extract the comments associated
+              with an entity whose declaration belongs to the first block of
+              code in a file (without any blank line in between) and when this 
+              block of code is on the second line of a file (the first line
+              must be blank).
+  Workaround: Disable the tooltips using Preferences/Editor facility.
+
 - F224-007 Crash when using Search/Replace
   Problem:    When using the Search/Replace dialog, GPS might sometimes
               crash if editions occur between successive searches.
