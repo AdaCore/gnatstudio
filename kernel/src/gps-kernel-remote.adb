@@ -32,6 +32,7 @@ with GNAT.Regpat;                use GNAT.Regpat;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
+with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 with Gtk.Box;                    use Gtk.Box;
@@ -249,6 +250,11 @@ package body GPS.Kernel.Remote is
       Params : Glib.Values.GValues);
    --  Called when something in the path tree has been edited
 
+   procedure On_Configure_Server_List
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Remote->Configure the servers list
+
    -----------------------
    -- Server Assignment --
    -----------------------
@@ -262,7 +268,7 @@ package body GPS.Kernel.Remote is
 
    Servers : array (Server_Type) of Server_Config
      := (others => (Is_Local => True,
-                    Nickname => new String'(Local_Nickname)));
+                    Nickname => new String'("")));
    --  Servers currently used. Default is the localhost.
 
    type Servers_Property is new Property_Record with null record;
@@ -770,6 +776,7 @@ package body GPS.Kernel.Remote is
       Item        : Gtk_List_Item;
       Empty_List  : Boolean := True;
       VBox        : Gtk_Vbox;
+      Line_Nb     : Guint;
       pragma Unreferenced (Tmp);
    begin
       Dialog := new Server_List_Editor_Record;
@@ -821,24 +828,32 @@ package body GPS.Kernel.Remote is
       Gtk_New (Dialog.Right_Table, Rows => 6, Columns => 2,
                Homogeneous => False);
 
+      Line_Nb := 0;
       Create_Blue_Label (Dialog.Nickname_Label,
                          Dialog.Nickname_Event);
-      Attach (Dialog.Right_Table, Dialog.Nickname_Event, 0, 2, 0, 1,
+      Attach (Dialog.Right_Table, Dialog.Nickname_Event,
+              0, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 5, 5);
 
+      Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Network name:");
-      Attach (Dialog.Right_Table, Label, 0, 1, 1, 2,
+      Attach (Dialog.Right_Table, Label,
+              0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
       Gtk_New (Dialog.Network_Name_Entry);
-      Attach (Dialog.Right_Table, Dialog.Network_Name_Entry, 1, 2, 1, 2,
+      Attach (Dialog.Right_Table, Dialog.Network_Name_Entry,
+              1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
 
+      Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Remote access tool:");
-      Attach (Dialog.Right_Table, Label, 0, 1, 2, 3,
+      Attach (Dialog.Right_Table, Label,
+              0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
       Gtk_New (Dialog.Remote_Access_Combo);
       Set_Editable (Get_Entry (Dialog.Remote_Access_Combo), False);
-      Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo, 1, 2, 2, 3,
+      Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo,
+              1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
 
       for J in 1 .. Get_Nb_Remote_Access_Descriptor loop
@@ -847,12 +862,15 @@ package body GPS.Kernel.Remote is
       end loop;
       Show_All (Get_List (Dialog.Remote_Access_Combo));
 
+      Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Shell:");
-      Attach (Dialog.Right_Table, Label, 0, 1, 3, 4,
+      Attach (Dialog.Right_Table, Label,
+              0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
       Gtk_New (Dialog.Remote_Shell_Combo);
       Set_Editable (Get_Entry (Dialog.Remote_Shell_Combo), False);
-      Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo, 1, 2, 3, 4,
+      Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo,
+              1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
 
       for J in 1 .. Get_Nb_Shell_Descriptor loop
@@ -861,14 +879,18 @@ package body GPS.Kernel.Remote is
       end loop;
       Show_All (Get_List (Dialog.Remote_Shell_Combo));
 
+      Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Button, -"Advanced >>");
       Set_Active (Dialog.Advanced_Button, False);
-      Attach (Dialog.Right_Table, Dialog.Advanced_Button, 1, 2, 4, 5,
+      Attach (Dialog.Right_Table, Dialog.Advanced_Button,
+              1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10, 10);
 
+      Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Table,
                Rows => 4, Columns => 2, Homogeneous => False);
-      Attach (Dialog.Right_Table, Dialog.Advanced_Table, 0, 2, 6, 7,
+      Attach (Dialog.Right_Table, Dialog.Advanced_Table,
+              0, 2, Line_Nb, Line_Nb + 1,
               0, 0);
       Set_Child_Visible (Dialog.Advanced_Table,
                          Get_Mode (Dialog.Advanced_Button));
@@ -1591,6 +1613,18 @@ package body GPS.Kernel.Remote is
       Changed (Dialog);
    end Path_Edited;
 
+   ------------------------------
+   -- On_Configure_Server_List --
+   ------------------------------
+
+   procedure On_Configure_Server_List
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) is
+      pragma Unreferenced (Widget);
+   begin
+      Configure_Server_List (Kernel);
+   end On_Configure_Server_List;
+
    ---------------------------
    -- Configure_Server_List --
    ---------------------------
@@ -1660,23 +1694,23 @@ package body GPS.Kernel.Remote is
    function From_Callback_Data_Sync_Hook
      (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Src_Server  : Server_Type;
-      Dest_Server : Server_Type;
    begin
-      Src_Server  := Server_Type'Value (String'(Nth_Arg (Data, 2)));
-      Dest_Server := Server_Type'Value (String'(Nth_Arg (Data, 3)));
       declare
+         Src_Name  : constant String := Nth_Arg (Data, 2);
+         Dest_Name : constant String := Nth_Arg (Data, 3);
          Queue_Id  : constant String := Nth_Arg (Data, 4);
          Src_Path  : constant String := Nth_Arg (Data, 5);
          Dest_Path : constant String := Nth_Arg (Data, 6);
       begin
          return Rsync_Hooks_Args'
            (Hooks_Data with
+            Src_Name_Length  => Src_Name'Length,
+            Dest_Name_Length => Dest_Name'Length,
             Queue_Id_Length  => Queue_Id'Length,
             Src_Path_Length  => Src_Path'Length,
             Dest_Path_Length => Dest_Path'Length,
-            Src              => Src_Server,
-            Dest             => Dest_Server,
+            Src_Name         => Src_Name,
+            Dest_Name        => Dest_Name,
             Queue_Id         => Queue_Id,
             Src_Path         => Src_Path,
             Dest_Path        => Dest_Path);
@@ -1697,8 +1731,8 @@ package body GPS.Kernel.Remote is
         new Callback_Data'Class'(Create (Script, 6));
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
-      Set_Nth_Arg (D.all, 2, Server_Type'Image (Data.Src));
-      Set_Nth_Arg (D.all, 3, Server_Type'Image (Data.Dest));
+      Set_Nth_Arg (D.all, 2, Data.Src_Name);
+      Set_Nth_Arg (D.all, 3, Data.Dest_Name);
       Set_Nth_Arg (D.all, 4, Data.Queue_Id);
       Set_Nth_Arg (D.all, 5, Data.Src_Path);
       Set_Nth_Arg (D.all, 6, Data.Dest_Path);
@@ -1754,6 +1788,7 @@ package body GPS.Kernel.Remote is
    is
       Unix_FS    : Unix_Filesystem_Record;
       Windows_FS : Windows_Filesystem_Record;
+      Remote     : constant String := "/_" & (-"Remote") & '/';
    begin
       --  Register synchronisation hook
       Register_Hook_Data_Type
@@ -1788,6 +1823,11 @@ package body GPS.Kernel.Remote is
       --  Connect to project_changed hook
       Add_Hook (Kernel, Project_Changed_Hook,
                 Wrapper (On_Project_Changed'Access), "gps.kernel.remote");
+
+      --  Add menu item
+      Register_Menu
+        (Kernel, Remote, -"_Configure the servers list", "",
+         On_Configure_Server_List'Access);
    end Register_Module;
 
    ----------
@@ -1831,7 +1871,7 @@ package body GPS.Kernel.Remote is
                                Nickname => new String'(Srv.Value.all));
             else
                Servers (J) := (Is_Local => True,
-                               Nickname => new String'(Local_Nickname));
+                               Nickname => new String'(""));
             end if;
          end if;
       end loop;
@@ -2061,11 +2101,12 @@ package body GPS.Kernel.Remote is
    ------------------
 
    function To_Unix_Path
-     (Path             : String;
-      Server           : Server_Type) return String
+     (Path       : String;
+      Server     : Server_Type;
+      Use_Cygwin : Boolean := False) return String
    is
    begin
-      return To_Unix (Get_Filesystem (Server), Path);
+      return To_Unix (Get_Filesystem (Server), Path, Use_Cygwin);
    end To_Unix_Path;
 
    ------------
@@ -2086,8 +2127,13 @@ package body GPS.Kernel.Remote is
    begin
       Glib.Free (Servers (Server).Nickname);
 
-      Servers (Server) := (Is_Local => Nickname = Local_Nickname,
-                           Nickname => new String'(Nickname));
+      if Nickname = Local_Nickname then
+         Servers (Server) := (Is_Local => True,
+                              Nickname => new String'(""));
+      else
+         Servers (Server) := (Is_Local => False,
+                              Nickname => new String'(Nickname));
+      end if;
 
       Prop := new Servers_Property;
       Set_Property
@@ -2112,6 +2158,20 @@ package body GPS.Kernel.Remote is
    begin
       return Servers (Server).Nickname.all;
    end Get_Nickname;
+
+   ----------------------------
+   -- Get_Printable_Nickname --
+   ----------------------------
+
+   function Get_Printable_Nickname (Server : Server_Type) return String is
+      Nickname : constant String := Get_Nickname (Server);
+   begin
+      if Nickname = "" then
+         return Local_Nickname;
+      else
+         return Nickname;
+      end if;
+   end Get_Printable_Nickname;
 
    ----------------------
    -- Get_Network_Name --
@@ -2199,13 +2259,17 @@ package body GPS.Kernel.Remote is
             end if;
 
             declare
-               Data : aliased Rsync_Hooks_Args
+               From_Name : constant String := Get_Nickname (From);
+               To_Name   : constant String := Get_Nickname (To);
+               Data      : aliased Rsync_Hooks_Args
                  := (Hooks_Data with
+                     Src_Name_Length  => From_Name'Length,
+                     Dest_Name_Length => To_Name'Length,
                      Queue_Id_Length  => Queue_Id'Length,
                      Src_Path_Length  => From_Path'Length,
                      Dest_Path_Length => To_Path'Length,
-                     Src              => From,
-                     Dest             => To,
+                     Src_Name         => From_Name,
+                     Dest_Name        => To_Name,
                      Queue_Id         => Queue_Id,
                      Src_Path         => From_Path.all,
                      Dest_Path        => To_Path.all);
@@ -2259,7 +2323,6 @@ package body GPS.Kernel.Remote is
       Exec         : String_Access;
       Old_Dir      : String_Access;
       Args         : Argument_List_Access;
---        New_Args     : Argument_List_Access;
       L_Args       : Argument_List_Access := null;
       Default_Error_Manager : aliased Default_Error_Display_Record;
       In_Use_Error_Manager  : Error_Display;
