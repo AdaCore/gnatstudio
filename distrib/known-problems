@@ -39,7 +39,7 @@ Known Problems fixed in GPS 4.0.0
   Workaround: remove the incorrect line in the $HOME/.gps/history file, and
               do not use spaces in the name for the console
 
-- F221-012 Crashes when using refactoring
+- F221-012 Crash when using refactoring
   Problem:    When using refactoring, if the cross-references are not matching
               exactly the source files, GPS might crash while applying
               changes to the source.
