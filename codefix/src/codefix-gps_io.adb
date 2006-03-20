@@ -51,32 +51,18 @@ package body Codefix.GPS_Io is
      (Current_Text : Console_Interface;
       Cursor       : File_Cursor'Class) return Mark_Abstr'Class
    is
-      Line_Cursor : Text_Cursor;
-      Workaround_Column : Column_Index;
+      Result : GPS_Mark;
+      Args   : Argument_List :=
+        (1 => new String'(Full_Name (Get_File (Cursor)).all),
+         2 => new String'(Image (Get_Line (Cursor))),
+         3 => new String'(Image (Natural (Get_Column (Cursor)))),
+         4 => new String'("0"));
    begin
-      --  ??? This is a temporary workaround, this has to be changed as soon
-      --  as GPS shell commands handles tabs properly
-      Set_Location (Line_Cursor, Get_Line (Cursor), 1);
-
-      Workaround_Column := To_Column_Index_Workaround
-        (Char_Index (Get_Column (Cursor)),
-         Get_Line (Current_Text, Line_Cursor));
-
-      declare
-         Result : GPS_Mark;
-         Args   : Argument_List :=
-           (1 => new String'(Full_Name (Get_File (Cursor)).all),
-            2 => new String'(Image (Get_Line (Cursor))),
---              3 => new String'(Image (Natural (Get_Column (Cursor)))),
-            3 => new String'(Image (Natural (Workaround_Column))),
-            4 => new String'("0"));
-      begin
-         Result.Id := new String'
-           (Execute_GPS_Shell_Command
-              (Current_Text.Kernel, "Editor.create_mark", Args));
-         Free (Args);
-         return Result;
-      end;
+      Result.Id := new String'
+        (Execute_GPS_Shell_Command
+           (Current_Text.Kernel, "Editor.create_mark", Args));
+      Free (Args);
+      return Result;
    end Get_New_Mark;
 
    ------------------------
@@ -98,22 +84,11 @@ package body Codefix.GPS_Io is
            (Current_Text.Kernel, "Editor.get_column", Args);
          Line : constant String := Execute_GPS_Shell_Command
            (Current_Text.Kernel, "Editor.get_line", Args);
-
-         Line_Cursor       : Text_Cursor;
-         Workaround_Column : Column_Index;
       begin
-         --  ??? This is a temporary workaround, this has to be changed as soon
-         --  as GPS shell commands handles tabs properly
-         Set_Location (Line_Cursor, Integer'Value (Line), 1);
-         Workaround_Column := Column_Index (To_Char_Index_Workaround
-           (Column_Index'Value (Column),
-            Get_Line (Current_Text, Line_Cursor)));
-
          Set_Location
            (New_Cursor,
             Natural'Value (Line),
---              Column_Index'Value (Column));
-            Workaround_Column);
+            Column_Index'Value (Column));
 
       exception
          when Constraint_Error =>
@@ -203,13 +178,19 @@ package body Codefix.GPS_Io is
    --------------
 
    function Get_Line
-     (This   : Console_Interface;
-      Cursor : Text_Cursor'Class) return String
+     (This      : Console_Interface;
+      Cursor    : Text_Cursor'Class;
+      Start_Col : Column_Index := 0) return String
    is
       Line : constant String := Get_Recorded_Line (This, Get_Line (Cursor));
-      Char_Ind : constant Char_Index :=
-        To_Char_Index (Get_Column (Cursor), Line);
+      Char_Ind : Char_Index;
    begin
+      if Start_Col = 0 then
+         Char_Ind := To_Char_Index (Get_Column (Cursor), Line);
+      else
+         Char_Ind := To_Char_Index (Start_Col, Line);
+      end if;
+
       return Line (Natural (Char_Ind) .. Line'Last);
    end Get_Line;
 
