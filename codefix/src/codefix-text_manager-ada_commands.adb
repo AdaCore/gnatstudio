@@ -290,7 +290,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
       Destination  : VFS.Virtual_File := VFS.No_File;
-      Category     : Language_Category := Cat_With)
+      Category     : Dependency_Category := Cat_With)
    is
       use Codefix.Ada_Tools.Words_Lists;
 
