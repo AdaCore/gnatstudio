@@ -1198,7 +1198,7 @@ package body GPS.Kernel.Remote is
                   Dialog.Paths_Table := new Mirrors_List_Record'
                     (Nickname  => new String'(Nickname),
                      Path_List => null,
-                     Next      => null);
+                     Next      => Dialog.Paths_Table);
                   Path_Item := Dialog.Paths_Table;
                end if;
 
