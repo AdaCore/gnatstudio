@@ -20,7 +20,11 @@
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Regpat; use GNAT.Regpat;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 
+with Filesystem;         use Filesystem;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Remote;  use GPS.Kernel.Remote;
@@ -60,39 +64,74 @@ package body Remote_Sync_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean
    is
-      Rsync_Data : Rsync_Hooks_Args renames Rsync_Hooks_Args (Data.all);
-      Src_Path   : String_Access;
-      Dest_Path  : String_Access;
-      Rsync_Args : constant String_List :=
-        (new String'("--rsh=ssh"),
-         new String'("-az"),
+      Rsync_Data    : Rsync_Hooks_Args renames Rsync_Hooks_Args (Data.all);
+      Src_Path      : String_Access;
+      Dest_Path     : String_Access;
+      Src_FS        : Filesystem_Access;
+      Dest_FS       : Filesystem_Access;
+      Machine       : Machine_Descriptor;
+      Success       : Boolean;
+      Rsync_Args    : constant String_List :=
+        (new String'("-az"),
          new String'("--progress"),
+         new String'("--delete"),
          new String'("--exclude"),
-         new String'("'*.o'"),
-         new String'("--delete"));
-      Success    : Boolean;
+         new String'("'*.o'"));
+      Transport_Arg : String_Access;
+
+      function  Build_Arg return String_List;
+      --  Build rsync arguments
+
+      ---------------
+      -- Build_Arg --
+      ---------------
+
+      function Build_Arg return String_List is
+      begin
+         if Transport_Arg /= null then
+            return Rsync_Args & Transport_Arg & Src_Path & Dest_Path;
+         else
+            return Rsync_Args & Src_Path & Dest_Path;
+         end if;
+      end Build_Arg;
    begin
 
-      if Is_Local (Rsync_Data.Src) then
-         Src_Path := new String'(To_Unix_Path (Rsync_Data.Src_Path,
-                                               Rsync_Data.Src));
+      if Rsync_Data.Src_Name = "" then
+         --  Local src machine, remote dest machine
+         Machine := Get_Machine_Descriptor (Rsync_Data.Dest_Name);
+         Src_FS    := new Filesystem_Record'Class'(Get_Local_Filesystem);
+         Src_Path  := new String'
+           (To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
+         Dest_FS   := new Filesystem_Record'Class'
+           (Get_Filesystem (Rsync_Data.Dest_Name));
          Dest_Path := new String'
-           (Get_Network_Name (Rsync_Data.Dest) & ":" &
-            To_Unix_Path (Rsync_Data.Dest_Path,
-                          Rsync_Data.Dest));
+           (Machine.Network_Name.all & ":" &
+            To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
       else
-         Src_Path := new String'
-           (Get_Network_Name (Rsync_Data.Src) & ":" &
-            To_Unix_Path (Rsync_Data.Src_Path,
-                          Rsync_Data.Src));
-         Dest_Path := new String'(To_Unix_Path (Rsync_Data.Dest_Path,
-                                                Rsync_Data.Dest));
+         --  Remote src machine, local dest machine
+         Machine := Get_Machine_Descriptor (Rsync_Data.Src_Name);
+         Src_FS    := new Filesystem_Record'Class'
+           (Get_Filesystem (Rsync_Data.Src_Name));
+         Src_Path  := new String'
+           (Machine.Network_Name.all & ":" &
+            To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
+         Dest_FS   := new Filesystem_Record'Class'(Get_Local_Filesystem);
+         Dest_Path := new String'
+           (To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
+      end if;
+
+      if Machine = null then
+         return False;
+      end if;
+
+      if Machine.Access_Name.all = "ssh" then
+         Transport_Arg := new String'("--rsh=ssh");
       end if;
 
       Launch_Process
         (Kernel_Handle (Kernel),
          Command              => "rsync",
-         Arguments            => Rsync_Args & Src_Path & Dest_Path,
+         Arguments            => Build_Arg,
          Console              => Get_Console (Kernel),
          Show_Command         => True,
          Show_Output          => True,
@@ -103,6 +142,7 @@ package body Remote_Sync_Module is
          Synchronous          => False);
       Free (Src_Path);
       Free (Dest_Path);
+      Free (Transport_Arg);
       return Success;
    end On_Rsync_Hook;
 
