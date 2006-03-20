@@ -42,22 +42,12 @@ package body Codefix.Errors_Parser is
    is
       Current_Node : Parser_List.List_Node;
       Success      : Boolean := False;
-
-      --  ??? This is used temporary to workaround tab problems, will be
-      --  removed as soon as GPS commands properly handles tabulations
-      Workaround_Message : Error_Message := Clone (Message);
-      Line_Cursor        : File_Cursor;
+      Line_Cursor  : File_Cursor;
    begin
       Current_Node := First (General_Parse_List);
 
       Set_File (Line_Cursor, Get_File (Message));
       Set_Location (Line_Cursor, Get_Line (Message), 1);
-
-      Set_Location
-        (Workaround_Message,
-         Get_Line (Message),
-         Column_Index (To_Char_Index_Workaround
-           (Get_Column (Message), Get_Line (Current_Text, Line_Cursor))));
 
       while Current_Node /= Parser_List.Null_Node loop
          if Get_Error_State
@@ -68,7 +58,7 @@ package body Codefix.Errors_Parser is
               (Data (Current_Node).all,
                Errors_List,
                Current_Text,
-               Workaround_Message,
+               Message,
                Solutions,
                Success);
          end if;
