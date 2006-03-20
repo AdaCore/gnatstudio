@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -108,6 +108,7 @@ package body Ada_Module is
               Integer (Get_Pref (Ada_Continuation_Level)),
             Indent_Decl         =>
               Integer (Get_Pref (Ada_Declaration_Level)),
+            Indent_Conditional  => 0,
             Tab_Width           => Integer (Get_Pref (Tab_Width)),
             Indent_Case_Extra   => Indent_Style'Val
               (Get_Pref (Ada_Indent_Case_Extra)),
