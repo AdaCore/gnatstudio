@@ -687,6 +687,7 @@ package body Ada_Analyzer is
       Indent_Record      : Natural renames Indent_Params.Indent_Level;
       Indent_Case_Extra  : Indent_Style renames
         Indent_Params.Indent_Case_Extra;
+      Indent_Conditional : Natural renames Indent_Params.Indent_Conditional;
       Reserved_Casing    : Casing_Type renames Indent_Params.Reserved_Casing;
       Ident_Casing       : Casing_Type renames Indent_Params.Ident_Casing;
       Use_Tabs           : Boolean renames Indent_Params.Use_Tabs;
@@ -2743,6 +2744,8 @@ package body Ada_Analyzer is
                      Push (Paren_Stack, Top (Paren_Stack).all);
                   elsif Top_Token.Token = Tok_Type then
                      Push (Paren_Stack, Type_Declaration);
+                  elsif Prev_Prev_Token = Tok_Return then
+                     Push (Paren_Stack, Aggregate);
                   elsif Prev_Prev_Token in Reserved_Token_Type then
                      Push (Paren_Stack, Conditional);
                   elsif Prev_Prev_Token = Tok_Identifier then
@@ -2853,7 +2856,11 @@ package body Ada_Analyzer is
                   declare
                      Level : Integer;
                   begin
-                     if Subprogram_Decl
+                     if Top (Paren_Stack).all = Conditional then
+                        Level := P - Start_Of_Line + Padding + 1
+                                 + Indent_Conditional;
+
+                     elsif Subprogram_Decl
                        or else Top (Paren_Stack).all = Conditional
                        or else Top (Paren_Stack).all = Type_Declaration
                        or else Prev_Prev_Token = Tok_Arrow
