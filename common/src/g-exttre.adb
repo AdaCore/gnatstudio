@@ -562,6 +562,7 @@ package body GNAT.Expect.TTY.Remote is
          Descriptor.Input_Fd   := Machine.Sessions (Session_Nb).Pd.Input_Fd;
          Descriptor.Output_Fd  := Machine.Sessions (Session_Nb).Pd.Output_Fd;
          Descriptor.Error_Fd   := Machine.Sessions (Session_Nb).Pd.Error_Fd;
+         Descriptor.Pid        := Machine.Sessions (Session_Nb).Pd.Pid;
          Descriptor.Terminated := False;
          Machine.Sessions (Session_Nb).State := BUSY;
 
@@ -652,6 +653,7 @@ package body GNAT.Expect.TTY.Remote is
          Descriptor.Input_Fd   := Machine.Sessions (Session_Nb).Pd.Input_Fd;
          Descriptor.Output_Fd  := Machine.Sessions (Session_Nb).Pd.Output_Fd;
          Descriptor.Error_Fd   := Machine.Sessions (Session_Nb).Pd.Error_Fd;
+         Descriptor.Pid        := Machine.Sessions (Session_Nb).Pd.Pid;
          Descriptor.Terminated := False;
          Machine.Sessions (Session_Nb).State := BUSY;
 
@@ -1038,11 +1040,12 @@ package body GNAT.Expect.TTY.Remote is
             Descriptor.Machine.Sessions (Descriptor.Session_Nb).State := READY;
          end if;
 
-         Descriptor.Input_Fd := GNAT.OS_Lib.Invalid_FD;
+         Descriptor.Input_Fd  := GNAT.OS_Lib.Invalid_FD;
          Descriptor.Output_Fd := GNAT.OS_Lib.Invalid_FD;
          Descriptor.Error_Fd  := GNAT.OS_Lib.Invalid_FD;
-         Descriptor.Machine := null;
-         Descriptor.Shell   := null;
+         Descriptor.Pid       := Invalid_Pid;
+         Descriptor.Machine   := null;
+         Descriptor.Shell     := null;
          Close_Pseudo_Descriptor (Descriptor);
       else
          Status := 0;
