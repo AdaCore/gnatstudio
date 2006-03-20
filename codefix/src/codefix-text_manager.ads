@@ -203,11 +203,12 @@ package Codefix.Text_Manager is
    --  Get the characters from the the position specified by the cursor.
 
    function Get_Line
-     (This   : Text_Interface;
-      Cursor : Text_Cursor'Class) return String is abstract;
+     (This      : Text_Interface;
+      Cursor    : Text_Cursor'Class;
+      Start_Col : Column_Index := 0) return String is abstract;
    --  Get all character from the column specified by the cursor to the end of
-   --  the line. The String resulting must have parameter 'First equal to
-   --  Cursor.Col.
+   --  the line, or beginning by Start_Col if not 0. The String resulting must
+   --  have parameter 'First equal to Cursor.Col.
 
    procedure Replace
      (This      : in out Text_Interface;
