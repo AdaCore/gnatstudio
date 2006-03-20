@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.0.0
 
+- F317-003 Auto-saved file not deleted when saving into a new name
+  Problem:    If a file creates an auto-saved file and then is saved into an
+              other name, the auto-saved file is not removed. As a consequence,
+              when the original file is re-opened, GPS tries to retreived
+              and auto-saved file.
+  Workaround: The auto-saved file has to be manually deleted before the 
+              re-opening of the original file.
+
 - F308-037 Infinite loop when displying a tooltip
   Problem:    GPS may fall in an infinite loop when displying a tooltip. The
               problem occurs when GPS tries to extract the comments associated
