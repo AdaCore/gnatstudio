@@ -97,6 +97,7 @@ package body Cpp_Module is
                     Integer (Get_Pref (C_Indentation_Level)),
                   Indent_Continue     => 0,
                   Indent_Decl         => 0,
+                  Indent_Conditional  => 0,
                   Tab_Width           =>
                     Integer (Get_Pref (Tab_Width)),
                   Indent_Case_Extra   => Automatic,
