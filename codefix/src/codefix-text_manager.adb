@@ -822,7 +822,7 @@ package body Codefix.Text_Manager is
       Current_Info      : Construct_Access;
       Info_Saved        : Construct_Access;
       Line              : constant String :=
-        Get_Line (Text_Interface'Class (Current_Text), Cursor);
+        Get_Line (Text_Interface'Class (Current_Text), Cursor, 1);
       Cursor_Char_Index : constant Char_Index :=
         To_Char_Index (Cursor.Col, Line);
 
