@@ -547,7 +547,7 @@ package body Builder_Module is
          Files_Callback_Data (Data.Callback_Data.all).Buffer :=
            Ada.Strings.Unbounded.To_Unbounded_String
              (Output (Last_EOL + 1 .. Output'Last));
-      else
+      elsif Data.Process_Died then
          Process_Builder_Output
            (Kernel  => Data.Kernel,
             Command => Data.Command,
