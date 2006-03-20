@@ -25,6 +25,7 @@ with Codefix_Module;         use Codefix_Module;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body Codefix.Errors_Parser is
+
    Me : constant Debug_Handle := Create ("Codefix");
 
    use Codefix_Module.Codefix_Remove_Policy_Properties;
@@ -1141,7 +1142,31 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Solutions := Remove_Use_Clause (Current_Text, Message);
+      Solutions := Remove_Dependency_Clause (Current_Text, Message, Cat_Use);
+   end Fix;
+
+   ----------------------------
+   -- Redundant_With_In_Body --
+   ----------------------------
+
+   procedure Initialize (This : in out Redundant_With_In_Body) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("redundant with clause in body")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Redundant_With_In_Body;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List, Matches);
+   begin
+      Solutions := Remove_Dependency_Clause (Current_Text, Message, Cat_With);
    end Fix;
 
    -----------------------
@@ -1900,9 +1925,9 @@ package body Codefix.Errors_Parser is
          Set_File (Spec_Cursor, Get_File (Message));
       else
          Set_File
-           (Spec_Cursor, Create
-              (Get_Message (Message)
-                 (Matches (1).First .. Matches (1).Last),
+           (Spec_Cursor,
+            Create
+              (Get_Message (Message) (Matches (1).First .. Matches (1).Last),
                Get_Kernel (Current_Text)));
       end if;
 
@@ -1931,7 +1956,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Solutions := Remove_Use_Clause (Current_Text, Message);
+      Solutions := Remove_Dependency_Clause (Current_Text, Message, Cat_Use);
    end Fix;
 
    -----------------------------
