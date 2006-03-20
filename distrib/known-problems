@@ -9,18 +9,6 @@ Known Problems fixed in GPS 4.0.0
               must be blank).
   Workaround: Disable the tooltips using Preferences/Editor facility.
 
-- F224-007 Crash when using Search/Replace
-  Problem:    When using the Search/Replace dialog, GPS might sometimes
-              crash if editions occur between successive searches.
-  Workaround: Instead of using the Search/Replace dialog, use the key
-              shortcut for "Navigate->Find Next" to find the next
-              occurrence, and the shortcut for "Paste" to replace it.
-
-- F223-026 Debugger closes when hitting enter
-  Problem:    When starting the debugger, and hitting 'enter' key in the
-              debugger console, GPS will often close the debugger session.
-  Workaround: Do not press enter before entering a first command
-
 - F223-020 Changing order of source dirs has no effect
   Problem:    In the project properties editor, if you change the order of
               the source directories through the Up and Down buttons, without
@@ -35,11 +23,6 @@ Known Problems fixed in GPS 4.0.0
               display instead 'Unknown variable'.
   Workaround: Use the tooltip, or 'print variable' instead of 'graph display'
 
-- F221-027 Debugger hangs when typing \ at end of line
-  Problem:    When typing a command ending with \ in the debugger console,
-              GPS hangs.
-  Workaround: Avoid typing backslash
-
 - F221-022 Consoles with spaces in their names
   Problem:    When you create, from python, a new console with a space or
               other XML special characters in its name, GPS will report a
@@ -47,12 +30,6 @@ Known Problems fixed in GPS 4.0.0
               next startup
   Workaround: remove the incorrect line in the $HOME/.gps/history file, and
               do not use spaces in the name for the console
-
-- F221-012 Crash when using refactoring
-  Problem:    When using refactoring, if the cross-references are not matching
-              exactly the source files, GPS might crash while applying
-              changes to the source.
-  Workaround: Always fully recompile the project before using refactoring.
 
 - F220-009 Relative paths in project properties on Windows
   Problem:    On Windows, using the system file selection dialog will change
