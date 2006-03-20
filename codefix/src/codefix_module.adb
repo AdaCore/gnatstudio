@@ -794,6 +794,7 @@ package body Codefix_Module is
       Add_Parser (new Not_Fully_Conformant);
       Add_Parser (new Generic_Use_Unallowed);
       Add_Parser (new Non_Visible_Declaration);
+      Add_Parser (new Redundant_With_In_Body);
       Initialize_Parsers;
 
    exception
