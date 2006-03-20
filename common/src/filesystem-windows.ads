@@ -29,8 +29,9 @@ package Filesystem.Windows is
    procedure Initialize_Module (FS : Windows_Filesystem_Record);
 
    function To_Unix
-     (FS   : Windows_Filesystem_Record;
-      Path : String) return String;
+     (FS         : Windows_Filesystem_Record;
+      Path       : String;
+      Use_Cygwin : Boolean := False) return String;
 
    function From_Unix
      (FS   : Windows_Filesystem_Record;

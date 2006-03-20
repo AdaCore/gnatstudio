@@ -29,8 +29,9 @@ package Filesystem.Unix is
    procedure Initialize_Module (FS : Unix_Filesystem_Record);
 
    function To_Unix
-     (FS   : Unix_Filesystem_Record;
-      Path : String) return String;
+     (FS         : Unix_Filesystem_Record;
+      Path       : String;
+      Use_Cygwin : Boolean := False) return String;
 
    function From_Unix
      (FS   : Unix_Filesystem_Record;

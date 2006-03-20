@@ -33,8 +33,9 @@ package Filesystem is
    --  Need to be called once per actual filesystem class.
 
    function To_Unix
-     (FS   : Filesystem_Record;
-      Path : String) return String is abstract;
+     (FS         : Filesystem_Record;
+      Path       : String;
+      Use_Cygwin : Boolean := False) return String is abstract;
    --  Translate a Path to unix style
 
    function From_Unix
