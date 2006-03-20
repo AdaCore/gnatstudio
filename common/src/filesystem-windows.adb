@@ -53,8 +53,9 @@ package body Filesystem.Windows is
    -------------
 
    function To_Unix
-     (FS   : Windows_Filesystem_Record;
-      Path : String) return String
+     (FS         : Windows_Filesystem_Record;
+      Path       : String;
+      Use_Cygwin : Boolean := False) return String
    is
       pragma Unreferenced (FS);
       The_Path : String := Path;
@@ -70,6 +71,14 @@ package body Filesystem.Windows is
             The_Path (J) := '/';
          end if;
       end loop;
+
+      if Use_Cygwin
+        and then The_Path'Length > 3
+        and then The_Path (The_Path'First + 1 .. The_Path'First + 2) = ":/"
+      then
+         return "/cygdrive/" & The_Path (The_Path'First) &
+            The_Path (The_Path'First + 2 .. The_Path'Last);
+      end if;
 
       return The_Path;
    end To_Unix;
