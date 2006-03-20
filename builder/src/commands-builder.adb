@@ -32,7 +32,6 @@ with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Console;    use GPS.Kernel.Console;
 with GPS.Kernel.Styles;     use GPS.Kernel.Styles;
 with GPS.Location_View;     use GPS.Location_View;
-with String_Utils;          use String_Utils;
 with String_List_Utils;
 with Builder_Module;        use Builder_Module;
 with GPS.Intl;              use GPS.Intl;
@@ -111,40 +110,24 @@ package body Commands.Builder is
       --  we should not have a hard coded regexp here, and especially not
       --  recompile it every time.
       Matcher : constant Pattern_Matcher := Compile
-        ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.");
+        ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.\n", Single_Line);
+      Start   : Integer := Output'First;
       Matched : Match_Array (0 .. 3);
-      Start, Eol, Eol2   : Integer := Output'First;
       Buffer  : Unbounded_String;
    begin
       while Start <= Output'Last loop
-         Eol := Next_Line (Output, Start);
-         exit when Eol = Start;
+         Match (Matcher, Output (Start .. Output'Last), Matched);
+         exit when Matched (0) = No_Match;
 
-         if Eol - 1 > Start then
-            Eol2 := Eol - 1;
-            if Output (Eol2 - 1) = ASCII.CR then
-               Eol2 := Eol2 - 1;
-            end if;
+         Command.Progress.Current := Natural'Value
+           (Output (Matched (1).First .. Matched (1).Last));
+         Command.Progress.Total := Natural'Value
+           (Output (Matched (2).First .. Matched (2).Last));
 
-            Match (Matcher, Output (Start .. Eol2), Matched);
-            if Matched (0) = No_Match then
-               Append (Buffer, Output (Start .. Eol2));
-            else
-               Command.Progress.Current := Natural'Value
-                 (Output (Matched (1).First .. Matched (1).Last));
-               Command.Progress.Total := Natural'Value
-                 (Output (Matched (2).First .. Matched (2).Last));
-            end if;
-         else
-            Append (Buffer, Output (Start .. Eol2));
-         end if;
-
-         Start := Eol;
+         Append (Buffer, Output (Start .. Matched (0).First - 1));
+         Start := Matched (0).Last + 1;
       end loop;
-
-      if Output (Output'Last) = ASCII.LF then
-         Append (Buffer, ASCII.LF);
-      end if;
+      Append (Buffer, Output (Start .. Output'Last));
 
       if Length (Buffer) /= 0 then
          Parse_Compiler_Output
