@@ -2889,8 +2889,9 @@ package body Src_Editor_Buffer is
       Success  : out Boolean;
       Internal : Boolean := False)
    is
-      Name_Changed : constant Boolean := Buffer.Filename /= Filename;
-      Result       : Boolean;
+      Name_Changed      : constant Boolean := Buffer.Filename /= Filename;
+      Result            : Boolean;
+      Original_Filename : VFS.Virtual_File := Buffer.Filename;
    begin
       if not Internal then
          if Name_Changed then
@@ -2934,8 +2935,8 @@ package body Src_Editor_Buffer is
                   Buffer.Filename));
          end if;
 
-         if Buffer.Filename /= VFS.No_File then
-            Delete (Autosaved_File (Buffer.Filename), Result);
+         if Original_Filename /= VFS.No_File then
+            Delete (Autosaved_File (Original_Filename), Result);
          end if;
 
          Set_Modified (Buffer, False);
