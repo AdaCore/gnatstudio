@@ -50,9 +50,12 @@ package GPS.Kernel.Remote is
    --  Translate a local file/directory path to server 'To'
    --  if Unix_Style is set, the translated path will have a unix style.
 
-   function To_Unix_Path (Path             : String;
-                          Server           : Server_Type) return String;
+   function To_Unix_Path (Path       : String;
+                          Server     : Server_Type;
+                          Use_Cygwin : Boolean := False) return String;
    --  Transform a remote path into unix path style.
+   --  Use_Cygwin forces cygwin style path if filesystem of server is
+   --  windows fs
 
    procedure Synchronize (Kernel        : Kernel_Handle;
                           From          : Server_Type;
@@ -109,10 +112,11 @@ package GPS.Kernel.Remote is
    Rsync_Hook_Type : constant String := "rsync_action_hook";
 
    type Rsync_Hooks_Args
-     (Queue_Id_Length, Src_Path_Length, Dest_Path_Length : Natural)
+     (Src_Name_Length, Dest_Name_Length, Queue_Id_Length,
+      Src_Path_Length, Dest_Path_Length : Natural)
      is new Hooks_Data with record
-        Src       : Server_Type;
-        Dest      : Server_Type;
+        Src_Name  : String (1 .. Src_Name_Length);
+        Dest_Name : String (1 .. Dest_Name_Length);
         Queue_Id  : String (1 .. Queue_Id_Length);
         Src_Path  : String (1 .. Src_Path_Length);
         Dest_Path : String (1 .. Dest_Path_Length);
@@ -168,6 +172,10 @@ package GPS.Kernel.Remote is
 
    function Get_Nickname (Server : Server_Type) return String;
    --  Gets the nickname of a server
+
+   function Get_Printable_Nickname (Server : Server_Type) return String;
+   --  Gets the nickname of a server. If server is local, Local_Nickname is
+   --  returned
 
    function Get_Network_Name (Server : Server_Type) return String;
    --  Gets the network name of a server
