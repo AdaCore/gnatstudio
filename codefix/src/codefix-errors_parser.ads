@@ -33,8 +33,8 @@
 --  derived from 'Error_Parser'. The two values of the discriminant should be
 --  defined at the derivation. 'Category' is used to know which category of
 --  error the parser fixes. It is used to know if the user wants or not to fix
---  this error. If you want to create a new category, just type an indedite
---  indedite value for the discriminant. The genius programmers of GPS should
+--  this error. If you want to create a new category, just type your own
+--  value for the discriminant. The genius programmers of GPS should
 --  have managed a way to update automatically the structure of the
 --  preferences. The second parameter of 'Error_Parser'is 'Nb_Parser'. It is
 --  used to know how many regular expressions you want to check in your parser.
