@@ -55,7 +55,7 @@
 --  function of 'Error_Parser'). Basically, the creation of a new regular
 --  expression is ' := new Pattern_Matcher'(Compile (...))'.
 
---  The second procedure, the most important one is the procedure Fix:
+--  The second and most important procedure is Fix:
 
 --  procedure Fix
 --    (This         : Error_Parser;
@@ -96,7 +96,7 @@
 --  message for the same treatment. If you need such of thing, add a complain
 --  at the beginning of the document.
 
---  In the body of Fix, you have to call one or more functions from
+--  In the body of Fix, you have to call one or more function from
 --  Formal_Errors to generate at least one Text_Command and add it in
 --  'Solutions'.
 
@@ -167,9 +167,10 @@ package Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Success      : out Boolean);
-   --  Analyse the error message and, if it matches, trasmit it to the abstract
-   --  version of Fix. At the end, Solutions contains the possible corrections,
-   --  if no possible correction Success is False, otherwise it is True.
+   --  Analyse the error message and, if it matches, transmit it to the
+   --  abstract version of Fix. At the end, Solutions contains the possible
+   --  corrections. If no possible correction is found Success is False,
+   --  otherwise it is True.
 
    procedure Free (This : in out Error_Parser);
    --  Free the memory associated with an Error_Parser
@@ -679,7 +680,22 @@ package Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
-   --  Fix 'pckg is already use_visible"
+   --  Fix 'pckg is already use_visible'
+
+   type Redundant_With_In_Body is new Error_Parser
+     (new String'("Useless_Statement"), 1)
+   with null record;
+
+   procedure Initialize (This : in out Redundant_With_In_Body);
+
+   procedure Fix
+     (This         : Redundant_With_In_Body;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix for 'redundant with clause in body'
 
    type Use_Valid_Instead is new Error_Parser
      (new String'("Useless_Statement"), 1)
