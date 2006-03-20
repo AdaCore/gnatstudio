@@ -1037,13 +1037,14 @@ package body Codefix.Formal_Errors is
       return Result;
    end Make_Conformant;
 
-   -----------------------
-   -- Remove_Use_Clause --
-   -----------------------
+   ------------------------------
+   -- Remove_Dependency_Clause --
+   ------------------------------
 
-   function Remove_Use_Clause
+   function Remove_Dependency_Clause
      (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class) return Solution_List
+      Cursor       : File_Cursor'Class;
+      Category     : Dependency_Category) return Solution_List
    is
       Result      : Solution_List;
       New_Command : Remove_Pkg_Clauses_Cmd;
@@ -1057,14 +1058,20 @@ package body Codefix.Formal_Errors is
         (New_Command,
          Current_Text,
          Word,
-         Category => Cat_Use);
-      Set_Caption (New_Command, "Remove use clause");
-      Append (Result, New_Command);
+         Category => Category);
+
+      if Category = Cat_With then
+         Set_Caption (New_Command, "Remove with clause");
+      elsif Category = Cat_Use then
+         Set_Caption (New_Command, "Remove use clause");
+      end if;
+
+         Append (Result, New_Command);
 
       Free (Word);
 
       return Result;
-   end Remove_Use_Clause;
+   end Remove_Dependency_Clause;
 
    -----------------------------------
    -- Resolve_Unvisible_Declaration --

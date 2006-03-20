@@ -205,10 +205,11 @@ package Codefix.Formal_Errors is
    --  Propose to make the body profile conformant with the spec one, or
    --  the spec profile conformant with the body one.
 
-   function Remove_Use_Clause
+   function Remove_Dependency_Clause
      (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class) return Solution_List;
-   --  Remove a use clause at the position defined by the cursor.
+      Cursor       : File_Cursor'Class;
+      Category     : Dependency_Category) return Solution_List;
+   --  Remove a with/use clause at the position defined by the cursor.
 
    function Resolve_Unvisible_Declaration
      (Current_Text  : Text_Navigator_Abstr'Class;
