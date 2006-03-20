@@ -73,8 +73,9 @@ package Codefix.GPS_Io is
    --  cursor.
 
    function Get_Line
-     (This   : Console_Interface;
-      Cursor : Text_Cursor'Class) return String;
+     (This      : Console_Interface;
+      Cursor    : Text_Cursor'Class;
+      Start_Col : Column_Index := 0) return String;
    --  Get all character from the column and the line specified by the cursor
    --  to the end of the line.
 
