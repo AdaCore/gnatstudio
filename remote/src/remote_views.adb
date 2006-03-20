@@ -210,7 +210,7 @@ package body Remote_Views is
          -"The remote server used to compile, debug and execute your " &
          "project.");
 
-      Gtk_New (View.Config_List_Button, -"List configuration");
+      Gtk_New (View.Config_List_Button, -"Servers configuration");
       Set_Tip
         (Tooltips, View.Config_List_Button,
          -"Configure the list of available servers.");
@@ -439,7 +439,7 @@ package body Remote_Views is
 
       if Simple_Config then
          Set_Text (Get_Entry (View.Remote_Combo),
-                   Get_Nickname (Build_Server));
+                   Get_Printable_Nickname (Build_Server));
       else
          Set_Text (Get_Entry (View.Remote_Combo),
                    -"(Advanced configuration)");
@@ -447,11 +447,11 @@ package body Remote_Views is
 
       --  Set server for full view
       Set_Text (Get_Entry (View.Build_Combo),
-                Get_Nickname (Build_Server));
+                Get_Printable_Nickname (Build_Server));
       Set_Text (Get_Entry (View.Debug_Combo),
-                Get_Nickname (Debug_Server));
+                Get_Printable_Nickname (Debug_Server));
       Set_Text (Get_Entry (View.Exec_Combo),
-                Get_Nickname (Execution_Server));
+                Get_Printable_Nickname (Execution_Server));
    end Set_Servers;
 
    -----------------------------------
