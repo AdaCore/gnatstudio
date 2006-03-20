@@ -25,32 +25,6 @@ package body Codefix is
    -------------------
 
    function To_Char_Index (Index : Column_Index; Str : String)
-                           return Char_Index
-   is
-      pragma Unreferenced (Str);
-   begin
-      --  ??? The actual future implementation is in To_Char_Index_Workaround
-      return Char_Index (Index);
-   end To_Char_Index;
-
-   ---------------------
-   -- To_Column_Index --
-   ---------------------
-
-   function To_Column_Index (Index : Char_Index; Str : String)
-                             return Column_Index
-   is
-      pragma Unreferenced (Str);
-   begin
-      --  ??? The actual future implementation is in To_Column_Index_Workaround
-      return Column_Index (Index);
-   end To_Column_Index;
-
-   ------------------------------
-   -- To_Char_Index_Workaround --
-   ------------------------------
-
-   function To_Char_Index_Workaround (Index : Column_Index; Str : String)
      return Char_Index
    is
       Current_Index : Char_Index := Char_Index (Str'First);
@@ -72,13 +46,13 @@ package body Codefix is
       end loop;
 
       return Current_Index;
-   end To_Char_Index_Workaround;
+   end To_Char_Index;
 
-   --------------------------------
-   -- To_Column_Index_Workaround --
-   --------------------------------
+   ---------------------
+   -- To_Column_Index --
+   ---------------------
 
-   function To_Column_Index_Workaround (Index : Char_Index; Str : String)
+   function To_Column_Index (Index : Char_Index; Str : String)
      return Column_Index
    is
       Current_Index : Char_Index := Char_Index (Str'First);
@@ -100,7 +74,7 @@ package body Codefix is
       end loop;
 
       return Current_Col;
-   end To_Column_Index_Workaround;
+   end To_Column_Index;
 
    ------------
    -- Assign --
