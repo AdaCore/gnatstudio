@@ -2289,7 +2289,9 @@ package body Ada_Analyzer is
 
          procedure Close_Parenthesis is
          begin
-            Pop (Paren_Stack);
+            if not Is_Empty (Paren_Stack) then
+               Pop (Paren_Stack);
+            end if;
 
             if Indents = null or else Top (Indents).Level = None then
                --  Syntax error
