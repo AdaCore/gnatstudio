@@ -112,9 +112,10 @@ package GPS.Kernel.Remote is
    Rsync_Hook_Type : constant String := "rsync_action_hook";
 
    type Rsync_Hooks_Args
-     (Src_Name_Length, Dest_Name_Length, Queue_Id_Length,
+     (Tool_Name_Length, Src_Name_Length, Dest_Name_Length, Queue_Id_Length,
       Src_Path_Length, Dest_Path_Length : Natural)
      is new Hooks_Data with record
+        Tool_Name : String (1 .. Tool_Name_Length);
         Src_Name  : String (1 .. Src_Name_Length);
         Dest_Name : String (1 .. Dest_Name_Length);
         Queue_Id  : String (1 .. Queue_Id_Length);
