@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005-2006                   --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -61,5 +61,10 @@ package VCS_Activities_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
    --  Add a file to an activity menu callback
+
+   procedure On_Menu_Close_Open_Activity
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
+   --  Change Activity's status to/from closed/opened
 
 end VCS_Activities_View_API;
