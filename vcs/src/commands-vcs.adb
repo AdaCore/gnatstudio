@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -237,14 +237,14 @@ package body Commands.VCS is
       Files     : constant String_List.List :=
                     Get_Files_In_Activity (Command.Activity);
       Files_It  : String_List.List_Node;
-      Committed : Boolean := True;
+      Closed    : Boolean := True;
    begin
       --  Set the committed status if all files are up-to-date
 
       Files_It := String_List.First (Files);
 
       while Files_It /= String_List.Null_Node loop
-         Committed := Committed
+         Closed := Closed
            and Has_Status
              (Get_Status_Cache,
               Create (Full_Filename => String_List.Data (Files_It)),
@@ -252,7 +252,7 @@ package body Commands.VCS is
          Files_It := String_List.Next (Files_It);
       end loop;
 
-      Set_Committed (Command.Kernel, Command.Activity, To => Committed);
+      Set_Closed (Command.Kernel, Command.Activity, To => Closed);
       Refresh (Explorer);
 
       Command_Finished (Command, True);
