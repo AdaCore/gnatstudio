@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.0.0
 
+- F321-010 Using the file selector on Windows changes the working directory
+  Problem:    If opening a file in a different directory than the working
+              directory, doing so with the Windows' file selector changes the
+              working directory
+  Workaround: Select back the working directory using the 'Change Dir' menu
+              function.
+
 - F317-003 Auto-saved file not deleted when saving into a new name
   Problem:    If a file creates an auto-saved file and then is saved into an
               other name, the auto-saved file is not removed. As a consequence,
