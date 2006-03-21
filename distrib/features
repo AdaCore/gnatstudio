@@ -16,8 +16,9 @@ New features in GPS 4.0.0
 
 F316-006 Automatic fix for the redundant with clause in body warning
 
-  After a build the GPS recognize the 'redundant with clause in body' warning
-  as fixable. The obvious correction is to remove the corresponding clause. 
+  After a build GPS recognizes the 'redundant with clause in body' warning
+  as fixable. The obvious correction is the removal of the corresponding 
+  clause. 
 
 F315-016 New Revision Views (2006-03-19)
 
