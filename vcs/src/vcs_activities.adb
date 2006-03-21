@@ -47,7 +47,7 @@ package body VCS_Activities is
       Id           : Activity_Id;
       VCS          : VCS_Access;
       Group_Commit : Boolean := False;
-      Committed    : Boolean := False;
+      Closed       : Boolean := False;
       Files        : String_List.List;
    end record;
 
@@ -123,12 +123,18 @@ package body VCS_Activities is
          Committed    : constant Boolean :=
                           Boolean'Value
                             (Get_Attribute (Node, "committed", "false"));
+         --  For compatibility with GPS version 3.2, the name has been renamed
+         --  closed starting with GPS 4.0.
+         Closed       : constant Boolean :=
+                          Boolean'Value
+                            (Get_Attribute (Node, "closed", "false"));
          Child        : Node_Ptr := Node.Child;
          Item         : Activity_Record;
       begin
          Item := (Create (Project),
                   new String'(Name), Value (Id),
-                  null, Group_Commit, Committed, String_List.Null_List);
+                  null, Group_Commit,
+                  Committed or Closed, String_List.Null_List);
 
          while Child /= null loop
             if Child.Tag.all = "file" then
@@ -217,7 +223,7 @@ package body VCS_Activities is
          Set_Attribute
            (Child, "group_commit", Boolean'Image (Item.Group_Commit));
          Set_Attribute
-           (Child, "committed", Boolean'Image (Item.Committed));
+           (Child, "closed", Boolean'Image (Item.Closed));
 
          Add_Child (Ada_Child, Child);
 
@@ -499,7 +505,7 @@ package body VCS_Activities is
       Item : Activity_Record := Get_First;
    begin
       while Item /= Empty_Activity loop
-         if not Item.Committed
+         if not Item.Closed
            and then Is_In_List (Item.Files, File_Key (File))
          then
             return Item.Id;
@@ -572,7 +578,7 @@ package body VCS_Activities is
 
       if (Item.VCS /= null and then VCS /= Item.VCS)
         or else (F_Activity /= No_Activity
-                 and then not Is_Committed (F_Activity))
+                 and then not Is_Closed (F_Activity))
       then
          --  ??? dialog saying that it is not possible (2 diff VCS)
          --  ??? or activity is already committed.
@@ -623,29 +629,44 @@ package body VCS_Activities is
       Save_Activities (Kernel);
    end Toggle_Group_Commit;
 
-   -------------------
-   -- Set_Committed --
-   -------------------
+   ----------------
+   -- Set_Closed --
+   ----------------
 
-   procedure Set_Committed
+   procedure Set_Closed
      (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id;
       To       : Boolean)
    is
       Item : Activity_Record := Get (Activity);
    begin
-      Item.Committed := To;
+      Item.Closed := To;
       Set (Activity, Item);
       Save_Activities (Kernel);
-   end Set_Committed;
+   end Set_Closed;
 
-   ------------------
-   -- Is_Committed --
-   ------------------
+   ---------------
+   -- Is_Closed --
+   ---------------
 
-   function Is_Committed (Activity : Activity_Id) return Boolean is
+   function Is_Closed (Activity : Activity_Id) return Boolean is
    begin
-      return Get (Activity).Committed;
-   end Is_Committed;
+      return Get (Activity).Closed;
+   end Is_Closed;
+
+   --------------------------
+   -- Toggle_Closed_Status --
+   --------------------------
+
+   procedure Toggle_Closed_Status
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Activity : Activity_Id)
+   is
+      Item : Activity_Record := Get (Activity);
+   begin
+      Item.Closed := not Item.Closed;
+      Set (Activity, Item);
+      Save_Activities (Kernel);
+   end Toggle_Closed_Status;
 
 end VCS_Activities;
