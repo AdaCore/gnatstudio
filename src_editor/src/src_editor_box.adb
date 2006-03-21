@@ -1708,7 +1708,11 @@ package body Src_Editor_Box is
       if Success then
          Set_Cursor_Location (Editor, 1, 1, Force_Focus);
          Set_Filename (Editor.Source_Buffer, Filename);
-         Set_Text (Editor.Modified_Label, -"Unmodified");
+         if Get_Modified (Editor.Source_Buffer) then
+            Set_Text (Editor.Modified_Label, -"Modified");
+         else
+            Set_Text (Editor.Modified_Label, -"Unmodified");
+         end if;
 
          if Read_Only_Set then
             Set_Writable (Editor, False);
