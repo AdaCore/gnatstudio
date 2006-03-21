@@ -24,17 +24,38 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
-with Filesystem;         use Filesystem;
+with Glib.Xml_Int;       use Glib.Xml_Int;
+
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Remote;  use GPS.Kernel.Remote;
 with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
+
 with Commands;           use Commands;
+with Filesystem;         use Filesystem;
+with String_Utils;       use String_Utils;
 with Traces;             use Traces;
+with VFS;                use VFS;
 
 package body Remote_Sync_Module is
 
    Me : constant Debug_Handle := Create ("remote_sync_module");
+
+   type Rsync_Module_Record is new Module_ID_Record with record
+      Kernel     : Kernel_Handle;
+      Rsync_Args : String_List_Access;
+   end record;
+   type Rsync_Module_ID is access all Rsync_Module_Record'Class;
+
+   procedure Customize
+     (Module : access Rsync_Module_Record;
+      File   : VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   --  See doc for inherited subprogram
+
+   Rsync_Module : Rsync_Module_ID := null;
 
    function On_Rsync_Hook
      (Kernel : access Kernel_Handle_Record'Class;
@@ -51,10 +72,38 @@ package body Remote_Sync_Module is
 
    procedure Register_Module (Kernel : Kernel_Handle) is
    begin
+      --  Register the module
+      Rsync_Module := new Rsync_Module_Record;
+      Rsync_Module.Kernel := Kernel;
+      Register_Module
+        (Rsync_Module, Kernel, "rsync");
+
       Add_Hook (Kernel, Rsync_Action_Hook,
                 Wrapper (On_Rsync_Hook'Access),
                 "remote_sync_module.rsync");
    end Register_Module;
+
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Module : access Rsync_Module_Record;
+      File   : VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (File, Level);
+      Child   : Node_Ptr;
+   begin
+      if Node.Tag.all = "rsync_configuration" then
+         Trace (Me, "Customize: 'rsync_configuration'");
+         Child := Find_Tag (Node.Child, "arguments");
+         if Child /= null then
+            Module.Rsync_Args := Argument_String_To_List (Child.Value.all);
+         end if;
+      end if;
+   end Customize;
 
    -------------------
    -- On_Rsync_Hook --
@@ -71,12 +120,6 @@ package body Remote_Sync_Module is
       Dest_FS       : Filesystem_Access;
       Machine       : Machine_Descriptor;
       Success       : Boolean;
-      Rsync_Args    : constant String_List :=
-        (new String'("-az"),
-         new String'("--progress"),
-         new String'("--delete"),
-         new String'("--exclude"),
-         new String'("'*.o'"));
       Transport_Arg : String_Access;
 
       function  Build_Arg return String_List;
@@ -87,6 +130,8 @@ package body Remote_Sync_Module is
       ---------------
 
       function Build_Arg return String_List is
+         Rsync_Args    : constant String_List
+           := Clone (Rsync_Module.Rsync_Args.all);
       begin
          if Transport_Arg /= null then
             return Rsync_Args & Transport_Arg & Src_Path & Dest_Path;
@@ -95,6 +140,17 @@ package body Remote_Sync_Module is
          end if;
       end Build_Arg;
    begin
+      --  Check that we want to use rsync
+      if Rsync_Data.Tool_Name /= "rsync" then
+         return False;
+      end if;
+
+      --  Check the module configuration
+      if Rsync_Module = null or else Rsync_Module.Rsync_Args = null then
+         Insert (Kernel, "Invalid rsync configuration. Cannot use rsync.",
+                 Mode => Error);
+         return False;
+      end if;
 
       if Rsync_Data.Src_Name = "" then
          --  Local src machine, remote dest machine
