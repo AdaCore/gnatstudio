@@ -163,7 +163,7 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       On_Delete_Activity (Kernel, Value (Activity_Information (Context)));
    exception
@@ -463,6 +463,20 @@ package body VCS_Activities_View_API is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Edit_Log;
 
+   ---------------------------------
+   -- On_Menu_Close_Open_Activity --
+   ---------------------------------
+
+   procedure On_Menu_Close_Open_Activity
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+   begin
+      On_Close_Open_Activity (Kernel, Value (Activity_Information (Context)));
+   end On_Menu_Close_Open_Activity;
+
    ------------------------------
    -- On_Menu_Build_Patch_File --
    ------------------------------
@@ -689,7 +703,7 @@ package body VCS_Activities_View_API is
          Activity_Section := not Has_File_Information (Context)
            and then not Has_Directory_Information (Context);
          Activity := Value (Activity_Information (Context));
-         Active := not Is_Committed (Activity);
+         Active := not Is_Closed (Activity);
          File_Section     := Has_File_Information (Context)
            or else Has_Directory_Information (Context);
       else
@@ -710,7 +724,7 @@ package body VCS_Activities_View_API is
             VCS /= null
             and then Absolute_Filenames_Supported (VCS)
             and then Atomic_Commands_Supported (VCS)
-            and then not Is_Committed (Activity));
+            and then not Is_Closed (Activity));
 
          Gtk_New (Item);
          Append (Menu, Item);
@@ -723,6 +737,17 @@ package body VCS_Activities_View_API is
       Set_Sensitive (Item, True);
 
       if Activity_Section then
+         if Is_Closed (Activity) then
+            Gtk_New (Item, Label => -"Re-open activity");
+         else
+            Gtk_New (Item, Label => -"Close activity");
+         end if;
+
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate", On_Menu_Close_Open_Activity'Access, Context);
+         Set_Sensitive (Item, True);
+
          Gtk_New (Item, Label => -"Delete activity");
          Append (Menu, Item);
          Context_Callback.Connect
