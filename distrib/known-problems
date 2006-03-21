@@ -5,14 +5,14 @@ Known Problems fixed in GPS 4.0.0
               other name, the auto-saved file is not removed. As a consequence,
               when the original file is re-opened, GPS tries to retreived
               and auto-saved file.
-  Workaround: The auto-saved file has to be manually deleted before the 
+  Workaround: The auto-saved file has to be manually deleted before the
               re-opening of the original file.
 
 - F308-037 Infinite loop when displying a tooltip
   Problem:    GPS may fall in an infinite loop when displying a tooltip. The
               problem occurs when GPS tries to extract the comments associated
               with an entity whose declaration belongs to the first block of
-              code in a file (without any blank line in between) and when this 
+              code in a file (without any blank line in between) and when this
               block of code is on the second line of a file (the first line
               must be blank).
   Workaround: Disable the tooltips using Preferences/Editor facility.
@@ -89,6 +89,12 @@ Known Problems fixed in GPS 4.0.0
               effect on the python console in fact.
   Workaround: type manually "import ..." or "reload (...)" in the python
               console
+
+- F119-004 Recovered files are marked as 'unmodified'
+  Problem:    When recovering a file from its backup, GPS opens it marked
+              'unmodified', and it is not possible to save it directly (you
+              have to edit it first).
+  Workaround: Just edit the file (adding a character and removing it is enough)
 
 - F118-002 GPS Code fix fails when formal is access procedure
   Problem:    With an access to procedure parameter in the Ada 05 fashion,
