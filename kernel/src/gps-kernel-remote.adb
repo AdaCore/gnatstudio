@@ -1765,19 +1765,22 @@ package body GPS.Kernel.Remote is
    is
    begin
       declare
-         Src_Name  : constant String := Nth_Arg (Data, 2);
-         Dest_Name : constant String := Nth_Arg (Data, 3);
-         Queue_Id  : constant String := Nth_Arg (Data, 4);
-         Src_Path  : constant String := Nth_Arg (Data, 5);
-         Dest_Path : constant String := Nth_Arg (Data, 6);
+         Tool_Name : constant String := Nth_Arg (Data, 2);
+         Src_Name  : constant String := Nth_Arg (Data, 3);
+         Dest_Name : constant String := Nth_Arg (Data, 4);
+         Queue_Id  : constant String := Nth_Arg (Data, 5);
+         Src_Path  : constant String := Nth_Arg (Data, 6);
+         Dest_Path : constant String := Nth_Arg (Data, 7);
       begin
          return Rsync_Hooks_Args'
            (Hooks_Data with
+            Tool_Name_Length => Tool_Name'Length,
             Src_Name_Length  => Src_Name'Length,
             Dest_Name_Length => Dest_Name'Length,
             Queue_Id_Length  => Queue_Id'Length,
             Src_Path_Length  => Src_Path'Length,
             Dest_Path_Length => Dest_Path'Length,
+            Tool_Name        => Tool_Name,
             Src_Name         => Src_Name,
             Dest_Name        => Dest_Name,
             Queue_Id         => Queue_Id,
@@ -1800,11 +1803,12 @@ package body GPS.Kernel.Remote is
         new Callback_Data'Class'(Create (Script, 6));
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
-      Set_Nth_Arg (D.all, 2, Data.Src_Name);
-      Set_Nth_Arg (D.all, 3, Data.Dest_Name);
-      Set_Nth_Arg (D.all, 4, Data.Queue_Id);
-      Set_Nth_Arg (D.all, 5, Data.Src_Path);
-      Set_Nth_Arg (D.all, 6, Data.Dest_Path);
+      Set_Nth_Arg (D.all, 2, Data.Tool_Name);
+      Set_Nth_Arg (D.all, 3, Data.Src_Name);
+      Set_Nth_Arg (D.all, 4, Data.Dest_Name);
+      Set_Nth_Arg (D.all, 5, Data.Queue_Id);
+      Set_Nth_Arg (D.all, 6, Data.Src_Path);
+      Set_Nth_Arg (D.all, 7, Data.Dest_Path);
       return D;
    end Create_Callback_Data;
 
@@ -2288,11 +2292,13 @@ package body GPS.Kernel.Remote is
       To       : Server_Type;
       Queue_Id : String)
    is
-      Server    : Server_Type;
-      Mirror    : Mirror_Path_Access;
-      From_Path : String_Access;
-      To_Path   : String_Access;
+      Server         : Server_Type;
+      Mirror         : Mirror_Path_Access;
+      From_Path      : String_Access;
+      To_Path        : String_Access;
       Path_List_Item : Mirrors_List_Access;
+      --  ??? allow other rsync tool name
+      Tool_Name      : constant String := "rsync";
 
    begin
       Trace (Me, "Synchronizing paths");
@@ -2332,11 +2338,13 @@ package body GPS.Kernel.Remote is
                To_Name   : constant String := Get_Nickname (To);
                Data      : aliased Rsync_Hooks_Args
                  := (Hooks_Data with
+                     Tool_Name_Length => Tool_Name'Length,
                      Src_Name_Length  => From_Name'Length,
                      Dest_Name_Length => To_Name'Length,
                      Queue_Id_Length  => Queue_Id'Length,
                      Src_Path_Length  => From_Path'Length,
                      Dest_Path_Length => To_Path'Length,
+                     Tool_Name        => Tool_Name,
                      Src_Name         => From_Name,
                      Dest_Name        => To_Name,
                      Queue_Id         => Queue_Id,
