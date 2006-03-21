@@ -2642,7 +2642,12 @@ package body Src_Editor_Buffer is
          Buffer.Line_Terminator := LF;
       end if;
 
-      Set_Modified (Buffer, False);
+      if not Recovering then
+         Set_Modified (Buffer, False);
+      else
+         Set_Modified (Buffer, True);
+         File_Edited (Buffer.Kernel, Filename);
+      end if;
 
       Buffer.Inserting := False;
       Buffer.Modified_Auto := False;
