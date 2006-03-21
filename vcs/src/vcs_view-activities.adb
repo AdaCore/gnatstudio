@@ -274,6 +274,63 @@ package body VCS_View.Activities is
       end if;
    end On_Delete_Activity;
 
+   ----------------------------
+   -- On_Close_Open_Activity --
+   ----------------------------
+
+   procedure On_Close_Open_Activity
+     (Kernel : Kernel_Handle; Activity : Activity_Id)
+   is
+      use type String_List.List_Node;
+      Closed : constant Boolean := Is_Closed (Activity);
+      Ok     : Boolean := True;
+      Files  : String_List.List;
+      Iter   : String_List.List_Node;
+   begin
+      --  Before reopening an activity check that there is no file part of this
+      --  activity that are already into an open activity.
+
+      if Closed then
+         Files := Get_Files_In_Activity (Activity);
+
+         Iter := String_List.First (Files);
+
+         while Iter /= String_List.Null_Node loop
+            declare
+               File       : constant Virtual_File :=
+                              Create (String_List.Data (Iter));
+               F_Activity : Activity_Id;
+               Button     : Message_Dialog_Buttons := Button_OK;
+               pragma Unreferenced (Button);
+            begin
+               F_Activity := Get_File_Activity (File);
+               if F_Activity /= No_Activity then
+                  Button := Message_Dialog
+                    (Msg     =>
+                       (-"Activity") & ''' & Get_Name (Activity) & ''' &
+                     (-"can't be re-opened") & ASCII.LF &
+                     (-"file ") & Base_Name (File) &
+                     (-" is part of activity '") & Get_Name (F_Activity) &
+                     ''' & ASCII.LF,
+                     Dialog_Type => Warning,
+                     Title       => -"Open Activity",
+                     Buttons     => Button_OK);
+                  --  Revert back the status to its current setting
+                  Ok := False;
+                  exit;
+               end if;
+            end;
+            Iter := String_List.Next (Iter);
+         end loop;
+      end if;
+
+      if Ok then
+         Toggle_Closed_Status (Kernel, Activity);
+      end if;
+
+      Refresh (Get_Activities_Explorer (Kernel, False, False));
+   end On_Close_Open_Activity;
+
    -----------------------------
    -- On_Remove_From_Activity --
    -----------------------------
@@ -387,14 +444,14 @@ package body VCS_View.Activities is
                Set (Explorer.Model, A_Iter,
                     Has_Log_Column, Has_Log (Kernel, Activity));
 
-               if not Is_Committed (Activity) then
+               if not Is_Closed (Activity) then
                   Push (A_Iter);
                end if;
             end if;
 
-            if Is_Committed (Activity) then
+            if Is_Closed (Activity) then
                Set (Explorer.Model, A_Iter,
-                    Base_Name_Column, Get_Name (Activity) & " (committed)");
+                    Base_Name_Column, Get_Name (Activity) & " (closed)");
                Set (Explorer.Model, A_Iter, Control_Column, False);
             else
                Set (Explorer.Model, A_Iter,
@@ -514,7 +571,7 @@ package body VCS_View.Activities is
                      if Iter = Null_Iter and then Force_Display then
                         Append (Explorer.Model, Iter, A_Iter);
 
-                        if not Is_Committed (Activity) then
+                        if not Is_Closed (Activity) then
                            Push (A_Iter);
                         end if;
                      end if;
