@@ -6862,6 +6862,10 @@ for full details.
 @item Create new activity
 Create a new activity. The name can be edited by double clicking on it.
 
+@item Re-open activity / Close activity
+If the activity is closed it is possible to re-open it and if it is
+opened it is possible to close it manually.
+
 @item Delete activity
 Remove the activity.
 
