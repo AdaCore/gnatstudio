@@ -1308,7 +1308,7 @@ package body GUI_Utils is
       is
          pragma Unreferenced (Data);
       begin
-         if Changed then
+         if Changed and then Accel_Key /= GDK_VoidSymbol then
             Put_Line (File, "(gtk_accel_path """
                       & Accel_Path
                       & """ """
