@@ -469,6 +469,7 @@ package body Gtkada.File_Selector is
       Pos_Mouse     : constant := 2;
       File_Selector : File_Selector_Window_Access;
       S             : Chars_Ptr;
+      Working_Dir   : Virtual_File;
       Initial_Dir   : Virtual_File;
       procedure c_free (S : Chars_Ptr);
       pragma Import (C, c_free, "free");
@@ -478,6 +479,9 @@ package body Gtkada.File_Selector is
         and then NativeFileSelectionSupported /= 0
         and then not Remote_Browsing
       then
+         --  Save working directory
+         Working_Dir := Get_Current_Dir;
+
          if Base_Directory = No_File then
             S := NativeFileSelection
               (Title & ASCII.NUL,
@@ -498,6 +502,9 @@ package body Gtkada.File_Selector is
                Pos_Mouse,
                File_Selector_Kind'Pos (Kind));
          end if;
+
+         --  Change back to working directory
+         Change_Dir (Working_Dir);
 
          declare
             Val : constant String := Interfaces.C.Strings.Value (S);
