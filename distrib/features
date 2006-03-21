@@ -14,6 +14,11 @@ of the feature.
 New features in GPS 4.0.0
 -------------------------
 
+F321-004 Activities can be re-opened (2006-03-21)
+
+  A committed (closed) activity can now be re-opened for complementary
+  work like adding some files to it for example.
+
 F316-006 Automatic fix for the redundant with clause in body warning
 
   After a build GPS recognizes the 'redundant with clause in body' warning
