@@ -33,4 +33,10 @@
     <password_prompt_ptrn>^.*(password|passphrase.*): *$</password_prompt_ptrn>
   </remote_connection_config>
 
+  <!-- RSYNC CONFIGURATION -->
+
+  <rsync_configuration>
+    <arguments>-az --progress --delete --exclude *.o</arguments>
+  </rsync_configuration>
+
 </GPS>
