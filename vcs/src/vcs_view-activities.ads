@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -66,6 +66,10 @@ package VCS_View.Activities is
    procedure On_Delete_Activity
      (Kernel : Kernel_Handle; Activity : Activity_Id);
    --  Delete the given activity from the explorer
+
+   procedure On_Close_Open_Activity
+     (Kernel : Kernel_Handle; Activity : Activity_Id);
+   --  Change Activity's status to/from closed/opened
 
    procedure On_Remove_From_Activity
      (Kernel : Kernel_Handle; Activity : Activity_Id; File : Virtual_File);
