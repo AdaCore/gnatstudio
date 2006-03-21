@@ -64,14 +64,19 @@ package VCS_Activities is
    procedure Set_Name (Activity : Activity_Id; Name : String);
    --  Set the name of the activity
 
-   procedure Set_Committed
+   procedure Set_Closed
      (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id;
       To       : Boolean);
    --  Set the committed status for this activity
 
-   function Is_Committed (Activity : Activity_Id) return Boolean;
+   function Is_Closed (Activity : Activity_Id) return Boolean;
    --  Returns the committed status for this activity
+
+   procedure Toggle_Closed_Status
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Activity : Activity_Id);
+   --  Invert the committed status
 
    function Has_Log
      (Kernel   : Kernel_Handle;
