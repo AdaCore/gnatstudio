@@ -319,7 +319,7 @@ package body VCS_View_API is
          while Activity /= No_Activity loop
             if Project_Path (Get_Root_Project (Get_Registry (Kernel).all))
               = Get_Project_Path (Activity)
-              and then not Is_Committed (Activity)
+              and then not Is_Closed (Activity)
             then
                Found := True;
                Gtk_New (Item, Label => Get_Name (Activity));
