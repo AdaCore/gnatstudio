@@ -113,6 +113,8 @@ package body Src_Editor_Module is
 
    editor_xpm : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, editor_xpm, "mini_page_xpm");
+   editor_modified_xpm : aliased Chars_Ptr_Array (0 .. 0);
+   pragma Import (C, editor_modified_xpm, "modified_page_xpm");
    fold_block_xpm : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, fold_block_xpm, "fold_block_xpm");
    unfold_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
@@ -1139,7 +1141,13 @@ package body Src_Editor_Module is
             Module         => Src_Editor_Module_Id);
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
-         Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
+
+         if Get_Modified (Get_Buffer (Editor)) then
+            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_modified_xpm));
+         else
+            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
+         end if;
+
          Widget_Callback.Connect
            (Child, "selected", Update_Cache_On_Focus'Access);
 
