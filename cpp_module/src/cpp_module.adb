@@ -98,8 +98,8 @@ package body Cpp_Module is
                   Indent_Continue     => 0,
                   Indent_Decl         => 0,
                   Indent_Conditional  => 0,
-                  Tab_Width           =>
-                    Integer (Get_Pref (Tab_Width)),
+                  Indent_Record       => 0,
+                  Tab_Width           => Integer (Get_Pref (Tab_Width)),
                   Indent_Case_Extra   => Automatic,
                   Casing_Policy       => Case_Handling.Disabled,
                   Reserved_Casing     => Case_Handling.Unchanged,
