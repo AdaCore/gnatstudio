@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -132,6 +132,7 @@ package Traces is
    pragma Inline (Trace);
    --  Output Message to the stream associated with Handle, along with any
    --  extra information setup by the user (see the default handles below).
+   --  If Handle is not active, this function will do nothing.
    --
    --  If message includes ASCII.LF characters, then several lines are output,
    --  starting with a special prefix
@@ -158,7 +159,8 @@ package Traces is
 
    procedure Set_Active (Handle : Debug_Handle; Active : Boolean);
    pragma Inline (Set_Active);
-   --  Override the activation status for Handle
+   --  Override the activation status for Handle.
+   --  When not Active, the Trace function will do nothing.
 
    function Active (Handle : Debug_Handle) return Boolean;
    pragma Inline (Active);
