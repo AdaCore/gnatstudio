@@ -2874,11 +2874,10 @@ package body Ada_Analyzer is
                      Level : Integer;
                   begin
                      if Top (Paren_Stack).all = Conditional then
-                        Level := P - Start_Of_Line + Padding + 1
+                        Level := P - Start_Of_Line + Padding
                                  + Indent_Conditional;
 
                      elsif Subprogram_Decl
-                       or else Top (Paren_Stack).all = Conditional
                        or else Top (Paren_Stack).all = Type_Declaration
                        or else Prev_Prev_Token = Tok_Arrow
                        or else (Format
