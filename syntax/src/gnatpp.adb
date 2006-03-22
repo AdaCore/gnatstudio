@@ -77,7 +77,7 @@ begin
       Analyze_Ada_Source
         (Buffer.all,
          Indent_Params =>
-           (3, 2, 2, 0, 3, 8, Automatic, End_Of_Line,
+           (3, 2, 2, 1, 3, 8, Automatic, End_Of_Line,
             Lower, Smart_Mixed, True, False, True, True, True),
          Replace => Replace_Cb'Unrestricted_Access);
    end if;
