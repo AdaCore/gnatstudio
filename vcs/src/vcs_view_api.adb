@@ -2291,7 +2291,7 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Files    : String_List.List;
+      Files : String_List.List;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -2328,7 +2328,7 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Files    : String_List.List;
+      Files : String_List.List;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -2461,13 +2461,17 @@ package body VCS_View_API is
 
          --  Get information fro the branches if defined
 
-         if Var_Branches.Kind = Single then
+         if Attribute_Is_Defined (Project, Vcs_Branches_Attribute)
+           and then Var_Branches.Kind = Single
+         then
             Get_Log_For_Root (File, Get_Name_String (Var_Branches.Value));
          end if;
 
          --  Get information fro the tags if defined
 
-         if Var_Tags.Kind = Single then
+         if Attribute_Is_Defined (Project, Vcs_Tags_Attribute)
+           and then Var_Tags.Kind = Single
+         then
             Get_Log_For_Root (File, Get_Name_String (Var_Tags.Value));
          end if;
       end Get_Log;
