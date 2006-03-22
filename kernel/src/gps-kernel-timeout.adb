@@ -496,7 +496,8 @@ package body GPS.Kernel.Timeout is
          Synchronize (Kernel,
                       GPS_Server,
                       Server,
-                      Q_Id);
+                      Q_Id,
+                      True);
       end if;
 
       C := new Monitor_Command;
@@ -560,7 +561,8 @@ package body GPS.Kernel.Timeout is
          Synchronize (Kernel,
                       Server,
                       GPS_Server,
-                      Q_Id);
+                      Q_Id,
+                      True);
       end if;
       Success := True;
    exception
