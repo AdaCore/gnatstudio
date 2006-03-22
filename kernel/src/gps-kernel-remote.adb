@@ -157,7 +157,8 @@ package body GPS.Kernel.Remote is
    type Machine_Descriptor_Record is
      new GNAT.Expect.TTY.Remote.Machine_Descriptor_Record
    with record
-      Attribute        : Descriptor_Attribute;
+      Attribute  : Descriptor_Attribute;
+      Rsync_Func : String_Access;
    end record;
 
    type Item_Record;
@@ -205,6 +206,7 @@ package body GPS.Kernel.Remote is
       Network_Name_Entry    : Gtk_Entry;
       Remote_Access_Combo   : Gtkada_Combo;
       Remote_Shell_Combo    : Gtkada_Combo;
+      Remote_Sync_Combo     : Gtkada_Combo;
       Advanced_Button       : Gtk_Toggle_Button;
       Advanced_Table        : Gtk_Table;
       User_Name_Entry       : Gtk_Entry;
@@ -441,6 +443,8 @@ package body GPS.Kernel.Remote is
         := Get_Attribute (Node, "remote_access");
       Remote_Shell       : constant String
         := Get_Attribute (Node, "remote_shell");
+      Remote_Sync        : constant String
+        := Get_Attribute (Node, "remote_sync", "rsync");
       Field              : String_Ptr;
       Max_Nb_Connections : Natural;
       User_Name          : String_Access;
@@ -549,6 +553,7 @@ package body GPS.Kernel.Remote is
          Network_Name        => new String'(Network_Name),
          Access_Name         => new String'(Remote_Access),
          Shell_Name          => new String'(Remote_Shell),
+         Rsync_Func          => new String'(Remote_Sync),
          Max_Nb_Connections  => Max_Nb_Connections,
          User_Name           => User_Name,
          Timeout             => Timeout,
@@ -687,6 +692,9 @@ package body GPS.Kernel.Remote is
          then
             Item := new Node;
             Item.Tag := new String'("remote_machine_descriptor");
+            Set_Attribute
+              (Item, "remote_sync",
+               Machine_Descriptor_Record (Desc.all).Rsync_Func.all);
             Set_Attribute (Item, "remote_shell", Desc.Shell_Name.all);
             Set_Attribute (Item, "remote_access", Desc.Access_Name.all);
             Set_Attribute (Item, "network_name", Desc.Network_Name.all);
@@ -829,7 +837,7 @@ package body GPS.Kernel.Remote is
       Gtk_New (Label, -"Server config");
       Append_Page (Dialog.Notebook, Scrolled, Label);
 
-      Gtk_New (Dialog.Right_Table, Rows => 6, Columns => 2,
+      Gtk_New (Dialog.Right_Table, Rows => 7, Columns => 2,
                Homogeneous => False);
       Add_With_Viewport (Scrolled, Dialog.Right_Table);
 
@@ -883,6 +891,28 @@ package body GPS.Kernel.Remote is
          Add (Get_List (Dialog.Remote_Shell_Combo), Item);
       end loop;
       Show_All (Get_List (Dialog.Remote_Shell_Combo));
+
+      Line_Nb := Line_Nb + 1;
+      Gtk_New (Label, -"Sync tool:");
+      Attach (Dialog.Right_Table, Label,
+              0, 1, Line_Nb, Line_Nb + 1,
+              Fill or Expand, 0);
+      Gtk_New (Dialog.Remote_Sync_Combo);
+      Set_Editable (Get_Entry (Dialog.Remote_Sync_Combo), False);
+      Attach (Dialog.Right_Table, Dialog.Remote_Sync_Combo,
+              1, 2, Line_Nb, Line_Nb + 1,
+              Fill or Expand, 0);
+
+      declare
+         Rsync_List : constant GNAT.OS_Lib.String_List :=
+           Get_Hook_Func_List (Kernel, Rsync_Action_Hook);
+      begin
+         for J in Rsync_List'Range loop
+            Gtk_New (Item, Locale_To_UTF8 (Rsync_List (J).all));
+            Add (Get_List (Dialog.Remote_Sync_Combo), Item);
+         end loop;
+         Show_All (Get_List (Dialog.Remote_Sync_Combo));
+      end;
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Button, -"Advanced >>");
@@ -994,6 +1024,9 @@ package body GPS.Kernel.Remote is
          "changed", Changed'Access, Dialog);
       Widget_Callback.Object_Connect
         (Get_Entry (Dialog.Remote_Shell_Combo),
+         "changed", Changed'Access, Dialog);
+      Widget_Callback.Object_Connect
+        (Get_Entry (Dialog.Remote_Sync_Combo),
          "changed", Changed'Access, Dialog);
       Widget_Callback.Object_Connect
         (Dialog.Max_Nb_Connected_Spin, "changed", Changed'Access, Dialog);
@@ -1187,6 +1220,8 @@ package body GPS.Kernel.Remote is
                        (Get_Text (Get_Entry (Dialog.Remote_Access_Combo))),
                      Shell_Name          => new String'
                        (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))),
+                     Rsync_Func          => new String'
+                       (Get_Text (Get_Entry (Dialog.Remote_Sync_Combo))),
                      User_Name           => new String'
                        (Get_Text (Dialog.User_Name_Entry)),
                      Timeout             =>
@@ -1314,6 +1349,9 @@ package body GPS.Kernel.Remote is
                       Item.Desc.Access_Name.all);
             Set_Text (Get_Entry (Dialog.Remote_Shell_Combo),
                       Item.Desc.Shell_Name.all);
+            Set_Text
+              (Get_Entry (Dialog.Remote_Sync_Combo),
+               Machine_Descriptor_Record (Item.Desc.all).Rsync_Func.all);
             Set_Value (Dialog.Timeout_Spin,
                        Gdouble (Item.Desc.Timeout) / 1000.0);
             Set_Value (Dialog.Max_Nb_Connected_Spin,
@@ -1422,9 +1460,10 @@ package body GPS.Kernel.Remote is
             Network_Name        => new String'(""),
             Access_Name         => new String'(""),
             Shell_Name          => new String'(""),
+            Rsync_Func          => new String'("rsync"),
             User_Name           => new String'(""),
             Extra_Init_Commands => null,
-            Timeout             => 3000,
+            Timeout             => 10000,
             Max_Nb_Connections  => 3,
             Attribute           => User_Defined,
             Ref                 => 1),
@@ -1765,12 +1804,13 @@ package body GPS.Kernel.Remote is
    is
    begin
       declare
-         Tool_Name : constant String := Nth_Arg (Data, 2);
-         Src_Name  : constant String := Nth_Arg (Data, 3);
-         Dest_Name : constant String := Nth_Arg (Data, 4);
-         Queue_Id  : constant String := Nth_Arg (Data, 5);
-         Src_Path  : constant String := Nth_Arg (Data, 6);
-         Dest_Path : constant String := Nth_Arg (Data, 7);
+         Tool_Name    : constant String := Nth_Arg (Data, 2);
+         Src_Name     : constant String := Nth_Arg (Data, 3);
+         Dest_Name    : constant String := Nth_Arg (Data, 4);
+         Queue_Id     : constant String := Nth_Arg (Data, 5);
+         Src_Path     : constant String := Nth_Arg (Data, 6);
+         Dest_Path    : constant String := Nth_Arg (Data, 7);
+         Sync_Deleted : constant Boolean := Nth_Arg (Data, 8);
       begin
          return Rsync_Hooks_Args'
            (Hooks_Data with
@@ -1785,7 +1825,8 @@ package body GPS.Kernel.Remote is
             Dest_Name        => Dest_Name,
             Queue_Id         => Queue_Id,
             Src_Path         => Src_Path,
-            Dest_Path        => Dest_Path);
+            Dest_Path        => Dest_Path,
+            Sync_Deleted     => Sync_Deleted);
       end;
    end From_Callback_Data_Sync_Hook;
 
@@ -1800,7 +1841,7 @@ package body GPS.Kernel.Remote is
       return GPS.Kernel.Scripts.Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 6));
+        new Callback_Data'Class'(Create (Script, 8));
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Data.Tool_Name);
@@ -1809,6 +1850,7 @@ package body GPS.Kernel.Remote is
       Set_Nth_Arg (D.all, 5, Data.Queue_Id);
       Set_Nth_Arg (D.all, 6, Data.Src_Path);
       Set_Nth_Arg (D.all, 7, Data.Dest_Path);
+      Set_Nth_Arg (D.all, 8, Data.Sync_Deleted);
       return D;
    end Create_Callback_Data;
 
@@ -2287,18 +2329,18 @@ package body GPS.Kernel.Remote is
    -----------------
 
    procedure Synchronize
-     (Kernel   : Kernel_Handle;
-      From     : Server_Type;
-      To       : Server_Type;
-      Queue_Id : String)
+     (Kernel       : Kernel_Handle;
+      From         : Server_Type;
+      To           : Server_Type;
+      Queue_Id     : String;
+      Sync_Deleted : Boolean)
    is
       Server         : Server_Type;
       Mirror         : Mirror_Path_Access;
       From_Path      : String_Access;
       To_Path        : String_Access;
       Path_List_Item : Mirrors_List_Access;
-      --  ??? allow other rsync tool name
-      Tool_Name      : constant String := "rsync";
+      Machine        : Machine_Descriptor_Record;
 
    begin
       Trace (Me, "Synchronizing paths");
@@ -2328,9 +2370,13 @@ package body GPS.Kernel.Remote is
             if Is_Local (From) then
                From_Path := Mirror.Local_Path;
                To_Path   := Mirror.Remote_Path;
+               Machine   := Machine_Descriptor_Record
+                 (Get_Machine_Descriptor (Servers (To).Nickname.all).all);
             else
                From_Path := Mirror.Remote_Path;
                To_Path   := Mirror.Local_Path;
+               Machine   := Machine_Descriptor_Record
+                 (Get_Machine_Descriptor (Servers (From).Nickname.all).all);
             end if;
 
             declare
@@ -2338,18 +2384,19 @@ package body GPS.Kernel.Remote is
                To_Name   : constant String := Get_Nickname (To);
                Data      : aliased Rsync_Hooks_Args
                  := (Hooks_Data with
-                     Tool_Name_Length => Tool_Name'Length,
+                     Tool_Name_Length => Machine.Rsync_Func.all'Length,
                      Src_Name_Length  => From_Name'Length,
                      Dest_Name_Length => To_Name'Length,
                      Queue_Id_Length  => Queue_Id'Length,
                      Src_Path_Length  => From_Path'Length,
                      Dest_Path_Length => To_Path'Length,
-                     Tool_Name        => Tool_Name,
+                     Tool_Name        => Machine.Rsync_Func.all,
                      Src_Name         => From_Name,
                      Dest_Name        => To_Name,
                      Queue_Id         => Queue_Id,
                      Src_Path         => From_Path.all,
-                     Dest_Path        => To_Path.all);
+                     Dest_Path        => To_Path.all,
+                     Sync_Deleted     => Sync_Deleted);
 
             begin
                Trace (Me, "run sync hook for " & Data.Src_Path);
