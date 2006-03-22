@@ -43,6 +43,8 @@ package body Ada_Module is
    Ada_Indentation_Level     : Param_Spec_Int;
    Ada_Continuation_Level    : Param_Spec_Int;
    Ada_Declaration_Level     : Param_Spec_Int;
+   Ada_Conditional_Level     : Param_Spec_Int;
+   Ada_Record_Level          : Param_Spec_Int;
    Ada_Indent_Case_Extra     : Param_Spec_Enum;
    Ada_Casing_Policy         : Param_Spec_Enum;
    Ada_Reserved_Casing       : Param_Spec_Enum;
@@ -108,7 +110,10 @@ package body Ada_Module is
               Integer (Get_Pref (Ada_Continuation_Level)),
             Indent_Decl         =>
               Integer (Get_Pref (Ada_Declaration_Level)),
-            Indent_Conditional  => 0,
+            Indent_Conditional  =>
+              Integer (Get_Pref (Ada_Conditional_Level)),
+            Indent_Record       =>
+              Integer (Get_Pref (Ada_Record_Level)),
             Tab_Width           => Integer (Get_Pref (Tab_Width)),
             Indent_Case_Extra   => Indent_Style'Val
               (Get_Pref (Ada_Indent_Case_Extra)),
@@ -196,6 +201,30 @@ package body Ada_Module is
            Nick    => -"Declaration lines"));
       Register_Property
         (Kernel, Param_Spec (Ada_Declaration_Level), -"Editor:Ada");
+
+      Ada_Conditional_Level := Param_Spec_Int
+        (Gnew_Int
+          (Name    => "Ada-Conditional-Level",
+           Minimum => 0,
+           Maximum => 9,
+           Default => 0,
+           Blurb   =>
+             -"The number of extra spaces for multiple line conditionals",
+           Nick    => -"Conditional continuation lines"));
+      Register_Property
+        (Kernel, Param_Spec (Ada_Conditional_Level), -"Editor:Ada");
+
+      Ada_Record_Level := Param_Spec_Int
+        (Gnew_Int
+          (Name    => "Ada-Record-Level",
+           Minimum => 0,
+           Maximum => 9,
+           Default => 3,
+           Blurb   =>
+             -"The number of extra spaces for multiple line record types",
+           Nick    => -"Record indentation"));
+      Register_Property
+        (Kernel, Param_Spec (Ada_Record_Level), -"Editor:Ada");
 
       Ada_Indent_Case_Extra := Param_Spec_Enum
         (Indent_Properties.Gnew_Enum
