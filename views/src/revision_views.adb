@@ -20,18 +20,24 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings; use Ada.Strings.Unbounded;
+with Ada.Unchecked_Conversion;
+with System;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
+with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
+use Gtk.Cell_Renderer.Cell_Renderer_List;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -51,9 +57,9 @@ with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 
---  with GPS.Kernel.Console; use GPS.Kernel.Console;
-
 package body Revision_Views is
+
+   Root_Color_Name : constant String := "blue";
 
    Revision_Column : constant := 0;
    Author_Column   : constant := 1;
@@ -61,6 +67,7 @@ package body Revision_Views is
    Date_Column     : constant := 3;
    Log_Column      : constant := 4;
    Link_Column     : constant := 5;
+   Color_Column    : constant := 6;
 
    package SL renames String_List_Utils.String_List;
 
@@ -81,6 +88,7 @@ package body Revision_Views is
       Mode         : Mode_Kind := Link;
       Syms         : String_Hash_Table.HTable;
       File         : Virtual_File;
+      Root_Color   : Gdk_Color;
    end record;
 
    type Revision_View is access all Revision_View_Record'Class;
@@ -460,10 +468,14 @@ package body Revision_Views is
       Iter : Gtk_Tree_Iter;
       Line : Line_Data)
    is
+      function To_Proxy is new
+        Ada.Unchecked_Conversion (System.Address, C_Proxy);
+
       Child : Gtk_Tree_Iter;
       Info  : Unbounded_String;
       --  The info column contains the date plus tags/branches
    begin
+      Set (View.Model, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
       Set (View.Model, Iter, Revision_Column, To_String (Line.Log.Revision));
       Set (View.Model, Iter, Author_Column, To_String (Line.Log.Author));
       Set (View.Model, Iter, Date_Column, To_String (Line.Log.Date));
@@ -474,6 +486,7 @@ package body Revision_Views is
       --  Create log entry
 
       Append (View.Model, Child, Iter);
+      Set (View.Model, Child, Color_Column, C_Proxy'(null));
       Set (View.Model, Child, Info_Column, To_String (Line.Log.Log));
 
       --  Tags & Branches
@@ -537,10 +550,29 @@ package body Revision_Views is
      (View   : access Revision_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Names : GNAT.OS_Lib.String_List :=
-        (1 => new String'(-"Revision"),
-         2 => new String'(-"Author"),
-         3 => new String'(-"Date / Log"));
+      procedure Set_Attribute (Col : Gint);
+      --  Set column attribute
+
+      -------------------
+      -- Set_Attribute --
+      -------------------
+
+      procedure Set_Attribute (Col : Gint) is
+         List : Cell_Renderer_List.Glist;
+      begin
+         List := Get_Cell_Renderers (Get_Column (View.Tree, Col));
+         Add_Attribute
+           (Get_Column (View.Tree, Col),
+            Cell_Renderer_List.Get_Data (List),
+            "foreground_gdk", Color_Column);
+         Free (List);
+      end Set_Attribute;
+
+      Names   : GNAT.OS_Lib.String_List :=
+                  (1 => new String'(-"Revision"),
+                   2 => new String'(-"Author"),
+                   3 => new String'(-"Date / Log"));
+      Success : Boolean;
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Scrolled_Window.Initialize (View);
@@ -552,12 +584,21 @@ package body Revision_Views is
                                 Info_Column     => GType_String,
                                 Date_Column     => GType_String,
                                 Log_Column      => GType_String,
-                                Link_Column     => GType_Boolean),
+                                Link_Column     => GType_Boolean,
+                                Color_Column    => Gdk_Color_Type),
          Column_Names       => Names,
          Show_Column_Titles => True,
          Sortable_Columns   => True,
          Initial_Sort_On    => Date_Column + 1);
       Add (View, View.Tree);
+
+      View.Root_Color := Parse (Root_Color_Name);
+      Alloc_Color
+        (Get_Default_Colormap, View.Root_Color, False, True, Success);
+
+      Set_Attribute (Revision_Column);
+      Set_Attribute (Author_Column);
+      Set_Attribute (Info_Column);
 
       View.Model := Gtk_Tree_Store (Get_Model (View.Tree));
 
