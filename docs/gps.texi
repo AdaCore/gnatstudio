@@ -8396,6 +8396,29 @@ then
 
 @item Record indentation
 @cindex record indentation
+The number of extra spaces for record definitions, when the @code{record}
+keyword is on its own line.
+
+For example, when this preference is set to 3 (the default), the
+following sample will be indented as:
+
+@cindex example
+@smallexample
+type T is
+   record
+      F : Integer;
+   end record;
+@end smallexample
+
+When this preference is set to 1, this gives:
+
+@cindex example
+@smallexample
+type T is
+ record
+    F : Integer;
+ end record;
+@end smallexample
 
 @item Case indentation
 @cindex case indentation
