@@ -80,7 +80,7 @@ package body Remote_Sync_Module is
 
       Add_Hook (Kernel, Rsync_Action_Hook,
                 Wrapper (On_Rsync_Hook'Access),
-                "remote_sync_module.rsync");
+                "rsync");
    end Register_Module;
 
    ---------------
@@ -134,9 +134,19 @@ package body Remote_Sync_Module is
            := Clone (Rsync_Module.Rsync_Args.all);
       begin
          if Transport_Arg /= null then
-            return Rsync_Args & Transport_Arg & Src_Path & Dest_Path;
+            if Rsync_Data.Sync_Deleted then
+               return (1 => new String'("--delete")) &
+                      Rsync_Args & Transport_Arg & Src_Path & Dest_Path;
+            else
+               return Rsync_Args & Transport_Arg & Src_Path & Dest_Path;
+            end if;
          else
-            return Rsync_Args & Src_Path & Dest_Path;
+            if Rsync_Data.Sync_Deleted then
+               return (1 => new String'("--delete")) &
+                      Rsync_Args & Src_Path & Dest_Path;
+            else
+               return Rsync_Args & Src_Path & Dest_Path;
+            end if;
          end if;
       end Build_Arg;
    begin
@@ -160,17 +170,31 @@ package body Remote_Sync_Module is
            (To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
          Dest_FS   := new Filesystem_Record'Class'
            (Get_Filesystem (Rsync_Data.Dest_Name));
-         Dest_Path := new String'
-           (Machine.Network_Name.all & ":" &
-            To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
+         if Machine.User_Name.all /= "" then
+            Dest_Path := new String'
+              (Machine.User_Name.all & "@" &
+               Machine.Network_Name.all & ":" &
+               To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
+         else
+            Dest_Path := new String'
+              (Machine.Network_Name.all & ":" &
+               To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
+         end if;
       else
          --  Remote src machine, local dest machine
          Machine := Get_Machine_Descriptor (Rsync_Data.Src_Name);
          Src_FS    := new Filesystem_Record'Class'
            (Get_Filesystem (Rsync_Data.Src_Name));
-         Src_Path  := new String'
-           (Machine.Network_Name.all & ":" &
-            To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
+         if Machine.User_Name.all /= "" then
+            Src_Path  := new String'
+              (Machine.User_Name.all & "@" &
+               Machine.Network_Name.all & ":" &
+               To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
+         else
+            Src_Path  := new String'
+              (Machine.Network_Name.all & ":" &
+               To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
+         end if;
          Dest_FS   := new Filesystem_Record'Class'(Get_Local_Filesystem);
          Dest_Path := new String'
            (To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
