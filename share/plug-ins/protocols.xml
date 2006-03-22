@@ -36,7 +36,7 @@
   <!-- RSYNC CONFIGURATION -->
 
   <rsync_configuration>
-    <arguments>-az --progress --delete --exclude *.o</arguments>
+    <arguments>-az --progress --exclude *.o</arguments>
   </rsync_configuration>
 
 </GPS>
