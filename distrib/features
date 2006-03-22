@@ -21,7 +21,7 @@ F321-004 Activities can be re-opened (2006-03-21)
 
   Keyword: VCS
 
-F316-006 Automatic fix for the redundant with clause in body warning
+F316-006 Automatic fix for redundant with clause in body warning (2006-03-20)
 
   After a build GPS recognizes the 'redundant with clause in body' warning
   as fixable. The obvious correction is the removal of the corresponding 
@@ -67,7 +67,7 @@ F128-002 VCS supports directories (2006-02-07)
 
   Keywords: VCS
 
-F104-029 New "record indentation" preference
+F104-029 New "record indentation" preference (2006-03-22)
 
   A new preference to refine how Ada sources are indented is added, to
   define how much extra spaces are used to indent "record" type definitions,
@@ -104,7 +104,7 @@ EB30-005 Saving the contents of the Data Window (2005-11-30)
 
   Keywords: Debugger
 
-EB29-004 Editing project with no sources
+EB29-004 Editing project with no sources (2006-12-09)
 
   When you open a project that contains no sources for one of its languages,
   a warning is displayed in the Messages window. Editing the project properties
@@ -113,7 +113,7 @@ EB29-004 Editing project with no sources
 
   Keywords: Project
 
-EB28-010 New "conditional continuation lines" preference
+EB28-010 New "conditional continuation lines" preference (2006-03-22)
 
   A new preference to refine how Ada sources are indented is added, to
   define how multiple line parenthesized conditionals are indented, e.g:
