@@ -138,10 +138,7 @@ package body Doc_Utils is
 
    begin
       if not Active (Extract_Me) then
-         if Active (Me) then
-            Trace (Me, "Comment extraction disabled");
-         end if;
-
+         Trace (Me, "Comment extraction disabled");
          return "";
       end if;
 
