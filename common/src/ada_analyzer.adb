@@ -677,32 +677,34 @@ package body Ada_Analyzer is
       pragma Warnings (Off, Default_Extended);
       --  Use default values to initialize this pseudo constant.
 
-      Indent_Level       : Natural renames Indent_Params.Indent_Level;
-      Indent_Continue    : Natural renames Indent_Params.Indent_Continue;
-      Indent_Decl        : Natural renames Indent_Params.Indent_Decl;
-      Indent_With        : constant := 5;
-      Indent_Use         : constant := 4;
-      Indent_When        : constant := 5;
-      Stop_On_Blank_Line : constant Boolean := True;
-      Indent_Record      : Natural renames Indent_Params.Indent_Level;
-      Indent_Case_Extra  : Indent_Style renames
+      Indent_Level        : Natural renames Indent_Params.Indent_Level;
+      Indent_Continue     : Natural renames Indent_Params.Indent_Continue;
+      Indent_Decl         : Natural renames Indent_Params.Indent_Decl;
+      Indent_With         : constant := 5;
+      Indent_Use          : constant := 4;
+      Indent_When         : constant := 5;
+      Indent_Comments     : constant Boolean := True;
+      Stick_Comments      : constant Boolean := False;
+      Stop_On_Blank_Line  : constant Boolean := True;
+      Indent_Record       : Natural renames Indent_Params.Indent_Record;
+      Indent_Case_Extra   : Indent_Style renames
         Indent_Params.Indent_Case_Extra;
-      Indent_Conditional : Natural renames Indent_Params.Indent_Conditional;
-      Reserved_Casing    : Casing_Type renames Indent_Params.Reserved_Casing;
-      Ident_Casing       : Casing_Type renames Indent_Params.Ident_Casing;
-      Use_Tabs           : Boolean renames Indent_Params.Use_Tabs;
-      Tab_Width          : Natural renames Indent_Params.Tab_Width;
-      Format_Operators   : constant Boolean :=
-                             Format and then Indent_Params.Format_Operators;
-      Align_On_Colons    : constant Boolean :=
-                             Format and then Indent_Params.Align_On_Colons;
-      Align_On_Arrows    : constant Boolean :=
-                             Format and then Indent_Params.Align_On_Arrows;
+      Indent_Conditional  : Natural renames Indent_Params.Indent_Conditional;
+      Reserved_Casing     : Casing_Type renames Indent_Params.Reserved_Casing;
+      Ident_Casing        : Casing_Type renames Indent_Params.Ident_Casing;
+      Use_Tabs            : Boolean renames Indent_Params.Use_Tabs;
+      Tab_Width           : Natural renames Indent_Params.Tab_Width;
+      Format_Operators    : constant Boolean :=
+                              Format and then Indent_Params.Format_Operators;
+      Align_On_Colons     : constant Boolean :=
+                              Format and then Indent_Params.Align_On_Colons;
+      Align_On_Arrows     : constant Boolean :=
+                              Format and then Indent_Params.Align_On_Arrows;
       Align_Decl_On_Colon : constant Boolean :=
                               Format
                                 and then Indent_Params.Align_Decl_On_Colon;
 
-      Buffer_Last        : constant Natural := Buffer'Last;
+      Buffer_Last         : constant Natural := Buffer'Last;
 
       ---------------
       -- Variables --
@@ -2584,9 +2586,20 @@ package body Ada_Analyzer is
          procedure Skip_Comments is
             Prev_Start_Line : Natural;
             Last            : Natural;
-            Ref_Indent      : Natural := Num_Spaces;
+            Ref_Indent      : Natural;
 
          begin
+            Ref_Indent := Num_Spaces;
+
+            if not Indent_Done
+              and then Stick_Comments
+              and then (Prev_Token = Tok_Is or else Prev_Token = Tok_Record)
+              and then Start_Of_Line > Buffer'First + 2
+              and then Buffer (Start_Of_Line - 2) /= ASCII.LF
+            then
+               Ref_Indent := Ref_Indent - Indent_Level;
+            end if;
+
             while P < Buffer_Last
               and then Buffer (P) = '-'
               and then Buffer (P + 1) = '-'
@@ -2603,7 +2616,9 @@ package body Ada_Analyzer is
                --  begin
                --     --  comment
 
-               Do_Indent (P, Ref_Indent);
+               if Indent_Comments then
+                  Do_Indent (P, Ref_Indent);
+               end if;
 
                --  Keep track of the indentation of the first comment line,
                --  in case we're doing incremental reformatting: in this case,
@@ -2660,7 +2675,7 @@ package body Ada_Analyzer is
                Indent_Done := False;
                Padding     := 0;
 
-               if Buffer (P) = ASCII.LF then
+               if Indent_Comments and then Buffer (P) = ASCII.LF then
                   --  Indent last buffer line before exiting, to position
                   --  the cursor at the right location
 
