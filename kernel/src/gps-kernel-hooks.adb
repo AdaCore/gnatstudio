@@ -622,6 +622,47 @@ package body GPS.Kernel.Hooks is
       end if;
    end Remove_Hook;
 
+   ------------------------
+   -- Get_Hook_Func_List --
+   ------------------------
+
+   function Get_Hook_Func_List
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Hook   : String) return String_List
+   is
+      Info    : constant Hook_Description_Access :=
+                  Hook_Description_Access (Get (Kernel.Hooks, Hook));
+      N       : Hooks_List.List_Node := Hooks_List.Null_Node;
+      N_Funcs : Natural;
+      F_Index : Natural;
+   begin
+      if Info /= null then
+         N := Hooks_List.First (Info.Funcs);
+         N_Funcs := 0;
+         while N /= Null_Node loop
+            N_Funcs := N_Funcs + 1;
+            N := Next (N);
+         end loop;
+
+         declare
+            Ret : String_List (1 .. N_Funcs);
+         begin
+            F_Index := 1;
+            N := Hooks_List.First (Info.Funcs);
+
+            while N /= Null_Node loop
+               Ret (F_Index) := Hooks_List.Data (N).Name;
+               F_Index := F_Index + 1;
+               N := Next (N);
+            end loop;
+
+            return Ret;
+         end;
+      else
+         return (1 .. 0 => null);
+      end if;
+   end Get_Hook_Func_List;
+
    -------------
    -- Execute --
    -------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,7 +20,7 @@
 
 --  This package implements a general support for hooks.
 --  See the GPS documentation on how to use hooks from the scripting languages.
-
+with GNAT.OS_Lib;
 with GPS.Kernel.Scripts;
 with Glib.Object;
 
@@ -141,6 +141,11 @@ package GPS.Kernel.Hooks is
       Hook   : String;
       Func   : access GPS.Kernel.Hook_Function_Record'Class);
    --  Remove Func from the list of functions calle when the hook is run.
+
+   function Get_Hook_Func_List
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Hook   : String) return GNAT.OS_Lib.String_List;
+   --  Return the description of the functions attached to the specified hook.
 
    --------------------------------------
    -- Hook functions with no arguments --
