@@ -32,7 +32,8 @@ with Language_Handlers; use Language_Handlers;
 
 package body Doc_Utils is
 
-   Me : constant Debug_Handle := Create ("Doc_Utils");
+   Me         : constant Debug_Handle := Create ("Doc_Utils");
+   Extract_Me : constant Debug_Handle := Create ("COMMENT_EXTRACTION");
 
    procedure Get_Documentation_Before
      (Context       : Language_Context;
@@ -136,6 +137,14 @@ package body Doc_Utils is
       Column             : Basic_Types.Character_Offset_Type;
 
    begin
+      if not Active (Extract_Me) then
+         if Active (Me) then
+            Trace (Me, "Comment extraction disabled");
+         end if;
+
+         return "";
+      end if;
+
       if Lang = null then
          if Active (Me) then
             Trace (Me, "Get_Documentation language unknown for "
