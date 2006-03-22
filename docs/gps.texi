@@ -8369,6 +8369,34 @@ variable1,
     variable3 : Integer;
 @end smallexample
 
+@item Conditional continuation lines
+@cindex conditional line
+The number of extra spaces used to indent multiple lines conditionals
+within parentheses.
+
+For example, when this preference is set to 1 (the default), continuation
+lines are indented based on the previous parenthesis plus one space:
+
+@cindex example
+@smallexample
+if (Condition1
+    and then Condition2)
+then
+@end smallexample
+
+When this preference is set to 3, this gives:
+
+@cindex example
+@smallexample
+if (Condition1
+      and then Condition2)
+then
+@end smallexample
+
+
+@item Record indentation
+@cindex record indentation
+
 @item Case indentation
 @cindex case indentation
 Whether GPS should indent case statements with an extra level, as used in the
