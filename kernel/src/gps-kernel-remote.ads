@@ -60,8 +60,11 @@ package GPS.Kernel.Remote is
    procedure Synchronize (Kernel        : Kernel_Handle;
                           From          : Server_Type;
                           To            : Server_Type;
-                          Queue_Id      : String);
+                          Queue_Id      : String;
+                          Sync_Deleted  : Boolean);
    --  Forces a file system synchronisation between the two servers.
+   --  If Sync_Deleted is set, then deleted files in src server will be
+   --  deleted on To server.
 
    ---------------------------------
    -- Error display when spawning --
@@ -115,12 +118,20 @@ package GPS.Kernel.Remote is
      (Tool_Name_Length, Src_Name_Length, Dest_Name_Length, Queue_Id_Length,
       Src_Path_Length, Dest_Path_Length : Natural)
      is new Hooks_Data with record
-        Tool_Name : String (1 .. Tool_Name_Length);
-        Src_Name  : String (1 .. Src_Name_Length);
-        Dest_Name : String (1 .. Dest_Name_Length);
-        Queue_Id  : String (1 .. Queue_Id_Length);
-        Src_Path  : String (1 .. Src_Path_Length);
-        Dest_Path : String (1 .. Dest_Path_Length);
+      Sync_Deleted : Boolean;
+      --  Delete dest files if local files were deleted
+      Tool_Name    : String (1 .. Tool_Name_Length);
+      --  What hook function shall perform the action
+      Src_Name     : String (1 .. Src_Name_Length);
+      --  Source server nickname
+      Dest_Name    : String (1 .. Dest_Name_Length);
+      --  Destination server nickname
+      Queue_Id     : String (1 .. Queue_Id_Length);
+      --  Queue_Id used to enqueue the sync command
+      Src_Path     : String (1 .. Src_Path_Length);
+      --  Source path
+      Dest_Path    : String (1 .. Dest_Path_Length);
+      --  Destination path
      end record;
 
    function Create_Callback_Data
@@ -128,6 +139,7 @@ package GPS.Kernel.Remote is
       Hook_Name : String;
       Data      : access Rsync_Hooks_Args)
       return GPS.Kernel.Scripts.Callback_Data_Access;
+   --  See inherited for documentation
 
    --------------------------------
    -- Server Config Changed Hook --
@@ -140,8 +152,10 @@ package GPS.Kernel.Remote is
    type Server_Config_Changed_Hooks_Args
      (Nickname_Length : Natural)
      is new Hooks_Data with record
-        Server   : Server_Type;
-        Nickname : String (1 .. Nickname_Length);
+      Server   : Server_Type;
+      --  The server type modified
+      Nickname : String (1 .. Nickname_Length);
+      --  The new server nickname attached to it
      end record;
 
    function Create_Callback_Data
@@ -149,6 +163,7 @@ package GPS.Kernel.Remote is
       Hook_Name : String;
       Data      : access Server_Config_Changed_Hooks_Args)
       return GPS.Kernel.Scripts.Callback_Data_Access;
+   --  See inherited for documentation
 
    ------------------------------
    -- Server List Changed Hook --
