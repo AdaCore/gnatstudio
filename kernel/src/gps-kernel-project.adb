@@ -84,7 +84,8 @@ package body GPS.Kernel.Project is
          if Path /= null then
             Compute_Predefined_Paths
               (Handle.Registry.all,
-               Gnatls_Path  => Path.all,
+               Gnatls_Path  =>
+                 Normalize_Pathname (Path.all, Resolve_Links => False),
                Gnatls_Args  => Gnatls_Args,
                GNAT_Version => GNAT_Version'Unchecked_Access);
             Handle.GNAT_Version := GNAT_Version;
