@@ -19,6 +19,8 @@ F321-004 Activities can be re-opened (2006-03-21)
   A committed (closed) activity can now be re-opened for complementary
   work like adding some files to it for example.
 
+  Keyword: VCS
+
 F316-006 Automatic fix for the redundant with clause in body warning
 
   After a build GPS recognizes the 'redundant with clause in body' warning
@@ -65,6 +67,19 @@ F128-002 VCS supports directories (2006-02-07)
 
   Keywords: VCS
 
+F104-029 New "record indentation" preference
+
+  A new preference to refine how Ada sources are indented is added, to
+  define how much extra spaces are used to indent "record" type definitions,
+  e.g:
+
+  type T is
+    record
+       F : Integer;
+    end record;
+
+  Keyword: Indentation
+
 EC29-004 GPS Activities improvement (2006-01-04)
 
   A VCS activity is now closed if all the files have been properly committed.
@@ -97,6 +112,17 @@ EB29-004 Editing project with no sources
   potential errors in the project
 
   Keywords: Project
+
+EB28-010 New "conditional continuation lines" preference
+
+  A new preference to refine how Ada sources are indented is added, to
+  define how multiple line parenthesized conditionals are indented, e.g:
+
+  if (Condition1
+        and then Condition2)
+  then
+
+  Keyword: Indentation
 
 EB25-007 Full shell/python interface for accessing the debugger (2005-11-25)
 
