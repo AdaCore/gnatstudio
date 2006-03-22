@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.0.0
 
+- F322-010 Cannot open GNAT run-time files under Windows
+  Problem:    Under Windows, using GPS 3.1.3, if you install GPS and GNAT
+              under the same directory, GPS is not be able to display the
+              GNAT version and find GNAT run-time files.
+  Workaround: Install GPS under another location, or specify gnatls.exe as
+              the Gnatlist project property.
+
 - F321-010 Using the file selector on Windows changes the working directory
   Problem:    If opening a file in a different directory than the working
               directory, doing so with the Windows' file selector changes the
