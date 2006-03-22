@@ -295,6 +295,7 @@ package Language is
       Indent_Continue     : Natural;
       Indent_Decl         : Natural;
       Indent_Conditional  : Natural;
+      Indent_Record       : Natural;
       Tab_Width           : Natural;
       Indent_Case_Extra   : Indent_Style;
       Casing_Policy       : Case_Handling.Casing_Policy;
@@ -320,6 +321,7 @@ package Language is
    --                      declaration.
    --  Indent_Conditional  extra number of spaces when indenting multi-line
    --                      conditionals.
+   --  Indent_Record       extra number of spaces when indenting record types
    --  Tab_Width           number of spaces for a tab character.
    --  Indent_Case_Extra   Whether to add extra indent level for case
    --                      statements
@@ -338,6 +340,7 @@ package Language is
       Indent_Continue     => 2,
       Indent_Decl         => 0,
       Indent_Conditional  => 0,
+      Indent_Record       => 8,
       Tab_Width           => 8,
       Indent_Case_Extra   => Automatic,
       Casing_Policy       => Case_Handling.Disabled,
