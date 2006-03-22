@@ -44,6 +44,7 @@ UNEXPECTED_EXCEPTIONS=yes
 
 --  Change behavior of GPS. These debug handle do not add extra logs
 
+COMMENT_EXTRACTION                = yes
 EXPLORERS.TOOLTIPS                = no
 ENTITIES.FORCE_UNIQUE_REF         = yes
 ENTITIES.QUERIES_FILE_GRANULARITY = yes
