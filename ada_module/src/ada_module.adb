@@ -207,7 +207,7 @@ package body Ada_Module is
           (Name    => "Ada-Conditional-Level",
            Minimum => 0,
            Maximum => 9,
-           Default => 0,
+           Default => 1,
            Blurb   =>
              -"The number of extra spaces for multiple line conditionals",
            Nick    => -"Conditional continuation lines"));
