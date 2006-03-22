@@ -1235,12 +1235,12 @@ package body GPS.Location_View is
    ----------------------
 
    procedure Set_Column_Types (View : access Location_View_Record'Class) is
-      Tree          : constant Tree_View := View.Tree;
-      Col           : Gtk_Tree_View_Column renames View.Sorting_Column;
-      Text_Rend     : Gtk_Cell_Renderer_Text;
-      Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
+      Tree        : constant Tree_View := View.Tree;
+      Col         : Gtk_Tree_View_Column renames View.Sorting_Column;
+      Text_Rend   : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
 
-      Dummy         : Gint;
+      Dummy       : Gint;
       pragma Unreferenced (Dummy);
 
    begin
@@ -1939,10 +1939,9 @@ package body GPS.Location_View is
 
    function Get_Or_Create_Location_View_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True)
-      return MDI_Child
+      Allow_Creation : Boolean := True) return MDI_Child
    is
-      Child   : GPS_MDI_Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+      Child     : GPS_MDI_Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Location_View_Record'Tag));
       Locations : Location_View;
    begin
