@@ -632,6 +632,7 @@ package GPS.Kernel is
    Contextual_Menu_Close_Hook    : constant String := "contextual_menu_close";
 
    --  Hooks with File_Hooks_Args argument
+   Project_Changing_Hook         : constant String := "project_changing";
    File_Edited_Hook              : constant String := "file_edited";
    File_Saved_Hook               : constant String := "file_saved";
    File_Closed_Hook              : constant String := "file_closed";
