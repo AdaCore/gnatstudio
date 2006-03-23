@@ -173,7 +173,7 @@ package body GNATbench.JNI_Functions is
         Indent_Parameters :=
           (Indent_Level        => 3,
            Indent_Continue     => 2,
-           Indent_Conditional  => 0,
+           Indent_Conditional  => 1,
            Indent_Record       => 3,
            Indent_Decl         => 0,
            Tab_Width           => 8,
