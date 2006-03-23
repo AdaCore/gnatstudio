@@ -2018,8 +2018,8 @@ package body GPS.Kernel.Remote is
       end loop;
 
       if not Is_Local (D.File) then
-         Local_File := Create (To_Local (Full_Name (D.File).all,
-                                         Get_Host (D.File)));
+         Local_File :=
+           Create (To_Local (Full_Name (D.File).all, Get_Host (D.File)));
       else
          Local_File := D.File;
       end if;
@@ -2061,15 +2061,18 @@ package body GPS.Kernel.Remote is
       User_Prompt_Ptrn          : String_Ptr;
       Password_Prompt_Ptrn      : String_Ptr;
       Extra_Ptrn_Length         : Natural;
+
    begin
       if Node.Tag.all = "remote_machine_descriptor" then
          Trace (Me, "Customize: 'remote_machine_descriptor'");
          Parse_Remote_Machine_Descriptor_Node
            (Module.Kernel, Node, System_Defined);
+
       elsif Node.Tag.all = "remote_path_config" then
          Trace (Me, "Customize: 'remote_path_config'");
          Parse_Remote_Path_Node
            (Module.Kernel, Node, System_Defined);
+
       elsif Node.Tag.all = "remote_connection_config" then
          Trace (Me, "Initialize_Remote_Config: 'remote_connection_config'");
 
@@ -2115,10 +2118,11 @@ package body GPS.Kernel.Remote is
             Extra_Ptrns : Extra_Prompts (1 .. Extra_Ptrn_Length);
             Auto_Answer : Boolean;
             Str_Access  : String_Ptr;
-         begin
 
+         begin
             Child := Node.Child;
             Extra_Ptrn_Length := 0;
+
             while Child /= null loop
                if Child.Tag.all = "extra_ptrn" then
                   Extra_Ptrn_Length := Extra_Ptrn_Length + 1;
@@ -2187,6 +2191,7 @@ package body GPS.Kernel.Remote is
    begin
       --  If From and To are the same machine (and no unix path translation is
       --  needed), just return Path
+
       if Is_Local (To) then
          if Unix_Style then
             return To_Unix (Get_Local_Filesystem, Path);
@@ -2196,7 +2201,9 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Search for mirror path in 'To' config
+
       Path_List_Item := Main_Paths_Table;
+
       while Path_List_Item /= null loop
          if Path_List_Item.Nickname.all = Servers (To).Nickname.all then
             Mirror := Path_List_Item.Path_List;
@@ -2209,7 +2216,8 @@ package body GPS.Kernel.Remote is
       while Mirror /= null loop
          if Is_Subtree (Get_Local_Filesystem,
                         Mirror.Local_Path.all,
-                        Path) then
+                        Path)
+         then
             Path_From := Mirror.Local_Path;
             Path_To   := Mirror.Remote_Path;
             exit;
@@ -2219,12 +2227,14 @@ package body GPS.Kernel.Remote is
       end loop;
 
       if Path_From = null or Path_To = null then
-         --  Not configured mirror path.
+         --  Not configured mirror path
+
          return Path;
       end if;
 
       --  At this point, we have the from and to moint points. Let's translate
       --  the path
+
       declare
          To_Filesystem : Filesystem_Record'Class := Get_Filesystem (To);
          U_Path     : constant String := To_Unix (Get_Local_Filesystem,
@@ -2233,8 +2243,9 @@ package body GPS.Kernel.Remote is
          U_Frompath : constant String := To_Unix (Get_Local_Filesystem,
                                                   Path_From.all);
          --  The local root dir, in unix style
-         U_Subpath  : constant String
-           := U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
+         U_Subpath  : constant String :=
+           U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
+
       begin
          if Unix_Style then
             return To_Unix (To_Filesystem, Path_To.all) & U_Subpath;
@@ -2250,9 +2261,7 @@ package body GPS.Kernel.Remote is
    -- To_Local --
    --------------
 
-   function To_Local (Path : String;
-                      From : Server_Type) return String
-   is
+   function To_Local (Path : String; From : Server_Type) return String is
    begin
       return To_Local (Path, Servers (From).Nickname.all);
    end To_Local;
@@ -2261,25 +2270,27 @@ package body GPS.Kernel.Remote is
    -- To_Local --
    --------------
 
-   function To_Local (Path : String;
-                      From : String) return String
-   is
+   function To_Local (Path : String; From : String) return String is
       Path_From       : String_Access;
       Path_To         : String_Access;
       Mirror          : Mirror_Path_Access;
       Path_List_Item  : Mirrors_List_Access;
+
    begin
       if Active (Me) then
          Trace (Me, "To_Local: " & Path & " on server " & From);
       end if;
 
       --  If From and To are the same machine, just return Path
+
       if From = "" then
          return Path;
       end if;
 
       --  Search for mirror path in 'From' config
+
       Path_List_Item := Main_Paths_Table;
+
       while Path_List_Item /= null loop
          if Path_List_Item.Nickname.all = From then
             Mirror := Path_List_Item.Path_List;
@@ -2290,9 +2301,9 @@ package body GPS.Kernel.Remote is
       end loop;
 
       while Mirror /= null loop
-         if Is_Subtree (Get_Filesystem (From),
-                        Mirror.Remote_Path.all,
-                        Path) then
+         if Is_Subtree
+           (Get_Filesystem (From), Mirror.Remote_Path.all, Path)
+         then
             Path_To   := Mirror.Local_Path;
             Path_From := Mirror.Remote_Path;
             exit;
@@ -2302,7 +2313,8 @@ package body GPS.Kernel.Remote is
       end loop;
 
       if Path_From = null or Path_To = null then
-         --  Not configured mirror path.
+         --  Not configured mirror path
+
          return Path;
       end if;
 
@@ -2313,18 +2325,21 @@ package body GPS.Kernel.Remote is
 
       --  At this point, we have the from and to moint points. Let's translate
       --  the path
+
       declare
          FS         : Filesystem_Record'Class := Get_Filesystem (From);
          U_Path     : constant String := To_Unix (FS, Path);
          --  The input path in unix style
          U_Frompath : constant String := To_Unix (FS, Path_From.all);
          --  The local root dir, in unix style
-         U_Subpath  : constant String
-           := U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
+         U_Subpath  : constant String :=
+           U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
+
       begin
-         return Concat (Get_Local_Filesystem,
-                        Path_To.all,
-                        From_Unix (Get_Local_Filesystem, U_Subpath));
+         return Concat
+           (Get_Local_Filesystem,
+            Path_To.all,
+            From_Unix (Get_Local_Filesystem, U_Subpath));
       end;
    end To_Local;
 
@@ -2335,8 +2350,7 @@ package body GPS.Kernel.Remote is
    function To_Unix_Path
      (Path       : String;
       Server     : Server_Type;
-      Use_Cygwin : Boolean := False) return String
-   is
+      Use_Cygwin : Boolean := False) return String is
    begin
       return To_Unix (Get_Filesystem (Server), Path, Use_Cygwin);
    end To_Unix_Path;
@@ -2350,21 +2364,22 @@ package body GPS.Kernel.Remote is
       Server   : Server_Type;
       Nickname : String)
    is
-      Data : aliased Server_Config_Changed_Hooks_Args
-        := (Hooks_Data with
-            Nickname_Length => Nickname'Length,
-            Server          => Server,
-            Nickname        => Nickname);
+      Data : aliased Server_Config_Changed_Hooks_Args :=
+               (Hooks_Data with
+                 Nickname_Length => Nickname'Length,
+                 Server          => Server,
+                 Nickname        => Nickname);
       Prop : Property_Access;
+
    begin
       Glib.Free (Servers (Server).Nickname);
 
       if Nickname = Local_Nickname or else Nickname = "" then
-         Servers (Server) := (Is_Local => True,
-                              Nickname => new String'(""));
+         Servers (Server) :=
+           (Is_Local => True, Nickname => new String'(""));
       else
-         Servers (Server) := (Is_Local => False,
-                              Nickname => new String'(Nickname));
+         Servers (Server) :=
+           (Is_Local => False, Nickname => new String'(Nickname));
       end if;
 
       Prop := new Servers_Property;
@@ -2422,8 +2437,8 @@ package body GPS.Kernel.Remote is
    -- Get_Filesystem --
    --------------------
 
-   function Get_Filesystem (Server : Server_Type)
-                            return Filesystem_Record'Class is
+   function Get_Filesystem
+     (Server : Server_Type) return Filesystem_Record'Class is
    begin
       if Is_Local (Server) then
          return Get_Local_Filesystem;
@@ -2467,12 +2482,15 @@ package body GPS.Kernel.Remote is
       elsif not Is_Local (To) then
          Server := To;
       else
-         --  Both servers local. No need to synchronize.
+         --  Both servers local. No need to synchronize
+
          return;
       end if;
 
       --  Search for mirror paths in 'To' config
+
       Path_List_Item := Main_Paths_Table;
+
       while Path_List_Item /= null loop
          if Path_List_Item.Nickname.all = Servers (Server).Nickname.all then
             Mirror := Path_List_Item.Path_List;
@@ -2489,6 +2507,7 @@ package body GPS.Kernel.Remote is
                To_Path   := Mirror.Remote_Path;
                Machine   := Machine_Descriptor_Record
                  (Get_Machine_Descriptor (Servers (To).Nickname.all).all);
+
             else
                From_Path := Mirror.Remote_Path;
                To_Path   := Mirror.Local_Path;
@@ -2499,22 +2518,22 @@ package body GPS.Kernel.Remote is
             declare
                From_Name : constant String := Get_Nickname (From);
                To_Name   : constant String := Get_Nickname (To);
-               Data      : aliased Rsync_Hooks_Args
-                 := (Hooks_Data with
-                     Tool_Name_Length => Machine.Rsync_Func.all'Length,
-                     Src_Name_Length  => From_Name'Length,
-                     Dest_Name_Length => To_Name'Length,
-                     Queue_Id_Length  => Queue_Id'Length,
-                     Src_Path_Length  => From_Path'Length,
-                     Dest_Path_Length => To_Path'Length,
-                     Tool_Name        => Machine.Rsync_Func.all,
-                     Src_Name         => From_Name,
-                     Dest_Name        => To_Name,
-                     Queue_Id         => Queue_Id,
-                     Src_Path         => From_Path.all,
-                     Dest_Path        => To_Path.all,
-                     Sync_Deleted     => Sync_Deleted,
-                     Synchronous      => Queue_Id = "");
+               Data      : aliased Rsync_Hooks_Args :=
+                 (Hooks_Data with
+                   Tool_Name_Length => Machine.Rsync_Func.all'Length,
+                   Src_Name_Length  => From_Name'Length,
+                   Dest_Name_Length => To_Name'Length,
+                   Queue_Id_Length  => Queue_Id'Length,
+                   Src_Path_Length  => From_Path'Length,
+                   Dest_Path_Length => To_Path'Length,
+                   Tool_Name        => Machine.Rsync_Func.all,
+                   Src_Name         => From_Name,
+                   Dest_Name        => To_Name,
+                   Queue_Id         => Queue_Id,
+                   Src_Path         => From_Path.all,
+                   Dest_Path        => To_Path.all,
+                   Sync_Deleted     => Sync_Deleted,
+                   Synchronous      => Queue_Id = "");
 
             begin
                Trace (Me, "run sync hook for " & Data.Src_Path);
@@ -2540,9 +2559,7 @@ package body GPS.Kernel.Remote is
       Message : String) is
    begin
       if Manager.Kernel /= null then
-         Insert (Manager.Kernel,
-                 Message,
-                 Mode => Error);
+         Insert (Manager.Kernel, Message, Mode => Error);
       end if;
    end On_Error;
 
@@ -2584,22 +2601,23 @@ package body GPS.Kernel.Remote is
          Full_Exec := Locate_Exec_On_Path (Exec);
 
          if Full_Exec = null then
-            On_Error (In_Use_Error_Manager,
-                      -"Could not locate executable on path: " & Exec);
+            On_Error
+              (In_Use_Error_Manager,
+               -"Could not locate executable on path: " & Exec);
             return null;
          end if;
 
          --  use Normalize_Pathname to prevent relative paths like
          --  ./my_prog. See F322-010 concerning problem with gnatls in this
          --  particular case.
-         Norm_Exec := new String'(Normalize_Pathname (Full_Exec.all,
-                                                      Resolve_Links => False));
+
+         Norm_Exec := new String'
+           (Normalize_Pathname (Full_Exec.all, Resolve_Links => False));
          Free (Full_Exec);
          return Norm_Exec;
       end Check_Exec;
 
-      Request_User : Request_User_Object
-        := (Main_Window => null);
+      Request_User : Request_User_Object := (Main_Window => null);
 
    begin
       Success := False;
@@ -2660,6 +2678,7 @@ package body GPS.Kernel.Remote is
 
          --  If using an external terminal, use Execute_Command preference
          --  ??? incompatible with gnat.expect.tty.remote...
+
          if Use_Ext_Terminal then
             declare
                Tmp_Args_1 : Argument_List_Access := Args;
@@ -2686,19 +2705,22 @@ package body GPS.Kernel.Remote is
          --  possible overflow)
 
          if L_Args /= null then
-            Non_Blocking_Spawn (Pd.all,
-                                L_Args (L_Args'First).all,
-                                L_Args (L_Args'First + 1 .. L_Args'Last) &
-                                Args.all,
-                                Buffer_Size => 0,
-                                Err_To_Out  => True);
+            Non_Blocking_Spawn
+              (Pd.all,
+               L_Args (L_Args'First).all,
+               L_Args (L_Args'First + 1 .. L_Args'Last) &
+               Args.all,
+               Buffer_Size => 0,
+               Err_To_Out  => True);
             Free (L_Args);
+
          else
-            Non_Blocking_Spawn (Pd.all,
-                                Args (Args'First).all,
-                                Args (Args'First + 1 .. Args'Last),
-                                Buffer_Size => 0,
-                                Err_To_Out  => True);
+            Non_Blocking_Spawn
+              (Pd.all,
+               Args (Args'First).all,
+               Args (Args'First + 1 .. Args'Last),
+               Buffer_Size => 0,
+               Err_To_Out  => True);
          end if;
 
          if Directory /= "" then
@@ -2708,19 +2730,19 @@ package body GPS.Kernel.Remote is
 
       else
          if Active (Me) then
-            Trace (Me, "Remote Spawning " &
-                   Argument_List_To_String (Args.all));
+            Trace
+              (Me, "Remote Spawning " & Argument_List_To_String (Args.all));
          end if;
 
          if Directory = "" then
-            Old_Dir := new String'
-              (To_Remote (Get_Current_Dir, Server));
+            Old_Dir := new String'(To_Remote (Get_Current_Dir, Server));
          else
             Old_Dir := new String'(Directory);
          end if;
 
          --  Set buffer_size to 0 for dynamically allocated buffer
          --  (prevents possible overflow)
+
          Remote_Spawn
            (Pd,
             Target_Nickname       => Servers (Server).Nickname.all,
@@ -2738,11 +2760,9 @@ package body GPS.Kernel.Remote is
    exception
       when E : Invalid_Process | Process_Died =>
          Success := False;
-
-         On_Error (In_Use_Error_Manager,
-                   -"Invalid command (" &
-                   Ada.Exceptions.Exception_Message (E) &
-                   ")");
+         On_Error
+           (In_Use_Error_Manager,
+            -"Invalid command (" & Ada.Exceptions.Exception_Message (E) & ")");
    end Spawn;
 
 end GPS.Kernel.Remote;
