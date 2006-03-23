@@ -718,7 +718,7 @@ package body GNAT.Expect.TTY.Remote is
       Args                  : GNAT.OS_Lib.Argument_List;
       Execution_Directory   : String := "";
       Err_To_Out            : Boolean := False;
-      Request_User_Instance : Request_User_Object'Class)
+      Request_User_Instance : Request_User_Object'Class := Default_Req_User)
    is
       Machine_Desc : Machine_Descriptor_Access;
       Res          : Expect_Match;
@@ -1050,6 +1050,11 @@ package body GNAT.Expect.TTY.Remote is
       else
          Status := 0;
       end if;
+   exception
+      when Process_Died =>
+         --  Session died
+         Descriptor.Machine.Sessions (Descriptor.Session_Nb).State := OFF;
+         Close (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd);
    end Close;
 
    -----------
