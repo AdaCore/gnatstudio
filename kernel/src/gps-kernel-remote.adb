@@ -2653,7 +2653,6 @@ package body GPS.Kernel.Remote is
 
       if Console /= null
         and then Show_Command
-        and then not Is_Local (Server)
       then
          if Is_Local (Server) then
             Insert (Console,
