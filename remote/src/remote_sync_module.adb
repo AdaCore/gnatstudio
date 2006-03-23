@@ -138,14 +138,16 @@ package body Remote_Sync_Module is
                return (1 => new String'("--delete")) &
                       Rsync_Args & Transport_Arg & Src_Path & Dest_Path;
             else
-               return Rsync_Args & Transport_Arg & Src_Path & Dest_Path;
+               return (1 => new String'("--update")) &
+                      Rsync_Args & Transport_Arg & Src_Path & Dest_Path;
             end if;
          else
             if Rsync_Data.Sync_Deleted then
                return (1 => new String'("--delete")) &
                       Rsync_Args & Src_Path & Dest_Path;
             else
-               return Rsync_Args & Src_Path & Dest_Path;
+               return (1 => new String'("--update")) &
+                      Rsync_Args & Src_Path & Dest_Path;
             end if;
          end if;
       end Build_Arg;
@@ -219,7 +221,7 @@ package body Remote_Sync_Module is
          Line_By_Line         => True,
          Callback             => Parse_Rsync_Output'Access,
          Queue_Id             => Rsync_Data.Queue_Id,
-         Synchronous          => False);
+         Synchronous          => Rsync_Data.Synchronous);
       Free (Src_Path);
       Free (Dest_Path);
       Free (Transport_Arg);
