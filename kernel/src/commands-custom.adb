@@ -561,6 +561,7 @@ package body Commands.Custom is
         Get_Attribute (Command, "show-command", "true") = "true";
       Script : constant String :=
         Get_Attribute (Command, "lang", GPS_Shell_Name);
+
    begin
       if Output /= "@@" then
          Outp := new String'(Output);
