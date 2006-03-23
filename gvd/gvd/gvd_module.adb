@@ -97,6 +97,7 @@ with Pixmaps_IDE;               use Pixmaps_IDE;
 with Process_Proxies;           use Process_Proxies;
 with Projects;                  use Projects;
 with Std_Dialogs;               use Std_Dialogs;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 
@@ -2447,13 +2448,15 @@ package body GVD_Module is
 
    begin
       --  Remove all existing menus
+
       Remove_All_Children (Menu);
 
       if Debuggable_Suffix = null then
          Debuggable_Suffix := new String'("");
       end if;
 
-      --  Add all the main units from all the imported projects.
+      --  Add all the main units from all the imported projects
+
       while Current (Iter) /= No_Project loop
          declare
             Mains : GNAT.OS_Lib.Argument_List := Get_Attribute_Value
@@ -2474,7 +2477,8 @@ package body GVD_Module is
                        (Project => Current (Iter),
                         File    => Create
                           (Executables_Directory (Current (Iter)) & Exec)));
-                  Set_Accel_Path (Mitem, Debug_Menu_Prefix & Exec, Group);
+                  Set_Accel_Path
+                    (Mitem, Debug_Menu_Prefix & "item" & Image (M), Group);
                end;
             end loop;
 
