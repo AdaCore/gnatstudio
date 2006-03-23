@@ -767,13 +767,17 @@ package body GPS.Kernel is
    procedure Finalize (Context : in out Selection_Context_Controlled) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Selection_Context_Data_Record, Selection_Context_Data);
+
+      Garbage : Selection_Context_Data;
    begin
       if Context.Data /= null then
          Context.Data.Ref_Count := Context.Data.Ref_Count - 1;
 
          if Context.Data.Ref_Count = 0 then
-            Free (Context.Data.all);
-            Unchecked_Free (Context.Data);
+            Garbage := Context.Data;
+            Context.Data := null;
+            Free (Garbage.all);
+            Unchecked_Free (Garbage);
          end if;
       end if;
    exception
