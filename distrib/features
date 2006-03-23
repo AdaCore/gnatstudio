@@ -43,6 +43,14 @@ F223-022 New preference for the debugger: "Always open main unit" (2006-02-27)
 
   Keywords: Debugger
 
+F222-017 New key shortcut for Build->Run-><first main>
+
+  A new keyboard shortcut (Shift-F2) is added by default for the first main
+  unit in the menu Build->Run. It is now also possible to set key shortcuts
+  more easily on the Build->Run and Build->Debug menu items.
+
+  Keywords: Shortcut, Menu
+
 F213-017 New python example: spell-checking the current word (2006-02-13)
 
   A new example has been included in the GPS distribution, called
