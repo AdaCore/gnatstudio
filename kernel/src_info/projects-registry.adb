@@ -29,7 +29,6 @@ with Basic_Types;               use Basic_Types;
 with Csets;
 with Errout;
 with File_Utils;                use File_Utils;
-with String_Utils;              use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
@@ -1869,6 +1868,17 @@ package body Projects.Registry is
       Registry.Data.Predefined_Object_Path := new String'(Path);
    end Set_Predefined_Object_Path;
 
+   ---------------------------------
+   -- Set_Predefined_Project_Path --
+   ---------------------------------
+
+   procedure Set_Predefined_Project_Path
+     (Registry : in out Project_Registry; Path : String) is
+      pragma Unreferenced (Registry);
+   begin
+      Prj.Ext.Set_Project_Path (Path);
+   end Set_Predefined_Project_Path;
+
    -----------------------------
    -- Get_Full_Path_From_File --
    -----------------------------
@@ -2114,112 +2124,6 @@ package body Projects.Registry is
    begin
       return Prj.Ext.Project_Path;
    end Get_Predefined_Project_Path;
-
-   ------------------------------
-   -- Compute_Predefined_Paths --
-   ------------------------------
-
-   procedure Compute_Predefined_Paths
-     (Registry     : in out Project_Registry;
-      GNAT_Version : access GNAT.OS_Lib.String_Access;
-      Gnatls_Path  : String;
-      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access)
-   is
-      Current         : GNAT.OS_Lib.String_Access := new String'("");
-      Object_Path_Set : Boolean := False;
-
-      procedure Add_Directory (S : String);
-      --  Add S to the search path.
-      --  If Source_Path is True, the source path is modified.
-      --  Otherwise, the object path is modified.
-
-      -------------------
-      -- Add_Directory --
-      -------------------
-
-      procedure Add_Directory (S : String) is
-         Tmp : GNAT.OS_Lib.String_Access;
-      begin
-         if S = "" then
-            return;
-
-         elsif S = "<Current_Directory>"
-           and then not Object_Path_Set
-         then
-            --  Do not include "." in the default source paths: when the user
-            --  is compiling, it would represent the object directory, when the
-            --  user is searching file it would represent whatever the current
-            --  directory is at that point, ...
-            return;
-
-         else
-            Tmp := Current;
-            Current := new String'(Current.all & Path_Separator & S);
-            Free (Tmp);
-         end if;
-      end Add_Directory;
-
-      Fd     : TTY_Process_Descriptor;
-      Result : Expect_Match;
-
-   begin
-      Trace (Me, "Executing " & Gnatls_Path
-             & ' '
-             & Argument_List_To_String (Gnatls_Args (2 .. Gnatls_Args'Last)));
-      Non_Blocking_Spawn
-        (Fd, Gnatls_Path,
-         Gnatls_Args (2 .. Gnatls_Args'Last),
-         Buffer_Size => 0, Err_To_Out => True);
-
-      Expect (Fd, Result, "GNATLS .+(\n| )Copyright", Timeout => -1);
-
-      declare
-         S : constant String := Strip_CR (Expect_Out_Match (Fd));
-      begin
-         GNAT_Version.all := new String'(S (S'First + 7 .. S'Last - 10));
-      end;
-
-      Expect (Fd, Result, "Source Search Path:", Timeout => -1);
-
-      loop
-         Expect (Fd, Result, "\n", Timeout => -1);
-
-         declare
-            S : constant String :=
-              Trim (Strip_CR (Expect_Out (Fd)), Ada.Strings.Left);
-         begin
-            if S = "Object Search Path:" & ASCII.LF then
-               Trace (Me, "Set source path from gnatls to " & Current.all);
-               Set_Predefined_Source_Path (Registry, Current.all);
-               Free (Current);
-               Current := new String'("");
-
-            elsif S = "Project Search Path:" & ASCII.LF then
-               Trace (Me, "Set object path from gnatls to " & Current.all);
-               Object_Path_Set := True;
-               Set_Predefined_Object_Path (Registry, Current.all);
-               Free (Current);
-               Current := new String'("");
-
-            else
-               Add_Directory (S (S'First .. S'Last - 1));
-            end if;
-         end;
-      end loop;
-
-   exception
-      when Process_Died =>
-         if Object_Path_Set then
-            Trace (Me, "Set project path from gnatls to " & Current.all);
-            Prj.Ext.Set_Project_Path (Current.all);
-         else
-            Trace (Me, "Set object path (2) from gnatls to " & Current.all);
-            Set_Predefined_Object_Path (Registry, Current.all);
-         end if;
-
-         Free (Current);
-         Close (Fd);
-   end Compute_Predefined_Paths;
 
    --------------
    -- Get_Tree --

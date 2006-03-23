@@ -67,16 +67,6 @@ package Projects.Registry is
    --  for all the languages. This includes for instance the run time library
    --  for Ada, or the C library (/usr/include/...) for C files.
 
-   procedure Compute_Predefined_Paths
-     (Registry     : in out Project_Registry;
-      GNAT_Version : access GNAT.OS_Lib.String_Access;
-      Gnatls_Path  : String;
-      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access);
-   --  Compute the predefined paths for the GNAT runtime, and return the
-   --  GNAT version that is used.
-   --  ??? GNAT_Version is an access parameter rather than 'out' because
-   --  of a bug in GNAT 3.17/GCC 2.8.1
-
    function Get_Predefined_Source_Path
      (Registry : Project_Registry) return String;
    --  Return the predefined Source Path.
@@ -105,6 +95,10 @@ package Projects.Registry is
    procedure Set_Predefined_Object_Path
      (Registry : in out Project_Registry; Path : String);
    --  Set the predefined object path
+
+   procedure Set_Predefined_Project_Path
+     (Registry : in out Project_Registry; Path : String);
+   --  Set the predefined project path
 
    ----------------------
    -- Loading projects --
