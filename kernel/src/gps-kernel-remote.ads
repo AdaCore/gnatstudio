@@ -50,6 +50,14 @@ package GPS.Kernel.Remote is
    --  Translate a local file/directory path to server 'To'
    --  if Unix_Style is set, the translated path will have a unix style.
 
+   function To_Local (Path : String;
+                      From : Server_Type) return String;
+   --  Translate a remote file/directory path from server 'From' to local path.
+
+   function To_Local (Path : String;
+                      From : String) return String;
+   --  Same as above, using From's nickname instead of Server_Type.
+
    function To_Unix_Path (Path       : String;
                           Server     : Server_Type;
                           Use_Cygwin : Boolean := False) return String;
@@ -63,8 +71,12 @@ package GPS.Kernel.Remote is
                           Queue_Id      : String;
                           Sync_Deleted  : Boolean);
    --  Forces a file system synchronisation between the two servers.
+   --  If Queue_Id is not an empty string, then the synchronisation is
+   --   launched as an asynchronous command using the queue_id. Else, it is
+   --   launched synchronously.
    --  If Sync_Deleted is set, then deleted files in src server will be
-   --  deleted on To server.
+   --   deleted on To server. Else, an update is performed (only newer files
+   --   are copied).
 
    ---------------------------------
    -- Error display when spawning --
@@ -120,6 +132,8 @@ package GPS.Kernel.Remote is
      is new Hooks_Data with record
       Sync_Deleted : Boolean;
       --  Delete dest files if local files were deleted
+      Synchronous  : Boolean;
+      --  Tells if the synchronisation call shall be performed synchronously
       Tool_Name    : String (1 .. Tool_Name_Length);
       --  What hook function shall perform the action
       Src_Name     : String (1 .. Src_Name_Length);
