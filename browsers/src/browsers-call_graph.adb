@@ -736,6 +736,8 @@ package body Browsers.Call_Graph is
                         Call_Graph_Browser (Get_Widget (Child_Browser));
       Item          : constant Entity_Item :=
                         Add_Entity_If_Not_Present (Browser, Entity);
+      Canvas        : Interactive_Canvas;
+
    begin
       if not Children_Shown (Item) then
          declare
@@ -764,8 +766,9 @@ package body Browsers.Call_Graph is
       --  We need to do a layout in all cases, so that the newly added item
       --  is put at a correct place.
       Layout (Browser, Force => False);
-      Refresh_Canvas (Get_Canvas (Browser));
-      Align_Item (Get_Canvas (Browser), Item, 0.5, 0.5);
+      Canvas := Get_Canvas (Browser);
+      Refresh_Canvas (Canvas);
+      Align_Item (Canvas, Item, 0.4, 0.4);
 
    exception
       when E : others =>
