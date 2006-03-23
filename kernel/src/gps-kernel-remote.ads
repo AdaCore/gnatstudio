@@ -44,32 +44,37 @@ package GPS.Kernel.Remote is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
-   function To_Remote (Path       : String;
-                       To         : Server_Type;
-                       Unix_Style : Boolean := False) return String;
+   function To_Remote
+     (Path       : String;
+      To         : Server_Type;
+      Unix_Style : Boolean := False) return String;
    --  Translate a local file/directory path to server 'To'
    --  if Unix_Style is set, the translated path will have a unix style.
 
-   function To_Local (Path : String;
-                      From : Server_Type) return String;
+   function To_Local
+     (Path : String;
+      From : Server_Type) return String;
    --  Translate a remote file/directory path from server 'From' to local path.
 
-   function To_Local (Path : String;
-                      From : String) return String;
+   function To_Local
+     (Path : String;
+      From : String) return String;
    --  Same as above, using From's nickname instead of Server_Type.
 
-   function To_Unix_Path (Path       : String;
-                          Server     : Server_Type;
-                          Use_Cygwin : Boolean := False) return String;
+   function To_Unix_Path
+     (Path       : String;
+      Server     : Server_Type;
+      Use_Cygwin : Boolean := False) return String;
    --  Transform a remote path into unix path style.
    --  Use_Cygwin forces cygwin style path if filesystem of server is
    --  windows fs
 
-   procedure Synchronize (Kernel        : Kernel_Handle;
-                          From          : Server_Type;
-                          To            : Server_Type;
-                          Queue_Id      : String;
-                          Sync_Deleted  : Boolean);
+   procedure Synchronize
+     (Kernel       : Kernel_Handle;
+      From         : Server_Type;
+      To           : Server_Type;
+      Queue_Id     : String;
+      Sync_Deleted : Boolean);
    --  Forces a file system synchronisation between the two servers.
    --  If Queue_Id is not an empty string, then the synchronisation is
    --   launched as an asynchronous command using the queue_id. Else, it is
@@ -129,7 +134,7 @@ package GPS.Kernel.Remote is
    type Rsync_Hooks_Args
      (Tool_Name_Length, Src_Name_Length, Dest_Name_Length, Queue_Id_Length,
       Src_Path_Length, Dest_Path_Length : Natural)
-     is new Hooks_Data with record
+   is new Hooks_Data with record
       Sync_Deleted : Boolean;
       --  Delete dest files if local files were deleted
       Synchronous  : Boolean;
@@ -146,7 +151,7 @@ package GPS.Kernel.Remote is
       --  Source path
       Dest_Path    : String (1 .. Dest_Path_Length);
       --  Destination path
-     end record;
+   end record;
 
    function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
@@ -164,13 +169,13 @@ package GPS.Kernel.Remote is
    Server_Config_Changed_Hook_Type : constant String := "srv_config_hook";
 
    type Server_Config_Changed_Hooks_Args
-     (Nickname_Length : Natural)
-     is new Hooks_Data with record
+     (Nickname_Length : Natural) is new Hooks_Data with
+   record
       Server   : Server_Type;
       --  The server type modified
       Nickname : String (1 .. Nickname_Length);
       --  The new server nickname attached to it
-     end record;
+   end record;
 
    function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
@@ -210,8 +215,8 @@ package GPS.Kernel.Remote is
    function Get_Network_Name (Server : Server_Type) return String;
    --  Gets the network name of a server
 
-   function Get_Filesystem (Server : Server_Type)
-                            return Filesystem_Record'Class;
+   function Get_Filesystem
+     (Server : Server_Type) return Filesystem_Record'Class;
    --  Get the filesystem of the specified server
 
    function Is_Local (Server : Server_Type) return Boolean;
