@@ -19,14 +19,21 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Expect;               use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with Projects;                  use Projects;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Basic_Types;
-with Prj;
 with Entities;
+with Prj;
+with String_Utils;              use String_Utils;
+with Traces;                    use Traces;
 with VFS;                       use VFS;
 
 with GPS.Intl;                  use GPS.Intl;
@@ -34,10 +41,13 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Location_View;         use GPS.Location_View;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 
 package body GPS.Kernel.Project is
+
+   Me : constant Debug_Handle := Create ("GPS.Kernel.Project");
 
    Location_Category : constant String := "Project";
    --  Category uses in the Location window for errors related to loading the
@@ -55,13 +65,49 @@ package body GPS.Kernel.Project is
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class)
    is
-      Gnatls       : constant String := Get_Attribute_Value
+      Gnatls          : constant String := Get_Attribute_Value
         (Get_Project (Handle), Gnatlist_Attribute, Default => "gnatls");
-      Gnatls_Args  : Argument_List_Access :=
+      Gnatls_Args     : Argument_List_Access :=
                        Argument_String_To_List (Gnatls & " -v");
-      Path         : String_Access;
-      GNAT_Version : aliased String_Access;
-      Langs : Argument_List := Get_Languages (Get_Project (Handle));
+      Langs           : Argument_List := Get_Languages (Get_Project (Handle));
+      Current         : GNAT.OS_Lib.String_Access := new String'("");
+      Object_Path_Set : Boolean := False;
+
+      procedure Add_Directory (S : String);
+      --  Add S to the search path.
+      --  If Source_Path is True, the source path is modified.
+      --  Otherwise, the object path is modified.
+
+      -------------------
+      -- Add_Directory --
+      -------------------
+
+      procedure Add_Directory (S : String) is
+         Tmp : GNAT.OS_Lib.String_Access;
+      begin
+         if S = "" then
+            return;
+
+         elsif S = "<Current_Directory>"
+           and then not Object_Path_Set
+         then
+            --  Do not include "." in the default source paths: when the user
+            --  is compiling, it would represent the object directory, when the
+            --  user is searching file it would represent whatever the current
+            --  directory is at that point, ...
+            return;
+
+         else
+            Tmp := Current;
+            Current := new String'(Current.all & Path_Separator &
+                                   To_Local (S, Build_Server));
+            Free (Tmp);
+         end if;
+      end Add_Directory;
+
+      Fd      : Process_Descriptor_Access;
+      Result  : Expect_Match;
+      Success : Boolean;
 
    begin
       if Basic_Types.Contains (Langs, "ada", Case_Sensitive => False) then
@@ -70,6 +116,7 @@ package body GPS.Kernel.Project is
 
          if Handle.Gnatls_Cache /= null
            and then Handle.Gnatls_Cache.all = Gnatls
+           and then Is_Local (Build_Server)
          then
             return;
          end if;
@@ -77,31 +124,74 @@ package body GPS.Kernel.Project is
          Free (Handle.Gnatls_Cache);
          Handle.Gnatls_Cache := new String'(Gnatls);
 
-         --  ??? Should remove, when possible, the previous predefined project
+         Trace (Me, "Executing " & Argument_List_To_String (Gnatls_Args.all));
+         begin
+            Spawn (Kernel_Handle (Handle), Gnatls_Args.all, Build_Server,
+                   Fd, Success);
+            if not Success then
+               return;
+            end if;
 
-         Path := Locate_Exec_On_Path (Gnatls_Args (1).all);
+            Expect (Fd.all, Result, "GNATLS .+(\n| )Copyright", Timeout => -1);
 
-         if Path /= null then
-            Compute_Predefined_Paths
-              (Handle.Registry.all,
-               Gnatls_Path  =>
-                 Normalize_Pathname (Path.all, Resolve_Links => False),
-               Gnatls_Args  => Gnatls_Args,
-               GNAT_Version => GNAT_Version'Unchecked_Access);
-            Handle.GNAT_Version := GNAT_Version;
+            declare
+               S : constant String := Strip_CR (Expect_Out_Match (Fd.all));
+            begin
+               Handle.GNAT_Version
+                 := new String'(S (S'First + 7 .. S'Last - 10));
+            end;
 
-            Free (Path);
-            Free (Gnatls_Args);
+            Expect (Fd.all, Result, "Source Search Path:", 1000);
 
-         else
-            Insert (Handle,
-                    -"Command not found in path: " & Gnatls_Args (1).all,
-                    Mode => GPS.Kernel.Console.Error);
+            loop
+               Expect (Fd.all, Result, "\n", 1000);
 
-            Set_Predefined_Source_Path (Handle.Registry.all, "");
-            Set_Predefined_Object_Path (Handle.Registry.all, "");
-            Free (Gnatls_Args);
-         end if;
+               declare
+                  S : constant String :=
+                    Trim (Strip_CR (Expect_Out (Fd.all)), Ada.Strings.Left);
+               begin
+                  if S = "Object Search Path:" & ASCII.LF then
+                     Trace (Me, "Set source path from gnatls to " &
+                            Current.all);
+                     Set_Predefined_Source_Path (Handle.Registry.all,
+                                                 Current.all);
+                     Free (Current);
+                     Current := new String'("");
+
+                  elsif S = "Project Search Path:" & ASCII.LF then
+                     Trace (Me, "Set object path from gnatls to " &
+                            Current.all);
+                     Object_Path_Set := True;
+                     Set_Predefined_Object_Path (Handle.Registry.all,
+                                                 Current.all);
+                     Free (Current);
+                     Current := new String'("");
+
+                  else
+                     Add_Directory (S (S'First .. S'Last - 1));
+                  end if;
+               end;
+            end loop;
+
+         exception
+            when Process_Died =>
+               if Object_Path_Set then
+                  Trace (Me, "Set project path from gnatls to " &
+                         Current.all);
+                  Set_Predefined_Project_Path (Handle.Registry.all,
+                                               Current.all);
+               else
+                  Trace (Me, "Set object path (2) from gnatls to " &
+                         Current.all);
+                  Set_Predefined_Object_Path (Handle.Registry.all,
+                                              Current.all);
+               end if;
+
+               Free (Current);
+               Close (Fd.all);
+         end;
+
+         Free (Gnatls_Args);
       end if;
 
       Basic_Types.Free (Langs);
@@ -248,12 +338,14 @@ package body GPS.Kernel.Project is
       Had_Project_Desktop : Boolean;
       New_Project_Loaded  : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
+      Data                : aliased File_Hooks_Args;
 
       Same_Project : constant Boolean :=
           Status (Get_Root_Project (Kernel.Registry.all)) = From_File
         and then
-          Project = Project_Path (Get_Root_Project (Kernel.Registry.all));
-
+          Project = Project_Path (Get_Root_Project (Kernel.Registry.all))
+        and then Is_Local (Project);
+      Local_Project : VFS.Virtual_File;
    begin
       --  Unless we are reloading the same project
 
@@ -281,7 +373,31 @@ package body GPS.Kernel.Project is
       if Is_Regular_File (Project) then
          Push_State (Kernel_Handle (Kernel), Busy);
 
-         Change_Dir (Dir (Project));
+         Data.File := Project;
+         Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
+
+         if not Is_Local (Project) then
+            Trace (Me, "Converting to Local Project");
+            --  Loading a remote project. Convert its path to the local path
+            --  Note that Running the Project_Changing_Hook has already
+            --  set the build_server to Project's Host
+            Local_Project := Create (To_Local (Full_Name (Project).all,
+                                               Build_Server));
+
+            if not Is_Regular_File (Local_Project) then
+               Console.Insert
+                 (Kernel, (-"Cannot find remote project file ")
+                  & Full_Name (Project).all &
+                  (-". Please configure the appropriate remote path"),
+                  Mode => Console.Error, Add_Lf => False);
+               Load_Default_Project (Kernel, Directory => Get_Current_Dir);
+               return;
+            end if;
+         else
+            Local_Project := Project;
+         end if;
+
+         Change_Dir (Dir (Local_Project));
 
          --  When loading a new project, we need to reset the cache containing
          --  LI information, otherwise this cache might contain dangling
@@ -291,13 +407,15 @@ package body GPS.Kernel.Project is
             Entities.Reset (Get_Database (Kernel));
          end if;
 
-         if Get_Predefined_Source_Path (Kernel.Registry.all) = "" then
+         if Get_Predefined_Source_Path (Kernel.Registry.all) = ""
+           or else not Is_Local (Build_Server) then
+            Trace (Me, "Compute or recompute predefined paths");
             Compute_Predefined_Paths (Kernel);
          end if;
 
          Remove_Location_Category (Kernel, Location_Category);
          Load (Registry           => Kernel.Registry.all,
-               Root_Project_Path  => Project,
+               Root_Project_Path  => Local_Project,
                Errors             => Report_Error'Unrestricted_Access,
                New_Project_Loaded => New_Project_Loaded);
 
