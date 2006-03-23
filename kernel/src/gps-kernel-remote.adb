@@ -68,6 +68,7 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
 with Config;                     use Config;
 with Filesystem.Unix;            use Filesystem.Unix;
@@ -298,9 +299,10 @@ package body GPS.Kernel.Remote is
    -- Callbacks --
    ---------------
 
-   procedure On_Project_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when project changed
+   procedure On_Project_Changing
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when project is about to change
 
    function From_Callback_Data_Sync_Hook
      (Data : Callback_Data'Class) return Hooks_Data'Class;
@@ -1811,6 +1813,7 @@ package body GPS.Kernel.Remote is
          Src_Path     : constant String := Nth_Arg (Data, 6);
          Dest_Path    : constant String := Nth_Arg (Data, 7);
          Sync_Deleted : constant Boolean := Nth_Arg (Data, 8);
+         Synchronous  : constant Boolean := Nth_Arg (Data, 9);
       begin
          return Rsync_Hooks_Args'
            (Hooks_Data with
@@ -1826,7 +1829,8 @@ package body GPS.Kernel.Remote is
             Queue_Id         => Queue_Id,
             Src_Path         => Src_Path,
             Dest_Path        => Dest_Path,
-            Sync_Deleted     => Sync_Deleted);
+            Sync_Deleted     => Sync_Deleted,
+            Synchronous      => Synchronous);
       end;
    end From_Callback_Data_Sync_Hook;
 
@@ -1841,7 +1845,7 @@ package body GPS.Kernel.Remote is
       return GPS.Kernel.Scripts.Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 8));
+        new Callback_Data'Class'(Create (Script, 9));
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Data.Tool_Name);
@@ -1851,6 +1855,7 @@ package body GPS.Kernel.Remote is
       Set_Nth_Arg (D.all, 6, Data.Src_Path);
       Set_Nth_Arg (D.all, 7, Data.Dest_Path);
       Set_Nth_Arg (D.all, 8, Data.Sync_Deleted);
+      Set_Nth_Arg (D.all, 9, Data.Synchronous);
       return D;
    end Create_Callback_Data;
 
@@ -1935,9 +1940,9 @@ package body GPS.Kernel.Remote is
       Initialize_Module (Unix_FS);
       Initialize_Module (Windows_FS);
 
-      --  Connect to project_changed hook
-      Add_Hook (Kernel, Project_Changed_Hook,
-                Wrapper (On_Project_Changed'Access), "gps.kernel.remote");
+      --  Connect to project_changing hook
+      Add_Hook (Kernel, Project_Changing_Hook,
+                Wrapper (On_Project_Changing'Access), "gps.kernel.remote");
 
       --  Add menu item
       Register_Menu
@@ -1996,16 +2001,46 @@ package body GPS.Kernel.Remote is
    -- On_Project_Changed --
    ------------------------
 
-   procedure On_Project_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+   procedure On_Project_Changing
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
+      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Property : Servers_Property;
       Success  : Boolean;
+      Local_File : VFS.Virtual_File;
    begin
+      --  Reset the servers to local machine
+      Trace (Me, "Reseting servers to local machine");
+      for J in Server_Type'Range loop
+         Servers (J) := (Is_Local => True,
+                         Nickname => new String'(""));
+      end loop;
+
+      if not Is_Local (D.File) then
+         Local_File := Create (To_Local (Full_Name (D.File).all,
+                                         Get_Host (D.File)));
+      else
+         Local_File := D.File;
+      end if;
+
+      --  Get servers associated with this file
+      Trace (Me, "Loading servers_config property");
       Get_Property
-        (Property, Get_Project (Kernel),
+        (Property, Local_File,
          Name => "servers_config", Found => Success);
-   end On_Project_Changed;
+
+      if not Is_Local (D.File) then
+         Trace (Me, "Assign build server: project loaded from remote host");
+         Assign (Kernel_Handle (Kernel), Build_Server, Get_Host (D.File));
+      end if;
+
+      if not Is_Local (Build_Server) then
+         Trace (Me, "Start synchronization of build_server");
+         Synchronize (Kernel_Handle (Kernel),
+                      Build_Server, GPS_Server, "", False);
+      end if;
+   end On_Project_Changing;
 
    ---------------
    -- Customize --
@@ -2211,6 +2246,88 @@ package body GPS.Kernel.Remote is
       end;
    end To_Remote;
 
+   --------------
+   -- To_Local --
+   --------------
+
+   function To_Local (Path : String;
+                      From : Server_Type) return String
+   is
+   begin
+      return To_Local (Path, Servers (From).Nickname.all);
+   end To_Local;
+
+   --------------
+   -- To_Local --
+   --------------
+
+   function To_Local (Path : String;
+                      From : String) return String
+   is
+      Path_From       : String_Access;
+      Path_To         : String_Access;
+      Mirror          : Mirror_Path_Access;
+      Path_List_Item  : Mirrors_List_Access;
+   begin
+      if Active (Me) then
+         Trace (Me, "To_Local: " & Path & " on server " & From);
+      end if;
+
+      --  If From and To are the same machine, just return Path
+      if From = "" then
+         return Path;
+      end if;
+
+      --  Search for mirror path in 'From' config
+      Path_List_Item := Main_Paths_Table;
+      while Path_List_Item /= null loop
+         if Path_List_Item.Nickname.all = From then
+            Mirror := Path_List_Item.Path_List;
+            exit;
+         end if;
+
+         Path_List_Item := Path_List_Item.Next;
+      end loop;
+
+      while Mirror /= null loop
+         if Is_Subtree (Get_Filesystem (From),
+                        Mirror.Remote_Path.all,
+                        Path) then
+            Path_To   := Mirror.Local_Path;
+            Path_From := Mirror.Remote_Path;
+            exit;
+         end if;
+
+         Mirror := Mirror.Next;
+      end loop;
+
+      if Path_From = null or Path_To = null then
+         --  Not configured mirror path.
+         return Path;
+      end if;
+
+      if Active (Me) then
+         Trace (Me, "Path_From: " & Path_From.all);
+         Trace (Me, "Path_To: " & Path_To.all);
+      end if;
+
+      --  At this point, we have the from and to moint points. Let's translate
+      --  the path
+      declare
+         FS         : Filesystem_Record'Class := Get_Filesystem (From);
+         U_Path     : constant String := To_Unix (FS, Path);
+         --  The input path in unix style
+         U_Frompath : constant String := To_Unix (FS, Path_From.all);
+         --  The local root dir, in unix style
+         U_Subpath  : constant String
+           := U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
+      begin
+         return Concat (Get_Local_Filesystem,
+                        Path_To.all,
+                        From_Unix (Get_Local_Filesystem, U_Subpath));
+      end;
+   end To_Local;
+
    ------------------
    -- To_Unix_Path --
    ------------------
@@ -2242,7 +2359,7 @@ package body GPS.Kernel.Remote is
    begin
       Glib.Free (Servers (Server).Nickname);
 
-      if Nickname = Local_Nickname then
+      if Nickname = Local_Nickname or else Nickname = "" then
          Servers (Server) := (Is_Local => True,
                               Nickname => new String'(""));
       else
@@ -2396,7 +2513,8 @@ package body GPS.Kernel.Remote is
                      Queue_Id         => Queue_Id,
                      Src_Path         => From_Path.all,
                      Dest_Path        => To_Path.all,
-                     Sync_Deleted     => Sync_Deleted);
+                     Sync_Deleted     => Sync_Deleted,
+                     Synchronous      => Queue_Id = "");
 
             begin
                Trace (Me, "run sync hook for " & Data.Src_Path);
@@ -2461,6 +2579,7 @@ package body GPS.Kernel.Remote is
 
       function Check_Exec (Exec : String) return String_Access is
          Full_Exec : String_Access;
+         Norm_Exec : String_Access;
       begin
          Full_Exec := Locate_Exec_On_Path (Exec);
 
@@ -2470,7 +2589,13 @@ package body GPS.Kernel.Remote is
             return null;
          end if;
 
-         return Full_Exec;
+         --  use Normalize_Pathname to prevent relative paths like
+         --  ./my_prog. See F322-010 concerning problem with gnatls in this
+         --  particular case.
+         Norm_Exec := new String'(Normalize_Pathname (Full_Exec.all,
+                                                      Resolve_Links => False));
+         Free (Full_Exec);
+         return Norm_Exec;
       end Check_Exec;
 
       Request_User : Request_User_Object
