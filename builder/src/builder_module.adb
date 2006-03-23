@@ -242,10 +242,11 @@ package body Builder_Module is
    --  (build "all", "compile all sources")
 
    procedure Add_Run_Menu
-     (Menu    : in out Gtk_Menu;
-      Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class;
-      Mains   : Argument_List);
+     (Menu         : in out Gtk_Menu;
+      Project      : Project_Type;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Set_Shortcut : Boolean;
+      Mains        : Argument_List);
    --  Same as Add_Build_Menu, but for the Run menu
 
    type Builder_Contextual is new Submenu_Factory_Record with null record;
@@ -1648,17 +1649,17 @@ package body Builder_Module is
                File    => Main));
 
          declare
-            Accel_Path : constant String := Make_Menu_Prefix
-              & Executables_Directory (Project) & Mains (M).all;
+            Accel_Path : constant String := Make_Menu_Prefix &
+              "item" & Image (M);
             Key : Gtk_Accel_Key;
             Found : Boolean;
+
          begin
             Set_Accel_Path (Mitem, Accel_Path, Group);
 
             --  The first item in the make menu should have a key binding
-            if Set_Shortcut
-              and then M = Mains'First
-            then
+
+            if Set_Shortcut and then M = Mains'First then
                Lookup_Entry
                  (Accel_Path => Accel_Path,
                   Key        => Key,
@@ -1728,10 +1729,11 @@ package body Builder_Module is
    ------------------
 
    procedure Add_Run_Menu
-     (Menu    : in out Gtk_Menu;
-      Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class;
-      Mains   : Argument_List)
+     (Menu         : in out Gtk_Menu;
+      Project      : Project_Type;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Set_Shortcut : Boolean;
+      Mains        : Argument_List)
    is
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
       Mitem : Dynamic_Menu_Item;
@@ -1752,7 +1754,6 @@ package body Builder_Module is
             Mitem := new Dynamic_Menu_Item_Record;
             Gtk.Menu_Item.Initialize (Mitem, Exec);
             Append (Menu, Mitem);
-            Set_Accel_Path (Mitem, -Run_Menu_Prefix & Exec, Group);
             File_Project_Cb.Object_Connect
               (Mitem, "activate", On_Run'Access,
                Slot_Object => Kernel,
@@ -1760,6 +1761,35 @@ package body Builder_Module is
                  (Project => Project,
                   File    => Create
                     (Executables_Directory (Project) & Exec)));
+
+            declare
+               Accel_Path : constant String := Run_Menu_Prefix &
+                 "item" & Image (M);
+               Key        : Gtk_Accel_Key;
+               Found      : Boolean;
+
+            begin
+               Set_Accel_Path (Mitem, Accel_Path, Group);
+
+               --  The first item in the run menu should have a key binding
+
+               if Set_Shortcut and then M = Mains'First then
+                  Lookup_Entry
+                    (Accel_Path => Accel_Path,
+                     Key        => Key,
+                     Found      => Found);
+
+                  if not Found or else Key.Accel_Key = 0 then
+                     Change_Entry
+                       (Accel_Path => Accel_Path,
+                        Accel_Key  => GDK_F2,
+                        Accel_Mods => Shift_Mask,
+                        Replace    => False);
+                  end if;
+
+                  Builder_Module_ID.Build_Item := Gtk_Menu_Item (Mitem);
+               end if;
+            end;
          end;
       end loop;
    end Add_Run_Menu;
@@ -1878,6 +1908,7 @@ package body Builder_Module is
                     (Menu         => Builder_Module_ID.Run_Menu,
                      Project      => Get_Project (Kernel),
                      Kernel       => Kernel,
+                     Set_Shortcut => True,
                      Mains        => Mains);
                   Free (Mains);
                   exit;
@@ -1960,6 +1991,7 @@ package body Builder_Module is
         (Project_Information (Context),
          Attribute => Main_Attribute);
       M     : Gtk_Menu := Gtk_Menu (Menu);
+
    begin
       if Mains'Length /= 0 then
          Add_Build_Menu
@@ -1989,12 +2021,14 @@ package body Builder_Module is
         (Project_Information (Context),
          Attribute => Main_Attribute);
       M     : Gtk_Menu := Gtk_Menu (Menu);
+
    begin
       Add_Run_Menu
-        (Menu    => M,
-         Project => Project_Information (Context),
-         Kernel  => Get_Kernel (Context),
-         Mains   => Mains);
+        (Menu         => M,
+         Project      => Project_Information (Context),
+         Kernel       => Get_Kernel (Context),
+         Set_Shortcut => False,
+         Mains        => Mains);
       Free (Mains);
    end Append_To_Menu;
 
