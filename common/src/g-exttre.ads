@@ -262,13 +262,16 @@ package GNAT.Expect.TTY.Remote is
                           Query         : String;
                           Password_Mode : Boolean) return String;
 
+   Default_Req_User : constant Request_User_Object
+     := (Main_Window => null);
+
    procedure Remote_Spawn
      (Descriptor            : out Process_Descriptor_Access;
       Target_Nickname       : String;
       Args                  : GNAT.OS_Lib.Argument_List;
       Execution_Directory   : String := "";
       Err_To_Out            : Boolean := False;
-      Request_User_Instance : Request_User_Object'Class);
+      Request_User_Instance : Request_User_Object'Class := Default_Req_User);
    --  Spawns a process on a remote machine
    --  Target_Name designs the machine on which the process is spawned
    --  Target_Identifier is used to retrieve the descriptors
