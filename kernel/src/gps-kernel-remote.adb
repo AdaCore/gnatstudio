@@ -2036,15 +2036,15 @@ package body GPS.Kernel.Remote is
          Parse_Remote_Path_Node
            (Module.Kernel, Node, System_Defined);
       elsif Node.Tag.all = "remote_connection_config" then
-         Trace (Me, "Initialize_Remote_Config : 'remote_connection_config'");
+         Trace (Me, "Initialize_Remote_Config: 'remote_connection_config'");
 
          Name := new String'(Get_Attribute (Node, "name"));
 
          if Name.all = "" then
             Console.Insert
               (Module.Kernel,
-               " XML Error: remote_connection_config tags shall" &
-               " have a name attribute",
+               -("XML Error: remote_connection_config tag is missing a " &
+                 "name attribute"),
                Add_LF => True, Mode => Error);
             return;
          end if;
@@ -2054,8 +2054,8 @@ package body GPS.Kernel.Remote is
          if Start_Command = null then
             Console.Insert
               (Module.Kernel,
-               " XML Error: remote_connection_config tags shall" &
-               " have a start_command field",
+               -("XML Error: remote_connection_config is missing a " &
+               "start_command field"),
                Add_LF => True, Mode => Error);
             return;
          end if;
