@@ -48,7 +48,8 @@ package GNAT.Expect.TTY.Remote is
    -----------------------------
 
    type Extra_Prompt (Auto_Answer : Boolean := False) is record
-      Ptrn   : Pattern_Matcher_Access;
+      Ptrn : Pattern_Matcher_Access;
+
       case Auto_Answer is
          when True =>
             Answer : String_Access;
@@ -258,12 +259,12 @@ package GNAT.Expect.TTY.Remote is
       Main_Window : Gtk.Window.Gtk_Window;
    end record;
 
-   function Request_User (Instance      : Request_User_Object;
-                          Query         : String;
-                          Password_Mode : Boolean) return String;
+   function Request_User
+     (Instance      : Request_User_Object;
+      Query         : String;
+      Password_Mode : Boolean) return String;
 
-   Default_Req_User : constant Request_User_Object
-     := (Main_Window => null);
+   Default_Req_User : constant Request_User_Object := (Main_Window => null);
 
    procedure Remote_Spawn
      (Descriptor            : out Process_Descriptor_Access;
