@@ -211,14 +211,16 @@ package body Src_Editor_Box.Tooltips is
    begin
       if Entity_Ref /= No_Entity_Reference then
          Inst := From_Instantiation_At (Entity_Ref);
+
          while Inst /= No_Instantiation loop
             Inst_E := Get_Entity (Inst);
             Inst_Of := Is_Instantiation_Of (Inst_E);
+
             if Inst_Of = null then
                Result := Result
-                 & ASCII.LF & (-"from instance at ");
+                 & (-"from instance at ");
             else
-               Result := Result & ASCII.LF
+               Result := Result
                  & (-"from instance of ")
                  & Get_Name (Inst_Of).all & ':'
                  & Base_Name (Get_Filename
@@ -226,12 +228,14 @@ package body Src_Editor_Box.Tooltips is
                  & Image (Get_Line (Get_Declaration_Of (Inst_Of)))
                  & ASCII.LF & "  at ";
             end if;
+
             Result := Result
               & Get_Name (Inst_E).all
               & ':'
               &  Base_Name (Get_Filename
                               (Get_File (Get_Declaration_Of (Inst_E)))) & ':'
-              & Image (Get_Line (Get_Declaration_Of (Inst_E)));
+              & Image (Get_Line (Get_Declaration_Of (Inst_E)))
+              & ASCII.LF & ASCII.LF;
             Inst := Generic_Parent (Inst);
          end loop;
       end if;
@@ -289,16 +293,9 @@ package body Src_Editor_Box.Tooltips is
 
    function Get_Documentation
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information) return String
-   is
-      Doc : constant String :=
-        Get_Documentation (Get_Language_Handler (Kernel), Entity);
+      Entity : Entity_Information) return String is
    begin
-      if Doc /= "" then
-         return Doc;
-      else
-         return "";
-      end if;
+      return Get_Documentation (Get_Language_Handler (Kernel), Entity);
    end Get_Documentation;
 
    ----------
