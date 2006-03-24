@@ -24,6 +24,7 @@ with GNAT.Expect.TTY.Remote;     use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;
 
+with GPS.Intl;             use GPS.Intl;
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;
 with Filesystem;           use Filesystem;
@@ -31,6 +32,10 @@ with Interactive_Consoles;
 with VFS;
 
 package GPS.Kernel.Remote is
+
+   Remote_Menu_Path : constant String
+     := "/_" & (-"Tools") & "/_" & (-"Remote") & "/";
+   --  Defines where the path for the remote menu
 
    type Server_Type is
      (GPS_Server,
