@@ -2025,14 +2025,18 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Get servers associated with this file
-      Trace (Me, "Loading servers_config property");
+      Trace (Me, "Loading servers_config property for file " &
+             Full_Name (Local_File).all);
       Get_Property
         (Property, Local_File,
          Name => "servers_config", Found => Success);
 
       if not Is_Local (D.File) then
          Trace (Me, "Assign build server: project loaded from remote host");
-         Assign (Kernel_Handle (Kernel), Build_Server, Get_Host (D.File));
+         Assign (Kernel_Handle (Kernel),
+                 Build_Server,
+                 Get_Host (D.File),
+                 Local_File);
       end if;
 
       if not Is_Local (Build_Server) then
@@ -2362,7 +2366,8 @@ package body GPS.Kernel.Remote is
    procedure Assign
      (Kernel   : Kernel_Handle;
       Server   : Server_Type;
-      Nickname : String)
+      Nickname : String;
+      Prj_File : VFS.Virtual_File := VFS.No_File)
    is
       Data : aliased Server_Config_Changed_Hooks_Args :=
                (Hooks_Data with
@@ -2383,11 +2388,19 @@ package body GPS.Kernel.Remote is
       end if;
 
       Prop := new Servers_Property;
-      Set_Property
-        (Get_Project (Kernel),
-         Name       => "servers_config",
-         Property   => Prop,
-         Persistent => True);
+      if Prj_File = VFS.No_File then
+         Set_Property
+           (Get_Project (Kernel),
+            Name       => "servers_config",
+            Property   => Prop,
+            Persistent => True);
+      else
+         Set_Property
+           (Prj_File,
+            Name       => "servers_config",
+            Property   => Prop,
+            Persistent => True);
+      end if;
 
       if Active (Me) then
          Trace (Me, "run server_changed hook for " &
