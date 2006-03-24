@@ -1588,6 +1588,8 @@ package body GNAT.Expect.TTY.Remote is
          --  Don't need to wait for anything. Everything is already in the
          --  buffer
          Timeout := 1;
+      elsif Timeout <= 0 then
+         Timeout := 1000;
       end if;
    end Handle_Pre_Disconnect;
 
