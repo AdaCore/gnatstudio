@@ -347,7 +347,7 @@ package body Remote_Views is
                   Default_Width => 215,
                   Group         => Group_View,
                   Module        => Remote_View_Module_Id);
-         Set_Title (Child, -"Remote Servers View", -"Remote Servers View");
+         Set_Title (Child, -"Remote View", -"Remote View");
          Put (Get_MDI (User), Child, Initial_Position => Position_Left);
          return MDI_Child (Child);
       end if;
@@ -560,7 +560,7 @@ package body Remote_Views is
                   Default_Width => 215,
                   Group         => Group_View,
                   Module        => Remote_View_Module_Id);
-         Set_Title (Child, -"Remote Servers View", -"Remote Servers View");
+         Set_Title (Child, -"Remote View", -"Remote View");
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
       end if;
 
@@ -580,7 +580,7 @@ package body Remote_Views is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Remote : constant String := "/_" & (-"Remote") & '/';
+      Remote : constant String := Remote_Menu_Path;
    begin
       Remote_View_Module_Id := new Remote_View_Module_Record;
       Register_Module
@@ -591,7 +591,7 @@ package body Remote_Views is
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu
-        (Kernel, Remote, -"_Show Remote View", "",
+        (Kernel, Remote, -"Remote _View", "",
          On_Show_Remote_View'Access);
    end Register_Module;
 
