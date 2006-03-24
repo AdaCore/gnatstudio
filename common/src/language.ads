@@ -309,6 +309,9 @@ package Language is
       --  ??? Missing alignment parameters:
       --      - assignments in declarations
       --      - assignments in assignment statements
+
+      Indent_Comments     : Boolean;
+      Stick_Comments      : Boolean;
    end record;
    pragma Convention (C, Indent_Parameters);
    --  Define all parameters to indent a source code.
@@ -323,7 +326,7 @@ package Language is
    --                      conditionals.
    --  Indent_Record       extra number of spaces when indenting record types
    --  Tab_Width           number of spaces for a tab character.
-   --  Indent_Case_Extra   Whether to add extra indent level for case
+   --  Indent_Case_Extra   whether to add extra indent level for case
    --                      statements
    --  Reserved_Casing     casing of reserved words.
    --  Indent_Casing       casing of identifiers.
@@ -334,6 +337,9 @@ package Language is
    --  Align_On_Arrows     perform alignment on arrows in associations
    --  Align_Decl_On_Colon align variable declarations based on the ':' of the
    --                      variable decl.
+   --  Indent_Comments     whether comments should be indented or left as is
+   --  Stick_Comments      whether comments should stick to previous line
+   --                      indentation in some cases (language defined).
 
    Default_Indent_Parameters : constant Indent_Parameters :=
      (Indent_Level        => 8,
@@ -350,7 +356,9 @@ package Language is
       Use_Tabs            => False,
       Align_On_Colons     => False,
       Align_On_Arrows     => False,
-      Align_Decl_On_Colon => False);
+      Align_Decl_On_Colon => False,
+      Indent_Comments     => True,
+      Stick_Comments      => False);
 
    type Indentation_Kind is (None, Simple, Extended);
    for Indentation_Kind'Size use Integer'Size;

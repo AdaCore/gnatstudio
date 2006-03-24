@@ -683,8 +683,8 @@ package body Ada_Analyzer is
       Indent_With         : constant := 5;
       Indent_Use          : constant := 4;
       Indent_When         : constant := 5;
-      Indent_Comments     : constant Boolean := True;
-      Stick_Comments      : constant Boolean := False;
+      Indent_Comments     : Boolean renames Indent_Params.Indent_Comments;
+      Stick_Comments      : Boolean renames Indent_Params.Stick_Comments;
       Stop_On_Blank_Line  : constant Boolean := True;
       Indent_Record       : Natural renames Indent_Params.Indent_Record;
       Indent_Case_Extra   : Indent_Style renames
