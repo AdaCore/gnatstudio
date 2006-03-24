@@ -1006,11 +1006,11 @@ package body GPS.Kernel.Remote is
 
       --  Add/Restore/Remove buttons
 
-      Gtk_New (Dialog.Add_Machine_Button, -"Add a new machine");
+      Gtk_New (Dialog.Add_Machine_Button, -"Add server");
       Pack_Start (VBox, Dialog.Add_Machine_Button, False, False);
-      Gtk_New (Dialog.Restore_Button, -"Restore to default");
+      Gtk_New (Dialog.Restore_Button, -"Remove local changes");
       Pack_Start (VBox, Dialog.Restore_Button, False, False);
-      Gtk_New (Dialog.Remove_Button, -"Remove the server");
+      Gtk_New (Dialog.Remove_Button, -"Remove server");
       Pack_Start (VBox, Dialog.Remove_Button, False, False);
       Set_Sensitive (Dialog.Restore_Button, False);
       Set_Sensitive (Dialog.Remove_Button, False);
@@ -1122,7 +1122,7 @@ package body GPS.Kernel.Remote is
          Set (Gtk_Tree_Store (Model), Iter, User_Def_Col, True);
 
       else
-         Trace (Me, "Changes not from user inputs");
+         Trace (Me, "Changes not from user input");
       end if;
    end Changed;
 
