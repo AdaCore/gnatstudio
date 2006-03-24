@@ -108,17 +108,13 @@ package body Cpp_Module is
                   Use_Tabs            => Tabs,
                   Align_On_Colons     => False,
                   Align_On_Arrows     => False,
-                  Align_Decl_On_Colon => False);
+                  Align_Decl_On_Colon => False,
+                  Indent_Comments     => True,
+                  Stick_Comments      => False);
 
    begin
-      Set_Indentation_Parameters
-        (C_Lang,
-         Indent_Style  => Style,
-         Params        => Params);
-      Set_Indentation_Parameters
-        (Cpp_Lang,
-         Indent_Style  => Style,
-         Params        => Params);
+      Set_Indentation_Parameters (C_Lang, Params, Style);
+      Set_Indentation_Parameters (Cpp_Lang, Params, Style);
    end On_Preferences_Changed;
 
    --------------------------
