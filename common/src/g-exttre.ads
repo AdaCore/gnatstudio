@@ -304,6 +304,11 @@ package GNAT.Expect.TTY.Remote is
    procedure Close_All;
    --  Closes all opened connection.
 
+   --  Note on the following expect procedures. Contrary to its ancestor,
+   --  this package does not handle nicely the timeout value of -1 (infinite
+   --  timeout), that can really lead to infinite wait. So this value is
+   --  automatically replaced with a timeout of 1s.
+
    procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
