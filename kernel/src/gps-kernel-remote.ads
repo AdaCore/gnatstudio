@@ -28,6 +28,7 @@ with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;
 with Filesystem;           use Filesystem;
 with Interactive_Consoles;
+with VFS;
 
 package GPS.Kernel.Remote is
 
@@ -202,8 +203,11 @@ package GPS.Kernel.Remote is
    procedure Assign
      (Kernel   : Kernel_Handle;
       Server   : Server_Type;
-      Nickname : String);
+      Nickname : String;
+      Prj_File : VFS.Virtual_File := VFS.No_File);
    --  Assigns a Server to a configuration
+   --  Prj_File allows to select to which project file this configuration is
+   --  assigned to. If No_File, it is assigned to the current project.
 
    function Get_Nickname (Server : Server_Type) return String;
    --  Gets the nickname of a server
