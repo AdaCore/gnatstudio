@@ -75,6 +75,23 @@ F128-002 VCS supports directories (2006-02-07)
 
   Keywords: VCS
 
+F104-029 New "indent comments" preference (2006-03-24)
+
+  A new preference to enable or disable indentation of Ada comments is
+  added.
+
+  Keyword: Indentation
+
+F104-029 New "Align comments on keywords" preference (2006-03-24)
+
+  A new preference to refine how Ada comment lines are aligned after
+  'record' and 'is' keywords, e.g:
+
+  package P is
+  --  Align on line above, do not extra indent when this preference is set
+
+  Keyword: Indentation
+
 F104-029 New "record indentation" preference (2006-03-22)
 
   A new preference to refine how Ada sources are indented is added, to
