@@ -390,6 +390,7 @@ package body GPS.Kernel.Project is
                   & Full_Name (Project).all &
                   (-". Please configure the appropriate remote path"),
                   Mode => Console.Error, Add_Lf => False);
+               Pop_State (Kernel_Handle (Kernel));
                Load_Default_Project (Kernel, Directory => Get_Current_Dir);
                return;
             end if;
