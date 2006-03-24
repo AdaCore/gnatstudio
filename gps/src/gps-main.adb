@@ -1058,7 +1058,8 @@ procedure GPS.Main is
             if File_Extension (Str (1 .. Last)) = Project_File_Extension then
                if Project_Name = VFS.No_File then
                   Auto_Load_Project := True;
-                  Project_Name := Create (Str (1 .. Last));
+                  Project_Name := Create (Normalize_Pathname (Str (1 .. Last),
+                                            Resolve_Links => False));
                else
                   Auto_Load_Project := False;
                   exit;
