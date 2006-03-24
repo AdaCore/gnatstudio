@@ -8497,6 +8497,7 @@ based on the colon character.
 
 Consider the following code:
 
+@cindex example
 @smallexample
 Variable : constant String :=
   "a string";
@@ -8504,9 +8505,40 @@ Variable : constant String :=
 
 If this preference is enabled, it will be indented as follows:
 
+@cindex example
 @smallexample
 Variable : constant String :=
              "a string";
+@end smallexample
+
+@item Indent comments
+Whether to indent lines containing only comments and blanks, or to keep
+these lines unchanged.
+
+@item Align comments on keywords
+Whether to align comment lines following @code{record} and
+@code{is} keywords immediately with no extra space.
+
+When enabled, the following code will be indented as:
+
+@cindex example
+@smallexample
+package P is
+--  Comment
+
+   [...]
+end P;
+@end smallexample
+
+When disabled, the indentation will be:
+
+@cindex example
+@smallexample
+package P is
+   --  Comment
+
+   [...]
+end P;
 @end smallexample
 
 @end table
