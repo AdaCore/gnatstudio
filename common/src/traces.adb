@@ -21,18 +21,22 @@
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Text_IO;               use Ada.Text_IO;
+
 with GNAT.Calendar;             use GNAT.Calendar;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.IO_Aux;               use GNAT.IO_Aux;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Task_Lock;            use GNAT.Task_Lock;
 with GNAT.Traceback;            use GNAT.Traceback;
+
 with System.Address_Image;
 with System.Assertions;         use System.Assertions;
-with GNAT.Task_Lock;            use GNAT.Task_Lock;
-with String_Utils;              use String_Utils;
+
 with Unchecked_Conversion;
 with Unchecked_Deallocation;
+
+with String_Utils;              use String_Utils;
 
 package body Traces is
 
@@ -127,9 +131,7 @@ package body Traces is
    -- Find_Handle --
    -----------------
 
-   function Find_Handle (Unit_Name_Upper_Case : String)
-      return Debug_Handle
-   is
+   function Find_Handle (Unit_Name_Upper_Case : String) return Debug_Handle is
       Tmp : Debug_Handle := Handles_List;
    begin
       while Tmp /= null
@@ -738,7 +740,7 @@ package body Traces is
    --------------
 
    procedure Finalize is
-      Tmp : Debug_Handle := Handles_List;
+      Tmp  : Debug_Handle := Handles_List;
       Next : Debug_Handle;
       Tmp2 : Debug_Handle;
    begin
