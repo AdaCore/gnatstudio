@@ -17,6 +17,34 @@
   
      for Source_Dirs use ();
   
+*** gnat_src/ali.ads.old 2006-03-24 11:11:30.000000000 +0100
+--- gnat_src/ali.ads     2006-03-24 11:13:15.000000000 +0100
+***************
+*** 38,43 ****
+--- 38,46 ----
+
+  package ALI is
+
++    No_Restrictions : Restrictions_Info;
++    --  Stub for GPS compilation: unused by GPS.
++
+     --------------
+     -- Id Types --
+     --------------
+*** gnat_src/targparm.ads.old    2006-03-24 10:56:35.000000000 +0100
+--- gnat_src/targparm.ads        2006-03-24 11:35:36.000000000 +0100
+***************
+*** 81,86 ****
+--- 81,89 ----
+
+  package Targparm is
+
++    No_Restrictions : Restrictions_Info;
++    --  Stub for GPS compilation: unused by GPS.
++
+     ---------------------------
+     -- Configuration Pragmas --
+     ---------------------------
 --- gnat_src/osint.adb	19 Feb 2006 01:36:23 -0000	1.329
 +++ gnat_src/osint.adb	13 Mar 2006 08:46:18 -0000
 @@ -750,7 +750,7 @@
