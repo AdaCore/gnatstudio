@@ -59,9 +59,9 @@ with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Combo;               use Gtkada.Combo;
+with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
-with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
@@ -795,7 +795,7 @@ package body GPS.Kernel.Remote is
    begin
       Dialog := new Server_List_Editor_Record;
       Initialize (Dialog,
-                  -"Server list configuration",
+                  -"Servers configuration",
                   Get_Main_Window (Kernel),
                   Modal + Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Mouse);
@@ -852,6 +852,7 @@ package body GPS.Kernel.Remote is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Network name:");
+      Set_Justify (Label, Justify_Left);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
@@ -862,6 +863,7 @@ package body GPS.Kernel.Remote is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Remote access tool:");
+      Set_Justify (Label, Justify_Left);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
@@ -879,6 +881,7 @@ package body GPS.Kernel.Remote is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Shell:");
+      Set_Justify (Label, Justify_Left);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
@@ -896,6 +899,7 @@ package body GPS.Kernel.Remote is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Sync tool:");
+      Set_Justify (Label, Justify_Left);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
@@ -933,6 +937,7 @@ package body GPS.Kernel.Remote is
                          Get_Mode (Dialog.Advanced_Button));
 
       Gtk_New (Label, -"User name:");
+      Set_Justify (Label, Justify_Left);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 0, 1,
               Fill or Expand, 0);
       Gtk_New (Dialog.User_Name_Entry);
@@ -940,6 +945,7 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0);
 
       Gtk_New (Label, -"Timeout value (in s):");
+      Set_Justify (Label, Justify_Left);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 1, 2,
               Fill or Expand, 0);
       Gtk_New (Dialog.Timeout_Spin, 1.0, 50.0, 1.0);
@@ -948,6 +954,7 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0);
 
       Gtk_New (Label, -"Max number of connections:");
+      Set_Justify (Label, Justify_Left);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 2, 3,
               Fill or Expand, 0);
       Gtk_New (Dialog.Max_Nb_Connected_Spin, 1.0, 50.0, 1.0);
@@ -956,6 +963,7 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0);
 
       Gtk_New (Label, -"Extra init commands:");
+      Set_Justify (Label, Justify_Left);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4,
               Fill or Expand, 0);
       Gtk_New (Scrolled);
@@ -1552,6 +1560,7 @@ package body GPS.Kernel.Remote is
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Item      : Item_Access;
       Prev      : Item_Access;
+      Ret       : Message_Dialog_Buttons;
 
    begin
       Get_Selected (Get_Selection (Dialog.Machine_Tree), Model, Iter);
@@ -1561,6 +1570,17 @@ package body GPS.Kernel.Remote is
             Current_Selection : constant String :=
                                   Get_String (Model, Iter, Name_Col);
          begin
+            Ret := Message_Dialog
+              (-"Are you sure you want to remove server " &
+               Current_Selection & " ?",
+               Dialog_Type => Confirmation,
+               Buttons     => Button_OK or Button_Cancel,
+               Title       => "Server removal confirmation");
+
+            if Ret = Button_Cancel then
+               return;
+            end if;
+
             if Active (Me) then
                Trace (Me, "Removing " & Current_Selection);
             end if;
@@ -1908,7 +1928,6 @@ package body GPS.Kernel.Remote is
    is
       Unix_FS    : Unix_Filesystem_Record;
       Windows_FS : Windows_Filesystem_Record;
-      Remote     : constant String := "/_" & (-"Remote") & '/';
    begin
       --  Register synchronisation hook
       Register_Hook_Data_Type
@@ -1946,7 +1965,7 @@ package body GPS.Kernel.Remote is
 
       --  Add menu item
       Register_Menu
-        (Kernel, Remote, -"_Configure the servers list", "",
+        (Kernel, Remote_Menu_Path, -"Servers _configuration", "",
          On_Configure_Server_List'Access);
    end Register_Module;
 
