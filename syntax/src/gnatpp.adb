@@ -70,7 +70,7 @@ begin
         (Buffer.all,
          Indent_Params =>
            (2, 2, 2, 0, 2, 8, Automatic, End_Of_Line, Unchanged, Unchanged,
-            False, True, False, False, False),
+            False, True, False, False, False, True, False),
          Replace => Replace_Cb'Unrestricted_Access);
 
    else
@@ -78,7 +78,8 @@ begin
         (Buffer.all,
          Indent_Params =>
            (3, 2, 2, 1, 3, 8, Automatic, End_Of_Line,
-            Lower, Smart_Mixed, True, False, True, True, True),
+            Lower, Smart_Mixed, True, False, True, True,
+            True, True, False),
          Replace => Replace_Cb'Unrestricted_Access);
    end if;
 
