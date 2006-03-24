@@ -53,6 +53,8 @@ package body Ada_Module is
    Ada_Align_On_Colons       : Param_Spec_Boolean;
    Ada_Align_On_Arrows       : Param_Spec_Boolean;
    Ada_Align_Decl_On_Colon   : Param_Spec_Boolean;
+   Ada_Indent_Comments       : Param_Spec_Boolean;
+   Ada_Stick_Comments        : Param_Spec_Boolean;
 
    package Casing_Policy_Properties is new
      Glib.Generic_Properties.Generic_Enumeration_Property
@@ -128,7 +130,9 @@ package body Ada_Module is
             Align_On_Colons     => Get_Pref (Ada_Align_On_Colons),
             Align_On_Arrows     => Get_Pref (Ada_Align_On_Arrows),
             Align_Decl_On_Colon =>
-              Get_Pref (Ada_Align_Decl_On_Colon)));
+              Get_Pref (Ada_Align_Decl_On_Colon),
+            Indent_Comments     => Get_Pref (Ada_Indent_Comments),
+            Stick_Comments      => Get_Pref (Ada_Stick_Comments)));
    end On_Preferences_Changed;
 
    ---------------------
@@ -301,6 +305,26 @@ package body Ada_Module is
            Nick    => -"Align declarations after colon"));
       Register_Property
         (Kernel, Param_Spec (Ada_Align_Decl_On_Colon), -"Editor:Ada");
+
+      Ada_Indent_Comments := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Ada-Indent-Comments",
+           Default => True,
+           Blurb   => -"Whether to indent lines with comments only",
+           Nick    => -"Indent comments"));
+      Register_Property
+        (Kernel, Param_Spec (Ada_Indent_Comments), -"Editor:Ada");
+
+      Ada_Stick_Comments := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Ada-Stick-Comments",
+           Default => False,
+           Blurb   =>
+             -("Whether to align comment lines following 'record' and " &
+               "'is' keywords immediately with no extra space"),
+           Nick    => -"Align comments on keywords"));
+      Register_Property
+        (Kernel, Param_Spec (Ada_Stick_Comments), -"Editor:Ada");
 
       Add_Hook
         (Kernel, Preferences_Changed_Hook,
