@@ -185,7 +185,9 @@ package body GNATbench.JNI_Functions is
            Use_Tabs            => False,
            Align_On_Colons     => False,
            Align_On_Arrows     => False,
-           Align_Decl_On_Colon => False);
+           Align_Decl_On_Colon => False,
+           Indent_Comments     => True,
+           Stick_Comments      => False);
 
    begin
       Id := GetMethodID
