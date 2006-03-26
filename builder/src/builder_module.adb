@@ -542,7 +542,7 @@ package body Builder_Module is
             Command => Data.Command,
             Output  => Ada.Strings.Unbounded.To_String
               (Files_Callback_Data (Data.Callback_Data.all).Buffer)
-               & Output (1 .. Last_EOL - 1) & ASCII.LF,
+               & Output (Output'First .. Last_EOL - 1) & ASCII.LF,
             Quiet   => False);
 
          Files_Callback_Data (Data.Callback_Data.all).Buffer :=
