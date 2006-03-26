@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -74,7 +74,7 @@ package GPS.Kernel.Project is
    --  needed.
 
    procedure Reload_Project_If_Needed
-     (Kernel               : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  If any of the project files on the disk have been modified, reload the
    --  project. This doesn't recompute the view, though.
 
@@ -111,7 +111,7 @@ package GPS.Kernel.Project is
       return Projects.Registry.Project_Registry_Access;
    --  Return the projects registry
 
-   procedure Recompute_View (Handle  : access Kernel_Handle_Record'Class);
+   procedure Recompute_View (Handle : access Kernel_Handle_Record'Class);
    --  Recompute the view of the project, based on the current value of all
    --  scenario variables.
    --  This emits the "project_view_changed" signal.
