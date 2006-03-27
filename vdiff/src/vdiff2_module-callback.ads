@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2005                    --
+--                        Copyright (C) 2001-2006                    --
 --                                AdaCore                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -17,13 +17,11 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
---  Provide all callback for menu
 
 with Glib.Object;          use Glib.Object;
 
 with Commands.Interactive; use Commands, Commands.Interactive;
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
-with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 
 package Vdiff2_Module.Callback is
 
@@ -53,10 +51,6 @@ package Vdiff2_Module.Callback is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data    : access GPS.Kernel.Hooks.Hooks_Data'Class);
    --  Callback for the "file_closed" signal
-
-   procedure Diff_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
-   --  Interactive command handler for the Visual_Diff module
 
    procedure On_Preferences_Changed
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
