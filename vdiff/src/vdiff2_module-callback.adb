@@ -32,6 +32,7 @@ with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with OS_Utils;                          use OS_Utils;
 with Traces;                            use Traces;
@@ -112,12 +113,7 @@ package body Vdiff2_Module.Callback is
                  Pattern_Name      => -"All files;Ada files;C/C++ files",
                  History           => Get_History (Kernel));
          begin
-            if File3 = VFS.No_File then
-               Visual_Diff (File1, File2);
-               return;
-            end if;
-
-            Visual_Diff (File2, File1, File3);
+            Visual_Diff (File1, File2, File3);
          end;
       end;
    exception
@@ -184,7 +180,6 @@ package body Vdiff2_Module.Callback is
    procedure On_Merge_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Item   : Diff_Head;
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select Common Ancestor",
@@ -254,7 +249,7 @@ package body Vdiff2_Module.Callback is
 
             begin
                if Merge /= VFS.No_File then
-                  Show_Merge (Kernel, Full_Name (Merge).all, Item);
+                  Show_Merge (Kernel, Full_Name (Merge).all);
                end if;
             end;
          end;
@@ -273,7 +268,6 @@ package body Vdiff2_Module.Callback is
    procedure On_Merge_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Item   : Diff_Head;
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select First File",
@@ -324,7 +318,7 @@ package body Vdiff2_Module.Callback is
 
          begin
             if Merge /= VFS.No_File then
-               Show_Merge (Kernel, Full_Name (Merge).all, Item);
+               Show_Merge (Kernel, Full_Name (Merge).all);
             end if;
          end;
       end;
@@ -356,11 +350,11 @@ package body Vdiff2_Module.Callback is
          declare
             Ref_F : constant Virtual_File :=
                       Create (Full_Filename => Get_Ref_Filename (D.New_File));
-            Res   : Boolean;
+            Res   : Diff_Head_Access;
          begin
             Res := Visual_Patch (Ref_F, D.New_File, D.Diff_File, True);
             Delete (Ref_F, Success);
-            return Res;
+            return Res /= null;
          end;
 
       elsif D.New_File = VFS.No_File then
@@ -371,15 +365,15 @@ package body Vdiff2_Module.Callback is
          declare
             Ref_F : constant Virtual_File :=
                       Create (Full_Filename => Get_Ref_Filename (D.Orig_File));
-            Res   : Boolean;
+            Res   : Diff_Head_Access;
          begin
             Res := Visual_Patch (D.Orig_File, Ref_F, D.Diff_File, False);
             Delete (Ref_F, Success);
-            return Res;
+            return Res /= null;
          end;
 
       else
-         return Visual_Patch (D.Orig_File, D.New_File, D.Diff_File);
+         return Visual_Patch (D.Orig_File, D.New_File, D.Diff_File) /= null;
       end if;
    end Diff_Hook;
 
@@ -392,7 +386,7 @@ package body Vdiff2_Module.Callback is
       Data   : access Hooks_Data'Class)
    is
       D    : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Diff : Diff_Head;
+      Diff : Diff_Head_Access;
       Node : Diff_Head_List.List_Node;
    begin
       if Vdiff_Module_ID = null then
@@ -415,11 +409,6 @@ package body Vdiff2_Module.Callback is
 
          Hide_Differences (Kernel, Diff);
 
-         Remove_Nodes
-           (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-            Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),
-            Node);
-
          --  Close all temporary files used in the visual diff
 
          for J in Diff.Files'Range loop
@@ -439,7 +428,11 @@ package body Vdiff2_Module.Callback is
             end if;
          end loop;
 
-         Free_All (Diff);
+         Remove_Nodes
+           (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+            Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),
+            Node);
+
       end if;
 
    exception
@@ -448,32 +441,6 @@ package body Vdiff2_Module.Callback is
                 "Unexpected exception: " & Exception_Information (E));
    end File_Closed_Cb;
 
-   --------------------------
-   -- Diff_Command_Handler --
-   --------------------------
-
-   procedure Diff_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-   begin
-      if Command = "visual_diff" then
-         declare
-            File1 : constant Virtual_File :=
-                      Create (Nth_Arg (Data, 1), Kernel,
-                              Use_Source_Path => True);
-            File2 : constant Virtual_File :=
-                      Create (Nth_Arg (Data, 2), Kernel,
-                              Use_Source_Path => True);
-            File3 : constant Virtual_File :=
-                      Create (Nth_Arg (Data, 3, Default => ""),
-                              Kernel, Use_Source_Path => True);
-         begin
-            Visual_Diff (File1, File2, File3);
-         end;
-      end if;
-   end Diff_Command_Handler;
-
    ------------------------------
    --  On_Preferences_Changed  --
    ------------------------------
@@ -481,10 +448,9 @@ package body Vdiff2_Module.Callback is
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Diff      : Diff_Head;
+      Diff      : Diff_Head_Access;
       Curr_Node : Diff_Head_List.List_Node :=
-        First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
-
+                    First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
    begin
       Register_Highlighting (Kernel);
 
@@ -492,7 +458,6 @@ package body Vdiff2_Module.Callback is
          Diff := Data (Curr_Node);
          Hide_Differences (Kernel, Diff);
          Show_Differences3 (Kernel, Diff);
-         Set_Data (Curr_Node, Diff);
          Curr_Node := Next (Curr_Node);
       end loop;
    exception
@@ -513,8 +478,8 @@ package body Vdiff2_Module.Callback is
       Node          : Diff_Head_List.List_Node;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
-      Diff          : Diff_Head;
-      Ref_File      : constant T_VFile_Index := Diff.Ref_File;
+      Diff          : Diff_Head_Access;
+      Ref_File      : T_VFile_Index;
    begin
       Create
         (Cmd,
@@ -529,6 +494,7 @@ package body Vdiff2_Module.Callback is
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
       Diff := Data (Node);
+      Ref_File := Diff.Ref_File;
 
       for J in T_VFile_Index loop
          if Diff.Files (J) = Selected_File then
@@ -538,8 +504,7 @@ package body Vdiff2_Module.Callback is
       end loop;
 
       if Diff.Ref_File /= Ref_File then
-         Set_Data (Node, Diff);
-         Unchecked_Execute (Cmd, Node);
+         Unchecked_Execute (Cmd, Diff);
       end if;
 
       Free (Root_Command (Cmd.all));
@@ -573,7 +538,7 @@ package body Vdiff2_Module.Callback is
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      Unchecked_Execute (Cmd, Node);
+      Unchecked_Execute (Cmd, Data (Node));
       Free (Root_Command (Cmd.all));
       return Commands.Success;
    end Execute;
@@ -626,7 +591,7 @@ package body Vdiff2_Module.Callback is
          end if;
       end loop;
 
-      Unchecked_Execute (Cmd, Node);
+      Unchecked_Execute (Cmd, Data (Node));
 
       for J in To_Delete'Range loop
          if To_Delete (J) then
@@ -665,8 +630,9 @@ package body Vdiff2_Module.Callback is
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      Unchecked_Execute (Cmd, Node);
+      Unchecked_Execute (Cmd, Data (Node));
       Free (Root_Command (Cmd.all));
+
       return Commands.Success;
    end Execute;
 
