@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Expect;                use GNAT.Expect;
@@ -35,6 +36,7 @@ with Glib.Convert;               use Glib.Convert;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glib.Xml_Int;               use Glib.Xml_Int;
+with Gdk.Color;                  use Gdk.Color;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Dialog;                 use Gtk.Dialog;
@@ -49,6 +51,7 @@ with Gtk.Notebook;               use Gtk.Notebook;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
 with Gtk.Stock;                  use Gtk.Stock;
+with Gtk.Style;                  use Gtk.Style;
 with Gtk.Table;                  use Gtk.Table;
 with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
 with Gtk.Tooltips;               use Gtk.Tooltips;
@@ -222,6 +225,9 @@ package body GPS.Kernel.Remote is
       Restore_Button        : Gtk_Button;
       Remove_Button         : Gtk_Button;
       Restoring             : Boolean := False;
+      Added_Item            : Boolean := False;
+      Select_Back           : Boolean := False;
+      --  Set to true when selecting a machine back.
    end record;
    type Server_List_Editor is access all Server_List_Editor_Record'Class;
 
@@ -231,6 +237,13 @@ package body GPS.Kernel.Remote is
 
    procedure Changed  (W : access Gtk_Widget_Record'Class);
    --  Called when one of the entries has changed
+
+   function Save (Dialog        : Server_List_Editor;
+                  Save_Selected : Boolean := False) return Boolean;
+   --  Saves all modified item. Return True if succeed, false if missing
+   --  mandatory values exist.
+   --  If Save_Selected is set, then the selected item is saved. Else
+   --  only unselected items are saved.
 
    procedure Selection_Changed (W : access Gtk_Widget_Record'Class);
    --  Called when the selected machine has changed.
@@ -791,6 +804,8 @@ package body GPS.Kernel.Remote is
       Empty_List  : Boolean := True;
       VBox        : Gtk_Vbox;
       Line_Nb     : Guint;
+      Color       : Gdk_Color;
+      Style       : Gtk_Style;
       pragma Unreferenced (Tmp);
    begin
       Dialog := new Server_List_Editor_Record;
@@ -832,6 +847,12 @@ package body GPS.Kernel.Remote is
       Set_Show_Tabs (Dialog.Notebook, True);
       Set_Tab_Pos (Dialog.Notebook, Pos_Top);
 
+      --  Color for mandatory fields
+      Color := Parse ("#ae0000");
+      Alloc (Get_Default_Colormap, Color);
+      Style := Copy (Get_Default_Style);
+      Set_Fg (Style, State_Normal, Color);
+
       --  Machine configuration
 
       Gtk_New (Scrolled);
@@ -852,10 +873,11 @@ package body GPS.Kernel.Remote is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Network name:");
-      Set_Justify (Label, Justify_Left);
+      Set_Alignment (Label, 0.0, 0.5);
+      Set_Style (Label, Style);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0);
+              Fill or Expand, 0, 10);
       Gtk_New (Dialog.Network_Name_Entry);
       Attach (Dialog.Right_Table, Dialog.Network_Name_Entry,
               1, 2, Line_Nb, Line_Nb + 1,
@@ -863,10 +885,11 @@ package body GPS.Kernel.Remote is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Remote access tool:");
-      Set_Justify (Label, Justify_Left);
+      Set_Alignment (Label, 0.0, 0.5);
+      Set_Style (Label, Style);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0);
+              Fill or Expand, 0, 10);
       Gtk_New (Dialog.Remote_Access_Combo);
       Set_Editable (Get_Entry (Dialog.Remote_Access_Combo), False);
       Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo,
@@ -881,10 +904,11 @@ package body GPS.Kernel.Remote is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Shell:");
-      Set_Justify (Label, Justify_Left);
+      Set_Alignment (Label, 0.0, 0.5);
+      Set_Style (Label, Style);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0);
+              Fill or Expand, 0, 10);
       Gtk_New (Dialog.Remote_Shell_Combo);
       Set_Editable (Get_Entry (Dialog.Remote_Shell_Combo), False);
       Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo,
@@ -899,10 +923,10 @@ package body GPS.Kernel.Remote is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Sync tool:");
-      Set_Justify (Label, Justify_Left);
+      Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0);
+              Fill or Expand, 0, 10);
       Gtk_New (Dialog.Remote_Sync_Combo);
       Set_Editable (Get_Entry (Dialog.Remote_Sync_Combo), False);
       Attach (Dialog.Right_Table, Dialog.Remote_Sync_Combo,
@@ -937,35 +961,35 @@ package body GPS.Kernel.Remote is
                          Get_Mode (Dialog.Advanced_Button));
 
       Gtk_New (Label, -"User name:");
-      Set_Justify (Label, Justify_Left);
+      Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 0, 1,
-              Fill or Expand, 0);
+              Fill or Expand, 0, 10);
       Gtk_New (Dialog.User_Name_Entry);
       Attach (Dialog.Advanced_Table, Dialog.User_Name_Entry, 1, 2, 0, 1,
               Fill or Expand, 0);
 
       Gtk_New (Label, -"Timeout value (in s):");
-      Set_Justify (Label, Justify_Left);
+      Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 1, 2,
-              Fill or Expand, 0);
+              Fill or Expand, 0, 10);
       Gtk_New (Dialog.Timeout_Spin, 1.0, 50.0, 1.0);
       Set_Digits (Dialog.Timeout_Spin, 0);
       Attach (Dialog.Advanced_Table, Dialog.Timeout_Spin, 1, 2, 1, 2,
               Fill or Expand, 0);
 
       Gtk_New (Label, -"Max number of connections:");
-      Set_Justify (Label, Justify_Left);
+      Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 2, 3,
-              Fill or Expand, 0);
+              Fill or Expand, 0, 10);
       Gtk_New (Dialog.Max_Nb_Connected_Spin, 1.0, 50.0, 1.0);
       Set_Digits (Dialog.Max_Nb_Connected_Spin, 0);
       Attach (Dialog.Advanced_Table, Dialog.Max_Nb_Connected_Spin, 1, 2, 2, 3,
               Fill or Expand, 0);
 
       Gtk_New (Label, -"Extra init commands:");
-      Set_Justify (Label, Justify_Left);
+      Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4,
-              Fill or Expand, 0);
+              Fill or Expand, 0, 10);
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
       Attach (Dialog.Advanced_Table, Scrolled, 1, 2, 3, 4,
@@ -1134,174 +1158,254 @@ package body GPS.Kernel.Remote is
       end if;
    end Changed;
 
+   ----------
+   -- Save --
+   ----------
+
+   function Save (Dialog        : Server_List_Editor;
+                  Save_Selected : Boolean := False) return Boolean
+   is
+      function Check_Fields
+        (Model  : Gtk.Tree_Store.Gtk_Tree_Store;
+         Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Dialog : Server_List_Editor) return Boolean;
+      --  Check that the last selected machine has correctly been entered
+
+      ------------------
+      -- Check_Fields --
+      ------------------
+
+      function Check_Fields
+        (Model          : Gtk.Tree_Store.Gtk_Tree_Store;
+         Iter           : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Dialog         : Server_List_Editor) return Boolean
+      is
+         Nickname  : constant String
+           := Get_String (Model, Iter, Name_Col);
+         Has_Network_Name : Boolean;
+         Has_Access_Name  : Boolean;
+         Has_Shell_Name   : Boolean;
+         Error_Str        : Ada.Strings.Unbounded.Unbounded_String;
+         Ret              : Message_Dialog_Buttons;
+         pragma Unreferenced (Ret);
+         use type Ada.Strings.Unbounded.Unbounded_String;
+      begin
+         Has_Network_Name := Get_Text (Dialog.Network_Name_Entry) /= "";
+         Has_Access_Name  := Get_Text
+           (Get_Entry (Dialog.Remote_Access_Combo)) /= "";
+         Has_Shell_Name   :=
+           Get_Text (Get_Entry (Dialog.Remote_Shell_Combo)) /= "";
+
+         if not Has_Network_Name
+           or else not Has_Access_Name
+           or else not Has_Shell_Name
+         then
+            Error_Str := Ada.Strings.Unbounded.To_Unbounded_String
+              (-"Error ! The following items are missing for server " &
+               Nickname & ":");
+            if not Has_Network_Name then
+               Error_Str := Error_Str & ASCII.LF & (-"- Network name");
+            end if;
+            if not Has_Access_Name then
+               Error_Str := Error_Str & ASCII.LF & (-"- Remote access");
+            end if;
+            if not Has_Shell_Name then
+               Error_Str := Error_Str & ASCII.LF & (-"- Shell");
+            end if;
+            Ret := Message_Dialog
+              (Ada.Strings.Unbounded.To_String (Error_Str),
+               Dialog_Type => Error,
+               Buttons     => Button_OK,
+               Parent      => Gtk_Window (Dialog));
+            return False;
+         end if;
+         return True;
+      end Check_Fields;
+
+      Model      : Gtk.Tree_Store.Gtk_Tree_Store;
+      Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Item       : Item_Access;
+      Init_Cmds  : String_List_Access;
+      Path_Item  : Mirrors_List_Access;
+      Path_Model : Gtk.Tree_Store.Gtk_Tree_Store;
+      Path_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Cmds_Model : Gtk_Tree_Store;
+      Cmds_Iter  : Gtk_Tree_Iter;
+      Nb_Cmds    : Natural;
+      Cmd_Idx    : Natural;
+      Attribute  : Descriptor_Attribute;
+      Modified   : Boolean;
+   begin
+      Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
+      Iter  := Get_Iter_First (Model);
+
+      Modified := False;
+      while Iter /= Null_Iter loop
+         --  Do not check or save a selected item !
+         if Get_Boolean (Model, Iter, Modified_Col)
+           and then (Save_Selected or else
+                     not Iter_Is_Selected (Get_Selection (Dialog.Machine_Tree),
+                                           Iter))
+         then
+            Modified := True;
+            exit;
+         end if;
+         Next (Model, Iter);
+      end loop;
+
+      --  Nothing modified. Just return.
+      if not Modified then
+         return True;
+      end if;
+
+      if not Check_Fields (Model, Iter, Dialog) then
+         Trace (Me, "Setting back selection to uncomplete machine");
+         Dialog.Select_Back := True;
+         Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
+         return False;
+      end if;
+
+      declare
+         Nickname   : constant String
+           := Get_String (Model, Iter, Name_Col);
+      begin
+         --  Get attribute value.
+         if Get_Boolean (Model, Iter, User_Def_Col) then
+            Trace (Me, "Internal save user defined machine");
+            Attribute := User_Defined;
+         else
+            Trace (Me, "Internal save system defined machine");
+            Attribute := System_Defined;
+         end if;
+
+         Item := Dialog.Machines;
+         while Item /= null loop
+            exit when Item.Desc.Nickname.all = Nickname;
+            Item := Item.Next;
+         end loop;
+
+         if Item /= null then
+            --  free replaced descriptor
+            Unref (Item.Desc);
+
+            Cmds_Model := Gtk_Tree_Store
+              (Get_Model (Dialog.Extra_Init_Cmds_Tree));
+            Cmds_Iter  := Get_Iter_First (Cmds_Model);
+            Nb_Cmds    := 0;
+
+            while Cmds_Iter /= Null_Iter loop
+               if Get_String (Cmds_Model, Cmds_Iter, 0) /= "" then
+                  Nb_Cmds := Nb_Cmds + 1;
+               end if;
+               Next (Cmds_Model, Cmds_Iter);
+            end loop;
+
+            Init_Cmds := new Argument_List (1 .. Nb_Cmds);
+            Cmd_Idx   := Init_Cmds'First;
+            Cmds_Iter := Get_Iter_First (Cmds_Model);
+
+            while Cmds_Iter /= Null_Iter loop
+               declare
+                  Str : constant String :=
+                    Get_String (Cmds_Model, Cmds_Iter, 0);
+               begin
+                  if Str /= "" then
+                     if Active (Me) then
+                        Trace (Me, "added init cmd: '" & Str & "'");
+                     end if;
+                     Init_Cmds (Cmd_Idx) := new String'(Str);
+                     Cmd_Idx := Cmd_Idx + 1;
+                  end if;
+               end;
+               Next (Cmds_Model, Cmds_Iter);
+            end loop;
+
+            Item.Desc := new Machine_Descriptor_Record'
+              (Nickname            => new String'(Nickname),
+               Network_Name        => new String'
+                 (Get_Text (Dialog.Network_Name_Entry)),
+               Access_Name         => new String'
+                 (Get_Text (Get_Entry (Dialog.Remote_Access_Combo))),
+               Shell_Name          => new String'
+                 (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))),
+               Rsync_Func          => new String'
+                 (Get_Text (Get_Entry (Dialog.Remote_Sync_Combo))),
+               User_Name           => new String'
+                 (Get_Text (Dialog.User_Name_Entry)),
+               Timeout             =>
+                 Integer (Get_Value_As_Int (Dialog.Timeout_Spin)) * 1000,
+               Max_Nb_Connections  => Integer
+                 (Get_Value_As_Int (Dialog.Max_Nb_Connected_Spin)),
+               Extra_Init_Commands => Init_Cmds,
+               Attribute           => Attribute,
+               Ref                 => 1);
+         end if;
+
+         --  now save the paths
+         Trace (Me, "Internal save paths");
+
+         Path_Item := Dialog.Paths_Table;
+         while Path_Item /= null loop
+            exit when Path_Item.Nickname.all = Nickname;
+            Path_Item := Path_Item.Next;
+         end loop;
+
+         if Path_Item = null then
+            Dialog.Paths_Table := new Mirrors_List_Record'
+              (Nickname  => new String'(Nickname),
+               Path_List => null,
+               Next      => Dialog.Paths_Table);
+            Path_Item := Dialog.Paths_Table;
+         end if;
+
+         Free (Path_Item.Path_List);
+         Path_Model := Gtk_Tree_Store (Get_Model (Dialog.Paths_Tree));
+         Path_Iter := Get_Iter_First (Path_Model);
+
+         while Path_Iter /= Null_Iter loop
+            declare
+               Local_Path  : constant String :=
+                 Get_String (Path_Model, Path_Iter, Local_Col);
+               Remote_Path : constant String :=
+                 Get_String (Path_Model, Path_Iter, Remote_Col);
+               Need_Sync   : constant Boolean :=
+                 Get_Boolean (Path_Model, Path_Iter, Need_Sync_Col);
+               User_Def    : constant Boolean :=
+                 Get_Boolean (Path_Model, Path_Iter, Editable_Col);
+               Attribute   : Descriptor_Attribute;
+            begin
+               if Local_Path /= "" and then Remote_Path /= "" then
+                  if User_Def then
+                     Attribute := User_Defined;
+                  else
+                     Attribute := System_Defined;
+                  end if;
+
+                  Trace (Me, "Save " & Local_Path & ", " &
+                         Remote_Path);
+                  Path_Item.Path_List := new Mirror_Path_Record'
+                    (Local_Path  => new String'(Local_Path),
+                     Remote_Path => new String'(Remote_Path),
+                     Need_Sync   => Need_Sync,
+                     Attribute   => Attribute,
+                     Next        => Path_Item.Path_List);
+               end if;
+            end;
+            Next (Path_Model, Path_Iter);
+         end loop;
+
+         --  Set this iter as not modified
+         Set (Model, Iter, Modified_Col, False);
+      end;
+
+      return True;
+   end Save;
+
    -----------------------
    -- Selection_Changed --
    -----------------------
 
    procedure Selection_Changed (W : access Gtk_Widget_Record'Class) is
-
-      procedure Save
-        (Model  : Gtk.Tree_Store.Gtk_Tree_Store;
-         Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Dialog : in out Server_List_Editor_Record);
-      --  Saves all modified item
-
-      ----------
-      -- Save --
-      ----------
-
-      procedure Save
-        (Model  : Gtk.Tree_Store.Gtk_Tree_Store;
-         Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Dialog : in out Server_List_Editor_Record)
-      is
-         Item       : Item_Access;
-         Init_Cmds  : String_List_Access;
-         Path_Item  : Mirrors_List_Access;
-         Path_Model : Gtk.Tree_Store.Gtk_Tree_Store;
-         Path_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Cmds_Model : Gtk_Tree_Store;
-         Cmds_Iter  : Gtk_Tree_Iter;
-         Nb_Cmds    : Natural;
-         Cmd_Idx    : Natural;
-      begin
-         if Get_Boolean (Model, Iter, Modified_Col) then
-            declare
-               Attribute : Descriptor_Attribute;
-               Nickname  : constant String
-                 := Get_String (Model, Iter, Name_Col);
-            begin
-               --  Get attribute value.
-               if Get_Boolean (Model, Iter, User_Def_Col) then
-                  Trace (Me, "Internal save user defined machine");
-                  Attribute := User_Defined;
-               else
-                  Trace (Me, "Internal save system defined machine");
-                  Attribute := System_Defined;
-               end if;
-
-               Item := Dialog.Machines;
-               while Item /= null loop
-                  exit when Item.Desc.Nickname.all = Nickname;
-                  Item := Item.Next;
-               end loop;
-
-               if Item /= null then
-                  --  free replaced descriptor
-                  Unref (Item.Desc);
-
-                  Cmds_Model := Gtk_Tree_Store
-                    (Get_Model (Dialog.Extra_Init_Cmds_Tree));
-                  Cmds_Iter  := Get_Iter_First (Cmds_Model);
-                  Nb_Cmds    := 0;
-
-                  while Cmds_Iter /= Null_Iter loop
-                     if Get_String (Cmds_Model, Cmds_Iter, 0) /= "" then
-                        Nb_Cmds := Nb_Cmds + 1;
-                     end if;
-                     Next (Cmds_Model, Cmds_Iter);
-                  end loop;
-
-                  Init_Cmds := new Argument_List (1 .. Nb_Cmds);
-                  Cmd_Idx   := Init_Cmds'First;
-                  Cmds_Iter := Get_Iter_First (Cmds_Model);
-
-                  while Cmds_Iter /= Null_Iter loop
-                     declare
-                        Str : constant String :=
-                          Get_String (Cmds_Model, Cmds_Iter, 0);
-                     begin
-                        if Str /= "" then
-                           if Active (Me) then
-                              Trace (Me, "added init cmd: '" & Str & "'");
-                           end if;
-                           Init_Cmds (Cmd_Idx) := new String'(Str);
-                           Cmd_Idx := Cmd_Idx + 1;
-                        end if;
-                     end;
-                     Next (Cmds_Model, Cmds_Iter);
-                  end loop;
-
-                  Item.Desc := new Machine_Descriptor_Record'
-                    (Nickname            => new String'(Nickname),
-                     Network_Name        => new String'
-                       (Get_Text (Dialog.Network_Name_Entry)),
-                     Access_Name         => new String'
-                       (Get_Text (Get_Entry (Dialog.Remote_Access_Combo))),
-                     Shell_Name          => new String'
-                       (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))),
-                     Rsync_Func          => new String'
-                       (Get_Text (Get_Entry (Dialog.Remote_Sync_Combo))),
-                     User_Name           => new String'
-                       (Get_Text (Dialog.User_Name_Entry)),
-                     Timeout             =>
-                       Integer (Get_Value_As_Int (Dialog.Timeout_Spin)) * 1000,
-                     Max_Nb_Connections  => Integer
-                       (Get_Value_As_Int (Dialog.Max_Nb_Connected_Spin)),
-                     Extra_Init_Commands => Init_Cmds,
-                     Attribute           => Attribute,
-                     Ref                 => 1);
-               end if;
-
-               --  now save the paths
-               Trace (Me, "Internal save paths");
-
-               Path_Item := Dialog.Paths_Table;
-               while Path_Item /= null loop
-                  exit when Path_Item.Nickname.all = Nickname;
-                  Path_Item := Path_Item.Next;
-               end loop;
-
-               if Path_Item = null then
-                  Dialog.Paths_Table := new Mirrors_List_Record'
-                    (Nickname  => new String'(Nickname),
-                     Path_List => null,
-                     Next      => Dialog.Paths_Table);
-                  Path_Item := Dialog.Paths_Table;
-               end if;
-
-               Free (Path_Item.Path_List);
-               Path_Model := Gtk_Tree_Store (Get_Model (Dialog.Paths_Tree));
-               Path_Iter := Get_Iter_First (Path_Model);
-
-               while Path_Iter /= Null_Iter loop
-                  declare
-                     Local_Path  : constant String :=
-                       Get_String (Path_Model, Path_Iter, Local_Col);
-                     Remote_Path : constant String :=
-                       Get_String (Path_Model, Path_Iter, Remote_Col);
-                     Need_Sync   : constant Boolean :=
-                       Get_Boolean (Path_Model, Path_Iter, Need_Sync_Col);
-                     User_Def    : constant Boolean :=
-                       Get_Boolean (Path_Model, Path_Iter, Editable_Col);
-                     Attribute   : Descriptor_Attribute;
-                  begin
-                     if Local_Path /= "" and then Remote_Path /= "" then
-                        if User_Def then
-                           Attribute := User_Defined;
-                        else
-                           Attribute := System_Defined;
-                        end if;
-
-                        Trace (Me, "Save " & Local_Path & ", " &
-                               Remote_Path);
-                        Path_Item.Path_List := new Mirror_Path_Record'
-                          (Local_Path  => new String'(Local_Path),
-                           Remote_Path => new String'(Remote_Path),
-                           Need_Sync   => Need_Sync,
-                           Attribute   => Attribute,
-                           Next        => Path_Item.Path_List);
-                     end if;
-                  end;
-                  Next (Path_Model, Path_Iter);
-               end loop;
-            end;
-
-            --  Set this iter as not modified
-            Set (Model, Iter, Modified_Col, False);
-         end if;
-      end Save;
-
       Dialog    : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Store.Gtk_Tree_Store;
@@ -1316,14 +1420,17 @@ package body GPS.Kernel.Remote is
       M_Path    : Mirror_Path_Access;
 
    begin
-      --  First save previous selection if needed
-      Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
-      Iter  := Get_Iter_First (Model);
+      --  If we just added a machine, do not perform any save
+      if not Dialog.Added_Item and then not Save (Server_List_Editor (W)) then
+         return;
+      end if;
+      Dialog.Added_Item := False;
 
-      while Iter /= Null_Iter loop
-         Save (Model, Iter, Dialog);
-         Next (Model, Iter);
-      end loop;
+      if Dialog.Select_Back then
+         --  Do not change dialog values.
+         Dialog.Select_Back := False;
+         return;
+      end if;
 
       --  Now reinit the dialog values
       Get_Selected (Get_Selection (Dialog.Machine_Tree),
@@ -1380,6 +1487,7 @@ package body GPS.Kernel.Remote is
                   Set (Cmd_Model, Cmd_Iter, 1, True);
                end loop;
             end if;
+
             --  Append an empty line at the end
             Append (Cmd_Model, Cmd_Iter, Null_Iter);
             Set (Cmd_Model, Cmd_Iter, 0, "");
@@ -1450,44 +1558,53 @@ package body GPS.Kernel.Remote is
    procedure Add_Machine_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog   : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
-      Nickname : constant String := Query_User
-        (Parent => Gtk_Window (W),
-         Prompt => -"Please enter the new machine's nickname",
-         Password_Mode => False);
       Model    : Gtk_Tree_Store;
       Iter     : Gtk_Tree_Iter := Null_Iter;
 
    begin
-      if Nickname = "" then
-         return;
+      --  First save the machines.
+      if Save (Server_List_Editor (W), True) then
+         declare
+            Nickname : constant String := Query_User
+              (Parent => Gtk_Window (W),
+               Prompt => -"Please enter the new machine's nickname",
+               Password_Mode => False);
+         begin
+            if Nickname = "" then
+               return;
+            end if;
+
+            Set_Child_Visible (Dialog.Notebook, True);
+
+            Dialog.Machines := new Item_Record'
+              (Desc => new Machine_Descriptor_Record'
+                 (Nickname            => new String'(Nickname),
+                  Network_Name        => new String'(""),
+                  Access_Name         => new String'(""),
+                  Shell_Name          => new String'(""),
+                  Rsync_Func          => new String'("rsync"),
+                  User_Name           => new String'(""),
+                  Extra_Init_Commands => null,
+                  Timeout             => 10000,
+                  Max_Nb_Connections  => 3,
+                  Attribute           => User_Defined,
+                  Ref                 => 1),
+               Next => Dialog.Machines);
+
+            Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
+            Append (Model, Iter, Null_Iter);
+            Set (Model, Iter, Name_Col, Nickname);
+            --  Set iter as modified
+            Set (Model, Iter, Modified_Col, True);
+            --  User defined item
+            Set (Model, Iter, User_Def_Col, True);
+            --  Tell the Selection_Changed callback that a new item
+            --  has been added.
+            Dialog.Added_Item := True;
+            --  Select this newly created machine
+            Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
+         end;
       end if;
-
-      Set_Child_Visible (Dialog.Notebook, True);
-
-      Dialog.Machines := new Item_Record'
-        (Desc => new Machine_Descriptor_Record'
-           (Nickname            => new String'(Nickname),
-            Network_Name        => new String'(""),
-            Access_Name         => new String'(""),
-            Shell_Name          => new String'(""),
-            Rsync_Func          => new String'("rsync"),
-            User_Name           => new String'(""),
-            Extra_Init_Commands => null,
-            Timeout             => 10000,
-            Max_Nb_Connections  => 3,
-            Attribute           => User_Defined,
-            Ref                 => 1),
-         Next => Dialog.Machines);
-
-      Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
-      Append (Model, Iter, Null_Iter);
-      Set (Model, Iter, Name_Col, Nickname);
-      --  Set iter as not modified
-      Set (Model, Iter, Modified_Col, False);
-      --  User defined item
-      Set (Model, Iter, User_Def_Col, True);
-
-      Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
    end Add_Machine_Clicked;
 
    ---------------------
