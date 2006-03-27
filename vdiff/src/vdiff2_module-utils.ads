@@ -31,39 +31,25 @@ package Vdiff2_Module.Utils is
 
    procedure Show_Merge
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Merge  : String;
-      Item   : Diff_Head);
+      Merge  : String);
    --  Show a result of a Merge
-
-   procedure Process_Differences
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item      : Diff_Head;
-      Diff_List : Diff_Head_List_Access);
-   --  Verify if Item is  not in Diff_List
-   --  then show differences and append Item to diff_List
 
    function Process_Differences
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item      : Diff_Head;
-      Diff_List : Diff_Head_List_Access) return Diff_Head_List.List_Node;
-   --  ???
-
-   procedure Modify_Differences
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item      : in out Diff_Head;
-      Diff_List : Diff_Head_List_Access);
-   --  Verify if Item is  not in Diff_List
-   --  then show differences and modify Item to diff_List
+      Diff_List : Diff_Head_List_Access) return Diff_Head_Access;
+   --  Verify that Item is not in Diff_List then show differences and append
+   --  Item to diff_List.
 
    procedure Show_Differences3
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item   : in out Diff_Head);
+      Item   : access Diff_Head);
    --  Show a result of diff Item
 
    procedure Hide_Differences
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_Head);
-   --  Remove the hightlighting of all file of Diff
+      Item   : access Diff_Head);
+   --  Remove the hightlighting of all files used in a visual diff
 
    procedure Unhighlight_Block
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -76,19 +62,27 @@ package Vdiff2_Module.Utils is
      (File1 : Virtual_File;
       File2 : Virtual_File;
       File3 : Virtual_File := VFS.No_File);
-   --  Execute Diff and display the result in the editor
-
    function Visual_Diff
      (File1 : Virtual_File;
       File2 : Virtual_File;
-      File3 : Virtual_File := VFS.No_File) return Diff_Head_List.List_Node;
-   --  ???
+      File3 : Virtual_File := VFS.No_File) return Diff_Head_Access;
+   --  Create a new visual diff
+
+   function Get_Vdiff
+     (File1 : Virtual_File;
+      File2 : Virtual_File := VFS.No_File;
+      File3 : Virtual_File := VFS.No_File) return Diff_Head_Access;
+   --  Return the visual diff that contains all the specified files. If no
+   --  visual diff is found null is returned.
+
+   function Get_Vdiff_List return Diff_Head_List_Access;
+   --  Get the list of visual diff associated with the module
 
    function Visual_Patch
      (Orig_File : VFS.Virtual_File;
       New_File  : VFS.Virtual_File;
       Diff_File : VFS.Virtual_File;
-      Revert    : Boolean := False) return Boolean;
+      Revert    : Boolean := False) return Diff_Head_Access;
    --  Compute the differences from Diff_File.
    --  If Revert is False, create New_File from Orig_File and Diff_File.
    --  If Revert is True, create Orig_File from New_File and Diff_File.
