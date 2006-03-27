@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with GPS.Intl;                  use GPS.Intl;
@@ -29,12 +27,15 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Traces;                    use Traces;
 with Vdiff2_Command_Block;      use Vdiff2_Command_Block;
 with Vdiff2_Module.Callback;    use Vdiff2_Module.Callback;
 with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
 with VFS;                       use VFS;
 
 package body Vdiff2_Module is
+
+   Me : constant Debug_Handle := Create ("Vdiff2_Module");
 
    use Diff_Head_List;
 
@@ -50,23 +51,21 @@ package body Vdiff2_Module is
       Context : Selection_Context) return Boolean;
    --  Filter for 3-way diff contextual menus
 
-   type Vdiff_Info is record
-      Node : Diff_Head_List.List_Node;
-   end record;
-   type Vdiff_Info_Access is access Vdiff_Info;
-
    type Vdiff_Property is new Instance_Property_Record with record
-      Vdiff : Vdiff_Info_Access;
+      Vdiff : Diff_Head_Access;
    end record;
    procedure Destroy (Property : in out Vdiff_Property);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Vdiff_Info, Vdiff_Info_Access);
-
    procedure Set_Vdiff_Data
-     (Instance : Class_Instance;
-      Data     : Diff_Head_List.List_Node);
-      --  Set the data assiociated with an instance of the Vdiff classs
+     (Data     : access Diff_Head;
+      Instance : Class_Instance);
+   --  Set the data assiociated with an instance of the Vdiff classs
+
+   function Instance_From_Vdiff
+     (Vdiff  : access Diff_Head;
+      Class  : Class_Type;
+      Script : access Scripting_Language_Record'Class) return Class_Instance;
+   --  Get or create the class instance associated with a visual diff
 
    Vdiff_Class_Name : constant String := "Vdiff";
 
@@ -74,10 +73,10 @@ package body Vdiff2_Module is
    File2_Cst : aliased constant String := "file2";
    File3_Cst : aliased constant String := "File3";
 
-   Vdiff_Cmd_Parameters : constant Cst_Argument_List :=
-                            (1 => File1_Cst'Access,
-                             2 => File2_Cst'Access,
-                             3 => File3_Cst'Access);
+   Vdiff_Create_Parameters : constant Cst_Argument_List :=
+                               (1 => File1_Cst'Access,
+                                2 => File2_Cst'Access,
+                                3 => File3_Cst'Access);
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
    --  Register commands specific to the Vdiff2 module
@@ -92,7 +91,7 @@ package body Vdiff2_Module is
 
    procedure Destroy (Property : in out Vdiff_Property) is
    begin
-      Unchecked_Free (Property.Vdiff);
+      Free (Property.Vdiff);
    end Destroy;
 
    --------------------
@@ -100,15 +99,13 @@ package body Vdiff2_Module is
    --------------------
 
    procedure Set_Vdiff_Data
-     (Instance : Class_Instance;
-      Data     : Diff_Head_List.List_Node)
-   is
-      Info : constant Vdiff_Info_Access := new Vdiff_Info'(Node => Data);
+     (Data     : access Diff_Head;
+      Instance : Class_Instance) is
    begin
       Set_Property
         (Instance,
          Vdiff_Class_Name,
-         Vdiff_Property'(Vdiff => Info));
+         Vdiff_Property'(Vdiff => Diff_Head_Access (Data)));
    end Set_Vdiff_Data;
 
    -----------------------
@@ -120,7 +117,20 @@ package body Vdiff2_Module is
                       New_Class (Kernel, Vdiff_Class_Name);
    begin
       Register_Command
-        (Kernel, Constructor_Method, 2, 3, Vdiff_Cmds'Access, Vdiff_Class);
+        (Kernel, Constructor_Method, 0, 0, Vdiff_Cmds'Access, Vdiff_Class);
+      Register_Command
+        (Kernel, "close_editors", 0, 0, Vdiff_Cmds'Access, Vdiff_Class);
+      Register_Command
+        (Kernel, "create", 2, 3, Vdiff_Cmds'Access, Vdiff_Class,
+         Static_Method => True);
+      Register_Command
+        (Kernel, "files", 0, 0, Vdiff_Cmds'Access, Vdiff_Class);
+      Register_Command
+        (Kernel, "get", 1, 3, Vdiff_Cmds'Access, Vdiff_Class,
+         Static_Method => True);
+--        Register_Command
+--          (Kernel, "list", 0, 0, Vdiff_Cmds'Access, Vdiff_Class,
+--           Static_Method => True);
       Register_Command
         (Kernel, "recompute", 0, 0, Vdiff_Cmds'Access, Vdiff_Class);
    end Register_Commands;
@@ -136,39 +146,125 @@ package body Vdiff2_Module is
                       New_Class (Get_Kernel (Data), Vdiff_Class_Name);
    begin
       if Command = Constructor_Method then
-         Name_Parameters (Data, Vdiff_Cmd_Parameters);
+         Set_Error_Msg (Data, -("Cannot build instances of Vdiff."
+           & " Use Vdiff.get() or Vdiff.create() instead"));
+
+      elsif Command = "close_editors" then
          declare
             Instance : constant Class_Instance :=
                          Nth_Arg (Data, 1, Vdiff_Class);
-            File1    : constant Virtual_File :=
-                         Get_Data (Data, 2);
-            File2    : constant Virtual_File :=
-                         Get_Data (Data, 3);
-            File3    : Virtual_File := No_File;
+            Property : Vdiff_Property :=
+                         Vdiff_Property
+                           (Get_Property (Instance, Vdiff_Class_Name));
+            Cmd      : Diff_Command_Access;
          begin
-            if Number_Of_Arguments (Data) > 3 then
-               File3 := Get_Data (Data, 4);
+            if Property.Vdiff = null then
+               Set_Error_Msg (Data, "Visual diff has been destroyed");
+            else
+               Create
+                 (Cmd,
+                  Get_Kernel (Vdiff_Module_ID.all),
+                  VDiff2_Module (Vdiff_Module_ID).List_Diff,
+                  Close_Difference'Access);
+               Unchecked_Execute (Cmd, Property.Vdiff);
+               Free (Root_Command (Cmd.all));
+            end if;
+         end;
+
+      elsif Command = "create" then
+         declare
+            File1 : constant Virtual_File := Get_Data (Data, 1);
+            File2 : constant Virtual_File := Get_Data (Data, 2);
+            File3 : Virtual_File := No_File;
+            Vdiff : Diff_Head_Access;
+         begin
+            Name_Parameters (Data, Vdiff_Create_Parameters);
+
+            if Number_Of_Arguments (Data) > 2 then
+               File3 := Get_Data (Data, 3);
             end if;
 
-            Set_Vdiff_Data (Instance, Visual_Diff (File1, File2, File3));
+            Vdiff := Visual_Diff (File1, File2, File3);
+
+            if Vdiff /= null then
+               Set_Return_Value
+                 (Data,
+                  Instance_From_Vdiff
+                    (Vdiff,
+                     Vdiff_Class,
+                     Get_Script (Data)));
+            end if;
          end;
+
+      elsif Command = "get" then
+         declare
+            File1 : constant Virtual_File :=
+                      Get_Data (Data, 1);
+            File2 : constant Virtual_File :=
+                      Get_Data (Data, 2);
+            File3 : Virtual_File := No_File;
+            Vdiff : Diff_Head_Access;
+         begin
+            if Number_Of_Arguments (Data) > 2 then
+               File3 := Get_Data (Data, 3);
+            end if;
+
+            Vdiff := Get_Vdiff (File1, File2, File3);
+
+            if Vdiff /= null then
+               Set_Return_Value
+                 (Data,
+                  Instance_From_Vdiff
+                    (Vdiff,
+                     Vdiff_Class,
+                     Get_Script (Data)));
+            end if;
+         end;
+
+      elsif Command = "files" then
+         declare
+            Instance : constant Class_Instance :=
+                         Nth_Arg (Data, 1, Vdiff_Class);
+            Property : constant Vdiff_Property :=
+                         Vdiff_Property
+                           (Get_Property (Instance, Vdiff_Class_Name));
+            Files    : T_VFile;
+         begin
+            if Property.Vdiff = null then
+               Set_Error_Msg (Data, "Visual diff has been destroyed");
+               return;
+            end if;
+
+            Set_Return_Value_As_List (Data);
+
+            for Index in Files'Range loop
+               if Files (Index) /= VFS.No_File then
+                  Set_Return_Value
+                    (Data, Create_File (Get_Script (Data), Files (Index)));
+               end if;
+            end loop;
+         end;
+
       elsif Command = "recompute" then
          declare
-            Instance      : constant Class_Instance :=
-                              Nth_Arg (Data, 1, Vdiff_Class);
-            Property      : constant Vdiff_Property :=
-                              Vdiff_Property
-                                (Get_Property (Instance, Vdiff_Class_Name));
-            Node          : Diff_Head_List.List_Node :=
-                              Property.Vdiff.Node;
-            Cmd           : Diff_Command_Access;
+            Instance : constant Class_Instance :=
+                         Nth_Arg (Data, 1, Vdiff_Class);
+            Property : constant Vdiff_Property :=
+                         Vdiff_Property
+                           (Get_Property (Instance, Vdiff_Class_Name));
+            Cmd      : Diff_Command_Access;
          begin
+            if Property.Vdiff = null then
+               Set_Error_Msg (Data, "Visual diff has been destroyed");
+               return;
+            end if;
+
             Create
               (Cmd,
                Get_Kernel (Vdiff_Module_ID.all),
                VDiff2_Module (Vdiff_Module_ID).List_Diff,
                Reload_Difference'Access);
-            Unchecked_Execute (Cmd, Node);
+            Unchecked_Execute (Cmd, Property.Vdiff);
             Free (Root_Command (Cmd.all));
          end;
       end if;
@@ -327,12 +423,6 @@ package body Vdiff2_Module is
 --          (Kernel, Tools, -"Merge Three Files...", "",
 --           On_Merge_Three_Files'Access);
 
-      Register_Command
-        (Kernel, "visual_diff",
-         Minimum_Args => 2,
-         Maximum_Args => 3,
-         Handler      => Diff_Command_Handler'Access);
-
       Register_Commands (Kernel);
    end Register_Module;
 
@@ -384,5 +474,32 @@ package body Vdiff2_Module is
           (File_Information (Context),
            VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
    end Filter_Matches_Primitive;
+
+   -------------------------
+   -- Instance_From_Vdiff --
+   -------------------------
+
+   function Instance_From_Vdiff
+        (Vdiff  : access Diff_Head;
+         Class  : Class_Type;
+         Script : access Scripting_Language_Record'Class) return Class_Instance
+   is
+      Instance : Class_Instance;
+   begin
+      if Vdiff.Instances = null then
+         Vdiff.Instances := new Instance_List'(Null_Instance_List);
+      end if;
+
+      Instance := Get (Vdiff.Instances.all, Script);
+
+      if Instance = No_Class_Instance then
+         Trace (Me, "Create a new instance of the current visual diff");
+         Instance := New_Instance (Script, Class);
+         Set_Vdiff_Data (Vdiff, Instance);
+         Set (Vdiff.Instances.all, Script, Instance);
+      end if;
+
+      return Instance;
+   end Instance_From_Vdiff;
 
 end Vdiff2_Module;
