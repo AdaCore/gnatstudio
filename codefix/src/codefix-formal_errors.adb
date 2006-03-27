@@ -843,9 +843,10 @@ package body Codefix.Formal_Errors is
          "(pragma\s+[\w\d_]+\s*(\([^\)]*\))?\s*;)", Regular_Expression);
 
       Set_File (Begin_Cursor, Get_File (Cursor));
-      Set_Location (Begin_Cursor, 0, 1);
+      Set_Location (Begin_Cursor, 1, 1);
 
-      Initialize (New_Command, Current_Text, Pragma_Cursor, Begin_Cursor);
+      Initialize
+        (New_Command, Current_Text, Pragma_Cursor, Begin_Cursor, True);
       Set_Caption
         (New_Command, "Move the pragma to the beginning of the file");
       Append (Result, New_Command);
@@ -1066,7 +1067,7 @@ package body Codefix.Formal_Errors is
          Set_Caption (New_Command, "Remove use clause");
       end if;
 
-         Append (Result, New_Command);
+      Append (Result, New_Command);
 
       Free (Word);
 
