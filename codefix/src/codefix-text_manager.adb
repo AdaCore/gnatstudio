@@ -1789,10 +1789,11 @@ package body Codefix.Text_Manager is
       --------------------------
 
       procedure Commit_Modified_Line is
-         It                : Mask_Iterator;
-         Len               : Natural;
-         Info              : Merge_Info;
-         Content           : constant String := Get_String (This);
+         It      : Mask_Iterator;
+         Len     : Natural;
+         Info    : Merge_Info;
+         Content : constant String (1 .. Get_String (This)'Length)
+           := Get_String (This);
          Cursor_Char_Index : Char_Index := To_Char_Index (Cursor.Col, Content);
       begin
          Reset (It, This.Content);
@@ -3948,12 +3949,13 @@ package body Codefix.Text_Manager is
    ---------------------
 
    procedure Initialize
-     (This         : in out Insert_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor'Class;
-      New_Position : File_Cursor'Class;
-      Add_Spaces   : Boolean := True;
-      Position     : Relative_Position := Specified)
+     (This            : in out Insert_Word_Cmd;
+      Current_Text    : Text_Navigator_Abstr'Class;
+      Word            : Word_Cursor'Class;
+      New_Position    : File_Cursor'Class;
+      Add_Spaces      : Boolean := True;
+      Position        : Relative_Position := Specified;
+      Insert_New_Line : Boolean := False)
    is
       New_Word : Word_Cursor;
    begin
@@ -3966,6 +3968,7 @@ package body Codefix.Text_Manager is
         (New_Word, Get_Line (New_Position), Get_Column (New_Position));
       Set_Word (New_Word, "", Text_Ascii);
       Make_Word_Mark (New_Word, Current_Text, This.New_Position);
+      This.Insert_New_Line := Insert_New_Line;
    end Initialize;
 
    procedure Free (This : in out Insert_Word_Cmd) is
@@ -3987,6 +3990,8 @@ package body Codefix.Text_Manager is
       Length          : Integer;
       New_Pos         : Word_Cursor;
       Word_Char_Index : Char_Index;
+
+      Tmp_Extract     : Extract;
    begin
       Make_Word_Cursor (This.Word, Current_Text, Word);
       Make_Word_Cursor (This.New_Position, Current_Text, New_Pos);
@@ -3999,13 +4004,12 @@ package body Codefix.Text_Manager is
 
       case Word.Mode is
          when Regular_Expression =>
-            Get_Line (Current_Text, File_Cursor (Word), New_Extract);
+            Get_Line (Current_Text, File_Cursor (Word), Tmp_Extract);
             declare
-               Str : constant String :=
-                 Get_String (New_Extract, Get_Line (Word));
+               Str : constant String := Get_String (Tmp_Extract);
             begin
                Length := Get_Word_Length
-                 (New_Extract, Word, Word.String_Match.all);
+                 (Tmp_Extract, Word, Word.String_Match.all);
                Assign (New_Str, Str (Str'First .. Str'First + Length - 1));
             end;
 
@@ -4036,14 +4040,40 @@ package body Codefix.Text_Manager is
             end if;
          end if;
 
-         Add_Word (New_Extract, Word, New_Str.all);
+         if This.Insert_New_Line then
+            declare
+               Extract_Line   : Ptr_Extract_Line;
+            begin
+               Extract_Line := Get_Line (New_Extract, New_Pos);
+
+               declare
+                  Line : constant String := Get_String (Extract_Line.all);
+                  Pos_Char_Index : Char_Index;
+               begin
+                  Pos_Char_Index := To_Char_Index (Get_Column (New_Pos), Line);
+                  Replace
+                    (New_Extract,
+                     New_Pos,
+                     Line (Natural (Pos_Char_Index) .. Line'Last)'Length,
+                     "");
+                  Add_Indented_Line
+                    (New_Extract,
+                     New_Pos,
+                     Line (Natural (Pos_Char_Index) .. Line'Last),
+                     Current_Text);
+               end;
+            end;
+         end if;
+
+         Add_Word (New_Extract, New_Pos, New_Str.all);
+
       elsif This.Position = After then
          Add_Indented_Line
-           (New_Extract, Line_Cursor, New_Str.all, Current_Text);
+           (New_Extract, New_Pos, New_Str.all, Current_Text);
       elsif This.Position = Before then
-         Line_Cursor.Line := Line_Cursor.Line - 1;
+         New_Pos.Line := New_Pos.Line - 1;
          Add_Indented_Line
-           (New_Extract, Line_Cursor, New_Str.all, Current_Text);
+           (New_Extract, New_Pos, New_Str.all, Current_Text);
       end if;
 
       Free (New_Str);
@@ -4055,12 +4085,18 @@ package body Codefix.Text_Manager is
    -------------------
 
    procedure Initialize
-     (This         : in out Move_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor'Class;
-      New_Position : File_Cursor'Class) is
+     (This            : in out Move_Word_Cmd;
+      Current_Text    : Text_Navigator_Abstr'Class;
+      Word            : Word_Cursor'Class;
+      New_Position    : File_Cursor'Class;
+      Insert_New_Line : Boolean := False) is
    begin
-      Initialize (This.Step_Insert, Current_Text, Word, New_Position);
+      Initialize
+        (This            => This.Step_Insert,
+         Current_Text    => Current_Text,
+         Word            => Word,
+         New_Position    => New_Position,
+         Insert_New_Line => Insert_New_Line);
       Initialize (This.Step_Remove, Current_Text, Word);
    end Initialize;
 
