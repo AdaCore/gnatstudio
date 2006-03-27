@@ -107,14 +107,26 @@ package Diff_Utils2 is
                   In_Destruction => False,
                   Instances      => null);
 
-   procedure Free (Data : in out Diff_Head_Access);
+   procedure Free (Vdiff : in out Diff_Head_Access);
    --  Free the memory associated with the head of the list Link
 
    package Diff_Head_List is new Generic_List (Diff_Head_Access, Free);
    type Diff_Head_List_Access is access all Diff_Head_List.List;
 
-   procedure Free_List (List : in out Diff_Head_List.List);
-   --  Free all content of node of the list
+   procedure Free (Vdiff_List : in out Diff_Head_List_Access);
+   --  Free the memory associated with a list of Vdiff
+
+   Vdiff_Class_Name : constant String := "Vdiff";
+
+   type Vdiff_Property is new Instance_Property_Record with record
+      Vdiff : Diff_Head_Access;
+   end record;
+   --  Vdiff structure that is stored in a class instance
+
+   procedure Set_Vdiff_Data
+     (Instance : Class_Instance;
+      Data     : Diff_Head_Access);
+   --  Set the data assiociated with an instance of the Vdiff classs
 
    function Diff
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
