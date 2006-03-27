@@ -49,20 +49,21 @@ package body Vdiff2_Command_Line is
    function Execute
      (Command : access Diff_Command_Line) return Command_Return_Type
    is
-      Diff : constant Diff_Head_Access := new Diff_Head;
+      Diff : Diff_Head_Access;
    begin
 
       if Command.Head /= Diff_Head_List.Null_Node
         and Command.Line > 0
         and Command.Action /= null
       then
-         Diff.all := Data (Command.Head);
+         Diff := Data (Command.Head);
          Diff.Current_Node := Is_In_Diff_Chunk_List
            (Command.File, Diff.all, Command.Line);
 
          if Diff.Current_Node /= Diff_Chunk_List.Null_Node then
-            Command.Action (Command.Kernel, Diff,
-                            Command.Line, Command.File);
+            Command.Action
+              (Command.Kernel, Diff,
+               Command.Line, Command.File);
          end if;
       end if;
 
