@@ -51,15 +51,15 @@ package body Vdiff2_Command_Block is
       Action    : Handler_Action) is
 
    begin
-      Item           := new Diff_Command_Block;
-      Item.Kernel    := Kernel;
+      Item := new Diff_Command_Block;
+      Item.Kernel := Kernel;
       Item.List_Diff := List_Diff;
 
       if Id = null then
          Id := List_Diff;
       end if;
 
-      Item.Action    := Action;
+      Item.Action := Action;
    end Create;
 
    -------------------------
@@ -68,16 +68,9 @@ package body Vdiff2_Command_Block is
 
    procedure Unchecked_Execute
      (Command : access Diff_Command_Block;
-      Diff    : in out Diff_Head_List.List_Node)
-   is
-      Tmp : Diff_Head_Access := new Diff_Head;
+      Diff    : access Diff_Head) is
    begin
-      if Diff /= Diff_Head_List.Null_Node then
-         Tmp.all := Data (Diff);
-         Command.Action (Command.Kernel, Tmp.all);
-      end if;
-
-      Free (Tmp);
+      Command.Action (Command.Kernel, Diff);
    end Unchecked_Execute;
 
    -------------
@@ -101,13 +94,12 @@ package body Vdiff2_Command_Block is
    -------------
 
    function Execute
-     (Command : access Diff_Command_Block)
-      return Command_Return_Type
+     (Command : access Diff_Command_Block) return Command_Return_Type
    is
-      Context       : constant Selection_Context
-        := Get_Current_Context (Command.Kernel);
+      Context       : constant Selection_Context :=
+                        Get_Current_Context (Command.Kernel);
       Curr_Node     : Diff_Head_List.List_Node;
-      Diff          : Diff_Head := Null_Head;
+      Diff          : Diff_Head_Access;
       Selected_File : Virtual_File;
 
    begin
@@ -119,8 +111,7 @@ package body Vdiff2_Command_Block is
          Curr_Node := Get_Diff_Node (Selected_File, Command.List_Diff.all);
 
          if Curr_Node /= Diff_Head_List.Null_Node then
-            Diff := Data (Curr_Node);
-
+            Diff := Diff_Head_List.Data (Curr_Node);
          else
             Diff := Command.Last_Active_Diff;
          end if;
@@ -128,16 +119,14 @@ package body Vdiff2_Command_Block is
          Diff := Command.Last_Active_Diff;
       end if;
 
-      if Diff /= Null_Head then
+      if Diff /= null then
          Command.Action (Command.Kernel, Diff);
 
          if Diff.List = Diff_Chunk_List.Null_List then
-            Remove_Nodes (Command.List_Diff.all,
-                             Prev (Command.List_Diff.all, Curr_Node),
-                             Curr_Node);
-            Diff := Null_Head;
-         else
-            Set_Data (Curr_Node, Diff);
+            Remove_Nodes
+              (Command.List_Diff.all,
+               Prev (Command.List_Diff.all, Curr_Node),
+               Curr_Node);
          end if;
       end if;
 
@@ -153,10 +142,10 @@ package body Vdiff2_Command_Block is
 
    procedure Reload_Difference
      (Kernel : Kernel_Handle;
-      Item   : in out Diff_Head)
+      Item   : access Diff_Head)
    is
-      Tmp : Diff_List;
-      Button     : Message_Dialog_Buttons;
+      Tmp    : Diff_List;
+      Button : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
    begin
       Unhighlight_Difference (Kernel, Item);
@@ -172,13 +161,26 @@ package body Vdiff2_Command_Block is
            (Msg     => -"No differences found.",
             Buttons => Button_OK,
             Parent  => Get_Current_Window (Kernel));
+
+         declare
+            Vdiff_List : constant Diff_Head_List_Access := Get_Vdiff_List;
+            Curr_Node  : constant Diff_Head_List.List_Node :=
+                          Get_Diff_Node
+                             (Item.Files (Item.Ref_File), Vdiff_List.all);
+         begin
+            Remove_Nodes
+              (Vdiff_List.all,
+               Prev (Vdiff_List.all, Curr_Node),
+               Curr_Node);
+         end;
+
          return;
       end if;
 
       Free_List (Item.List);
       Item.List := Tmp;
       Item.Current_Node := First (Item.List);
-      Modify_Differences (Kernel, Item, Id);
+      Show_Differences3 (Kernel, Item);
    end Reload_Difference;
 
    ----------------------
@@ -187,27 +189,28 @@ package body Vdiff2_Command_Block is
 
    procedure Close_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head)
+      Diff   : access Diff_Head)
    is
+      Files : constant T_VFile := Diff.Files;
       Args1 : Argument_List :=
-                (1 => new String'(Full_Name (Diff.Files (1)).all));
+                (1 => new String'(Full_Name (Files (1)).all));
       Args2 : Argument_List :=
-                (1 => new String'(Full_Name (Diff.Files (2)).all));
+                (1 => new String'(Full_Name (Files (2)).all));
       Args3 : Argument_List (1 .. 1);
+
    begin
-
-      if Diff.Files (3) /= VFS.No_File then
-         Args3 := (1 => new String'(Full_Name (Diff.Files (3)).all));
-         Execute_GPS_Shell_Command (Kernel, "Editor.close", Args3);
-         --  At this point all the memory associated with Diff is freed
-      end if;
-
-      if Diff.Files (1) /= VFS.No_File then
+      if Files (1) /= VFS.No_File then
          Execute_GPS_Shell_Command (Kernel, "Editor.close", Args1);
       end if;
 
-      if Diff.Files (2) /= VFS.No_File then
+      if Files (2) /= VFS.No_File then
          Execute_GPS_Shell_Command (Kernel, "Editor.close", Args2);
+      end if;
+
+      if Diff.Files (3) /= VFS.No_File then
+         Args3 := (1 => new String'(Full_Name (Files (3)).all));
+         Execute_GPS_Shell_Command (Kernel, "Editor.close", Args3);
+         --  At this point all the memory associated with Diff is freed
       end if;
 
       Free (Args1);
@@ -221,7 +224,7 @@ package body Vdiff2_Command_Block is
 
    procedure Unhighlight_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head)is
+      Diff   : access Diff_Head)is
    begin
       Hide_Differences (Kernel, Diff);
    end Unhighlight_Difference;
@@ -232,7 +235,7 @@ package body Vdiff2_Command_Block is
 
    procedure Remove_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head) is
+      Diff   : access Diff_Head) is
    begin
       Unhighlight_Difference (Kernel, Diff);
       Free (Diff.List);
@@ -244,10 +247,10 @@ package body Vdiff2_Command_Block is
 
    procedure Change_Ref_File
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head) is
+      Diff   : access Diff_Head) is
    begin
       Unhighlight_Difference (Kernel, Diff);
-      Modify_Differences (Kernel, Diff, Id);
+      Show_Differences3 (Kernel, Diff);
    end Change_Ref_File;
 
 end Vdiff2_Command_Block;

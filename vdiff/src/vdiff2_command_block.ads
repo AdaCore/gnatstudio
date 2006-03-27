@@ -30,12 +30,12 @@ package Vdiff2_Command_Block is
 
    type Handler_Action is access procedure
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head);
+      Diff   : access Diff_Head);
    --  Is an access for the action executed by an Diff_Command_block
 
    type Diff_Command_Block is new Diff_Command with record
       Action           : Handler_Action;
-      Last_Active_Diff : Diff_Head := Null_Head;
+      Last_Active_Diff : Diff_Head_Access := null;
    end record;
    type Diff_Command_Access is access all Diff_Command_Block'Class;
 
@@ -48,9 +48,8 @@ package Vdiff2_Command_Block is
 
    procedure Unchecked_Execute
      (Command : access Diff_Command_Block;
-      Diff    : in out Diff_Head_List.List_Node);
-   --  Execute the command Command
-   --  without control of existence in diff list
+      Diff    : access Diff_Head);
+   --  Execute the command Command without control of existence in diff list
 
    function Execute
      (Command : access Diff_Command_Block;
@@ -64,26 +63,26 @@ package Vdiff2_Command_Block is
 
    procedure Reload_Difference
      (Kernel : Kernel_Handle;
-      Item   : in out Diff_Head);
+      Item   : access Diff_Head);
    --  Remove the highlighting, recalculate differences and show difference
 
    procedure Remove_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head);
+      Diff   : access Diff_Head);
    --  Remove the highlighting, and free the memory associated with Diff_list
 
    procedure Close_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head);
+      Diff   : access Diff_Head);
    --  Close the current difference
 
    procedure Unhighlight_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head);
+      Diff   : access Diff_Head);
    --  Remove the highlighting from all file of diff
 
    procedure Change_Ref_File
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head);
+      Diff   : access Diff_Head);
 
 end Vdiff2_Command_Block;
