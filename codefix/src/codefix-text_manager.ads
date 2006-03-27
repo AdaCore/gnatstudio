@@ -1062,12 +1062,13 @@ package Codefix.Text_Manager is
    type Insert_Word_Cmd is new Text_Command with private;
 
    procedure Initialize
-     (This         : in out Insert_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor'Class;
-      New_Position : File_Cursor'Class;
-      Add_Spaces   : Boolean := True;
-      Position     : Relative_Position := Specified);
+     (This            : in out Insert_Word_Cmd;
+      Current_Text    : Text_Navigator_Abstr'Class;
+      Word            : Word_Cursor'Class;
+      New_Position    : File_Cursor'Class;
+      Add_Spaces      : Boolean := True;
+      Position        : Relative_Position := Specified;
+      Insert_New_Line : Boolean := False);
    --  Set all the marks that will be necessary later to insert the word.
 
    procedure Free (This : in out Insert_Word_Cmd);
@@ -1086,10 +1087,11 @@ package Codefix.Text_Manager is
    type Move_Word_Cmd is new Text_Command with private;
 
    procedure Initialize
-     (This         : in out Move_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor'Class;
-      New_Position : File_Cursor'Class);
+     (This            : in out Move_Word_Cmd;
+      Current_Text    : Text_Navigator_Abstr'Class;
+      Word            : Word_Cursor'Class;
+      New_Position    : File_Cursor'Class;
+      Insert_New_Line : Boolean := False);
    --  Set all the marks that will be needed to move the word later.
 
    procedure Free (This : in out Move_Word_Cmd);
@@ -1298,10 +1300,11 @@ private
    end record;
 
    type Insert_Word_Cmd is new Text_Command with record
-      Word         : Word_Mark;
-      Add_Spaces   : Boolean := True;
-      Position     : Relative_Position := Specified;
-      New_Position : Word_Mark;
+      Word            : Word_Mark;
+      Add_Spaces      : Boolean := True;
+      Position        : Relative_Position := Specified;
+      New_Position    : Word_Mark;
+      Insert_New_Line : Boolean := False;
    end record;
 
    type Move_Word_Cmd is new Text_Command with record
