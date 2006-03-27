@@ -692,6 +692,16 @@ package body Diff_Utils2 is
       Free_List (Link.List);
 
       if Link.Instances /= null then
+         declare
+            Instances : Instance_Array := Get_Instances (Link.Instances.all);
+         begin
+            for Index in Instances'Range loop
+               if Instances (Index) /= No_Class_Instance then
+                  Set_Vdiff_Data (Instances (Index), null);
+               end if;
+            end loop;
+         end;
+
          Free (Link.Instances);
       end if;
    end Free;
@@ -700,12 +710,12 @@ package body Diff_Utils2 is
    -- Free --
    ----------
 
-   procedure Free (Data : in out Diff_Head_Access) is
+   procedure Free (Vdiff : in out Diff_Head_Access) is
       procedure Free is
         new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
    begin
-      Free (Data.all);
-      Free (Data);
+      Free (Vdiff.all);
+      Free (Vdiff);
    end Free;
 
    ----------
@@ -725,20 +735,18 @@ package body Diff_Utils2 is
       end loop;
    end Free;
 
-   ---------------
-   -- Free_List --
-   ---------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Free_List (List : in out Diff_Head_List.List) is
-      Curr_Node : Diff_Head_List.List_Node := First (List);
-      Diff : Diff_Head;
+   procedure Free (Vdiff_List : in out Diff_Head_List_Access) is
+      procedure Free is
+        new Ada.Unchecked_Deallocation
+          (Diff_Head_List.List, Diff_Head_List_Access);
    begin
-      while Curr_Node /= Diff_Head_List.Null_Node loop
-         Diff := Data (Curr_Node).all;
-         Free (Diff);
-         Curr_Node := Next (Curr_Node);
-      end loop;
-   end Free_List;
+      Free (Vdiff_List.all);
+      Free (Vdiff_List);
+   end Free;
 
    ----------
    -- Free --
@@ -750,5 +758,19 @@ package body Diff_Utils2 is
          Free (V (J));
       end loop;
    end Free;
+
+   --------------------
+   -- Set_Vdiff_Data --
+   --------------------
+
+   procedure Set_Vdiff_Data
+     (Instance : Class_Instance;
+      Data     : Diff_Head_Access) is
+   begin
+      Set_Property
+        (Instance,
+         Vdiff_Class_Name,
+         Vdiff_Property'(Vdiff => Data));
+   end Set_Vdiff_Data;
 
 end Diff_Utils2;
