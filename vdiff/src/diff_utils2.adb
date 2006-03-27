@@ -408,7 +408,7 @@ package body Diff_Utils2 is
    procedure Diff3 (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
                     Item   : in out Diff_Head) is
    begin
-      Free_List (Item.List);
+      Free (Item.List);
 
       if Item.Files (1) /= VFS.No_File and Item.Files (2) /= VFS.No_File then
          if Item.Files (3) /= VFS.No_File then
@@ -688,20 +688,25 @@ package body Diff_Utils2 is
    ----------
 
    procedure Free (Link : in out Diff_Head) is
-      pragma Unreferenced (Link);
-   begin
-      null;
-      --  In the list of Diff_Head the memory is freed manualy
-   end Free;
-
-   --------------
-   -- Free_All --
-   --------------
-
-   procedure Free_All (Link : in out Diff_Head) is
    begin
       Free_List (Link.List);
-   end Free_All;
+
+      if Link.Instances /= null then
+         Free (Link.Instances);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Data : in out Diff_Head_Access) is
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
+   begin
+      Free (Data.all);
+      Free (Data);
+   end Free;
 
    ----------
    -- Free --
@@ -729,8 +734,8 @@ package body Diff_Utils2 is
       Diff : Diff_Head;
    begin
       while Curr_Node /= Diff_Head_List.Null_Node loop
-         Diff := Data (Curr_Node);
-         Free_All (Diff);
+         Diff := Data (Curr_Node).all;
+         Free (Diff);
          Curr_Node := Next (Curr_Node);
       end loop;
    end Free_List;
