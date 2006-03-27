@@ -51,23 +51,11 @@ package body Vdiff2_Module is
       Context : Selection_Context) return Boolean;
    --  Filter for 3-way diff contextual menus
 
-   type Vdiff_Property is new Instance_Property_Record with record
-      Vdiff : Diff_Head_Access;
-   end record;
-   procedure Destroy (Property : in out Vdiff_Property);
-
-   procedure Set_Vdiff_Data
-     (Data     : access Diff_Head;
-      Instance : Class_Instance);
-   --  Set the data assiociated with an instance of the Vdiff classs
-
    function Instance_From_Vdiff
      (Vdiff  : access Diff_Head;
       Class  : Class_Type;
       Script : access Scripting_Language_Record'Class) return Class_Instance;
    --  Get or create the class instance associated with a visual diff
-
-   Vdiff_Class_Name : constant String := "Vdiff";
 
    File1_Cst : aliased constant String := "file1";
    File2_Cst : aliased constant String := "file2";
@@ -84,29 +72,6 @@ package body Vdiff2_Module is
    procedure Vdiff_Cmds
      (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the Vdiff class
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Property : in out Vdiff_Property) is
-   begin
-      Free (Property.Vdiff);
-   end Destroy;
-
-   --------------------
-   -- Set_Vdiff_Data --
-   --------------------
-
-   procedure Set_Vdiff_Data
-     (Data     : access Diff_Head;
-      Instance : Class_Instance) is
-   begin
-      Set_Property
-        (Instance,
-         Vdiff_Class_Name,
-         Vdiff_Property'(Vdiff => Diff_Head_Access (Data)));
-   end Set_Vdiff_Data;
 
    -----------------------
    -- Register_Commands --
@@ -432,8 +397,7 @@ package body Vdiff2_Module is
 
    procedure Destroy (Id : in out VDiff2_Module_Record) is
    begin
-      Free_List (Id.List_Diff.all);
-      Free (Id.List_Diff.all);
+      Free (Id.List_Diff);
       Vdiff_Module_ID := null;
    end Destroy;
 
@@ -495,7 +459,7 @@ package body Vdiff2_Module is
       if Instance = No_Class_Instance then
          Trace (Me, "Create a new instance of the current visual diff");
          Instance := New_Instance (Script, Class);
-         Set_Vdiff_Data (Vdiff, Instance);
+         Set_Vdiff_Data (Instance, Diff_Head_Access (Vdiff));
          Set (Vdiff.Instances.all, Script, Instance);
       end if;
 
