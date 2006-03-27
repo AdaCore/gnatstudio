@@ -23,11 +23,12 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
 with Generic_List;
-with GPS.Kernel;   use GPS.Kernel;
-with VFS;          use VFS;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with VFS;                use VFS;
 
 package Diff_Utils2 is
 
@@ -77,22 +78,21 @@ package Diff_Utils2 is
    --  Linked list of diff occurrences
    subtype Diff_List_Node is Diff_Chunk_List.List_Node;
    procedure Free_List (Link : in out Diff_List);
-   --  Free the memory associated with each node of the list Link.
+   --  Free the memory associated with each node of the list Link
 
-   type Diff_Head is tagged record
+   type Diff_Head is record
       List           : Diff_List;
       Files          : T_VFile;
       Current_Node   : Diff_List_Node;
       Ref_File       : T_VFile_Index := 2;
       In_Destruction : Boolean := False;
+      Instances      : Instance_List_Access := null;
    end record;
    type Diff_Head_Access is access all Diff_Head;
+   --  Data structure that represents a visual diff
 
    procedure Free (Link : in out Diff_Head);
-   --  Free the memory of this Link
-
-   procedure Free_All (Link : in out Diff_Head);
-   --  Free all content of Head of the list
+   --  Free the memory associated with Link
 
    procedure Diff3
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -104,13 +104,13 @@ package Diff_Utils2 is
                   Files          => (others => VFS.No_File),
                   Current_Node   => Diff_Chunk_List.Null_Node,
                   Ref_File       => 2,
-                  In_Destruction => False);
+                  In_Destruction => False,
+                  Instances      => null);
 
-   procedure Free is
-      new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
+   procedure Free (Data : in out Diff_Head_Access);
    --  Free the memory associated with the head of the list Link
 
-   package Diff_Head_List is new Generic_List (Diff_Head, Free);
+   package Diff_Head_List is new Generic_List (Diff_Head_Access, Free);
    type Diff_Head_List_Access is access all Diff_Head_List.List;
 
    procedure Free_List (List : in out Diff_Head_List.List);
