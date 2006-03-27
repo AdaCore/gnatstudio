@@ -47,7 +47,7 @@ package body Vdiff2_Module.Utils is
    use Diff_Head_List;
    use Diff_Chunk_List;
 
-   type   T_VLine_Information is array (1 .. 3) of Line_Information_Data;
+   type T_VLine_Information is array (1 .. 3) of Line_Information_Data;
 
    procedure Append
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -93,13 +93,14 @@ package body Vdiff2_Module.Utils is
 
    procedure Show_Differences
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item   : in out Diff_Head);
+      Item   : access Diff_Head);
    --  Show a result of diff Item
 
    procedure Show_Diff_Chunk
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item    : Diff_Head; Curr_Chunk : Diff_Chunk_Access;
-      Info    : T_VLine_Information);
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Item       : access Diff_Head;
+      Curr_Chunk : Diff_Chunk_Access;
+      Info       : T_VLine_Information);
    --  Hightlight the Current Chunk Curr_Chunk
 
    -------------
@@ -325,7 +326,7 @@ package body Vdiff2_Module.Utils is
 
    procedure Hide_Differences
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_Head)
+      Item   : access Diff_Head)
    is
       Curr_Node  : Diff_List_Node;
       Curr_Chunk : Diff_Chunk_Access;
@@ -370,12 +371,14 @@ package body Vdiff2_Module.Utils is
       Node : constant Diff_Head_List.List_Node :=
                Get_Diff_Node (Selected_File, List);
    begin
-      if Node = Diff_Head_List.Null_Node then
+      if Node = Diff_Head_List.Null_Node
+        or else Diff_Head_List.Data (Node) = null
+      then
          return False;
       end if;
 
       declare
-         Diff : constant Diff_Head := Diff_Head_List.Data (Node);
+         Diff : constant Diff_Head := Diff_Head_List.Data (Node).all;
       begin
          for J in Diff.Files'Range loop
             if Diff.Files (J) = No_File then
@@ -399,7 +402,7 @@ package body Vdiff2_Module.Utils is
       Diff      : Diff_Head;
    begin
       while Curr_Node /= Diff_Head_List.Null_Node loop
-         Diff := Data (Curr_Node);
+         Diff := Data (Curr_Node).all;
          exit when Diff.Files (1) = Selected_File
            or else Diff.Files (2) = Selected_File
            or else Diff.Files (3) = Selected_File;
@@ -441,95 +444,32 @@ package body Vdiff2_Module.Utils is
    end Move_Mark;
 
    -------------------------
-   --  Modify_Differences --
-   -------------------------
-
-   procedure Modify_Differences
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item      : in out Diff_Head;
-      Diff_List : Diff_Head_List_Access)
-   is
-      Curr_Node : Diff_Head_List.List_Node;
-   begin
-      Curr_Node := Get_Diff_Node (Item.Files (1), Diff_List.all);
-
-      if Curr_Node /= Diff_Head_List.Null_Node then
-         Show_Differences3 (Kernel, Item);
-         Item.Current_Node := First (Item.List);
-         Set_Data (Curr_Node, Item);
-      end if;
-   end Modify_Differences;
-
-   -------------------------
-   -- Process_Differences --
-   -------------------------
-
-   procedure Process_Differences
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item      : Diff_Head;
-      Diff_List : Diff_Head_List_Access)
-   is
-      Item_Local : Diff_Head := Item;
-      Button     : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-
-   begin
-      if Get_Diff_Node
-          (Item_Local.Files (1), Diff_List.all) = Diff_Head_List.Null_Node
-        and then Get_Diff_Node
-          (Item_Local.Files (2), Diff_List.all) = Diff_Head_List.Null_Node
-      then
-         if Item_Local.Files (2) /= VFS.No_File
-           and then Get_Diff_Node
-             (Item.Files (3), Diff_List.all) = Diff_Head_List.Null_Node
-         then
-            Append (Diff_List.all, Item_Local);
-            Show_Differences3 (Kernel, Item_Local);
-            return;
-
-         elsif Item_Local.Files (3) = VFS.No_File then
-            Append (Diff_List.all, Item_Local);
-            Show_Differences3 (Kernel, Item_Local);
-            return;
-         end if;
-      end if;
-      Button := Message_Dialog
-        (Msg     => -"One of these files is already used in VDiff",
-         Buttons => Button_OK,
-         Parent  => Get_Current_Window (Kernel));
-   end Process_Differences;
-
-   -------------------------
    -- Process_Differences --
    -------------------------
 
    function Process_Differences
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item      : Diff_Head;
-      Diff_List : Diff_Head_List_Access) return Diff_Head_List.List_Node
+      Diff_List : Diff_Head_List_Access) return Diff_Head_Access
    is
-      Item_Local : Diff_Head := Item;
-      Button     : Message_Dialog_Buttons;
+      Item_Access : Diff_Head_Access;
+      Button      : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
    begin
       if Get_Diff_Node
-          (Item_Local.Files (1), Diff_List.all) = Diff_Head_List.Null_Node
+          (Item.Files (1), Diff_List.all) = Diff_Head_List.Null_Node
         and then Get_Diff_Node
-          (Item_Local.Files (2), Diff_List.all) = Diff_Head_List.Null_Node
+          (Item.Files (2), Diff_List.all) = Diff_Head_List.Null_Node
       then
-         if Item_Local.Files (3) /= VFS.No_File
-           and then Get_Diff_Node
+         if Item.Files (3) = VFS.No_File
+           or else Get_Diff_Node
              (Item.Files (3), Diff_List.all) = Diff_Head_List.Null_Node
          then
-            Append (Diff_List.all, Item_Local);
-            Show_Differences3 (Kernel, Item_Local);
-            return Last (Diff_List.all);
-
-         elsif Item_Local.Files (3) = VFS.No_File then
-            Append (Diff_List.all, Item_Local);
-            Show_Differences3 (Kernel, Item_Local);
-            return Last (Diff_List.all);
+            Item_Access := new Diff_Head'(Item);
+            Diff_Head_List.Append (Diff_List.all, Item_Access);
+            Show_Differences3 (Kernel, Item_Access);
+            return Item_Access;
          end if;
       end if;
 
@@ -538,7 +478,7 @@ package body Vdiff2_Module.Utils is
          Buttons => Button_OK,
          Parent  => Get_Current_Window (Kernel));
 
-      return Diff_Head_List.Null_Node;
+      return null;
    end Process_Differences;
 
    ------------------
@@ -590,7 +530,7 @@ package body Vdiff2_Module.Utils is
 
    procedure Show_Differences
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item   : in out Diff_Head)
+      Item   : access Diff_Head)
    is
       List       : constant Diff_List := Item.List;
       Curr_Node  : Diff_List_Node := First (List);
@@ -814,7 +754,7 @@ package body Vdiff2_Module.Utils is
 
    procedure Show_Differences3
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item   : in out Diff_Head)
+      Item   : access Diff_Head)
    is
       Res        : Diff_List;
       Curr_Node  : Diff_List_Node;
@@ -889,7 +829,7 @@ package body Vdiff2_Module.Utils is
         (Kernel, Item.Files (3), Id_Col_Vdiff,
          Info (3));
       Move_Mark (Res, Item.List);
-      Free_List (Res);
+      Free (Res);
       Free (Res);
       Trace (Me, "End Show_Differences3");
 
@@ -905,7 +845,7 @@ package body Vdiff2_Module.Utils is
 
    procedure Show_Diff_Chunk
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item       : Diff_Head;
+      Item       : access Diff_Head;
       Curr_Chunk : Diff_Chunk_Access;
       Info       : T_VLine_Information)
    is
@@ -1100,16 +1040,14 @@ package body Vdiff2_Module.Utils is
 
    procedure Show_Merge
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Merge  : String;
-      Item   : Diff_Head)
+      Merge  : String)
    is
-      pragma Unreferenced (Item);
       Button : Message_Dialog_Buttons;
 
    begin
       if Is_Regular_File (Merge) then
          Button := Message_Dialog
-           (Msg     => -"Would you overwrite this file: "& Merge,
+           (Msg     => -"Would you overwrite this file: " & Merge,
             Buttons => Button_Yes or Button_No,
             Parent  => Get_Current_Window (Kernel));
 
@@ -1142,10 +1080,10 @@ package body Vdiff2_Module.Utils is
    -- Visual_Diff --
    -----------------
 
-   procedure Visual_Diff
+   function Visual_Diff
      (File1 : Virtual_File;
       File2 : Virtual_File;
-      File3 : Virtual_File := VFS.No_File)
+      File3 : Virtual_File := VFS.No_File) return Diff_Head_Access
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
@@ -1166,7 +1104,7 @@ package body Vdiff2_Module.Utils is
            (Msg     => -"No differences found.",
             Buttons => Button_OK,
             Parent  => Get_Current_Window (Kernel));
-         return;
+         return null;
       end if;
 
       Item :=
@@ -1174,48 +1112,25 @@ package body Vdiff2_Module.Utils is
          Files          => (File1, File2, File3),
          Current_Node   => First (Result),
          Ref_File       => 2,
-         In_Destruction => False);
-      Process_Differences (Kernel, Item, Id.List_Diff);
+         In_Destruction => False,
+         Instances      => null);
+
+      return Process_Differences (Kernel, Item, Id.List_Diff);
    end Visual_Diff;
 
    -----------------
    -- Visual_Diff --
    -----------------
 
-   function Visual_Diff
+   procedure Visual_Diff
      (File1 : Virtual_File;
       File2 : Virtual_File;
-      File3 : Virtual_File := VFS.No_File) return Diff_Head_List.List_Node
+      File3 : Virtual_File := VFS.No_File)
    is
-      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
-      Result : Diff_List;
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-      Item   : Diff_Head;
-
+      Dummy : constant Diff_Head_Access := Visual_Diff (File1, File2, File3);
+      pragma Unreferenced (Dummy);
    begin
-      if File3 /= VFS.No_File then
-         Result := Diff3 (Kernel, File1, File2, File3);
-      else
-         Result := Diff (Kernel, File1, File2);
-      end if;
-
-      if Result = Diff_Chunk_List.Null_List then
-         Button := Message_Dialog
-           (Msg     => -"No differences found.",
-            Buttons => Button_OK,
-            Parent  => Get_Current_Window (Kernel));
-         return Diff_Head_List.Null_Node;
-      end if;
-
-      Item :=
-        (List           => Result,
-         Files          => (File1, File2, File3),
-         Current_Node   => First (Result),
-         Ref_File       => 2,
-         In_Destruction => False);
-      return Process_Differences (Kernel, Item, Id.List_Diff);
+      null;
    end Visual_Diff;
 
    ------------------
@@ -1226,7 +1141,7 @@ package body Vdiff2_Module.Utils is
      (Orig_File : VFS.Virtual_File;
       New_File  : VFS.Virtual_File;
       Diff_File : VFS.Virtual_File;
-      Revert    : Boolean := False) return Boolean
+      Revert    : Boolean := False) return Diff_Head_Access
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
@@ -1243,7 +1158,7 @@ package body Vdiff2_Module.Utils is
            (Msg     => -"No differences found.",
             Buttons => Button_OK,
             Parent  => Get_Current_Window (Kernel));
-         return False;
+         return null;
       end if;
 
       Item :=
@@ -1251,10 +1166,60 @@ package body Vdiff2_Module.Utils is
          Files          => (Orig_File, New_File, No_File),
          Current_Node   => First (Result),
          Ref_File       => 1,
-         In_Destruction => False);
-      Process_Differences (Kernel, Item, Id.List_Diff);
+         In_Destruction => False,
+         Instances      => null);
 
-      return True;
+      return Process_Differences (Kernel, Item, Id.List_Diff);
    end Visual_Patch;
+
+   ---------------
+   -- Get_Vdiff --
+   ---------------
+
+   function Get_Vdiff
+     (File1 : Virtual_File;
+      File2 : Virtual_File := VFS.No_File;
+      File3 : Virtual_File := VFS.No_File) return Diff_Head_Access
+   is
+      Vdiff_List : constant Diff_Head_List_Access := Get_Vdiff_List;
+      Vdiff_Node : Diff_Head_List.List_Node;
+      Vdiff      : Diff_Head_Access;
+   begin
+      if Vdiff_List = null then
+         return null;
+      end if;
+
+      Vdiff_Node := Get_Diff_Node (File1, Vdiff_List.all);
+
+      if Vdiff_Node = Diff_Head_List.Null_Node then
+         return null;
+      end if;
+
+      Vdiff := Data (Vdiff_Node);
+
+      if (File2 /= VFS.No_File
+          and then File2 /= Vdiff.Files (1)
+          and then File2 /= Vdiff.Files (2)
+          and then File2 /= Vdiff.Files (3))
+        or else (File3 /= VFS.No_File
+          and then File3 /= Vdiff.Files (1)
+          and then File3 /= Vdiff.Files (2)
+          and then File3 /= Vdiff.Files (3))
+      then
+         return null;
+      end if;
+
+      return Vdiff;
+
+   end Get_Vdiff;
+
+   --------------------
+   -- Get_Vdiff_List --
+   --------------------
+
+   function Get_Vdiff_List return Diff_Head_List_Access is
+   begin
+      return VDiff2_Module (Vdiff_Module_ID).List_Diff;
+   end Get_Vdiff_List;
 
 end Vdiff2_Module.Utils;
