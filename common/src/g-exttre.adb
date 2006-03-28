@@ -941,6 +941,9 @@ package body GNAT.Expect.TTY.Remote is
             Desc.Buffer := Tmp_Buf;
             Desc.Busy := False;
             Desc.Terminated := True;
+            if Desc.Buffer'Length = 0 then
+               raise Process_Died;
+            end if;
          end if;
       end if;
 
@@ -1517,6 +1520,11 @@ package body GNAT.Expect.TTY.Remote is
    function Is_Configured (Nickname : String) return Boolean is
       Desc : Machine_Descriptor_Access := Machine_Descriptor_List;
    begin
+      --  Local machine is always configured !
+      if Nickname = "" then
+         return True;
+      end if;
+
       while Desc /= null loop
          if Desc.Desc.Nickname.all = Nickname then
             return True;
