@@ -1,8 +1,9 @@
 +
+>&2
 
 --  Configure the traces format
 
-DEBUG.COLORS=yes
+DEBUG.COLORS=no
 DEBUG.ABSOLUTE_TIME=yes
 DEBUG.ELAPSED_TIME=no
 DEBUG.STACK_TRACE=no
@@ -30,7 +31,7 @@ UNEXPECTED_EXCEPTIONS=yes
 --  MODULE.EXTERNAL_EDITOR    = yes
 --  MODULE.VCS                = yes
 --  MODULE.CUSTOM             = yes
-MODULE.ACTION_EDITOR      = yes
+--  MODULE.ACTION_EDITOR      = yes
 --  MODULE.CODEFIX            = yes
 --  MODULE.GVD                = yes
 --  MODULE.AUNIT              = yes
