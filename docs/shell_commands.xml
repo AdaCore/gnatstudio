@@ -4292,7 +4292,7 @@ GPS comes with some predefined logging streams, which can be used to configure t
 
   <shell_doc name="GPS.Vdiff.files">
      <param name="self">An instance of GPS.Vdiff</param>
-     <return>A list of instances GPS.File</return>
+     <return>A list of GPS.File</return>
      <description>Return the list of files used in a visual diff.</description>
   </shell_doc>
 
@@ -4304,7 +4304,7 @@ GPS comes with some predefined logging streams, which can be used to configure t
   </shell_doc>
 
   <shell_doc name="GPS.Vdiff.list">
-     <return>A list of instances of GPS.Vdiff</return>
+     <return>A list GPS.Vdiff</return>
      <description>This function returns the list of visual diff currently opened in GPS.</description>
   </shell_doc>
 
