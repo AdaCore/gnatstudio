@@ -24,7 +24,6 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with Projects;                  use Projects;
 with Projects.Editor;           use Projects.Editor;
@@ -32,7 +31,6 @@ with Projects.Registry;         use Projects.Registry;
 with Basic_Types;
 with Entities;
 with Prj;
-with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 
@@ -53,10 +51,33 @@ package body GPS.Kernel.Project is
    --  Category uses in the Location window for errors related to loading the
    --  project file
 
+   Prev_Server : String_Access := new String'("");
+   --  Server on which the last gnatls command was executed.
+
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class);
    --  Compute the predefined source and object paths, given the current
    --  project view associated with Handle.
+
+   type Registry_Error_Handler_Record is new Error_Handler_Record with record
+      Handle : Kernel_Handle;
+   end record;
+
+   procedure Report (Handler : access Registry_Error_Handler_Record;
+                     Msg     : String);
+   --  Used to report an error to the user.
+
+   Error_Handler : aliased Registry_Error_Handler_Record;
+
+   ------------
+   -- Report --
+   ------------
+
+   procedure Report (Handler : access Registry_Error_Handler_Record;
+                     Msg     : String) is
+   begin
+      Insert (Handler.Handle, Msg, Mode => Error);
+   end Report;
 
    ------------------------------
    -- Compute_Predefined_Paths --
@@ -70,44 +91,6 @@ package body GPS.Kernel.Project is
       Gnatls_Args     : Argument_List_Access :=
                        Argument_String_To_List (Gnatls & " -v");
       Langs           : Argument_List := Get_Languages (Get_Project (Handle));
-      Current         : GNAT.OS_Lib.String_Access := new String'("");
-      Object_Path_Set : Boolean := False;
-
-      procedure Add_Directory (S : String);
-      --  Add S to the search path.
-      --  If Source_Path is True, the source path is modified.
-      --  Otherwise, the object path is modified.
-
-      -------------------
-      -- Add_Directory --
-      -------------------
-
-      procedure Add_Directory (S : String) is
-         Tmp : GNAT.OS_Lib.String_Access;
-      begin
-         if S = "" then
-            return;
-
-         elsif S = "<Current_Directory>"
-           and then not Object_Path_Set
-         then
-            --  Do not include "." in the default source paths: when the user
-            --  is compiling, it would represent the object directory, when the
-            --  user is searching file it would represent whatever the current
-            --  directory is at that point, ...
-            return;
-
-         else
-            Tmp := Current;
-            Current := new String'(Current.all & Path_Separator &
-                                   To_Local (S, Build_Server));
-            Free (Tmp);
-         end if;
-      end Add_Directory;
-
-      Fd      : Process_Descriptor_Access;
-      Result  : Expect_Match;
-      Success : Boolean;
 
    begin
       if Basic_Types.Contains (Langs, "ada", Case_Sensitive => False) then
@@ -116,81 +99,22 @@ package body GPS.Kernel.Project is
 
          if Handle.Gnatls_Cache /= null
            and then Handle.Gnatls_Cache.all = Gnatls
-           and then Is_Local (Build_Server)
+           and then Prev_Server.all = Get_Nickname (Build_Server)
          then
             return;
          end if;
 
+         Free (Prev_Server);
+         Prev_Server := new String'(Get_Nickname (Build_Server));
          Free (Handle.Gnatls_Cache);
          Handle.Gnatls_Cache := new String'(Gnatls);
 
-         Trace (Me, "Executing " & Argument_List_To_String (Gnatls_Args.all));
-         begin
-            Spawn (Kernel_Handle (Handle), Gnatls_Args.all, Build_Server,
-                   Fd, Success);
-            if not Success then
-               return;
-            end if;
-
-            Expect (Fd.all, Result, "GNATLS .+(\n| )Copyright", Timeout => -1);
-
-            declare
-               S : constant String := Strip_CR (Expect_Out_Match (Fd.all));
-            begin
-               Handle.GNAT_Version
-                 := new String'(S (S'First + 7 .. S'Last - 10));
-            end;
-
-            Expect (Fd.all, Result, "Source Search Path:", 1000);
-
-            loop
-               Expect (Fd.all, Result, "\n", 1000);
-
-               declare
-                  S : constant String :=
-                    Trim (Strip_CR (Expect_Out (Fd.all)), Ada.Strings.Left);
-               begin
-                  if S = "Object Search Path:" & ASCII.LF then
-                     Trace (Me, "Set source path from gnatls to " &
-                            Current.all);
-                     Set_Predefined_Source_Path (Handle.Registry.all,
-                                                 Current.all);
-                     Free (Current);
-                     Current := new String'("");
-
-                  elsif S = "Project Search Path:" & ASCII.LF then
-                     Trace (Me, "Set object path from gnatls to " &
-                            Current.all);
-                     Object_Path_Set := True;
-                     Set_Predefined_Object_Path (Handle.Registry.all,
-                                                 Current.all);
-                     Free (Current);
-                     Current := new String'("");
-
-                  else
-                     Add_Directory (S (S'First .. S'Last - 1));
-                  end if;
-               end;
-            end loop;
-
-         exception
-            when Process_Died =>
-               if Object_Path_Set then
-                  Trace (Me, "Set project path from gnatls to " &
-                         Current.all);
-                  Set_Predefined_Project_Path (Handle.Registry.all,
-                                               Current.all);
-               else
-                  Trace (Me, "Set object path (2) from gnatls to " &
-                         Current.all);
-                  Set_Predefined_Object_Path (Handle.Registry.all,
-                                              Current.all);
-               end if;
-
-               Free (Current);
-               Close (Fd.all);
-         end;
-
+         Error_Handler.Handle := Kernel_Handle (Handle);
+         Projects.Registry.Compute_Predefined_Paths
+           (Handle.Registry.all,
+            Handle.GNAT_Version,
+            Gnatls_Args,
+            Error_Handler'Access);
          Free (Gnatls_Args);
       end if;
 
