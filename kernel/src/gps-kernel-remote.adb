@@ -47,6 +47,7 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.List;                   use Gtk.List;
 with Gtk.List_Item;              use Gtk.List_Item;
+with Gtk.Main;                   use Gtk.Main;
 with Gtk.Notebook;               use Gtk.Notebook;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
@@ -78,6 +79,7 @@ with Filesystem.Unix;            use Filesystem.Unix;
 with Filesystem.Windows;         use Filesystem.Windows;
 with GUI_Utils;                  use GUI_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
+with Projects;                   use Projects;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
@@ -286,12 +288,15 @@ package body GPS.Kernel.Remote is
       --  Identifier of the server
    end record;
 
-   Servers : array (Server_Type) of Server_Config
-     := (others => (Is_Local => True,
-                    Nickname => new String'("")));
+   type Servers_Config is array (Server_Type) of Server_Config;
+
+   Servers : Servers_Config := (others => (Is_Local => True,
+                                           Nickname => new String'("")));
    --  Servers currently used. Default is the localhost.
 
-   type Servers_Property is new Property_Record with null record;
+   type Servers_Property is new Property_Record with record
+      Servers : Servers_Config;
+   end record;
 
    procedure Save
      (Property : access Servers_Property;
@@ -299,6 +304,20 @@ package body GPS.Kernel.Remote is
 
    procedure Load
      (Property : in out Servers_Property; From : Glib.Xml_Int.Node_Ptr);
+
+   ----------------------------
+   -- Project load utilities --
+   ----------------------------
+
+   type Reload_Callback_Data is record
+      File   : VFS.Virtual_File;
+      Kernel : Kernel_Handle;
+   end record;
+
+   package Reload_Timeout is new Gtk.Main.Timeout (Reload_Callback_Data);
+
+   function Reload_Prj_Cb (Data : Reload_Callback_Data) return Boolean;
+   --  Callback used to reload the project when build_server changed
 
    ---------------------
    -- Utility methods --
@@ -1236,6 +1255,7 @@ package body GPS.Kernel.Remote is
       Attribute  : Descriptor_Attribute;
       Modified   : Boolean;
    begin
+      Trace (Me, "Save");
       Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
       Iter  := Get_Iter_First (Model);
 
@@ -1269,6 +1289,7 @@ package body GPS.Kernel.Remote is
          Nickname   : constant String
            := Get_String (Model, Iter, Name_Col);
       begin
+         Trace (Me, "Save machine " & Nickname);
          --  Get attribute value.
          if Get_Boolean (Model, Iter, User_Def_Col) then
             Trace (Me, "Internal save user defined machine");
@@ -1894,27 +1915,25 @@ package body GPS.Kernel.Remote is
 
          if Resp = Gtk_Response_OK or Resp = Gtk_Response_Apply then
             --  First make sure the last edited machine is saved
+            if Save (Dialog, True) then
+               --  For all config, apply in g-exttre
+               Item := Dialog.Machines;
+               Remove_All_Machine_Descriptors;
 
-            Selection_Changed (Dialog);
+               while Item /= null loop
+                  Add_Machine_Descriptor (Item.Desc);
+                  Item := Item.Next;
+               end loop;
 
-            --  For all config, apply in g-exttre
+               --  Save mirror paths
+               Free (Main_Paths_Table);
+               --  Duplicate it instead of just copy it, for easier handling
+               --  of cancel/apply cases
+               Main_Paths_Table := Deep_Copy (Dialog.Paths_Table);
 
-            Item := Dialog.Machines;
-            Remove_All_Machine_Descriptors;
-
-            while Item /= null loop
-               Add_Machine_Descriptor (Item.Desc);
-               Item := Item.Next;
-            end loop;
-
-            --  Save mirror paths
-            Free (Main_Paths_Table);
-            --  Duplicate it instead of just copy it, for easier handling
-            --  of cancel/apply cases
-            Main_Paths_Table := Deep_Copy (Dialog.Paths_Table);
-
-            Save_Remote_Config (Kernel);
-            Run_Hook (Kernel, Server_List_Changed_Hook);
+               Save_Remote_Config (Kernel);
+               Run_Hook (Kernel, Server_List_Changed_Hook);
+            end if;
          end if;
 
          exit when Resp /= Gtk_Response_Apply;
@@ -2095,15 +2114,13 @@ package body GPS.Kernel.Remote is
       Node     : in out Glib.Xml_Int.Node_Ptr)
    is
       Srv : Node_Ptr;
-      pragma Unreferenced (Property);
    begin
-      for J in Servers'Range loop
-         if not Servers (J).Is_Local then
-            Srv := new Glib.Xml_Int.Node;
-            Srv.Tag := new String'(Server_Type'Image (J));
-            Srv.Value := new String'(Servers (J).Nickname.all);
-            Add_Child (Node, Srv);
-         end if;
+      Trace (Me, "Saving remote property");
+      for J in Property.Servers'Range loop
+         Srv := new Glib.Xml_Int.Node;
+         Srv.Tag := new String'(Server_Type'Image (J));
+         Srv.Value := new String'(Property.Servers (J).Nickname.all);
+         Add_Child (Node, Srv);
       end loop;
    end Save;
 
@@ -2115,19 +2132,21 @@ package body GPS.Kernel.Remote is
      (Property : in out Servers_Property; From : Glib.Xml_Int.Node_Ptr)
    is
       Srv :  Node_Ptr;
-      pragma Unreferenced (Property);
    begin
-      for J in Servers'Range loop
+      Trace (Me, "Loading remote property");
+      for J in Property.Servers'Range loop
          if From.Child /= null then
             Srv := Find_Tag (From.Child, Server_Type'Image (J));
             if Srv /= null
               and then Is_Configured (Srv.Value.all)
+              and then Srv.Value.all /= ""
             then
-               Servers (J) := (Is_Local => False,
-                               Nickname => new String'(Srv.Value.all));
+               Property.Servers (J) :=
+                 (Is_Local => False,
+                  Nickname => new String'(Srv.Value.all));
             else
-               Servers (J) := (Is_Local => True,
-                               Nickname => new String'(""));
+               Property.Servers (J) := (Is_Local => True,
+                                        Nickname => new String'(""));
             end if;
          end if;
       end loop;
@@ -2143,16 +2162,11 @@ package body GPS.Kernel.Remote is
    is
       D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Property : Servers_Property;
+      Prop     : Property_Access;
       Success  : Boolean;
       Local_File : VFS.Virtual_File;
    begin
-      --  Reset the servers to local machine
-      Trace (Me, "Reseting servers to local machine");
-      for J in Server_Type'Range loop
-         Servers (J) := (Is_Local => True,
-                         Nickname => new String'(""));
-      end loop;
-
+      --  Get local file equivalence for project
       if not Is_Local (D.File) then
          Local_File :=
            Create (To_Local (Full_Name (D.File).all, Get_Host (D.File)));
@@ -2167,12 +2181,30 @@ package body GPS.Kernel.Remote is
         (Property, Local_File,
          Name => "servers_config", Found => Success);
 
-      if not Is_Local (D.File) then
+      if not Success then
+         Trace (Me, "Property servers_config does not exist. Create it");
+         for J in Server_Type'Range loop
+            Property.Servers (J) := (Is_Local => True,
+                                     Nickname => new String'(""));
+         end loop;
+         Prop := new Servers_Property'(Property);
+         Set_Property (Local_File, "servers_config", Prop, Persistent => True);
+      end if;
+
+      for J in Server_Type'Range loop
+         Glib.Free (Servers (J).Nickname);
+         Servers (J) :=
+           (Is_Local => Property.Servers (J).Is_Local,
+            Nickname => new String'(Property.Servers (J).Nickname.all));
+      end loop;
+
+      if Get_Host (D.File) /= Servers (Build_Server).Nickname.all then
          Trace (Me, "Assign build server: project loaded from remote host");
          Assign (Kernel_Handle (Kernel),
                  Build_Server,
                  Get_Host (D.File),
-                 Local_File);
+                 Local_File,
+                 Reload_Prj => False);
       end if;
 
       if not Is_Local (Build_Server) then
@@ -2314,13 +2346,25 @@ package body GPS.Kernel.Remote is
       Remote_Module := null;
    end Destroy;
 
-   -------------
-   -- Convert --
-   -------------
+   ---------------
+   -- To_Remote --
+   ---------------
 
    function To_Remote
      (Path       : String;
       To         : Server_Type;
+      Unix_Style : Boolean := False) return String is
+   begin
+      return To_Remote (Path, Get_Nickname (To), Unix_Style);
+   end To_Remote;
+
+   ---------------
+   -- To_Remote --
+   ---------------
+
+   function To_Remote
+     (Path       : String;
+      To         : String;
       Unix_Style : Boolean := False) return String
    is
       Path_From      : String_Access;
@@ -2332,7 +2376,7 @@ package body GPS.Kernel.Remote is
       --  If From and To are the same machine (and no unix path translation is
       --  needed), just return Path
 
-      if Is_Local (To) then
+      if To = "" then
          if Unix_Style then
             return To_Unix (Get_Local_Filesystem, Path);
          else
@@ -2345,7 +2389,7 @@ package body GPS.Kernel.Remote is
       Path_List_Item := Main_Paths_Table;
 
       while Path_List_Item /= null loop
-         if Path_List_Item.Nickname.all = Servers (To).Nickname.all then
+         if Path_List_Item.Nickname.all = To then
             Mirror := Path_List_Item.Path_List;
             exit;
          end if;
@@ -2495,47 +2539,83 @@ package body GPS.Kernel.Remote is
       return To_Unix (Get_Filesystem (Server), Path, Use_Cygwin);
    end To_Unix_Path;
 
+   -------------------
+   -- Reload_Prj_Cb --
+   -------------------
+
+   function Reload_Prj_Cb (Data : Reload_Callback_Data) return Boolean is
+   begin
+      Trace (Me, "Reloading the project");
+      Load_Project (Data.Kernel, Data.File);
+      return False;
+   end Reload_Prj_Cb;
+
    ------------
    -- Assign --
    ------------
 
    procedure Assign
-     (Kernel   : Kernel_Handle;
-      Server   : Server_Type;
-      Nickname : String;
-      Prj_File : VFS.Virtual_File := VFS.No_File)
+     (Kernel     : Kernel_Handle;
+      Server     : Server_Type;
+      Nickname   : String;
+      Prj_File   : VFS.Virtual_File := VFS.No_File;
+      Reload_Prj : Boolean := False)
    is
-      Data : aliased Server_Config_Changed_Hooks_Args :=
-               (Hooks_Data with
-                 Nickname_Length => Nickname'Length,
-                 Server          => Server,
-                 Nickname        => Nickname);
-      Prop : Property_Access;
-
+      Data        : aliased Server_Config_Changed_Hooks_Args :=
+                     (Hooks_Data with
+                       Nickname_Length => Nickname'Length,
+                       Server          => Server,
+                       Nickname        => Nickname);
+      Timeout     : constant Guint32 := 50;
+      Id          : Timeout_Handler_Id;
+      Load_Data   : Reload_Callback_Data;
+      Property    : Servers_Property;
+      Prop        : Property_Access;
+      Found       : Boolean;
+      The_File    : VFS.Virtual_File;
+      pragma Unreferenced (Id);
    begin
       Glib.Free (Servers (Server).Nickname);
-
-      if Nickname = Local_Nickname or else Nickname = "" then
-         Servers (Server) :=
-           (Is_Local => True, Nickname => new String'(""));
+      if Nickname /= "" and Nickname /= Local_Nickname then
+         Servers (Server) := (Is_Local => False,
+                              Nickname => new String'(Nickname));
       else
-         Servers (Server) :=
-           (Is_Local => False, Nickname => new String'(Nickname));
+         Servers (Server) := (Is_Local => True,
+                              Nickname => new String'(""));
       end if;
 
-      Prop := new Servers_Property;
-      if Prj_File = VFS.No_File then
-         Set_Property
-           (Get_Project (Kernel),
-            Name       => "servers_config",
-            Property   => Prop,
-            Persistent => True);
+      --  Update the project's property
+      if Prj_File /= VFS.No_File then
+         The_File := Prj_File;
       else
-         Set_Property
-           (Prj_File,
-            Name       => "servers_config",
-            Property   => Prop,
-            Persistent => True);
+         The_File := Project_Path (Get_Project (Kernel));
+      end if;
+
+      Get_Property (Property,
+                    The_File,
+                    "servers_config",
+                    Found);
+      if Found then
+         Trace (Me, "Saving servers_config property");
+         Glib.Free (Property.Servers (Server).Nickname);
+         Property.Servers (Server) :=
+           (Is_Local => Servers (Server).Is_Local,
+            Nickname => new String'(Servers (Server).Nickname.all));
+         Remove_Property (The_File, "servers_config");
+
+         Prop := new Servers_Property'(Property);
+         Set_Property (The_File,
+                       "servers_config",
+                       Prop,
+                       Persistent => True);
+      end if;
+
+      --  Reload project if Build_Server has been assigned
+      if Server = Build_Server and then Reload_Prj then
+         Load_Data.Kernel := Kernel;
+         Load_Data.File := Project_Path (Get_Project (Kernel),
+                                         Get_Nickname (Build_Server));
+         Id := Reload_Timeout.Add (Timeout, Reload_Prj_Cb'Access, Load_Data);
       end if;
 
       if Active (Me) then
