@@ -4306,6 +4306,30 @@ GPS comes with some predefined logging streams, which can be used to configure t
   <shell_doc name="GPS.Vdiff.list">
      <return>A list GPS.Vdiff</return>
      <description>This function returns the list of visual diff currently opened in GPS.</description>
+     <example lang="python">
+         # Here is an example that demonstrates how to use GPS.Vdiff.list to
+         # close all the visual diff.
+
+         # First two visual diff are created
+         vdiff1 = GPS.Vdiff.create (GPS.File ("a.adb"), GPS.File ("b.adb"))
+         vdiff2 = GPS.Vdiff.create (GPS.File ("a.adb"), GPS.File ("b.adb"))
+
+         # Then we get the list of all current visual diff
+         vdiff_list = GPS.Vdiff.list ()
+
+         # And we iterate on that list in order to close all editors used in
+         # each visual diff from the list.
+         for vdiff in vdiff_list:
+            files = vdiff.files ()
+
+            # But before each visual diff is actually closed, we just inform
+            #  the user of the files that will be closed.
+            for file in files:
+               print "Beware! " + file.name () + "will be closed."
+
+            # Finally, we close the visual diff
+            vdiff.close_editors ()
+     </example>
   </shell_doc>
 
   <shell_doc name="GPS.Vdiff.recompute">
