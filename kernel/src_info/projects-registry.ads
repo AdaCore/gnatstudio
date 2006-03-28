@@ -60,12 +60,38 @@ package Projects.Registry is
    --  and that directory names cannot match file names according to the
    --  naming scheme. This provides much faster loading.
 
+   -----------------------------
+   -- Error reporting handler --
+   -----------------------------
+
+   type Error_Handler_Record is abstract tagged null record;
+   type Error_Handler is access all Error_Handler_Record'Class;
+
+   procedure Report (Handler : access Error_Handler_Record;
+                     Msg     : String) is abstract;
+   --  Used to report an error to the user.
+
+   type Null_Error_Handler_Record is new Error_Handler_Record with null record;
+   procedure Report (Handler : access Null_Error_Handler_Record;
+                     Msg     : String);
+   --  Just does nothing. Use in stand-alone library.
+
+   Null_E_Handler : constant Error_Handler := new Null_Error_Handler_Record;
+
    ------------------------
    -- Predefined project --
    ------------------------
    --  The following subprograms are used to access the predefined environment
    --  for all the languages. This includes for instance the run time library
    --  for Ada, or the C library (/usr/include/...) for C files.
+
+   procedure Compute_Predefined_Paths
+     (Registry     : in out Project_Registry;
+      GNAT_Version : out GNAT.OS_Lib.String_Access;
+      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
+      E_Handler    : Error_Handler := Null_E_Handler);
+   --  Compute the predefined paths for the GNAT runtime, and return the
+   --  GNAT version that is used.
 
    function Get_Predefined_Source_Path
      (Registry : Project_Registry) return String;
