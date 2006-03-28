@@ -57,6 +57,12 @@ package GPS.Kernel.Remote is
    --  Translate a local file/directory path to server 'To'
    --  if Unix_Style is set, the translated path will have a unix style.
 
+   function To_Remote
+     (Path       : String;
+      To         : String;
+      Unix_Style : Boolean := False) return String;
+   --  Same as above, using To's nickname instead of Server_Type
+
    function To_Local
      (Path : String;
       From : Server_Type) return String;
@@ -206,13 +212,15 @@ package GPS.Kernel.Remote is
    --  Runs the server list editor dialog
 
    procedure Assign
-     (Kernel   : Kernel_Handle;
-      Server   : Server_Type;
-      Nickname : String;
-      Prj_File : VFS.Virtual_File := VFS.No_File);
+     (Kernel     : Kernel_Handle;
+      Server     : Server_Type;
+      Nickname   : String;
+      Prj_File   : VFS.Virtual_File := VFS.No_File;
+      Reload_Prj : Boolean := False);
    --  Assigns a Server to a configuration
    --  Prj_File allows to select to which project file this configuration is
-   --  assigned to. If No_File, it is assigned to the current project.
+   --   assigned to. If No_File, it is assigned to the current project.
+   --  Reload_Prj, if set, recomputes the view if the build_server changed.
 
    function Get_Nickname (Server : Server_Type) return String;
    --  Gets the nickname of a server
