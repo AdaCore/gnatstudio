@@ -340,6 +340,7 @@ private
    type Paste_Profile_Cmd is new Text_Command with record
       Destination_Begin, Destination_End : Ptr_Mark;
       Source_Begin, Source_End           : Ptr_Mark;
+      Add_Spaces                         : Boolean := False;
    end record;
 
    type Get_Visible_Declaration_Cmd is new Text_Command with record
