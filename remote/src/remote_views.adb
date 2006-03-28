@@ -482,7 +482,8 @@ package body Remote_Views is
 
       for J in Server_Type'Range loop
          if not Is_Configured (Get_Nickname (J)) then
-            Assign (Kernel_Handle (Kernel), J, Local_Nickname);
+            Assign (Kernel_Handle (Kernel), J, Local_Nickname,
+                    Reload_Prj => True);
          end if;
       end loop;
 
@@ -503,7 +504,8 @@ package body Remote_Views is
          User.View.Combo_Selected := True;
          Assign (User.View.Kernel,
                  User.Server,
-                 Value);
+                 Value,
+                 Reload_Prj => True);
          User.View.Combo_Selected := False;
       end if;
    end On_Combo_Changed;
