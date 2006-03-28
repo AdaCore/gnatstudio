@@ -36,6 +36,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
 pragma Warnings (On);
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with Glib.Convert;              use Glib.Convert;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
@@ -53,6 +54,7 @@ with Prj;                       use Prj;
 with Projects.Editor;           use Projects.Editor;
 with Scans;                     use Scans;
 with Snames;                    use Snames;
+with String_Utils;              use String_Utils;
 with Stringt;
 with String_Hash;
 with Traces;                    use Traces;
@@ -252,6 +254,15 @@ package body Projects.Registry is
    pragma Inline (Array_Elements);
    --  Return access to the various tables that contain information about the
    --  project
+
+   type Remote_Error_Handler is new Error_Display_Record with record
+      Handler : Error_Handler;
+   end record;
+
+   procedure On_Error
+     (Manager : access Remote_Error_Handler;
+      Message : String);
+   --  Error reporting for GPS.Kernel.Remote interface
 
    --------------------
    -- Array_Elements --
@@ -1789,6 +1800,145 @@ package body Projects.Registry is
       ALI.Xref.Free;
       Atree.Atree_Private_Part.Nodes.Free;
    end Finalize;
+
+   ------------
+   -- Report --
+   ------------
+
+   procedure Report (Handler : access Null_Error_Handler_Record;
+                     Msg     : String) is
+      pragma Unreferenced (Handler, Msg);
+   begin
+      null;
+   end Report;
+
+   --------------
+   -- On_Error --
+   --------------
+
+   procedure On_Error
+     (Manager : access Remote_Error_Handler;
+      Message : String) is
+   begin
+      Report (Manager.Handler, Message);
+   end  On_Error;
+
+   ------------------------------
+   -- Compute_Predefined_Paths --
+   ------------------------------
+
+   procedure Compute_Predefined_Paths
+     (Registry     : in out Project_Registry;
+      GNAT_Version : out GNAT.OS_Lib.String_Access;
+      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
+      E_Handler    : Error_Handler := Null_E_Handler)
+   is
+      Current         : GNAT.OS_Lib.String_Access := new String'("");
+      Object_Path_Set : Boolean := False;
+
+      procedure Add_Directory (S : String);
+      --  Add S to the search path.
+      --  If Source_Path is True, the source path is modified.
+      --  Otherwise, the object path is modified.
+
+      -------------------
+      -- Add_Directory --
+      -------------------
+
+      procedure Add_Directory (S : String) is
+         Tmp : GNAT.OS_Lib.String_Access;
+      begin
+         if S = "" then
+            return;
+
+         elsif S = "<Current_Directory>"
+           and then not Object_Path_Set
+         then
+            --  Do not include "." in the default source paths: when the user
+            --  is compiling, it would represent the object directory, when the
+            --  user is searching file it would represent whatever the current
+            --  directory is at that point, ...
+            return;
+
+         else
+            Tmp := Current;
+            Current := new String'(Current.all & Path_Separator &
+                                   To_Local (S, Build_Server));
+            Free (Tmp);
+         end if;
+      end Add_Directory;
+
+      Fd      : Process_Descriptor_Access;
+      Result  : Expect_Match;
+      Success : Boolean;
+
+      Remote_E_Handler : aliased Remote_Error_Handler
+        := (Handler => E_Handler);
+
+   begin
+      Trace (Me, "Executing " & Argument_List_To_String (Gnatls_Args.all));
+      --  ??? Place a error handler here
+      GPS.Kernel.Remote.Spawn
+        (null, Gnatls_Args.all, Build_Server, Fd, Success,
+         Error_Manager => Remote_E_Handler'Unchecked_Access);
+
+      if not Success then
+         Report (E_Handler,
+                 -"Could not compute predefined paths for this project.");
+         Report (E_Handler,
+                 -"Subprojects might be incorrectly loaded");
+         return;
+      end if;
+
+      Expect (Fd.all, Result, "GNATLS .+(\n| )Copyright", Timeout => 10000);
+
+      declare
+         S : constant String := Strip_CR (Expect_Out_Match (Fd.all));
+      begin
+         GNAT_Version := new String'(S (S'First + 7 .. S'Last - 10));
+      end;
+
+      Expect (Fd.all, Result, "Source Search Path:", Timeout => 10000);
+
+      loop
+         Expect (Fd.all, Result, "\n", Timeout => 10000);
+
+         declare
+            S : constant String :=
+              Trim (Strip_CR (Expect_Out (Fd.all)), Ada.Strings.Left);
+         begin
+            if S = "Object Search Path:" & ASCII.LF then
+               Trace (Me, "Set source path from gnatls to " & Current.all);
+               Set_Predefined_Source_Path (Registry, Current.all);
+               Free (Current);
+               Current := new String'("");
+
+            elsif S = "Project Search Path:" & ASCII.LF then
+               Trace (Me, "Set object path from gnatls to " & Current.all);
+               Object_Path_Set := True;
+               Set_Predefined_Object_Path (Registry, Current.all);
+               Free (Current);
+               Current := new String'("");
+
+            else
+               Add_Directory (S (S'First .. S'Last - 1));
+            end if;
+         end;
+      end loop;
+
+   exception
+      when Process_Died =>
+         if Object_Path_Set then
+            Trace (Me, "Set project path from gnatls to " & Current.all);
+            Prj.Ext.Set_Project_Path (Current.all);
+         else
+            Trace (Me, "Set object path (2) from gnatls to " & Current.all);
+            Set_Predefined_Object_Path (Registry, Current.all);
+         end if;
+
+         Free (Current);
+         Close (Fd.all);
+   end Compute_Predefined_Paths;
 
    --------------------------------
    -- Get_Predefined_Source_Path --
