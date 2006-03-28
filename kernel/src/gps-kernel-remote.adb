@@ -2183,10 +2183,18 @@ package body GPS.Kernel.Remote is
 
       if not Success then
          Trace (Me, "Property servers_config does not exist. Create it");
-         for J in Server_Type'Range loop
-            Property.Servers (J) := (Is_Local => True,
-                                     Nickname => new String'(""));
-         end loop;
+         if not Is_Local (D.File) then
+            for J in Server_Type'Range loop
+               Property.Servers (J) :=
+                 (Is_Local => False,
+                  Nickname => new String'(Get_Host (D.File)));
+            end loop;
+         else
+            for J in Server_Type'Range loop
+               Property.Servers (J) := (Is_Local => True,
+                                        Nickname => new String'(""));
+            end loop;
+         end if;
          Prop := new Servers_Property'(Property);
          Set_Property (Local_File, "servers_config", Prop, Persistent => True);
       end if;
@@ -2198,7 +2206,11 @@ package body GPS.Kernel.Remote is
             Nickname => new String'(Property.Servers (J).Nickname.all));
       end loop;
 
-      if Get_Host (D.File) /= Servers (Build_Server).Nickname.all then
+      --  If Project is loaded from a distant host, force build_server as
+      --  distant host.
+      if not Is_Local (D.File)
+        and then Get_Host (D.File) /= Servers (Build_Server).Nickname.all
+      then
          Trace (Me, "Assign build server: project loaded from remote host");
          Assign (Kernel_Handle (Kernel),
                  Build_Server,
