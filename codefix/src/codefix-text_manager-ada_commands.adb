@@ -807,46 +807,73 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Position                 : File_Cursor;
          Begin_Cursor, End_Cursor : out File_Cursor)
       is
-         Garbage_Cursor : File_Cursor;
-         Next_Word_End  : GNAT.OS_Lib.String_Access;
+         Local_Cursor   : Word_Cursor;
+
+         Delimiters_Array : String_Array (1 .. 4) :=
+           (new String'("("),
+            new String'("is"),
+            new String'(";"),
+            new String'("return"));
       begin
-         Begin_Cursor := File_Cursor
-           (Search_String
-              (Current_Text, Position, "(", Std_Ada_Escape));
+         Local_Cursor := Word_Cursor
+           (Search_Strings
+              (Current_Text,
+               Position,
+               Delimiters_Array,
+               Std_Ada_Escape));
 
-         End_Cursor := File_Cursor
-           (Get_Right_Paren (Current_Text, Begin_Cursor));
+         if Get_Word (Local_Cursor) = "(" then
+            Begin_Cursor := Clone (File_Cursor (Local_Cursor));
+            Free (Local_Cursor);
 
-         Garbage_Cursor := End_Cursor;
-         Garbage_Cursor.Col := Garbage_Cursor.Col + 1;
-         Next_Word (Current_Text, Garbage_Cursor, Next_Word_End);
+            End_Cursor := File_Cursor
+              (Get_Right_Paren (Current_Text, Begin_Cursor));
 
-         if To_Lower (Next_Word_End.all) = "return" then
-            declare
-               Is_Cursor, Semicol_Cursor : File_Cursor;
-            begin
-               Is_Cursor := File_Cursor
-                 (Search_String
-                    (Current_Text, End_Cursor, "is", Std_Ada_Escape));
-               Semicol_Cursor := File_Cursor
-                 (Search_String
-                    (Current_Text, End_Cursor, ";", Std_Ada_Escape));
+            Local_Cursor := Word_Cursor
+              (Search_Strings
+                 (Current_Text,
+                  End_Cursor,
+                  Delimiters_Array (2 .. 3),
+                  --  Search a "is" or a ";"
+                  Std_Ada_Escape));
 
-               Free (End_Cursor);
+            Free (End_Cursor);
+            End_Cursor := File_Cursor (Previous_Char
+              (Current_Text, Clone (File_Cursor (Local_Cursor))));
 
-               if Is_Cursor = Null_File_Cursor
-                 or else Semicol_Cursor < Is_Cursor
-               then
-                  End_Cursor := File_Cursor
-                    (Previous_Char (Current_Text, Semicol_Cursor));
-                  Free (Is_Cursor);
-               else
-                  End_Cursor := File_Cursor
-                    (Previous_Char (Current_Text, Is_Cursor));
-                  Free (Semicol_Cursor);
-               end if;
-            end;
+            Free (Local_Cursor);
+         elsif Get_Word (Local_Cursor) = "return" then
+            Begin_Cursor := Clone (File_Cursor (Local_Cursor));
+
+            Local_Cursor := Word_Cursor
+              (Search_Strings
+                 (Current_Text,
+                  Begin_Cursor,
+                  Delimiters_Array (2 .. 3),
+                  --  Search a "is" or a ";"
+                  Std_Ada_Escape));
+
+            Free (End_Cursor);
+            End_Cursor := File_Cursor
+              (Previous_Char
+                 (Current_Text, Clone (File_Cursor (Local_Cursor))));
+
+            Free (Local_Cursor);
+         else
+            --  In this case, the profile is empty, so we will artificlally
+            --  move the begin cursor and create a space after the name of the
+            --  function
+            Begin_Cursor := File_Cursor (Clone
+              (Previous_Char (Current_Text, File_Cursor (Local_Cursor))));
+            End_Cursor := File_Cursor (Clone
+              (Previous_Char (Current_Text, File_Cursor (Local_Cursor))));
+
+            Begin_Cursor.Col := Begin_Cursor.Col + 1;
+            End_Cursor.Col := End_Cursor.Col + 1;
+            Free (Local_Cursor);
          end if;
+
+         Free (Delimiters_Array);
       end Initialize_Profile;
 
       Destination_Begin, Destination_End : File_Cursor;
@@ -856,6 +883,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Initialize_Profile
         (File_Cursor (Destination), Destination_Begin, Destination_End);
       Initialize_Profile (File_Cursor (Source), Source_Begin, Source_End);
+
+      if Destination_Begin = Destination_End then
+         This.Add_Spaces := True;
+      end if;
 
       This.Destination_Begin := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Destination_Begin));
@@ -906,6 +937,10 @@ package body Codefix.Text_Manager.Ada_Commands is
          Source_Begin,
          Source_End,
          Current_Text);
+
+      if This.Add_Spaces then
+         Replace (New_Extract, Destination_Begin, 0, " ");
+      end if;
 
       Free (Destination_Begin);
       Free (Destination_End);
