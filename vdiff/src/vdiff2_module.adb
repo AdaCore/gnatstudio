@@ -93,9 +93,9 @@ package body Vdiff2_Module is
       Register_Command
         (Kernel, "get", 1, 3, Vdiff_Cmds'Access, Vdiff_Class,
          Static_Method => True);
---        Register_Command
---          (Kernel, "list", 0, 0, Vdiff_Cmds'Access, Vdiff_Class,
---           Static_Method => True);
+      Register_Command
+        (Kernel, "list", 0, 0, Vdiff_Cmds'Access, Vdiff_Class,
+         Static_Method => True);
       Register_Command
         (Kernel, "recompute", 0, 0, Vdiff_Cmds'Access, Vdiff_Class);
    end Register_Commands;
@@ -207,6 +207,33 @@ package body Vdiff2_Module is
                   Set_Return_Value
                     (Data, Create_File (Get_Script (Data), Files (Index)));
                end if;
+            end loop;
+         end;
+
+      elsif Command = "list" then
+         declare
+            Vdiff_List : constant Diff_Head_List_Access := Get_Vdiff_List;
+            Vdiff_Node : Diff_Head_List.List_Node;
+         begin
+            Set_Return_Value_As_List (Data);
+
+            if Vdiff_List = null
+              or else Vdiff_List.all = Null_List
+              or else Is_Empty (Vdiff_List.all)
+            then
+               return;
+            end if;
+
+            Vdiff_Node := First (Vdiff_List.all);
+
+            while Vdiff_Node /= Null_Node loop
+               Set_Return_Value
+                 (Data,
+                  Instance_From_Vdiff
+                    (Diff_Head_List.Data (Vdiff_Node),
+                     Vdiff_Class,
+                     Get_Script (Data)));
+               Vdiff_Node := Next (Vdiff_Node);
             end loop;
          end;
 
