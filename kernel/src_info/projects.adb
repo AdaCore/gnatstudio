@@ -26,6 +26,7 @@ with Basic_Types;               use Basic_Types;
 with File_Utils;                use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with Namet;                     use Namet;
 with Osint;                     use Osint;
 with OS_Utils;                  use OS_Utils;
@@ -393,21 +394,29 @@ package body Projects is
    -- Project_Path --
    ------------------
 
-   function Project_Path (Project : Project_Type) return VFS.Virtual_File is
+   function Project_Path (Project : Project_Type;
+                          Host    : String := "") return VFS.Virtual_File is
       View : constant Project_Id := Get_View (Project);
    begin
       if Status (Project) /= From_File then
          --  Still return a path, since some modules might depend on knowing
          --  the project path (for instance the builder module)
          return Create
-           (Get_String (Path_Name_Of (Project.Node, Project.Tree)));
+           (Host,
+            To_Remote (Get_String (Path_Name_Of (Project.Node, Project.Tree)),
+                       Host));
       elsif View = Prj.No_Project then
          --  Still needed for the project wizard
          return Create
-           (Get_String (Path_Name_Of (Project.Node, Project.Tree)));
+           (Host,
+            To_Remote (Get_String (Path_Name_Of (Project.Node, Project.Tree)),
+                       Host));
       else
          return Create
-           (Get_String (Projects_Table (Project)(View).Display_Path_Name));
+           (Host,
+            To_Remote
+              (Get_String (Projects_Table (Project)(View).Display_Path_Name),
+               Host));
       end if;
    end Project_Path;
 
@@ -416,9 +425,10 @@ package body Projects is
    -----------------------
 
    function Project_Directory
-     (Project : Project_Type) return VFS.Virtual_File is
+     (Project : Project_Type;
+      Host    : String := "") return VFS.Virtual_File is
    begin
-      return Dir (Project_Path (Project));
+      return Dir (Project_Path (Project, Host));
    end Project_Directory;
 
    -----------------

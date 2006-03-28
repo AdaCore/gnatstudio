@@ -109,11 +109,14 @@ package Projects is
    --  The empty string is returned if the project is the default project or
    --  No_Project.
 
-   function Project_Path (Project : Project_Type) return VFS.Virtual_File;
+   function Project_Path (Project : Project_Type;
+                          Host    : String := "") return VFS.Virtual_File;
    --  Return the full path name to the project file
+   --  If Host is given, the path will be the one on the specified host.
    --  No_File is returned if the project is the default project or No_Project.
 
-   function Project_Directory (Project : Project_Type) return VFS.Virtual_File;
+   function Project_Directory (Project : Project_Type;
+                               Host    : String := "") return VFS.Virtual_File;
    --  Return the directory that contains the project file.
    --  No_File is returned if the project is No_Project.
 
