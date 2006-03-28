@@ -193,7 +193,6 @@ package body Vdiff2_Module is
             Property : constant Vdiff_Property :=
                          Vdiff_Property
                            (Get_Property (Instance, Vdiff_Class_Name));
-            Files    : T_VFile;
          begin
             if Property.Vdiff = null then
                Set_Error_Msg (Data, "Visual diff has been destroyed");
@@ -202,10 +201,12 @@ package body Vdiff2_Module is
 
             Set_Return_Value_As_List (Data);
 
-            for Index in Files'Range loop
-               if Files (Index) /= VFS.No_File then
+            for Index in Property.Vdiff.Files'Range loop
+               if Property.Vdiff.Files (Index) /= VFS.No_File then
                   Set_Return_Value
-                    (Data, Create_File (Get_Script (Data), Files (Index)));
+                    (Data,
+                     Create_File
+                       (Get_Script (Data), Property.Vdiff.Files (Index)));
                end if;
             end loop;
          end;
