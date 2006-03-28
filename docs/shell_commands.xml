@@ -346,7 +346,7 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
 
   <shell_doc name="GPS.exit">
       <param name="force" default="False">A boolean</param>
-      <param name="status" default="0">An integer</param>  
+      <param name="status" default="0">An integer</param>
       <description>Exit GPS, asking for confirmation if any file is currently modified and unsaved. If force is True, no check is done.
 Status is the exit status to return to the calling shell. 0 will generally mean success on all architectures.</description>
   </shell_doc>
@@ -793,7 +793,7 @@ GPS.parse_xml ("""
 
   <shell_doc name="GPS.File.imports">
       <param name="self">The instance of GPS.File</param>
-      <param name="recursive">A boolean</param>	  
+      <param name="recursive">A boolean</param>
       <return>A list of files</return>
       <description>Return the the list of files that self depends on. If recursive is true, then return dependecies recursively.</description>
       <see_also name="GPS.File.imported_by()"/>
@@ -801,7 +801,7 @@ GPS.parse_xml ("""
 
   <shell_doc name="GPS.File.imported_by">
       <param name="self">The instance of GPS.File</param>
-      <param name="recursive">A boolean</param>	
+      <param name="recursive">A boolean</param>
       <description>Return the list of files that depends on file_name. This command might take some time to execute since GPS needs to parse the cross-reference information for multiple source files. If recursive is true, then return dependencies recursively.</description>
       <see_also name="GPS.File.imports()" />
   </shell_doc>
@@ -1087,7 +1087,7 @@ to a generic instantiation in Ada. If synchronous is True, then the result will 
       <description>Returns the references that have been found so far by the command.</description>
       <see_also name="GPS.Entity.references()" />
   </shell_doc>
-      
+
   <!--#################################################################
     ####   FileLocation class
     ###################################################################-->
@@ -1392,7 +1392,7 @@ The index only needs to be specified if it applies to that attribute.</descripti
 If the package is not specified, the attribute at the toplevel of the project is queried.
 The index only needs to be specified if it applies to that attribute.</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.Project.scenario_variables_values">
        <return>A hash table of strings</return>
        <description>Return a hash table where keys are the various scenario variables defined in the current project and values the different values that this variable can get.</description>
@@ -3346,7 +3346,7 @@ After this, the menu will never be displayed again.
      <param name="ref" default="">A string</param>
      <param name="add_before" default="True">A boolean</param>
      <description>Create a new contextual menu entry.
-Whenever this menu entry is selected by the user, GPS will execute on_activate, passing one parameter which is the context for which the menu is displayed (this is generally the same as GPS.current_contextual()). 
+Whenever this menu entry is selected by the user, GPS will execute on_activate, passing one parameter which is the context for which the menu is displayed (this is generally the same as GPS.current_contextual()).
 The filter parameter can be used to filter when the entry should be displayed in the menu. It is a subprogram that receives one parameter, an instance of GPS.Context, and returns a boolean. If it returns True, the entry will be displayed, otherwise it is hidden.
 The label parameter can be used to control the text displayed in the contextual menu. By default, it is the same as the contextual name (used in the constructor to GPS.Contextual.__init__). If specified, it must be a subprogram that takes an instance of GPS.Context in parameter, and returns a string, which will be displayed in the menu.
 The parameters ref and add_before can be used to control the location of the entry within the contextual menu. ref is the name of another contextual menu entry, and add_before indicates whether the new entry is put before or after that second entry.</description>
@@ -3385,7 +3385,7 @@ class My_Context (GPS.Contextual):
    def __init__ (self):
        GPS.Contextual.__init__ (self, "Custom")
        self.data = "Menu Name"
-       self.create (on_activate=self.on_contextual, 
+       self.create (on_activate=self.on_contextual,
                     filter     =self.on_filter,
                     label      =self.label)
       </example>
@@ -4262,4 +4262,50 @@ GPS comes with some predefined logging streams, which can be used to configure t
       <param name="self">An instance of GPS.Bookmark</param>
       <description>Change the current context in GPS so that it matches the one saved in the bookmark. In particular, if the bookmark is inside an editor, this editor is raised, and the cursor moved to the correct line and column. You cannot query directly the line and column from the bookmark, since these might not exist, for instance when the editor points inside a browser.</description>
   </shell_doc>
+
+  <!--#################################################################
+      ## Vdiff class
+      #################################################################-->
+
+  <shell_doc name="GPS.Vdiff">
+     <description>This class provides access to the graphical comparison between two or three files or two versions of the same file within GPS. A visual diff is a group of two or three editors with synchronized scrolling. Differences are rendered using blank lines and color highlighting.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Vdiff.__init__">
+     <description>This function prevents the creation of a visual diff instance directly. You must use GPS.Vdiff.create() or GPS.Vdiff.get() instead.</description>
+     <see_also name="GPS.Vdiff.create" />
+     <see_also name="GPS.Vdiff.get" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Vdiff.close_editors">
+     <param name="self">An instance of GPS.Vdiff</param>
+     <description>Close all editors implied in a visual diff.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Vdiff.create">
+     <param name="file1">An instance of GPS.File</param>
+     <param name="file2">An instance of GPS.File</param>
+     <param name="file3" default="">An instance of GPS.File</param>
+     <return>An instance of GPS.Vdiff</return>
+     <description>If none of the files given as parameter is already used in a visual diff, this function creates a new visual diff and returns it. Otherwise, None is returned.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Vdiff.files">
+     <param name="self">An instance of GPS.Vdiff</param>
+     <return>A list of GPS.File</return>
+     <description>Return the list of files used in a visual diff.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Vdiff.get">
+     <param name="file1">An instance of GPS.File</param>
+     <param name="file2" default="">An instance of GPS.File</param>
+     <param name="file3" default="">An instance of GPS.File</param>
+     <description>Return an instance of an already exisiting visual diff. If an instance already exists for this visual diff, it is returned. All files passed as parameters have to be part of the visual diff but not all files of the visual diff have to be passed for the visual diff to be returned. For example if only one file is passed the visual diff that contains it, if any, will be returned no matter it is a two or three files visual diff.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Vdiff.recompute">
+     <param name="self">An instance of GPS.Vdiff</param>
+     <description>Recompute a visual diff. The content of each editor used in the visual diff is saved. The files are recompared and the display is redone (blank lines and color highlighting).</description>
+  </shell_doc>
+
 </docs>
