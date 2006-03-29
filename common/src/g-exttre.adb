@@ -720,6 +720,7 @@ package body GNAT.Expect.TTY.Remote is
    is
       Machine_Desc : Machine_Descriptor_Access;
       Res          : Expect_Match;
+      The_Args     : GNAT.OS_Lib.Argument_List := Clone (Args);
    begin
       Descriptor := new Remote_Process_Descriptor;
 
@@ -765,8 +766,8 @@ package body GNAT.Expect.TTY.Remote is
                Idx : constant Natural := Index (Cd_Cmd, "%d");
             begin
                Send (Descriptor.all,
-                     Cd_Cmd (Cd_Cmd'First .. Idx - 1) &
-                     Execution_Directory &
+                     Cd_Cmd (Cd_Cmd'First .. Idx - 1) & '"' &
+                     Execution_Directory & '"' &
                      Cd_Cmd (Idx + 2 .. Cd_Cmd'Last));
                Expect (Descriptor.all,
                        Res,
@@ -775,6 +776,18 @@ package body GNAT.Expect.TTY.Remote is
                        False);
             end;
          end if;
+
+         --  First protect spaces in arguments
+         for J in The_Args'Range loop
+            Space_Loop :
+            for K in The_Args (J)'Range loop
+               if The_Args (J) (K) = ' ' then
+                  Free (The_Args (J));
+                  The_Args (J) := new String'('"' & Args (J).all & '"');
+                  exit Space_Loop;
+               end if;
+            end loop Space_Loop;
+         end loop;
 
          --  Set filter to intercept the end of the program
          --  This filter also removes echoed lines.
@@ -786,7 +799,11 @@ package body GNAT.Expect.TTY.Remote is
 
          Flush (Desc);
          --  Now lauch the remote program
-         Send (Desc, Argument_List_To_String (Args, False));
+         Send (Desc, Argument_List_To_String (The_Args, False));
+
+         for J in The_Args'Range loop
+            Free (The_Args (J));
+         end loop;
       end;
    end Remote_Spawn;
 
