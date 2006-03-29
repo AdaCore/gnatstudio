@@ -416,26 +416,68 @@ package body Revision_Views is
       Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget, Kernel, Menu);
-      V    : constant Revision_View := Revision_View (Object);
+
+      function Get_Parent_Revision (Iter : Gtk_Tree_Iter) return String;
+      --  Return the revision for Iter's parent
+
+      V : constant Revision_View := Revision_View (Object);
+
+      -------------------------
+      -- Get_Parent_Revision --
+      -------------------------
+
+      function Get_Parent_Revision (Iter : Gtk_Tree_Iter) return String is
+         I : Gtk_Tree_Iter;
+      begin
+         Iter_Copy (Iter, I);
+         --  Climb the tree until finding a revision node corresponding to the
+         --  current iter.
+
+         Look_For_Revision : while I /= Null_Iter loop
+            declare
+               Rev : constant String :=
+                       Get_String (V.Model, I, Revision_Column);
+            begin
+               if Rev /= "" then
+                  return Rev;
+               end if;
+               I := Parent (V.Model, I);
+            end;
+         end loop Look_For_Revision;
+
+         return "";
+      end Get_Parent_Revision;
+
       Iter : Gtk_Tree_Iter;
+      Rev  : Unbounded_String;
+      Tag  : Unbounded_String;
    begin
       Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
 
-      --  Climb the tree until finding a revision node corresponding to the
-      --  current iter.
+      declare
+         R : constant String := Get_String (V.Model, Iter, Revision_Column);
+      begin
+         if R /= "" then
+            if Has_Child (V.Model, Iter) then
+               --  We are on a revision node
+               Rev := To_Unbounded_String (R);
 
-      Look_For_Revision : while Iter /= Null_Iter loop
-         declare
-            Rev : constant String :=
-                    Get_String (V.Model, Iter, Revision_Column);
-         begin
-            if Rev /= "" then
-               Set_File_Information (Context, File => V.File, Revision => Rev);
-               exit Look_For_Revision;
+            else
+               --  We are on a tag/branch node
+               Tag := To_Unbounded_String (R);
+               Rev := To_Unbounded_String (Get_Parent_Revision (Iter));
             end if;
-            Iter := Parent (V.Model, Iter);
-         end;
-      end loop Look_For_Revision;
+
+         else
+            Rev := To_Unbounded_String (Get_Parent_Revision (Iter));
+         end if;
+      end;
+
+      Set_File_Information
+        (Context,
+         File     => V.File,
+         Revision => To_String (Rev),
+         Tag      => To_String (Tag));
    end View_Context_Factory;
 
    -----------------------------
