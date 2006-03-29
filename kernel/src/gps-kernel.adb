@@ -219,6 +219,8 @@ package body GPS.Kernel is
         (Language_Handler (Handle.Lang_Handler), Handle.Registry);
 
       Handle.Gnatls_Cache := null;
+      --  by default, the local server.
+      Handle.Gnatls_Server := new String'("");
 
       --  Note: we do not compute the view of this project yet. This will be
       --  done only if no other project was loaded from the command line, which
@@ -1291,6 +1293,7 @@ package body GPS.Kernel is
       Destroy_Clipboard (Handle);
       Destroy (Handle.Preferences);
       Free (Handle.Gnatls_Cache);
+      Free (Handle.Gnatls_Server);
       Free (Handle.Home_Dir);
       Free (Handle.Prefix);
 
