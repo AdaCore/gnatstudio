@@ -29,6 +29,44 @@
       <shell>VCS.status_parse "Subversion" "%1" "$1" FALSE "%3"</shell>
    </action>
 
+   <!-- SVN tag/branch -->
+
+   <action name="generic_svn_create_tag" show-command="true" output="">
+      <shell output="none">VCS.repository_dir /tags/$2</shell>
+      <shell output="none">VCS.repository_dir /tags/$2/$1</shell>
+      <shell output="">echo "Create tag on %1"</shell>
+      <external output="none">svn mkdir -m "New tag directory" "%3"</external>
+      <external output="none">svn copy -m "New tag" "../$1" "%3"</external>
+      <on-failure>
+         <shell output="">echo "SVN error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+   </action>
+
+   <action name="generic_svn_create_branch" show-command="true" output="">
+      <shell output="none">VCS.repository_dir /branches/$2</shell>
+      <shell output="none">VCS.repository_dir /branches/$2/$1</shell>
+      <shell>echo "Create branch on %1"</shell>
+      <external output="none">svn mkdir -m "New branch directory" "%3"</external>
+      <external output="none">svn copy -m "New branch" "../$1" "%3"</external>
+      <on-failure>
+         <shell output="">echo "SVN error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+   </action>
+
+   <!-- SVN switch -->
+
+   <action name="generic_svn_switch" show-command="true" output="">
+      <shell output="none">VCS.repository_dir $2</shell>
+      <shell output="">echo "Switch to %1"</shell>
+      <external output="none">svn switch %2</external>
+      <on-failure>
+         <shell output="">echo "SVN error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+   </action>
+
    <!-- SVN annotate -->
 
    <action name="generic_svn_annotate" show-command="true" output="">
@@ -255,6 +293,24 @@
       <shell>delete "%8"</shell>
    </action>
 
+   <action name="generic_svn_diff_tag" show-command="true" output="none">
+      <shell output="">echo "Getting comparison for revision $1 of $3/$2 ..."</shell>
+      <shell output="">VCS.repository_path $2</shell>
+      <shell output="">VCS.repository_path $2 $1</shell>
+      <external>svn --non-interactive diff --diff-cmd diff -x --normal "%2" "%1"</external>
+
+      <on-failure>
+         <shell output="">echo "SVN error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+      <shell>dump "%1" TRUE</shell>
+      <shell>File "%1"</shell>
+      <shell>File "$2"</shell>
+      <shell>Hook "diff_action_hook"</shell>
+      <shell>Hook.run %1 null %2 %3</shell>
+      <shell>delete "%5"</shell>
+   </action>
+
    <!-- SVN revert -->
 
    <action name="generic_svn_revert" show-command="true" output="none">
@@ -275,6 +331,9 @@
       <status_files       action="generic_svn_status"           label="Query status"/>
       <status_dir         action="generic_svn_status_dir"       label="Query status for directory"/>
       <local_status_files action="generic_svn_local_status"     label="Local status"/>
+      <create_tag         action="generic_svn_create_tag"       label="Create tag"/>
+      <create_branch      action="generic_svn_create_branch"    label="Create branch"/>
+      <switch             action="generic_svn_switch"           label="Switch tag/branch"/>
       <update             action="generic_svn_update"           label="Update"/>
       <resolved           action="generic_svn_resolved"         label="Resolved"/>
       <commit             action="generic_svn_commit"           label="Commit"/>
@@ -291,6 +350,7 @@
       <diff_head          action="generic_svn_diff_head"        label="Compare against head revision"/>
       <diff_base_head     action="generic_svn_diff_base_head"   label="Compare base against head"/>
       <diff               action="generic_svn_diff"             label="Compare against other revision"/>
+      <diff_tag           action="generic_svn_diff_tag"         label="Compare against a tag/branch"/>
       <diff2              action="generic_svn_diff2"            label="Compare between two revisions"/>
 
       <status label="Up to date" stock="gps-vcs-up-to-date" />
@@ -349,7 +409,7 @@
       </annotations_parser>
 
       <log_parser>
-         <regexp>----------\n(r[^ ]+) \| ([^\|]+)\| (....-..-.. ..:..:..)[^\n]+\n((\n|.?.?.?.?.?[^-][^-][^-][^-][^-][^\n]*\n)*)</regexp>
+         <regexp>----------\nr([^ ]+) \| ([^\|]+)\| (....-..-.. ..:..:..)[^\n]+\n((\n|[^-\n]+\n|.?.?.?.?.?[^-][^-][^-][^-][^-][^\n]*\n)*)</regexp>
 
          <repository_revision_index>1</repository_revision_index>
 	 <author_index>2</author_index>
@@ -358,7 +418,7 @@
       </log_parser>
 
       <revision_parser>
-         <regexp>----------\n(r[^ ]+) [^\n]+\nChanged paths:\n   A ([^ ]+) \(from </regexp>
+         <regexp>----------\nr([^ ]+) [^\n]+\nChanged paths:\n   A ([^ ]+) \(from </regexp>
 	 <sym_index>2</sym_index>
 	 <repository_revision_index>1</repository_revision_index>
       </revision_parser>
