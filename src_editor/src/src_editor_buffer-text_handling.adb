@@ -86,6 +86,8 @@ package body Src_Editor_Buffer.Text_Handling is
          for J in 1 .. Before loop
             if Get_Line_Offset (Iter) = 0 then
                Line_Begin := Line_Begin - 1;
+               exit when Line_Begin = 0;
+
                Unfold_Line (Buffer, Line_Begin);
             end if;
 
