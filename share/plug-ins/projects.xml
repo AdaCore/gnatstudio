@@ -204,23 +204,13 @@
     </project_attribute>
 
     <project_attribute
-       name="vcs_branches_root"
+       name="vcs_repository_root"
        package="IDE"
        editor_page="VCS"
-       editor_section="Tags and Branches"
-       description="The branches root directory"
-       label="Branches">
-       <string type="directory" default="" />
-    </project_attribute>
-
-    <project_attribute
-       name="vcs_tags_root"
-       package="IDE"
-       editor_page="VCS"
-       editor_section="Tags and Branches"
-       description="The tags root directory"
-       label="Tags">
-       <string type="directory" default="" />
+       editor_section="Repository"
+       description="The repository root path"
+       label="Repository">
+       <string />
     </project_attribute>
 
     <!-- Sources directories -->
