@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -290,8 +290,7 @@ package Projects is
    Vcs_Log_Check              : constant Attribute_Pkg;
    Obj_Dir_Attribute          : constant Attribute_Pkg;
    Vcs_Kind_Attribute         : constant Attribute_Pkg;
-   Vcs_Branches_Attribute     : constant Attribute_Pkg;
-   Vcs_Tags_Attribute         : constant Attribute_Pkg;
+   Vcs_Repository_Root        : constant Attribute_Pkg;
    Global_Pragmas_Attribute   : constant Attribute_Pkg;
    Local_Pragmas_Attribute    : constant Attribute_Pkg;
    Locally_Removed_Files_Attribute : constant Attribute_Pkg;
@@ -721,10 +720,8 @@ private
    Vcs_Log_Check             : constant Attribute_Pkg := "ide#vcs_log_check";
    Obj_Dir_Attribute         : constant Attribute_Pkg := "object_dir";
    Vcs_Kind_Attribute        : constant Attribute_Pkg := "ide#vcs_kind";
-   Vcs_Branches_Attribute    : constant Attribute_Pkg :=
-                                 "ide#vcs_branches_root";
-   Vcs_Tags_Attribute        : constant Attribute_Pkg :=
-                                 "ide#vcs_tags_root";
+   Vcs_Repository_Root       : constant Attribute_Pkg :=
+                                 "ide#vcs_repository_root";
    Global_Pragmas_Attribute  : constant Attribute_Pkg :=
                                  "builder#global_configuration_pragmas";
    Local_Pragmas_Attribute   : constant Attribute_Pkg :=
