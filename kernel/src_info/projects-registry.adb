@@ -1805,8 +1805,10 @@ package body Projects.Registry is
    -- Report --
    ------------
 
-   procedure Report (Handler : access Null_Error_Handler_Record;
-                     Msg     : String) is
+   procedure Report
+     (Handler : access Null_Error_Handler_Record;
+      Msg     : String)
+   is
       pragma Unreferenced (Handler, Msg);
    begin
       null;
