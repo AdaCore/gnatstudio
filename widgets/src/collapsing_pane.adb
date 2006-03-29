@@ -192,6 +192,7 @@ package body Collapsing_Pane is
 
       Append_Page (Pane.Notebook, Widget);
       Pane.Page_Expanded := Page_Num (Pane.Notebook, Widget);
+      Pane.Expanded_Widget := Gtk_Widget (Widget);
    end Set_Expanded_Widget;
 
    --------------------------
@@ -203,12 +204,13 @@ package body Collapsing_Pane is
       Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
    begin
-      if Pane.Page_Collabsed /= -1 then
-         Remove_Page (Pane.Notebook, Pane.Page_Collabsed);
+      if Pane.Page_Collapsed /= -1 then
+         Remove_Page (Pane.Notebook, Pane.Page_Collapsed);
       end if;
 
       Append_Page (Pane.Notebook, Widget);
-      Pane.Page_Collabsed := Page_Num (Pane.Notebook, Widget);
+      Pane.Page_Collapsed := Page_Num (Pane.Notebook, Widget);
+      Pane.Collapsed_Widget := Gtk_Widget (Widget);
    end Set_Collapsed_Widget;
 
    -----------------------
@@ -227,30 +229,38 @@ package body Collapsing_Pane is
       --  incorrectly recomputed by gtk+. Looks like a bug to me..
 
       if State = Collapsed then
-         if Pane.Page_Collabsed /= -1 then
+         if Pane.Page_Collapsed /= -1 then
             Set_Child_Visible (Pane.Notebook, True);
             Show (Pane.Notebook);
-            Set_Current_Page (Pane.Notebook, Pane.Page_Collabsed);
+            Set_Current_Page (Pane.Notebook, Pane.Page_Collapsed);
+
+            if Pane.Expanded_Widget /= null then
+               Set_Size_Request (Pane.Expanded_Widget, 0, 0);
+            end if;
+
+            Set_Size_Request (Pane.Collapsed_Widget, -1, -1);
             Set_Size_Request (Pane.Notebook, -1, -1);
---              Set_Size_Request (Pane, -1, -1);
          else
             Set_Child_Visible (Pane.Notebook, False);
             Hide (Pane.Notebook);
             Set_Size_Request (Pane.Notebook, 0, 0);
---              Set_Size_Request (Pane, -1, -1);
          end if;
       elsif State = Expanded then
          if Pane.Page_Expanded /= -1 then
             Set_Child_Visible (Pane.Notebook, True);
             Show (Pane.Notebook);
             Set_Current_Page (Pane.Notebook, Pane.Page_Expanded);
+
+            if Pane.Collapsed_Widget /= null then
+               Set_Size_Request (Pane.Collapsed_Widget, 0, 0);
+            end if;
+
+            Set_Size_Request (Pane.Expanded_Widget, -1, -1);
             Set_Size_Request (Pane.Notebook, -1, -1);
---              Set_Size_Request (Pane, -1, -1);
          else
             Set_Child_Visible (Pane.Notebook, False);
             Hide (Pane.Notebook);
             Set_Size_Request (Pane.Notebook, 0, 0);
---              Set_Size_Request (Pane, -1, -1);
          end if;
       end if;
 
