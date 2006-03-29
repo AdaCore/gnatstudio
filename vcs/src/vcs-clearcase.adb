@@ -666,6 +666,24 @@ package body VCS.ClearCase is
       return Result;
    end Local_Get_Status;
 
+   ----------------
+   -- Create_Tag --
+   ----------------
+
+   procedure Create_Tag
+     (Rep       : access ClearCase_Record;
+      Dir       : VFS.Virtual_File;
+      Tag       : String;
+      As_Branch : Boolean)
+   is
+      pragma Unreferenced (Rep, Dir, Tag, As_Branch);
+
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+   begin
+      Insert (Kernel, -"Function not implemented");
+   end Create_Tag;
+
    ----------
    -- Open --
    ----------
@@ -954,6 +972,23 @@ package body VCS.ClearCase is
          File_Node := Next (File_Node);
       end loop;
    end Update;
+
+   ------------
+   -- Switch --
+   ------------
+
+   procedure Switch
+     (Rep : access ClearCase_Record;
+      Dir : VFS.Virtual_File;
+      Tag : String)
+   is
+      pragma Unreferenced (Rep, Dir, Tag);
+
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+   begin
+      Insert (Kernel, -"Function not implemented");
+   end Switch;
 
    --------------
    -- Resolved --
@@ -1646,6 +1681,23 @@ package body VCS.ClearCase is
       Insert (Kernel, -"Function not implemented");
    end Diff_Working;
 
+   --------------
+   -- Diff_Tag --
+   --------------
+
+   procedure Diff_Tag
+     (Rep      : access ClearCase_Record;
+      File     : VFS.Virtual_File;
+      Tag_Name : String)
+   is
+      pragma Unreferenced (Rep, File, Tag_Name);
+
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+   begin
+      Insert (Kernel, -"Function not implemented");
+   end Diff_Tag;
+
    ---------
    -- Log --
    ---------
@@ -1773,6 +1825,9 @@ package body VCS.ClearCase is
          Status_Dir         => null,
          Local_Status_Files => null,
          Local_Status_Dir   => null,
+         Create_Tag         => null,
+         Create_Branch      => null,
+         Switch             => null,
          Open               => new String'(-"Start editing"),
          Update             => new String'(-"Update"),
          Resolved           => null,
@@ -1787,6 +1842,7 @@ package body VCS.ClearCase is
          Diff_Base_Head     => null,
          Diff               => new String'(-"Diff against specific rev."),
          Diff2              => new String'(-"Diff between two revisions"),
+         Diff_Tag           => null,
          Add                => new String'(-"Add to repository"),
          Add_No_Commit      => null,
          Remove             => new String'(-"Remove from repository"),
