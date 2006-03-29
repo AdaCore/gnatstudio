@@ -53,6 +53,9 @@ package VCS is
       Status_Dir,         --  Queries the status for one directory
       Local_Status_Files, --  Queries the local status for one or more files
       Local_Status_Dir,   --  Queries the local status for one directory
+      Create_Tag,         --  Create a new tag
+      Create_Branch,      --  Create a new branch
+      Switch,             --  Switch to a specific branch/tag
       Open,               --  Open one or more file for writing
       Update,             --  Update one or more files
       Resolved,           --  Change file status after conflict resolution
@@ -67,6 +70,7 @@ package VCS is
       Diff_Base_Head,     --  Diff base against head revision
       Diff,               --  Diff current against specified revision
       Diff2,              --  Diff between two specified revisions
+      Diff_Tag,           --  Diff current against a specific branch/tag
       Add,                --  Add and commit one file or dir to the repository
       Add_No_Commit,      --  Add one file or dir to the repository
       Remove,             --  Remove and commit one file or dir from repository
@@ -234,6 +238,15 @@ package VCS is
    --  directories.
    --  The user must free Filenames.
 
+   procedure Create_Tag
+     (Rep       : access VCS_Record;
+      Dir       : VFS.Virtual_File;
+      Tag       : String;
+      As_Branch : Boolean) is abstract;
+   --  Create a new tag/branch starting from dir as root. If As_Branch is set
+   --  branch tag is created instead. Repository_Root can be set to point to
+   --  the repository root directory path.
+
    procedure Open
      (Rep       : access VCS_Record;
       Filenames : String_List.List;
@@ -256,6 +269,12 @@ package VCS is
       Filenames : String_List.List) is abstract;
    --  Synchronize the local files or directories.
    --  The user must free Filenames.
+
+   procedure Switch
+     (Rep : access VCS_Record;
+      Dir : VFS.Virtual_File;
+      Tag : String) is abstract;
+   --  Swicth to the specified tag/branch starting from dir as root
 
    procedure Resolved
      (Rep       : access VCS_Record;
@@ -299,14 +318,9 @@ package VCS is
       File      : VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "") is abstract;
-   --  Return a diff between two versions of one file.
-   --  The result is a String_List.List with one element for each line,
-   --  in the standard basic diff format.
+   --  Return a diff between two versions of one file
    --  If Version_1 is empty, then the local file is taken.
    --  If Version_2 is empty, then the HEAD revision is taken.
-   --
-   --  This procedure should call GPS.Kernel.Modules.Display_Differences
-   --  in order to display a GPS visual diff.
 
    procedure Diff_Patch
      (Rep    : access VCS_Record;
@@ -322,6 +336,12 @@ package VCS is
      (Rep  : access VCS_Record;
       File : VFS.Virtual_File) is abstract;
    --  Compare base against head revision of File
+
+   procedure Diff_Tag
+     (Rep      : access VCS_Record;
+      File     : VFS.Virtual_File;
+      Tag_Name : String) is abstract;
+   --  Compare local against the specified tag/branch
 
    procedure Log
      (Rep     : access VCS_Record;
