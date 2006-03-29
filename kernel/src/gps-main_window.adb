@@ -59,6 +59,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
@@ -1158,17 +1159,39 @@ package body GPS.Main_Window is
    procedure Reset_Title
      (Window : access GPS_Window_Record;
       Info   : String := "") is
+      function Info_Str return String;
+      --  Returns the info string, if set
+      function Remote_Str return String;
+      --  Returns the remote string, if set
+
+      --------------
+      -- Info_Str --
+      --------------
+
+      function Info_Str return String is
+      begin
+         if Info /= "" then
+            return " - " & Info;
+         end if;
+         return "";
+      end Info_Str;
+
+      ----------------
+      -- Remote_Str --
+      ----------------
+
+      function Remote_Str return String is
+      begin
+         if not Is_Local (Build_Server) then
+            return " on " & Get_Nickname (Build_Server);
+         end if;
+         return "";
+      end Remote_Str;
    begin
-      if Info = "" then
-         Set_Title (Window, GPS_Name (Window) &
-                    (-" - GNAT Programming Studio (project: ") &
-                    Project_Name (Get_Project (Window.Kernel)) & ')');
-      else
-         Set_Title (Window, GPS_Name (Window) &
-                    (-" - GNAT Programming Studio (project: ") &
-                    Project_Name (Get_Project (Window.Kernel)) &
-                    ") - " & Info);
-      end if;
+      Set_Title (Window, GPS_Name (Window) &
+                 (-" - GNAT Programming Studio (project: ") &
+                 Project_Name (Get_Project (Window.Kernel)) &
+                 Remote_Str & ')' & Info_Str);
    end Reset_Title;
 
 end GPS.Main_Window;
