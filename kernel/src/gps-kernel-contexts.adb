@@ -175,7 +175,8 @@ package body GPS.Kernel.Contexts is
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
-      Revision          : String := "") is
+      Revision          : String := "";
+      Tag               : String := "") is
    begin
       Context.Data.Data.File                     := File;
       Context.Data.Data.Line                     := Line;
@@ -183,7 +184,14 @@ package body GPS.Kernel.Contexts is
       Context.Data.Data.Creator_Provided_Project := Project /= No_Project;
       Context.Data.Data.Project                  := Project;
       Context.Data.Data.Importing_Project        := Importing_Project;
-      Context.Data.Data.Revision                 := new String'(Revision);
+
+      if Revision /= "" then
+         Context.Data.Data.Revision := new String'(Revision);
+      end if;
+
+      if Tag /= "" then
+         Context.Data.Data.Tag := new String'(Tag);
+      end if;
    end Set_File_Information;
 
    -----------------------------
@@ -297,6 +305,27 @@ package body GPS.Kernel.Contexts is
    begin
       return Context.Data.Data.Revision.all;
    end Revision_Information;
+
+   -------------------------
+   -- Has_Tag_Information --
+   -------------------------
+
+   function Has_Tag_Information
+     (Context : Selection_Context) return Boolean is
+   begin
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Tag /= null;
+   end Has_Tag_Information;
+
+   ---------------------
+   -- Tag_Information --
+   ---------------------
+
+   function Tag_Information
+     (Context : Selection_Context) return String is
+   begin
+      return Context.Data.Data.Tag.all;
+   end Tag_Information;
 
    ---------------------------------------
    -- Has_Importing_Project_Information --

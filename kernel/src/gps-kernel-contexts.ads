@@ -44,7 +44,8 @@ package GPS.Kernel.Contexts is
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
-      Revision          : String := "");
+      Revision          : String := "";
+      Tag               : String := "");
    --  Set the information in this context.
    --  File_Name must be UTF8-encoded.
    --  ??? We should use non-ambiguous types for Line and Column
@@ -106,6 +107,12 @@ package GPS.Kernel.Contexts is
      (Context : Selection_Context) return String;
    --  Return the revision information associated with the file. The revision
    --  is the number or tag used by the VCS to specify a uniq version of file.
+
+   function Has_Tag_Information
+     (Context : Selection_Context) return Boolean;
+   function Tag_Information
+     (Context : Selection_Context) return String;
+   --  Return the tag/branch name associated with the file
 
    -----------
    -- Areas --
