@@ -29,6 +29,37 @@
       <shell>VCS.status_parse "CVS" "%1" "$1" FALSE "%3"</shell>
    </action>
 
+   <!-- CVS tag/branch -->
+
+   <action name="generic_cvs_create_tag" show-command="true" output="">
+      <shell>echo "Create tag $2 on $1"</shell>
+      <external output="none">cvs tag -c "$2"</external>
+      <on-failure>
+         <shell output="">echo "CVS error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+   </action>
+
+   <action name="generic_cvs_create_branch" show-command="true" output="">
+      <shell>echo "Create branch $2 on $1"</shell>
+      <external output="none">cvs tag -c -b "$2"</external>
+      <on-failure>
+         <shell output="">echo "CVS error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+   </action>
+
+   <!-- CVS switch -->
+
+   <action name="generic_cvs_switch" show-command="true" output="">
+      <shell>echo "Switch to $2"</shell>
+      <external output="none">cvs update -r $2</external>
+      <on-failure>
+         <shell output="">echo "SVN error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+   </action>
+
    <!-- CVS annotate -->
 
    <action name="generic_cvs_annotate" show-command="true" output="">
@@ -224,6 +255,21 @@
       <shell>MDI.dialog "No differences found."</shell>
    </action>
 
+   <action name="generic_cvs_diff_tag" show-command="true" output="none">
+      <shell output="">echo "Getting comparison for revision $1 of $2 ..."</shell>
+      <external>cvs -f diff -r $1 "$2"</external>
+
+      <on-failure>
+        <shell>dump "%1" TRUE</shell>
+        <shell>File "%1"</shell>
+        <shell>File "$2"</shell>
+        <shell>Hook "diff_action_hook"</shell>
+        <shell>Hook.run %1 null %2 %3</shell>
+        <shell>delete "%5"</shell>
+      </on-failure>
+      <shell>MDI.dialog "No differences found."</shell>
+   </action>
+
    <action name="generic_cvs_diff2" show-command="true" output="none">
       <shell output="">echo "Getting comparison between revisions $1 / $2 of $3 ..."</shell>
       <external>cvs -q update -p -r$2 "$3"</external>
@@ -302,6 +348,9 @@
       <status_files       action="generic_cvs_status"           label="Query status"/>
       <status_dir         action="generic_cvs_status_dir"       label="Query status for directory"/>
       <local_status_files action="generic_cvs_local_status"     label="Local status"/>
+      <create_tag         action="generic_cvs_create_tag"       label="Create tag"/>
+      <create_branch      action="generic_cvs_create_branch"    label="Create branch"/>
+      <switch             action="generic_cvs_switch"           label="Switch tag/branch"/>
       <open               action="generic_cvs_open"             label="Open"/>
       <update             action="generic_cvs_update"           label="Update"/>
       <commit             action="generic_cvs_commit"           label="Commit"/>
@@ -318,6 +367,7 @@
       <diff_head          action="generic_cvs_diff_head"        label="Compare against head revision"/>
       <diff_base_head     action="generic_cvs_diff_base_head"   label="Compare base against head"/>
       <diff               action="generic_cvs_diff"             label="Compare against other revision"/>
+      <diff_tag           action="generic_cvs_diff_tag"         label="Compare against a tag/branch"/>
       <diff2              action="generic_cvs_diff2"            label="Compare between two revisions"/>
 
       <status label="Up to date" stock="gps-vcs-up-to-date" />
@@ -376,7 +426,7 @@
       </log_parser>
 
       <revision_parser>
-         <regexp>\t([^ ]+) *\t\((revision:|branch:) ([0-9\.]+)\)</regexp>
+         <regexp>\t([^ ]+) *\t\((revision:|branch:) (\d+\.\d+)(\.\d+)?\)</regexp>
 	 <sym_index>1</sym_index>
 	 <repository_revision_index>3</repository_revision_index>
       </revision_parser>
