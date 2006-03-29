@@ -53,12 +53,12 @@ package GPS.Kernel.Remote is
    function To_Remote_Possible
      (Path : String;
       To   : String) return Boolean;
-   --  Tells if path equivalence on To server exists
+   --  Tell if path equivalence on To server exists
 
    function To_Local_Possible
      (Path : String;
       From : String) return Boolean;
-   --  Tells if From'path equivalence on local server exists
+   --  Tell if From'path equivalence on local server exists
 
    function To_Remote
      (Path       : String;
