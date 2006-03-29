@@ -103,7 +103,7 @@ package Projects is
    --  Return False if the project either didn't need to be saved or couldn't
    --  be saved.
 
-   function Project_Name (Project          : Project_Type) return String;
+   function Project_Name (Project : Project_Type) return String;
    function Project_Name (Project : Project_Type) return Types.Name_Id;
    --  Return the name of the project.
    --  The empty string is returned if the project is the default project or
