@@ -40,6 +40,16 @@ package VCS_View_API is
       Context : Selection_Context);
    --  ???
 
+   procedure On_Menu_Create_Tag
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
+   --  Create a new tag or branch
+
+   procedure On_Menu_Switch_Tag
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
+   --  Switch to a tag or branch
+
    procedure On_Menu_Open
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
@@ -119,6 +129,11 @@ package VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
    --  ???
+
+   procedure On_Menu_Diff_Tag
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
+   --  Do a diff between the current version and a specific tag
 
    procedure On_Menu_View_Log
      (Widget  : access GObject_Record'Class;
