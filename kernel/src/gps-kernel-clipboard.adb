@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -65,8 +65,8 @@ package body GPS.Kernel.Clipboard is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Size : constant Integer :=
-        Integer (Get_Pref (Clipboard_Size_Pref));
+      Size      : constant Integer :=
+                    Integer (Get_Pref (Clipboard_Size_Pref));
       Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
       List      : Selection_List_Access;
    begin
@@ -87,9 +87,10 @@ package body GPS.Kernel.Clipboard is
    procedure Create_Clipboard
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Clipboard : constant Clipboard_Access := new Clipboard_Record;
-      Size      : Integer;
-      Filename  : constant String := Get_Home_Dir (Kernel) & "clipboards.xml";
+      Clipboard   : constant Clipboard_Access := new Clipboard_Record;
+      Size        : Integer;
+      Filename    : constant String :=
+                      Get_Home_Dir (Kernel) & "clipboards.xml";
       File, Child : Node_Ptr;
       Err         : String_Access;
    begin
@@ -194,8 +195,7 @@ package body GPS.Kernel.Clipboard is
    -------------------
 
    function Get_Clipboard
-     (Kernel : access Kernel_Handle_Record'Class) return Clipboard_Access
-   is
+     (Kernel : access Kernel_Handle_Record'Class) return Clipboard_Access is
    begin
       return Convert (Kernel.Clipboard);
    end Get_Clipboard;
