@@ -2119,6 +2119,7 @@ package body GPS.Kernel.Remote is
       Srv : Node_Ptr;
    begin
       Trace (Me, "Saving remote property");
+
       for J in Remote_Server_Type'Range loop
          Srv := new Glib.Xml_Int.Node;
          Srv.Tag := new String'(Server_Type'Image (J));
@@ -2137,9 +2138,11 @@ package body GPS.Kernel.Remote is
       Srv :  Node_Ptr;
    begin
       Trace (Me, "Loading remote property");
+
       for J in Remote_Server_Type'Range loop
          if From.Child /= null then
             Srv := Find_Tag (From.Child, Server_Type'Image (J));
+
             if Srv /= null
               and then Is_Configured (Srv.Value.all)
               and then Srv.Value.all /= ""
@@ -2153,8 +2156,10 @@ package body GPS.Kernel.Remote is
             end if;
          end if;
       end loop;
-      Property.Servers (GPS_Server) := (Is_Local => True,
-                                        Nickname => new String'(""));
+
+      Property.Servers (GPS_Server) :=
+        (Is_Local => True,
+         Nickname => new String'(""));
    end Load;
 
    ------------------------
@@ -2188,6 +2193,7 @@ package body GPS.Kernel.Remote is
 
       if not Success then
          Trace (Me, "Property servers_config does not exist. Create it");
+
          if not Is_Local (D.File) then
             for J in Remote_Server_Type'Range loop
                Property.Servers (J) :=
@@ -2368,11 +2374,13 @@ package body GPS.Kernel.Remote is
    -- To_Remote_Possible --
    ------------------------
 
-   function To_Remote_Possible (Path : String;
-                                To   : String) return Boolean
+   function To_Remote_Possible
+     (Path : String;
+      To   : String) return Boolean
    is
       Mirror         : Mirror_Path_Access;
       Path_List_Item : Mirrors_List_Access;
+
    begin
       if To = "" then
          return True;
@@ -2405,11 +2413,13 @@ package body GPS.Kernel.Remote is
    -- To_Local_Possible --
    -----------------------
 
-   function To_Local_Possible (Path : String;
-                               From : String) return Boolean
+   function To_Local_Possible
+     (Path : String;
+      From : String) return Boolean
    is
       Mirror         : Mirror_Path_Access;
       Path_List_Item : Mirrors_List_Access;
+
    begin
       if From = "" then
          return True;
