@@ -2066,6 +2066,16 @@ If the line and column are not specified, then the current selection is returned
       <description>Parses string to find revisions tags and branches information for file. This command uses the parser in the XML description node for the VCS corresponding to vcs_identifier.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.VCS.repository_dir">
+      <param name="tag_name" default="">A string</param>
+      <description>Returns the repository root directory, or if tag_name is specified the repository directory for the given tag or branch.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.VCS.repository_path">
+      <param name="file">A string</param>
+      <param name="tag_name" default="">A string</param>
+      <description>Returns the trunk repository path for file or if tag_name is specified the repository path on the given tag or branch path.</description>
+  </shell_doc>
 
   <!--#################################################################
     ####  Revision class
