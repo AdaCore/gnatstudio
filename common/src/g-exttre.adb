@@ -332,7 +332,7 @@ package body GNAT.Expect.TTY.Remote is
       Request_User_Instance : Request_User_Object'Class)
    is
       Session_Nb   : Natural := 0;
-      Remote_Desc  : Remote_Descriptor_Access := Remote_Descriptor_List;
+      Remote_Desc  : Remote_Descriptor_Access;
       New_Args     : String_List_Access;
       Old_Args     : String_List_Access;
       Regexp_Array : Compiled_Regexp_Array (1 .. 3);
@@ -434,8 +434,7 @@ package body GNAT.Expect.TTY.Remote is
                      Machine.Desc.User_Name := new String'
                        (Request_User
                           (Request_User_Instance,
-                           "Please enter a user name for machine " &
-                           Machine.Desc.Nickname.all,
+                           Expect_Out (Descriptor),
                            Password_Mode => False));
                      if Machine.Desc.User_Name.all = "" then
                         Free (Machine.Desc.User_Name);
@@ -476,8 +475,7 @@ package body GNAT.Expect.TTY.Remote is
                      Machine.Password := new String'
                        (Request_User
                           (Request_User_Instance,
-                           "Please enter a password for machine " &
-                           Machine.Desc.Nickname.all,
+                           Expect_Out (Descriptor),
                            Password_Mode => True));
                      if Machine.Password.all = "" then
                         Free (Machine.Password);
@@ -873,9 +871,13 @@ package body GNAT.Expect.TTY.Remote is
       end loop;
    exception
       when Process_Died =>
-         Close (Process_Descriptor'Class (Fd.all), Status);
-         if Status = 0 then
-            Success := True;
+         if Fd /= null then
+            Close (Process_Descriptor'Class (Fd.all), Status);
+            if Status = 0 then
+               Success := True;
+            else
+               Success := False;
+            end if;
          else
             Success := False;
          end if;
@@ -1160,11 +1162,18 @@ package body GNAT.Expect.TTY.Remote is
       Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts)
    is
       --  ??? Add max_password_prompt in parameters
-      Remote : constant Remote_Descriptor_Access := new Remote_Descriptor;
+      Remote    : constant Remote_Descriptor_Access := new Remote_Descriptor;
+      Full_Exec : String_Access;
    begin
+      Full_Exec := Locate_Exec_On_Path (Start_Command);
+
+      if Full_Exec = null then
+         return;
+      end if;
+
       Remote.all :=
         (Name => new String'(Name),
-         Start_Cmd => new String'(Start_Command),
+         Start_Cmd             => Full_Exec,
          Start_Cmd_Common_Args => new String_List'(Start_Command_Common_Args),
          Start_Cmd_User_Args   => new String_List'(Start_Command_User_Args),
          User_Prompt_Ptrn      => new Pattern_Matcher'(Compile (
