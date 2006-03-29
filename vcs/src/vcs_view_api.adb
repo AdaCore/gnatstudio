@@ -20,14 +20,26 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
+with Glib.Values;               use Glib.Values;
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
 
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
@@ -43,7 +55,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Log_Utils;                 use Log_Utils;
 with Projects.Registry;         use Projects.Registry;
-with Projects.Editor;           use Projects.Editor;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
@@ -57,9 +68,6 @@ with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 with VFS;                       use VFS;
-with Prj;
-
-with Namet;                     use Namet;
 
 package body VCS_View_API is
 
@@ -152,6 +160,384 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
    --  Clear the VCS Explorer view
+
+   --  Switch tag support
+
+   type Switch_Tag_Dialog_Record is new Gtk_Dialog_Record with record
+      Tag_Name : Gtk_GEntry;
+      Dir      : Gtk_GEntry;
+   end record;
+   type Switch_Tag_Dialog is access all Switch_Tag_Dialog_Record'Class;
+
+   procedure Gtk_New
+     (Dialog      : out Switch_Tag_Dialog;
+      Default_Tag : String;
+      Default_Dir : String);
+   --  Create a new dialog for creating a new tag/branch
+
+   --  Create tag support
+
+   type Create_Tag_Dialog_Record is new Switch_Tag_Dialog_Record with record
+      Branch : Gtk_Check_Button;
+   end record;
+   type Create_Tag_Dialog is access all Create_Tag_Dialog_Record'Class;
+
+   procedure Gtk_New
+     (Dialog      : out Create_Tag_Dialog;
+      Default_Dir : String);
+   --  Create a new dialog for creating a new tag/branch
+
+   package Dialog_Callback is
+     new Gtk.Handlers.User_Callback (Gtk_Button_Record, Switch_Tag_Dialog);
+
+   procedure On_Select_Dir
+     (Widget : access Gtk_Button_Record'Class;
+      Params : Glib.Values.GValues;
+      Dialog : Switch_Tag_Dialog);
+
+   function Get_Repository_Root (Project : Project_Type) return String;
+   --  Return the repository root as defined in project, ensure that it has an
+   --  ending directory separator.
+
+   function Get_Branches_Root
+     (Project    : Project_Type;
+      Repository : Boolean := False) return String;
+   --  Return the root directory containing the branches. This routines expects
+   --  a Subversion standard layout (i.e. trunk, branches, tags). If Repository
+   --  is set the returned directory is referenign the repository root instead
+   --  of the local copy.
+
+   function Get_Tags_Root
+     (Project    : Project_Type;
+      Repository : Boolean := False) return String;
+   --  Return the root directory containing the tags. This routines expects
+   --  a Subversion standard layout (i.e. trunk, branches, tags). If Repository
+   --  is set the returned directory is referenign the repository root instead
+   --  of the local copy.
+
+   function Get_Repository_Path
+     (Kernel : Kernel_Handle; File : Virtual_File; Tag : String) return String;
+   --  Return the "trunk" repository path for File or the path to the
+   --  corresponding tag/branch if specificed.
+
+   -------------------------
+   -- Get_Repository_Root --
+   -------------------------
+
+   function Get_Repository_Root (Project : Project_Type) return String is
+      Rep_Root : constant String :=
+                   Get_Attribute_Value (Project, Vcs_Repository_Root);
+   begin
+      if Rep_Root = "" then
+         return "";
+
+      elsif Rep_Root (Rep_Root'Last) = '/' then
+         return Rep_Root (Rep_Root'First .. Rep_Root'Last - 1);
+
+      else
+         return Rep_Root;
+      end if;
+   end Get_Repository_Root;
+
+   -----------------------
+   -- Get_Branches_Root --
+   -----------------------
+
+   function Get_Branches_Root
+     (Project    : Project_Type;
+      Repository : Boolean := False) return String
+   is
+      Pattern : constant String := Dir_Separator & "trunk" & Dir_Separator;
+
+      function Rep_Root return String;
+      --  Return the repository root
+
+      function Loc_Root return String;
+      --  Return the local root
+
+      --------------
+      -- Loc_Root --
+      --------------
+
+      function Loc_Root return String is
+         Proj : constant Virtual_File := Project_Path (Project);
+         Path : constant String := Full_Name (Proj, True).all;
+         I    : constant Natural := Index (Path, Pattern);
+      begin
+         if I = 0 then
+            return "";
+
+         else
+            return Path (Path'First .. I) & "tags";
+         end if;
+      end Loc_Root;
+
+      --------------
+      -- Rep_Root --
+      --------------
+
+      function Rep_Root return String is
+         Rep_Root : constant String := Get_Repository_Root (Project);
+      begin
+         if Rep_Root = "" then
+            return "";
+         else
+            return Rep_Root & "/branches";
+         end if;
+      end Rep_Root;
+
+   begin
+      if Repository then
+         return Rep_Root;
+      else
+         return Loc_Root;
+      end if;
+   end Get_Branches_Root;
+
+   -------------------
+   -- Get_Tags_Root --
+   -------------------
+
+   function Get_Tags_Root
+     (Project    : Project_Type;
+      Repository : Boolean := False) return String
+   is
+      Pattern : constant String := Dir_Separator & "trunk" & Dir_Separator;
+
+      function Rep_Root return String;
+      --  Return the repository root
+
+      function Loc_Root return String;
+      --  Return the local root
+
+      --------------
+      -- Loc_Root --
+      --------------
+
+      function Loc_Root return String is
+         Proj : constant Virtual_File := Project_Path (Project);
+         Path : constant String := Full_Name (Proj, True).all;
+         I    : constant Natural := Index (Path, Pattern);
+      begin
+         if I = 0 then
+            return "";
+
+         else
+            return Path (Path'First .. I) & "tags";
+         end if;
+      end Loc_Root;
+
+      --------------
+      -- Rep_Root --
+      --------------
+
+      function Rep_Root return String is
+         Rep_Root : constant String := Get_Repository_Root (Project);
+      begin
+         if Rep_Root = "" then
+            return "";
+
+         else
+            return Rep_Root & "/tags";
+         end if;
+      end Rep_Root;
+
+   begin
+      if Repository then
+         return Rep_Root;
+      else
+         return Loc_Root;
+      end if;
+   end Get_Tags_Root;
+
+   -------------------------
+   -- Get_Repository_Path --
+   -------------------------
+
+   function Get_Repository_Path
+     (Kernel : Kernel_Handle; File : Virtual_File; Tag : String) return String
+   is
+      Slash     : constant Character_Mapping := To_Mapping ("\", "/");
+      DS        : Character renames Dir_Separator;
+      H_Pattern : constant String := DS & "trunk" & DS;
+      T_Pattern : constant String := DS & "tags" & DS;
+      B_Pattern : constant String := DS & "branches" & DS;
+      Project   : constant Project_Type := Get_Project (Kernel);
+      Rep_Root  : constant String := Get_Repository_Root (Project);
+      Full      : constant String := Full_Name (File).all;
+      K, P, N   : Natural;
+   begin
+      if Rep_Root = "" then
+         --  No repository root defined
+         return "";
+      end if;
+
+      if File = No_File then
+         --  Just return the directory for the given tag
+         return Rep_Root & Tag;
+      end if;
+
+      --  look for part after the repository path
+
+      K := Index (Full, H_Pattern);
+
+      if K = 0 then
+         K := Index (Full, T_Pattern);
+
+         if K = 0 then
+            K := Index (Full, B_Pattern);
+
+            if K = 0 then
+               --  Unknown layout
+               return "";
+            end if;
+         end if;
+      end if;
+
+      if Tag = "" then
+         return Rep_Root & Translate (Full (K .. Full'Last), Slash);
+
+      else
+         if Full (K + 1 .. K + 5) = "trunk" then
+            --  Skip trunk, and the next name which is part of the taf
+            --  Note that this is true for Subversion and is the only VCS with
+            --  repository PATH for now.
+
+            P := K + 7;
+            N := 1;
+
+         else
+            --  Skip tags or branches and the symbolic name
+            P := K + 1;
+            N := 2;
+         end if;
+
+         loop
+            if Full (P) = DS then
+               N := N - 1;
+            end if;
+
+            exit when N = 0;
+
+            P := P + 1;
+         end loop;
+
+         return Rep_Root & Tag & Translate (Full (P .. Full'Last), Slash);
+      end if;
+   end Get_Repository_Path;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Dialog      : out Create_Tag_Dialog;
+      Default_Dir : String)
+   is
+      Label  : Gtk_Label;
+      Box    : Gtk_Box;
+      Browse : Gtk_Button;
+      Button : Gtk_Widget;
+      pragma Unreferenced (Button);
+   begin
+      Dialog := new Create_Tag_Dialog_Record;
+      Gtk.Dialog.Initialize
+        (Dialog,
+         Title  => -"Create tag/branch",
+         Parent => null,
+         Flags  => Destroy_With_Parent);
+
+      Gtk_New_Hbox (Box);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+
+      Gtk_New (Label, -"From: ");
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Dialog.Dir);
+      Set_Text (Dialog.Dir, Default_Dir);
+      Pack_Start (Box, Dialog.Dir);
+      Gtk_New (Browse, -"Browse");
+      Pack_Start (Box, Browse);
+      Dialog_Callback.Connect
+        (Browse, "clicked", On_Select_Dir'Access, Switch_Tag_Dialog (Dialog));
+
+      Gtk_New_Hbox (Box);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+
+      Gtk_New (Label, -"Tag name: ");
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Dialog.Tag_Name);
+      Pack_Start (Box, Dialog.Tag_Name);
+
+      Gtk_New (Dialog.Branch, -"Is a branch tag");
+      Pack_Start (Get_Vbox (Dialog), Dialog.Branch, Expand => False);
+
+      Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+   end Gtk_New;
+
+   procedure Gtk_New
+     (Dialog      : out Switch_Tag_Dialog;
+      Default_Tag : String;
+      Default_Dir : String)
+   is
+      Label  : Gtk_Label;
+      Box    : Gtk_Box;
+      Browse : Gtk_Button;
+      Button : Gtk_Widget;
+      pragma Unreferenced (Button);
+   begin
+      Dialog := new Switch_Tag_Dialog_Record;
+      Gtk.Dialog.Initialize
+        (Dialog,
+         Title  => -"Switch tag/branch",
+         Parent => null,
+         Flags  => Destroy_With_Parent);
+
+      Gtk_New_Hbox (Box);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+
+      Gtk_New (Label, -"From: ");
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Dialog.Dir);
+      Set_Text (Dialog.Dir, Default_Dir);
+      Pack_Start (Box, Dialog.Dir);
+      Gtk_New (Browse, -"Browse");
+      Pack_Start (Box, Browse);
+      Dialog_Callback.Connect
+        (Browse, "clicked", On_Select_Dir'Access, Dialog);
+
+      Gtk_New_Hbox (Box);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+
+      Gtk_New (Label, -"Tag name: ");
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Dialog.Tag_Name);
+      Set_Text (Dialog.Tag_Name, Default_Tag);
+      Pack_Start (Box, Dialog.Tag_Name);
+
+      Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+   end Gtk_New;
+
+   -------------------
+   -- On_Select_Dir --
+   -------------------
+
+   procedure On_Select_Dir
+     (Widget : access Gtk_Button_Record'Class;
+      Params : Glib.Values.GValues;
+      Dialog : Switch_Tag_Dialog)
+   is
+      pragma Unreferenced (Params);
+      Name : constant VFS.Virtual_File := Select_Directory
+        (Title          => -"Select root directory",
+         Parent         => Gtk_Window (Get_Toplevel (Widget)),
+         Base_Directory => VFS.Create (Get_Text (Dialog.Dir)));
+   begin
+      if Name /= VFS.No_File then
+         Set_Text (Dialog.Dir, Full_Name (Name).all);
+      end if;
+   end On_Select_Dir;
 
    ----------------------------
    -- On_Menu_Remove_Project --
@@ -590,14 +976,29 @@ package body VCS_View_API is
          Append (Menu, Item);
       end if;
 
+      if File_Section then
+         Items_Inserted := False;
+
+         if Show_Everything or else Has_Tag_Information (Context) then
+            Add_Action (Switch, On_Menu_Switch_Tag'Access);
+         end if;
+
+         if Show_Everything or else Has_Tag_Information (Context) then
+            Add_Action (Diff_Tag, On_Menu_Diff_Tag'Access);
+         end if;
+
+         Add_Separator;
+      end if;
+
       --  Fill the section for the activity
 
       --  ??? removed this menu item when in the VCS Activities window.
       --  For now, moving from one activity to another is not possible.
       --  We shall however display this submenu once it is allowed.
-      if (File_Section or else Show_Everything)
-        and then First /= No_Activity
-        and then not Has_Activity_Information (Context)
+      if (File_Section
+          and then First /= No_Activity
+          and then not Has_Activity_Information (Context))
+        or else Show_Everything
       then
          Items_Inserted := True;
          Gtk_New (Menu_Item, Label => -"Add to Activity");
@@ -1185,6 +1586,80 @@ package body VCS_View_API is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Edit_Log;
+
+   ------------------------
+   -- On_Menu_Create_Tag --
+   ------------------------
+
+   procedure On_Menu_Create_Tag
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
+      Project : constant Project_Type := Get_Project (Kernel);
+      Dialog  : Create_Tag_Dialog;
+   begin
+      Gtk_New (Dialog, Full_Name (Project_Directory (Project)).all);
+      Show_All (Dialog);
+
+      if Run (Dialog) = Gtk_Response_OK then
+         declare
+            Dir       : constant String := Get_Text (Dialog.Dir);
+            Tag       : constant String := Get_Text (Dialog.Tag_Name);
+            As_Branch : constant Boolean := Get_Active (Dialog.Branch);
+         begin
+            Create_Tag
+              (Get_Current_Ref (Context), Create (Dir), Tag, As_Branch);
+         end;
+      end if;
+
+      Destroy (Dialog);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Create_Tag;
+
+   ------------------------
+   -- On_Menu_Switch_Tag --
+   ------------------------
+
+   procedure On_Menu_Switch_Tag
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
+      Project : constant Project_Type := Get_Project (Kernel);
+      Dialog  : Switch_Tag_Dialog;
+   begin
+      if Has_Tag_Information (Context) then
+         Gtk_New
+           (Dialog,
+            Tag_Information (Context),
+            Full_Name (Project_Directory (Project)).all);
+      else
+         Gtk_New (Dialog, "", Full_Name (Project_Directory (Project)).all);
+      end if;
+
+      Show_All (Dialog);
+
+      if Run (Dialog) = Gtk_Response_OK then
+         declare
+            Dir : constant String := Get_Text (Dialog.Dir);
+            Tag : constant String := Get_Text (Dialog.Tag_Name);
+         begin
+            Switch (Get_Current_Ref (Context), Create (Dir), Tag);
+         end;
+      end if;
+
+      Destroy (Dialog);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Switch_Tag;
 
    ---------------------
    -- Get_Current_Ref --
@@ -2011,8 +2486,8 @@ package body VCS_View_API is
      (Context   : Selection_Context;
       Recursive : Boolean)
    is
-      Files        : String_List.List;
-      Ref          : constant VCS_Access := Get_Current_Ref (Context);
+      Files : String_List.List;
+      Ref   : constant VCS_Access := Get_Current_Ref (Context);
 
    begin
       Open_Explorer (Get_Kernel (Context), Context);
@@ -2362,8 +2837,6 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      use Prj;
-
       procedure Get_Log (VCS : VCS_Access; Filename : String);
       --  Get log information for the file, handles tags & branches
 
@@ -2431,19 +2904,16 @@ package body VCS_View_API is
             end if;
          end Get_Log_For_Root;
 
-         Kernel       : constant Kernel_Handle := Get_Kernel (Context);
-         File         : Virtual_File := Create (Full_Filename => Filename);
-         Project      : constant Project_Type :=
-                          Get_Project_From_File
-                            (Get_Registry (Kernel).all, File);
-         Var_Branches : constant Variable_Value :=
-                          Get_Attribute_Value
-                            (Project, Vcs_Branches_Attribute);
-         Var_Tags     : constant Variable_Value :=
-                          Get_Attribute_Value (Project, Vcs_Tags_Attribute);
-         Script       : constant Scripting_Language :=
-                          Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
-         Command      : Custom_Command_Access;
+         Kernel        : constant Kernel_Handle := Get_Kernel (Context);
+         File          : Virtual_File := Create (Full_Filename => Filename);
+         Project       : constant Project_Type :=
+                           Get_Project_From_File
+                             (Get_Registry (Kernel).all, File);
+         Root_Branches : constant String := Get_Branches_Root (Project);
+         Root_Tags     : constant String := Get_Tags_Root (Project);
+         Script        : constant Scripting_Language :=
+                           Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+         Command       : Custom_Command_Access;
 
       begin
          --  Clear the revision view for this file
@@ -2461,18 +2931,14 @@ package body VCS_View_API is
 
          --  Get information fro the branches if defined
 
-         if Attribute_Is_Defined (Project, Vcs_Branches_Attribute)
-           and then Var_Branches.Kind = Single
-         then
-            Get_Log_For_Root (File, Get_Name_String (Var_Branches.Value));
+         if Root_Branches /= "" then
+            Get_Log_For_Root (File, Root_Branches);
          end if;
 
          --  Get information fro the tags if defined
 
-         if Attribute_Is_Defined (Project, Vcs_Tags_Attribute)
-           and then Var_Tags.Kind = Single
-         then
-            Get_Log_For_Root (File, Get_Name_String (Var_Tags.Value));
+         if Root_Tags /= "" then
+            Get_Log_For_Root (File, Root_Tags);
          end if;
       end Get_Log;
 
@@ -2636,6 +3102,31 @@ package body VCS_View_API is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff2;
 
+   ----------------------
+   -- On_Menu_Diff_Tag --
+   ----------------------
+
+   procedure On_Menu_Diff_Tag
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+      Ref : constant VCS_Access := Get_Current_Ref (Context);
+   begin
+      if Has_File_Information (Context)
+        and then Has_Tag_Information (Context)
+      then
+         Diff_Tag
+           (Ref,
+            File_Information (Context),
+            Tag_Information (Context));
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Diff_Tag;
+
    ----------------
    -- Comparison --
    ----------------
@@ -2654,6 +3145,7 @@ package body VCS_View_API is
       Revision_2 : String_Access;
       Str        : String_Access;
       Index      : Natural;
+      Confirm    : Boolean := True;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -2679,28 +3171,36 @@ package body VCS_View_API is
          end if;
       end if;
 
-      if Is_Empty (Status.Working_Revision) then
-         Revision_1 := new String'("");
+      if Has_Revision_Information (Context) then
+         Str := new String'(Revision_Information (Context));
+         Confirm := False;
+
       else
-         Revision_1 := new String'
-           (Protect (Head (Status.Working_Revision)));
+         if Is_Empty (Status.Working_Revision) then
+            Revision_1 := new String'("");
+         else
+            Revision_1 := new String'
+              (Protect (Head (Status.Working_Revision)));
+         end if;
       end if;
 
-      if One_Rev then
-         Str := new String'
-           (Execute_GPS_Shell_Command
-              (Kernel,
-               "MDI.input_dialog"
-               & " ""Compare against revision:"""
-               & " ""Revision=" & Revision_1.all & """"));
-      else
-         Str := new String'
-           (Execute_GPS_Shell_Command
-              (Kernel,
-               "MDI.input_dialog"
-               & " ""Compare between two revisions:"""
-               & " ""Revision 1=" & Revision_1.all & """"
-               & " ""Revision 2=" & Revision_2.all & """"));
+      if Confirm then
+         if One_Rev then
+            Str := new String'
+              (Execute_GPS_Shell_Command
+                 (Kernel,
+                  "MDI.input_dialog"
+                  & " ""Compare against revision:"""
+                  & " ""Revision=" & Revision_1.all & """"));
+         else
+            Str := new String'
+              (Execute_GPS_Shell_Command
+                 (Kernel,
+                  "MDI.input_dialog"
+                  & " ""Compare between two revisions:"""
+                  & " ""Revision 1=" & Revision_1.all & """"
+                  & " ""Revision 2=" & Revision_2.all & """"));
+         end if;
       end if;
 
       if One_Rev then
@@ -2888,13 +3388,20 @@ package body VCS_View_API is
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      File   : constant String := Nth_Arg (Data, 1);
+      File   : constant String := Nth_Arg (Data, 1, "");
       Full   : Virtual_File;
       Prj    : Project_Type;
       Ref    : VCS_Access;
       Files  : String_List.List;
 
    begin
+      if Command = "repository_dir" then
+         Set_Return_Value
+           (Data,
+            Get_Repository_Path (Kernel, No_File, Nth_Arg (Data, 1, "")));
+         return;
+      end if;
+
       if File = "" then
          Insert (Kernel, -"Command "
                  & Command
@@ -2992,6 +3499,9 @@ package body VCS_View_API is
       elsif Command = "remove_annotations" then
          Remove_Line_Information_Column (Kernel, Full, Annotation_Id);
 
+      elsif Command = "repository_path" then
+         Set_Return_Value
+           (Data, Get_Repository_Path (Kernel, Full, Nth_Arg (Data, 2, "")));
       end if;
 
       String_List.Free (Files);
