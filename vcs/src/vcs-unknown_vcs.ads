@@ -53,6 +53,12 @@ package VCS.Unknown_VCS is
       Filenames : String_List.List)
      return File_Status_List.List;
 
+   procedure Create_Tag
+     (Rep       : access Unknown_VCS_Record;
+      Dir       : VFS.Virtual_File;
+      Tag       : String;
+      As_Branch : Boolean);
+
    procedure Open
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
@@ -66,6 +72,11 @@ package VCS.Unknown_VCS is
    procedure Update
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List);
+
+   procedure Switch
+     (Rep : access Unknown_VCS_Record;
+      Dir : VFS.Virtual_File;
+      Tag : String);
 
    procedure Resolved
      (Rep       : access Unknown_VCS_Record;
@@ -109,6 +120,11 @@ package VCS.Unknown_VCS is
    procedure Diff_Working
      (Rep  : access Unknown_VCS_Record;
       File : VFS.Virtual_File);
+
+   procedure Diff_Tag
+     (Rep      : access Unknown_VCS_Record;
+      File     : VFS.Virtual_File;
+      Tag_Name : String);
 
    procedure Log
      (Rep     : access Unknown_VCS_Record;
