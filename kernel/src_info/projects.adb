@@ -398,25 +398,28 @@ package body Projects is
                           Host    : String := "") return VFS.Virtual_File is
       View : constant Project_Id := Get_View (Project);
    begin
-      if Status (Project) /= From_File then
+      if Status (Project) /= From_File
+        or else View = Prj.No_Project
+      then
          --  Still return a path, since some modules might depend on knowing
          --  the project path (for instance the builder module)
-         return Create
-           (Host,
-            To_Remote (Get_String (Path_Name_Of (Project.Node, Project.Tree)),
-                       Host));
-      elsif View = Prj.No_Project then
-         --  Still needed for the project wizard
-         return Create
-           (Host,
-            To_Remote (Get_String (Path_Name_Of (Project.Node, Project.Tree)),
-                       Host));
+
+         --  View=Prj.No_Project case needed for the project wizard
+
+         declare
+            Path : constant String :=
+              Get_String (Path_Name_Of (Project.Node, Project.Tree));
+         begin
+            return Create (Host, To_Remote (Path, Host));
+         end;
+
       else
-         return Create
-           (Host,
-            To_Remote
-              (Get_String (Projects_Table (Project)(View).Display_Path_Name),
-               Host));
+         declare
+            Path : constant String :=
+              Get_String (Projects_Table (Project)(View).Display_Path_Name);
+         begin
+            return Create (Host, To_Remote (Path, Host));
+         end;
       end if;
    end Project_Path;
 
