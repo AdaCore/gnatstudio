@@ -505,6 +505,20 @@ package body VCS_Module is
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
       Register_Command
+        (Kernel, "repository_path",
+         Minimum_Args  => 1,
+         Maximum_Args  => 2,
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler       => VCS_Command_Handler'Access);
+      Register_Command
+        (Kernel, "repository_dir",
+         Minimum_Args  => 0,
+         Maximum_Args  => 1,
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler       => VCS_Command_Handler'Access);
+      Register_Command
         (Kernel, "status_parse",
          Minimum_Args  => 4,
          Maximum_Args  => 5,
@@ -725,6 +739,23 @@ package body VCS_Module is
          -"Resolved",
          File_Filter,
          On_Menu_Resolved'Access);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Register_Action_Menu
+        ("Create tag",
+         -"Create a tag or branch tag",
+         -"Create tag",
+         File_Filter,
+         On_Menu_Create_Tag'Access);
+
+      Register_Action_Menu
+        ("Switch tag",
+         -"Switch to a specific tag or branch",
+         -"Switch tag",
+         File_Filter,
+         On_Menu_Switch_Tag'Access);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
