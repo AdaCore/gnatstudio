@@ -103,20 +103,22 @@ package Projects is
    --  Return False if the project either didn't need to be saved or couldn't
    --  be saved.
 
-   function Project_Name (Project : Project_Type) return String;
+   function Project_Name (Project          : Project_Type) return String;
    function Project_Name (Project : Project_Type) return Types.Name_Id;
    --  Return the name of the project.
    --  The empty string is returned if the project is the default project or
    --  No_Project.
 
-   function Project_Path (Project : Project_Type;
-                          Host    : String := "") return VFS.Virtual_File;
+   function Project_Path
+     (Project : Project_Type;
+      Host    : String := "") return VFS.Virtual_File;
    --  Return the full path name to the project file
    --  If Host is given, the path will be the one on the specified host.
    --  No_File is returned if the project is the default project or No_Project.
 
-   function Project_Directory (Project : Project_Type;
-                               Host    : String := "") return VFS.Virtual_File;
+   function Project_Directory
+     (Project : Project_Type;
+      Host    : String := "") return VFS.Virtual_File;
    --  Return the directory that contains the project file.
    --  No_File is returned if the project is No_Project.
 

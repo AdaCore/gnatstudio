@@ -394,8 +394,10 @@ package body Projects is
    -- Project_Path --
    ------------------
 
-   function Project_Path (Project : Project_Type;
-                          Host    : String := "") return VFS.Virtual_File is
+   function Project_Path
+     (Project : Project_Type;
+      Host    : String := "") return VFS.Virtual_File
+   is
       View : constant Project_Id := Get_View (Project);
    begin
       if Status (Project) /= From_File
