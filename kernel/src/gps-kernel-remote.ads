@@ -50,6 +50,16 @@ package GPS.Kernel.Remote is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
+   function To_Remote_Possible
+     (Path : String;
+      To   : String) return Boolean;
+   --  Tells if path equivalence on To server exists
+
+   function To_Local_Possible
+     (Path : String;
+      From : String) return Boolean;
+   --  Tells if From'path equivalence on local server exists
+
    function To_Remote
      (Path       : String;
       To         : Server_Type;
