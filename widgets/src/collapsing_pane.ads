@@ -88,7 +88,7 @@ private
          Collapsed_Box    : Gtk.Box.Gtk_Box;
          Notebook         : Gtk.Notebook.Gtk_Notebook;
 
-         Page_Collabsed   : Gint := -1;
+         Page_Collapsed   : Gint := -1;
          Page_Expanded    : Gint := -1;
 
          Reduce_Window    : Boolean := False;
