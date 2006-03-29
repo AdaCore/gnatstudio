@@ -275,7 +275,7 @@ package body VCS_Activities_View_API is
       pragma Unreferenced (Widget);
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
       Activity  : constant Activity_Id :=
-        Value (Activity_Information (Context));
+                    Value (Activity_Information (Context));
       Files     : String_List.List;
    begin
       Files := Get_Files_In_Activity (Activity);
