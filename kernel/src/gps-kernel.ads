@@ -850,6 +850,8 @@ private
       Gnatls_Cache : GNAT.OS_Lib.String_Access;
       --  The name of the gnatls command used to get the predefined source
       --  path.
+      Gnatls_Server : GNAT.OS_Lib.String_Access;
+      --  The name of the server having executed the last gnatls command.
 
       Preferences : Default_Preferences.Preferences_Manager;
       --  The current setting for the preferences
