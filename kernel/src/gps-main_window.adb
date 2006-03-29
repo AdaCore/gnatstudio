@@ -1158,9 +1158,11 @@ package body GPS.Main_Window is
 
    procedure Reset_Title
      (Window : access GPS_Window_Record;
-      Info   : String := "") is
+      Info   : String := "")
+   is
       function Info_Str return String;
       --  Returns the info string, if set
+
       function Remote_Str return String;
       --  Returns the remote string, if set
 
@@ -1173,6 +1175,7 @@ package body GPS.Main_Window is
          if Info /= "" then
             return " - " & Info;
          end if;
+
          return "";
       end Info_Str;
 
@@ -1185,13 +1188,15 @@ package body GPS.Main_Window is
          if not Is_Local (Build_Server) then
             return " on " & Get_Nickname (Build_Server);
          end if;
+
          return "";
       end Remote_Str;
    begin
-      Set_Title (Window, GPS_Name (Window) &
-                 (-" - GNAT Programming Studio (project: ") &
-                 Project_Name (Get_Project (Window.Kernel)) &
-                 Remote_Str & ')' & Info_Str);
+      Set_Title
+        (Window, GPS_Name (Window) &
+         (-" - GNAT Programming Studio (project: ") &
+         Project_Name (Get_Project (Window.Kernel)) &
+         Remote_Str & ')' & Info_Str);
    end Reset_Title;
 
 end GPS.Main_Window;
