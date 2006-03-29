@@ -706,6 +706,7 @@ private
       Category_Name : GNAT.OS_Lib.String_Access := null;
       Message       : GNAT.OS_Lib.String_Access := null;
       Revision      : GNAT.OS_Lib.String_Access := null;
+      Tag           : GNAT.OS_Lib.String_Access := null;
       --  In the location window
 
       Start_Line : Integer;
