@@ -51,9 +51,6 @@ package body GPS.Kernel.Project is
    --  Category uses in the Location window for errors related to loading the
    --  project file
 
-   Prev_Server : String_Access := new String'("");
-   --  Server on which the last gnatls command was executed.
-
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class);
    --  Compute the predefined source and object paths, given the current
@@ -66,8 +63,6 @@ package body GPS.Kernel.Project is
    procedure Report (Handler : access Registry_Error_Handler_Record;
                      Msg     : String);
    --  Used to report an error to the user.
-
-   Error_Handler : aliased Registry_Error_Handler_Record;
 
    ------------
    -- Report --
@@ -91,6 +86,7 @@ package body GPS.Kernel.Project is
       Gnatls_Args     : Argument_List_Access :=
                        Argument_String_To_List (Gnatls & " -v");
       Langs           : Argument_List := Get_Languages (Get_Project (Handle));
+      Error_Handler   : aliased Registry_Error_Handler_Record;
 
    begin
       if Basic_Types.Contains (Langs, "ada", Case_Sensitive => False) then
@@ -99,22 +95,22 @@ package body GPS.Kernel.Project is
 
          if Handle.Gnatls_Cache /= null
            and then Handle.Gnatls_Cache.all = Gnatls
-           and then Prev_Server.all = Get_Nickname (Build_Server)
+           and then Handle.Gnatls_Server.all = Get_Nickname (Build_Server)
          then
             return;
          end if;
 
-         Free (Prev_Server);
-         Prev_Server := new String'(Get_Nickname (Build_Server));
          Free (Handle.Gnatls_Cache);
          Handle.Gnatls_Cache := new String'(Gnatls);
+         Free (Handle.Gnatls_Server);
+         Handle.Gnatls_Server := new String'(Get_Nickname (Build_Server));
 
          Error_Handler.Handle := Kernel_Handle (Handle);
          Projects.Registry.Compute_Predefined_Paths
            (Handle.Registry.all,
             Handle.GNAT_Version,
             Gnatls_Args,
-            Error_Handler'Access);
+            Error_Handler'Unchecked_Access);
          Free (Gnatls_Args);
       end if;
 
