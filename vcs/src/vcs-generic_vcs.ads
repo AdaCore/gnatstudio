@@ -52,6 +52,12 @@ package VCS.Generic_VCS is
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List) return File_Status_List.List;
 
+   procedure Create_Tag
+     (Rep       : access Generic_VCS_Record;
+      Dir       : VFS.Virtual_File;
+      Tag       : String;
+      As_Branch : Boolean);
+
    procedure Open
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;
@@ -65,6 +71,11 @@ package VCS.Generic_VCS is
    procedure Update
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List);
+
+   procedure Switch
+     (Rep : access Generic_VCS_Record;
+      Dir : VFS.Virtual_File;
+      Tag : String);
 
    procedure Resolved
      (Rep       : access Generic_VCS_Record;
@@ -108,6 +119,11 @@ package VCS.Generic_VCS is
    procedure Diff_Working
      (Rep  : access Generic_VCS_Record;
       File : VFS.Virtual_File);
+
+   procedure Diff_Tag
+     (Rep      : access Generic_VCS_Record;
+      File     : VFS.Virtual_File;
+      Tag_Name : String);
 
    procedure Log
      (Rep     : access Generic_VCS_Record;

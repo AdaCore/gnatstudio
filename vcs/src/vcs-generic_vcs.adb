@@ -718,6 +718,34 @@ package body VCS.Generic_VCS is
       return Result;
    end Local_Get_Status;
 
+   ----------------
+   -- Create_Tag --
+   ----------------
+
+   procedure Create_Tag
+     (Rep       : access Generic_VCS_Record;
+      Dir       : VFS.Virtual_File;
+      Tag       : String;
+      As_Branch : Boolean)
+   is
+      Args     : GNAT.OS_Lib.String_List_Access;
+      Dir_List : String_List.List;
+   begin
+      Args := new GNAT.OS_Lib.String_List (1 .. 2);
+      Args (1) := new String'(Base_Dir_Name (Dir)); -- root dir
+      Args (2) := new String'(Tag);                 -- tag name
+
+      Append (Dir_List, Full_Name (Dir).all);
+
+      if As_Branch then
+         Generic_Dir_Command (Rep, Dir_List, Args, Create_Branch);
+      else
+         Generic_Dir_Command (Rep, Dir_List, Args, Create_Tag);
+      end if;
+
+      String_List.Free (Dir_List);
+   end Create_Tag;
+
    ----------
    -- Open --
    ----------
@@ -762,6 +790,29 @@ package body VCS.Generic_VCS is
    begin
       Generic_Command (Rep, Filenames, null, Update);
    end Update;
+
+   ------------
+   -- Switch --
+   ------------
+
+   procedure Switch
+     (Rep : access Generic_VCS_Record;
+      Dir : VFS.Virtual_File;
+      Tag : String)
+   is
+      Args     : GNAT.OS_Lib.String_List_Access;
+      Dir_List : String_List.List;
+   begin
+      Args := new GNAT.OS_Lib.String_List (1 .. 2);
+      Args (1) := new String'(Base_Dir_Name (Dir)); -- root dir
+      Args (2) := new String'(Tag);                 -- tag name
+
+      Append (Dir_List, Full_Name (Dir).all);
+
+      Generic_Dir_Command (Rep, Dir_List, Args, Switch);
+
+      String_List.Free (Dir_List);
+   end Switch;
 
    --------------
    -- Resolved --
@@ -924,6 +975,26 @@ package body VCS.Generic_VCS is
    begin
       Generic_Command (Rep, File, null, Diff_Working);
    end Diff_Working;
+
+   --------------
+   -- Diff_Tag --
+   --------------
+
+   procedure Diff_Tag
+     (Rep      : access Generic_VCS_Record;
+      File     : VFS.Virtual_File;
+      Tag_Name : String)
+   is
+      Args : GNAT.OS_Lib.String_List_Access;
+   begin
+      Args := new GNAT.OS_Lib.String_List (1 .. 2);
+      Args (1) := new String'(Tag_Name);
+      Args (2) := new String'(Base_Name (File));
+
+      Generic_Command (Rep, File, Args, Diff_Tag);
+
+      GNAT.Strings.Free (Args);
+   end Diff_Tag;
 
    ---------
    -- Log --
