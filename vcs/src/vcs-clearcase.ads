@@ -49,6 +49,12 @@ package VCS.ClearCase is
       Filenames : String_List.List)
      return File_Status_List.List;
 
+   procedure Create_Tag
+     (Rep       : access ClearCase_Record;
+      Dir       : VFS.Virtual_File;
+      Tag       : String;
+      As_Branch : Boolean);
+
    procedure Open
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
@@ -62,6 +68,11 @@ package VCS.ClearCase is
    procedure Update
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List);
+
+   procedure Switch
+     (Rep : access ClearCase_Record;
+      Dir : VFS.Virtual_File;
+      Tag : String);
 
    procedure Resolved
      (Rep       : access ClearCase_Record;
@@ -105,6 +116,11 @@ package VCS.ClearCase is
    procedure Diff_Working
      (Rep  : access ClearCase_Record;
       File : VFS.Virtual_File);
+
+   procedure Diff_Tag
+     (Rep      : access ClearCase_Record;
+      File     : VFS.Virtual_File;
+      Tag_Name : String);
 
    procedure Log
      (Rep     : access ClearCase_Record;

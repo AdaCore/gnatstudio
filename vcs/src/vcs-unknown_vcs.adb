@@ -128,6 +128,23 @@ package body VCS.Unknown_VCS is
       return Result;
    end Local_Get_Status;
 
+   ----------------
+   -- Create_Tag --
+   ----------------
+
+   procedure Create_Tag
+     (Rep       : access Unknown_VCS_Record;
+      Dir       : VFS.Virtual_File;
+      Tag       : String;
+      As_Branch : Boolean)
+   is
+      pragma Unreferenced (Rep, Tag, As_Branch);
+   begin
+      if Dir /= No_File then
+         Error (Base_Name (Dir));
+      end if;
+   end Create_Tag;
+
    ----------
    -- Open --
    ----------
@@ -174,6 +191,22 @@ package body VCS.Unknown_VCS is
          Error (Head (Filenames));
       end if;
    end Update;
+
+   ------------
+   -- Switch --
+   ------------
+
+   procedure Switch
+     (Rep : access Unknown_VCS_Record;
+      Dir : VFS.Virtual_File;
+      Tag : String)
+   is
+      pragma Unreferenced (Rep, Tag);
+   begin
+      if Dir /= No_File then
+         Error (Base_Name (Dir));
+      end if;
+   end Switch;
 
    --------------
    -- Resolved --
@@ -310,6 +343,20 @@ package body VCS.Unknown_VCS is
    begin
       null;
    end Diff_Working;
+
+   --------------
+   -- Diff_Tag --
+   --------------
+
+   procedure Diff_Tag
+     (Rep      : access Unknown_VCS_Record;
+      File     : VFS.Virtual_File;
+      Tag_Name : String)
+   is
+      pragma Unreferenced (Rep, File, Tag_Name);
+   begin
+      null;
+   end Diff_Tag;
 
    ---------
    -- Log --
