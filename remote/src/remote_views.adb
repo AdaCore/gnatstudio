@@ -500,7 +500,9 @@ package body Remote_Views is
    is
       Value : constant String := Get_Text (Get_Entry (Gtkada_Combo (Combo)));
    begin
-      if Value /= "" then
+      if Value /= ""
+        and then Get_Nickname (User.Server) /= Value
+      then
          User.View.Combo_Selected := True;
          Assign (User.View.Kernel,
                  User.Server,
