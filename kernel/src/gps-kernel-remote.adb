@@ -21,6 +21,7 @@
 with Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;
+with Ada.Tags;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Expect;                use GNAT.Expect;
@@ -155,6 +156,8 @@ package body GPS.Kernel.Remote is
       Node      : Glib.Xml_Int.Node_Ptr;
       Attribute : Descriptor_Attribute);
    --  Parse a remote_path node
+
+   No_Path : constant String_Access := new String'("");
 
    ------------------------
    -- Machine_Descriptor --
@@ -2116,7 +2119,7 @@ package body GPS.Kernel.Remote is
       Srv : Node_Ptr;
    begin
       Trace (Me, "Saving remote property");
-      for J in Property.Servers'Range loop
+      for J in Remote_Server_Type'Range loop
          Srv := new Glib.Xml_Int.Node;
          Srv.Tag := new String'(Server_Type'Image (J));
          Srv.Value := new String'(Property.Servers (J).Nickname.all);
@@ -2134,7 +2137,7 @@ package body GPS.Kernel.Remote is
       Srv :  Node_Ptr;
    begin
       Trace (Me, "Loading remote property");
-      for J in Property.Servers'Range loop
+      for J in Remote_Server_Type'Range loop
          if From.Child /= null then
             Srv := Find_Tag (From.Child, Server_Type'Image (J));
             if Srv /= null
@@ -2150,6 +2153,8 @@ package body GPS.Kernel.Remote is
             end if;
          end if;
       end loop;
+      Property.Servers (GPS_Server) := (Is_Local => True,
+                                        Nickname => new String'(""));
    end Load;
 
    ------------------------
@@ -2184,22 +2189,23 @@ package body GPS.Kernel.Remote is
       if not Success then
          Trace (Me, "Property servers_config does not exist. Create it");
          if not Is_Local (D.File) then
-            for J in Server_Type'Range loop
+            for J in Remote_Server_Type'Range loop
                Property.Servers (J) :=
                  (Is_Local => False,
                   Nickname => new String'(Get_Host (D.File)));
             end loop;
          else
-            for J in Server_Type'Range loop
+            for J in Remote_Server_Type'Range loop
                Property.Servers (J) := (Is_Local => True,
                                         Nickname => new String'(""));
             end loop;
          end if;
+
          Prop := new Servers_Property'(Property);
          Set_Property (Local_File, "servers_config", Prop, Persistent => True);
       end if;
 
-      for J in Server_Type'Range loop
+      for J in Remote_Server_Type'Range loop
          Glib.Free (Servers (J).Nickname);
          Servers (J) :=
            (Is_Local => Property.Servers (J).Is_Local,
@@ -2358,6 +2364,83 @@ package body GPS.Kernel.Remote is
       Remote_Module := null;
    end Destroy;
 
+   ------------------------
+   -- To_Remote_Possible --
+   ------------------------
+
+   function To_Remote_Possible (Path : String;
+                                To   : String) return Boolean
+   is
+      Mirror         : Mirror_Path_Access;
+      Path_List_Item : Mirrors_List_Access;
+   begin
+      if To = "" then
+         return True;
+      end if;
+
+      --  Search for mirror path in 'To' config
+      Path_List_Item := Main_Paths_Table;
+      Mirror := null;
+      while Path_List_Item /= null loop
+         if Path_List_Item.Nickname.all = To then
+            Mirror := Path_List_Item.Path_List;
+            exit;
+         end if;
+
+         Path_List_Item := Path_List_Item.Next;
+      end loop;
+
+      while Mirror /= null loop
+         if Is_Subtree (Get_Local_Filesystem, Mirror.Local_Path.all, Path) then
+            return True;
+         end if;
+
+         Mirror := Mirror.Next;
+      end loop;
+
+      return False;
+   end To_Remote_Possible;
+
+   -----------------------
+   -- To_Local_Possible --
+   -----------------------
+
+   function To_Local_Possible (Path : String;
+                               From : String) return Boolean
+   is
+      Mirror         : Mirror_Path_Access;
+      Path_List_Item : Mirrors_List_Access;
+   begin
+      if From = "" then
+         return True;
+      end if;
+
+      --  Search for mirror path in 'From' config
+      Path_List_Item := Main_Paths_Table;
+      Mirror := null;
+      while Path_List_Item /= null loop
+         if Path_List_Item.Nickname.all = From then
+            Mirror := Path_List_Item.Path_List;
+            exit;
+         end if;
+
+         Path_List_Item := Path_List_Item.Next;
+      end loop;
+
+      while Mirror /= null loop
+         if Is_Subtree (Get_Filesystem (From),
+                        Mirror.Remote_Path.all,
+                        Path)
+         then
+            return True;
+         end if;
+
+         Mirror := Mirror.Next;
+      end loop;
+
+      return False;
+   end To_Local_Possible;
+
    ---------------
    -- To_Remote --
    ---------------
@@ -2387,7 +2470,6 @@ package body GPS.Kernel.Remote is
    begin
       --  If From and To are the same machine (and no unix path translation is
       --  needed), just return Path
-
       if To = "" then
          if Unix_Style then
             return To_Unix (Get_Local_Filesystem, Path);
@@ -2396,9 +2478,13 @@ package body GPS.Kernel.Remote is
          end if;
       end if;
 
-      --  Search for mirror path in 'To' config
+      if Active (Me) then
+         Trace (Me, "To_Remote: " & Path & " to server " & To);
+      end if;
 
+      --  Search for mirror path in 'To' config
       Path_List_Item := Main_Paths_Table;
+      Mirror := null;
 
       while Path_List_Item /= null loop
          if Path_List_Item.Nickname.all = To then
@@ -2424,8 +2510,8 @@ package body GPS.Kernel.Remote is
 
       if Path_From = null or Path_To = null then
          --  Not configured mirror path
-
-         return Path;
+         Path_From := No_Path;
+         Path_To := No_Path;
       end if;
 
       --  At this point, we have the from and to moint points. Let's translate
@@ -2444,8 +2530,24 @@ package body GPS.Kernel.Remote is
 
       begin
          if Unix_Style then
+            if Active (Me) then
+               Trace (Me, "result: '" &
+                      To_Unix (To_Filesystem, Path_To.all) & U_Subpath &
+                      "'");
+            end if;
             return To_Unix (To_Filesystem, Path_To.all) & U_Subpath;
          else
+            if Active (Me) then
+               Trace (Me, "local filesystem " &
+                      Ada.Tags.External_Tag (Get_Local_Filesystem'Tag));
+               Trace (Me, "from_path: " & Path_From.all);
+               Trace (Me, "unix form: " & U_Frompath);
+               Trace (Me, "result: '" &
+                      Concat (To_Filesystem,
+                              Path_To.all,
+                              From_Unix (To_Filesystem, U_Subpath)) &
+                      "'");
+            end if;
             return Concat (To_Filesystem,
                            Path_To.all,
                            From_Unix (To_Filesystem, U_Subpath));
@@ -2473,14 +2575,14 @@ package body GPS.Kernel.Remote is
       Path_List_Item  : Mirrors_List_Access;
 
    begin
-      if Active (Me) then
-         Trace (Me, "To_Local: " & Path & " on server " & From);
-      end if;
-
       --  If From and To are the same machine, just return Path
 
       if From = "" then
          return Path;
+      end if;
+
+      if Active (Me) then
+         Trace (Me, "To_Local: " & Path & " on server " & From);
       end if;
 
       --  Search for mirror path in 'From' config
@@ -2509,9 +2611,9 @@ package body GPS.Kernel.Remote is
       end loop;
 
       if Path_From = null or Path_To = null then
-         --  Not configured mirror path
-
-         return Path;
+         --  Not configured mirror path. Try to convert all paths
+         Path_From := No_Path;
+         Path_To   := No_Path;
       end if;
 
       if Active (Me) then
@@ -2627,7 +2729,15 @@ package body GPS.Kernel.Remote is
          Load_Data.Kernel := Kernel;
          Load_Data.File := Project_Path (Get_Project (Kernel),
                                          Get_Nickname (Build_Server));
-         Id := Reload_Timeout.Add (Timeout, Reload_Prj_Cb'Access, Load_Data);
+         if Get_Host (Load_Data.File) /= Get_Nickname (Build_Server) then
+            Insert (Kernel,
+                    -"Error: the project " & Full_Name (Load_Data.File).all &
+                    (-" has no path equivalence on remote machine ") &
+                    Get_Nickname (Build_Server));
+         else
+            Id := Reload_Timeout.Add (Timeout, Reload_Prj_Cb'Access,
+                                      Load_Data);
+         end if;
       end if;
 
       if Active (Me) then
@@ -2729,8 +2839,8 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Search for mirror paths in 'To' config
-
       Path_List_Item := Main_Paths_Table;
+      Mirror := null;
 
       while Path_List_Item /= null loop
          if Path_List_Item.Nickname.all = Servers (Server).Nickname.all then
@@ -2907,7 +3017,7 @@ package body GPS.Kernel.Remote is
          end if;
       end if;
 
-      if Servers (Server).Is_Local then
+      if Is_Local (Server) then
          Pd := new GNAT.Expect.TTY.TTY_Process_Descriptor;
 
          if Host = Config.Windows then
