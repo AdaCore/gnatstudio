@@ -253,19 +253,19 @@ package body Remote_Views is
 
       Set_Tip
         (Tooltips, Get_Entry (View.Build_Combo),
-         -"The server used to perform builds and execute gnat tools.");
+         -"The server used to perform builds and execute gnat tools");
       Set_Tip
         (Tooltips, Get_Entry (View.Debug_Combo),
-         -"The server used to launch the debugger.");
+         -"The server used to launch the debugger");
       Set_Tip
         (Tooltips, Get_Entry (View.Exec_Combo),
-         -"The server used to execute the built executables.");
+         -"The server used to execute the built executables");
 
       --  "Servers configuration" button
       Gtk_New (View.Config_List_Button, -"Servers configuration");
       Set_Tip
         (Tooltips, View.Config_List_Button,
-         -"Configure the list of available servers.");
+         -"Configure the list of available servers");
       Attach (View, View.Config_List_Button,
               0, 1, 1, 2, 0, 0, 5, 5);
       View_Callback.Connect
