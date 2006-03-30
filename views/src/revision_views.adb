@@ -427,21 +427,22 @@ package body Revision_Views is
       -------------------------
 
       function Get_Parent_Revision (Iter : Gtk_Tree_Iter) return String is
-         I : Gtk_Tree_Iter;
+         J : Gtk_Tree_Iter;
       begin
-         Iter_Copy (Iter, I);
+         Iter_Copy (Iter, J);
          --  Climb the tree until finding a revision node corresponding to the
          --  current iter.
 
-         Look_For_Revision : while I /= Null_Iter loop
+         Look_For_Revision : while J /= Null_Iter loop
             declare
                Rev : constant String :=
-                       Get_String (V.Model, I, Revision_Column);
+                       Get_String (V.Model, J, Revision_Column);
             begin
                if Rev /= "" then
                   return Rev;
                end if;
-               I := Parent (V.Model, I);
+
+               J := Parent (V.Model, J);
             end;
          end loop Look_For_Revision;
 
@@ -451,6 +452,7 @@ package body Revision_Views is
       Iter : Gtk_Tree_Iter;
       Rev  : Unbounded_String;
       Tag  : Unbounded_String;
+
    begin
       Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
 
@@ -680,22 +682,22 @@ package body Revision_Views is
 
       procedure Iterate (Iter : Gtk_Tree_Iter) is
          Quit : Boolean := False;
-         I    : Gtk_Tree_Iter;
+         J    : Gtk_Tree_Iter;
       begin
-         Iter_Copy (Iter, I);
+         Iter_Copy (Iter, J);
 
-         while not Quit and then I /= Null_Iter loop
-            if Has_Child (View.Model, I) then
-               Iterate (Children (View.Model, I));
+         while not Quit and then J /= Null_Iter loop
+            if Has_Child (View.Model, J) then
+               Iterate (Children (View.Model, J));
             end if;
 
-            if Get_String (View.Model, I, Revision_Column) = Rev then
+            if Get_String (View.Model, J, Revision_Column) = Rev then
                Quit := True;
-               Iter_Copy (I, Result);
+               Iter_Copy (J, Result);
                return;
             end if;
 
-            Next (View.Model, I);
+            Next (View.Model, J);
          end loop;
       end Iterate;
 
@@ -716,6 +718,7 @@ package body Revision_Views is
       Title  : constant String := -"Revision View - " & B_Name;
       View   : Revision_View;
       Child  : MDI_Child;
+
    begin
       View := BT.Get
         (Revision_View_Module (Revision_View_Module_ID.all).Table,
