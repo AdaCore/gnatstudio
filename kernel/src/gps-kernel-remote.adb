@@ -2139,8 +2139,8 @@ package body GPS.Kernel.Remote is
    begin
       Trace (Me, "Loading remote property");
 
-      for J in Remote_Server_Type'Range loop
-         if From.Child /= null then
+      if From.Child /= null then
+         for J in Remote_Server_Type'Range loop
             Srv := Find_Tag (From.Child, Server_Type'Image (J));
 
             if Srv /= null
@@ -2154,12 +2154,19 @@ package body GPS.Kernel.Remote is
                Property.Servers (J) := (Is_Local => True,
                                         Nickname => new String'(""));
             end if;
-         end if;
-      end loop;
+         end loop;
 
-      Property.Servers (GPS_Server) :=
-        (Is_Local => True,
-         Nickname => new String'(""));
+         Property.Servers (GPS_Server) :=
+           (Is_Local => True,
+            Nickname => new String'(""));
+
+      else
+         for J in Server_Type'Range loop
+            Property.Servers (J) :=
+              (Is_Local => True,
+               Nickname => new String'(""));
+         end loop;
+      end if;
    end Load;
 
    ------------------------
