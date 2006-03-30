@@ -744,6 +744,7 @@ package body VCS.Generic_VCS is
       end if;
 
       String_List.Free (Dir_List);
+      GNAT.Strings.Free (Args);
    end Create_Tag;
 
    ----------
@@ -812,6 +813,7 @@ package body VCS.Generic_VCS is
       Generic_Dir_Command (Rep, Dir_List, Args, Switch);
 
       String_List.Free (Dir_List);
+      GNAT.Strings.Free (Args);
    end Switch;
 
    --------------
@@ -831,11 +833,28 @@ package body VCS.Generic_VCS is
 
    procedure Merge
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List)
+      Filenames : String_List.List;
+      Tag       : String)
    is
-      pragma Unreferenced (Rep, Filenames);
+      Args : GNAT.OS_Lib.String_List_Access;
    begin
-      null;
+      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args (1) := new String'(Tag);                 -- tag name
+
+      --  Iterate through all files, the merge is file oriented and some VCS
+      --  won't accept multiple files to merge.
+
+      declare
+         Node : List_Node;
+      begin
+         Node := First (Filenames);
+         while Node /= Null_Node loop
+            Generic_Command (Rep, Create (Data (Node)), Args, Merge);
+            Node := Next (Node);
+         end loop;
+      end;
+
+      GNAT.Strings.Free (Args);
    end Merge;
 
    ---------
