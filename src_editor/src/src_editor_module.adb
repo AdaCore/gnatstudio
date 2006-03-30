@@ -2077,9 +2077,7 @@ package body Src_Editor_Module is
          return True;
 
       else
-         if D.Line = 0 and then D.Column = 0 then
-            No_Location := True;
-         end if;
+         No_Location := D.Line = 0;
 
          Source := Open_File
            (Kernel, D.File,
