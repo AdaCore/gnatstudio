@@ -155,6 +155,11 @@ package VCS_View_API is
       Context : Selection_Context);
    --  ???
 
+   procedure On_Menu_Merge
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
+   --  Merge changes from a branch
+
    procedure On_Menu_Edit_ChangeLog
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
