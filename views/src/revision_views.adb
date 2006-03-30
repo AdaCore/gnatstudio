@@ -315,9 +315,8 @@ package body Revision_Views is
             null;
 
          when Branch =>
-            --  A branch, back track and reparent all nodes that until an
-            --  orphan is found. This node is the end of the current parsed
-            --  branch.
+            --  A branch, back track and reparent all nodes until an orphan is
+            --  found. This node is the end of the current parsed branch.
 
             declare
                Path     : Gtk_Tree_Path;
@@ -373,6 +372,7 @@ package body Revision_Views is
          Fill_Info (View, Iter, (Log, False));
          View.Prev2 := View.Prev1;
          View.Prev1 := Log.Revision;
+         View.Mode := Link;
 
       elsif View.Mode = Link then
          --  We are in link mode and we reached an existing node. We found a
