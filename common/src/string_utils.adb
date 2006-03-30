@@ -183,8 +183,8 @@ package body String_Utils is
             if Index > Buffer'First then
                Index := Index - 1;
 
-               if Buffer (Index) = ASCII.CR then
-                  return Index;
+               if Buffer (Index) = ASCII.LF then
+                  return Index + 1;
                end if;
             else
                return Buffer'First;
@@ -193,7 +193,7 @@ package body String_Utils is
       elsif Buffer (P) = ASCII.CR then
          Index := Index - 1;
 
-         if Buffer (Index) = ASCII.CR or else Buffer (Index) = ASCII.LF then
+         if Buffer (Index) = ASCII.LF then
             return Index + 1;
          end if;
       end if;
