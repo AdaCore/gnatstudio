@@ -32,7 +32,6 @@ with Gdk.Window; use Gdk.Window;
 with Gtk.Box;       use Gtk.Box;
 with Gtk.Event_Box; use Gtk.Event_Box;
 with Gtk.Label;     use Gtk.Label;
-with Gtk.Notebook;  use Gtk.Notebook;
 with Gtk.Style;     use Gtk.Style;
 with Gtk.Widget;    use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
@@ -171,10 +170,12 @@ package body Collapsing_Pane is
       Pack_Start
         (Label_Hbox, Pane.Label, Padding => 3, Expand => False, Fill => False);
 
-      Gtk_New (Pane.Notebook);
-      Set_Show_Tabs (Pane.Notebook, False);
-      Set_Show_Border (Pane.Notebook, False);
-      Pack_Start (Pane.Main_Box, Pane.Notebook, Expand => True, Fill => False);
+      Gtk_New_Vbox (Pane.Expanded_Box, Homogeneous => False);
+      Gtk_New_Vbox (Pane.Collapsed_Box, Homogeneous => False);
+      Pack_Start (Pane.Main_Box, Pane.Expanded_Box,
+                  Expand => False, Fill => False);
+      Pack_Start (Pane.Main_Box, Pane.Collapsed_Box,
+                  Expand => False, Fill => False);
    end Initialize;
 
    -------------------------
@@ -185,14 +186,15 @@ package body Collapsing_Pane is
      (Pane   : access Collapsing_Pane_Record;
       Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
+      Child : Gtk_Widget;
    begin
-      if Pane.Page_Expanded /= -1 then
-         Remove_Page (Pane.Notebook, Pane.Page_Expanded);
+      Child := Get_Child (Pane.Expanded_Box, 0);
+
+      if Child /= null then
+         Remove (Pane.Expanded_Box, Child);
       end if;
 
-      Append_Page (Pane.Notebook, Widget);
-      Pane.Page_Expanded := Page_Num (Pane.Notebook, Widget);
-      Pane.Expanded_Widget := Gtk_Widget (Widget);
+      Pack_Start (Pane.Expanded_Box, Widget, Expand => False, Fill => False);
    end Set_Expanded_Widget;
 
    --------------------------
@@ -203,14 +205,15 @@ package body Collapsing_Pane is
      (Pane   : access Collapsing_Pane_Record;
       Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
+      Child : Gtk_Widget;
    begin
-      if Pane.Page_Collapsed /= -1 then
-         Remove_Page (Pane.Notebook, Pane.Page_Collapsed);
+      Child := Get_Child (Pane.Collapsed_Box, 0);
+
+      if Child /= null then
+         Remove (Pane.Collapsed_Box, Child);
       end if;
 
-      Append_Page (Pane.Notebook, Widget);
-      Pane.Page_Collapsed := Page_Num (Pane.Notebook, Widget);
-      Pane.Collapsed_Widget := Gtk_Widget (Widget);
+      Pack_Start (Pane.Collapsed_Box, Widget, Expand => False, Fill => False);
    end Set_Collapsed_Widget;
 
    -----------------------
@@ -229,39 +232,15 @@ package body Collapsing_Pane is
       --  incorrectly recomputed by gtk+. Looks like a bug to me..
 
       if State = Collapsed then
-         if Pane.Page_Collapsed /= -1 then
-            Set_Child_Visible (Pane.Notebook, True);
-            Show (Pane.Notebook);
-            Set_Current_Page (Pane.Notebook, Pane.Page_Collapsed);
-
-            if Pane.Expanded_Widget /= null then
-               Set_Size_Request (Pane.Expanded_Widget, 0, 0);
-            end if;
-
-            Set_Size_Request (Pane.Collapsed_Widget, -1, -1);
-            Set_Size_Request (Pane.Notebook, -1, -1);
-         else
-            Set_Child_Visible (Pane.Notebook, False);
-            Hide (Pane.Notebook);
-            Set_Size_Request (Pane.Notebook, 0, 0);
-         end if;
-      elsif State = Expanded then
-         if Pane.Page_Expanded /= -1 then
-            Set_Child_Visible (Pane.Notebook, True);
-            Show (Pane.Notebook);
-            Set_Current_Page (Pane.Notebook, Pane.Page_Expanded);
-
-            if Pane.Collapsed_Widget /= null then
-               Set_Size_Request (Pane.Collapsed_Widget, 0, 0);
-            end if;
-
-            Set_Size_Request (Pane.Expanded_Widget, -1, -1);
-            Set_Size_Request (Pane.Notebook, -1, -1);
-         else
-            Set_Child_Visible (Pane.Notebook, False);
-            Hide (Pane.Notebook);
-            Set_Size_Request (Pane.Notebook, 0, 0);
-         end if;
+         Set_Child_Visible (Pane.Expanded_Box, False);
+         Set_Size_Request (Pane.Expanded_Box, 0, 0);
+         Set_Child_Visible (Pane.Collapsed_Box, True);
+         Set_Size_Request (Pane.Collapsed_Box, -1, -1);
+      else
+         Set_Child_Visible (Pane.Expanded_Box, True);
+         Set_Size_Request (Pane.Expanded_Box, -1, -1);
+         Set_Child_Visible (Pane.Collapsed_Box, False);
+         Set_Size_Request (Pane.Collapsed_Box, 0, 0);
       end if;
 
       if Pane.Reduce_Window then
