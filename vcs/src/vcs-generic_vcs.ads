@@ -83,7 +83,8 @@ package VCS.Generic_VCS is
 
    procedure Merge
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Tag       : String);
 
    procedure Add
      (Rep       : access Generic_VCS_Record;

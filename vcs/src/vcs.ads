@@ -56,6 +56,7 @@ package VCS is
       Create_Tag,         --  Create a new tag
       Create_Branch,      --  Create a new branch
       Switch,             --  Switch to a specific branch/tag
+      Merge,              --  Merge changes from a branch
       Open,               --  Open one or more file for writing
       Update,             --  Update one or more files
       Resolved,           --  Change file status after conflict resolution
@@ -284,7 +285,8 @@ package VCS is
 
    procedure Merge
      (Rep       : access VCS_Record;
-      Filenames : String_List.List) is abstract;
+      Filenames : String_List.List;
+      Tag       : String) is abstract;
    --  Merge the files from the specified repository with the local files.
    --  The merge is done locally, a commit is required to pass the
    --  resulting changes to the repository.

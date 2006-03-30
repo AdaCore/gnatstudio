@@ -229,9 +229,10 @@ package body VCS.Unknown_VCS is
 
    procedure Merge
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List)
+      Filenames : String_List.List;
+      Tag       : String)
    is
-      pragma Unreferenced (Rep);
+      pragma Unreferenced (Rep, Tag);
    begin
       if Filenames /= Null_List then
          Error (Head (Filenames));

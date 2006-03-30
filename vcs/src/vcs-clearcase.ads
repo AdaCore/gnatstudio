@@ -80,7 +80,8 @@ package VCS.ClearCase is
 
    procedure Merge
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Tag       : String);
 
    procedure Add
      (Rep       : access ClearCase_Record;

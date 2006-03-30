@@ -1012,9 +1012,10 @@ package body VCS.ClearCase is
 
    procedure Merge
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List)
+      Filenames : String_List.List;
+      Tag       : String)
    is
-      pragma Unreferenced (Rep, Filenames);
+      pragma Unreferenced (Rep, Filenames, Tag);
    begin
       null;
    end Merge;
@@ -1830,6 +1831,7 @@ package body VCS.ClearCase is
          Switch             => null,
          Open               => new String'(-"Start editing"),
          Update             => new String'(-"Update"),
+         Merge              => null,
          Resolved           => null,
          Commit             => new String'(-"Commit"),
          History_Text       => new String'(-"View revision history"),

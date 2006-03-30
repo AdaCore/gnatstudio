@@ -84,7 +84,8 @@ package VCS.Unknown_VCS is
 
    procedure Merge
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Tag       : String);
 
    procedure Add
      (Rep       : access Unknown_VCS_Record;
