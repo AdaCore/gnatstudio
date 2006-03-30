@@ -41,6 +41,7 @@ with Gtk.Tooltips;       use Gtk.Tooltips;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Combo;       use Gtkada.Combo;
 with Gtkada.MDI;         use Gtkada.MDI;
+with Collapsing_Pane;    use Collapsing_Pane;
 
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel;         use GPS.Kernel;
@@ -60,16 +61,12 @@ package body Remote_Views is
 
    type Remote_View_Record is new Gtk.Table.Gtk_Table_Record with record
       Kernel             : GPS.Kernel.Kernel_Handle;
-      Simple_Mode        : Boolean;
-      Simple_Table       : Gtk_Table;
-      Full_Table         : Gtk_Table;
+      Pane               : Collapsing_Pane.Collapsing_Pane;
       Remote_Combo       : Gtkada_Combo;
       Build_Combo        : Gtkada_Combo;
       Debug_Combo        : Gtkada_Combo;
       Exec_Combo         : Gtkada_Combo;
       Config_List_Button : Gtk_Button;
-      Simple_View_Button : Gtk_Button;
-      Full_View_Button   : Gtk_Button;
       Combo_Selected     : Boolean := False;
    end record;
    type Remote_View is access all Remote_View_Record'Class;
@@ -134,11 +131,6 @@ package body Remote_Views is
       User  : Remote_Data);
    --  Called when one of the combo box's value changes
 
-   procedure On_View_Mode_Clicked
-     (View : access Gtk_Widget_Record'Class;
-      User : Remote_Data);
-   --  Called when the view's mode is changed
-
    procedure On_Config_List_Clicked
      (View : access Gtk_Widget_Record'Class;
       User : Remote_Data);
@@ -174,28 +166,40 @@ package body Remote_Views is
    is
       Label         : Gtk_Label;
       Tooltips      : Gtk_Tooltips;
+      Simple_Table  : Gtk_Table;
+      Full_Table    : Gtk_Table;
    begin
       Gtk.Table.Initialize (View, 2, 1, False);
 
       View.Kernel := Kernel;
-      Gtk_New (View.Simple_Table, 2, 2, False);
-      Attach (View, View.Simple_Table, 0, 1, 0, 1,
+      Gtk_New (View.Pane, "Servers assignment");
+      Attach (View, View.Pane, 0, 1, 0, 1,
               Expand or Fill, 0);
-      Gtk_New (View.Full_Table, 4, 2, False);
-      Attach (View, View.Full_Table, 0, 1, 0, 2,
-              Expand or Fill, 0);
+      Set_Reduce_Window (View.Pane, False);
+
+      Gtk_New (Simple_Table, 2, 2, False);
+      Set_Collapsed_Widget (View.Pane,
+                            Simple_Table);
+      Gtk_New (Full_Table, 4, 2, False);
+      Set_Expanded_Widget (View.Pane,
+                           Full_Table);
+
       Tooltips := Get_Tooltips (View.Kernel);
 
-      View.Simple_Mode := Use_Simple_View;
+      if Use_Simple_View then
+         Set_State (View.Pane, Collapsed);
+      else
+         Set_State (View.Pane, Expanded);
+      end if;
 
       --  Simple view
       Gtk_New (Label, -("Remote Server:"));
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (View.Simple_Table, Label, 0, 1, 0, 1, Fill);
+      Attach (Simple_Table, Label, 0, 1, 0, 1, Fill);
       Gtk_New (View.Remote_Combo);
       Set_Editable (Get_Entry (View.Remote_Combo), False);
       Set_Width_Chars (Get_Entry (View.Remote_Combo), 0);
-      Attach (View.Simple_Table, View.Remote_Combo, 1, 2, 0, 1);
+      Attach (Simple_Table, View.Remote_Combo, 1, 2, 0, 1);
       View_Callback.Connect
         (View.Remote_Combo, "changed", On_Combo_Changed'Access,
          (View => Remote_View (View), Server => Build_Server));
@@ -210,40 +214,23 @@ package body Remote_Views is
          -"The remote server used to compile, debug and execute your " &
          "project.");
 
-      Gtk_New (View.Config_List_Button, -"Servers configuration");
-      Set_Tip
-        (Tooltips, View.Config_List_Button,
-         -"Configure the list of available servers.");
-      Attach (View.Simple_Table, View.Config_List_Button,
-              0, 1, 1, 2, 0, 0, 5, 5);
-      View_Callback.Connect
-        (View.Config_List_Button, "clicked", On_Config_List_Clicked'Access,
-         (View => Remote_View (View), Server => GPS_Server));
-
-      Gtk_New (View.Simple_View_Button, -"Advanced >>");
-      Attach (View.Simple_Table, View.Simple_View_Button,
-              1, 2, 1, 2, 0, 0, 5, 5);
-      View_Callback.Connect
-        (View.Simple_View_Button, "clicked", On_View_Mode_Clicked'Access,
-         (View => Remote_View (View), Server => GPS_Server));
-
       --  Full view mode
       Gtk_New (Label, -("Build:"));
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (View.Full_Table, Label, 0, 1, 0, 1, Fill);
+      Attach (Full_Table, Label, 0, 1, 0, 1, Fill);
 
       Gtk_New (Label, -("Debug:"));
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (View.Full_Table, Label, 0, 1, 1, 2, Fill);
+      Attach (Full_Table, Label, 0, 1, 1, 2, Fill);
 
       Gtk_New (Label, -("Execution:"));
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (View.Full_Table, Label, 0, 1, 2, 3, Fill);
+      Attach (Full_Table, Label, 0, 1, 2, 3, Fill);
 
       Gtk_New (View.Build_Combo);
       Set_Editable (Get_Entry (View.Build_Combo), False);
       Set_Width_Chars (Get_Entry (View.Build_Combo), 0);
-      Attach (View.Full_Table, View.Build_Combo, 1, 2, 0, 1);
+      Attach (Full_Table, View.Build_Combo, 1, 2, 0, 1);
       View_Callback.Connect
         (View.Build_Combo, "changed", On_Combo_Changed'Access,
          (View => Remote_View (View), Server => Build_Server));
@@ -251,7 +238,7 @@ package body Remote_Views is
       Gtk_New (View.Debug_Combo);
       Set_Editable (Get_Entry (View.Debug_Combo), False);
       Set_Width_Chars (Get_Entry (View.Debug_Combo), 0);
-      Attach (View.Full_Table, View.Debug_Combo, 1, 2, 1, 2);
+      Attach (Full_Table, View.Debug_Combo, 1, 2, 1, 2);
       View_Callback.Connect
         (View.Debug_Combo, "changed", On_Combo_Changed'Access,
          (View => Remote_View (View), Server => Debug_Server));
@@ -259,7 +246,7 @@ package body Remote_Views is
       Gtk_New (View.Exec_Combo);
       Set_Editable (Get_Entry (View.Exec_Combo), False);
       Set_Width_Chars (Get_Entry (View.Exec_Combo), 0);
-      Attach (View.Full_Table, View.Exec_Combo, 1, 2, 2, 3);
+      Attach (Full_Table, View.Exec_Combo, 1, 2, 2, 3);
       View_Callback.Connect
         (View.Exec_Combo, "changed", On_Combo_Changed'Access,
          (View => Remote_View (View), Server => Execution_Server));
@@ -274,27 +261,17 @@ package body Remote_Views is
         (Tooltips, Get_Entry (View.Exec_Combo),
          -"The server used to execute the built executables.");
 
-      Gtk_New (View.Config_List_Button, -"List configuration");
-      Attach (View.Full_Table, View.Config_List_Button,
-              0, 1, 3, 4, 0, 0, 5, 5);
+      --  "Servers configuration" button
+      Gtk_New (View.Config_List_Button, -"Servers configuration");
       Set_Tip
         (Tooltips, View.Config_List_Button,
          -"Configure the list of available servers.");
+      Attach (View, View.Config_List_Button,
+              0, 1, 1, 2, 0, 0, 5, 5);
       View_Callback.Connect
         (View.Config_List_Button, "clicked", On_Config_List_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
-      Gtk_New (View.Full_View_Button, -"Basic <<");
-      Attach (View.Full_Table, View.Full_View_Button,
-              1, 2, 3, 4, 0, 0, 5, 5);
-      View_Callback.Connect
-        (View.Full_View_Button, "clicked", On_View_Mode_Clicked'Access,
-         (View =>  Remote_View (View), Server => GPS_Server));
-
-      Set_Child_Visible (View.Simple_Table,
-                         View.Simple_Mode);
-      Set_Child_Visible (View.Full_Table,
-                         not View.Simple_Mode);
       Set_Servers (View);
 
       declare
@@ -368,8 +345,12 @@ package body Remote_Views is
       if Widget.all in Remote_View_Record'Class then
          N := new Node;
          N.Tag := new String'(Module_Name);
-         Set_Attribute (N, "simple_mode",
-           Boolean'Image (Remote_View (Widget).Simple_Mode));
+
+         if Get_State (Remove_View (Widget).Pane) = Collapsed then
+            Set_Attribute (N, "simple_mode", True);
+         else
+            Set_Attribute (N, "simple_mode", False);
+         end if;
          return N;
       end if;
       return null;
@@ -511,25 +492,6 @@ package body Remote_Views is
          User.View.Combo_Selected := False;
       end if;
    end On_Combo_Changed;
-
-   --------------------------
-   -- On_View_Mode_Clicked --
-   --------------------------
-
-   procedure On_View_Mode_Clicked
-     (View : access Gtk_Widget_Record'Class;
-      User : Remote_Data)
-   is
-      pragma Unreferenced (View);
-   begin
-      User.View.Simple_Mode := not User.View.Simple_Mode;
-
-      Set_Child_Visible (User.View.Simple_Table, User.View.Simple_Mode);
-      Set_Child_Visible (User.View.Full_Table, not User.View.Simple_Mode);
-      Show (User.View.Simple_Table);
-      Show (User.View.Full_Table);
-      Set_Servers (User.View);
-   end On_View_Mode_Clicked;
 
    ----------------------------
    -- On_Config_List_Clicked --
