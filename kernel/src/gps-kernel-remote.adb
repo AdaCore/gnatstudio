@@ -37,7 +37,6 @@ with Glib.Convert;               use Glib.Convert;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glib.Xml_Int;               use Glib.Xml_Int;
-with Gdk.Color;                  use Gdk.Color;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Dialog;                 use Gtk.Dialog;
@@ -49,23 +48,24 @@ with Gtk.Label;                  use Gtk.Label;
 with Gtk.List;                   use Gtk.List;
 with Gtk.List_Item;              use Gtk.List_Item;
 with Gtk.Main;                   use Gtk.Main;
-with Gtk.Notebook;               use Gtk.Notebook;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
 with Gtk.Stock;                  use Gtk.Stock;
-with Gtk.Style;                  use Gtk.Style;
 with Gtk.Table;                  use Gtk.Table;
-with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
+with Gtk.Text_View;              use Gtk.Text_View;
+with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
 with Gtk.Tree_View;              use Gtk.Tree_View;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Combo;               use Gtkada.Combo;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Handlers;            use Gtkada.Handlers;
+with Collapsing_Pane;            use Collapsing_Pane;
 
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
@@ -206,7 +206,6 @@ package body GPS.Kernel.Remote is
       Kernel                : Kernel_Handle;
       Machines              : Item_Access;
       Machine_Tree          : Gtk_Tree_View;
-      Notebook              : Gtk_Notebook;
       --  Machine config pannel
       Right_Table           : Gtk_Table;
       Nickname_Event        : Gtk_Event_Box;
@@ -216,12 +215,13 @@ package body GPS.Kernel.Remote is
       Remote_Access_Combo   : Gtkada_Combo;
       Remote_Shell_Combo    : Gtkada_Combo;
       Remote_Sync_Combo     : Gtkada_Combo;
-      Advanced_Button       : Gtk_Toggle_Button;
+      --  Advanced config panel
+      Advanced_Pane         : Collapsing_Pane.Collapsing_Pane;
       Advanced_Table        : Gtk_Table;
       User_Name_Entry       : Gtk_Entry;
       Max_Nb_Connected_Spin : Gtk_Spin_Button;
       Timeout_Spin          : Gtk_Spin_Button;
-      Extra_Init_Cmds_Tree  : Gtk_Tree_View;
+      Init_Cmds_View        : Gtk_Text_View;
       --  Mirror Paths config pannel
       Paths_Table           : Mirrors_List_Access;
       Paths_Tree            : Gtk_Tree_View;
@@ -262,18 +262,10 @@ package body GPS.Kernel.Remote is
    procedure Remove_Clicked (W : access Gtk_Widget_Record'Class);
    --  Called when the remove button is clicked.
 
-   procedure Advanced_Clicked (W : access Gtk_Widget_Record'Class);
-   --  Called when the advanced button is toggeled.
-
    procedure Path_Edited
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
    --  Called when something in the path tree has been edited
-
-   procedure Cmd_Edited
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Called when a use init command has been edited
 
    procedure On_Configure_Server_List
      (Widget : access GObject_Record'Class;
@@ -824,10 +816,8 @@ package body GPS.Kernel.Remote is
       Label       : Gtk_Label;
       Item        : Gtk_List_Item;
       Empty_List  : Boolean := True;
-      VBox        : Gtk_Vbox;
       Line_Nb     : Guint;
-      Color       : Gdk_Color;
-      Style       : Gtk_Style;
+      VBox        : Gtk_Vbox;
       pragma Unreferenced (Tmp);
    begin
       Dialog := new Server_List_Editor_Record;
@@ -848,7 +838,7 @@ package body GPS.Kernel.Remote is
       Attach (Main_Table, Frame, 0, 1, 0, 1);
 
       Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Add (Frame, Scrolled);
 
       Dialog.Machine_Tree := Create_Tree_View
@@ -863,26 +853,13 @@ package body GPS.Kernel.Remote is
          Hide_Expander      => False);
       Add (Scrolled, Dialog.Machine_Tree);
 
-      Gtk_New (Dialog.Notebook);
-      Attach (Main_Table, Dialog.Notebook, 1, 2, 0, 1);
-      Set_Show_Border (Dialog.Notebook, True);
-      Set_Show_Tabs (Dialog.Notebook, True);
-      Set_Tab_Pos (Dialog.Notebook, Pos_Top);
-
-      --  Color for mandatory fields
-      Color := Parse ("#ae0000");
-      Alloc (Get_Default_Colormap, Color);
-      Style := Copy (Get_Default_Style);
-      Set_Fg (Style, State_Normal, Color);
-
       --  Machine configuration
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-      Gtk_New (Label, -"Server config");
-      Append_Page (Dialog.Notebook, Scrolled, Label);
+      Attach (Main_Table, Scrolled, 1, 2, 0, 1);
 
-      Gtk_New (Dialog.Right_Table, Rows => 7, Columns => 2,
+      Gtk_New (Dialog.Right_Table, Rows => 8, Columns => 2,
                Homogeneous => False);
       Add_With_Viewport (Scrolled, Dialog.Right_Table);
 
@@ -894,9 +871,8 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0, 5, 5);
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"Network name:");
+      Gtk_New (Label, -"Network name (*):");
       Set_Alignment (Label, 0.0, 0.5);
-      Set_Style (Label, Style);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
@@ -906,9 +882,8 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0);
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"Remote access tool:");
+      Gtk_New (Label, -"Remote access tool (*):");
       Set_Alignment (Label, 0.0, 0.5);
-      Set_Style (Label, Style);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
@@ -925,9 +900,8 @@ package body GPS.Kernel.Remote is
       Show_All (Get_List (Dialog.Remote_Access_Combo));
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"Shell:");
+      Gtk_New (Label, -"Shell (*):");
       Set_Alignment (Label, 0.0, 0.5);
-      Set_Style (Label, Style);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
@@ -967,20 +941,15 @@ package body GPS.Kernel.Remote is
       end;
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Dialog.Advanced_Button, -"Advanced >>");
-      Set_Active (Dialog.Advanced_Button, False);
-      Attach (Dialog.Right_Table, Dialog.Advanced_Button,
-              1, 2, Line_Nb, Line_Nb + 1,
+      Gtk_New (Dialog.Advanced_Pane, -"Advanced configuration");
+      Set_State (Dialog.Advanced_Pane, Collapsed);
+      Attach (Dialog.Right_Table, Dialog.Advanced_Pane,
+              0, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10, 10);
 
-      Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Table,
                Rows => 4, Columns => 2, Homogeneous => False);
-      Attach (Dialog.Right_Table, Dialog.Advanced_Table,
-              0, 2, Line_Nb, Line_Nb + 1,
-              0, 0);
-      Set_Child_Visible (Dialog.Advanced_Table,
-                         Get_Mode (Dialog.Advanced_Button));
+      Set_Expanded_Widget (Dialog.Advanced_Pane, Dialog.Advanced_Table);
 
       Gtk_New (Label, -"User name:");
       Set_Alignment (Label, 0.0, 0.5);
@@ -1012,31 +981,22 @@ package body GPS.Kernel.Remote is
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4,
               Fill or Expand, 0, 10);
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-      Attach (Dialog.Advanced_Table, Scrolled, 1, 2, 3, 4,
-              Fill or Expand, 0);
-      Dialog.Extra_Init_Cmds_Tree := Create_Tree_View
-        (Column_Types       => (0 => GType_String,
-                                1 => GType_Boolean),
-         Column_Names       => (1 => new String'("command")),
-         Editable_Columns   => (0 => 1),
-         Editable_Callback  => (0 => Cmd_Edited'Access),
-         Show_Column_Titles => False,
-         Selection_Mode     => Selection_Single,
-         Sortable_Columns   => False,
-         Hide_Expander      => False);
-      Add (Scrolled, Dialog.Extra_Init_Cmds_Tree);
-
-      Gtk_New_Vbox (VBox, Spacing => 5);
-      Attach (Main_Table, VBox, 2, 3, 0, 1);
+      Gtk_New (Dialog.Init_Cmds_View);
+      Set_Wrap_Mode (Dialog.Init_Cmds_View, Wrap_Word);
+      Set_Left_Margin (Dialog.Init_Cmds_View, 10);
+      Set_Indent (Dialog.Init_Cmds_View, -10);
+      Set_Pixels_Below_Lines (Dialog.Init_Cmds_View, 3);
+      Attach (Dialog.Advanced_Table, Dialog.Init_Cmds_View, 1, 2, 3, 4,
+              Fill or Expand);
 
       --  Remote paths configuration
 
+      Line_Nb := Line_Nb + 1;
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-      Gtk_New (Label, -"Remote Paths");
-      Append_Page (Dialog.Notebook, Scrolled, Label);
+      Attach (Dialog.Right_Table, Scrolled,
+              0, 2, Line_Nb, Line_Nb + 1,
+              Fill or Expand, 0, 10, 10);
 
       Dialog.Paths_Tree := Create_Tree_View
         (Column_Types       => (Local_Col     => GType_String,
@@ -1058,8 +1018,16 @@ package body GPS.Kernel.Remote is
          Hide_Expander      => False);
       Add (Scrolled, Dialog.Paths_Tree);
 
-      --  Add/Restore/Remove buttons
+      Line_Nb := Line_Nb + 1;
+      Gtk_New (Label, -"(*): Fields marked with a star are mandatory fields");
+      Set_Alignment (Label, 0.0, 0.5);
+      Attach (Dialog.Right_Table, Label,
+              0, 2, Line_Nb, Line_Nb + 1,
+              Fill or Expand, 0, 10);
 
+      --  Add/Restore/Remove buttons
+      Gtk_New_Vbox (VBox, Homogeneous => True);
+      Attach (Main_Table, VBox, 2, 3, 0, 1, 0, 0);
       Gtk_New (Dialog.Add_Machine_Button, -"Add server");
       Pack_Start (VBox, Dialog.Add_Machine_Button, False, False);
       Gtk_New (Dialog.Restore_Button, -"Remove local changes");
@@ -1089,6 +1057,9 @@ package body GPS.Kernel.Remote is
       Widget_Callback.Object_Connect
         (Dialog.Timeout_Spin, "changed", Changed'Access, Dialog);
       Widget_Callback.Object_Connect
+        (Get_Buffer (Dialog.Init_Cmds_View), "changed",
+         Changed'Access, Dialog);
+      Widget_Callback.Object_Connect
         (Get_Selection (Dialog.Machine_Tree), "changed",
          Selection_Changed'Access,
          Dialog);
@@ -1103,10 +1074,6 @@ package body GPS.Kernel.Remote is
       Widget_Callback.Object_Connect
         (Dialog.Remove_Button, "clicked",
          Remove_Clicked'Access,
-         Dialog);
-      Widget_Callback.Object_Connect
-        (Dialog.Advanced_Button, "toggled",
-         Advanced_Clicked'Access,
          Dialog);
 
       --  Copy paths table
@@ -1142,7 +1109,7 @@ package body GPS.Kernel.Remote is
       end loop;
 
       if Empty_List then
-         Set_Child_Visible (Dialog.Notebook, False);
+         Set_Child_Visible (Dialog.Right_Table, False);
       end if;
 
       Tmp := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
@@ -1174,9 +1141,6 @@ package body GPS.Kernel.Remote is
 
          --  User defined item
          Set (Gtk_Tree_Store (Model), Iter, User_Def_Col, True);
-
-      else
-         Trace (Me, "Changes not from user input");
       end if;
    end Changed;
 
@@ -1187,11 +1151,56 @@ package body GPS.Kernel.Remote is
    function Save (Dialog        : Server_List_Editor;
                   Save_Selected : Boolean := False) return Boolean
    is
+      function Get_Command_List
+        (View : Gtk_Text_View) return Argument_List;
+      --  Retrieve the commands from the gtk_text_view
+
       function Check_Fields
         (Model  : Gtk.Tree_Store.Gtk_Tree_Store;
          Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
          Dialog : Server_List_Editor) return Boolean;
       --  Check that the last selected machine has correctly been entered
+
+      ----------------------
+      -- Get_Command_List --
+      ----------------------
+
+      function Get_Command_List
+        (View : Gtk_Text_View) return Argument_List
+      is
+         I_Start : Gtk_Text_Iter;
+         I_End   : Gtk_Text_Iter;
+         Buffer  : constant Gtk_Text_Buffer := Get_Buffer (View);
+      begin
+         Get_Start_Iter (Buffer, I_Start);
+         Get_End_Iter (Buffer, I_End);
+
+         declare
+            Str     : constant String := Get_Text (Buffer, I_Start, I_End);
+            Idx     : Natural := Str'First;
+            Idx_End : Natural := Str'Last;
+            N_Lines : Natural;
+         begin
+            Skip_Blanks (Str, Idx);
+            Skip_Blanks (Str, Idx_End, -1);
+            N_Lines := Lines_Count (Str (Idx .. Idx_End));
+
+            declare
+               Substr : constant String := Str (Idx .. Idx_End);
+               List   : GNAT.OS_Lib.String_List (1 .. N_Lines);
+            begin
+               Idx := Substr'First;
+
+               for J in List'Range loop
+                  Idx_End := Line_End (Substr, Idx);
+                  List (J) := new String'(Substr (Idx .. Idx_End));
+                  Idx := Next_Line (Substr, Idx);
+               end loop;
+
+               return List;
+            end;
+         end;
+      end Get_Command_List;
 
       ------------------
       -- Check_Fields --
@@ -1247,14 +1256,9 @@ package body GPS.Kernel.Remote is
       Model      : Gtk.Tree_Store.Gtk_Tree_Store;
       Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
       Item       : Item_Access;
-      Init_Cmds  : String_List_Access;
       Path_Item  : Mirrors_List_Access;
       Path_Model : Gtk.Tree_Store.Gtk_Tree_Store;
       Path_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Cmds_Model : Gtk_Tree_Store;
-      Cmds_Iter  : Gtk_Tree_Iter;
-      Nb_Cmds    : Natural;
-      Cmd_Idx    : Natural;
       Attribute  : Descriptor_Attribute;
       Modified   : Boolean;
    begin
@@ -1312,38 +1316,6 @@ package body GPS.Kernel.Remote is
             --  free replaced descriptor
             Unref (Item.Desc);
 
-            Cmds_Model := Gtk_Tree_Store
-              (Get_Model (Dialog.Extra_Init_Cmds_Tree));
-            Cmds_Iter  := Get_Iter_First (Cmds_Model);
-            Nb_Cmds    := 0;
-
-            while Cmds_Iter /= Null_Iter loop
-               if Get_String (Cmds_Model, Cmds_Iter, 0) /= "" then
-                  Nb_Cmds := Nb_Cmds + 1;
-               end if;
-               Next (Cmds_Model, Cmds_Iter);
-            end loop;
-
-            Init_Cmds := new Argument_List (1 .. Nb_Cmds);
-            Cmd_Idx   := Init_Cmds'First;
-            Cmds_Iter := Get_Iter_First (Cmds_Model);
-
-            while Cmds_Iter /= Null_Iter loop
-               declare
-                  Str : constant String :=
-                    Get_String (Cmds_Model, Cmds_Iter, 0);
-               begin
-                  if Str /= "" then
-                     if Active (Me) then
-                        Trace (Me, "added init cmd: '" & Str & "'");
-                     end if;
-                     Init_Cmds (Cmd_Idx) := new String'(Str);
-                     Cmd_Idx := Cmd_Idx + 1;
-                  end if;
-               end;
-               Next (Cmds_Model, Cmds_Iter);
-            end loop;
-
             Item.Desc := new Machine_Descriptor_Record'
               (Nickname            => new String'(Nickname),
                Network_Name        => new String'
@@ -1360,7 +1332,8 @@ package body GPS.Kernel.Remote is
                  Integer (Get_Value_As_Int (Dialog.Timeout_Spin)) * 1000,
                Max_Nb_Connections  => Integer
                  (Get_Value_As_Int (Dialog.Max_Nb_Connected_Spin)),
-               Extra_Init_Commands => Init_Cmds,
+               Extra_Init_Commands => new Argument_List'
+                 (Get_Command_List (Dialog.Init_Cmds_View)),
                Attribute           => Attribute,
                Ref                 => 1);
          end if;
@@ -1434,8 +1407,6 @@ package body GPS.Kernel.Remote is
         renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Store.Gtk_Tree_Store;
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Cmd_Model : Gtk.Tree_Store.Gtk_Tree_Store;
-      Cmd_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
       Item      : Item_Access;
       Sys_Item  : Item_Access;
       Overriden : Boolean;
@@ -1498,24 +1469,15 @@ package body GPS.Kernel.Remote is
             Set_Value (Dialog.Max_Nb_Connected_Spin,
                        Gdouble (Item.Desc.Max_Nb_Connections));
 
-            Cmd_Model :=
-              Gtk_Tree_Store (Get_Model (Dialog.Extra_Init_Cmds_Tree));
-            Clear (Cmd_Model);
-            Cmd_Iter := Null_Iter;
+            Set_Text (Get_Buffer (Dialog.Init_Cmds_View), "");
 
             if Item.Desc.Extra_Init_Commands /= null then
                for J in Item.Desc.Extra_Init_Commands'Range loop
-                  Append (Cmd_Model, Cmd_Iter, Null_Iter);
-                  Set (Cmd_Model, Cmd_Iter, 0,
-                       Item.Desc.Extra_Init_Commands (J).all);
-                  Set (Cmd_Model, Cmd_Iter, 1, True);
+                  Insert_At_Cursor
+                    (Get_Buffer (Dialog.Init_Cmds_View),
+                     Item.Desc.Extra_Init_Commands (J).all & ASCII.LF);
                end loop;
             end if;
-
-            --  Append an empty line at the end
-            Append (Cmd_Model, Cmd_Iter, Null_Iter);
-            Set (Cmd_Model, Cmd_Iter, 0, "");
-            Set (Cmd_Model, Cmd_Iter, 1, True);
 
             Dialog.Restoring := False;
 
@@ -1598,7 +1560,7 @@ package body GPS.Kernel.Remote is
                return;
             end if;
 
-            Set_Child_Visible (Dialog.Notebook, True);
+            Set_Child_Visible (Dialog.Right_Table, True);
 
             Dialog.Machines := new Item_Record'
               (Desc => new Machine_Descriptor_Record'
@@ -1746,7 +1708,7 @@ package body GPS.Kernel.Remote is
             end loop;
 
             if Dialog.Machines = null then
-               Set_Child_Visible (Dialog.Notebook, False);
+               Set_Child_Visible (Dialog.Right_Table, False);
                Set_Sensitive (Dialog.Restore_Button, False);
                Set_Sensitive (Dialog.Remove_Button, False);
             end if;
@@ -1760,18 +1722,6 @@ package body GPS.Kernel.Remote is
          end;
       end if;
    end Remove_Clicked;
-
-   ----------------------
-   -- Advanced_Clicked --
-   ----------------------
-
-   procedure Advanced_Clicked (W : access Gtk_Widget_Record'Class) is
-      Dialog    : Server_List_Editor_Record
-        renames Server_List_Editor_Record (W.all);
-   begin
-      Set_Child_Visible
-        (Dialog.Advanced_Table, Get_Active (Dialog.Advanced_Button));
-   end Advanced_Clicked;
 
    -----------------
    -- Path_Edited --
@@ -1834,55 +1784,6 @@ package body GPS.Kernel.Remote is
       --  Tell dialog that some values have changed for the selected machine.
       Changed (Dialog);
    end Path_Edited;
-
-   ----------------
-   -- Cmd_Edited --
-   ----------------
-
-   procedure Cmd_Edited
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) is
-      pragma Unreferenced (Params);
-      Dialog      : constant Server_List_Editor :=
-        Server_List_Editor (Get_Toplevel (Widget));
-      Empty_Exist : Boolean := False;
-      Model       : Gtk_Tree_Store;
-      Iter        : Gtk_Tree_Iter;
-      Empty_Iter  : Gtk_Tree_Iter;
-   begin
-      Trace (Me, "Local_Path_Edited");
-
-      --  Determine if a new path was added
-      Model := Gtk_Tree_Store (Get_Model (Dialog.Extra_Init_Cmds_Tree));
-      Iter  := Get_Iter_First (Model);
-
-      Empty_Exist := False;
-      while Iter /= Null_Iter loop
-         if Get_String (Model, Iter, 0) = "" then
-            if not Empty_Exist then
-               Empty_Exist := True;
-               Iter_Copy (Iter, Empty_Iter);
-            else
-               --  Always keep the last empty line
-               Remove (Model, Empty_Iter);
-               Iter_Copy (Iter, Empty_Iter);
-            end if;
-         end if;
-         Next (Model, Iter);
-      end loop;
-
-      --  If no empty line exist, create one.
-      if not Empty_Exist then
-         Trace (Me, "No empty line, create one");
-         Iter := Null_Iter;
-         Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, 0, "");
-         Set (Model, Iter, 1, True);
-      end if;
-
-      --  Tell dialog that some values have changed for the selected machine.
-      Changed (Dialog);
-   end Cmd_Edited;
 
    ------------------------------
    -- On_Configure_Server_List --
