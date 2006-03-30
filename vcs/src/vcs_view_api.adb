@@ -262,13 +262,13 @@ package body VCS_View_API is
       function Loc_Root return String is
          Proj : constant Virtual_File := Project_Path (Project);
          Path : constant String := Full_Name (Proj, True).all;
-         I    : constant Natural := Index (Path, Pattern);
+         J    : constant Natural := Index (Path, Pattern);
       begin
-         if I = 0 then
+         if J = 0 then
             return "";
 
          else
-            return Path (Path'First .. I) & "tags";
+            return Path (Path'First .. J) & "tags";
          end if;
       end Loc_Root;
 
@@ -317,13 +317,13 @@ package body VCS_View_API is
       function Loc_Root return String is
          Proj : constant Virtual_File := Project_Path (Project);
          Path : constant String := Full_Name (Proj, True).all;
-         I    : constant Natural := Index (Path, Pattern);
+         J    : constant Natural := Index (Path, Pattern);
       begin
-         if I = 0 then
+         if J = 0 then
             return "";
 
          else
-            return Path (Path'First .. I) & "tags";
+            return Path (Path'First .. J) & "tags";
          end if;
       end Loc_Root;
 
@@ -548,8 +548,8 @@ package body VCS_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      Explorer  : constant VCS_Explorer_View_Access := Get_Explorer (Kernel);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Explorer : constant VCS_Explorer_View_Access := Get_Explorer (Kernel);
    begin
       if Has_Project_Information (Context) then
          On_Remove_Project
