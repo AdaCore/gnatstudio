@@ -66,6 +66,10 @@ package Collapsing_Pane is
    --  Changes programmatically the state of the collapsing pane. The widget
    --  will be automatically refreshed if needed.
 
+   function Get_State
+     (Pane : access Collapsing_Pane_Record'Class) return Foldable_Box_State;
+   --  Get the state of Pane.
+
    procedure Set_Reduce_Window
      (Pane : access Collapsing_Pane_Record'Class; Reduce_Window : Boolean);
    --  When the collapsing pane is collapsed or expanded, it can automatically

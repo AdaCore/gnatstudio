@@ -260,6 +260,16 @@ package body Collapsing_Pane is
       Refresh_Pixmap (Pane);
    end Set_State;
 
+   ---------------
+   -- Get_State --
+   ---------------
+
+   function Get_State
+     (Pane : access Collapsing_Pane_Record'Class) return Foldable_Box_State is
+   begin
+      return Pane.State;
+   end Get_State;
+
    ---------------------
    -- On_Change_State --
    ---------------------
