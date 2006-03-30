@@ -32,7 +32,6 @@ with Gtk.Box;
 with Gtk.Container;
 with Gtk.Event_Box;
 with Gtk.Label;
-with Gtk.Notebook;
 with Gtk.Widget;
 
 package Collapsing_Pane is
@@ -82,14 +81,8 @@ private
          Label            : Gtk.Label.Gtk_Label;
          Label_Box        : Gtk.Event_Box.Gtk_Event_Box;
          Label_Image      : Gtk.Box.Gtk_Box;
-         Expanded_Widget  : Gtk.Widget.Gtk_Widget;
-         Collapsed_Widget : Gtk.Widget.Gtk_Widget;
          Expanded_Box     : Gtk.Box.Gtk_Box;
          Collapsed_Box    : Gtk.Box.Gtk_Box;
-         Notebook         : Gtk.Notebook.Gtk_Notebook;
-
-         Page_Collapsed   : Gint := -1;
-         Page_Expanded    : Gint := -1;
 
          Reduce_Window    : Boolean := False;
          --  Do we want to reduce de window when we collapse the pane ?
