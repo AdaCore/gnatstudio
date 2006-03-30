@@ -67,13 +67,38 @@ package body Commands.Builder is
       Output           : String;
       Quiet            : Boolean := False)
    is
+      Last  : Natural;
       Lines : Slice_Set;
    begin
       if not Quiet then
          Insert (Kernel, Output, Add_LF => False);
       end if;
 
-      Create (Lines, Output, To_Set (ASCII.LF));
+      if Output'Length = 0
+        or else
+          (Output'Length = 1
+           and then Output (Output'First) = ASCII.LF)
+      then
+         return;
+      end if;
+
+      --  A string terminated by an ASCII.LF is split into the some string plus
+      --  an extra empty one. We therefore need to remove the trailing ASCII.LF
+      --  from the string before splitting it.
+
+      Last := Output'Last;
+
+      if Last > Output'First
+        and then Output (Last) = ASCII.LF
+      then
+         Last := Last - 1;
+      end if;
+
+      Create
+        (Lines,
+         From       => Output (Output'First .. Last),
+         Separators => To_Set (ASCII.LF),
+         Mode       => Single);
 
       for J in 1 .. Slice_Count (Lines) loop
          String_List_Utils.String_List.Append
