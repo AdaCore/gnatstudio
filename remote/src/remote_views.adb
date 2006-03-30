@@ -346,10 +346,10 @@ package body Remote_Views is
          N := new Node;
          N.Tag := new String'(Module_Name);
 
-         if Get_State (Remove_View (Widget).Pane) = Collapsed then
-            Set_Attribute (N, "simple_mode", True);
+         if Get_State (Remote_View (Widget).Pane) = Collapsed then
+            Set_Attribute (N, "simple_mode", "true");
          else
-            Set_Attribute (N, "simple_mode", False);
+            Set_Attribute (N, "simple_mode", "false");
          end if;
          return N;
       end if;
