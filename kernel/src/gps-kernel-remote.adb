@@ -2005,7 +2005,7 @@ package body GPS.Kernel.Remote is
 
       --  Add menu item
       Register_Menu
-        (Kernel, Remote_Menu_Path, -"Servers _configuration", "",
+        (Kernel, Remote_Menu_Path, -"Servers _Configuration", "",
          On_Configure_Server_List'Access);
    end Register_Module;
 
