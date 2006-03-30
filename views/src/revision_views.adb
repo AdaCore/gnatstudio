@@ -322,10 +322,19 @@ package body Revision_Views is
                Path     : Gtk_Tree_Path;
                Tmp      : Gtk_Tree_Iter;
                Has_Link : Boolean;
+               Parent   : Gtk_Tree_Iter := Rev_2;
             begin
                Path := Get_Path (View.Model, Rev_1);
+
                loop
-                  Append (View.Model, Iter, Rev_2);
+                  Append (View.Model, Iter, Parent);
+
+                  if Parent = Rev_2 then
+                     --  The first node becomes the parent of the next
+                     --  reparented nodes.
+                     Parent := Iter;
+                  end if;
+
                   Tmp := Get_Iter (View.Model, Path);
                   Has_Link := Get_Boolean (View.Model, Tmp, Link_Column);
 
