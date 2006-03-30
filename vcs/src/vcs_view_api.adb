@@ -268,7 +268,7 @@ package body VCS_View_API is
             return "";
 
          else
-            return Path (Path'First .. J) & "tags";
+            return Path (Path'First .. J) & "branches";
          end if;
       end Loc_Root;
 
@@ -985,6 +985,7 @@ package body VCS_View_API is
 
          if Show_Everything or else Has_Tag_Information (Context) then
             Add_Action (Diff_Tag, On_Menu_Diff_Tag'Access);
+            Add_Action (Merge, On_Menu_Merge'Access);
          end if;
 
          Add_Separator;
@@ -1335,10 +1336,8 @@ package body VCS_View_API is
             end if;
 
          else
-            if Has_File_Information (Context) then
-               String_List.Append
-                 (List, Full_Name (File_Information (Context)).all);
-            end if;
+            String_List.Append
+              (List, Full_Name (File_Information (Context)).all);
          end if;
       end if;
 
@@ -2220,8 +2219,8 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Files : String_List.List;
       Ref   : constant VCS_Access := Get_Current_Ref (Context);
+      Files : String_List.List;
 
    begin
       Files := Get_Selected_Files (Context);
@@ -2242,6 +2241,30 @@ package body VCS_View_API is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update;
+
+   -------------------
+   -- On_Menu_Merge --
+   -------------------
+
+   procedure On_Menu_Merge
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+
+      Ref   : constant VCS_Access := Get_Current_Ref (Context);
+      Files : String_List.List;
+   begin
+      if Has_Tag_Information (Context) then
+         Files := Get_Selected_Files (Context);
+         Merge (Ref, Files, Tag_Information (Context));
+         String_List.Free (Files);
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Merge;
 
    ------------------------
    -- On_Menu_Get_Status --
