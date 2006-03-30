@@ -214,6 +214,18 @@
       <shell>Hook.run %1 null</shell>
    </action>
 
+   <!-- CVS merge -->
+
+   <action name="generic_cvs_merge" show-command="true" output="none">
+      <external output="">cvs update -j "$1" "$2"</external>
+      <on-failure>
+         <shell output="">echo "CVS error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+      <shell>Hook "file_changed_on_disk"</shell>
+      <shell>Hook.run %1 null</shell>
+   </action>
+
    <!-- CVS diff -->
 
    <action name="generic_cvs_diff_patch" show-command="true" output="none">
@@ -353,6 +365,7 @@
       <switch             action="generic_cvs_switch"           label="Switch tag/branch"/>
       <open               action="generic_cvs_open"             label="Open"/>
       <update             action="generic_cvs_update"           label="Update"/>
+      <merge              action="generic_cvs_merge"            label="Merge"/>
       <commit             action="generic_cvs_commit"           label="Commit"/>
       <history            action="generic_cvs_history"          label="View entire revision history"/>
       <history_text       action="generic_cvs_history_text"     label="View entire revision history (as text)"/>

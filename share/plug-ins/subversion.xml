@@ -215,6 +215,20 @@
       <shell>Hook.run %1 null</shell>
    </action>
 
+   <!-- SVN merge -->
+
+   <action name="generic_svn_merge" show-command="true" output="none">
+      <shell>VCS.repository_path "$2"</shell>
+      <shell>VCS.repository_path "$2" "$1"</shell>
+      <external output="">svn --non-interactive merge "%2" "%1"</external>
+      <on-failure>
+         <shell output="">echo "SVN error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+      <shell>Hook "file_changed_on_disk"</shell>
+      <shell>Hook.run %1 null</shell>
+   </action>
+
    <!-- SVN resolved -->
 
    <action name="generic_svn_resolved" show-command="true" output="none">
@@ -295,8 +309,8 @@
 
    <action name="generic_svn_diff_tag" show-command="true" output="none">
       <shell output="">echo "Getting comparison for revision $1 of $3/$2 ..."</shell>
-      <shell output="">VCS.repository_path $2</shell>
-      <shell output="">VCS.repository_path $2 $1</shell>
+      <shell output="">VCS.repository_path "$2"</shell>
+      <shell output="">VCS.repository_path "$2" "$1"</shell>
       <external>svn --non-interactive diff --diff-cmd diff -x --normal "%2" "%1"</external>
 
       <on-failure>
@@ -335,6 +349,7 @@
       <create_branch      action="generic_svn_create_branch"    label="Create branch"/>
       <switch             action="generic_svn_switch"           label="Switch tag/branch"/>
       <update             action="generic_svn_update"           label="Update"/>
+      <merge              action="generic_svn_merge"            label="Merge"/>
       <resolved           action="generic_svn_resolved"         label="Resolved"/>
       <commit             action="generic_svn_commit"           label="Commit"/>
       <history            action="generic_svn_history"          label="View entire revision history"/>
