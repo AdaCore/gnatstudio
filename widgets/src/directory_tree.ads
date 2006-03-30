@@ -89,8 +89,8 @@ package Directory_Tree is
    --
    --  If the directory doesn't exist, the closest possible parent is selected.
 
-   function Get_Selection (Tree : access Dir_Tree_Record)
-                           return VFS.Virtual_File;
+   function Get_Selection
+     (Tree : access Dir_Tree_Record) return VFS.Virtual_File;
    --  Return the absolute directory for the selected node.
    --  An empty string "" is returned if there is no selection currently.
 
@@ -142,8 +142,7 @@ package Directory_Tree is
    --  The empty string is returned if there is no selection.
 
    function Get_Multiple_Selection
-     (Selector : access Directory_Selector_Record'Class)
-      return VFS.File_Array;
+     (Selector : access Directory_Selector_Record'Class) return VFS.File_Array;
    --  Return the list of all selected directories in Selector.
    --  If Selector only allowed the selection of a single directory, then an
    --  array of size 1 is returned.
