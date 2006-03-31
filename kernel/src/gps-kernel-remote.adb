@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;
 with Ada.Tags;
@@ -34,15 +35,18 @@ with GNAT.Regpat;                use GNAT.Regpat;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
-with Glib.Values;                use Glib.Values;
+with Glib.Glist;
+with Glib.Object;                use Glib.Object;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
+with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.GEntry;                 use Gtk.GEntry;
+with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.List;                   use Gtk.List;
 with Gtk.List_Item;              use Gtk.List_Item;
@@ -61,6 +65,7 @@ with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
+with Gtkada;
 with Gtkada.Combo;               use Gtkada.Combo;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Handlers;            use Gtkada.Handlers;
@@ -197,10 +202,77 @@ package body GPS.Kernel.Remote is
    Modified_Col  : constant := 1;
    User_Def_Col  : constant := 2;
 
-   Local_Col     : constant := 0;
-   Remote_Col    : constant := 1;
-   Need_Sync_Col : constant := 2;
-   Editable_Col  : constant := 3;
+   Enter_Local_Path_String : constant String :=  -"<enter local path here>";
+   Enter_Remote_Path_String : constant String := -"<enter remote path here>";
+
+   type Path_Row_Record is record
+      Local_Entry          : Gtk_Entry;
+      Remote_Entry         : Gtk_Entry;
+      Need_Sync_Button     : Gtk_Check_Button;
+      Remove_Button        : Gtk_Button;
+   end record;
+   type Path_Row is access all Path_Row_Record;
+   --  This widget is the graphical representation of a mirror path.
+
+   function Convert is new Ada.Unchecked_Conversion (System.Address, Path_Row);
+   function Convert is new Ada.Unchecked_Conversion (Path_Row, System.Address);
+
+   package Path_Row_List is new Glib.Glist.Generic_List (Path_Row);
+
+   type Paths_Widget_Record is new Gtk_Frame_Record with record
+      Table           : Gtk_Table;
+      Add_Path_Button : Gtk_Button;
+      List            : Path_Row_List.Glist;
+      Nb_Rows         : Guint;
+      On_Change_W     : Gtk_Widget;
+      On_Change_P     : Widget_Callback.Simple_Handler;
+   end record;
+   type Paths_Widget is access all Paths_Widget_Record'Class;
+
+   procedure Gtk_New
+     (Widget      : out Paths_Widget;
+      On_Change_W : Gtk_Widget;
+      On_Change_P : Widget_Callback.Simple_Handler);
+
+   procedure Set_Path_List
+     (Widget    : Paths_Widget;
+      Path_List : Mirror_Path_Access);
+   --  Reset the widget and fills it with the path list
+
+   function Get_Path_List (Widget : Paths_Widget) return Mirror_Path_Access;
+   --  Retrieve the mirror path list represented by the widget.
+
+   procedure Add_Path_Row
+     (Widget      : Paths_Widget;
+      Row_Number  : Guint;
+      Path        : Mirror_Path_Access);
+   --  Add a new Path row to the Mirror_Path_Widget
+
+   procedure Remove_Path_Row
+     (Widget : Paths_Widget;
+      Row    : in out Path_Row);
+   --  Remove the row from widget
+
+   function Get_Path (Row : Path_Row) return Mirror_Path_Access;
+   --  Retrieve the mirror path represented by the widget
+
+   procedure On_Path_Grab_Focus (Widget : access Gtk_Widget_Record'Class);
+   --  Called when a path with default string is clicked
+
+   procedure On_Add_Path_Clicked (W : access Gtk_Widget_Record'Class);
+   --  Add_Path button is clicked.
+
+   type Remove_Row_Data is new Glib.Object.GObject_Record with record
+      Widget : Paths_Widget;
+      Row    : Path_Row;
+   end record;
+   type Remove_Row_Data_Access is access all Remove_Row_Data'Class;
+
+   package Remove_Callback is new
+     Gtk.Handlers.Callback (Remove_Row_Data);
+
+   procedure On_Remove_Path_Clicked (W : access Remove_Row_Data'Class);
+   --  One of the Remove_Path button is clicked.
 
    type Server_List_Editor_Record is new Gtk_Dialog_Record with record
       Kernel                : Kernel_Handle;
@@ -223,8 +295,8 @@ package body GPS.Kernel.Remote is
       Timeout_Spin          : Gtk_Spin_Button;
       Init_Cmds_View        : Gtk_Text_View;
       --  Mirror Paths config pannel
-      Paths_Table           : Mirrors_List_Access;
-      Paths_Tree            : Gtk_Tree_View;
+      Paths_List            : Mirrors_List_Access;
+      Paths_List_Widget     : Paths_Widget;
       --  Add/Remove/Restore buttons
       Add_Machine_Button    : Gtk_Button;
       Restore_Button        : Gtk_Button;
@@ -232,7 +304,6 @@ package body GPS.Kernel.Remote is
       Restoring             : Boolean := False;
       Added_Item            : Boolean := False;
       Select_Back           : Boolean := False;
-      --  Set to true when selecting a machine back.
    end record;
    type Server_List_Editor is access all Server_List_Editor_Record'Class;
 
@@ -240,7 +311,7 @@ package body GPS.Kernel.Remote is
                       Kernel : Kernel_Handle);
    --  Creates the server_list_editor dialog
 
-   procedure Changed  (W : access Gtk_Widget_Record'Class);
+   procedure On_Changed  (W : access Gtk_Widget_Record'Class);
    --  Called when one of the entries has changed
 
    function Save (Dialog        : Server_List_Editor;
@@ -250,22 +321,17 @@ package body GPS.Kernel.Remote is
    --  If Save_Selected is set, then the selected item is saved. Else
    --  only unselected items are saved.
 
-   procedure Selection_Changed (W : access Gtk_Widget_Record'Class);
+   procedure On_Selection_Changed (W : access Gtk_Widget_Record'Class);
    --  Called when the selected machine has changed.
 
-   procedure Add_Machine_Clicked (W : access Gtk_Widget_Record'Class);
+   procedure On_Add_Machine_Clicked (W : access Gtk_Widget_Record'Class);
    --  Called when the add_machine button is clicked.
 
-   procedure Restore_Clicked (W : access Gtk_Widget_Record'Class);
+   procedure On_Restore_Clicked (W : access Gtk_Widget_Record'Class);
    --  Called when the restore button is clicked.
 
-   procedure Remove_Clicked (W : access Gtk_Widget_Record'Class);
+   procedure On_Remove_Clicked (W : access Gtk_Widget_Record'Class);
    --  Called when the remove button is clicked.
-
-   procedure Path_Edited
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Called when something in the path tree has been edited
 
    -----------------------
    -- Server Assignment --
@@ -798,6 +864,283 @@ package body GPS.Kernel.Remote is
    -------------
 
    procedure Gtk_New
+     (Widget : out Paths_Widget;
+      On_Change_W : Gtk_Widget;
+      On_Change_P : Widget_Callback.Simple_Handler)
+   is
+      Pix    : Gtk_Image;
+      Label  : Gtk_Label;
+   begin
+      Widget := new Paths_Widget_Record;
+      Gtk.Frame.Initialize (Widget, -"Path Translations");
+
+      Widget.On_Change_W := On_Change_W;
+      Widget.On_Change_P := On_Change_P;
+
+      Gtk_New (Widget.Table, 1, 4, False);
+      Add (Widget, Widget.Table);
+
+      Gtk_New (Label, -"Local Path");
+      Attach (Widget.Table, Label, 0, 1, 0, 1, Expand or Fill, 0);
+      Gtk_New (Label, -"Remote Path");
+      Attach (Widget.Table, Label, 1, 2, 0, 1, Expand or Fill, 0);
+      Gtk_New (Label, -"keep sync");
+      Attach (Widget.Table, Label, 2, 3, 0, 1, Expand or Fill, 0);
+
+      Gtk_New (Widget.Add_Path_Button);
+      Gtk_New (Pix, Stock_Add, Icon_Size_Menu);
+      Add (Widget.Add_Path_Button, Pix);
+      Attach (Widget.Table, Widget.Add_Path_Button, 3, 4, 1, 2,
+              0, 0);
+
+      Widget.List := Path_Row_List.Null_List;
+      Widget_Callback.Object_Connect
+        (Widget.Add_Path_Button, "clicked",
+         On_Add_Path_Clicked'Access,
+         Widget);
+   end Gtk_New;
+
+   -------------------
+   -- Set_Path_List --
+   -------------------
+
+   procedure Set_Path_List
+     (Widget    : Paths_Widget;
+      Path_List : Mirror_Path_Access)
+   is
+      Path   : Mirror_Path_Access;
+      Row    : Path_Row;
+      use type Path_Row_List.Glist;
+   begin
+      loop
+         exit when Widget.List = Path_Row_List.Null_List;
+         Row := Path_Row_List.Get_Data (Widget.List);
+         Remove_Path_Row (Widget, Row);
+      end loop;
+
+      Ref (Widget.Add_Path_Button);
+      Remove (Widget.Table, Widget.Add_Path_Button);
+
+      Resize (Widget.Table, 1, 4);
+
+      Widget.Nb_Rows := 1;
+      Path := Path_List;
+
+      while Path /= null loop
+         Add_Path_Row (Widget, Widget.Nb_Rows, Path);
+         Widget.Nb_Rows := Widget.Nb_Rows + 1;
+         Path := Path.Next;
+      end loop;
+
+      Attach (Widget.Table, Widget.Add_Path_Button,
+              3, 4, Widget.Nb_Rows, Widget.Nb_Rows + 1, 0, 0);
+      Show_All (Widget.Table);
+      Unref (Widget.Add_Path_Button);
+   end Set_Path_List;
+
+   -------------------
+   -- Get_Path_List --
+   -------------------
+
+   function Get_Path_List (Widget : Paths_Widget) return Mirror_Path_Access
+   is
+      List : Path_Row_List.Glist;
+      Row  : Path_Row;
+      Path : Mirror_Path_Access;
+      Item : Mirror_Path_Access;
+      use type Path_Row_List.Glist;
+   begin
+      List := Widget.List;
+
+      while List /= Path_Row_List.Null_List loop
+         Row := Path_Row_List.Get_Data (List);
+
+         if Path = null then
+            Path := Get_Path (Row);
+            Item := Path;
+         else
+            Item.Next := Get_Path (Row);
+            if Item.Next /= null then
+               Item := Item.Next;
+            end if;
+         end if;
+
+         List := Path_Row_List.Next (List);
+      end loop;
+
+      return Path;
+   end Get_Path_List;
+
+   ------------------
+   -- Add_Path_Row --
+   ------------------
+
+   procedure Add_Path_Row
+     (Widget      : Paths_Widget;
+      Row_Number  : Guint;
+      Path        : Mirror_Path_Access)
+   is
+      Pix : Gtk_Image;
+      Row : Path_Row;
+      Data : Remove_Row_Data_Access;
+   begin
+      Row := new Path_Row_Record;
+
+      Gtk_New (Row.Local_Entry);
+      Set_Width_Chars (Row.Local_Entry, 15);
+      Attach (Widget.Table, Row.Local_Entry, 0, 1, Row_Number, Row_Number + 1,
+              Fill or Expand, 0, 0, 2);
+
+      Gtk_New (Row.Remote_Entry);
+      Set_Width_Chars (Row.Remote_Entry, 15);
+      Attach (Widget.Table, Row.Remote_Entry, 1, 2, Row_Number, Row_Number + 1,
+              Fill or Expand, 0, 0, 2);
+
+      Gtk_New (Row.Need_Sync_Button);
+      Attach
+        (Widget.Table, Row.Need_Sync_Button, 2, 3, Row_Number, Row_Number + 1,
+         0, 0, 0, 2);
+
+      Gtk_New (Row.Remove_Button);
+      Gtk_New (Pix, Stock_Remove, Icon_Size_Menu);
+      Add (Row.Remove_Button, Pix);
+      Attach
+        (Widget.Table, Row.Remove_Button, 3, 4, Row_Number, Row_Number + 1,
+         0, 0, 0, 2);
+      Data := new Remove_Row_Data;
+      Data.Widget := Widget;
+      Data.Row    := Row;
+      Remove_Callback.Object_Connect
+        (Row.Remove_Button, "clicked", On_Remove_Path_Clicked'Access, Data);
+
+      Path_Row_List.Append (Widget.List, Row);
+
+      if Path = null then
+         Set_Text (Row.Local_Entry, Enter_Local_Path_String);
+         Set_Text (Row.Remote_Entry, Enter_Remote_Path_String);
+         Set_Active (Row.Need_Sync_Button, False);
+         Widget_Callback.Object_Connect
+           (Row.Local_Entry, "grab_focus",
+            On_Path_Grab_Focus'Access, Row.Local_Entry);
+         Widget_Callback.Object_Connect
+           (Row.Remote_Entry, "grab_focus",
+            On_Path_Grab_Focus'Access, Row.Remote_Entry);
+      else
+         Set_Text (Row.Local_Entry, Path.Local_Path.all);
+         Set_Text (Row.Remote_Entry, Path.Remote_Path.all);
+         Set_Active (Row.Need_Sync_Button, Path.Need_Sync);
+      end if;
+      Widget_Callback.Object_Connect
+        (Row.Local_Entry, "changed", Widget.On_Change_P, Widget.On_Change_W);
+      Widget_Callback.Object_Connect
+        (Row.Remote_Entry, "changed", Widget.On_Change_P, Widget.On_Change_W);
+      Widget_Callback.Object_Connect
+        (Row.Need_Sync_Button, "toggled",
+         Widget.On_Change_P, Widget.On_Change_W);
+      Show_All (Widget.Table);
+   end Add_Path_Row;
+
+   ------------------------
+   -- On_Path_Grab_Focus --
+   ------------------------
+
+   procedure On_Path_Grab_Focus (Widget : access Gtk_Widget_Record'Class) is
+      Gentry : constant Gtk_Entry := Gtk_Entry (Widget);
+      Str    : constant String := Get_Text (Gentry);
+   begin
+      if Str = Enter_Local_Path_String
+        or else Str = Enter_Remote_Path_String
+      then
+         Set_Text (Gentry, "");
+      end if;
+   end On_Path_Grab_Focus;
+
+   ---------------------
+   -- Remove_Path_Row --
+   ---------------------
+
+   procedure Remove_Path_Row
+     (Widget : Paths_Widget;
+      Row    : in out Path_Row)
+   is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Path_Row_Record, Path_Row);
+   begin
+      Remove (Widget.Table, Row.Local_Entry);
+      Remove (Widget.Table, Row.Remote_Entry);
+      Remove (Widget.Table, Row.Need_Sync_Button);
+      Remove (Widget.Table, Row.Remove_Button);
+      Path_Row_List.Remove (Widget.List, Row);
+      Free (Row);
+   end Remove_Path_Row;
+
+   --------------
+   -- Get_Path --
+   --------------
+
+   function Get_Path (Row : Path_Row) return Mirror_Path_Access is
+      Item : Mirror_Path_Access;
+      Local : constant String := Get_Text (Row.Local_Entry);
+      Remote : constant String := Get_Text (Row.Remote_Entry);
+   begin
+
+      --  ??? get remote machine from the widget to be able to get remote FS
+      if Local /= Enter_Local_Path_String
+        and then Local /= ""
+        and then Is_Absolute_Path (Get_Local_Filesystem, Local)
+        and then Remote /= Enter_Remote_Path_String
+        and then Remote /= ""
+      then
+         --  ??? Attribute item need to be determined
+         Item := new Mirror_Path_Record'
+           (Local_Path =>
+              new String'(Ensure_Directory (Get_Local_Filesystem, Local)),
+            Remote_Path =>
+              new String'(Remote),
+            Need_Sync   =>
+              Get_Active (Row.Need_Sync_Button),
+            Attribute   => User_Defined,
+            Next        => null);
+
+         return Item;
+      end if;
+
+      return null;
+   end Get_Path;
+
+   ----------------------
+   -- Add_Path_Clicked --
+   ----------------------
+
+   procedure On_Add_Path_Clicked (W : access Gtk_Widget_Record'Class) is
+      Widget : Paths_Widget_Record renames Paths_Widget_Record (W.all);
+   begin
+      Ref (Widget.Add_Path_Button);
+      Remove (Widget.Table, Widget.Add_Path_Button);
+
+      Add_Path_Row (Paths_Widget (W), Widget.Nb_Rows, null);
+      Widget.Nb_Rows := Widget.Nb_Rows + 1;
+
+      Attach (Widget.Table, Widget.Add_Path_Button,
+              3, 4, Widget.Nb_Rows, Widget.Nb_Rows + 1, 0, 0);
+      Show_All (Widget.Table);
+   end On_Add_Path_Clicked;
+
+   -------------------------
+   -- Remove_Path_Clicked --
+   -------------------------
+
+   procedure On_Remove_Path_Clicked (W : access Remove_Row_Data'Class) is
+   begin
+      Remove_Path_Row (W.Widget, W.Row);
+      W.Widget.On_Change_P (W.Widget.On_Change_W);
+   end On_Remove_Path_Clicked;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
      (Dialog : out Server_List_Editor;
       Kernel : Kernel_Handle)
    is
@@ -824,7 +1167,7 @@ package body GPS.Kernel.Remote is
          Get_Main_Window (Kernel),
          Modal + Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Mouse);
-      Set_Default_Size (Dialog, 620, 400);
+      Set_Default_Size (Dialog, 670, 450);
       Gtk_New (Tips);
 
       Dialog.Kernel := Kernel;
@@ -996,7 +1339,7 @@ package body GPS.Kernel.Remote is
       Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4,
               Fill or Expand, 0, 10);
       Gtk_New (Dialog.Init_Cmds_View);
-      Set_Wrap_Mode (Dialog.Init_Cmds_View, Wrap_Word);
+      Set_Wrap_Mode (Dialog.Init_Cmds_View, Wrap_Char);
       Set_Left_Margin (Dialog.Init_Cmds_View, 10);
       Set_Indent (Dialog.Init_Cmds_View, -10);
       Set_Pixels_Below_Lines (Dialog.Init_Cmds_View, 3);
@@ -1004,33 +1347,12 @@ package body GPS.Kernel.Remote is
               Fill or Expand);
 
       --  Remote paths configuration
-
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-      Attach (Dialog.Right_Table, Scrolled,
+      Gtk_New
+        (Dialog.Paths_List_Widget, Gtk_Widget (Dialog), On_Changed'Access);
+      Attach (Dialog.Right_Table, Dialog.Paths_List_Widget,
               0, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10, 10);
-
-      Dialog.Paths_Tree := Create_Tree_View
-        (Column_Types       => (Local_Col     => GType_String,
-                                Remote_Col    => GType_String,
-                                Need_Sync_Col => GType_Boolean,
-                                Editable_Col  => GType_Boolean),
-         Column_Names       => (new String'("Local path"),
-                                new String'("Remote path"),
-                                new String'("Need sync")),
-         Editable_Columns   => (Local_Col     => Editable_Col,
-                                Remote_Col    => Editable_Col,
-                                Need_Sync_Col => Editable_Col),
-         Editable_Callback  => (Local_Col     => Path_Edited'Access,
-                                Remote_Col    => Path_Edited'Access,
-                                Need_Sync_Col => Path_Edited'Access),
-         Show_Column_Titles => True,
-         Selection_Mode     => Selection_Single,
-         Sortable_Columns   => False,
-         Hide_Expander      => False);
-      Add (Scrolled, Dialog.Paths_Tree);
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label);
@@ -1044,8 +1366,9 @@ package body GPS.Kernel.Remote is
       Pack_End (VBox, Label, False, False, Padding => 5);
 
       --  Add/Restore/Remove buttons
-      Gtk_New_Vbox (VBox, Homogeneous => True);
-      Attach (Main_Table, VBox, 2, 3, 0, 1, 0, 0);
+      Gtk_New_Vbox (VBox, Homogeneous => False);
+      Attach (Main_Table, VBox, 2, 3, 0, 1,
+              Fill or Expand, Expand);
       Gtk_New (Dialog.Add_Machine_Button, -"Add server");
       Pack_Start (VBox, Dialog.Add_Machine_Button, False, False);
       Gtk_New (Dialog.Restore_Button, -"Remove local changes");
@@ -1058,45 +1381,45 @@ package body GPS.Kernel.Remote is
       --  Callbacks connections
 
       Widget_Callback.Object_Connect
-        (Dialog.Network_Name_Entry, "changed", Changed'Access, Dialog);
+        (Dialog.Network_Name_Entry, "changed", On_Changed'Access, Dialog);
       Widget_Callback.Object_Connect
-        (Dialog.User_Name_Entry, "changed", Changed'Access, Dialog);
+        (Dialog.User_Name_Entry, "changed", On_Changed'Access, Dialog);
       Widget_Callback.Object_Connect
         (Get_Entry (Dialog.Remote_Access_Combo),
-         "changed", Changed'Access, Dialog);
+         "changed", On_Changed'Access, Dialog);
       Widget_Callback.Object_Connect
         (Get_Entry (Dialog.Remote_Shell_Combo),
-         "changed", Changed'Access, Dialog);
+         "changed", On_Changed'Access, Dialog);
       Widget_Callback.Object_Connect
         (Get_Entry (Dialog.Remote_Sync_Combo),
-         "changed", Changed'Access, Dialog);
+         "changed", On_Changed'Access, Dialog);
       Widget_Callback.Object_Connect
-        (Dialog.Max_Nb_Connected_Spin, "changed", Changed'Access, Dialog);
+        (Dialog.Max_Nb_Connected_Spin, "changed", On_Changed'Access, Dialog);
       Widget_Callback.Object_Connect
-        (Dialog.Timeout_Spin, "changed", Changed'Access, Dialog);
+        (Dialog.Timeout_Spin, "changed", On_Changed'Access, Dialog);
       Widget_Callback.Object_Connect
         (Get_Buffer (Dialog.Init_Cmds_View), "changed",
-         Changed'Access, Dialog);
+         On_Changed'Access, Dialog);
       Widget_Callback.Object_Connect
         (Get_Selection (Dialog.Machine_Tree), "changed",
-         Selection_Changed'Access,
+         On_Selection_Changed'Access,
          Dialog);
       Widget_Callback.Object_Connect
         (Dialog.Add_Machine_Button, "clicked",
-         Add_Machine_Clicked'Access,
+         On_Add_Machine_Clicked'Access,
          Dialog);
       Widget_Callback.Object_Connect
         (Dialog.Restore_Button, "clicked",
-         Restore_Clicked'Access,
+         On_Restore_Clicked'Access,
          Dialog);
       Widget_Callback.Object_Connect
         (Dialog.Remove_Button, "clicked",
-         Remove_Clicked'Access,
+         On_Remove_Clicked'Access,
          Dialog);
 
       --  Copy paths table
 
-      Dialog.Paths_Table := Deep_Copy (Main_Paths_Table);
+      Dialog.Paths_List := Deep_Copy (Main_Paths_Table);
 
       --  Fill the tree with already configured machines
 
@@ -1139,11 +1462,11 @@ package body GPS.Kernel.Remote is
       Show_All (Dialog);
    end Gtk_New;
 
-   -------------
-   -- Changed --
-   -------------
+   ----------------
+   -- On_Changed --
+   ----------------
 
-   procedure Changed (W : access Gtk_Widget_Record'Class) is
+   procedure On_Changed (W : access Gtk_Widget_Record'Class) is
       Dialog    : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -1160,7 +1483,7 @@ package body GPS.Kernel.Remote is
          --  User defined item
          Set (Gtk_Tree_Store (Model), Iter, User_Def_Col, True);
       end if;
-   end Changed;
+   end On_Changed;
 
    ----------
    -- Save --
@@ -1275,8 +1598,6 @@ package body GPS.Kernel.Remote is
       Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
       Item       : Item_Access;
       Path_Item  : Mirrors_List_Access;
-      Path_Model : Gtk.Tree_Store.Gtk_Tree_Store;
-      Path_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
       Attribute  : Descriptor_Attribute;
       Modified   : Boolean;
    begin
@@ -1359,58 +1680,22 @@ package body GPS.Kernel.Remote is
          --  now save the paths
          Trace (Me, "Internal save paths");
 
-         Path_Item := Dialog.Paths_Table;
+         Path_Item := Dialog.Paths_List;
          while Path_Item /= null loop
             exit when Path_Item.Nickname.all = Nickname;
             Path_Item := Path_Item.Next;
          end loop;
 
          if Path_Item = null then
-            Dialog.Paths_Table := new Mirrors_List_Record'
+            Dialog.Paths_List := new Mirrors_List_Record'
               (Nickname  => new String'(Nickname),
                Path_List => null,
-               Next      => Dialog.Paths_Table);
-            Path_Item := Dialog.Paths_Table;
+               Next      => Dialog.Paths_List);
+            Path_Item := Dialog.Paths_List;
          end if;
 
          Free (Path_Item.Path_List);
-         Path_Model := Gtk_Tree_Store (Get_Model (Dialog.Paths_Tree));
-         Path_Iter := Get_Iter_First (Path_Model);
-
-         while Path_Iter /= Null_Iter loop
-            declare
-               Local_Path  : constant String :=
-                 Get_String (Path_Model, Path_Iter, Local_Col);
-               Remote_Path : constant String :=
-                 Get_String (Path_Model, Path_Iter, Remote_Col);
-               Need_Sync   : constant Boolean :=
-                 Get_Boolean (Path_Model, Path_Iter, Need_Sync_Col);
-               User_Def    : constant Boolean :=
-                 Get_Boolean (Path_Model, Path_Iter, Editable_Col);
-               Attribute   : Descriptor_Attribute;
-            begin
-               if Local_Path /= "" and then Remote_Path /= "" then
-                  if User_Def then
-                     Attribute := User_Defined;
-                  else
-                     Attribute := System_Defined;
-                  end if;
-
-                  Trace (Me, "Save " & Local_Path & ", " &
-                         Remote_Path);
-                  Path_Item.Path_List := new Mirror_Path_Record'
-                    (Local_Path  => new String'(Local_Path),
-                     Remote_Path => new String'(Remote_Path),
-                     Need_Sync   => Need_Sync,
-                     Attribute   => Attribute,
-                     Next        => Path_Item.Path_List);
-               end if;
-            end;
-            Next (Path_Model, Path_Iter);
-         end loop;
-
-         --  Set this iter as not modified
-         Set (Model, Iter, Modified_Col, False);
+         Path_Item.Path_List := Get_Path_List (Dialog.Paths_List_Widget);
       end;
 
       return True;
@@ -1420,7 +1705,7 @@ package body GPS.Kernel.Remote is
    -- Selection_Changed --
    -----------------------
 
-   procedure Selection_Changed (W : access Gtk_Widget_Record'Class) is
+   procedure On_Selection_Changed (W : access Gtk_Widget_Record'Class) is
       Dialog    : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Store.Gtk_Tree_Store;
@@ -1430,7 +1715,6 @@ package body GPS.Kernel.Remote is
       Overriden : Boolean;
       User_Only : Boolean;
       Path_Item : Mirrors_List_Access;
-      M_Path    : Mirror_Path_Access;
 
    begin
       --  If we just added a machine, do not perform any save
@@ -1524,42 +1808,24 @@ package body GPS.Kernel.Remote is
             Set_Sensitive (Dialog.Remove_Button, User_Only);
 
             --  Now fill the path list
-            Model := Gtk_Tree_Store (Get_Model (Dialog.Paths_Tree));
-            Clear (Model);
-            Iter := Null_Iter;
-            Path_Item := Dialog.Paths_Table;
+            Path_Item := Dialog.Paths_List;
             while Path_Item /= null loop
                exit when Path_Item.Nickname.all = Nickname;
                Path_Item := Path_Item.Next;
             end loop;
 
-            if Path_Item /= null then
-               M_Path := Path_Item.Path_List;
-               while M_Path /= null loop
-                  Append (Model, Iter, Null_Iter);
-                  Set (Model, Iter, Local_Col, M_Path.Local_Path.all);
-                  Set (Model, Iter, Remote_Col, M_Path.Remote_Path.all);
-                  Set (Model, Iter, Need_Sync_Col, M_Path.Need_Sync);
-                  Set (Model, Iter, Editable_Col,
-                       M_Path.Attribute = User_Defined);
-                  M_Path := M_Path.Next;
-               end loop;
-            end if;
-            --  Always add an empty item for adding a path
-            Append (Model, Iter, Null_Iter);
-            Set (Model, Iter, Local_Col, "");
-            Set (Model, Iter, Remote_Col, "");
-            Set (Model, Iter, Need_Sync_Col, False);
-            Set (Model, Iter, Editable_Col, True);
+            Set_Path_List
+              (Dialog.Paths_List_Widget,
+               Path_Item.Path_List);
          end;
       end if;
-   end Selection_Changed;
+   end On_Selection_Changed;
 
    -------------------------
    -- Add_Machine_Clicked --
    -------------------------
 
-   procedure Add_Machine_Clicked (W : access Gtk_Widget_Record'Class) is
+   procedure On_Add_Machine_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog   : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
       Model    : Gtk_Tree_Store;
@@ -1609,13 +1875,13 @@ package body GPS.Kernel.Remote is
             Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
          end;
       end if;
-   end Add_Machine_Clicked;
+   end On_Add_Machine_Clicked;
 
    ---------------------
    -- Restore_Clicked --
    ---------------------
 
-   procedure Restore_Clicked (W : access Gtk_Widget_Record'Class) is
+   procedure On_Restore_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
       Model  : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -1668,13 +1934,13 @@ package body GPS.Kernel.Remote is
             end if;
          end;
       end if;
-   end Restore_Clicked;
+   end On_Restore_Clicked;
 
    --------------------
    -- Remove_Clicked --
    --------------------
 
-   procedure Remove_Clicked (W : access Gtk_Widget_Record'Class) is
+   procedure On_Remove_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog    : Server_List_Editor_Record
         renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -1739,69 +2005,7 @@ package body GPS.Kernel.Remote is
             end if;
          end;
       end if;
-   end Remove_Clicked;
-
-   -----------------
-   -- Path_Edited --
-   -----------------
-
-   procedure Path_Edited
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      pragma Unreferenced (Params);
-      Dialog      : constant Server_List_Editor :=
-        Server_List_Editor (Get_Toplevel (Widget));
-      Empty_Exist : Boolean := False;
-      Full_Empty  : Boolean := False;
-      Model       : Gtk_Tree_Store;
-      Iter        : Gtk_Tree_Iter;
-      Empty_Iter  : Gtk_Tree_Iter;
-   begin
-      Trace (Me, "Local_Path_Edited");
-
-      --  Determine if a new path was added
-      Model := Gtk_Tree_Store (Get_Model (Dialog.Paths_Tree));
-      Iter  := Get_Iter_First (Model);
-
-      Empty_Exist := False;
-      Full_Empty := False;
-      while Iter /= Null_Iter loop
-         if Get_String (Model, Iter, Local_Col) = ""
-           or else Get_String (Model, Iter, Remote_Col) = ""
-         then
-            Empty_Exist := True;
-         end if;
-
-         if Get_String (Model, Iter, Local_Col) = ""
-           and then Get_String (Model, Iter, Remote_Col) = ""
-         then
-            if not Full_Empty then
-               Full_Empty := True;
-               Iter_Copy (Iter, Empty_Iter);
-            else
-               --  Always keep the last empty line
-               Remove (Model, Empty_Iter);
-               Iter_Copy (Iter, Empty_Iter);
-            end if;
-         end if;
-         Next (Model, Iter);
-      end loop;
-
-      --  If no empty line exist, create one.
-      if not Empty_Exist then
-         Trace (Me, "No empty line, create one");
-         Iter := Null_Iter;
-         Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, Local_Col, "");
-         Set (Model, Iter, Remote_Col, "");
-         Set (Model, Iter, Need_Sync_Col, False);
-         Set (Model, Iter, Editable_Col, True);
-      end if;
-
-      --  Tell dialog that some values have changed for the selected machine.
-      Changed (Dialog);
-   end Path_Edited;
+   end On_Remove_Clicked;
 
    ---------------------------
    -- Configure_Server_List --
@@ -1839,7 +2043,7 @@ package body GPS.Kernel.Remote is
                Free (Main_Paths_Table);
                --  Duplicate it instead of just copy it, for easier handling
                --  of cancel/apply cases
-               Main_Paths_Table := Deep_Copy (Dialog.Paths_Table);
+               Main_Paths_Table := Deep_Copy (Dialog.Paths_List);
 
                Save_Remote_Config (Kernel);
                Run_Hook (Kernel, Server_List_Changed_Hook);
@@ -1858,7 +2062,7 @@ package body GPS.Kernel.Remote is
       end loop;
 
       --  destroy duplicated path table
-      Free (Dialog.Paths_Table);
+      Free (Dialog.Paths_List);
       --  destroy the widget
       Destroy (Dialog);
    end Configure_Server_List;
