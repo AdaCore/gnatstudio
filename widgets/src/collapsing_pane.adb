@@ -196,6 +196,14 @@ package body Collapsing_Pane is
       end if;
 
       Pack_Start (Pane.Expanded_Box, Widget, Expand => False, Fill => False);
+
+      if Pane.State = Collapsed then
+         Set_Child_Visible (Pane.Expanded_Box, False);
+         Set_Size_Request (Pane.Expanded_Box, 0, 0);
+      else
+         Set_Child_Visible (Pane.Expanded_Box, True);
+         Set_Size_Request (Pane.Expanded_Box, -1, -1);
+      end if;
    end Set_Expanded_Widget;
 
    --------------------------
@@ -215,6 +223,14 @@ package body Collapsing_Pane is
       end if;
 
       Pack_Start (Pane.Collapsed_Box, Widget, Expand => False, Fill => False);
+
+      if Pane.State = Collapsed then
+         Set_Child_Visible (Pane.Collapsed_Box, True);
+         Set_Size_Request (Pane.Collapsed_Box, -1, -1);
+      else
+         Set_Child_Visible (Pane.Collapsed_Box, False);
+         Set_Size_Request (Pane.Collapsed_Box, 0, 0);
+      end if;
    end Set_Collapsed_Widget;
 
    -----------------------
