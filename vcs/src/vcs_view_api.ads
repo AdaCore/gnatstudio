@@ -150,6 +150,11 @@ package VCS_View_API is
       Context : Selection_Context);
    --  ???
 
+   procedure On_Menu_View_File_Revision
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
+   --  View a specific revision of a file
+
    procedure On_Menu_Update
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
