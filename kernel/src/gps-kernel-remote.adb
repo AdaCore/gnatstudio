@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;
+with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;
@@ -1057,7 +1057,7 @@ package body GPS.Kernel.Remote is
 
    exception
       when E : others =>
-         Trace (Exception_Handler,
+         Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Path_Grab_Focus;
 
@@ -1133,7 +1133,7 @@ package body GPS.Kernel.Remote is
 
    exception
       when E : others =>
-         Trace (Exception_Handler,
+         Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Add_Path_Clicked;
 
@@ -1148,7 +1148,7 @@ package body GPS.Kernel.Remote is
 
    exception
       when E : others =>
-         Trace (Exception_Handler,
+         Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Remove_Path_Clicked;
 
@@ -1502,7 +1502,7 @@ package body GPS.Kernel.Remote is
 
    exception
       when E : others =>
-         Trace (Exception_Handler,
+         Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Changed;
 
@@ -1843,7 +1843,7 @@ package body GPS.Kernel.Remote is
 
    exception
       when E : others =>
-         Trace (Exception_Handler,
+         Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Selection_Changed;
 
@@ -1904,7 +1904,7 @@ package body GPS.Kernel.Remote is
 
    exception
       when E : others =>
-         Trace (Exception_Handler,
+         Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Add_Machine_Clicked;
 
@@ -1968,7 +1968,7 @@ package body GPS.Kernel.Remote is
 
    exception
       when E : others =>
-         Trace (Exception_Handler,
+         Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Restore_Clicked;
 
@@ -2044,7 +2044,7 @@ package body GPS.Kernel.Remote is
 
    exception
       when E : others =>
-         Trace (Exception_Handler,
+         Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Remove_Clicked;
 
@@ -2393,7 +2393,7 @@ package body GPS.Kernel.Remote is
 
    exception
       when E : others =>
-         Trace (Exception_Handler,
+         Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Project_Changing;
 
