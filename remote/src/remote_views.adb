@@ -491,6 +491,11 @@ package body Remote_Views is
                  Reload_Prj => True);
          User.View.Combo_Selected := False;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Combo_Changed;
 
    ----------------------------
@@ -504,6 +509,11 @@ package body Remote_Views is
       pragma Unreferenced (View);
    begin
       Configure_Server_List (User.View.Kernel);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Config_List_Clicked;
 
    -------------------------
