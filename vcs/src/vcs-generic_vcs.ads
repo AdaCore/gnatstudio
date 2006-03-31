@@ -102,6 +102,11 @@ package VCS.Generic_VCS is
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List);
 
+   procedure File_Revision
+     (Rep      : access Generic_VCS_Record;
+      File     : VFS.Virtual_File;
+      Revision : String);
+
    procedure Diff
      (Rep       : access Generic_VCS_Record;
       File      : VFS.Virtual_File;

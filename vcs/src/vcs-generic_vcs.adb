@@ -857,6 +857,23 @@ package body VCS.Generic_VCS is
       GNAT.Strings.Free (Args);
    end Merge;
 
+   -------------------
+   -- File_Revision --
+   -------------------
+
+   procedure File_Revision
+     (Rep      : access Generic_VCS_Record;
+      File     : VFS.Virtual_File;
+      Revision : String)
+   is
+      Args : GNAT.OS_Lib.String_List_Access;
+   begin
+      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args (1) := new String'(Revision);
+
+      Generic_Command (Rep, File, Args, VCS.Revision);
+   end File_Revision;
+
    ---------
    -- Add --
    ---------

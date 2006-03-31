@@ -290,6 +290,20 @@ package body VCS.Unknown_VCS is
       null;
    end Revert;
 
+   -------------------
+   -- File_Revision --
+   -------------------
+
+   procedure File_Revision
+     (Rep      : access Unknown_VCS_Record;
+      File     : VFS.Virtual_File;
+      Revision : String)
+   is
+      pragma Unreferenced (Rep, File, Revision);
+   begin
+      null;
+   end File_Revision;
+
    ----------
    -- Diff --
    ----------

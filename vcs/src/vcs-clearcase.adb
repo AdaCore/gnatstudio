@@ -1533,6 +1533,20 @@ package body VCS.ClearCase is
       end loop;
    end Revert;
 
+   -------------------
+   -- File_Revision --
+   -------------------
+
+   procedure File_Revision
+     (Rep      : access ClearCase_Record;
+      File     : VFS.Virtual_File;
+      Revision : String)
+   is
+      pragma Unreferenced (Rep, File, Revision);
+   begin
+      null;
+   end File_Revision;
+
    ----------
    -- Diff --
    ----------
@@ -1833,6 +1847,7 @@ package body VCS.ClearCase is
          Update             => new String'(-"Update"),
          Merge              => null,
          Resolved           => null,
+         Revision           => null,
          Commit             => new String'(-"Commit"),
          History_Text       => new String'(-"View revision history"),
          History            => null,

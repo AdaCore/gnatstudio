@@ -58,6 +58,7 @@ package VCS is
       Switch,             --  Switch to a specific branch/tag
       Merge,              --  Merge changes from a branch
       Open,               --  Open one or more file for writing
+      Revision,           --  Get a specific file revision
       Update,             --  Update one or more files
       Resolved,           --  Change file status after conflict resolution
       Commit,             --  Commits one or more files
@@ -314,6 +315,12 @@ package VCS is
       Filenames : String_List.List) is abstract;
    --  Obtain the files in Filenames from their respective checked-in versions.
    --  The user must free Filenames.
+
+   procedure File_Revision
+     (Rep      : access VCS_Record;
+      File     : VFS.Virtual_File;
+      Revision : String) is abstract;
+   --  Retreive a specific revision of a given file
 
    procedure Diff
      (Rep       : access VCS_Record;
