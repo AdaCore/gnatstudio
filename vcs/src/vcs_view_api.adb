@@ -990,6 +990,10 @@ package body VCS_View_API is
             Add_Action (Merge, On_Menu_Merge'Access);
          end if;
 
+         if Show_Everything or else Has_Revision_Information (Context) then
+            Add_Action (Revision, On_Menu_View_File_Revision'Access);
+         end if;
+
          Add_Separator;
       end if;
 
@@ -3092,6 +3096,29 @@ package body VCS_View_API is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_View_Log_Rev;
+
+   --------------------------------
+   -- On_Menu_View_File_Revision --
+   --------------------------------
+
+   procedure On_Menu_View_File_Revision
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+      Ref : constant VCS_Access := Get_Current_Ref (Context);
+   begin
+      if Has_Revision_Information (Context) then
+         File_Revision
+           (Ref,
+            File_Information (Context),
+            Revision_Information (Context));
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_View_File_Revision;
 
    ---------------------------
    -- On_Menu_Diff_Specific --
