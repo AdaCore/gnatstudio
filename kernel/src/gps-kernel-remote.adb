@@ -866,7 +866,7 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0, 5, 5);
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"Network name (*):");
+      Gtk_New (Label, -"* Network name:");
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
@@ -877,7 +877,7 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0);
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"Remote access tool (*):");
+      Gtk_New (Label, -"* Remote access tool:");
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
@@ -892,10 +892,11 @@ package body GPS.Kernel.Remote is
          Gtk_New (Item, Locale_To_UTF8 (Get_Remote_Access_Name (J)));
          Add (Get_List (Dialog.Remote_Access_Combo), Item);
       end loop;
+
       Show_All (Get_List (Dialog.Remote_Access_Combo));
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"Shell (*):");
+      Gtk_New (Label, -"* Shell:");
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
@@ -1014,7 +1015,7 @@ package body GPS.Kernel.Remote is
       Add (Scrolled, Dialog.Paths_Tree);
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"(*): Fields marked with a star are mandatory fields");
+      Gtk_New (Label, -"Fields marked with an asterisk (*) are mandatory");
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 2, Line_Nb, Line_Nb + 1,
