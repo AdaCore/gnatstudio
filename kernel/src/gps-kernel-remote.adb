@@ -1738,17 +1738,17 @@ package body GPS.Kernel.Remote is
       Path_Item : Mirrors_List_Access;
 
    begin
-      --  If we just added a machine, do not perform any save
-      if not Dialog.Added_Item and then not Save (Server_List_Editor (W)) then
-         return;
-      end if;
-      Dialog.Added_Item := False;
-
       if Dialog.Select_Back then
          --  Do not change dialog values.
          Dialog.Select_Back := False;
          return;
       end if;
+
+      --  If we just added a machine, do not perform any save
+      if not Dialog.Added_Item and then not Save (Server_List_Editor (W)) then
+         return;
+      end if;
+      Dialog.Added_Item := False;
 
       --  Now reinit the dialog values
       Get_Selected (Get_Selection (Dialog.Machine_Tree),
@@ -1870,6 +1870,8 @@ package body GPS.Kernel.Remote is
                return;
             end if;
 
+            --  ??? Check that nickname does not already exist
+
             Set_Child_Visible (Dialog.Right_Table, True);
 
             Dialog.Machines := new Item_Record'
@@ -1886,6 +1888,10 @@ package body GPS.Kernel.Remote is
                   Attribute           => User_Defined,
                   Ref                 => 1),
                Next => Dialog.Machines);
+            Dialog.Paths_List := new Mirrors_List_Record'
+              (Nickname  => new String'(Nickname),
+               Path_List => null,
+               Next      => Dialog.Paths_List);
 
             Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
             Append (Model, Iter, Null_Iter);
