@@ -405,10 +405,14 @@ package body Log_Utils is
       Log_Name : Virtual_File) return Virtual_File
    is
       Mapper : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
+      F_Name : constant String := Get_Other_Text
+        (Mapper, Full_Name (Log_Name, Normalize => True).all);
    begin
-      return Create
-        (Full_Filename => Get_Other_Text
-           (Mapper, Full_Name (Log_Name, Normalize => True).all));
+      if F_Name = "" then
+         return No_File;
+      else
+         return Create (Full_Filename => F_Name);
+      end if;
    end Get_File_From_Log;
 
    -------------
