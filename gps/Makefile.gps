@@ -83,7 +83,6 @@ CFLAGS = -g -O2
 ADA_SOURCES = gps-main.adb
 
 PROJECT_FILE = gps
-ADAFLAGS=-j2
 
 ifneq ($(strip $(GPS_SRCS)),)
    LIBS := $(GPS_OBJ_DIR)/libgps$(AR_EXT) $(LIBS)
@@ -106,7 +105,7 @@ ifeq ($(MAIN_ROOT),True)
 	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 
    gpslink: force
-#	cd $(GPS_OBJ_DIR); gnatmake -q -a ../src/gpslink
+	cd $(GPS_OBJ_DIR); gnatmake -q -a ../src/gpslink
 
    include ../Makefile.gnat
    include ../builder/src/Makefile.generic
