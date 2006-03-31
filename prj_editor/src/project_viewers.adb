@@ -2644,7 +2644,8 @@ package body Project_Viewers is
         (Kernel, Project, -"Edit File _Switches", "",
          On_Edit_Switches'Access, Ref_Item => -"Recent", Add_Before => False);
       Register_Menu
-        (Kernel, Tools, -"File Sw_itches", "", On_Edit_Switches'Access);
+        (Kernel, Tools, -"File Sw_itches", "", On_Edit_Switches'Access,
+         Ref_Item => -"Remote");
 
       Register_Menu
         (Kernel, Project, -"Edit Project _Properties", "",
@@ -2652,7 +2653,7 @@ package body Project_Viewers is
          Add_Before => False);
       Register_Menu
         (Kernel, Tools, -"Pro_ject Properties", "",
-         On_Project_Properties'Access);
+         On_Project_Properties'Access, Ref_Item => -"Remote");
 
       Register_Menu
         (Kernel, Project, -"Save _All", "",

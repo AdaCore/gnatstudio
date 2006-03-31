@@ -1243,7 +1243,8 @@ package body Project_Explorers_Files is
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu
-        (Kernel, Tools, -"_Files", "", On_Open_Explorer'Access);
+        (Kernel, Tools, -"_Files", "", On_Open_Explorer'Access,
+         Ref_Item => -"Remote");
    end Register_Module;
 
 end Project_Explorers_Files;

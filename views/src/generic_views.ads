@@ -63,10 +63,6 @@ package Generic_Views is
       View_Name   : String;
       --  Name of MDI window that is used to create the view
 
-      Menu_Name   : String;
-      --  Name of the menu, in tools, that is used to create the view.
-      --  You can use '_' to specify a menu key shortcut.
-
       type Formal_View_Record is new View_Record with private;
       --  Type of the widget representing the view
 
@@ -80,12 +76,17 @@ package Generic_Views is
       type View_Access is access all Formal_View_Record'Class;
 
       procedure Register_Module
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         ID     : GPS.Kernel.Modules.Module_ID := null);
+        (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+         ID          : GPS.Kernel.Modules.Module_ID := null;
+         Menu_Name   : String := View_Name;
+         Before_Menu : String := "");
       --  Register the module. This sets it up for proper desktop handling, as
       --  well as create a menu in Tools/ so that the user can open the view.
       --  ID can be passed in parameter if a special tagged type needs to be
       --  used.
+      --  Menu_Name is the name of the menu, in tools, that is used to create
+      --  the view.
+      --  If Before_Menu is not empty, the menu entry will be added before it.
 
       function Get_Module return GPS.Kernel.Modules.Module_ID;
       --  Return the module ID corresponding to that view

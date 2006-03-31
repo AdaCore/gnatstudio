@@ -112,7 +112,6 @@ package body Bookmark_Views is
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Bookmark_View",
       View_Name          => "Bookmarks",
-      Menu_Name          => "_Bookmarks",
       Formal_View_Record => Bookmark_View_Record);
    subtype Bookmark_View_Access is Generic_View.View_Access;
 
@@ -985,7 +984,8 @@ package body Bookmark_Views is
    begin
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
       Generic_View.Register_Module
-        (Kernel, Module_ID (Bookmark_Views_Module));
+        (Kernel, Module_ID (Bookmark_Views_Module),
+         "_Bookmarks", -"Call Tree");
 
       Register_Hook_No_Return (Kernel, Bookmark_Added_Hook, String_Hook_Type);
       Register_Hook_No_Return

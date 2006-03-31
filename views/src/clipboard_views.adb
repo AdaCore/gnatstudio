@@ -75,7 +75,6 @@ package body Clipboard_Views is
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Clipboard_View",
       View_Name          => "Clipboard",
-      Menu_Name          => "_Clipboard",
       Formal_View_Record => Clipboard_View_Record);
    subtype Clipboard_View_Access is Generic_View.View_Access;
 
@@ -507,7 +506,8 @@ package body Clipboard_Views is
    is
       Command : Interactive_Command_Access;
    begin
-      Generic_View.Register_Module (Kernel);
+      Generic_View.Register_Module
+        (Kernel, Menu_Name => -"_Clipboard", Before_Menu => -"Remote");
       Command := new Merge_With_Previous_Command;
       Register_Contextual_Menu
         (Kernel, "Clipboard View Append To Previous",

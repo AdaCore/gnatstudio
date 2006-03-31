@@ -103,7 +103,6 @@ package body Call_Graph_Views is
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Callgraph_View",
       View_Name          => "Call Tree",
-      Menu_Name          => "Call _Tree",
       Formal_View_Record => Callgraph_View_Record);
    subtype Callgraph_View_Access is Generic_View.View_Access;
 
@@ -1021,7 +1020,8 @@ package body Call_Graph_Views is
       Filter  : Action_Filter;
       Command : Interactive_Command_Access;
    begin
-      Generic_View.Register_Module (Kernel);
+      Generic_View.Register_Module
+        (Kernel, Menu_Name => "Call _Tree", Before_Menu => -"Remote");
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Show_Locations, True);

@@ -180,8 +180,10 @@ package body Generic_Views is
       ---------------------
 
       procedure Register_Module
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         ID     : GPS.Kernel.Modules.Module_ID := null) is
+        (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+         ID          : GPS.Kernel.Modules.Module_ID := null;
+         Menu_Name   : String := View_Name;
+         Before_Menu : String := "") is
       begin
          if ID = null then
             Module := new Module_ID_Record;
@@ -200,7 +202,7 @@ package body Generic_Views is
          Register_Menu
            (Kernel, '/' & (-"Tools") & '/' & (-"_Views"),
             Menu_Name, "", On_Open_View_Access,
-            Ref_Item => -"Remote", Add_Before => True);
+            Ref_Item => Before_Menu);
       end Register_Module;
    end Simple_Views;
 

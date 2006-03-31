@@ -85,7 +85,6 @@ package body Buffer_Views is
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => Module_Name,
       View_Name          => "Windows",
-      Menu_Name          => "_Windows",
       Formal_View_Record => Buffer_View_Record);
    subtype Buffer_View_Access is Generic_View.View_Access;
 
@@ -596,7 +595,7 @@ package body Buffer_Views is
    is
       Command : Interactive_Command_Access;
    begin
-      Generic_View.Register_Module (Kernel);
+      Generic_View.Register_Module (Kernel, Menu_Name => -"_Windows");
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Editors_Only, True);

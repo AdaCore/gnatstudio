@@ -846,7 +846,8 @@ package body Outline_View is
          Kernel      => Kernel);
 
       Register_Menu
-        (Kernel, Tools, -"_Outline", "", On_Open_Outline'Access);
+        (Kernel, Tools, -"_Outline", "", On_Open_Outline'Access,
+         Ref_Item => -"Project Properties");
 
       Command := new Refresh_Outline_Command;
       Register_Contextual_Menu

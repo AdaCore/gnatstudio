@@ -5809,7 +5809,12 @@ package body Src_Editor_Buffer is
       Tab_Len : constant Visible_Column_Type := Visible_Column_Type
         (Buffer.Tab_Width);
       J       : Natural;
+
    begin
+      if Line not in Buffer.Editable_Lines'Range then
+         return Count;
+      end if;
+
       case Buffer.Editable_Lines (Line).Where is
          when In_Buffer =>
             Get_Iter_At_Line

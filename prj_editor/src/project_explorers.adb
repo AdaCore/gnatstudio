@@ -2822,7 +2822,8 @@ package body Project_Explorers is
       Register_Menu
         (Kernel, Project, -"Project _View", "", On_Open_Explorer'Access);
       Register_Menu
-        (Kernel, Tools, -"_Project", "", On_Open_Explorer'Access);
+        (Kernel, Tools, -"_Project", "", On_Open_Explorer'Access,
+         Ref_Item => -"Remote");
 
       Extra := new Explorer_Search_Extra_Record;
       Gtk.Frame.Initialize (Extra, -"Scope");
