@@ -123,6 +123,9 @@ package body Src_Editor_Buffer.Text_Handling is
          for J in 1 .. After loop
             if Ends_Line (Iter) then
                Line_End := Line_End + 1;
+
+               exit when not Is_Valid_Position (Buffer, Line_End);
+
                Unfold_Line (Buffer, Line_End);
 
                --  After unfolding the line, Iter might be invalid, therefore
