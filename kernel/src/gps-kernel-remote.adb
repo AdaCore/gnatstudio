@@ -1030,6 +1030,7 @@ package body GPS.Kernel.Remote is
          Set_Text (Row.Remote_Entry, Path.Remote_Path.all);
          Set_Active (Row.Need_Sync_Button, Path.Need_Sync);
       end if;
+
       Widget_Callback.Object_Connect
         (Row.Local_Entry, "changed", Widget.On_Change_P, Widget.On_Change_W);
       Widget_Callback.Object_Connect
@@ -1352,7 +1353,7 @@ package body GPS.Kernel.Remote is
         (Dialog.Paths_List_Widget, Gtk_Widget (Dialog), On_Changed'Access);
       Attach (Dialog.Right_Table, Dialog.Paths_List_Widget,
               0, 2, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0, 10, 10);
+              Fill or Expand, 0, 10, 0);
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label);
