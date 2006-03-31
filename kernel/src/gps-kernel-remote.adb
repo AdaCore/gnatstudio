@@ -797,8 +797,9 @@ package body GPS.Kernel.Remote is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Dialog : out Server_List_Editor;
-                      Kernel : Kernel_Handle)
+   procedure Gtk_New
+     (Dialog : out Server_List_Editor;
+      Kernel : Kernel_Handle)
    is
       Nb_Machines : Natural;
       Tips        : Gtk_Tooltips;
@@ -814,12 +815,14 @@ package body GPS.Kernel.Remote is
       Line_Nb     : Guint;
       VBox        : Gtk_Vbox;
       pragma Unreferenced (Tmp);
+
    begin
       Dialog := new Server_List_Editor_Record;
-      Initialize (Dialog,
-                  -"Servers configuration",
-                  Get_Main_Window (Kernel),
-                  Modal + Destroy_With_Parent);
+      Initialize
+        (Dialog,
+         -"Servers configuration",
+         Get_Main_Window (Kernel),
+         Modal + Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, 620, 400);
       Gtk_New (Tips);
@@ -850,11 +853,14 @@ package body GPS.Kernel.Remote is
 
       --  Machine configuration
 
+      Gtk_New_Vbox (VBox, Homogeneous => False);
+      Attach (Main_Table, VBox, 1, 2, 0, 1);
+
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-      Attach (Main_Table, Scrolled, 1, 2, 0, 1);
+      Pack_Start (VBox, Scrolled);
 
-      Gtk_New (Dialog.Right_Table, Rows => 8, Columns => 2,
+      Gtk_New (Dialog.Right_Table, Rows => 7, Columns => 2,
                Homogeneous => False);
       Add_With_Viewport (Scrolled, Dialog.Right_Table);
 
@@ -866,7 +872,11 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0, 5, 5);
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"* Network name:");
+      Gtk_New (Label);
+      Set_Markup
+        (Label,
+         "<span foreground=""red"">*</span>" &
+         (-" Network name:"));
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
@@ -877,7 +887,11 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0);
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"* Remote access tool:");
+      Gtk_New (Label);
+      Set_Markup
+        (Label,
+         "<span foreground=""red"">*</span>" &
+         (-" Remote access tool:"));
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
@@ -896,7 +910,11 @@ package body GPS.Kernel.Remote is
       Show_All (Get_List (Dialog.Remote_Access_Combo));
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"* Shell:");
+      Gtk_New (Label);
+      Set_Markup
+        (Label,
+         "<span foreground=""red"">*</span>" &
+         (-" Shell:"));
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
@@ -1015,11 +1033,15 @@ package body GPS.Kernel.Remote is
       Add (Scrolled, Dialog.Paths_Tree);
 
       Line_Nb := Line_Nb + 1;
-      Gtk_New (Label, -"Fields marked with an asterisk (*) are mandatory");
+      Gtk_New (Label);
+      Set_Markup
+        (Label,
+         "<span style=""italic"">" &
+         (-" Fields marked by an asterisk (") &
+         ("<span foreground=""red"">*</span>") &
+         (-") are mandatory") & "</span>");
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Right_Table, Label,
-              0, 2, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0, 10);
+      Pack_End (VBox, Label, False, False, Padding => 5);
 
       --  Add/Restore/Remove buttons
       Gtk_New_Vbox (VBox, Homogeneous => True);
