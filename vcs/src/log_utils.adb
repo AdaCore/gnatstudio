@@ -843,18 +843,21 @@ package body Log_Utils is
 
          if Project /= No_Project then
             declare
-               File_Check_Script : constant String := Get_Attribute_Value
+               use GNAT;
+
+               File_Check_Command : constant String := Get_Attribute_Value
                  (Project, Vcs_File_Check);
-               Log_Check_Script  : constant String := Get_Attribute_Value
+               Log_Check_Command  : constant String := Get_Attribute_Value
                  (Project, Vcs_Log_Check);
-               Log_File          : constant Virtual_File :=
-                                     Get_Log_From_File
-                                       (Kernel, File, False,
-                                        Action_To_Log_Suffix (Action));
-               File_Args         : String_List.List;
-               Log_Args          : String_List.List;
-               Head_List         : String_List.List;
-               S                 : GNAT.OS_Lib.String_Access;
+               Log_File           : constant Virtual_File :=
+                                      Get_Log_From_File
+                                        (Kernel, File, False,
+                                         Action_To_Log_Suffix (Action));
+               File_Args          : String_List.List;
+               Log_Args           : String_List.List;
+               Head_List          : String_List.List;
+               S                  : OS_Lib.String_Access;
+               C_Args             : OS_Lib.Argument_List_Access;
 
                use type GNAT.OS_Lib.String_Access;
 
@@ -873,12 +876,23 @@ package body Log_Utils is
                else
                   --  Record a check command if necessary
 
-                  if File_Check_Script /= "" then
+                  if File_Check_Command /= "" then
+                     C_Args := OS_Lib.Argument_String_To_List
+                       (File_Check_Command);
+
+                     --  Add all arguments form the command string
+
+                     for K in C_Args'First + 1 .. C_Args'Last loop
+                        Append (File_Args, C_Args (K).all);
+                     end loop;
+
+                     --  Add filename
+
                      Append (File_Args, Data (Files_Temp));
 
                      Create (File_Checks,
                              Kernel,
-                             File_Check_Script,
+                             C_Args (C_Args'First).all,
                              "",
                              File_Args,
                              Null_List,
@@ -892,10 +906,11 @@ package body Log_Utils is
                      end if;
 
                      Last_Check := Command_Access (File_Checks);
+                     OS_Lib.Free (C_Args);
                   end if;
                end if;
 
-               if Log_Check_Script /= ""
+               if Log_Check_Command /= ""
                  and then Log_File /= No_File
                then
                   --  Check that the log file is not empty
@@ -938,6 +953,17 @@ package body Log_Utils is
 
                   GNAT.OS_Lib.Free (S);
 
+                  C_Args := OS_Lib.Argument_String_To_List
+                    (Log_Check_Command);
+
+                  --  Add all arguments form the command string
+
+                  for K in C_Args'First + 1 .. C_Args'Last loop
+                     Append (Log_Args, C_Args (K).all);
+                  end loop;
+
+                  --  Add filename
+
                   Append (Log_Args, Full_Name (Log_File).all);
                   Append
                     (Head_List, -"File: " & Full_Name (File).all & ASCII.LF
@@ -946,7 +972,7 @@ package body Log_Utils is
                   Create
                     (Log_Checks,
                      Kernel,
-                     Log_Check_Script,
+                     C_Args (C_Args'First).all,
                      "",
                      Log_Args,
                      Head_List,
@@ -960,6 +986,7 @@ package body Log_Utils is
                   end if;
 
                   Last_Check := Command_Access (Log_Checks);
+                  OS_Lib.Free (C_Args);
                end if;
 
                Free (File_Args);
