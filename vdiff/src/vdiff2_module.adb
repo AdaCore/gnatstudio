@@ -273,8 +273,8 @@ package body Vdiff2_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       use Default_Preferences;
-      Tools          : constant String := '/' & (-"Tools") & '/'
-        & (-"Visual Diff") & '/';
+      Tools          : constant String :=
+                         '/' & (-"Tools") & '/' & (-"Compare");
       Filter         : Action_Filter;
       Filter_3_Files : Action_Filter;
       Command        : Interactive_Command_Access;
@@ -397,15 +397,16 @@ package body Vdiff2_Module is
          Name => "vdiff2.diff");
 
       Register_Menu
-        (Kernel, '/' & (-"Tools") & '/', (-"Visual Diff"),
+        (Kernel, '/' & (-"Tools") & '/', (-"C_ompare"),
          Callback => null,
-         Ref_Item => -"Interrupt", Add_Before => True);
+         Ref_Item   => -"Consoles",
+         Add_Before => False);
 
       Register_Menu
-        (Kernel, Tools, -"Compare Two Files...", "",
+        (Kernel, Tools, -"_Two Files...", "",
          On_Compare_Two_Files'Access);
       Register_Menu
-        (Kernel, Tools, -"Compare Three Files...", "",
+        (Kernel, Tools, -"T_hree Files...", "",
          On_Compare_Three_Files'Access);
 
       --  ??? Disable these menus for now, since the "Merge" interface doesn't

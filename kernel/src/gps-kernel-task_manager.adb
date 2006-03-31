@@ -76,7 +76,7 @@ package body GPS.Kernel.Task_Manager is
 
    procedure On_Task_Manager
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Tools->Task Manager.
+   --  Callback for Tools->Views->Tasks
 
    function Create_Wrapper
      (Command         : access Root_Command'Class;
@@ -501,9 +501,11 @@ package body GPS.Kernel.Task_Manager is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools                     : constant String := "/" & (-"Tools");
+      Tools                     : constant String :=
+                                    "/" & (-"Tools") & '/' & (-"Views");
       Push_Command, Pop_Command : Custom_Command_Access;
       Script                    : Scripting_Language;
+
    begin
       Task_Manager_Module_Id := new Task_Manager_Module_Id_Record;
       Register_Module
@@ -533,13 +535,13 @@ package body GPS.Kernel.Task_Manager is
       Register_Menu
         (Kernel,
          Tools,
-         -"Task Manager",
-         Callback => On_Task_Manager'Access,
-         Ref_Item => -"Interrupt", Add_Before => True);
+         -"Tas_ks",
+         Callback => On_Task_Manager'Access);
 
-      Add_Hook (Kernel, Before_Exit_Action_Hook,
-                Wrapper (On_Exit_Hook'Access),
-                Name => "task_manager.on_exit");
+      Add_Hook
+        (Kernel, Before_Exit_Action_Hook,
+         Wrapper (On_Exit_Hook'Access),
+         Name => "task_manager.on_exit");
    end Register_Module;
 
    -------------

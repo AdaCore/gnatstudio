@@ -2074,8 +2074,7 @@ package body Project_Explorers is
                      Default_Height => 600,
                      Group          => Group_View,
                      Module         => Explorer_Module_ID);
-         Set_Title
-           (C2, -"Project Explorer - Project View",  -"Project View");
+         Set_Title (C2, -"Project View",  -"Project View");
          Put (Get_MDI (Kernel), C2, Initial_Position => Position_Left);
 
          Set_Focus_Child (C2);
@@ -2778,6 +2777,7 @@ package body Project_Explorers is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
+      Tools   : constant String := '/' & (-"Tools") & '/' & (-"Views");
       Extra   : Explorer_Search_Extra;
       Box     : Gtk_Box;
 
@@ -2821,6 +2821,8 @@ package body Project_Explorers is
 
       Register_Menu
         (Kernel, Project, -"Project _View", "", On_Open_Explorer'Access);
+      Register_Menu
+        (Kernel, Tools, -"_Project", "", On_Open_Explorer'Access);
 
       Extra := new Explorer_Search_Extra_Record;
       Gtk.Frame.Initialize (Extra, -"Scope");

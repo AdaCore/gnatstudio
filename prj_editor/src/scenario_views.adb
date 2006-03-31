@@ -520,8 +520,8 @@ package body Scenario_Views is
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu
-        (Kernel, '/' & (-"Tools"),
-         -"_Scenario View", "", On_Open_View'Access);
+        (Kernel, '/' & (-"Tools") & '/' & (-"Views"),
+         -"_Scenario", "", On_Open_View'Access);
    end Register_Module;
 
 end Scenario_Views;

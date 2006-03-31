@@ -57,12 +57,15 @@ package Generic_Views is
 
    generic
       Module_Name : String;
-      --  The name of the module, and name used in the desktop file. It mustn'y
+      --  The name of the module, and name used in the desktop file. It mustn't
       --  contain any space
 
       View_Name   : String;
-      --  Name of the menu, in tools, that is used to create the view. It is
-      --  also used as the name for the MDI window.
+      --  Name of MDI window that is used to create the view
+
+      Menu_Name   : String;
+      --  Name of the menu, in tools, that is used to create the view.
+      --  You can use '_' to specify a menu key shortcut.
 
       type Formal_View_Record is new View_Record with private;
       --  Type of the widget representing the view

@@ -2094,6 +2094,8 @@ package body Builder_Module is
         (Kernel, Build, -"Load Xref info in memory", "",
          Load_Xref_In_Memory'Access);
 
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Tools, Mitem);
       Register_Menu
         (Kernel, Tools, -"_Interrupt", Stock_Stop, On_Tools_Interrupt'Access,
          null, GDK_C, Control_Mask + Shift_Mask);

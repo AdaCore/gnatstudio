@@ -836,7 +836,7 @@ package body Outline_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools : constant String := '/' & (-"Tools");
+      Tools : constant String := '/' & (-"Tools") & '/' & (-"Views");
       Command : Interactive_Command_Access;
    begin
       Outline_View_Module := new Outline_View_Module_Record;
@@ -846,7 +846,7 @@ package body Outline_View is
          Kernel      => Kernel);
 
       Register_Menu
-        (Kernel, Tools, -"Outline View", "", On_Open_Outline'Access);
+        (Kernel, Tools, -"_Outline", "", On_Open_Outline'Access);
 
       Command := new Refresh_Outline_Command;
       Register_Contextual_Menu

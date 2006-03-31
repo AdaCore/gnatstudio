@@ -546,7 +546,8 @@ package body Remote_Views is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Remote : constant String := Remote_Menu_Path;
+      Remote : constant String := '/' & (-"_Tools") & '/' & (-"_Views");
+
    begin
       Remote_View_Module_Id := new Remote_View_Module_Record;
       Register_Module
@@ -557,8 +558,7 @@ package body Remote_Views is
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu
-        (Kernel, Remote, -"Remote _View", "",
-         On_Show_Remote_View'Access);
+        (Kernel, Remote, -"_Remote", "", On_Show_Remote_View'Access);
    end Register_Module;
 
 end Remote_Views;

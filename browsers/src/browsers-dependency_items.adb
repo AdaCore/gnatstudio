@@ -246,7 +246,7 @@ package body Browsers.Dependency_Items is
 
    procedure On_Dependency_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Tools->Dependency Browser
+   --  Tools->Browsers->Dependency
 
    procedure Browser_Context_Factory
      (Context      : in out Selection_Context;
@@ -505,6 +505,7 @@ package body Browsers.Dependency_Items is
       Browser : Dependency_Browser;
       Hook    : Project_Changed_Hook;
       Title   : constant String := -"Dependency Browser";
+
    begin
       Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Dependency_Browser_Record'Tag));
@@ -1052,11 +1053,12 @@ package body Browsers.Dependency_Items is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools   : constant String := '/' & (-"Tools");
+      Tools   : constant String := '/' & (-"Tools") & '/' & (-"Browsers");
       Command : Interactive_Command_Access;
       Filter  : constant Action_Filter :=
                   Action_Filter ((not Lookup_Filter (Kernel, "Entity"))
                                    and Lookup_Filter (Kernel, "In project"));
+
    begin
       Dependency_Browser_Module_ID := new Dependency_Browser_Module;
       Register_Module
@@ -1093,7 +1095,7 @@ package body Browsers.Dependency_Items is
          Filter => Action_Filter
            (Create (Module => Dependency_Browser_Module_Name)));
 
-      Register_Menu (Kernel, Tools, -"Dependency Browser", "",
+      Register_Menu (Kernel, Tools, -"_Dependency", "",
                      On_Dependency_Browser'Access);
 
       Register_Command

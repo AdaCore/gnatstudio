@@ -112,6 +112,7 @@ package body Bookmark_Views is
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Bookmark_View",
       View_Name          => "Bookmarks",
+      Menu_Name          => "_Bookmarks",
       Formal_View_Record => Bookmark_View_Record);
    subtype Bookmark_View_Access is Generic_View.View_Access;
 

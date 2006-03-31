@@ -496,8 +496,8 @@ package body Browsers.Entities is
          Action => Command);
       Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => '/' & (-"Tools"),
-         Text        => -"Entity Browser",
+         Parent_Path => '/' & (-"Tools") & '/' & (-"Browsers"),
+         Text        => -"_Entity",
          Callback    => On_Type_Browser'Access);
       Register_Command
         (Kernel, "show",

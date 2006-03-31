@@ -2621,9 +2621,11 @@ package body Project_Viewers is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
-      Filter : Action_Filter;
+      Tools   : constant String := '/' & (-"Tools") & '/' & (-"Views");
+      Filter  : Action_Filter;
       Command : Interactive_Command_Access;
       Mitem   : Gtk_Menu_Item;
+
    begin
       Prj_Editor_Module_ID := new Prj_Editor_Module_Id_Record;
       Register_Module
@@ -2642,9 +2644,16 @@ package body Project_Viewers is
         (Kernel, Project, -"Edit File _Switches", "",
          On_Edit_Switches'Access, Ref_Item => -"Recent", Add_Before => False);
       Register_Menu
+        (Kernel, Tools, -"File Sw_itches", "", On_Edit_Switches'Access);
+
+      Register_Menu
         (Kernel, Project, -"Edit Project _Properties", "",
          On_Project_Properties'Access, Ref_Item => -"Recent",
          Add_Before => False);
+      Register_Menu
+        (Kernel, Tools, -"Pro_ject Properties", "",
+         On_Project_Properties'Access);
+
       Register_Menu
         (Kernel, Project, -"Save _All", "",
          Save_All_Projects'Access, Ref_Item => -"Edit Project Properties",

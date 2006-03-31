@@ -342,7 +342,7 @@ package body Vdiff_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools : constant String := '/' & (-"Tools") & '/' & (-"Compare") & '/';
+      Tools : constant String := '/' & (-"Tools") & '/' & (-"C_ompare");
    begin
       Vdiff_Module_ID := new Vdiff_Module_Record;
       Register_Module
@@ -353,7 +353,13 @@ package body Vdiff_Module is
       Add_Hook (Kernel, Diff_Action_Hook,
                 Wrapper (Diff_Hook'Access), Name => "vidff.diff");
       Register_Menu
-        (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);
+        (Kernel, '/' & (-"Tools") & '/', (-"C_ompare"),
+         Callback => null,
+         Ref_Item   => -"Consoles",
+         Add_Before => False);
+      Register_Menu
+        (Kernel, Tools, -"_Two Files...", "", On_Compare_Two_Files'Access,
+         Ref_Item => -"Browsers", Add_Before => False);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 

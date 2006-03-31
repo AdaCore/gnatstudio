@@ -1036,8 +1036,8 @@ package body Docgen_Module is
       On_Preferences_Changed (Kernel);
 
       Register_Menu
-        (Kernel, Tools, "Documentation", Callback => null,
-         Ref_Item => -"Interrupt", Add_Before => True);
+        (Kernel, Tools, "_Documentation", Callback => null,
+         Ref_Item => -"Compare", Add_Before => False);
 
       Register_Menu
         (Kernel,

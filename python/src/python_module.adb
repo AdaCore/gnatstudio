@@ -735,8 +735,8 @@ package body Python_Module is
 
       Register_Menu
         (Kernel,
-         Parent_Path => "/" & (-"Tools"),
-         Text        => -"Python Console",
+         Parent_Path => "/" & (-"_Tools") & '/' & (-"Consoles"),
+         Text        => -"_Python",
          Callback    => Open_Python_Console'Access);
 
       --  If PyGtk is available, register some special functions, so that
@@ -746,6 +746,7 @@ package body Python_Module is
         (Python_Module_Id.Script.Interpreter,
          "import pygtk", Hide_Output => True,
          Errors => Errors'Unchecked_Access);
+
       if not Errors then
          Trace (Me, "Loading support for pygtk");
          Result := Run_Command

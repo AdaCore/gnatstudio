@@ -34,7 +34,6 @@ with GNAT.Regpat;                use GNAT.Regpat;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
-with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 with Gtk.Box;                    use Gtk.Box;
@@ -67,6 +66,7 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Collapsing_Pane;            use Collapsing_Pane;
 
+with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
@@ -266,11 +266,6 @@ package body GPS.Kernel.Remote is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
    --  Called when something in the path tree has been edited
-
-   procedure On_Configure_Server_List
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Remote->Configure the servers list
 
    -----------------------
    -- Server Assignment --
@@ -1785,18 +1780,6 @@ package body GPS.Kernel.Remote is
       Changed (Dialog);
    end Path_Edited;
 
-   ------------------------------
-   -- On_Configure_Server_List --
-   ------------------------------
-
-   procedure On_Configure_Server_List
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
-      pragma Unreferenced (Widget);
-   begin
-      Configure_Server_List (Kernel);
-   end On_Configure_Server_List;
-
    ---------------------------
    -- Configure_Server_List --
    ---------------------------
@@ -2002,11 +1985,6 @@ package body GPS.Kernel.Remote is
       --  Connect to project_changing hook
       Add_Hook (Kernel, Project_Changing_Hook,
                 Wrapper (On_Project_Changing'Access), "gps.kernel.remote");
-
-      --  Add menu item
-      Register_Menu
-        (Kernel, Remote_Menu_Path, -"Servers _Configuration", "",
-         On_Configure_Server_List'Access);
    end Register_Module;
 
    ----------

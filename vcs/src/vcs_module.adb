@@ -349,8 +349,10 @@ package body VCS_Module is
    is
       VCS_Class : constant Class_Type := New_Class (Kernel, "VCS");
 
-      VCS_Root  : constant String := -"VCS";
-      Command   : Generic_Kernel_Command_Access;
+      VCS_Root    : constant String := -"VCS";
+      VCS_Menu    : constant String := VCS_Root & '/';
+      Tools_Menu  : constant String := -"Tools" & '/' & (-"Views");
+      Command     : Generic_Kernel_Command_Access;
 
       VCS_Action_Context : constant Action_Filter := Action_Filter (Create);
 
@@ -397,7 +399,7 @@ package body VCS_Module is
 
          Register_Menu
            (Kernel      => Kernel,
-            Parent_Path => "/_" & VCS_Root & Parent_String.all,
+            Parent_Path => VCS_Menu & Parent_String.all,
             Text        => Menu_Label,
             Callback    => null,
             Action      => Lookup_Action (Kernel, Action_Label));
@@ -556,78 +558,76 @@ package body VCS_Module is
          Ref_Item   => -"Navigate",
          Add_Before => False);
 
-      Gtk_New_With_Mnemonic (Mitem, -"_Explorer");
-      Kernel_Callback.Connect
-        (Mitem, "activate", On_Open_Interface'Access, Kernel_Handle (Kernel));
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+      Register_Menu
+        (Kernel, VCS_Menu, -"_Explorer", "",
+         On_Open_Interface'Access);
+      Register_Menu
+        (Kernel, Tools_Menu, -"_VCS Explorer", "",
+         On_Open_Interface'Access);
 
-      Gtk_New_With_Mnemonic (Mitem, -"_Activities");
-      Kernel_Callback.Connect
-        (Mitem, "activate", On_Open_Activities_Interface'Access,
-         Kernel_Handle (Kernel));
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+      Register_Menu
+        (Kernel, VCS_Menu, -"_Activities", "",
+         On_Open_Activities_Interface'Access);
+      Register_Menu
+        (Kernel, Tools_Menu, -"VCS _Activities", "",
+         On_Open_Activities_Interface'Access);
 
-      Gtk_New_With_Mnemonic (Mitem, -"Update all _projects");
-      Kernel_Callback.Connect
-        (Mitem, "activate", Update_All'Access, Kernel_Handle (Kernel));
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
-
-      Gtk_New_With_Mnemonic (Mitem, -"_Query status for all projects");
-      Kernel_Callback.Connect
-        (Mitem, "activate", Query_Status_For_Project'Access,
-         Kernel_Handle (Kernel));
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
-
+      Register_Menu
+        (Kernel, VCS_Menu, -"Update all _projects", "",
+         Update_All'Access);
+      Register_Menu
+        (Kernel, VCS_Menu, -"_Query status for all projects", "",
+         Query_Status_For_Project'Access);
       Gtk_New (Mitem);
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+      Register_Menu (Kernel, VCS_Menu, Mitem);
 
       Register_Action_Menu
         ("Status",
          -"Query the status of the current selection",
-         -"Query status",
+         -"Query _status",
          File_Filter,
          On_Menu_Get_Status'Access);
 
       Register_Action_Menu
         ("Update",
          -"Update to the current repository revision",
-         -"Update",
+         -"_Update",
          File_Filter,
          On_Menu_Update'Access);
 
       Register_Action_Menu
         ("Commit",
          -"Commit current file, or file corresponding to the current log",
-         -"Commit",
+         -"_Commit",
          File_Filter,
          On_Menu_Commit'Access);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+      Register_Menu (Kernel, VCS_Menu, Mitem);
 
       Register_Action_Menu
         ("Open",
          -"Open the current file for editing",
-         -"Open",
+         -"_Open",
          File_Filter,
          On_Menu_Open'Access);
 
       Register_Action_Menu
         ("History",
          -"View the revision history for the current file",
-         -"View entire revision history",
+         -"View _entire revision history",
          File_Filter,
          On_Menu_View_Log'Access);
 
       Register_Action_Menu
         ("History for revision...",
          -"View the revision history for one revision of the current file",
-         -"View specific revision history",
+         -"View specific revision _history",
          File_Filter,
          On_Menu_View_Log_Rev'Access);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+      Register_Menu (Kernel, VCS_Menu, Mitem);
 
       Register_Action_Menu
         ("Diff against head",
@@ -696,47 +696,47 @@ package body VCS_Module is
          On_Menu_Remove_Log'Access);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+      Register_Menu (Kernel, VCS_Menu, Mitem);
 
       Register_Action_Menu
         ("Add",
          -"Add the current file to repository",
-         -"Add",
+         -"_Add",
          File_Filter,
          On_Menu_Add'Access);
 
       Register_Action_Menu
         ("Add no commit",
          -"Add the current file to repository, do not commit",
-         -"Add/No commit",
+         -"Add/_No commit",
          File_Filter,
          On_Menu_Add_No_Commit'Access);
 
       Register_Action_Menu
         ("Remove",
          -"Remove the current file from repository",
-         -"Remove",
+         -"_Remove",
          File_Filter,
          On_Menu_Remove'Access);
 
       Register_Action_Menu
         ("Remove no commit",
          -"Remove the current file from repository, do not commit",
-         -"Remove/No commit",
+         -"Remove/N_o commit",
          File_Filter,
          On_Menu_Remove_No_Commit'Access);
 
       Register_Action_Menu
         ("Revert",
          -"Revert the current file to repository revision",
-         -"Revert",
+         -"Re_vert",
          File_Filter,
          On_Menu_Revert'Access);
 
       Register_Action_Menu
         ("Resolved",
          -"Mark file conflicts resolved",
-         -"Resolved",
+         -"Reso_lved",
          File_Filter,
          On_Menu_Resolved'Access);
 
@@ -746,90 +746,87 @@ package body VCS_Module is
       Register_Action_Menu
         ("Create tag",
          -"Create a tag or branch tag",
-         -"Create tag",
+         -"Create _tag...",
          File_Filter,
          On_Menu_Create_Tag'Access);
 
       Register_Action_Menu
         ("Switch tag",
          -"Switch to a specific tag or branch",
-         -"Switch tag",
+         -"S_witch tag...",
          File_Filter,
          On_Menu_Switch_Tag'Access);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+      Register_Menu (Kernel, VCS_Menu, Mitem);
 
       Register_Action_Menu
         ("Status dir",
          -"Query the status of the current directory",
-         -"Query status for directory",
+         -"_Query status for directory",
          Dir_Filter,
          On_Menu_Get_Status_Dir'Access);
 
       Register_Action_Menu
         ("Update dir",
          -"Update the current directory",
-         -"Update directory",
+         -"_Update directory",
          Dir_Filter,
          On_Menu_Update_Dir'Access);
 
       Register_Action_Menu
         ("Status dir (recursively)",
          -"Query the status of the current directory recursively",
-         -"Query status for directory (recursively)",
+         -"Query _status for directory (recursively)",
          Dir_Filter,
          On_Menu_Get_Status_Dir_Recursive'Access);
 
       Register_Action_Menu
         ("Update dir (recursively)",
          -"Update the current directory (recursively)",
-         -"Update directory (recursively)",
+         -"Update _directory (recursively)",
          Dir_Filter,
          On_Menu_Update_Dir_Recursive'Access);
-
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
 
       Register_Action_Menu
         ("List project",
          -"List all the files in project",
-         -"List all files in project",
+         -"_List all files in project",
          Prj_Filter,
          On_Menu_List_Project_Files'Access);
 
       Register_Action_Menu
         ("Status project",
          -"Query the status of the current project",
-         -"Query status",
+         -"_Query status",
          Prj_Filter,
          On_Menu_Get_Status_Project'Access);
 
       Register_Action_Menu
         ("Update project",
          -"Update the current project",
-         -"Update project",
+         -"_Update project",
          Prj_Filter,
          On_Menu_Update_Project'Access);
 
       Register_Action_Menu
         ("List project (recursively)",
          -"List all the files in project and subprojects",
-         -"List all files in project (recursively)",
+         -"List _all files in project (recursively)",
          Prj_Filter,
          On_Menu_List_Project_Files_Recursive'Access);
 
       Register_Action_Menu
         ("Status project (recursively)",
          -"Query the status of the current project recursively",
-         -"Query status (recursively)",
+         -"Query _status (recursively)",
          Prj_Filter,
          On_Menu_Get_Status_Project_Recursive'Access);
 
       Register_Action_Menu
         ("Update project (recursively)",
          -"Update the current project (recursively)",
-         -"Update project (recursively)",
+         -"Update _project (recursively)",
          Prj_Filter,
          On_Menu_Update_Project_Recursive'Access);
    end Register_Module;

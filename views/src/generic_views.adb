@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -198,8 +198,9 @@ package body Generic_Views is
            (Save_Desktop_Access, Load_Desktop_Access);
 
          Register_Menu
-           (Kernel, "/" & (-"Tools"), View_Name, "", On_Open_View_Access,
-            Ref_Item => -"File View", Add_Before => False);
+           (Kernel, '/' & (-"Tools") & '/' & (-"_Views"),
+            Menu_Name, "", On_Open_View_Access,
+            Ref_Item => -"Remote", Add_Before => True);
       end Register_Module;
    end Simple_Views;
 

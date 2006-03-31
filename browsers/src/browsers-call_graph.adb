@@ -2090,7 +2090,7 @@ package body Browsers.Call_Graph is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools    : constant String := '/' & (-"Tools");
+      Tools    : constant String := '/' & (-"Tools") & '/' & (-"Browsers");
       Navigate : constant String := "/_" & (-"Navigate");
       Find_All : constant String := -"Find _All References";
       Command  : Interactive_Command_Access;
@@ -2174,7 +2174,13 @@ package body Browsers.Call_Graph is
          Filter => Action_Filter (Create (Module => Call_Graph_Module_Name))
          and Lookup_Filter (Kernel, "Entity"));
 
-      Register_Menu (Kernel, Tools, -"Call Graph", "", On_Call_Graph'Access);
+      Register_Menu
+        (Kernel, '/' & (-"Tools") & '/', (-"_Browsers"),
+         Callback   => null,
+         Ref_Item   => -"Views",
+         Add_Before => False);
+      Register_Menu
+        (Kernel, Tools, -"_Call Graph", "", On_Call_Graph'Access);
       Register_Menu
         (Kernel, Navigate, Find_All, "", On_Find_All_References'Access,
          Ref_Item => -"Find Previous", Add_Before => False);

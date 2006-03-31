@@ -84,7 +84,8 @@ package body Buffer_Views is
 
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => Module_Name,
-      View_Name          => "Windows View",
+      View_Name          => "Windows",
+      Menu_Name          => "_Windows",
       Formal_View_Record => Buffer_View_Record);
    subtype Buffer_View_Access is Generic_View.View_Access;
 

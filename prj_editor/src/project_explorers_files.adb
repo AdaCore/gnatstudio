@@ -1171,7 +1171,7 @@ package body Project_Explorers_Files is
                      Default_Height => 600,
                      Group          => Group_View,
                      Module         => Explorer_Files_Module_Id);
-         Set_Title (C2, -"Project Explorer - File View",  -"File View");
+         Set_Title (C2, -"File View",  -"File View");
          Put (Get_MDI (Kernel), C2, Initial_Position => Position_Left);
          Set_Focus_Child (C2);
          Raise_Child (C2);
@@ -1232,7 +1232,7 @@ package body Project_Explorers_Files is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools : constant String := '/' & (-"Tools");
+      Tools : constant String := '/' & (-"Tools") & '/' & (-"Views");
    begin
       Explorer_Files_Module_Id := new Explorer_Module_Record;
       Register_Module
@@ -1243,7 +1243,7 @@ package body Project_Explorers_Files is
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu
-        (Kernel, Tools, -"File View", "", On_Open_Explorer'Access);
+        (Kernel, Tools, -"_Files", "", On_Open_Explorer'Access);
    end Register_Module;
 
 end Project_Explorers_Files;
