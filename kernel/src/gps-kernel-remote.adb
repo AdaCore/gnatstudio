@@ -1739,20 +1739,24 @@ package body GPS.Kernel.Remote is
 
    begin
       if Dialog.Select_Back then
-         --  Do not change dialog values.
+         --  Do not change dialog values
          Dialog.Select_Back := False;
+
          return;
       end if;
 
       --  If we just added a machine, do not perform any save
+
       if not Dialog.Added_Item and then not Save (Server_List_Editor (W)) then
          return;
       end if;
+
       Dialog.Added_Item := False;
 
       --  Now reinit the dialog values
-      Get_Selected (Get_Selection (Dialog.Machine_Tree),
-                    Gtk_Tree_Model (Model), Iter);
+
+      Get_Selected
+        (Get_Selection (Dialog.Machine_Tree), Gtk_Tree_Model (Model), Iter);
 
       if Iter /= Null_Iter then
          declare
@@ -1807,6 +1811,7 @@ package body GPS.Kernel.Remote is
             --  If user defined, look for a system defined descriptor with
             --  same nickname. If found, propose to restore user defined
             --  value with default value.
+
             Overriden := False;
             User_Only := False;
 
@@ -1829,9 +1834,12 @@ package body GPS.Kernel.Remote is
             Set_Sensitive (Dialog.Remove_Button, User_Only);
 
             --  Now fill the path list
+
             Path_Item := Dialog.Paths_List;
+
             while Path_Item /= null loop
                exit when Path_Item.Nickname.all = Nickname;
+
                Path_Item := Path_Item.Next;
             end loop;
 
