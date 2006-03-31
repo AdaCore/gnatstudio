@@ -136,9 +136,12 @@ procedure GPS.Main is
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
-   Docgen_Trace   : constant Debug_Handle := Create ("MODULE.Docgen", On);
-   Refactor_Trace : constant Debug_Handle := Create ("MODULE.Refactor", On);
-   Python_Trace   : constant Debug_Handle := Create ("MODULE.Python", On);
+   Docgen_Trace           : constant Debug_Handle :=
+                              Create ("MODULE.Docgen", On);
+   Refactor_Trace         : constant Debug_Handle :=
+                              Create ("MODULE.Refactor", On);
+   Python_Trace           : constant Debug_Handle :=
+                              Create ("MODULE.Python", On);
    Call_Graph_Trace       : constant Debug_Handle :=
                               Create ("MODULE.Call_Graph", On);
    Dependency_Trace       : constant Debug_Handle :=
@@ -149,37 +152,47 @@ procedure GPS.Main is
                               Create ("MODULE.Entities_Browser", On);
    Revision_Views_Trace   : constant Debug_Handle :=
                                Create ("MODULE.Revision_Views", On);
-   Aliases_Trace : constant Debug_Handle := Create ("MODULE.Aliases", On);
+   Aliases_Trace          : constant Debug_Handle :=
+                              Create ("MODULE.Aliases", On);
    Project_Explorer_Trace : constant Debug_Handle :=
                               Create ("MODULE.Project_Explorer", On);
    Files_Explorer_Trace   : constant Debug_Handle :=
                               Create ("MODULE.Files_Explorer", On);
    External_Editor_Trace  : constant Debug_Handle :=
                               Create ("MODULE.External_Editor", On);
-   VCS_Trace     : constant Debug_Handle := Create ("MODULE.VCS", On);
-   Custom_Trace  : constant Debug_Handle := Create ("MODULE.Custom", On);
-   Action_Editor_Trace : constant Debug_Handle :=
-                           Create ("MODULE.Action_Editor", Off);
-   Codefix_Trace : constant Debug_Handle := Create ("MODULE.Codefix", On);
-   Builder_Trace : constant Debug_Handle := Create ("MODULE.Builder", On);
-   GVD_Trace     : constant Debug_Handle := Create ("MODULE.GVD", On);
-   Aunit_Trace   : constant Debug_Handle := Create ("MODULE.Aunit", On);
-   VFS_Trace     : constant Debug_Handle := Create ("MODULE.VFS", On);
-   Help_Trace    : constant Debug_Handle := Create ("MODULE.Help", On);
-   Scenario_View_Trace : constant Debug_Handle :=
-                           Create ("MODULE.SCENARIO", On);
-   Project_Viewer_Trace : constant Debug_Handle :=
-                            Create ("MODULE.Project_Viewer", On);
+   VCS_Trace              : constant Debug_Handle := Create ("MODULE.VCS", On);
+   Custom_Trace           : constant Debug_Handle :=
+                              Create ("MODULE.Custom", On);
+   Action_Editor_Trace    : constant Debug_Handle :=
+                              Create ("MODULE.Action_Editor", Off);
+   Codefix_Trace          : constant Debug_Handle :=
+                                       Create ("MODULE.Codefix", On);
+   Builder_Trace          : constant Debug_Handle :=
+                                       Create ("MODULE.Builder", On);
+   GVD_Trace              : constant Debug_Handle :=
+                                       Create ("MODULE.GVD", On);
+   Aunit_Trace            : constant Debug_Handle :=
+                                       Create ("MODULE.Aunit", On);
+   VFS_Trace              : constant Debug_Handle := Create ("MODULE.VFS", On);
+   Help_Trace             : constant Debug_Handle :=
+                                       Create ("MODULE.Help", On);
+   Scenario_View_Trace    : constant Debug_Handle :=
+                              Create ("MODULE.SCENARIO", On);
+   Project_Viewer_Trace   : constant Debug_Handle :=
+                              Create ("MODULE.Project_Viewer", On);
    Project_Properties_Trace : constant Debug_Handle :=
                                 Create ("MODULE.Project_Properties", On);
-   CPP_Trace : constant Debug_Handle := Create ("MODULE.CPP", On);
-   Outline_View_Trace : constant Debug_Handle := Create ("MODULE.OUTLINE", On);
-   Call_Graph_View_Trace : constant Debug_Handle :=
-                             Create ("MODULE.CALL_GRAPH_VIEW", On);
-   Remote_View_Trace : constant Debug_Handle :=
-                         Create ("MODULE.REMOTE_VIEW", On);
+   CPP_Trace              : constant Debug_Handle := Create ("MODULE.CPP", On);
+   Outline_View_Trace     : constant Debug_Handle :=
+                              Create ("MODULE.Outline", On);
+   Call_Graph_View_Trace  : constant Debug_Handle :=
+                              Create ("MODULE.Call_Graph_View", On);
+   Clipboard_View_Trace   : constant Debug_Handle :=
+                              Create ("MODULE.Clipboard_Vview", On);
+   Remote_View_Trace      : constant Debug_Handle :=
+                              Create ("MODULE.Remote_View", On);
 
-   GPS_Started_Hook : constant String := "gps_started";
+   GPS_Started_Hook       : constant String := "gps_started";
 
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
@@ -1248,8 +1261,6 @@ procedure GPS.Main is
 
       Theme_Manager_Module.Register_Module (GPS_Main.Kernel);
 
-      Clipboard_Views.Register_Module (GPS_Main.Kernel);
-
       Vsearch_Ext.Register_Module (GPS_Main.Kernel);
 
       if Active (Help_Trace) then
@@ -1272,8 +1283,16 @@ procedure GPS.Main is
          Call_Graph_Views.Register_Module (GPS_Main.Kernel);
       end if;
 
+      if Active (Clipboard_View_Trace) then
+         Clipboard_Views.Register_Module (GPS_Main.Kernel);
+      end if;
+
       if Active (Dependency_Trace) then
          Browsers.Dependency_Items.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Files_Explorer_Trace) then
+         Project_Explorers_Files.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Project_Browser_Trace) then
@@ -1292,8 +1311,12 @@ procedure GPS.Main is
          Project_Viewers.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Active (Scenario_View_Trace) then
-         Scenario_Views.Register_Module (GPS_Main.Kernel);
+      if Active (Outline_View_Trace) then
+         Outline_View.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Project_Explorer_Trace) then
+         Project_Explorers.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Project_Properties_Trace) then
@@ -1306,18 +1329,6 @@ procedure GPS.Main is
 
       if Active (Aliases_Trace) then
          Aliases_Module.Register_Module (GPS_Main.Kernel);
-      end if;
-
-      if Active (Project_Explorer_Trace) then
-         Project_Explorers.Register_Module (GPS_Main.Kernel);
-      end if;
-
-      if Active (Files_Explorer_Trace) then
-         Project_Explorers_Files.Register_Module (GPS_Main.Kernel);
-      end if;
-
-      if Active (Outline_View_Trace) then
-         Outline_View.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (External_Editor_Trace) then
@@ -1338,6 +1349,12 @@ procedure GPS.Main is
          Vdiff2_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
+      if Active (Scenario_View_Trace) then
+         Scenario_Views.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      GPS.Kernel.Task_Manager.Register_Module (GPS_Main.Kernel);
+
       if Active (VCS_Trace) then
          VCS_Module.Register_Module (GPS_Main.Kernel);
          VCS.ClearCase.Register_Module (GPS_Main.Kernel);
@@ -1351,7 +1368,6 @@ procedure GPS.Main is
          Codefix_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      GPS.Kernel.Task_Manager.Register_Module (GPS_Main.Kernel);
       GPS.Kernel.Preferences.Register_Module (GPS_Main.Kernel);
 
       if Active (Custom_Trace) then
@@ -1376,7 +1392,7 @@ procedure GPS.Main is
 
       Casing_Exceptions.Register_Module (GPS_Main.Kernel);
 
-      --  Load these last, since this requires the collaboration of over
+      --  Load these last, since this requires the collaboration of other
       --  modules
 
       Bookmark_Views.Register_Module (GPS_Main.Kernel);
