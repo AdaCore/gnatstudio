@@ -254,7 +254,7 @@ package body VCS_View.Activities is
       if File_Count > 0 then
          Button := Message_Dialog
            (Msg     =>
-              (-"Activity") & ''' & Get_Name (Activity) & ''' & ASCII.LF &
+              (-"Activity") & " '" & Get_Name (Activity) & ''' & ASCII.LF &
                (-"will be deleted") & ASCII.LF,
             Dialog_Type => Warning,
             Title       => -"Delete Activity",
@@ -263,13 +263,9 @@ package body VCS_View.Activities is
 
       if Button = Button_OK then
          Close_File_Editors (Kernel, Log_File);
-
          Delete_Activity (Kernel, Activity);
-
          Iter := Get_Iter_From_Activity (Explorer, Activity);
-
          Remove (Explorer.Model, Iter);
-
          Refresh (Get_Explorer (Kernel, False, False));
       end if;
    end On_Delete_Activity;
