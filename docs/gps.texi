@@ -17,8 +17,6 @@
 @set GPS
 @set GPSVersion 4.0.0
 
-@set python
-
 @titlepage
 
 @flushleft
@@ -96,12 +94,7 @@ Description of the main windows
 * The Callgraph View::
 * Bookmarks::
 * The Messages Window::
-@ifset python
 * The Shell and Python Windows::
-@end ifset
-@ifclear python
-* The Shell Window::
-@end ifclear
 * The Locations Tree::
 * The Status Line::
 * The Task Manager::
@@ -239,16 +232,11 @@ Scripting GPS
 * Scripts::
 * Scripts and GPS actions::
 * The GPS Shell::
-@ifset python
 * The Python Interpreter::
-@end ifset
 * Subprogram parameters::
-@ifset python
 * Python FAQ::
-@end ifset
 * Hooks::
 
-@ifset python
 Python FAQ
 * Spawning external processes::
 * Redirecting the output of spawned processes::
@@ -259,7 +247,6 @@ Python FAQ
 * Automatically loading python files at startup::
 * Hiding contextual menus::
 * Creating custom graphical interfaces::
-@end ifset
 
 Environment
 * Command Line Options::
@@ -329,15 +316,7 @@ gcc, gdb, gnatmake, etc@dots{}.
 * The Callgraph View::
 * Bookmarks::
 * The Messages Window::
-
-@ifset python
 * The Shell and Python Windows::
-@end ifset
-
-@ifclear python
-* The Shell Window::
-@end ifclear
-
 * The Locations Tree::
 * The Execution Window::
 * The Status Line::
@@ -535,7 +514,8 @@ The whole work space is based on a multiple document interface,
 The project explorer provides a view of the various components of your project
 hierarchy, as listed below.
 It is displayed by default on the left side of the main window, and can
-be selected by using the @code{Project->Project View} menu item.
+be selected by using the @code{Project->Project View} or
+@code{Tools->Views->Project} menu items.
 
 @cindex drag-n-drop
 Under Windows, it is possible to drop files (coming e.g. from the Explorer)
@@ -741,7 +721,7 @@ according to the new setup.
 
 @noindent
 In addition to the @code{Project View}, GPS also provides a
-@code{File View} through the @code{Tools->File View} menu.
+@code{File View} through the @code{Tools->Views->Files} menu.
 
 @iftex
 @cindex screen shot
@@ -773,7 +753,7 @@ files view, to conveniently open a file.
 
 @noindent
 The @code{Window View} displays the currently opened windows.
-It is opened through the @code{Tools->Window View} menu.
+It is opened through the @code{Tools->Views->Windows} menu.
 
 It can display the opened windows in one of two ways:
 @itemize @bullet
@@ -806,7 +786,7 @@ cleanup your desktop after you have finished working on a task.
 
 @noindent
 The Outline View, which you can choose to activate through the
-@code{Tools->Outline View} menu, shows the contents of the current file.
+@code{Tools->Views->Outline} menu, shows the contents of the current file.
 
 @iftex
 @cindex screen shot
@@ -961,8 +941,8 @@ The menu @code{Edit->Create Bookmark} allows you to create a bookmark
 at the current location (either in the editor, or the browser for instance).
 
 All the bookmarks you have created will be visible in the
-@code{Tools->Bookmarks} window. Clicking on the small icon to the left side
-of each line will immediately jump to that bookmark.
+@code{Tools->Views->Bookmarks} window. Clicking on the small icon to the left
+side of each line will immediately jump to that bookmark.
 
 You can rename a bookmark so that it is easier to remember what it refers to.
 To do so, open the Bookmarks window, and click twice on the line of the
@@ -1005,25 +985,12 @@ no input is possible.
 @cindex shell window
 @cindex shell
 For an input/output window, see @ref{The Execution Window} and also
-@ifset python
 @ref{The Shell and Python Windows}.
-@end ifset
-@ifclear python
-@ref{The Shell Window}.
-@end ifclear
 
 @c --------------------------------------------------------------------
-@ifset python
 @node The Shell and Python Windows
 @section The Shell and Python Windows
 @cindex python window
-@end ifset
-
-@ifclear python
-@node The Shell Window
-@section The Shell Window
-@end ifclear
-
 @cindex shell
 @cindex shell window
 @cindex interactive command
@@ -1035,11 +1002,9 @@ These windows give access to the various scripting languages supported
 by GPS, and allow you to type commands such as editing a file or
 compiling without using the menu items or the mouse.
 
-@ifset python
 Some of these windows, especially the python window, might not be
 visible in your version of GPS, if GPS wasn't compiled with the
 support for that specific scripting language.
-@end ifset
 
 To show the shell consoles, select the menu @code{Tools}.
 
@@ -1293,17 +1258,9 @@ the small wrapper script @file{gps} itself on Unix systems.
 It can also be set programmatically through the GPS shell or any of the
 scripting languages. This is done with
 
-@ifset python
 @smallexample
 GPS.add_doc_directory ("/home/foo")
 @end smallexample
-@end ifset
-
-@ifclear python
-@smallexample
-add_doc_path "/home/foo"
-@end smallexample
-@end ifclear
 
 The specific list of files shown in the menus is set by reading the
 index files in each of the directories in @code{GPS_DOC_PATH}. These
@@ -3440,7 +3397,7 @@ All the attributes of a project, except its list of imported projects,
 can be chosen based on the value of external variables, whose value is
 generally coming from the host computer environment, or directly set in
 GPS. The interface to manipulate these scenarios is the scenario view, which
-can be displayed by selecting the menu @code{Tools->Scenario View}.
+can be displayed by selecting the menu @code{Tools->Views->Scenario}.
 It can be convenient to drag this window with your mouse, and drop it above
 the project view, so that you can see both at the same time.
 
@@ -3824,6 +3781,7 @@ project properties dialog for this project.
 This will save all the modified projects in the hierarchy.
 
 @item Edit File Switches
+@anchor{File Switches}
 This menu applies to the currently selected project. This will open a
 new window in GPS, listing all the source files for this project,
 along with the switches that will be used to compile them, @xref{The
@@ -4785,7 +4743,7 @@ interrupt the previous one by selecting the same menu again.
 
 However, the easiest way to interrupt a specific operation, no matter if it was
 started last or not, is to use the @code{Task Manager}, through the
-@code{Tools->Task Manager} menu. It will show one line per running process,
+@code{Tools->Views->Tasks} menu. It will show one line per running process,
 and right-clicking on any of these lines gives the possibility to interrupt
 that process.
 
@@ -6921,7 +6879,8 @@ Edit the current revision log for the selected file.
 Basic VCS operations can be accessed through the VCS menu. Most of
 these functions act on the current selection, i.e. on the selected items
 in the VCS Explorer if it is present, or on the currently selected
-file editor, or on the currently selected item in the @code{Tools->File View}.
+file editor, or on the currently selected item in the
+@code{Tools->Views->Files}.
 In most cases, the VCS contextual menu offers more control on
 VCS operations. @xref{The Version Control Contextual Menu}.
 
@@ -7279,51 +7238,105 @@ currently disabled, meaning that these are planned tools not yet available.
 The list of active items includes:
 
 @table @b
-@item GPS Shell Console
+@item Views
+
+@table @b
+
+@item Bookmarks
+@cindex bookmark
+@xref{Bookmarks}.
+
+@item Call Tree
+Open a tree view of function callers and callees. See also @ref{Call Graph}.
+
+@item Clipboard
+@xref{The Clipboard View}.
+
+@item Files
+Open a file system explorer on the left area.
+@xref{The File View}.
+
+@item File Switches
+@xref{File Switches}.
+
+@item Outline
+Open a view of the current source editor.
+@xref{The Outline View}.
+
+@item Project Properties
+This menu applies to the currently selected project, and will open the
+project properties dialog for this project.
+
+@item Project
+@xref{The Project View}.
+
+@item Remote
+@c ??? Not documented yet
+
+@item Scenario
+@xref{Scenarios and Configuration Variables}.
+
+@item Tasks
+@xref{The Task Manager}.
+
+@item VCS Explorer
+@xref{The VCS Explorer}.
+
+@item VCS Activities
+@xref{The VCS Activities}.
+
+@item Windows
+Open a view containing all currently opened files.
+@xref{The Window View}.
+
+@end table
+
+@item Browsers
+
+@table @b
+@item Call Graph
+@xref{Call Graph}.
+
+@item Dependency
+@xref{Dependency Browser}.
+
+@item Entity
+@xref{Entity Browser}.
+
+@end table
+
+@item Consoles
+@table @b
+@end table
+
+@item GPS Shell
 @cindex shell
 Open a shell console at the bottom area of GPS. Note that this not an OS
 shell console, but a GPS shell console, where you can type GPS specific
 commands such as @code{help}.
 
-@ifset python
 @xref{The Shell and Python Windows}.
-@end ifset
-@ifclear python
-@xref{The Shell Window}.
-@end ifclear
 
-@item Call Graph
-@xref{Call Graph}.
-
-@item Dependency Browser
-@xref{Dependency Browser}.
-
-@item Entity Browser
-@xref{Entity Browser}.
-
-@item File View
-Open a file system explorer on the left area.
-@xref{The File View}.
-
-@item Window View
-Open a view containing all currently opened files.
-@xref{The Window View}.
-
-@item Outline View
-Open a view of the current source editor.
-@xref{The Outline View}.
+@item Python
+@cindex python
+Open a python console to access the python interpreter.
+@xref{The Shell and Python Windows}.
 
 @item Compare
+@cindex vidual diff
 @xref{Visual Comparison}.
 
-@item Task Manager
-@xref{The Task Manager}.
-
 @item Documentation
+@cindex documentation
 @xref{Documentation Generation}.
 
 @item Metrics
+@cindex metrics
 @xref{Metrics}.
+
+@item Interrupt
+@cindex interrupt
+Interrupt the last task launched (e.g. compilation, vcs query, @dots{}).
 
 @end table
 
@@ -8052,7 +8065,7 @@ the progress of those actions.
 
 If you wish to save vertical screen space, you can hide this status
 bar. The progress bars will no longer be visible. Instead, you can
-display the Task Manager through the @code{Tools->Task Manager} menu,
+display the Task Manager through the @code{Tools->Views->Tasks} menu,
 to get similar information.  This manager can then be put on the right
 or left side of the GPS window, for instance just below the Project
 View.
@@ -9230,13 +9243,7 @@ which they are searched. Files with the @file{.xml} extension found through
 the system directory. Likewise, files found in the user's directory can
 override any file found in the @code{GPS_CUSTOM_PATH} directories.
 
-Note that only files with the @file{.xml}
-@ifset python
-or @file{.py} extensions
-@end ifset
-@ifclear python
-extension
-@end ifclear
+Note that only files with the @file{.xml} or @file{.py} extensions
 are considered, other files are ignored.
 
 @itemize @bullet
@@ -9551,9 +9558,7 @@ By default, commands are expected to be written in the GPS shell language.
 However, you can specify the language through the @code{lang} attribute. Its
 default value is @code{"shell"}.
 
-@ifset python
 The value of this attribute could also be "python".
-@end ifset
 
 When programming with the GPS shell, you can execute multiple commands
 by separating them with semicolons. Therefore, the following example
@@ -9622,31 +9627,25 @@ shell or external commands. Macro arguments
 are special parameters that are transformed every time the command is executed.
 The following macro arguments are provided.
 
-@ifset python
 The equivalent python command is given for all tests. These commands are useful
 when you are writing a full python script, and want to test for yourself
 whether the context is properly defined.
-@end ifset
 
 @table @code
 @item %f
 Base name of the currently selected file.
-@ifset python
 Python equivalent:
 @smallexample
 import os.path
 os.path.basename (GPS.current_context().file().name())
 @end smallexample
-@end ifset
 
 @item %F
 Absolute name of the currently opened file.
-@ifset python
 Python equivalent:
 @smallexample
 GPS.current_context().file().name()
 @end smallexample
-@end ifset
 
 @item %fk
 Krunched base name of the currently selected file.
@@ -9656,12 +9655,10 @@ labels, to keep the menus narrow.
 
 @item %e
 Name of the entity the user clicked on.
-@ifset python
 Python equivalent:
 @smallexample
 GPS.current_context().entity().name()
 @end smallexample
-@end ifset
 
 @item %ek
 Krunched name of the entity the user clicked on.
@@ -9669,33 +9666,27 @@ This is the same as @code{%e}, except long names are shorted as in @code{%fk}.
 
 @item %d
 The current directory.
-@ifset python
 Python equivalent:
 @smallexample
 GPS.current_context().directory()
 @end smallexample
-@end ifset
 
 @item %dk
 The krunched name of the current directory.
 
 @item %l
 This is the line number on which the user clicked.
-@ifset python
 Python equivalent:
 @smallexample
 GPS.current_context().line()
 @end smallexample
-@end ifset
 
 @item %c
 This is the column number on which the user clicked.
-@ifset python
 Python equivalent:
 @smallexample
 GPS.current_context().column()
 @end smallexample
-@end ifset
 
 @item %a
 If the user clicked within the Locations Window, this is the name of the
@@ -9717,53 +9708,43 @@ the @file{.gpr} extension is not included in this name, and the casing is the
 one found inside the project file, not the one of the file name itself.
 If the current context is an editor, this is the name of the project to which
 the source file belongs.
-@ifset python
 Python equivalent:
 @smallexample
 GPS.current_context().project().name()
 @end smallexample
-@end ifset
 
 @item %P
 The root project. This is the name of the project, not the project file.
-@ifset python
 Python equivalent:
 @smallexample
 GPS.Project.root().name()
 @end smallexample
-@end ifset
 
 @item %pp
 The current project file pathname. If a file is selected, this is the project
 file to which the source file belongs.
-@ifset python
 Python equivalent:
 @smallexample
 GPS.current_context().project().file().name()
 @end smallexample
-@end ifset
 
 @item %PP
 The root project pathname.
-@ifset python
 Python equivalent:
 @smallexample
 GPS.Project.root().file().name()
 @end smallexample
-@end ifset
 
 @item %pps
 This is similar to @code{%pp}, except it returns the project name prepended
 with @code{-P}, or an empty string if there is no project file selected and the
 current source file doesn't belong to any project. This is mostly for use with
 the GNAT command line tools.
-@ifset python
 Python equivalent:
 @smallexample
 if GPS.current_context().project():
    return "-P" & GPS.current_context().project().path()
 @end smallexample
-@end ifset
 
 @item %PPs
 This is similar to @code{%PP}, except it returns the project name prepended
@@ -9789,22 +9770,18 @@ sub projects, etc@dots{}
 @item d
 list the source directories.
 
-@ifset python
 Python equivalent:
 @smallexample
 GPS.current_context().project().source_dirs()
 @end smallexample
-@end ifset
 
 @item s
 list the source files.
 
-@ifset python
 Python equivalent:
 @smallexample
 GPS.current_context().project().sources()
 @end smallexample
-@end ifset
 
 @item f
 output the list into a file and substitute the parameter with the
@@ -10363,11 +10340,9 @@ that particular value is selected.
    </entry>
 @end smallexample
 
-@ifset python
 A more convenient interface exists for Python, the GPS.Toolbar class, which
 gives you the same flexibility as above, but also gives you dynamic control
 over the entry. See the python documentation.
-@end ifset
 
 @c ---------------------------------------------------------------------
 @node Binding actions to keys
@@ -10546,7 +10521,6 @@ Preference "my-enum"
 Preference.get %1
 @end smallexample
 
-@ifset python
 @item Python
 
 @smallexample
@@ -10554,7 +10528,6 @@ val = GPS.Preference ("my-enum").get ()
 val2 = GPS.Preference ("my-int").get ()
 @end smallexample
 
-@end ifset
 @end itemize
 
 
@@ -12586,7 +12559,6 @@ behavior is so that for scripting languages that systematically protect their
 output with quotes (simple or double), these quotes are sometimes in the
 way when calling external commands.
 
-@ifset python
 @smallexample
 <?xml version="1.0" ?>
 <quotes>
@@ -12597,7 +12569,6 @@ way when calling external commands.
   </action>
 </quotes>
 @end smallexample
-@end ifset
 
 If one of the commands in the action raises an error, the execution of the
 action is stopped immediately, and no further command is performed.
@@ -12668,7 +12639,6 @@ command is a simple output of these switches
 </find_switches>
 @end smallexample
 
-@ifset python
 The following example shows how something similar can be done from Python, in
 a simpler manner. For a change, this function queries the Ada compiler
 switches for the current project, and prints them out in the messages
@@ -12686,7 +12656,6 @@ window. The
   </action>
 </query_switches>
 @end smallexample
-@end ifset
 
 @c --------------------------------------------------------------------------
 @node Querying switches interactively
@@ -12725,7 +12694,6 @@ values. However, this function is especially useful with other scripting
 languages.
 @end table
 
-@ifset python
 The following is a short example that queries the name of a directory and a
 file name, and displays each in the Messages window.
 
@@ -12740,8 +12708,6 @@ file name, and displays each in the Messages window.
   </action>
 </query_file>
 @end smallexample
-
-@end ifset
 
 @c --------------------------------------------------------------------------
 @node Redirecting the command output
@@ -12860,7 +12826,6 @@ Errors can also be fixed automatically by calling the methods of the
 each of which is associated with a specific category. The list of currently
 active sessions can be retrieved through the @code{Codefix.sessions()} command.
 
-@ifset python
 @cindex Codefix.errors
 @cindex CodefixError.fix
 @cindex CodefixError.possible_fixes
@@ -12881,8 +12846,6 @@ errors  = session.errors ()
 print errors [0].possible_fixes ()
 errors [0].fix ()
 @end smallexample
-
-@end ifset
 
 @end enumerate
 
@@ -12994,13 +12957,9 @@ user interactively for the name of the file to search.
 * Scripts::
 * Scripts and GPS actions::
 * The GPS Shell::
-@ifset python
 * The Python Interpreter::
-@end ifset
 * Subprogram parameters::
-@ifset python
 * Python FAQ::
-@end ifset
 * Hooks::
 @end menu
 
@@ -13040,10 +12999,8 @@ GPS> File
 then press the @key{tab} key, which will list all the functions whose
 name starts with "File".
 
-@ifset python
 A similar feature is available in the python console, which also
 provides completion for all the standard python commands and modules.
-@end ifset
 
 All the scripting languages share the same set of commands exported by
 GPS, thanks to a abstract interface defined in the GPS core. As a
@@ -13108,11 +13065,9 @@ following example:
 execute_action "Split horizontally"
 @end smallexample
 
-@ifset python
 @smallexample
 GPS.execute_action (action="Split horizontally")
 @end smallexample
-@end ifset
 
 The list of actions known to GPS can be found through the
 @code{Edit->Key shortcuts} dialog. Action names are case sensitive.
@@ -13195,13 +13150,6 @@ the contents of the string you are quoting.
 Locations.parse """%1 """ category_name
 @end smallexample
 
-@c ------------------------------------------------------------------------
-@ifclear python
-In future versions of GPS, it will be possible to use more advanced scripting
-languages such as @code{Python}.
-@end ifclear
-
-@ifset python
 @node The Python Interpreter
 @subsection The Python Interpreter
 @cindex python
@@ -13216,7 +13164,7 @@ documentation for the current version of python.
 
 If python support has been enabled, the python shell is accessible through the
 @code{Python} window at the bottom of the GPS window. You can also
-display it by using the menu @file{Tools->Python Console}.
+display it by using the menu @file{Tools->Consoles->Python}.
 
 You can type @code{help(GPS)} in the python console to see the list of
 functions exported by GPS to python. If you want to save the output of
@@ -13390,8 +13338,6 @@ This will include the python traces as part of the general traces available
 in the file @file{$HOME/.gps/log}. Note that it may slow down GPS if there is
 a lot of output to process.
 
-@end ifset
-
 @c --------------------------------------------------------------------
 @node Subprogram parameters
 @subsection Subprogram parameters
@@ -13425,8 +13371,6 @@ parse_xml """<action name="on_edition">
 Hook "file_edited"
 Hook.add %1 "on_edition"
 @end smallexample
-
-@ifset python
 
 @item Python
 
@@ -13571,13 +13515,9 @@ MyClass()
 
 @end itemize
 
-
-@end ifset
-
 @end itemize
 
 @c ------------------------------------------------------------------------
-@ifset python
 @node Python FAQ
 @subsection Python FAQ
 @cindex python
@@ -13919,8 +13859,6 @@ This text file includes bold characters by default. Such bold characters
 are correctly interpreted by tools such as @file{a2ps} which can be used
 to convert the text file into a postscript document.
 
-@end ifset
-
 @c -------------------------------------------
 @node Automatically loading python files at startup
 @subsubsection Automatically loading python files at startup
@@ -14021,11 +13959,9 @@ project_changed
 open_file_action_hook
 preferences_changed
 [...]
-@end smallexample
 
-@ifset python
 Python> GPS.Hook.list()
-@end ifset
+@end smallexample
 
 @cindex hooks, type
 The description of each hooks includes a pointer to the type of the hook, that
@@ -14067,7 +14003,6 @@ GPS> Hook project_changed
 GPS> Hook.add %1 "my_action"
 @end smallexample
 
-@ifset python
 @item Python
 
 The command must be a subprogram to execute. The arguments for the
@@ -14080,7 +14015,6 @@ def my_callback (name):
     print "The hook " + name + " was executed by GPS"
 GPS.Hook ("project_changed").add (my_callback)
 @end smallexample
-@end ifset
 
 @end itemize
 
@@ -14099,7 +14033,6 @@ GPS> Hook "file_edited"
 GPS> Hook.add %1 "my_action"
 @end smallexample
 
-@ifset python
 @item Python
 
 The following code prints the name of the file being edited by GPS in the
@@ -14112,10 +14045,8 @@ def my_file_callback (name, file):
 GPS.Hook ("file_edited").add (my_file_callback)
 @end smallexample
 
-@end ifset
 @end itemize
 
-@ifset python
 @c ----------------------------------
 @subsubsection Action hooks
 @cindex hooks, action_hooks
@@ -14171,8 +14102,6 @@ def my_foo_handler (name, file, line, column, \
 GPS.Hook ("open_file_action_hook").add (my_foo_handler)
 @end smallexample
 
-@end ifset
-
 @c --------------------------------------------------------------------
 @subsubsection Running hooks
 @cindex hooks, Hook.run
@@ -14193,10 +14122,8 @@ of the Hook class, and a variable number of arguments
 These must be in the right order and of the right type
 for that specific type of hook.
 
-@ifset python
 If you are running an action hook, the execution will stop as usual as soon
 as one of the subprograms return a True value.
-@end ifset
 
 The following example shows how to run a simple hook with no parameter, and
 a more complex hook with several parameters. The latter will in fact request
@@ -14204,21 +14131,11 @@ the opening of an editor for the file in GPS, and thus has an immediately
 visible effect on the interface. The file is opened at line 100. See the
 description of the hook for more information on the other parameters.
 
-@ifset python
 @smallexample
 GPS.Hook ("project_changed").run()
 GPS.Hook ("open_file_action_hook").run \
               (GPS.File ("test.adb"), 100, 1, 0, 1, 1, 1)
 @end smallexample
-@end ifset
-
-@ifclear python
-GPS> Hook "project_changed"
-GPS> Hook.run %1
-GPS> Hook "open_file_action_hook"
-GPS> File "test.adb"
-GPS> Hook.run %2 %1 100 1 0 true true true
-@end ifclear
 
 @c --------------------------------------------------------------------
 @subsubsection Creating new hooks
@@ -14278,7 +14195,6 @@ only receive the hook name in parameter, not the full list of parameters.
 
 @end itemize
 
-@ifset python
 A small trick worth noting: if the command bound to a hook doesn't have the
 right number of parameters that this hook provide, the command will not be
 executed and GPS will report an error. You can make sure that your command
@@ -14303,15 +14219,6 @@ Hook ("my_custom_hook").add (trace2)
 Hook ("my_custom_hook").run (1, 2) ## Prints 1 2
 Hook ("my_custom_hook").run (1)    ## Prints 1 100
 @end smallexample
-
-@end ifset
-
-@ifclear python
-GPS> Hook.register"my_custom_hook" "some description" "general"
-GPS> Hook "my_custom_hook"
-GPS> Hook.run %1 1 2
-GPS> Hook.run %2 "arg1" "arg2" "arg3"
-@end ifclear
 
 @c --------------------------------------------------------------------
 @node Adding support for new Version Control Systems
