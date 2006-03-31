@@ -478,20 +478,38 @@ package body GPS.Kernel.MDI is
    procedure Close_All_Children
      (Handle : access Kernel_Handle_Record'Class)
    is
-      MDI   : constant MDI_Window := Get_MDI (Handle);
-      Iter  : Child_Iterator := First_Child (MDI);
-      Child : MDI_Child;
-   begin
-      while Get (Iter) /= null loop
-         Child := Get (Iter);
-         Next (Iter);
+      procedure Recurse (Iter : in out Child_Iterator);
+      --  Recursively close children of Iter
 
-         if Child.all not in GPS_MDI_Child_Record'Class
-           or else not GPS_MDI_Child (Child).Desktop_Independent
-         then
-            Close_Child (Child);
+      -------------
+      -- Recurse --
+      -------------
+
+      procedure Recurse (Iter : in out Child_Iterator) is
+         Child : constant MDI_Child := Get (Iter);
+      begin
+         if Child /= null then
+            Next (Iter);
+            Recurse (Iter);
+
+            if Child.all not in GPS_MDI_Child_Record'Class
+              or else not GPS_MDI_Child (Child).Desktop_Independent
+            then
+               Close_Child (Child);
+            end if;
          end if;
-      end loop;
+      end Recurse;
+
+      Iter : Child_Iterator := First_Child (Get_MDI (Handle));
+
+   begin
+      --  ??? We used to have a simple loop here to close MDI children,
+      --  but using Gtk+ 2.8 on e.g. Windows, we are getting SEGV when
+      --  traversing the list, so apparently some data is freed while
+      --  we were still trying to access it. Not clear whether this is
+      --  a Gtk+/Glib bug, or a bug in GPS/GtkAda code.
+
+      Recurse (Iter);
    end Close_All_Children;
 
    -------------------------
