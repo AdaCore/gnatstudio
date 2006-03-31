@@ -830,6 +830,7 @@ package body VCS_View_API is
       --  the contextual menu...
 
       Section_Active := File_Section;
+      Items_Inserted := False;
 
       if File_Section or else Show_Everything then
          if Log_File then
@@ -840,6 +841,8 @@ package body VCS_View_API is
                if Original /= VFS.No_File
                  and then Actions (Commit) /= null
                then
+                  Items_Inserted := True;
+
                   Set_File_Information
                     (Context,
                      Original,
@@ -972,8 +975,7 @@ package body VCS_View_API is
       if Show_Everything
         or else (File_Section and then (Project_Section or else Dir_Section))
       then
-         Gtk_New (Item);
-         Append (Menu, Item);
+         Add_Separator;
       end if;
 
       if File_Section then
