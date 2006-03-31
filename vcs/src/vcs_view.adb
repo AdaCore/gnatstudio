@@ -513,9 +513,15 @@ package body VCS_View is
          Data  : Explorer_Selection_Foreach.Data_Type_Access)
       is
          pragma Unreferenced (Model, Path, Data);
+         use type Gtk_Tree_Iter;
       begin
-         String_List.Append
-           (Result, Get_String (Explorer.Model, Iter, Name_Column));
+         if not (Parent (Explorer.Model, Iter) = Null_Iter) then
+            --  Do not take root nodes, those are the activity name or the VCS
+            --  project name not a file.
+
+            String_List.Append
+              (Result, Get_String (Explorer.Model, Iter, Name_Column));
+         end if;
       end Add_Selected_Item;
 
       E  : aliased VCS_View_Access := Explorer;
