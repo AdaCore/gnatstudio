@@ -337,6 +337,19 @@
       <shell>Hook.run %1 null</shell>
    </action>
 
+   <!-- SVN revision -->
+
+   <action name="generic_svn_revision" show-command="true" output="none">
+      <external output="">svn cat -r "$1" "$2"</external>
+      <on-failure>
+         <shell output="">echo "CVS error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+      <shell>dump_file "%1" "$2$$$1"</shell>
+      <shell>Editor.edit "%1"</shell>
+      <shell>delete "%2"</shell>
+   </action>
+
    <!-- SVN -->
 
    <vcs name="Subversion" 
@@ -361,6 +374,7 @@
       <remove             action="generic_svn_remove"           label="Remove"/>
       <remove_no_commit   action="generic_svn_remove_no_commit" label="Remove/No commit"/>
       <revert             action="generic_svn_revert"           label="Revert"/>
+      <revision           action="generic_svn_revision"         label="View revision"/>
       <diff_patch         action="generic_svn_diff_patch"       label="Compare against head revision for building a patch file"/>
       <diff_head          action="generic_svn_diff_head"        label="Compare against head revision"/>
       <diff_base_head     action="generic_svn_diff_base_head"   label="Compare base against head"/>
