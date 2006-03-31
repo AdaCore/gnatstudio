@@ -2045,17 +2045,19 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean
    is
-      D : constant Source_File_Hooks_Args := Source_File_Hooks_Args (Data.all);
-      Iter        : Child_Iterator := First_Child (Get_MDI (Kernel));
-      Child       : MDI_Child;
-      No_Location : Boolean := False;
-      Column      : Visible_Column_Type := D.Column;
-      Real_Column : Character_Offset_Type;
+      D               : constant Source_File_Hooks_Args :=
+                          Source_File_Hooks_Args (Data.all);
+      Iter            : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Child           : MDI_Child;
+      No_Location     : Boolean := False;
+      Column          : Visible_Column_Type := D.Column;
+      Real_Column     : Character_Offset_Type;
       Real_Column_End : Character_Offset_Type;
-      Source      : Source_Editor_Box;
-      Edit        : Source_Editor_Box;
-      Tmp         : Boolean;
+      Source          : Source_Editor_Box;
+      Edit            : Source_Editor_Box;
+      Tmp             : Boolean;
       pragma Unreferenced (Tmp);
+
    begin
       if D.Line = -1 then
          --  Close all file editors corresponding to File.
