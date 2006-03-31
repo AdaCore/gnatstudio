@@ -63,13 +63,14 @@ Known Problems fixed in GPS 4.0.0
               use absolute paths in the project properties editor.
 
 - F216-019: Instabilities of the visual file comparison
-  Problem:    The visual file comparison might be instable. In particular
+  Problem:    The visual file comparison might be unstable. In particular
               this can happen when selecting some text including either the
               first or the last line of a file used in a visual diff and right
               clicking to see the contextual menu.
               The underlying problem also causes some troubles to the
               GPS.Editor.get_chars function from the shell API.
- Workaround:  Use command line comparison tools (such as diff or cvs diff).
+ Workaround:  Use the activity patch generation, or command line comparison
+              tools (e.g. diff, cvs diff).
 
 - F216-011 Outline view not refreshed properly
   Problem:    It sometimes happens that the outline view indicates there are
