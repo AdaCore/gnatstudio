@@ -73,8 +73,8 @@ package body Collapsing_Pane is
       New_String ("    ++    "),
       New_String ("          "));
 
-   function On_Change_State (Object : access Gtk_Widget_Record'Class)
-      return Boolean;
+   function On_Change_State
+     (Object : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the user clicks on the label or the collapse icon
 
    procedure On_Destroy (Object : access Gtk_Widget_Record'Class);
@@ -291,8 +291,9 @@ package body Collapsing_Pane is
    -- On_Change_State --
    ---------------------
 
-   function On_Change_State (Object : access Gtk_Widget_Record'Class)
-     return Boolean is
+   function On_Change_State
+     (Object : access Gtk_Widget_Record'Class) return Boolean
+   is
       Pane : constant Collapsing_Pane := Collapsing_Pane (Object);
    begin
       if Pane.State = Collapsed then
