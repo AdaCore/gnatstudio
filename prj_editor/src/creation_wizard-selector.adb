@@ -174,6 +174,7 @@ package body Creation_Wizard.Selector is
       Separator : Gtk_Separator;
       Label     : Gtk_Label;
       pragma Unreferenced (Button);
+
    begin
       Gtk_New_Vbox (Box, Homogeneous => False);
 
