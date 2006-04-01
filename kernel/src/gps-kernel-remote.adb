@@ -120,9 +120,8 @@ package body GPS.Kernel.Remote is
 
    Remote_Module : Remote_Module_ID;
 
-   type Descriptor_Attribute is
-     (System_Defined,
-      User_Defined);
+   type Descriptor_Attribute is (System_Defined, User_Defined);
+   --  ???
 
    ------------------
    -- Mirror_Paths --
@@ -147,6 +146,7 @@ package body GPS.Kernel.Remote is
    end record;
 
    Main_Paths_Table : Mirrors_List_Access := null;
+   --  ??? Global variable, should get rid of it
 
    function Deep_Copy (List : Mirror_Path_Access) return Mirror_Path_Access;
    function Deep_Copy (List : Mirrors_List_Access) return Mirrors_List_Access;
@@ -163,6 +163,7 @@ package body GPS.Kernel.Remote is
    --  Parse a remote_path node
 
    No_Path : constant String_Access := new String'("");
+   --  ??? Global variable, should get rid of it
 
    ------------------------
    -- Machine_Descriptor --
@@ -184,6 +185,7 @@ package body GPS.Kernel.Remote is
    end record;
 
    System_Machine_List : Item_Access := null;
+   --  ??? Global variable, should get rid of it
 
    procedure Free (Item : in out Item_Access);
    --  Free memory associated with Item.
@@ -202,7 +204,7 @@ package body GPS.Kernel.Remote is
    Modified_Col  : constant := 1;
    User_Def_Col  : constant := 2;
 
-   Enter_Local_Path_String : constant String :=  -"<enter local path here>";
+   Enter_Local_Path_String  : constant String := -"<enter local path here>";
    Enter_Remote_Path_String : constant String := -"<enter remote path here>";
 
    type Path_Row_Record is record
@@ -307,15 +309,17 @@ package body GPS.Kernel.Remote is
    end record;
    type Server_List_Editor is access all Server_List_Editor_Record'Class;
 
-   procedure Gtk_New (Dialog : out Server_List_Editor;
-                      Kernel : Kernel_Handle);
+   procedure Gtk_New
+     (Dialog : out Server_List_Editor;
+      Kernel : Kernel_Handle);
    --  Creates the server_list_editor dialog
 
-   procedure On_Changed  (W : access Gtk_Widget_Record'Class);
+   procedure On_Changed (W : access Gtk_Widget_Record'Class);
    --  Called when one of the entries has changed
 
-   function Save (Dialog        : Server_List_Editor;
-                  Save_Selected : Boolean := False) return Boolean;
+   function Save
+     (Dialog        : Server_List_Editor;
+      Save_Selected : Boolean := False) return Boolean;
    --  Saves all modified item. Return True if succeed, false if missing
    --  mandatory values exist.
    --  If Save_Selected is set, then the selected item is saved. Else
@@ -346,9 +350,10 @@ package body GPS.Kernel.Remote is
 
    type Servers_Config is array (Server_Type) of Server_Config;
 
-   Servers : Servers_Config := (others => (Is_Local => True,
-                                           Nickname => new String'("")));
+   Servers : Servers_Config :=
+               (others => (Is_Local => True, Nickname => new String'("")));
    --  Servers currently used. Default is the localhost.
+   --  ??? Global variable, should get rid of it
 
    type Servers_Property is new Property_Record with record
       Servers : Servers_Config;
@@ -404,7 +409,8 @@ package body GPS.Kernel.Remote is
    -- Deep_Copy --
    ---------------
 
-   function Deep_Copy (List : Mirror_Path_Access) return Mirror_Path_Access
+   function Deep_Copy
+     (List : Mirror_Path_Access) return Mirror_Path_Access
    is
       Dest, Item_Src, Item_Dest : Mirror_Path_Access;
    begin
@@ -436,11 +442,8 @@ package body GPS.Kernel.Remote is
       return Dest;
    end Deep_Copy;
 
-   ---------------
-   -- Deep_Copy --
-   ---------------
-
-   function Deep_Copy (List : Mirrors_List_Access) return Mirrors_List_Access
+   function Deep_Copy
+     (List : Mirrors_List_Access) return Mirrors_List_Access
    is
       Dest, Item_Src, Item_Dest : Mirrors_List_Access;
    begin
@@ -476,6 +479,7 @@ package body GPS.Kernel.Remote is
       Next_Item : Mirror_Path_Access;
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Mirror_Path_Record, Mirror_Path_Access);
+
    begin
       while List /= null loop
          Next_Item := List.Next;
@@ -486,14 +490,11 @@ package body GPS.Kernel.Remote is
       end loop;
    end Free;
 
-   ----------
-   -- Free --
-   ----------
-
    procedure Free (List : in out Mirrors_List_Access) is
       Next_Item : Mirrors_List_Access;
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Mirrors_List_Record, Mirrors_List_Access);
+
    begin
       while List /= null loop
          Next_Item := List.Next;
@@ -503,10 +504,6 @@ package body GPS.Kernel.Remote is
          List := Next_Item;
       end loop;
    end Free;
-
-   ----------
-   -- Free --
-   ----------
 
    procedure Free (Item : in out Item_Access) is
       procedure Internal is new Ada.Unchecked_Deallocation
@@ -525,16 +522,15 @@ package body GPS.Kernel.Remote is
       Node      : Glib.Xml_Int.Node_Ptr;
       Attribute : Descriptor_Attribute)
    is
-      Nickname           : constant String
-        := Get_Attribute (Node, "nickname");
-      Network_Name       : constant String
-        := Get_Attribute (Node, "network_name");
-      Remote_Access      : constant String
-        := Get_Attribute (Node, "remote_access");
-      Remote_Shell       : constant String
-        := Get_Attribute (Node, "remote_shell");
-      Remote_Sync        : constant String
-        := Get_Attribute (Node, "remote_sync", "rsync");
+      Nickname           : constant String := Get_Attribute (Node, "nickname");
+      Network_Name       : constant String :=
+                             Get_Attribute (Node, "network_name");
+      Remote_Access      : constant String :=
+                             Get_Attribute (Node, "remote_access");
+      Remote_Shell       : constant String :=
+                             Get_Attribute (Node, "remote_shell");
+      Remote_Sync        : constant String :=
+                             Get_Attribute (Node, "remote_sync", "rsync");
       Field              : String_Ptr;
       Max_Nb_Connections : Natural;
       User_Name          : String_Access;
@@ -544,37 +540,46 @@ package body GPS.Kernel.Remote is
       Child              : Node_Ptr;
       Cmd                : Node_Ptr;
       Desc               : Machine_Descriptor;
-   begin
 
+   begin
       if Nickname = "" then
          Console.Insert
-           (Kernel, " XML Error: remote_machine_descriptor tags shall" &
-            " have a nickname attribute",
+           (Kernel,
+            -("XML Error: remote_machine_descriptor tags missing" &
+              " a nickname attribute"),
             Add_LF => True, Mode => Error);
+
          return;
       end if;
 
       if Network_Name = "" then
          Console.Insert
-           (Kernel, " XML Error: remote_machine_descriptor tags shall" &
-            " have a network_name attribute",
+           (Kernel,
+            -("XML Error: remote_machine_descriptor tags missing" &
+              " a network_name attribute"),
             Add_LF => True, Mode => Error);
+
          return;
       end if;
 
       if Remote_Access = "" then
          Console.Insert
-           (Kernel, " XML Error: remote_machine_descriptor tags shall" &
-            " have a remote_access attribute",
+           (Kernel,
+            -("XML Error: remote_machine_descriptor tags missing" &
+              " a remote_access attribute"),
             Add_LF => True, Mode => Error);
+
          return;
       end if;
 
       if Remote_Shell = "" then
          Console.Insert
-           (Kernel, " XML Error: remote_machine_descriptor tags shall" &
+           (Kernel,
+            -("XML Error: remote_machine_descriptor tags missing" &
+              " a remote_shell attribute"),
             " have a remote_shell attribute",
             Add_LF => True, Mode => Error);
+
          return;
       end if;
 
@@ -621,7 +626,8 @@ package body GPS.Kernel.Remote is
       end if;
 
       if Child /= null then
-         Cmd          := Child.Child;
+         Cmd := Child.Child;
+
          while Cmd /= null loop
             Nb_Init_Cmds := Nb_Init_Cmds + 1;
             Cmd := Cmd.Next;
@@ -652,6 +658,7 @@ package body GPS.Kernel.Remote is
          Ref                 => 0);
 
       --  Add this machine at GNAT.Expect.TTY.Remote level
+
       if not Is_Configured (Nickname)
         or else Machine_Descriptor_Record
           (Get_Machine_Descriptor (Nickname).all).Attribute /= User_Defined
@@ -660,6 +667,7 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  If this is a predefined machine, save it
+
       if Attribute = System_Defined then
          Desc.Ref := Desc.Ref + 1;
          System_Machine_List :=
@@ -680,11 +688,12 @@ package body GPS.Kernel.Remote is
       Attribute : Descriptor_Attribute)
    is
       pragma Unreferenced (Kernel);
-      Nickname   : constant String
-        := Get_Attribute (Node, "server_name");
+      Nickname   : constant String := Get_Attribute (Node, "server_name");
       Paths_Item : Mirrors_List_Access;
+
    begin
       Paths_Item := Main_Paths_Table;
+
       while Paths_Item /= null loop
          exit when Paths_Item.Nickname.all = Nickname;
          Paths_Item := Paths_Item.Next;
@@ -704,11 +713,12 @@ package body GPS.Kernel.Remote is
          while Child /= null loop
             declare
                Local_Path  : constant String :=
-                 Get_Attribute (Child, "local_path");
+                               Get_Attribute (Child, "local_path");
                Remote_Path : constant String :=
-                 Get_Attribute (Child, "remote_path");
+                               Get_Attribute (Child, "remote_path");
                Need_Sync   : constant String :=
-                 Get_Attribute (Child, "need_sync", "False");
+                               Get_Attribute (Child, "need_sync", "False");
+
             begin
                Paths_Item.Path_List := new Mirror_Path_Record'
                  (Local_Path => new String'(Local_Path),
@@ -727,11 +737,11 @@ package body GPS.Kernel.Remote is
    -- Load_Remote_Machine_List --
    ------------------------------
 
-   procedure Load_Remote_Config (Kernel : Kernel_Handle)
-   is
+   procedure Load_Remote_Config (Kernel : Kernel_Handle) is
       Filename : constant String := Get_Home_Dir (Kernel) & "remote.xml";
       File, Child : Node_Ptr;
       Err : String_Access;
+
    begin
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename);
@@ -750,6 +760,7 @@ package body GPS.Kernel.Remote is
                   Parse_Remote_Path_Node
                     (Kernel, Child, User_Defined);
                end if;
+
                Child := Child.Next;
             end loop;
          end if;
@@ -760,14 +771,14 @@ package body GPS.Kernel.Remote is
    -- Save_Remote_Machine_List --
    ------------------------------
 
-   procedure Save_Remote_Config (Kernel : Kernel_Handle)
-   is
+   procedure Save_Remote_Config (Kernel : Kernel_Handle) is
       Filename   : constant String := Get_Home_Dir (Kernel) & "remote.xml";
       File, Item, Child, Cmd_Node : Node_Ptr;
       Desc       : Machine_Descriptor;
       Nb_Desc    : Natural;
       M_Path     : Mirror_Path_Access;
       Paths_Item : Mirrors_List_Access;
+
    begin
       Trace (Me, "Saving " & Filename);
 
@@ -775,11 +786,11 @@ package body GPS.Kernel.Remote is
       File.Tag := new String'("remote_config");
 
       Nb_Desc := Get_Nb_Machine_Descriptor;
+
       for J in 1 .. Nb_Desc loop
          Desc := Get_Machine_Descriptor (J);
-         if Machine_Descriptor_Record (Desc.all).Attribute =
-           User_Defined
-         then
+
+         if Machine_Descriptor_Record (Desc.all).Attribute = User_Defined then
             Item := new Node;
             Item.Tag := new String'("remote_machine_descriptor");
             Set_Attribute
@@ -806,6 +817,7 @@ package body GPS.Kernel.Remote is
             if Desc.Extra_Init_Commands /= null then
                Child := new Node;
                Child.Tag := new String'("extra_init_commands");
+
                for J in Desc.Extra_Init_Commands'Range loop
                   Cmd_Node := new Node;
                   Cmd_Node.Tag := new String'("cmd");
@@ -813,14 +825,17 @@ package body GPS.Kernel.Remote is
                     new String'(Desc.Extra_Init_Commands (J).all);
                   Add_Child (Child, Cmd_Node, True);
                end loop;
+
                Add_Child (Item, Child);
             end if;
 
             Add_Child (File, Item, True);
          end if;
 
-         --  Saving remote paths list
+         --  Save remote paths list
+
          Paths_Item := Main_Paths_Table;
+
          while Paths_Item /= null loop
             exit when Paths_Item.Nickname.all = Desc.Nickname.all;
             Paths_Item := Paths_Item.Next;
@@ -848,6 +863,7 @@ package body GPS.Kernel.Remote is
                  (Child, "local_path", M_Path.Local_Path.all);
                Add_Child (Item, Child);
             end if;
+
             M_Path := M_Path.Next;
          end loop;
 
@@ -890,14 +906,12 @@ package body GPS.Kernel.Remote is
       Gtk_New (Widget.Add_Path_Button);
       Gtk_New (Pix, Stock_Add, Icon_Size_Menu);
       Add (Widget.Add_Path_Button, Pix);
-      Attach (Widget.Table, Widget.Add_Path_Button, 3, 4, 1, 2,
-              0, 0);
+      Attach (Widget.Table, Widget.Add_Path_Button, 3, 4, 1, 2, 0, 0);
 
       Widget.List := Path_Row_List.Null_List;
       Widget_Callback.Object_Connect
         (Widget.Add_Path_Button, "clicked",
-         On_Add_Path_Clicked'Access,
-         Widget);
+         On_Add_Path_Clicked'Access, Widget);
    end Gtk_New;
 
    -------------------
@@ -911,6 +925,7 @@ package body GPS.Kernel.Remote is
       Path   : Mirror_Path_Access;
       Row    : Path_Row;
       use type Path_Row_List.Glist;
+
    begin
       loop
          exit when Widget.List = Path_Row_List.Null_List;
@@ -942,13 +957,13 @@ package body GPS.Kernel.Remote is
    -- Get_Path_List --
    -------------------
 
-   function Get_Path_List (Widget : Paths_Widget) return Mirror_Path_Access
-   is
+   function Get_Path_List (Widget : Paths_Widget) return Mirror_Path_Access is
       List : Path_Row_List.Glist;
       Row  : Path_Row;
       Path : Mirror_Path_Access;
       Item : Mirror_Path_Access;
       use type Path_Row_List.Glist;
+
    begin
       List := Widget.List;
 
@@ -960,6 +975,7 @@ package body GPS.Kernel.Remote is
             Item := Path;
          else
             Item.Next := Get_Path (Row);
+
             if Item.Next /= null then
                Item := Item.Next;
             end if;
@@ -1025,6 +1041,7 @@ package body GPS.Kernel.Remote is
          Widget_Callback.Object_Connect
            (Row.Remote_Entry, "grab_focus",
             On_Path_Grab_Focus'Access, Row.Remote_Entry);
+
       else
          Set_Text (Row.Local_Entry, Path.Local_Path.all);
          Set_Text (Row.Remote_Entry, Path.Remote_Path.all);
@@ -1085,12 +1102,13 @@ package body GPS.Kernel.Remote is
    --------------
 
    function Get_Path (Row : Path_Row) return Mirror_Path_Access is
-      Item : Mirror_Path_Access;
-      Local : constant String := Get_Text (Row.Local_Entry);
+      Item   : Mirror_Path_Access;
+      Local  : constant String := Get_Text (Row.Local_Entry);
       Remote : constant String := Get_Text (Row.Remote_Entry);
-   begin
 
+   begin
       --  ??? get remote machine from the widget to be able to get remote FS
+
       if Local /= Enter_Local_Path_String
         and then Local /= ""
         and then Is_Absolute_Path (Get_Local_Filesystem, Local)
@@ -1098,13 +1116,12 @@ package body GPS.Kernel.Remote is
         and then Remote /= ""
       then
          --  ??? Attribute item need to be determined
+
          Item := new Mirror_Path_Record'
-           (Local_Path =>
-              new String'(Ensure_Directory (Get_Local_Filesystem, Local)),
-            Remote_Path =>
-              new String'(Remote),
-            Need_Sync   =>
-              Get_Active (Row.Need_Sync_Button),
+           (Local_Path => new String'
+                            (Ensure_Directory (Get_Local_Filesystem, Local)),
+            Remote_Path => new String'(Remote),
+            Need_Sync   => Get_Active (Row.Need_Sync_Button),
             Attribute   => User_Defined,
             Next        => null);
 
@@ -1233,9 +1250,7 @@ package body GPS.Kernel.Remote is
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label);
       Set_Markup
-        (Label,
-         "<span foreground=""red"">*</span>" &
-         (-" Network name:"));
+        (Label, "<span foreground=""red"">*</span>" & (-" Network name:"));
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
@@ -1249,8 +1264,7 @@ package body GPS.Kernel.Remote is
       Gtk_New (Label);
       Set_Markup
         (Label,
-         "<span foreground=""red"">*</span>" &
-         (-" Remote access tool:"));
+         "<span foreground=""red"">*</span>" & (-" Remote access tool:"));
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
@@ -1270,10 +1284,7 @@ package body GPS.Kernel.Remote is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label);
-      Set_Markup
-        (Label,
-         "<span foreground=""red"">*</span>" &
-         (-" Shell:"));
+      Set_Markup (Label, "<span foreground=""red"">*</span>" & (-" Shell:"));
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
@@ -1454,7 +1465,8 @@ package body GPS.Kernel.Remote is
          Set (Model, Iter, Modified_Col, False);
 
          if Machine_Descriptor_Record (Dialog.Machines.Desc.all).Attribute
-           = User_Defined then
+           = User_Defined
+         then
             Set (Model, Iter, User_Def_Col, True);
          else
             Set (Model, Iter, User_Def_Col, False);
@@ -1484,7 +1496,7 @@ package body GPS.Kernel.Remote is
 
    procedure On_Changed (W : access Gtk_Widget_Record'Class) is
       Dialog    : Server_List_Editor_Record
-        renames Server_List_Editor_Record (W.all);
+                    renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
 
@@ -1510,8 +1522,9 @@ package body GPS.Kernel.Remote is
    -- Save --
    ----------
 
-   function Save (Dialog        : Server_List_Editor;
-                  Save_Selected : Boolean := False) return Boolean
+   function Save
+     (Dialog        : Server_List_Editor;
+      Save_Selected : Boolean := False) return Boolean
    is
       function Get_Command_List
         (View : Gtk_Text_View) return Argument_List;
@@ -1533,6 +1546,7 @@ package body GPS.Kernel.Remote is
          I_Start : Gtk_Text_Iter;
          I_End   : Gtk_Text_Iter;
          Buffer  : constant Gtk_Text_Buffer := Get_Buffer (View);
+
       begin
          Get_Start_Iter (Buffer, I_Start);
          Get_End_Iter (Buffer, I_End);
@@ -1542,6 +1556,7 @@ package body GPS.Kernel.Remote is
             Idx     : Natural := Str'First;
             Idx_End : Natural := Str'Last;
             N_Lines : Natural;
+
          begin
             Skip_Blanks (Str, Idx);
             Skip_Blanks (Str, Idx_End, -1);
@@ -1573,8 +1588,7 @@ package body GPS.Kernel.Remote is
          Iter           : Gtk.Tree_Model.Gtk_Tree_Iter;
          Dialog         : Server_List_Editor) return Boolean
       is
-         Nickname  : constant String
-           := Get_String (Model, Iter, Name_Col);
+         Nickname  : constant String := Get_String (Model, Iter, Name_Col);
          Has_Network_Name : Boolean;
          Has_Access_Name  : Boolean;
          Has_Shell_Name   : Boolean;
@@ -1582,6 +1596,7 @@ package body GPS.Kernel.Remote is
          Ret              : Message_Dialog_Buttons;
          pragma Unreferenced (Ret);
          use type Ada.Strings.Unbounded.Unbounded_String;
+
       begin
          Has_Network_Name := Get_Text (Dialog.Network_Name_Entry) /= "";
          Has_Access_Name  := Get_Text
@@ -1594,24 +1609,30 @@ package body GPS.Kernel.Remote is
            or else not Has_Shell_Name
          then
             Error_Str := Ada.Strings.Unbounded.To_Unbounded_String
-              (-"Error ! The following items are missing for server " &
-               Nickname & ":");
+              (-"The following items are missing for server ") &
+               Nickname & ":";
+
             if not Has_Network_Name then
                Error_Str := Error_Str & ASCII.LF & (-"- Network name");
             end if;
+
             if not Has_Access_Name then
                Error_Str := Error_Str & ASCII.LF & (-"- Remote access");
             end if;
+
             if not Has_Shell_Name then
                Error_Str := Error_Str & ASCII.LF & (-"- Shell");
             end if;
+
             Ret := Message_Dialog
               (Ada.Strings.Unbounded.To_String (Error_Str),
                Dialog_Type => Error,
                Buttons     => Button_OK,
                Parent      => Gtk_Window (Dialog));
+
             return False;
          end if;
+
          return True;
       end Check_Fields;
 
@@ -1621,14 +1642,17 @@ package body GPS.Kernel.Remote is
       Path_Item  : Mirrors_List_Access;
       Attribute  : Descriptor_Attribute;
       Modified   : Boolean;
+
    begin
       Trace (Me, "Save");
       Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
       Iter  := Get_Iter_First (Model);
 
       Modified := False;
+
       while Iter /= Null_Iter loop
          --  Do not check or save a selected item !
+
          if Get_Boolean (Model, Iter, Modified_Col)
            and then (Save_Selected or else
                      not Iter_Is_Selected (Get_Selection (Dialog.Machine_Tree),
@@ -1637,10 +1661,12 @@ package body GPS.Kernel.Remote is
             Modified := True;
             exit;
          end if;
+
          Next (Model, Iter);
       end loop;
 
-      --  Nothing modified. Just return.
+      --  Nothing modified. Just return
+
       if not Modified then
          return True;
       end if;
@@ -1653,11 +1679,12 @@ package body GPS.Kernel.Remote is
       end if;
 
       declare
-         Nickname   : constant String
-           := Get_String (Model, Iter, Name_Col);
+         Nickname : constant String := Get_String (Model, Iter, Name_Col);
       begin
          Trace (Me, "Save machine " & Nickname);
-         --  Get attribute value.
+
+         --  Get attribute value
+
          if Get_Boolean (Model, Iter, User_Def_Col) then
             Trace (Me, "Internal save user defined machine");
             Attribute := User_Defined;
@@ -1667,13 +1694,14 @@ package body GPS.Kernel.Remote is
          end if;
 
          Item := Dialog.Machines;
+
          while Item /= null loop
             exit when Item.Desc.Nickname.all = Nickname;
             Item := Item.Next;
          end loop;
 
          if Item /= null then
-            --  free replaced descriptor
+            --  Free replaced descriptor
             Unref (Item.Desc);
 
             Item.Desc := new Machine_Descriptor_Record'
@@ -1698,7 +1726,8 @@ package body GPS.Kernel.Remote is
                Ref                 => 1);
          end if;
 
-         --  now save the paths
+         --  Now save the paths
+
          Trace (Me, "Internal save paths");
 
          Path_Item := Dialog.Paths_List;
@@ -1728,7 +1757,7 @@ package body GPS.Kernel.Remote is
 
    procedure On_Selection_Changed (W : access Gtk_Widget_Record'Class) is
       Dialog    : Server_List_Editor_Record
-        renames Server_List_Editor_Record (W.all);
+                    renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Store.Gtk_Tree_Store;
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Item      : Item_Access;
@@ -1843,9 +1872,7 @@ package body GPS.Kernel.Remote is
                Path_Item := Path_Item.Next;
             end loop;
 
-            Set_Path_List
-              (Dialog.Paths_List_Widget,
-               Path_Item.Path_List);
+            Set_Path_List (Dialog.Paths_List_Widget, Path_Item.Path_List);
          end;
       end if;
 
@@ -1861,18 +1888,20 @@ package body GPS.Kernel.Remote is
 
    procedure On_Add_Machine_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog   : Server_List_Editor_Record
-        renames Server_List_Editor_Record (W.all);
+                   renames Server_List_Editor_Record (W.all);
       Model    : Gtk_Tree_Store;
       Iter     : Gtk_Tree_Iter := Null_Iter;
 
    begin
-      --  First save the machines.
+      --  First save the machines
+
       if Save (Server_List_Editor (W), True) then
          declare
             Nickname : constant String := Query_User
               (Parent => Gtk_Window (W),
                Prompt => -"Please enter the new machine's nickname",
                Password_Mode => False);
+
          begin
             if Nickname = "" then
                return;
@@ -1904,13 +1933,17 @@ package body GPS.Kernel.Remote is
             Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
             Append (Model, Iter, Null_Iter);
             Set (Model, Iter, Name_Col, Nickname);
+
             --  Set iter as modified
             Set (Model, Iter, Modified_Col, True);
+
             --  User defined item
             Set (Model, Iter, User_Def_Col, True);
+
             --  Tell the Selection_Changed callback that a new item
             --  has been added.
             Dialog.Added_Item := True;
+
             --  Select this newly created machine
             Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
          end;
@@ -1928,7 +1961,7 @@ package body GPS.Kernel.Remote is
 
    procedure On_Restore_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog : Server_List_Editor_Record
-        renames Server_List_Editor_Record (W.all);
+                 renames Server_List_Editor_Record (W.all);
       Model  : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Item   : Item_Access;
@@ -1959,9 +1992,12 @@ package body GPS.Kernel.Remote is
             if Item /= null then
                Dialog.Restoring := True;
                --  Modified item
+
                Set (Gtk_Tree_Store (Model), Iter, Modified_Col, True);
+
                --  Not user defined item
                Set (Gtk_Tree_Store (Model), Iter, User_Def_Col, False);
+
                --  Set dialog values
                Set_Text (Dialog.Network_Name_Entry,
                          Item.Desc.Network_Name.all);
@@ -1992,7 +2028,7 @@ package body GPS.Kernel.Remote is
 
    procedure On_Remove_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog    : Server_List_Editor_Record
-        renames Server_List_Editor_Record (W.all);
+                    renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Item      : Item_Access;
@@ -2008,7 +2044,7 @@ package body GPS.Kernel.Remote is
                                   Get_String (Model, Iter, Name_Col);
          begin
             Ret := Message_Dialog
-              (-"Are you sure you want to remove server " &
+              ((-"Are you sure you want to remove server ") &
                Current_Selection & " ?",
                Dialog_Type => Confirmation,
                Buttons     => Button_OK or Button_Cancel,
@@ -2077,6 +2113,7 @@ package body GPS.Kernel.Remote is
 
    begin
       Gtk_New (Dialog, Kernel);
+
       loop
          Resp := Run (Dialog);
 
@@ -2084,8 +2121,10 @@ package body GPS.Kernel.Remote is
 
          if Resp = Gtk_Response_OK or Resp = Gtk_Response_Apply then
             --  First make sure the last edited machine is saved
+
             if Save (Dialog, True) then
                --  For all config, apply in g-exttre
+
                Item := Dialog.Machines;
                Remove_All_Machine_Descriptors;
 
@@ -2096,6 +2135,7 @@ package body GPS.Kernel.Remote is
 
                --  Save mirror paths
                Free (Main_Paths_Table);
+
                --  Duplicate it instead of just copy it, for easier handling
                --  of cancel/apply cases
                Main_Paths_Table := Deep_Copy (Dialog.Paths_List);
@@ -2108,7 +2148,7 @@ package body GPS.Kernel.Remote is
          exit when Resp /= Gtk_Response_Apply;
       end loop;
 
-      --  destroy duplicated machine list
+      --  Destroy duplicated machine list
       while Dialog.Machines /= null loop
          Item := Dialog.Machines.Next;
          Unref (Dialog.Machines.Desc);
@@ -2116,9 +2156,10 @@ package body GPS.Kernel.Remote is
          Dialog.Machines := Item;
       end loop;
 
-      --  destroy duplicated path table
+      --  Destroy duplicated path table
       Free (Dialog.Paths_List);
-      --  destroy the widget
+
+      --  Destroy the widget
       Destroy (Dialog);
    end Configure_Server_List;
 
@@ -2127,18 +2168,18 @@ package body GPS.Kernel.Remote is
    ----------------------------------
 
    function From_Callback_Data_Sync_Hook
-     (Data : Callback_Data'Class) return Hooks_Data'Class
-   is
+     (Data : Callback_Data'Class) return Hooks_Data'Class is
    begin
       declare
-         Tool_Name    : constant String := Nth_Arg (Data, 2);
-         Src_Name     : constant String := Nth_Arg (Data, 3);
-         Dest_Name    : constant String := Nth_Arg (Data, 4);
-         Queue_Id     : constant String := Nth_Arg (Data, 5);
-         Src_Path     : constant String := Nth_Arg (Data, 6);
-         Dest_Path    : constant String := Nth_Arg (Data, 7);
+         Tool_Name    : constant String  := Nth_Arg (Data, 2);
+         Src_Name     : constant String  := Nth_Arg (Data, 3);
+         Dest_Name    : constant String  := Nth_Arg (Data, 4);
+         Queue_Id     : constant String  := Nth_Arg (Data, 5);
+         Src_Path     : constant String  := Nth_Arg (Data, 6);
+         Dest_Path    : constant String  := Nth_Arg (Data, 7);
          Sync_Deleted : constant Boolean := Nth_Arg (Data, 8);
          Synchronous  : constant Boolean := Nth_Arg (Data, 9);
+
       begin
          return Rsync_Hooks_Args'
            (Hooks_Data with
@@ -2191,9 +2232,10 @@ package body GPS.Kernel.Remote is
    function From_Callback_Data_Server_Config_Changed_Hook
      (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Server  : Server_Type;
+      Server : Server_Type;
    begin
       Server  := Server_Type'Value (String'(Nth_Arg (Data, 2)));
+
       declare
          Nickname  : constant String := Nth_Arg (Data, 3);
       begin
@@ -2312,8 +2354,8 @@ package body GPS.Kernel.Remote is
                  (Is_Local => False,
                   Nickname => new String'(Srv.Value.all));
             else
-               Property.Servers (J) := (Is_Local => True,
-                                        Nickname => new String'(""));
+               Property.Servers (J) :=
+                 (Is_Local => True, Nickname => new String'(""));
             end if;
          end loop;
 
@@ -2343,8 +2385,10 @@ package body GPS.Kernel.Remote is
       Prop     : Property_Access;
       Success  : Boolean;
       Local_File : VFS.Virtual_File;
+
    begin
       --  Get local file equivalence for project
+
       if not Is_Local (D.File) then
          Local_File :=
            Create (To_Local (Full_Name (D.File).all, Get_Host (D.File)));
@@ -2353,6 +2397,7 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Get servers associated with this file
+
       Trace (Me, "Loading servers_config property for file " &
              Full_Name (Local_File).all);
       Get_Property
@@ -2368,6 +2413,7 @@ package body GPS.Kernel.Remote is
                  (Is_Local => False,
                   Nickname => new String'(Get_Host (D.File)));
             end loop;
+
          else
             for J in Remote_Server_Type'Range loop
                Property.Servers (J) := (Is_Local => True,
@@ -2388,6 +2434,7 @@ package body GPS.Kernel.Remote is
 
       --  If Project is loaded from a distant host, force build_server as
       --  distant host.
+
       if not Is_Local (D.File)
         and then Get_Host (D.File) /= Servers (Build_Server).Nickname.all
       then
@@ -2476,10 +2523,12 @@ package body GPS.Kernel.Remote is
 
          Child := Node.Child;
          Extra_Ptrn_Length := 0;
+
          while Child /= null loop
             if Child.Tag.all = "extra_ptrn" then
                Extra_Ptrn_Length := Extra_Ptrn_Length + 1;
             end if;
+
             Child := Child.Next;
          end loop;
 
@@ -2560,8 +2609,10 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Search for mirror path in 'To' config
+
       Path_List_Item := Main_Paths_Table;
       Mirror := null;
+
       while Path_List_Item /= null loop
          if Path_List_Item.Nickname.all = To then
             Mirror := Path_List_Item.Path_List;
@@ -2599,8 +2650,10 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Search for mirror path in 'From' config
+
       Path_List_Item := Main_Paths_Table;
       Mirror := null;
+
       while Path_List_Item /= null loop
          if Path_List_Item.Nickname.all = From then
             Mirror := Path_List_Item.Path_List;
@@ -2611,9 +2664,8 @@ package body GPS.Kernel.Remote is
       end loop;
 
       while Mirror /= null loop
-         if Is_Subtree (Get_Filesystem (From),
-                        Mirror.Remote_Path.all,
-                        Path)
+         if Is_Subtree
+              (Get_Filesystem (From), Mirror.Remote_Path.all, Path)
          then
             return True;
          end if;
@@ -2653,6 +2705,7 @@ package body GPS.Kernel.Remote is
    begin
       --  If From and To are the same machine (and no unix path translation is
       --  needed), just return Path
+
       if To = "" then
          if Unix_Style then
             return To_Unix (Get_Local_Filesystem, Path);
@@ -2666,6 +2719,7 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Search for mirror path in 'To' config
+
       Path_List_Item := Main_Paths_Table;
       Mirror := null;
 
@@ -2679,10 +2733,7 @@ package body GPS.Kernel.Remote is
       end loop;
 
       while Mirror /= null loop
-         if Is_Subtree (Get_Local_Filesystem,
-                        Mirror.Local_Path.all,
-                        Path)
-         then
+         if Is_Subtree (Get_Local_Filesystem, Mirror.Local_Path.all, Path) then
             Path_From := Mirror.Local_Path;
             Path_To   := Mirror.Remote_Path;
             exit;
@@ -2693,6 +2744,7 @@ package body GPS.Kernel.Remote is
 
       if Path_From = null or Path_To = null then
          --  Not configured mirror path
+
          Path_From := No_Path;
          Path_To := No_Path;
       end if;
@@ -2702,8 +2754,7 @@ package body GPS.Kernel.Remote is
 
       declare
          To_Filesystem : Filesystem_Record'Class := Get_Filesystem (To);
-         U_Path     : constant String := To_Unix (Get_Local_Filesystem,
-                                                  Path);
+         U_Path     : constant String := To_Unix (Get_Local_Filesystem, Path);
          --  The input path in unix style
          U_Frompath : constant String := To_Unix (Get_Local_Filesystem,
                                                   Path_From.all);
@@ -2718,7 +2769,9 @@ package body GPS.Kernel.Remote is
                       To_Unix (To_Filesystem, Path_To.all) & U_Subpath &
                       "'");
             end if;
+
             return To_Unix (To_Filesystem, Path_To.all) & U_Subpath;
+
          else
             if Active (Me) then
                Trace (Me, "local filesystem " &
@@ -2731,6 +2784,7 @@ package body GPS.Kernel.Remote is
                               From_Unix (To_Filesystem, U_Subpath)) &
                       "'");
             end if;
+
             return Concat (To_Filesystem,
                            Path_To.all,
                            From_Unix (To_Filesystem, U_Subpath));
@@ -2871,6 +2925,7 @@ package body GPS.Kernel.Remote is
       Found       : Boolean;
       The_File    : VFS.Virtual_File;
       pragma Unreferenced (Id);
+
    begin
       Glib.Free (Servers (Server).Nickname);
       if Nickname /= "" and Nickname /= Local_Nickname then
@@ -2882,16 +2937,15 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Update the project's property
+
       if Prj_File /= VFS.No_File then
          The_File := Prj_File;
       else
          The_File := Project_Path (Get_Project (Kernel));
       end if;
 
-      Get_Property (Property,
-                    The_File,
-                    "servers_config",
-                    Found);
+      Get_Property (Property, The_File, "servers_config", Found);
+
       if Found then
          Trace (Me, "Saving servers_config property");
          Glib.Free (Property.Servers (Server).Nickname);
@@ -2908,6 +2962,7 @@ package body GPS.Kernel.Remote is
       end if;
 
       --  Reload project if Build_Server has been assigned
+
       if Server = Build_Server and then Reload_Prj then
          Load_Data.Kernel := Kernel;
          Load_Data.File := Project_Path (Get_Project (Kernel),
@@ -3113,10 +3168,10 @@ package body GPS.Kernel.Remote is
       Directory        : String := "";
       Error_Manager    : Error_Display := null)
    is
-      Exec         : String_Access;
-      Old_Dir      : String_Access;
-      Args         : Argument_List_Access;
-      L_Args       : Argument_List_Access := null;
+      Exec                  : String_Access;
+      Old_Dir               : String_Access;
+      Args                  : Argument_List_Access;
+      L_Args                : Argument_List_Access := null;
       Default_Error_Manager : aliased Default_Error_Display_Record;
       In_Use_Error_Manager  : Error_Display;
 
