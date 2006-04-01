@@ -913,6 +913,10 @@ package body VCS_View_API is
             Add_Action (Diff2, On_Menu_Diff2'Access);
             Add_Action (Diff_Base_Head, On_Menu_Diff_Base_Head'Access);
 
+            if Has_Tag_Information (Context) then
+               Add_Action (Diff_Tag, On_Menu_Diff_Tag'Access);
+            end if;
+
             Add_Separator;
 
             if Actions (Annotate) /= null then
@@ -986,7 +990,6 @@ package body VCS_View_API is
          end if;
 
          if Show_Everything or else Has_Tag_Information (Context) then
-            Add_Action (Diff_Tag, On_Menu_Diff_Tag'Access);
             Add_Action (Merge, On_Menu_Merge'Access);
          end if;
 
