@@ -170,7 +170,7 @@ Version Control System
 * The VCS Menu::
 * The Version Control Contextual Menu::
 * Working with global ChangeLog file::
-* The Revision Browser::
+* The Revision View::
 
 Tools
 * The Tools Menu::
@@ -6536,7 +6536,7 @@ debugger console, or automatically every time the debugger stops through the
 * The VCS Menu::
 * The Version Control Contextual Menu::
 * Working with global ChangeLog file::
-* The Revision Browser::
+* The Revision View::
 @end menu
 
 GPS offers the possibility for multiple developers to work on the same project,
@@ -6894,6 +6894,16 @@ sub-projects, recursively.
 
 @item Query status for all projects
 Query the status of all files in the project and all imported sub-projects.
+
+@item Create tag...
+Create a tag or branch tag starting from a specific root
+directory. The name of the tag is a simple name.
+
+@item Switch tag...
+Switch the local copy to a specific tag. The name of the tag depends
+on the external VCS used. For CVS this this the simple tag name, for
+Subversion the tag must conform to the default repository layout. For
+a branch tag this is @code{/branches/<tag_name>/<root_dir>}.
 @end table
 
 For a description of the other entries in the VCS menu, see
@@ -6983,6 +6993,12 @@ of the file in the repository.
 Show a visual comparison between the corresponding version of the
 file in the repository and the most recent version of that file.
 
+@item Compare against tag/branch
+@anchor{Compare base against tag/branch}
+Only available on a Revision View and over a tag/branch. Show a visual
+comparison between the corresponding version of the file in the
+repository and the version of that file in the tag/branch.
+
 @item Annotate
 @anchor{Annotate}
 Display the annotations for the file, i.e. the information for each
@@ -7033,6 +7049,18 @@ changes.
 @item Resolved
 Mark files' merge conflics as resolved. Some version control systems
 (like Subversion) will block any commit until this action is called.
+
+@item Switch tag/bracnh
+Only available on a Revision View and over a tag/branch name. Will
+switch the tree starting from a selected root to this specific tag or
+branch. 
+
+@item Merge
+Only available on a Revision View and over a tag/branch name. Merge
+file changes made on this specific tag/branch.
+
+@item View revision
+Only available on a Revision View and over a revision. ???
 
 @item Add to Activity
 A menu containing all the current activities. Selecting one will add
@@ -7177,41 +7205,36 @@ when ready to check-in a file use the standard @b{Edit revision log}
 menu command. This will open the standard revision log buffer with the
 content filled from the global @file{ChangeLog} file.
 
-@node The Revision Browser
-@section The Revision Browser
+@node The Revision View
+@section The Revision View
 
 @noindent
-The revision browser is used to display a revision tree for a given
-file. Each node contains information for a specific revision of the
-file. 
+The revision view is used to display a revision tree for a given
+file. Each node contains information for a specific revision of
+the file.
 
 @iftex
 @cindex screen shot
-@image{revision-browser, 12.7cm}
+@image{revision-view, 13.5cm}
 @end iftex
 
 @ifhtml
 @cindex screen shot
-@image{revision-browser}
+@image{revision-view}
 @end ifhtml
 
 @table @b
 
-@item the filename
-
 @item the revision number
-It is possible to look at the log for each revision by clicking on the
-revision number link.
-
-@item date
-The check-in date for this revision.
+This corresponds to the external VCS revision number.
 
 @item author
 The author of this revision.
 
-@item tags and branches
-A list of all tags and branches corresponding to this revision are
-listed at the end.
+@item date / log
+For root nodes this column contains the check-in date and eventually
+the list of tags and branches associated with this revision. For
+children nodes this contains the log for the corresponding revision.
 
 @end table
 
@@ -14633,7 +14656,7 @@ parameters:
     @item $1 = file
   @end table
   Query the entire changelog history for the specified file. The result
-  is expected to be placed into a Revision Browser.
+  is expected to be placed into a Revision View.
 
 @item history_revision
   @table @code
