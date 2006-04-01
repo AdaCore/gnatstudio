@@ -342,7 +342,7 @@
    <action name="generic_svn_revision" show-command="true" output="none">
       <external output="">svn cat -r "$1" "$2"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
+         <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
       </on-failure>
       <shell>dump_file "%1" "$2$$$1"</shell>
