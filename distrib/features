@@ -219,6 +219,15 @@ EA14-023 Scenario View back in the default desktop (2005-11-18)
 
   Keywords: Desktop, Scenario View
 
+EA06-012 Tools menu reorganized (2006-03-31)
+
+  The Tools menu has been regorganized by categories, so that it is easier
+  to access the arious GPS tools. Some menu entries have also been added,
+  which are duplicated from other menus, so that it is easy to access
+  most GPS tools at a glance.
+
+  Keywords: Menu
+
 E804-013 Fixing "pckg is already use_visible" warnings (2006-01-04)
 
   Code fixing now handles messages like "pckg already use_visible" by removing 
