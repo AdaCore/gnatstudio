@@ -577,7 +577,6 @@ package body GPS.Kernel.Remote is
            (Kernel,
             -("XML Error: remote_machine_descriptor tags missing" &
               " a remote_shell attribute"),
-            " have a remote_shell attribute",
             Add_LF => True, Mode => Error);
 
          return;
