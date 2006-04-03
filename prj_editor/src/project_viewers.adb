@@ -2651,9 +2651,6 @@ package body Project_Viewers is
         (Kernel, Project, -"Edit Project _Properties", "",
          On_Project_Properties'Access, Ref_Item => -"Recent",
          Add_Before => False);
-      Register_Menu
-        (Kernel, Tools, -"Pro_ject Properties", "",
-         On_Project_Properties'Access, Ref_Item => -"Remote");
 
       Register_Menu
         (Kernel, Project, -"Save _All", "",
