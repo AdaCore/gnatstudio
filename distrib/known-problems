@@ -147,6 +147,11 @@ Known Problems fixed in GPS 4.0.0
   Workaround: Use the -P command line parameter to GPS to specify the
               project directly on the command line.
 
+- EC29-001 Stripping blanks incompatible with UTF-8 characters
+  Problem:    When the preference "Strip blanks" is enabled, UTF-8 characters
+              might be lost or corrupted when saving the file.
+  Workaround: Disable the "Strip blanks" preference when working in UTF-8.
+
 - EB16-002 Wrong parenthesis highlighting
   Problem:    Parentheses in comments are taken into account when doing the
               highlighting of matching parenthesis.
