@@ -2638,7 +2638,7 @@ package body Project_Viewers is
                      Add_Before => False);
       Register_Menu (Kernel, Project, -"_New...", "",
                      Creation_Wizard.Selector.On_New_Project'Access,
-                     Ref_Item => -"Open...", Add_Before => False);
+                     Ref_Item => -"Open From Host...", Add_Before => False);
 
       Register_Menu
         (Kernel, Project, -"Edit File _Switches", "",
