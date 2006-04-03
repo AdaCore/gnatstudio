@@ -4853,8 +4853,7 @@ package body Src_Editor_Buffer is
                Indent_Params);
 
          else
-            C_Str := Get_Slice
-              (Buffer, 0, 0, Line, Get_Line_Offset (End_Pos));
+            C_Str := Get_Slice (Buffer, 0, 0, Line, Get_Line_Offset (End_Pos));
             Slice := To_Unchecked_String (C_Str);
             Local_Format_Buffer
               (Lang,
