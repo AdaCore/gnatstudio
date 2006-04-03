@@ -17,7 +17,7 @@ New features in GPS 4.0.0
 F324-019 Support for UNC paths under Windows (2006-04-03)
 
   Support for UNC paths under Windows via the file and directory selectors
-  as well as under the various tools (e.g. debugger) is now available.
+  as well as under the various tools (e.g. builder, debugger) is now available.
 
 F321-004 Activities can be re-opened (2006-03-21)
 
