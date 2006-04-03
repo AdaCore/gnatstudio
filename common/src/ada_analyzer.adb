@@ -2564,18 +2564,17 @@ package body Ada_Analyzer is
                loop
                   if Buffer (P) = ASCII.LF then
                      New_Line (Line_Count);
+                     Indent_Done := False;
                   end if;
 
                   P := Next_Char (P);
                end loop;
 
-               if Buffer (P) = ASCII.LF then
-                  New_Line (Line_Count);
+               if P < Buffer_Last then
+                  Start_Of_Line := P;
+                  End_Of_Line   := Line_End (Buffer, Start_Of_Line);
                end if;
 
-               Start_Of_Line := P;
-               Indent_Done   := False;
-               End_Of_Line   := Line_End (Buffer, Start_Of_Line);
             end if;
          end Skip_Blank_Lines;
 
@@ -2633,12 +2632,14 @@ package body Ada_Analyzer is
                end if;
 
                P := Next_Line (Buffer, P + 1);
-               New_Line (Line_Count);
+               Last := P;
 
-               if P < Buffer_Last or else Buffer (P) = ASCII.LF then
-                  Last := Prev_Char (P);
-               else
-                  Last := P;
+               if P < Buffer_Last then
+                  New_Line (Line_Count);
+
+                  if Buffer (P) = ASCII.LF then
+                     Last := Prev_Char (Last);
+                  end if;
                end if;
 
                loop
@@ -2659,10 +2660,6 @@ package body Ada_Analyzer is
                         P := P + 1;
 
                         if P = Buffer_Last then
-                           if Buffer (P) = ASCII.LF then
-                              New_Line (Line_Count);
-                           end if;
-
                            exit;
                         end if;
                      end loop;
