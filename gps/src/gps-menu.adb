@@ -271,6 +271,11 @@ package body GPS.Menu is
       Kernel : Kernel_Handle);
    --  Project->Open menu
 
+   procedure On_Open_Remote_Project
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Project->Open remote menu
+
    procedure On_Project_Recompute
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
@@ -307,7 +312,6 @@ package body GPS.Menu is
               File_Pattern      => "*.gpr",
               Pattern_Name      => -"Project files",
               Parent            => Get_Current_Window (Kernel),
-              Remote_Browsing   => True,
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
@@ -322,6 +326,38 @@ package body GPS.Menu is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Open_Project;
+
+   ----------------------------
+   -- On_Open_Remote_Project --
+   ----------------------------
+
+   procedure On_Open_Remote_Project
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      declare
+         Filename : constant Virtual_File :=
+           Select_File
+             (-"Open Project",
+              File_Pattern      => "*.gpr",
+              Pattern_Name      => -"Project files",
+              Parent            => Get_Current_Window (Kernel),
+              Remote_Browsing   => True,
+              Kind              => Open_File,
+              History           => Get_History (Kernel));
+      begin
+         if Filename /= VFS.No_File then
+            Load_Project (Kernel, Filename);
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Open_Remote_Project;
 
    --------------------
    -- On_Preferences --
@@ -362,6 +398,11 @@ package body GPS.Menu is
       Register_Menu
         (Kernel, Project, -"_Open...", "",
          On_Open_Project'Access,
+         Ref_Item => -"Window");
+
+      Register_Menu
+        (Kernel, Project, -"Open From _Host...", "",
+         On_Open_Remote_Project'Access,
          Ref_Item => -"Window");
 
       Reopen_Menu := Register_Menu
