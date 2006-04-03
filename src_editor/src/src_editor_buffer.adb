@@ -2791,9 +2791,11 @@ package body Src_Editor_Buffer is
                      Contents : constant String := Glib.Convert.Convert
                        (Str.Contents (1 .. Str.Length),
                         Buffer.Charset.all, "UTF-8");
+                     Prev     : Natural;
                   begin
                      if Strip_Blank then
                         Index := Contents'Length;
+                        Prev  := Index + 1;
 
                         while Index >= Contents'First loop
                            C := UTF8_Get_Char
@@ -2801,10 +2803,12 @@ package body Src_Editor_Buffer is
                            exit when C /= Character'Pos (' ')
                              and then C /= Character'Pos (ASCII.HT);
 
+                           Prev  := Index;
                            Index := UTF8_Find_Prev_Char (Contents, Index);
                         end loop;
 
-                        Append (U_Buffer, Contents (Contents'First .. Index));
+                        Append
+                          (U_Buffer, Contents (Contents'First .. Prev - 1));
 
                      else
                         Append (U_Buffer, Contents);
