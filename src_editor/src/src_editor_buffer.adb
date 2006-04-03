@@ -3521,6 +3521,7 @@ package body Src_Editor_Buffer is
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
+      Success    : Boolean;
 
    begin
       pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
@@ -3532,6 +3533,10 @@ package body Src_Editor_Buffer is
          pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
          Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
       end if;
+
+      --  Needed, since we expect Get_Slice to return a result [start, end] and
+      --  Get_Text actually return a [start, end).
+      Forward_Char (End_Iter, Success);
 
       return Get_Text (Buffer, Start_Iter, End_Iter, True);
    end Get_Slice;
@@ -4844,7 +4849,8 @@ package body Src_Editor_Buffer is
                Indent_Params);
 
          else
-            C_Str := Get_Slice (Buffer, 0, 0, Line, Get_Line_Offset (End_Pos));
+            C_Str := Get_Slice
+              (Buffer, 0, 0, Line, Get_Line_Offset (End_Pos));
             Slice := To_Unchecked_String (C_Str);
             Local_Format_Buffer
               (Lang,
