@@ -5811,6 +5811,10 @@ package body Src_Editor_Buffer is
       J       : Natural;
 
    begin
+      if Column = 0 then
+         return 0;
+      end if;
+
       case Buffer.Editable_Lines (Line).Where is
          when In_Buffer =>
             Get_Iter_At_Line
