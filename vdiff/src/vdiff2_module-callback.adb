@@ -432,7 +432,6 @@ package body Vdiff2_Module.Callback is
            (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
             Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),
             Node);
-
       end if;
 
    exception
