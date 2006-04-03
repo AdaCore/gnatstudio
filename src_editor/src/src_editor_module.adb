@@ -2699,7 +2699,7 @@ package body Src_Editor_Module is
          GDK_F3, Shift_Mask,
          Ref_Item => -"Save More");
       Register_Menu
-        (Kernel, File, -"Open From _Remote Host...",  Stock_Open,
+        (Kernel, File, -"Open From _Host...",  Stock_Open,
          On_Open_Remote_File'Access, null, GDK_F3, Control_Mask,
          Ref_Item => -"Save More");
 
