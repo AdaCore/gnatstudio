@@ -1,8 +1,8 @@
 /*********************************************************************
  *                               G P S                               *
  *                                                                   *
- *                      Copyright (C) 2002-2005                      *
- *                            ACT-Europe                             *
+ *                      Copyright (C) 2002-2006                      *
+ *                              AdaCore                              *
  *                                                                   *
  * GPS is free  software;  you can redistribute it and/or modify  it *
  * under the terms of the GNU General Public License as published by *
@@ -26,6 +26,7 @@
 
 #include <windows.h>
 #include <commdlg.h>
+#include <shlobj.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -254,6 +255,75 @@ NativeFileSelection
     (title, basedir, filepattern, patternname, defaultname, 0, kind);
 }
 
+#ifndef BFFM_SETEXPANDED
+#define BFFM_SETEXPANDED (WM_USER + 106)
+#endif
+
+static int CALLBACK
+BrowseHook
+  (HWND hwnd,
+   UINT uMsg,
+   LPARAM lParam,
+   LPARAM lpData)
+{
+  switch (uMsg)
+    {
+      case BFFM_INITIALIZED:
+	SendMessage (hwnd, BFFM_SETEXPANDED, TRUE, lpData);
+	break;
+
+      default:
+        break;
+    }
+}
+
+char*
+NativeDirSelection
+  (const char* title,
+   const char* basedir)
+{
+  TCHAR displayName [MAX_PATH];
+  TCHAR path [MAX_PATH];
+  static WCHAR wbasedir [MAX_PATH];
+  BROWSEINFO BI = { 0 };
+  LPITEMIDLIST pIdList;
+  IShellFolder *psf = NULL;
+  char *res;
+
+  MultiByteToWideChar (CP_UTF8, 0, basedir, -1, wbasedir, MAX_PATH);
+
+  BI.hwndOwner = GetActiveWindow ();
+  BI.lpszTitle = title;
+  BI.pszDisplayName = displayName;
+  BI.ulFlags = BIF_USENEWUI;
+  BI.lpfn = (BFFCALLBACK) BrowseHook;
+  BI.lParam = (LPARAM) wbasedir;
+
+  pIdList = SHBrowseForFolder (&BI);
+
+  if (pIdList != 0)
+    {
+      IMalloc *imalloc = 0;
+
+      if (! SHGetPathFromIDList (pIdList, path))
+        path [0] = '\0';
+
+#if 0   /* ??? Does not compile with mingw */
+      if (SUCCEEDED (SHGetMalloc (&imalloc)))
+        {
+          imalloc->Free (pIdList);
+          imalloc->Release ();
+        }
+#endif
+    }
+  else
+    path [0] = '\0';
+
+  res = malloc (sizeof (char) * (strlen (path) + 1));
+  strcpy (res, path);
+  return res;
+}
+
 int
 NativeFileSelectionSupported ()
 {
@@ -271,6 +341,14 @@ NativeFileSelection
    const char*  defaultname,
    int          style,
    int          kind)
+{
+  return (char *)0;
+}
+
+char*
+NativeDirSelection
+  (const char* title,
+   const char* basedir)
 {
   return (char *)0;
 }
