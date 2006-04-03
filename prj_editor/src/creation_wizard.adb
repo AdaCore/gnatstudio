@@ -261,10 +261,12 @@ package body Creation_Wizard is
       P : constant Name_And_Location_Page_Access :=
             Name_And_Location_Page_Access (Page);
       Name : constant VFS.Virtual_File := Select_Directory
-        (Title          => -"Select project file location",
-         Parent         => Gtk_Window (Get_Toplevel (Widget)),
-         Base_Directory => VFS.Create (Get_Text (P.Project_Location)),
-         History        => Get_History (P.Kernel));
+        (Title             => -"Select project file location",
+         Parent            => Gtk_Window (Get_Toplevel (Widget)),
+         Base_Directory    => VFS.Create (Get_Text (P.Project_Location)),
+         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+         History           => Get_History (P.Kernel));
+
    begin
       if Name /= VFS.No_File then
          VFS.Ensure_Directory (Name);

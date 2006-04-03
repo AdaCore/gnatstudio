@@ -124,10 +124,11 @@ package body GPS.Menu is
       Dir    : Virtual_File;
 
    begin
-      Dir :=  Select_Directory
+      Dir := Select_Directory
         (-"Select a directory",
-         History => Get_History (Kernel),
-         Parent  => Gtk_Window (Get_Current_Window (Kernel)));
+         History           => Get_History (Kernel),
+         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+         Parent            => Gtk_Window (Get_Current_Window (Kernel)));
 
       if Dir /= No_File then
          Change_Dir (Dir);

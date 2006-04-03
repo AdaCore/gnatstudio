@@ -91,6 +91,32 @@ package body Gtkada.File_Selector is
    --  but this is in any case better than changing the current directory
    --  as we did before.
 
+   --------------------------
+   -- Extern C subprograms --
+   --------------------------
+
+   function NativeFileSelectionSupported return Integer;
+   pragma Import
+     (C, NativeFileSelectionSupported, "NativeFileSelectionSupported");
+
+   function NativeFileSelection
+     (Title       : String;
+      Basedir     : String;
+      Filepattern : String;
+      Patternname : String;
+      Defaultname : String;
+      Style       : Integer;
+      Kind        : Integer) return Chars_Ptr;
+   pragma Import (C, NativeFileSelection, "NativeFileSelection");
+
+   function NativeDirSelection
+     (Title       : String;
+      Basedir     : String) return Chars_Ptr;
+   pragma Import (C, NativeDirSelection, "NativeDirSelection");
+
+   procedure c_free (S : Chars_Ptr);
+   pragma Import (C, c_free, "free");
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -452,27 +478,11 @@ package body Gtkada.File_Selector is
       Kind              : File_Selector_Kind := Unspecified;
       History           : Histories.History := null) return VFS.Virtual_File
    is
-      function NativeFileSelection
-        (Title       : String;
-         Basedir     : String;
-         Filepattern : String;
-         Patternname : String;
-         Defaultname : String;
-         Style       : Integer;
-         Kind        : Integer) return Chars_Ptr;
-      pragma Import (C, NativeFileSelection, "NativeFileSelection");
-
-      function NativeFileSelectionSupported return Integer;
-      pragma Import
-        (C, NativeFileSelectionSupported, "NativeFileSelectionSupported");
-
       Pos_Mouse     : constant := 2;
       File_Selector : File_Selector_Window_Access;
       S             : Chars_Ptr;
       Working_Dir   : Virtual_File;
       Initial_Dir   : Virtual_File;
-      procedure c_free (S : Chars_Ptr);
-      pragma Import (C, c_free, "free");
 
    begin
       if Use_Native_Dialog
@@ -483,6 +493,10 @@ package body Gtkada.File_Selector is
          Working_Dir := Get_Current_Dir;
 
          if Base_Directory = No_File then
+            if Last_Directory = No_File then
+               Last_Directory := Working_Dir;
+            end if;
+
             S := NativeFileSelection
               (Title & ASCII.NUL,
                Locale_Full_Name (Last_Directory) & ASCII.NUL,
@@ -651,10 +665,50 @@ package body Gtkada.File_Selector is
       Use_Native_Dialog : Boolean := False;
       History           : Histories.History := null) return Virtual_File
    is
-      pragma Unreferenced (Use_Native_Dialog);
-
       File_Selector_Window : File_Selector_Window_Access;
+      S                    : Chars_Ptr;
+      Working_Dir          : Virtual_File;
+
    begin
+      if Use_Native_Dialog
+        and then NativeFileSelectionSupported /= 0
+      then
+         --  Save working directory
+         Working_Dir := Get_Current_Dir;
+
+         if Base_Directory = No_File then
+            if Last_Directory = No_File then
+               Last_Directory := Working_Dir;
+            end if;
+
+            S := NativeDirSelection
+              (Title & ASCII.NUL,
+               Locale_Full_Name (Last_Directory) & ASCII.NUL);
+
+         else
+            S := NativeDirSelection
+              (Title & ASCII.NUL,
+               Locale_Full_Name (Base_Directory) & ASCII.NUL);
+         end if;
+
+         --  Change back to working directory
+         Change_Dir (Working_Dir);
+
+         declare
+            Val : constant String := Interfaces.C.Strings.Value (S);
+         begin
+            c_free (S);
+
+            if Val = "" then
+               return VFS.No_File;
+            else
+               Last_Directory := Create (Locale_To_UTF8 (Val));
+
+               return Last_Directory;
+            end if;
+         end;
+      end if;
+
       Set_Busy (Parent, True);
 
       if Base_Directory = No_File then

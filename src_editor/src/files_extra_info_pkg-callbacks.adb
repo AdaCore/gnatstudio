@@ -18,23 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  with System; use System;
---  with Glib; use Glib;
---  with Gdk.Event; use Gdk.Event;
---  with Gdk.Types; use Gdk.Types;
---  with Gtk.Accel_Group; use Gtk.Accel_Group;
---  with Gtk.Object; use Gtk.Object;
---  with Gtk.Enums; use Gtk.Enums;
---  with Gtk.Style; use Gtk.Style;
---  with Gtk.Widget; use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl; use GPS.Intl;
 with VFS; use VFS;
 
 package body Files_Extra_Info_Pkg.Callbacks is
-
-   --  use Gtk.Arguments;
 
    ------------------------------
    -- On_Browse_Button_Clicked --
@@ -48,7 +38,8 @@ package body Files_Extra_Info_Pkg.Callbacks is
       S     : constant VFS.Virtual_File := Select_Directory
         (-"Select a directory",
          Parent  => Gtk_Window (Get_Toplevel (Object)),
-         History => null);  --  ??? No history
+         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+         History           => null);  --  ??? No history
 
    begin
       if S /= No_File then

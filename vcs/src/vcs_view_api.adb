@@ -50,6 +50,7 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
@@ -530,9 +531,11 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Params);
       Name : constant VFS.Virtual_File := Select_Directory
-        (Title          => -"Select root directory",
-         Parent         => Gtk_Window (Get_Toplevel (Widget)),
-         Base_Directory => VFS.Create (Get_Text (Dialog.Dir)));
+        (Title             => -"Select root directory",
+         Parent            => Gtk_Window (Get_Toplevel (Widget)),
+         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+         Base_Directory    => VFS.Create (Get_Text (Dialog.Dir)));
+
    begin
       if Name /= VFS.No_File then
          Set_Text (Dialog.Dir, Full_Name (Name).all);
