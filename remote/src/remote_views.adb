@@ -175,8 +175,7 @@ package body Remote_Views is
    procedure Gtk_New
      (View            : out Remote_View;
       Kernel          : Kernel_Handle;
-      Use_Simple_View : Boolean := True)
-   is
+      Use_Simple_View : Boolean := True) is
    begin
       View := new Remote_View_Record;
       Initialize (View, Kernel, Use_Simple_View);
@@ -195,6 +194,7 @@ package body Remote_Views is
       Tooltips      : Gtk_Tooltips;
       Simple_Table  : Gtk_Table;
       Full_Table    : Gtk_Table;
+
    begin
       Gtk.Table.Initialize (View, 3, 3, False);
 
@@ -320,18 +320,18 @@ package body Remote_Views is
       Set_Servers (View);
 
       declare
-         Hook_Func : constant Function_With_Args_Access
-           := new On_Server_Config_Hook'(Function_With_Args with
-                                         View => Remote_View (View));
+         Hook_Func : constant Function_With_Args_Access :=
+           new On_Server_Config_Hook'(Function_With_Args with
+                                      View => Remote_View (View));
       begin
          Add_Hook (Kernel, Server_Config_Changed_Hook, Hook_Func,
                    "remote_views module", Watch => GObject (View));
       end;
 
       declare
-         Hook_Func : constant Function_No_Args_Access
-           := new On_Server_List_Hook'(Function_No_Args with
-                                       View => Remote_View (View));
+         Hook_Func : constant Function_No_Args_Access :=
+           new On_Server_List_Hook'(Function_No_Args with
+                                    View => Remote_View (View));
       begin
          Add_Hook (Kernel, Server_List_Changed_Hook, Hook_Func,
                    "remote_views module", Watch => GObject (View));
@@ -414,9 +414,8 @@ package body Remote_Views is
    -- Set_Servers --
    -----------------
 
-   procedure Set_Servers
-     (View : access Remote_View_Record'Class)
-   is
+   procedure Set_Servers (View : access Remote_View_Record'Class) is
+
       procedure Set_Servers_List (List   : access Gtk_List_Record'Class);
       --  Sets the list of available servers
 
@@ -424,16 +423,15 @@ package body Remote_Views is
       -- Set_Servers_List --
       ----------------------
 
-      procedure Set_Servers_List (List   : access Gtk_List_Record'Class) is
-         Item     : Gtk_List_Item;
+      procedure Set_Servers_List (List : access Gtk_List_Record'Class) is
+         Item : Gtk_List_Item;
       begin
          Clear_Items (List, 0, -1);
          Gtk_New (Item, Locale_To_UTF8 (Local_Nickname));
          Add (List, Item);
 
          for J in 1 .. Get_Nb_Machine_Descriptor loop
-            Gtk_New (Item, Locale_To_UTF8
-                     (Get_Nickname (J)));
+            Gtk_New (Item, Locale_To_UTF8 (Get_Nickname (J)));
             Add (List, Item);
          end loop;
 
@@ -447,6 +445,7 @@ package body Remote_Views is
       Set_Servers_List (Get_List (View.Exec_Combo));
 
       --  Set server for full view
+
       Set_Text (Get_Entry (View.Build_Combo),
                 Get_Printable_Nickname (Build_Server));
       Set_Modified (Get_Entry (View.Build_Combo), False);
@@ -456,10 +455,12 @@ package body Remote_Views is
       Set_Text (Get_Entry (View.Exec_Combo),
                 Get_Printable_Nickname (Execution_Server));
       Set_Modified (Get_Entry (View.Exec_Combo), False);
+
       --  Update simple view by calling the combo_changed CB
+
       On_Combo_Changed
-        (View.Build_Combo, (View   => Remote_View (View),
-                            Server => Build_Server));
+        (View.Build_Combo,
+         (View => Remote_View (View), Server => Build_Server));
    end Set_Servers;
 
    -----------------------------------
@@ -502,16 +503,14 @@ package body Remote_Views is
    -- Set_Modified_Style --
    ------------------------
 
-   procedure Set_Modified
-     (Gentry   : Gtk_Entry;
-      Modified : Boolean)
-   is
-      Txt       : constant String := Get_Text (Gentry);
+   procedure Set_Modified (Gentry : Gtk_Entry; Modified : Boolean) is
+      Txt : constant String := Get_Text (Gentry);
    begin
       Trace (Me, "Set_Modified : " & Boolean'Image (Modified) & " Txt=" & Txt);
+
       if Modified then
-         Set_Markup (Get_Layout (Gentry),
-                     "<span style=""italic"">" & Txt & "</span>");
+         Set_Markup
+           (Get_Layout (Gentry), "<span style=""italic"">" & Txt & "</span>");
       else
          Set_Markup (Get_Layout (Gentry), Txt);
       end if;
@@ -525,14 +524,14 @@ package body Remote_Views is
      (Combo : access Gtk_Widget_Record'Class;
       User  : Remote_Data)
    is
-      Value        : constant String
-        := Get_Text (Get_Entry (Gtkada_Combo (Combo)));
+      Value        : constant String :=
+                       Get_Text (Get_Entry (Gtkada_Combo (Combo)));
       Build_Entry  : constant Gtk_Entry := Get_Entry (User.View.Build_Combo);
       Exec_Entry   : constant Gtk_Entry := Get_Entry (User.View.Exec_Combo);
       Debug_Entry  : constant Gtk_Entry := Get_Entry (User.View.Debug_Combo);
       Remote_Entry : constant Gtk_Entry := Get_Entry (User.View.Remote_Combo);
-   begin
 
+   begin
       case User.Server is
          when Build_Server =>
             Trace (Me, "Build_Combo change");
@@ -562,12 +561,13 @@ package body Remote_Views is
       end case;
 
       --  Update simple view combo
+
       declare
          Build_Txt : constant String := Get_Text (Build_Entry);
          Exec_Txt  : constant String := Get_Text (Exec_Entry);
          Debug_Txt : constant String := Get_Text (Debug_Entry);
-      begin
 
+      begin
          if Build_Txt /= Exec_Txt or Build_Txt /= Debug_Txt then
             Set_Text (Remote_Entry, "(Advanced configuration)");
          else
@@ -602,16 +602,17 @@ package body Remote_Views is
      (W    : access Gtk_Widget_Record'Class;
       User : Remote_Data)
    is
-      New_Build_Server : constant String
-        := Get_Text (Get_Entry (User.View.Build_Combo));
-      Project          : constant String
-        := Full_Name (Project_Path (Get_Project (User.View.Kernel))).all;
+      New_Build_Server : constant String :=
+                           Get_Text (Get_Entry (User.View.Build_Combo));
+      Project          : constant String :=
+                           Full_Name (Project_Path (Get_Project
+                             (User.View.Kernel))).all;
       Reasons          : Ada.Strings.Unbounded.Unbounded_String;
       Failure          : Boolean := False;
       Res              : Message_Dialog_Buttons;
       pragma Unreferenced (W, Res);
-   begin
 
+   begin
       begin
          if New_Build_Server /= Local_Nickname
            and then not To_Remote_Possible (Project, New_Build_Server)
@@ -624,7 +625,6 @@ package body Remote_Views is
          end if;
 
       exception
-
          when E : Invalid_Process =>
             Failure := True;
             Reasons := Reasons & "Could not connect to host " &
@@ -653,12 +653,14 @@ package body Remote_Views is
       User : Remote_Data)
    is
       pragma Unreferenced (W);
-      Build_Srv : constant String
-        := Get_Text (Get_Entry (User.View.Build_Combo));
-      Exec_Srv  : constant String
-        := Get_Text (Get_Entry (User.View.Exec_Combo));
-      Debug_Srv : constant String
-        := Get_Text (Get_Entry (User.View.Debug_Combo));
+
+      Build_Srv : constant String :=
+                    Get_Text (Get_Entry (User.View.Build_Combo));
+      Exec_Srv  : constant String :=
+                    Get_Text (Get_Entry (User.View.Exec_Combo));
+      Debug_Srv : constant String :=
+                    Get_Text (Get_Entry (User.View.Debug_Combo));
+
    begin
       if Debug_Srv /= Get_Printable_Nickname (Debug_Server) then
          Trace (Me, "Assign debug server to " & Debug_Srv);
