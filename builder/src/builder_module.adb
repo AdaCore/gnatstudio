@@ -586,7 +586,7 @@ package body Builder_Module is
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
 
       if Builder_Module_ID.Build_Count = 0 then
-         Compilation_Finished (Data.Kernel, VFS.No_File, Error_Category);
+         Compilation_Finished (Data.Kernel, Error_Category);
       end if;
    end Free_Temporary_Files;
 
