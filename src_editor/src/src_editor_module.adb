@@ -784,62 +784,80 @@ package body Src_Editor_Module is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       User   : Kernel_Handle) return Node_Ptr
    is
-      pragma Unreferenced (User);
       N, Child  : Node_Ptr;
-
       Line      : Editable_Line_Type;
       Column    : Character_Offset_Type;
       Editor    : Source_Editor_Box;
+      File      : Virtual_File;
+      Pref      : Editor_Desktop_Policy;
 
    begin
-      if Widget.all in Source_Editor_Box_Record'Class then
-         Editor := Source_Editor_Box (Widget);
+      if Widget.all not in Source_Editor_Box_Record'Class then
+         return null;
+      end if;
 
-         --  ??? for now, save with desktop only local files
-         if not Is_Local (Get_Filename (Editor)) then
+      begin
+         Pref := Editor_Desktop_Policy'Val (Get_Pref (Save_Editor_Desktop));
+      exception
+         when Constraint_Error =>
+            Pref := From_Project;
+      end;
+
+      if Pref = Never then
+         return null;
+      end if;
+
+      Editor := Source_Editor_Box (Widget);
+      File   := Get_Filename (Editor);
+
+      --  ??? For now, save with desktop only local files
+
+      if not Is_Local (File) then
+         return null;
+      end if;
+
+      if Pref = From_Project and then
+        (Status (Get_Project (User)) = Default
+         or else Get_Project_From_File
+           (Get_Registry (User).all, File, False) = No_Project)
+      then
+         return null;
+      end if;
+
+      declare
+         Filename : constant String := Full_Name (File).all;
+      begin
+         if Filename = "" or else not Is_Regular_File (File) then
             return null;
          end if;
 
-         declare
-            Filename : constant String :=
-              Full_Name (Get_Filename (Editor)).all;
-         begin
-            if Filename = ""
-              or else not Is_Regular_File (Get_Filename (Editor))
-            then
-               return null;
-            end if;
+         N := new Node;
+         N.Tag := new String'("Source_Editor");
 
-            N := new Node;
-            N.Tag := new String'("Source_Editor");
+         Child := new Node;
+         Child.Tag := new String'("File");
+         Child.Value := new String'(Filename);
+         Add_Child (N, Child);
 
-            Child := new Node;
-            Child.Tag := new String'("File");
-            Child.Value := new String'(Filename);
-            Add_Child (N, Child);
+         Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
 
-            Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
+         Child := new Node;
+         Child.Tag := new String'("Line");
+         Child.Value := new String'(Image (Integer (Line)));
+         Add_Child (N, Child);
 
-            Child := new Node;
-            Child.Tag := new String'("Line");
-            Child.Value := new String'(Image (Integer (Line)));
-            Add_Child (N, Child);
+         Child := new Node;
+         Child.Tag := new String'("Column");
+         Child.Value := new String'(Image (Integer (Column)));
+         Add_Child (N, Child);
 
-            Child := new Node;
-            Child.Tag := new String'("Column");
-            Child.Value := new String'(Image (Integer (Column)));
-            Add_Child (N, Child);
+         Child := new Node;
+         Child.Tag := new String'("Column_End");
+         Child.Value := new String'(Image (Integer (Column)));
+         Add_Child (N, Child);
 
-            Child := new Node;
-            Child.Tag := new String'("Column_End");
-            Child.Value := new String'(Image (Integer (Column)));
-            Add_Child (N, Child);
-
-            return N;
-         end;
-      end if;
-
-      return null;
+         return N;
+      end;
    end Save_Desktop;
 
    -----------------------------
