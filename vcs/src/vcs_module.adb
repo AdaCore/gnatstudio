@@ -347,10 +347,8 @@ package body VCS_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      VCS_Class : constant Class_Type := New_Class (Kernel, "VCS");
-
-      VCS_Root    : constant String := -"VCS";
-      VCS_Menu    : constant String := VCS_Root & '/';
+      VCS_Class   : constant Class_Type := New_Class (Kernel, "VCS");
+      VCS_Menu    : constant String := "/_" & (-"VCS");
       Tools_Menu  : constant String := -"Tools" & '/' & (-"Views");
       Command     : Generic_Kernel_Command_Access;
 
@@ -554,13 +552,10 @@ package body VCS_Module is
       Register_Filter (Kernel, VCS_Action_Context, "VCS");
 
       Register_Menu
-        (Kernel, "/_" & VCS_Root,
+        (Kernel, VCS_Menu, -"_Explorer", "",
+         On_Open_Interface'Access,
          Ref_Item   => -"Navigate",
          Add_Before => False);
-
-      Register_Menu
-        (Kernel, VCS_Menu, -"_Explorer", "",
-         On_Open_Interface'Access);
       Register_Menu
         (Kernel, Tools_Menu, -"_VCS Explorer", "",
          On_Open_Interface'Access);
@@ -658,7 +653,7 @@ package body VCS_Module is
          On_Menu_Diff_Base_Head'Access);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+      Register_Menu (Kernel, VCS_Menu, Mitem);
 
       Register_Action_Menu
         ("Annotate",
@@ -741,7 +736,7 @@ package body VCS_Module is
          On_Menu_Resolved'Access);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+      Register_Menu (Kernel, VCS_Menu, Mitem);
 
       Register_Action_Menu
         ("Create tag",

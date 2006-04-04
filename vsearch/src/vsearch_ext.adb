@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1845,7 +1845,6 @@ package body Vsearch_Ext is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Navigate : constant String := "/_" & (-"Navigate");
-      Find_All : constant String := -"Find All References";
       Mitem    : Gtk_Menu_Item;
    begin
       Vsearch_Module_Id := new Vsearch_Module_Record;
@@ -1861,12 +1860,9 @@ package body Vsearch_Ext is
 
       --  Register the menus
       Register_Menu
-        (Kernel, Navigate, null, Ref_Item => -"Edit", Add_Before => False);
-
-      Register_Menu
         (Kernel, Navigate, -"_Find or Replace...",
          Stock_Find, Search_Menu_Cb'Access,
-         Ref_Item => Find_All,
+         Ref_Item => -"Edit", Add_Before => False,
          Accel_Key => GDK_F, Accel_Mods => Control_Mask);
 
       Vsearch_Module_Id.Next_Menu_Item := Register_Menu
