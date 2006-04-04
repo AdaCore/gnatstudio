@@ -248,6 +248,13 @@ E512-008 Saving breakpoints between sessions (2005-11-29)
 
   Keywords: Debugger
 
+D611-009 New preference "Save editor in desktop" (2006-04-04)
+
+  This preference determines when source editors are saved in the desktop:
+  never, always, or only when part of the current project.
+
+  Keywords: Desktop
+
 D319-023 GPS VCS Explorer supports ignore file (2006-02-16)
 
   The VCS Explorer will ignore all files listed in a specific file as
