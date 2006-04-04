@@ -8098,12 +8098,18 @@ Whether the tool bar should show both text and icons, or only icons.
 Whether unsaved files and projects should be saved automatically before
 calling external tools (e.g. before a build).
 
-@item Save desktop on exit
+@item Save project-specific desktop on exit
 @cindex desktop
 Whether the desktop (size and positions of all windows) should be saved when
-exiting. The default desktop is never saved automatically, ie GPS will only
+exiting. The default desktop is never saved automatically, i.e. GPS will only
 save a desktop associated with the current project. If you are working with
 a project created automatically by GPS, the desktop will not be saved.
+
+@item Save editor in desktop
+@cindex desktop
+Determines when source editors should be saved in the desktop: @code{Never},
+@code{Always}, or when a source file is associated with the current project
+(@code{From_Project}).
 
 @item Clipboard size
 @cindex clipboard
