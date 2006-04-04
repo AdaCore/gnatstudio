@@ -749,7 +749,8 @@ package body Remote_Views is
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu
-        (Kernel, Remote, -"_Remote", "", On_Show_Remote_View'Access);
+        (Kernel, Remote, -"_Remote", "", On_Show_Remote_View'Access,
+         Ref_Item => -"Window");
    end Register_Module;
 
 end Remote_Views;
