@@ -13,8 +13,11 @@ BASE_DIR=$(PROJECT_CONVERTER_BASE_DIR)/../../gtkada
 include $(BASE_DIR)/Makefile.gtkada
 BASE_DIR=$(PROJECT_CONVERTER_BASE_DIR)/../../common
 include $(BASE_DIR)/Makefile.common
+BASE_DIR=$(PROJECT_CONVERTER_BASE_DIR)/../../widgets
+include $(BASE_DIR)/Makefile.widgets
+PIXMAPS_BASE_DIR=$(PROJECT_CONVERTER_BASE_DIR)/../../gvd/pixmaps
 
-PROJECT_CONVERTER_SRC_DIRS = $(PROJECT_CONVERTER_BASE_DIR) $(PROJECT_CONVERTER_BASE_DIR)/testsuite 
+PROJECT_CONVERTER_SRC_DIRS = $(PROJECT_CONVERTER_BASE_DIR) $(PROJECT_CONVERTER_BASE_DIR)/testsuite $(PIXMAPS_BASE_DIR)
 SRC_DIRS += $(PROJECT_CONVERTER_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(PROJECT_CONVERTER_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
@@ -25,7 +28,7 @@ CFLAGS = -g -O2
 ADA_SOURCES = convert_prj.adb
 
 PROJECT_FILE = convert
-LIBS := $(LIBS) $(EXTRA_LIBS)
+LIBS := $(PROJECT_CONVERTER_OBJ_DIR)/libconvert$(AR_EXT) $(LIBS) $(EXTRA_LIBS)
 
 ifeq ($(PROJECT_CONVERTER_ROOT),True)
    include ../../builder/src/Makefile.generic
