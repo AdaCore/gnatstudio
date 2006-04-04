@@ -31,7 +31,7 @@ with Glib.Convert;       use Glib.Convert;
 with Glib.Object;        use Glib.Object;
 with Glib.Xml_Int;       use Glib.Xml_Int;
 
-with Pango.Layout;       use Pango.Layout;
+with Gdk.Color;          use Gdk.Color;
 
 with Gtk.Button;         use Gtk.Button;
 with Gtk.Enums;          use Gtk.Enums;
@@ -40,6 +40,7 @@ with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Label;          use Gtk.Label;
 with Gtk.List;           use Gtk.List;
 with Gtk.List_Item;      use Gtk.List_Item;
+with Gtk.Style;          use Gtk.Style;
 with Gtk.Table;          use Gtk.Table;
 with Gtk.Tooltips;       use Gtk.Tooltips;
 with Gtk.Widget;         use Gtk.Widget;
@@ -80,6 +81,8 @@ package body Remote_Views is
       Connect_Button     : Gtk_Button;
       Config_List_Button : Gtk_Button;
       Combo_Selected     : Boolean := False;
+      Normal_Style       : Gtk_Style;
+      Modified_Style     : Gtk_Style;
    end record;
    type Remote_View is access all Remote_View_Record'Class;
 
@@ -139,7 +142,8 @@ package body Remote_Views is
    --  Called when server list changed
 
    procedure Set_Modified
-     (Gentry   : Gtk_Entry;
+     (View     : Remote_View;
+      Gentry   : Gtk_Entry;
       Modified : Boolean);
    --  Set font style according to the modified state
 
@@ -194,6 +198,8 @@ package body Remote_Views is
       Tooltips      : Gtk_Tooltips;
       Simple_Table  : Gtk_Table;
       Full_Table    : Gtk_Table;
+      Color         : Gdk_Color;
+      Success       : Boolean;
 
    begin
       Gtk.Table.Initialize (View, 3, 3, False);
@@ -282,6 +288,13 @@ package body Remote_Views is
       Set_Tip
         (Tooltips, Get_Entry (View.Exec_Combo),
          -"The server used to execute the built executables");
+
+      --  Styles
+      View.Normal_Style := Get_Default_Style;
+      View.Modified_Style := Copy (Get_Default_Style);
+      Color := Parse ("red");
+      Alloc_Color (Get_Default_Colormap, Color, Success => Success);
+      Set_Text (View.Modified_Style, State_Normal, Color);
 
       --  "Check" and "connect" buttons
       Gtk_New (View.Check_Button, -"Check configuration");
@@ -448,13 +461,13 @@ package body Remote_Views is
 
       Set_Text (Get_Entry (View.Build_Combo),
                 Get_Printable_Nickname (Build_Server));
-      Set_Modified (Get_Entry (View.Build_Combo), False);
+      Set_Modified (Remote_View (View), Get_Entry (View.Build_Combo), False);
       Set_Text (Get_Entry (View.Debug_Combo),
                 Get_Printable_Nickname (Debug_Server));
-      Set_Modified (Get_Entry (View.Debug_Combo), False);
+      Set_Modified (Remote_View (View), Get_Entry (View.Debug_Combo), False);
       Set_Text (Get_Entry (View.Exec_Combo),
                 Get_Printable_Nickname (Execution_Server));
-      Set_Modified (Get_Entry (View.Exec_Combo), False);
+      Set_Modified (Remote_View (View), Get_Entry (View.Exec_Combo), False);
 
       --  Update simple view by calling the combo_changed CB
 
@@ -503,16 +516,16 @@ package body Remote_Views is
    -- Set_Modified_Style --
    ------------------------
 
-   procedure Set_Modified (Gentry : Gtk_Entry; Modified : Boolean) is
-      Txt : constant String := Get_Text (Gentry);
+   procedure Set_Modified
+     (View     : Remote_View;
+      Gentry   : Gtk_Entry;
+      Modified : Boolean)
+   is
    begin
-      Trace (Me, "Set_Modified : " & Boolean'Image (Modified) & " Txt=" & Txt);
-
       if Modified then
-         Set_Markup
-           (Get_Layout (Gentry), "<span style=""italic"">" & Txt & "</span>");
+         Set_Style (Gentry, View.Modified_Style);
       else
-         Set_Markup (Get_Layout (Gentry), Txt);
+         Set_Style (Gentry, View.Normal_Style);
       end if;
    end Set_Modified;
 
@@ -535,29 +548,35 @@ package body Remote_Views is
       case User.Server is
          when Build_Server =>
             Trace (Me, "Build_Combo change");
-            Set_Modified (Build_Entry,
-                          Get_Printable_Nickname (Build_Server) /= Value);
+            Set_Modified
+              (User.View, Build_Entry,
+               Get_Printable_Nickname (Build_Server) /= Value);
 
          when Execution_Server =>
             Trace (Me, "Exec_Combo change");
-            Set_Modified (Exec_Entry,
-                          Get_Printable_Nickname (Execution_Server) /= Value);
+            Set_Modified
+              (User.View, Exec_Entry,
+               Get_Printable_Nickname (Execution_Server) /= Value);
 
          when Debug_Server =>
             Trace (Me, "Debug_Combo change");
-            Set_Modified (Debug_Entry,
-                          Get_Printable_Nickname (Debug_Server) /= Value);
+            Set_Modified
+              (User.View, Debug_Entry,
+               Get_Printable_Nickname (Debug_Server) /= Value);
 
          when GPS_Server =>
             Set_Text (Build_Entry, Value);
             Set_Text (Exec_Entry, Value);
             Set_Text (Debug_Entry, Value);
-            Set_Modified (Build_Entry,
-                          Get_Printable_Nickname (Build_Server) /= Value);
-            Set_Modified (Exec_Entry,
-                          Get_Printable_Nickname (Execution_Server) /= Value);
-            Set_Modified (Debug_Entry,
-                          Get_Printable_Nickname (Debug_Server) /= Value);
+            Set_Modified
+              (User.View, Build_Entry,
+               Get_Printable_Nickname (Build_Server) /= Value);
+            Set_Modified
+              (User.View, Exec_Entry,
+               Get_Printable_Nickname (Execution_Server) /= Value);
+            Set_Modified
+              (User.View, Debug_Entry,
+               Get_Printable_Nickname (Debug_Server) /= Value);
       end case;
 
       --  Update simple view combo
@@ -578,11 +597,11 @@ package body Remote_Views is
            or else Exec_Txt /= Get_Printable_Nickname (Execution_Server)
            or else Debug_Txt /= Get_Printable_Nickname (Debug_Server)
          then
-            Set_Modified (Remote_Entry, True);
+            Set_Modified (User.View, Remote_Entry, True);
             Set_Sensitive (User.View.Check_Button, True);
             Set_Sensitive (User.View.Connect_Button, True);
          else
-            Set_Modified (Remote_Entry, False);
+            Set_Modified (User.View, Remote_Entry, False);
             Set_Sensitive (User.View.Check_Button, False);
             Set_Sensitive (User.View.Connect_Button, False);
          end if;
@@ -603,7 +622,11 @@ package body Remote_Views is
       User : Remote_Data)
    is
       New_Build_Server : constant String :=
-                           Get_Text (Get_Entry (User.View.Build_Combo));
+        Get_Text (Get_Entry (User.View.Build_Combo));
+      New_Debug_Server : constant String :=
+        Get_Text (Get_Entry (User.View.Debug_Combo));
+      New_Exec_Server  : constant String :=
+        Get_Text (Get_Entry (User.View.Exec_Combo));
       Project          : constant String :=
                            Full_Name (Project_Path (Get_Project
                              (User.View.Kernel))).all;
@@ -613,6 +636,48 @@ package body Remote_Views is
       pragma Unreferenced (W, Res);
 
    begin
+      if New_Build_Server /= Local_Nickname
+        and then New_Build_Server /= Get_Nickname (Build_Server)
+      then
+         declare
+            Error_Msg : constant String := Check_Host (New_Build_Server);
+         begin
+            if Error_Msg /= "" then
+               Failure := True;
+               Reasons := Reasons & "Check failed for Build server " &
+                 New_Build_Server & ": " & Error_Msg & ASCII.LF;
+            end if;
+         end;
+      end if;
+
+      if New_Debug_Server /= Local_Nickname
+        and then New_Debug_Server /= Get_Nickname (Debug_Server)
+      then
+         declare
+            Error_Msg : constant String := Check_Host (New_Debug_Server);
+         begin
+            if Error_Msg /= "" then
+               Failure := True;
+               Reasons := Reasons & "Check failed for Debug server " &
+                 New_Debug_Server & ": " & Error_Msg & ASCII.LF;
+            end if;
+         end;
+      end if;
+
+      if New_Exec_Server /= Local_Nickname
+        and then New_Exec_Server /= Get_Nickname (Execution_Server)
+      then
+         declare
+            Error_Msg : constant String := Check_Host (New_Exec_Server);
+         begin
+            if Error_Msg /= "" then
+               Failure := True;
+               Reasons := Reasons & "Check failed for Exec server " &
+                 New_Exec_Server & ": " & Error_Msg & ASCII.LF;
+            end if;
+         end;
+      end if;
+
       begin
          if New_Build_Server /= Local_Nickname
            and then not To_Remote_Possible (Project, New_Build_Server)
