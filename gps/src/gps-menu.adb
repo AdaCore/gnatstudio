@@ -399,11 +399,9 @@ package body GPS.Menu is
         (Kernel, Project, -"_Open...", "",
          On_Open_Project'Access,
          Ref_Item => -"Window");
-
       Register_Menu
         (Kernel, Project, -"Open From _Host...", "",
-         On_Open_Remote_Project'Access,
-         Ref_Item => -"Window");
+         On_Open_Remote_Project'Access);
 
       Reopen_Menu := Register_Menu
         (Kernel, Project, -"_Recent", "", null);
