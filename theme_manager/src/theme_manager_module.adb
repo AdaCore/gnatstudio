@@ -103,7 +103,6 @@ package body Theme_Manager_Module is
       Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  See doc for inherited subprograms.
 
-
    type Theme_Manager_Module_Record is new Module_ID_Record with record
       Themes : Theme_Description_Access;
       --  List of all registered themes.
@@ -247,10 +246,10 @@ package body Theme_Manager_Module is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level);
-      Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
-      Themes : Theme_Description_Access;
-      Str : GNAT.OS_Lib.String_Access;
-      Active : constant String := Get_Pref (Active_Themes);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Module.all);
+      Active       : constant String := Get_Pref (Active_Themes);
+      Themes       : Theme_Description_Access;
+      Str          : GNAT.OS_Lib.String_Access;
       Theme_Active : Boolean;
    begin
       if Node.Tag.all = "theme" then
@@ -318,7 +317,7 @@ package body Theme_Manager_Module is
 
    procedure Selection_Changed (Editor : access Gtk_Widget_Record'Class) is
       Ed        : constant Theme_Editor_Widget :=
-        Theme_Editor_Widget (Editor);
+                    Theme_Editor_Widget (Editor);
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
@@ -383,11 +382,12 @@ package body Theme_Manager_Module is
      (Editor : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Ed        : constant Theme_Editor_Widget := Theme_Editor_Widget (Editor);
-      Iter      : Gtk_Tree_Iter;
+      Ed          : constant Theme_Editor_Widget :=
+                      Theme_Editor_Widget (Editor);
       Path_String : constant String := Get_String (Nth (Params, 1));
-      Setting   : Boolean;
-      Themes    : Theme_Description_Access := Theme_Manager_Module.Themes;
+      Iter        : Gtk_Tree_Iter;
+      Setting     : Boolean;
+      Themes      : Theme_Description_Access := Theme_Manager_Module.Themes;
    begin
       Iter := Get_Iter_From_String (Ed.Model, Path_String);
       if Iter /= Null_Iter then
@@ -436,8 +436,9 @@ package body Theme_Manager_Module is
       Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       pragma Unreferenced (Pref);
-      W    : constant Theme_Editor_Widget := Theme_Editor_Widget (Widget);
-      List : Unbounded_String := To_Unbounded_String ("@");
+      W              : constant Theme_Editor_Widget :=
+                         Theme_Editor_Widget (Widget);
+      List           : Unbounded_String := To_Unbounded_String ("@");
       Category, Iter : Gtk_Tree_Iter;
 
    begin
@@ -476,22 +477,23 @@ package body Theme_Manager_Module is
    function Create
      (Pref : access Theme_Editor_Record) return Gtk.Widget.Gtk_Widget
    is
-      Action   : Gtk_Widget;
-      Scrolled : Gtk_Scrolled_Window;
-      Render   : Gtk_Cell_Renderer_Text;
+      Active          : constant String := Get_Pref (Active_Themes);
+      Action          : Gtk_Widget;
+      Scrolled        : Gtk_Scrolled_Window;
+      Render          : Gtk_Cell_Renderer_Text;
       Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
-      Num      : Gint;
-      Iter     : Gtk_Tree_Iter;
-      Col      : Gtk_Tree_View_Column;
-      Pane     : Theme_Editor_Widget;
-      Frame    : Gtk_Frame;
-      Box      : Gtk_Box;
-      Event    : Gtk_Event_Box;
-      Sep      : Gtk_Separator;
-      Text     : Gtk_Text_View;
-      Themes   : Theme_Description_Access := Theme_Manager_Module.Themes;
+      Num             : Gint;
+      Iter            : Gtk_Tree_Iter;
+      Col             : Gtk_Tree_View_Column;
+      Pane            : Theme_Editor_Widget;
+      Frame           : Gtk_Frame;
+      Box             : Gtk_Box;
+      Event           : Gtk_Event_Box;
+      Sep             : Gtk_Separator;
+      Text            : Gtk_Text_View;
+      Themes          : Theme_Description_Access :=
+                          Theme_Manager_Module.Themes;
       pragma Unreferenced (Action, Num, Iter);
-      Active : constant String := Get_Pref (Active_Themes);
 
    begin
       if Themes = null then
@@ -588,7 +590,7 @@ package body Theme_Manager_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Theme     : constant Theme_Editor := new Theme_Editor_Record;
+      Theme : constant Theme_Editor := new Theme_Editor_Record;
    begin
       Theme_Manager_Module := new Theme_Manager_Module_Record;
       Register_Module
