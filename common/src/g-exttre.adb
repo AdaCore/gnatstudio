@@ -812,6 +812,57 @@ package body GNAT.Expect.TTY.Remote is
       end;
    end Remote_Spawn;
 
+   ----------------
+   -- Check_Host --
+   ----------------
+
+   function Check_Host
+     (Nickname              : String;
+      Request_User_Instance : Request_User_Object'Class := Default_Req_User)
+      return String
+   is
+      Descriptor   : Process_Descriptor_Access;
+      Machine_Desc : Machine_Descriptor_Access;
+      Shell_Desc   : Shell_Descriptor_Access;
+   begin
+      Descriptor := new Remote_Process_Descriptor;
+
+      begin
+         Machine_Desc := Get_Machine_Descriptor (Nickname);
+
+      exception
+         when Invalid_Nickname =>
+            return "No machine with name " & Nickname & " is configured";
+      end;
+
+      Shell_Desc := Shell_Descriptor_List;
+
+      while Shell_Desc /= null loop
+         exit when Shell_Desc.Name.all = Machine_Desc.Desc.Shell_Name.all;
+         Shell_Desc := Shell_Desc.Next;
+      end loop;
+
+      if Shell_Desc = null then
+         return "No shell with name " & Machine_Desc.Desc.Shell_Name.all &
+           " is configured";
+      end if;
+
+      Remote_Process_Descriptor (Descriptor.all).Shell := Shell_Desc;
+
+      begin
+         Get_Or_Init_Session
+           (Machine_Desc, Remote_Process_Descriptor (Descriptor.all), True,
+            Request_User_Instance);
+
+      exception
+         when E : Invalid_Process =>
+            return Exception_Message (E);
+      end;
+
+      Close (Descriptor.all);
+      return "";
+   end Check_Host;
+
    ------------------
    -- Sync_Execute --
    ------------------

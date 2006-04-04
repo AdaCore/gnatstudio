@@ -282,6 +282,13 @@ package GNAT.Expect.TTY.Remote is
    --   (set Buffer_Size to 0 for dynamic memory allocation)
    --  Err_To_Out tells if the stderr shall be redirected to stdout
 
+   function Check_Host
+     (Nickname              : String;
+      Request_User_Instance : Request_User_Object'Class := Default_Req_User)
+      return String;
+   --  Check host connection. Return empty string upon success, or the error
+   --  message.
+
    procedure Sync_Execute
      (Host                  : String;
       Args                  : GNAT.OS_Lib.Argument_List;
