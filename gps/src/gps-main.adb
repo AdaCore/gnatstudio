@@ -1331,6 +1331,8 @@ procedure GPS.Main is
          Aliases_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
+      KeyManager_Module.Register_Key_Menu (GPS_Main.Kernel);
+
       if Active (External_Editor_Trace) then
          External_Editor_Module.Register_Module (GPS_Main.Kernel);
       end if;
