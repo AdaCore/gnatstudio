@@ -52,6 +52,9 @@ package body GPS.Kernel.Preferences is
    package Speed_Column_Policy_Properties is new Generic_Enumeration_Property
      ("Speed_Column_Policies", Speed_Column_Policies);
 
+   package Editor_Desktop_Policy_Properties is new Generic_Enumeration_Property
+     ("Editor_Desktop_Policy", Editor_Desktop_Policy);
+
    Preferences_Pages : Preferences_Page_Array_Access;
    --  ??? To be included in the kernel
 
@@ -370,6 +373,15 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Save_Desktop_On_Exit), -"General");
 
+      Save_Editor_Desktop := Param_Spec_Enum
+        (Editor_Desktop_Policy_Properties.Gnew_Enum
+           (Name    => "General-Editor-Desktop-Policy",
+            Nick    => "Save editor in desktop",
+            Blurb   => -"When to save source editors in the desktop",
+            Default => From_Project));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Save_Editor_Desktop), -"General");
+
       Multi_Language_Build := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Multi-Language-Build",
          Nick    => -"Multi language build",
@@ -589,8 +601,8 @@ package body GPS.Kernel.Preferences is
       Speed_Column_Policy := Param_Spec_Enum
         (Speed_Column_Policy_Properties.Gnew_Enum
            (Name    => "Src-Editor-Speed-Column-Policy",
-            Nick    => "Speed column policy",
-            Blurb   => "When the speed column should be displayed",
+            Nick    => -"Speed column policy",
+            Blurb   => -"When the speed column should be displayed",
             Default => Automatic));
       Register_Property
         (Kernel.Preferences, Param_Spec (Speed_Column_Policy), -"Editor");

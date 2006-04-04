@@ -136,12 +136,17 @@ package GPS.Kernel.Preferences is
    type Line_Terminators is (Unchanged, Unix, Windows);
    for Line_Terminators'Size use Glib.Gint'Size;
    pragma Convention (C, Line_Terminators);
-   --  The list of supported line terminators.
+   --  The list of supported line terminators
 
    type Speed_Column_Policies is (Never, Automatic, Always);
    for Speed_Column_Policies'Size use Glib.Gint'Size;
    pragma Convention (C, Speed_Column_Policies);
-   --  The list of possible behaviours for the speed column.
+   --  The list of possible behaviours for the speed column
+
+   type Editor_Desktop_Policy is (Never, From_Project, Always);
+   for Editor_Desktop_Policy'Size use Glib.Gint'Size;
+   pragma Convention (C, Editor_Desktop_Policy);
+   --  The list of possible behaviours when saving editors in the desktop
 
    -----------------------
    -- List of constants --
@@ -162,6 +167,7 @@ package GPS.Kernel.Preferences is
    Toolbar_Show_Text     : Param_Spec_Boolean;
    Auto_Save             : Param_Spec_Boolean;
    Save_Desktop_On_Exit  : Param_Spec_Boolean;
+   Save_Editor_Desktop   : Param_Spec_Enum;
    Multi_Language_Build  : Param_Spec_Boolean;
    Auto_Jump_To_First    : Param_Spec_Boolean;
    Tooltip_Color         : Param_Spec_Color;
