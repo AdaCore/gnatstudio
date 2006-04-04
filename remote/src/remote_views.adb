@@ -290,8 +290,8 @@ package body Remote_Views is
          -"The server used to execute the built executables");
 
       --  Styles
-      View.Normal_Style := Get_Default_Style;
-      View.Modified_Style := Copy (Get_Default_Style);
+      Gtk_New (View.Normal_Style);
+      Gtk_New (View.Modified_Style);
       Color := Parse ("red");
       Alloc_Color (Get_Default_Colormap, Color, Success => Success);
       Set_Text (View.Modified_Style, State_Normal, Color);
