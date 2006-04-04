@@ -51,9 +51,9 @@ package GPS.Kernel.Standard_Hooks is
    --  Base type for hooks that take a single file in parameter
    --  See inherited doc
 
-   String_Hook_Type        : constant String := "string_hooks";
+   String_Hook_Type : constant String := "string_hooks";
    type String_Hooks_Args (Length : Natural) is new Hooks_Data with record
-      Value   : String (1 .. Length);
+      Value : String (1 .. Length);
    end record;
    function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
@@ -88,12 +88,6 @@ package GPS.Kernel.Standard_Hooks is
       Context : GPS.Kernel.Selection_Context;
    end record;
    --  Base type for hooks that take a single context in parameter
-
-   type Compilation_Hooks_Args (Category_Length : Natural) is
-     new File_Hooks_Args with
-      record
-         Category : String (1 .. Category_Length);
-      end record;
 
    ------------------
    -- Marker_Hooks --
@@ -459,13 +453,6 @@ private
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Source_File_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
-   --  See inherited doc
-
-   function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Compilation_Hooks_Args)
       return GPS.Kernel.Scripts.Callback_Data_Access;
    --  See inherited doc
 
