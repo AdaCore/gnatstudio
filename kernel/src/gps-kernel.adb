@@ -433,14 +433,12 @@ package body GPS.Kernel is
 
    procedure Compilation_Finished
      (Handle   : access Kernel_Handle_Record;
-      File     : VFS.Virtual_File;
       Category : String)
    is
-      Data : aliased Compilation_Hooks_Args :=
+      Data : aliased String_Hooks_Args :=
         (Hooks_Data with
-         Category_Length => Category'Length,
-         File            => File,
-         Category        => Category);
+         Length => Category'Length,
+         Value  => Category);
    begin
       Run_Hook (Handle, Compilation_Finished_Hook, Data'Unchecked_Access);
    end Compilation_Finished;
