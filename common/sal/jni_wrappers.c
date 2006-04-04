@@ -97,6 +97,32 @@ void Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_freeSEGVHandlerInt
   free (handler);
 }
 
+jint Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_getTERMHandlerInt
+  (JNIEnv * Env, jclass * this)
+{
+  struct sigaction * handler =
+    (struct sigaction *) malloc (sizeof (struct sigaction));
+
+  sigaction (SIGTERM, NULL, handler);
+
+  return (jint) handler;
+}
+
+void Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_setTERMHandlerInt
+  (JNIEnv * Env, jclass * this, jint addr)
+{
+  struct sigaction * handler = (struct sigaction *) addr;
+
+  sigaction (SIGTERM, handler, NULL);
+}
+
+void Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_freeTERMHandlerInt
+  (JNIEnv * Env, jclass * this, jint addr)
+{
+  struct sigaction * handler = (struct sigaction *) addr;
+  free (handler);
+}
+
 #else
 
 jint Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_getSEGVHandlerInt
@@ -111,6 +137,23 @@ void Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_setSEGVHandlerInt
 }
 
 void Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_freeSEGVHandlerInt
+  (JNIEnv * Env, jclass * this, jint addr)
+{
+}
+
+
+jint Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_getTERMHandlerInt
+  (JNIEnv * Env, jclass * this)
+{
+  return 0;
+}
+
+void Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_setTERMHandlerInt
+  (JNIEnv * Env, jclass * this, jint addr)
+{
+}
+
+void Java_com_adacore_gnatbench_core_gpsjni_SystemHandler_freeTERMHandlerInt
   (JNIEnv * Env, jclass * this, jint addr)
 {
 }
