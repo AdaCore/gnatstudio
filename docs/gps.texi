@@ -7286,10 +7286,6 @@ Open a file system explorer on the left area.
 Open a view of the current source editor.
 @xref{The Outline View}.
 
-@item Project Properties
-This menu applies to the currently selected project, and will open the
-project properties dialog for this project.
-
 @item Project
 @xref{The Project View}.
 
