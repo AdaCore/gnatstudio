@@ -26,4 +26,8 @@ package KeyManager_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
+   procedure Register_Key_Menu
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register menus for KeyManager module
+
 end KeyManager_Module;

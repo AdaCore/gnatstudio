@@ -2099,8 +2099,6 @@ package body KeyManager_Module is
    is
       Manager    : constant Key_Manager_Access := new Key_Manager_Record;
       Macro_Menu : constant String := "/" & (-"Tools/Macro");
-      Edit_Menu  : constant String := "/" & (-"Edit");
-
    begin
       Manager.Kernel := Kernel_Handle (Kernel);
       Load_Custom_Keys (Kernel, Manager);
@@ -2113,17 +2111,6 @@ package body KeyManager_Module is
       Event_Handler_Set
         (General_Event_Handler'Access,
          Convert (Kernel_Handle (Kernel)));
-
-      --  Ideally we would want to put the menu item before Edit->Preferences,
-      --  but due to order or initialization constraints this is not yet
-      --  possible ???
-
-      Register_Menu
-        (Kernel, Edit_Menu,
-         -"_Key shortcuts",
-         Callback   => On_Edit_Keys'Access,
-         Ref_Item   => -"Preferences",
-         Add_Before => False);
 
       if Active (Use_Macro) then
          Register_Menu
@@ -2160,5 +2147,16 @@ package body KeyManager_Module is
             Handler      => Macro_Command_Handler'Access);
       end if;
    end Register_Module;
+
+   procedure Register_Key_Menu
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+   begin
+      Register_Menu
+        (Kernel, '/' & (-"Edit"),
+         -"_Key shortcuts",
+         Callback => On_Edit_Keys'Access,
+         Ref_Item => -"Preferences");
+   end Register_Key_Menu;
 
 end KeyManager_Module;
