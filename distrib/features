@@ -270,3 +270,8 @@ C502-013 Ability to comment out code when code fixing (2006-01-09)
 
   Keywords: Code fixing
 
+C830-001 Improved behavior of Open From Project dialog (2006-04-04)
+
+  The Open From Project dialog now also takes into account the 'Enter' key
+  when a file is selected.
+
