@@ -1683,16 +1683,17 @@ package body GUI_Utils is
             Pack_Start (Col, Toggle_Render, False);
             Add_Attribute (Col, Toggle_Render, "active", Gint (N));
 
+            Tree_Column_Callback.Connect
+              (Toggle_Render, "toggled",
+               Toggle_Callback'Access,
+               User_Data => (Gtk_Tree_Model (Model), Gint (N)));
+
             if Integer (ColNum) in Editable_Columns'Range
               and then Editable_Columns (Integer (ColNum)) >= 0
             then
                Add_Attribute
                  (Col, Toggle_Render, "activatable",
                   Editable_Columns (Integer (ColNum)));
-               Tree_Column_Callback.Connect
-                 (Toggle_Render, "toggled",
-                  Toggle_Callback'Access,
-                  User_Data => (Gtk_Tree_Model (Model), Gint (N)));
 
                if Integer (ColNum) in Editable_Callback'Range
                  and then Editable_Callback (Integer (ColNum)) /= null
