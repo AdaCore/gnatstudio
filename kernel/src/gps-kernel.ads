@@ -613,7 +613,6 @@ package GPS.Kernel is
 
    procedure Compilation_Finished
      (Handle   : access Kernel_Handle_Record;
-      File     : VFS.Virtual_File;
       Category : String);
    --  Runs the "compilation_finished" hook
    --  The Category corresponds to the location/highlighting category that
