@@ -65,6 +65,11 @@ package body Gtkada.Entry_Completion is
       Event     : Gdk_Event) return Boolean;
    --  Called when the user clicked in the list
 
+   function On_Key_Press
+     (The_Entry : access Gtk_Widget_Record'Class;
+      Event     : Gdk_Event) return Boolean;
+   --  Called when the user pressed a key
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Completions_Factory'Class, Completions_Factory_Access);
 
@@ -136,6 +141,9 @@ package body Gtkada.Entry_Completion is
       Return_Callback.Object_Connect
         (The_Entry.View, "button_press_event",
          Return_Callback.To_Marshaller (On_Button_Press'Access), The_Entry);
+      Return_Callback.Object_Connect
+        (The_Entry.View, "key_press_event",
+         Return_Callback.To_Marshaller (On_Key_Press'Access), The_Entry);
 
       Gtk_New (Renderer);
 
@@ -192,6 +200,27 @@ package body Gtkada.Entry_Completion is
       end if;
       return False;
    end On_Button_Press;
+
+   ------------------
+   -- On_Key_Press --
+   ------------------
+
+   function On_Key_Press
+     (The_Entry : access Gtk_Widget_Record'Class;
+      Event     : Gdk_Event) return Boolean is
+   begin
+      if Get_Key_Val (Event) = GDK_Return then
+         return Activate_Default (Gtk_Window (Get_Toplevel (The_Entry)));
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
+         return False;
+   end On_Key_Press;
 
    ---------------
    -- Get_Entry --
