@@ -891,26 +891,6 @@ package body GPS.Kernel.Standard_Hooks is
    function Create_Callback_Data
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
-      Data      : access Compilation_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access
-   is
-      F : constant Class_Instance := Create_File (Script, Data.File);
-      D : constant Callback_Data_Access :=
-            new Callback_Data'Class'(Create (Script, 3));
-   begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
-      Set_Nth_Arg (D.all, 2, F);
-      Set_Nth_Arg (D.all, 3, Data.Category);
-      return D;
-   end Create_Callback_Data;
-
-   --------------------------
-   -- Create_Callback_Data --
-   --------------------------
-
-   function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
-      Hook_Name : String;
       Data      : access Exit_Before_Action_Hooks_Args)
       return GPS.Kernel.Scripts.Callback_Data_Access
    is
