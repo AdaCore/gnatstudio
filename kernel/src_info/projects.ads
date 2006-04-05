@@ -114,7 +114,8 @@ package Projects is
       Host    : String := "") return VFS.Virtual_File;
    --  Return the full path name to the project file
    --  If Host is given, the path will be the one on the specified host.
-   --  No_File is returned if the project is the default project or No_Project.
+   --  Use Status (Project) instead to check for the default project since
+   --  a dummy path will be returned by this function.
 
    function Project_Directory
      (Project : Project_Type;
