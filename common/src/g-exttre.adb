@@ -567,7 +567,7 @@ package body GNAT.Expect.TTY.Remote is
          Add_LF       : Boolean := True;
          Empty_Buffer : Boolean := False) is
       begin
-         if Remote_Desc.Use_Cr_Lf and Add_LF then
+         if Remote_Desc.Use_Cr_Lf and then Add_LF then
             Send (Descriptor, Str & ASCII.CR, True, Empty_Buffer);
          else
             Send (Descriptor, Str, Add_LF, Empty_Buffer);
@@ -577,7 +577,8 @@ package body GNAT.Expect.TTY.Remote is
       Res : Expect_Match;
 
    begin
-      --  Search for READY of OFF sessions
+      --  Search for READY or OFF sessions
+
       for J in Machine.Sessions'Range loop
          if Machine.Sessions (J).State = OFF and Session_Nb = 0 then
             --  At least one possibility is to launch a new session
