@@ -81,7 +81,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;                 use GUI_Utils;
-with Language_Handlers;     use Language_Handlers;
+with Language_Handlers;         use Language_Handlers;
 with Prj.Attr;                  use Prj, Prj.Attr;
 with Project_Viewers;           use Project_Viewers;
 with Projects.Editor;           use Projects, Projects.Editor;
@@ -2739,17 +2739,17 @@ package body Project_Properties is
    -----------------
 
    procedure Select_File
-     (Editor       : access Gtk_Widget_Record'Class)
+     (Editor : access Gtk_Widget_Record'Class)
    is
-      Ed   : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
+      Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
       Files : constant VFS.File_Array := Select_Files_Or_Directories
-        (Toplevel           => Gtk_Window (Get_Toplevel (Editor)),
-         Project            => Ed.Project,
-         Default            => Get_Text (Gtk_Entry (Ed.Ent)),
-         Project_Path       => Get_Text (Ed.Path_Widget),
-         As_Directory       => Ed.As_Directory,
-         Filter             => Ed.Filter,
-         Allow_Multiple     => False);
+        (Toplevel       => Gtk_Window (Get_Toplevel (Editor)),
+         Project        => Ed.Project,
+         Default        => Get_Text (Gtk_Entry (Ed.Ent)),
+         Project_Path   => Get_Text (Ed.Path_Widget),
+         As_Directory   => Ed.As_Directory,
+         Filter         => Ed.Filter,
+         Allow_Multiple => False);
    begin
       for F in Files'Range loop
          Set_Text (Gtk_Entry (Ed.Ent), Full_Name (Files (F)).all);
