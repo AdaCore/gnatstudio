@@ -655,7 +655,7 @@ package body GPS.Kernel is
       Node                 : Node_Ptr;
       File                 : constant String :=
         Handle.Home_Dir.all & Desktop_Name;
-      Project              : Project_Type := Get_Project (Handle);
+      Project              : constant Project_Type := Get_Project (Handle);
       Project_Name         : Virtual_File := No_File;
       Child                : Node_Ptr;
       Desktop_Node         : Node_Ptr;
