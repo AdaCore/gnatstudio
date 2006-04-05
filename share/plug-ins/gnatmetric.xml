@@ -67,13 +67,13 @@
 
   <submenu>
     <title>Tools</title>
-    <submenu before="Interrupt">
-      <title>Metrics</title>
+    <submenu after="Documentation">
+      <title>_Metrics</title>
       <menu action="metrics root project">
-        <title>Compute metrics for root project</title>
+        <title>Compute metrics for root _project</title>
       </menu>
       <menu action="metrics file">
-        <title>Compute metrics for current file</title>
+        <title>Compute metrics for current _file</title>
       </menu>
     </submenu>
   </submenu>
