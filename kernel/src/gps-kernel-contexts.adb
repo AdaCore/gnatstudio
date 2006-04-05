@@ -19,14 +19,15 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
+
 with Basic_Types;        use Basic_Types;
-with Projects;           use Projects;
-with Projects.Registry;  use Projects.Registry;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
-with VFS;                use VFS;
 with Entities;           use Entities;
 with Entities.Queries;   use Entities.Queries;
 with Language_Handlers;  use Language_Handlers;
+with Projects;           use Projects;
+with Projects.Registry;  use Projects.Registry;
+with VFS;                use VFS;
 
 package body GPS.Kernel.Contexts is
 
@@ -259,7 +260,7 @@ package body GPS.Kernel.Contexts is
    ----------------------
 
    function File_Information
-     (Context  : Selection_Context) return Virtual_File is
+     (Context : Selection_Context) return Virtual_File is
    begin
       if not Context.Data.Data.File_Checked then
          declare
