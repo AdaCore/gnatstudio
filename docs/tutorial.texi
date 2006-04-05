@@ -689,7 +689,9 @@ this document includes:
 @item Flexible multiple document interface
 @end itemize
 
-For more information, please look at the @i{User's Guide} (@url{gps.html}).
+For more information, please look at the @i{User's Guide} (@url{gps.html}),
+and also look at the @code{Tools} menu which gives access to most of these
+capabilities.
 
 @c @printindex cp
 
