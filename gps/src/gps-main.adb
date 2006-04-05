@@ -590,6 +590,13 @@ procedure GPS.Main is
             OS_Exit (1);
       end;
 
+      if not Is_Directory (Get_Tmp_Dir) then
+         Button := Message_Dialog
+           ((-"Cannot found the temporary directory ") & Get_Tmp_Dir,
+            Error, Button_OK, Justification => Justify_Left);
+         OS_Exit (1);
+      end if;
+
       --  Initialize the traces
 
       Traces.Parse_Config_File
