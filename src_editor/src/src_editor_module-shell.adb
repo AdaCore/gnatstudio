@@ -1324,12 +1324,12 @@ package body Src_Editor_Module.Shell is
       elsif Command = "cursor_set_position" then
          declare
             File   : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
+                       Create (Nth_Arg (Data, 1), Kernel);
             Child  : constant MDI_Child := Find_Editor (Kernel, File);
             Line   : constant Editable_Line_Type :=
-              Editable_Line_Type (Integer'(Nth_Arg (Data, 2)));
+                       Editable_Line_Type (Integer'(Nth_Arg (Data, 2)));
             Column : Visible_Column_Type :=
-              Visible_Column_Type (Nth_Arg (Data, 3, Default => 0));
+                       Visible_Column_Type (Nth_Arg (Data, 3, Default => 0));
             Real_Col : Character_Offset_Type;
          begin
             if Child = null then
@@ -2713,15 +2713,16 @@ package body Src_Editor_Module.Shell is
    procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      EditorLoc  : constant Class_Type :=
-        New_Class (Kernel, Editor_Location_Class_Name);
+      EditorLoc    : constant Class_Type :=
+                       New_Class (Kernel, Editor_Location_Class_Name);
       Editor_Class : constant Class_Type := New_Class (Kernel, "Editor");
       EditorBuffer : constant Class_Type := New_Class (Kernel, "EditorBuffer");
       EditorMark   : constant Class_Type := New_Class (Kernel, "EditorMark");
       EditorView   : constant Class_Type :=
-        New_Class (Kernel, "EditorView", Get_GUI_Class (Kernel));
+                       New_Class
+                         (Kernel, "EditorView", Get_GUI_Class (Kernel));
       EditorOverlay : constant Class_Type :=
-        New_Class (Kernel, "EditorOverlay");
+                        New_Class (Kernel, "EditorOverlay");
    begin
       --  EditorOverlay
 

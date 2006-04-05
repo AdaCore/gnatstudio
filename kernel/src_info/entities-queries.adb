@@ -28,7 +28,8 @@ with Traces;                  use Traces;
 with VFS;                     use VFS;
 
 package body Entities.Queries is
-   Me : constant Debug_Handle := Create ("Entities.Queries", Off);
+
+   Me     : constant Debug_Handle := Create ("Entities.Queries", Off);
    Ref_Me : constant Debug_Handle := Create ("Entities.Ref", Off);
 
    Find_Deps_File_Granularity : constant Debug_Handle :=

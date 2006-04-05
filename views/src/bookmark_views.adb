@@ -68,6 +68,7 @@ with Traces;                    use Traces;
 with Tooltips;
 
 package body Bookmark_Views is
+
    Me : constant Debug_Handle := Create ("Bookmarks");
 
    Icon_Column     : constant := 0;
@@ -862,6 +863,7 @@ package body Bookmark_Views is
          Set_Data (Inst, Class, Bookmark_List.Data (List).Name.all);
          Set (Bookmark_List.Data (List).Instances, Script, Inst);
       end if;
+
       return Inst;
    end Instance_From_Bookmark;
 

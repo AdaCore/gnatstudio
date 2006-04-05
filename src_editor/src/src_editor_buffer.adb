@@ -3125,8 +3125,7 @@ package body Src_Editor_Buffer is
       Column : Character_Offset_Type;
       Center : Boolean := True)
    is
-      Buffer_Line : Buffer_Line_Type :=
-        Get_Buffer_Line (Buffer, Line);
+      Buffer_Line : Buffer_Line_Type := Get_Buffer_Line (Buffer, Line);
    begin
       if Buffer.Do_Not_Move_Cursor then
          return;
