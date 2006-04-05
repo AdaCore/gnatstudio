@@ -2476,6 +2476,7 @@ package body GPS.Kernel.Remote is
       User_Prompt_Ptrn          : String_Ptr;
       Password_Prompt_Ptrn      : String_Ptr;
       Extra_Ptrn_Length         : Natural;
+      Use_Cr_Lf                 : Boolean;
 
    begin
       if Node.Tag.all = "remote_machine_descriptor" then
@@ -2519,6 +2520,21 @@ package body GPS.Kernel.Remote is
            (Get_Field (Node, "start_command_user_args").all);
          User_Prompt_Ptrn := Get_Field (Node, "user_prompt_ptrn");
          Password_Prompt_Ptrn := Get_Field (Node, "password_prompt_ptrn");
+
+         declare
+            Use_Cr_Lf_String_Access : constant String_Ptr
+              := Get_Field (Node, "use_cr_lf");
+         begin
+            if Use_Cr_Lf_String_Access = null then
+               Use_Cr_Lf := False;
+            else
+               Use_Cr_Lf := Boolean'Value (Use_Cr_Lf_String_Access.all);
+            end if;
+
+         exception
+            when others =>
+               Use_Cr_Lf := False;
+         end;
 
          Child := Node.Child;
          Extra_Ptrn_Length := 0;
@@ -2574,7 +2590,8 @@ package body GPS.Kernel.Remote is
                Start_Command_User_Args   => Start_Command_User_Args.all,
                User_Prompt_Ptrn          => User_Prompt_Ptrn.all,
                Password_Prompt_Ptrn      => Password_Prompt_Ptrn.all,
-               Extra_Prompt_Array        => Extra_Ptrns);
+               Extra_Prompt_Array        => Extra_Ptrns,
+               Use_Cr_Lf                 => Use_Cr_Lf);
          end;
 
          Glib.Xml_Int.Free (Name);
