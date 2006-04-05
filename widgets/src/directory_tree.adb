@@ -517,7 +517,7 @@ package body Directory_Tree is
 
       if Recursive then
          declare
-            Files : constant File_Array_Access := Read_Dir (Dir);
+            Files : constant File_Array_Access := Read_Dir (Dir, Dirs_Only);
          begin
             for F in Files'Range loop
                if Is_Directory (Files (F))
@@ -1142,7 +1142,7 @@ package body Directory_Tree is
       end if;
 
       declare
-         Files : File_Array_Access := Read_Dir (D.Norm_Dir);
+         Files : File_Array_Access := Read_Dir (D.Norm_Dir, Dirs_Only);
       begin
          Sort (Files.all);
          D.Depth := D.Depth + 1;
