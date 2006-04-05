@@ -32,7 +32,7 @@ F316-006 Automatic fix for redundant with clause in body warning (2006-03-20)
   as fixable. The obvious correction is the removal of the corresponding 
   clause. 
 
-F315-016 New Revision Views (2006-03-19)
+F315-016 New Revision View (2006-03-19)
 
   In addition to having the revision log as plain text a revision view
   has been implemented. This structured view helps browsing large revision
