@@ -2522,8 +2522,8 @@ package body GPS.Kernel.Remote is
          Password_Prompt_Ptrn := Get_Field (Node, "password_prompt_ptrn");
 
          declare
-            Use_Cr_Lf_String_Access : constant String_Ptr
-              := Get_Field (Node, "use_cr_lf");
+            Use_Cr_Lf_String_Access : constant String_Ptr :=
+                                      Get_Field (Node, "use_cr_lf");
          begin
             if Use_Cr_Lf_String_Access = null then
                Use_Cr_Lf := False;
