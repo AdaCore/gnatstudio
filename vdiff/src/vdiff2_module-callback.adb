@@ -27,6 +27,7 @@ with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.MDI;                        use Gtkada.MDI;
 
+with Basic_Types;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
@@ -338,7 +339,6 @@ package body Vdiff2_Module.Callback is
       Data   : access Hooks_Data'Class)
       return Boolean
    is
-      pragma Unreferenced (Kernel);
       D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
       Success : Boolean;
    begin
@@ -353,7 +353,21 @@ package body Vdiff2_Module.Callback is
             Res   : Diff_Head_Access;
          begin
             Res := Visual_Patch (Ref_F, D.New_File, D.Diff_File, True);
+
+            if Res /= null then
+               declare
+                  Args : Argument_List :=
+                           (1 => new String'(Full_Name (Ref_F).all),
+                            2 => new String'(Boolean'Image (False)));
+               begin
+                  Execute_GPS_Shell_Command
+                    (Kernel, "Editor.set_writable", Args);
+                  Basic_Types.Free (Args);
+               end;
+            end if;
+
             Delete (Ref_F, Success);
+
             return Res /= null;
          end;
 
@@ -368,6 +382,19 @@ package body Vdiff2_Module.Callback is
             Res   : Diff_Head_Access;
          begin
             Res := Visual_Patch (D.Orig_File, Ref_F, D.Diff_File, False);
+
+            if Res /= null then
+               declare
+                  Args : Argument_List :=
+                           (1 => new String'(Full_Name (Ref_F).all),
+                            2 => new String'(Boolean'Image (False)));
+               begin
+                  Execute_GPS_Shell_Command
+                    (Kernel, "Editor.set_writable", Args);
+                  Basic_Types.Free (Args);
+               end;
+            end if;
+
             Delete (Ref_F, Success);
             return Res /= null;
          end;
