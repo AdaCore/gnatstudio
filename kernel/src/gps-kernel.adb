@@ -551,11 +551,12 @@ package body GPS.Kernel is
       --  Return the project name to match in the file
 
       function Get_Project_Name return Virtual_File is
+         Project : constant Project_Type := Get_Project (Handle);
       begin
-         if As_Default_Desktop then
+         if As_Default_Desktop or else Status (Project) = Default then
             return VFS.No_File;
          else
-            return Project_Path (Get_Project (Handle));
+            return Project_Path (Project);
          end if;
       end Get_Project_Name;
 
