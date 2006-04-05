@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2513,9 +2513,8 @@ package body Docgen.Work_On_Source is
       loop
          Line_Count := Line_Count + 1;
 
-         if Line_End (Text, J) = Line_End (Text, Next_Line (Text, J))
-         --  Last line
-         then
+         if Line_End (Text, J) = Line_End (Text, Next_Line (Text, J)) then
+            --  Last line
             End_Of_Line := Text'Last;
          else
             End_Of_Line := Next_Line (Text, J) - 1;
