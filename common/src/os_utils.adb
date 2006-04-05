@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -249,9 +249,17 @@ package body OS_Utils is
    ------------------------
 
    procedure Make_Dir_Recursive (Name : String) is
-      Last : Natural := Name'First + 1;
+      Last     : Natural := Name'First + 1;
+      UNC_Path : Boolean := False;
+
    begin
+      if Name (Name'First .. Last) = "\\" then
+         UNC_Path := True;
+         Last := Last + 1;
+      end if;
+
       --  Strictly inferior to ignore '/' at the end of Name
+
       while Last < Name'Last loop
          while Last <= Name'Last
            and then Name (Last) /= Directory_Separator
@@ -261,7 +269,18 @@ package body OS_Utils is
          end loop;
 
          if not Is_Directory (Name (Name'First .. Last - 1)) then
-            GNAT.Directory_Operations.Make_Dir (Name (Name'First .. Last - 1));
+            begin
+               GNAT.Directory_Operations.Make_Dir
+                 (Name (Name'First .. Last - 1));
+            exception
+               when Directory_Error =>
+                  --  ??? Ignore Directory_Error on UNC paths since apparently
+                  --  Is_Directory does not work properly on UNC paths
+
+                  if not UNC_Path then
+                     raise;
+                  end if;
+            end;
          end if;
 
          Last := Last + 1;
