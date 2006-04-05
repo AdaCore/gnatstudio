@@ -55,7 +55,7 @@
       <shell>echo "Switch to $2"</shell>
       <external output="none">cvs update -r $2</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
+         <shell output="">echo "CVS error:"</shell>
          <shell output="">echo "%2"</shell>
       </on-failure>
    </action>
