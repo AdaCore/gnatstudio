@@ -241,6 +241,24 @@ package body String_Utils is
       return Buffer'Last;
    end Next_Line;
 
+   procedure Next_Line
+     (Buffer  : String;
+      P       : Natural;
+      Next    : out Natural;
+      Success : out Boolean) is
+   begin
+      for J in P .. Buffer'Last - 1 loop
+         if Buffer (J) = ASCII.LF then
+            Next := J + 1;
+            Success := True;
+            return;
+         end if;
+      end loop;
+
+      Success := False;
+      Next    := Buffer'Last;
+   end Next_Line;
+
    -------------------
    -- Previous_Line --
    -------------------
