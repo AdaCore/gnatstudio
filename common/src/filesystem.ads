@@ -223,8 +223,12 @@ package Filesystem is
    function Read_Dir
      (FS             : Filesystem_Record;
       Host           : String;
-      Local_Dir_Name : String) return GNAT.OS_Lib.String_List is abstract;
+      Local_Dir_Name : String;
+      Dirs_Only      : Boolean := False;
+      Files_Only     : Boolean := False)
+      return GNAT.OS_Lib.String_List is abstract;
    --  Read the specified directory and returns a list of filenames
-   --  (base names).
+   --  (base names). If Dirs_Only is set, then the files returned are directory
+   --  only. Same for Files_Only, concerning regular files.
 
 end Filesystem;

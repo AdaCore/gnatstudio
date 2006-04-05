@@ -156,6 +156,8 @@ package Filesystem.Windows is
    function Read_Dir
      (FS             : Windows_Filesystem_Record;
       Host           : String;
-      Local_Dir_Name : String) return GNAT.OS_Lib.String_List;
+      Local_Dir_Name : String;
+      Dirs_Only      : Boolean := False;
+      Files_Only     : Boolean := False) return GNAT.OS_Lib.String_List;
 
 end Filesystem.Windows;
