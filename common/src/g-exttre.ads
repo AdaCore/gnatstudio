@@ -84,7 +84,8 @@ package GNAT.Expect.TTY.Remote is
       Start_Command_User_Args   : String_List;
       User_Prompt_Ptrn          : String;
       Password_Prompt_Ptrn      : String;
-      Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts);
+      Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts;
+      Use_Cr_Lf                 : Boolean := False);
    --  Adds a new Remote Access Descriptor
    --  Name : identifier of this descriptor
    --  Start_Command : command used to launch the remote access utility
@@ -94,6 +95,8 @@ package GNAT.Expect.TTY.Remote is
    --  User_Prompt_Ptrn          : regular expression for user prompt
    --  Password_Prompt_Ptrn      : regular expression for password prompt
    --  Extra_Prompt_Array        : extra specific prompts.
+   --  Use_Cr_Lf                 : tell if CR character needs to be added when
+   --                               sending commands to the tool.
 
    procedure Add_Shell_Descriptor
      (Name                : String;
