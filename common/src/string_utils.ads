@@ -117,7 +117,7 @@ package String_Utils is
       Success : out Boolean);
    --  Return the start of the next line in Next or Buffer'Last if the end of
    --  the buffer is reached.
-   --  Success is set to True is a new line was found, false otherwise (end of
+   --  Success is set to True if a new line was found, false otherwise (end of
    --  buffer reached).
 
    function Previous_Line (Buffer : String; P : Natural) return Natural;
