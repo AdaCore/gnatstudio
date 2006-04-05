@@ -108,6 +108,7 @@ package String_Utils is
    function Next_Line (Buffer : String; P : Natural) return Natural;
    --  Return the start of the next line or Buffer'Last if the end of the
    --  buffer is reached.
+   --  Consider using procedure Next_Line below instead.
 
    procedure Next_Line
      (Buffer  : String;
