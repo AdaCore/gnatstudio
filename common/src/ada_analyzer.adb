@@ -2586,6 +2586,7 @@ package body Ada_Analyzer is
             Prev_Start_Line : Natural;
             Last            : Natural;
             Ref_Indent      : Natural;
+            Success         : Boolean;
 
          begin
             Ref_Indent := Num_Spaces;
@@ -2631,15 +2632,16 @@ package body Ada_Analyzer is
                   Ref_Indent := P - Start_Of_Line - Indent_Offset;
                end if;
 
-               P := Next_Line (Buffer, P + 1);
+               Next_Line (Buffer, P + 1, P, Success);
+
+               if Success then
+                  New_Line (Line_Count);
+               end if;
+
                Last := P;
 
-               if P < Buffer_Last then
-                  New_Line (Line_Count);
-
-                  if Buffer (P) = ASCII.LF then
+               if P < Buffer_Last and then Buffer (P) = ASCII.LF then
                      Last := Prev_Char (Last);
-                  end if;
                end if;
 
                loop
