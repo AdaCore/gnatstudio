@@ -655,8 +655,8 @@ package body GPS.Kernel is
       Node                 : Node_Ptr;
       File                 : constant String :=
         Handle.Home_Dir.all & Desktop_Name;
-      Project_Name         : constant Virtual_File :=
-        Project_Path (Get_Project (Handle));
+      Project              : Project_Type := Get_Project (Handle);
+      Project_Name         : Virtual_File := No_File;
       Child                : Node_Ptr;
       Desktop_Node         : Node_Ptr;
       Default_Desktop_Node : Node_Ptr;
@@ -671,6 +671,10 @@ package body GPS.Kernel is
 
    begin
       Main_Window.Desktop_Loaded := True;
+
+      if Status (Project) /= Default then  --  ??? Should this be = From_File
+         Project_Name := Project_Path (Project);
+      end if;
 
       --  We might have to try twice: once to check the user's desktop.xml
       --  file, and if that fails the predefined desktop.xml file
