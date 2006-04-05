@@ -395,7 +395,7 @@
       <diff_base_head     action="generic_cvs_diff_base_head"   label="Compare base against head"/>
       <diff               action="generic_cvs_diff"             label="Compare against other revision"/>
       <diff_tag           action="generic_cvs_diff_tag"         label="Compare against a tag/branch"/>
-      <diff2              action="generic_cvs_diff2"            label="Compare between two revisions"/>
+      <diff2              action="generic_cvs_diff2"            label="Compare two revisions"/>
 
       <status label="Up to date" stock="gps-vcs-up-to-date" />
       <status label="Locally modified" stock="gps-vcs-modified" />
