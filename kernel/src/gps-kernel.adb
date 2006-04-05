@@ -651,23 +651,24 @@ package body GPS.Kernel is
    function Load_Desktop
      (Handle : access Kernel_Handle_Record) return Boolean
    is
-      MDI                  : constant MDI_Window := Get_MDI (Handle);
-      Node                 : Node_Ptr;
-      File                 : constant String :=
-        Handle.Home_Dir.all & Desktop_Name;
-      Project              : constant Project_Type := Get_Project (Handle);
-      Project_Name         : Virtual_File := No_File;
-      Child                : Node_Ptr;
-      Desktop_Node         : Node_Ptr;
-      Default_Desktop_Node : Node_Ptr;
-      Main_Window          : constant GPS_Window :=
-        GPS_Window (Handle.Main_Window);
+      MDI                     : constant MDI_Window := Get_MDI (Handle);
+      File                    : constant String :=
+                                  Handle.Home_Dir.all & Desktop_Name;
+      Project                 : constant Project_Type := Get_Project (Handle);
+      Main_Window             : constant GPS_Window :=
+                                  GPS_Window (Handle.Main_Window);
+      Predefined_Desktop      : constant String :=
+                                  Get_System_Dir (Handle) &
+                                    "share/gps/desktop.xml";
+      Node                    : Node_Ptr;
+      Project_Name            : Virtual_File := No_File;
+      Child                   : Node_Ptr;
+      Desktop_Node            : Node_Ptr;
+      Default_Desktop_Node    : Node_Ptr;
       Success_Loading_Desktop : Boolean := False;
-      Err                  : String_Access;
-      Predefined_Desktop   : constant String :=
-        Get_System_Dir (Handle) & "share/gps/desktop.xml";
-      Is_Default_Desktop   : Boolean := False;
-      Try_User_Desktop     : Boolean := True;
+      Err                     : String_Access;
+      Is_Default_Desktop      : Boolean := False;
+      Try_User_Desktop        : Boolean := True;
 
    begin
       Main_Window.Desktop_Loaded := True;
