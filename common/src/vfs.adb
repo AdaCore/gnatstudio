@@ -954,13 +954,19 @@ package body VFS is
    -- Read --
    ----------
 
-   function Read_Dir (Dir : in Virtual_File) return File_Array_Access is
+   function Read_Dir
+     (Dir    : in Virtual_File;
+      Filter : Read_Dir_Filter := All_Files)
+      return File_Array_Access
+   is
       Nb_Files  : Natural := 0;
       Tmp       : File_Array_Access;
       F_Array   : File_Array_Access;
       Local_Dir : GNAT.Directory_Operations.Dir_Type;
       Name      : String (1 .. 1024);
       Last      : Natural;
+      Tmp_File  : Virtual_File;
+      Add_File  : Boolean;
 
    begin
       if Dir.Value = null then
@@ -984,17 +990,32 @@ package body VFS is
          loop
             GNAT.Directory_Operations.Read (Local_Dir, Name, Last);
             exit when Last = 0;
-            Nb_Files := Nb_Files + 1;
+            Tmp_File := Create_From_Dir (Dir, Name (1 .. Last));
 
-            --  array too small. let's double it.
-            if Nb_Files > F_Array'Last then
-               Tmp := F_Array;
-               F_Array := new File_Array (1 .. Tmp'Last * 2);
-               F_Array (1 .. Tmp'Last) := Tmp.all;
-               Unchecked_Free (Tmp);
+            case Filter is
+               when All_Files =>
+                  Add_File := True;
+
+               when Dirs_Only =>
+                  Add_File := Is_Directory (Tmp_File);
+
+               when Files_Only =>
+                  Add_File := not Is_Directory (Tmp_File);
+            end case;
+
+            if Add_File then
+               Nb_Files := Nb_Files + 1;
+
+                  --  array too small. let's double it.
+               if Nb_Files > F_Array'Last then
+                  Tmp := F_Array;
+                  F_Array := new File_Array (1 .. Tmp'Last * 2);
+                  F_Array (1 .. Tmp'Last) := Tmp.all;
+                  Unchecked_Free (Tmp);
+               end if;
+
+               F_Array (Nb_Files) := Tmp_File;
             end if;
-
-            F_Array (Nb_Files) := Create_From_Dir (Dir, Name (1 .. Last));
          end loop;
 
          GNAT.Directory_Operations.Close (Local_Dir);
@@ -1009,15 +1030,30 @@ package body VFS is
             List : GNAT.OS_Lib.String_List := Read_Dir
               (Get_Filesystem (Dir.Value.Server.all),
                Dir.Value.Server.all,
-               Dir.Value.Full_Name.all);
+               Dir.Value.Full_Name.all,
+               Dirs_Only  => Filter = Dirs_Only,
+               Files_Only => Filter = Files_Only);
          begin
             F_Array := new File_Array (1 .. List'Length);
             Nb_Files := List'Length;
 
             for J in List'Range loop
-               F_Array (F_Array'First + J - List'First) :=
-                 Create_From_Dir (Dir, List (J).all);
+               Tmp_File := Create_From_Dir (Dir, List (J).all);
                Free (List (J));
+
+               case Filter is
+                  when Dirs_Only =>
+                     Tmp_File.Value.Kind := Directory;
+
+                  when Files_Only =>
+                     Tmp_File.Value.Kind := File;
+
+                  when others =>
+                     null;
+
+               end case;
+
+               F_Array (F_Array'First + J - List'First) := Tmp_File;
             end loop;
          end;
       end if;
