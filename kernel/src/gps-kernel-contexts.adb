@@ -29,6 +29,7 @@ with Entities.Queries;   use Entities.Queries;
 with Language_Handlers;  use Language_Handlers;
 
 package body GPS.Kernel.Contexts is
+
    type Filter_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_File; Ctxt : Selection_Context)

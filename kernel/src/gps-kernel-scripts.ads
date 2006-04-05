@@ -415,9 +415,10 @@ package GPS.Kernel.Scripts is
    --  always get the user data stored in the instance every time we work with
    --  the same widget.
 
-   ----------------------------
+   ---------------------------
    -- Class_Instance_Record --
    ---------------------------
+
    --  This type encapsulate some language specific data. It is overriden by
    --  each of the scripting languages. Do not use directly unless you are
    --  implementing a new scripting language
@@ -463,6 +464,7 @@ package GPS.Kernel.Scripts is
    --------------------
    -- Instance lists --
    --------------------
+
    --  Most internal objects, when exported to a shell, should reuse the same
    --  class instance whenever the same physical object is referenced. This is
    --  so that the user can store user data within the instance, and get it
@@ -505,6 +507,7 @@ package GPS.Kernel.Scripts is
    -------------------------
    -- Callback_Data lists --
    -------------------------
+
    --  This type's goal is similar to the one for the instance lists, since the
    --  callback_data are also language-specific
 
