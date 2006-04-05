@@ -2592,12 +2592,12 @@ package body GPS.Kernel.Scripts is
       Instance : Class_Instance;
    begin
       if Context.Data.Data.Instances = null then
-         Context.Data.Data.Instances := new Instance_List'
-           (Instance_List_Base with List => null);
+         Context.Data.Data.Instances := new Instance_List'(Null_Instance_List);
       end if;
 
-      Instance := Get
-        (Instance_List (Context.Data.Data.Instances.all), Script);
+      Instance :=
+        Get (Instance_List (Context.Data.Data.Instances.all), Script);
+
       if Instance = No_Class_Instance then
          Trace (Me, "Create a new instance for the current context");
          Instance := New_Instance (Script, Class);
@@ -2699,9 +2699,9 @@ package body GPS.Kernel.Scripts is
       end if;
    end GUI_Command_Handler;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Free_User_Data --
+   --------------------
 
    procedure Free_User_Data (Data : in out User_Data_List) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
