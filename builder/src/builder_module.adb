@@ -435,8 +435,7 @@ package body Builder_Module is
            (To_Remote (Full_Name (Project_Path (Project)).all,
                        Build_Server));
       else
-         Project_Str := new String'
-           (To_Remote (Path, Build_Server));
+         Project_Str := new String'(To_Remote (Path, Build_Server));
       end if;
 
       --  -XVAR1=value1 [-c] -Pproject [-u] main...
