@@ -260,12 +260,14 @@ package body GPS.Kernel.Project is
       pragma Unreferenced (Had_Project_Desktop);
       Data                : aliased File_Hooks_Args;
 
+      Root         : constant Project_Type :=
+                       Get_Root_Project (Kernel.Registry.all);
       Same_Project : constant Boolean :=
-          Status (Get_Root_Project (Kernel.Registry.all)) = From_File
-        and then
-          Project = Project_Path (Get_Root_Project (Kernel.Registry.all))
-        and then Is_Local (Project);
+                       Status (Root) = From_File
+                         and then Project = Project_Path (Root)
+                         and then Is_Local (Project);
       Local_Project : VFS.Virtual_File;
+
    begin
       --  Unless we are reloading the same project
 
