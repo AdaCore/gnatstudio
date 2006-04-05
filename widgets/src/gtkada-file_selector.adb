@@ -2248,8 +2248,10 @@ package body Gtkada.File_Selector is
       Result : constant Gtk_Entry := Gtk_Entry (Ent);
       Name   : constant Virtual_File := Select_Directory
         (-"Select directory",
-         Parent => Gtk_Window (Get_Toplevel (Ent)),
-         Base_Directory => Create (Get_Text (Result)));
+         Parent            => Gtk_Window (Get_Toplevel (Ent)),
+         Use_Native_Dialog => True,
+         Base_Directory    => Create (Get_Text (Result)));
+
    begin
       if Name /= No_File then
          Set_Text (Result, Full_Name (Name).all);
