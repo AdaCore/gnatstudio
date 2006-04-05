@@ -39,7 +39,7 @@ package body Filesystem.Unix is
    procedure Initialize_Module (FS : Unix_Filesystem_Record) is
    begin
       Add_Shell_Descriptor
-        ("sh", "sh",
+        ("sh", "sh -i",
          Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
@@ -53,7 +53,7 @@ package body Filesystem.Unix is
          Get_Status_Command  => "echo $?",
          Get_Status_Ptrn     => "^([0-9]*)\s*$");
       Add_Shell_Descriptor
-        ("bash", "bash",
+        ("bash", "bash -i",
          Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
@@ -619,16 +619,51 @@ package body Filesystem.Unix is
    function Read_Dir
      (FS             : Unix_Filesystem_Record;
       Host           : String;
-      Local_Dir_Name : String) return GNAT.OS_Lib.String_List
+      Local_Dir_Name : String;
+      Dirs_Only      : Boolean := False;
+      Files_Only     : Boolean := False) return GNAT.OS_Lib.String_List
    is
       pragma Unreferenced (FS);
-      Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("ls"),
-         new String'("-a1"),
-         new String'("""" & Local_Dir_Name & """"));
+      function Create_Args return GNAT.OS_Lib.Argument_List;
+      --  Return dir arguments following the Dirs_Only and Files_Only arguments
+
+      -----------------
+      -- Create_Args --
+      -----------------
+
+      function Create_Args return GNAT.OS_Lib.Argument_List is
+      begin
+         if Dirs_Only then
+            return
+              (new String'("echo"),
+               new String'
+                 ("""`find '" & Local_Dir_Name &
+                  "' -maxdepth 1 -mindepth 1 -type d -printf ""%f\n""`" &
+                  ASCII.LF &
+                  "`find '" & Local_Dir_Name &
+                  "' -maxdepth 1 -mindepth 1 -type l -xtype d " &
+                  "-printf ""%f\n""`"""));
+         elsif Files_Only then
+            return
+              (new String'("echo"),
+               new String'
+                 ("""`find '" & Local_Dir_Name &
+                  "' -maxdepth 1 -mindepth 1 -type f -printf ""%f\n""`" &
+                  ASCII.LF &
+                  "`find '" & Local_Dir_Name &
+                  "' -maxdepth 1 -mindepth 1 -type l -xtype f " &
+                  "-printf ""%f\n""`"""));
+         else
+            return (new String'("ls"),
+                    new String'("-A1"),
+                    new String'(Local_Dir_Name));
+         end if;
+      end Create_Args;
+
+      Args     : GNAT.OS_Lib.Argument_List := Create_Args;
       Status   : Boolean;
       Output   : String_Access;
-      Regexp   : constant Pattern_Matcher := Compile ("^(.+)$",
+      Regexp   : constant Pattern_Matcher := Compile ("^>? ?(.+)$",
                                                       Multiple_Lines);
       Matched  : Match_Array (0 .. 1);
       Index    : Integer;

@@ -630,13 +630,38 @@ package body Filesystem.Windows is
    function Read_Dir
      (FS             : Windows_Filesystem_Record;
       Host           : String;
-      Local_Dir_Name : String) return GNAT.OS_Lib.String_List
+      Local_Dir_Name : String;
+      Dirs_Only      : Boolean := False;
+      Files_Only     : Boolean := False) return GNAT.OS_Lib.String_List
    is
       pragma Unreferenced (FS);
-      Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("dir"),
-         new String'("/b"),
-         new String'("""" & Local_Dir_Name & """"));
+      function Create_Args return GNAT.OS_Lib.Argument_List;
+      --  Return dir arguments following the Dirs_Only and Files_Only arguments
+
+      -----------------
+      -- Create_Args --
+      -----------------
+
+      function Create_Args return GNAT.OS_Lib.Argument_List is
+      begin
+         if Dirs_Only then
+            return (new String'("dir"),
+                    new String'("/ad"),
+                    new String'("/b"),
+                    new String'(Local_Dir_Name));
+         elsif Files_Only then
+            return (new String'("dir"),
+                    new String'("/a-d"),
+                    new String'("/b"),
+                    new String'(Local_Dir_Name));
+         else
+            return (new String'("dir"),
+                    new String'("/b"),
+                    new String'(Local_Dir_Name));
+         end if;
+      end Create_Args;
+
+      Args     : GNAT.OS_Lib.Argument_List := Create_Args;
       Status   : Boolean;
       Output   : String_Access;
       Regexp   : constant Pattern_Matcher := Compile ("^(.+)$",
