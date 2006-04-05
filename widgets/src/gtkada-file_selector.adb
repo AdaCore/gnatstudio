@@ -862,7 +862,8 @@ package body Gtkada.File_Selector is
       end if;
 
       declare
-         Files : File_Array_Access := Read_Dir (Win.Current_Directory);
+         Files : File_Array_Access
+           := Read_Dir (Win.Current_Directory, Files_Only);
          Inserted : Boolean;
       begin
          for F in Files'Range loop
@@ -1714,7 +1715,8 @@ package body Gtkada.File_Selector is
             end if;
 
             declare
-               Files : File_Array_Access := Read_Dir (Win.Current_Directory);
+               Files : File_Array_Access
+                 := Read_Dir (Win.Current_Directory, Files_Only);
             begin
                for F in Files'Range loop
                   Matcher (Base_Name (S), Base_Dir_Name (Files (F)));
