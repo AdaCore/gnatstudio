@@ -69,9 +69,9 @@ package body GNAT.Expect.TTY.Remote is
    Test_Echo_Cmd : constant String := "echo foo";
    Echoing_Regexps : constant Compiled_Regexp_Array
      := (1 => new Pattern_Matcher'
-           (Compile ("^echo foo.?\n", Multiple_Lines or Single_Line)),
+           (Compile ("^echo foo", Multiple_Lines or Single_Line)),
          2 => new Pattern_Matcher'
-           (Compile ("^foo.?\n", Multiple_Lines or Single_Line)));
+           (Compile ("^foo", Multiple_Lines or Single_Line)));
 
    type Remote_Descriptor is record
       Name                  : String_Access            := null;
@@ -967,7 +967,7 @@ package body GNAT.Expect.TTY.Remote is
                     Host,
                     Args,
                     Execution_Directory,
-                    Err_To_Out            => True,
+                    Err_To_Out            => False,
                     Request_User_Instance => Request_Obj);
       loop
          Expect (Fd.all, Result, Regexp, Timeout => 5);
@@ -1018,6 +1018,7 @@ package body GNAT.Expect.TTY.Remote is
       Str        : String;
       User_Data  : System.Address := System.Null_Address)
    is
+      pragma Unreferenced (Descriptor);
       type Remote_PD_Access is access all Remote_Process_Descriptor;
       function Convert is new Ada.Unchecked_Conversion (System.Address,
                                                         Remote_PD_Access);
@@ -1088,7 +1089,7 @@ package body GNAT.Expect.TTY.Remote is
          while Current_Filter /= null loop
             if Current_Filter.Filter_On = Output then
                Current_Filter.Filter
-                 (Descriptor, Desc.Buffer.all, Current_Filter.User_Data);
+                 (Desc.all, Desc.Buffer.all, Current_Filter.User_Data);
             end if;
 
             Current_Filter := Current_Filter.Next;
