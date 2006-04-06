@@ -2381,10 +2381,10 @@ package body GPS.Kernel.Remote is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Property : Servers_Property;
-      Prop     : Property_Access;
-      Success  : Boolean;
+      D          : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Property   : Servers_Property;
+      Prop       : Property_Access;
+      Success    : Boolean;
       Local_File : VFS.Virtual_File;
 
    begin
@@ -2449,8 +2449,11 @@ package body GPS.Kernel.Remote is
 
       if not Is_Local (Build_Server) then
          Trace (Me, "Start synchronization of build_server");
-         Synchronize (Kernel_Handle (Kernel),
-                      Build_Server, GPS_Server, "", False);
+         --  Use a 2-way synchronization
+         Synchronize
+           (Kernel_Handle (Kernel), GPS_Server, Build_Server, "", False);
+         Synchronize
+           (Kernel_Handle (Kernel), Build_Server, GPS_Server, "", False);
       end if;
 
    exception
