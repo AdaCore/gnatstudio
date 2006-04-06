@@ -57,8 +57,10 @@ package body Filesystem.Unix is
       --  Force interactive (see above) and do not read rc files so that no
       --  strange behavior is encountered (title strings parasiting the output
       --  for example
+      --  Note: long options shall be set before short options on some linux
+      --  bash.
       Add_Shell_Descriptor
-        ("bash", "bash -i --norc",
+        ("bash", "bash --norc -i",
          Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
