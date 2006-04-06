@@ -636,6 +636,8 @@ package body Remote_Views is
       pragma Unreferenced (W, Res);
 
    begin
+      Push_State (User.View.Kernel, Busy);
+
       if New_Build_Server /= Local_Nickname
         and then New_Build_Server /= Get_Nickname (Build_Server)
       then
@@ -695,6 +697,8 @@ package body Remote_Views is
             Reasons := Reasons & "Could not connect to host " &
               New_Build_Server & ": " & Exception_Message (E) & ASCII.LF;
       end;
+
+      Pop_State (User.View.Kernel);
 
       if not Failure then
          Res := Message_Dialog
