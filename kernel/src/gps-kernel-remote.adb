@@ -1677,6 +1677,8 @@ package body GPS.Kernel.Remote is
          return False;
       end if;
 
+      Set (Model, Iter, Modified_Col, False);
+
       declare
          Nickname : constant String := Get_String (Model, Iter, Name_Col);
       begin
