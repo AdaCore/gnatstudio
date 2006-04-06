@@ -2633,15 +2633,11 @@ package body Ada_Analyzer is
                end if;
 
                Next_Line (Buffer, P + 1, P, Success);
+               Last := P;
 
                if Success then
                   New_Line (Line_Count);
-               end if;
-
-               Last := P;
-
-               if P < Buffer_Last and then Buffer (P) = ASCII.LF then
-                     Last := Prev_Char (Last);
+                  Last := Prev_Char (Last);
                end if;
 
                loop
