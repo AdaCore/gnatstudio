@@ -15214,7 +15214,7 @@ subdirectories, they should be owned by the user.
 Q: Whenever I run gps from an ssh session, I get an error of the form:
 The program 'gps_exe' received an X Window System error.
 This probably reflects a bug in the program.
-The error was 'BadPixmap (invlaid Pixmap parameter)'.
+The error was 'BadPixmap (invalid Pixmap parameter)'.
 
 A: You need to use ssh -Y to run GPS properly through ssh
 
