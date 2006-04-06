@@ -15216,7 +15216,7 @@ The program 'gps_exe' received an X Window System error.
 This probably reflects a bug in the program.
 The error was 'BadPixmap (invlaid Pixmap parameter)'.
 
-A: You need to use ssh -XY to run GPS properly through ssh
+A: You need to use ssh -Y to run GPS properly through ssh
 
 @item GPS crashes whenever I open a source editor
 This is usually due to font problems. Editing the file
