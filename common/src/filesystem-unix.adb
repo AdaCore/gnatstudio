@@ -38,6 +38,7 @@ package body Filesystem.Unix is
 
    procedure Initialize_Module (FS : Unix_Filesystem_Record) is
    begin
+      --  Force interactive shells. Required for solaris.
       Add_Shell_Descriptor
         ("sh", "sh -i",
          Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
@@ -52,8 +53,12 @@ package body Filesystem.Unix is
          Cd_Command          => "cd %d",
          Get_Status_Command  => "echo $?",
          Get_Status_Ptrn     => "^([0-9]*)\s*$");
+
+      --  Force interactive (see above) and do not read rc files so that no
+      --  strange behavior is encountered (title strings parasiting the output
+      --  for example
       Add_Shell_Descriptor
-        ("bash", "bash -i",
+        ("bash", "bash -i --norc",
          Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
@@ -420,7 +425,7 @@ package body Filesystem.Unix is
       Sync_Execute (Host, Args, Output, Status);
       Basic_Types.Free (Args);
 
-      if Status then
+      if Status and then Output /= null then
          Match (Regexp, Output.all, Matched);
          if Matched (0) = No_Match then
             return VFS.No_Time;
@@ -627,6 +632,9 @@ package body Filesystem.Unix is
       function Create_Args return GNAT.OS_Lib.Argument_List;
       --  Return dir arguments following the Dirs_Only and Files_Only arguments
 
+      function Create_Args_Links return GNAT.OS_Lib.Argument_List;
+      --  Same as above except that the considered files are soft links
+
       -----------------
       -- Create_Args --
       -----------------
@@ -635,24 +643,36 @@ package body Filesystem.Unix is
       begin
          if Dirs_Only then
             return
-              (new String'("echo"),
-               new String'
-                 ("""`find '" & Local_Dir_Name &
-                  "' -maxdepth 1 -mindepth 1 -type d -printf ""%f\n""`" &
-                  ASCII.LF &
-                  "`find '" & Local_Dir_Name &
-                  "' -maxdepth 1 -mindepth 1 -type l -xtype d " &
-                  "-printf ""%f\n""`"""));
+              (new String'("find"),
+               new String'(Local_Dir_Name),
+               new String'("-follow"),
+               new String'("-maxdepth"),
+               new String'("1"),
+               new String'("-mindepth"),
+               new String'("1"),
+               new String'("-type"),
+               new String'("d"),
+               new String'("-printf"),
+               new String'("""%f\n"""),
+               new String'("2>"),
+               new String'("/dev/null"));
+
          elsif Files_Only then
             return
-              (new String'("echo"),
-               new String'
-                 ("""`find '" & Local_Dir_Name &
-                  "' -maxdepth 1 -mindepth 1 -type f -printf ""%f\n""`" &
-                  ASCII.LF &
-                  "`find '" & Local_Dir_Name &
-                  "' -maxdepth 1 -mindepth 1 -type l -xtype f " &
-                  "-printf ""%f\n""`"""));
+              (new String'("find"),
+               new String'(Local_Dir_Name),
+               new String'("-follow"),
+               new String'("-maxdepth"),
+               new String'("1"),
+               new String'("-mindepth"),
+               new String'("1"),
+               new String'("-type"),
+               new String'("f"),
+               new String'("-printf"),
+               new String'("""%f\n"""),
+               new String'("2>"),
+               new String'("/dev/null"));
+
          else
             return (new String'("ls"),
                     new String'("-A1"),
@@ -660,10 +680,59 @@ package body Filesystem.Unix is
          end if;
       end Create_Args;
 
+      -----------------------
+      -- Create_Args_Links --
+      -----------------------
+
+      function Create_Args_Links return GNAT.OS_Lib.Argument_List is
+      begin
+         if Dirs_Only then
+            return
+              (new String'("find"),
+               new String'(Local_Dir_Name),
+               new String'("-follow"),
+               new String'("-maxdepth"),
+               new String'("1"),
+               new String'("-mindepth"),
+               new String'("1"),
+               new String'("-type"),
+               new String'("l"),
+               new String'("-xtype"),
+               new String'("d"),
+               new String'("-printf"),
+               new String'("""%f\n"""),
+               new String'("2>"),
+               new String'("/dev/null"));
+
+         elsif Files_Only then
+            return
+              (new String'("find"),
+               new String'(Local_Dir_Name),
+               new String'("-follow"),
+               new String'("-maxdepth"),
+               new String'("1"),
+               new String'("-mindepth"),
+               new String'("1"),
+               new String'("-type"),
+               new String'("l"),
+               new String'("-xtype"),
+               new String'("f"),
+               new String'("-printf"),
+               new String'("""%f\n"""),
+               new String'("2>"),
+               new String'("/dev/null"));
+
+         else
+            return (1 .. 0 => null);
+         end if;
+      end Create_Args_Links;
+
       Args     : GNAT.OS_Lib.Argument_List := Create_Args;
+      Args2    : GNAT.OS_Lib.Argument_List := Create_Args_Links;
       Status   : Boolean;
       Output   : String_Access;
-      Regexp   : constant Pattern_Matcher := Compile ("^>? ?(.+)$",
+      Output2  : String_Access := null;
+      Regexp   : constant Pattern_Matcher := Compile ("^(.+)$",
                                                       Multiple_Lines);
       Matched  : Match_Array (0 .. 1);
       Index    : Integer;
@@ -673,7 +742,12 @@ package body Filesystem.Unix is
       Sync_Execute (Host, Args, Output, Status);
       Basic_Types.Free (Args);
 
-      if Status and then Output /= null then
+      if Args2'Length > 0 then
+         Sync_Execute (Host, Args2, Output2, Status);
+         Basic_Types.Free (Args2);
+      end if;
+
+      if Output /= null then
          Index    := Output'First;
          Nb_Files := 0;
 
@@ -688,6 +762,18 @@ package body Filesystem.Unix is
                Nb_Files := Nb_Files + 1;
             end if;
          end loop;
+
+         if Output2 /= null then
+            Index := Output2'First;
+
+            while Index <= Output2'Last loop
+               Match (Regexp, Output2 (Index .. Output2'Last), Matched);
+               exit when Matched (0) = No_Match;
+               Index := Matched (1).Last + 1;
+
+               Nb_Files := Nb_Files + 1;
+            end loop;
+         end if;
 
          declare
             List : String_List (1 .. Nb_Files);
@@ -711,9 +797,26 @@ package body Filesystem.Unix is
                end if;
             end loop;
 
+            if Output2 /= null then
+               Index := Output2'First;
+
+               while Index <= Output2'Last loop
+                  Match (Regexp, Output2 (Index .. Output2'Last), Matched);
+                  exit when Matched (0) = No_Match;
+                  Index := Matched (1).Last + 1;
+
+                  List (File_Idx) := new String'
+                    (Output2 (Matched (1).First .. Matched (1).Last));
+                  File_Idx := File_Idx + 1;
+               end loop;
+            end if;
+
             return List;
          end;
       end if;
+
+      Free (Output);
+      Free (Output2);
 
       return (1 .. 0 => null);
    end Read_Dir;
