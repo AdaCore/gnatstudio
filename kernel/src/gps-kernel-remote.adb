@@ -2449,7 +2449,14 @@ package body GPS.Kernel.Remote is
 
       if not Is_Local (Build_Server) then
          Trace (Me, "Start synchronization of build_server");
-         --  Use a 2-way synchronization
+         --  Use a 2-way synchronization: the project might be a local project
+         --  that will be compiled on a remote machine (in this case, the
+         --  project needs to be copied on this remote machine), or a remote
+         --  project is loaded locally (in this case, the remote project needs
+         --  to be copied locally).
+         --  Note that the Sync_Deleted option has to be set to false, in order
+         --  to be non destructive. Only the most recent files are copied, no
+         --  deletion is performed.
          Synchronize
            (Kernel_Handle (Kernel), GPS_Server, Build_Server, "", False);
          Synchronize
