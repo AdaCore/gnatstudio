@@ -340,14 +340,16 @@
    <!-- SVN revision -->
 
    <action name="generic_svn_revision" show-command="true" output="none">
-      <external output="">svn cat -r "$1" "$2"</external>
+      <shell output="">echo "Getting $2 at revision $1"</shell>
+      <external output="none">svn cat -r "$1" "$2"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
       </on-failure>
-      <shell>dump_file "%1" "$2$$$1"</shell>
+      <shell>dump_file "%1" "revision $1 for $2"</shell>
       <shell>Editor.edit "%1"</shell>
-      <shell>delete "%2"</shell>
+      <shell>Editor.set_writable "%2" FALSE</shell>
+      <shell>delete "%3"</shell>
    </action>
 
    <!-- SVN -->
