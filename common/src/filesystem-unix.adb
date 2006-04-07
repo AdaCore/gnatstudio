@@ -471,15 +471,13 @@ package body Filesystem.Unix is
          3 => new String'("""" & Local_Full_Name & """"),
          4 => new String'("<<"),
          5 => new String'("GPSEOF"));
-      Request_User : constant Request_User_Object := (Main_Window => null);
       Regexp       : constant Pattern_Matcher
         := Compile ("[>] ", Single_Line or Multiple_Lines);
       Res          : Expect_Match;
    begin
       Remote_Spawn (Pd,
                     Target_Nickname       => Host,
-                    Args                  => Args,
-                    Request_User_Instance => Request_User);
+                    Args                  => Args);
 
       declare
          Content : String_Access := OS_Utils.Read_File (Temporary_File);
