@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<GPS_Desktop>
+  <MDI project="" state=" 0" y=" 0" x=" 0" height=" 600" width=" 800" >
+    <Pane Orientation="ORIENTATION_HORIZONTAL" >
+      <Pane Orientation="ORIENTATION_VERTICAL" >
+        <Notebook Height=" 67" Width=" 279" >
+          <Child Raised="True" Group=" 106" State="NORMAL" >
+            <Scenario_View />
+          </Child>
+        </Notebook>
+        <Notebook Height=" 422" Width=" 279" >
+          <Child Raised="True" Group=" 106" State="NORMAL" >
+            <Project_Explorer_Project />
+          </Child>
+          <Child Group=" 106" State="NORMAL" >
+            <Outline_View />
+          </Child>
+        </Notebook>
+      </Pane>
+      <Pane Orientation="ORIENTATION_VERTICAL" >
+        <Notebook default="true" Height=" 361" Width=" 515" />
+        <Notebook Height=" 128" Width=" 515" >
+          <Child Raised="True" Group=" 107" State="NORMAL" >
+            <Message_Window />
+          </Child>
+        </Notebook>
+      </Pane>
+    </Pane>
+  </MDI>
+</GPS_Desktop>
