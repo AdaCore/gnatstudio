@@ -25,7 +25,7 @@ with GNAT.Regpat;
 
 with Gtk.Widget;
 with Gtk.Combo;
-with Gtk.Frame;
+with Gtk.Box;
 
 with Basic_Types;
 with Find_Utils;                    use Find_Utils;
@@ -39,7 +39,7 @@ with Src_Editor_Buffer; use Src_Editor_Buffer;
 
 package Src_Contexts is
 
-   type Scope_Selector_Record is new Gtk.Frame.Gtk_Frame_Record with private;
+   type Scope_Selector_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Scope_Selector is access all Scope_Selector_Record'Class;
    --  The widget used to ask the extra information for the search algorithms
    --  in source files
@@ -365,7 +365,7 @@ private
    procedure Move_To_First_File (Context : access Open_Files_Context);
    procedure Free (Context : in out Open_Files_Context);
 
-   type Scope_Selector_Record is new Gtk.Frame.Gtk_Frame_Record with record
+   type Scope_Selector_Record is new Gtk.Box.Gtk_Box_Record with record
       Combo : Gtk.Combo.Gtk_Combo;
    end record;
 
