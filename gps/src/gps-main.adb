@@ -127,7 +127,7 @@ with VCS_Module;
 with VFS_Module;
 with Vdiff2_Module;
 with Vdiff_Module;
-with Vsearch_Ext;
+with Vsearch;
 
 procedure GPS.Main is
    use GPS.Main_Window;
@@ -1268,7 +1268,7 @@ procedure GPS.Main is
 
       Theme_Manager_Module.Register_Module (GPS_Main.Kernel);
 
-      Vsearch_Ext.Register_Module (GPS_Main.Kernel);
+      Vsearch.Register_Module (GPS_Main.Kernel);
 
       if Active (Help_Trace) then
          Help_Module.Register_Module (GPS_Main.Kernel);
