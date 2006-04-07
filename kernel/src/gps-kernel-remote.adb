@@ -2487,6 +2487,7 @@ package body GPS.Kernel.Remote is
       Start_Command_User_Args   : String_List_Access;
       User_Prompt_Ptrn          : String_Ptr;
       Password_Prompt_Ptrn      : String_Ptr;
+      Passphrase_Prompt_Ptrn    : String_Ptr;
       Extra_Ptrn_Length         : Natural;
       Use_Cr_Lf                 : Boolean;
 
@@ -2530,8 +2531,10 @@ package body GPS.Kernel.Remote is
            (Get_Field (Node, "start_command_common_args").all);
          Start_Command_User_Args := Argument_String_To_List
            (Get_Field (Node, "start_command_user_args").all);
-         User_Prompt_Ptrn := Get_Field (Node, "user_prompt_ptrn");
-         Password_Prompt_Ptrn := Get_Field (Node, "password_prompt_ptrn");
+         --  If null, the default value will be used in Add_Remote_Access_Desc.
+         User_Prompt_Ptrn       := Get_Field (Node, "user_prompt_ptrn");
+         Password_Prompt_Ptrn   := Get_Field (Node, "password_prompt_ptrn");
+         Passphrase_Prompt_Ptrn := Get_Field (Node, "passphrase_prompt_ptrn");
 
          declare
             Use_Cr_Lf_String_Access : constant String_Ptr :=
@@ -2600,8 +2603,9 @@ package body GPS.Kernel.Remote is
                Start_Command             => Start_Command.all,
                Start_Command_Common_Args => Start_Command_Common_Args.all,
                Start_Command_User_Args   => Start_Command_User_Args.all,
-               User_Prompt_Ptrn          => User_Prompt_Ptrn.all,
-               Password_Prompt_Ptrn      => Password_Prompt_Ptrn.all,
+               User_Prompt_Ptrn          => User_Prompt_Ptrn,
+               Password_Prompt_Ptrn      => Password_Prompt_Ptrn,
+               Passphrase_Prompt_Ptrn    => Passphrase_Prompt_Ptrn,
                Extra_Prompt_Array        => Extra_Ptrns,
                Use_Cr_Lf                 => Use_Cr_Lf);
          end;
@@ -3234,7 +3238,7 @@ package body GPS.Kernel.Remote is
          return Norm_Exec;
       end Check_Exec;
 
-      Request_User : Request_User_Object := (Main_Window => null);
+      Main_Window : Gtk.Window.Gtk_Window := null;
 
    begin
       Success := False;
@@ -3249,7 +3253,7 @@ package body GPS.Kernel.Remote is
       end if;
 
       if Kernel /= null then
-         Request_User.Main_Window := Get_Main_Window (Kernel);
+         Main_Window := Get_Main_Window (Kernel);
       end if;
 
       --  First verify the executable to be launched
@@ -3361,11 +3365,11 @@ package body GPS.Kernel.Remote is
 
          Remote_Spawn
            (Pd,
-            Target_Nickname       => Servers (Server).Nickname.all,
-            Args                  => Args.all,
-            Execution_Directory   => Old_Dir.all,
-            Err_To_Out            => True,
-            Request_User_Instance => Request_User);
+            Target_Nickname     => Servers (Server).Nickname.all,
+            Args                => Args.all,
+            Execution_Directory => Old_Dir.all,
+            Err_To_Out          => True,
+            Main_Window         => Main_Window);
          Free (Old_Dir);
       end if;
 
