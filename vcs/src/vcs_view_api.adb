@@ -815,7 +815,7 @@ package body VCS_View_API is
            (Item, "activate", On_Menu_Collapse_All'Access, Context);
          Set_Sensitive (Item, True);
 
-         if Has_Activity_Information (Context) then
+         if not Has_Activity_Information (Context) then
             Gtk_New (Item, Label => -"Clear view");
             Append (Menu, Item);
             Context_Callback.Connect
