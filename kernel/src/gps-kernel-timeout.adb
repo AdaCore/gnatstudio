@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -558,12 +558,9 @@ package body GPS.Kernel.Timeout is
       end if;
 
       if not Is_Local (Server) then
-         Synchronize (Kernel,
-                      Server,
-                      GPS_Server,
-                      Q_Id,
-                      True);
+         Synchronize (Kernel, Server, GPS_Server, Q_Id, True);
       end if;
+
       Success := True;
    exception
       when E : others =>

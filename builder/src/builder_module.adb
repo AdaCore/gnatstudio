@@ -1492,7 +1492,7 @@ package body Builder_Module is
          Ext_Terminal : Boolean;
          Title        : String)
       is
-         Console     : Interactive_Console;
+         Console : Interactive_Console;
 
       begin
          Console := Create_Interactive_Console (K, Title);
