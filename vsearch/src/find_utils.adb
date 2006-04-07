@@ -29,7 +29,7 @@ with Traces;                    use Traces;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
-with Vsearch_Ext;               use Vsearch_Ext;
+with Vsearch;                   use Vsearch;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 
 package body Find_Utils is
@@ -53,12 +53,12 @@ package body Find_Utils is
    procedure Register_Search_Function
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : Search_Module_Data)
-      renames Vsearch_Ext.Register_Search_Function;
+      renames Vsearch.Register_Search_Function;
 
    function Search_Context_From_Module
      (Id : access GPS.Kernel.Abstract_Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data
-      renames Vsearch_Ext.Search_Context_From_Module;
+      renames Vsearch.Search_Context_From_Module;
 
    -----------------------
    -- Is_Word_Delimiter --
