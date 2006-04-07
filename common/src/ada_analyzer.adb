@@ -2638,6 +2638,7 @@ package body Ada_Analyzer is
                if Success then
                   New_Line (Line_Count);
                   Last := Prev_Char (Last);
+                  Indent_Done := False;
                end if;
 
                loop
@@ -2667,7 +2668,6 @@ package body Ada_Analyzer is
                end loop;
 
                End_Of_Line := Line_End (Buffer, P);
-               Indent_Done := False;
                Padding     := 0;
 
                if Indent_Comments and then Buffer (P) = ASCII.LF then
