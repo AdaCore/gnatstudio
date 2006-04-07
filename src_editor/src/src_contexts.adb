@@ -28,11 +28,9 @@ with GNAT.Regpat;               use GNAT.Regpat;
 with Glib;                      use Glib;
 with Glib.Unicode;              use Glib.Unicode;
 
-with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Table;                 use Gtk.Table;
@@ -1372,40 +1370,36 @@ package body Src_Contexts is
                Context.End_Line,
                Context.End_Column,
                Replace_String);
+
+            Forward_Position
+              (Get_Buffer (Editor),
+               Context.Begin_Line,
+               Context.Begin_Column,
+               Replace_String'Length,
+               Context.End_Line,
+               Context.End_Column);
+
+            Push_Current_Editor_Location_In_History (Kernel);
+
+            if Search_Backward then
+               Context.End_Line := Context.Begin_Line;
+               Context.End_Column := Context.Begin_Column;
+            else
+               Context.Begin_Line := Context.End_Line;
+               Context.Begin_Column := Context.End_Column;
+            end if;
+
+            Set_Cursor_Position
+              (Get_Buffer (Editor),
+               Context.Begin_Line,
+               Context.Begin_Column,
+               True);
+
+            Save_Cursor_Position (Get_View (Editor));
          end if;
       end if;
 
-      --  Search for next replaceable entity.
-      --  It must be in a different location than where we are (so that for
-      --  instance we can replace the regexp "$" repeatedly
-      --  Replace_String. The following assumes the replace_string doesn't
-      --  contain any newline character
-
-      declare
-         BL : constant Editable_Line_Type := Context.Begin_Line;
-         BC : constant Character_Offset_Type :=
-           Context.Begin_Column + Replace_String'Length;
-         Replaced_Has_Null_Length : constant Boolean :=
-           Context.Begin_Line = Context.End_Line
-           and then Context.Begin_Column = Context.End_Column;
-         Result : Boolean;
-      begin
-         Result := Auxiliary_Search
-           (Context, Editor, Get_Language_Handler (Kernel),
-            Kernel, Search_Backward);
-
-         if Replaced_Has_Null_Length
-           and then Context.Begin_Line = BL
-           and then Context.Begin_Column = BC
-         then
-            Result := Auxiliary_Search
-              (Context, Editor, Get_Language_Handler (Kernel),
-               Kernel, Search_Backward);
-         end if;
-
-         return Result;
-      end;
-
+      return True;
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1599,6 +1593,7 @@ package body Src_Contexts is
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
+      pragma Unreferenced (Give_Focus);
       C            : constant Abstract_Files_Context_Access :=
                        Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
@@ -1613,8 +1608,6 @@ package body Src_Contexts is
       End_Column   : Character_Offset_Type;
       Success      : Boolean;
       Matches      : Match_Result_Array_Access;
-      Found        : Boolean;
-      Continue     : Boolean;
 
    begin
       --  If we already have an occurrence, and the file is still open, the
@@ -1646,19 +1639,41 @@ package body Src_Contexts is
                        (Get_Buffer (Editor),
                         Start_Line, Start_Column, End_Line, End_Column,
                         Replace_String);
+
+                     Context.Begin_Line := Start_Line;
+                     Context.Begin_Column := Start_Column;
+
+                     Forward_Position
+                       (Get_Buffer (Editor),
+                        Context.Begin_Line,
+                        Context.Begin_Column,
+                        Replace_String'Length,
+                        Context.End_Line,
+                        Context.End_Column);
+
+                     Push_Current_Editor_Location_In_History (Kernel);
+
+                     if Search_Backward then
+                        Context.End_Line := Context.Begin_Line;
+                        Context.End_Column := Context.Begin_Column;
+                     else
+                        Context.Begin_Line := Context.End_Line;
+                        Context.Begin_Column := Context.End_Column;
+                     end if;
+
+                     Set_Cursor_Position
+                       (Get_Buffer (Editor),
+                        Context.Begin_Line,
+                        Context.Begin_Column,
+                        True);
+
+                     Save_Cursor_Position (Get_View (Editor));
                   end if;
                end if;
             end if;
          end if;
 
-         --  Else search the next occurrence
-         Search
-           (C, Kernel, Search_Backward,
-            Give_Focus => Give_Focus,
-            Found      => Found,
-            Continue   => Continue);
-
-         return Found;
+         return True;
 
       --  Non interactive case
       else
@@ -1968,17 +1983,12 @@ package body Src_Contexts is
      (Selector : out Scope_Selector;
       Kernel   : access Kernel_Handle_Record'Class)
    is
-      Box : Gtk_Box;
    begin
       Selector := new Scope_Selector_Record;
-      Gtk.Frame.Initialize (Selector);
-      Set_Label (Selector, -"Scope");
-
-      Gtk_New_Hbox (Box, False, 0);
-      Add (Selector, Box);
+      Gtk.Box.Initialize_Vbox (Gtk.Box.Gtk_Box (Selector));
 
       Gtk_New (Selector.Combo);
-      Pack_Start (Box, Selector.Combo, False, True, 2);
+      Pack_Start (Selector, Selector.Combo, False, True, 2);
       Initialize_Scope_Combo (Selector.Combo, Kernel);
    end Gtk_New;
 
