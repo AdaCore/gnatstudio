@@ -446,7 +446,7 @@
       </annotations_parser>
 
       <log_parser>
-         <regexp>----------\nrevision ([^\n]+)\ndate: ([^;]+);  author: ([^;]+)[^\n]+(\nbranches: [^;]+;\n|\n)(([^-\n]+\n|.?.?[^-=][^-=][^-=][^-=][^-=][^\n]*\n)*)</regexp>
+         <regexp>----------\nrevision ([^\n]+)\ndate: ([^;]+);  author: ([^;]+)[^\n]+(\nbranches: [^;]+;\n|\n)(([^-\n][^\n]+\n|.?.?[^-=][^-=][^-=][^-=][^-=][^\n]*\n)*)</regexp>
 
          <repository_revision_index>1</repository_revision_index>
 	 <author_index>3</author_index>
