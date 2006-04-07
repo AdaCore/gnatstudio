@@ -54,17 +54,14 @@ package body Filesystem.Unix is
          Get_Status_Command  => "echo $?",
          Get_Status_Ptrn     => "^([0-9]*)\s*$");
 
-      --  Force interactive (see above) and do not read rc files so that no
-      --  strange behavior is encountered (title strings parasiting the output
-      --  for example
-      --  Note: long options shall be set before short options on some linux
-      --  bash.
+      --  Force interactive (see above).
       Add_Shell_Descriptor
-        ("bash", "bash --norc -i",
+        ("bash", "bash -i",
          Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
          Init_Commands       => (new String'("export COLUMNS=2048"),
+                                 new String'("unset PROMPT_COMMAND"),
                                  new String'("unalias ls"),
                                  new String'("export LANG=C"),
                                  new String'("export PS1=---GPSPROMPT--#")),
@@ -295,7 +292,7 @@ package body Filesystem.Unix is
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("test"),
          new String'("-r"),
-         new String'("""" & Local_Full_Name & """"));
+         new String'(Local_Full_Name));
       Status : Boolean;
 
    begin
@@ -316,7 +313,7 @@ package body Filesystem.Unix is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("cat"),
-         new String'("""" & Local_Full_Name & """"));
+         new String'(Local_Full_Name));
       Status : Boolean;
       Output : String_Access;
 
@@ -339,7 +336,7 @@ package body Filesystem.Unix is
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("rm"),
          new String'("-f"),
-         new String'("""" & Local_Full_Name & """"));
+         new String'(Local_Full_Name));
       Status : Boolean;
 
    begin
@@ -361,7 +358,7 @@ package body Filesystem.Unix is
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("test"),
          new String'("-w"),
-         new String'("""" & Local_Full_Name & """"));
+         new String'(Local_Full_Name));
       Status : Boolean;
 
    begin
@@ -383,7 +380,7 @@ package body Filesystem.Unix is
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("test"),
          new String'("-d"),
-         new String'("""" & Local_Full_Name & """"));
+         new String'(Local_Full_Name));
       Status : Boolean;
 
    begin
@@ -407,7 +404,7 @@ package body Filesystem.Unix is
         (new String'("ls"),
          new String'("-l"),
          new String'("--time-style=full-iso"),
-         new String'("""" & Local_Full_Name & """"),
+         new String'(Local_Full_Name),
          new String'("2>"),
          new String'("/dev/null"));
       Status  : Boolean;
@@ -468,7 +465,7 @@ package body Filesystem.Unix is
       Args : constant GNAT.OS_Lib.Argument_List :=
         (1 => new String'("cat"),
          2 => new String'(">"),
-         3 => new String'("""" & Local_Full_Name & """"),
+         3 => new String'(Local_Full_Name),
          4 => new String'("<<"),
          5 => new String'("GPSEOF"));
       Regexp       : constant Pattern_Matcher
@@ -514,7 +511,7 @@ package body Filesystem.Unix is
       Args : GNAT.OS_Lib.Argument_List :=
         (1 => new String'("chmod"),
          2 => new String'("u+w"),
-         3 => new String'("""" & Local_Full_Name & """"));
+         3 => new String'(Local_Full_Name));
       Status : Boolean;
 
    begin
@@ -540,7 +537,7 @@ package body Filesystem.Unix is
       Args : GNAT.OS_Lib.Argument_List :=
         (1 => new String'("chmod"),
          2 => new String'("u+r"),
-         3 => new String'("""" & Local_Full_Name & """"));
+         3 => new String'(Local_Full_Name));
       Status : Boolean;
 
    begin
@@ -580,7 +577,7 @@ package body Filesystem.Unix is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("mkdir"),
-         new String'("""" & Local_Dir_Name & """"));
+         new String'(Local_Dir_Name));
       Status : Boolean;
 
    begin
@@ -603,7 +600,7 @@ package body Filesystem.Unix is
       Args : GNAT.OS_Lib.Argument_List :=
         (1 => new String'("rm"),
          2 => new String'("-r"),
-         3 => new String'("""" & Local_Dir_Name & """"));
+         3 => new String'(Local_Dir_Name));
       Status : Boolean;
 
    begin
