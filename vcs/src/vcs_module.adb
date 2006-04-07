@@ -204,11 +204,15 @@ package body VCS_Module is
       --  build the menu. It is too late to modify the context at this stage,
       --  and this should be done in the context factory instead
 
-      VCS_View_API.VCS_Contextual_Menu
-        (Get_Kernel (Context),
-         C,
-         Menu,
-         False);
+      if Get_Creator (Context) /= Abstract_Module_ID (VCS_Module_ID)
+        or else Has_Activity_Information (Context)
+      then
+         VCS_View_API.VCS_Contextual_Menu
+           (Get_Kernel (Context),
+            C,
+            Menu,
+            False);
+      end if;
    end Append_To_Menu;
 
    ------------------
