@@ -1713,7 +1713,7 @@ package body Src_Editor_Module.Shell is
 
          declare
             Filename : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
+                         Create (Nth_Arg (Data, 1), Kernel);
             Write    : constant Boolean := Nth_Arg (Data, 2);
             Child    : MDI_Child;
          begin
