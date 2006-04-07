@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Frame; use Gtk.Frame;
+with Gtk.Box;   use Gtk.Box;
 with Gtk.Table; use Gtk.Table;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Combo; use Gtk.Combo;
@@ -28,7 +28,7 @@ with Gtk.Button; use Gtk.Button;
 with GPS.Kernel;
 package Files_Extra_Info_Pkg is
 
-   type Files_Extra_Info_Record is new Gtk_Frame_Record with record
+   type Files_Extra_Info_Record is new Gtk_Box_Record with record
       --  Files_Frame : Gtk_Frame;
       Files_Table : Gtk_Table;
       Files_Label : Gtk_Label;
