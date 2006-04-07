@@ -1362,6 +1362,7 @@ package body GNAT.Expect.TTY.Remote is
       Interrupt_Command   : String             := "")
    is
       Shell : constant Shell_Descriptor_Access := new Shell_Descriptor;
+      Item  : Shell_Descriptor_Access;
    begin
       Shell.all :=
         (Name             => new String'(Name),
@@ -1378,8 +1379,23 @@ package body GNAT.Expect.TTY.Remote is
          Prompt           => new Pattern_Matcher'
            (Compile (Configured_Prompt, Single_Line + Multiple_Lines)),
          Int_Cmd          => new String'(Interrupt_Command),
-         Next             => Shell_Descriptor_List);
-      Shell_Descriptor_List := Shell;
+         Next             => null);
+
+      Item := Shell_Descriptor_List;
+
+      if Item = null or else Item.Name.all > Name then
+         Shell.Next := Shell_Descriptor_List;
+         Shell_Descriptor_List := Shell;
+      else
+         while Item /= null loop
+            if Item.Next = null or else Item.Next.Name.all > Name then
+               Shell.Next := Item.Next;
+               Item.Next := Shell;
+               exit;
+            end if;
+            Item := Item.Next;
+         end loop;
+      end if;
    end Add_Shell_Descriptor;
 
    -----------
