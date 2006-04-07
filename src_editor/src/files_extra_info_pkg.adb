@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,15 +54,14 @@ begin
    --  Gtk_New (Files_Extra_Info.Files_Frame, -"Files");
    --  Set_Shadow_Type (Files_Extra_Info.Files_Frame, Shadow_Etched_In);
    --  Add (Files_Extra_Info, Files_Extra_Info.Files_Frame);
-   Gtk.Frame.Initialize (Files_Extra_Info, -"Files");
-   Set_Shadow_Type (Files_Extra_Info, Shadow_Etched_In);
+   Gtk.Box.Initialize_Vbox (Files_Extra_Info);
 
    Gtk_New (Files_Extra_Info.Files_Table, 4, 3, False);
    Set_Border_Width (Files_Extra_Info.Files_Table, 5);
    Set_Row_Spacings (Files_Extra_Info.Files_Table, 5);
    Set_Col_Spacings (Files_Extra_Info.Files_Table, 5);
    --  Add (Files_Extra_Info.Files_Frame, Files_Extra_Info.Files_Table);
-   Add (Files_Extra_Info, Files_Extra_Info.Files_Table);
+   Pack_Start (Files_Extra_Info, Files_Extra_Info.Files_Table);
 
    Gtk_New (Files_Extra_Info.Files_Label, -("Files:"));
    Set_Alignment (Files_Extra_Info.Files_Label, 0.0, 0.5);
