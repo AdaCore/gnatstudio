@@ -25,8 +25,10 @@
 
 with GNAT.Expect;     use GNAT.Expect;
 with GNAT.Expect.TTY; use GNAT.Expect.TTY;
+with GNAT.Regpat;     use GNAT.Regpat;
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 
+with Glib;            use Glib;
 with Gtk.Window;
 
 with Filesystem;      use Filesystem;
@@ -82,8 +84,9 @@ package GNAT.Expect.TTY.Remote is
       Start_Command             : String;
       Start_Command_Common_Args : String_List;
       Start_Command_User_Args   : String_List;
-      User_Prompt_Ptrn          : String;
-      Password_Prompt_Ptrn      : String;
+      User_Prompt_Ptrn          : String_Ptr;
+      Password_Prompt_Ptrn      : String_Ptr;
+      Passphrase_Prompt_Ptrn    : String_Ptr;
       Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts;
       Use_Cr_Lf                 : Boolean := False);
    --  Adds a new Remote Access Descriptor
@@ -93,7 +96,12 @@ package GNAT.Expect.TTY.Remote is
    --  Start_Command_User_Arg    : if user is specified, this argument will
    --   be used (%u replaced by actual user)
    --  User_Prompt_Ptrn          : regular expression for user prompt
+   --                              if null, the default user prompt is used
    --  Password_Prompt_Ptrn      : regular expression for password prompt
+   --                              if null, the default password prompt is used
+   --  Passphrase_Prompt_Ptrn    : regular expression for passphrases. This
+   --                              expression shall isolate the key_id with
+   --                              parenthesis
    --  Extra_Prompt_Array        : extra specific prompts.
    --  Use_Cr_Lf                 : tell if CR character needs to be added when
    --                               sending commands to the tool.
@@ -258,24 +266,13 @@ package GNAT.Expect.TTY.Remote is
    --  buffer) is first discarded before the command is sent. The output
    --  filters are of course called as usual.
 
-   type Request_User_Object is tagged record
-      Main_Window : Gtk.Window.Gtk_Window;
-   end record;
-
-   function Request_User
-     (Instance      : Request_User_Object;
-      Query         : String;
-      Password_Mode : Boolean) return String;
-
-   Default_Req_User : constant Request_User_Object := (Main_Window => null);
-
    procedure Remote_Spawn
      (Descriptor            : out Process_Descriptor_Access;
       Target_Nickname       : String;
       Args                  : GNAT.OS_Lib.Argument_List;
       Execution_Directory   : String := "";
       Err_To_Out            : Boolean := False;
-      Request_User_Instance : Request_User_Object'Class := Default_Req_User);
+      Main_Window           : Gtk.Window.Gtk_Window := null);
    --  Spawns a process on a remote machine
    --  Target_Name designs the machine on which the process is spawned
    --  Target_Identifier is used to retrieve the descriptors
@@ -284,13 +281,17 @@ package GNAT.Expect.TTY.Remote is
    --  Buffer_Size is the maximum buffer size for process output reception
    --   (set Buffer_Size to 0 for dynamic memory allocation)
    --  Err_To_Out tells if the stderr shall be redirected to stdout
+   --  If a request from user is needed, main_window is used as parent for the
+   --  dialog presented to the user.
 
    function Check_Host
      (Nickname              : String;
-      Request_User_Instance : Request_User_Object'Class := Default_Req_User)
+      Main_Window           : Gtk.Window.Gtk_Window := null)
       return String;
    --  Check host connection. Return empty string upon success, or the error
    --  message.
+   --  If a request from user is needed, main_window is used as parent for the
+   --  dialog presented to the user.
 
    procedure Sync_Execute
      (Host                  : String;
