@@ -29,10 +29,11 @@ install-common:
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - python/) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
 	(cd docgen/templates; tar cf - html/) \
 		| (cd $(sharedir)/gps/docgen; tar xf -)
 	$(MAKE) -C docs install
-	(cd examples; tar c --exclude CVS -f - . ) | (cd $(examplesdir); tar xf -)
+	(cd examples; tar cf - --exclude CVS . ) | (cd $(examplesdir); tar xf -)
 
 install: install-common
 ifeq ($(OS),Windows_NT)
