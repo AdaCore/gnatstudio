@@ -40,7 +40,6 @@ with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
-with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -162,7 +161,7 @@ package body Project_Explorers is
    procedure Free (Context : in out Explorer_Search_Context);
    --  Free the memory allocated for Context
 
-   type Explorer_Search_Extra_Record is new Gtk_Frame_Record with record
+   type Explorer_Search_Extra_Record is new Gtk_Box_Record with record
       Include_Entities    : Gtk_Check_Button;
       Include_Projects    : Gtk_Check_Button;
       Include_Directories : Gtk_Check_Button;
@@ -2826,10 +2825,10 @@ package body Project_Explorers is
          Ref_Item => -"Remote");
 
       Extra := new Explorer_Search_Extra_Record;
-      Gtk.Frame.Initialize (Extra, -"Scope");
+      Gtk.Box.Initialize_Vbox (Extra);
 
       Gtk_New_Vbox (Box, Homogeneous => False);
-      Add (Extra, Box);
+      Pack_Start (Extra, Box);
 
       Gtk_New (Extra.Include_Projects, -"Projects");
       Pack_Start (Box, Extra.Include_Projects);
