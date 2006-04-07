@@ -38,7 +38,7 @@ package body Filesystem.Unix is
 
    procedure Initialize_Module (FS : Unix_Filesystem_Record) is
    begin
-      --  Force interactive shells. Required for solaris.
+      --  Force interactive shells. Required for solaris (and others).
       Add_Shell_Descriptor
         ("sh", "sh -i",
          Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
@@ -54,7 +54,6 @@ package body Filesystem.Unix is
          Get_Status_Command  => "echo $?",
          Get_Status_Ptrn     => "^([0-9]*)\s*$");
 
-      --  Force interactive (see above).
       Add_Shell_Descriptor
         ("bash", "bash -i",
          Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
@@ -65,6 +64,34 @@ package body Filesystem.Unix is
                                  new String'("unalias ls"),
                                  new String'("export LANG=C"),
                                  new String'("export PS1=---GPSPROMPT--#")),
+         Exit_Commands       => (1 => new String'("exit")),
+         Cd_Command          => "cd %d",
+         Get_Status_Command  => "echo $?",
+         Get_Status_Ptrn     => "^([0-9]*)\s*$");
+
+      Add_Shell_Descriptor
+        ("csh", "csh -i",
+         Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
+         Configured_Prompt   => "^---GPSPROMPT--#.*$",
+         FS                  => FS,
+         Init_Commands       => (new String'("set prompt=---GPSPROMPT--#"),
+                                 new String'("setenv COLUMNS 2048"),
+                                 new String'("setenv LANG C"),
+                                 new String'("unalias ls")),
+         Exit_Commands       => (1 => new String'("exit")),
+         Cd_Command          => "cd %d",
+         Get_Status_Command  => "echo $?",
+         Get_Status_Ptrn     => "^([0-9]*)\s*$");
+
+      Add_Shell_Descriptor
+        ("tcsh", "tcsh -i",
+         Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
+         Configured_Prompt   => "^---GPSPROMPT--#.*$",
+         FS                  => FS,
+         Init_Commands       => (new String'("set prompt=---GPSPROMPT--#"),
+                                 new String'("setenv COLUMNS 2048"),
+                                 new String'("setenv LANG C"),
+                                 new String'("unalias ls")),
          Exit_Commands       => (1 => new String'("exit")),
          Cd_Command          => "cd %d",
          Get_Status_Command  => "echo $?",
@@ -638,9 +665,13 @@ package body Filesystem.Unix is
 
       function Create_Args return GNAT.OS_Lib.Argument_List is
       begin
+         --  Launch with sh to be able to redirect stderr to /dev/null, even
+         --  when using (t)csh
          if Dirs_Only then
             return
-              (new String'("find"),
+              (new String'("sh"),
+               new String'("-c"),
+               new String'("'find"),
                new String'(Local_Dir_Name),
                new String'("-follow"),
                new String'("-maxdepth"),
@@ -652,11 +683,13 @@ package body Filesystem.Unix is
                new String'("-printf"),
                new String'("""%f\n"""),
                new String'("2>"),
-               new String'("/dev/null"));
+               new String'("/dev/null'"));
 
          elsif Files_Only then
             return
-              (new String'("find"),
+              (new String'("sh"),
+               new String'("-c"),
+               new String'("'find"),
                new String'(Local_Dir_Name),
                new String'("-follow"),
                new String'("-maxdepth"),
@@ -668,7 +701,7 @@ package body Filesystem.Unix is
                new String'("-printf"),
                new String'("""%f\n"""),
                new String'("2>"),
-               new String'("/dev/null"));
+               new String'("/dev/null'"));
 
          else
             return (new String'("ls"),
@@ -685,7 +718,9 @@ package body Filesystem.Unix is
       begin
          if Dirs_Only then
             return
-              (new String'("find"),
+              (new String'("sh"),
+               new String'("-c"),
+               new String'("'find"),
                new String'(Local_Dir_Name),
                new String'("-follow"),
                new String'("-maxdepth"),
@@ -699,11 +734,13 @@ package body Filesystem.Unix is
                new String'("-printf"),
                new String'("""%f\n"""),
                new String'("2>"),
-               new String'("/dev/null"));
+               new String'("/dev/null'"));
 
          elsif Files_Only then
             return
-              (new String'("find"),
+              (new String'("sh"),
+               new String'("-c"),
+               new String'("'find"),
                new String'(Local_Dir_Name),
                new String'("-follow"),
                new String'("-maxdepth"),
@@ -717,7 +754,7 @@ package body Filesystem.Unix is
                new String'("-printf"),
                new String'("""%f\n"""),
                new String'("2>"),
-               new String'("/dev/null"));
+               new String'("/dev/null'"));
 
          else
             return (1 .. 0 => null);
