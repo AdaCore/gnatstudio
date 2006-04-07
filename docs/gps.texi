@@ -4528,8 +4528,7 @@ Search in the project browser (@pxref{The Project Browser}).
 @end table
 
 The second part of the window is a row of buttons, to start the search
-(or continue to the next occurrence), to stop the current search when
-it is taking too long, or to display the options.
+(or continue to the next occurrence), or to display the options.
 
 @iftex
 @cindex screen shot
@@ -4541,25 +4540,9 @@ it is taking too long, or to display the options.
 @image{search-options}
 @end ifhtml
 
-There are four check boxes in this options box.
+There are five check boxes in this options box.
 
 @table @b
-@item @code{"Search All Occurrences"}
-@cindex search all occurrences
-The default mode for the search widget is interactive searching: its
-stops as soon as one occurrence of the pattern is found. You then have
-to press the @code{Next} button (or the equivalent shortcut
-@key{Ctrl-N}) to go to the next occurrence.
-
-However, if you enable this check box, the search widget will start
-searching for all occurrences right away, and put the results in a new
-window called @code{Locations} (initially found in the bottom dock of
-the GPS window). You can interrupt the search at any time by pressing
-the @code{Stop} button: this will stop when the next occurrence is found.
-
-This button is reset to its default value whenever you modify the searched
-pattern or the replacement text.
-
 @item @code{"Case Sensitive"}
 @cindex case sensitive
 By default, patterns are case insensitive (upper-case letters and
@@ -4596,6 +4579,16 @@ then activated, the search window will be automatically closed when an
 occurrence of the search string is found.
 
 @end table
+
+Pressing the @code{Next} / @code{Prev} buttons performs an interactive search. 
+It stops as soon as one occurrence of the pattern is found. You then have
+to press the @code{Next} button (or the equivalent shortcut
+@key{Ctrl-N}) to go to the next occurrence.
+
+If you use the @code{Search all} button, the search widget will start
+searching for all occurrences right away, and put the results in a new
+window called @code{Locations} (initially found in the bottom dock of
+the GPS window).
 
 @cindex MDI
 @cindex Multiple Document Interface
