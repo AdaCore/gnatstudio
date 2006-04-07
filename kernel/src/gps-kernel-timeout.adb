@@ -67,7 +67,7 @@ package body GPS.Kernel.Timeout is
 
       D                    : Process_Data;
       Died                 : Boolean := False;
-      --  Indicates that the process has died.
+      --  Indicates that the process has died
 
       Interrupted          : Boolean := False;
       --  Whether the process was interrupted by the user
@@ -87,12 +87,12 @@ package body GPS.Kernel.Timeout is
      (Callback_Data_Record'Class, Callback_Data_Access);
 
    function Process_Cb (Data : Console_Process) return Boolean;
-   --  Generic callback for async spawn of processes.
+   --  Generic callback for async spawn of processes
 
    function Delete_Handler
      (Object : access GObject_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
-   --  Callback for the "delete_event" event.
+   --  Callback for the "delete_event" event
 
    procedure Cleanup (Data : Console_Process);
    --  Close the process descriptor and free its associated memory.
@@ -102,7 +102,7 @@ package body GPS.Kernel.Timeout is
      (Console   : access Interactive_Console_Record'Class;
       Input     : in String;
       User_Data : System.Address) return String;
-   --  Handler for user input on the console.
+   --  Handler for user input on the console
 
    type Monitor_Command is new Root_Command with record
       Name    : String_Access;
@@ -115,7 +115,7 @@ package body GPS.Kernel.Timeout is
    --  to Launch_Process already. Closing the console terminates the process.
 
    procedure Interrupt (Command : in out Monitor_Command);
-   --  Interrupts the command.
+   --  Interrupts the command
 
    procedure Free (D : in out Monitor_Command);
    function Execute
@@ -135,9 +135,9 @@ package body GPS.Kernel.Timeout is
    function Execute_Monitor
      (Command : Command_Access) return Command_Return_Type
    is
-      C      : constant Monitor_Command_Access :=
-        Monitor_Command_Access (Command);
-      Result : Command_Return_Type;
+      C        : constant Monitor_Command_Access :=
+                   Monitor_Command_Access (Command);
+      Result   : Command_Return_Type;
       Continue : Boolean;
       pragma Unreferenced (Continue);
    begin
@@ -167,8 +167,8 @@ package body GPS.Kernel.Timeout is
    ----------
 
    procedure Free (D : in out Monitor_Command) is
-      PID     : GNAT.Expect.Process_Id;
-      Status  : Integer;
+      PID    : GNAT.Expect.Process_Id;
+      Status : Integer;
    begin
       if not D.Data.Died and then D.Data.D.Descriptor /= null then
          PID := Get_Pid (D.Data.D.Descriptor.all);
@@ -265,7 +265,7 @@ package body GPS.Kernel.Timeout is
    -------------
 
    procedure Cleanup (Data : Console_Process) is
-      Status : Integer;
+      Status  : Integer;
       Console : Interactive_Console := Data.Console;
    begin
       if Data.D.Descriptor = null then
@@ -344,6 +344,7 @@ package body GPS.Kernel.Timeout is
                end if;
             end;
          end if;
+
       else
          raise Process_Died;
       end if;
@@ -448,8 +449,7 @@ package body GPS.Kernel.Timeout is
    -- Get_New_Queue_Id --
    ----------------------
 
-   function Get_New_Queue_Id (QId : String) return String
-   is
+   function Get_New_Queue_Id (QId : String) return String is
       Str_Id : constant String := Natural'Image (Id);
    begin
       if QId = "" then
@@ -593,7 +593,7 @@ package body GPS.Kernel.Timeout is
       Show_Exit_Status     : Boolean := False;
       Fd                   : out GNAT.Expect.Process_Descriptor_Access)
    is
-      C             : Command_Access;
+      C : Command_Access;
    begin
       Launch_Process
         (Kernel               => Kernel,
