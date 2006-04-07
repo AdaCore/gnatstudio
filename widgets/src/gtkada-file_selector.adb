@@ -1243,7 +1243,7 @@ package body Gtkada.File_Selector is
       Set_Location (Win.Location_Combo, Dir);
 
    exception
-      when Process_Died | Invalid_Process =>
+      when Process_Died | Invalid_Process | Invalid_Nickname =>
          Dead := Message_Dialog
            ("Problem while connecting to " & Host & ASCII.LF &
             "There might be a problem with Host's configuration",
@@ -2023,9 +2023,12 @@ package body Gtkada.File_Selector is
          Show_All (Get_List (File_Selector_Window.Hosts_Combo));
          Pack_Start (Hbox2, File_Selector_Window.Hosts_Combo, True, True, 3);
 
+         --  Connect to Gtkada-combo's "changed" signal, that is raised when
+         --  the list disapears. This prevents eventual dialogs appearing on
+         --  host selection to be hidden by the drop down list.
          Widget_Callback.Object_Connect
-           (Get_Entry (File_Selector_Window.Hosts_Combo), "changed",
-            Host_Selected'Access, File_Selector_Window);
+           (File_Selector_Window.Hosts_Combo, "changed",
+            Host_Selected'Access, File_Selector_Window, After => True);
       end if;
 
       Gtk_New_Hbox (Hbox3, False, 0);
