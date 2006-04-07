@@ -83,13 +83,9 @@ install:
 	-for img in $(IMAGES); do \
 	  $(INSTALL_DATA) $$img $(docdir)/html/; \
 	done
-	-$(INSTALL_DATA) gps-animation.gif $(sharedir)
-	-$(INSTALL_DATA) gps-animation.png $(sharedir)
 	-$(INSTALL_DATA) gps-splash.png $(sharedir)
 	-${INSTALL_DATA} gps_index.xml ${docdir}/html
 	-${INSTALL_DATA} help_index.html ${docdir}/html
-	-${INSTALL_DATA} shell_commands.xml ${sharedir}
-	-${INSTALL_DATA} desktop.xml ${sharedir}
 
 clean-temp-files:
 	-$(RM) *.aux
