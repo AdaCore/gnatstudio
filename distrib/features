@@ -248,6 +248,13 @@ E512-008 Saving breakpoints between sessions (2005-11-29)
 
   Keywords: Debugger
 
+E202-011 New replace window (2006-04-07)
+
+  The search / replace window has been redesigned. In particular, there are now
+  two buttons to perform the replace action, one doing only the replacement and
+  the other looking for the next occurence after having replace the current 
+  one.
+
 D611-009 New preference "Save editor in desktop" (2006-04-04)
 
   This preference determines when source editors are saved in the desktop:
