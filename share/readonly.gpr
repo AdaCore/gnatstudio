@@ -1,0 +1,5 @@
+project Readonly is
+
+   for Source_Dirs use ();
+
+end Readonly;
