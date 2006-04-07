@@ -47,6 +47,7 @@ with VCS_View.Activities;       use VCS_View.Activities;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 with VCS_Module;                use VCS_Module;
 with VFS;                       use VFS;
+with String_Utils;
 
 package body VCS.Generic_VCS is
 
@@ -1902,7 +1903,7 @@ package body VCS.Generic_VCS is
               (Command, -"add log", Kernel,
                "Revision.add_log " & Full_Name (File).all &
                " """ & Rev & """ """ & Author & """ """ &
-               Date & """ """ & Log & """",
+               Date & """ """ & String_Utils.Protect (Log) & """",
                Script);
 
             Launch_Background_Command
