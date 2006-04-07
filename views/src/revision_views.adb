@@ -54,6 +54,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GUI_Utils;                 use GUI_Utils;
 with String_Hash;
 with String_List_Utils;         use String_List_Utils;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 
@@ -246,7 +247,7 @@ package body Revision_Views is
                  (Revision => +Nth_Arg (Data, 2),
                   Author   => +Nth_Arg (Data, 3),
                   Date     => +Nth_Arg (Data, 4),
-                  Log      => +Nth_Arg (Data, 5));
+                  Log      => +Unprotect (Nth_Arg (Data, 5)));
       View   : constant Revision_View := Open_Revision_View (Kernel, File);
    begin
       Add_Log_If_Not_Present (View, Log);
