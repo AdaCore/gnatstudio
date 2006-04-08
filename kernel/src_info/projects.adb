@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -441,7 +441,7 @@ package body Projects is
    -----------------
 
    function Source_Dirs (Project : Project_Type) return Name_Id_Array is
-      View    : constant Project_Id := Get_View (Project);
+      View : constant Project_Id := Get_View (Project);
    begin
       if View = Prj.No_Project then
          return (1 .. 0 => No_Name);
@@ -449,8 +449,8 @@ package body Projects is
       else
          declare
             Src     : String_List_Id :=
-              Projects_Table (Project)(View).Source_Dirs;
-            Count   : constant Natural    := Length (Project.View_Tree, Src);
+                        Projects_Table (Project) (View).Source_Dirs;
+            Count   : constant Natural := Length (Project.View_Tree, Src);
             Sources : Name_Id_Array (1 .. Count);
          begin
             for C in Sources'Range loop
@@ -467,13 +467,15 @@ package body Projects is
    -----------------
 
    function Source_Dirs
-     (Project : Project_Type; Recursive : Boolean)
-      return Basic_Types.String_Array_Access
+     (Project   : Project_Type;
+      Recursive : Boolean;
+      Has_VCS   : Boolean := False) return Basic_Types.String_Array_Access
    is
       Iter    : Imported_Project_Iterator := Start (Project, Recursive);
       Count   : Natural := 0;
       P       : Project_Type;
       Sources : String_Array_Access;
+      Result  : String_Array_Access;
       Src     : String_List_Id;
       Index   : Natural := 1;
    begin
@@ -493,21 +495,33 @@ package body Projects is
          P := Current (Iter);
          exit when P = No_Project;
 
-         Src := Projects_Table (Project)(Get_View (P)).Source_Dirs;
+         if not Has_VCS
+           or else Get_Attribute_Value (P, Vcs_Kind_Attribute) /= ""
+         then
+            Src := Projects_Table (Project) (Get_View (P)).Source_Dirs;
 
-         while Src /= Nil_String loop
-            Sources (Index) := new String'
-              (Name_As_Directory
-                 (Normalize_Pathname
-                    (Get_String (String_Elements (P)(Src).Display_Value))));
-            Index := Index + 1;
-            Src   := String_Elements (P)(Src).Next;
-         end loop;
+            while Src /= Nil_String loop
+               Sources (Index) := new String'
+                 (Name_As_Directory
+                    (Normalize_Pathname
+                       (Get_String
+                          (String_Elements (P) (Src).Display_Value))));
+               Index := Index + 1;
+               Src   := String_Elements (P) (Src).Next;
+            end loop;
+         end if;
 
          Next (Iter);
       end loop;
 
-      return Sources;
+      if Index < Sources'Last then
+         Result := new String_Array'(Sources (1 .. Index - 1));
+         Unchecked_Free (Sources);
+      else
+         Result := Sources;
+      end if;
+
+      return Result;
    end Source_Dirs;
 
    ------------------
