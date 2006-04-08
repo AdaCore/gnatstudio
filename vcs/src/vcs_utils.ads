@@ -57,6 +57,6 @@ package VCS_Utils is
    --  the file has the Up_To_Date status. Also update the editor status.
 
    function Revision_Lower (Rev1, Rev2 : String) return Boolean;
-   --  Returns True if Rev1 is lower than Rev2
+   --  Return True if Rev1 is lower than Rev2
 
 end VCS_Utils;
