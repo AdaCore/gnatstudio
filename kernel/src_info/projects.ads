@@ -150,11 +150,13 @@ package Projects is
    --  directories are absolute directories.
 
    function Source_Dirs
-     (Project : Project_Type; Recursive : Boolean)
-      return Basic_Types.String_Array_Access;
+     (Project   : Project_Type;
+      Recursive : Boolean;
+      Has_VCS   : Boolean := False) return Basic_Types.String_Array_Access;
    --  Return the list of source directories. The directories are normalized.
    --  If Recursive is True, directories from imported projects will also be
-   --  returned.
+   --  returned. If Has_VCS is set to True only directories for projects having
+   --  a VCS defined are returned.
    --  Note that duplicate directories might be returned when directories are
    --  shared by multiple projects in the same tree.
    --  Returned array must be freed by the user.
