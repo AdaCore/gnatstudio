@@ -3327,12 +3327,13 @@ package body VCS_View_API is
       Prev   : List_Node;
    begin
       declare
-         A : constant String_Array_Access
-           := Source_Dirs (Project, Recursive);
+         A : String_Array_Access :=
+               Source_Dirs (Project, Recursive, Has_VCS => True);
       begin
          for J in A'Range loop
             Append (Result, A (J).all);
          end loop;
+         Free (A);
       end;
 
       --  The result of Source_Dirs can contain duplicate entries.
