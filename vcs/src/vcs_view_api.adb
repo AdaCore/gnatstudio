@@ -3237,8 +3237,18 @@ package body VCS_View_API is
          if Is_Empty (Status.Working_Revision) then
             Revision_1 := new String'("");
          else
-            Revision_1 := new String'
-              (Protect (Head (Status.Working_Revision)));
+            if Revision_Lower
+              (Head (Status.Working_Revision),
+               Head (Status.Repository_Revision))
+            then
+               --  The repository revision is newer than the working copy, use
+               --  this version by default.
+               Revision_1 := new String'
+                 (Protect (Head (Status.Repository_Revision)));
+            else
+               Revision_1 := new String'
+                 (Protect (Head (Status.Working_Revision)));
+            end if;
          end if;
       end if;
 
