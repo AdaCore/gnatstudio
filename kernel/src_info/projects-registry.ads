@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
---                               AdaCore                             --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -150,8 +150,8 @@ package Projects.Registry is
    --  Reloaded is set to true if the project was actually reloaded.
 
    procedure Load_Custom_Project
-     (Registry  : Project_Registry;
-      Project   : Project_Type);
+     (Registry : Project_Registry;
+      Project  : Project_Type);
    --  Set Project as the root project. Recompute_View should be called
    --  afterward. The status of the project is automatically set to Default.
    --  It is recommended that you call Reset before this function, to free

@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2002-2006                      --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -775,6 +775,7 @@ package body Projects.Editor is
          end if;
          Var := Project.View_Tree.Packages.Table (Pkg).Decl.Attributes;
          Arr := Project.View_Tree.Packages.Table (Pkg).Decl.Arrays;
+
       else
          Var := Project.View_Tree.Projects.Table
            (Project_View).Decl.Attributes;

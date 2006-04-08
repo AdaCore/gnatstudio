@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -938,8 +938,8 @@ package body Projects.Registry is
                Current_Source : constant Name_Id :=
                                   String_Elements (Registry)(Sources).Value;
                --  ??? Should avoid function returning unconstrained array
-               UTF8 : constant String := Locale_To_UTF8
-                 (Name_Buffer (1 .. Name_Len));
+               UTF8      : constant String :=
+                             Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
                Directory : Name_Id := No_Name;
                Unit      : Unit_Project;
             begin
