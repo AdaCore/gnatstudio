@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005-2006                   --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -55,5 +55,8 @@ package VCS_Utils is
       Up_To_Date     : File_Status);
    --  For all files in Status, remove the log file if Clear_Logs is set and
    --  the file has the Up_To_Date status. Also update the editor status.
+
+   function Revision_Lower (Rev1, Rev2 : String) return Boolean;
+   --  Returns True if Rev1 is lower than Rev2
 
 end VCS_Utils;

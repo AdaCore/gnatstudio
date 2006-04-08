@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005-2006                   --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -213,5 +214,50 @@ package body VCS_Utils is
          Iter := File_Status_List.Next (Iter);
       end loop;
    end Update_Files_Status;
+
+   --------------------
+   -- Revision_Lower --
+   --------------------
+
+   function Revision_Lower (Rev1, Rev2 : String) return Boolean is
+
+      N_Size : constant := 6;
+      --  Number of didgits used for normalized numbers
+
+      procedure Normalize (Source : String; Dest : out String);
+      --  Normalize revision number in Source and store it in Dest
+
+      ---------------
+      -- Normalize --
+      ---------------
+
+      procedure Normalize (Source : String; Dest : out String) is
+         J, K : Natural := Source'First;
+         D    : Natural := Dest'First;
+      begin
+         loop
+            J := Index (Source (K .. Source'Last), ".");
+            if J = 0 then
+               J := Source'Last;
+            else
+               J := J - 1;
+            end if;
+
+            Dest (D .. D + N_Size - 1) :=
+              ((N_Size - (J - K + 1)) * '0') & Source (K .. J);
+            D := D + N_Size;
+
+            exit when J = Source'Last;
+            K := J + 2;
+         end loop;
+      end Normalize;
+
+      R1 : String (1 .. Rev1'Length * N_Size);
+      R2 : String (1 .. Rev2'Length * N_Size);
+   begin
+      Normalize (Rev1, R1);
+      Normalize (Rev2, R2);
+      return R1 < R2;
+   end Revision_Lower;
 
 end VCS_Utils;
