@@ -290,12 +290,11 @@ package body VCS_Module is
    is
       pragma Unreferenced (MDI);
       M          : constant VCS_Module_ID_Access := VCS_Module_ID;
-      Explorer   : VCS_Explorer_View_Access;
       A_Explorer : VCS_Activities_View_Access;
-      pragma Unreferenced (Explorer, A_Explorer);
+      pragma Unreferenced (A_Explorer);
    begin
       if Node.Tag.all = "VCS_View_Record" then
-         Explorer := Get_Explorer (User, True, True);
+         Open_Explorer (User, No_Context);
          return M.Explorer_Child;
 
       elsif Node.Tag.all = "VCS_Activities_View_Record" then
@@ -444,6 +443,8 @@ package body VCS_Module is
       Add_Hook (Kernel, File_Status_Changed_Action_Hook,
                 Wrapper (File_Status_Changed_Cb'Access),
                 Name => "vcs.file_status_changed");
+
+      Load_Cache (Kernel, VCS_Module_ID.Cached_Status);
 
       --  Register VCS commands
 
