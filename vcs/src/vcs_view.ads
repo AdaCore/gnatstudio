@@ -85,8 +85,7 @@ package VCS_View is
    --  Success tells whether the information has been filled or not.
 
    function Get_Kernel
-     (Explorer : access VCS_View_Record)
-      return GPS.Kernel.Kernel_Handle;
+     (Explorer : access VCS_View_Record) return GPS.Kernel.Kernel_Handle;
    --  Return the kernel associated with VCS_View
 
    function Get_Selected_Files
