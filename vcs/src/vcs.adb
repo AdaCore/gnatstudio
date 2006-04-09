@@ -366,7 +366,38 @@ package body VCS is
             return Status_For (Removed);
          when Added_Id =>
             return Status_For (Added);
+         when Needs_Merge_Id =>
+            return Status_For (Needs_Merge);
+         when Needs_Update_Id =>
+            return Status_For (Needs_Update);
+         when Not_Registered_Id =>
+            return Status_For (Not_Registered);
       end case;
    end Get_File_Status;
+
+   ------------------------
+   -- Get_File_Status_Id --
+   ------------------------
+
+   function Get_File_Status_Id (Status : File_Status) return Status_Id is
+   begin
+      if Status.Stock_Id.all = Up_To_Date_Stock then
+         return Up_To_Date_Id;
+      elsif Status.Stock_Id.all = Added_Stock then
+         return Added_Id;
+      elsif Status.Stock_Id.all = Removed_Stock then
+         return Removed_Id;
+      elsif Status.Stock_Id.all = Modified_Stock then
+         return Modified_Id;
+      elsif Status.Stock_Id.all = Needs_Merge_Stock then
+         return Needs_Merge_Id;
+      elsif Status.Stock_Id.all = Needs_Update_Stock then
+         return Needs_Update_Id;
+      elsif Status.Stock_Id.all = Not_Registered_Stock then
+         return Not_Registered_Id;
+      else
+         return Unknown_Id;
+      end if;
+   end Get_File_Status_Id;
 
 end VCS;
