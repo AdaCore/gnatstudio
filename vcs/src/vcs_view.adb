@@ -254,6 +254,10 @@ package body VCS_View is
 
       Text       : String_Access;
    begin
+      if Tooltip.Explorer.Tree = null then
+         return;
+      end if;
+
       Window := Get_Bin_Window (Tooltip.Explorer.Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);
 
@@ -544,9 +548,9 @@ package body VCS_View is
    ----------------
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
-      pragma Unreferenced (View);
+      Explorer : constant VCS_View_Access := VCS_View_Access (View);
    begin
-      Clear_Cache (Get_Status_Cache);
+      Save_Cache (Explorer.Kernel, Get_Status_Cache);
 
    exception
       when E : others =>
