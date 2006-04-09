@@ -147,14 +147,20 @@ package VCS is
    --  tell (disconnected, locked, broken, etc)
 
    type Status_Id
-     is (Unknown_Id, Up_To_Date_Id, Modified_Id, Removed_Id, Added_Id);
+     is (Unknown_Id, Up_To_Date_Id, Modified_Id, Removed_Id, Added_Id,
+         Needs_Merge_Id, Needs_Update_Id, Not_Registered_Id);
 
    function Get_File_Status
      (Ref    : access VCS_Record'Class;
       Status : Status_Id) return File_Status;
-   --  Returns the File_Status given one of standard status. This routine uses
+   --  Return the File_Status given one of standard status. This routine uses
    --  the File_Status Stock_Id as the key. Return the Unknown status if the
    --  key is not found for the given VCS.
+
+   function Get_File_Status_Id (Status : File_Status) return Status_Id;
+   --  Return the Status_Id given a File_Status . This routine uses the
+   --  File_Status Stock_Id as the key. Return the Unknown status if the key is
+   --  not found for the given VCS.
 
    type Status_Array is array (Natural range <>) of File_Status;
    type Status_Array_Access is access Status_Array;
