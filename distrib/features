@@ -56,6 +56,23 @@ F222-017 New key shortcut for Build->Run-><first main>
 
   Keywords: Shortcut, Menu
 
+F122-003 Support for tags and branches (2006-04-09)
+
+  GPS has basic support for tags and branches. A set of actions has been
+  added to create a tag or branch tag, to switch to a specific branch, to
+  compare the local version of a file against a tag or branch tag and to
+  merge changes from a specific branch.
+
+  Keywords: VCS
+
+F316-016 New action to get source of a specific revision (2006-04-09)
+
+  A new action has been added to get the full source of a specific file at
+  a given revision number. This is tightly integrated with the new Revision
+  View.
+
+  Keywords: VCS
+
 F213-017 New python example: spell-checking the current word (2006-02-13)
 
   A new example has been included in the GPS distribution, called
@@ -261,6 +278,13 @@ D611-009 New preference "Save editor in desktop" (2006-04-04)
   never, always, or only when part of the current project.
 
   Keywords: Desktop
+
+D514-009 Persistence of VCS Explorer statuses (2006-04-09)
+
+  The VCS Explorer statuses are now persistent. The statuses are invalidated
+  after a certain amount of time which is two hours.
+
+  Keywords: VCS
 
 D319-023 GPS VCS Explorer supports ignore file (2006-02-16)
 
