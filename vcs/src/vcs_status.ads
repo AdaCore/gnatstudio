@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;      use Ada.Calendar;
+
+with GPS.Kernel;        use GPS.Kernel;
 with HTables;
 with String_List_Utils; use String_List_Utils;
 with VCS;               use VCS;
@@ -58,20 +61,35 @@ package VCS_Status is
       Status : Status_Id) return Boolean;
    --  Returns True if the File status correspond to Status
 
+   procedure Save_Cache
+     (Kernel : access Kernel_Handle_Record'Class; Cache : Status_Cache);
+   --  Save cache information
+
+   procedure Load_Cache
+     (Kernel : access Kernel_Handle_Record'Class; Cache : out Status_Cache);
+   --  Load cache information
+
 private
+
+   type Internal_Record is record
+      LR        : Line_Record;
+      Timestamp : Time;
+   end record;
 
    No_Data : constant Line_Record :=
                ((VFS.No_File, Unknown, others => String_List.Null_List),
                 False);
 
+   No_I_Data : constant Internal_Record := (No_Data, Time_Of (1970, 1, 1));
+
    type Header_Num is range 1 .. 5_000;
 
-   procedure Free (X : in out Line_Record);
+   procedure Free (X : in out Internal_Record);
 
    function Hash (F : Virtual_File) return Header_Num;
 
    package Status_Hash is new HTables.Simple_HTable
-     (Header_Num, Line_Record, Free, No_Data, Virtual_File, Hash, "=");
+     (Header_Num, Internal_Record, Free, No_I_Data, Virtual_File, Hash, "=");
    --  Store for each file the current status. This is a cache to avoid sending
    --  requests to the VCS.
 
