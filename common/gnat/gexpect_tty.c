@@ -41,6 +41,9 @@ Boston, MA 02111-1307, USA.
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>		/* some typedefs are used in sys/file.h */
+#ifndef __MINGW32__
+#include <sys/wait.h>
+#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
