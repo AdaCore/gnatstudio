@@ -18,37 +18,38 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;            use Glib;
-with Glib.Convert;    use Glib.Convert;
-with Glib.Object;     use Glib.Object;
-with Gtk.Box;         use Gtk.Box;
-with Gtk.Button;      use Gtk.Button;
-with Gtk.Dialog;      use Gtk.Dialog;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Event_Box;   use Gtk.Event_Box;
-with Gtk.GEntry;      use Gtk.GEntry;
-with Gtk.Image;       use Gtk.Image;
-with Gtk.Label;       use Gtk.Label;
-with Gtk.List;        use Gtk.List;
-with Gtk.List_Item;   use Gtk.List_Item;
-with Gtk.Stock;       use Gtk.Stock;
-with Gtk.Table;       use Gtk.Table;
-with Gtk.Tooltips;    use Gtk.Tooltips;
-with Gtk.Handlers;    use Gtk.Handlers;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtkada.Combo;    use Gtkada.Combo;
-with Gtkada.Dialogs;  use Gtkada.Dialogs;
-with Glib.Xml_Int;    use Glib.Xml_Int;
-with Gtkada.MDI;      use Gtkada.MDI;
+with Glib;                use Glib;
+with Glib.Convert;        use Glib.Convert;
+with Glib.Object;         use Glib.Object;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Event_Box;       use Gtk.Event_Box;
+with Gtk.GEntry;          use Gtk.GEntry;
+with Gtk.Image;           use Gtk.Image;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.List;            use Gtk.List;
+with Gtk.List_Item;       use Gtk.List_Item;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Stock;           use Gtk.Stock;
+with Gtk.Table;           use Gtk.Table;
+with Gtk.Tooltips;        use Gtk.Tooltips;
+with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtkada.Combo;        use Gtkada.Combo;
+with Gtkada.Dialogs;      use Gtkada.Dialogs;
+with Glib.Xml_Int;        use Glib.Xml_Int;
+with Gtkada.MDI;          use Gtkada.MDI;
 
-with Ada.Exceptions;       use Ada.Exceptions;
-with Projects.Editor;      use Projects, Projects.Editor;
+with Ada.Exceptions;     use Ada.Exceptions;
+with Projects.Editor;    use Projects, Projects.Editor;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
-with Variable_Editors;     use Variable_Editors;
+with Variable_Editors;   use Variable_Editors;
 with GPS.Intl;           use GPS.Intl;
 with String_List_Utils;
 
@@ -58,7 +59,8 @@ package body Scenario_Views is
 
    Me : constant Debug_Handle := Create ("Scenario_Views");
 
-   type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with record
+   type Scenario_View_Record is new Gtk_Scrolled_Window_Record with record
+      Vbox          : Gtk.Box.Gtk_Vbox;
       Table         : Gtk.Table.Gtk_Table;
       Kernel        : GPS.Kernel.Kernel_Handle;
       Empty_Event   : Gtk.Event_Box.Gtk_Event_Box;
@@ -170,14 +172,19 @@ package body Scenario_Views is
       Label : Gtk_Label;
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Box.Initialize_Vbox (View, Homogeneous => False);
+      Gtk.Scrolled_Window.Initialize (View, null, null);
+      Set_Policy (View, Policy_Never, Policy_Automatic);
+      Set_Shadow_Type (View, Shadow_None);
+
+      Gtk_New_Vbox (View.Vbox, Homogeneous => False);
+      Add_With_Viewport (View, View.Vbox);
 
       Gtk_New
         (View.Table,
          Rows        => 1,
          Columns     => 4,
          Homogeneous => False);
-      Pack_Start (View, View.Table, Expand => False);
+      Pack_Start (View.Vbox, View.Table, Expand => False);
       Set_Col_Spacing (View.Table, 0, 0);
       Set_Col_Spacing (View.Table, 1, 1);
 
@@ -185,7 +192,7 @@ package body Scenario_Views is
       Gtk_New (Label,
                -"The project contains no scenario variables");
       Add (View.Empty_Event, Label);
-      Pack_Start (View, View.Empty_Event, Expand => True);
+      Pack_Start (View.Vbox, View.Empty_Event, Expand => True);
 
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
