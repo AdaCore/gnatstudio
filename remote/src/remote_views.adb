@@ -381,7 +381,8 @@ package body Remote_Views is
          Gtk_New (Child, View,
                   Default_Width => 215,
                   Group         => Group_View,
-                  Module        => Remote_View_Module_Id);
+                  Module        => Remote_View_Module_Id,
+                  Use_Scrolled  => True);
          Set_Title (Child, -"Remote View", -"Remote View");
          Put (Get_MDI (User), Child, Initial_Position => Position_Left);
          return MDI_Child (Child);
@@ -785,7 +786,8 @@ package body Remote_Views is
          Gtk_New (Child, Remote,
                   Default_Width => 215,
                   Group         => Group_View,
-                  Module        => Remote_View_Module_Id);
+                  Module        => Remote_View_Module_Id,
+                  Use_Scrolled  => True);
          Set_Title (Child, -"Remote View", -"Remote View");
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
       end if;
