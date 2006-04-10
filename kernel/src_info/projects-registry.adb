@@ -1195,7 +1195,7 @@ package body Projects.Registry is
          elsif Src.Lang = No_Name then
             Set (Registry.Data.Sources,
                  K => F,
-                 E => (No_Project, Unknown_Language, No_Name));
+                 E => (Project, Unknown_Language, No_Name));
 
          elsif Src.Project /= No_Project then
             Errors (-("Warning, duplicate source file ") & F
@@ -1242,9 +1242,15 @@ package body Projects.Registry is
       ---------------------
 
       function File_In_Sources (File : String) return Boolean is
+         Data : Source_File_Data;
       begin
-         return not Sources_Specified
-           or else Get (Registry.Data.Sources, File).Lang /= No_Name;
+         if not Sources_Specified then
+            return True;
+         else
+            Data := Get (Registry.Data.Sources, File);
+            return Data.Lang /= No_Name
+              and then Data.Project = Project;
+         end if;
       end File_In_Sources;
 
       Languages  : Argument_List := Get_Languages (Project);
@@ -2110,7 +2116,7 @@ package body Projects.Registry is
          --  Otherwise we have a source file
 
          Real_Project := Get_Project_From_File
-           (Registry, Base_Name => Filename, Root_If_Not_Found => False);
+           (Registry, Base_Name => Filename, Root_If_Not_Found => True);
 
          if Project /= No_Project then
             Project2 := Project;
@@ -2191,6 +2197,7 @@ package body Projects.Registry is
             end if;
 
             Name_Len := 0;
+
          else
             Name_Len := 0;
          end if;
