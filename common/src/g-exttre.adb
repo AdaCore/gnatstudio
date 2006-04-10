@@ -620,13 +620,7 @@ package body GNAT.Expect.TTY.Remote is
 
          --  Construction of the arguments:
 
-         --  1) Set local arguments
-         if Host = Config.Windows then
-            Old_Args := new Argument_List'((new String'("cmd"),
-              new String'("/c")));
-         end if;
-
-         --  2) Set command
+         --  Set command
          if Old_Args /= null then
             New_Args := new Argument_List'(Old_Args.all &
                                            Remote_Desc.Start_Cmd);
@@ -636,7 +630,7 @@ package body GNAT.Expect.TTY.Remote is
             Old_Args := new Argument_List'(1 => Remote_Desc.Start_Cmd);
          end if;
 
-         --  3) Set user argument
+         --  Set user argument
          if Machine.Desc.User_Name.all /= "" then
             New_Args := new Argument_List'
               (Old_Args.all &
@@ -646,7 +640,7 @@ package body GNAT.Expect.TTY.Remote is
             Old_Args := New_Args;
          end if;
 
-         --  4) Set common arguments and remote command
+         --  Set common arguments and remote command
          New_Args := new Argument_List'
            (Old_Args.all &
             Process_Arg_List
@@ -655,7 +649,7 @@ package body GNAT.Expect.TTY.Remote is
          Simple_Free (Old_Args);
          Old_Args := New_Args;
 
-         --  5) Remove empty arguments
+         --  Remove empty arguments
          declare
             Cleaned : Boolean := True;
          begin
