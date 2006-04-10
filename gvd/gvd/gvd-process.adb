@@ -1449,7 +1449,9 @@ package body GVD.Process is
                  new String'(Send
                    (Debugger.Debugger, Check (Command), Mode => Mode));
 
-               if Output_Command then
+               if Output_Command
+                 and then Debugger.Debugger /= null
+               then
                   Display_Prompt (Debugger.Debugger);
                end if;
             end if;
