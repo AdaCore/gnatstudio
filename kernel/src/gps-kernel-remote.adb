@@ -80,7 +80,6 @@ with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
-with Config;                     use Config;
 with Filesystem.Unix;            use Filesystem.Unix;
 with Filesystem.Windows;         use Filesystem.Windows;
 with GUI_Utils;                  use GUI_Utils;
@@ -3289,12 +3288,6 @@ package body GPS.Kernel.Remote is
 
       if Is_Local (Server) then
          Pd := new GNAT.Expect.TTY.TTY_Process_Descriptor;
-
-         if Host = Config.Windows then
-            --  Windows commands are launched using "cmd /c the_command"
-            L_Args :=
-              new Argument_List'((new String'("cmd"), new String'("/c")));
-         end if;
 
          --  If using an external terminal, use Execute_Command preference
          --  ??? incompatible with gnat.expect.tty.remote...
