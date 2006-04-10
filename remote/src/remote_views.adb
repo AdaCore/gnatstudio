@@ -40,6 +40,7 @@ with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Label;          use Gtk.Label;
 with Gtk.List;           use Gtk.List;
 with Gtk.List_Item;      use Gtk.List_Item;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Style;          use Gtk.Style;
 with Gtk.Table;          use Gtk.Table;
 with Gtk.Tooltips;       use Gtk.Tooltips;
@@ -70,7 +71,8 @@ package body Remote_Views is
 
    Module_Name : constant String := "Remote_View";
 
-   type Remote_View_Record is new Gtk.Table.Gtk_Table_Record with record
+   type Remote_View_Record is new Gtk_Scrolled_Window_Record with record
+      Main_Table         : Gtk.Table.Gtk_Table;
       Kernel             : GPS.Kernel.Kernel_Handle;
       Pane               : Collapsing_Pane.Collapsing_Pane;
       Remote_Combo       : Gtkada_Combo;
@@ -202,11 +204,15 @@ package body Remote_Views is
       Success       : Boolean;
 
    begin
-      Gtk.Table.Initialize (View, 3, 3, False);
+      Gtk.Scrolled_Window.Initialize (View);
+      Set_Policy (View, Policy_Never, Policy_Automatic);
+      Set_Shadow_Type (View, Shadow_None);
+      Gtk_New (View.Main_Table, 3, 3, False);
+      Add_With_Viewport (View, View.Main_Table);
 
       View.Kernel := Kernel;
       Gtk_New (View.Pane, "Servers assignment");
-      Attach (View, View.Pane, 0, 2, 0, 1,
+      Attach (View.Main_Table, View.Pane, 0, 2, 0, 1,
               Expand or Fill, 0);
       Set_Reduce_Window (View.Pane, False);
 
@@ -301,7 +307,7 @@ package body Remote_Views is
       Set_Tip
         (Tooltips, View.Check_Button,
          -"Check your configuration against current project");
-      Attach (View, View.Check_Button,
+      Attach (View.Main_Table, View.Check_Button,
               0, 1, 1, 2, 0, 0, 5, 5);
       Set_Sensitive (View.Check_Button, False);
       View_Callback.Connect
@@ -312,7 +318,7 @@ package body Remote_Views is
       Set_Tip
         (Tooltips, View.Connect_Button,
          -"Connect to the configured remote servers");
-      Attach (View, View.Connect_Button,
+      Attach (View.Main_Table, View.Connect_Button,
               1, 2, 1, 2, 0, 0, 5, 5);
       Set_Sensitive (View.Connect_Button, False);
       View_Callback.Connect
@@ -324,7 +330,7 @@ package body Remote_Views is
       Set_Tip
         (Tooltips, View.Config_List_Button,
          -"Configure the list of available servers");
-      Attach (View, View.Config_List_Button,
+      Attach (View.Main_Table, View.Config_List_Button,
               0, 2, 2, 3, 0, 0, 5, 5);
       View_Callback.Connect
         (View.Config_List_Button, "clicked", On_Config_List_Clicked'Access,
@@ -381,8 +387,7 @@ package body Remote_Views is
          Gtk_New (Child, View,
                   Default_Width => 215,
                   Group         => Group_View,
-                  Module        => Remote_View_Module_Id,
-                  Use_Scrolled  => True);
+                  Module        => Remote_View_Module_Id);
          Set_Title (Child, -"Remote View", -"Remote View");
          Put (Get_MDI (User), Child, Initial_Position => Position_Left);
          return MDI_Child (Child);
@@ -786,8 +791,7 @@ package body Remote_Views is
          Gtk_New (Child, Remote,
                   Default_Width => 215,
                   Group         => Group_View,
-                  Module        => Remote_View_Module_Id,
-                  Use_Scrolled  => True);
+                  Module        => Remote_View_Module_Id);
          Set_Title (Child, -"Remote View", -"Remote View");
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
       end if;
