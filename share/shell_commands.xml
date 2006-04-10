@@ -1281,7 +1281,8 @@ This is also the list of projects that import self.</description>
        <description>Fetch the value of the attribute in the project.
 If the package is not specified, the attribute at the toplevel of the project is queried.
 The index only needs to be specified if it applies to that attribute.
-If the attribute value is stored as a list, the result string is a concatenation of all the elements of the list. This function always returns the value of the attribute in the currently selected scenario.</description>
+If the attribute value is stored as a list, the result string is a concatenation of all the elements of the list. This function always returns the value of the attribute in the currently selected scenario.
+When the attribute is not explicitely overridden in the project, the default value is returned. This default value is the one described in an XML file (see the GPS documentation for more information). This default value is not necessarily valid, and could for instance be a string starting with a parenthesis, as explained in the GPS documentation.</description>
        <example lang="python">
            If the project file contains the following text:
                project Default is
