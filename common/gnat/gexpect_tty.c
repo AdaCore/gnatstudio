@@ -26,21 +26,21 @@ Boston, MA 02111-1307, USA.
 /* Include the system-specific definitions */
 #include SYSTEM_INCLUDE
 
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifndef WIN32
+
 #define P_(X) X
 #define RETSIGTYPE void
 
 #include "systty.h"
 #include <signal.h>
 #include "syssignal.h"
-#include <errno.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>		/* some typedefs are used in sys/file.h */
-#ifndef __MINGW32__
-#include <sys/wait.h>
-#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -59,12 +59,6 @@ Boston, MA 02111-1307, USA.
 
 #ifdef HPUX
 #include <sys/ptyio.h>
-#endif
-
-#ifdef WIN32
-#include <windows.h>
-#include <io.h>
-#include <fcntl.h>
 #endif
 
 #ifdef HAVE_PTYS
@@ -93,9 +87,6 @@ struct GVD_Process {
 
   sigset_t procmask;
   int forkin, forkout;
-#ifdef WIN32
-  PROCESS_INFORMATION procinfo;
-#endif
 };
 
 #define NILP(x) ((x) == 0)
@@ -118,328 +109,6 @@ struct GVD_Process {
    1 = tty
  */
 static int Vprocess_connection_type = 1;
-
-#ifdef WIN32
-#define pipe nt_pipe
-#define HAVE_NTGUI
-#define MAXPATHLEN 1024
-
-/* Control whether create_child causes the process to inherit GVD'
-   console window, or be given a new one of its own.  The default is
-   0, to allow multiple DOS programs to run on Win95.  Having separate
-   consoles also allows Gvd to cleanly terminate process groups.  */
-static int Vw32_start_process_share_console = 0;
-
-/* Control whether create_child cause the process to inherit GVD'
-   error mode setting.  The default is 1, to minimize the possibility of
-   subprocesses blocking when accessing unmounted drives.  */
-static int Vw32_start_process_inherit_error_mode = 1;
-
-/* Control whether create_child causes the process' window to be
-   hidden.  The default is 0. */
-static int Vw32_start_process_show_window = 0;
-
-/* Control whether spawnve quotes arguments as necessary to ensure
-   correct parsing by child process.  Because not all uses of spawnve
-   are careful about constructing argv arrays, we make this behaviour
-   conditional (off by default, since a similar operation is already done
-   in g-expect.adb by calling Normalize_Argument). */
-static int Vw32_quote_process_args = 0;
-
-static int
-nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
-{
-  STARTUPINFO start;
-  SECURITY_ATTRIBUTES sec_attrs;
-  SECURITY_DESCRIPTOR sec_desc;
-  DWORD flags;
-  char dir[ MAXPATHLEN ];
-  int pid;
-  char *cmdline, *parg, **targ;
-  int do_quoting = 0;
-  char escape_char;
-  int arglen;
-
-  /* we have to do some conjuring here to put argv and envp into the
-     form CreateProcess wants...  argv needs to be a space separated/null
-     terminated list of parameters, and envp is a null
-     separated/double-null terminated list of parameters.
-
-     Additionally, zero-length args and args containing whitespace or
-     quote chars need to be wrapped in double quotes - for this to work,
-     embedded quotes need to be escaped as well.  The aim is to ensure
-     the child process reconstructs the argv array we start with
-     exactly, so we treat quotes at the beginning and end of arguments
-     as embedded quotes.
-
-     Note that using backslash to escape embedded quotes requires
-     additional special handling if an embedded quote is already
-     preceeded by backslash, or if an arg requiring quoting ends with
-     backslash.  In such cases, the run of escape characters needs to be
-     doubled.  For consistency, we apply this special handling as long
-     as the escape character is not quote.
-
-     Since we have no idea how large argv and envp are likely to be we
-     figure out list lengths on the fly and allocate them.  */
-
-  if (!NILP (Vw32_quote_process_args))
-    {
-      do_quoting = 1;
-      /* Override escape char by binding w32-quote-process-args to
-	 desired character, or use t for auto-selection.  */
-      if (INTEGERP (Vw32_quote_process_args))
-	escape_char = XINT (Vw32_quote_process_args);
-      else
-	escape_char = '\\';
-    }
-
-  /* do argv...  */
-  arglen = 0;
-  targ = argv;
-  while (*targ)
-    {
-      char * p = *targ;
-      int need_quotes = 0;
-      int escape_char_run = 0;
-
-      if (*p == 0)
-	need_quotes = 1;
-      for ( ; *p; p++)
-	{
-	  if (*p == '"')
-	    {
-	      /* allow for embedded quotes to be escaped */
-	      arglen++;
-	      need_quotes = 1;
-	      /* handle the case where the embedded quote is already escaped */
-	      if (escape_char_run > 0)
-		{
-		  /* To preserve the arg exactly, we need to double the
-		     preceding escape characters (plus adding one to
-		     escape the quote character itself).  */
-		  arglen += escape_char_run;
-		}
-	    }
-	  else if (*p == ' ' || *p == '\t')
-	    {
-	      need_quotes = 1;
-	    }
-
-	  if (*p == escape_char && escape_char != '"')
-	    escape_char_run++;
-	  else
-	    escape_char_run = 0;
-	}
-      if (need_quotes)
-	{
-	  arglen += 2;
-	  /* handle the case where the arg ends with an escape char - we
-	     must not let the enclosing quote be escaped.  */
-	  if (escape_char_run > 0)
-	    arglen += escape_char_run;
-	}
-      arglen += strlen (*targ++) + 1;
-    }
-  cmdline = (char*)malloc (arglen + 1);
-  targ = argv;
-  parg = cmdline;
-  while (*targ)
-    {
-      char * p = *targ;
-      int need_quotes = 0;
-
-      if (*p == 0)
-	need_quotes = 1;
-
-      if (do_quoting)
-	{
-	  for ( ; *p; p++)
-	    if (*p == ' ' || *p == '\t' || *p == '"')
-	      need_quotes = 1;
-	}
-      if (need_quotes)
-	{
-	  int escape_char_run = 0;
-	  char * first;
-	  char * last;
-
-	  p = *targ;
-	  first = p;
-	  last = p + strlen (p) - 1;
-	  *parg++ = '"';
-	  for ( ; *p; p++)
-	    {
-	      if (*p == '"')
-		{
-		  /* double preceding escape chars if any */
-		  while (escape_char_run > 0)
-		    {
-		      *parg++ = escape_char;
-		      escape_char_run--;
-		    }
-		  /* escape all quote chars, even at beginning or end */
-		  *parg++ = escape_char;
-		}
-	      *parg++ = *p;
-
-	      if (*p == escape_char && escape_char != '"')
-		escape_char_run++;
-	      else
-		escape_char_run = 0;
-	    }
-	  /* double escape chars before enclosing quote */
-	  while (escape_char_run > 0)
-	    {
-	      *parg++ = escape_char;
-	      escape_char_run--;
-	    }
-	  *parg++ = '"';
-	}
-      else
-	{
-	  strcpy (parg, *targ);
-	  parg += strlen (*targ);
-	}
-      *parg++ = ' ';
-      targ++;
-    }
-  *--parg = '\0';
-
-  memset (&start, 0, sizeof (start));
-  start.cb = sizeof (start);
-
-#ifdef HAVE_NTGUI
-  if (NILP (Vw32_start_process_show_window))
-    start.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-  else
-    start.dwFlags = STARTF_USESTDHANDLES;
-  start.wShowWindow = SW_HIDE;
-
-  start.hStdInput = GetStdHandle (STD_INPUT_HANDLE);
-  start.hStdOutput = GetStdHandle (STD_OUTPUT_HANDLE);
-  start.hStdError = GetStdHandle (STD_ERROR_HANDLE);
-#endif /* HAVE_NTGUI */
-
-  /* Explicitly specify no security */
-  if (!InitializeSecurityDescriptor (&sec_desc, SECURITY_DESCRIPTOR_REVISION))
-    goto EH_Fail;
-  if (!SetSecurityDescriptorDacl (&sec_desc, TRUE, NULL, FALSE))
-    goto EH_Fail;
-  sec_attrs.nLength = sizeof (sec_attrs);
-  sec_attrs.lpSecurityDescriptor = &sec_desc;
-  sec_attrs.bInheritHandle = FALSE;
-
-  flags = (!NILP (Vw32_start_process_share_console)
-	   ? CREATE_NEW_PROCESS_GROUP
-	   : CREATE_NEW_CONSOLE);
-  if (NILP (Vw32_start_process_inherit_error_mode))
-    flags |= CREATE_DEFAULT_ERROR_MODE;
-
-  if (!CreateProcess (NULL, cmdline, &sec_attrs, NULL, TRUE,
-		      flags, env, ".", &start, procinfo))
-    goto EH_Fail;
-
-  pid = (int) procinfo->dwProcessId;
-
-  /* Hack for Windows 95, which assigns large (ie negative) pids */
-  if (pid < 0)
-    pid = -pid;
-
-  return pid;
-
- EH_Fail:
-  return -1;
-}
-
-static int
-nt_pipe (int *fd)
-{
-  return _pipe (fd, 1024, _O_BINARY);
-}
-
-/* The following two routines are used to manipulate stdin, stdout, and
-   stderr of our child processes.
-
-   Assuming that in, out, and err are *not* inheritable, we make them
-   stdin, stdout, and stderr of the child as follows:
-
-   - Save the parent's current standard handles.
-   - Set the std handles to inheritable duplicates of the ones being passed in.
-     (Note that _get_osfhandle() is an io.h procedure that retrieves the
-     NT file handle for a crt file descriptor.)
-   - Spawn the child, which inherits in, out, and err as stdin,
-     stdout, and stderr. (see Spawnve)
-   - Close the std handles passed to the child.
-   - Reset the parent's standard handles to the saved handles.
-     (see reset_standard_handles)
-   We assume that the caller closes in, out, and err after calling us.  */
-
-static void
-prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
-{
-  HANDLE parent;
-  HANDLE newstdin, newstdout, newstderr;
-
-  parent = GetCurrentProcess ();
-
-  handles[0] = GetStdHandle (STD_INPUT_HANDLE);
-  handles[1] = GetStdHandle (STD_OUTPUT_HANDLE);
-  handles[2] = GetStdHandle (STD_ERROR_HANDLE);
-
-  /* make inheritable copies of the new handles */
-  if (!DuplicateHandle (parent,
-		       (HANDLE) _get_osfhandle (in),
-		       parent,
-		       &newstdin,
-		       0,
-		       TRUE,
-		       DUPLICATE_SAME_ACCESS))
-    report_file_error ("Duplicating input handle for child", Qnil);
-
-  if (!DuplicateHandle (parent,
-		       (HANDLE) _get_osfhandle (out),
-		       parent,
-		       &newstdout,
-		       0,
-		       TRUE,
-		       DUPLICATE_SAME_ACCESS))
-    report_file_error ("Duplicating output handle for child", Qnil);
-  
-  if (!DuplicateHandle (parent,
-		       (HANDLE) _get_osfhandle (err),
-		       parent,
-		       &newstderr,
-		       0,
-		       TRUE,
-		       DUPLICATE_SAME_ACCESS))
-    report_file_error ("Duplicating error handle for child", Qnil);
-
-  /* and store them as our std handles */
-  if (!SetStdHandle (STD_INPUT_HANDLE, newstdin))
-    report_file_error ("Changing stdin handle", Qnil);
-
-  if (!SetStdHandle (STD_OUTPUT_HANDLE, newstdout))
-    report_file_error ("Changing stdout handle", Qnil);
-  
-  if (!SetStdHandle (STD_ERROR_HANDLE, newstderr))
-    report_file_error ("Changing stderr handle", Qnil);
-}
-
-static void
-reset_standard_handles (int in, int out, int err, HANDLE handles[3])
-{
-  /* close the duplicated handles passed to the child */
-  CloseHandle (GetStdHandle (STD_INPUT_HANDLE));
-  CloseHandle (GetStdHandle (STD_OUTPUT_HANDLE));
-  CloseHandle (GetStdHandle (STD_ERROR_HANDLE));
-
-  /* now restore parent's saved std handles */
-  SetStdHandle (STD_INPUT_HANDLE, handles[0]);
-  SetStdHandle (STD_OUTPUT_HANDLE, handles[1]);
-  SetStdHandle (STD_ERROR_HANDLE, handles[2]);
-}
-
-#endif /* WIN32 */
 
 /******************************************************
  **  gvd_open ()
@@ -683,8 +352,6 @@ gvd_get_tty (fd, settings)
  **
  ***********************************************************/
 
-#ifndef WIN32
-
 sigset_t
 sys_sigunblock (sigset_t new_mask)
 {
@@ -705,8 +372,6 @@ sys_sigblock (sigset_t new_mask)
   sigprocmask (SIG_BLOCK, &new_mask, &old_mask);
   return (old_mask);
 }
-
-#endif /* WIN32 */
 
 /*************************************************************
  **  sys_signal ()
@@ -789,7 +454,7 @@ setup_pty (fd)
   /* Beeing able to trap exceptional conditions like a "close" on the
      slave side is useful and requires an explicit ioctl call to be enabled on
      HPUX.  */
-#ifdef HPUX 
+#ifdef HPUX
   ioctl (fd, TIOCTRAP, &on);
 #endif
 }
@@ -920,7 +585,7 @@ allocate_pty (void)
 
   /* We jump through some hoops to frob the pty.
      It's not obvious that checking the return code here is useful. */
-  
+
   /* "The grantpt() function will fail if it is unable to successfully
       invoke the setuid root program.  It may also fail if the
       application has installed a signal handler to catch SIGCHLD
@@ -936,12 +601,12 @@ allocate_pty (void)
 #if defined (HAVE_UNLOCKPT)
   unlockpt (master_fd);
 #endif
-  
+
   UNBLOCK_SIGNAL (SIGCHLD);
 #endif /* HAVE_GRANTPT || HAVE_UNLOCKPT */
-  
+
   return master_fd;
- 
+
  lose:
   if (master_fd >= 0)
     close (master_fd);
@@ -1014,7 +679,7 @@ allocate_pty_the_old_fashioned_way ()
             sprintf (pty_name, "/dev/tty%c%x", c, i);
 #endif /* no PTY_TTY_NAME_SPRINTF */
             if (access (pty_name, 6) == 0)
-              { 
+              {
                 setup_pty (fd);
                 return fd;
               }
@@ -1178,10 +843,6 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
 {
   char **env;
   char *pwd_var;
-#ifdef WINDOWSNT
-  int cpid;
-  HANDLE handles[3];
-#endif /* WINDOWSNT */
 
   int pid = getpid ();
 
@@ -1192,10 +853,6 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
      `env' to a vector of the strings in Vprocess_environment.
      This code has been removed completely. */
 
-#ifdef WINDOWSNT
-  prepare_standard_handles (in, out, err, handles);
-
-#else  /* not WINDOWSNT */
   /* Make sure that in, out, and err are not actually already in
      descriptors zero, one, or two; this could happen if GVD is
      started with its standard in, out, or error closed, as might
@@ -1232,7 +889,6 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
   gvd_close (out);
   gvd_close (err);
 #endif /* not MSDOS */
-#endif /* not WINDOWSNT */
 
 #if defined(USG) && !defined(BSD_PGRPS)
 #ifndef SETPGRP_RELEASES_CTTY
@@ -1258,15 +914,6 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
     report_file_error ("Spawning child process", Qnil);
   return pid;
 #else  /* not MSDOS */
-#ifdef WINDOWSNT
-  /* Spawn the child. */
-  cpid = nt_spawnve (new_argv[0], new_argv, NULL, &process->procinfo);
-  if (cpid == -1)
-    /* An error occurred while trying to spawn the process.  */
-    report_file_error ("Spawning child process", Qnil);
-  reset_standard_handles (in, out, err, handles);
-  return cpid;
-#else /* not WINDOWSNT */
   /* execvp does not accept an environment arg so the only way
      to pass this environment is to set environ.  Our caller
      is responsible for restoring the ambient value of environ.  */
@@ -1277,7 +924,6 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
   write (1, new_argv[0], strlen (new_argv[0]));
   write (1, "\n", 1);
   _exit (1);
-#endif /* not WINDOWSNT */
 #endif /* not MSDOS */
 }
 #endif /* VMS */
@@ -1287,7 +933,7 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
  ********************************/
 
 void
-gvd_free_process (struct GVD_Process** process) 
+gvd_free_process (struct GVD_Process** process)
 {
    free (*process);
    *process = NULL;
@@ -1587,9 +1233,7 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
 
   signal (SIGINT, SIG_DFL);
 
-#ifndef WIN32
   signal (SIGQUIT, SIG_DFL);
-#endif /* WIN32 */
 
   /* Stop blocking signals in the child.  */
 #ifdef POSIX_SIGNALS
@@ -1608,13 +1252,8 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
 
   if (process->pty_flag)
     child_setup_tty (xforkout);
-#ifdef WINDOWSNT
-  pid = child_setup (xforkin, xforkout, xforkout,
-		     new_argv, 1, current_dir, process);
-#else  /* not WINDOWSNT */
   child_setup (xforkin, xforkout, xforkout,
 	       new_argv, 1, current_dir, process);
-#endif /* not WINDOWSNT */
 
   process->pid=pid;
   return pid;
@@ -1696,8 +1335,6 @@ gvd_setup_parent_communication
 }
 
 /* Ctrl-C Handling */
-
-#ifndef WIN32
 
 #ifdef subprocesses
 
@@ -1968,7 +1605,519 @@ gvd_waitpid (struct GVD_Process* p)
   return WEXITSTATUS (status);
 }
 
-#else /* !WIN32 */
+#else /* WIN32 */
+
+#include <windows.h>
+
+#define MAXPATHLEN 1024
+
+#define NILP(x) ((x) == 0)
+#define Qnil 0
+#define report_file_error(x, y) fprintf (stderr, "Error: "x"\n");
+#define INTEGERP(x) 1
+#define XINT(x) x
+
+struct GVD_Process {
+  int pid;           /* Number of this process */
+  PROCESS_INFORMATION procinfo;
+  HANDLE w_infd, w_outfd;
+  HANDLE w_forkin, w_forkout, w_forkerr;
+};
+
+/* Control whether create_child causes the process to inherit GVD'
+   console window, or be given a new one of its own.  The default is
+   0, to allow multiple DOS programs to run on Win95.  Having separate
+   consoles also allows Gvd to cleanly terminate process groups.  */
+static int Vw32_start_process_share_console = 0;
+
+/* Control whether create_child cause the process to inherit GVD'
+   error mode setting.  The default is 1, to minimize the possibility of
+   subprocesses blocking when accessing unmounted drives.  */
+static int Vw32_start_process_inherit_error_mode = 1;
+
+/* Control whether spawnve quotes arguments as necessary to ensure
+   correct parsing by child process.  Because not all uses of spawnve
+   are careful about constructing argv arrays, we make this behaviour
+   conditional (off by default, since a similar operation is already done
+   in g-expect.adb by calling Normalize_Argument). */
+static int Vw32_quote_process_args = 0;
+
+DWORD AbsoluteSeek(HANDLE, DWORD);
+VOID  ReadBytes(HANDLE, LPVOID, DWORD);
+VOID  WriteBytes(HANDLE, LPVOID, DWORD);
+VOID  CopySection(HANDLE, HANDLE, DWORD);
+
+#define XFER_BUFFER_SIZE 2048
+
+/* This tell if the executable we're about to launch uses a GUI interface. */
+/* if we can't determine it, we will return true */
+int is_gui_app (char *exe)
+{
+  HANDLE hImage;
+
+  DWORD  bytes;
+  DWORD  iSection;
+  DWORD  SectionOffset;
+  DWORD  CoffHeaderOffset;
+  DWORD  MoreDosHeader[16];
+
+  ULONG  ntSignature;
+
+  IMAGE_DOS_HEADER      image_dos_header;
+  IMAGE_FILE_HEADER     image_file_header;
+  IMAGE_OPTIONAL_HEADER image_optional_header;
+  IMAGE_SECTION_HEADER  image_section_header;
+
+  /*
+   *  Open the reference file.
+   */
+  hImage = CreateFile(exe,
+                      GENERIC_READ,
+                      FILE_SHARE_READ,
+                      NULL,
+                      OPEN_EXISTING,
+                      FILE_ATTRIBUTE_NORMAL,
+                      NULL);
+
+  if (INVALID_HANDLE_VALUE == hImage)
+    {
+      report_file_error ("Could not open exe\n", Qnil);
+      return -1;
+    }
+
+  /*
+   *  Read the MS-DOS image header.
+   */
+  ReadBytes(hImage,
+            &image_dos_header,
+            sizeof(IMAGE_DOS_HEADER));
+
+  if (IMAGE_DOS_SIGNATURE != image_dos_header.e_magic)
+    {
+      report_file_error("Sorry, I do not understand this file.\n", Qnil);
+      return -1;
+    }
+
+  /*
+   *  Read more MS-DOS header.       */
+  ReadBytes(hImage,
+            MoreDosHeader,
+            sizeof(MoreDosHeader));
+   /*
+   *  Get actual COFF header.
+   */
+  CoffHeaderOffset = AbsoluteSeek(hImage, image_dos_header.e_lfanew) +
+                     sizeof(ULONG);
+  if (CoffHeaderOffset < 0)
+    return -1;
+
+  ReadBytes (hImage, &ntSignature, sizeof(ULONG));
+
+  if (IMAGE_NT_SIGNATURE != ntSignature)
+    {
+      report_file_error ("Missing NT signature. Unknown file type.\n", Qnil);
+      return -1;
+    }
+
+  SectionOffset = CoffHeaderOffset + IMAGE_SIZEOF_FILE_HEADER +
+    IMAGE_SIZEOF_NT_OPTIONAL_HEADER;
+
+  ReadBytes(hImage,
+            &image_file_header,
+            IMAGE_SIZEOF_FILE_HEADER);
+
+  /*
+   *  Read optional header.
+   */
+  ReadBytes(hImage,
+            &image_optional_header,
+            IMAGE_SIZEOF_NT_OPTIONAL_HEADER);
+
+  switch (image_optional_header.Subsystem)
+    {
+    case IMAGE_SUBSYSTEM_UNKNOWN:
+        return 1;
+        break;
+
+    case IMAGE_SUBSYSTEM_NATIVE:
+        return 1;
+        break;
+
+    case IMAGE_SUBSYSTEM_WINDOWS_GUI:
+        return 1;
+        break;
+
+    case IMAGE_SUBSYSTEM_WINDOWS_CUI:
+        return 0;
+        break;
+
+    case IMAGE_SUBSYSTEM_OS2_CUI:
+        return 0;
+        break;
+
+    case IMAGE_SUBSYSTEM_POSIX_CUI:
+        return 0;
+        break;
+
+    default:
+        /* Unknown, return GUI app to be preservative: if yes, it will be
+           correctly launched, if no, it will be launched, and a console will
+           be also displayed, which is not a big deal */
+        return 1;
+        break;
+    }
+
+}
+
+DWORD
+AbsoluteSeek(HANDLE hFile,
+             DWORD  offset)
+{
+    DWORD newOffset;
+
+    if ((newOffset = SetFilePointer(hFile,
+                                    offset,
+                                    NULL,
+                                    FILE_BEGIN)) == 0xFFFFFFFF)
+      return -1;
+
+    return newOffset;
+}
+
+VOID
+ReadBytes(HANDLE hFile,
+          LPVOID buffer,
+          DWORD  size)
+{
+    DWORD bytes;
+
+    if (!ReadFile(hFile,
+                  buffer,
+                  size,
+                  &bytes,
+                  NULL))
+    {
+      size = 0;
+      return;
+    }
+    else if (size != bytes)
+    {
+      return;
+    }
+}
+
+
+static int
+nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
+{
+  STARTUPINFO start;
+  SECURITY_ATTRIBUTES sec_attrs;
+  SECURITY_DESCRIPTOR sec_desc;
+  DWORD flags;
+  char dir[ MAXPATHLEN ];
+  int pid;
+  char *cmdline, *parg, **targ;
+  int do_quoting = 0;
+  char escape_char;
+  int arglen;
+
+  /* we have to do some conjuring here to put argv and envp into the
+     form CreateProcess wants...  argv needs to be a space separated/null
+     terminated list of parameters, and envp is a null
+     separated/double-null terminated list of parameters.
+
+     Additionally, zero-length args and args containing whitespace or
+     quote chars need to be wrapped in double quotes - for this to work,
+     embedded quotes need to be escaped as well.  The aim is to ensure
+     the child process reconstructs the argv array we start with
+     exactly, so we treat quotes at the beginning and end of arguments
+     as embedded quotes.
+
+     Note that using backslash to escape embedded quotes requires
+     additional special handling if an embedded quote is already
+     preceeded by backslash, or if an arg requiring quoting ends with
+     backslash.  In such cases, the run of escape characters needs to be
+     doubled.  For consistency, we apply this special handling as long
+     as the escape character is not quote.
+
+     Since we have no idea how large argv and envp are likely to be we
+     figure out list lengths on the fly and allocate them.  */
+
+  if (!NILP (Vw32_quote_process_args))
+    {
+      do_quoting = 1;
+      /* Override escape char by binding w32-quote-process-args to
+	 desired character, or use t for auto-selection.  */
+      if (INTEGERP (Vw32_quote_process_args))
+	escape_char = XINT (Vw32_quote_process_args);
+      else
+	escape_char = '\\';
+    }
+
+  /* do argv...  */
+  arglen = 0;
+  targ = argv;
+  while (*targ)
+    {
+      char * p = *targ;
+      int need_quotes = 0;
+      int escape_char_run = 0;
+
+      if (*p == 0)
+	need_quotes = 1;
+      for ( ; *p; p++)
+	{
+	  if (*p == '"')
+	    {
+	      /* allow for embedded quotes to be escaped */
+	      arglen++;
+	      need_quotes = 1;
+	      /* handle the case where the embedded quote is already escaped */
+	      if (escape_char_run > 0)
+		{
+		  /* To preserve the arg exactly, we need to double the
+		     preceding escape characters (plus adding one to
+		     escape the quote character itself).  */
+		  arglen += escape_char_run;
+		}
+	    }
+	  else if (*p == ' ' || *p == '\t')
+	    {
+	      need_quotes = 1;
+	    }
+
+	  if (*p == escape_char && escape_char != '"')
+	    escape_char_run++;
+	  else
+	    escape_char_run = 0;
+	}
+      if (need_quotes)
+	{
+	  arglen += 2;
+	  /* handle the case where the arg ends with an escape char - we
+	     must not let the enclosing quote be escaped.  */
+	  if (escape_char_run > 0)
+	    arglen += escape_char_run;
+	}
+      arglen += strlen (*targ++) + 1;
+    }
+  cmdline = (char*)malloc (arglen + 1);
+  targ = argv;
+  parg = cmdline;
+  while (*targ)
+    {
+      char * p = *targ;
+      int need_quotes = 0;
+
+      if (*p == 0)
+	need_quotes = 1;
+
+      if (do_quoting)
+	{
+	  for ( ; *p; p++)
+	    if (*p == ' ' || *p == '\t' || *p == '"')
+	      need_quotes = 1;
+	}
+      if (need_quotes)
+	{
+	  int escape_char_run = 0;
+	  char * first;
+	  char * last;
+
+	  p = *targ;
+	  first = p;
+	  last = p + strlen (p) - 1;
+	  *parg++ = '"';
+	  for ( ; *p; p++)
+	    {
+	      if (*p == '"')
+		{
+		  /* double preceding escape chars if any */
+		  while (escape_char_run > 0)
+		    {
+		      *parg++ = escape_char;
+		      escape_char_run--;
+		    }
+		  /* escape all quote chars, even at beginning or end */
+		  *parg++ = escape_char;
+		}
+	      *parg++ = *p;
+
+	      if (*p == escape_char && escape_char != '"')
+		escape_char_run++;
+	      else
+		escape_char_run = 0;
+	    }
+	  /* double escape chars before enclosing quote */
+	  while (escape_char_run > 0)
+	    {
+	      *parg++ = escape_char;
+	      escape_char_run--;
+	    }
+	  *parg++ = '"';
+	}
+      else
+	{
+	  strcpy (parg, *targ);
+	  parg += strlen (*targ);
+	}
+      *parg++ = ' ';
+      targ++;
+    }
+  *--parg = '\0';
+
+  memset (&start, 0, sizeof (start));
+  start.cb = sizeof (start);
+
+  start.dwFlags = STARTF_USESTDHANDLES;
+  start.hStdInput = GetStdHandle (STD_INPUT_HANDLE);
+  start.hStdOutput = GetStdHandle (STD_OUTPUT_HANDLE);
+  start.hStdError = GetStdHandle (STD_ERROR_HANDLE);
+
+  if (NILP (is_gui_app (argv[0]))) {
+     start.dwFlags |= STARTF_USESHOWWINDOW;
+     start.wShowWindow = SW_HIDE;
+   }
+
+  /* Explicitly specify no security */
+  if (!InitializeSecurityDescriptor (&sec_desc, SECURITY_DESCRIPTOR_REVISION))
+    goto EH_Fail;
+  if (!SetSecurityDescriptorDacl (&sec_desc, TRUE, NULL, FALSE))
+    goto EH_Fail;
+  sec_attrs.nLength = sizeof (sec_attrs);
+  sec_attrs.lpSecurityDescriptor = &sec_desc;
+  sec_attrs.bInheritHandle = FALSE;
+
+  flags = CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE;
+  if (NILP (Vw32_start_process_inherit_error_mode))
+    flags |= CREATE_DEFAULT_ERROR_MODE;
+
+  if (!CreateProcess (NULL, cmdline, &sec_attrs, NULL, TRUE,
+		      flags, env, ".", &start, &process->procinfo))
+    goto EH_Fail;
+
+  pid = (int) process->procinfo.dwProcessId;
+
+  /* Hack for Windows 95, which assigns large (ie negative) pids */
+  if (pid < 0)
+    pid = -pid;
+
+  return pid;
+
+ EH_Fail:
+  return -1;
+}
+
+/********************************
+ **  gvd_setup_communication ()
+ ********************************/
+
+int
+gvd_setup_communication (struct GVD_Process** process_out) /* output param */
+{
+  struct GVD_Process* process;
+
+  process = (struct GVD_Process*)malloc (sizeof (struct GVD_Process));
+  *process_out = process;
+
+  return 0;
+}
+
+int
+gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
+{
+  int cpid;
+
+  HANDLE forkin, forkout;
+  HANDLE parent;
+  HANDLE handles[3];
+
+  parent = GetCurrentProcess ();
+
+  handles[0] = GetStdHandle (STD_INPUT_HANDLE);
+  handles[1] = GetStdHandle (STD_OUTPUT_HANDLE);
+  handles[2] = GetStdHandle (STD_ERROR_HANDLE);
+
+  CreatePipe (&forkin, &process->w_infd, NULL, 0);
+  CreatePipe (&process->w_outfd, &forkout, NULL, 0);
+
+  /* make inheritable copies of the new handles */
+  if (!DuplicateHandle (parent,
+		        forkin,
+		        parent,
+		        &process->w_forkin,
+		        0,
+		        TRUE,
+		        DUPLICATE_SAME_ACCESS))
+    report_file_error ("Duplicating input handle for child", Qnil);
+
+  if (!DuplicateHandle (parent,
+		        forkout,
+		        parent,
+		        &process->w_forkout,
+		        0,
+		        TRUE,
+		        DUPLICATE_SAME_ACCESS))
+    report_file_error ("Duplicating output handle for child", Qnil);
+
+  if (!DuplicateHandle (parent,
+		        forkout,
+		        parent,
+		        &process->w_forkerr,
+		        0,
+		        TRUE,
+		        DUPLICATE_SAME_ACCESS))
+    report_file_error ("Duplicating error handle for child", Qnil);
+
+  /* Close duplicated handles, not used by current process */
+  CloseHandle (forkin);
+  CloseHandle (forkout);
+
+  /* and store them as our std handles */
+  if (!SetStdHandle (STD_INPUT_HANDLE, process->w_forkin))
+    report_file_error ("Changing stdin handle", Qnil);
+
+  if (!SetStdHandle (STD_OUTPUT_HANDLE, process->w_forkout))
+    report_file_error ("Changing stdout handle", Qnil);
+
+  if (!SetStdHandle (STD_ERROR_HANDLE, process->w_forkerr))
+    report_file_error ("Changing stderr handle", Qnil);
+
+  /* Spawn the child. */
+  cpid = nt_spawnve (new_argv[0], new_argv, NULL, process);
+
+  if (cpid == -1)
+    /* An error occurred while trying to spawn the process.  */
+    report_file_error ("Spawning child process", Qnil);
+
+  /* close the duplicated handles passed to the child */
+  CloseHandle (GetStdHandle (STD_INPUT_HANDLE));
+  CloseHandle (GetStdHandle (STD_OUTPUT_HANDLE));
+  CloseHandle (GetStdHandle (STD_ERROR_HANDLE));
+
+  /* now restore parent's saved std handles */
+  SetStdHandle (STD_INPUT_HANDLE, handles[0]);
+  SetStdHandle (STD_OUTPUT_HANDLE, handles[1]);
+  SetStdHandle (STD_ERROR_HANDLE, handles[2]);
+
+  /* close the duplicated handles passed to the child */
+  CloseHandle (process->w_forkin);
+  CloseHandle (process->w_forkout);
+  CloseHandle (process->w_forkerr);
+
+  return cpid;
+}
+
+int
+gvd_setup_parent_communication
+  (struct GVD_Process* process, int* in, int* out, int* err, int* pid)
+{
+  *in = _open_osfhandle ((long) process->w_infd, 0);
+  *out = _open_osfhandle ((long) process->w_outfd, 0);
+  *err = _open_osfhandle ((long) process->w_outfd, 0);
+  *pid = process->procinfo.dwProcessId;
+}
+
 
 typedef struct _child_process
 {
@@ -2132,7 +2281,9 @@ gvd_interrupt_pid (int pid)
 int
 gvd_terminate_process (struct GVD_Process* p)
 {
-  if (TerminateProcess (p->procinfo.hProcess, 1) == FALSE)
+  DWORD rc;
+
+  if (!TerminateProcess (p->procinfo.hProcess, 1))
     return -1;
   else
     return 0;
@@ -2157,14 +2308,25 @@ gvd_waitpid (struct GVD_Process* p)
   CloseHandle (p->procinfo.hThread);
   CloseHandle (p->procinfo.hProcess);
 
-  close (p->infd);
-  close (p->outfd);
-  close (p->forkin);
-  close (p->forkout);
+  CloseHandle (p->w_infd);
+  CloseHandle (p->w_outfd);
 
   return (int) exitcode;
 }
-#endif /* !WIN32 */
+
+/********************************
+ **  gvd_free_process ()
+ ********************************/
+
+void
+gvd_free_process (struct GVD_Process** process)
+{
+   free (*process);
+   *process = NULL;
+}
+
+#endif /* WIN32 */
+
 
 /* TTY handling */
 
@@ -2225,6 +2387,8 @@ gvd_reset_tty (TTY_Handle* t)
 void
 gvd_close_tty (TTY_Handle* t)
 {
-  gvd_close (t->tty_fd);
+#ifdef HAVE_PTYS
+   gvd_close (t->tty_fd);
+#endif
   free (t);
 }
