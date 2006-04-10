@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
+--                     Copyright (C) 2005-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -56,30 +56,34 @@ package GPS.Kernel.MDI is
    --  Base record for all MDI children that go into the MDI
 
    procedure Gtk_New
-     (Child        : out GPS_MDI_Child;
-      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Flags        : Child_Flags := All_Buttons;
-      Group        : Child_Group := Group_Default;
-      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+     (Child               : out GPS_MDI_Child;
+      Widget              : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags               : Child_Flags := All_Buttons;
+      Group               : Child_Group := Group_Default;
+      Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module        : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False);
+      Module              : access Module_ID_Record'Class;
+      Desktop_Independent : Boolean := False;
+      Use_Scrolled        : Boolean := False);
    --  Recommended version of Gtk_New to use, instead of the one in
    --  GtkAda.MDI. This version has several new parameters:
    --    - Module : used to associate a module with a widget. This is used to
    --               get the current context for instance
    --    - Desktop_Independent: if this is true, then the window will not be
    --               closed  when a new desktop is loaded.
+   --    - Use_Scrolled : if this is true, then the widget will be included
+   --               inside a scrolled window
 
    procedure Initialize
-     (Child        : access GPS_MDI_Child_Record'Class;
-      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Flags        : Child_Flags := All_Buttons;
-      Group        : Child_Group := Group_Default;
-      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+     (Child               : access GPS_MDI_Child_Record'Class;
+      Widget              : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags               : Child_Flags := All_Buttons;
+      Group               : Child_Group := Group_Default;
+      Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module        : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False);
+      Module              : access Module_ID_Record'Class;
+      Desktop_Independent : Boolean := False;
+      Use_Scrolled        : Boolean := False);
    --  Internal version of Gtk_New
 
    function Get_MDI
