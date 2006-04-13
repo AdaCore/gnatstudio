@@ -358,7 +358,7 @@
 
    <action name="generic_cvs_revision" show-command="true" output="none">
       <shell output="">echo "Getting $2 at revision $1"</shell>
-      <external output="none">cvs update -p -r "$1" "$2"</external>
+      <external output="none">cvs -q update -p -r "$1" "$2"</external>
       <on-failure>
          <shell output="">echo "CVS error:"</shell>
          <shell output="">echo "%2"</shell>
