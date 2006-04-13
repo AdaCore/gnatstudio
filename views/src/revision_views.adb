@@ -69,6 +69,7 @@ package body Revision_Views is
    Log_Column      : constant := 4;
    Link_Column     : constant := 5;
    Color_Column    : constant := 6;
+   Rev_Info_Column : constant := 7;
 
    package SL renames String_List_Utils.String_List;
 
@@ -446,7 +447,7 @@ package body Revision_Views is
          Look_For_Revision : while J /= Null_Iter loop
             declare
                Rev : constant String :=
-                       Get_String (V.Model, J, Revision_Column);
+                       Get_String (V.Model, J, Rev_Info_Column);
             begin
                if Rev /= "" then
                   return Rev;
@@ -467,7 +468,7 @@ package body Revision_Views is
       Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
 
       declare
-         R : constant String := Get_String (V.Model, Iter, Revision_Column);
+         R : constant String := Get_String (V.Model, Iter, Rev_Info_Column);
       begin
          if R /= "" then
             if Has_Child (V.Model, Iter) then
@@ -531,6 +532,7 @@ package body Revision_Views is
    begin
       Set (View.Model, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
       Set (View.Model, Iter, Revision_Column, To_String (Line.Log.Revision));
+      Set (View.Model, Iter, Rev_Info_Column, To_String (Line.Log.Revision));
       Set (View.Model, Iter, Author_Column, To_String (Line.Log.Author));
       Set (View.Model, Iter, Date_Column, To_String (Line.Log.Date));
       Set (View.Model, Iter, Log_Column, To_String (Line.Log.Log));
@@ -562,7 +564,8 @@ package body Revision_Views is
 
             while Node /= SL.Null_Node loop
                Append (View.Model, Child, Iter);
-               Set (View.Model, Child, Revision_Column, SL.Data (Node));
+               Set (View.Model, Child, Info_Column, "tag: " & SL.Data (Node));
+               Set (View.Model, Child, Rev_Info_Column, SL.Data (Node));
                if First then
                   Append (Info, SL.Data (Node));
                   First := False;
@@ -589,7 +592,7 @@ package body Revision_Views is
    is
       Log : Log_Data;
    begin
-      Log.Revision := +Get_String (View.Model, Iter, Revision_Column);
+      Log.Revision := +Get_String (View.Model, Iter, Rev_Info_Column);
       Log.Author := +Get_String (View.Model, Iter, Author_Column);
       Log.Date := +Get_String (View.Model, Iter, Date_Column);
       Log.Log := +Get_String (View.Model, Iter, Log_Column);
@@ -639,7 +642,8 @@ package body Revision_Views is
                                 Date_Column     => GType_String,
                                 Log_Column      => GType_String,
                                 Link_Column     => GType_Boolean,
-                                Color_Column    => Gdk_Color_Type),
+                                Color_Column    => Gdk_Color_Type,
+                                Rev_Info_Column => GType_String),
          Column_Names       => Names,
          Show_Column_Titles => True,
          Sortable_Columns   => True,
@@ -701,7 +705,7 @@ package body Revision_Views is
                Iterate (Children (View.Model, J));
             end if;
 
-            if Get_String (View.Model, J, Revision_Column) = Rev then
+            if Get_String (View.Model, J, Rev_Info_Column) = Rev then
                Quit := True;
                Iter_Copy (J, Result);
                return;
