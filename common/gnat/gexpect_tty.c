@@ -4,20 +4,20 @@
       Free Software Foundation, Inc.
    Copyright (C) 2000-2006 AdaCore.
 
-This file is part of GVD.
+This file is part of GPS.
 
-GVD is free software; you can redistribute it and/or modify
+GPS is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
-GVD is distributed in the hope that it will be useful,
+GPS is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GVD; see the file COPYING.  If not, write to
+along with GPS; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 
@@ -262,11 +262,9 @@ gvd_set_tty (fd, settings, flushp)
     return -1;
 
 #else
-#ifndef DOS_NT
   /* I give up - I hope you have the BSD ioctls.  */
   if (ioctl (fd, (flushp) ? TIOCSETP : TIOCSETN, &settings->main) < 0)
     return -1;
-#endif /* not DOS_NT */
 
 #endif
 #endif
@@ -324,11 +322,9 @@ gvd_get_tty (fd, settings)
     return -1;
 
 #else
-#ifndef DOS_NT
   /* I give up - I hope you have the BSD ioctls.  */
   if (ioctl (fd, TIOCGETP, &settings->main) < 0)
     return -1;
-#endif /* not DOS_NT */
 #endif
 #endif
 #endif
@@ -448,7 +444,7 @@ setup_pty (fd)
 #ifdef IBMRTAIX
   /* On AIX, the parent gets SIGHUP when a pty attached child dies.  So, we */
   /* ignore SIGHUP once we've started a child on a pty.  Note that this may */
-  /* cause GVD not to die when it should, i.e., when its own controlling  */
+  /* cause GPS not to die when it should, i.e., when its own controlling  */
   /* tty goes away.  I've complained to the AIX developers, and they may    */
   /* change this behavior, but I'm not going to hold my breath.             */
   signal (SIGHUP, SIG_IGN);
@@ -701,7 +697,7 @@ allocate_pty_the_old_fashioned_way ()
  **  Set up the terminal at the other end of a pseudo-terminal that
  **  we will be controlling an inferior through.
  **  It should not echo or do line-editing, since that is done
- **  in GVD. No padding needed for insertion into a buffer.
+ **  in GPS. No padding needed for insertion into a buffer.
  **
  ***********************************************************/
 
@@ -709,7 +705,6 @@ static void
 child_setup_tty (out)
      int out;
 {
-#ifndef DOS_NT
   struct gvd_tty s;
 
   GVD_GET_TTY (out, &s);
@@ -809,7 +804,6 @@ child_setup_tty (out)
     ioctl (out, FIOASYNC, &zero);
   }
 #endif /* RTU */
-#endif /* not DOS_NT */
 }
 
 /************************************************************
@@ -857,7 +851,7 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
      This code has been removed completely. */
 
   /* Make sure that in, out, and err are not actually already in
-     descriptors zero, one, or two; this could happen if GVD is
+     descriptors zero, one, or two; this could happen if GPS is
      started with its standard in, out, or error closed, as might
      happen under X.  */
   {
@@ -880,7 +874,6 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
       err = relocate_fd (err, 3);
   }
 
-#ifndef MSDOS
   gvd_close (0);
   gvd_close (1);
   gvd_close (2);
@@ -891,7 +884,6 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
   gvd_close (in);
   gvd_close (out);
   gvd_close (err);
-#endif /* not MSDOS */
 
 #if defined(USG) && !defined(BSD_PGRPS)
 #ifndef SETPGRP_RELEASES_CTTY
@@ -910,24 +902,16 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
   something missing here;
 #endif /* vipc */
 
-#ifdef MSDOS
-  pid = run_msdos_command (new_argv, pwd_var + 4, in, out, err, env);
-  if (pid == -1)
-    /* An error occurred while trying to run the subprocess.  */
-    report_file_error ("Spawning child process", Qnil);
-  return pid;
-#else  /* not MSDOS */
   /* execvp does not accept an environment arg so the only way
      to pass this environment is to set environ.  Our caller
      is responsible for restoring the ambient value of environ.  */
-  /* Disabled env handling in GVD ??? */
+  /* Disabled env handling in GPS ??? */
   execvp (new_argv[0], new_argv);
 
   write (1, "Can't exec program: ", 20);
   write (1, new_argv[0], strlen (new_argv[0]));
   write (1, "\n", 1);
   _exit (1);
-#endif /* not MSDOS */
 }
 #endif /* VMS */
 
@@ -1627,13 +1611,13 @@ struct GVD_Process {
   HANDLE w_forkin, w_forkout, w_forkerr;
 };
 
-/* Control whether create_child causes the process to inherit GVD'
+/* Control whether create_child causes the process to inherit GPS'
    console window, or be given a new one of its own.  The default is
    0, to allow multiple DOS programs to run on Win95.  Having separate
-   consoles also allows Gvd to cleanly terminate process groups.  */
+   consoles also allows GPS to cleanly terminate process groups.  */
 static int Vw32_start_process_share_console = 0;
 
-/* Control whether create_child cause the process to inherit GVD'
+/* Control whether create_child cause the process to inherit GPS'
    error mode setting.  The default is 1, to minimize the possibility of
    subprocesses blocking when accessing unmounted drives.  */
 static int Vw32_start_process_inherit_error_mode = 1;
@@ -1645,16 +1629,15 @@ static int Vw32_start_process_inherit_error_mode = 1;
    in g-expect.adb by calling Normalize_Argument). */
 static int Vw32_quote_process_args = 0;
 
-DWORD AbsoluteSeek(HANDLE, DWORD);
-VOID  ReadBytes(HANDLE, LPVOID, DWORD);
-VOID  WriteBytes(HANDLE, LPVOID, DWORD);
-VOID  CopySection(HANDLE, HANDLE, DWORD);
+static DWORD AbsoluteSeek(HANDLE, DWORD);
+static VOID  ReadBytes(HANDLE, LPVOID, DWORD);
 
 #define XFER_BUFFER_SIZE 2048
 
 /* This tell if the executable we're about to launch uses a GUI interface. */
 /* if we can't determine it, we will return true */
-int is_gui_app (char *exe)
+static int
+is_gui_app (char *exe)
 {
   HANDLE hImage;
 
@@ -1691,9 +1674,7 @@ int is_gui_app (char *exe)
   /*
    *  Read the MS-DOS image header.
    */
-  ReadBytes(hImage,
-            &image_dos_header,
-            sizeof(IMAGE_DOS_HEADER));
+  ReadBytes(hImage, &image_dos_header, sizeof(IMAGE_DOS_HEADER));
 
   if (IMAGE_DOS_SIGNATURE != image_dos_header.e_magic)
     {
@@ -1703,9 +1684,7 @@ int is_gui_app (char *exe)
 
   /*
    *  Read more MS-DOS header.       */
-  ReadBytes(hImage,
-            MoreDosHeader,
-            sizeof(MoreDosHeader));
+  ReadBytes(hImage, MoreDosHeader, sizeof(MoreDosHeader));
    /*
    *  Get actual COFF header.
    */
@@ -1725,9 +1704,7 @@ int is_gui_app (char *exe)
   SectionOffset = CoffHeaderOffset + IMAGE_SIZEOF_FILE_HEADER +
     IMAGE_SIZEOF_NT_OPTIONAL_HEADER;
 
-  ReadBytes(hImage,
-            &image_file_header,
-            IMAGE_SIZEOF_FILE_HEADER);
+  ReadBytes(hImage, &image_file_header, IMAGE_SIZEOF_FILE_HEADER);
 
   /*
    *  Read optional header.
@@ -1772,38 +1749,30 @@ int is_gui_app (char *exe)
 
 }
 
-DWORD
-AbsoluteSeek(HANDLE hFile,
-             DWORD  offset)
+static DWORD
+AbsoluteSeek (HANDLE hFile, DWORD offset)
 {
     DWORD newOffset;
 
-    if ((newOffset = SetFilePointer(hFile,
-                                    offset,
-                                    NULL,
-                                    FILE_BEGIN)) == 0xFFFFFFFF)
-      return -1;
+    newOffset = SetFilePointer (hFile, offset, NULL, FILE_BEGIN);
 
-    return newOffset;
+    if (newOffset == 0xFFFFFFFF)
+      return -1;
+    else
+      return newOffset;
 }
 
-VOID
-ReadBytes(HANDLE hFile,
-          LPVOID buffer,
-          DWORD  size)
+static VOID
+ReadBytes (HANDLE hFile, LPVOID buffer, DWORD size)
 {
-    DWORD bytes;
+  DWORD bytes;
 
-    if (!ReadFile(hFile,
-                  buffer,
-                  size,
-                  &bytes,
-                  NULL))
+  if (!ReadFile(hFile, buffer, size, &bytes, NULL))
     {
       size = 0;
       return;
     }
-    else if (size != bytes)
+  else if (size != bytes)
     {
       return;
     }
