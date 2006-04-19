@@ -29,6 +29,7 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib;                      use Glib;
 
 with Gtk.Accel_Label;           use Gtk.Accel_Label;
+with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Image;                 use Gtk.Image;
@@ -979,6 +980,87 @@ package body Custom_Module is
          Factory : constant Gtk_Icon_Factory := Get_Icon_Factory (Kernel);
          Source  : Gtk_Icon_Source;
          Set     : Gtk_Icon_Set;
+
+         procedure Add_Alternate_Sources;
+         --  Add the alternate sources to the icon set.
+
+         ---------------------------
+         -- Add_Alternate_Sources --
+         ---------------------------
+
+         procedure Add_Alternate_Sources is
+            Files    : Node_Ptr := Child.Child;
+            Pic_File : VFS.Virtual_File;
+         begin
+            while Files /= null loop
+               if To_Lower (Files.Tag.all) = "alternate" then
+                  declare
+                     Filename : constant String :=
+                       Get_Attribute (Files, "file");
+                  begin
+                     if Filename = "" then
+                        Insert
+                          (Kernel,
+                           -"No alternate file specified for icon "
+                           & Get_Attribute (Child, "id"), Mode => Error);
+                     else
+                        if Is_Absolute_Path (Filename) then
+                           Pic_File := Create (Filename);
+                        else
+                           if File = VFS.No_File then
+                              Pic_File := Create (Get_Current_Dir & Filename);
+                           else
+                              Pic_File := Create
+                                (Dir_Name (File).all & Filename);
+                           end if;
+                        end if;
+
+                        if Is_Regular_File (Pic_File) then
+                           Source := Gtk_New;
+                           Set_Filename (Source, Full_Name (Pic_File).all);
+
+                           declare
+                              Size : Gtk.Enums.Gtk_Icon_Size;
+                           begin
+                              Size := Gtk.Enums.Gtk_Icon_Size'Value
+                                ("Icon_Size_" &
+                                 Get_Attribute (Files, "size"));
+                              Set_Size (Source, Size);
+                              Set_Size_Wildcarded (Source, False);
+                           exception
+                              when Constraint_Error =>
+                                 Insert
+                                   (Kernel,
+                                    -("No valid size specified for alternate"
+                                      & " image to use for icon ")
+                                    & Get_Attribute (Child, "id"),
+                                    Mode => Error);
+                           end;
+
+                           Add_Source (Set, Source);
+                           Free (Source);
+                        else
+                           Insert
+                             (Kernel,
+                              -"Error when creating stock icon "
+                              & Get_Attribute (Child, "id")
+                              & (-". File not found: ")
+                              & Full_Name (Pic_File).all);
+                        end if;
+
+                     end if;
+                  end;
+               else
+                  Insert
+                    (Kernel,
+                     -"child for <ìcon> node not recognized: " &
+                     Files.Tag.all);
+               end if;
+
+               Files := Files.Next;
+            end loop;
+         end Add_Alternate_Sources;
+
       begin
          while Child /= null loop
             if To_Lower (Child.Tag.all) = "icon" then
@@ -1012,13 +1094,15 @@ package body Custom_Module is
 
                      if Is_Regular_File (Pic_File) then
                         Set    := Gtk_New;
+
                         Source := Gtk_New;
                         Set_Filename (Source, Full_Name (Pic_File).all);
-
                         Add_Source (Set, Source);
-                        Add (Factory, Id, Set);
-
                         Free (Source);
+
+                        Add_Alternate_Sources;
+
+                        Add (Factory, Id, Set);
                      else
                         Insert
                           (Kernel,
