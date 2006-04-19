@@ -1629,7 +1629,6 @@ package body GPS.Kernel.Scripts is
                Create_If_Not_Exist => Title /= "Python"
                  and then Title /= "Shell",
                Force_Create        => Force);
-            Enable_Prompt_Display (Console, Enable => Title = "Python");
             --   ??? If the console was already associated with an instance,
             --  we would lose that original instance and all data the user
             --  might have stored in it.
