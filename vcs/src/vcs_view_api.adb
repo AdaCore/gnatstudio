@@ -3234,9 +3234,9 @@ package body VCS_View_API is
          Confirm := False;
 
       else
-         if Is_Empty (Status.Working_Revision) then
-            Revision_1 := new String'("");
-         else
+         if not Is_Empty (Status.Working_Revision)
+           and then not Is_Empty (Status.Repository_Revision)
+         then
             if Revision_Lower
               (Head (Status.Working_Revision),
                Head (Status.Repository_Revision))
@@ -3249,6 +3249,16 @@ package body VCS_View_API is
                Revision_1 := new String'
                  (Protect (Head (Status.Working_Revision)));
             end if;
+
+         elsif not Is_Empty (Status.Repository_Revision) then
+            Revision_1 := new String'
+              (Protect (Head (Status.Repository_Revision)));
+
+         elsif not Is_Empty (Status.Working_Revision) then
+            Revision_1 := new String'
+              (Protect (Head (Status.Working_Revision)));
+         else
+            Revision_1 := new String'("");
          end if;
       end if;
 
