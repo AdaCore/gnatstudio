@@ -4580,7 +4580,7 @@ occurrence of the search string is found.
 
 @end table
 
-Pressing the @code{Next} / @code{Prev} buttons performs an interactive search. 
+Pressing the @code{Next} / @code{Prev} buttons performs an interactive search.
 It stops as soon as one occurrence of the pattern is found. You then have
 to press the @code{Next} button (or the equivalent shortcut
 @key{Ctrl-N}) to go to the next occurrence.
@@ -7046,7 +7046,7 @@ Mark files' merge conflics as resolved. Some version control systems
 @item Switch tag/bracnh
 Only available on a Revision View and over a tag/branch name. Will
 switch the tree starting from a selected root to this specific tag or
-branch. 
+branch.
 
 @item Merge
 Only available on a Revision View and over a tag/branch name. Merge
@@ -11846,8 +11846,34 @@ the stock icon, and the attribute @code{file} points to the file which contains
 the actual picture, either in absolute format, or relative to the directory
 which contains the XML file.
 
-For a better rendering, icons that are to be used in menus and buttons should
-have a size of 24x24 pixels, whereas icons used in toolbars should be 48x48 pixels.
+For icons that are intended to be displayed at multiple sizes, you can specify
+multiple files corresponding to these multiple sizes. This is done by adding
+children to the main icon node, with the tag @code{alternate}, containing
+a @code{file} attribute and a @code{size} attribute which correspond to the
+size for which this alternate source should be used.
+
+Possible sizes are:
+
+@table @code
+@item menu
+Menu item (ideal size: 16x16 pixels)
+
+@item small_toolbar
+Button in a small toolbar (ideal size: 18x18 pixels)
+
+@item large_toolbar
+Button in a large toolbar (ideal size: 24x24 pixels)
+
+@item button
+Image for a standard button (ideal size: 20x20 pixels)
+
+@item dnd
+Image used during drag-and-drop operation (ideal size: 32x32 pixels)
+
+@item dialog
+Main image in a dialog (ideal size: 48x48 pixels)
+
+@end table
 
 Here is an example:
 @smallexample
@@ -11855,6 +11881,13 @@ Here is an example:
 <my_visual_preferences>
   <stock>
     <icon id="myproject-my-picture" file="icons/my-picture.png" />
+
+    <icon id="myproject-multipurpose-image" file="icons/icon_default.png">
+       <alternate file"icons/icon_16.png" size="menu" />
+       <alternate file"icons/icon_24.png" size="large_toolbar" />
+       <alternate file"icons/icon_20.png" size="button" />
+    </icon>
+
   </stock>
 </my_visual_preferences>
 @end smallexample
@@ -14180,7 +14213,7 @@ error messages. Such general hooks will also not pass their parameters to
 other scripting languages.
 
 Creating new hooks is done through a call to @b{Hook.register}. This function
-takes two arguments: the name of the hook you are creating, 
+takes two arguments: the name of the hook you are creating,
 and the type of the hook.
 
 The name of the hook is left to you. Any character is allowed in that name,
