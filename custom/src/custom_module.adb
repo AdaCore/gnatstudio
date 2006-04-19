@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                            AdaCore                                --
+--                      Copyright (C) 2001-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -447,6 +447,7 @@ package body Custom_Module is
            Get_Attribute (Node, "attribute", "default_switches");
          Switches : String_Access;
          N     : Node_Ptr := Node.Child;
+
       begin
          if Name = "" then
             Insert (Kernel,
@@ -1053,7 +1054,7 @@ package body Custom_Module is
                else
                   Insert
                     (Kernel,
-                     -"child for <ìcon> node not recognized: " &
+                     -"child for <icon> node not recognized: " &
                      Files.Tag.all);
                end if;
 
