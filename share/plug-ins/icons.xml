@@ -1,10 +1,65 @@
 <?xml version="1.0"?>
 
-<!--  This file adds default icons -->
+<!-- This file adds default icons -->
 
 <GPS>
 
   <stock>
+    <!-- Toolbar icons -->
+
+
+    <icon id="gtk-paste"              file="../icons/24px/clipboard_24.png" >
+       <alternate                     file="../icons/16px/clipboard_16.png" size="menu" />
+       <alternate                     file="../icons/18px/clipboard_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gtk-copy"               file="../icons/24px/copy_24.png" >
+       <alternate                     file="../icons/16px/copy_16.png" size="menu" />
+       <alternate                     file="../icons/18px/copy_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gtk-cut"                file="../icons/24px/cut_24.png" >
+       <alternate                     file="../icons/16px/cut_16.png" size="menu" />
+       <alternate                     file="../icons/18px/cut_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gtk-go-forward"         file="../icons/24px/goto_next_24.png" >
+       <alternate                     file="../icons/16px/goto_next_16.png" size="menu" />
+       <alternate                     file="../icons/18px/goto_next_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gtk-go-back"            file="../icons/24px/goto_previous_24.png" >
+       <alternate                     file="../icons/16px/goto_previous_16.png" size="menu" />
+       <alternate                     file="../icons/18px/goto_previous_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gtk-new"                file="../icons/24px/newfile_24.png" >
+       <alternate                     file="../icons/16px/newfile_16.png" size="menu" />
+       <alternate                     file="../icons/18px/newfile_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gtk-open"               file="../icons/24px/open_24.png" >
+       <alternate                     file="../icons/16px/open_16.png" size="menu" />
+       <alternate                     file="../icons/18px/open_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gtk-redo"               file="../icons/24px/redo_24.png" >
+       <alternate                     file="../icons/16px/redo_16.png" size="menu" />
+       <alternate                     file="../icons/18px/redo_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gtk-save"               file="../icons/24px/save_24.png" >
+       <alternate                     file="../icons/16px/save_16.png" size="menu" />
+       <alternate                     file="../icons/18px/save_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gtk-undo"               file="../icons/24px/undo_24.png" >
+       <alternate                     file="../icons/16px/undo_16.png" size="menu" />
+       <alternate                     file="../icons/18px/undo_18.png" size="small_toolbar" />
+    </icon>
+
+    <!-- VCS icons -->
+
     <icon id="gps-vcs-added"          file="../icons/gps-vcs-added.png" />
     <icon id="gps-vcs-modified"       file="../icons/gps-vcs-modified.png" />
     <icon id="gps-vcs-needs-merge"    file="../icons/gps-vcs-needs-merge.png" />
