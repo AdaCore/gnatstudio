@@ -1946,6 +1946,7 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
   start.dwFlags = STARTF_USESTDHANDLES;
   start.hStdInput = process->w_forkin;
   start.hStdOutput = process->w_forkout;
+  /* child's stderr is always redirected to outfd */
   start.hStdError = process->w_forkout;
 
   /* Explicitly specify no security */
@@ -2046,6 +2047,7 @@ gvd_setup_parent_communication
 {
   *in = _open_osfhandle ((long) process->w_infd, 0);
   *out = _open_osfhandle ((long) process->w_outfd, 0);
+  /* child's stderr is always redirected to outfd */
   *err = _open_osfhandle ((long) process->w_outfd, 0);
   *pid = process->procinfo.dwProcessId;
 }
@@ -2234,7 +2236,7 @@ gvd_waitpid (struct GVD_Process* p)
   DWORD res;
   HANDLE proc_hand = p->procinfo.hProcess;
 
-  res = WaitForSingleObject (proc_hand, 200);
+  res = WaitForSingleObject (proc_hand, 0);
   GetExitCodeProcess (proc_hand, &exitcode);
 
   CloseHandle (p->procinfo.hThread);
