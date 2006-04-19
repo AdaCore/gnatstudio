@@ -1713,6 +1713,8 @@ is_gui_app (char *exe)
             &image_optional_header,
             IMAGE_SIZEOF_NT_OPTIONAL_HEADER);
 
+  CloseHandle (hImage);
+
   switch (image_optional_header.Subsystem)
     {
     case IMAGE_SUBSYSTEM_UNKNOWN:
@@ -1942,14 +1944,9 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
   start.cb = sizeof (start);
 
   start.dwFlags = STARTF_USESTDHANDLES;
-  start.hStdInput = GetStdHandle (STD_INPUT_HANDLE);
-  start.hStdOutput = GetStdHandle (STD_OUTPUT_HANDLE);
-  start.hStdError = GetStdHandle (STD_ERROR_HANDLE);
-
-  if (NILP (is_gui_app (argv[0]))) {
-     start.dwFlags |= STARTF_USESHOWWINDOW;
-     start.wShowWindow = SW_HIDE;
-   }
+  start.hStdInput = process->w_forkin;
+  start.hStdOutput = process->w_forkout;
+  start.hStdError = process->w_forkout;
 
   /* Explicitly specify no security */
   if (!InitializeSecurityDescriptor (&sec_desc, SECURITY_DESCRIPTOR_REVISION))
@@ -1960,9 +1957,19 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
   sec_attrs.lpSecurityDescriptor = &sec_desc;
   sec_attrs.bInheritHandle = FALSE;
 
-  flags = CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE;
+  /* CREATE_NEW_PROCESS_GROUP allows closing all children depending on the
+     spawned process at once. */
+  flags = CREATE_NEW_PROCESS_GROUP;
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
+
+  /* if app is not a gui application, use the CREATE_NEW_CONSOLE flag and
+     hide it as its input/output are redirected */
+  if (NILP (is_gui_app (argv[0]))) {
+     flags |= CREATE_NEW_CONSOLE;
+     start.dwFlags |= STARTF_USESHOWWINDOW;
+     start.wShowWindow = SW_HIDE;
+   }
 
   if (!CreateProcess (NULL, cmdline, &sec_attrs, NULL, TRUE,
 		      flags, env, ".", &start, &process->procinfo))
@@ -1999,83 +2006,37 @@ int
 gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
 {
   int cpid;
-
-  HANDLE forkin, forkout;
   HANDLE parent;
-  HANDLE handles[3];
+  SECURITY_ATTRIBUTES sec_attrs;
 
   parent = GetCurrentProcess ();
 
-  handles[0] = GetStdHandle (STD_INPUT_HANDLE);
-  handles[1] = GetStdHandle (STD_OUTPUT_HANDLE);
-  handles[2] = GetStdHandle (STD_ERROR_HANDLE);
+  /* Set inheritance for the pipe handles */
+  sec_attrs.nLength = sizeof (SECURITY_ATTRIBUTES);
+  sec_attrs.bInheritHandle = TRUE;
+  sec_attrs.lpSecurityDescriptor = NULL;
 
-  CreatePipe (&forkin, &process->w_infd, NULL, 0);
-  CreatePipe (&process->w_outfd, &forkout, NULL, 0);
+  /* Create in and out pipes */
+  if (!CreatePipe (&process->w_forkin, &process->w_infd, &sec_attrs, 0))
+    report_file_error ("Creation of child's IN handle", Qnil);
+  if (!CreatePipe (&process->w_outfd, &process->w_forkout, &sec_attrs, 0))
+    report_file_error ("Creation of child's OUT handle", Qnil);
 
-  /* make inheritable copies of the new handles */
-  if (!DuplicateHandle (parent,
-		        forkin,
-		        parent,
-		        &process->w_forkin,
-		        0,
-		        TRUE,
-		        DUPLICATE_SAME_ACCESS))
-    report_file_error ("Duplicating input handle for child", Qnil);
-
-  if (!DuplicateHandle (parent,
-		        forkout,
-		        parent,
-		        &process->w_forkout,
-		        0,
-		        TRUE,
-		        DUPLICATE_SAME_ACCESS))
-    report_file_error ("Duplicating output handle for child", Qnil);
-
-  if (!DuplicateHandle (parent,
-		        forkout,
-		        parent,
-		        &process->w_forkerr,
-		        0,
-		        TRUE,
-		        DUPLICATE_SAME_ACCESS))
-    report_file_error ("Duplicating error handle for child", Qnil);
-
-  /* Close duplicated handles, not used by current process */
-  CloseHandle (forkin);
-  CloseHandle (forkout);
-
-  /* and store them as our std handles */
-  if (!SetStdHandle (STD_INPUT_HANDLE, process->w_forkin))
-    report_file_error ("Changing stdin handle", Qnil);
-
-  if (!SetStdHandle (STD_OUTPUT_HANDLE, process->w_forkout))
-    report_file_error ("Changing stdout handle", Qnil);
-
-  if (!SetStdHandle (STD_ERROR_HANDLE, process->w_forkerr))
-    report_file_error ("Changing stderr handle", Qnil);
+  /* Do not inherit the parent's side of the pipes */
+  SetHandleInformation (&process->w_infd, HANDLE_FLAG_INHERIT, 0);
+  SetHandleInformation (&process->w_outfd, HANDLE_FLAG_INHERIT, 0);
 
   /* Spawn the child. */
   cpid = nt_spawnve (new_argv[0], new_argv, NULL, process);
-
-  if (cpid == -1)
-    /* An error occurred while trying to spawn the process.  */
-    report_file_error ("Spawning child process", Qnil);
-
-  /* close the duplicated handles passed to the child */
-  CloseHandle (GetStdHandle (STD_INPUT_HANDLE));
-  CloseHandle (GetStdHandle (STD_OUTPUT_HANDLE));
-  CloseHandle (GetStdHandle (STD_ERROR_HANDLE));
-
-  /* now restore parent's saved std handles */
-  SetStdHandle (STD_INPUT_HANDLE, handles[0]);
-  SetStdHandle (STD_OUTPUT_HANDLE, handles[1]);
-  SetStdHandle (STD_ERROR_HANDLE, handles[2]);
 
   /* close the duplicated handles passed to the child */
   CloseHandle (process->w_forkin);
   CloseHandle (process->w_forkout);
   CloseHandle (process->w_forkerr);
+
+  if (cpid == -1)
+    /* An error occurred while trying to spawn the process.  */
+    report_file_error ("Spawning child process", Qnil);
 
   return cpid;
 }
@@ -2274,7 +2235,7 @@ gvd_waitpid (struct GVD_Process* p)
   DWORD res;
   HANDLE proc_hand = p->procinfo.hProcess;
 
-  res = WaitForSingleObject (proc_hand, 0);
+  res = WaitForSingleObject (proc_hand, 200);
   GetExitCodeProcess (proc_hand, &exitcode);
 
   CloseHandle (p->procinfo.hThread);
