@@ -1608,7 +1608,7 @@ struct GVD_Process {
   int pid;           /* Number of this process */
   PROCESS_INFORMATION procinfo;
   HANDLE w_infd, w_outfd;
-  HANDLE w_forkin, w_forkout, w_forkerr;
+  HANDLE w_forkin, w_forkout;
 };
 
 /* Control whether create_child causes the process to inherit GPS'
@@ -2032,7 +2032,6 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
   /* close the duplicated handles passed to the child */
   CloseHandle (process->w_forkin);
   CloseHandle (process->w_forkout);
-  CloseHandle (process->w_forkerr);
 
   if (cpid == -1)
     /* An error occurred while trying to spawn the process.  */
