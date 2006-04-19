@@ -77,6 +77,14 @@ package body Collapsing_Pane is
      (Object : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the user clicks on the label or the collapse icon
 
+   function On_Enter_Label
+     (Object : access Gtk_Widget_Record'Class) return Boolean;
+   --  Called when the cursor enters in the head label of the pane
+
+   function On_Exit_Label
+     (Object : access Gtk_Widget_Record'Class) return Boolean;
+   --  Called when the cursor exits the head label of the pane
+
    procedure On_Destroy (Object : access Gtk_Widget_Record'Class);
    --  Called when the widget is destroyed
 
@@ -108,6 +116,7 @@ package body Collapsing_Pane is
    procedure Initialize (Pane : Collapsing_Pane; Label : UTF8_String) is
       Label_Hbox                       : Gtk_Box;
       Original_Color, Background_Color : Gdk.Color.Gdk_Color;
+      Prelight_Color                   : Gdk.Color.Gdk_Color;
       Success                          : Boolean;
    begin
       Pane.Collapsed_Pixbuf :=
@@ -142,6 +151,23 @@ package body Collapsing_Pane is
       Return_Callback.Object_Connect
         (Pane.Label_Box,
          "button_release_event", On_Change_State'Access, Pane);
+      Return_Callback.Object_Connect
+        (Pane.Label_Box,
+         "leave_notify_event", On_Exit_Label'Access, Pane);
+      Return_Callback.Object_Connect
+        (Pane.Label_Box,
+         "enter_notify_event", On_Enter_Label'Access, Pane);
+      Alloc_Color
+        (Get_Colormap (Pane.Label_Box),
+         Prelight_Color,
+         Success => Success);
+      Set_Rgb
+        (Prelight_Color,
+         16#FFFF#,
+         16#FFFF#,
+         16#FFFF#);
+      Modify_Bg
+        (Pane.Label_Box, State_Prelight, Prelight_Color);
       Pack_Start
         (Pane.Main_Box, Pane.Label_Box, Expand => False, Fill => False);
 
@@ -304,6 +330,32 @@ package body Collapsing_Pane is
 
       return True;
    end On_Change_State;
+
+   --------------------
+   -- On_Enter_Label --
+   --------------------
+
+   function On_Enter_Label
+     (Object : access Gtk_Widget_Record'Class) return Boolean
+   is
+      Pane : constant Collapsing_Pane := Collapsing_Pane (Object);
+   begin
+      Set_State (Pane.Label_Box, State_Prelight);
+      return False;
+   end On_Enter_Label;
+
+   -------------------
+   -- On_Exit_Label --
+   -------------------
+
+   function On_Exit_Label
+     (Object : access Gtk_Widget_Record'Class) return Boolean
+   is
+      Pane : constant Collapsing_Pane := Collapsing_Pane (Object);
+   begin
+      Set_State (Pane.Label_Box, State_Normal);
+      return False;
+   end On_Exit_Label;
 
    ----------------
    -- On_Destroy --
