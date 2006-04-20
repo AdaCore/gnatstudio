@@ -92,15 +92,15 @@
 
     <!-- VCS icons -->
 
-    <icon id="gps-vcs-added"          file="../icons/gps-vcs-added.png" />
-    <icon id="gps-vcs-modified"       file="../icons/gps-vcs-modified.png" />
-    <icon id="gps-vcs-needs-merge"    file="../icons/gps-vcs-needs-merge.png" />
-    <icon id="gps-vcs-needs-update"   file="../icons/gps-vcs-needs-update.png" />
-    <icon id="gps-vcs-not-registered" file="../icons/gps-vcs-not-registered.png" />
-    <icon id="gps-vcs-removed"        file="../icons/gps-vcs-removed.png" />
-    <icon id="gps-vcs-unknown"        file="../icons/gps-vcs-unknown.png" />
-    <icon id="gps-vcs-up-to-date"     file="../icons/gps-vcs-up-to-date.png" />
-    <icon id="gps-vcs-has-conflicts"  file="../icons/gps-vcs-has-conflicts.png" />
+    <icon id="gps-vcs-added"          file="../icons/20px/vcs-added.png" />
+    <icon id="gps-vcs-modified"       file="../icons/20px/vcs-modified.png" />
+    <icon id="gps-vcs-needs-merge"    file="../icons/20px/vcs-needs-merge.png" />
+    <icon id="gps-vcs-needs-update"   file="../icons/20px/vcs-needs-update.png" />
+    <icon id="gps-vcs-not-registered" file="../icons/20px/vcs-not-registered.png" />
+    <icon id="gps-vcs-removed"        file="../icons/20px/vcs-removed.png" />
+    <icon id="gps-vcs-unknown"        file="../icons/20px/vcs-unknown.png" />
+    <icon id="gps-vcs-up-to-date"     file="../icons/20px/vcs-up-to-date.png" />
+    <icon id="gps-vcs-has-conflicts"  file="../icons/20px/vcs-has-conflicts.png" />
   </stock>
 
 </GPS>
