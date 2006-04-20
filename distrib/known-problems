@@ -8,6 +8,22 @@ Known Problems fixed in GPS 4.0.0
               projects
   Workaround: Use different source directories if possible
 
+- F324-010 Windshell not accepting input
+  Problem:    It is not possible to enter any data into the Windshell console
+  Workaound:  Apply the following patch to tgtsvr.py:
+
+@@ -176,7 +176,9 @@
+       self.kill ()
+
+    def __init__ (self, process, args=""):
+-      GPS.Console.__init__ (self, process, \
++      ##GPS.Console.__init__ (self, process, \
++      ## A bug in GPS only allows input if the console is named "Python"
++      GPS.Console.__init__ (self, "Python", \
+                              on_input=Console_Process.on_input, \
+                              on_destroy=Console_Process.on_destroy, \
+                              force=True)
+
 - F322-010 Cannot open GNAT run-time files under Windows
   Problem:    Under Windows, using GPS 3.1.3, if you install GPS and GNAT
               under the same directory, GPS is not be able to display the
