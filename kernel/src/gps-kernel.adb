@@ -209,7 +209,7 @@ package body GPS.Kernel is
 
       --  Create the language handler.
 
-      Gtk_New (Handler);
+      Create_Handler (Handler);
       Handle.Lang_Handler := Handler;
 
       Handle.Registry := new Project_Registry;
