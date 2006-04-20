@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,7 +44,7 @@ package Language_Handlers is
      is new Entities.Abstract_Language_Handler_Record with private;
    type Language_Handler is access all Language_Handler_Record'Class;
 
-   procedure Gtk_New (Handler : out Language_Handler);
+   procedure Create_Handler (Handler : out Language_Handler);
    --  Create a new language handler
 
    procedure Destroy (Handler : in out Language_Handler);

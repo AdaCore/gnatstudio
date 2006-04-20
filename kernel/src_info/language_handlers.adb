@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2005                      --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -58,11 +58,11 @@ package body Language_Handlers is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Handler : out Language_Handler) is
+   procedure Create_Handler (Handler : out Language_Handler) is
    begin
       --  ??? Never freed, but the handler is never destroyed.
       Handler := new Language_Handler_Record;
-   end Gtk_New;
+   end Create_Handler;
 
    ------------------
    -- Set_Registry --
