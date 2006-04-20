@@ -23,7 +23,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
 with Gdk.Color;                 use Gdk.Color;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
@@ -32,12 +31,12 @@ with Glib.Object;               use Glib.Object;
 
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -93,7 +92,6 @@ with Histories;                 use Histories;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with List_Select_Pkg;           use List_Select_Pkg;
-with Pixmaps_IDE;               use Pixmaps_IDE;
 with Process_Proxies;           use Process_Proxies;
 with Projects;                  use Projects;
 with Std_Dialogs;               use Std_Dialogs;
@@ -153,7 +151,7 @@ package body GVD_Module is
       Next_Button,
       Finish_Button,
       Up_Button,
-      Down_Button                    : Gtk.Widget.Gtk_Widget;
+      Down_Button                    : Gtk.Button.Gtk_Button;
 
       First_Debugger                 : Debugger_List_Link;
       --  Points to the list of debuggers
@@ -539,72 +537,68 @@ package body GVD_Module is
    procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class) is
       Toolbar  : constant Gtk_Toolbar  := Get_Toolbar (Kernel);
       Window   : constant Gtk_Window := Get_Main_Window (Kernel);
-      Image    : Gtk_Image;
+      Stock    : Gtk_Stock_Item;
 
    begin
       if GVD_Module_ID.Cont_Button /= null then
          return;
       end if;
 
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (run_xpm));
-      GVD_Module_ID.Cont_Button := Append_Element
+      --  Register the stock items
+      Gtk_New (Stock, "gps-debugger-run", -"Go", 0, 0, "");
+      Add (Stock);
+      Gtk_New (Stock, "gps-debugger-step", -"Step", 0, 0, "");
+      Add (Stock);
+      Gtk_New (Stock, "gps-debugger-next", -"Next", 0, 0, "");
+      Add (Stock);
+      Gtk_New (Stock, "gps-debugger-finish", -"Finish", 0, 0, "");
+      Add (Stock);
+      Gtk_New (Stock, "gps-debugger-up", -"Up", 0, 0, "");
+      Add (Stock);
+      Gtk_New (Stock, "gps-debugger-down", -"Down", 0, 0, "");
+      Add (Stock);
+
+      GVD_Module_ID.Cont_Button := Insert_Stock
         (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Go",
-         Tooltip_Text => -"Start/Continue the debugged program",
-         Icon         => Gtk_Widget (Image));
+         Stock_Id     => "gps-debugger-run",
+         Tooltip_Text => -"Start/Continue the debugged program");
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Cont_Button, "clicked",
          On_Start_Continue'Access, Window);
 
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (step_xpm));
-      GVD_Module_ID.Step_Button := Append_Element
+      GVD_Module_ID.Step_Button := Insert_Stock
         (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Step",
-         Tooltip_Text => -"Step",
-         Icon         => Gtk_Widget (Image));
+         Stock_Id     => "gps-debugger-step",
+         Tooltip_Text => -"Step");
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Step_Button, "clicked", On_Step'Access, Window);
 
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (next_xpm));
-      GVD_Module_ID.Next_Button := Append_Element
+      GVD_Module_ID.Next_Button := Insert_Stock
         (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Next",
-         Tooltip_Text => -"Next",
-         Icon         => Gtk_Widget (Image));
+         Stock_Id     => "gps-debugger-next",
+         Tooltip_Text => -"Next");
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Next_Button, "clicked", On_Next'Access, Window);
 
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (finish_xpm));
-      GVD_Module_ID.Finish_Button := Append_Element
+      GVD_Module_ID.Finish_Button := Insert_Stock
         (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Finish",
-         Tooltip_Text => -"Execute until selected stack frame returns",
-         Icon         => Gtk_Widget (Image));
+         Stock_Id     => "gps-debugger-finish",
+         Tooltip_Text => -"Execute until selected stack frame returns");
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Finish_Button, "clicked", On_Finish'Access, Window);
 
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (up_xpm));
-      GVD_Module_ID.Up_Button := Append_Element
+      GVD_Module_ID.Up_Button := Insert_Stock
         (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Up",
+         Stock_Id     => "gps-debugger-up",
          Tooltip_Text =>
-         -"Select and print stack frame that called this one",
-         Icon         => Gtk_Widget (Image));
+         -"Select and print stack frame that called this one");
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Up_Button, "clicked", On_Up'Access, Window);
 
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (down_xpm));
-      GVD_Module_ID.Down_Button := Append_Element
+      GVD_Module_ID.Down_Button := Insert_Stock
         (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Down",
-         Tooltip_Text => -"Select and print stack frame called by this one",
-         Icon         => Gtk_Widget (Image));
+         Stock_Id     => "gps-debugger-down",
+         Tooltip_Text => -"Select and print stack frame called by this one");
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Down_Button, "clicked", On_Down'Access, Window);
    end Add_Debug_Buttons;
