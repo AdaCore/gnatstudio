@@ -5,8 +5,8 @@
 <GPS>
 
   <stock>
-    <!-- Toolbar icons -->
 
+    <!-- General-purpose icons -->
 
     <icon id="gtk-paste"              file="../icons/24px/clipboard_24.png" >
        <alternate                     file="../icons/16px/clipboard_16.png" size="menu" />
@@ -56,6 +56,38 @@
     <icon id="gtk-undo"               file="../icons/24px/undo_24.png" >
        <alternate                     file="../icons/16px/undo_16.png" size="menu" />
        <alternate                     file="../icons/18px/undo_18.png" size="small_toolbar" />
+    </icon>
+
+    <!-- Debugger icons -->
+
+    <icon id="gps-debugger-run"       file="../icons/24px/play_24.png" >
+       <alternate                     file="../icons/16px/play_16.png" size="menu" />
+       <alternate                     file="../icons/18px/play_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gps-debugger-step"      file="../icons/24px/step_24.png" >
+       <alternate                     file="../icons/16px/step_16.png" size="menu" />
+       <alternate                     file="../icons/18px/step_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gps-debugger-next"      file="../icons/24px/next_24.png" >
+       <alternate                     file="../icons/16px/next_16.png" size="menu" />
+       <alternate                     file="../icons/18px/next_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gps-debugger-finish"    file="../icons/24px/finish_24.png" >
+       <alternate                     file="../icons/16px/finish_16.png" size="menu" />
+       <alternate                     file="../icons/18px/finish_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gps-debugger-up"        file="../icons/24px/stack_up_24.png" >
+       <alternate                     file="../icons/16px/stack_up_16.png" size="menu" />
+       <alternate                     file="../icons/18px/stack_up_18.png" size="small_toolbar" />
+    </icon>
+
+    <icon id="gps-debugger-down"      file="../icons/24px/stack_down_24.png" >
+       <alternate                     file="../icons/16px/stack_down_16.png" size="menu" />
+       <alternate                     file="../icons/18px/stack_down_18.png" size="small_toolbar" />
     </icon>
 
     <!-- VCS icons -->
