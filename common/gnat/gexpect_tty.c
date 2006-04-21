@@ -1611,12 +1611,6 @@ struct GVD_Process {
   HANDLE w_forkin, w_forkout;
 };
 
-/* Control whether create_child causes the process to inherit GPS'
-   console window, or be given a new one of its own.  The default is
-   0, to allow multiple DOS programs to run on Win95.  Having separate
-   consoles also allows GPS to cleanly terminate process groups.  */
-static int Vw32_start_process_share_console = 0;
-
 /* Control whether create_child cause the process to inherit GPS'
    error mode setting.  The default is 1, to minimize the possibility of
    subprocesses blocking when accessing unmounted drives.  */
@@ -2130,7 +2124,7 @@ gvd_interrupt_process (struct GVD_Process* p)
   /* Try to locate console window for process. */
   EnumWindows ((ENUMWINDOWSPROC) find_child_console, (LPARAM) &cp);
 
-  if (NILP (Vw32_start_process_share_console) && cp.hwnd)
+  if (cp.hwnd)
     {
       BYTE control_scan_code = (BYTE) MapVirtualKey (VK_CONTROL, 0);
       /* Retrieve Ctrl-C scancode */
