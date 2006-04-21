@@ -161,17 +161,18 @@ package body GNAT.Expect.TTY.Remote is
    --  Assign it to descriptor upon success
    --  Raises No_Session_Available is all sessions are BUSY
 
-   procedure Log (Where : in String;
-                  What  : in String);
-   --  Log a debug comment.
+   procedure Log (Where : String; What : String);
+   --  Log a debug comment
 
    ---------
    -- Log --
    ---------
 
-   procedure Log (Where : in String;
-                  What  : in String) is
+   procedure Log (Where : in String; What : in String) is
+
       function Clean_Up (Str : in String) return String;
+      --  ???
+
       function Clean_Up (Str : in String) return String is
          Out_S : String := Str;
       begin
@@ -180,8 +181,10 @@ package body GNAT.Expect.TTY.Remote is
                Out_S (J) := '@';
             end if;
          end loop;
+
          return Out_S;
       end Clean_Up;
+
    begin
       if Active (Me) then
          Trace (Me, "(" & Where & "): '" & Clean_Up (What) & "'");
