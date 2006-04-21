@@ -1958,16 +1958,15 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
   sec_attrs.lpSecurityDescriptor = &sec_desc;
   sec_attrs.bInheritHandle = FALSE;
 
-  /* CREATE_NEW_PROCESS_GROUP allows closing all children depending on the
-     spawned process at once. */
-  flags = CREATE_NEW_PROCESS_GROUP;
+  /* creating a new console allow easier close. creating a new process group
+     allow killing the child process, and its own children */
+  flags = CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP;
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
 
   /* if app is not a gui application, use the CREATE_NEW_CONSOLE flag and
      hide it as its input/output are redirected */
   if (NILP (is_gui_app (argv[0]))) {
-     flags |= CREATE_NEW_CONSOLE;
      start.dwFlags |= STARTF_USESHOWWINDOW;
      start.wShowWindow = SW_HIDE;
    }
