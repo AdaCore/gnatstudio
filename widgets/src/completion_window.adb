@@ -21,20 +21,25 @@
 with Glib;                   use Glib;
 with Glib.Values;            use Glib.Values;
 
-with Gdk.Event; use Gdk.Event;
-with Gdk.Types; use Gdk.Types;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Gdk.Rectangle; use Gdk.Rectangle;
+with Gdk.Event;              use Gdk.Event;
+with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Window;             use Gdk.Window;
+with Gdk.Types;              use Gdk.Types;
+with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 
-with Gtk.Handlers; use Gtk.Handlers;
-with Gtk.Frame; use Gtk.Frame;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Handlers;           use Gtk.Handlers;
+with Gtk.Frame;              use Gtk.Frame;
 with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Style;              use Gtk.Style;
+with Gtk.Widget;             use Gtk.Widget;
+
+with Pango.Font;             use Pango.Font;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
@@ -42,6 +47,10 @@ with Ada.Unchecked_Deallocation;
 with Traces;                    use Traces;
 
 package body Completion_Window is
+
+   Max_Width          : constant := 150;
+   Notes_Window_Width : constant := 300;
+   Max_Height         : constant := 200;
 
    Markup_Column : constant := 0;
    Index_Column  : constant := 1;
@@ -78,6 +87,10 @@ package body Completion_Window is
       Params : Glib.Values.GValues);
    --  Callback after a text insertion.
 
+   procedure On_Selection_Changed
+     (Window : access Completion_Window_Record'Class);
+   --  Callback on a selection change in the tree view.
+
    procedure Delete (Window : access Completion_Window_Record'Class);
    --  Destroy the window and its contents.
 
@@ -107,6 +120,7 @@ package body Completion_Window is
 
       Unchecked_Free (Window.Info);
 
+      Destroy (Window.Notes_Window);
       Destroy (Window);
    end Delete;
 
@@ -199,6 +213,40 @@ package body Completion_Window is
                 "Unexpected exception: " & Exception_Information (E));
    end Insert_Text_Handler;
 
+   --------------------------
+   -- On_Selection_Changed --
+   --------------------------
+
+   procedure On_Selection_Changed
+     (Window : access Completion_Window_Record'Class)
+   is
+      Sel   : Gtk_Tree_Selection;
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Index : Natural;
+   begin
+      Sel := Get_Selection (Window.View);
+      Get_Selected (Sel, Model, Iter);
+
+      if Iter = Null_Iter then
+         Hide_All (Window.Notes_Window);
+      else
+         Index := Natural (Get_Int (Window.Model, Iter, Index_Column));
+
+         if Window.Info (Index).Notes.all /= "" then
+            Set_Markup (Window.Notes_Label, Window.Info (Index).Notes.all);
+            Show_All (Window.Notes_Window);
+         else
+            Hide_All (Window.Notes_Window);
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Selection_Changed;
+
    ------------------
    -- On_Focus_Out --
    ------------------
@@ -231,31 +279,42 @@ package body Completion_Window is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
+
+      Pos        : Natural;
+      Text_Begin : Gtk_Text_Iter;
+      Text_End   : Gtk_Text_Iter;
+
    begin
       Key := Get_Key_Val (Event);
 
       --  Case by case basis
 
       case Key is
-         when GDK_Escape =>
+         when GDK_Escape | GDK_Left | GDK_Right =>
             Delete (Window);
             return True;
 
          when GDK_Return =>
-            --  ??? Insert the text
-            Destroy (Window);
+            Get_Selected (Get_Selection (Window.View), Model, Iter);
+
+            if Iter /= Null_Iter then
+               Pos := Natural (Get_Int (Window.Model, Iter, Index_Column));
+
+               Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+               Get_Iter_At_Mark
+                 (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
+
+               Delete (Window.Buffer, Text_Begin, Text_End);
+
+               Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+               Insert (Window.Buffer, Text_Begin, Window.Info (Pos).Text.all);
+            end if;
+
+            Delete (Window);
             return True;
 
          when GDK_Down | GDK_KP_Down =>
-            Sel := Get_Selection (Window.View);
-            Get_Selected (Sel, Model, Iter);
-            Next (Window.Model, Iter);
-
-            if Iter = Null_Iter then
-               Iter := Get_Iter_First (Window.Model);
-            end if;
-
-            Select_Iter (Sel, Iter);
+            Select_Next (Completion_Window_Access (Window));
             return True;
 
          when GDK_Up | GDK_KP_Up =>
@@ -303,10 +362,14 @@ package body Completion_Window is
    ----------------
 
    procedure Initialize (Window : access Completion_Window_Record'Class) is
-      Col   : Gtk_Tree_View_Column;
-      Text  : Gtk_Cell_Renderer_Text;
-      Dummy : Gint;
-      Frame : Gtk_Frame;
+      Col    : Gtk_Tree_View_Column;
+      Text   : Gtk_Cell_Renderer_Text;
+      Dummy  : Gint;
+      Frame  : Gtk_Frame;
+      Scroll : Gtk_Scrolled_Window;
+      VBox   : Gtk_Vbox;
+      HBox   : Gtk_Hbox;
+
       pragma Unreferenced (Dummy);
    begin
       Gtk.Window.Initialize (Window, Window_Popup);
@@ -324,11 +387,27 @@ package body Completion_Window is
       Add_Attribute (Col, Text, "markup", Markup_Column);
 
       Gtk_New (Frame);
-      Add (Frame, Window.View);
       Add (Window, Frame);
+
+      Gtk_New (Scroll);
+      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
+      Add (Scroll, Window.View);
+      Add (Frame, Scroll);
 
       Window.Info := new Information_Array (1 .. 1024);
       Window.Index := 1;
+
+      --  Create the Notes window
+
+      Gtk_New (Window.Notes_Window, Window_Popup);
+      Gtk_New (Window.Notes_Label);
+      Gtk_New_Vbox (VBox);
+      Gtk_New_Hbox (HBox);
+      Gtk_New (Frame);
+      Add (Window.Notes_Window, Frame);
+      Add (Frame, VBox);
+      Pack_Start (VBox, HBox, False, False, 3);
+      Pack_Start (HBox, Window.Notes_Label, False, False, 3);
    end Initialize;
 
    ------------------
@@ -345,11 +424,23 @@ package body Completion_Window is
       Info : Information_Record;
    begin
       Info :=
-        (new String'(Markup), new String'(Completion), new String'(Notes),
+        (new String'(Markup),
+         new String'(Completion),
+         new String'(Notes),
          True);
 
       Window.Info (Window.Index) := Info;
       Window.Index := Window.Index + 1;
+
+      if Window.Index > Window.Info'Last then
+         declare
+            A : Information_Array (1 .. Window.Info'Last * 2);
+         begin
+            A (1 .. Window.Index - 1) := Window.Info (1 .. Window.Index - 1);
+            Unchecked_Free (Window.Info);
+            Window.Info := new Information_Array'(A);
+         end;
+      end if;
 
       Append (Window.Model, Iter);
 
@@ -371,9 +462,15 @@ package body Completion_Window is
       Window_X, Window_Y : Gint;
       Gdk_X, Gdk_Y       : Gint;
       Dummy : Boolean;
-   begin
-      --  ??? Set size according to screen space
 
+      Rows               : Gint;
+      Width, Height      : Gint;
+      X, Y               : Gint;
+      Requisition        : Gtk_Requisition;
+
+      Dummy_X, Dummy_Y, D     : Gint;
+      Root_Width, Root_Height : Gint;
+   begin
       Window.Text := View;
       Window.Buffer := Buffer;
       Window.Mark := Create_Mark (Buffer, "", Iter);
@@ -392,11 +489,55 @@ package body Completion_Window is
         (Get_Window (View, Text_Window_Text), Gdk_X, Gdk_Y, Dummy);
       --  ??? should we check for the result ?
 
+      --  Compute the placement of the window.
+
+      Size_Request (Window.View, Requisition);
+      Requisition := Get_Child_Requisition (Window.View);
+
       --  ??? Uposition should take into account the current desktop.
 
-      Set_UPosition (Window, Gdk_X + Window_X, Gdk_Y + Window_Y);
+      Trace (Exception_Handle,
+             Requisition.Width'Img & ":" & Requisition.Height'Img);
 
-      Modify_Font (Window.View, Get_Font_Description (Get_Style (View)));
+      --  Compute the real width and height of the window
+
+      Width := Gint'Min (Max_Width, Requisition.Width) + 5;
+
+      if Requisition.Height > Max_Height then
+         --  Display an integer number of lines in the tree view.
+         Rows := (Gint (Window.Index - 1) * (Max_Height)) / Requisition.Height;
+         Height := Rows * (Requisition.Height / Gint (Window.Index - 1)) + 5;
+      else
+         Height := Max_Height + 5;
+      end if;
+
+      Set_Default_Size (Window, Width, Height);
+
+      --  Compute the coordinates of the window so that it doesn't get past
+      --  the screen border.
+      Get_Geometry (Null_Window, Dummy_X, Dummy_Y, Root_Width, Root_Height, D);
+      X := Gint'Min (Gdk_X + Window_X, Root_Width - Width);
+      Y := Gint'Min (Gdk_Y + Window_Y, Root_Height - Height);
+
+      Set_UPosition (Window, X, Y);
+
+      --  Compute the size and position of the Notes window.
+
+      Set_Default_Size (Window.Notes_Window, Notes_Window_Width, Height);
+
+      if Root_Width - (X + Width + 4) > Notes_Window_Width then
+         Set_UPosition (Window.Notes_Window, X + Width + 4, Y);
+      else
+         Set_UPosition (Window.Notes_Window, X - Notes_Window_Width - 4, Y);
+      end if;
+
+      declare
+         Font : constant Pango_Font_Description :=
+           Get_Font_Description (Get_Style (View));
+      begin
+         Modify_Font (Window.View, Font);
+         Modify_Font (Window.Notes_Label, Font);
+      end;
 
       Show_All (Window);
 
@@ -419,6 +560,33 @@ package body Completion_Window is
       Object_Connect
         (Buffer, "delete_range", Insert_Text_Handler'Access, Window,
          After => True);
+
+      Object_Connect
+        (Get_Selection (Window.View), "changed",
+         To_Marshaller (On_Selection_Changed'Access), Window,
+         After => True);
+
+      On_Selection_Changed (Window);
    end Show;
+
+   -----------------
+   -- Select_Next --
+   -----------------
+
+   procedure Select_Next (Window : Completion_Window_Access) is
+      Sel   : Gtk_Tree_Selection;
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+   begin
+      Sel := Get_Selection (Window.View);
+      Get_Selected (Sel, Model, Iter);
+      Next (Window.Model, Iter);
+
+      if Iter = Null_Iter then
+         Iter := Get_Iter_First (Window.Model);
+      end if;
+
+      Select_Iter (Sel, Iter);
+   end Select_Next;
 
 end Completion_Window;
