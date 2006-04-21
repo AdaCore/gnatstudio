@@ -116,8 +116,7 @@ package GNAT.Expect.TTY.Remote is
       Exit_Commands       : String_List        := Null_String_List;
       Cd_Command          : String             := "";
       Get_Status_Command  : String             := "";
-      Get_Status_Ptrn     : String             := "";
-      Interrupt_Command   : String             := "");
+      Get_Status_Ptrn     : String             := "");
    --  This function is used to add a new shell descriptor
    --  - Name                : name in the program descriptor table
    --  - Start_Command       : name of the program to be launched
@@ -139,7 +138,6 @@ package GNAT.Expect.TTY.Remote is
    --  - Use_TTY             : if set to true use TTY version of GNAT.Expect
    --  - Output_Processor    : processing of the output ... (to get for example
    --                          the exit status)
-   --  - Interrupt_Command   : string that can be sent to interrupt a command
    --
    --  For all Commands, %h is replaced by target host, %d is replaced by
    --  working directory
@@ -224,6 +222,8 @@ package GNAT.Expect.TTY.Remote is
    ----------------------
 
    type Remote_Process_Descriptor is new TTY_Process_Descriptor with private;
+   type Remote_Process_Descriptor_Access is
+     access all Remote_Process_Descriptor'Class;
 
    procedure Add_Filter
      (Descriptor : in out Remote_Process_Descriptor;
@@ -402,11 +402,9 @@ private
    procedure Interrupt (Descriptor : in out Remote_Process_Descriptor);
 
    type Shell_Descriptor;
-
    type Shell_Descriptor_Access is access all Shell_Descriptor;
 
    type Machine_Descriptor_Item;
-
    type Machine_Descriptor_Access is access all Machine_Descriptor_Item;
 
    type Remote_Process_Descriptor is new TTY_Process_Descriptor with record
