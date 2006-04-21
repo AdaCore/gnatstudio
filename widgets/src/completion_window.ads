@@ -31,6 +31,8 @@
 
 with Gtk.Window;     use Gtk.Window;
 
+with Gtk.Label;      use Gtk.Label;
+
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.List_Store; use Gtk.List_Store;
 
@@ -72,9 +74,8 @@ package Completion_Window is
    --  to start on the given mark.
    --  Show the window.
 
-   --  ??? Need a function to set the key shortcut
-
-   --  ??? Need a function to set the font
+   procedure Select_Next (Window : Completion_Window_Access);
+   --  Select the next item in the window.
 
    --  ??? Need a function to set case sensitivity
 
@@ -103,6 +104,9 @@ private
       Info   : Information_Array_Access;
       Index  : Natural;
       --  Index to the first free position in Info.
+
+      Notes_Window : Gtk_Window;
+      Notes_Label  : Gtk_Label;
    end record;
 
 end Completion_Window;
