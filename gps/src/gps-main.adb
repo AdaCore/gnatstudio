@@ -1280,8 +1280,6 @@ procedure GPS.Main is
 
       Src_Editor_Module.Register_Module (GPS_Main.Kernel);
 
-      Navigation_Module.Register_Module (GPS_Main.Kernel);
-
       if Active (Call_Graph_Trace) then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);
       end if;
@@ -1413,6 +1411,8 @@ procedure GPS.Main is
       if Active (Custom_Trace) then
          Load_All_Custom_Files (GPS_Main.Kernel);
       end if;
+
+      Navigation_Module.Register_Module (GPS_Main.Kernel);
 
       --  Do this after the custom files, since this will override other
       --  The comment above is unfinished ???
