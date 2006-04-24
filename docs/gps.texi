@@ -186,7 +186,7 @@ Working in a Cross Environment
 Using GPS for Remote Development
 * Requirements::
 * Setup the remote servers::
-* Work with a remote project::
+* Working with a remote project::
 * Customize::
 * Limitations::
 
@@ -7739,7 +7739,7 @@ machine, you can specify the name of this machine by setting the
 @menu
 * Requirements::
 * Setup the remote servers::
-* Work with a remote project::
+* Working with a remote project::
 * Customize::
 * Limitations::
 @end menu
@@ -7777,8 +7777,8 @@ Windows (see section Limitations).
 Either have a Network Filesystem (i.e. NFS or SMB) sharing the project files
 between the host and the target, or having rsync on both client and server.
 @item
-Subprojects shall be withed by the main project using relative paths, or both
-machines shall share the same absolute path.
+Subprojects must be withed by the main project using relative paths, or both
+machines must share the same absolute path.
 @end itemize
 
 @noindent
@@ -7808,7 +7808,7 @@ debug your project. You can open it using the menu @code{Tools->Views->Remote}
 @end ifhtml
 
 @noindent
-Once the Remote View is opend, click on @code{Servers configuration} to open
+Once the Remote View is opened, click on @code{Servers configuration} to open
 the servers configuration dialog.
 
 @iftex
@@ -7826,7 +7826,7 @@ This dialog is composed of several parts:
 @itemize
 @item
 The left part of the dialog contains the list of configured servers,
-identified by their nickname. Each nickname shall be unique.
+identified by their nickname. Each nickname must be unique.
 @item
 The middle part of the dialog contains the selected server's configuration.
 @item
@@ -7850,8 +7850,9 @@ The remote access tool is the tool used to connect to this server. You select
 it using the drop down list. The following tools are supported natively by
 GPS: ssh, rsh, telnet and plink (Windows tool) in ssh, rsh or telnet mode. See
 the customize section if you need to add a specific tool.
+@c ??? need to add xref
 @item
-The shell tells GPS what Shell runs on the remote server. The following unix
+The shell tells GPS what shell runs on the remote server. The following unix
 shells are supported by GPS: sh, bash, csh and tcsh. Windows' shell is also
 supported (cmd.exe).
 @end itemize
@@ -7889,10 +7890,10 @@ file for the bash shell). Then GPS sends these extra init commands, allowing
 you for example to specify a compilation toolchain.
 @end itemize
 
-The last configuration part consist on defining the paths translations between
-your local host and the remote server. GPS will use these paths translations to
+The last configuration part is to define the path translations between
+your local host and the remote server. GPS will use these path translations to
 locally load your project, and remotely compile, execute or debug it. All your
-project's dependencies shall then reside in a path that is defined here, even
+project's dependencies must then reside in a path that is defined here, even
 those implicitely loaded through ADA_PROJECT_PATH.
 
 The way those paths need to be configured depend on your network architecture.
@@ -7900,7 +7901,7 @@ The way those paths need to be configured depend on your network architecture.
 @item If your project is on a filesystem that is shared between your host and
 the remote host (using NFS of SMB filestems, for example), then only the roots
 of those filesystems need to be specified, using each server's native paths (on
-Windows, the paths will be expressed using X:\my\mounted\diretory\ while on
+Windows, the paths will be expressed using X:\my\mounted\directory\ while on
 unix, the paths will be expressed using /mnt/path/).
 @item In case the project's files are synchronized using rsync, then defining
 a too generic path translation will lead to very slow synchronization. You will
@@ -7908,19 +7909,20 @@ then need to define the most specific paths as possible, in order to speed up
 the synchronization process as much as possible.
 @end itemize
 
-To add a new path, just click on the @code{+} button, and enter the equivalents
+To add a new path, click on the @code{+} button, and enter the corresponding
 local and remote paths. You can specify by checking the @code{Need Sync} button
 wether the paths are shared (button unchecked) or need synchronization (button
 checked).
 
-That's it ! Close the dialog by clicking on the OK button.
+Once the steps above are done, the configuration is now performed, and
+validated when clicking on the @code{OK} button.
 
-@node Work with a remote project
-@section Work with a remote project
+@node Working with a remote project
+@section Working with a remote project
 
 @noindent
 There are two ways to load a remote project. Either the project already exists
-on a remote server, either it exists on the local machine.
+on a remote server, or it exists on the local machine.
 
 In the first case, you need to use the menu @code{Project->Open From Host}.
 Then you select the server's nickname. This will show you its file tree.
@@ -7943,6 +7945,7 @@ source editing, browsing, debugging behave the same.
 
 @node Customize
 @section Customize
+@c ??? to be done
 
 @node Limitations
 @section Limitations
@@ -7954,13 +7957,15 @@ Working with GPS in remote mode implies a few limitations:
 connection tools such as rsh, ssh, telnet or rsync. However, Cygwin's
 versions of such tools under Windows do not ask for such passwords when
 launched by another process. In this case, a password-less connection is
-required. PuTTY's command line tool plink do not suffer such limitations, so
+required. PuTTY's command line tool plink does not suffer such limitations, so
 passwords are correctly handled in this case. However, the PuTTY project do
-not offer any implementation of rsync, and Cygwin's rsync do not work with
-PuTTY's version of ssh.
+not offer any implementation of rsync, and Cygwin rsync does not work with
+PuTTY ssh.
+
 @item Execution: you cannot use an external terminal to remotely execute your
 application. The @code{Use external terminal} checkbox of the run dialog will
 then have no effect if the program is run remotely.
+
 @item Debugging: you cannot use a separate execution window. To make sure
 the execution window is not used, go to menu @code{Edit->Preferences}, select
 the @code{Debugger} tab, and make sure the @code{Execution window} is disabled.
