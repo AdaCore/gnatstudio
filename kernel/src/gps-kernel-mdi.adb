@@ -217,7 +217,7 @@ package body GPS.Kernel.MDI is
       Force    : Boolean := False) return Boolean
    is
       Column_Types        : constant GType_Array :=
-        (GType_Boolean, GType_String);
+                              (GType_Boolean, GType_String);
       MDI                 : constant MDI_Window := Get_MDI (Handle);
       Project_Description : constant String := -"Project";
       Iter                : Child_Iterator;
@@ -518,7 +518,7 @@ package body GPS.Kernel.MDI is
 
    procedure Select_All_Children (View : access Gtk_Widget_Record'Class) is
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
+                Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Value : Boolean;
 
@@ -542,10 +542,10 @@ package body GPS.Kernel.MDI is
       Params : Glib.Values.GValues)
    is
       Model       : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
+                      Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
       Path_String : constant String := Get_String (Nth (Params, 1));
       Iter        : constant Gtk_Tree_Iter :=
-        Get_Iter_From_String (Model, Path_String);
+                      Get_Iter_From_String (Model, Path_String);
 
    begin
       Set (Model, Iter, 0, not Get_Boolean (Model, Iter, 0));
