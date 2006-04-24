@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,12 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Color;                         use Gdk.Color;
+with Gdk.Color;              use Gdk.Color;
 
 with Basic_Types;
-with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
-with String_Utils;                      use String_Utils;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with String_Utils;           use String_Utils;
 
 package body Vdiff2_Module.Utils.Shell_Command is
 
@@ -69,24 +69,14 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
    procedure Edit
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File     : Virtual_File;
-      Writable : Boolean := True)
+      File     : Virtual_File)
    is
-      Args_Edit           : Argument_List :=
+      Args_Edit : Argument_List :=
         (1 => new String'(Full_Name (File).all),
          2 => new String'("0"),
-         3 => new String'("0"),
-         4 => new String'("false"));
-
+         3 => new String'("0"));
    begin
-      Execute_GPS_Shell_Command (Kernel, "Editor.edit", Args_Edit (1 .. 3));
-
-      if not Writable then
-         Execute_GPS_Shell_Command
-           (Kernel, "Editor.set_writable",
-            Args_Edit (1 .. 1) & Args_Edit (4 .. 4));
-      end if;
-
+      Execute_GPS_Shell_Command (Kernel, "Editor.edit", Args_Edit);
       Basic_Types.Free (Args_Edit);
    end Edit;
 

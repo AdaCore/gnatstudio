@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -35,10 +35,8 @@ package Vdiff2_Module.Utils.Shell_Command is
 
    procedure Edit
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File     : Virtual_File;
-      Writable : Boolean := True);
+      File     : Virtual_File);
    --  Open editor for File
-   --  If Writable is False, make this editor read-only.
    pragma Inline (Edit);
 
    procedure Synchronize_Scrolling
@@ -64,7 +62,7 @@ package Vdiff2_Module.Utils.Shell_Command is
 
    function Get_File_Last_Line
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File : Virtual_File) return Natural;
+      File   : Virtual_File) return Natural;
    --  Return the number of line in file File
    pragma Inline (Get_File_Last_Line);
 
@@ -124,22 +122,22 @@ package Vdiff2_Module.Utils.Shell_Command is
 
    procedure Unhighlight
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural;
-      Style : String := "");
+      File   : Virtual_File;
+      Pos    : Natural;
+      Style  : String := "");
    pragma Inline (Unhighlight);
    --  Remove highlighting of line number Pos in file File
 
    procedure Unhighlight_Line
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural;
-      Style : String := "");
+      File   : Virtual_File;
+      Pos    : Natural;
+      Style  : String := "");
    --  Remove highlighting of line number Pos in file File
    pragma Inline (Unhighlight_Line);
 
    procedure Unhighlight_Range
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Style   : String;
       Line    : Natural := 0;
