@@ -11899,6 +11899,10 @@ the stock icon, and the attribute @code{file} points to the file which contains
 the actual picture, either in absolute format, or relative to the directory
 which contains the XML file.
 
+If the stock icon is to be used in a toolbar, use the attribute @code{label} to
+specify the text to display in the toolbar, under the button, when the toolbar
+is configured to show text.
+
 For icons that are intended to be displayed at multiple sizes, you can specify
 multiple files corresponding to these multiple sizes. This is done by adding
 children to the main icon node, with the tag @code{alternate}, containing
@@ -11935,7 +11939,9 @@ Here is an example:
   <stock>
     <icon id="myproject-my-picture" file="icons/my-picture.png" />
 
-    <icon id="myproject-multipurpose-image" file="icons/icon_default.png">
+    <icon id="myproject-multipurpose-image"
+           label="do something"
+           file="icons/icon_default.png">
        <alternate file"icons/icon_16.png" size="menu" />
        <alternate file"icons/icon_24.png" size="large_toolbar" />
        <alternate file"icons/icon_20.png" size="button" />
