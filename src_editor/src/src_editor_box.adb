@@ -964,7 +964,6 @@ package body Src_Editor_Box is
       Editor : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
       Editor.Explicit_Writable_Set := True;
-
       Set_Writable (Editor, not Editor.Writable);
 
       return False;
@@ -1042,6 +1041,8 @@ package body Src_Editor_Box is
       --  Connect the Undo/Redo buttons to the buffer
       if B.Writable then
          Add_Controls (B.Source_Buffer);
+      else
+         Remove_Controls (B.Source_Buffer);
       end if;
 
       return False;
@@ -1639,7 +1640,6 @@ package body Src_Editor_Box is
         (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
          Get_Language (Source.Source_Buffer));
       Box.Writable := Source.Writable;
-
       Set_Text (Box.Modified_Label, Get_Text (Source.Modified_Label));
 
       if Box.Writable then
@@ -1681,6 +1681,11 @@ package body Src_Editor_Box is
          return;
       end if;
 
+      --  ??? It would probably be disirable to replace the following code with
+      --  a call to Set_Writable although the fact that it adds a call to
+      --  Add_Controls/Remove_Controls introduce Storage_Error's in
+      --  Commands.Undo.
+
       Editor.Writable := Get_Filename (Editor.Source_Buffer) = VFS.No_File
         or else Is_Writable (Get_Filename (Editor.Source_Buffer))
         or else (not Is_Regular_File (Get_Filename (Editor.Source_Buffer))
@@ -1711,11 +1716,6 @@ package body Src_Editor_Box is
       if Success then
          Set_Cursor_Location (Editor, 1, 1, Force_Focus);
          Set_Filename (Editor.Source_Buffer, Filename);
-         if Get_Modified (Editor.Source_Buffer) then
-            Set_Text (Editor.Modified_Label, -"Modified");
-         else
-            Set_Text (Editor.Modified_Label, -"Unmodified");
-         end if;
 
          if Read_Only_Set then
             Set_Writable (Editor, False);
