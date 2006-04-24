@@ -168,10 +168,10 @@ package body GNAT.Expect.TTY.Remote is
    -- Log --
    ---------
 
-   procedure Log (Where : in String; What : in String) is
+   procedure Log (Where : String; What : String) is
 
       function Clean_Up (Str : in String) return String;
-      --  ???
+      --  On VMS, traces might begin with NUL character. Remove it for display
 
       function Clean_Up (Str : in String) return String is
          Out_S : String := Str;
@@ -287,8 +287,10 @@ package body GNAT.Expect.TTY.Remote is
    procedure Internal_Handle_Exceptions
      (Desc : in out Remote_Process_Descriptor) is
    begin
-      if not Desc.Died then
-         --  Exception comming from the shell, not from the remote process
+      --  Exception comming from the shell, not from the remote process
+      --  If Session_Died is set, the session exception has already been
+      --  treated.
+      if not Desc.Terminated and not Desc.Session_Died then
          if Desc.Machine /= null
            and then Desc.Session_Nb in Desc.Machine.Sessions'Range
            and then Desc.Machine.Sessions (Desc.Session_Nb).State /= OFF
@@ -296,7 +298,8 @@ package body GNAT.Expect.TTY.Remote is
             Desc.Machine.Sessions (Desc.Session_Nb).State := OFF;
             Close (Desc.Machine.Sessions (Desc.Session_Nb).Pd);
          end if;
-         Desc.Died := True;
+         Desc.Terminated   := True;
+         Desc.Session_Died := True;
       end if;
 
    exception
@@ -438,11 +441,11 @@ package body GNAT.Expect.TTY.Remote is
 
          case Res is
             when Expect_Timeout =>
-               Trace (Me, "got timeout in Wait_For_Prompt");
-               Descriptor.Died := True;
+               Trace (Me, "got timeout in Wait_For_Prompt (intermediate=" &
+                      Boolean'Image (Intermediate) & ")");
+               Descriptor.Session_Died := True;
                Close (Descriptor);
 
-               Descriptor.Shell := null;
                Raise_Exception
                  (Invalid_Process'Identity,
                   "Could not get prompt when connecting to host " &
@@ -549,10 +552,9 @@ package body GNAT.Expect.TTY.Remote is
                   Res_Extra := Natural (Res - 3);
                else
                   Trace (Me, "got disconnected in Wait_For_Prompt");
-                  Descriptor.Died := True;
+                  Descriptor.Session_Died := True;
                   Close (Descriptor);
 
-                  Descriptor.Shell := null;
                   Raise_Exception
                     (Invalid_Process'Identity,
                      "Unexpected error when connecting to " &
@@ -831,7 +833,7 @@ package body GNAT.Expect.TTY.Remote is
 
          Desc.Busy                 := True;
          Desc.Current_Echo_Skipped := False;
-         Desc.Died                 := False;
+         Desc.Session_Died         := False;
 
          Get_Or_Init_Session
            (Desc, True, Main_Window);
@@ -1153,11 +1155,14 @@ package body GNAT.Expect.TTY.Remote is
                         Filter_Out'Access);
          Status := 0;
 
-         --  If underlying session died unexpectedly, just close the descriptor
-         if not Descriptor.Died then
+         --  Close is called before remote program terminates. Close the
+         --  underlying session.
+         --  This happens when the session is blocked or has died.
+         if not Descriptor.Terminated then
             Descriptor.Machine.Sessions (Descriptor.Session_Nb).State := OFF;
             Close (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd,
                    Status);
+            Descriptor.Session_Died := True;
          else
             if Descriptor.Shell.Get_Status_Cmd /= null then
                --  try to retrieve the terminated program's status
@@ -1224,8 +1229,6 @@ package body GNAT.Expect.TTY.Remote is
          Descriptor.Output_Fd  := GNAT.OS_Lib.Invalid_FD;
          Descriptor.Error_Fd   := GNAT.OS_Lib.Invalid_FD;
          Descriptor.Pid        := Invalid_Pid;
-         Descriptor.Machine    := null;
-         Descriptor.Shell      := null;
          Descriptor.Session_Nb := 0;
          Close_Pseudo_Descriptor (Descriptor);
       else
@@ -1253,7 +1256,7 @@ package body GNAT.Expect.TTY.Remote is
 
    procedure Interrupt (Descriptor : in out Remote_Process_Descriptor) is
    begin
-      if not Descriptor.Died then
+      if not Descriptor.Terminated then
          --  Interrupt the session. The best case (unix) is that this SIGINT
          --  is transmitted to the remote process. The worst case (windows) is
          --  that the session is killed (thus terminating the remote process).
@@ -1828,7 +1831,6 @@ package body GNAT.Expect.TTY.Remote is
       Result : Expect_Match) is
    begin
       if Descriptor.Terminated and then Result = Expect_Timeout then
-         Descriptor.Died := True;
          raise Process_Died;
       end if;
    end Handle_Post_Disconnect;
