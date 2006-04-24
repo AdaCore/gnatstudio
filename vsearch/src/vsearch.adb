@@ -1374,6 +1374,11 @@ package body Vsearch is
       Set_Tip (Tooltips, Vsearch.Pattern_Entry,
                -"The searched word or pattern");
 
+      Gtk_New (Vsearch.Buttons_Table, 2, 3, True);
+      Set_Row_Spacings (Vsearch.Buttons_Table, 3);
+      Set_Col_Spacings (Vsearch.Buttons_Table, 3);
+      Pack_Start (Vsearch, Vsearch.Buttons_Table, False, False, 0);
+
       Gtk_New_Vbox (Enclosing_Options_Box);
       Pack_Start (Vsearch, Enclosing_Options_Box);
 
@@ -1390,9 +1395,6 @@ package body Vsearch is
 
       Gtk_New (Vsearch.Options_Vbox, 3, 2, False);
       Pack_Start (Vsearch.Options_Frame, Vsearch.Options_Vbox, Padding => 3);
-
-      Gtk_New (Vsearch.Buttons_Table, 2, 3, True);
-      Pack_Start (Vsearch, Vsearch.Buttons_Table, False, False, 0);
 
       Gtk_New (Vsearch.Case_Check, -"Case Sensitive");
       Set_Active (Vsearch.Case_Check, False);
@@ -1412,12 +1414,12 @@ package body Vsearch is
       Gtk_New (Vsearch.Select_Editor_Check, -"Select Window on Match");
       Set_Active (Vsearch.Select_Editor_Check, False);
       Attach (Vsearch.Options_Vbox,
-              Vsearch.Select_Editor_Check, 0, 1, 2, 3);
+              Vsearch.Select_Editor_Check, 0, 1, 1, 2);
 
       Gtk_New (Vsearch.Auto_Hide_Check, -"Close Dialog on Search");
       Set_Active (Vsearch.Auto_Hide_Check, False);
       Attach (Vsearch.Options_Vbox,
-              Vsearch.Auto_Hide_Check, 0, 1, 1, 2);
+              Vsearch.Auto_Hide_Check, 0, 1, 2, 3);
 
       Vsearch.Kernel := Handle;
 
