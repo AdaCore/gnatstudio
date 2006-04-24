@@ -36,6 +36,7 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -1104,6 +1105,17 @@ package body Custom_Module is
                         Add_Alternate_Sources;
 
                         Add (Factory, Id, Set);
+
+                        declare
+                           Stock : Gtk_Stock_Item;
+                        begin
+                           Gtk_New
+                             (Stock, Id,
+                              -Get_Attribute (Child, "label"),
+                             0, 0, "");
+                           Add (Stock);
+                        end;
+
                      else
                         Insert
                           (Kernel,
