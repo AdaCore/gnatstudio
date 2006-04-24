@@ -76,8 +76,7 @@ package body Completion is
 
    procedure Register_Resolver
      (Manager  : access Completion_Manager;
-      Resolver : access Completion_Resolver'Class)
-   is
+      Resolver : access Completion_Resolver'Class) is
    begin
       Append (Manager.Resolvers, Completion_Resolver_Access (Resolver));
       Resolver.Manager := Completion_Manager_Access (Manager);
@@ -125,8 +124,7 @@ package body Completion is
      (Proposal   : Completion_Proposal;
       Identifier : String;
       Offset     : Positive;
-      Is_Partial : Boolean)
-      return Completion_List
+      Is_Partial : Boolean) return Completion_List
    is
       Composition : constant Completion_List := Get_Composition
         (Completion_Proposal'Class (Proposal), Offset);
@@ -163,8 +161,7 @@ package body Completion is
    ------------------
 
    function Get_Resolver (Proposal : Completion_Proposal)
-     return Completion_Resolver_Access
-   is
+     return Completion_Resolver_Access is
    begin
       return Proposal.Resolver;
    end Get_Resolver;
@@ -200,6 +197,10 @@ package body Completion is
          Returned_List : Completion_List;
 
          function Handle_Identifier (Id : String) return Completion_List;
+
+         -----------------------
+         -- Handle_Identifier --
+         -----------------------
 
          function Handle_Identifier (Id : String) return Completion_List is
             Returned_List : Completion_List;
@@ -251,6 +252,7 @@ package body Completion is
 
             return Returned_List;
          end Handle_Identifier;
+
       begin
          case Data (Token).Tok_Type is
             when Tok_Dot =>
@@ -309,7 +311,6 @@ package body Completion is
 
             when others =>
                null;
-
          end case;
 
          return Null_Completion_List;
@@ -363,8 +364,7 @@ package body Completion is
    ------------------
 
    function Get_Proposal (This : Completion_Iterator)
-     return Completion_Proposal'Class
-   is
+     return Completion_Proposal'Class is
    begin
       return Data (This);
    end Get_Proposal;
@@ -373,8 +373,7 @@ package body Completion is
    -- Get_Name --
    --------------
 
-   function Get_Name (Proposal : Simple_Completion_Proposal) return String
-   is
+   function Get_Name (Proposal : Simple_Completion_Proposal) return String is
    begin
       return Proposal.Name.all;
    end Get_Name;
@@ -412,8 +411,7 @@ package body Completion is
      (Proposal   : Simple_Completion_Proposal;
       Identifier : String;
       Offset     : Positive;
-      Is_Partial : Boolean)
-      return Completion_List
+      Is_Partial : Boolean) return Completion_List
    is
       pragma Unreferenced (Proposal, Identifier, Offset, Is_Partial);
    begin
@@ -454,4 +452,5 @@ package body Completion is
         or else (not Is_Partial
                    and then Lower_Tested_Name = Lower_Seeked_Name);
    end Match;
+
 end Completion;

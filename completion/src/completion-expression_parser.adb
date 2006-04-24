@@ -60,6 +60,10 @@ package body Completion.Expression_Parser is
       procedure Push (Token : in out Token_Record);
       procedure Pop;
 
+      ---------------------
+      -- Skip_Expression --
+      ---------------------
+
       procedure Skip_Expression (Offset : in out Natural) is
          Local_Token : Token_Record := Token;
       begin
@@ -107,6 +111,10 @@ package body Completion.Expression_Parser is
          end loop;
       end Skip_Expression;
 
+      -----------------
+      -- Skip_String --
+      -----------------
+
       procedure Skip_String (Offset : in out Natural) is
       begin
          while Offset > 0 loop
@@ -123,13 +131,16 @@ package body Completion.Expression_Parser is
 
                when others =>
                   null;
-
             end case;
 
             Offset := Offset - 1;
 
          end loop;
       end Skip_String;
+
+      -----------------------
+      -- Skip_Comment_Line --
+      -----------------------
 
       procedure Skip_Comment_Line (Offset : in out Natural) is
          Local_Offset : Natural := 0;
@@ -156,6 +167,10 @@ package body Completion.Expression_Parser is
 
          end loop;
       end Skip_Comment_Line;
+
+      ---------------
+      -- Push_Pckg --
+      ---------------
 
       procedure Push_Pckg (Offset : in out Natural) is
       begin
@@ -184,6 +199,10 @@ package body Completion.Expression_Parser is
          end if;
       end Push_Pckg;
 
+      ----------
+      -- Push --
+      ----------
+
       procedure Push (Token : in out Token_Record) is
       begin
          if Token /= Null_Token then
@@ -191,6 +210,10 @@ package body Completion.Expression_Parser is
             Token := Null_Token;
          end if;
       end Push;
+
+      ---------
+      -- Pop --
+      ---------
 
       procedure Pop is
       begin

@@ -40,8 +40,7 @@ package Completion.Entities_Extractor is
       Identifier : String;
       Is_Partial : Boolean;
       Offset     : Natural;
-      Filter     : Possibilities_Filter)
-      return Completion_List;
+      Filter     : Possibilities_Filter) return Completion_List;
    --  See inherited documentation
 
    procedure Free (This : in out Entity_Completion_Resolver);
@@ -102,16 +101,14 @@ private
       Unit_Name    : String;
       View_Private : Boolean;
       Resolver     : Completion_Resolver_Access;
-      Is_Partial   : Boolean := False)
-      return Completion_List;
+      Is_Partial   : Boolean := False) return Completion_List;
    --  Return all the entities in the given file of the current name
    --  referenced in the given unit.
 
    function Get_Source_For_Unit
      (Handler   : access Language_Handler_Record'Class;
       Project   : Project_Type;
-      Unit_Name : String)
-      return Source_File;
+      Unit_Name : String) return Source_File;
    --  Return the source file corresponding to the unit name given in parameter
 
    function Get_Unit_Info (Source : Source_File) return Entity_Information;

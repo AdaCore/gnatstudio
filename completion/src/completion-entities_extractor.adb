@@ -32,8 +32,7 @@ package body Completion.Entities_Extractor is
      (Tree    : Construct_Tree_Access;
       Project : Project_Type;
       Handler : access Language_Handler_Record'Class)
-      return Entity_Completion_Resolver
-   is
+      return Entity_Completion_Resolver is
    begin
       return
         (Manager => null,
@@ -252,8 +251,7 @@ package body Completion.Entities_Extractor is
       Unit_Name    : String;
       View_Private : Boolean;
       Resolver     : Completion_Resolver_Access;
-      Is_Partial   : Boolean := False)
-      return Completion_List
+      Is_Partial   : Boolean := False) return Completion_List
    is
       It     : Entity_Iterator;
       Result : Completion_List;
@@ -295,8 +293,7 @@ package body Completion.Entities_Extractor is
    function Get_Source_For_Unit
      (Handler   : access Language_Handler_Record'Class;
       Project   : Project_Type;
-      Unit_Name : String)
-      return Source_File
+      Unit_Name : String) return Source_File
    is
       Files        : VFS.File_Array_Access :=
         Get_Source_Files (Project, True);
@@ -327,8 +324,7 @@ package body Completion.Entities_Extractor is
       Identifier : String;
       Is_Partial : Boolean;
       Offset     : Natural;
-      Filter     : Possibilities_Filter)
-      return Completion_List
+      Filter     : Possibilities_Filter) return Completion_List
    is
       It     : Construct_Tree_Iterator := First (Resolver.Tree.all);
       Result : Completion_List;

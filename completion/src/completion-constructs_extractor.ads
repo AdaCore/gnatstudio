@@ -34,8 +34,7 @@ package Completion.Constructs_Extractor is
       Identifier : String;
       Is_Partial : Boolean;
       Offset     : Natural;
-      Filter     : Possibilities_Filter)
-      return Completion_List;
+      Filter     : Possibilities_Filter) return Completion_List;
    --  See inherited documentation
 
    procedure Free (This : in out Construct_Completion_Resolver);
@@ -44,7 +43,7 @@ package Completion.Constructs_Extractor is
 private
 
    type Construct_Completion_Resolver is new Completion_Resolver with record
-      Tree   : Construct_Tree_Access;
+      Tree : Construct_Tree_Access;
    end record;
 
    type Construct_Completion_Proposal is new Completion_Proposal with record

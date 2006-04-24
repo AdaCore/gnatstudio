@@ -71,11 +71,15 @@ package body Completion.Constructs_Extractor is
       return Completion_List
    is
       Tree : constant Construct_Tree_Access :=
-        Construct_Completion_Resolver (Proposal.Resolver.all).Tree;
+               Construct_Completion_Resolver (Proposal.Resolver.all).Tree;
 
       function Get_Composition_Of_Type
         (Type_Iterator : Construct_Tree_Iterator; Recursive : Boolean := True)
          return Completion_List;
+
+      -----------------------------
+      -- Get_Composition_Of_Type --
+      -----------------------------
 
       function Get_Composition_Of_Type
         (Type_Iterator : Construct_Tree_Iterator; Recursive : Boolean := True)
@@ -90,8 +94,8 @@ package body Completion.Constructs_Extractor is
          if Recursive and then Parent_Name /= "" then
             declare
                Parents : constant Construct_Tree_Iterator_Array :=
-                 Get_Visible_Constructs
-                   (Tree.all, Type_Iterator, Parent_Name);
+                           Get_Visible_Constructs
+                             (Tree.all, Type_Iterator, Parent_Name);
             begin
                if Parents'Length >= 1 then
                   Concat (Result, Get_Composition_Of_Type
@@ -159,11 +163,11 @@ package body Completion.Constructs_Extractor is
                   --  have to look elsewhere
 
                   declare
-                     Resolver : constant Completion_Resolver_Access :=
-                       Next (Proposal.Resolver);
-                     Completions         : Completion_List;
-                     It                  : Completion_Iterator;
-                     Result              : Completion_List;
+                     Resolver    : constant Completion_Resolver_Access :=
+                                     Next (Proposal.Resolver);
+                     Completions : Completion_List;
+                     It          : Completion_Iterator;
+                     Result      : Completion_List;
                   begin
                      if Resolver /= null then
                         Completions := Get_Possibilities
@@ -189,6 +193,7 @@ package body Completion.Constructs_Extractor is
                   end;
                end if;
             end;
+
          when Cat_Package =>
             declare
                Spec_It         : Construct_Tree_Iterator;
@@ -216,8 +221,8 @@ package body Completion.Constructs_Extractor is
 
                --  Add the entities from the specification
 
-               while Get_Parent_Scope (Tree.all, Child_Iterator)
-                 = Spec_It
+               while
+                 Get_Parent_Scope (Tree.all, Child_Iterator) = Spec_It
                loop
                   if Spec_Visibility
                     or else
@@ -244,8 +249,8 @@ package body Completion.Constructs_Extractor is
 
                   --  Add the entities from the specification
 
-                  while Get_Parent_Scope (Tree.all, Child_Iterator)
-                    = Body_It
+                  while
+                    Get_Parent_Scope (Tree.all, Child_Iterator) = Body_It
                   loop
                      Append
                        (Result,
@@ -290,13 +295,13 @@ package body Completion.Constructs_Extractor is
       Identifier : String;
       Is_Partial : Boolean;
       Offset     : Natural;
-      Filter     : Possibilities_Filter)
-      return Completion_List
+      Filter     : Possibilities_Filter) return Completion_List
    is
-      Result : Completion_List;
+      Result       : Completion_List;
       Result_Array : constant Construct_Tree_Iterator_Array :=
-        Get_Visible_Constructs
-          (Resolver.Tree.all, Offset, Identifier, True, Is_Partial);
+                       Get_Visible_Constructs
+                         (Resolver.Tree.all, Offset, Identifier,
+                          True, Is_Partial);
    begin
       if (Filter and All_Visible_Entities) /= 0 then
          for J in Result_Array'Range loop
