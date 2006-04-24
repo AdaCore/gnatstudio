@@ -465,7 +465,7 @@ package body GPS.Kernel.Preferences is
 
       MDI_Focus_Title_Color := Param_Spec_Color (Gnew_Color
         (Name    => "MDI-Focus-Title-Color",
-         Default => "#000088",
+         Default => "#6297C5",
          Blurb   => -"Color to use for the title bar of selected items",
          Nick    => -"Selected title bar color"));
       Register_Property
