@@ -30,7 +30,6 @@ with "../views/views";
 with "../remote/remote";
 with "../completion/completion";
 
-
 project GPS is
 
    for Languages use ("Ada");
