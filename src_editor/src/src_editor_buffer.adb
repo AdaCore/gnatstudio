@@ -3997,8 +3997,7 @@ package body Src_Editor_Buffer is
 
    procedure Undo (Buffer : access Source_Buffer_Record) is
       Command : constant Editor_Command :=
-        Editor_Command (Buffer.Current_Command);
-
+                  Editor_Command (Buffer.Current_Command);
    begin
       if not Is_Null_Command (Command) then
          End_Action (Buffer);
@@ -4174,6 +4173,7 @@ package body Src_Editor_Buffer is
          Set_Controls
            (Buffer.Queue, Undo_Redo_Data.Get (Buffer.Kernel, Undo_Redo_Id));
       end if;
+
       Buffer.Controls_Set := True;
    end Add_Controls;
 
