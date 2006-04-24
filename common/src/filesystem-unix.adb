@@ -41,7 +41,7 @@ package body Filesystem.Unix is
       --  Force interactive shells. Required for solaris (and others).
       Add_Shell_Descriptor
         ("sh", "sh -i",
-         Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
+         Generic_Prompt      => "^[^\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
          Init_Commands       => (new String'("PS1=---GPSPROMPT--#"),
@@ -56,7 +56,7 @@ package body Filesystem.Unix is
 
       Add_Shell_Descriptor
         ("bash", "bash -i",
-         Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
+         Generic_Prompt      => "^[^\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
          Init_Commands       => (new String'("export COLUMNS=2048"),
@@ -71,7 +71,7 @@ package body Filesystem.Unix is
 
       Add_Shell_Descriptor
         ("csh", "csh -i",
-         Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
+         Generic_Prompt      => "^[^\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
          Init_Commands       => (new String'("set prompt=---GPSPROMPT--#"),
@@ -85,7 +85,7 @@ package body Filesystem.Unix is
 
       Add_Shell_Descriptor
         ("tcsh", "tcsh -i",
-         Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
+         Generic_Prompt      => "^[^\n]*[#$%>] *$",
          Configured_Prompt   => "^---GPSPROMPT--#.*$",
          FS                  => FS,
          Init_Commands       => (new String'("set prompt=---GPSPROMPT--#"),
