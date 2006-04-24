@@ -1104,12 +1104,7 @@ package body Src_Editor_View is
       Save_Cursor_Position (View);
       External_End_Action (Buffer);
 
-      if View.Button_Pressed then
-         Set_Time (View.Button_Event, 0);
-
-         Result := Return_Callback.Emit_By_Name
-           (Widget, "button_release_event", View.Button_Event);
-      end if;
+      Stop_Selection_Drag (View);
 
       return False;
 
@@ -1669,6 +1664,22 @@ package body Src_Editor_View is
          Get_Iter_At_Mark (Get_Buffer (View), Iter, View.Saved_Cursor_Mark);
       end if;
    end Get_Cursor_Position;
+
+   -------------------------
+   -- Stop_Selection_Drag --
+   -------------------------
+
+   procedure Stop_Selection_Drag (View : access Source_View_Record'Class) is
+      Result : Boolean;
+      pragma Unreferenced (Result);
+   begin
+      if View.Button_Pressed then
+         Set_Time (View.Button_Event, 0);
+
+         Result := Return_Callback.Emit_By_Name
+           (View, "button_release_event", View.Button_Event);
+      end if;
+   end Stop_Selection_Drag;
 
    -----------------------------
    -- Window_To_Buffer_Coords --
