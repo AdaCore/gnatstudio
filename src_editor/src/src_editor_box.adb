@@ -1964,6 +1964,10 @@ package body Src_Editor_Box is
                Button := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
                Button := Add_Button (Dialog, -"Reload", Gtk_Response_No);
 
+               --  Ungrab the pointer if needed, to avoid freezing the
+               --  interface if the user is e.g. moving the GPS window
+
+               Pointer_Ungrab;
                Show_All (Dialog);
                Response := Run (Dialog);
                Destroy (Dialog);
