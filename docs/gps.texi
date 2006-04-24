@@ -7736,8 +7736,9 @@ machine, you can specify the name of this machine by setting the
 @c --------------------------------------------------------------------
 @menu
 * Requirements::
-* Setup with a shared filesystem::
-* Setup without a shared filesystem::
+* Setup the remote servers::
+* Load a remote project::
+* Customize::
 @end menu
 
 @noindent
@@ -7747,7 +7748,7 @@ instance, each developers may have a PC running Windows or GNU/Linux as their
 main entrypoint to the company network and do all their development activities
 on servers potentially running a different operating system and on which the
 various project resources are shared. A typical way of operating in such an
-environment is to access the server through X-Windows. GPS does naturally work
+environment is to access the server through X-Window. GPS does naturally work
 in such a context but it is not necessarily the most efficient organization.
 Running GPS remotely on a shared remote server will increase the workload of the
 server as well as the traffic on the network. When the network is slow or
@@ -7755,205 +7756,201 @@ saturated, the user interactions can become uncomfortably sluggish. This is a
 pity when the desktop used to access the network is often a powerful PC which
 remains idle most of the time. GPS offers the possibility to run natively on the
 desktop while compilation, run and/or debug activities are performed
-transparently on the remote server.
+transparently on one or several remote server.
 
 @node Requirements
 @section Requirements
 
 @noindent
-Future versions of GPS will most certainly have new features that will
-facilitate its use with remote servers. Nonetheless, in its current state GPS
-already provides many interesting features that can be used once the limitation
-of the current scheme as well as their workaround are understood.
-
 In order to compile, run or debug on a remote host from GPS, two conditions need
 to be met:
 
 @itemize
 @item
-Have a password-less non-interactive remote connection to the host.
+Have a remote connection to the host using 'rsh', 'ssh' or 'telnet'. Note that
+GPS can now handle passwords for such connections.
 @item
-Offer to GPS a coherent view of the project from the local and from the remote
-machine.
+Either have a Network Filesystem (i.e. NFS or SMB) sharing the project files
+between the host and the target, or having rsync on both client and server.
+@item
+Subprojects shall be withed by the main project using relative paths, or both
+machines shall share the same absolute path.
 @end itemize
 
-The first condition can be met by using protocols such as 'rsh' or 'ssh'. In
-the first case, you will have to create the necessary entries in your
-@file{.rhosts} file on the remote machine to allow a password-less connection.
-In the second case, an ssh agent or @file{.shosts} file are one of the
-possibilities that can be used to obtain the same effect.
-
-Here are the steps that need to be taken in order to setup the work with the
-remote host:
+@noindent
+The full remote setup is performed in several steps:
 @itemize
-@item Check some of the preferences in @code{Edit->Preferences}:
-  @itemize
-  @item @code{External Command->Remote shell} should contain the desired remote
-        password-less connection command (e.g. "ssh").
-  @item @code{Debugger->Execution Window} is disabled.
-  @end itemize
-@item Change some of the main project properties
-@code{Project->Edit Project Properties}:
-  @itemize
-  @item @code{General->Cross environment->Tools host} shall contain the name
-  of the server (e.g. machine.company.com) or an IP address if the name is not
-  available. The 2 fields below @code{Program host} and @code{Protocol} should
-  be left empty.
-  @item @code{Languages->Tools->compiler->Ada} may be set to the full
-  pathname of the gnatmake command on the remote machine (e.g.
-  /opt/gnatpro/5.03a/bin/gnatmake)
-  @item @code{Languages->Tools->compiler->Gnatls} may be set to the full
-  pathname of the gnatls command on the remote machine (e.g.
-  /opt/gnatpro/5.03a/bin/gnatls)
-  @item @code{Languages->Tools->Debugger} may be set to the full
-  pathname of the gdb command on the remote machine (e.g.
-  /opt/gnatpro/5.03a/bin/gdb)
-  @end itemize
+@item Setup the remote servers you will connect to
+@item Determine the paths shared between the host and the target server
+@item Load your remote project, or compile your local project on the server
 @end itemize
 
-The 3 latter changes are necessary when the remote shell command does not
-initialize the user environment on the remote machine when used in batch mode.
-This is the case when using directly 'rsh' or 'ssh'. Providing
-the full path names of the GNAT tools on the remote machine allows GPS to
-access the right GNAT toolset without having to rely on the user default
-initialization (such as .profile or .cshrc on Unix machines). If a more complex
-setup is required in order to properly run GNAT commands on the remote host,
-then it is possible to replace the remote shell command specified in the
-preferences by a script calling another script on the remote machine
-whose job is to set up the environment before launching the command.
-For instance, if both the desktop and the remote hosts are unix machines (or
-Windows machines running cygwin), you can use this script on your desktop
-after having set @code{Preferences->External Command->Remote shell} to
-"sh /some_path/my_ssh":
-@smallexample
-#!/bin/sh
-# @code{my_ssh} is a wrapper to ssh calling @code{execute} on the remote host
-machine=$1
-shift
-ssh $machine sh --login bin/execute "$@@"
-@end smallexample
-along with a script "execute" on the remote host which can look like:
-@smallexample
-#!/bin/sh
-# execute sets the environment and calls the command in argument
-# enter here the commands necessary of the setup
+@node Setup the remote servers
+@section Setup the remote servers
 
-# call the command in argument
-"$@@"
-@end smallexample
+@noindent
+First you need to open the remote view, that will allow you to setup your
+remote configuration, and control what server will be used to compile, run or
+debug your project. You can open it using the menu @code{Tools->Views->Remote}
 
-The second condition mentioned earlier is related to providing GPS with a
-coherent view of the project on the desktop and on the remote host. A GNAT
-project is composed of several elements such as project files, sources,
-objects, ALI files, etc. that can be spread through various directories. Most of
-those elements must be accessible from both the desktop and the remote machine.
-More specifically, For editing/modifying the project, the source code need to
-be accessible from the desktop along with the project files. The paths used in
-the project need to be coherent with the desktop filesystem. For compiling,
-The source code need to be accessible from the remote server and the path in
-project files must be coherent with the server filesystem. For browsing and
-navigating, the ALI files produced during compilation must be accessible from
-the desktop. For debugging, the project and sources must be accessible from the
-desktop while the sources and the executable must be accessible from the remote
-server.
+@iftex
+@cindex screen shot
+@image{remote-view, 4.8cm}
+@end iftex
 
-It is recommended to use relative paths in the project files instead of
-absolute paths so that the relative path match on the local and remote machines.
-The next sections describe two setups that help meeting this second
-condition.
+@ifhtml
+@cindex screen shot
+@image{remote-view}
+@end ifhtml
 
-@node Setup with a shared filesystem
-@section Setup with a shared filesystem
+@noindent
+Once the Remote View is opend, click on @code{Servers configuration} to open
+the servers configuration dialog.
 
-Having the shared disk between the desktop machine and the remote host offers
-simple ways of meeting the coherent view requirement mentioned in the previous
-section.
+@iftex
+@cindex screen shot
+@image{servers-configuration, 11.5cm}
+@end iftex
 
-GPS will also need to reference for building the root project file with the
-same pathname for the desktop and the remote host, so this requires appropriate
-mounting and possibly the use of symbolic links under Unix systems.
+@ifhtml
+@cindex screen shot
+@image{servers-configuration}
+@end ifhtml
 
-Similarly, GPS will need to access executables (found in the executable or
-object directory of the project file) with same pathname between the desktop and
-the remote host. When under Windows, the drive letter will also be used by GPS.
-
-If the remote host is a Unix machine, you will need create in your remote
-home directory a symbolic link corresponding to the drive letter where
-the project is, pointing to the directory starting the directory hierarchy
-used by your project.
-
-For example, if you have a project file called @file{d:\projects\foo.gpr}
-corresponding to the remote file @file{/home/users/projects/foo.gpr} and that
-your remote home directory is @file{/home/users}, you need to create the
-following link on the remote host:
-
-@smallexample
-$ cd /home/users  # home directory
-$ ln -s . d:
-@end smallexample
-
-So that, when GPS will be referencing d:/projects/foo.gpr on the remote
-host, this will automatically get transformed into
-@file{/home/users/projects/foo.gpr}
-
-@node Setup without a shared filesystem
-@section Setup without a shared filesystem
-
-When a shared filesystem is not an option, the next best option is to have all
-the elements of the project (sources, ALI files etc.) duplicated on both sides.
-It is possible to synchronize automatically both sides by using a standard tool
-such as rsync in conjunction with slightly more sophisticated version of the
-remote shell script @code{my_ssh} mentioned earlier. Here is an example that has
-been tested with a local Windows machine running cygwin and a remote Unix
-server or another Windows server running cygwin and in particular a sshd deamon:
-@smallexample
-#!/bin/sh
-machine=$1
-shift
-#where is the main project file
-local_dir="C:/my_home/test/demo2"
-remote_dir="test/demo2"
-
-# convert the local path into a path suitable for the remote machine
-cmd=`echo "$@@" | sed -e "s|$local_dir|$remote_dir/|g"`
-
-# This line can be removed if the local machine is a Unix machine
-local_dir=`cygpath -u $local_dir`
-
-# synchronize sources from local to remote machine
-rsync -ar --rsh="ssh" --include="*.ads" --include="*.adb" \
-      --include="*.gpr" --include="*/" --exclude="*" \
-      $local_dir/ $machine:$remote_dir
-
-# execute the remote command
-ssh $machine "bin/execute $cmd"
-
-# synchronize ALI files from remote to local machine
-rsync -ar --rsh="ssh" --include="*.ali" --exclude="*" \
-      $machine:$remote_dir/ $local_dir/
-@end smallexample
-
-This script makes a few assumptions:
+@noindent
+This dialog is composed of several parts:
 @itemize
-@item All the sources of the project are available of the local desktop.
-@item The main project file is at the root of the project hierarchy
-@item The sources use the default GNAT naming conventions
-@item the @code{execute} script described in a previous section must be
-installed in the $HOME/bin directory of the remote machine.
+@item
+The left part of the dialog contains the list of configured servers,
+identified by their nickname. Each nickname shall be unique.
+@item
+The middle part of the dialog contains the selected server's configuration.
+@item
+The right part allows you to create, reinitialize or delete a server.
 @end itemize
-If some of those assumptions are not met, the script will need adaptations. In
-all cases, minor adaptations to the local setup are required before usage:
+
+So you need first to create a new server. For this, click on the button
+@code{Add Server} on the right part of the dialog. Enter a nickname identifying
+the server you want to connect to (this is not necessarily the network name of
+this server). This new server is then automatically selected, and the center
+part of the dialog shows its configuration, which is empty for the most part.
+
+You now have to enter all mandatory fields, identified by an asterisk:
 @itemize
-@item The @code{local_dir} variable needs to be set to the full path of the
-project file on the local machine precisely as GPS will generate it when it
-launches gnatmake command.
-@item The @code{remote_dir} variable must be set to the directory on the remote
-hosts that will serve as a root of the project mirror hierarchy.
-@item The line containing the call to @code{cygpath} command must only be used
-from a local Windows machine running cygwin. Otherwise it must be removed.
+@item
+The network name is the name used to connect to this server via your network.
+It can be either an IP address, a host name of your local network, or a fully
+qualified network name.
+@item
+The remote access tool is the tool used to connect to this server. You select
+it using the drop down list. The following tools are supported natively by
+GPS: ssh, rsh, telnet and plink (Windows tool) in ssh, rsh or telnet mode. See
+the customize section if you need to add a specific tool.
+@item
+The shell tells GPS what Shell runs on the remote server. The following unix
+shells are supported by GPS: sh, bash, csh and tcsh. Windows' shell is also
+supported (cmd.exe).
 @end itemize
-A more sophisticated and safe version of this script is available in the GPS
-examples directory.
+
+@noindent
+Other fields might need to be taken into consideration, but they are not
+mandatory. They are for the most part accessible through the advanced
+configuration pane.
+
+@itemize
+@item
+The remote sync tool is used to synchronize remote and local filesystems, if
+these are not shared filesystems. For now, only rsync is supported.
+@item
+The user name specifies the name used to connect to the server. If unspecified,
+the remote access tool will most of the time use your current login name. If
+not, and a user name is requested, gps will prompt you for a user name when
+requested.
+@item
+The timeout value is used to determine if a connection to a remote host is
+dead. All elementary operations performed on the remote host (i.e. operations
+that are normally almost immediate to perform) will use this timeout value. By
+default, this value is set to 10s. If you have a very slow network connection
+or a very overloaded server, set this timeout to a higher value.
+@item
+The maximum number of connections determines the maximum number of simultaneous
+connections GPS is allowed to perform to this server. In fact, if you want to
+compile, debug and execute at the same time on the machine, GPS will need
+more that one ssh or rsh connection to do this. The default value is 3.
+@item
+The Extra Init Commands field represent initialization commands sent to the
+server upon connection: when GPS connects to your remote machine, the chosen
+shell is launched, and your default initialization files are read (i.e. .bashrc
+file for the bash shell). Then GPS sends these extra init commands, allowing
+you for example to specify a compilation toolchain.
+@end itemize
+
+The last configuration part consist on defining the paths translations between
+your local host and the remote server. GPS will use these paths translations to
+locally load your project, and remotely compile, execute or debug it. All your
+project's dependencies shall then reside in a path that is defined here, even
+those implicitely loaded through ADA_PROJECT_PATH.
+
+The way those paths need to be configured depend on your network architecture.
+@itemize
+@item If your project is on a filesystem that is shared between your host and
+the remote host (using NFS of SMB filestems, for example), then only the roots
+of those filesystems need to be specified, using each server's native paths (on
+Windows, the paths will be expressed using X:\my\mounted\diretory\ while on
+unix, the paths will be expressed using /mnt/path/).
+@item In case the project's files are synchronized using rsync, then defining
+a too generic path translation will lead to very slow synchronization. You will
+then need to define the most specific paths as possible, in order to speed up
+the synchronization process as much as possible.
+@end itemize
+
+To add a new path, just click on the @code{+} button, and enter the equivalents
+local and remote paths. You can specify by checking the @code{Need Sync} button
+wether the paths are shared (button unchecked) or need synchronization (button
+checked).
+
+That's it ! Close the dialog by clicking on the OK button.
+
+@node Work with a remote project
+@section Work with a remote project
+
+@noindent
+There are two ways to load a remote project. Either the project already exists
+on a remote server, either it exists on the local machine.
+
+In the first case, you need to use the menu @code{Project->Open From Host}.
+Then you select the server's nickname. This will show you its file tree.
+Navigate to your project, select it. If the server was not correctly
+configured, then error messages are displayed in the Messages console, and the
+default project is loaded instead.
+
+In the second case, you need to first load your local project the usual way.
+Then, open the remote view (@code{Tools->Views->Remote}) and select the server
+in the drop-down list. You can then check your configuration, and then connect
+to this server.
+
+Once your project is loaded, you can select different servers for compilation,
+execution and debug operations. You can do this by opening the
+@code{Servers assignment} pane and selecting the appropriate server for each
+operation kind.
+
+Next, working with the remote project is exactly the same as working locally:
+source editing, browsing, debugging behave the same, with a few exceptions:
+
+@itemize
+@item Execution: you cannot use an external terminal to remotely execute your
+application. If you need to execute a remote X application, you will need a
+local Xwindow server, and eventually configure your remote access tool to
+redirect Xwindow messages, or configure your server to use your local machine
+as display.
+@item Debugging: you cannot use a separate execution window. To make sure
+the execution window is not used, go to menu @code{Edit->Preferences}, select
+the @code{Debugger} tab, and make sure the @code{Execution window} is disabled.
+@end itemize
+
+@node Customize
+@section Customize
+
 @c --------------------------------------------------------------------
 @node Customizing and Extending GPS
 @chapter Customizing and Extending GPS
