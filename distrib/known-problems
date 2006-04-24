@@ -113,6 +113,13 @@ Known Problems fixed in GPS 4.0.0
   Workaround: Close the visual diff and reopen it either using the VCS module
               or the Tools/Visual Diff menus.
 
+- F208-014 No undo/redo for visual diff's
+  Problem:    The undo/redo icons and corresponding menus do not work for on
+              of the file used in a visual diff.
+  Workaound:  Make sure the editor is writable and eventually give the focus
+              (by clicking) to another editor and then back to the previous
+              one.
+
 - F131-018 Cannot launch external process when name contains spaces
   Problem:    When using the Process API in GPS shell or Python, it is not
               possible to launch processes using their full paths when this
