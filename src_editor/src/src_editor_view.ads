@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -143,6 +143,9 @@ package Src_Editor_View is
      (View : access Source_View_Record'Class;
       Iter : out Gtk.Text_Iter.Gtk_Text_Iter);
    --  Return the cursor location in that view.
+
+   procedure Stop_Selection_Drag (View : access Source_View_Record'Class);
+   --  Stop the selection drag if it's currently in done
 
 private
 
