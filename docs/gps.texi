@@ -7773,6 +7773,8 @@ need to be met:
 Have a remote connection to the host using 'rsh', 'ssh' or 'telnet'. Note that
 GPS can now handle passwords for such connections, with some limitations on
 Windows (see section Limitations).
+@c ??? add xref
+
 @item
 Either have a Network Filesystem (i.e. NFS or SMB) sharing the project files
 between the host and the target, or having rsync on both client and server.
