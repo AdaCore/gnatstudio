@@ -7772,8 +7772,7 @@ need to be met:
 @item
 Have a remote connection to the host using 'rsh', 'ssh' or 'telnet'. Note that
 GPS can now handle passwords for such connections, with some limitations on
-Windows (see section Limitations).
-@c ??? add xref
+Windows. @xref{Limitations}, for the list of limitations.
 
 @item
 Either have a Network Filesystem (i.e. NFS or SMB) sharing the project files
@@ -7850,9 +7849,8 @@ qualified network name.
 @item
 The remote access tool is the tool used to connect to this server. You select
 it using the drop down list. The following tools are supported natively by
-GPS: ssh, rsh, telnet and plink (Windows tool) in ssh, rsh or telnet mode. See
-the customize section if you need to add a specific tool.
-@c ??? need to add xref
+GPS: ssh, rsh, telnet and plink (Windows tool) in ssh, rsh or telnet mode.
+@xref{Customize}, if you need to add a specific tool.
 @item
 The shell tells GPS what shell runs on the remote server. The following unix
 shells are supported by GPS: sh, bash, csh and tcsh. Windows' shell is also
@@ -7919,31 +7917,67 @@ checked).
 Once the steps above are done, the configuration is now performed, and
 validated when clicking on the @code{OK} button.
 
+@c -----------------------------------------------------------------------
 @node Working with a remote project
 @section Working with a remote project
+@cindex remote project
+@c -----------------------------------------------------------------------
+
+@menu
+* Remote operations on a local project::
+* Locally editing remote project::
+@end menu
 
 @noindent
-There are two ways to load a remote project. Either the project already exists
-on a remote server, or it exists on the local machine.
+@c -----------------------------------------------------------------------
+@node Remote operations on a local project
+@subsection Remote operations on a local project
+@c -----------------------------------------------------------------------
 
-In the first case, you need to use the menu @code{Project->Open From Host}.
-Then you select the server's nickname. This will show you its file tree.
-Navigate to your project, select it. If the server was not correctly
-configured, then error messages are displayed in the Messages console, and the
-default project is loaded instead.
+GPS defines three different remote operation categories: Build operations,
+Debug operations and Execution operations. The Remote view
+(@code{Tools->Views->Remote}) allows you to assign to each operation category
+a configured server (when the Servers assignment tab is fully expanded) or
+assign at once all categories to a unique server (when the Servers assignment
+tab is collapsed).
 
-In the second case, you need to first load your local project the usual way.
-Then, open the remote view (@code{Tools->Views->Remote}) and select the server
-in the drop-down list. You can then check your configuration, and then connect
-to this server.
+When a server is selected for a particular category, the change is not
+immediately performed. Thus, the server's name will appear in red. You can
+check the configuration before applying it by pressing the
+@code{Check configuration} button. This will test for correct remote hosts
+connection, and will check that the project path exists on the build server and
+has an equivalence on the local machine.
 
-Once your project is loaded, you can select different servers for compilation,
-execution and debug operations. You can do this by opening the
-@code{Servers assignment} pane and selecting the appropriate server for each
-operation kind.
+Once the configuration checked, you need to click the @code{Connect} button,
+which will perform the actual connection to the servers:
+@itemize
+@item Read the default project paths on the Build machine and translate them
+into local paths.
+@item Synchronize when requested the remote paths and the local paths.
+@item Load the translated local project
+@item Assign the Build, Execution and Debug servers.
+@end itemize
+
+If one of the above operations fail, then errors are reported in the
+@code{Messages} view, and the default project is loaded.
 
 Next, working with the remote project is exactly the same as working locally:
 source editing, browsing, debugging behave the same.
+
+@c -----------------------------------------------------------------------
+@node Locally editing remote project
+@subsection Locally editing remote project
+@c -----------------------------------------------------------------------
+
+@noindent
+If the project you want to load/edit is already on a distant server, you can
+directly load it on your local GPS.
+
+To do this, you need to use the menu @code{Project->Open From Host}.
+Then you select the server's nickname. This will show you its file tree.
+Navigate to your project, select it. The project will be loaded as described
+above, with all remote operations categories assigned to the selected server by
+default.
 
 @node Customize
 @section Customize
@@ -7952,7 +7986,7 @@ source editing, browsing, debugging behave the same.
 @node Limitations
 @section Limitations
 
-Working with GPS in remote mode implies a few limitations:
+The GPS remote mode involves a few limitations:
 
 @itemize
 @item Password support: GPS supports password asking when launching remote
