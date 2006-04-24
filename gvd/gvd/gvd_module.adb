@@ -537,26 +537,11 @@ package body GVD_Module is
    procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class) is
       Toolbar  : constant Gtk_Toolbar  := Get_Toolbar (Kernel);
       Window   : constant Gtk_Window := Get_Main_Window (Kernel);
-      Stock    : Gtk_Stock_Item;
 
    begin
       if GVD_Module_ID.Cont_Button /= null then
          return;
       end if;
-
-      --  Register the stock items
-      Gtk_New (Stock, "gps-debugger-run", -"Go", 0, 0, "");
-      Add (Stock);
-      Gtk_New (Stock, "gps-debugger-step", -"Step", 0, 0, "");
-      Add (Stock);
-      Gtk_New (Stock, "gps-debugger-next", -"Next", 0, 0, "");
-      Add (Stock);
-      Gtk_New (Stock, "gps-debugger-finish", -"Finish", 0, 0, "");
-      Add (Stock);
-      Gtk_New (Stock, "gps-debugger-up", -"Up", 0, 0, "");
-      Add (Stock);
-      Gtk_New (Stock, "gps-debugger-down", -"Down", 0, 0, "");
-      Add (Stock);
 
       GVD_Module_ID.Cont_Button := Insert_Stock
         (Toolbar      => Toolbar,
