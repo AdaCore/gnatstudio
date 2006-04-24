@@ -185,8 +185,10 @@ Working in a Cross Environment
 
 Using GPS for Remote Development
 * Requirements::
-* Setup with a shared filesystem::
-* Setup without a shared filesystem::
+* Setup the remote servers::
+* Work with a remote project::
+* Customize::
+* Limitations::
 
 Customizing and Extending GPS
 * The Preferences Dialog::
@@ -7737,8 +7739,9 @@ machine, you can specify the name of this machine by setting the
 @menu
 * Requirements::
 * Setup the remote servers::
-* Load a remote project::
+* Work with a remote project::
 * Customize::
+* Limitations::
 @end menu
 
 @noindent
@@ -7762,13 +7765,14 @@ transparently on one or several remote server.
 @section Requirements
 
 @noindent
-In order to compile, run or debug on a remote host from GPS, two conditions need
-to be met:
+In order to compile, run or debug on a remote host from GPS, three conditions
+need to be met:
 
 @itemize
 @item
 Have a remote connection to the host using 'rsh', 'ssh' or 'telnet'. Note that
-GPS can now handle passwords for such connections.
+GPS can now handle passwords for such connections, with some limitations on
+Windows (see section Limitations).
 @item
 Either have a Network Filesystem (i.e. NFS or SMB) sharing the project files
 between the host and the target, or having rsync on both client and server.
@@ -7778,7 +7782,7 @@ machines shall share the same absolute path.
 @end itemize
 
 @noindent
-The full remote setup is performed in several steps:
+The full remote development setup is performed in several steps:
 @itemize
 @item Setup the remote servers you will connect to
 @item Determine the paths shared between the host and the target server
@@ -7935,21 +7939,32 @@ execution and debug operations. You can do this by opening the
 operation kind.
 
 Next, working with the remote project is exactly the same as working locally:
-source editing, browsing, debugging behave the same, with a few exceptions:
+source editing, browsing, debugging behave the same.
+
+@node Customize
+@section Customize
+
+@node Limitations
+@section Limitations
+
+Working with GPS in remote mode implies a few limitations:
 
 @itemize
+@item Password support: GPS supports password asking when launching remote
+connection tools such as rsh, ssh, telnet or rsync. However, Cygwin's
+versions of such tools under Windows do not ask for such passwords when
+launched by another process. In this case, a password-less connection is
+required. PuTTY's command line tool plink do not suffer such limitations, so
+passwords are correctly handled in this case. However, the PuTTY project do
+not offer any implementation of rsync, and Cygwin's rsync do not work with
+PuTTY's version of ssh.
 @item Execution: you cannot use an external terminal to remotely execute your
-application. If you need to execute a remote X application, you will need a
-local Xwindow server, and eventually configure your remote access tool to
-redirect Xwindow messages, or configure your server to use your local machine
-as display.
+application. The @code{Use external terminal} checkbox of the run dialog will
+then have no effect if the program is run remotely.
 @item Debugging: you cannot use a separate execution window. To make sure
 the execution window is not used, go to menu @code{Edit->Preferences}, select
 the @code{Debugger} tab, and make sure the @code{Execution window} is disabled.
 @end itemize
-
-@node Customize
-@section Customize
 
 @c --------------------------------------------------------------------
 @node Customizing and Extending GPS
