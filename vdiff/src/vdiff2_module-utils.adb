@@ -603,8 +603,8 @@ package body Vdiff2_Module.Utils is
       --  editor. This doesn't lose the user's current setup, and will be
       --  superceded by the use of MDI_Child groups
 
-      Edit (Kernel, Item.Files (2), Ref = 1);
-      Edit (Kernel, Item.Files (1), Ref = 2);
+      Edit (Kernel, Item.Files (2));
+      Edit (Kernel, Item.Files (1));
 
       --  Synchronize the scrollings
 
@@ -618,9 +618,9 @@ package body Vdiff2_Module.Utils is
       --  unopened editors will not create a cascade of refs.
 
       if Ref = 1 then
-         Edit (Kernel, Item.Files (2), True);
+         Edit (Kernel, Item.Files (2));
       else
-         Edit (Kernel, Item.Files (3), True);
+         Edit (Kernel, Item.Files (3));
       end if;
 
       Create_Line_Information_Column
