@@ -984,10 +984,10 @@ package body Navigation_Module is
       Register_Hook_No_Args (Kernel, Marker_Added_In_History_Hook);
 
       Register_Menu
-        (Kernel, Navigate, -"Bac_k", Stock_Go_Back,
+        (Kernel, Navigate, -"Bac_k", "gps-navigate-back",
          On_Back'Access);
       Register_Menu
-        (Kernel, Navigate, -"For_ward", Stock_Go_Forward,
+        (Kernel, Navigate, -"For_ward", "gps-navigate-forward",
          On_Forward'Access);
       Add_Hook (Kernel, Marker_Added_In_History_Hook,
                 Wrapper (On_Marker_Added_In_History'Access),
@@ -996,7 +996,7 @@ package body Navigation_Module is
       Append_Space (Toolbar);
 
       Button := Insert_Stock
-        (Toolbar, Stock_Go_Back, -"Goto Previous Location");
+        (Toolbar, "gps-navigate-back", -"Goto Previous Location");
       Navigation_Module (Navigation_Module_ID).Back_Button :=
         Gtk_Widget (Button);
 
@@ -1004,7 +1004,7 @@ package body Navigation_Module is
         (Button, "clicked", On_Back'Access, Kernel_Handle (Kernel));
 
       Button := Insert_Stock
-        (Toolbar, Stock_Go_Forward, -"Goto Next Location");
+        (Toolbar, "gps-navigate-forward", -"Goto Next Location");
       Navigation_Module (Navigation_Module_ID).Forward_Button :=
         Gtk_Widget (Button);
 
