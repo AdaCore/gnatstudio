@@ -44,7 +44,11 @@ package body GPS.Kernel.Command_API is
       Data_Command     : Scheduled_Command_Access;
       Command_Instance : Class_Instance;
    begin
-      if Command = "list" then
+      if Command = Destructor_Method then
+         Command_Instance := Nth_Arg (Data, 1, Command_Class);
+         Data_Command := Get_Data (Command_Instance);
+         Destroy (Command_Access (Data_Command));
+      elsif Command = "list" then
          declare
             Commands : constant Command_Array := Get_Scheduled_Commands
                 (GPS.Kernel.Task_Manager.Get_Task_Manager
@@ -114,6 +118,8 @@ package body GPS.Kernel.Command_API is
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
       Command_Class  : constant Class_Type := New_Class (Kernel, "Command");
    begin
+      Register_Command
+        (Kernel, Destructor_Method, 0, 0, Command_Cmds'Access, Command_Class);
       Register_Command
         (Kernel, "list", 0, 0, Command_Cmds'Access, Command_Class, True);
       Register_Command
