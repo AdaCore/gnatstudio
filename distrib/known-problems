@@ -1,11 +1,17 @@
 Known Problems fixed in GPS 4.0.0
 
+- F403-006 Freeze under Windows when file modified externally
+  Problem:    Under Windows, when a file is modified outside GPS, and you
+              move the GPS main window before the 'file changed on disk'
+              dialog is displayed, GPS freezes the desktop.
+  Workaround: First click on GPS before moving it
+
 - F327-002 Project's Source_File attribute and shared directories
   Problem:    When two or more projects share the same source directories,
               and use the Source_Files attribute to avoid conflicts, GPS
               incorrectly loads the list of sources for languages other
               than Ada, and some sources will appear as shared among these
-              projects
+              projects.
   Workaround: Use different source directories if possible
 
 - F324-010 User consoles not accepting input
