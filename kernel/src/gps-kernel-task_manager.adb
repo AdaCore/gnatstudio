@@ -330,6 +330,7 @@ package body GPS.Kernel.Task_Manager is
    begin
       if Command.Destroy_On_Exit or else Command.Is_Dead then
          Destroy (Command.Command);
+         Free (Command.Instances);
       elsif not Command.Destroy_On_Exit and then not Command.Is_Dead then
          declare
             Dead_Command : Scheduled_Command_Access :=
@@ -340,7 +341,6 @@ package body GPS.Kernel.Task_Manager is
          begin
             Dead_Command.Command := Command.Command;
             Dead_Command.Destroy_On_Exit := Command.Destroy_On_Exit;
-            Dead_Command.Instances := Command.Instances;
             Dead_Command.Is_Dead := True;
 
             for J in Instances'Range loop
@@ -352,12 +352,14 @@ package body GPS.Kernel.Task_Manager is
                end if;
             end loop;
 
-            --  If the command is not referenced by any scipt, then we just
+            --  If the command is not referenced by any script, then we just
             --  remove it.
 
             if not Found then
                Destroy (Command_Access (Dead_Command));
             end if;
+
+            Free (Command.Instances);
          end;
       end if;
    end Free;
