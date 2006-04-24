@@ -1157,6 +1157,8 @@ package body Src_Editor_Box is
       end In_Selection;
 
    begin
+      Stop_Selection_Drag (V);
+
       --  Click in the line numbers area ?
 
       if Event /= null
