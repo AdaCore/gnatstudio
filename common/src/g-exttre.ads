@@ -423,7 +423,7 @@ private
       --  Session number on this machine
       Terminated           : Boolean := False;
       --  Tells if the command has finished
-      Died                 : Boolean := False;
+      Session_Died         : Boolean := False;
       --  Tells if the shell died unexpectedly
       Status               : Integer := 0;
       --  Records the status of the finished command
