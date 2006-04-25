@@ -223,6 +223,8 @@ package body Remote_Sync_Module is
                   User_Name        => Machine.User_Name,
                   Nb_Password_Tries => 0);
 
+      --  Do not set Line_By_Line as this will prevent the password prompt
+      --  catch.
       Launch_Process
         (Kernel_Handle (Kernel),
          Command       => "rsync",
@@ -231,7 +233,7 @@ package body Remote_Sync_Module is
          Show_Command  => False,
          Show_Output   => False,
          Success       => Success,
-         Line_By_Line  => True,
+         Line_By_Line  => False,
          Callback      => Parse_Rsync_Output'Access,
          Callback_Data => new Rsync_Callback_Data'(Cb_Data),
          Queue_Id      => Rsync_Data.Queue_Id,
