@@ -144,32 +144,25 @@ package body Completion.Entities_Extractor is
       Resolver     : Entity_Completion_Resolver := Entity_Completion_Resolver
         (Proposal.Resolver.all);
 
-      procedure Add_Nested_Packages
-        (Source : Source_File; Parent_Name : String);
+      procedure Add_Nested_Packages (Unit_Info : Entity_Information);
 
       -------------------------
       -- Add_Nested_Packages --
       -------------------------
 
-      procedure Add_Nested_Packages
-        (Source : Source_File; Parent_Name : String)
+      procedure Add_Nested_Packages (Unit_Info : Entity_Information)
       is
-         It    : Entity_Iterator;
-         Info  : Entity_Information;
-         Scope : Entity_Information;
+         It   : Calls_Iterator;
+         Info : Entity_Information;
       begin
-         Find_All_Entities_In_File (It, Source);
+         It := Get_All_Called_Entities (Unit_Info);
 
          while not At_End (It) loop
             Info := Get (It);
-            Scope := Get_Caller (Declaration_As_Reference (Info));
 
-            if Get_Kind (Info).Kind = Package_Kind
-              and then Scope /= null
-              and then
-                To_Lower (Parent_Name)
-                = To_Lower (Get_Full_Name (Scope))
-            then
+            if Get_File (Get_Declaration_Of (Info))
+              = Get_File (Get_Declaration_Of (Unit_Info))
+              and then Get_Kind (Info).Kind = Package_Kind then
                Append
                  (Result,
                   Unit_Completion_Proposal'
@@ -210,8 +203,7 @@ package body Completion.Entities_Extractor is
                then
                   --  If it's this unit, then see if there are nested packages
 
-                  Add_Nested_Packages
-                    (Current_File, Get_Full_Name (Proposal.Info));
+                  Add_Nested_Packages (Get_Unit_Info (Current_File));
 
                end if;
             end if;
@@ -221,9 +213,7 @@ package body Completion.Entities_Extractor is
          Unchecked_Free (Files);
 
       else
-         Add_Nested_Packages
-           (Get_File (Get_Declaration_Of (Proposal.Info)),
-            Get_Full_Name (Proposal.Info));
+         Add_Nested_Packages (Proposal.Info);
       end if;
 
       return Result;
@@ -246,28 +236,23 @@ package body Completion.Entities_Extractor is
    ----------------
 
    function Get_Entities
-     (Source       : Source_File;
-      Name         : String;
-      Unit_Name    : String;
+     (Name         : String;
+      Unit_Info    : Entity_Information;
       View_Private : Boolean;
       Resolver     : Completion_Resolver_Access;
       Is_Partial   : Boolean := False) return Completion_List
    is
-      It     : Entity_Iterator;
+      It     : Calls_Iterator;
       Result : Completion_List;
    begin
-      Find_All_Entities_In_File (It, Source);
+      It := Get_All_Called_Entities (Unit_Info);
 
       while not At_End (It) loop
          declare
             Info        : constant Entity_Information := Get (It);
             Entity_Name : constant String := Get_Name (Info).all;
-            Scope       : constant Entity_Information :=
-              Get_Caller (Declaration_As_Reference (Info));
          begin
             if Match (Name, Entity_Name, Is_Partial)
-              and then
-                To_Lower (Unit_Name) = To_Lower (Get_Full_Name (Scope))
               and then
                 (View_Private or else Get_Attributes (Info) (Global))
             then
@@ -345,9 +330,8 @@ package body Completion.Entities_Extractor is
                   Concat
                     (Result,
                      Get_Entities
-                       (File,
-                        Identifier,
-                        Get_Construct (It).Name.all,
+                       (Identifier,
+                        Get_Unit_Info (File),
                         False,
                         Completion_Resolver_Access (Resolver),
                         Is_Partial));
