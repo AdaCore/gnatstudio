@@ -6,13 +6,18 @@ Known Problems fixed in GPS 4.0.0
               dialog is displayed, GPS freezes the desktop.
   Workaround: First click on GPS before moving it
 
+- F403-003:   Typing 'q' in the debugger console crashes GPS
+  Problem:    Once a debug session is begun typing 'q', 'qu', or 'qui' in
+              in the debugger console crashes GPS.
+  Workaroun:  Type 'quit' entirely instead of using an abreviation.
+
 - F327-002 Project's Source_File attribute and shared directories
   Problem:    When two or more projects share the same source directories,
               and use the Source_Files attribute to avoid conflicts, GPS
               incorrectly loads the list of sources for languages other
               than Ada, and some sources will appear as shared among these
               projects.
-  Workaround: Use different source directories if possible
+  Workaround: Use different source directories if possible.
 
 - F324-010 User consoles not accepting input
   Problem:    It is not possible to enter any data into a user created console
