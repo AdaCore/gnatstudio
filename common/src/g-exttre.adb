@@ -1615,6 +1615,26 @@ package body GNAT.Expect.TTY.Remote is
       return Desc.Name.all;
    end Get_Shell_Descriptor_Name;
 
+   -------------------------------
+   -- Get_Filesystem_From_Shell --
+   -------------------------------
+
+   function Get_Filesystem_From_Shell
+     (Shell : String) return Filesystem_Record'Class
+   is
+      Desc : Shell_Descriptor_Access;
+   begin
+      Desc := Shell_Descriptor_List;
+      while Desc /= null loop
+         if Desc.Name.all = Shell then
+            return Desc.Filesystem.all;
+         end if;
+         Desc := Desc.Next;
+      end loop;
+
+      return Get_Local_Filesystem;
+   end Get_Filesystem_From_Shell;
+
    -------------------------------------
    -- Get_Nb_Remote_Access_Descriptor --
    -------------------------------------

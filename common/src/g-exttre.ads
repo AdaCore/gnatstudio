@@ -183,6 +183,10 @@ package GNAT.Expect.TTY.Remote is
    function Get_Shell_Descriptor_Name (N : Natural) return String;
    --  Get the Nth shell descriptor name
 
+   function Get_Filesystem_From_Shell (Shell : String)
+                                       return Filesystem_Record'Class;
+   --  Get the filesystem corresponding to shell
+
    function Get_Nb_Remote_Access_Descriptor return Natural;
    --  Get the total number of remote access descriptor configured
 
