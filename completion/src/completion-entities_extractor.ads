@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  Provides a completer working on entities for Ada
+
 with Entities;          use Entities;
 with Language.Tree;     use Language.Tree;
 with Projects;          use Projects;
@@ -96,9 +98,8 @@ private
    --  See inherited documentation
 
    function Get_Entities
-     (Source       : Source_File;
-      Name         : String;
-      Unit_Name    : String;
+     (Name         : String;
+      Unit_Info    : Entity_Information;
       View_Private : Boolean;
       Resolver     : Completion_Resolver_Access;
       Is_Partial   : Boolean := False) return Completion_List;
