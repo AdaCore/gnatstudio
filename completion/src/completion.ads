@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  Provides the base structures / subprograms for the completion manager.
+
 with Basic_Types;  use Basic_Types;
 with Language;     use Language;
 with Generic_List;
@@ -72,13 +74,13 @@ package Completion is
    procedure Free (Resolver : in out Completion_Resolver) is abstract;
    --  Free the data of a Resolver.
 
-   type Completion_Manager is private;
+   type Completion_Manager is abstract tagged private;
    --  A completion manager is a type holding a list of completions resolvers.
    --  Resolvers will be called in the order they are referenced. This object
    --  also holds a couple of general datas, such as the buffer from where the
    --  completion is done.
 
-   type Completion_Manager_Access is access all Completion_Manager;
+   type Completion_Manager_Access is access all Completion_Manager'Class;
 
    procedure Set_Buffer
      (Manager : in out Completion_Manager; Buffer : String_Access);
@@ -149,15 +151,15 @@ package Completion is
 
    function Get_Initial_Completion_List
      (Manager      : Completion_Manager;
-      Start_Offset : Natural) return Completion_List;
+      Start_Offset : Natural) return Completion_List is abstract;
    --  Generates an initial completion list, for the cursor pointing at the
    --  given offset. This operation is time consuming, so it would be good
    --  to use the one below afterwards, until the completion process is done.
 
    function Refine_Completion_List
      (Previous_Completion : Completion_List;
-      String_Added        : String) return Completion_List;
-   --  Refine a completion list considerating that the used added the string
+      Character_Added     : Character) return Completion_List;
+   --  Refine a completion list considerating that the user added the character
    --  given in parameter.
 
    -------------------------
@@ -192,7 +194,7 @@ private
 
    use Completion_Resolver_List_Pckg;
 
-   type Completion_Manager is record
+   type Completion_Manager is abstract tagged record
       Buffer    : String_Access;
       Resolvers : Completion_Resolver_List_Pckg.List;
    end record;
