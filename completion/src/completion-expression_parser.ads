@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 --  This package is used to provide an easy way to analyze expression that have
---  to be completed
+--  to be completed for Ada
 
 with Generic_List;
 
