@@ -18,8 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package provide a bench of function used to get further ada-specific
+--  This package provide a set of function used to get further ada-specific
 --  information from the analyzis done by the ada analyzer
+--  ??? This interface should probably be made language independent.
 
 with Language.Tree; use Language.Tree;
 
