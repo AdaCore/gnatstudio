@@ -6,10 +6,10 @@ Known Problems fixed in GPS 4.0.0
               dialog is displayed, GPS freezes the desktop.
   Workaround: First click on GPS before moving it
 
-- F403-003:   Typing 'q' in the debugger console crashes GPS
-  Problem:    Once a debug session is begun typing 'q', 'qu', or 'qui' in
-              in the debugger console crashes GPS.
-  Workaroun:  Type 'quit' entirely instead of using an abreviation.
+- F403-003 Typing 'q' in the debugger console crashes GPS under unix
+  Problem:    Once a debug session is started, typing 'q', 'qu', or 'qui' in
+              in the debugger console crashes GPS under non Windows platforms.
+  Workaround: Type 'quit' instead of using an abreviation
 
 - F327-002 Project's Source_File attribute and shared directories
   Problem:    When two or more projects share the same source directories,
@@ -17,7 +17,7 @@ Known Problems fixed in GPS 4.0.0
               incorrectly loads the list of sources for languages other
               than Ada, and some sources will appear as shared among these
               projects.
-  Workaround: Use different source directories if possible.
+  Workaround: Use different source directories if possible
 
 - F324-010 User consoles not accepting input
   Problem:    It is not possible to enter any data into a user created console
@@ -53,7 +53,7 @@ Known Problems fixed in GPS 4.0.0
               code in a file (without any blank line in between) and when this
               block of code is on the second line of a file (the first line
               must be blank).
-  Workaround: Disable the tooltips using Preferences/Editor facility.
+  Workaround: Disable the tooltips using Preferences/Editor facility
 
 - F223-020 Changing order of source dirs has no effect
   Problem:    In the project properties editor, if you change the order of
@@ -61,7 +61,7 @@ Known Problems fixed in GPS 4.0.0
               modifying or adding any directory, the change is not saved in
               the project.
   Workaround: Edit the project file manually (available through the contextual
-              menu on a project node in the Project View)
+              menu on a project node in the Project View).
 
 - F223-004 Cannot display complex variant record in debugger
   Problem:    When trying to display under the debugger a complex data mixing
@@ -75,7 +75,7 @@ Known Problems fixed in GPS 4.0.0
               failure loading one of its internal files (history) on the
               next startup
   Workaround: remove the incorrect line in the $HOME/.gps/history file, and
-              do not use spaces in the name for the console
+              do not use spaces in the name for the console.
 
 - F220-009 Relative paths in project properties on Windows
   Problem:    On Windows, using the system file selection dialog will change
@@ -103,7 +103,7 @@ Known Problems fixed in GPS 4.0.0
               select a project or when a floating search window has
               just been used
   Workaround: click in another window, and then back in the editor to force
-              a refresh
+              a refresh.
 
 - F209-004 Incorrect display and setting of array indexed by enum in debugger
   Problem:    In the debugger, when displaying graphically the contents of
@@ -135,27 +135,27 @@ Known Problems fixed in GPS 4.0.0
 
 - F128-007 Project view: No direct response on expand sub item
   Problem:    Expanding a category needs two consecutive clicks.
-  Workaround: Click two times on the category to expand it.
+  Workaround: Click two times on the category to expand it
 
 - F120-025 Python menu doesn't properly reload scripts
   Problem:    If you have added Python as a supported language in your
               project, GPS creates a python menu every time you edit a
               python file. This menu contains a "Reload" entry, which has no
               effect on the python console in fact.
-  Workaround: type manually "import ..." or "reload (...)" in the python
-              console
+  Workaround: Manually type "import ..." or "reload (...)" in the python
+              console.
 
 - F119-004 Recovered files are marked as 'unmodified'
   Problem:    When recovering a file from its backup, GPS opens it marked
               'unmodified', and it is not possible to save it directly (you
               have to edit it first).
-  Workaround: Just edit the file (adding a character and removing it is enough)
+  Workaround: Edit the file (adding a character and removing it is enough)
 
 - F118-002 GPS Code fix fails when formal is access procedure
   Problem:    With an access to procedure parameter in the Ada 05 fashion,
               fixing a non conformant subprogram profile would give a wrong
               result.
-  Workaround: Do manually the fix
+  Workaround: Fix the code manually
 
 - F106-014 GPS auto-casing does not support unicode characters
   Problem:    GPS was not properly changing the case of identifiers with
@@ -181,7 +181,7 @@ Known Problems fixed in GPS 4.0.0
 - EC29-001 Stripping blanks incompatible with UTF-8 characters
   Problem:    When the preference "Strip blanks" is enabled, UTF-8 characters
               might be lost or corrupted when saving the file.
-  Workaround: Disable the "Strip blanks" preference when working in UTF-8.
+  Workaround: Disable the "Strip blanks" preference when working in UTF-8
 
 - EB16-002 Wrong parenthesis highlighting
   Problem:    Parentheses in comments are taken into account when doing the
