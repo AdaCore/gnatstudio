@@ -7285,7 +7285,7 @@ Open a view of the current source editor.
 @xref{The Project View}.
 
 @item Remote
-@c ??? Not documented yet
+@xref{Working with a remote project}.
 
 @item Scenario
 @xref{Scenarios and Configuration Variables}.
@@ -7797,18 +7797,8 @@ The full remote development setup is performed in several steps:
 First you need to open the remote view, that will allow you to setup your
 remote configuration, and control what server will be used to compile, run or
 debug your project. You can open it using the menu @code{Tools->Views->Remote}
+(@xref{Working with a remote project}.)
 
-@iftex
-@cindex screen shot
-@image{remote-view, 4.8cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{remote-view}
-@end ifhtml
-
-@noindent
 Once the Remote View is opened, click on @code{Servers configuration} to open
 the servers configuration dialog.
 
@@ -7941,6 +7931,17 @@ a configured server (when the Servers assignment tab is fully expanded) or
 assign at once all categories to a unique server (when the Servers assignment
 tab is collapsed).
 
+@iftex
+@cindex screen shot
+@image{remote-view, 4.8cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{remote-view}
+@end ifhtml
+
+@noindent
 When a server is selected for a particular category, the change is not
 immediately performed. Thus, the server's name will appear in red. You can
 check the configuration before applying it by pressing the
