@@ -1871,6 +1871,7 @@ package body VCS.Generic_VCS is
       Branch   : Unbounded_String;
       P_Branch : Unbounded_String;
       P_Rev    : Unbounded_String;
+      First    : Boolean := True;
    begin
       if Parser.Regexp = null then
          Insert (Rep.Kernel,
@@ -1903,8 +1904,11 @@ package body VCS.Generic_VCS is
               (Command, -"add log", Kernel,
                "Revision.add_log " & Full_Name (File).all &
                " """ & Rev & """ """ & Author & """ """ &
-               Date & """ """ & String_Utils.Protect (Log) & """",
+               Date & """ """ & String_Utils.Protect (Log) & """ """ &
+               Boolean'Image (First) & """",
                Script);
+
+            First := False;
 
             Launch_Background_Command
               (Kernel, Command_Access (Command), True, False, "");
