@@ -166,12 +166,10 @@ package GNAT.Expect.TTY.Remote is
    procedure Unref (Desc : in out Machine_Descriptor);
    --  Does Ref - 1. Free allocated memory for the descriptor if ref=0
 
-   procedure Add_Machine_Descriptor
-     (Desc : Machine_Descriptor);
+   procedure Add_Machine_Descriptor (Desc : Machine_Descriptor);
    --  Adds a new machine descriptor.
 
-   procedure Remove_Machine_Descriptor
-     (Desc : in out Machine_Descriptor);
+   procedure Remove_Machine_Descriptor (Desc : in out Machine_Descriptor);
    --  Removes a machine descriptor.
 
    procedure Remove_All_Machine_Descriptors;
@@ -183,8 +181,8 @@ package GNAT.Expect.TTY.Remote is
    function Get_Shell_Descriptor_Name (N : Natural) return String;
    --  Get the Nth shell descriptor name
 
-   function Get_Filesystem_From_Shell (Shell : String)
-                                       return Filesystem_Record'Class;
+   function Get_Filesystem_From_Shell
+     (Shell : String) return Filesystem_Record'Class;
    --  Get the filesystem corresponding to shell
 
    function Get_Nb_Remote_Access_Descriptor return Natural;
@@ -199,8 +197,8 @@ package GNAT.Expect.TTY.Remote is
    function Get_Machine_Descriptor (N : Natural) return Machine_Descriptor;
    --  Retrieve the descriptor of the Nth configured machine
 
-   function Get_Machine_Descriptor (Nickname : String)
-                                    return Machine_Descriptor;
+   function Get_Machine_Descriptor
+     (Nickname : String) return Machine_Descriptor;
    --  Get machine descriptor from nickname
 
    function Get_Nickname (N : Natural) return String;
@@ -271,12 +269,12 @@ package GNAT.Expect.TTY.Remote is
    --  filters are of course called as usual.
 
    procedure Remote_Spawn
-     (Descriptor            : out Process_Descriptor_Access;
-      Target_Nickname       : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Execution_Directory   : String := "";
-      Err_To_Out            : Boolean := False;
-      Main_Window           : Gtk.Window.Gtk_Window := null);
+     (Descriptor          : out Process_Descriptor_Access;
+      Target_Nickname     : String;
+      Args                : GNAT.OS_Lib.Argument_List;
+      Execution_Directory : String := "";
+      Err_To_Out          : Boolean := False;
+      Main_Window         : Gtk.Window.Gtk_Window := null);
    --  Spawns a process on a remote machine
    --  Target_Name designs the machine on which the process is spawned
    --  Target_Identifier is used to retrieve the descriptors
@@ -289,19 +287,18 @@ package GNAT.Expect.TTY.Remote is
    --  dialog presented to the user.
 
    function Check_Host
-     (Nickname              : String;
-      Main_Window           : Gtk.Window.Gtk_Window := null)
-      return String;
+     (Nickname    : String;
+      Main_Window : Gtk.Window.Gtk_Window := null) return String;
    --  Check host connection. Return empty string upon success, or the error
    --  message.
    --  If a request from user is needed, main_window is used as parent for the
    --  dialog presented to the user.
 
    procedure Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Status                : out Boolean;
-      Execution_Directory   : String  := "");
+     (Host                : String;
+      Args                : GNAT.OS_Lib.Argument_List;
+      Status              : out Boolean;
+      Execution_Directory : String  := "");
    --  Spawns synchronously a remote program and returns its status
    --  Host : Host on which the program is launched
    --  Args : The program to launch
@@ -309,11 +306,11 @@ package GNAT.Expect.TTY.Remote is
    --  Execution_Directory: Where the program is launched.
 
    procedure Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Out_Value             : out GNAT.OS_Lib.String_Access;
-      Status                : out Boolean;
-      Execution_Directory   : String  := "");
+     (Host                : String;
+      Args                : GNAT.OS_Lib.Argument_List;
+      Out_Value           : out GNAT.OS_Lib.String_Access;
+      Status              : out Boolean;
+      Execution_Directory : String  := "");
    --  Same as above, except that the program output is also returned
 
    procedure Close_All;
