@@ -1411,7 +1411,7 @@ package body GVD.Process is
       if Looking_At (Lowered_Command, First, "graph") then
          Process_Graph_Command (Debugger, Command, Mode);
 
-      elsif Lowered_Command'Length in 4 .. Quit_String'Length
+      elsif Lowered_Command'Length in 1 .. Quit_String'Length
         and then Lowered_Command = Quit_String (1 .. Lowered_Command'Length)
       then
          if Busy
