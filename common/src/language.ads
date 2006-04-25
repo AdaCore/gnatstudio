@@ -60,10 +60,11 @@ package Language is
       Keyword_Text,
       Comment_Text,
       Character_Text,
-      String_Text);
+      String_Text,
+      Partial_Identifier_Text,
+      Operator_Text);
    pragma Convention (C, Language_Entity);
-   --  The entities found in a language, and that can have a different scheme
-   --  for colors highlighting.
+   --  The entities found in a language.
 
    subtype Standout_Language_Entity is Language_Entity
      range Keyword_Text .. String_Text;
