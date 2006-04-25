@@ -164,7 +164,8 @@ package body Revision_Views is
    function "+"
      (Str : String) return Unbounded_String renames To_Unbounded_String;
 
-   procedure Add_Log_If_Not_Present (View : Revision_View; Log : Log_Data);
+   procedure Add_Log_If_Not_Present
+     (View : Revision_View; Log : Log_Data; Expand : Boolean);
    --  Add log data into Browser if not already present
 
    procedure Add_Link_If_Not_Present
@@ -249,9 +250,10 @@ package body Revision_Views is
                   Author   => +Nth_Arg (Data, 3),
                   Date     => +Nth_Arg (Data, 4),
                   Log      => +Unprotect (Nth_Arg (Data, 5)));
+      Expand : constant Boolean := Nth_Arg (Data, 6, False);
       View   : constant Revision_View := Open_Revision_View (Kernel, File);
    begin
-      Add_Log_If_Not_Present (View, Log);
+      Add_Log_If_Not_Present (View, Log, Expand);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -374,7 +376,7 @@ package body Revision_Views is
    ----------------------------
 
    procedure Add_Log_If_Not_Present
-     (View : Revision_View; Log : Log_Data)
+     (View : Revision_View; Log : Log_Data; Expand : Boolean)
    is
       Iter : Gtk_Tree_Iter := Find_Revision (View, Log);
    begin
@@ -384,6 +386,18 @@ package body Revision_Views is
          View.Prev2 := View.Prev1;
          View.Prev1 := Log.Revision;
          View.Mode := Link;
+
+         if Expand then
+            declare
+               Path : Gtk_Tree_Path;
+               Tmp  : Boolean;
+               pragma Warnings (Off, Tmp);
+            begin
+               Path := Get_Path (View.Model, Iter);
+               Tmp := Expand_Row (View.Tree, Path, Open_All => True);
+               Path_Free (Path);
+            end;
+         end if;
 
       elsif View.Mode = Link then
          --  We are in link mode and we reached an existing node. We found a
@@ -783,7 +797,7 @@ package body Revision_Views is
         (Kernel, "add_log",
          Handler       => Add_Log_Command_Handler'Access,
          Minimum_Args  => 5,
-         Maximum_Args  => 5,
+         Maximum_Args  => 6,
          Class         => Revision_Class,
          Static_Method => True);
 
