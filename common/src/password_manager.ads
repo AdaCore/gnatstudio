@@ -48,4 +48,10 @@ package Password_Manager is
       Force_Asking : Boolean := False) return String;
    --  Same as above, for a passphrase.
 
+   function Get_Tool_Password
+     (Parent       : Gtk.Window.Gtk_Window;
+      Tool         : String;
+      Force_Asking : Boolean := False) return String;
+   --  Same as above, for the specified tool
+
 end Password_Manager;

@@ -29,6 +29,9 @@ package body Password_Manager is
    type Passphrase_Record;
    type Passphrase_Access is access all Passphrase_Record;
 
+   type Tool_Record;
+   type Tool_Access is access all Tool_Record;
+
    type Password_Record is record
       Machine   : String_Ptr;
       User_Name : String_Ptr;
@@ -42,8 +45,15 @@ package body Password_Manager is
       Next       : Passphrase_Access;
    end record;
 
-   Password_List : Password_Access := null;
+   type Tool_Record is record
+      Tool_Name : String_Ptr;
+      Password  : String_Ptr;
+      Next      : Tool_Access;
+   end record;
+
+   Password_List   : Password_Access   := null;
    Passphrase_List : Passphrase_Access := null;
+   Tool_List       : Tool_Access       := null;
 
    Password_Regexp : constant Pattern_Matcher :=
                        Compile ("^[^\n]*[Pp]assword: *$",
@@ -178,5 +188,50 @@ package body Password_Manager is
 
       return Psp.Passphrase.all;
    end Get_Passphrase;
+
+   -----------------------
+   -- Get_Tool_Password --
+   -----------------------
+
+   function Get_Tool_Password
+     (Parent       : Gtk.Window.Gtk_Window;
+      Tool         : String;
+      Force_Asking : Boolean := False) return String
+   is
+      Psp : Tool_Access := Tool_List;
+   begin
+      while Psp /= null loop
+         exit when Psp.Tool_Name.all = Tool;
+         Psp := Psp.Next;
+      end loop;
+
+      if Psp = null then
+         Psp := new Tool_Record'
+           (Tool_Name => new String'(Tool),
+            Password  => null,
+            Next      => Tool_List);
+         Tool_List := Psp;
+      end if;
+
+      if Psp.Password = null or else Force_Asking then
+         Free (Psp.Password);
+
+         declare
+            Str : constant String :=
+                    Query_User
+                      (Parent,
+                       "Please enter password for tool " & Tool & ":",
+                       Password_Mode => True);
+         begin
+            if Str = "" then
+               return "";
+            end if;
+
+            Psp.Password := new String'(Str);
+         end;
+      end if;
+
+      return Psp.Password.all;
+   end Get_Tool_Password;
 
 end Password_Manager;
