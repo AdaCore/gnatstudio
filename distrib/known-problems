@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.0.0
 
+- F405-011 Outline view lost after a search
+  Problem:    When doing a search in a source editor the outline view is
+              cleared right after the search dialog pops up (only in the case
+              it is a floating window).
+  Workaound:  Once the search dialog has been closed give the focus (by 
+              clicking) to another window in the GPS dektop and then give it
+              back to the current source editor.
+
 - F403-006 Freeze under Windows when file modified externally
   Problem:    Under Windows, when a file is modified outside GPS, and you
               move the GPS main window before the 'file changed on disk'
