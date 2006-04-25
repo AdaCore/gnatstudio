@@ -193,6 +193,13 @@ private
 
       Context  : Selection_Context := No_Context;
       --  The context we had at the beginning of the executing
+
+      Check_Password : Boolean;
+      --  Check for password/passphrase prompt
+
+      Nb_Password    : Natural;
+      --  The count of user password asking.
+
    end record;
    type Custom_Command_Execution is access Custom_Command_Execution_Record;
    --  Stores information relevant only while a command is executing, to
@@ -220,6 +227,7 @@ private
 
    type External_Component_Record is new Custom_Component_Record with record
       Server               : Server_Type;
+      Check_Password       : Boolean;
       Show_In_Task_Manager : Boolean;
       Progress_Regexp      : String_Access;
       Progress_Current     : Natural;
