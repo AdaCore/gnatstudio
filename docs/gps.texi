@@ -9506,6 +9506,16 @@ Thus, the @code{external} tag would look like:
 This tag accepts the following attributes:
 
    @table @code
+   @item server (optional)
+   This attribute can be used to execute the external command on a remote
+   server. The accepted values are @code{"gps_server"} (default),
+   @code{"build_server"}, @code{"execution_server"} and @code{"debug_server"}.
+
+   @item check-password (optional)
+   This attribute can be used to tell GPS to check and handle password prompts
+   from the external command. The accepted values are @code{"false"} (default)
+   and @code{"true"}.
+
    @item show-command (optional)
    This attribute can be used to override the homonym attribute specified for
    the @code{<action>} tag.
