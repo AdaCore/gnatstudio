@@ -240,7 +240,9 @@ package body GPS.Kernel.Remote is
       Path_List : Mirror_Path_Access);
    --  Reset the widget and fills it with the path list
 
-   function Get_Path_List (Widget : Paths_Widget) return Mirror_Path_Access;
+   function Get_Path_List
+     (Widget : Paths_Widget;
+      FS     : Filesystem_Record'Class) return Mirror_Path_Access;
    --  Retrieve the mirror path list represented by the widget.
 
    procedure Add_Path_Row
@@ -254,7 +256,9 @@ package body GPS.Kernel.Remote is
       Row    : in out Path_Row);
    --  Remove the row from widget
 
-   function Get_Path (Row : Path_Row) return Mirror_Path_Access;
+   function Get_Path
+     (Row : Path_Row;
+      FS  : Filesystem_Record'Class) return Mirror_Path_Access;
    --  Retrieve the mirror path represented by the widget
 
    procedure On_Path_Grab_Focus (Widget : access Gtk_Widget_Record'Class);
@@ -955,7 +959,10 @@ package body GPS.Kernel.Remote is
    -- Get_Path_List --
    -------------------
 
-   function Get_Path_List (Widget : Paths_Widget) return Mirror_Path_Access is
+   function Get_Path_List
+     (Widget : Paths_Widget;
+      FS     : Filesystem_Record'Class) return Mirror_Path_Access
+   is
       List : Path_Row_List.Glist;
       Row  : Path_Row;
       Path : Mirror_Path_Access;
@@ -969,10 +976,10 @@ package body GPS.Kernel.Remote is
          Row := Path_Row_List.Get_Data (List);
 
          if Path = null then
-            Path := Get_Path (Row);
+            Path := Get_Path (Row, FS);
             Item := Path;
          else
-            Item.Next := Get_Path (Row);
+            Item.Next := Get_Path (Row, FS);
 
             if Item.Next /= null then
                Item := Item.Next;
@@ -1099,7 +1106,10 @@ package body GPS.Kernel.Remote is
    -- Get_Path --
    --------------
 
-   function Get_Path (Row : Path_Row) return Mirror_Path_Access is
+   function Get_Path
+     (Row : Path_Row;
+      FS  : Filesystem_Record'Class) return Mirror_Path_Access
+   is
       Item   : Mirror_Path_Access;
       Local  : constant String := Get_Text (Row.Local_Entry);
       Remote : constant String := Get_Text (Row.Remote_Entry);
@@ -1118,7 +1128,8 @@ package body GPS.Kernel.Remote is
          Item := new Mirror_Path_Record'
            (Local_Path => new String'
                             (Ensure_Directory (Get_Local_Filesystem, Local)),
-            Remote_Path => new String'(Remote),
+            Remote_Path => new String'
+                            (Ensure_Directory (FS, Remote)),
             Need_Sync   => Get_Active (Row.Need_Sync_Button),
             Attribute   => User_Defined,
             Next        => null);
@@ -1745,7 +1756,11 @@ package body GPS.Kernel.Remote is
          end if;
 
          Free (Path_Item.Path_List);
-         Path_Item.Path_List := Get_Path_List (Dialog.Paths_List_Widget);
+
+            Path_Item.Path_List := Get_Path_List
+              (Dialog.Paths_List_Widget,
+               Get_Filesystem_From_Shell
+                 (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))));
       end;
 
       return True;
