@@ -18,8 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNAT.Regpat;            use GNAT.Regpat;
+with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
@@ -34,6 +35,7 @@ with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
 
 with Commands;           use Commands;
 with Filesystem;         use Filesystem;
+with Password_Manager;   use Password_Manager;
 with String_Utils;       use String_Utils;
 with Traces;             use Traces;
 with VFS;                use VFS;
@@ -56,6 +58,12 @@ package body Remote_Sync_Module is
    --  See doc for inherited subprogram
 
    Rsync_Module : Rsync_Module_ID := null;
+
+   type Rsync_Callback_Data is new Callback_Data_Record with record
+      Network_Name      : String_Access;
+      User_Name         : String_Access;
+      Nb_Password_Tries : Natural;
+   end record;
 
    function On_Rsync_Hook
      (Kernel : access Kernel_Handle_Record'Class;
@@ -121,6 +129,7 @@ package body Remote_Sync_Module is
       Machine       : Machine_Descriptor;
       Success       : Boolean;
       Transport_Arg : String_Access;
+      Cb_Data       : Rsync_Callback_Data;
 
       function  Build_Arg return String_List;
       --  Build rsync arguments
@@ -210,18 +219,23 @@ package body Remote_Sync_Module is
          Transport_Arg := new String'("--rsh=ssh");
       end if;
 
+      Cb_Data := (Network_Name     => Machine.Network_Name,
+                  User_Name        => Machine.User_Name,
+                  Nb_Password_Tries => 0);
+
       Launch_Process
         (Kernel_Handle (Kernel),
-         Command              => "rsync",
-         Arguments            => Build_Arg,
-         Console              => Get_Console (Kernel),
-         Show_Command         => False,
-         Show_Output          => False,
-         Success              => Success,
-         Line_By_Line         => True,
-         Callback             => Parse_Rsync_Output'Access,
-         Queue_Id             => Rsync_Data.Queue_Id,
-         Synchronous          => Rsync_Data.Synchronous);
+         Command       => "rsync",
+         Arguments     => Build_Arg,
+         Console       => Get_Console (Kernel),
+         Show_Command  => False,
+         Show_Output   => False,
+         Success       => Success,
+         Line_By_Line  => True,
+         Callback      => Parse_Rsync_Output'Access,
+         Callback_Data => new Rsync_Callback_Data'(Cb_Data),
+         Queue_Id      => Rsync_Data.Queue_Id,
+         Synchronous   => Rsync_Data.Synchronous);
       Free (Src_Path);
       Free (Dest_Path);
       Free (Transport_Arg);
@@ -237,12 +251,66 @@ package body Remote_Sync_Module is
    is
       Progress_Regexp : constant Pattern_Matcher := Compile
         ("^.*\(([0-9]*), [0-9.%]* of ([0-9]*)", Multiple_Lines);
-      Matched     : Match_Array (0 .. 2);
-      File_Nb     : Natural;
-      Total_Files : Natural;
+      Matched         : Match_Array (0 .. 2);
+      File_Nb         : Natural;
+      Total_Files     : Natural;
+      Force           : Boolean;
+      Cb_Data         : Rsync_Callback_Data renames
+        Rsync_Callback_Data (Data.Callback_Data.all);
    begin
       Trace (Me, "Parse_Rsync_Output: '" & Output & "'");
       if not Data.Process_Died then
+         --  Retrieve password prompt if any
+         Match (Get_Default_Password_Regexp,
+                Output,
+                Matched);
+         if Matched (0) /= No_Match then
+            Force := Cb_Data.Nb_Password_Tries > 0;
+            Cb_Data.Nb_Password_Tries := Cb_Data.Nb_Password_Tries + 1;
+
+            declare
+               Password : constant String :=
+                            Get_Password (Get_Main_Window (Data.Kernel),
+                                          Cb_Data.Network_Name.all,
+                                          Cb_Data.User_Name.all,
+                                          Force);
+            begin
+               if Password = "" then
+                  Interrupt (Data.Descriptor.all);
+               else
+                  Send (Data.Descriptor.all, Password);
+               end if;
+            end;
+
+            return;
+         end if;
+
+         --  Retrieve passphrase prompt if any
+         Match (Get_Default_Passphrase_Regexp,
+                Output,
+                Matched);
+         if Matched (0) /= No_Match then
+            Force := Cb_Data.Nb_Password_Tries > 0;
+            Cb_Data.Nb_Password_Tries := Cb_Data.Nb_Password_Tries + 1;
+
+            declare
+               Password : constant String :=
+                            Get_Passphrase
+                              (Get_Main_Window (Data.Kernel),
+                               Output (Matched (1).First .. Matched (1).Last),
+                               Force);
+            begin
+               if Password = "" then
+                  Interrupt (Data.Descriptor.all);
+               else
+                  Send (Data.Descriptor.all, Password);
+               end if;
+            end;
+
+            return;
+         end if;
+
+         --  Retrieve progression.
          Match (Progress_Regexp,
                 Output,
                 Matched);
