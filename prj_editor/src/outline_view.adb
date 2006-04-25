@@ -184,18 +184,17 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      Child : constant MDI_Child := Find_MDI_Child_By_Tag
+      Child       : constant MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Outline_View_Record'Tag);
-      Outline : Outline_View_Access;
-      Iter    : Gtk_Tree_Iter;
-      Model   : Gtk_Tree_Store;
-      Path    : Gtk_Tree_Path;
-      Subprogram : Entity_Information;
+      Outline     : Outline_View_Access;
+      Iter        : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Store;
+      Path        : Gtk_Tree_Path;
+      Subprogram  : Entity_Information;
       Editor_Line : constant Natural :=
-        File_Location_Hooks_Args_Access (Data).Line;
-
-      Distance : Gint := Gint'Last;
-      Closest  : Gtk_Tree_Iter;
+                      File_Location_Hooks_Args_Access (Data).Line;
+      Distance    : Gint := Gint'Last;
+      Closest     : Gtk_Tree_Iter;
    begin
       if Get_Pref (Outline_View_Link_Editor)
         and then Child /= null
@@ -812,19 +811,22 @@ package body Outline_View is
          Outline := Outline_View_Access (Get_Widget (Child));
 
          if Module /= null
-           and then (Get_Name (Module) = "Source_Editor"
-                     or else Get_Name (Module) = Outline_View_Module_Name)
-           and then Has_File_Information (D.Context)
+           and then
+             (Get_Name (Module) = "Source_Editor"
+              or else Get_Name (Module) = Outline_View_Module_Name)
          then
-            File := File_Information (D.Context);
+            if Has_File_Information (D.Context) then
+               File := File_Information (D.Context);
+            else
+               File := VFS.No_File;
+            end if;
+
             if File /= Outline.File then
                Outline.File := File;
                Refresh (Outline);
+            elsif Outline.File = VFS.No_File then
+               Refresh (Outline);
             end if;
-
-         else
-            Outline.File := VFS.No_File;
-            Refresh (Outline);
          end if;
       end if;
    end On_Context_Changed;
