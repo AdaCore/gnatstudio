@@ -23,6 +23,7 @@ with Ada.Text_IO;                   use Ada.Text_IO;
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Text_IO; use Ada.Strings.Unbounded.Text_IO;
 
+with Completion.Ada;                  use Completion.Ada;
 with Completion.Entities_Extractor;   use Completion.Entities_Extractor;
 with Completion.Constructs_Extractor; use Completion.Constructs_Extractor;
 with Completion.Expression_Parser;    use Completion.Expression_Parser;
@@ -114,8 +115,8 @@ procedure Completion.Test is
       Iter := First (List);
 
       while Iter /= Null_Completion_Iterator loop
-         Ada.Text_IO.Put (Get_Name (Get_Proposal (Iter)) & " (");
-         Ada.Text_IO.Put
+         Standard.Ada.Text_IO.Put (Get_Name (Get_Proposal (Iter)) & " (");
+         Standard.Ada.Text_IO.Put
            (Language_Category'Image
               (Get_Category (Get_Proposal (Iter))) & ")");
          New_Line;
@@ -280,7 +281,8 @@ procedure Completion.Test is
       Start_Word  : Natural;
       End_Word    : Natural;
 
-      Manager  : constant Completion_Manager_Access := new Completion_Manager;
+      Manager  : constant Completion_Manager_Access :=
+        new Ada_Completion_Manager;
       Resolver : constant Completion_Resolver_Access :=
         Get_Construct_Completion_Resolver (Buffer);
    begin
@@ -317,7 +319,8 @@ procedure Completion.Test is
       Start_Word  : Natural;
       End_Word    : Natural;
 
-      Manager  : constant Completion_Manager_Access := new Completion_Manager;
+      Manager  : constant Completion_Manager_Access :=
+        new Ada_Completion_Manager;
       Resolver : constant Completion_Resolver_Access :=
         Get_Construct_Completion_Resolver (Buffer);
    begin
@@ -352,7 +355,8 @@ procedure Completion.Test is
       Start_Word  : Natural;
       End_Word    : Natural;
 
-      Manager  : constant Completion_Manager_Access := new Completion_Manager;
+      Manager  : constant Completion_Manager_Access :=
+        new Ada_Completion_Manager;
       Resolver : constant Completion_Resolver_Access :=
         Get_Entity_Completion_Resolver (Buffer, Project);
    begin
@@ -390,7 +394,8 @@ procedure Completion.Test is
       Start_Word  : Natural;
       End_Word    : Natural;
 
-      Manager  : constant Completion_Manager_Access := new Completion_Manager;
+      Manager  : constant Completion_Manager_Access :=
+        new Ada_Completion_Manager;
 
    begin
       Tag_Index := 1;
@@ -418,6 +423,7 @@ procedure Completion.Test is
 begin
    if Argument_Count < 2 then
       Put_Line ("Usage : <command> <file_name> <mode>");
+      return;
    end if;
 
    Open (File, In_File, Argument (1));
@@ -425,7 +431,7 @@ begin
    while not End_Of_File (File) loop
       Append
         (Buffer,
-         Ada.Strings.Unbounded.Text_IO.Get_Line (File) & ASCII.LF);
+         Standard.Ada.Strings.Unbounded.Text_IO.Get_Line (File) & ASCII.LF);
    end loop;
 
    Close (File);
@@ -439,12 +445,14 @@ begin
    elsif Argument (2) = "entity" then
       if Argument_Count < 3 then
          Put_Line ("Usage : <command> <file_name> analyze <project_name>");
+         return;
       end if;
 
       Extract_Entities (To_String (Buffer), Argument (3));
    elsif Argument (2) = "full" then
       if Argument_Count < 3 then
          Put_Line ("Usage : <command> <file_name> full <project_name>");
+         return;
       end if;
 
       Full_Test (To_String (Buffer), Argument (3));
