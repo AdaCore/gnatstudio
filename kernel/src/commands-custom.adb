@@ -50,6 +50,7 @@ with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with Interactive_Consoles;      use Interactive_Consoles;
+with Password_Manager;          use Password_Manager;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
@@ -272,6 +273,56 @@ package body Commands.Custom is
       Index, EOL     : Integer;
 
    begin
+      if Command.Execution.Check_Password then
+
+         declare
+            Matched : Match_Array (0 .. 2);
+            Force   : Boolean;
+         begin
+
+            --  Retrieve password prompt if any
+            Match (Get_Default_Password_Regexp,
+                   Output,
+                   Matched);
+
+            if Matched (0) /= No_Match then
+               Force := Command.Execution.Nb_Password > 0;
+               Command.Execution.Nb_Password :=
+                 Command.Execution.Nb_Password + 1;
+
+               declare
+                  Password : constant String :=
+                    Get_Tool_Password (Get_Main_Window (Data.Kernel),
+                                       Command.Name.all,
+                                       Force);
+               begin
+                  Send (Data.Descriptor.all, Password);
+               end;
+            end if;
+
+            --  Retrieve passphrase prompt if any
+            Match (Get_Default_Passphrase_Regexp,
+                   Output,
+                   Matched);
+
+            if Matched (0) /= No_Match then
+               Force := Command.Execution.Nb_Password > 0;
+               Command.Execution.Nb_Password :=
+                 Command.Execution.Nb_Password + 1;
+
+               declare
+                  Password : constant String :=
+                    Get_Passphrase
+                      (Get_Main_Window (Data.Kernel),
+                       Output (Matched (1).First .. Matched (1).Last),
+                       Force);
+               begin
+                  Send (Data.Descriptor.all, Password);
+               end;
+            end if;
+         end;
+      end if;
+
       if Command.Execution.Progress_Matcher /= null then
          declare
             Matched : Match_Array
@@ -602,6 +653,8 @@ package body Commands.Custom is
         Get_Attribute (Command, "progress-hide", "true") = "true";
       Server        : constant String :=
         Get_Attribute (Command, "server", "gps_server");
+      Check_Password : constant Boolean :=
+        Get_Attribute (Command, "check_password", "false") = "true";
       Server_T      : Server_Type;
    begin
       if Show_Task_Manager = "" then
@@ -626,6 +679,7 @@ package body Commands.Custom is
       return new External_Component_Record'
         (Command_Component_Record with
          Server           => Server_T,
+         Check_Password   => Check_Password,
          Show_Command     => Show_C,
          Output           => Outp,
          Command          => new String'(Command.Value.all),
@@ -1122,6 +1176,8 @@ package body Commands.Custom is
             Command.Execution.Total_In_Regexp   :=
               Integer'Max (0, Component.Progress_Final);
             Command.Execution.Hide_Progress := Component.Progress_Hide;
+            Command.Execution.Check_Password := Component.Check_Password;
+            Command.Execution.Nb_Password    := 0;
 
             if Component.Progress_Regexp.all /= "" then
                Command.Execution.Progress_Matcher := new Pattern_Matcher'
