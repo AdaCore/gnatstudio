@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  Provides a completer working on language constructs for Ada
+
 with Language.Tree; use Language.Tree;
 
 package Completion.Constructs_Extractor is
