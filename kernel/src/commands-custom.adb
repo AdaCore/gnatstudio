@@ -654,7 +654,7 @@ package body Commands.Custom is
       Server        : constant String :=
         Get_Attribute (Command, "server", "gps_server");
       Check_Password : constant Boolean :=
-        Get_Attribute (Command, "check_password", "false") = "true";
+        Get_Attribute (Command, "check-password", "false") = "true";
       Server_T      : Server_Type;
    begin
       if Show_Task_Manager = "" then
