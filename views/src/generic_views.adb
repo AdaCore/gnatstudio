@@ -140,7 +140,8 @@ package body Generic_Views is
       function Get_Or_Create_View
         (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
          Reuse_If_Exist : Boolean := True;
-         Focus          : Boolean := True)
+         Focus          : Boolean := True;
+         Group          : Gtkada.MDI.Child_Group := GPS.Kernel.MDI.Group_View)
          return View_Access
       is
          Child  : GPS_MDI_Child;
@@ -157,10 +158,10 @@ package body Generic_Views is
             Gtk_New (Child, View,
                      Default_Width  => 215,
                      Default_Height => 600,
-                     Group          => Group_View,
+                     Group          => Group,
                      Module         => Module);
             Set_Title (Child, View_Name, View_Name);
-            Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
+            Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
          end if;
 
          if Focus then

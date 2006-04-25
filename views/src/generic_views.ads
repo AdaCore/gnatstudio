@@ -24,6 +24,7 @@
 --  This package must be instanciated at library-level
 
 with GPS.Kernel.Modules;
+with GPS.Kernel.MDI;
 with Glib.Object;
 with Glib.Xml_Int;
 with Gtk.Scrolled_Window;
@@ -94,7 +95,8 @@ package Generic_Views is
       function Get_Or_Create_View
         (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
          Reuse_If_Exist : Boolean := True;
-         Focus          : Boolean := True)
+         Focus          : Boolean := True;
+         Group          : Gtkada.MDI.Child_Group := GPS.Kernel.MDI.Group_View)
          return View_Access;
       --  Return the view (create a new one if necessary, or always if
       --  Reuse_If_Exist is False).
