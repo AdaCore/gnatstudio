@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.0.0
 
+- F425-013 Crash when quiting while gnatmake is running
+  Problem:    GPS crashes when it is closed while processing a gnatmake 
+              command.
+  Workaround: Use the task manager to interrupt all build commands before 
+              exiting GPS.
+
 - F405-011 Outline view lost after a search
   Problem:    When doing a search in a source editor the outline view is
               cleared right after the search dialog pops up (only in the case
