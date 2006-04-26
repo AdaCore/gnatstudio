@@ -156,24 +156,24 @@ def kill_line():
        whitespaces correctly  """
    # Will not work in new files, since there is no file name set. We would
    # need to access directly the current editor instead of current context.
-   file = GPS.current_context().file().name()
-   line = GPS.current_context().location().line()
-   col  = GPS.current_context().location().column()
-   # get the characters following the current location
-   str = GPS.Editor.get_chars (file, line, col, 0)
-   strip_str = string.rstrip (str)
+   context  = GPS.current_context ()
+   buffer   = GPS.EditorBuffer.get(context.file ())
+   location = context.location ()
+   start    = GPS.EditorLocation (buffer, location.line (), location.column ())
 
-   # case when there is no non-blank caracters after the
-   # cursor and an end-of-line => kill all non-blank
-   # caracters and the end-of-line
-   if strip_str == "" and str [len (str) - 1] == '\n':
-      GPS.Editor.select_text (line, line, col, col + len (str))
-   # there are non-blank caracters => kill them until the end-of-line if one
-   elif str [len (str) - 1] == '\n':
-      GPS.Editor.select_text (line, line, col, col + len (str) - 1)
-   else:
-      GPS.Editor.select_text (line, line, col, col + len (str))
-   GPS.Editor.cut()
+   # In case the current location points to a line terminator we just cut it
+   if buffer.get_chars (start, start) == "\n":
+      buffer.cut (start, start)
+      return
+
+   end       = start.end_of_line ()
+   str       = buffer.get_chars (start, end)
+   strip_str = str.rstrip ()
+
+   if len (str) > 0 and str [len (str) - 1] == '\n' and strip_str != "":
+      end = end.forward_char (-1)
+
+   buffer.cut (start, end)
 
 def beginning_of_buffer():
    """  Move the cursor to the beginning of the buffer. """
