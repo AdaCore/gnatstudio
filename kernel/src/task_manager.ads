@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2005                      --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -60,6 +60,9 @@ package Task_Manager is
 
    procedure Interrupt_Latest_Task (Manager : Task_Manager_Access);
    --  Interrupt the task that was started last
+
+   procedure Interrupt_All_Tasks (Manager : Task_Manager_Access);
+   --  Interrput all tasks
 
    procedure Set_Progress_Area
      (Manager : Task_Manager_Access;

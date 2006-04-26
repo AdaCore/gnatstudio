@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
+--                     Copyright (C) 2003 - 2006                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -489,6 +489,7 @@ package body Task_Manager is
          while Node /= Null_Node loop
             if Data (Node) = Command then
                Interrupt_Command (Manager, J);
+               Free (Manager.Queues (J).Queue);
                return;
             end if;
 
@@ -585,6 +586,18 @@ package body Task_Manager is
          Interrupt_Command (Manager, Manager.Queues'Last);
       end if;
    end Interrupt_Latest_Task;
+
+   -------------------------
+   -- Interrupt_All_Tasks --
+   -------------------------
+
+   procedure Interrupt_All_Tasks (Manager : Task_Manager_Access) is
+      Commands : constant Command_Array := Get_Scheduled_Commands (Manager);
+   begin
+      for C in Commands'Range loop
+         Interrupt_Queue (Manager, Commands (C));
+      end loop;
+   end Interrupt_All_Tasks;
 
    --------------------------
    -- Has_Running_Commands --
