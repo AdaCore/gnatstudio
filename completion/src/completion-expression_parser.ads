@@ -21,6 +21,8 @@
 --  This package is used to provide an easy way to analyze expression that have
 --  to be completed for Ada
 
+with Glib; use Glib;
+
 with Generic_List;
 
 package Completion.Expression_Parser is
@@ -57,9 +59,10 @@ package Completion.Expression_Parser is
    use Token_List;
 
    function Parse_Current_List
-     (Buffer : String; Start_Offset : Natural) return Token_List.List;
+     (Buffer : UTF8_String; Start_Offset : Natural) return Token_List.List;
    --  This function looks backwards from the offset given in parameter and
-   --  parses the relevant completion expression
+   --  parses the relevant completion expression.
+   --  Start_Offset is the offset (in byte) of where we have to look
 
    function Get_Name (Buffer : String; Token : Token_Record) return String;
    --  Return the name of the element pointed by the token
