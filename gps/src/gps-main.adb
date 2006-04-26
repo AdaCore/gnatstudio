@@ -77,6 +77,7 @@ with Projects.Registry;         use Projects;
 with Remote_Views;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_Utils;
+with Task_Manager;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 with Welcome;                   use Welcome;
@@ -1667,6 +1668,12 @@ procedure GPS.Main is
       --  point, we no longer want to access/update it past this point.
 
       GPS_Main.Animation_Image := null;
+
+      --  All tasks should be interrupted before the main window is closed
+      --  since they need to access their consoles.
+
+      Task_Manager.Interrupt_All_Tasks (Get_Task_Manager (Kernel));
+
       Destroy (GPS_Main);
 
       Free_Modules (Kernel);
