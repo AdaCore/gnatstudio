@@ -270,6 +270,15 @@ package body Completion is
       return 0;
    end Get_Number_Of_Parameters;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Proposal : in out Simple_Completion_Proposal) is
+   begin
+      Free (Proposal.Name);
+   end Free;
+
    -----------
    -- Match --
    -----------
