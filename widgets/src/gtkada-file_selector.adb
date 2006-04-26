@@ -1243,8 +1243,13 @@ package body Gtkada.File_Selector is
       else
          Dir := Get_Current_Dir;
       end if;
-      Change_Directory (Win, Dir);
-      Set_Location (Win.Location_Combo, Dir);
+
+      if Is_Directory (Dir) then
+         Change_Directory (Win, Dir);
+         Set_Location (Win.Location_Combo, Dir);
+      else
+         raise Process_Died;
+      end if;
 
    exception
       when Process_Died | Invalid_Process | Invalid_Nickname =>
@@ -1254,7 +1259,13 @@ package body Gtkada.File_Selector is
             Dialog_Type => Error,
             Buttons     => Button_OK,
             Parent      => Gtk_Window (Win));
-         Set_Text (Get_Entry (Win.Hosts_Combo), Local_Nickname);
+         if Is_Local (Win.Current_Directory) then
+            Set_Text (Get_Entry (Win.Hosts_Combo),
+                      Local_Nickname);
+         else
+            Set_Text (Get_Entry (Win.Hosts_Combo),
+                      Get_Host (Win.Current_Directory));
+         end if;
          Host_Selected (Object);
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
