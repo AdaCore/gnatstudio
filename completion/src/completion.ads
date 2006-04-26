@@ -18,7 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  Provides the base structures / subprograms for the completion manager.
+--  Provides the base structures / subprograms for the completion manager. A
+--  completion manager is the base class of the completion mechanism. Before
+--  using it, you have to add manually the completion resolvers you want to
+--  use. A completion manager has to be build at each completion request, since
+--  it might depend on different datas. You can see for example the subprogram
+--  Full_Test in the test driver Completion.Test.
 
 with Basic_Types;  use Basic_Types;
 with Language;     use Language;
@@ -156,10 +161,13 @@ package Completion is
    --  given offset. This operation is time consuming, so it would be good
    --  to use the one below afterwards, until the completion process is done.
 
+   procedure Free (Proposal : in out Completion_Proposal) is abstract;
+   --  Free the memory associated to the proposal.
+
    function Refine_Completion_List
      (Previous_Completion : Completion_List;
       Character_Added     : Character) return Completion_List;
-   --  Refine a completion list considerating that the user added the character
+   --  Refine a completion list considering that the user added the character
    --  given in parameter.
 
    -------------------------
@@ -251,7 +259,13 @@ private
      return Natural;
    --  See inherited documentation
 
+   procedure Free (Proposal : in out Simple_Completion_Proposal);
+   --  See inherited documentation
+
    function Match (Seeked_Name, Tested_Name : String; Is_Partial : Boolean)
       return Boolean;
+   --  Return true if Tested_Name matches Seeked_Name, possibly only partially
+   --  (in which case Seeked_Name is the beginning of Tested_Name), false
+   --  otherwise
 
 end Completion;
