@@ -309,7 +309,10 @@ package body Completion.Entities_Extractor is
            (Get_LI_Handler_From_File (Handler, Files.all (J)),
             Files.all (J));
 
-         if To_Lower (Get_Unit_Name (Current_File)) = To_Lower (Unit_Name) then
+         if Current_File /= null
+           and then To_Lower
+             (Get_Unit_Name (Current_File)) = To_Lower (Unit_Name)
+         then
             return Current_File;
          end if;
       end loop;
