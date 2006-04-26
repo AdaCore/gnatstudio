@@ -82,6 +82,7 @@ with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
 with Projects.Registry;                 use Projects, Projects.Registry;
+with Remote_Servers;                    use Remote_Servers;
 with Src_Contexts;                      use Src_Contexts;
 with Src_Editor_Box;                    use Src_Editor_Box;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
@@ -1488,7 +1489,7 @@ package body Src_Editor_Module is
       --  of completions through the keyboard (C423-005)
       Gtk_New (Open_File_Entry,
                Use_Combo => False,
-               Case_Sensitive => Filenames_Are_Case_Sensitive);
+               Case_Sensitive => Is_Case_Sensitive (Build_Server));
       Set_Activates_Default (Get_Entry (Open_File_Entry), True);
       Pack_Start (Get_Vbox (Open_File_Dialog), Open_File_Entry,
                   Fill => True, Expand => True);
@@ -3320,7 +3321,7 @@ package body Src_Editor_Module is
 
    function Hash (F : Virtual_File) return Header_Num is
    begin
-      if Filenames_Are_Case_Sensitive then
+      if Is_Case_Sensitive (Build_Server) then
          return Hash (Full_Name (F).all);
       else
          return Hash (To_Lower (Full_Name (F).all));

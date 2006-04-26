@@ -34,6 +34,7 @@ with Prj.Util;                  use Prj.Util;
 with Projects.Editor.Normalize; use Projects.Editor.Normalize;
 with Projects.Graphs;           use Projects.Graphs;
 with Projects.Registry;         use Projects.Registry;
+with Remote_Servers;            use Remote_Servers;
 with Snames;                    use Snames;
 with Traces;                    use Traces;
 with Types;                     use Types;
@@ -2414,7 +2415,8 @@ package body Projects.Editor is
       begin
          if Use_Relative_Paths then
             declare
-               Conv : constant String := Relative_Path_Name (Old, Base);
+               Conv : constant String :=
+                 Relative_Path_Name (Old, Base, Build_Server);
             begin
                if Conv /= Old then
                   Set_String_Value_Of (Node, Tree, Get_String (Conv));
@@ -2453,7 +2455,7 @@ package body Projects.Editor is
             if Use_Relative_Paths then
                declare
                   Conv : constant String :=
-                    Relative_Path_Name (Old, Base);
+                    Relative_Path_Name (Old, Base, Build_Server);
                begin
                   if Old /= Conv then
                      Set_Extended_Project_Path_Of
@@ -2999,8 +3001,9 @@ package body Projects.Editor is
       if Use_Relative_Path then
          Clause := Get_String
            (Relative_Path_Name
-            (Imported_Project_Location,
-             Dir_Name (Get_String (Path_Name_Of (Importing_Project, Tree)))));
+              (Imported_Project_Location,
+               Dir_Name (Get_String (Path_Name_Of (Importing_Project, Tree))),
+               Build_Server));
       else
          Clause := Get_String (Imported_Project_Location);
       end if;
@@ -3214,7 +3217,8 @@ package body Projects.Editor is
       if Dep_Name /= No_Project_Name_And_Node then
          if not File_Equal
            (Format_Pathname (Get_String (Path_Name_Of (Dep_Name.Node, Tree))),
-            Full_Name (Imported_Project_Location).all)
+            Full_Name (Imported_Project_Location).all,
+            Build_Server)
          then
             if Report_Errors /= null then
                Report_Errors
@@ -3388,7 +3392,8 @@ package body Projects.Editor is
                              (Normalize_Pathname
                                 (D, Full_Name
                                    (Old_Path).all, Resolve_Links => False),
-                              Full_Name (New_Path).all)));
+                              Full_Name (New_Path).all,
+                              Build_Server)));
                   end if;
                end;
 
@@ -3831,7 +3836,8 @@ package body Projects.Editor is
          declare
             Path : constant String :=
               Relative_Path_Name (Full_Name (Project_Path (Extended)).all,
-                                  Full_Name (Project_Directory (Project)).all);
+                                  Full_Name (Project_Directory (Project)).all,
+                                  Build_Server);
          begin
             Set_Extended_Project_Path_Of
               (Project.Node,

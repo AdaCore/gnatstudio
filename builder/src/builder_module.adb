@@ -68,6 +68,7 @@ with Language_Handlers;         use Language_Handlers;
 with Projects.Registry;         use Projects.Registry;
 with Entities;                  use Entities;
 with Histories;                 use Histories;
+with Remote_Servers;            use Remote_Servers;
 
 with Basic_Types;
 with Std_Dialogs;               use Std_Dialogs;

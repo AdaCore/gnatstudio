@@ -18,16 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with GNAT.Expect; use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 pragma Warnings (On);
-
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
+
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Remote;      use GPS.Kernel.Remote;
+with Remote_Servers;         use Remote_Servers;
 with String_Utils;           use String_Utils;
-with Ada.Unchecked_Deallocation;
 
 package body GVD.Proc_Utils is
 

@@ -21,6 +21,7 @@
 with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with GPS.Kernel.Remote;     use GPS.Kernel.Remote;
+with Remote_Servers;        use Remote_Servers;
 with String_Utils;          use String_Utils;
 with Entities;              use Entities;
 with Projects;              use Projects;
@@ -132,7 +133,7 @@ package body GPS.Kernel.Macros is
       Context : GPS.Kernel.Selection_Context;
       Quoted  : Boolean;
       Done    : access Boolean;
-      Server  : GPS.Kernel.Remote.Server_Type := GPS.Kernel.Remote.GPS_Server)
+      Server  : Remote_Servers.Remote_Server_Type := Remote_Servers.GPS_Server)
       return String
    is
       Project : Project_Type := No_Project;

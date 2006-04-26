@@ -59,11 +59,11 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with Projects;                  use Projects;
+with Remote_Servers;            use Remote_Servers;
 with Traces;                    use Traces;
 
 package body GPS.Main_Window is

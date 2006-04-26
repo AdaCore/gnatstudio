@@ -49,6 +49,7 @@ with Items;                      use Items;
 with Language;                   use Language;
 with Language.Debugger;          use Language.Debugger;
 with Process_Proxies;            use Process_Proxies;
+with Remote_Servers;             use Remote_Servers;
 with String_Utils;               use String_Utils;
 
 package body Debugger is

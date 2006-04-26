@@ -55,6 +55,7 @@ with Items;               use Items;
 with Language.Debugger;   use Language.Debugger;
 with Language;            use Language;
 with Process_Proxies;     use Process_Proxies;
+with Remote_Servers;      use Remote_Servers;
 with String_Utils;        use String_Utils;
 with VFS;                 use VFS;
 

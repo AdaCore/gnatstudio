@@ -22,13 +22,14 @@ with File_Utils;                use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with Remote_Servers;            use Remote_Servers;
 with Traces;                    use Traces;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with VFS;                       use VFS;
 with OS_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -97,18 +98,18 @@ package body VFS_Module is
             Directory := new String'(Name_As_Directory (Pattern));
             File_Regexp :=
               Compile ("*", Glob => True,
-                       Case_Sensitive => Filenames_Are_Case_Sensitive);
+                       Case_Sensitive => Is_Case_Sensitive (Build_Server));
          else
             Directory := new String'(Directory_Name);
 
             if Base = "" then
                File_Regexp :=
                  Compile ("*", Glob => True,
-                          Case_Sensitive => Filenames_Are_Case_Sensitive);
+                          Case_Sensitive => Is_Case_Sensitive (Build_Server));
             else
                File_Regexp :=
                  Compile (Base, Glob => True,
-                          Case_Sensitive => Filenames_Are_Case_Sensitive);
+                          Case_Sensitive => Is_Case_Sensitive (Build_Server));
             end if;
          end if;
 

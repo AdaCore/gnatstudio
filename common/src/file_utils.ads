@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@
 with VFS;
 with Ada.Calendar;
 with GNAT.Directory_Operations;
+with Remote_Servers;            use Remote_Servers;
 
 package File_Utils is
 
@@ -42,18 +43,22 @@ package File_Utils is
    --  Return all the files found in Dirs. Each directory in Dirs should be
    --  separated with Path_Separator
 
-   function Filenames_Are_Case_Sensitive return Boolean;
-   --  Return true if filenames are case sensitive on the current system.
+   function Is_Case_Sensitive
+     (Server : Remote_Server_Type := GPS_Server) return Boolean;
+   --  Return true if filenames are case sensitive on the server.
 
-   function File_Equal (File1, File2 : String) return Boolean;
+   function File_Equal
+     (File1, File2 : String;
+      Server : Remote_Server_Type := GPS_Server) return Boolean;
    --  Perform a comparison of file, taking into account the case sensitivity
-   --  depending on the OS.
+   --  depending on Server's OS.
 
    function Relative_Path_Name
-     (File_Name : String; Base_Name : String) return String;
+     (File_Name, Base_Name : String;
+      Server    : Remote_Server_Type := GPS_Server) return String;
    --  Modifies File_Name so that it is relative to Base_Name.
    --  Both names are first normalized to platform specific conventions, but
-   --  the links are not resolved.
+   --  the links are not resolved. The case sensitivity of Server is used.
 
    function Name_As_Directory
      (Name  : String;

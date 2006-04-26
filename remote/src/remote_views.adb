@@ -59,6 +59,7 @@ with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Remote;  use GPS.Kernel.Remote;
 
 with Projects;           use Projects;
+with Remote_Servers;     use Remote_Servers;
 with Traces;             use Traces;
 with VFS;                use VFS;
 

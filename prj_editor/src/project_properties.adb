@@ -86,6 +86,7 @@ with Prj.Attr;                  use Prj, Prj.Attr;
 with Project_Viewers;           use Project_Viewers;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
+with Remote_Servers;            use Remote_Servers;
 with Scenario_Selectors;        use Scenario_Selectors;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
@@ -1078,7 +1079,8 @@ package body Project_Properties is
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
                Value              => Relative_Path_Name
-                 (Get_Text (Editor.Ent), Get_Text (Editor.Path_Widget)),
+                 (Get_Text (Editor.Ent), Get_Text (Editor.Path_Widget),
+                  Build_Server),
                Entry_Value        => Get_Text (Editor.Ent),
                Project_Changed    => Project_Changed);
 
@@ -1114,7 +1116,8 @@ package body Project_Properties is
                        (Name_As_Directory
                           (Relative_Path_Name
                              (Get_String (Editor.Model, Iter, 0),
-                              Get_Text (Editor.Path_Widget)))
+                              Get_Text (Editor.Path_Widget),
+                              Build_Server))
                         & "/**");
                   else
                      Values (N) := new String'
@@ -1130,7 +1133,8 @@ package body Project_Properties is
                   Values (N) := new String'
                     (Relative_Path_Name
                        (Get_String (Editor.Model, Iter, 0),
-                        Get_Text (Editor.Path_Widget)));
+                        Get_Text (Editor.Path_Widget),
+                        Build_Server));
 
                else
                   Values (N) := new String'

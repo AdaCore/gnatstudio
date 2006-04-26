@@ -60,6 +60,7 @@ with GPS.Kernel;             use GPS.Kernel;
 with GPS.Intl;               use GPS.Intl;
 with Projects;                 use Projects;
 with Projects.Registry;        use Projects.Registry;
+with Remote_Servers;           use Remote_Servers;
 with String_List_Utils;        use String_List_Utils;
 with File_Utils;               use File_Utils;
 with GUI_Utils;                use GUI_Utils;
@@ -304,7 +305,7 @@ package body Project_Explorers_Files is
                      if P /= No_Project
                        and then File_Equal
                          (Dir_Name (Name_Buffer (1 .. Name_Len)),
-                          D.Norm_Dir.all)
+                          D.Norm_Dir.all, Build_Server)
                      then
                         Append (D.Files, Name);
                      end if;
@@ -332,7 +333,7 @@ package body Project_Explorers_Files is
          Push_State (D.Explorer.Kernel, Busy);
       end if;
 
-      if Filenames_Are_Case_Sensitive then
+      if Is_Case_Sensitive (Build_Server) then
          Sort (D.Dirs);
          Sort (D.Files);
       else
@@ -370,7 +371,7 @@ package body Project_Explorers_Files is
                 (D.Norm_Dest
                    (D.Norm_Dest'First ..
                        D.Norm_Dest'First + D.Norm_Dir'Length + Dir'Length - 1),
-                 D.Norm_Dir.all & Dir)
+                 D.Norm_Dir.all & Dir, Build_Server)
             then
                Path_Found := True;
 
@@ -396,7 +397,8 @@ package body Project_Explorers_Files is
                --  Are we on the target directory ?
 
                if File_Equal
-                 (D.Norm_Dest.all, D.Norm_Dir.all & Dir & Directory_Separator)
+                 (D.Norm_Dest.all, D.Norm_Dir.all & Dir & Directory_Separator,
+                  Build_Server)
                then
                   declare
                      Success   : Boolean;
@@ -988,7 +990,8 @@ package body Project_Explorers_Files is
                   if File_Equal
                     (Buffer (Last .. J - 1),
                      Cur_Dir (Cur_Dir'First ..
-                              Cur_Dir'First + J - Last - 1))
+                         Cur_Dir'First + J - Last - 1),
+                     Build_Server)
                   then
                      File_Append_Directory
                        (Explorer, Buffer (Last .. J - 1),
@@ -1096,11 +1099,11 @@ package body Project_Explorers_Files is
                while Index < Greatest_Prefix_Length
                  and then Index < Length
                  and then
-                   ((Filenames_Are_Case_Sensitive
+                   ((Is_Case_Sensitive (Build_Server)
                      and then Challenger (First + Index)
                        = Greatest_Prefix (Greatest_Prefix'First + Index))
                     or else
-                      (not Filenames_Are_Case_Sensitive
+                      (not Is_Case_Sensitive (Build_Server)
                        and then To_Lower (Challenger (First + Index))
                          = To_Lower (Greatest_Prefix
                                        (Greatest_Prefix'First + Index))))

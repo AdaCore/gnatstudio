@@ -56,6 +56,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Log_Utils;                 use Log_Utils;
 with Projects.Registry;         use Projects.Registry;
+with Remote_Servers;            use Remote_Servers;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
@@ -3361,7 +3362,7 @@ package body VCS_View_API is
       --  efficient way to do this (in O(N*log (N))) is to sort the list and
       --  eliminate duplicates on the sorted list.
 
-      if Filenames_Are_Case_Sensitive then
+      if Is_Case_Sensitive (Build_Server) then
          Sort (Result);
       else
          Sort_Case_Insensitive (Result);
@@ -3374,7 +3375,7 @@ package body VCS_View_API is
             S : constant String := Data (Node);
          begin
             if Prev = Null_Node
-              or else not File_Equal (Data (Prev), S)
+              or else not File_Equal (Data (Prev), S, Build_Server)
             then
                Append (Final, S);
             end if;

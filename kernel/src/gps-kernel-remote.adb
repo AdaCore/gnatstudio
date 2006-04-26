@@ -85,6 +85,7 @@ with Filesystem.Windows;         use Filesystem.Windows;
 with GUI_Utils;                  use GUI_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
 with Projects;                   use Projects;
+with Remote_Servers;             use Remote_Servers;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
@@ -350,13 +351,7 @@ package body GPS.Kernel.Remote is
       Nickname : String_Ptr;
       --  Identifier of the server
    end record;
-
-   type Servers_Config is array (Server_Type) of Server_Config;
-
-   Servers : Servers_Config :=
-               (others => (Is_Local => True, Nickname => new String'("")));
-   --  Servers currently used. Default is the localhost.
-   --  ??? Global variable, should get rid of it
+   type Servers_Config is array (Distant_Server_Type) of Server_Config;
 
    type Servers_Property is new Property_Record with record
       Servers : Servers_Config;
@@ -2338,7 +2333,7 @@ package body GPS.Kernel.Remote is
    begin
       Trace (Me, "Saving remote property");
 
-      for J in Remote_Server_Type'Range loop
+      for J in Property.Servers'Range loop
          Srv := new Glib.Xml_Int.Node;
          Srv.Tag := new String'(Server_Type'Image (J));
          Srv.Value := new String'(Property.Servers (J).Nickname.all);
@@ -2358,7 +2353,7 @@ package body GPS.Kernel.Remote is
       Trace (Me, "Loading remote property");
 
       if From.Child /= null then
-         for J in Remote_Server_Type'Range loop
+         for J in Property.Servers'Range loop
             Srv := Find_Tag (From.Child, Server_Type'Image (J));
 
             if Srv /= null
@@ -2374,12 +2369,8 @@ package body GPS.Kernel.Remote is
             end if;
          end loop;
 
-         Property.Servers (GPS_Server) :=
-           (Is_Local => True,
-            Nickname => new String'(""));
-
       else
-         for J in Server_Type'Range loop
+         for J in Property.Servers'Range loop
             Property.Servers (J) :=
               (Is_Local => True,
                Nickname => new String'(""));
@@ -2423,14 +2414,14 @@ package body GPS.Kernel.Remote is
          Trace (Me, "Property servers_config does not exist. Create it");
 
          if not Is_Local (D.File) then
-            for J in Remote_Server_Type'Range loop
+            for J in Property.Servers'Range loop
                Property.Servers (J) :=
                  (Is_Local => False,
                   Nickname => new String'(Get_Host (D.File)));
             end loop;
 
          else
-            for J in Remote_Server_Type'Range loop
+            for J in Property.Servers'Range loop
                Property.Servers (J) := (Is_Local => True,
                                         Nickname => new String'(""));
             end loop;
@@ -2440,18 +2431,15 @@ package body GPS.Kernel.Remote is
          Set_Property (Local_File, "servers_config", Prop, Persistent => True);
       end if;
 
-      for J in Remote_Server_Type'Range loop
-         Glib.Free (Servers (J).Nickname);
-         Servers (J) :=
-           (Is_Local => Property.Servers (J).Is_Local,
-            Nickname => new String'(Property.Servers (J).Nickname.all));
+      for J in Property.Servers'Range loop
+         Assign (J, Property.Servers (J).Nickname.all);
       end loop;
 
       --  If Project is loaded from a distant host, force build_server as
       --  distant host.
 
       if not Is_Local (D.File)
-        and then Get_Host (D.File) /= Servers (Build_Server).Nickname.all
+        and then Get_Host (D.File) /= Get_Nickname (Build_Server)
       then
          Trace (Me, "Assign build server: project loaded from remote host");
          Assign (Kernel_Handle (Kernel),
@@ -2844,7 +2832,7 @@ package body GPS.Kernel.Remote is
 
    function To_Local (Path : String; From : Server_Type) return String is
    begin
-      return To_Local (Path, Servers (From).Nickname.all);
+      return To_Local (Path, Get_Nickname (From));
    end To_Local;
 
    --------------
@@ -2973,14 +2961,7 @@ package body GPS.Kernel.Remote is
       pragma Unreferenced (Id);
 
    begin
-      Glib.Free (Servers (Server).Nickname);
-      if Nickname /= "" and Nickname /= Local_Nickname then
-         Servers (Server) := (Is_Local => False,
-                              Nickname => new String'(Nickname));
-      else
-         Servers (Server) := (Is_Local => True,
-                              Nickname => new String'(""));
-      end if;
+      Assign (Server, Nickname);
 
       --  Update the project's property
 
@@ -2996,8 +2977,8 @@ package body GPS.Kernel.Remote is
          Trace (Me, "Saving servers_config property");
          Glib.Free (Property.Servers (Server).Nickname);
          Property.Servers (Server) :=
-           (Is_Local => Servers (Server).Is_Local,
-            Nickname => new String'(Servers (Server).Nickname.all));
+           (Is_Local => Is_Local (Server),
+            Nickname => new String'(Get_Nickname (Server)));
          Remove_Property (The_File, "servers_config");
 
          Prop := new Servers_Property'(Property);
@@ -3032,29 +3013,6 @@ package body GPS.Kernel.Remote is
       Run_Hook (Kernel, Server_Config_Changed_Hook, Data'Unchecked_Access);
    end Assign;
 
-   ------------------
-   -- Get_Nickname --
-   ------------------
-
-   function Get_Nickname (Server : Server_Type) return String is
-   begin
-      return Servers (Server).Nickname.all;
-   end Get_Nickname;
-
-   ----------------------------
-   -- Get_Printable_Nickname --
-   ----------------------------
-
-   function Get_Printable_Nickname (Server : Server_Type) return String is
-      Nickname : constant String := Get_Nickname (Server);
-   begin
-      if Nickname = "" then
-         return Local_Nickname;
-      else
-         return Nickname;
-      end if;
-   end Get_Printable_Nickname;
-
    ----------------------
    -- Get_Network_Name --
    ----------------------
@@ -3081,15 +3039,6 @@ package body GPS.Kernel.Remote is
          return Get_Filesystem (Get_Nickname (Server));
       end if;
    end Get_Filesystem;
-
-   --------------
-   -- Is_Local --
-   --------------
-
-   function Is_Local (Server : Server_Type) return Boolean is
-   begin
-      return Servers (Server).Is_Local;
-   end Is_Local;
 
    -----------------
    -- Synchronize --
@@ -3127,7 +3076,7 @@ package body GPS.Kernel.Remote is
       Mirror := null;
 
       while Path_List_Item /= null loop
-         if Path_List_Item.Nickname.all = Servers (Server).Nickname.all then
+         if Path_List_Item.Nickname.all = Get_Nickname (Server) then
             Mirror := Path_List_Item.Path_List;
             exit;
          end if;
@@ -3141,13 +3090,13 @@ package body GPS.Kernel.Remote is
                From_Path := Mirror.Local_Path;
                To_Path   := Mirror.Remote_Path;
                Machine   := Machine_Descriptor_Record
-                 (Get_Machine_Descriptor (Servers (To).Nickname.all).all);
+                 (Get_Machine_Descriptor (Get_Nickname (To)).all);
 
             else
                From_Path := Mirror.Remote_Path;
                To_Path   := Mirror.Local_Path;
                Machine   := Machine_Descriptor_Record
-                 (Get_Machine_Descriptor (Servers (From).Nickname.all).all);
+                 (Get_Machine_Descriptor (Get_Nickname (From)).all);
             end if;
 
             declare
@@ -3373,7 +3322,7 @@ package body GPS.Kernel.Remote is
 
          Remote_Spawn
            (Pd,
-            Target_Nickname     => Servers (Server).Nickname.all,
+            Target_Nickname     => Get_Nickname (Server),
             Args                => Args.all,
             Execution_Directory => Old_Dir.all,
             Err_To_Out          => True,

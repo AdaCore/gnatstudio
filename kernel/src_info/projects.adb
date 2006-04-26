@@ -38,6 +38,7 @@ with Prj.Util;                  use Prj.Util;
 with Projects.Graphs;           use Projects.Graphs;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
+with Remote_Servers;            use Remote_Servers;
 with Snames;                    use Snames;
 with String_Hash;
 with Traces;                    use Traces;
@@ -1446,7 +1447,7 @@ package body Projects is
       Value : Argument_List := Get_Attribute_Value
         (Project, Attribute => Main_Attribute);
    begin
-      if Filenames_Are_Case_Sensitive then
+      if Is_Case_Sensitive (Build_Server) then
          for V in Value'Range loop
             if Value (V).all = File then
                Free (Value);

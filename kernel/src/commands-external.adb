@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,9 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Config;                     use Config;
-
 with GNAT.Expect;                use GNAT.Expect;
+with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Strings;
@@ -28,8 +27,9 @@ with GNAT.Strings;
 with Ada.Exceptions;             use Ada.Exceptions;
 
 with Traces;                     use Traces;
-with GPS.Intl;                 use GPS.Intl;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with Password_Manager;           use Password_Manager;
 with String_Utils;               use String_Utils;
 
 package body Commands.External is
@@ -72,14 +72,15 @@ package body Commands.External is
    ------------
 
    procedure Create
-     (Item         : out External_Command_Access;
-      Kernel       : Kernel_Handle;
-      Command      : String;
-      Dir          : String;
-      Args         : String_List.List;
-      Head         : String_List.List;
-      Handler      : String_List_Handler;
-      Description  : String) is
+     (Item           : out External_Command_Access;
+      Kernel         : Kernel_Handle;
+      Command        : String;
+      Dir            : String;
+      Args           : String_List.List;
+      Head           : String_List.List;
+      Handler        : String_List_Handler;
+      Description    : String;
+      Check_Password : Boolean := False) is
    begin
       Item := new External_Command;
       Item.Kernel  := Kernel;
@@ -91,9 +92,10 @@ package body Commands.External is
          Item.Dir := new String'(Dir);
       end if;
 
-      Item.Args    := Copy_String_List (Args);
-      Item.Head    := Copy_String_List (Head);
-      Item.Handler := Handler;
+      Item.Args           := Copy_String_List (Args);
+      Item.Head           := Copy_String_List (Head);
+      Item.Handler        := Handler;
+      Item.Check_Password := Check_Password;
 
       Item.Description := new String'(Description);
    end Create;
@@ -107,14 +109,51 @@ package body Commands.External is
       Match : Expect_Match := 1;
    begin
       loop
-         Expect (D.Fd, Match, "\n", 1);
+         if not D.Check_Password then
+            Expect (D.Fd, Match, "\n", 1);
 
-         case Match is
-            when Expect_Timeout =>
-               return True;
-            when others =>
-               String_List.Append (D.Output, Strip_CR (Expect_Out (D.Fd)));
-         end case;
+            case Match is
+               when Expect_Timeout =>
+                  return True;
+               when others =>
+                  String_List.Append (D.Output, Strip_CR (Expect_Out (D.Fd)));
+            end case;
+
+         else
+            declare
+               Regexp_Array : Compiled_Regexp_Array (1 .. 3);
+               Matched      : GNAT.Regpat.Match_Array (0 .. 1);
+            begin
+               Regexp_Array (1) :=
+                 new Pattern_Matcher'(Get_Default_Password_Regexp);
+               Regexp_Array (2) :=
+                 new Pattern_Matcher'(Get_Default_Passphrase_Regexp);
+               Regexp_Array (3) :=
+                 new Pattern_Matcher'(Compile ("\n"));
+               Expect (D.Fd, Match, Regexp_Array, Matched, 1, False);
+
+               case Match is
+                  when Expect_Timeout =>
+                     return True;
+
+                  when 1 | 2 =>
+                     --  Password/passphrase prompt
+                     declare
+                        Password : constant String :=
+                          Get_Tool_Password (Get_Main_Window (D.Kernel),
+                                             D.Command.all,
+                                             D.Nb_Pwd > 0);
+                     begin
+                        D.Nb_Pwd := D.Nb_Pwd + 1;
+                        Send (D.Fd, Password);
+                     end;
+
+                  when others =>
+                     String_List.Append
+                       (D.Output, Strip_CR (Expect_Out (D.Fd)));
+               end case;
+            end;
+         end if;
       end loop;
 
    exception
@@ -208,37 +247,12 @@ package body Commands.External is
                   Krunch (Argument_List_To_String (Args), 128));
             end if;
 
-            --  If we are under Windows, spawn the command using "cmd /c".
-            --  Otherwise spawn it directly.
-            --  ??? This implementation is temporary, a general way of spawning
-            --  commands should not be system-dependent
-
-            if Host = Windows then
-               declare
-                  Real_Args : GNAT.OS_Lib.Argument_List (1 .. 2);
-               begin
-                  Real_Args (1) := new String'("/c");
-                  Real_Args (2) := new String'(Command.Command.all);
-
-                  Non_Blocking_Spawn
-                    (Command.Fd,
-                     "cmd",
-                     Real_Args & Args,
-                     Err_To_Out => True,
-                     Buffer_Size => 0);
-
-                  GNAT.OS_Lib.Free (Real_Args (1));
-                  GNAT.OS_Lib.Free (Real_Args (2));
-               end;
-
-            else
-               Non_Blocking_Spawn
-                 (Command.Fd,
-                  Command.Command.all,
-                  Args,
-                  Err_To_Out => True,
-                  Buffer_Size => 0);
-            end if;
+            Non_Blocking_Spawn
+              (Command.Fd,
+               Command.Command.all,
+               Args,
+               Err_To_Out => True,
+               Buffer_Size => 0);
 
             for J in Args'Range loop
                GNAT.OS_Lib.Free (Args (J));

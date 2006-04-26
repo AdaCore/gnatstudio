@@ -82,6 +82,7 @@ with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with String_List_Utils;
 with Histories;                 use Histories;
+with Remote_Servers;            use Remote_Servers;
 with VFS;                       use VFS;
 with Tooltips;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -989,7 +990,8 @@ package body Project_Explorers is
       else
          Set (Explorer.Tree.Model, Node, Base_Name_Column,
               Relative_Path_Name
-                (Node_Text, Dir_Name (Project_Path (Project)).all));
+               (Node_Text, Dir_Name (Project_Path (Project)).all,
+                Build_Server));
       end if;
    end Update_Directory_Node_Text;
 
@@ -1547,7 +1549,9 @@ package body Project_Explorers is
       Index : Integer := Files'First;
    begin
       for S in Files_In_Project'Range loop
-         if File_Equal (Dir_Name (Files_In_Project (S)).all, Directory) then
+         if File_Equal (Dir_Name (Files_In_Project (S)).all,
+                        Directory, Build_Server)
+         then
             Files (Index) := Files_In_Project (S);
             Index := Index + 1;
          end if;
@@ -1651,7 +1655,7 @@ package body Project_Explorers is
          end if;
       end loop;
 
-      if Filenames_Are_Case_Sensitive then
+      if Is_Case_Sensitive (Build_Server) then
          String_List_Utils.Sort (Dirs);
       else
          String_List_Utils.Sort_Case_Insensitive (Dirs);
@@ -1683,7 +1687,7 @@ package body Project_Explorers is
                      N := N2;
 
                   --  Directory still exists in the new view
-                  elsif File_Equal (Dir, Data (Dir_Node)) then
+                  elsif File_Equal (Dir, Data (Dir_Node), Build_Server) then
                      Update_Directory_Node_Text (Explorer, Project, N);
                      Update_Node (Explorer, N, Files);
                      N := N2;
@@ -1826,7 +1830,8 @@ package body Project_Explorers is
 
       for J in Files_In_Project'Range loop
          if New_File (J)
-           and then File_Equal (Dir_Name (Files_In_Project (J)).all, Dir)
+           and then File_Equal (Dir_Name (Files_In_Project (J)).all,
+                                Dir, Build_Server)
          then
             Append_File
               (Explorer.Kernel,
@@ -2704,7 +2709,7 @@ package body Project_Explorers is
         (Context  => C,
          Look_For =>
            "^" & Base_Name (File_Information (Context.Context)) & "$",
-         Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
+         Options  => (Case_Sensitive => Is_Case_Sensitive (Build_Server),
                       Whole_Word     => True,
                       Regexp         => True));
 
@@ -2747,7 +2752,7 @@ package body Project_Explorers is
       Set_Context
         (Context  => C,
          Look_For => Project_Name (Project_Information (Context.Context)),
-         Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
+         Options  => (Case_Sensitive => Is_Case_Sensitive (Build_Server),
                       Whole_Word     => True,
                       Regexp         => False));
 

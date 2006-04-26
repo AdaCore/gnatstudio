@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,9 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
+
 with System;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Filesystem;                use Filesystem;
 with GNAT.Calendar;             use GNAT.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -127,25 +132,34 @@ package body File_Utils is
       return Result;
    end Read_Files_From_Dirs;
 
-   ----------------------------------
-   -- Filenames_Are_Case_Sensitive --
-   ----------------------------------
+   -----------------------
+   -- Is_Case_Sensitive --
+   -----------------------
 
-   function Filenames_Are_Case_Sensitive return Boolean is
+   function Is_Case_Sensitive
+     (Server : Remote_Server_Type := GPS_Server) return Boolean
+   is
       function Internal return Integer;
       pragma Import (C, Internal, "__gnat_get_file_names_case_sensitive");
    begin
-      return Boolean'Val (Internal);
-   end Filenames_Are_Case_Sensitive;
+      if Is_Local (Server) then
+         return Boolean'Val (Internal);
+      else
+         return Is_Case_Sensitive
+           (Get_Filesystem (Get_Nickname (Server)));
+      end if;
+   end Is_Case_Sensitive;
 
    ----------------
    -- File_Equal --
    ----------------
 
-   function File_Equal (File1, File2 : String) return Boolean is
+   function File_Equal
+     (File1, File2 : String;
+      Server : Remote_Server_Type := GPS_Server) return Boolean is
    begin
       return Equal
-        (File1, File2, Case_Sensitive => Filenames_Are_Case_Sensitive);
+        (File1, File2, Case_Sensitive => Is_Case_Sensitive (Server));
    end File_Equal;
 
    ------------------
@@ -318,7 +332,8 @@ package body File_Utils is
    ------------------------
 
    function Relative_Path_Name
-     (File_Name : String; Base_Name : String) return String
+     (File_Name, Base_Name : String;
+      Server    : Remote_Server_Type := GPS_Server) return String
    is
       Base       : constant String := Name_As_Directory
         (Normalize_Pathname (Base_Name, Resolve_Links => False));
@@ -330,8 +345,8 @@ package body File_Utils is
       Parent_Dir : constant String := ".." & Directory_Separator;
 
    begin
-      if File_Equal (File, Base)
-        or else File_Equal (File, Base (Base'First .. Base'Last - 1))
+      if File_Equal (File, Base, Server)
+        or else File_Equal (File, Base (Base'First .. Base'Last - 1), Server)
       then
          return ".";
       end if;
@@ -345,14 +360,16 @@ package body File_Utils is
          if File'Length >= Length
            and then File_Equal
              (File (File'First .. File'First + Length - 1),
-              Base (Base'First .. Base_End))
+              Base (Base'First .. Base_End),
+              Server)
          then
             return (Level * Parent_Dir) & File
               (File'First + Length .. File'Last);
 
          --  Else try without the last directory separator
          elsif File'Length = Length - 1
-           and then File_Equal (File, Base (Base'First .. Base_End - 1))
+           and then File_Equal
+             (File, Base (Base'First .. Base_End - 1), Server)
          then
             return (Level * Parent_Dir) & File
               (File'First + Length .. File'Last);

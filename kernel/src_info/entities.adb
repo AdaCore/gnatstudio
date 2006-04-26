@@ -37,6 +37,7 @@ with Language_Utils;             use Language_Utils;
 with Namet;                      use Namet;
 with Projects.Registry;          use Projects.Registry;
 with Projects;                   use Projects;
+with Remote_Servers;             use Remote_Servers;
 with String_Utils;               use String_Utils;
 with System;                     use System;
 with Traces;                     use Traces;
@@ -974,7 +975,7 @@ package body Entities is
 
    function Hash (Key : VFS.Cst_UTF8_String_Access) return HTable_Header is
    begin
-      if Filenames_Are_Case_Sensitive then
+      if Is_Case_Sensitive (Build_Server) then
          return String_Hash (Key.all);
       else
          return String_Hash (To_Lower (Key.all));
@@ -1033,7 +1034,7 @@ package body Entities is
 
    function Equal (K1, K2 : VFS.Cst_UTF8_String_Access) return Boolean is
    begin
-      if Filenames_Are_Case_Sensitive then
+      if Is_Case_Sensitive (Build_Server) then
          return K1 = K2 or else K1.all = K2.all;
       else
          return K1 = K2 or else To_Lower (K1.all) = To_Lower (K2.all);

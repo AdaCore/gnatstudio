@@ -69,6 +69,7 @@ with Gtkada.Types;              use Gtkada.Types;
 with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
+with Remote_Servers;            use Remote_Servers;
 with Traces;                    use Traces;
 with Unchecked_Deallocation;
 with VFS;                       use VFS;
@@ -365,7 +366,10 @@ package body Gtkada.File_Selector is
         Compile
           (Pattern        => Pattern,
            Glob           => True,
-           Case_Sensitive => Filenames_Are_Case_Sensitive);
+           Case_Sensitive => Is_Case_Sensitive (GPS_Server));
+      --  ??? At this place, we don't know what's the selected server. If we
+      --  would, we could use the server's case sensitivity instead of the
+      --  local one.
       return Filter;
    end Regexp_File_Filter;
 

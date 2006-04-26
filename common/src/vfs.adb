@@ -45,6 +45,7 @@ with Glib.Values;               use Glib.Values;
 with Filesystem;                use Filesystem;
 with File_Utils;                use File_Utils;
 with OS_Utils;                  use OS_Utils;
+with Remote_Servers;            use Remote_Servers;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
@@ -118,7 +119,7 @@ package body VFS is
          Ensure_Normalized (File1);
          Ensure_Normalized (File2);
          if File1.Value.Server.all = "" then
-            Case_Sensitive := Filenames_Are_Case_Sensitive;
+            Case_Sensitive := Is_Case_Sensitive (GPS_Server);
          else
             Case_Sensitive :=
               Is_Case_Sensitive (Get_Filesystem (File1.Value.Server.all));
@@ -271,7 +272,7 @@ package body VFS is
                      Resolve_Links => Active (Resolve_Links_Handle)));
             end if;
 
-            if not File_Utils.Filenames_Are_Case_Sensitive then
+            if not File_Utils.Is_Case_Sensitive (GPS_Server) then
                To_Lower (File.Value.Normalized_Full.all);
             end if;
          end if;
@@ -1182,7 +1183,7 @@ package body VFS is
          return False;
       else
          if File1.Value.Server.all = "" then
-            Case_Sensitive := Filenames_Are_Case_Sensitive;
+            Case_Sensitive := Is_Case_Sensitive (GPS_Server);
          else
             Case_Sensitive :=
               Is_Case_Sensitive (Get_Filesystem (File1.Value.Server.all));
@@ -1235,7 +1236,7 @@ package body VFS is
 
       if Is_Local (Parent) then
          for C in Parent.Value.Normalized_Full'Range loop
-            if Filenames_Are_Case_Sensitive then
+            if Is_Case_Sensitive (GPS_Server) then
                C1 := Parent.Value.Normalized_Full (C);
                C2 := Child.Value.Normalized_Full (C);
             else

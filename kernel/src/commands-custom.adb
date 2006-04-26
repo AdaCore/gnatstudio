@@ -51,6 +51,7 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Password_Manager;          use Password_Manager;
+with Remote_Servers;            use Remote_Servers;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 

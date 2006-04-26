@@ -84,6 +84,7 @@ with Prj;
 with Project_Properties;           use Project_Properties;
 with Projects.Editor;              use Projects, Projects.Editor;
 with Projects.Registry;            use Projects.Registry;
+with Remote_Servers;               use Remote_Servers;
 with String_Utils;                 use String_Utils;
 with Switches_Editors;             use Switches_Editors;
 with System;
@@ -1547,7 +1548,7 @@ package body Project_Viewers is
             Index : Natural := Dirs'Last;
          begin
             for D in Dirs'Range loop
-               if File_Equal (Dirs (D).all, Dir) then
+               if File_Equal (Dirs (D).all, Dir, Build_Server) then
                   Free (Dirs (D));
                   Dirs (D .. Dirs'Last - 1) := Dirs (D + 1 .. Dirs'Last);
                   Index := Index - 1;

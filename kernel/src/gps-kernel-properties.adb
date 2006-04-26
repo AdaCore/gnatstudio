@@ -27,6 +27,7 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 with Projects;                   use Projects;
+with Remote_Servers;             use Remote_Servers;
 with String_Hash;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
@@ -66,7 +67,7 @@ package body GPS.Kernel.Properties is
      (Data_Type      => Properties_Description_HTable,
       Free_Data      => Free,
       Null_Ptr       => null,
-      Case_Sensitive => Filenames_Are_Case_Sensitive);
+      Case_Sensitive => Is_Case_Sensitive (Build_Server));
    use Properties_Hash.String_Hash_Table;
 
    All_Properties : Properties_Hash.String_Hash_Table.HTable;

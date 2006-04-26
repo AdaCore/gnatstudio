@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,14 +41,15 @@ package Commands.External is
    --  This function should NOT modify data referenced by Head and List.
 
    procedure Create
-     (Item         : out External_Command_Access;
-      Kernel       : Kernel_Handle;
-      Command      : String;
-      Dir          : String;
-      Args         : String_List.List;
-      Head         : String_List.List;
-      Handler      : String_List_Handler;
-      Description  : String);
+     (Item           : out External_Command_Access;
+      Kernel         : Kernel_Handle;
+      Command        : String;
+      Dir            : String;
+      Args           : String_List.List;
+      Head           : String_List.List;
+      Handler        : String_List_Handler;
+      Description    : String;
+      Check_Password : Boolean := False);
    --  Copies of Args and Head are made internally.
    --  Command is spawned as a shell command, with Args as its arguments.
    --  Head and the output of this command are then passed to Handler.
@@ -57,7 +58,9 @@ package Commands.External is
    --  If Handler is null, the output of the command is discarded, and
    --  the commands always executes successfully.
    --  If Dir is empty, the current directory will be used.
-   --  Description is a short description of the command
+   --  Description is a short description of the command.
+   --  Check_Password tells if a password prompt is expected from the external
+   --  command.
 
    function Execute
      (Command : access External_Command) return Command_Return_Type;
@@ -73,18 +76,20 @@ private
      new Gtk.Main.Timeout (External_Command_Access);
 
    type External_Command is new Root_Command with record
-      Kernel  : Kernel_Handle;
-      Fd      : TTY_Process_Descriptor;
-      Command : String_Access;
-      Dir     : String_Access;
-      Args    : String_List.List;
-      Head    : String_List.List;
-      Handler : String_List_Handler;
-      Output  : String_List.List;
+      Kernel          : Kernel_Handle;
+      Fd              : TTY_Process_Descriptor;
+      Command         : String_Access;
+      Dir             : String_Access;
+      Args            : String_List.List;
+      Head            : String_List.List;
+      Handler         : String_List_Handler;
+      Output          : String_List.List;
 
-      Running : Boolean := False;
+      Running         : Boolean := False;
+      Check_Password  : Boolean := False;
+      Nb_Pwd          : Natural := 0;
 
-      Description : String_Access;
+      Description     : String_Access;
 
       Handler_Success : Boolean := False;
    end record;

@@ -42,9 +42,6 @@ package GNAT.Expect.TTY.Remote is
    Null_String_List : constant String_List (1 .. 0) := (others => null);
    --  Null string list
 
-   Local_Nickname : constant String := "(local)";
-   --  Used to describe the local machine
-
    -----------------------------
    -- Configuration functions --
    -----------------------------

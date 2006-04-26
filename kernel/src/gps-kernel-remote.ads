@@ -28,18 +28,12 @@ with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;
 with Filesystem;           use Filesystem;
 with Interactive_Consoles;
+with Remote_Servers;
 with VFS;
 
 package GPS.Kernel.Remote is
 
-   type Server_Type is
-     (GPS_Server,
-      Build_Server,
-      Execution_Server,
-      Debug_Server);
-
-   subtype Remote_Server_Type is Server_Type
-     range Build_Server .. Debug_Server;
+   subtype Server_Type is Remote_Servers.Remote_Server_Type;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -227,21 +221,11 @@ package GPS.Kernel.Remote is
    --   assigned to. If No_File, it is assigned to the current project.
    --  Reload_Prj, if set, recomputes the view if the build_server changed.
 
-   function Get_Nickname (Server : Server_Type) return String;
-   --  Gets the nickname of a server
-
-   function Get_Printable_Nickname (Server : Server_Type) return String;
-   --  Gets the nickname of a server. If server is local, Local_Nickname is
-   --  returned
-
    function Get_Network_Name (Server : Server_Type) return String;
    --  Gets the network name of a server
 
    function Get_Filesystem
      (Server : Server_Type) return Filesystem_Record'Class;
    --  Get the filesystem of the specified server
-
-   function Is_Local (Server : Server_Type) return Boolean;
-   --  Tells if the server is the local server or is remote
 
 end GPS.Kernel.Remote;

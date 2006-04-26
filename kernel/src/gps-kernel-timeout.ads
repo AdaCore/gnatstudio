@@ -26,6 +26,7 @@ with Gtk.Main;
 with Interactive_Consoles;
 with Commands;          use Commands;
 
+with Remote_Servers;    use Remote_Servers;
 with GPS.Kernel.Remote; use GPS.Kernel.Remote;
 
 package GPS.Kernel.Timeout is

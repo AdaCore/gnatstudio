@@ -52,6 +52,7 @@ with Prj.Proc;                  use Prj.Proc;
 with Prj.Tree;                  use Prj.Tree;
 with Prj;                       use Prj;
 with Projects.Editor;           use Projects.Editor;
+with Remote_Servers;            use Remote_Servers;
 with Scans;                     use Scans;
 with Snames;                    use Snames;
 with String_Utils;              use String_Utils;
@@ -100,7 +101,7 @@ package body Projects.Registry is
      (Data_Type      => Directory_Dependency,
       Free_Data      => Do_Nothing,
       Null_Ptr       => None,
-      Case_Sensitive => Filenames_Are_Case_Sensitive);
+      Case_Sensitive => Is_Case_Sensitive (Build_Server));
    use Directory_Htable.String_Hash_Table;
 
    type Source_File_Data is record
@@ -120,7 +121,7 @@ package body Projects.Registry is
      (Data_Type      => Source_File_Data,
       Free_Data      => Do_Nothing,
       Null_Ptr       => No_Source_File_Data,
-      Case_Sensitive => Filenames_Are_Case_Sensitive);
+      Case_Sensitive => Is_Case_Sensitive (Build_Server));
    use Source_Htable.String_Hash_Table;
 
    procedure Do_Nothing (Name : in out Name_Id);

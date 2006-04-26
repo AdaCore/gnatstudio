@@ -31,6 +31,7 @@ with Projects.Registry;         use Projects.Registry;
 with Basic_Types;
 with Entities;
 with Prj;
+with Remote_Servers;            use Remote_Servers;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 
