@@ -50,6 +50,7 @@ with Generic_Views;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                    use GPS.Intl;
@@ -1307,7 +1308,7 @@ package body Call_Graph_Views is
    begin
       if Entity /= null then
          View := Generic_View.Get_Or_Create_View
-           (Kernel, False);
+           (Kernel, False, Group => GPS.Kernel.MDI.Group_Consoles);
          View.Typ := View_Calls;
          Expand_Row (View.Tree,
            Insert_Entity (View, null, Entity, No_Entity_Reference,
@@ -1317,6 +1318,7 @@ package body Call_Graph_Views is
          R := Get_Child_Requisition (View.Tree);
          Set_Position (View.Pane, (R.Width * 3) / 2);
       end if;
+
       return Commands.Success;
    end Execute;
 
@@ -1338,7 +1340,7 @@ package body Call_Graph_Views is
    begin
       if Entity /= null then
          View := Generic_View.Get_Or_Create_View
-           (Kernel, False);
+           (Kernel, False, Group => GPS.Kernel.MDI.Group_Consoles);
          View.Typ := View_Called_By;
          Expand_Row
            (View.Tree, Insert_Entity (View, null, Entity,
