@@ -286,6 +286,16 @@ package body Completion.Constructs_Extractor is
       return 0;
    end Get_Number_Of_Parameters;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Proposal : in out Construct_Completion_Proposal) is
+      pragma Unreferenced (Proposal);
+   begin
+      null;
+   end Free;
+
    -----------------------
    -- Get_Possibilities --
    -----------------------

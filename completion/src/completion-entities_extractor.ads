@@ -76,6 +76,9 @@ private
      return Natural;
    --  See inherited documentation
 
+   procedure Free (Proposal : in out Entity_Completion_Proposal);
+   --  See inherited documentation
+
    type Unit_Completion_Proposal is new Completion_Proposal with record
       Info   : Entity_Information;
       Nested : Boolean;
@@ -95,6 +98,9 @@ private
 
    function Get_Number_Of_Parameters (Proposal : Unit_Completion_Proposal)
      return Natural;
+   --  See inherited documentation
+
+   procedure Free (Proposal : in out Unit_Completion_Proposal);
    --  See inherited documentation
 
    function Get_Entities

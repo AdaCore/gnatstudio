@@ -69,4 +69,7 @@ private
      return Natural;
    --  See inherited documentation
 
+   procedure Free (Proposal : in out Construct_Completion_Proposal);
+   --  See inherited documentation
+
 end Completion.Constructs_Extractor;

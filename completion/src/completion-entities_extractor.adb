@@ -105,6 +105,16 @@ package body Completion.Entities_Extractor is
       return 0;
    end Get_Number_Of_Parameters;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Proposal : in out Entity_Completion_Proposal) is
+      pragma Unreferenced (Proposal);
+   begin
+      null;
+   end Free;
+
    --------------
    -- Get_Name --
    --------------
@@ -230,6 +240,16 @@ package body Completion.Entities_Extractor is
    begin
       return 0;
    end Get_Number_Of_Parameters;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Proposal : in out Unit_Completion_Proposal) is
+      pragma Unreferenced (Proposal);
+   begin
+      null;
+   end Free;
 
    ----------------
    -- Get_Entity --
