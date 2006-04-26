@@ -20,6 +20,8 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
+with Glib.Unicode;            use Glib.Unicode;
+
 package body Completion.Expression_Parser is
 
    ----------
@@ -56,6 +58,8 @@ package body Completion.Expression_Parser is
       procedure Skip_String (Offset : in out Natural);
       procedure Skip_Comment_Line (Offset : in out Natural);
       procedure Push_Pckg (Offset : in out Natural);
+      function Check_Prev_Word (Offset : Positive; Word : String)
+         return Boolean;
 
       procedure Push (Token : in out Token_Record);
       procedure Pop;
@@ -72,7 +76,7 @@ package body Completion.Expression_Parser is
          while Offset > 0 loop
             case Buffer (Offset) is
                when ')' =>
-                  Offset := Offset - 1;
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
                   Skip_Expression (Offset);
 
                   --  We don't want to store sub expressions
@@ -83,20 +87,17 @@ package body Completion.Expression_Parser is
                     Local_Token.Number_Of_Parameters + 1;
 
                when '"' =>
-                  Offset := Offset - 1;
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
                   Skip_String (Offset);
 
                when ''' =>
-                  if Offset - 2 > 0 then
-                     Offset := Offset - 2;
-                  else
-                     raise Constraint_Error;
-                  end if;
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
 
                when '(' =>
                   Local_Token.Tok_Type := Tok_Expression;
                   Push (Local_Token);
-                  Offset := Offset - 1;
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
                   exit;
 
                when ASCII.LF =>
@@ -106,7 +107,7 @@ package body Completion.Expression_Parser is
                   null;
             end case;
 
-            Offset := Offset - 1;
+            Offset := UTF8_Find_Prev_Char (Buffer, Offset);
 
          end loop;
       end Skip_Expression;
@@ -125,7 +126,7 @@ package body Completion.Expression_Parser is
                      if Buffer (Offset - 1) /= '"' then
                         exit;
                      else
-                        Offset := Offset - 1;
+                        Offset := UTF8_Find_Prev_Char (Buffer, Offset);
                      end if;
                   end if;
 
@@ -133,7 +134,7 @@ package body Completion.Expression_Parser is
                   null;
             end case;
 
-            Offset := Offset - 1;
+            Offset := UTF8_Find_Prev_Char (Buffer, Offset);
 
          end loop;
       end Skip_String;
@@ -148,12 +149,13 @@ package body Completion.Expression_Parser is
          while Local_Offset > 1 loop
             case Buffer (Local_Offset) is
                when '"' =>
-                  Offset := Offset - 1;
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
                   Skip_String (Local_Offset);
 
                when '-' =>
                   if Buffer (Local_Offset - 1) = '-' then
-                     Local_Offset := Local_Offset - 1;
+                     Local_Offset := UTF8_Find_Prev_Char
+                       (Buffer, Local_Offset);
 
                      Skip_Comment_Line (Local_Offset);
                      Offset := Local_Offset;
@@ -174,28 +176,12 @@ package body Completion.Expression_Parser is
 
       procedure Push_Pckg (Offset : in out Natural) is
       begin
-         if Offset - 3 > 0
-           and then To_Lower (Buffer (Offset - 3 .. Offset)) = "with"
-         then
-            if Offset - 4 <= 0
-              or else Buffer (Offset - 4) = ' '
-              or else Buffer (Offset - 4) = ASCII.LF
-              or else Buffer (Offset - 4) = ASCII.HT
-            then
-               Token.Tok_Type := Tok_With;
-               Push (Token);
-            end if;
-         elsif Offset - 2 > 0
-           and then To_Lower (Buffer (Offset - 3 .. Offset)) = "use"
-         then
-            if Offset - 3 <= 0
-              or else Buffer (Offset - 3) = ' '
-              or else Buffer (Offset - 3) = ASCII.LF
-              or else Buffer (Offset - 3) = ASCII.HT
-            then
-               Token.Tok_Type := Tok_Use;
-               Push (Token);
-            end if;
+         if Check_Prev_Word (Offset, "with") then
+            Token.Tok_Type := Tok_With;
+            Push (Token);
+         elsif Check_Prev_Word (Offset, "use") then
+            Token.Tok_Type := Tok_Use;
+            Push (Token);
          end if;
       end Push_Pckg;
 
@@ -220,12 +206,29 @@ package body Completion.Expression_Parser is
          Remove_Nodes (Result, Token_List.Null_Node, First (Result));
       end Pop;
 
+      ---------------------
+      -- Check_Prev_Word --
+      ---------------------
+
+      function Check_Prev_Word (Offset : Positive; Word : String)
+         return Boolean is
+      begin
+         return Offset - (Word'Length - 1) > 0
+           and then To_Lower (Buffer (Offset - (Word'Length - 1) .. Offset))
+             = To_Lower (Word)
+           and then
+             (Offset - Word'Length <= 0
+              or else Buffer (Offset - Word'Length) = ' '
+              or else Buffer (Offset - Word'Length) = ASCII.LF
+              or else Buffer (Offset - Word'Length) = ASCII.HT);
+      end Check_Prev_Word;
+
    begin
       while Offset > 0 loop
          case Buffer (Offset) is
             when ')' =>
                Push (Token);
-               Offset := Offset - 1;
+               Offset := UTF8_Find_Prev_Char (Buffer, Offset);
                Skip_Expression (Offset);
 
             when '(' =>
@@ -240,7 +243,7 @@ package body Completion.Expression_Parser is
                Push (Token);
 
                if Length (Result) = 0 then
-                  Offset := Offset - 1;
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
                   Skip_Expression (Offset);
                else
                   exit;
@@ -249,36 +252,41 @@ package body Completion.Expression_Parser is
             when ' ' | ASCII.HT | ASCII.CR =>
                Push (Token);
 
-            when 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' =>
-               Token.Tok_Type := Tok_Identifier;
-               Token.Token_Name_First := Offset;
-
-               if Token.Token_Name_Last = 0 then
-                  Token.Token_Name_Last := Offset;
-
-                  if Length (Result) > 0
-                    and then Head (Result).Tok_Type = Tok_Identifier
-                  then
-                     if To_Lower (Get_Name (Buffer, Token)) = "all" then
-                        Token.Tok_Type := Tok_All;
-                     end if;
-
-                     Push_Pckg (Offset);
-                     Token := Null_Token;
-                     exit;
-                  end if;
-               end if;
-
             when ASCII.LF =>
                Skip_Comment_Line (Offset);
 
             when others =>
-               Push (Token);
-               exit;
+               if Is_Alnum
+                 (UTF8_Get_Char
+                    (Buffer (Offset .. UTF8_Next_Char (Buffer, Offset))))
+                 or else Buffer (Offset) = '_'
+               then
 
+                  Token.Tok_Type := Tok_Identifier;
+                  Token.Token_Name_First := Offset;
+
+                  if Token.Token_Name_Last = 0 then
+                     Token.Token_Name_Last := Offset;
+
+                     if Length (Result) > 0
+                       and then Head (Result).Tok_Type = Tok_Identifier
+                     then
+                        if To_Lower (Get_Name (Buffer, Token)) = "all" then
+                           Token.Tok_Type := Tok_All;
+                        end if;
+
+                        Push_Pckg (Offset);
+                        Token := Null_Token;
+                        exit;
+                     end if;
+                  end if;
+               else
+                  Push (Token);
+                  exit;
+               end if;
          end case;
 
-         Offset := Offset - 1;
+         Offset := UTF8_Find_Prev_Char (Buffer, Offset);
       end loop;
 
       Push (Token);
