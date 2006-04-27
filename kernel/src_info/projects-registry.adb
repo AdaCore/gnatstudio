@@ -541,10 +541,8 @@ package body Projects.Registry is
       Errors             : Projects.Error_Report;
       New_Project_Loaded : out Boolean)
    is
-      Previous_Project : constant Virtual_File :=
-                           Project_Path (Registry.Data.Root);
-      Previous_Default : constant Boolean :=
-                           Status (Registry.Data.Root) = Default;
+      Previous_Project : Virtual_File;
+      Previous_Default : Boolean;
 
       procedure Fail (S1, S2, S3 : String);
       --  Replaces Osint.Fail
@@ -586,6 +584,14 @@ package body Projects.Registry is
          Success    : Boolean;
 
       begin
+         if Registry.Data /= null then
+            Previous_Project := Project_Path (Registry.Data.Root);
+            Previous_Default := Status (Registry.Data.Root) = Default;
+         else
+            Previous_Project := VFS.No_File;
+            Previous_Default := False;
+         end if;
+
          if not Is_Regular_File (Root_Project_Path) then
             Trace (Me, "Load: " & Full_Name (Root_Project_Path).all
                    & " is not a regular file");
@@ -623,7 +629,7 @@ package body Projects.Registry is
          Opt.Full_Path_Name_For_Brief_Errors := False;
 
          if Project = Empty_Node then
-            if Reload_If_Errors then
+            if Reload_If_Errors and then Previous_Project /= VFS.No_File then
                if Errors /= null then
                   Errors (-"Couldn't parse the project "
                           & Full_Name (Root_Project_Path).all
