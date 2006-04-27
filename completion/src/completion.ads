@@ -34,6 +34,9 @@ package Completion is
    type Completion_List is private;
    --  This type hold a set of completions
 
+   procedure Free (List : in out Completion_List);
+   --  Free the memory associated to the completion list.
+
    Null_Completion_List : constant Completion_List;
 
    -------------------------

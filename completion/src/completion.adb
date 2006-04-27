@@ -24,6 +24,15 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 package body Completion is
 
    ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Completion_List) is
+   begin
+      Completion_List_Pckg.Free (Completion_List_Pckg.List (List));
+   end Free;
+
+   ----------
    -- Next --
    ----------
 
