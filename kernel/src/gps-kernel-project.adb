@@ -134,6 +134,7 @@ package body GPS.Kernel.Project is
       Default             : constant String := Share_Dir & "default.gpr";
       Readonly            : constant String := Share_Dir & "readonly.gpr";
       Found               : Boolean;
+      Is_Readonly         : Boolean := False;
       Had_Project_Desktop : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
 
@@ -154,13 +155,17 @@ package body GPS.Kernel.Project is
       elsif Is_Regular_File (Readonly) then
          Project := VFS.Create (Readonly);
          Found := True;
+         Is_Readonly := True;
       else
          Found := False;
       end if;
 
       if Found then
          Load_Project (Kernel, Project);
-         Set_Status (Get_Project (Kernel), Projects.Default);
+
+         if not Is_Readonly then
+            Set_Status (Get_Project (Kernel), Projects.Default);
+         end if;
       else
          Load_Empty_Project (Kernel);
       end if;
