@@ -803,7 +803,7 @@ package body Debugger.Gdb is
       Send (Debugger, "set annotate 1", Mode => Internal);
 
       if Get_Pref (Execution_Window)
-        and then not Is_Local (Debug_Server)
+        and then Is_Local (Debug_Server)
       then
          if Host = Windows then
             Send (Debugger, "set new-console", Mode => Internal);
