@@ -3282,6 +3282,23 @@ package body Ada_Analyzer is
                Comments_Skipped := False;
             end if;
 
+            if Prev_Token in Tok_Double_Asterisk .. Tok_Colon_Equal
+              or else Prev_Token in Tok_Semicolon .. Tok_Dot_Dot
+            then
+               if Callback /= null then
+                  if Callback
+                    (Operator_Text,
+                     (Line_Count, First - Start_Of_Line + 1, First),
+                     (Line_Count, P - Start_Of_Line + 1, P),
+                     False)
+                  then
+                     Terminated := True;
+                     Comments_Skipped := False;
+                     return;
+                  end if;
+               end if;
+            end if;
+
             P := Next_Char (P);
          end loop;
 
@@ -3437,7 +3454,7 @@ package body Ada_Analyzer is
                Start_Of_Line := Line_Start (Buffer, Prec);
 
                exit Main_Loop when Callback
-                 (Identifier_Text,
+                 (Operator_Text,
                   (Line_Count, Prec - Start_Of_Line + 1, Prec),
                   (Line_Count, Current - Start_Of_Line + 1, Current),
                   False);
