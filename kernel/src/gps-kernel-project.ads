@@ -60,7 +60,8 @@ package GPS.Kernel.Project is
       No_Save : Boolean := False);
    --  Load project Project as the current project.
    --  This emits the "project_changed" and "project_view_changed" signals.
-   --  If the project isn't found, the default project is loaded.
+   --  If the project isn't found, nothing is done (the previous project is
+   --  kept).
    --  If No_Save is True, then the current project will not be saved if it was
    --  modified.
 
@@ -72,6 +73,10 @@ package GPS.Kernel.Project is
    --  If Load_Desktop is true, then all current MDI children are removed, and
    --  the default desktop is reloaded. The "project_changed" hook is run if
    --  needed.
+
+   procedure Load_Empty_Project
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Create and load an empty project in memory.
 
    procedure Reload_Project_If_Needed
      (Kernel : access Kernel_Handle_Record'Class);
