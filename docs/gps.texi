@@ -898,15 +898,14 @@ callgraph tree.
 Closing and expanding a node again will recompute the callgraph for the
 entity.
 
-By default, GPS adds one special node to each entity. This node is called
-either @code{... called at} or @code{... calling parent at}, and is used to
-display the location where the entity occurs within its caller. Clicking on
-any of the locations will open the corresponding editor at the specified
-location.
+On the right side of the main tree, a list displays the locations of calls for
+the selected entity. Clicking on entries in this list opens editors showing
+the corresponding location.
 
-However, you might choose to concentrate on the callgraph itself and hide
-these locations node. This can be done by toggling the contextual menu
-@code{Show Locations}.
+The Callgraph View supports keyboard navigation: @code{Up} and @code{Down} 
+keys navigate between listed locations, @code{Left} collapses the current 
+level, @code{Right} expands the current level, and @code{Return} jumps to the
+currently selected location.
 
 All open callgraph views are automatically saved in the desktop, and restored
 the next time you restart GPS. However, the information displayed in these
