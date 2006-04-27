@@ -598,7 +598,7 @@ package body Language.Ada is
                if Word = "access" or else Word = "new"
                  or else Word = "return" or else Word = "renames"
                  or else (Word = "is"
-                          and then Construct.Category in Type_Category)
+                          and then Construct.Category = Cat_Subtype)
                then
                   Has_Reference := True;
                end if;
@@ -610,6 +610,8 @@ package body Language.Ada is
                end if;
 
                return True;
+            elsif Entity = Operator_Text and then Word = ":" then
+               Has_Reference := True;
             end if;
          end if;
 
@@ -618,8 +620,6 @@ package body Language.Ada is
                Paren_Depth := Paren_Depth + 1;
             elsif Word = ")" then
                Paren_Depth := Paren_Depth - 1;
-            elsif Word = ":" then
-               Has_Reference := True;
             end if;
          end if;
 
