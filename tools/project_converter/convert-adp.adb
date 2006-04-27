@@ -21,7 +21,7 @@ package body Convert.Adp is
       pragma Unreferenced (Tmp);
    begin
       Projects.Registry.Initialize;
-      Load_Default_Project (Registry, Create ("./"));
+      Load_Empty_Project (Registry);
 
       Project := Create_Project
         (Registry,
