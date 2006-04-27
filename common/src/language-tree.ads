@@ -25,6 +25,10 @@ package Language.Tree is
    function Contains (Scope, Item : Construct_Access) return Boolean;
    --  Returns true if Item is contained by Scope, false otherwise.
 
+   --------------------
+   -- Construct_Tree --
+   --------------------
+
    type Construct_Tree (<>) is private;
 
    Null_Construct_Tree : constant Construct_Tree;
@@ -44,6 +48,10 @@ package Language.Tree is
    --  body and spec of a function, public and private part of a type...).
    --  This is possibly time consuming, and if not needed, can be deactivated
    --  by the user.
+
+   -----------------------------
+   -- Construct_Tree_Iterator --
+   -----------------------------
 
    type Construct_Tree_Iterator is private;
    --  This type is used to iterate over a construct tree
@@ -147,6 +155,15 @@ package Language.Tree is
       return Boolean;
    --  Same as above, but doesn't need a "real" entity, only a location
 
+   function Get_Full_Name
+     (Tree : Construct_Tree; It : Construct_Tree_Iterator) return String;
+   --  Return the name of the construct given in parameter, prefixed by all the
+   --  relevant enclosing units.
+
+   --------------------------
+   -- Composite_Identifier --
+   --------------------------
+
    type Composite_Identifier (<>) is private;
    --  This type is used to store identifiers with multiple parts, e.g.
    --  A.B.
@@ -178,6 +195,12 @@ package Language.Tree is
    --  does not return blindly the string upon wich the identifier has been
    --  created, but remove all the irrelevant caracters (typically, blanks
    --  charaters)
+
+   function Get_Slice
+     (Identifier : Composite_Identifier; From : Natural; To : Natural)
+      return Composite_Identifier;
+   --  Return an identifier base on the slice of items specified in
+   --  parameterers.
 
    type Construct_Tree_Iterator_Array is array (Natural range <>) of
      Construct_Tree_Iterator;
