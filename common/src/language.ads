@@ -604,14 +604,14 @@ package Language is
       Success    : out Boolean;
       From_Index : Natural := 0);
    --  Some constructs are referencing one ore more entities. The purpose of
-   --  this procedure is to extract then. It can be the type of a variable,
+   --  this procedure is to extract them. It can be the type of a variable,
    --  the parent type of a class, the generic package from wich a package is
-   --  instantiated, the returned type of a subprogram... It the instantiation
-   --  is not found, then Success is false, otherwise it's true. The
+   --  instantiated, the returned type of a subprogram... If no reference
+   --  entity is found, then Success is set to False, True otherwise. The
    --  From_Index parameter is used to initialize the search at a given offset
    --  (in bytes). It helps to handle cases where the construct is referencing
    --  more than one element  (e.g. extension from interfaces in Java and Ada,
-   --  multiple inheritance in C++). If From_Index is 0, then the serach will
+   --  multiple inheritance in C++). If From_Index is 0, then the search will
    --  start at the begining of the construct.
 
    type Make_Entry_Func is access function
