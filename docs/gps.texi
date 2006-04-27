@@ -348,21 +348,14 @@ following choices:
 @table @b
 @item Start with default project in directory
 @cindex project
-If you select this option and click on the @code{OK} button, GPS will create a
-default internal project with the following properties:
+If you select this option and click on the @code{OK} button, GPS copy in
+the current directory the default project found under
+@code{<prefix>/share/gps/default.gpr} and load it.
+GPS will remove this copy when exiting or loading another project, if the
+copy has not been modified during the session.
 
-@cindex Ada
-@cindex GNAT
-  The project supports Ada files only, using the default GNAT
-  naming scheme: @code{.ads} for spec files, @code{.adb} for body files.
-
-  A single source directory corresponding to the current directory.
-  The current directory can be set by modifying the text entry on clicking
-  on the @code{Browse} button. All the Ada files found in this directory
-  will be considered as part of the default project.
-
-  The object directory where the object and executable files will
-  be put, corresponding also to the current directory.
+If the current directory is not writable, GPS will instead load directly
+@code{<prefix>/share/gps/readonly.gpr}.
 
 @item Create new project with wizard
 @cindex project
@@ -7960,7 +7953,7 @@ into local paths.
 @end itemize
 
 If one of the above operations fail, then errors are reported in the
-@code{Messages} view, and the default project is loaded.
+@code{Messages} view, and the previous project is kept/reloaded.
 
 Next, working with the remote project is exactly the same as working locally:
 source editing, browsing, debugging behave the same.
@@ -7974,7 +7967,7 @@ source editing, browsing, debugging behave the same.
 If the project you want to load/edit is already on a distant server, you can
 directly load it on your local GPS.
 
-To do this, you need to use the menu @code{Project->Open From Host}.
+To do this, you need to use the @code{Project->Open From Host} menu.
 Then you select the server's nickname. This will show you its file tree.
 Navigate to your project, select it. The project will be loaded as described
 above, with all remote operations categories assigned to the selected server by
@@ -15256,6 +15249,15 @@ You can modify this file if you want, knowing that this will impact all users
 of GPS sharing this installation.
 The format of this file is the same as $HOME/.gps/desktop.xml, which can be
 copied from your own directory if you wish.
+
+   @item @i{prefix}/share/gps/default.gpr
+@cindex default project
+Default project used by GPS. Can be modified after installation time to
+provide useful default for a given system or project.
+
+   @item @i{prefix}/share/gps/readonly.gpr
+Project used by GPS as the default project when working in a read-only
+directory.
 
    @item @i{prefix}/share/locale
 Directory used to retrieve the translation files, when relevant.
