@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada_Analyzer.Utils; use Ada_Analyzer.Utils;
+with Language.Ada;       use Language.Ada;
 
 package body Completion.Constructs_Extractor is
 
@@ -73,6 +74,9 @@ package body Completion.Constructs_Extractor is
       Tree : constant Construct_Tree_Access :=
                Construct_Completion_Resolver (Proposal.Resolver.all).Tree;
 
+      Parent_Sloc_Start, Parent_Sloc_End : Source_Location;
+      Parent_Found                       : Boolean;
+
       function Get_Composition_Of_Type
         (Type_Iterator : Construct_Tree_Iterator; Recursive : Boolean := True)
          return Completion_List;
@@ -86,13 +90,22 @@ package body Completion.Constructs_Extractor is
          return Completion_List
       is
          Child_Iterator : Construct_Tree_Iterator;
-         Parent_Name    : constant String := Get_Parent_Type
-           (Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
-            Get_Construct (Type_Iterator).all);
          Result         : Completion_List;
       begin
-         if Recursive and then Parent_Name /= "" then
+         Get_Referenced_Entity
+           (Ada_Lang,
+            Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
+            Get_Construct (Type_Iterator).all,
+            Parent_Sloc_Start,
+            Parent_Sloc_End,
+            Parent_Found);
+
+         if Recursive and then Parent_Found then
             declare
+               Parent_Name : constant String :=
+                 Get_Buffer (Get_Resolver (Proposal).Manager.all).all
+                 (Parent_Sloc_Start.Index .. Parent_Sloc_End.Index);
+
                Parents : constant Construct_Tree_Iterator_Array :=
                            Get_Visible_Constructs
                              (Tree.all, Type_Iterator, Parent_Name);
@@ -142,11 +155,18 @@ package body Completion.Constructs_Extractor is
    begin
       case Get_Construct (Proposal.Tree_Node).Category is
          when Cat_Variable | Cat_Local_Variable | Cat_Field =>
+            Get_Referenced_Entity
+              (Ada_Lang,
+               Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
+               Get_Construct (Proposal.Tree_Node).all,
+               Parent_Sloc_Start,
+               Parent_Sloc_End,
+               Parent_Found);
+
             declare
-               Id : constant Composite_Identifier :=
-                 Get_Typename
-                   (Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
-                    Get_Construct (Proposal.Tree_Node).all);
+               Id : constant Composite_Identifier := To_Composite_Identifier
+                 (Get_Buffer (Get_Resolver (Proposal).Manager.all).all
+                    (Parent_Sloc_Start.Index .. Parent_Sloc_End.Index));
                Type_Iterator  : Construct_Tree_Iterator;
 
                Visible_Types  : constant Construct_Tree_Iterator_Array :=
