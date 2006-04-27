@@ -217,7 +217,7 @@ package body GPS.Kernel.Macros is
          Project := Project_From_Param (Param, Context);
 
          if Param = "pps" or else Param = "PPs" then
-            if Project = No_Project or else Status (Project) = Default then
+            if Project = No_Project then
                return "";
             else
                return String_Utils.Protect
