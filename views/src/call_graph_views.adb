@@ -82,7 +82,7 @@ package body Call_Graph_Views is
    Location_Line_Column      : constant := 0;
    Location_Column_Column    : constant := 1;
    Location_Character_Column : constant := 2;
-   Location_Kind_Column      : constant := 3;
+   Location_String_Column    : constant := 3;
    Location_File_Column      : constant := 4;
 
    History_Show_Locations : constant History_Key :=
@@ -118,7 +118,6 @@ package body Call_Graph_Views is
    type Reference_Record is record
       Line   : Integer;
       Column : Visible_Column_Type;
-      Kind   : Reference_Kind;
       File   : VFS.Virtual_File;
    end record;
 
@@ -223,9 +222,14 @@ package body Call_Graph_Views is
    --  Context factory when creating contextual menus
 
    function Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean;
-   --  Callback for the "button_press" event
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for the "button_press" event on the main tree
+
+   function Button_Press_On_List
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for the "button_press" event on the locations list
 
    function On_Key_Press
      (View  : access Gtk_Widget_Record'Class;
@@ -236,6 +240,10 @@ package body Call_Graph_Views is
      (View : access Callgraph_View_Record'Class);
    --  Open an editor to the current location.
 
+   procedure Open_Selected_Value
+     (View : access Callgraph_View_Record'Class);
+   --  Open the value currently selected in the main tree.
+
    ---------------
    -- To_Record --
    ---------------
@@ -244,7 +252,6 @@ package body Call_Graph_Views is
    begin
       return (Get_Line (Get_Location (Ref)),
               Get_Column (Get_Location (Ref)),
-              Get_Kind (Ref),
               Get_Filename (Get_File (Get_Location (Ref))));
    end To_Record;
 
@@ -275,36 +282,37 @@ package body Call_Graph_Views is
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
 
       if Iter /= Null_Iter then
-         --  The entity to highlight depends on the type of the view
-         case View.Typ is
-         when View_Calls =>
-            Get_Value (Model, Iter,
-                       Entity_Column, Value);
-         when View_Called_By =>
-            Get_Value (Model,
-                       Parent (Model, Iter),
-                       Entity_Column, Value);
-         end case;
+         if Parent (Model, Iter) = Null_Iter then
+            Open_Selected_Value (View);
+         else
+            --  The entity to highlight depends on the type of the view
+            case View.Typ is
+            when View_Calls =>
+               Get_Value (Model, Iter, Entity_Column, Value);
+            when View_Called_By =>
+               Get_Value (Model, Parent (Model, Iter), Entity_Column, Value);
+            end case;
 
-         Entity := From_GValue (Value);
-         Unset (Value);
+            Entity := From_GValue (Value);
+            Unset (Value);
 
-         Get_Selected (Get_Selection (View.Locations_Tree), Model, Iter);
+            Get_Selected (Get_Selection (View.Locations_Tree), Model, Iter);
 
-         if Iter /= Null_Iter then
-            File := Create (Get_String (Model, Iter, Location_File_Column));
+            if Iter /= Null_Iter then
+               File := Create (Get_String (Model, Iter, Location_File_Column));
 
-            Open_File_Editor
-              (View.Kernel,
-               Filename   => File,
-               Line       => Natural
-                 (Get_Int (Model, Iter, Location_Line_Column)),
-               Column     => Visible_Column_Type
-                 (Get_Int (Model, Iter, Location_Column_Column)),
-               Column_End => Visible_Column_Type
-                 (Get_Int (Model, Iter, Location_Column_Column))
-               + Get_Name (Entity)'Length,
-               Focus => False);
+               Open_File_Editor
+                 (View.Kernel,
+                  Filename   => File,
+                  Line       => Natural
+                    (Get_Int (Model, Iter, Location_Line_Column)),
+                  Column     => Visible_Column_Type
+                    (Get_Int (Model, Iter, Location_Column_Column)),
+                  Column_End => Visible_Column_Type
+                    (Get_Int (Model, Iter, Location_Column_Column))
+                  + Get_Name (Entity)'Length,
+                  Focus => False);
+            end if;
          end if;
       end if;
    end Select_Current_Location;
@@ -365,7 +373,9 @@ package body Call_Graph_Views is
                else
                   Next (Model, New_Iter);
 
-                  while New_Iter = Null_Iter and then Up (Path) loop
+                  while New_Iter = Null_Iter and then Up (Path)
+                    and then Get_Depth (Path) > 0
+                  loop
                      New_Iter := Get_Iter (Model, Path);
                      Next (Model, New_Iter);
                   end loop;
@@ -399,16 +409,21 @@ package body Call_Graph_Views is
                Strong_Select (V.Tree, New_Iter);
 
                if Going_Down then
-                  Iter := Get_Iter_First (V.Locations_Model);
+                  New_Iter := Get_Iter_First (V.Locations_Model);
 
                else
-                  Iter := Nth_Child
-                    (V.Locations_Model, Null_Iter,
-                     N_Children (V.Locations_Model) - 1);
+                  if Children (V.Locations_Model, Null_Iter) /= Null_Iter then
+                     New_Iter := Nth_Child
+                       (V.Locations_Model, Null_Iter,
+                        N_Children (V.Locations_Model) - 1);
+                  else
+                     New_Iter := Null_Iter;
+                  end if;
                end if;
 
-               if Iter /= Null_Iter then
-                  Strong_Select (V.Locations_Tree, Iter);
+               if New_Iter /= Null_Iter then
+                  Strong_Select (V.Locations_Tree, New_Iter);
+                  Grab_Focus (V.Locations_Tree);
                end if;
             end if;
          end if;
@@ -434,6 +449,7 @@ package body Call_Graph_Views is
                   Select_In_Base_Tree (Going_Down => True);
                else
                   Strong_Select (V.Locations_Tree, Iter);
+                  Grab_Focus (V.Locations_Tree);
                end if;
             end if;
 
@@ -451,6 +467,7 @@ package body Call_Graph_Views is
 
                if Result then
                   Strong_Select (V.Locations_Tree, Get_Iter (Model, Path));
+                  Grab_Focus (V.Locations_Tree);
                else
                   Select_In_Base_Tree (Going_Down => False);
                end if;
@@ -516,20 +533,53 @@ package body Call_Graph_Views is
          return False;
    end On_Key_Press;
 
+   -------------------------
+   -- Open_Selected_Value --
+   -------------------------
+
+   procedure Open_Selected_Value
+     (View : access Callgraph_View_Record'Class)
+   is
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+
+      Value  : GValue;
+      Entity : Entity_Information;
+      Loc    : File_Location;
+   begin
+      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+
+      if Iter /= Null_Iter then
+         Get_Value (Model, Iter, Entity_Column, Value);
+         Entity := From_GValue (Value);
+         Unset (Value);
+
+         Loc := Get_Declaration_Of (Entity);
+
+         Open_File_Editor
+           (View.Kernel,
+            Filename   => Get_Filename (Get_File (Loc)),
+            Line       => Get_Line (Loc),
+            Column     => Get_Column (Loc),
+            Column_End => Get_Column (Loc) + Get_Name (Entity)'Length,
+            Focus => False);
+      end if;
+   end Open_Selected_Value;
+
    ------------------
    -- Button_Press --
    ------------------
 
    function Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
    is
-      V : Callgraph_View_Access;
+      View  : Callgraph_View_Access;
    begin
-      V := Callgraph_View_Access (View);
+      View := Callgraph_View_Access (Widget);
 
       if Get_Event_Type (Event) = Gdk_2button_Press then
-         Select_Current_Location (V);
+         Open_Selected_Value (View);
       end if;
 
       return False;
@@ -539,6 +589,34 @@ package body Call_Graph_Views is
                 "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Press;
+
+   --------------------------
+   -- Button_Press_On_List --
+   --------------------------
+
+   function Button_Press_On_List
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      View  : Callgraph_View_Access;
+      Iter  : Gtk_Tree_Iter;
+   begin
+      View := Callgraph_View_Access (Widget);
+
+      if Get_Event_Type (Event) = Button_Press then
+         Iter := Find_Iter_For_Event
+           (View.Locations_Tree, View.Locations_Model, Event);
+         Select_Iter (Get_Selection (View.Locations_Tree), Iter);
+         Select_Current_Location (View);
+      end if;
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Button_Press_On_List;
 
    --------------------------
    -- On_Selection_Changed --
@@ -583,9 +661,8 @@ package body Call_Graph_Views is
                Set (V.Locations_Model, T, Location_Column_Column,
                     Gint (R.Column));
                Set (V.Locations_Model, T, Location_Character_Column, ":");
-               Set (V.Locations_Model, T, Location_Kind_Column,
-                    "   (" & Kind_To_String (R.Kind) & ") "
-                    & Base_Name (R.File));
+               Set (V.Locations_Model, T, Location_String_Column,
+                    "    " & Base_Name (R.File));
                Set (V.Locations_Model, T, Location_File_Column,
                     Full_Name (R.File).all);
 
@@ -618,10 +695,10 @@ package body Call_Graph_Views is
       M      : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter, Child : Gtk_Tree_Iter := Null_Iter;
       Dummy  : Gtk_Tree_Iter;
-      Value       : GValue;
-      Entity      : Entity_Information;
-      Column      : Gint;
-      Data        : Ancestors_User_Data_Access;
+      Value  : GValue;
+      Entity : Entity_Information;
+      Column : Gint;
+      Data   : Ancestors_User_Data_Access;
    begin
       if V.Block_On_Expanded then
          return;
@@ -742,7 +819,6 @@ package body Call_Graph_Views is
       Result.Tag := new String'("loc");
       Set_Attribute (Result, "line", R.Line'Img);
       Set_Attribute (Result, "column", R.Column'Img);
-      Set_Attribute (Result, "kind", R.Kind'Img);
       Set_Attribute (Result, "file", Full_Name (R.File).all);
       return Result;
    end To_XML;
@@ -756,7 +832,6 @@ package body Call_Graph_Views is
    begin
       Result.Line := Integer'Value (Get_Attribute (N, "line"));
       Result.Column := Visible_Column_Type'Value (Get_Attribute (N, "column"));
-      Result.Kind := Reference_Kind'Value (Get_Attribute (N, "kind"));
       Result.File := Create (Get_Attribute (N, "file"));
       return Result;
    end From_XML;
@@ -1021,10 +1096,7 @@ package body Call_Graph_Views is
      (View   : access Callgraph_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Names : GNAT.OS_Lib.String_List :=
-        (1 => new String'(-"Name"),
-         2 => new String'(-"Location"));
-
+      Names  : GNAT.OS_Lib.String_List := (1 => new String'(-"Name"));
       Scroll : Gtk_Scrolled_Window;
 
    begin
@@ -1060,8 +1132,8 @@ package body Call_Graph_Views is
                (Location_Line_Column      => GType_Int,
                 Location_Column_Column    => GType_Int,
                 Location_Character_Column => GType_String,
-                Location_Kind_Column      => GType_String,
-                Location_File_Column       => GType_String));
+                Location_String_Column    => GType_String,
+                Location_File_Column      => GType_String));
       Gtk_New (View.Locations_Tree, View.Locations_Model);
       Set_Headers_Visible (View.Locations_Tree, False);
 
@@ -1085,7 +1157,7 @@ package body Call_Graph_Views is
          Add_Attribute (Col, C, "text", Location_Column_Column);
          Gtk_New (C);
          Pack_Start (Col, C, False);
-         Add_Attribute (Col, C, "text", Location_Kind_Column);
+         Add_Attribute (Col, C, "text", Location_String_Column);
 
          Dummy := Append_Column (View.Locations_Tree, Col);
       end;
@@ -1110,7 +1182,7 @@ package body Call_Graph_Views is
       Return_Callback.Object_Connect
         (View.Locations_Tree,
          "button_press_event",
-         Return_Callback.To_Marshaller (Button_Press'Access),
+         Return_Callback.To_Marshaller (Button_Press_On_List'Access),
          Slot_Object => View,
          After       => False);
 
