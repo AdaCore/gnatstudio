@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;    use Basic_Types;
-with String_Utils;   use String_Utils;
+with Basic_Types;       use Basic_Types;
+with String_Utils;      use String_Utils;
 with Generic_List;
 
 with Ada.Unchecked_Deallocation;
@@ -65,6 +65,10 @@ package body Language.Tree is
       --  Set the spec, public body and private body info for this iterator.
       --  If Base_Scope is null, then the search will start at the entity after
       --  Base_Iter, otherwise it will start at the first child of Base_Sope.
+
+      -------------------
+      -- Compute_Scope --
+      -------------------
 
       procedure Compute_Scope
         (Tree       : in out Construct_Tree;
@@ -238,6 +242,13 @@ package body Language.Tree is
                Iter := First (Tree);
 
                while Iter /= Null_Construct_Tree_Iterator loop
+                  --  ??? Re-looking at the whole structure here is highly
+                  --  innefficient. We should look for this during the initial
+                  --  construction of the tree. Besides, the function below is
+                  --  a bit Ada-specific. See if there is a way to make it
+                  --  more language-independant (maybe by introducing a
+                  --  language privitive between two constructs saying if they
+                  --  are two part of the same entity or not).
                   Compute_Scope (Tree, Iter);
 
                   Iter := Next (Tree, Iter, Jump_Into);
@@ -565,6 +576,55 @@ package body Language.Tree is
       end if;
    end Encloses;
 
+   -------------------
+   -- Get_Full_Name --
+   -------------------
+
+   --  ??? This is language dependent, to be either moved into a language
+   --  dependent package or made language indepenend
+   function Get_Full_Name
+     (Tree : Construct_Tree; It : Construct_Tree_Iterator)
+      return String
+   is
+      Length  : Integer;
+      Current : Construct_Tree_Iterator := Get_Parent_Scope (Tree, It);
+   begin
+      if Get_Construct (It).Name = null then
+         return "";
+      end if;
+
+      Length := Get_Construct (It).Name.all'Length;
+
+      while Current /= Null_Construct_Tree_Iterator
+        and then Get_Construct (Current).Category = Cat_Package
+      loop
+         Length := Length + 1 + Get_Construct (Current).Name.all'Length;
+         Current := Get_Parent_Scope (Tree, Current);
+      end loop;
+
+      declare
+         Name  : String (1 .. Length);
+         Index : Positive := Name'Last;
+      begin
+         Name (Index - Get_Construct (It).Name.all'Length + 1 .. Index) :=
+           Get_Construct (It).Name.all;
+
+         Current := Get_Parent_Scope (Tree, It);
+
+         while Current /= Null_Construct_Tree_Iterator
+           and then Get_Construct (Current).Category = Cat_Package
+         loop
+            Name (Index - Get_Construct (Current).Name.all'Length .. Index)
+              := Get_Construct (Current).Name.all & ".";
+
+            Index := Index - 1 - Get_Construct (Current).Name.all'Length;
+            Current := Get_Parent_Scope (Tree, Current);
+         end loop;
+
+         return Name;
+      end;
+   end Get_Full_Name;
+
    --------------
    -- Get_Spec --
    --------------
@@ -736,6 +796,33 @@ package body Language.Tree is
       return Buffer (1 .. Buffer_Ind);
    end To_String;
 
+   ---------------
+   -- Get_Slice --
+   ---------------
+
+   function Get_Slice
+     (Identifier : Composite_Identifier; From : Natural; To : Natural)
+      return Composite_Identifier
+   is
+      Result : Composite_Identifier
+        (Identifier.Position_End (To) - Identifier.Position_Start (From) + 1,
+         To - From + 1);
+   begin
+      for J in From .. To loop
+         Result.Position_Start (J - From + 1) :=
+           Identifier.Position_Start (J)
+           - Identifier.Position_Start (From) + 1;
+         Result.Position_End (J - From + 1) :=
+           Identifier.Position_End (From)
+           - Identifier.Position_Start (From) + 1;
+      end loop;
+
+      Result.Identifier := Identifier.Identifier
+        (Identifier.Position_Start (From) .. Identifier.Position_End (To));
+
+      return Result;
+   end Get_Slice;
+
    ---------------------------
    -- Get_Visible_Construct --
    ---------------------------
@@ -761,6 +848,8 @@ package body Language.Tree is
    -- Get_Visible_Construct --
    ---------------------------
 
+   --   ??? This function is actually very language dependent. Consider either
+   --  make it more general or put it into languages-dependant types.
    function Get_Visible_Constructs
      (Tree       : Construct_Tree;
       From       : Construct_Tree_Iterator;
@@ -780,8 +869,23 @@ package body Language.Tree is
       Seek_Iterator      : Construct_Tree_Iterator;
       Prev_Iterator      : Construct_Tree_Iterator;
       Initial_Parent     : Construct_Tree_Iterator;
-      Use_Iterator       : Construct_Tree_Iterator :=
-        Null_Construct_Tree_Iterator;
+
+      type Use_Record is record
+         Name    : String_Access;
+         --  ??? Would it save computation to store a Composite_Identifier
+         --  here ?
+
+         Removed : Boolean;
+      end record;
+
+      procedure Free (This : in out Use_Record);
+      --  Free the memory associated to the Use_Record given in parameter.
+
+      package Use_List_Pckg is new Generic_List (Use_Record);
+
+      Use_List           : Use_List_Pckg.List;
+
+      use Use_List_Pckg;
 
       function Name_Match (Name_Tested : String) return Boolean;
       --  Return true if the name given in parameter matches the expected one.
@@ -799,6 +903,49 @@ package body Language.Tree is
       --  Add the given iterator to Construct_Found if and only if the iterator
       --  it visible even with the ones already in the list. If Last is false,
       --  the iterator will be preempted instead of being appened.
+
+      procedure Analyze_Used_Package
+        (Pckg     : Construct_Tree_Iterator;
+         Root_Use : String;
+         Begin_It : Use_List_Pckg.List_Node);
+      --  Analyze the package considering the use information. If Root_Use is
+      --  not an empty string, this means that the use taken into account has
+      --  to be applied to a nested package. Use clauses after Begin_It will
+      --  also be checked to see if they match a nested package.
+
+      function Get_First_Item (Name : String) return String;
+      --  Return first element of the name given in parameter
+
+      function Remove_First_Item (Name : String) return String;
+      --  Return the name given in parameter without the first element
+
+      function Simplify_Scope_Name
+        (Current_Scope : Composite_Identifier;
+         Checked_Scope : Composite_Identifier) return Composite_Identifier;
+      --  Return Checked_Scope without the elements found in Current_Scope.
+      --  This simplifies use clauses, e.g., in:
+      --
+      --  package A is
+      --
+      --     ...
+      --
+      --     use A.B
+      --
+      --  for the name A.B this function will only return the element B.
+
+      procedure Handle_Use_For (Pckg : Construct_Tree_Iterator);
+      --  Handle the use clauses for the package given in parameter, in order
+      --  to resolve visibile entities in it.
+
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (This : in out Use_Record) is
+         pragma Unreferenced (This);
+      begin
+         null;
+      end Free;
 
       ---------------------
       -- Look_In_Package --
@@ -882,9 +1029,220 @@ package body Language.Tree is
          end if;
       end Name_Match;
 
-   begin
-      --  ??? We have to make this use-wise
+      --------------------------
+      -- Analyze_Used_Package --
+      --------------------------
 
+      procedure Analyze_Used_Package
+        (Pckg     : Construct_Tree_Iterator;
+         Root_Use : String;
+         Begin_It : Use_List_Pckg.List_Node)
+      is
+         Tree_It : Construct_Tree_Iterator;
+         Use_It  : Use_List_Pckg.List_Node := Next (Begin_It);
+      begin
+         if Root_Use /= "" then
+            --  See the sub entities of this Root_Use
+
+            Tree_It := Next (Tree, Pckg, Jump_Into);
+
+            while Get_Parent_Scope (Tree, Tree_It) = Pckg loop
+               if Get_Construct (Tree_It).Category = Cat_Package
+                 and then Get_Construct (Tree_It).Is_Declaration
+               then
+                  if Get_First_Item (Get_Construct (Tree_It).Name.all)
+                    = Get_First_Item (Root_Use)
+                  then
+                     Analyze_Used_Package
+                       (Tree_It,
+                        Remove_First_Item (Root_Use),
+                        Begin_It);
+                  end if;
+               end if;
+
+               Tree_It := Next (Tree, Tree_It, Jump_Over);
+            end loop;
+         else
+            --  Analyze the current package
+
+            Look_In_Package (Pckg, False);
+         end if;
+
+         --  See the use that have been called after
+
+         Tree_It := Next (Tree, Pckg, Jump_Into);
+
+         while Get_Parent_Scope (Tree, Tree_It) = Pckg loop
+            Use_It := Next (Begin_It);
+
+            if Get_Construct (Tree_It).Category = Cat_Package
+              and then Get_Construct (Tree_It).Is_Declaration
+            then
+               while Use_It /= Use_List_Pckg.Null_Node loop
+                  if not Data (Use_It).Removed
+                    and then Get_First_Item (Data (Use_It).Name.all)
+                    = Get_First_Item (Get_Construct (Tree_It).Name.all)
+                  then
+                     Analyze_Used_Package
+                       (Tree_It,
+                        Remove_First_Item (Get_Construct (Tree_It).Name.all),
+                        Use_It);
+
+                     Data_Ref (Use_It).Removed := True;
+                  end if;
+
+                  Use_It := Next (Use_It);
+               end loop;
+            end if;
+
+            Tree_It := Next (Tree, Tree_It, Jump_Over);
+         end loop;
+
+      end Analyze_Used_Package;
+
+      --------------------
+      -- Get_First_Item --
+      --------------------
+
+      function Get_First_Item (Name : String) return String is
+         Index : Natural := Name'First;
+      begin
+         Skip_To_Char (Name, Index, '.');
+
+         if Index > Name'Last then
+            return Name;
+         else
+            return Name (Name'First .. Index - 1);
+         end if;
+      end Get_First_Item;
+
+      -----------------------
+      -- Remove_First_Item --
+      -----------------------
+
+      function Remove_First_Item (Name : String) return String is
+         Index : Natural := Name'First;
+      begin
+         Skip_To_Char (Name, Index, '.');
+
+         if Index > Name'Last then
+            return "";
+         else
+            return Name (Index + 1 .. Name'Last);
+         end if;
+      end Remove_First_Item;
+
+      -------------------------
+      -- Simplify_Scope_Name --
+      -------------------------
+
+      function Simplify_Scope_Name
+        (Current_Scope : Composite_Identifier;
+         Checked_Scope : Composite_Identifier) return Composite_Identifier
+      is
+         Checked_Index   : Integer := 1;
+         Has_To_Be_Equal : Boolean := False;
+      begin
+         for Current_Index in 1 .. Length (Current_Scope) loop
+            if not Has_To_Be_Equal
+              and then Get_Item (Current_Scope, Current_Index)
+              = Get_Item (Checked_Scope, 1)
+            then
+               Has_To_Be_Equal := True;
+               Checked_Index := 2;
+            end if;
+
+            if Has_To_Be_Equal then
+               if Checked_Index > Length (Checked_Scope) or else
+                 Get_Item (Current_Scope, Current_Index)
+                 /= Get_Item (Checked_Scope, Checked_Index)
+               then
+                  return Checked_Scope;
+               else
+                  Checked_Index := Checked_Index + 1;
+               end if;
+            end if;
+         end loop;
+
+         return Get_Slice
+           (Checked_Scope, Checked_Index, Length (Checked_Scope));
+      end Simplify_Scope_Name;
+
+      --------------------
+      -- Handle_Use_For --
+      --------------------
+
+      procedure Handle_Use_For (Pckg : Construct_Tree_Iterator) is
+         Full_Name : constant String := Get_Full_Name (Tree, Pckg);
+         Use_It    : Use_List_Pckg.List_Node;
+      begin
+         Use_It := First (Use_List);
+
+         while Use_It /= Use_List_Pckg.Null_Node loop
+            if not Data (Use_It).Removed then
+               if Get_First_Item (Data (Use_It).Name.all) =
+                 Get_First_Item
+                   (Get_Construct (Pckg).Name.all)
+               then
+                  --  In this case, the first element of the use clause matches
+
+                  Analyze_Used_Package
+                    (Pckg,
+                     Remove_First_Item (Data (Use_It).Name.all),
+                     Use_It);
+
+                  Data_Ref (Use_It).Removed := True;
+               else
+                  --  Otherwise, check if by removing the eventual extra prefix
+                  --  we find something
+
+                  declare
+                     Scope_Id   : constant Composite_Identifier :=
+                       To_Composite_Identifier (Full_Name);
+                     Use_Id     : constant Composite_Identifier :=
+                       To_Composite_Identifier (Data (Use_It).Name.all);
+                     New_Use_Id : constant Composite_Identifier :=
+                       Simplify_Scope_Name (Scope_Id, Use_Id);
+                  begin
+                     if Length (New_Use_Id) > 0
+                       and then Get_Item (New_Use_Id, 1)
+                       = Get_First_Item (Get_Construct (Pckg).Name.all)
+                     then
+                        Analyze_Used_Package
+                          (Pckg,
+                           Remove_First_Item (To_String (New_Use_Id)),
+                           Use_It);
+
+                        Data_Ref (Use_It).Removed := True;
+                     end if;
+                  end;
+               end if;
+            end if;
+
+            Use_It := Next (Use_It);
+         end loop;
+
+         --  Once we finished to analyze the package and its possible
+         --  interresting entities trough the uses, we have to remove every use
+         --  clause that have been resolved.
+
+         declare
+            It      : Use_List_Pckg.List_Node := First (Use_List);
+            Garbage : Use_List_Pckg.List_Node;
+         begin
+            while It /= Use_List_Pckg.Null_Node loop
+               if Data (It).Removed then
+                  Garbage := It;
+                  It := Next (It);
+                  Remove_Nodes (Use_List, Garbage, Garbage);
+               else
+                  It := Next (It);
+               end if;
+            end loop;
+         end;
+      end Handle_Use_For;
+
+   begin
       if From /= Null_Construct_Tree_Iterator then
 
          --  Look back to see if we find the entity
@@ -892,8 +1250,6 @@ package body Language.Tree is
          Seek_Iterator := From;
 
          while Seek_Iterator /= Null_Construct_Tree_Iterator loop
-
-            Use_Iterator := Null_Construct_Tree_Iterator;
 
             case Get_Construct (Seek_Iterator).Category is
                when Cat_Use =>
@@ -903,26 +1259,10 @@ package body Language.Tree is
                   --  seeked entity
 
                   if Use_Wise then
-                     declare
-                        Visible_Constructs : constant
-                          Construct_Tree_Iterator_Array :=
-                            Get_Visible_Constructs
-                              (Tree,
-                               Prev (Tree, Seek_Iterator, Jump_Over),
-                               To_Composite_Identifier
-                                 (Get_Construct (Seek_Iterator).Name.all),
-                               True);
-                     begin
-                        if Visible_Constructs'Length >= 1 then
-                           Use_Iterator := Visible_Constructs (1);
-
-                           if Use_Iterator.Node.Spec_Index /= 0 then
-                              Use_Iterator :=
-                                (Tree (Use_Iterator.Node.Spec_Index),
-                                 Use_Iterator.Node.Spec_Index);
-                           end if;
-                        end if;
-                     end;
+                     Prepend
+                       (Use_List,
+                        ((Get_Construct (Seek_Iterator).Name),
+                         False));
                   end if;
 
                when Cat_Package .. Cat_Field =>
@@ -935,6 +1275,13 @@ package body Language.Tree is
                       (Get_Construct (Seek_Iterator).Name.all)
                   then
                      Add_If_Visible (Seek_Iterator);
+                  end if;
+
+                  if Get_Construct (Seek_Iterator).Category = Cat_Package
+                    and then Use_Wise
+                    and then Get_Construct (Seek_Iterator).Is_Declaration
+                  then
+                     Handle_Use_For (Seek_Iterator);
                   end if;
 
                when others =>
@@ -967,16 +1314,12 @@ package body Language.Tree is
                end if;
             end if;
 
-            --  If we found a use clause, see if it has someting inside
-
-            if Use_Iterator /= Null_Construct_Tree_Iterator then
-               Look_In_Package (Use_Iterator, False);
-            end if;
-
             Seek_Iterator := Prev_Iterator;
          end loop;
 
       end if;
+
+      Free (Use_List);
 
       declare
          Result : Construct_Tree_Iterator_Array
