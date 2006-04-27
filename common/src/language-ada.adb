@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -118,7 +118,6 @@ package body Language.Ada is
        Icon           => package_xpm'Access,
        Make_Entry     => Make_Entry_Protected'Access));
 
-
    --  ??? Would be nice to specify the list of available cross compilers
    --  using a configuration file
 
@@ -159,7 +158,6 @@ package body Language.Ada is
                12 => new String'("powerpc-xcoff-lynxos-gnatls"),
                13 => new String'("gnaampls")),
             Editable        => True));
-
 
    --------------------
    -- Is_Simple_Type --
@@ -557,6 +555,98 @@ package body Language.Ada is
    begin
       return "Ada";
    end Get_Name;
+
+   ---------------------------
+   -- Get_Referenced_Entity --
+   ---------------------------
+
+   procedure Get_Referenced_Entity
+     (Lang       : access Ada_Language;
+      Buffer     : String;
+      Construct  : Construct_Information;
+      Sloc_Start : out Source_Location;
+      Sloc_End   : out Source_Location;
+      Success    : out Boolean;
+      From_Index : Natural := 0)
+   is
+      Paren_Depth   : Integer := 0;
+      Has_Reference : Boolean := False;
+
+      function Token_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start_Got : Source_Location;
+         Sloc_End_Got   : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+      --  Used to parse the tokens of the construct
+
+      --------------------
+      -- Token_Callback --
+      --------------------
+
+      function Token_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start_Got : Source_Location;
+         Sloc_End_Got   : Source_Location;
+         Partial_Entity : Boolean) return Boolean
+      is
+         pragma Unreferenced (Partial_Entity);
+         Word : constant String :=
+           Buffer (Sloc_Start_Got.Index .. Sloc_End_Got.Index);
+      begin
+         if Paren_Depth = 0 then
+            if Entity = Keyword_Text then
+               if Word = "access" or else Word = "new"
+                 or else Word = "return" or else Word = "renames"
+                 or else (Word = "is"
+                          and then Construct.Category in Type_Category)
+               then
+                  Has_Reference := True;
+               end if;
+            elsif Entity = Identifier_Text then
+               if Has_Reference then
+                  Sloc_Start := Sloc_Start_Got;
+                  Sloc_End := Sloc_End_Got;
+                  Success := True;
+               end if;
+
+               return True;
+            end if;
+         end if;
+
+         if Entity = Operator_Text then
+            if Word = "(" then
+               Paren_Depth := Paren_Depth + 1;
+            elsif Word = ")" then
+               Paren_Depth := Paren_Depth - 1;
+            elsif Word = ":" then
+               Has_Reference := True;
+            end if;
+         end if;
+
+         return False;
+      end Token_Callback;
+
+      Index_Begin : Natural;
+   begin
+      if From_Index = 0 then
+         Index_Begin := Construct.Sloc_Entity.Index + Construct.Name'Length;
+      else
+         Index_Begin := From_Index;
+      end if;
+
+      Success := False;
+
+      if Construct.Category in Type_Category
+        or else Construct.Category in Subprogram_Category
+        or else Construct.Category in Cat_Variable .. Cat_Field
+      then
+         Parse_Entities
+           (Lang,
+            Buffer (Index_Begin .. Construct.Sloc_End.Index),
+            Callback => Token_Callback'Unrestricted_Access);
+      end if;
+
+   end Get_Referenced_Entity;
 
 begin
    Compile (Keywords_List,

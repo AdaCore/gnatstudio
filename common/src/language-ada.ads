@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -99,6 +99,16 @@ package Language.Ada is
      (Lang     : access Ada_Language;
       Buffer   : String;
       Callback : Entity_Callback);
+
+   procedure Get_Referenced_Entity
+     (Lang       : access Ada_Language;
+      Buffer     : String;
+      Construct  : Construct_Information;
+      Sloc_Start : out Source_Location;
+      Sloc_End   : out Source_Location;
+      Success    : out Boolean;
+      From_Index : Natural := 0);
+   --  See inherited documentation
 
 private
    type Ada_Language is new Language_Root with null record;
