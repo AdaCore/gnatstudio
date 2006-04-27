@@ -541,12 +541,22 @@ package body Projects.Registry is
       Errors             : Projects.Error_Report;
       New_Project_Loaded : out Boolean)
    is
-      Project : Project_Node_Id;
-      Iter    : Imported_Project_Iterator;
-      Timestamp : Time;
+      Previous_Project : constant Virtual_File :=
+                           Project_Path (Registry.Data.Root);
+      Previous_Default : constant Boolean :=
+                           Status (Registry.Data.Root) = Default;
 
       procedure Fail (S1, S2, S3 : String);
       --  Replaces Osint.Fail
+
+      procedure Internal_Load
+        (Registry           : in out Project_Registry;
+         Root_Project_Path  : VFS.Virtual_File;
+         Errors             : Projects.Error_Report;
+         New_Project_Loaded : out Boolean;
+         Reload_If_Errors   : Boolean := True);
+      --  Actual implementation. Reload_If_Errors is used to decide whether
+      --  to reload the previous project or not.
 
       ----------
       -- Fail --
@@ -559,80 +569,121 @@ package body Projects.Registry is
          end if;
       end Fail;
 
-   begin
-      if not Is_Regular_File (Root_Project_Path) then
-         Trace (Me, "Load: " & Full_Name (Root_Project_Path).all
-                & " is not a regular file");
+      -------------------
+      -- Internal_Load --
+      -------------------
 
-         if Errors /= null then
-            Errors (Full_Name (Root_Project_Path).all
-                    & (-" is not a regular file"));
+      procedure Internal_Load
+        (Registry           : in out Project_Registry;
+         Root_Project_Path  : VFS.Virtual_File;
+         Errors             : Projects.Error_Report;
+         New_Project_Loaded : out Boolean;
+         Reload_If_Errors   : Boolean := True)
+      is
+         Project    : Project_Node_Id;
+         Iter       : Imported_Project_Iterator;
+         Timestamp  : Time;
+         Success    : Boolean;
+
+      begin
+         if not Is_Regular_File (Root_Project_Path) then
+            Trace (Me, "Load: " & Full_Name (Root_Project_Path).all
+                   & " is not a regular file");
+
+            if Errors /= null then
+               Errors (Full_Name (Root_Project_Path).all
+                       & (-" is not a regular file"));
+            end if;
+
+            New_Project_Loaded := False;
+            return;
          end if;
 
-         New_Project_Loaded := False;
-         return;
-      end if;
+         Trace (Me, "Set project path to "
+                & Get_Predefined_Project_Path (Registry));
+         Prj.Ext.Set_Project_Path
+           (Get_Predefined_Project_Path (Registry));
 
-      Trace (Me, "Set project path to "
-             & Get_Predefined_Project_Path (Registry));
-      Prj.Ext.Set_Project_Path
-        (Get_Predefined_Project_Path (Registry));
+         New_Project_Loaded := True;
 
-      New_Project_Loaded := True;
+         --  Use the full path name so that the messages are sent to the result
+         --  view.
 
-      --  Use the full path name so that the messages are sent to the result
-      --  view.
-      Opt.Full_Path_Name_For_Brief_Errors := True;
-      Output.Set_Special_Output (Output.Output_Proc (Errors));
-      Reset (Registry, View_Only => False);
+         Opt.Full_Path_Name_For_Brief_Errors := True;
+         Output.Set_Special_Output (Output.Output_Proc (Errors));
+         Reset (Registry, View_Only => False);
 
-      Prj.Com.Fail := Fail'Unrestricted_Access;
+         Prj.Com.Fail := Fail'Unrestricted_Access;
 
-      Prj.Part.Parse
-        (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all, True,
-         Store_Comments => True);
-      Prj.Com.Fail := null;
+         Prj.Part.Parse
+           (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all,
+            True, Store_Comments => True);
+         Prj.Com.Fail := null;
 
-      Opt.Full_Path_Name_For_Brief_Errors := False;
+         Opt.Full_Path_Name_For_Brief_Errors := False;
 
-      if Project = Empty_Node then
-         if Errors /= null then
-            Errors (-"Couldn't parse the project "
-                    & Full_Name (Root_Project_Path).all
-                    & ASCII.LF & (-"Using default project instead"));
+         if Project = Empty_Node then
+            if Reload_If_Errors then
+               if Errors /= null then
+                  Errors (-"Couldn't parse the project "
+                          & Full_Name (Root_Project_Path).all
+                          & ASCII.LF & (-"Reverting to previous project"));
+               end if;
+
+               Internal_Load
+                 (Registry,
+                  Previous_Project,
+                  Errors,
+                  New_Project_Loaded,
+                  False);
+            else
+               Load_Empty_Project (Registry);
+            end if;
+
+            return;
          end if;
-         Load_Default_Project (Registry, Get_Current_Dir);
-         return;
-      end if;
 
-      Registry.Data.Root := Get_Project_From_Name
-        (Registry, Prj.Tree.Name_Of (Project, Registry.Data.Tree));
-      Unchecked_Free (Registry.Data.Scenario_Variables);
+         Registry.Data.Root := Get_Project_From_Name
+           (Registry, Prj.Tree.Name_Of (Project, Registry.Data.Tree));
+         Unchecked_Free (Registry.Data.Scenario_Variables);
 
-      Set_Status (Registry.Data.Root, From_File);
-      Output.Set_Special_Output (null);
-
-      --  We cannot simply use Clock here, since this returns local time, and
-      --  the file timestamps will be returned in GMT, therefore we won't be
-      --  able to compare
-      Registry.Data.Timestamp := VFS.No_Time;
-      Iter := Start (Registry.Data.Root);
-      while Current (Iter) /= No_Project loop
-         Timestamp := File_Time_Stamp (Project_Path (Current (Iter)));
-         if Timestamp > Registry.Data.Timestamp then
-            Registry.Data.Timestamp := Timestamp;
-         end if;
-         Next (Iter);
-      end loop;
-
-      Trace (Me, "End of Load project");
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, "Load: unexpected exception: "
-                & Exception_Information (E));
+         Set_Status (Registry.Data.Root, From_File);
          Output.Set_Special_Output (null);
-         raise;
+
+         --  We cannot simply use Clock here, since this returns local time,
+         --  and the file timestamps will be returned in GMT, therefore we
+         --  won't be able to compare
+
+         Registry.Data.Timestamp := VFS.No_Time;
+         Iter := Start (Registry.Data.Root);
+
+         while Current (Iter) /= No_Project loop
+            Timestamp := File_Time_Stamp (Project_Path (Current (Iter)));
+
+            if Timestamp > Registry.Data.Timestamp then
+               Registry.Data.Timestamp := Timestamp;
+            end if;
+
+            Next (Iter);
+         end loop;
+
+         if Previous_Default then
+            Trace (Me, "Remove default project on disk, no longer used");
+            Delete (Previous_Project, Success);
+         end if;
+
+         Trace (Me, "End of Load project");
+
+      exception
+         when E : others =>
+            Trace (Exception_Handle, "Load: unexpected exception: "
+                   & Exception_Information (E));
+            Output.Set_Special_Output (null);
+            raise;
+      end Internal_Load;
+
+   begin
+      Internal_Load (Registry, Root_Project_Path, Errors, New_Project_Loaded);
    end Load;
 
    ----------------------
@@ -644,35 +695,34 @@ package body Projects.Registry is
       Errors   : Projects.Error_Report;
       Reloaded : out Boolean)
    is
-      Modified : Boolean := False;
-      Iter     : Imported_Project_Iterator;
+      Iter               : Imported_Project_Iterator;
       New_Project_Loaded : Boolean;
    begin
-      if Status (Registry.Data.Root) = From_File then
-         Iter := Start (Registry.Data.Root);
-         while Current (Iter) /= No_Project loop
-            if File_Time_Stamp (Project_Path (Current (Iter))) >
-              Registry.Data.Timestamp
-            then
-               Trace (Me, "Reload_If_Needed: timestamp has changed for "
-                      & Project_Name (Current (Iter)));
-               Modified := True;
-               exit;
-            end if;
-            Next (Iter);
-         end loop;
+      Iter     := Start (Registry.Data.Root);
+      Reloaded := False;
 
-         if Modified then
-            Load
-              (Registry           => Registry,
-               Root_Project_Path  => Project_Path (Registry.Data.Root),
-               Errors             => Errors,
-               New_Project_Loaded => New_Project_Loaded);
-         else
-            Trace (Me, "Reload_If_Needed: nothing to do");
+      while Current (Iter) /= No_Project loop
+         if File_Time_Stamp (Project_Path (Current (Iter))) >
+           Registry.Data.Timestamp
+         then
+            Trace (Me, "Reload_If_Needed: timestamp has changed for "
+                   & Project_Name (Current (Iter)));
+            Reloaded := True;
+            exit;
          end if;
+
+         Next (Iter);
+      end loop;
+
+      if Reloaded then
+         Load
+           (Registry           => Registry,
+            Root_Project_Path  => Project_Path (Registry.Data.Root),
+            Errors             => Errors,
+            New_Project_Loaded => New_Project_Loaded);
+      else
+         Trace (Me, "Reload_If_Needed: nothing to do");
       end if;
-      Reloaded := Modified;
    end Reload_If_Needed;
 
    -------------------------
@@ -684,24 +734,21 @@ package body Projects.Registry is
       Project  : Project_Type) is
    begin
       Registry.Data.Root := Project;
-      Set_Status (Registry.Data.Root, Default);
       Set_Project_Modified (Registry.Data.Root, False);
    end Load_Custom_Project;
 
-   --------------------------
-   -- Load_Default_Project --
-   --------------------------
+   ------------------------
+   -- Load_Empty_Project --
+   ------------------------
 
-   procedure Load_Default_Project
-     (Registry  : in out Project_Registry;
-      Directory : VFS.Virtual_File) is
+   procedure Load_Empty_Project (Registry : in out Project_Registry) is
    begin
       Reset (Registry, View_Only => False);
       Prj.Tree.Initialize (Registry.Data.Tree);
       Load_Custom_Project
-        (Registry,
-         Create_Default_Project (Registry, "default", Directory));
-   end Load_Default_Project;
+        (Registry, Create_Project (Registry, "empty", Get_Current_Dir));
+      Set_Status (Registry.Data.Root, Default);
+   end Load_Empty_Project;
 
    --------------------
    -- Recompute_View --
@@ -938,7 +985,6 @@ package body Projects.Registry is
             declare
                Current_Source : constant Name_Id :=
                                   String_Elements (Registry)(Sources).Value;
-               --  ??? Should avoid function returning unconstrained array
                UTF8      : constant String :=
                              Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
                Directory : Name_Id := No_Name;
