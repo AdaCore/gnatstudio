@@ -37,8 +37,8 @@ package VCS_Activities_View_API is
    --  List all files as part of an activity
 
    procedure Query_Activities_Files
-     (Kernel      : Kernel_Handle;
-      Real_Query  : Boolean);
+     (Kernel     : Kernel_Handle;
+      Real_Query : Boolean);
    --  Query status for activities files
 
    procedure Query_Activities_Files
