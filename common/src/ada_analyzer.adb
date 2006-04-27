@@ -3155,6 +3155,8 @@ package body Ada_Analyzer is
                   end if;
 
                when ',' | ';' =>
+                  First := P;
+
                   if Buffer (P) = ';' then
                      Prev_Token := Tok_Semicolon;
 
