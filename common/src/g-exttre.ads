@@ -304,14 +304,6 @@ package GNAT.Expect.TTY.Remote is
    --  If a request from user is needed, main_window is used as parent for the
    --  dialog presented to the user.
 
-   function Check_Host
-     (Nickname    : String;
-      Main_Window : Gtk.Window.Gtk_Window := null) return String;
-   --  Check host connection. Return empty string upon success, or the error
-   --  message.
-   --  If a request from user is needed, main_window is used as parent for the
-   --  dialog presented to the user.
-
    procedure Sync_Execute
      (Host                : String;
       Args                : GNAT.OS_Lib.Argument_List;
