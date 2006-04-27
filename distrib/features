@@ -265,6 +265,11 @@ E512-008 Saving breakpoints between sessions (2005-11-29)
 
   Keywords: Debugger
 
+E310-010 Improved handling of default project (2005-04-27)
+
+  GPS now takes the default project from a file which can be customized by
+  user (prefix/share/gps/default.gpr).
+
 E202-011 New replace window (2006-04-07)
 
   The search / replace window has been redesigned. In particular, there are now
