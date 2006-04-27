@@ -108,7 +108,7 @@ package body Builder_Module is
    --      -"All"
 
    Quiet_Opt      : aliased String := "-q";
-   Unique_Compile : aliased String := "-u";
+   Unique_Compile : aliased constant String := "-u";
    Syntax_Check   : aliased String := "-gnats";
    --  ??? Shouldn't have hard-coded options.
 
@@ -614,22 +614,6 @@ package body Builder_Module is
       Success : Boolean;
       Common_Args : Argument_List_Access;
 
-      function Copy_Arguments (Arguments : Argument_List)
-        return  Argument_List;
-      --  Create a new argument string with all the data duplicated.
-
-      function Copy_Arguments (Arguments : Argument_List)
-        return  Argument_List
-      is
-         Copy : Argument_List (Arguments'Range);
-      begin
-         for J in Arguments'Range loop
-            Copy (J) := new String'(Arguments (J).all);
-         end loop;
-
-         return Copy;
-      end Copy_Arguments;
-
    begin
       if Langs'Length = 0 then
          return;
@@ -667,9 +651,7 @@ package body Builder_Module is
       --  Do this before checking the project, in case we have a default
       --  project whose name is changed when saving
 
-      if not Save_MDI_Children
-        (Kernel, Force => Get_Pref (Auto_Save))
-      then
+      if not Save_MDI_Children (Kernel, Force => Get_Pref (Auto_Save)) then
          Free (Args);
          return;
       end if;
@@ -691,23 +673,7 @@ package body Builder_Module is
                end if;
 
                Prj := Get_Project_From_File (Get_Registry (Kernel).all, F);
-
-               if Prj = No_Project
-                 or else Status (Get_Project (Kernel)) /= From_File
-               then
-                  --  Use the default switches for that tool
-                  Args := new Argument_List'
-                    (Get_Switches
-                       (Handle   => Kernel,
-                        Project  => No_Project,
-                        In_Pkg   => Builder_Package,
-                        Index    => Ada_String,
-                        Use_Initial_Value => True)
-                     & Copy_Arguments (Common_Args.all)
-                     & new String'(Base_Name (F)));
-               else
-                  Args := Compute_Arguments (Kernel, Prj, "", F);
-               end if;
+               Args := Compute_Arguments (Kernel, Prj, "", F);
             end;
 
          --  There is no current file, so we can't compile anything
@@ -719,44 +685,10 @@ package body Builder_Module is
          end if;
 
       else
-         --  Are we using the default internal project ?
-
-         if Status (Get_Project (Kernel)) /= From_File then
-            case Syntax is
-               when GNAT_Syntax =>
-                  if File = VFS.No_File then
-                     Console.Insert
-                       (Kernel, -"Default project has no main unit",
-                        Mode => Error);
-                     return;
-                  else
-                     --  Use the default switches for that tool
-                     Args := new Argument_List'
-                       (Get_Switches
-                          (Handle   => Kernel,
-                           Project  => No_Project,
-                           In_Pkg   => Builder_Package,
-                           Index    => Ada_String,
-                           Use_Initial_Value => True)
-                        & Copy_Arguments (Common_Args.all)
-                        & new String'(To_Remote (Full_Name (File).all,
-                                                 Build_Server)));
-                  end if;
-
-               when Make_Syntax =>
-                  Console.Insert
-                    (Kernel, -"You must save the project file before building",
-                     Mode => Error);
-                  return;
-            end case;
-
-         else
-            Args := Compute_Arguments
-              (Kernel, Project, "", File,
-               Unique_Project => not Main_Units,
-               Extra_Args => Common_Args);
-         end if;
-
+         Args := Compute_Arguments
+           (Kernel, Project, "", File,
+            Unique_Project => not Main_Units,
+            Extra_Args     => Common_Args);
          Change_Dir (Dir_Name (Project_Path (Project)).all);
       end if;
 
@@ -888,7 +820,6 @@ package body Builder_Module is
       Shadow_Path     : String_Access;
       Compilable_File : Virtual_File := File;
       Success         : Boolean;
-      Files_To_Free   : File_Array_Access;
       Cb_Data         : Files_Callback_Data_Access;
 
    begin
@@ -955,17 +886,6 @@ package body Builder_Module is
          end if;
 
       else
-         if Status (Prj) /= From_File then
-            if not Quiet then
-               Console.Insert
-                 (Kernel, -"You must save the project before compiling",
-                  Mode => Error);
-            end if;
-
-            Free (Local_File);
-            return;
-         end if;
-
          Cmd         := new String'("gprmake");
          Common_Args := new Argument_List'(1 .. 0 => null);
       end if;
@@ -973,6 +893,8 @@ package body Builder_Module is
       if Builder_Module_ID.Build_Count = 0 then
          Clear_Compilation_Output (Kernel, Shadow);
       end if;
+
+      Cb_Data := new Files_Callback_Data;
 
       if Shadow then
          --  Create a temporary project, and a temporary file containing the
@@ -1013,8 +935,8 @@ package body Builder_Module is
             Compilable_File := Temp_File;
             Change_Dir (Tmp_Dir);
 
-            Files_To_Free := new File_Array'
-              (1 => Temp_File, 2 => Temp_Project);
+            Cb_Data.Files :=
+              new File_Array'(1 => Temp_File, 2 => Temp_Project);
          end;
 
       else
@@ -1033,87 +955,36 @@ package body Builder_Module is
          end;
       end if;
 
-      if not Shadow
-        and then (Status (Prj) /= From_File or else Syntax_Only)
-      then
-         --  Use the default switches for that tool
-         declare
-            Default_Builder_Switches : Argument_List := Get_Switches
-              (Handle   => Kernel,
-               Project  => No_Project,
-               In_Pkg   => Builder_Package,
-               Index    => Ada_String,
-               Use_Initial_Value => True);
-         begin
-            Cb_Data := new Files_Callback_Data'
-              (Files  => Files_To_Free,
-               Buffer => Ada.Strings.Unbounded.Null_Unbounded_String);
+      Args := Compute_Arguments
+        (Kernel, Prj, Shadow_Path.all, Compilable_File, Compile_Only => True);
+      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
-            Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
-
-            if not Quiet then
-               Console.Raise_Console (Kernel);
-            end if;
-
-            Launch_Process
-              (Kernel,
-               Command              => Cmd.all,
-               Arguments            => Default_Builder_Switches
-               & Common_Args.all & (Unique_Compile'Access, Local_File),
-               Server               => Build_Server,
-               Console              => Get_Console (Kernel),
-               Show_Command         => not Quiet,
-               Show_Output          => False,
-               Success              => Success,
-               Callback_Data        =>
-                 GPS.Kernel.Timeout.Callback_Data_Access (Cb_Data),
-               Line_By_Line         => False,
-               Exit_Cb              => Free_Temporary_Files'Access,
-               Callback             => Parse_Compiler_Output'Access,
-               Show_In_Task_Manager => True,
-               Synchronous          => Synchronous,
-               Show_Exit_Status     => True);
-            Free (Default_Builder_Switches);
-         end;
-
-      else
-         Args := Compute_Arguments
-           (Kernel,
-            Prj,
-            Shadow_Path.all,
-            Compilable_File,
-            Compile_Only => True);
-         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
-
-         if not Quiet then
-            Console.Raise_Console (Kernel);
-         end if;
-
-         Launch_Process
-           (Kernel,
-            Command              => Cmd.all,
-            Arguments            => Common_Args.all & Args.all,
-            Server               => Build_Server,
-            Console              => Get_Console (Kernel),
-            Show_Command         => not Quiet,
-            Show_Output          => False,
-            Callback_Data        => new Files_Callback_Data,
-            Success              => Success,
-            Line_By_Line         => False,
-            Callback             => Parse_Compiler_Output'Access,
-            Exit_Cb              => Free_Temporary_Files'Access,
-            Show_In_Task_Manager => True,
-            Synchronous          => Synchronous,
-            Show_Exit_Status     => True);
-         Free (Args);
+      if not Quiet then
+         Console.Raise_Console (Kernel);
       end if;
 
+      Launch_Process
+        (Kernel,
+         Command              => Cmd.all,
+         Arguments            => Common_Args.all & Args.all,
+         Server               => Build_Server,
+         Console              => Get_Console (Kernel),
+         Show_Command         => not Quiet,
+         Show_Output          => False,
+         Callback_Data        => Cb_Data.all'Access,
+         Success              => Success,
+         Line_By_Line         => False,
+         Callback             => Parse_Compiler_Output'Access,
+         Exit_Cb              => Free_Temporary_Files'Access,
+         Show_In_Task_Manager => True,
+         Synchronous          => Synchronous,
+         Show_Exit_Status     => True);
+      Free (Args);
       Basic_Types.Unchecked_Free (Common_Args);
       Free (Cmd);
-
-      Change_Dir (Old_Dir);
       Free (Local_File);
       Free (Shadow_Path);
+      Change_Dir (Old_Dir);
 
    exception
       when Invalid_Process =>
