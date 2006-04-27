@@ -22,7 +22,6 @@ with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;               use GNAT.Case_Util;
-with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 
 with Gdk.Color;                    use Gdk.Color;
@@ -33,19 +32,14 @@ with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
 with Glib.Xml_Int;                 use Glib.Xml_Int;
 
-with Gtk.Arguments;                use Gtk.Arguments;
 with Gtk.Box;                      use Gtk.Box;
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
-with Gtk.Dialog;                   use Gtk.Dialog;
 with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Frame;                    use Gtk.Frame;
-with Gtk.GEntry;                   use Gtk.GEntry;
-with Gtk.Label;                    use Gtk.Label;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
 with Gtk.Size_Group;               use Gtk.Size_Group;
-with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Table;                    use Gtk.Table;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
@@ -53,9 +47,7 @@ with Gtk.Tree_Store;               use Gtk.Tree_Store;
 with Gtk.Tree_View;                use Gtk.Tree_View;
 with Gtk.Tree_View_Column;         use Gtk.Tree_View_Column;
 with Gtk.Widget;                   use Gtk.Widget;
-with Gtk.Window;                   use Gtk.Window;
 
-with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
 
@@ -76,7 +68,6 @@ with GPS.Kernel.Project;           use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                   use GPS.Kernel;
-with GPS.Location_View;            use GPS.Location_View;
 with GUI_Utils;                    use GUI_Utils;
 with Language_Handlers;            use Language_Handlers;
 with Naming_Editors;               use Naming_Editors;
@@ -296,13 +287,6 @@ package body Project_Viewers is
    --  Save the project associated with the kernel, and all its imported
    --  projects.
 
-   function Read_Project_Name
-     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type)
-      return Boolean;
-   --  Open a popup dialog to select a new name for Project.
-   --  True is returned if a new name was chosen, False if the user pressed
-   --  Cancel.
-
    procedure Edit_Multiple_Switches
      (Viewer : access Gtk_Widget_Record'Class);
    --  Edit the switches for all the files selected in Viewer.
@@ -328,15 +312,6 @@ package body Project_Viewers is
       Iter              : Gtk_Tree_Iter);
    --  Set the contents of the line Iter in the model. It is assumed the file
    --  name has already been set on that line
-
-   procedure On_File_Edited
-     (Object : access GObject_Record'Class;
-      Args   : Gtk_Args;
-      Kernel : Kernel_Handle);
-   pragma Unreferenced (On_File_Edited);
-   --  See comments in the body of this function explaining the use of this
-   --  pragma.
-   --  Called when a new file is edited
 
    procedure Parsing_Switches_XML
      (Kernel : access Kernel_Handle_Record'Class;
@@ -932,74 +907,6 @@ package body Project_Viewers is
    end On_Project_Properties;
 
    -----------------------
-   -- Read_Project_Name --
-   -----------------------
-
-   function Read_Project_Name
-     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type)
-      return Boolean
-   is
-      procedure Report_Error (Msg : String);
-      --  Report an error to the console
-
-      ------------------
-      -- Report_Error --
-      ------------------
-
-      procedure Report_Error (Msg : String) is
-      begin
-         Console.Insert (Kernel, Msg, Mode => Console.Error);
-         Parse_File_Locations (Kernel, Msg, -"Project read");
-      end Report_Error;
-
-      Dialog : Gtk_Dialog;
-      Label  : Gtk_Label;
-      Text   : Gtk_Entry;
-      Widget : Gtk_Widget;
-      pragma Unreferenced (Widget);
-
-   begin
-      Gtk_New
-        (Dialog,
-         Title  => -"Select name for project",
-         Parent => Get_Current_Window (Kernel),
-         Flags  => Modal or Destroy_With_Parent);
-      Widget := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Widget := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Gtk_New (Label, -"Enter name of project:");
-      Pack_Start (Get_Vbox (Dialog), Label);
-
-      Gtk_New (Text, 40);
-      Set_Width_Chars (Text, 20);
-      Set_Text (Text, Project_Name (Project));
-      Pack_Start (Get_Vbox (Dialog), Text);
-
-      Show_All (Dialog);
-      if Run (Dialog) = Gtk_Response_OK then
-         Rename_And_Move
-           (Root_Project  => Project,
-            Project       => Project,
-            New_Name      => Get_Text (Text),
-            New_Path      => Project_Directory (Project),
-            Report_Errors => Report_Error'Unrestricted_Access);
-         Run_Hook (Kernel, Project_Changed_Hook);
-         Recompute_View (Kernel);
-         Destroy (Dialog);
-         return True;
-      end if;
-
-      Destroy (Dialog);
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-         return False;
-   end Read_Project_Name;
-
-   -----------------------
    -- Save_All_Projects --
    -----------------------
 
@@ -1007,16 +914,10 @@ package body Project_Viewers is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Tmp : Boolean := True;
-      pragma Unreferenced (Widget);
+      Tmp : Boolean;
+      pragma Unreferenced (Widget, Tmp);
    begin
-      if Status (Get_Project (Kernel)) /= From_File then
-         Tmp := Read_Project_Name (Kernel, Get_Project (Kernel));
-      end if;
-
-      if Tmp then
-         Tmp := Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
-      end if;
+      Tmp := Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
 
    exception
       when E : others =>
@@ -1032,16 +933,13 @@ package body Project_Viewers is
      (Command : access Save_Project_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Tmp     : Boolean := True;
       pragma Unreferenced (Command);
+
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Project : constant Project_Type := Project_Information (Context.Context);
-   begin
-      if Status (Project) /= From_File then
-         Tmp := Read_Project_Name (Kernel, Project);
-      end if;
 
-      if Tmp and then Save_Project (Kernel, Project) then
+   begin
+      if Save_Project (Kernel, Project) then
          return Success;
       else
          return Failure;
@@ -1874,57 +1772,6 @@ package body Project_Viewers is
       end if;
       return null;
    end Get_Naming_Scheme_Page;
-
-   --------------------
-   -- On_File_Edited --
-   --------------------
-
-   procedure On_File_Edited
-     (Object : access GObject_Record'Class;
-      Args   : Gtk_Args;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Object);
-   begin
-      if Status (Get_Project (Kernel)) = Default then
-         declare
-            File         : constant String := To_String (Args, 1);
-            Dir          : aliased String := Dir_Name (File);
-            Current_Dirs : String_Array_Access := Source_Dirs
-              (Get_Project (Kernel), Recursive => False);
-
-         begin
-            for C in Current_Dirs'Range loop
-               if Current_Dirs (C).all = Dir then
-                  Free (Current_Dirs);
-                  return;
-               end if;
-            end loop;
-
-            Free (Current_Dirs);
-
-            if Message_Dialog
-              (Msg            => -"Add directory " & ASCII.LF
-                 & Dir & ASCII.LF
-                 & (-" to the default project ?"),
-               Dialog_Type    => Confirmation,
-               Buttons        => Button_Yes or Button_No,
-               Default_Button => Button_Yes,
-               Title          => -"Adding directory to project",
-               Justification  => Justify_Left,
-               Parent         => Get_Current_Window (Kernel)) = Button_Yes
-            then
-               Update_Attribute_Value_In_Scenario
-                 (Get_Project (Kernel),
-                  Scenario_Variables => Scenario_Variables (Kernel),
-                  Attribute          => Source_Dirs_Attribute,
-                  Values             => (1 => Dir'Unchecked_Access),
-                  Prepend            => True);
-               Recompute_View (Kernel);
-            end if;
-         end;
-      end if;
-   end On_File_Edited;
 
    --------------------------
    -- Parsing_Switches_XML --
