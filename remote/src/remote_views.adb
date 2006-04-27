@@ -114,6 +114,9 @@ package body Remote_Views is
      (View  : access Remote_View_Record'Class);
    --  Set the list of available servers
 
+   function Check_Host (Nickname : String) return String;
+   --  Check that the host can be contacted
+
    ---------------
    -- Callbacks --
    ---------------
@@ -619,6 +622,27 @@ package body Remote_Views is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Combo_Changed;
+
+   ----------------
+   -- Check_Host --
+   ----------------
+
+   function Check_Host (Nickname : String) return String
+   is
+      Dir : VFS.Virtual_File;
+   begin
+      Dir := Get_Root (Create (Nickname, ""));
+
+      if Is_Directory (Dir) then
+         return "";
+      else
+         return "Could not establish communication with host " & Nickname;
+      end if;
+
+   exception
+      when E : others =>
+         return Ada.Exceptions.Exception_Message (E);
+   end Check_Host;
 
    ----------------------
    -- On_Check_Clicked --
