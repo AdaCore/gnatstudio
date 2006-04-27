@@ -573,6 +573,25 @@ package body Language is
       end loop;
    end Parse_Entities;
 
+   ---------------------------
+   -- Get_Referenced_Entity --
+   ---------------------------
+
+   procedure Get_Referenced_Entity
+     (Lang       : access Language_Root;
+      Buffer     : String;
+      Construct  : Construct_Information;
+      Sloc_Start : out Source_Location;
+      Sloc_End   : out Source_Location;
+      Success    : out Boolean;
+      From_Index : Natural := 0)
+   is
+      pragma Unreferenced
+        (Lang, Buffer, Construct, Sloc_Start, Sloc_End, From_Index);
+   begin
+      Success := False;
+   end Get_Referenced_Entity;
+
    -------------------
    -- Format_Buffer --
    -------------------

@@ -595,6 +595,25 @@ package Language is
 
    --  These functions are provided as a support for the source code explorer.
 
+   procedure Get_Referenced_Entity
+     (Lang       : access Language_Root;
+      Buffer     : String;
+      Construct  : Construct_Information;
+      Sloc_Start : out Source_Location;
+      Sloc_End   : out Source_Location;
+      Success    : out Boolean;
+      From_Index : Natural := 0);
+   --  Some constructs are referencing one ore more entities. The purpose of
+   --  this procedure is to extract then. It can be the type of a variable,
+   --  the parent type of a class, the generic package from wich a package is
+   --  instantiated, the returned type of a subprogram... It the instantiation
+   --  is not found, then Success is false, otherwise it's true. The
+   --  From_Index parameter is used to initialize the search at a given offset
+   --  (in bytes). It helps to handle cases where the construct is referencing
+   --  more than one element  (e.g. extension from interfaces in Java and Ada,
+   --  multiple inheritance in C++). If From_Index is 0, then the serach will
+   --  start at the begining of the construct.
+
    type Make_Entry_Func is access function
      (Str      : String;
       Matched  : GNAT.Regpat.Match_Array) return String;
