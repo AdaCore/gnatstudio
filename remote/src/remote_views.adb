@@ -627,8 +627,7 @@ package body Remote_Views is
    -- Check_Host --
    ----------------
 
-   function Check_Host (Nickname : String) return String
-   is
+   function Check_Host (Nickname : String) return String is
       Dir : VFS.Virtual_File;
    begin
       Dir := Get_Root (Create (Nickname, ""));
