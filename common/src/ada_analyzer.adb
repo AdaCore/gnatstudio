@@ -3454,7 +3454,7 @@ package body Ada_Analyzer is
                Start_Of_Line := Line_Start (Buffer, Prec);
 
                exit Main_Loop when Callback
-                 (Operator_Text,
+                 (Identifier_Text,
                   (Line_Count, Prec - Start_Of_Line + 1, Prec),
                   (Line_Count, Current - Start_Of_Line + 1, Current),
                   False);
