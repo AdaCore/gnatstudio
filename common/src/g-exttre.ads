@@ -42,6 +42,24 @@ package GNAT.Expect.TTY.Remote is
    Null_String_List : constant String_List (1 .. 0) := (others => null);
    --  Null string list
 
+   -------------------------
+   -- Connection Debugger --
+   -------------------------
+
+   type Connection_Debugger_Record is abstract tagged null record;
+   type Connection_Debugger is access all Connection_Debugger_Record'Class;
+
+   procedure Create (Dbg   : access Connection_Debugger_Record'Class;
+                     Title : String) is abstract;
+   --  Create a new Connection Debugger with furnished title
+
+   type Mode_Type is (Input, Output);
+
+   procedure Print (Dbg  : access Connection_Debugger_Record;
+                    Str  : String;
+                    Mode : Mode_Type) is abstract;
+   --  Display Str in the connection debugger
+
    -----------------------------
    -- Configuration functions --
    -----------------------------
@@ -157,6 +175,9 @@ package GNAT.Expect.TTY.Remote is
       Max_Nb_Connections  : Natural := 3;
       --  Maximum number of simultaneous connections on the machine
       Ref                 : Natural := 0;
+      --  Ref counter
+      Dbg                 : Connection_Debugger := null;
+      --  Connection debug console.
    end record;
    type Machine_Descriptor is access all Machine_Descriptor_Record'Class;
 
@@ -408,9 +429,6 @@ private
    type Remote_Process_Descriptor is new TTY_Process_Descriptor with record
       Busy                 : Boolean                   := False;
       --  Tells if the remote shell is busy processing a command
-      Connected            : Boolean := False;
-      --  Tells if the connection with the remote machine has
-      --  been performed
       Current_Echo_Skipped : Boolean := False;
       --  Tells if the command we've sent has been echoed or not.
       Shell                : Shell_Descriptor_Access   := null;
