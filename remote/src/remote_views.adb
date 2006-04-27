@@ -303,7 +303,7 @@ package body Remote_Views is
       Alloc_Color (Get_Default_Colormap, Color, Success => Success);
       Set_Text (View.Modified_Style, State_Normal, Color);
 
-      --  "Check" and "connect" buttons
+      --  "Check" and "Apply" buttons
       Gtk_New (View.Check_Button, -"Check configuration");
       Set_Tip
         (Tooltips, View.Check_Button,
@@ -315,10 +315,10 @@ package body Remote_Views is
         (View.Check_Button, "clicked", On_Check_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
-      Gtk_New (View.Connect_Button, -"Connect");
+      Gtk_New (View.Connect_Button, -"Apply configuration");
       Set_Tip
         (Tooltips, View.Connect_Button,
-         -"Connect to the configured remote servers");
+         -"Apply then remote servers configuration");
       Attach (View.Main_Table, View.Connect_Button,
               1, 2, 1, 2, 0, 0, 5, 5);
       Set_Sensitive (View.Connect_Button, False);
