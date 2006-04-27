@@ -106,16 +106,13 @@ package Projects is
    function Project_Name (Project : Project_Type) return String;
    function Project_Name (Project : Project_Type) return Types.Name_Id;
    --  Return the name of the project.
-   --  The empty string is returned if the project is the default project or
-   --  No_Project.
+   --  "default" is returned if the project is the empty project or No_Project.
 
    function Project_Path
      (Project : Project_Type;
       Host    : String := "") return VFS.Virtual_File;
    --  Return the full path name to the project file
    --  If Host is given, the path will be the one on the specified host.
-   --  Use Status (Project) instead to check for the default project since
-   --  a dummy path will be returned by this function.
 
    function Project_Directory
      (Project : Project_Type;
