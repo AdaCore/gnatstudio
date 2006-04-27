@@ -22,29 +22,12 @@
 --  information from the analyzis done by the ada analyzer
 --  ??? This interface should probably be made language independent.
 
-with Language.Tree; use Language.Tree;
-
 package Ada_Analyzer.Utils is
-
-   function Get_Parent_Type
-     (Buffer : String; Construct : Construct_Information)
-      return String;
-   --  Return the name of the parent type of the construct given in parameter,
-   --  or an empty string if none. Parent type is a very large notion here,
-   --  it's in general the type on wich the type is based, base type of a
-   --  new type or a subtype, pointed type of an acces type, parent of a
-   --  tagged type...
 
    function Is_Access
      (Buffer : String; Construct : Construct_Information)
       return Boolean;
    --  Return true if the type of the construct given in parameter is an
    --  access type, false otherwise.
-
-   function Get_Typename
-     (Buffer : String; Construct : Construct_Information)
-      return Composite_Identifier;
-   --  Provided that the construct given in parameter is a variable/parameter/
-   --  constant declaration, this function returns its type.
 
 end Ada_Analyzer.Utils;
