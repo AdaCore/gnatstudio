@@ -1407,7 +1407,9 @@ procedure GPS.Main is
 
       Buffer_Views.Register_Module (GPS_Main.Kernel);
 
-      --  Load system files
+      --  Load system files.
+      --  This must be done before loading the Navigation module, since that
+      --  module relies on icons defined in custom files.
 
       if Active (Custom_Trace) then
          Load_All_Custom_Files (GPS_Main.Kernel);
