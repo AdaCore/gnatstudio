@@ -2259,6 +2259,7 @@ package body Ada_Analyzer is
          Prev_Prev_Token : Token_Type;
          Top_Token       : Token_Stack.Generic_Type_Access;
          Tmp             : Boolean;
+         Token_Found     : Boolean;
 
          procedure Close_Parenthesis;
          --  Current buffer contents is a closed parenthesis,
@@ -2737,9 +2738,11 @@ package body Ada_Analyzer is
 
             Top_Token := Top (Tokens);
             Prev_Prev_Token := Prev_Token;
+            Token_Found := True;
 
             case Buffer (P) is
                when '#' =>
+                  First := P;
                   Prev_Token := Tok_Pound;
 
                   if (P = Buffer'First
@@ -2750,6 +2753,7 @@ package body Ada_Analyzer is
                   end if;
 
                when '(' =>
+                  First := P;
                   Prev_Token := Tok_Left_Paren;
 
                   if not Is_Empty (Paren_Stack) then
@@ -2901,6 +2905,7 @@ package body Ada_Analyzer is
                   end if;
 
                when ')' =>
+                  First := P;
                   Prev_Token := Tok_Right_Paren;
                   Close_Parenthesis;
 
@@ -3238,6 +3243,8 @@ package body Ada_Analyzer is
                   --  we correctly treat constructs like:
                   --    A := Character'('A');
 
+                  First := P;
+
                   if Prev_Token = Tok_Identifier
                      or else Prev_Token = Tok_Right_Paren
                      or else Prev_Token = Tok_All
@@ -3246,8 +3253,6 @@ package body Ada_Analyzer is
                   then
                      Prev_Token := Tok_Apostrophe;
                   else
-                     First := P;
-
                      if P = End_Of_Line - 1 then
                         P := P + 1;
                      else
@@ -3277,15 +3282,16 @@ package body Ada_Analyzer is
                   end if;
 
                when others =>
-                  null;
+                  Token_Found := False;
             end case;
 
             if Buffer (P) /= ' ' and then not Is_Control (Buffer (P)) then
                Comments_Skipped := False;
             end if;
 
-            if Prev_Token in Tok_Double_Asterisk .. Tok_Colon_Equal
-              or else Prev_Token in Tok_Semicolon .. Tok_Dot_Dot
+            if Token_Found
+              and then (Prev_Token in Tok_Double_Asterisk .. Tok_Colon_Equal
+                        or else Prev_Token in Tok_Semicolon .. Tok_Dot_Dot)
             then
                if Callback /= null then
                   if Callback
