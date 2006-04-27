@@ -255,6 +255,8 @@ procedure Completion.Test is
 
       Db := Create (Registry'Unchecked_Access);
 
+      Load_Empty_Project (Registry);
+
       Load
         (Registry           => Registry,
          Root_Project_Path  => Create_From_Base (Project),
