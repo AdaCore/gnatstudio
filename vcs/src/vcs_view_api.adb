@@ -206,7 +206,7 @@ package body VCS_View_API is
       Repository : Boolean := False) return String;
    --  Return the root directory containing the branches. This routines expects
    --  a Subversion standard layout (i.e. trunk, branches, tags). If Repository
-   --  is set the returned directory is referenign the repository root instead
+   --  is set the returned directory is referencing the repository root instead
    --  of the local copy.
 
    function Get_Tags_Root
@@ -214,7 +214,7 @@ package body VCS_View_API is
       Repository : Boolean := False) return String;
    --  Return the root directory containing the tags. This routines expects
    --  a Subversion standard layout (i.e. trunk, branches, tags). If Repository
-   --  is set the returned directory is referenign the repository root instead
+   --  is set the returned directory is referencing the repository root instead
    --  of the local copy.
 
    function Get_Repository_Path
