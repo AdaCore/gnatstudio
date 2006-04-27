@@ -213,7 +213,7 @@ package body GPS.Kernel is
       Handle.Lang_Handler := Handler;
 
       Handle.Registry := new Project_Registry;
-      Load_Default_Project (Handle.Registry.all, Get_Current_Dir);
+      Load_Empty_Project (Handle.Registry.all);
 
       Set_Registry
         (Language_Handler (Handle.Lang_Handler), Handle.Registry);
@@ -553,7 +553,7 @@ package body GPS.Kernel is
       function Get_Project_Name return Virtual_File is
          Project : constant Project_Type := Get_Project (Handle);
       begin
-         if As_Default_Desktop or else Status (Project) = Default then
+         if As_Default_Desktop or else Status (Project) /= From_File then
             return VFS.No_File;
          else
             return Project_Path (Project);
@@ -588,6 +588,7 @@ package body GPS.Kernel is
 
       if Is_Regular_File (File_Name) then
          XML_Parsers.Parse (File_Name, Old, Err);
+
          if Err /= null then
             Insert (Handle, Err.all, Mode => Error);
             Free (Err);
@@ -673,7 +674,7 @@ package body GPS.Kernel is
    begin
       Main_Window.Desktop_Loaded := True;
 
-      if Status (Project) /= Default then  --  ??? Should this be = From_File
+      if Status (Project) = From_File then
          Project_Name := Project_Path (Project);
       end if;
 
