@@ -670,8 +670,9 @@ package body GNAT.Expect.TTY.Remote is
 
          if Remote_Desc = null then
             Raise_Exception (Invalid_Nickname'Identity,
-                             "Invalid Remote_Descriptor name for " &
-                             Descriptor.Machine.Desc.Nickname.all);
+                             "Invalid remote access tool name for " &
+                             Descriptor.Machine.Desc.Nickname.all &
+                             ": " & Descriptor.Machine.Desc.Access_Name.all);
          end if;
 
          --  Construction of the arguments:
@@ -831,7 +832,7 @@ package body GNAT.Expect.TTY.Remote is
       --  Set Terminated state as it is not started yet !
       Descriptor.Terminated := True;
       Descriptor.Busy       := False;
-      Descriptor.Machine.Sessions (Session_Nb).State := READY;
+      Descriptor.Machine.Sessions (Session_Nb).State := BUSY;
    end Get_Or_Init_Session;
 
    ------------------------
@@ -873,8 +874,9 @@ package body GNAT.Expect.TTY.Remote is
 
          if Desc.Shell = null then
             Raise_Exception (Invalid_Nickname'Identity,
-                             "Invalid Shell_Descriptor name for " &
-                             Desc.Machine.Desc.Nickname.all);
+                             Desc.Machine.Desc.Nickname.all & "error: " &
+                             "shell " & Desc.Machine.Desc.Shell_Name.all &
+                             " is unknown.");
          end if;
 
          Desc.Session_Died         := False;
@@ -946,63 +948,6 @@ package body GNAT.Expect.TTY.Remote is
          end loop;
       end;
    end Remote_Spawn;
-
-   ----------------
-   -- Check_Host --
-   ----------------
-
-   function Check_Host
-     (Nickname    : String;
-      Main_Window : Gtk.Window.Gtk_Window := null) return String
-   is
-      Desc       : Remote_Process_Descriptor_Access;
-      Shell_Desc : Shell_Descriptor_Access;
-   begin
-      Desc := new Remote_Process_Descriptor;
-
-      begin
-         Desc.Machine := Get_Machine_Descriptor (Nickname);
-
-      exception
-         when Invalid_Nickname =>
-            return "No machine with name " & Nickname & " is configured";
-      end;
-
-      Shell_Desc := Shell_Descriptor_List;
-
-      while Shell_Desc /= null loop
-         exit when Shell_Desc.Name.all = Desc.Machine.Desc.Shell_Name.all;
-         Shell_Desc := Shell_Desc.Next;
-      end loop;
-
-      if Shell_Desc = null then
-         return "No shell with name " & Desc.Machine.Desc.Shell_Name.all &
-           " is configured";
-      end if;
-
-      Remote_Process_Descriptor (Desc.all).Shell := Shell_Desc;
-
-      begin
-         Get_Or_Init_Session
-           (Remote_Process_Descriptor (Desc.all), True,
-            Main_Window);
-
-      exception
-         when E : Invalid_Process | Process_Died =>
-            Internal_Handle_Exceptions (Remote_Process_Descriptor (Desc.all));
-            return "Could not get connection to " & Nickname & ": " &
-              Exception_Message (E);
-         when E : Invalid_Nickname =>
-            return "Could not get connection to " & Nickname & ": " &
-              Exception_Message (E);
-         when E : others =>
-            return "Unexpected exception while connecting to " & Nickname &
-              ": " & Exception_Information (E);
-      end;
-
-      Close (Desc.all);
-      return "";
-   end Check_Host;
 
    ------------------
    -- Sync_Execute --
@@ -1355,11 +1300,6 @@ package body GNAT.Expect.TTY.Remote is
 
                if Shell_Desc.Exit_Cmds'Length /= 0 then
                   for K in Shell_Desc.Exit_Cmds'Range loop
-                     if Desc.Desc.Dbg /= null then
-                        Print (Desc.Desc.Dbg,
-                               Shell_Desc.Exit_Cmds (K).all,
-                               Output);
-                     end if;
                      Send (Desc.Sessions (J).Pd,
                            Shell_Desc.Exit_Cmds (K).all);
                   end loop;
