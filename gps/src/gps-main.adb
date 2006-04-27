@@ -804,8 +804,7 @@ procedure GPS.Main is
                     (Full_Name (Project_Name).all & Project_File_Extension);
                end if;
 
-               Trace (Me, "Found project: "
-                      & Full_Name (Project_Name).all);
+               Trace (Me, "Found project: " & Full_Name (Project_Name).all);
 
             when ASCII.NUL =>
                exit;
@@ -1008,9 +1007,7 @@ procedure GPS.Main is
             Load_Project (GPS_Main.Kernel, Project_Name);
             Project := Get_Project (GPS_Main.Kernel);
          else
-            Load_Default_Project
-              (GPS_Main.Kernel, Get_Current_Dir,
-               Load_Default_Desktop => True);
+            Load_Empty_Project (GPS_Main.Kernel);
             Project := Get_Project (GPS_Main.Kernel);
             Set_Status (Project, From_Executable);
          end if;
@@ -1079,8 +1076,9 @@ procedure GPS.Main is
             if File_Extension (Str (1 .. Last)) = Project_File_Extension then
                if Project_Name = VFS.No_File then
                   Auto_Load_Project := True;
-                  Project_Name := Create (Normalize_Pathname (Str (1 .. Last),
-                                            Resolve_Links => False));
+                  Project_Name := Create
+                    (Normalize_Pathname (Str (1 .. Last),
+                     Resolve_Links => False));
                else
                   Auto_Load_Project := False;
                   exit;
@@ -1101,7 +1099,7 @@ procedure GPS.Main is
          end if;
 
          if Batch_File /= null then
-            Load_Default_Project (GPS_Main.Kernel, Get_Current_Dir);
+            Load_Empty_Project (GPS_Main.Kernel);
             return True;
          end if;
 
@@ -1160,7 +1158,7 @@ procedure GPS.Main is
                exit when S = "";
 
                --  If no project has been loaded yet, load a default project
-               --  and desktop before open source editors.
+               --  and desktop before opening source editors.
 
                if not Auto_Load_Project and then not File_Opened then
                   Load_Default_Project
@@ -1190,15 +1188,10 @@ procedure GPS.Main is
 
          Change_Dir (New_Dir);
 
-         --  Load a default project, in case the wizard needs to be
-         --  launched. Do not load the desktop immediately, since this
-         --  would display the GPS window at the same time as the welcome
-         --  dialog.
+         --  Load a dummy project, in case the wizard needs to be launched.
 
          if not Auto_Load_Project and then not File_Opened then
-            Load_Default_Project
-              (GPS_Main.Kernel, Get_Current_Dir,
-               Load_Default_Desktop => False);
+            Load_Empty_Project (GPS_Main.Kernel);
          end if;
       end Load_Sources;
 
@@ -1473,7 +1466,7 @@ procedure GPS.Main is
       elsif Project_Name = VFS.No_File then
          if Server_Mode then
             Auto_Load_Project := True;
-            Load_Default_Project (GPS_Main.Kernel, Get_Current_Dir);
+            Load_Empty_Project (GPS_Main.Kernel);
             Load_Sources;
 
          else
@@ -1638,6 +1631,7 @@ procedure GPS.Main is
    procedure Do_Cleanups is
       Kernel   : constant Kernel_Handle := GPS_Main.Kernel;
       Log_File : constant String := Get_Home_Dir (Kernel) & "log";
+      Project  : constant Project_Type := Get_Project (Kernel);
       Success  : Boolean;
 
    begin
@@ -1661,6 +1655,16 @@ procedure GPS.Main is
                    "Unexpected exception: " & Exception_Information (E));
       end;
 
+      if Status (Project) = Default then
+         Trace (Me, "Remove default project on disk, no longer used");
+         Delete (Project_Path (Project), Success);
+      end if;
+
+      --  All tasks should be interrupted before the main window is closed
+      --  since they may need to access their consoles.
+
+      Task_Manager.Interrupt_All_Tasks (Get_Task_Manager (Kernel));
+
       --  Destroy the GUI before the modules, otherwise if some package tries
       --  to access their local module_id, they will generate storage_error.
       --  No module should need to access its GUI anyway when it is destroyed,
@@ -1670,11 +1674,6 @@ procedure GPS.Main is
       --  point, we no longer want to access/update it past this point.
 
       GPS_Main.Animation_Image := null;
-
-      --  All tasks should be interrupted before the main window is closed
-      --  since they need to access their consoles.
-
-      Task_Manager.Interrupt_All_Tasks (Get_Task_Manager (Kernel));
 
       Destroy (GPS_Main);
 
