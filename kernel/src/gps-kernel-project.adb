@@ -61,16 +61,16 @@ package body GPS.Kernel.Project is
       Handle : Kernel_Handle;
    end record;
 
-   procedure Report (Handler : access Registry_Error_Handler_Record;
-                     Msg     : String);
+   procedure Report
+     (Handler : access Registry_Error_Handler_Record; Msg : String);
    --  Used to report an error to the user.
 
    ------------
    -- Report --
    ------------
 
-   procedure Report (Handler : access Registry_Error_Handler_Record;
-                     Msg     : String) is
+   procedure Report
+     (Handler : access Registry_Error_Handler_Record; Msg : String) is
    begin
       Insert (Handler.Handle, Msg, Mode => Error);
    end Report;
@@ -82,12 +82,12 @@ package body GPS.Kernel.Project is
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class)
    is
-      Gnatls          : constant String := Get_Attribute_Value
+      Gnatls        : constant String := Get_Attribute_Value
         (Get_Project (Handle), Gnatlist_Attribute, Default => "gnatls");
-      Gnatls_Args     : Argument_List_Access :=
-                       Argument_String_To_List (Gnatls & " -v");
-      Langs           : Argument_List := Get_Languages (Get_Project (Handle));
-      Error_Handler   : aliased Registry_Error_Handler_Record;
+      Gnatls_Args   : Argument_List_Access :=
+                        Argument_String_To_List (Gnatls & " -v");
+      Langs         : Argument_List := Get_Languages (Get_Project (Handle));
+      Error_Handler : aliased Registry_Error_Handler_Record;
 
    begin
       if Basic_Types.Contains (Langs, "ada", Case_Sensitive => False) then
@@ -127,11 +127,16 @@ package body GPS.Kernel.Project is
       Directory            : VFS.Virtual_File;
       Load_Default_Desktop : Boolean := True)
    is
+      Project             : Virtual_File :=
+                              Create_From_Dir (Directory, "default.gpr");
+      Share_Dir           : constant String :=
+                              Get_System_Dir (Kernel) & "share/gps/";
+      Default             : constant String := Share_Dir & "default.gpr";
+      Readonly            : constant String := Share_Dir & "readonly.gpr";
+      Found               : Boolean;
       Had_Project_Desktop : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
 
-      Iter : Tools_Htable.String_Hash_Table.Iterator;
-      Prop : Tool_Properties_Record;
    begin
       --  Save all open children, and close everything. A new desktop will be
       --  open in the end anway
@@ -142,44 +147,23 @@ package body GPS.Kernel.Project is
 
       Push_State (Kernel_Handle (Kernel), Busy);
 
-      Entities.Reset (Get_Database (Kernel));
+      if Is_Regular_File (Project) then
+         Found := True;
+      elsif Is_Writable (Directory) and then Is_Regular_File (Default) then
+         Copy_File (Default, Full_Name (Project).all, Found);
+      elsif Is_Regular_File (Readonly) then
+         Project := VFS.Create (Readonly);
+         Found := True;
+      else
+         Found := False;
+      end if;
 
-      Load_Default_Project (Kernel.Registry.all, Directory);
-
-      --  For all registered tool that contain default switches, set these up
-
-      Tools_Htable.String_Hash_Table.Get_First (Kernel.Tools, Iter);
-      loop
-         Prop := Tools_Htable.String_Hash_Table.Get_Element (Iter);
-         exit when Prop = No_Tool;
-
-         if Prop.Initial_Cmd_Line /= null then
-            declare
-               Switches : Argument_List_Access :=
-                 Argument_String_To_List (Prop.Initial_Cmd_Line.all);
-               No_Scenario : constant Scenario_Variable_Array (1 .. 0) :=
-                 (others => No_Variable);
-            begin
-               Update_Attribute_Value_In_Scenario
-                 (Get_Project (Kernel),
-                  Scenario_Variables => No_Scenario,
-                  Attribute          => Build
-                    (Prop.Project_Package.all, Prop.Project_Attribute.all),
-                  Values             => Switches.all,
-                  Attribute_Index    => Prop.Project_Index.all);
-               Free (Switches);
-            end;
-         end if;
-
-         Tools_Htable.String_Hash_Table.Get_Next (Kernel.Tools, Iter);
-      end loop;
-
-      Set_Project_Modified (Get_Project (Kernel), False);
-
-      --  Compute the project
-
-      Run_Hook (Kernel, Project_Changed_Hook);
-      Recompute_View (Kernel);
+      if Found then
+         Load_Project (Kernel, Project);
+         Set_Status (Get_Project (Kernel), Projects.Default);
+      else
+         Load_Empty_Project (Kernel);
+      end if;
 
       --  Reload the default desktop
 
@@ -190,6 +174,24 @@ package body GPS.Kernel.Project is
 
       Pop_State (Kernel_Handle (Kernel));
    end Load_Default_Project;
+
+   ------------------------
+   -- Load_Empty_Project --
+   ------------------------
+
+   procedure Load_Empty_Project
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Had_Project_Desktop : Boolean;
+      pragma Unreferenced (Had_Project_Desktop);
+   begin
+      Entities.Reset (Get_Database (Kernel));
+      Load_Empty_Project (Kernel.Registry.all);
+      Run_Hook (Kernel, Project_Changed_Hook);
+      Recompute_View (Kernel);
+      Close_All_Children (Kernel);
+      Had_Project_Desktop := Load_Desktop (Kernel);
+   end Load_Empty_Project;
 
    ------------------------------
    -- Reload_Project_If_Needed --
@@ -250,6 +252,7 @@ package body GPS.Kernel.Project is
          --  the project file contains errors and couldn't be loaded, but it
          --  was also saved in the desktop. If that is the case, the project
          --  would be open several times otherwise
+
          Set_Pref (Kernel, Auto_Jump_To_First, False);
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
          Parse_File_Locations (Kernel, S, Location_Category);
@@ -261,12 +264,10 @@ package body GPS.Kernel.Project is
       pragma Unreferenced (Had_Project_Desktop);
       Data                : aliased File_Hooks_Args;
 
-      Root         : constant Project_Type :=
-                       Get_Root_Project (Kernel.Registry.all);
+      Root_Project : constant Virtual_File :=
+                       Project_Path (Get_Root_Project (Kernel.Registry.all));
       Same_Project : constant Boolean :=
-                       Status (Root) = From_File
-                         and then Project = Project_Path (Root)
-                         and then Is_Local (Project);
+                       Project = Root_Project and then Is_Local (Project);
       Local_Project : VFS.Virtual_File;
 
    begin
@@ -279,8 +280,7 @@ package body GPS.Kernel.Project is
             return;
          end if;
 
-         --  Do not save the desktop for the default project: that breaks the
-         --  loading of GPS, since we always start from a default project,
+         --  Never save automatically the desktop for the default project
 
          if Status (Get_Root_Project (Kernel.Registry.all)) = From_File
            and then Get_Pref (Save_Desktop_On_Exit)
@@ -290,6 +290,7 @@ package body GPS.Kernel.Project is
 
          --  Close all children before loading the new projet, in case a new
          --  editor needs to be loaded to display error messages
+
          Close_All_Children (Kernel);
       end if;
 
@@ -304,8 +305,9 @@ package body GPS.Kernel.Project is
             --  Loading a remote project. Convert its path to the local path
             --  Note that Running the Project_Changing_Hook has already
             --  set the build_server to Project's Host
-            Local_Project := Create (To_Local (Full_Name (Project).all,
-                                               Build_Server));
+
+            Local_Project :=
+              Create (To_Local (Full_Name (Project).all, Build_Server));
 
             if not Is_Regular_File (Local_Project) then
                Console.Insert
@@ -313,10 +315,15 @@ package body GPS.Kernel.Project is
                   & Full_Name (Project).all &
                   (-". Please configure the appropriate remote path"),
                   Mode => Console.Error, Add_Lf => False);
+
+               --  Need to run Project_Changing hook to reset build_server
+               Data.File := Root_Project;
+               Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
+
                Pop_State (Kernel_Handle (Kernel));
-               Load_Default_Project (Kernel, Directory => Get_Current_Dir);
                return;
             end if;
+
          else
             Local_Project := Project;
          end if;
@@ -332,8 +339,9 @@ package body GPS.Kernel.Project is
          end if;
 
          if Get_Predefined_Source_Path (Kernel.Registry.all) = ""
-           or else not Is_Local (Build_Server) then
-            Trace (Me, "Compute or recompute predefined paths");
+           or else not Is_Local (Build_Server)
+         then
+            Trace (Me, "Recompute predefined paths");
             Compute_Predefined_Paths (Kernel);
          end if;
 
@@ -363,7 +371,6 @@ package body GPS.Kernel.Project is
          Console.Insert (Kernel, (-"Cannot find project file ")
                          & Full_Name (Project).all,
                          Mode => Console.Error, Add_Lf => False);
-         Load_Default_Project (Kernel, Directory => Get_Current_Dir);
       end if;
    end Load_Project;
 
@@ -516,6 +523,7 @@ package body GPS.Kernel.Project is
       if Save_Project (Project, Report_Error'Unrestricted_Access) then
          Run_Hook (Kernel, Project_Saved_Hook, Data'Access);
       end if;
+
       return Result;
    end Save_Single_Project;
 
