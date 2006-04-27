@@ -22,6 +22,7 @@ with Ada.Command_Line;              use Ada.Command_Line;
 with Ada.Text_IO;                   use Ada.Text_IO;
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Text_IO; use Ada.Strings.Unbounded.Text_IO;
+with Ada.Calendar;                  use Ada.Calendar;
 
 with Completion.Ada;                  use Completion.Ada;
 with Completion.Entities_Extractor;   use Completion.Entities_Extractor;
@@ -285,6 +286,9 @@ procedure Completion.Test is
         new Ada_Completion_Manager;
       Resolver : constant Completion_Resolver_Access :=
         Get_Construct_Completion_Resolver (Buffer);
+
+      Start_Date  : Time;
+      Time_Passed : Duration;
    begin
       Tag_Index := 1;
 
@@ -297,12 +301,23 @@ procedure Completion.Test is
 
          exit when Tag_Index = 0;
 
+         Start_Date := Clock;
+
          Result := Get_Possibilities
            (Resolver => Resolver,
             Identifier => Buffer (Start_Word .. End_Word),
             Is_Partial => True,
             Offset     => End_Word,
             Filter     => All_Visible_Entities);
+
+         Time_Passed := Clock - Start_Date;
+
+         if Time_Passed > 1.0 then
+            Standard.Ada.Text_IO.Put_Line
+              ("Completion is too long: "
+               & Duration'Image (Time_Passed)
+               & " seconds.");
+         end if;
 
          Display (Result, Buffer (Start_Word .. End_Word));
       end loop;
@@ -323,6 +338,9 @@ procedure Completion.Test is
         new Ada_Completion_Manager;
       Resolver : constant Completion_Resolver_Access :=
         Get_Construct_Completion_Resolver (Buffer);
+
+      Start_Date  : Time;
+      Time_Passed : Duration;
    begin
       Tag_Index := 1;
 
@@ -335,9 +353,20 @@ procedure Completion.Test is
 
          exit when Tag_Index = 0;
 
+         Start_Date := Clock;
+
          Result := Get_Initial_Completion_List
            (Manager      => Manager.all,
             Start_Offset => End_Word);
+
+         Time_Passed := Clock - Start_Date;
+
+         if Time_Passed > 1.0 then
+            Standard.Ada.Text_IO.Put_Line
+              ("Completion is too long: "
+               & Duration'Image (Time_Passed)
+               & " seconds.");
+         end if;
 
          Display (Result, Buffer (Start_Word .. End_Word));
       end loop;
