@@ -123,6 +123,50 @@ package body GPS.Kernel.Remote is
    type Descriptor_Attribute is (System_Defined, User_Defined);
    --  ???
 
+   --------------------------
+   -- Connection debugging --
+   --------------------------
+
+   type Connection_Debug is new Connection_Debugger_Record with record
+      Kernel  : Kernel_Handle;
+      Title   : String_Ptr;
+      Console : Interactive_Console;
+   end record;
+
+   function Create (Kernel : Kernel_Handle;
+                    Title  : String) return Connection_Debugger;
+   --  Create a Connection_Debug object
+
+   procedure Print (Dbg  : access Connection_Debug;
+                    Str  : String;
+                    Mode : Mode_Type);
+   --  Display Str in the connection debugger
+
+   function Create (Kernel : Kernel_Handle;
+                    Title  : String) return Connection_Debugger is
+   begin
+      return new Connection_Debug'
+        (Kernel  => Kernel,
+         Title   => new String'(Title),
+         Console => null);
+   end Create;
+
+   procedure Print (Dbg  : access Connection_Debug;
+                    Str  : String;
+                    Mode : Mode_Type) is
+      Console : Interactive_Console;
+   begin
+      Console :=
+        Create_Interactive_Console (Dbg.Kernel, Dbg.Title.all);
+
+      case Mode is
+         when Input =>
+            Insert (Console, Str, Add_LF => True, Highlight => True);
+         when Output =>
+            Insert (Console, Str, Add_LF => False, Highlight => False);
+      end case;
+   end Print;
+
    ------------------
    -- Mirror_Paths --
    ------------------
@@ -300,6 +344,7 @@ package body GPS.Kernel.Remote is
       Max_Nb_Connected_Spin : Gtk_Spin_Button;
       Timeout_Spin          : Gtk_Spin_Button;
       Init_Cmds_View        : Gtk_Text_View;
+      Debug_Button          : Gtk_Check_Button;
       --  Mirror Paths config pannel
       Paths_List            : Mirrors_List_Access;
       Paths_List_Widget     : Paths_Widget;
@@ -529,6 +574,8 @@ package body GPS.Kernel.Remote is
                              Get_Attribute (Node, "remote_shell");
       Remote_Sync        : constant String :=
                              Get_Attribute (Node, "remote_sync", "rsync");
+      Debug_Console      : constant String :=
+                             Get_Attribute (Node, "debug_console", "false");
       Field              : String_Ptr;
       Max_Nb_Connections : Natural;
       User_Name          : String_Access;
@@ -538,6 +585,7 @@ package body GPS.Kernel.Remote is
       Child              : Node_Ptr;
       Cmd                : Node_Ptr;
       Desc               : Machine_Descriptor;
+      Dbg                : Connection_Debugger;
 
    begin
       if Nickname = "" then
@@ -641,6 +689,12 @@ package body GPS.Kernel.Remote is
          end loop;
       end if;
 
+      if Debug_Console = "true" then
+         Dbg := Create (Kernel, Nickname & " session");
+      else
+         Dbg := null;
+      end if;
+
       Desc := new Machine_Descriptor_Record'
         (Nickname            => new String'(Nickname),
          Network_Name        => new String'(Network_Name),
@@ -652,7 +706,8 @@ package body GPS.Kernel.Remote is
          Timeout             => Timeout,
          Extra_Init_Commands => Extra_Init_Cmds,
          Attribute           => Attribute,
-         Ref                 => 0);
+         Ref                 => 0,
+         Dbg                 => Dbg);
 
       --  Add this machine at GNAT.Expect.TTY.Remote level
 
@@ -797,6 +852,12 @@ package body GPS.Kernel.Remote is
             Set_Attribute (Item, "remote_access", Desc.Access_Name.all);
             Set_Attribute (Item, "network_name", Desc.Network_Name.all);
             Set_Attribute (Item, "nickname", Desc.Nickname.all);
+            if Desc.Dbg = null then
+               Set_Attribute (Item, "debug_console", "false");
+            else
+               Set_Attribute (Item, "debug_console", "true");
+            end if;
+
             Child := new Node;
             Child.Tag := new String'("user_name");
             Child.Value := new String'(Desc.User_Name.all);
@@ -1377,6 +1438,13 @@ package body GPS.Kernel.Remote is
       Attach (Dialog.Advanced_Table, Dialog.Init_Cmds_View, 1, 2, 3, 4,
               Fill or Expand);
 
+      Gtk_New (Label, -"Debug console:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Attach (Dialog.Advanced_Table, Label, 0, 1, 4, 5,
+              Fill or Expand, 0, 10);
+      Gtk_New (Dialog.Debug_Button);
+      Attach (Dialog.Advanced_Table, Dialog.Debug_Button, 1, 2, 4, 5, 0, 0);
+
       --  Remote paths configuration
       Line_Nb := Line_Nb + 1;
       Gtk_New
@@ -1431,6 +1499,8 @@ package body GPS.Kernel.Remote is
       Widget_Callback.Object_Connect
         (Get_Buffer (Dialog.Init_Cmds_View), "changed",
          On_Changed'Access, Dialog);
+      Widget_Callback.Object_Connect
+        (Dialog.Debug_Button, "clicked", On_Changed'Access, Dialog);
       Widget_Callback.Object_Connect
         (Get_Selection (Dialog.Machine_Tree), "changed",
          On_Selection_Changed'Access,
@@ -1646,6 +1716,7 @@ package body GPS.Kernel.Remote is
       Path_Item  : Mirrors_List_Access;
       Attribute  : Descriptor_Attribute;
       Modified   : Boolean;
+      Dbg        : Connection_Debugger;
 
    begin
       Trace (Me, "Save");
@@ -1710,6 +1781,12 @@ package body GPS.Kernel.Remote is
             --  Free replaced descriptor
             Unref (Item.Desc);
 
+            if Get_Active (Dialog.Debug_Button) then
+               Dbg := Create (Dialog.Kernel, Nickname & " session");
+            else
+               Dbg := null;
+            end if;
+
             Item.Desc := new Machine_Descriptor_Record'
               (Nickname            => new String'(Nickname),
                Network_Name        => new String'
@@ -1729,7 +1806,8 @@ package body GPS.Kernel.Remote is
                Extra_Init_Commands => new Argument_List'
                  (Get_Command_List (Dialog.Init_Cmds_View)),
                Attribute           => Attribute,
-               Ref                 => 1);
+               Ref                 => 1,
+               Dbg                 => Dbg);
          end if;
 
          --  Now save the paths
@@ -1834,8 +1912,8 @@ package body GPS.Kernel.Remote is
                        Gdouble (Item.Desc.Timeout) / 1000.0);
             Set_Value (Dialog.Max_Nb_Connected_Spin,
                        Gdouble (Item.Desc.Max_Nb_Connections));
-
             Set_Text (Get_Buffer (Dialog.Init_Cmds_View), "");
+            Set_Active (Dialog.Debug_Button, Item.Desc.Dbg /= null);
 
             if Item.Desc.Extra_Init_Commands /= null then
                for J in Item.Desc.Extra_Init_Commands'Range loop
@@ -1933,7 +2011,8 @@ package body GPS.Kernel.Remote is
                   Timeout             => 10000,
                   Max_Nb_Connections  => 3,
                   Attribute           => User_Defined,
-                  Ref                 => 1),
+                  Ref                 => 1,
+                  Dbg                 => null),
                Next => Dialog.Machines);
             Dialog.Paths_List := new Mirrors_List_Record'
               (Nickname  => new String'(Nickname),
@@ -2021,6 +2100,7 @@ package body GPS.Kernel.Remote is
                           Gdouble (Item.Desc.Timeout) / 1000.0);
                Set_Value (Dialog.Max_Nb_Connected_Spin,
                           Gdouble (Item.Desc.Max_Nb_Connections));
+               Set_Active (Dialog.Debug_Button, Item.Desc.Dbg /= null);
                Dialog.Restoring := False;
             end if;
          end;
