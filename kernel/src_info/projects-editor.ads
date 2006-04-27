@@ -68,13 +68,6 @@ package Projects.Editor is
    --  The project is also registered, so that it can be retrieved from one of
    --  its view.
 
-   function Create_Default_Project
-     (Registry : Projects.Registry.Project_Registry'Class;
-      Name     : String;
-      Path     : VFS.Virtual_File) return Project_Type;
-   --  Create a new project, whose source directory and object directory are is
-   --  Path.
-
    procedure Rename_And_Move
      (Root_Project  : Project_Type;
       Project       : Project_Type;
