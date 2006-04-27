@@ -153,17 +153,14 @@ package Projects.Registry is
      (Registry : Project_Registry;
       Project  : Project_Type);
    --  Set Project as the root project. Recompute_View should be called
-   --  afterward. The status of the project is automatically set to Default.
+   --  afterward.
    --  It is recommended that you call Reset before this function, to free
    --  the memory.
 
-   procedure Load_Default_Project
-     (Registry  : in out Project_Registry;
-      Directory : VFS.Virtual_File);
-   --  Load the default project for Directory.
+   procedure Load_Empty_Project (Registry  : in out Project_Registry);
+   --  Load an empty project.
    --  Recompute_View must be called afterwards.
-   --  Use the function GPS.Kernel.Project.Load_Default_Project instead, so
-   --  that default switches are properly initialized.
+   --  Used only when initializing other GPS components (e.g. kernel).
 
    function Load_Or_Find
      (Registry     : Project_Registry;
