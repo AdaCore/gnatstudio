@@ -2540,9 +2540,15 @@ package body GPS.Kernel.Remote is
          --  to be non destructive. Only the most recent files are copied, no
          --  deletion is performed.
          Synchronize
-           (Kernel_Handle (Kernel), GPS_Server, Build_Server, "", False);
-         Synchronize
-           (Kernel_Handle (Kernel), Build_Server, GPS_Server, "", False);
+           (Kernel_Handle (Kernel), GPS_Server, Build_Server, "", False,
+            Success);
+         --  If previous call to rsync is not successful, then don't try to
+         --  call it again to speed-up error reporting (prevents a second
+         --  timeout)
+         if Success then
+            Synchronize
+              (Kernel_Handle (Kernel), Build_Server, GPS_Server, "", False);
+         end if;
       end if;
 
    exception
@@ -3131,6 +3137,23 @@ package body GPS.Kernel.Remote is
       Queue_Id     : String;
       Sync_Deleted : Boolean)
    is
+      Status : Boolean;
+   begin
+      Synchronize (Kernel, From, To, Queue_Id, Sync_Deleted, Status);
+   end Synchronize;
+
+   -----------------
+   -- Synchronize --
+   -----------------
+
+   procedure Synchronize
+     (Kernel       : Kernel_Handle;
+      From         : Server_Type;
+      To           : Server_Type;
+      Queue_Id     : String;
+      Sync_Deleted : Boolean;
+      Status       : out Boolean)
+   is
       Server         : Server_Type;
       Mirror         : Mirror_Path_Access;
       From_Path      : String_Access;
@@ -3202,10 +3225,13 @@ package body GPS.Kernel.Remote is
             begin
                Trace (Me, "run sync hook for " & Data.Src_Path);
 
+               Status := True;
                if not Run_Hook_Until_Success
                  (Kernel, Rsync_Action_Hook, Data'Unchecked_Access)
                then
-                  Trace (Me, "No remote sync was registered");
+                  Status := False;
+                  Trace (Me, "No remote sync was registered or errors during" &
+                         " calls");
                end if;
             end;
          end if;
