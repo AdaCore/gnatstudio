@@ -2172,6 +2172,16 @@ language syntax.
 @cindex uncomment
 Remove the comment delimiters from the current selection or line.
 
+@item Complete Identifier
+@cindex complete identifier
+Complete the identifier prefix under the cursor. This command will cycle
+through all identifiers starting with the given prefix.
+
+@item Complete Block
+@cindex complete block
+Close the current statement (if, case, loop) or unit (procedure,
+function, package). This action works only on an Ada buffer.
+
 @item Refill
 @cindex refill
 Refill text on the selection or current line according to the right
