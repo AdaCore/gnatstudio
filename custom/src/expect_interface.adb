@@ -19,19 +19,20 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GNAT.Expect;        use GNAT.Expect;
-with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with GNAT.Regpat;        use GNAT.Regpat;
+with GNAT.Expect;             use GNAT.Expect;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.Regpat;             use GNAT.Regpat;
 
-with Gtk.Main;           use Gtk.Main;
+with Gtk.Main;                use Gtk.Main;
 
-with Custom_Module;      use Custom_Module;
-with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
-with Traces;             use Traces;
-with Commands;           use Commands;
+with Custom_Module;           use Custom_Module;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
+with Traces;                  use Traces;
+with Commands;                use Commands;
 
 package body Expect_Interface is
 
@@ -86,6 +87,10 @@ package body Expect_Interface is
 
    procedure Free (X : in out Custom_Action_Access);
    --  Free memory associated to X.
+
+   function Get_Process_Class (Kernel : access Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return the process class
 
    type Instance_Callback_Data is new Callback_Data_Record with record
       Inst : Class_Instance;
@@ -187,7 +192,7 @@ package body Expect_Interface is
      (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access
    is
       Process_Class : constant Class_Type :=
-        New_Class (Get_Kernel (Data), Process_Class_Name);
+        Get_Process_Class (Get_Kernel (Data));
       Inst : constant Class_Instance := Nth_Arg (Data, N, Process_Class);
    begin
       return Get_Data (Inst);
@@ -474,13 +479,14 @@ package body Expect_Interface is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Kernel        : constant Kernel_Handle :=
+      Kernel          : constant Kernel_Handle :=
         Get_Kernel (Custom_Module_ID.all);
-      D             : Custom_Action_Access;
-      Process_Class : constant Class_Type := New_Class
-        (Kernel, Process_Class_Name);
-      E             : Exit_Type;
-      Status        : Integer;
+      D               : Custom_Action_Access;
+      Process_Class   : constant Class_Type :=
+        Get_Process_Class (Get_Kernel (Data));
+      E               : Exit_Type;
+      Status          : Integer;
+      Created_Command : Scheduled_Command_Access;
       pragma Unreferenced (E);
 
    begin
@@ -513,21 +519,23 @@ package body Expect_Interface is
             --  All the parameters are correct: launch the process.
 
             Launch_Process
-              (Kernel        => Kernel,
-               Command       => D.Command (D.Command'First).all,
+              (Kernel          => Kernel,
+               Command         => D.Command (D.Command'First).all,
                Arguments  => D.Command (D.Command'First + 1 .. D.Command'Last),
-               Console       => null,
-               Callback      => Output_Cb'Access,
-               Exit_Cb       => Exit_Cb'Access,
-               Success       => Success,
-               Show_Command  => False,
-               Callback_Data => new Instance_Callback_Data'(Inst => Inst),
+               Console         => null,
+               Callback        => Output_Cb'Access,
+               Exit_Cb         => Exit_Cb'Access,
+               Success         => Success,
+               Show_Command    => False,
+               Callback_Data   => new Instance_Callback_Data'(Inst => Inst),
                Show_In_Task_Manager => Nth_Arg (Data, 6, True),
-               Line_By_Line  => False,
-               Directory     => "",
-               Fd            => D.Fd);
+               Line_By_Line    => False,
+               Directory       => "",
+               Fd              => D.Fd,
+               Created_Command => Created_Command);
 
             if Success then
+               Set_Instance (Created_Command, Get_Script (Data), Inst);
                Set_Property
                  (Inst, Process_Class_Name, Action_Property'(Action => D));
             else
@@ -589,12 +597,22 @@ package body Expect_Interface is
    end Custom_Spawn_Handler;
 
    -----------------------
+   -- Get_Process_Class --
+   -----------------------
+
+   function Get_Process_Class (Kernel : access Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      return New_Class
+        (Kernel, Process_Class_Name, New_Class (Kernel, "Command"));
+   end Get_Process_Class;
+
+   -----------------------
    -- Register_Commands --
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
-      Process_Class : constant Class_Type := New_Class
-        (Kernel, Process_Class_Name, New_Class (Kernel, "Command"));
+      Process_Class : constant Class_Type := Get_Process_Class (Kernel);
    begin
       Register_Command
         (Kernel, Constructor_Method,
