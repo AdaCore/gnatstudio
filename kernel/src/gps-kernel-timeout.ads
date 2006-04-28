@@ -90,7 +90,8 @@ package GPS.Kernel.Timeout is
       Show_In_Task_Manager : Boolean := True;
       Queue_Id             : String := "";
       Synchronous          : Boolean := False;
-      Show_Exit_Status     : Boolean := False);
+      Show_Exit_Status     : Boolean := False;
+      Timeout              : Integer := -1);
    --  Launch a given command with arguments on server 'Server'.
    --  Arguments must be freed by the user.
    --
@@ -130,6 +131,9 @@ package GPS.Kernel.Timeout is
    --  If Show_Exit_Status is true, the exit status of the process will be
    --  displayed in the Console.
    --
+   --  If Timeout is not -1, then the launched process will be interrupted
+   --  after Timeout ms if no output is received.
+   --
    --  Callback_Data is freed automatically when the process terminates.
 
    procedure Launch_Process
@@ -151,6 +155,7 @@ package GPS.Kernel.Timeout is
       Queue_Id             : String := "";
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
+      Timeout              : Integer := -1;
       Cmd                  : out Command_Access);
    --  Same as above, and returns the created Command_Access.
    --  Cmd is allocated by this procedure, and will be cleaned automatically,
