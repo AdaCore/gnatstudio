@@ -306,12 +306,8 @@ package body Remote_Sync_Module is
       Free (Dest_Path);
       Free (Transport_Arg);
 
-      if Rsync_Data.Synchronous and then Cb_Data.Status /= 0 then
-         Success := False;
-      end if;
-      --  ??? Free rsync_data structure
-
-      return Success;
+      return Cb_Data.Status /= 0 and then Success;
+      --  ??? Free cb_data structure
    end On_Rsync_Hook;
 
    ------------------------
@@ -433,6 +429,14 @@ package body Remote_Sync_Module is
       Cb_Data : Rsync_Callback_Data renames
         Rsync_Callback_Data (Data.Callback_Data.all);
    begin
+      if Cb_Data.Synchronous then
+         if Cb_Data.Dialog_Shown then
+            Gtk.Main.Grab_Remove (Cb_Data.Dialog);
+         end if;
+
+         Unref (Cb_Data.Dialog);
+      end if;
+
       Cb_Data.Status := Status;
 
       if Status /= 0 then
@@ -442,14 +446,6 @@ package body Remote_Sync_Module is
             -("Directories are not synchronized properly: rsync " &
               "failed. Please verify your network configuration"),
             Mode => Error);
-      end if;
-
-      if Cb_Data.Synchronous then
-         if Cb_Data.Dialog_Shown then
-            Gtk.Main.Grab_Remove (Cb_Data.Dialog);
-         end if;
-
-         Unref (Cb_Data.Dialog);
       end if;
 
    exception
