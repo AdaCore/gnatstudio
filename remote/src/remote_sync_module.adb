@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;         use Ada.Exceptions;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.Expect;            use GNAT.Expect;
@@ -25,8 +26,15 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
+with Glib;               use Glib;
 with Glib.Xml_Int;       use Glib.Xml_Int;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Dialog;         use Gtk.Dialog;
+with Gtk.Label;          use Gtk.Label;
+with Gtk.Progress_Bar;   use Gtk.Progress_Bar;
+with Gtk.Main;
 
+with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
@@ -59,10 +67,24 @@ package body Remote_Sync_Module is
 
    Rsync_Module : Rsync_Module_ID := null;
 
+   type Rsync_Dialog_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
+      Progress : Gtk.Progress_Bar.Gtk_Progress_Bar;
+   end record;
+   type Rsync_Dialog is access all Rsync_Dialog_Record'Class;
+
+   procedure Gtk_New (Dialog : out Rsync_Dialog;
+                      Kernel : access Kernel_Handle_Record'Class;
+                      Src_Path, Dest_Path : String);
+   --  Creates a new Rsync_Dialog
+
    type Rsync_Callback_Data is new Callback_Data_Record with record
       Network_Name      : String_Access;
       User_Name         : String_Access;
       Nb_Password_Tries : Natural;
+      Synchronous       : Boolean;
+      Dialog            : Rsync_Dialog;
+      Dialog_Shown      : Boolean;
+      Status            : Integer;
    end record;
 
    function On_Rsync_Hook
@@ -73,6 +95,10 @@ package body Remote_Sync_Module is
    procedure Parse_Rsync_Output
      (Data : Process_Data; Output : String);
    --  Called whenever new output from rsync is available
+
+   procedure Rsync_Terminated
+     (Data : Process_Data; Status : Integer);
+   --  Called when rsync exits.
 
    ---------------------
    -- Register_Module --
@@ -112,6 +138,33 @@ package body Remote_Sync_Module is
          end if;
       end if;
    end Customize;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New (Dialog : out Rsync_Dialog;
+                      Kernel : access Kernel_Handle_Record'Class;
+                      Src_Path, Dest_Path : String) is
+      Label : Gtk_Label;
+   begin
+      Dialog := new Rsync_Dialog_Record;
+      Initialize (Dialog, -"Synchronisation in progress",
+                  Get_Main_Window (Kernel), 0);
+      Set_Has_Separator (Dialog, False);
+      Gtk_New (Label, -"Synchronisation with remote host in progress.");
+      Pack_Start (Get_Vbox (Dialog), Label);
+      Gtk_New (Label);
+      Set_Markup (Label, (-"From: ") & "<span foreground=""blue"">" &
+                  Src_Path & "</span>");
+      Pack_Start (Get_Vbox (Dialog), Label);
+      Gtk_New (Label);
+      Set_Markup (Label, (-"To: ") & "<span foreground=""blue"">" &
+                  Dest_Path & "</span>");
+      Pack_Start (Get_Vbox (Dialog), Label);
+      Gtk_New (Dialog.Progress);
+      Pack_Start (Get_Vbox (Dialog), Dialog.Progress);
+   end Gtk_New;
 
    -------------------
    -- On_Rsync_Hook --
@@ -221,7 +274,15 @@ package body Remote_Sync_Module is
 
       Cb_Data := (Network_Name      => Machine.Network_Name,
                   User_Name         => Machine.User_Name,
-                  Nb_Password_Tries => 0);
+                  Nb_Password_Tries => 0,
+                  Synchronous       => Rsync_Data.Synchronous,
+                  Dialog            => null,
+                  Dialog_Shown      => False,
+                  Status            => 0);
+
+      if Rsync_Data.Synchronous then
+         Gtk_New (Cb_Data.Dialog, Kernel, Src_Path.all, Dest_Path.all);
+      end if;
 
       --  Do not set Line_By_Line as this will prevent the password prompt
       --  catch.
@@ -235,13 +296,21 @@ package body Remote_Sync_Module is
          Success       => Success,
          Line_By_Line  => False,
          Callback      => Parse_Rsync_Output'Access,
+         Exit_Cb       => Rsync_Terminated'Access,
          Callback_Data => new Rsync_Callback_Data'(Cb_Data),
          Queue_Id      => Rsync_Data.Queue_Id,
          Synchronous   => Rsync_Data.Synchronous,
          Timeout       => Machine.Timeout);
+
       Free (Src_Path);
       Free (Dest_Path);
       Free (Transport_Arg);
+
+      if Rsync_Data.Synchronous and then Cb_Data.Status /= 0 then
+         Success := False;
+      end if;
+      --  ??? Free rsync_data structure
+
       return Success;
    end On_Rsync_Hook;
 
@@ -260,6 +329,8 @@ package body Remote_Sync_Module is
       Force           : Boolean;
       Cb_Data         : Rsync_Callback_Data renames
         Rsync_Callback_Data (Data.Callback_Data.all);
+      Dead            : Boolean;
+      pragma Unreferenced (Dead);
    begin
       Trace (Me, "Parse_Rsync_Output: '" & Output & "'");
 
@@ -318,17 +389,72 @@ package body Remote_Sync_Module is
          Match (Progress_Regexp,
                 Output,
                 Matched);
+
          if Matched (0) /= No_Match then
             File_Nb := Natural'Value
               (Output (Matched (1).First .. Matched (1).Last));
             Total_Files := Natural'Value
               (Output (Matched (2).First .. Matched (2).Last));
-            Set_Progress (Data.Command,
-              Progress => (Activity => Running,
-                           Current  => File_Nb,
-                           Total    => Total_Files));
+
+            if Cb_Data.Synchronous then
+               if not Cb_Data.Dialog_Shown then
+                  Cb_Data.Dialog_Shown := True;
+                  Show_All (Cb_Data.Dialog);
+                  Gtk.Main.Grab_Add (Cb_Data.Dialog);
+               end if;
+
+               Set_Fraction (Cb_Data.Dialog.Progress,
+                             Gdouble (File_Nb) / Gdouble (Total_Files));
+               Set_Text (Cb_Data.Dialog.Progress,
+                         Natural'Image (File_Nb) & "/" &
+                         Natural'Image (Total_Files));
+
+               while Gtk.Main.Events_Pending loop
+                  Dead := Gtk.Main.Main_Iteration;
+               end loop;
+
+            else
+               Set_Progress (Data.Command,
+                             Progress => (Activity => Running,
+                                          Current  => File_Nb,
+                                          Total    => Total_Files));
+            end if;
          end if;
       end if;
    end Parse_Rsync_Output;
+
+   ----------------------
+   -- Rsync_Terminated --
+   ----------------------
+
+   procedure Rsync_Terminated
+     (Data : Process_Data; Status : Integer)
+   is
+      Cb_Data : Rsync_Callback_Data renames
+        Rsync_Callback_Data (Data.Callback_Data.all);
+   begin
+      Cb_Data.Status := Status;
+
+      if Status /= 0 then
+         Trace (Me, "rsync terminated with incorrect status");
+         GPS.Kernel.Console.Insert
+           (Data.Kernel,
+            -("Directories are not synchronized properly: rsync " &
+              "failed. Please verify your network configuration"),
+            Mode => Error);
+      end if;
+
+      if Cb_Data.Synchronous then
+         if Cb_Data.Dialog_Shown then
+            Gtk.Main.Grab_Remove (Cb_Data.Dialog);
+         end if;
+
+         Unref (Cb_Data.Dialog);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, Exception_Information (E));
+   end Rsync_Terminated;
 
 end Remote_Sync_Module;
