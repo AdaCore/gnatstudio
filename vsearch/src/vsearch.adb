@@ -693,6 +693,10 @@ package body Vsearch is
       C              : Search_Commands.Generic_Asynchronous_Command_Access;
 
    begin
+      if All_Occurences then
+         Vsearch.Find_Next := False;
+      end if;
+
       if Gtk_Widget (Vsearch) = Toplevel then
          Toplevel := Gtk_Widget (Get_Main_Window (Vsearch.Kernel));
       end if;
