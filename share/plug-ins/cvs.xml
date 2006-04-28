@@ -233,7 +233,7 @@
       <external check-password="true">cvs -f diff -N -c -rHEAD "$2"</external>
 
       <on-failure>
-        <shell>dump_file "%1" "$1" FALSE</shell>
+        <shell>dump_file "%1" "$1" TRUE</shell>
       </on-failure>
    </action>
 

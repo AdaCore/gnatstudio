@@ -244,7 +244,7 @@
    <action name="generic_svn_diff_patch" show-command="true" output="none">
       <shell output="">echo "Getting comparison for $2 ..."</shell>
       <external>svn --non-interactive diff --diff-cmd diff -x -c "$2"</external>
-      <shell>dump_file "%1" "$1" FALSE</shell>
+      <shell>dump_file "%1" "$1" TRUE</shell>
    </action>
 
    <action name="generic_svn_diff_head" show-command="true" output="none">
