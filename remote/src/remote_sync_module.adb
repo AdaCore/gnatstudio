@@ -219,8 +219,8 @@ package body Remote_Sync_Module is
          Transport_Arg := new String'("--rsh=ssh");
       end if;
 
-      Cb_Data := (Network_Name     => Machine.Network_Name,
-                  User_Name        => Machine.User_Name,
+      Cb_Data := (Network_Name      => Machine.Network_Name,
+                  User_Name         => Machine.User_Name,
                   Nb_Password_Tries => 0);
 
       --  Do not set Line_By_Line as this will prevent the password prompt
@@ -237,7 +237,8 @@ package body Remote_Sync_Module is
          Callback      => Parse_Rsync_Output'Access,
          Callback_Data => new Rsync_Callback_Data'(Cb_Data),
          Queue_Id      => Rsync_Data.Queue_Id,
-         Synchronous   => Rsync_Data.Synchronous);
+         Synchronous   => Rsync_Data.Synchronous,
+         Timeout       => Machine.Timeout);
       Free (Src_Path);
       Free (Dest_Path);
       Free (Transport_Arg);
@@ -261,6 +262,7 @@ package body Remote_Sync_Module is
         Rsync_Callback_Data (Data.Callback_Data.all);
    begin
       Trace (Me, "Parse_Rsync_Output: '" & Output & "'");
+
       if not Data.Process_Died then
          --  Retrieve password prompt if any
          Match (Get_Default_Password_Regexp,
