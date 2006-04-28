@@ -235,7 +235,7 @@ package body Remote_Views is
          Set_State (View.Pane, Expanded);
       end if;
 
-      Gtk_New (Label, -("Remote Server:"));
+      Gtk_New (Label, -("Server:"));
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Simple_Table, Label, 0, 1, 0, 1, Fill);
 
@@ -307,7 +307,7 @@ package body Remote_Views is
       Set_Text (View.Modified_Style, State_Normal, Color);
 
       --  "Check" and "Apply" buttons
-      Gtk_New (View.Check_Button, -"Check configuration");
+      Gtk_New (View.Check_Button, -"Check");
       Set_Tip
         (Tooltips, View.Check_Button,
          -"Check your configuration against current project");
@@ -318,7 +318,7 @@ package body Remote_Views is
         (View.Check_Button, "clicked", On_Check_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
-      Gtk_New (View.Connect_Button, -"Apply configuration");
+      Gtk_New (View.Connect_Button, -"Apply");
       Set_Tip
         (Tooltips, View.Connect_Button,
          -"Apply then remote servers configuration");
