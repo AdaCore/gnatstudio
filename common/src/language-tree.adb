@@ -82,6 +82,10 @@ package body Language.Tree is
          First_Body_Index   : Natural := 0;
          Second_Body_Index  : Natural := 0;
       begin
+         if Get_Construct (Base_Iter).Name = null then
+            return;
+         end if;
+
          if Base_Scope = Null_Construct_Tree_Iterator then
             Local_Iter := Next (Tree, Base_Iter, Jump_Over);
             Local_Scope := Get_Parent_Scope (Tree, Base_Iter);
