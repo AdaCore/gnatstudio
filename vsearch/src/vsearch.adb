@@ -74,6 +74,7 @@ package body Vsearch is
    Select_Window_Hist_Key : constant History_Key := "search_select_window";
    Window_X_Hist_Key  : constant History_Key := "search_window_x";
    Window_Y_Hist_Key  : constant History_Key := "search_window_y";
+   Options_Collapsed_Hist_Key  : constant History_Key := "options_collapsed";
    --  The key for the histories.
 
    procedure Free (Data : in out Search_Module_Data);
@@ -457,6 +458,10 @@ package body Vsearch is
    procedure Close_Vsearch (Search : access Gtk_Widget_Record'Class) is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Search);
    begin
+      Set_History
+        (Get_History (Vsearch.Kernel).all, Options_Collapsed_Hist_Key,
+         Get_State (Vsearch.Options_Box) = Collapsed);
+
       Store_Position (Vsearch);
       Close (Get_MDI (Vsearch.Kernel), Search, Force => True);
 
@@ -1387,7 +1392,6 @@ package body Vsearch is
       Pack_Start (Vsearch, Enclosing_Options_Box);
 
       Gtk_New (Vsearch.Options_Box, -"Options");
-      Set_State (Vsearch.Options_Box, Expanded);
       Pack_Start (Enclosing_Options_Box, Vsearch.Options_Box, Expand => False);
 
       Gtk_New_Vbox (Vsearch.Options_Frame, Homogeneous => False);
@@ -1538,6 +1542,17 @@ package body Vsearch is
       Get_History
         (Get_History (Handle).all, Pattern_Hist_Key, Vsearch.Pattern_Combo,
          Clear_Combo => False, Prepend => True);
+
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all, Options_Collapsed_Hist_Key, False);
+
+      if Get_History
+        (Get_History (Handle).all, Options_Collapsed_Hist_Key)
+      then
+         Set_State (Vsearch.Options_Box, Collapsed);
+      else
+         Set_State (Vsearch.Options_Box, Expanded);
+      end if;
 
       Associate
         (Get_History (Handle).all,
