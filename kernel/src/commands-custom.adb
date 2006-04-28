@@ -1165,6 +1165,7 @@ package body Commands.Custom is
                Substitution_Char => GPS.Kernel.Macros.Special_Character,
                Callback          => Substitution'Unrestricted_Access,
                Recursive         => False);
+            Dummy_Command   : Scheduled_Command_Access;
          begin
             Trace (Me, "Executing external command " & Component.Command.all);
 
@@ -1216,7 +1217,8 @@ package body Commands.Custom is
                Synchronous          => Context.Synchronous,
                Directory            => To_Remote (To_String (Context.Dir),
                                                   Component.Server),
-               Cmd                  => Command.Sub_Command);
+               Cmd                  => Command.Sub_Command,
+               Created_Command      => Dummy_Command);
             Free (Args);
 
             Command.Execution.External_Process_Console := Console;
