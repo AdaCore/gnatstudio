@@ -120,6 +120,19 @@ package GPS.Kernel.Task_Manager is
    --  created if needed. It has to be a child of type Command. If its type is
    --  No_Class, then default command class will be used.
 
+   procedure Set_Instance
+     (Command  : access Scheduled_Command'Class;
+      Language : access Scripting_Language_Record'Class;
+      Instance : Class_Instance);
+   --  Set the instance corresponding to the given language to the given
+   --  command. This assumes that no instance has previously been set for the
+   --  given language.
+
+   procedure Remove_Instance
+     (Command  : access Scheduled_Command'Class;
+      Language : access Scripting_Language_Record'Class);
+   --  Removes the instance corresponding to the given language from the list.
+
    function Get_Data
      (Instance : GPS.Kernel.Scripts.Class_Instance)
       return Scheduled_Command_Access;
