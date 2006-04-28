@@ -14,6 +14,13 @@ of the feature.
 New features in GPS 4.0.0
 -------------------------
 
+F409-010 Ada auto block completion
+
+  A new action named Block_Completion has been implemented. This action will
+  close the current Ada statement or unit. It handles if, case, loop
+  (with optional label), declare block (with optional label), procedure,
+  function and package.
+
 F407-003 Improved Call Tree Views
 
   The Call Tree Views are reorganized to separate the list of locations from
