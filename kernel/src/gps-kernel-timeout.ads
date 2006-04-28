@@ -24,10 +24,11 @@ with GNAT.OS_Lib;
 
 with Gtk.Main;
 with Interactive_Consoles;
-with Commands;          use Commands;
+with Commands;                use Commands;
 
-with Remote_Servers;    use Remote_Servers;
-with GPS.Kernel.Remote; use GPS.Kernel.Remote;
+with Remote_Servers;          use Remote_Servers;
+with GPS.Kernel.Remote;       use GPS.Kernel.Remote;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 
 package GPS.Kernel.Timeout is
 
@@ -156,7 +157,8 @@ package GPS.Kernel.Timeout is
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
       Timeout              : Integer := -1;
-      Cmd                  : out Command_Access);
+      Cmd                  : out Command_Access;
+      Created_Command      : out Scheduled_Command_Access);
    --  Same as above, and returns the created Command_Access.
    --  Cmd is allocated by this procedure, and will be cleaned automatically,
    --  and should not be freed by the caller of Launch_Process (although it is
@@ -179,7 +181,8 @@ package GPS.Kernel.Timeout is
       Show_In_Task_Manager : Boolean := True;
       Queue_Id             : String := "";
       Show_Exit_Status     : Boolean := False;
-      Fd                   : out GNAT.Expect.Process_Descriptor_Access);
+      Fd                   : out GNAT.Expect.Process_Descriptor_Access;
+      Created_Command      : out Scheduled_Command_Access);
    --  Same as above, and returns the created File_Descriptor.
    --  This process is necessarily launched locally.
 

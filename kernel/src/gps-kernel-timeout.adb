@@ -41,7 +41,6 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                 use GPS.Kernel;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
@@ -503,7 +502,8 @@ package body GPS.Kernel.Timeout is
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
       Timeout              : Integer := -1;
-      Cmd                  : out Command_Access)
+      Cmd                  : out Command_Access;
+      Created_Command      : out Scheduled_Command_Access)
    is
       C             : Monitor_Command_Access;
       Q_Id          : constant String := Get_New_Queue_Id (Queue_Id);
@@ -570,7 +570,7 @@ package body GPS.Kernel.Timeout is
 --           Add_Alternate_Action
 --             (Item   => C,
 --              Action =>
-         Launch_Background_Command
+         Created_Command := Launch_Background_Command
            (Kernel,
             Command_Access (C),
             Active   => False,
@@ -612,7 +612,8 @@ package body GPS.Kernel.Timeout is
       Show_In_Task_Manager : Boolean := True;
       Queue_Id             : String := "";
       Show_Exit_Status     : Boolean := False;
-      Fd                   : out GNAT.Expect.Process_Descriptor_Access)
+      Fd                   : out GNAT.Expect.Process_Descriptor_Access;
+      Created_Command      : out Scheduled_Command_Access)
    is
       C : Command_Access;
    begin
@@ -635,7 +636,8 @@ package body GPS.Kernel.Timeout is
          Queue_Id             => Queue_Id,
          Synchronous          => False,
          Show_Exit_Status     => Show_Exit_Status,
-         Cmd                  => C);
+         Cmd                  => C,
+         Created_Command      => Created_Command);
       if Success
         and then Execute (Monitor_Command_Access (C)) = Execute_Again
       then
@@ -678,7 +680,8 @@ package body GPS.Kernel.Timeout is
       Show_Exit_Status     : Boolean := False;
       Timeout              : Integer := -1)
    is
-      Cmd : Command_Access;
+      Cmd             : Command_Access;
+      Created_Command : Scheduled_Command_Access;
    begin
       Launch_Process
         (Kernel               => Kernel,
@@ -700,7 +703,8 @@ package body GPS.Kernel.Timeout is
          Synchronous          => Synchronous,
          Show_Exit_Status     => Show_Exit_Status,
          Timeout              => Timeout,
-         Cmd                  => Cmd);
+         Cmd                  => Cmd,
+         Created_Command      => Created_Command);
    end Launch_Process;
 
    --------------------
