@@ -365,10 +365,6 @@ package body GPS.Kernel.Task_Manager is
 
             if not Found then
                Destroy (Command_Access (Dead_Command));
-
-               if Command.Destroy_On_Exit then
-                  Destroy (Command.Command);
-               end if;
             end if;
 
             Free (Command.Instances);
