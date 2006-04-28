@@ -258,6 +258,9 @@ package body Vsearch is
      (Object : access Gtk_Widget_Record'Class);
    --  Called when the entry "Look in" is changed.
 
+   procedure On_Toggled (Object : access Gtk_Widget_Record'Class);
+   --  Called when the option frame is toggled.
+
    procedure Search_Menu_Cb
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for the menu Edit->Search
@@ -1058,6 +1061,30 @@ package body Vsearch is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Context_Entry_Changed;
 
+   ----------------
+   -- On_Toggled --
+   ----------------
+
+   procedure On_Toggled (Object : access Gtk_Widget_Record'Class) is
+      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
+
+      Child : constant MDI_Child := Find_MDI_Child
+        (Get_MDI (Vsearch.Kernel), Vsearch);
+      Req : Gtk_Requisition;
+   begin
+      if Child /= null then
+         if not Is_Floating (Child) then
+            Size_Request (Child, Req);
+            Set_Size
+              (Get_MDI (Vsearch.Kernel),
+               Child      => Child,
+               Width      => Req.Width,
+               Height     => Req.Height,
+               Fixed_Size => True);
+         end if;
+      end if;
+   end On_Toggled;
+
    -------------------------
    -- Set_First_Next_Mode --
    -------------------------
@@ -1393,6 +1420,8 @@ package body Vsearch is
 
       Gtk_New (Vsearch.Options_Box, -"Options");
       Pack_Start (Enclosing_Options_Box, Vsearch.Options_Box, Expand => False);
+      Widget_Callback.Object_Connect
+        (Vsearch.Options_Box, "toggled", On_Toggled'Access, Vsearch);
 
       Gtk_New_Vbox (Vsearch.Options_Frame, Homogeneous => False);
       Set_Expanded_Widget (Vsearch.Options_Box, Vsearch.Options_Frame);
