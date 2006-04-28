@@ -327,16 +327,24 @@ package body GPS.Kernel.Task_Manager is
    ----------
 
    procedure Free (Command : in out Scheduled_Command) is
+      Instances : Instance_Array := Get_Instances (Command.Instances);
    begin
-      if Command.Destroy_On_Exit or else Command.Is_Dead then
-         Destroy (Command.Command);
+      if Command.Is_Dead then
+         for J in Instances'Range loop
+            if Instances (J) /= No_Class_Instance then
+               return;
+            end if;
+         end loop;
+
+         if Command.Destroy_On_Exit then
+            Destroy (Command.Command);
+         end if;
+
          Free (Command.Instances);
-      elsif not Command.Destroy_On_Exit and then not Command.Is_Dead then
+      else
          declare
             Dead_Command : Scheduled_Command_Access :=
               new Scheduled_Command;
-            Instances    : constant Instance_Array :=
-              Get_Instances (Command.Instances);
             Found        : Boolean := False;
          begin
             Dead_Command.Command := Command.Command;
@@ -357,6 +365,10 @@ package body GPS.Kernel.Task_Manager is
 
             if not Found then
                Destroy (Command_Access (Dead_Command));
+
+               if Command.Destroy_On_Exit then
+                  Destroy (Command.Command);
+               end if;
             end if;
 
             Free (Command.Instances);
@@ -580,14 +592,39 @@ package body GPS.Kernel.Task_Manager is
             Inst := New_Instance (Language, Command_Class);
          end if;
 
-         Set_Property
-           (Inst, Command_Class_Name, Command_Property'
-              (Command => Scheduled_Command_Access (Command)));
-         Set (Command.Instances, Language, Inst);
+         Set_Instance (Command, Language, Inst);
       end if;
 
       return Inst;
    end Get_Instance;
+
+   ------------------
+   -- Set_Instance --
+   ------------------
+
+   procedure Set_Instance
+     (Command  : access Scheduled_Command'Class;
+      Language : access Scripting_Language_Record'Class;
+      Instance : Class_Instance)
+   is
+   begin
+      Set_Property
+        (Instance, Command_Class_Name, Command_Property'
+           (Command => Scheduled_Command_Access (Command)));
+      Set (Command.Instances, Language, Instance);
+   end Set_Instance;
+
+   ---------------------
+   -- Remove_Instance --
+   ---------------------
+
+   procedure Remove_Instance
+     (Command  : access Scheduled_Command'Class;
+      Language : access Scripting_Language_Record'Class)
+   is
+   begin
+      Set (Command.Instances, Language, No_Class_Instance);
+   end Remove_Instance;
 
    --------------
    -- Get_Data --
