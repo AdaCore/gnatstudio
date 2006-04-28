@@ -73,6 +73,21 @@ package body Collapsing_Pane is
       New_String ("    ++    "),
       New_String ("          "));
 
+   --------------------
+   -- Signal Support --
+   --------------------
+
+   Class_Record : GObject_Class := Uninitialized_Class;
+   --  A pointer to the 'class record'
+
+   Signals : constant Interfaces.C.Strings.chars_ptr_array :=
+     (1 => New_String ("toggled"));
+   --  The list of new signals supported by this GObject
+
+   Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
+     (1 => (GType_None, GType_None));
+   --  The parameters associated to each new signal
+
    function On_Change_State
      (Object : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the user clicks on the label or the collapse icon
@@ -125,6 +140,11 @@ package body Collapsing_Pane is
         Gdk.Pixbuf.Gdk_New_From_Xpm_Data (Expanded_Xpm);
 
       Gtk.Event_Box.Initialize (Pane);
+
+      Glib.Object.Initialize_Class_Record
+        (Pane, Signals, Class_Record, "CollapsingPane",
+         Signal_Parameters);
+
       Widget_Callback.Object_Connect
         (Pane,
          "destroy", On_Destroy'Access, Pane);
@@ -301,6 +321,8 @@ package body Collapsing_Pane is
       Pane.State := State;
 
       Refresh_Pixmap (Pane);
+
+      Widget_Callback.Emit_By_Name (Pane, "toggled");
    end Set_State;
 
    ---------------

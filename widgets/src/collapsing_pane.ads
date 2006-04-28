@@ -76,6 +76,16 @@ package Collapsing_Pane is
    --  resize the whole window. This is controlled by the parameter
    --  Reduce_Window of this procedure, False by default.
 
+   -------------
+   -- Signals --
+   -------------
+
+   --  <signals>
+   --  The following new signals are defined for this widget:
+   --
+   --  - "toggled"
+   --    procedure Handler (Widget : access Gtk_Widget_Record'Class);
+
 private
 
    type Collapsing_Pane_Record is new Gtk.Event_Box.Gtk_Event_Box_Record with
