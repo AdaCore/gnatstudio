@@ -34,13 +34,14 @@ import re, string, GPS
 GPS.parse_xml ("""
    <action name="Block_Completion">
       <description>End the current block.</description>
+      <filter language="ada" error="Block_Completion requires an Ada file" />
       <shell lang="python" output="none">block_completion.block_complete("%F");</shell>
    </action>
 
    <Submenu>
       <Title>Edit</Title>
-      <menu action="Block_Completion" before="Unit Testing" >
-         <Title>Block completion</Title>
+      <menu action="Block_Completion" before="Refill" >
+         <Title>Complete Block</Title>
       </menu>
    </Submenu>
 """)
