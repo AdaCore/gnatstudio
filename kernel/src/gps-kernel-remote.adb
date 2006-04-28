@@ -3229,6 +3229,11 @@ package body GPS.Kernel.Remote is
                if not Run_Hook_Until_Success
                  (Kernel, Rsync_Action_Hook, Data'Unchecked_Access)
                then
+                  GPS.Kernel.Console.Insert
+                    (Kernel,
+                     -("Directories are not synchronized properly: " &
+                       "Please verify your network configuration"),
+                     Mode => Error);
                   Status := False;
                   Trace (Me, "No remote sync was registered or errors during" &
                          " calls");
