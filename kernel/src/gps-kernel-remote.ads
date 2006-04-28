@@ -94,6 +94,15 @@ package GPS.Kernel.Remote is
    --   deleted on To server. Else, an update is performed (only newer files
    --   are copied).
 
+   procedure Synchronize
+     (Kernel       : Kernel_Handle;
+      From         : Server_Type;
+      To           : Server_Type;
+      Queue_Id     : String;
+      Sync_Deleted : Boolean;
+      Status       : out Boolean);
+   --  Same as above, returning synchronisation status.
+
    ---------------------------------
    -- Error display when spawning --
    ---------------------------------
