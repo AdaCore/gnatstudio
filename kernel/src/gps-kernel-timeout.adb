@@ -360,7 +360,9 @@ package body GPS.Kernel.Timeout is
            and then Ada.Calendar.Clock - Data.Start_Time >
              Duration (Data.Timeout) /  1000.0
          then
-            Interrupt (Fd.all);
+            --  Make sure the process is killed. Just interrupting it is
+            --  sometimes not enough
+            Close (Fd.all);
          end if;
 
       else
