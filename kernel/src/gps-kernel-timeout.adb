@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;               use Ada.Calendar;
 with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
@@ -74,6 +75,11 @@ package body GPS.Kernel.Timeout is
 
       Started              : Boolean := False;
       --  Whether the process has been started
+
+      Timeout              : Integer;
+      --  How many time do we wait for first output
+      Start_Time           : Ada.Calendar.Time;
+      --  Start time of the process
 
       Id                   : Timeout_Handler_Id;
    end record;
@@ -209,6 +215,10 @@ package body GPS.Kernel.Timeout is
                Delete_Handler'Access, GObject (Command.Data));
          end if;
 
+         if Command.Data.Timeout /= -1 then
+            Command.Data.Start_Time := Ada.Calendar.Clock;
+         end if;
+
          Trace (Me, "Spawn the process");
          Spawn (Command.Data.D.Kernel,
                 Command.Data.Args.all,
@@ -324,6 +334,9 @@ package body GPS.Kernel.Timeout is
          Expect (Fd.all, Result, Data.Expect_Regexp.all, Timeout => 1);
 
          if Result /= Expect_Timeout then
+            --  Received something. Cancel timeout.
+            Data.Timeout := -1;
+
             declare
                Output : constant String := Strip_CR (Expect_Out (Fd.all));
             begin
@@ -343,6 +356,12 @@ package body GPS.Kernel.Timeout is
                   Data.D.Callback (Data.D, Output);
                end if;
             end;
+
+         elsif Data.Timeout /= -1
+           and then Ada.Calendar.Clock - Data.Start_Time >
+             Duration (Data.Timeout) /  1000.0
+         then
+            Interrupt (Fd.all);
          end if;
 
       else
@@ -483,6 +502,7 @@ package body GPS.Kernel.Timeout is
       Queue_Id             : String := "";
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
+      Timeout              : Integer := -1;
       Cmd                  : out Command_Access)
    is
       C             : Monitor_Command_Access;
@@ -539,6 +559,7 @@ package body GPS.Kernel.Timeout is
       C.Data.Interrupted          := False;
       C.Data.Started              := False;
       C.Data.Id                   := 0;
+      C.Data.Timeout              := Timeout;
       Ref (C.Data);
 
       if Synchronous then
@@ -654,7 +675,8 @@ package body GPS.Kernel.Timeout is
       Show_In_Task_Manager : Boolean := True;
       Queue_Id             : String := "";
       Synchronous          : Boolean := False;
-      Show_Exit_Status     : Boolean := False)
+      Show_Exit_Status     : Boolean := False;
+      Timeout              : Integer := -1)
    is
       Cmd : Command_Access;
    begin
@@ -677,6 +699,7 @@ package body GPS.Kernel.Timeout is
          Queue_Id             => Queue_Id,
          Synchronous          => Synchronous,
          Show_Exit_Status     => Show_Exit_Status,
+         Timeout              => Timeout,
          Cmd                  => Cmd);
    end Launch_Process;
 
