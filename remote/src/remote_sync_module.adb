@@ -439,15 +439,6 @@ package body Remote_Sync_Module is
 
       Cb_Data.Status := Status;
 
-      if Status /= 0 then
-         Trace (Me, "rsync terminated with incorrect status");
-         GPS.Kernel.Console.Insert
-           (Data.Kernel,
-            -("Directories are not synchronized properly: rsync " &
-              "failed. Please verify your network configuration"),
-            Mode => Error);
-      end if;
-
    exception
       when E : others =>
          Trace (Exception_Handle, Exception_Information (E));
