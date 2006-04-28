@@ -1889,8 +1889,10 @@ package body Commands.Custom is
 
    procedure Interrupt (Command : in out Custom_Command) is
    begin
-      Command.Execution.Cmd_Index := Command.Components'First;
-      Interrupt_Queue (Command.Kernel, Command.Sub_Command);
+      if Command.Execution /= null then
+         Command.Execution.Cmd_Index := Command.Components'First;
+         Interrupt_Queue (Command.Kernel, Command.Sub_Command);
+      end if;
    end Interrupt;
 
 end Commands.Custom;
