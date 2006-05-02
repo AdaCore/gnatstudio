@@ -1991,6 +1991,10 @@ package body Src_Editor_View is
          return True;
       end if;
 
+      if View.In_Completion then
+         return False;
+      end if;
+
       if not Get_Editable (View) then
          return False;
       end if;
@@ -2373,5 +2377,40 @@ package body Src_Editor_View is
    begin
       View.Child := Child;
    end Set_Child;
+
+   ----------------------
+   -- Start_Completion --
+   ----------------------
+
+   procedure Start_Completion
+     (View : access Source_View_Record'Class;
+      Win  : Completion_Window_Access) is
+   begin
+      View.In_Completion := True;
+      View.Completion_Window := Win;
+   end Start_Completion;
+
+   --------------------
+   -- End_Completion --
+   --------------------
+
+   procedure End_Completion (View : access Source_View_Record'Class) is
+   begin
+      View.In_Completion := False;
+   end End_Completion;
+
+   -------------------
+   -- In_Completion --
+   -------------------
+
+   function In_Completion
+     (View : access Source_View_Record'Class) return Boolean is
+   begin
+      if View.In_Completion then
+         Select_Next (View.Completion_Window);
+      end if;
+
+      return View.In_Completion;
+   end In_Completion;
 
 end Src_Editor_View;
