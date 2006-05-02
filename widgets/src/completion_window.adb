@@ -91,9 +91,6 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class);
    --  Callback on a selection change in the tree view.
 
-   procedure Delete (Window : access Completion_Window_Record'Class);
-   --  Destroy the window and its contents.
-
    procedure Free (X : in out Information_Record);
    --  Free memory associated to X.
 
@@ -149,9 +146,6 @@ package body Completion_Window is
       declare
          UTF8 : constant UTF8_String := Get_Text (Window.Buffer, Beg, Iter);
       begin
-         Trace (Exception_Handle,
-                "inserted #" & UTF8 & "#");
-
          Selection := Get_Selection (Window.View);
 
          --  Find the entry currently being selected
@@ -496,9 +490,6 @@ package body Completion_Window is
 
       --  ??? Uposition should take into account the current desktop.
 
-      Trace (Exception_Handle,
-             Requisition.Width'Img & ":" & Requisition.Height'Img);
-
       --  Compute the real width and height of the window
 
       Width := Gint'Min (Max_Width, Requisition.Width) + 5;
@@ -543,7 +534,7 @@ package body Completion_Window is
 
       Object_Connect
         (Window.Text, "focus_out_event",
-            To_Marshaller (On_Focus_Out'Access), Window, After => False);
+         To_Marshaller (On_Focus_Out'Access), Window, After => False);
 
       Object_Connect
         (Window.Text, "button_press_event",
