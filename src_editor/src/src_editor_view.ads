@@ -41,6 +41,8 @@ with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Src_Editor_Buffer;
 
+with Completion_Window;      use Completion_Window;
+
 package Src_Editor_View is
 
    type Source_View_Record is new Gtkada_Text_View_Record
@@ -144,6 +146,16 @@ package Src_Editor_View is
       Iter : out Gtk.Text_Iter.Gtk_Text_Iter);
    --  Return the cursor location in that view.
 
+   procedure Start_Completion
+     (View : access Source_View_Record'Class;
+      Win  : Completion_Window_Access);
+   procedure End_Completion (View : access Source_View_Record'Class);
+   --  Inform the view that autocompletion is starting/ending
+
+   function In_Completion
+     (View : access Source_View_Record'Class) return Boolean;
+   --  Return whether the view is currently completing.
+
    procedure Stop_Selection_Drag (View : access Source_View_Record'Class);
    --  Stop the selection drag if it's currently in done
 
@@ -244,6 +256,12 @@ private
 
       Child                : GPS.Kernel.MDI.GPS_MDI_Child := null;
       --  The child that contains Editor.
+
+      In_Completion        : Boolean := False;
+      --  Whether we are in an autocompletion loop.
+
+      Completion_Window    : Completion_Window_Access;
+      --  The current completion window.
    end record;
 
 end Src_Editor_View;
