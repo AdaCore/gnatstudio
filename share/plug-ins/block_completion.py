@@ -46,18 +46,8 @@ GPS.parse_xml ("""
    </Submenu>
 """)
 
-def block_complete (filename):
-    file = GPS.File (filename);
-    lang = file.language ();
-
-    # Only Ada language supported
-    if lang != "ada":
-        return;
-
-    eb = GPS.EditorBuffer.get (file);
-    ev = eb.current_view();
-    el = ev.cursor();
-    block = el.block_type();
+def block_complete_on_location (buffer, location):
+    block = location.block_type();
     
     if not BLOCKS_DEFS.has_key (block):
         return;
@@ -67,10 +57,10 @@ def block_complete (filename):
     if pattern != '':
         # Retreive the line at the start of the block
     
-        start = GPS.EditorLocation (eb, el.block_start_line(), 1); 
-        end = GPS.EditorLocation (eb, el.block_start_line() + 1, 1);
+        start = GPS.EditorLocation (buffer, location.block_start_line(), 1); 
+        end = GPS.EditorLocation (buffer, location.block_start_line() + 1, 1);
     
-        bs_content = eb.get_chars (start, end);
+        bs_content = buffer.get_chars (start, end);
     
         re_pattern = re.compile (pattern, re.IGNORECASE | re.DOTALL);
         
@@ -83,5 +73,18 @@ def block_complete (filename):
             term = term.replace (r' \2', '');
             term = term.replace (r'\2', '');
             
-    eb.insert (el, term);
-    eb.indent (el, el);
+    buffer.insert (location, term);
+    buffer.indent (location, location);
+
+def block_complete (filename):
+    file = GPS.File (filename);
+    lang = file.language ();
+
+    # Only Ada language supported
+    if lang != "ada":
+        return;
+
+    eb = GPS.EditorBuffer.get (file);
+    ev = eb.current_view();
+    el = ev.cursor();
+    block_complete_on_location (eb, el);
