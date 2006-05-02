@@ -1090,22 +1090,22 @@ procedure GPS.Main is
 
          --  If only one project file was found in the current directory, do
          --  not open the welcome dialog. Likewise if we are loading a script,
-         --  since we consider that the script is responsible for loading the
-         --  appropriate project, or if source files have been specified on
-         --  the command line.
+         --  or if source files have been specified on the command line.
 
          if Auto_Load_Project then
-            return True;
-         end if;
-
-         if Batch_File /= null then
-            Load_Empty_Project (GPS_Main.Kernel);
             return True;
          end if;
 
          Load_Sources;
 
          if File_Opened then
+            return True;
+         end if;
+
+         if Batch_File /= null then
+            Load_Default_Project
+              (GPS_Main.Kernel, Get_Current_Dir,
+               Load_Default_Desktop => True);
             return True;
          end if;
 
