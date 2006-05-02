@@ -77,6 +77,9 @@ package Completion_Window is
    procedure Select_Next (Window : Completion_Window_Access);
    --  Select the next item in the window.
 
+   procedure Delete (Window : access Completion_Window_Record'Class);
+   --  Destroy the window and its contents.
+
    --  ??? Need a function to set case sensitivity
 
 private
