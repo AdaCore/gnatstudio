@@ -1497,6 +1497,8 @@ package body Src_Editor_Buffer.Line_Information is
       --  "Has_Globally_Enclosing_Construct" function in the Languages, or,
       --  better, to wait until we implement "fold nth sublevel" capacity, and
       --  rely on it.
+
+      Prev_State : constant Constructs_State_Type := Buffer.Constructs_State;
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return;
@@ -1526,10 +1528,9 @@ package body Src_Editor_Buffer.Line_Information is
                     Hide_Editable_Lines_Type (Command.all).Number;
                   Result := Execute (Command);
 
-                  --  Set the field Blocks_Need_Parsing to False to indicate
-                  --  that even though lines have been deleted, the block
-                  --  information hasn't changed.
-                  Buffer.Blocks_Need_Parsing := False;
+                  --  even though lines have been deleted, constructs info
+                  --  hasn't changed.
+                  Buffer.Constructs_State := Prev_State;
                else
                   First_Line_Found := True;
                end if;
@@ -1554,6 +1555,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       Cursor_Move : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Line        : Editable_Line_Type;
+
+      Prev_State  : constant Constructs_State_Type := Buffer.Constructs_State;
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return;
@@ -1580,10 +1583,9 @@ package body Src_Editor_Buffer.Line_Information is
                Line := Unhide_Editable_Lines_Type (Command.all).Last_Line;
                Result := Execute (Command);
 
-               --  Set the field Blocks_Need_Parsing to False to indicate
-               --  that even though lines have been deleted, the block
+               --  Even though lines have been deleted, the constructs state
                --  information hasn't changed.
-               Buffer.Blocks_Need_Parsing := False;
+               Buffer.Constructs_State := Prev_State;
             end if;
          end if;
 
@@ -1676,7 +1678,7 @@ package body Src_Editor_Buffer.Line_Information is
       Result : Boolean;
       pragma Unreferenced (Result);
    begin
-      if Buffer.Blocks_Need_Parsing then
+      if Get_Constructs_State (Buffer) /= Exact then
          Compute_Blocks (Buffer);
       end if;
 

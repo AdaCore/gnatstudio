@@ -517,6 +517,36 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
    --  Return True if the buffer needs to be saved
 
+   type Constructs_State_Type is
+     (Not_Parsed,
+      --  The constructs are not parsed.
+
+      Approximate,
+      --  The buffer has changed since the previous constructs computation.
+
+      Line_Exact,
+      --  The buffer has changed since the previous constructs computation,
+      --  but no lines have been added or removed.
+
+      Exact
+      --  The constructs match the contents of the buffer.
+     );
+   --  Describes the state of constructs cached in the editor.
+   --  Note: the implementation relies on this type being ordered from least
+   --  exact to most exact.
+
+   function Get_Constructs
+     (Buffer         : access Source_Buffer_Record;
+      Required_Level : Constructs_State_Type) return Language.Construct_List;
+   --  Return the current construct cache in the buffer. The returned
+   --  list matches at least the level of precision indicated by
+   --  Required_Level.
+   --  Caller must not free the result.
+
+   function Get_Constructs_State
+     (Buffer : access Source_Buffer_Record) return Constructs_State_Type;
+   --  Return the state of cached constructs.
+
    -----------------------
    -- Extra Information --
    -----------------------
@@ -727,11 +757,6 @@ package Src_Editor_Buffer is
    --  Return 0 if no buffer line was found.
    --  Note: Buffer lines are indexes in Buffer.Line_Data, ie are equal to
    --  lines in the actual Gtk_Text_Buffer, plus 1.
-
-   function Blocks_Valid (Buffer : access Source_Buffer_Record) return Boolean;
-   pragma Inline (Blocks_Valid);
-   --  Return whether the blocks stored in the buffer are valid.
-   --  (Ie if the text has not been modified since the last computation).
 
    function Get_String
      (Buffer : Source_Buffer) return String_Access;
@@ -1067,10 +1092,6 @@ private
       --  Whether the block information should be parsed on-the-fly whenever
       --  the text is edited.
 
-      Blocks_Need_Parsing : Boolean := False;
-      --  Whether the block information should be computed next time it is
-      --  needed.
-
       Blocks_Timeout_Registered : Boolean := False;
       --  Whether the blocks need to be recomputed.
 
@@ -1138,6 +1159,16 @@ private
 
       Charset : String_Access;
       --  The charset associated with the buffer.
+
+      Constructs : Language.Construct_List;
+      --  The parsed constructs in the buffer. This list might or might not
+      --  be up to date, see Constructs_State below.
+
+      Constructs_State : Constructs_State_Type := Not_Parsed;
+      --  The state of the constructs list.
+
+      Blocks_Exact : Boolean := False;
+      --  Whether the blocks information is exact.
    end record;
 
    procedure Emit_By_Name

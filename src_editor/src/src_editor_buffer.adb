@@ -998,7 +998,6 @@ package body Src_Editor_Buffer is
       Buffer.Blocks_Request_Timestamp := Clock;
 
       if not Buffer.Blocks_Timeout_Registered then
-         Buffer.Blocks_Need_Parsing := True;
          Buffer.Blocks_Timeout_Registered := True;
          Buffer.Blocks_Timeout := Buffer_Timeout.Add
            (Buffer_Recompute_Interval,
@@ -1137,6 +1136,12 @@ package body Src_Editor_Buffer is
    procedure Edit_Hook (Buffer : access Source_Buffer_Record'Class) is
    begin
       --  Request re-parsing of the blocks.
+
+      if Buffer.Constructs_State > Approximate then
+         Buffer.Constructs_State := Approximate;
+      end if;
+
+      Buffer.Blocks_Exact := False;
 
       Register_Edit_Timeout (Buffer);
    end Edit_Hook;
@@ -4498,9 +4503,7 @@ package body Src_Editor_Buffer is
       --  If the editor hasn't calculated block information on-the-fly,
       --  calculate the block information now.
 
-      if Force_Compute
-        and then Editor.Blocks_Need_Parsing
-      then
+      if Force_Compute then
          --  We need to temporarily change the value of
          --  Editor.Block_Highlighting so that Compute_Blocks parses the
          --  information that we want.
@@ -5496,16 +5499,6 @@ package body Src_Editor_Buffer is
       end if;
    end Get_Text;
 
-   ------------------
-   -- Blocks_Valid --
-   ------------------
-
-   function Blocks_Valid
-     (Buffer : access Source_Buffer_Record) return Boolean is
-   begin
-      return not Buffer.Blocks_Need_Parsing;
-   end Blocks_Valid;
-
    -----------------------------
    -- Update_Highlight_Region --
    -----------------------------
@@ -5863,5 +5856,40 @@ package body Src_Editor_Buffer is
 
       return Count;
    end Collapse_Tabs;
+
+   --------------------
+   -- Get_Constructs --
+   --------------------
+
+   function Get_Constructs
+     (Buffer         : access Source_Buffer_Record;
+      Required_Level : Constructs_State_Type) return Construct_List
+   is
+      Text : Basic_Types.String_Access;
+   begin
+      if Buffer.Constructs_State >= Required_Level then
+         return Buffer.Constructs;
+      end if;
+
+      Free (Buffer.Constructs);
+
+      Text := Get_String (Source_Buffer (Buffer));
+      Parse_Constructs (Buffer.Lang, Text.all, Buffer.Constructs);
+      Free (Text);
+
+      Buffer.Constructs_State := Exact;
+
+      return Buffer.Constructs;
+   end Get_Constructs;
+
+   --------------------------
+   -- Get_Constructs_State --
+   --------------------------
+
+   function Get_Constructs_State
+     (Buffer : access Source_Buffer_Record) return Constructs_State_Type is
+   begin
+      return Buffer.Constructs_State;
+   end Get_Constructs_State;
 
 end Src_Editor_Buffer;

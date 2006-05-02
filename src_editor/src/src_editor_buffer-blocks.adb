@@ -46,7 +46,6 @@ package body Src_Editor_Buffer.Blocks is
       Current           : Construct_Access;
       Line_Start        : Editable_Line_Type;
       Line_End          : Editable_Line_Type;
-      Text              : Basic_Types.String_Access;
       Block             : Block_Access;
       Buffer_Line       : Buffer_Line_Type;
       First_Buffer_Line : Buffer_Line_Type;
@@ -66,13 +65,17 @@ package body Src_Editor_Buffer.Blocks is
       end Copy;
 
    begin
-      Buffer.Blocks_Need_Parsing := False;
-
       if Buffer.Lang = null then
          Buffer.Parse_Blocks := False;
          Buffer_Information_Changed (Buffer);
          return;
       end if;
+
+      if Buffer.Blocks_Exact then
+         return;
+      end if;
+
+      Buffer.Blocks_Exact := True;
 
       if Buffer.Line_Data /= null then
          for Line in Buffer.Line_Data'Range loop
@@ -84,12 +87,7 @@ package body Src_Editor_Buffer.Blocks is
          Remove_Block_Folding_Commands (Buffer, False);
       end if;
 
-      Text := Get_String (Source_Buffer (Buffer));
-
-      --  ??? See if we could have a line-by-line version of Parse_Constructs.
-
-      Parse_Constructs (Buffer.Lang, Text.all, Constructs);
-      Free (Text);
+      Constructs := Get_Constructs (Buffer, Line_Exact);
 
       Current := Constructs.First;
 
@@ -172,7 +170,6 @@ package body Src_Editor_Buffer.Blocks is
       end loop;
 
       Buffer_Information_Changed (Buffer);
-      Free (Constructs);
    end Compute_Blocks;
 
    -----------------------------
@@ -188,7 +185,7 @@ package body Src_Editor_Buffer.Blocks is
       Result    : Boolean;
 
    begin
-      if not Blocks_Valid (Buffer) then
+      if Get_Constructs_State (Buffer) /= Exact then
          return;
       end if;
 
