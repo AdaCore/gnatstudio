@@ -573,8 +573,9 @@ package body Src_Editor_Module.Shell is
       Location : Gtk_Text_Iter) return Class_Instance
    is
       EditorLoc : constant Class_Type :=
-        New_Class (Get_Kernel (Script), Editor_Location_Class_Name);
-      Inst : constant Class_Instance := New_Instance (Script, EditorLoc);
+                    New_Class
+                      (Get_Kernel (Script), Editor_Location_Class_Name);
+      Inst      : constant Class_Instance := New_Instance (Script, EditorLoc);
    begin
       Set_Location_Data
         (Inst, Source_Buffer (Get_Buffer (Location)),
@@ -1243,10 +1244,10 @@ package body Src_Editor_Module.Shell is
       then
          declare
             File   : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
+                       Create (Nth_Arg (Data, 1), Kernel);
             Child  : constant MDI_Child := Find_Editor (Kernel, File);
             Line   : constant Editable_Line_Type :=
-              Editable_Line_Type (Natural'(Nth_Arg (Data, 2)));
+                       Editable_Line_Type (Natural'(Nth_Arg (Data, 2)));
 
          begin
             if Child = null then
@@ -2164,16 +2165,16 @@ package body Src_Editor_Module.Shell is
    procedure Location_Cmds
      (Data : in out Callback_Data'Class; Command : String)
    is
-      EditorLoc : constant Class_Type :=
-        New_Class (Get_Kernel (Data), Editor_Location_Class_Name);
-      Buffer          : Source_Buffer;
-      Inst            : Class_Instance;
-      Iter, Iter2     : Gtk_Text_Iter;
-      Mark            : Gtk_Text_Mark;
-      Success         : Boolean;
-      Count           : Gint;
-      Char            : Character;
-      Block           : Block_Record;
+      EditorLoc  : constant Class_Type :=
+                     New_Class (Get_Kernel (Data), Editor_Location_Class_Name);
+      Buffer      : Source_Buffer;
+      Inst        : Class_Instance;
+      Iter, Iter2 : Gtk_Text_Iter;
+      Mark        : Gtk_Text_Mark;
+      Success     : Boolean;
+      Count       : Gint;
+      Char        : Character;
+      Block       : Block_Record;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, (1 => Buffer_Cst'Access,
@@ -2325,50 +2326,43 @@ package body Src_Editor_Module.Shell is
          Unfold_Line (Source_Buffer (Get_Buffer (Iter)),
                       Editable_Line_Type (Get_Line (Iter)));
 
-      elsif Command = "block_end_line" then
+      elsif Command'Length > 6
+        and then Command (Command'First .. Command'First + 5) = "block_"
+      then
          Get_Location (Iter, Data, 1, Default => Iter);
-         Block := Get_Block
-           (Source_Buffer (Get_Buffer (Iter)),
-            Buffer_Line_Type (Get_Line (Iter)));
-         Set_Return_Value (Data, Integer (Block.Last_Line));
+         declare
+            Line  : constant Buffer_Line_Type :=
+                      Buffer_Line_Type (Get_Line (Iter) + 1);
+            Block : constant Block_Record :=
+                      Get_Block (Source_Buffer (Get_Buffer (Iter)), Line);
+         begin
+            if Command = "block_end_line" then
+               Set_Return_Value (Data, Integer (Block.Last_Line));
 
-      elsif Command = "block_start_line" then
-         Get_Location (Iter, Data, 1, Default => Iter);
-         Block := Get_Block
-           (Source_Buffer (Get_Buffer (Iter)),
-            Buffer_Line_Type (Get_Line (Iter)));
-         Set_Return_Value (Data, Integer (Block.First_Line));
+            elsif Command = "block_start_line" then
+               Set_Return_Value (Data, Integer (Block.First_Line));
 
-      elsif Command = "block_level" then
-         Get_Location (Iter, Data, 1, Default => Iter);
-         Block := Get_Block
-           (Source_Buffer (Get_Buffer (Iter)),
-            Buffer_Line_Type (Get_Line (Iter)));
-         Set_Return_Value (Data, Block.Indentation_Level);
+            elsif Command = "block_level" then
+               Set_Return_Value (Data, Block.Indentation_Level);
 
-      elsif Command = "block_type" then
-         Get_Location (Iter, Data, 1, Default => Iter);
-         Block := Get_Block
-           (Source_Buffer (Get_Buffer (Iter)),
-            Buffer_Line_Type (Get_Line (Iter)));
-         Set_Return_Value (Data, Language_Category'Image (Block.Block_Type));
+            elsif Command = "block_type" then
+               Set_Return_Value
+                 (Data, Language_Category'Image (Block.Block_Type));
 
-      elsif Command = "block_name" then
-         Get_Location (Iter, Data, 1, Default => Iter);
-         Block := Get_Block
-           (Source_Buffer (Get_Buffer (Iter)),
-            Buffer_Line_Type (Get_Line (Iter)));
-         if Block.Name = null then
-            Set_Return_Value (Data, "");
-         else
-            Set_Return_Value (Data, Block.Name.all);
-         end if;
+            elsif Command = "block_name" then
+               if Block.Name = null then
+                  Set_Return_Value (Data, "");
+               else
+                  Set_Return_Value (Data, Block.Name.all);
+               end if;
+            end if;
+         end;
 
       elsif Command = "subprogram_name" then
          Get_Location (Iter, Data, 1, Default => Iter);
          Block := Get_Subprogram_Block
            (Source_Buffer (Get_Buffer (Iter)),
-            Editable_Line_Type (Get_Line (Iter)));
+            Editable_Line_Type (Get_Line (Iter) + 1));
          if Block.Name = null then
             Set_Return_Value (Data, "");
          else
@@ -2380,7 +2374,7 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value_As_List (Data);
          declare
             use Gtk.Text_Tag.Text_Tag_List;
-            List : GSlist := Get_Tags (Iter);
+            List     : GSlist := Get_Tags (Iter);
             Iterator : GSlist := List;
          begin
             while Iterator /= Null_List loop
