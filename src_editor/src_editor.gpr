@@ -1,6 +1,7 @@
 with "../common/common";
 with "../gtkada/gtkada";
 with "../kernel/kernel";
+with "../completion/completion";
 with "../vsearch/vsearch";
 with "../widgets/widgets";
 with "../aliases/aliases";
