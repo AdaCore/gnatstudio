@@ -592,14 +592,14 @@ package Src_Editor_Buffer is
     (Line_Info_Width_Array, Line_Info_Width_Array_Access);
 
    type Line_Info_Display_Record is record
-      Identifier    : String_Access;
+      Identifier : String_Access;
       --  This identifies the column
 
-      Starting_X    : Integer;
+      Starting_X : Integer;
       --  The pixel distance between the left border of the column and
       --  the left border of the left window.
 
-      Width         : Integer;
+      Width      : Integer;
       --  The pixel width of the column
 
       Every_Line : Boolean;
@@ -707,8 +707,7 @@ package Src_Editor_Buffer is
       with null record;
    function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
-      Ctxt    : GPS.Kernel.Selection_Context)
-      return Boolean;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    --  A key context that matches if the current widget is a source editor
 
    --------------
