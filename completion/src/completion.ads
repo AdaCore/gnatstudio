@@ -147,7 +147,7 @@ package Completion is
       return Natural;
    --  Return the number of characters to be replaced by the completion, that
    --  were already written in the buffer but might be not fully accurate (e.g.
-   --  bad cased). The number of characters is
+   --  bad cased).
 
    function Get_Category (Proposal : Completion_Proposal)
      return Language_Category is abstract;
