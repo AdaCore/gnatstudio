@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Completion.Expression_Parser; use Completion.Expression_Parser;
+with Glib.Unicode;                 use Glib.Unicode;
 
 package body Completion.Ada is
 
@@ -60,6 +61,7 @@ package body Completion.Ada is
 
          function Handle_Identifier (Id : String) return Completion_List is
             Returned_List : Completion_List;
+            Extra_Size    : Natural;
          begin
             if Token = First (Completing_Expression)
               or else (Filter and All_Accessible_Units) /= 0
@@ -95,6 +97,14 @@ package body Completion.Ada is
             Tmp_It := First (Tmp);
 
             if Next (Token) = Token_List.Null_Node then
+               Extra_Size := Integer (UTF8_Strlen (Id));
+
+               while Tmp_It /= Null_Completion_Iterator loop
+                  Data_Ref (Tmp_It).Extra_Characters := Extra_Size;
+
+                  Tmp_It := Next (Tmp_It);
+               end loop;
+
                return Tmp;
             else
                while Tmp_It /= Null_Completion_Iterator loop
