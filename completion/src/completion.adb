@@ -123,6 +123,36 @@ package body Completion is
       Proposal.Mode := Mode;
    end Set_Mode;
 
+   ---------------------------
+   -- Characters_To_Replace --
+   ---------------------------
+
+   function Characters_To_Replace (Proposal : Completion_Proposal)
+      return Natural is
+   begin
+      return Proposal.Extra_Characters;
+   end Characters_To_Replace;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label (Proposal : Completion_Proposal)
+      return UTF8_String is
+   begin
+      return Get_Completion (Completion_Proposal'Class (Proposal));
+   end Get_Label;
+
+   ------------
+   -- Get_Id --
+   ------------
+
+   function Get_Id (Proposal : Completion_Proposal)
+      return UTF8_String is
+   begin
+      return Get_Completion (Completion_Proposal'Class (Proposal));
+   end Get_Id;
+
    ---------------------
    -- Get_Composition --
    ---------------------
@@ -140,7 +170,7 @@ package body Completion is
    begin
       while It /= Null_Completion_Iterator loop
          declare
-            Name : constant String := Get_Name (Get_Proposal (It));
+            Name : constant String := Get_Id (Get_Proposal (It));
          begin
             if Is_Partial then
                if Identifier'Length < Name'Length
@@ -218,14 +248,15 @@ package body Completion is
       return Data (This);
    end Get_Proposal;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------
+   -- Get_Completion --
+   --------------------
 
-   function Get_Name (Proposal : Simple_Completion_Proposal) return String is
+   function Get_Completion (Proposal : Simple_Completion_Proposal)
+      return UTF8_String is
    begin
       return Proposal.Name.all;
-   end Get_Name;
+   end Get_Completion;
 
    ------------------
    -- Get_Category --
