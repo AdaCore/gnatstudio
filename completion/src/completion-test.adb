@@ -116,7 +116,8 @@ procedure Completion.Test is
       Iter := First (List);
 
       while Iter /= Null_Completion_Iterator loop
-         Standard.Ada.Text_IO.Put (Get_Name (Get_Proposal (Iter)) & " (");
+         Standard.Ada.Text_IO.Put
+           (Get_Completion (Get_Proposal (Iter)) & " (");
          Standard.Ada.Text_IO.Put
            (Language_Category'Image
               (Get_Category (Get_Proposal (Iter))) & ")");
@@ -236,6 +237,13 @@ procedure Completion.Test is
          return Handler;
       end Create_Lang_Handler;
 
+      procedure Project_Error (Msg : String);
+
+      procedure Project_Error (Msg : String) is
+      begin
+         Standard.Ada.Text_IO.Put_Line ("Error loading project: " & Msg);
+      end Project_Error;
+
       Loaded  : Boolean;
 
    begin
@@ -258,11 +266,12 @@ procedure Completion.Test is
       Load
         (Registry           => Registry,
          Root_Project_Path  => Create_From_Base (Project),
-         Errors             => null,
+         Errors             => Project_Error'Unrestricted_Access,
          New_Project_Loaded => Loaded);
 
+      Recompute_View (Registry, Project_Error'Unrestricted_Access);
+
       Compute_All_Call_Graphs (Db);
-      Recompute_View (Registry, null);
 
       return new Entity_Completion_Resolver'
         (New_Entity_Completion_Resolver
