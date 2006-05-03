@@ -20,8 +20,8 @@
 
 with Ada.Command_Line;              use Ada.Command_Line;
 with Ada.Text_IO;                   use Ada.Text_IO;
-with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
-with Ada.Strings.Unbounded.Text_IO; use Ada.Strings.Unbounded.Text_IO;
+with Ada.Strings.Unbounded;         use Ada.Strings;
+with Ada.Strings.Unbounded.Text_IO;
 with Ada.Calendar;                  use Ada.Calendar;
 
 with Completion.Ada;                  use Completion.Ada;
@@ -45,10 +45,12 @@ with VFS;               use VFS;
 with Language.Ada;      use Language.Ada;
 
 procedure Completion.Test is
+   use Standard.Ada;
    use Token_List;
+   use type Strings.Unbounded.Unbounded_String;
 
    File   : File_Type;
-   Buffer : Unbounded_String;
+   Buffer : Strings.Unbounded.Unbounded_String;
 
    procedure Next_Complete_Tag
      (Buffer      : String;
@@ -116,11 +118,10 @@ procedure Completion.Test is
       Iter := First (List);
 
       while Iter /= Null_Completion_Iterator loop
-         Standard.Ada.Text_IO.Put
-           (Get_Completion (Get_Proposal (Iter)) & " (");
-         Standard.Ada.Text_IO.Put
+         Text_IO.Put (Get_Completion (Get_Proposal (Iter)) & " (");
+         Text_IO.Put
            (Language_Category'Image
-              (Get_Category (Get_Proposal (Iter))) & ")");
+             (Get_Category (Get_Proposal (Iter))) & ")");
          New_Line;
 
          Iter := Next (Iter);
@@ -241,7 +242,7 @@ procedure Completion.Test is
 
       procedure Project_Error (Msg : String) is
       begin
-         Standard.Ada.Text_IO.Put_Line ("Error loading project: " & Msg);
+         Text_IO.Put_Line ("Error loading project: " & Msg);
       end Project_Error;
 
       Loaded  : Boolean;
@@ -322,7 +323,7 @@ procedure Completion.Test is
          Time_Passed := Clock - Start_Date;
 
          if Time_Passed > 1.0 then
-            Standard.Ada.Text_IO.Put_Line
+            Text_IO.Put_Line
               ("Completion is too long: "
                & Duration'Image (Time_Passed)
                & " seconds.");
@@ -371,7 +372,7 @@ procedure Completion.Test is
          Time_Passed := Clock - Start_Date;
 
          if Time_Passed > 1.0 then
-            Standard.Ada.Text_IO.Put_Line
+            Text_IO.Put_Line
               ("Completion is too long: "
                & Duration'Image (Time_Passed)
                & " seconds.");
@@ -467,34 +468,39 @@ begin
    Open (File, In_File, Argument (1));
 
    while not End_Of_File (File) loop
-      Append
+      Strings.Unbounded.Append
         (Buffer,
-         Standard.Ada.Strings.Unbounded.Text_IO.Get_Line (File) & ASCII.LF);
+         Strings.Unbounded.Text_IO.Get_Line (File) & ASCII.LF);
    end loop;
 
    Close (File);
 
-   if Argument (2) = "parse" then
-      Parse_File (To_String (Buffer));
-   elsif Argument (2) = "construct" then
-      Extract_Constructs (To_String (Buffer));
-   elsif Argument (2) = "analyze" then
-      Analyze_Proposal (To_String (Buffer));
-   elsif Argument (2) = "entity" then
-      if Argument_Count < 3 then
-         Put_Line ("Usage : <command> <file_name> analyze <project_name>");
-         return;
-      end if;
+   declare
+      S : constant String := Strings.Unbounded.To_String (Buffer);
+   begin
+      if Argument (2) = "parse" then
+         Parse_File (S);
+      elsif Argument (2) = "construct" then
+         Extract_Constructs (S);
+      elsif Argument (2) = "analyze" then
+         Analyze_Proposal (S);
+      elsif Argument (2) = "entity" then
+         if Argument_Count < 3 then
+            Put_Line ("Usage : <command> <file_name> analyze <project_name>");
+            return;
+         end if;
 
-      Extract_Entities (To_String (Buffer), Argument (3));
-   elsif Argument (2) = "full" then
-      if Argument_Count < 3 then
-         Put_Line ("Usage : <command> <file_name> full <project_name>");
-         return;
-      end if;
+         Extract_Entities (S, Argument (3));
 
-      Full_Test (To_String (Buffer), Argument (3));
-   end if;
+      elsif Argument (2) = "full" then
+         if Argument_Count < 3 then
+            Put_Line ("Usage : <command> <file_name> full <project_name>");
+            return;
+         end if;
+
+         Full_Test (S, Argument (3));
+      end if;
+   end;
 
    Flush;
 
