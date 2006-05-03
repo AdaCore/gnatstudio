@@ -28,6 +28,7 @@
 with Basic_Types;  use Basic_Types;
 with Language;     use Language;
 with Generic_List;
+with Glib;         use Glib;
 
 package Completion is
 
@@ -128,9 +129,25 @@ package Completion is
      (Proposal : in out Completion_Proposal; Mode : Proposal_Mode);
    --  Set the display mode
 
-   function Get_Name (Proposal : Completion_Proposal) return String
+   function Get_Completion (Proposal : Completion_Proposal) return UTF8_String
      is abstract;
-   --  Return the label of the completion proposal
+   --  Return the text that has to be used for the completion, may be different
+   --  from the label.
+
+   function Get_Label (Proposal : Completion_Proposal) return UTF8_String;
+   --  Return the label of the completion proposal. By defaut, return the
+   --  completion
+
+   function Get_Id (Proposal : Completion_Proposal) return UTF8_String;
+   --  Return the identifier of the entity referenced in the proposal. This
+   --  identifier can be different from the completion propsed and the label.
+   --  By default, return the completion.
+
+   function Characters_To_Replace (Proposal : Completion_Proposal)
+      return Natural;
+   --  Return the number of characters to be replaced by the completion, that
+   --  were already written in the buffer but might be not fully accurate (e.g.
+   --  bad cased). The number of characters is
 
    function Get_Category (Proposal : Completion_Proposal)
      return Language_Category is abstract;
@@ -211,8 +228,9 @@ private
    end record;
 
    type Completion_Proposal is abstract tagged record
-      Mode     : Proposal_Mode := Show_Identifiers;
-      Resolver : Completion_Resolver_Access;
+      Mode             : Proposal_Mode := Show_Identifiers;
+      Resolver         : Completion_Resolver_Access;
+      Extra_Characters : Natural := 0;
    end record;
 
    procedure Free_Proposal (Proposal : in out Completion_Proposal'Class);
@@ -238,7 +256,8 @@ private
       Name : String_Access;
    end record;
 
-   function Get_Name (Proposal : Simple_Completion_Proposal) return String;
+   function Get_Completion (Proposal : Simple_Completion_Proposal)
+      return UTF8_String;
    --  See inherited documentation
 
    function Get_Category (Proposal : Simple_Completion_Proposal)
