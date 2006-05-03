@@ -21,8 +21,6 @@
 --  This package is used to provide an easy way to analyze expression that have
 --  to be completed for Ada
 
-with Glib; use Glib;
-
 with Generic_List;
 
 package Completion.Expression_Parser is
