@@ -34,19 +34,19 @@ package body Completion.Constructs_Extractor is
       return (Manager => null, Tree => Tree);
    end New_Construct_Completion_Resolver;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------
+   -- Get_Completion --
+   --------------------
 
-   function Get_Name (Proposal : Construct_Completion_Proposal) return String
-   is
+   function Get_Completion (Proposal : Construct_Completion_Proposal)
+      return UTF8_String is
    begin
       if Proposal.Is_All then
          return "all";
       else
          return Get_Construct (Proposal.Tree_Node).Name.all;
       end if;
-   end Get_Name;
+   end Get_Completion;
 
    --------------
    -- Get_Type --
@@ -130,6 +130,7 @@ package body Completion.Constructs_Extractor is
                Construct_Completion_Proposal'
                  (Show_Identifiers,
                   Get_Resolver (Proposal),
+                  0,
                   Child_Iterator,
                   False));
                Child_Iterator := Next (Tree.all, Child_Iterator, Jump_Over);
@@ -145,6 +146,7 @@ package body Completion.Constructs_Extractor is
                Construct_Completion_Proposal'
                  (Show_Identifiers,
                   Get_Resolver (Proposal),
+                  0,
                   Proposal.Tree_Node,
                   True));
          end if;
@@ -254,6 +256,7 @@ package body Completion.Constructs_Extractor is
                         Construct_Completion_Proposal'
                           (Show_Identifiers,
                            Get_Resolver (Proposal),
+                           0,
                            Child_Iterator,
                            False));
                   end if;
@@ -277,6 +280,7 @@ package body Completion.Constructs_Extractor is
                         Construct_Completion_Proposal'
                           (Show_Identifiers,
                            Get_Resolver (Proposal),
+                           0,
                            Child_Iterator,
                            False));
 
@@ -339,6 +343,7 @@ package body Completion.Constructs_Extractor is
               (Result, Construct_Completion_Proposal'
                  (Show_Identifiers,
                   Completion_Resolver_Access (Resolver),
+                  0,
                   Result_Array (J),
                   False));
          end loop;

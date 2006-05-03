@@ -53,7 +53,8 @@ private
       Is_All    : Boolean := False;
    end record;
 
-   function Get_Name (Proposal : Construct_Completion_Proposal) return String;
+   function Get_Completion (Proposal : Construct_Completion_Proposal)
+      return UTF8_String;
    --  See inherited documentation
 
    function Get_Category (Proposal : Construct_Completion_Proposal)

@@ -60,7 +60,8 @@ private
       Entity : Entity_Information;
    end record;
 
-   function Get_Name (Proposal : Entity_Completion_Proposal) return String;
+   function Get_Completion (Proposal : Entity_Completion_Proposal)
+      return UTF8_String;
    --  See inherited documentation
 
    function Get_Category (Proposal : Entity_Completion_Proposal)
@@ -84,7 +85,8 @@ private
       Nested : Boolean;
    end record;
 
-   function Get_Name (Proposal : Unit_Completion_Proposal) return String;
+   function Get_Completion (Proposal : Unit_Completion_Proposal)
+      return UTF8_String;
    --  See inherited documentation
 
    function Get_Category (Proposal : Unit_Completion_Proposal)

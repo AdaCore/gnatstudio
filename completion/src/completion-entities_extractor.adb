@@ -41,14 +41,15 @@ package body Completion.Entities_Extractor is
          Handler => Language_Handler (Handler));
    end New_Entity_Completion_Resolver;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------
+   -- Get_Completion --
+   --------------------
 
-   function Get_Name (Proposal : Entity_Completion_Proposal) return String is
+   function Get_Completion (Proposal : Entity_Completion_Proposal)
+      return UTF8_String is
    begin
       return Get_Name (Proposal.Entity).all;
-   end Get_Name;
+   end Get_Completion;
 
    ------------------
    -- Get_Category --
@@ -81,7 +82,7 @@ package body Completion.Entities_Extractor is
                Append
                  (Result,
                   Entity_Completion_Proposal'
-                    (Proposal.Mode, Proposal.Resolver, Get (It)));
+                    (Proposal.Mode, Proposal.Resolver, 0, Get (It)));
 
                Next (It);
             end loop;
@@ -115,14 +116,16 @@ package body Completion.Entities_Extractor is
       null;
    end Free;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------
+   -- Get_Completion --
+   --------------------
 
-   function Get_Name (Proposal : Unit_Completion_Proposal) return String is
+   function Get_Completion (Proposal : Unit_Completion_Proposal)
+      return UTF8_String
+   is
    begin
       return Get_Name (Proposal.Info).all;
-   end Get_Name;
+   end Get_Completion;
 
    ------------------
    -- Get_Category --
@@ -176,7 +179,7 @@ package body Completion.Entities_Extractor is
                Append
                  (Result,
                   Unit_Completion_Proposal'
-                    (Show_Identifiers, Proposal.Resolver, Info, True));
+                    (Show_Identifiers, Proposal.Resolver, 0, Info, True));
             end if;
 
             Next (It);
@@ -204,6 +207,7 @@ package body Completion.Entities_Extractor is
                      Unit_Completion_Proposal'
                        (Show_Identifiers,
                         Completion_Resolver_Access (Proposal.Resolver),
+                        0,
                         Get_Unit_Info (Current_File),
                         False));
 
@@ -279,7 +283,7 @@ package body Completion.Entities_Extractor is
                Append
                  (Result,
                   Entity_Completion_Proposal'
-                    (Show_Identifiers, Resolver, Get (It)));
+                    (Show_Identifiers, Resolver, 0, Get (It)));
             end if;
          end;
 
@@ -385,6 +389,7 @@ package body Completion.Entities_Extractor is
                      Unit_Completion_Proposal'
                        (Show_Identifiers,
                         Completion_Resolver_Access (Resolver),
+                        0,
                         Get_Unit_Info (Current_File),
                         False));
                end if;
