@@ -1731,7 +1731,7 @@ package body Gtkada.File_Selector is
 
             declare
                Files : File_Array_Access :=
-                       Read_Dir (Win.Current_Directory, Files_Only);
+                         Read_Dir (Win.Current_Directory, Dirs_Only);
             begin
                for F in Files'Range loop
                   Matcher (Base_Name (S), Base_Dir_Name (Files (F)));
