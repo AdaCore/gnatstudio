@@ -560,7 +560,8 @@ package body Completion_Module is
 
                   while Iter /= Null_Completion_Iterator loop
                      declare
-                        T : constant String := Get_Name (Get_Proposal (Iter));
+                        T : constant String :=
+                          Get_Completion (Get_Proposal (Iter));
                      begin
                         Add_Contents
                           (Win, T, T,
