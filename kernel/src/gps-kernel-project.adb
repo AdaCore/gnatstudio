@@ -107,6 +107,8 @@ package body GPS.Kernel.Project is
          Handle.Gnatls_Server := new String'(Get_Nickname (Build_Server));
 
          Error_Handler.Handle := Kernel_Handle (Handle);
+         --  ??? cache this information if Build_Server is not the local
+         --  machine, unless a recompute project is performed
          Projects.Registry.Compute_Predefined_Paths
            (Handle.Registry.all,
             Handle.GNAT_Version,
@@ -271,8 +273,7 @@ package body GPS.Kernel.Project is
 
       Root_Project : constant Virtual_File :=
                        Project_Path (Get_Root_Project (Kernel.Registry.all));
-      Same_Project : constant Boolean :=
-                       Project = Root_Project and then Is_Local (Project);
+      Same_Project : constant Boolean := Project = Root_Project;
       Local_Project : VFS.Virtual_File;
 
    begin
@@ -317,8 +318,9 @@ package body GPS.Kernel.Project is
             if not Is_Regular_File (Local_Project) then
                Console.Insert
                  (Kernel, (-"Cannot find remote project file ")
-                  & Full_Name (Project).all &
-                  (-". Please configure the appropriate remote path"),
+                  & Full_Name (Project).all & (-" at local place ")
+                  & Full_Name (Local_Project).all &
+                  (-". Please check your remote configuration."),
                   Mode => Console.Error, Add_Lf => False);
 
                --  Need to run Project_Changing hook to reset build_server
