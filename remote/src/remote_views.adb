@@ -33,35 +33,37 @@ with Glib.Xml_Int;       use Glib.Xml_Int;
 
 with Gdk.Color;          use Gdk.Color;
 
-with Gtk.Button;         use Gtk.Button;
-with Gtk.Enums;          use Gtk.Enums;
-with Gtk.GEntry;         use Gtk.GEntry;
-with Gtk.Handlers;       use Gtk.Handlers;
-with Gtk.Label;          use Gtk.Label;
-with Gtk.List;           use Gtk.List;
-with Gtk.List_Item;      use Gtk.List_Item;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.GEntry;          use Gtk.GEntry;
+with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Image;           use Gtk.Image;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.List;            use Gtk.List;
+with Gtk.List_Item;       use Gtk.List_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Style;          use Gtk.Style;
-with Gtk.Table;          use Gtk.Table;
-with Gtk.Tooltips;       use Gtk.Tooltips;
-with Gtk.Widget;         use Gtk.Widget;
-with Gtkada.Combo;       use Gtkada.Combo;
-with Gtkada.Dialogs;     use Gtkada.Dialogs;
-with Gtkada.MDI;         use Gtkada.MDI;
-with Collapsing_Pane;    use Collapsing_Pane;
+with Gtk.Stock;           use Gtk.Stock;
+with Gtk.Style;           use Gtk.Style;
+with Gtk.Table;           use Gtk.Table;
+with Gtk.Tooltips;        use Gtk.Tooltips;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtkada.Combo;        use Gtkada.Combo;
+with Gtkada.Dialogs;      use Gtkada.Dialogs;
+with Gtkada.MDI;          use Gtkada.MDI;
+with Collapsing_Pane;     use Collapsing_Pane;
 
-with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
-with GPS.Kernel.Remote;  use GPS.Kernel.Remote;
+with GPS.Intl;            use GPS.Intl;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with GPS.Kernel.Project;  use GPS.Kernel.Project;
+with GPS.Kernel.Remote;   use GPS.Kernel.Remote;
 
-with Projects;           use Projects;
-with Remote_Servers;     use Remote_Servers;
-with Traces;             use Traces;
-with VFS;                use VFS;
+with Projects;            use Projects;
+with Remote_Servers;      use Remote_Servers;
+with Traces;              use Traces;
+with VFS;                 use VFS;
 
 package body Remote_Views is
 
@@ -81,6 +83,7 @@ package body Remote_Views is
       Debug_Combo        : Gtkada_Combo;
       Exec_Combo         : Gtkada_Combo;
       Check_Button       : Gtk_Button;
+      Sync_Button        : Gtk_Button;
       Connect_Button     : Gtk_Button;
       Config_List_Button : Gtk_Button;
       Combo_Selected     : Boolean := False;
@@ -168,6 +171,11 @@ package body Remote_Views is
       User : Remote_Data);
    --  Called when the 'connect' button is clicked
 
+   procedure On_Sync_Clicked
+     (W    : access Gtk_Widget_Record'Class;
+      User : Remote_Data);
+   --  Called when the 'sync' button is clicked
+
    procedure On_Config_List_Clicked
      (View : access Gtk_Widget_Record'Class;
       User : Remote_Data);
@@ -200,12 +208,13 @@ package body Remote_Views is
       Kernel          : Kernel_Handle;
       Use_Simple_View : Boolean := True)
    is
-      Label         : Gtk_Label;
-      Tooltips      : Gtk_Tooltips;
-      Simple_Table  : Gtk_Table;
-      Full_Table    : Gtk_Table;
-      Color         : Gdk_Color;
-      Success       : Boolean;
+      Label        : Gtk_Label;
+      Tooltips     : Gtk_Tooltips;
+      Simple_Table : Gtk_Table;
+      Full_Table   : Gtk_Table;
+      Color        : Gdk_Color;
+      Success      : Boolean;
+      Pix          : Gtk_Image;
 
    begin
       Gtk.Scrolled_Window.Initialize (View);
@@ -216,7 +225,7 @@ package body Remote_Views is
 
       View.Kernel := Kernel;
       Gtk_New (View.Pane, "Servers assignment");
-      Attach (View.Main_Table, View.Pane, 0, 2, 0, 1,
+      Attach (View.Main_Table, View.Pane, 0, 3, 0, 1,
               Expand or Fill, 0);
       Set_Reduce_Window (View.Pane, False);
 
@@ -306,16 +315,30 @@ package body Remote_Views is
       Alloc_Color (Get_Default_Colormap, Color, Success => Success);
       Set_Text (View.Modified_Style, State_Normal, Color);
 
-      --  "Check" and "Apply" buttons
+      --  "Check", "Apply" and "Sync" buttons
       Gtk_New (View.Check_Button, -"Check");
       Set_Tip
         (Tooltips, View.Check_Button,
          -"Check your configuration against current project");
       Attach (View.Main_Table, View.Check_Button,
-              0, 1, 1, 2, 0, 0, 5, 5);
+              0, 1, 1, 2, Fill or Expand, 0, 5, 5);
       Set_Sensitive (View.Check_Button, False);
       View_Callback.Connect
         (View.Check_Button, "clicked", On_Check_Clicked'Access,
+         (View => Remote_View (View), Server => GPS_Server));
+
+      Gtk_New (View.Sync_Button);
+      Gtk_New (Pix, Stock_Refresh, Icon_Size_Menu);
+      Add (View.Sync_Button, Pix);
+      Set_Tip
+        (Tooltips, View.Sync_Button,
+         -("Force update of directories marked as 'Synchonise Once' from the" &
+           " selected build server"));
+      Attach (View.Main_Table, View.Sync_Button,
+              1, 2, 1, 2, Fill or Expand, 0, 5, 5);
+      Set_Sensitive (View.Sync_Button, False);
+      View_Callback.Connect
+        (View.Sync_Button, "clicked", On_Sync_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New (View.Connect_Button, -"Apply");
@@ -323,7 +346,7 @@ package body Remote_Views is
         (Tooltips, View.Connect_Button,
          -"Apply then remote servers configuration");
       Attach (View.Main_Table, View.Connect_Button,
-              1, 2, 1, 2, 0, 0, 5, 5);
+              2, 3, 1, 2, Fill or Expand, 0, 5, 5);
       Set_Sensitive (View.Connect_Button, False);
       View_Callback.Connect
         (View.Connect_Button, "clicked", On_Connect_Clicked'Access,
@@ -335,7 +358,7 @@ package body Remote_Views is
         (Tooltips, View.Config_List_Button,
          -"Configure the list of available servers");
       Attach (View.Main_Table, View.Config_List_Button,
-              0, 2, 2, 3, 0, 0, 5, 5);
+              0, 3, 2, 3, 0, 0, 5, 5);
       View_Callback.Connect
         (View.Config_List_Button, "clicked", On_Config_List_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
@@ -472,9 +495,11 @@ package body Remote_Views is
       Set_Text (Get_Entry (View.Build_Combo),
                 Get_Printable_Nickname (Build_Server));
       Set_Modified (Remote_View (View), Get_Entry (View.Build_Combo), False);
+
       Set_Text (Get_Entry (View.Debug_Combo),
                 Get_Printable_Nickname (Debug_Server));
       Set_Modified (Remote_View (View), Get_Entry (View.Debug_Combo), False);
+
       Set_Text (Get_Entry (View.Exec_Combo),
                 Get_Printable_Nickname (Execution_Server));
       Set_Modified (Remote_View (View), Get_Entry (View.Exec_Combo), False);
@@ -614,6 +639,14 @@ package body Remote_Views is
             Set_Modified (User.View, Remote_Entry, False);
             Set_Sensitive (User.View.Check_Button, False);
             Set_Sensitive (User.View.Connect_Button, False);
+         end if;
+
+         if User.Server = Build_Server
+           and then Build_Txt /= Local_Nickname
+         then
+            Set_Sensitive (User.View.Sync_Button, True);
+         else
+            Set_Sensitive (User.View.Sync_Button, False);
          end if;
       end;
 
@@ -777,6 +810,24 @@ package body Remote_Views is
                  Reload_Prj => True);
       end if;
    end On_Connect_Clicked;
+
+   ---------------------
+   -- On_Sync_Clicked --
+   ---------------------
+
+   procedure On_Sync_Clicked
+     (W    : access Gtk_Widget_Record'Class;
+      User : Remote_Data) is
+      pragma Unreferenced (W);
+   begin
+      Synchronize
+        (User.View.Kernel,
+         From           => Get_Text (Get_Entry (User.View.Build_Combo)),
+         To             => "",
+         Queue_Id       => "",
+         Sync_Deleted   => True,
+         Sync_Once_Dirs => True);
+   end On_Sync_Clicked;
 
    ----------------------------
    -- On_Config_List_Clicked --
