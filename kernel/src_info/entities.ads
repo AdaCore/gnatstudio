@@ -715,9 +715,11 @@ package Entities is
 
    procedure Continue
      (Iterator : in out LI_Handler_Iterator;
+      Errors   : Projects.Error_Report;
       Finished : out Boolean) is abstract;
    --  Move to the next source file that must be analyzed, if the previous file
    --  is fully parsed. Nothing is done otherwise.
+   --  Errors will be printed through Errors
 
    ----------------
    -- LI_Handler --
@@ -757,6 +759,7 @@ package Entities is
      (Handler      : access LI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Projects.Project_Type;
+      Errors       : Projects.Error_Report;
       Recursive    : Boolean := False)
       return LI_Handler_Iterator'Class is abstract;
    --  Generate the LI information for all the source files in Project (and all
@@ -772,7 +775,8 @@ package Entities is
       File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List);
    --  Build a Construct_List, either using the src_info tools (like SN)
-   --  or a language parser.
+   --  or a language parser. Any potential error should be ignored, and we
+   --  should return an empty Result instead.
    --  Result should be freed.
 
    function Get_Name (LI : access LI_Handler_Record) return String is abstract;

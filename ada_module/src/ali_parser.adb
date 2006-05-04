@@ -66,12 +66,15 @@ package body ALI_Parser is
      (Handler      : access ALI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Projects.Project_Type;
+      Errors       : Projects.Error_Report;
       Recursive    : Boolean := False) return LI_Handler_Iterator'Class;
    --  See doc for inherited subprograms
 
    type ALI_Handler_Iterator is new LI_Handler_Iterator with null record;
    procedure Continue
-     (Iterator : in out ALI_Handler_Iterator; Finished : out Boolean);
+     (Iterator : in out ALI_Handler_Iterator;
+      Errors   : Projects.Error_Report;
+      Finished : out Boolean);
    procedure Destroy (Iterator : in out ALI_Handler_Iterator);
    --  See doc for inherited subprograms
 
@@ -1755,9 +1758,10 @@ package body ALI_Parser is
      (Handler      : access ALI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Projects.Project_Type;
+      Errors       : Projects.Error_Report;
       Recursive    : Boolean := False) return LI_Handler_Iterator'Class
    is
-      pragma Unreferenced (Handler, Project, Recursive, Lang_Handler);
+      pragma Unreferenced (Handler, Project, Recursive, Lang_Handler, Errors);
       Iterator : ALI_Handler_Iterator;
    begin
       return Iterator;
@@ -1783,9 +1787,11 @@ package body ALI_Parser is
    --------------
 
    procedure Continue
-     (Iterator : in out ALI_Handler_Iterator; Finished : out Boolean)
+     (Iterator : in out ALI_Handler_Iterator;
+      Errors   : Projects.Error_Report;
+      Finished : out Boolean)
    is
-      pragma Unreferenced (Iterator);
+      pragma Unreferenced (Iterator, Errors);
    begin
       Finished := True;
    end Continue;
