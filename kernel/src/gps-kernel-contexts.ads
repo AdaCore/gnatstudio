@@ -47,7 +47,6 @@ package GPS.Kernel.Contexts is
       Revision          : String := "";
       Tag               : String := "");
    --  Set the information in this context.
-   --  File_Name must be UTF8-encoded.
    --  ??? We should use non-ambiguous types for Line and Column
 
    function Has_Directory_Information
