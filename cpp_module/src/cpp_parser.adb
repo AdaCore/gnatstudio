@@ -163,6 +163,7 @@ package body CPP_Parser is
      (Handler       : access CPP_Handler_Record;
       Lang_Handler  : access Abstract_Language_Handler_Record'Class;
       Project       : Projects.Project_Type;
+      Errors        : Projects.Error_Report;
       Recursive     : Boolean := False) return LI_Handler_Iterator'Class;
    procedure Parse_File_Constructs
      (Handler      : access CPP_Handler_Record;
@@ -197,13 +198,16 @@ package body CPP_Parser is
       --  freed on completion
    end record;
    procedure Continue
-     (Iterator : in out CPP_Handler_Iterator; Finished : out Boolean);
+     (Iterator : in out CPP_Handler_Iterator;
+      Errors   : Projects.Error_Report;
+      Finished : out Boolean);
    procedure Destroy (Iterator : in out CPP_Handler_Iterator);
    --  See doc for inherited subprograms
 
    procedure Browse_Project
      (Project      : Project_Type;
       Iterator     : in out CPP_Handler_Iterator'Class;
+      Errors       : Projects.Error_Report;
       Single_File  : VFS.Virtual_File := VFS.No_File);
    --  Runs cbrowser for all source files of Project.
    --  If Single_File is specified, then only this information for this file
@@ -213,6 +217,7 @@ package body CPP_Parser is
      (Handler      : access CPP_Handler_Record'Class;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Project_Type;
+      Errors       : Projects.Error_Report;
       File         : VFS.Virtual_File) return LI_Handler_Iterator'Class;
    --  Generate the cbrowser information for a single file. This means that
    --  we will mostly know about entity declaration and bodies, but not about
@@ -246,8 +251,9 @@ package body CPP_Parser is
    --  all imported projects).
    --  Result must be freed by user.
 
-   procedure Create_Directory_If_Not_Exist (Dir : String);
-   --  Create the directory Dir if it doesn't exist yet
+   function Create_Directory_If_Not_Exist (Dir : String) return Boolean;
+   --  Create the directory Dir if it doesn't exist yet.
+   --  Return True if the directory existed or could be created successfully.
 
    function Table_Extension (Table : Table_Type) return String;
    --  Given a table type, return the associated file extension, or "" if
@@ -522,11 +528,19 @@ package body CPP_Parser is
    -- Create_Directory_If_Not_Exist --
    -----------------------------------
 
-   procedure Create_Directory_If_Not_Exist (Dir : String) is
+   function Create_Directory_If_Not_Exist (Dir : String) return Boolean is
    begin
       if Dir /= "" and then not Is_Directory (Dir) then
+         --  It might happen that the Directory exists but is not readable.
+         --  A bug in the GNAT runtime has Is_Directory return False in this
+         --  case, and Make_Dir will of course fail.
          Make_Dir (Dir);
       end if;
+      return True;
+
+   exception
+      when GNAT.Directory_Operations.Directory_Error =>
+         return False;
    end Create_Directory_If_Not_Exist;
 
    ----------------
@@ -2884,6 +2898,7 @@ package body CPP_Parser is
    procedure Browse_Project
      (Project      : Project_Type;
       Iterator     : in out CPP_Handler_Iterator'Class;
+      Errors       : Projects.Error_Report;
       Single_File  : VFS.Virtual_File := VFS.No_File)
    is
       DB_Dir           : constant String := Get_DB_Dir (Project);
@@ -2915,7 +2930,15 @@ package body CPP_Parser is
       --  directory exists.
 
       if Iterator.Current_File <= Iterator.Current_Files'Last then
-         Create_Directory_If_Not_Exist (DB_Dir);
+         Success := Create_Directory_If_Not_Exist (DB_Dir);
+         if not Success then
+            if Errors /= null then
+               Errors ("Could not access or create the directory "
+                       & DB_Dir);
+            end if;
+            Iterator.State := Skip_Project;
+            return;
+         end if;
 
          --  Create the list of files that need to be analyzed.
 
@@ -2992,6 +3015,7 @@ package body CPP_Parser is
      (Handler      : access CPP_Handler_Record'Class;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Project_Type;
+      Errors       : Projects.Error_Report;
       File         : VFS.Virtual_File) return LI_Handler_Iterator'Class
    is
       Iter : CPP_Handler_Iterator;
@@ -3002,7 +3026,8 @@ package body CPP_Parser is
       Iter.Lang_Handler := Language_Handler (Lang_Handler);
       Iter.Do_Dbimp     := False;
 
-      Browse_Project (Current (Iter.Prj_Iterator), Iter, Single_File => File);
+      Browse_Project (Current (Iter.Prj_Iterator), Iter,
+                      Errors => Errors, Single_File => File);
 
       return Iter;
    end Generate_LI_For_Source;
@@ -3015,6 +3040,7 @@ package body CPP_Parser is
      (Handler       : access CPP_Handler_Record;
       Lang_Handler  : access Abstract_Language_Handler_Record'Class;
       Project       : Projects.Project_Type;
+      Errors        : Projects.Error_Report;
       Recursive     : Boolean := False) return LI_Handler_Iterator'Class
    is
       Iter : CPP_Handler_Iterator;
@@ -3026,7 +3052,7 @@ package body CPP_Parser is
       Iter.Do_Dbimp     := True;
 
       if Current (Iter.Prj_Iterator) /= No_Project then
-         Browse_Project (Current (Iter.Prj_Iterator), Iter);
+         Browse_Project (Current (Iter.Prj_Iterator), Iter, Errors);
       else
          Iter.State := Done;
       end if;
@@ -3039,7 +3065,9 @@ package body CPP_Parser is
    --------------
 
    procedure Continue
-     (Iterator : in out CPP_Handler_Iterator; Finished : out Boolean)
+     (Iterator : in out CPP_Handler_Iterator;
+      Errors   : Projects.Error_Report;
+      Finished : out Boolean)
    is
       Process_Alive  : Boolean := False;
       Success        : Boolean;
@@ -3055,7 +3083,7 @@ package body CPP_Parser is
          if Current (Iterator.Prj_Iterator) = No_Project then
             Iterator.State := Done;
          else
-            Browse_Project (Current (Iterator.Prj_Iterator), Iterator);
+            Browse_Project (Current (Iterator.Prj_Iterator), Iterator, Errors);
          end if;
       end Next_Project;
 
@@ -3262,10 +3290,11 @@ package body CPP_Parser is
               (Handler,
                Lang_Handler => Languages,
                Project     => Project,
+               Errors      => null,
                File        => File_Name);
          begin
             loop
-               Continue (Iter, Finished);
+               Continue (Iter, null, Finished);
                exit when Finished;
             end loop;
             Destroy (Iter);
