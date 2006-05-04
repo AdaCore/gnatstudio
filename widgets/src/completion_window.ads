@@ -66,10 +66,11 @@ package Completion_Window is
    --   in UTF-8.
 
    procedure Show
-     (Window : Completion_Window_Access;
-      View   : Gtk_Text_View;
-      Buffer : Gtk_Text_Buffer;
-      Iter   : Gtk_Text_Iter);
+     (Window         : Completion_Window_Access;
+      View           : Gtk_Text_View;
+      Buffer         : Gtk_Text_Buffer;
+      Iter           : Gtk_Text_Iter;
+      Case_Sensitive : Boolean);
    --  Attach the completion window to a text view, and set the completion
    --  to start on the given mark.
    --  Show the window.
@@ -110,6 +111,9 @@ private
 
       Notes_Window : Gtk_Window;
       Notes_Label  : Gtk_Label;
+
+      Case_Sensitive : Boolean;
+      In_Deletion    : Boolean := False;
    end record;
 
 end Completion_Window;
