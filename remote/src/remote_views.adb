@@ -332,8 +332,8 @@ package body Remote_Views is
       Add (View.Sync_Button, Pix);
       Set_Tip
         (Tooltips, View.Sync_Button,
-         -("Force update of directories marked as 'Synchonise Once' from the" &
-           " selected build server"));
+         -("Force update of directories marked as 'Synchronize Once' from the"
+           & " selected build server"));
       Attach (View.Main_Table, View.Sync_Button,
               1, 2, 1, 2, Fill or Expand, 0, 5, 5);
       Set_Sensitive (View.Sync_Button, False);
@@ -344,7 +344,7 @@ package body Remote_Views is
       Gtk_New (View.Connect_Button, -"Apply");
       Set_Tip
         (Tooltips, View.Connect_Button,
-         -"Apply then remote servers configuration");
+         -"Apply remote servers configuration");
       Attach (View.Main_Table, View.Connect_Button,
               2, 3, 1, 2, Fill or Expand, 0, 5, 5);
       Set_Sensitive (View.Connect_Button, False);
