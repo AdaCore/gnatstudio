@@ -328,7 +328,12 @@ package body GNAT.Expect.TTY.Remote is
                    Input);
          end if;
 
-         Descriptor.Current_Echo_Skipped := False;
+         --  Do not skip next line if a remote process is running. In fact,
+         --  this process will receive the commands, not the shell, and will
+         --  not echo them.
+         if Descriptor.Terminated then
+            Descriptor.Current_Echo_Skipped := False;
+         end if;
       end if;
 
       Send (TTY_Descriptor, Str, Add_LF, Empty_Buffer);
