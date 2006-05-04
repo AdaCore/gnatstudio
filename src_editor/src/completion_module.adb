@@ -509,6 +509,9 @@ package body Completion_Module is
       Text          : GNAT.OS_Lib.String_Access;
       Buffer        : Source_Buffer;
 
+      Movement      : Boolean;
+      To_Replace    : Natural := 0;
+
    begin
       if M = null then
          return Commands.Failure;
@@ -555,6 +558,35 @@ package body Completion_Module is
 
                procedure Display (List : Completion_List) is
                   Iter : Completion_Iterator;
+
+                  function To_Showable_String
+                    (P : Completion_Proposal'Class) return String;
+                  --  Return the string to display in the main window.
+
+                  function To_Showable_String
+                    (P : Completion_Proposal'Class) return String
+                  is
+                     function Proposal_To_Color return String;
+                     --  Return a color representing the proposal.
+
+                     function Proposal_To_Color return String is
+                        R : constant Completion_Resolver_Access :=
+                          Get_Resolver (P);
+                     begin
+                        if R = Entity_Resolver then
+                           return "blue";
+                        elsif R = Constructs_Resolver then
+                           return "dark green";
+                        else
+                           return "black";
+                        end if;
+                     end Proposal_To_Color;
+
+                  begin
+                     return "<span foreground=""" & Proposal_To_Color &
+                     """>" & Get_Label (P) & "</span>";
+                  end To_Showable_String;
+
                begin
                   Iter := First (List);
 
@@ -564,10 +596,15 @@ package body Completion_Module is
                           Get_Completion (Get_Proposal (Iter));
                      begin
                         Add_Contents
-                          (Win, T, T,
+                          (Win, To_Showable_String (Get_Proposal (Iter)), T,
                            Category_Name
                              (Get_Category (Get_Proposal (Iter))));
                      end;
+
+                     if To_Replace = 0 then
+                        To_Replace := Characters_To_Replace
+                          (Get_Proposal (Iter));
+                     end if;
 
                      Content_Displayed := True;
 
@@ -613,12 +650,11 @@ package body Completion_Module is
 
                Display (Result);
 
-               --  ??? The following should be freed, but lack corresponding
-               --  functions:
-
-               --              Free (Manager);
-               --              Free (Constructs);
-               --              Free (Completion_List);
+               Free (Constructs_Resolver);
+               Free (Entity_Resolver);
+               --  ??? Missing Free function.
+               --                 Free (Manager);
+               Free (Result);
                Free (Constructs_Tree);
                Free (The_Text);
 
@@ -626,15 +662,23 @@ package body Completion_Module is
                   Get_Iter_At_Mark
                     (Buffer, It, Get_Insert (Buffer));
 
-                  Start_Completion (View, Win);
+                  Backward_Chars (It, Gint (To_Replace), Movement);
 
-                  Widget_Callback.Object_Connect
-                    (Win, "destroy", Widget_Callback.To_Marshaller
-                       (On_Completion_Destroy'Access), View);
+                  if Movement then
+                     Start_Completion (View, Win);
 
-                  Show
-                    (Win, Gtk_Text_View (View), Gtk_Text_Buffer (Buffer), It);
+                     Widget_Callback.Object_Connect
+                       (Win, "destroy", Widget_Callback.To_Marshaller
+                          (On_Completion_Destroy'Access), View);
 
+                     Show
+                       (Win, Gtk_Text_View (View),
+                        Gtk_Text_Buffer (Buffer), It,
+                        Get_Language_Context
+                          (Get_Language (Buffer)).Case_Sensitive);
+                  else
+                     Delete (Win);
+                  end if;
                else
                   Delete (Win);
                end if;
