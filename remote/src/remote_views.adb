@@ -641,7 +641,7 @@ package body Remote_Views is
             Set_Sensitive (User.View.Connect_Button, False);
          end if;
 
-         if User.Server = Build_Server
+         if (User.Server = Build_Server or else User.Server = GPS_Server)
            and then Build_Txt /= Local_Nickname
          then
             Set_Sensitive (User.View.Sync_Button, True);
