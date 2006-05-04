@@ -81,27 +81,30 @@ package GPS.Kernel.Remote is
    --  windows fs
 
    procedure Synchronize
-     (Kernel       : Kernel_Handle;
-      From         : Server_Type;
-      To           : Server_Type;
-      Queue_Id     : String;
-      Sync_Deleted : Boolean);
-   --  Forces a file system synchronisation between the two servers.
+     (Kernel         : Kernel_Handle;
+      From           : Server_Type;
+      To             : Server_Type;
+      Queue_Id       : String;
+      Sync_Deleted   : Boolean;
+      Sync_Once_Dirs : Boolean := False);
+   --  Perform a file system synchronisation between From and To.
    --  If Queue_Id is not an empty string, then the synchronisation is
    --   launched as an asynchronous command using the queue_id. Else, it is
    --   launched synchronously.
    --  If Sync_Deleted is set, then deleted files in src server will be
    --   deleted on To server. Else, an update is performed (only newer files
    --   are copied).
+   --  If Sync_Once_Dirs is set, then only mirrors paths marked as 'sync once'
+   --   are synchronized.
 
    procedure Synchronize
-     (Kernel       : Kernel_Handle;
-      From         : Server_Type;
-      To           : Server_Type;
-      Queue_Id     : String;
-      Sync_Deleted : Boolean;
-      Status       : out Boolean);
-   --  Same as above, returning synchronisation status.
+     (Kernel         : Kernel_Handle;
+      From           : String;
+      To             : String;
+      Queue_Id       : String;
+      Sync_Deleted   : Boolean;
+      Sync_Once_Dirs : Boolean := False);
+   --  Same as above, with From and To servers identified by their nickname
 
    ---------------------------------
    -- Error display when spawning --
