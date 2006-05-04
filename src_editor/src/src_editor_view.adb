@@ -1501,12 +1501,12 @@ package body Src_Editor_View is
       Kernel : access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
-      Source  : constant Source_View := Source_View (Hook.View);
-      Descr   : Pango_Font_Description;
-      Layout  : Pango_Layout;
-      Color   : Gdk_Color;
-      Height  : Gint;
-      Mode    : constant Speed_Column_Policies := Source.Speed_Column_Mode;
+      Source : constant Source_View := Source_View (Hook.View);
+      Descr  : Pango_Font_Description;
+      Layout : Pango_Layout;
+      Color  : Gdk_Color;
+      Height : Gint;
+      Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
    begin
       --  Set the font.
 

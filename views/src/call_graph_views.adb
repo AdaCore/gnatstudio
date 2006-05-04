@@ -764,7 +764,6 @@ package body Call_Graph_Views is
       Remove (M, Child);
 
       Thaw_Sort (M, Column);
-
    exception
       when E : others =>
          Trace (Exception_Handle, "Unexpected exception: "

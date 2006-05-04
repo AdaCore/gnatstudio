@@ -1092,34 +1092,34 @@ private
       --  the text is edited.
 
       Blocks_Timeout_Registered : Boolean := False;
-      --  Whether the blocks need to be recomputed.
+      --  Whether the blocks need to be recomputed
 
       Blocks_Timeout : Gtk.Main.Timeout_Handler_Id;
-      --  A timeout handling the refresh of the timeouts.
+      --  A timeout handling the refresh of the timeouts
 
       Blocks_Request_Timestamp : Ada.Calendar.Time;
-      --  The last time the blocks refresh was requested.
+      --  The last time the blocks refresh was requested
 
       Cursor_Timeout_Registered : Boolean := False;
       --  Whether the cursor timeout is registered
 
       Cursor_Timeout : Gtk.Main.Timeout_Handler_Id;
-      --  A timeout handling the refresh of the timeouts.
+      --  A timeout handling the refresh of the timeouts
 
       Cursor_Timestamp : Ada.Calendar.Time;
-      --  The last time the cursor was moved;
+      --  The last time the cursor was moved
 
       Blank_Lines : Natural := 0;
-      --  The number of blank lines in the buffer.
+      --  The number of blank lines in the buffer
 
       Hidden_Lines : Natural := 0;
-      --  The number of hidden lines in the buffer.
+      --  The number of hidden lines in the buffer
 
       Block_Folding : Boolean := False;
-      --  Whether the editor buffer should allow block folding.
+      --  Whether the editor buffer should allow block folding
 
       Block_Highlighting : Boolean := False;
-      --  Whether the editor buffer should allow block highlighting.
+      --  Whether the editor buffer should allow block highlighting
 
       Block_Highlighting_Column : Integer := -1;
       --  The column (index in Buffer_Line_Info_Columns) that contains the
@@ -1139,13 +1139,13 @@ private
       --  They must be valid marks at all times.
 
       Highlight_Needed : Boolean := False;
-      --  Whether the text should be re-highlighted.
+      --  Whether the text should be re-highlighted
 
       Auto_Syntax_Check : Boolean := False;
-      --  Whether the syntax should be checked automatically.
+      --  Whether the syntax should be checked automatically
 
       Highlight_Delimiters : Boolean := False;
-      --  Cache corresponding preference.
+      --  Cache corresponding preference
 
       Tab_Width : Gint := 8;
       --  Width of a Tab character
@@ -1154,20 +1154,20 @@ private
       --  > 0 when the cursor position has been set explicitely in the code
 
       In_Destruction : Boolean := False;
-      --  Indicates whether the buffer is currently being destroyed.
+      --  Indicates whether the buffer is currently being destroyed
 
       Charset : String_Access;
-      --  The charset associated with the buffer.
+      --  The charset associated with the buffer
 
       Constructs : Language.Construct_List;
       --  The parsed constructs in the buffer. This list might or might not
       --  be up to date, see Constructs_State below.
 
       Constructs_State : Constructs_State_Type := Not_Parsed;
-      --  The state of the constructs list.
+      --  The state of the constructs list
 
       Blocks_Exact : Boolean := False;
-      --  Whether the blocks information is exact.
+      --  Whether the blocks information is exact
    end record;
 
    procedure Emit_By_Name

@@ -489,7 +489,7 @@ package Language is
       --  Is the construct public, private or protected ?
 
       Name           : Basic_Types.String_Access;
-      --  Name of the enclosing token. Null if not relevant for Token.
+      --  Name of the enclosing token. Null if not relevant for Token
 
       Profile        : Basic_Types.String_Access;
       --  Subprogram profile, if Category is in Subprogram_Category.

@@ -652,7 +652,7 @@ package body Src_Editor_Buffer is
          Compute_Blocks (Buffer);
       end if;
 
-      --  Re-highlight the highlight region if needed.
+      --  Re-highlight the highlight region if needed
 
       Process_Highlight_Region (Buffer);
 
@@ -666,7 +666,8 @@ package body Src_Editor_Buffer is
            (Buffer.Kernel, "File.shadow_check_syntax %1");
       end if;
 
-      --  Unregister the timeout.
+      --  Unregister the timeout
+
       Buffer.Blocks_Timeout_Registered := False;
       return False;
 
@@ -2374,11 +2375,11 @@ package body Src_Editor_Buffer is
       Prev    : Boolean;
 
       Keyword_Font : constant Pango.Font.Pango_Font_Description :=
-        Get_Pref_Font (Keywords_Style);
+                       Get_Pref_Font (Keywords_Style);
       Comment_Font : constant Pango.Font.Pango_Font_Description :=
-        Get_Pref_Font (Comments_Style);
+                       Get_Pref_Font (Comments_Style);
       String_Font  : constant Pango.Font.Pango_Font_Description :=
-        Get_Pref_Font (Strings_Style);
+                       Get_Pref_Font (Strings_Style);
    begin
       --  Since we update the tags directly, gtk+ will automatically refresh
       --  the source view, we don't need to do anything for this.
