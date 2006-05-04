@@ -68,6 +68,19 @@ package body Completion is
       Manager.Buffer := Buffer;
    end Set_Buffer;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Completion_Manager_Access) is
+      procedure Internal_Free is new
+        Ada.Unchecked_Deallocation
+          (Completion_Manager'Class, Completion_Manager_Access);
+   begin
+      Free (This.Resolvers, False);
+      Internal_Free (This);
+   end Free;
+
    ----------------
    -- Get_Buffer --
    ----------------

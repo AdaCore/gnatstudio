@@ -91,6 +91,10 @@ package Completion is
 
    type Completion_Manager_Access is access all Completion_Manager'Class;
 
+   procedure Free (This : in out Completion_Manager_Access);
+   --  Free the memory associated to a completion manager access. This does not
+   --  free the referenced resolvers which have to be freed separately.
+
    procedure Set_Buffer
      (Manager : in out Completion_Manager; Buffer : String_Access);
    --  Set the buffer from where the competion is done. This has to be called
