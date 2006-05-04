@@ -80,6 +80,7 @@ with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
+with Config;                     use Config;
 with Filesystem.Unix;            use Filesystem.Unix;
 with Filesystem.Windows;         use Filesystem.Windows;
 with GUI_Utils;                  use GUI_Utils;
@@ -121,7 +122,16 @@ package body GPS.Kernel.Remote is
    Remote_Module : Remote_Module_ID;
 
    type Descriptor_Attribute is (System_Defined, User_Defined);
-   --  ???
+   --  Tell where the descriptor comes from: system wide setup of user defined
+   --  setup
+
+   type Synchronisation_Type is (Never, Once, Always);
+   --  Synchronisation mechanism used for a given remote path.
+
+   Synchronisation_String : constant array (Synchronisation_Type) of String_Ptr
+                          := (Never  => new String'("Never"),
+                              Once   => new String'("Once"),
+                              Always => new String'("Always"));
 
    --------------------------
    -- Connection debugging --
@@ -174,11 +184,11 @@ package body GPS.Kernel.Remote is
    type Mirror_Path_Record;
    type Mirror_Path_Access is access all Mirror_Path_Record;
    type Mirror_Path_Record is record
-      Local_Path  : String_Access;
-      Remote_Path : String_Access;
-      Need_Sync   : Boolean;
-      Attribute   : Descriptor_Attribute;
-      Next        : Mirror_Path_Access;
+      Local_Path       : String_Access;
+      Remote_Path      : String_Access;
+      Sync             : Synchronisation_Type;
+      Attribute        : Descriptor_Attribute;
+      Next             : Mirror_Path_Access;
    end record;
 
    type Mirrors_List_Record;
@@ -252,10 +262,10 @@ package body GPS.Kernel.Remote is
    Enter_Remote_Path_String : constant String := -"<enter remote path here>";
 
    type Path_Row_Record is record
-      Local_Entry          : Gtk_Entry;
-      Remote_Entry         : Gtk_Entry;
-      Need_Sync_Button     : Gtk_Check_Button;
-      Remove_Button        : Gtk_Button;
+      Local_Entry   : Gtk_Entry;
+      Remote_Entry  : Gtk_Entry;
+      Sync_Combo    : Gtkada_Combo;
+      Remove_Button : Gtk_Button;
    end record;
    type Path_Row is access all Path_Row_Record;
    --  This widget is the graphical representation of a mirror path.
@@ -312,16 +322,16 @@ package body GPS.Kernel.Remote is
    procedure On_Add_Path_Clicked (W : access Gtk_Widget_Record'Class);
    --  Add_Path button is clicked.
 
-   type Remove_Row_Data is new Glib.Object.GObject_Record with record
+   type Path_Cb_Data is new Glib.Object.GObject_Record with record
       Widget : Paths_Widget;
       Row    : Path_Row;
    end record;
-   type Remove_Row_Data_Access is access all Remove_Row_Data'Class;
+   type Path_Cb_Data_Access is access all Path_Cb_Data'Class;
 
-   package Remove_Callback is new
-     Gtk.Handlers.Callback (Remove_Row_Data);
+   package Path_Callback is new
+     Gtk.Handlers.Callback (Path_Cb_Data);
 
-   procedure On_Remove_Path_Clicked (W : access Remove_Row_Data'Class);
+   procedure On_Remove_Path_Clicked (W : access Path_Cb_Data'Class);
    --  One of the Remove_Path button is clicked.
 
    type Server_List_Editor_Record is new Gtk_Dialog_Record with record
@@ -465,7 +475,7 @@ package body GPS.Kernel.Remote is
             Item_Dest.Next := new Mirror_Path_Record'
               (Local_Path  => new String'(Item_Src.Local_Path.all),
                Remote_Path => new String'(Item_Src.Remote_Path.all),
-               Need_Sync   => Item_Src.Need_Sync,
+               Sync        => Item_Src.Sync,
                Attribute   => Item_Src.Attribute,
                Next        => null);
             Item_Dest := Item_Dest.Next;
@@ -473,7 +483,7 @@ package body GPS.Kernel.Remote is
             Dest := new Mirror_Path_Record'
               (Local_Path  => new String'(Item_Src.Local_Path.all),
                Remote_Path => new String'(Item_Src.Remote_Path.all),
-               Need_Sync   => Item_Src.Need_Sync,
+               Sync        => Item_Src.Sync,
                Attribute   => Item_Src.Attribute,
                Next        => null);
             Item_Dest := Dest;
@@ -484,6 +494,10 @@ package body GPS.Kernel.Remote is
 
       return Dest;
    end Deep_Copy;
+
+   ---------------
+   -- Deep_Copy --
+   ---------------
 
    function Deep_Copy
      (List : Mirrors_List_Access) return Mirrors_List_Access
@@ -533,6 +547,10 @@ package body GPS.Kernel.Remote is
       end loop;
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (List : in out Mirrors_List_Access) is
       Next_Item : Mirrors_List_Access;
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -547,6 +565,10 @@ package body GPS.Kernel.Remote is
          List := Next_Item;
       end loop;
    end Free;
+
+   ----------
+   -- Free --
+   ----------
 
    procedure Free (Item : in out Item_Access) is
       procedure Internal is new Ada.Unchecked_Deallocation
@@ -768,14 +790,23 @@ package body GPS.Kernel.Remote is
                                Get_Attribute (Child, "local_path");
                Remote_Path : constant String :=
                                Get_Attribute (Child, "remote_path");
-               Need_Sync   : constant String :=
-                               Get_Attribute (Child, "need_sync", "False");
-
+               Sync_Str    : constant String :=
+                               Get_Attribute (Child, "sync", "never");
+               Sync        : Synchronisation_Type;
             begin
+
+               --  Retrieve Sync value from string.
+               begin
+                  Sync := Synchronisation_Type'Value (Sync_Str);
+               exception
+                  when Constraint_Error =>
+                     Sync := Never;
+               end;
+
                Paths_Item.Path_List := new Mirror_Path_Record'
-                 (Local_Path => new String'(Local_Path),
+                 (Local_Path  => new String'(Local_Path),
                   Remote_Path => new String'(Remote_Path),
-                  Need_Sync   => Boolean'Value (Need_Sync),
+                  Sync        => Sync,
                   Attribute   => Attribute,
                   Next        => Paths_Item.Path_List);
             end;
@@ -819,9 +850,9 @@ package body GPS.Kernel.Remote is
       end if;
    end Load_Remote_Config;
 
-   ------------------------------
-   -- Save_Remote_Machine_List --
-   ------------------------------
+   ------------------------
+   -- Save_Remote_Config --
+   ------------------------
 
    procedure Save_Remote_Config (Kernel : Kernel_Handle) is
       Filename   : constant String := Get_Home_Dir (Kernel) & "remote.xml";
@@ -914,7 +945,7 @@ package body GPS.Kernel.Remote is
                Child := new Glib.Xml_Int.Node;
                Child.Tag := new String'("mirror_path");
                Set_Attribute
-                 (Child, "need_sync", Boolean'Image (M_Path.Need_Sync));
+                 (Child, "sync", Synchronisation_Type'Image (M_Path.Sync));
                Set_Attribute
                  (Child, "remote_path", M_Path.Remote_Path.all);
                Set_Attribute
@@ -958,8 +989,8 @@ package body GPS.Kernel.Remote is
       Attach (Widget.Table, Label, 0, 1, 0, 1, Expand or Fill, 0);
       Gtk_New (Label, -"Remote Path");
       Attach (Widget.Table, Label, 1, 2, 0, 1, Expand or Fill, 0);
-      Gtk_New (Label, -"keep sync");
-      Attach (Widget.Table, Label, 2, 3, 0, 1, Expand or Fill, 0);
+      Gtk_New (Label, -"Sync");
+      Attach (Widget.Table, Label, 2, 3, 0, 1, 0, 0);
 
       Gtk_New (Widget.Add_Path_Button);
       Gtk_New (Pix, Stock_Add, Icon_Size_Menu);
@@ -1057,9 +1088,10 @@ package body GPS.Kernel.Remote is
       Row_Number  : Guint;
       Path        : Mirror_Path_Access)
    is
-      Pix : Gtk_Image;
-      Row : Path_Row;
-      Data : Remove_Row_Data_Access;
+      Pix  : Gtk_Image;
+      Row  : Path_Row;
+      Data : Path_Cb_Data_Access;
+      Item : Gtk_List_Item;
    begin
       Row := new Path_Row_Record;
 
@@ -1073,10 +1105,20 @@ package body GPS.Kernel.Remote is
       Attach (Widget.Table, Row.Remote_Entry, 1, 2, Row_Number, Row_Number + 1,
               Fill or Expand, 0, 0, 2);
 
-      Gtk_New (Row.Need_Sync_Button);
-      Attach
-        (Widget.Table, Row.Need_Sync_Button, 2, 3, Row_Number, Row_Number + 1,
-         0, 0, 0, 2);
+      Gtk_New (Row.Sync_Combo);
+      Set_Text (Get_Entry (Row.Sync_Combo),
+                Synchronisation_String (Never).all);
+
+      for I in Synchronisation_Type'Range loop
+         Gtk_New (Item, Synchronisation_String (I).all);
+         Add (Get_List (Row.Sync_Combo), Item);
+         Show_All (Get_List (Row.Sync_Combo));
+      end loop;
+
+      Set_Value_In_List (Row.Sync_Combo);
+      Set_Width_Chars (Get_Entry (Row.Sync_Combo), 6);
+      Attach (Widget.Table, Row.Sync_Combo, 2, 3, Row_Number, Row_Number + 1,
+              0, 0, 0, 2);
 
       Gtk_New (Row.Remove_Button);
       Gtk_New (Pix, Stock_Remove, Icon_Size_Menu);
@@ -1084,18 +1126,12 @@ package body GPS.Kernel.Remote is
       Attach
         (Widget.Table, Row.Remove_Button, 3, 4, Row_Number, Row_Number + 1,
          0, 0, 0, 2);
-      Data := new Remove_Row_Data;
-      Data.Widget := Widget;
-      Data.Row    := Row;
-      Remove_Callback.Object_Connect
-        (Row.Remove_Button, "clicked", On_Remove_Path_Clicked'Access, Data);
 
       Path_Row_List.Append (Widget.List, Row);
 
       if Path = null then
          Set_Text (Row.Local_Entry, Enter_Local_Path_String);
          Set_Text (Row.Remote_Entry, Enter_Remote_Path_String);
-         Set_Active (Row.Need_Sync_Button, False);
          Widget_Callback.Object_Connect
            (Row.Local_Entry, "grab_focus",
             On_Path_Grab_Focus'Access, Row.Local_Entry);
@@ -1106,7 +1142,8 @@ package body GPS.Kernel.Remote is
       else
          Set_Text (Row.Local_Entry, Path.Local_Path.all);
          Set_Text (Row.Remote_Entry, Path.Remote_Path.all);
-         Set_Active (Row.Need_Sync_Button, Path.Need_Sync);
+         Set_Text (Get_Entry (Row.Sync_Combo),
+                   Synchronisation_String (Path.Sync).all);
       end if;
 
       Widget_Callback.Object_Connect
@@ -1114,8 +1151,12 @@ package body GPS.Kernel.Remote is
       Widget_Callback.Object_Connect
         (Row.Remote_Entry, "changed", Widget.On_Change_P, Widget.On_Change_W);
       Widget_Callback.Object_Connect
-        (Row.Need_Sync_Button, "toggled",
-         Widget.On_Change_P, Widget.On_Change_W);
+        (Row.Sync_Combo, "changed", Widget.On_Change_P, Widget.On_Change_W);
+      Data := new Path_Cb_Data;
+      Data.Widget := Widget;
+      Data.Row    := Row;
+      Path_Callback.Object_Connect
+        (Row.Remove_Button, "clicked", On_Remove_Path_Clicked'Access, Data);
       Show_All (Widget.Table);
    end Add_Path_Row;
 
@@ -1152,7 +1193,7 @@ package body GPS.Kernel.Remote is
    begin
       Remove (Widget.Table, Row.Local_Entry);
       Remove (Widget.Table, Row.Remote_Entry);
-      Remove (Widget.Table, Row.Need_Sync_Button);
+      Remove (Widget.Table, Row.Sync_Combo);
       Remove (Widget.Table, Row.Remove_Button);
       Path_Row_List.Remove (Widget.List, Row);
       Free (Row);
@@ -1169,6 +1210,7 @@ package body GPS.Kernel.Remote is
       Item   : Mirror_Path_Access;
       Local  : constant String := Get_Text (Row.Local_Entry);
       Remote : constant String := Get_Text (Row.Remote_Entry);
+      Sync   : Synchronisation_Type := Never;
 
    begin
       --  ??? get remote machine from the widget to be able to get remote FS
@@ -1180,13 +1222,21 @@ package body GPS.Kernel.Remote is
         and then Remote /= ""
       then
          --  ??? Attribute item need to be determined
+         for J in Synchronisation_Type'Range loop
+            if Get_Text (Get_Entry (Row.Sync_Combo)) =
+              Synchronisation_String (J).all
+            then
+               Sync := J;
+               exit;
+            end if;
+         end loop;
 
          Item := new Mirror_Path_Record'
-           (Local_Path => new String'
-                            (Ensure_Directory (Get_Local_Filesystem, Local)),
+           (Local_Path  => new String'
+              (Ensure_Directory (Get_Local_Filesystem, Local)),
             Remote_Path => new String'
-                            (Ensure_Directory (FS, Remote)),
-            Need_Sync   => Get_Active (Row.Need_Sync_Button),
+              (Ensure_Directory (FS, Remote)),
+            Sync        => Sync,
             Attribute   => User_Defined,
             Next        => null);
 
@@ -1196,9 +1246,9 @@ package body GPS.Kernel.Remote is
       return null;
    end Get_Path;
 
-   ----------------------
-   -- Add_Path_Clicked --
-   ----------------------
+   -------------------------
+   -- On_Add_Path_Clicked --
+   -------------------------
 
    procedure On_Add_Path_Clicked (W : access Gtk_Widget_Record'Class) is
       Widget : Paths_Widget_Record renames Paths_Widget_Record (W.all);
@@ -1219,11 +1269,11 @@ package body GPS.Kernel.Remote is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Add_Path_Clicked;
 
-   -------------------------
-   -- Remove_Path_Clicked --
-   -------------------------
+   ----------------------------
+   -- On_Remove_Path_Clicked --
+   ----------------------------
 
-   procedure On_Remove_Path_Clicked (W : access Remove_Row_Data'Class) is
+   procedure On_Remove_Path_Clicked (W : access Path_Cb_Data'Class) is
    begin
       Remove_Path_Row (W.Widget, W.Row);
       W.Widget.On_Change_P (W.Widget.On_Change_W);
@@ -2490,6 +2540,7 @@ package body GPS.Kernel.Remote is
         (Property, Local_File,
          Name => "servers_config", Found => Success);
 
+      --  If no previous property exist, create it
       if not Success then
          Trace (Me, "Property servers_config does not exist. Create it");
 
@@ -2507,9 +2558,12 @@ package body GPS.Kernel.Remote is
             end loop;
          end if;
 
+         --  Set the property for loaded project
          Prop := new Servers_Property'(Property);
          Set_Property (Local_File, "servers_config", Prop, Persistent => True);
       end if;
+
+      --  Assign servers following property values
 
       for J in Property.Servers'Range loop
          Assign (J, Property.Servers (J).Nickname.all);
@@ -2529,26 +2583,17 @@ package body GPS.Kernel.Remote is
                  Reload_Prj => False);
       end if;
 
-      if not Is_Local (Build_Server) then
+      --  If project is loaded from distant host then synchronize all dirs to
+      --  local machine
+
+      if not Is_Local (D.File) then
          Trace (Me, "Start synchronization of build_server");
-         --  Use a 2-way synchronization: the project might be a local project
-         --  that will be compiled on a remote machine (in this case, the
-         --  project needs to be copied on this remote machine), or a remote
-         --  project is loaded locally (in this case, the remote project needs
-         --  to be copied locally).
-         --  Note that the Sync_Deleted option has to be set to false, in order
-         --  to be non destructive. Only the most recent files are copied, no
-         --  deletion is performed.
+         --  First sync 'once' dirs
          Synchronize
-           (Kernel_Handle (Kernel), GPS_Server, Build_Server, "", False,
-            Success);
-         --  If previous call to rsync is not successful, then don't try to
-         --  call it again to speed-up error reporting (prevents a second
-         --  timeout)
-         if Success then
-            Synchronize
-              (Kernel_Handle (Kernel), Build_Server, GPS_Server, "", False);
-         end if;
+           (Kernel_Handle (Kernel), Build_Server, GPS_Server, "", False, True);
+         --  Then sync 'Always' dirs
+         Synchronize
+           (Kernel_Handle (Kernel), Build_Server, GPS_Server, "", False);
       end if;
 
    exception
@@ -3017,7 +3062,7 @@ package body GPS.Kernel.Remote is
    function Reload_Prj_Cb (Data : Reload_Callback_Data) return Boolean is
    begin
       Trace (Me, "Reloading the project");
-      Load_Project (Data.Kernel, Data.File);
+      Load_Project (Data.Kernel, Project_Path (Get_Project (Data.Kernel)));
       return False;
    end Reload_Prj_Cb;
 
@@ -3056,23 +3101,33 @@ package body GPS.Kernel.Remote is
       else
          The_File := Project_Path (Get_Project (Kernel));
       end if;
+      --  ??? take care of default project ?
 
       Get_Property (Property, The_File, "servers_config", Found);
 
-      if Found then
-         Trace (Me, "Saving servers_config property");
-         Glib.Free (Property.Servers (Server).Nickname);
-         Property.Servers (Server) :=
-           (Is_Local => Is_Local (Server),
-            Nickname => new String'(Get_Nickname (Server)));
-         Remove_Property (The_File, "servers_config");
+      if not Found then
+         Trace (Me, "Property servers_config does not exist. Create it");
 
-         Prop := new Servers_Property'(Property);
-         Set_Property (The_File,
-                       "servers_config",
-                       Prop,
-                       Persistent => True);
+         for J in Property.Servers'Range loop
+            Property.Servers (J) := (Is_Local => True,
+                                     Nickname => new String'(""));
+         end loop;
+      else
+         --  Remove previously set property
+         Remove_Property (The_File, "servers_config");
       end if;
+
+      Trace (Me, "Saving servers_config property");
+      Glib.Free (Property.Servers (Server).Nickname);
+      Property.Servers (Server) :=
+        (Is_Local => Is_Local (Server),
+         Nickname => new String'(Get_Nickname (Server)));
+
+      Prop := new Servers_Property'(Property);
+      Set_Property (The_File,
+                    "servers_config",
+                    Prop,
+                    Persistent => True);
 
       --  Reload project if Build_Server has been assigned
 
@@ -3131,55 +3186,46 @@ package body GPS.Kernel.Remote is
    -----------------
 
    procedure Synchronize
-     (Kernel       : Kernel_Handle;
-      From         : Server_Type;
-      To           : Server_Type;
-      Queue_Id     : String;
-      Sync_Deleted : Boolean)
+     (Kernel         : Kernel_Handle;
+      From           : String;
+      To             : String;
+      Queue_Id       : String;
+      Sync_Deleted   : Boolean;
+      Sync_Once_Dirs : Boolean := False)
    is
-      Status : Boolean;
-   begin
-      Synchronize (Kernel, From, To, Queue_Id, Sync_Deleted, Status);
-   end Synchronize;
-
-   -----------------
-   -- Synchronize --
-   -----------------
-
-   procedure Synchronize
-     (Kernel       : Kernel_Handle;
-      From         : Server_Type;
-      To           : Server_Type;
-      Queue_Id     : String;
-      Sync_Deleted : Boolean;
-      Status       : out Boolean)
-   is
-      Server         : Server_Type;
       Mirror         : Mirror_Path_Access;
       From_Path      : String_Access;
       To_Path        : String_Access;
       Path_List_Item : Mirrors_List_Access;
       Machine        : Machine_Descriptor_Record;
-
+      Need_Sync      : Boolean;
    begin
-      Trace (Me, "Synchronizing paths");
+      --  Make sure that local nickname is empty string, not Local_Nickname
+      if From = Local_Nickname then
+         Synchronize (Kernel, "", To, Queue_Id, Sync_Deleted, Sync_Once_Dirs);
+         return;
 
-      if not Is_Local (From) then
-         Server := From;
-      elsif not Is_Local (To) then
-         Server := To;
-      else
-         --  Both servers local. No need to synchronize
-
+      elsif To = Local_Nickname then
+         Synchronize (Kernel, From, "", Queue_Id, Sync_Deleted,
+                      Sync_Once_Dirs);
          return;
       end if;
 
-      --  Search for mirror paths in 'To' config
+      if Active (Me) then
+         if To = "" then
+            Trace (Me, "Synchronizing paths from " & From);
+         else
+            Trace (Me, "Synchronizing paths to " & To);
+         end if;
+      end if;
+
       Path_List_Item := Main_Paths_Table;
       Mirror := null;
 
       while Path_List_Item /= null loop
-         if Path_List_Item.Nickname.all = Get_Nickname (Server) then
+         if Path_List_Item.Nickname.all = From
+           or else Path_List_Item.Nickname.all = To
+         then
             Mirror := Path_List_Item.Path_List;
             exit;
          end if;
@@ -3188,34 +3234,45 @@ package body GPS.Kernel.Remote is
       end loop;
 
       while Mirror /= null loop
-         if Mirror.Need_Sync then
-            if Is_Local (From) then
+
+         --  Determine if mirror path need to be synchronised
+         case Mirror.Sync is
+            when Never =>
+               Need_Sync := False;
+
+            when Once =>
+               Need_Sync := Sync_Once_Dirs;
+
+            when Always =>
+               Need_Sync := not Sync_Once_Dirs;
+         end case;
+
+         if Need_Sync then
+            if From = "" then
                From_Path := Mirror.Local_Path;
                To_Path   := Mirror.Remote_Path;
                Machine   := Machine_Descriptor_Record
-                 (Get_Machine_Descriptor (Get_Nickname (To)).all);
+                 (Get_Machine_Descriptor (To).all);
 
             else
                From_Path := Mirror.Remote_Path;
                To_Path   := Mirror.Local_Path;
                Machine   := Machine_Descriptor_Record
-                 (Get_Machine_Descriptor (Get_Nickname (From)).all);
+                 (Get_Machine_Descriptor (From).all);
             end if;
 
             declare
-               From_Name : constant String := Get_Nickname (From);
-               To_Name   : constant String := Get_Nickname (To);
                Data      : aliased Rsync_Hooks_Args :=
                  (Hooks_Data with
                    Tool_Name_Length => Machine.Rsync_Func.all'Length,
-                   Src_Name_Length  => From_Name'Length,
-                   Dest_Name_Length => To_Name'Length,
+                   Src_Name_Length  => From'Length,
+                   Dest_Name_Length => To'Length,
                    Queue_Id_Length  => Queue_Id'Length,
                    Src_Path_Length  => From_Path'Length,
                    Dest_Path_Length => To_Path'Length,
                    Tool_Name        => Machine.Rsync_Func.all,
-                   Src_Name         => From_Name,
-                   Dest_Name        => To_Name,
+                   Src_Name         => From,
+                   Dest_Name        => To,
                    Queue_Id         => Queue_Id,
                    Src_Path         => From_Path.all,
                    Dest_Path        => To_Path.all,
@@ -3225,24 +3282,60 @@ package body GPS.Kernel.Remote is
             begin
                Trace (Me, "run sync hook for " & Data.Src_Path);
 
-               Status := True;
                if not Run_Hook_Until_Success
                  (Kernel, Rsync_Action_Hook, Data'Unchecked_Access)
                then
                   GPS.Kernel.Console.Insert
                     (Kernel,
-                     -("Directories are not synchronized properly: " &
-                       "Please verify your network configuration"),
+                     -"Directories" & From_Path.all & " and " & To_Path.all &
+                     (-("are not synchronized properly (" &
+                        Machine.Rsync_Func.all & " failed): " &
+                        "Please verify your network configuration")),
                      Mode => Error);
-                  Status := False;
+
+                  if Host = Config.Windows then
+                     GPS.Kernel.Console.Insert
+                       (Kernel,
+                        -("(Hint) on Windows hosts, some remote access tools "
+                          & "from cygwin do not support passwords when used "
+                          & "from GPS. Make sure that you use password-less "
+                          & "connection in this case"));
+                  end if;
+
                   Trace (Me, "No remote sync was registered or errors during" &
                          " calls");
+                  return;
                end if;
+
+            exception
+               when E : others =>
+                  Trace (Exception_Handle, Exception_Information (E));
             end;
          end if;
 
          Mirror := Mirror.Next;
       end loop;
+   end Synchronize;
+
+   -----------------
+   -- Synchronize --
+   -----------------
+
+   procedure Synchronize
+     (Kernel         : Kernel_Handle;
+      From           : Server_Type;
+      To             : Server_Type;
+      Queue_Id       : String;
+      Sync_Deleted   : Boolean;
+      Sync_Once_Dirs : Boolean := False) is
+   begin
+      Synchronize
+        (Kernel         => Kernel,
+         From           => Get_Nickname (From),
+         To             => Get_Nickname (To),
+         Queue_Id       => Queue_Id,
+         Sync_Deleted   => Sync_Deleted,
+         Sync_Once_Dirs => Sync_Once_Dirs);
    end Synchronize;
 
    --------------
