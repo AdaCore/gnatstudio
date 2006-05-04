@@ -295,6 +295,9 @@ package body Ada_Analyzer is
 
       Visibility_Section  : Construct_Visibility := Visibility_Public;
       --  Are we on the public or on the private section of the token ?
+
+      Is_Parameter   : Boolean := False;
+      --  Return True if this token is in the profile of its parent
    end record;
    --  Extended information for a token
 
@@ -741,6 +744,10 @@ package body Ada_Analyzer is
       Last_Replace_Line   : Natural := 0;
       Padding             : Integer := 0;
       Paren_In_Middle     : Boolean := False;
+
+      Is_Parameter        : Boolean := False;
+      --  This variable is true if the identifiers picked are parameters, false
+      --  otherwise.
 
       function Handle_Reserved_Word (Reserved : Token_Type) return Boolean;
       --  Handle reserved words.
@@ -1580,6 +1587,8 @@ package body Ada_Analyzer is
                   when Tok_Identifier =>
                      if Is_Library_Level (Stack) then
                         Constructs.Current.Category := Cat_Variable;
+                     elsif Value.Is_Parameter then
+                        Constructs.Current.Category := Cat_Parameter;
                      elsif Is_Within_Composite (Stack) then
                         Constructs.Current.Category := Cat_Field;
                      else
@@ -1826,10 +1835,13 @@ package body Ada_Analyzer is
             if Reserved = Tok_Package then
                Temp.Package_Declaration := True;
 
-            elsif (Top_Token.Token = Tok_Type
-                   and then (Prev_Token /= Tok_Access
-                             or else Prev_Prev_Token = Tok_Is))
-              or else Prev_Token /= Tok_Access
+            elsif Reserved /= Tok_Protected
+              and then ((Top_Token.Token = Tok_Type
+                         and then (Prev_Token /= Tok_Access
+                                   or else Prev_Prev_Token = Tok_Is))
+                        or else (Prev_Token /= Tok_Access
+                                 and then Prev_Token /= Tok_Protected
+                                 and then Prev_Token /= Tok_Constant))
             then
                --  take into account the following:
                --  type P is access procedure;
@@ -2345,6 +2357,7 @@ package body Ada_Analyzer is
          begin
             Prev_Token := Tok_Colon;
             Non_Blank := Start_Of_Line;
+            Is_Parameter := False;
 
             if Format then
                Skip_Blanks (Buffer, Non_Blank);
@@ -2363,6 +2376,7 @@ package body Ada_Analyzer is
                   --  declaration from their type.
 
                   Val.Token := Tok_Colon;
+                  Val.Is_Parameter := Subprogram_Decl;
 
                   if Align_Decl_On_Colon then
                      Val.Colon_Col := P - Non_Blank;
@@ -2756,6 +2770,10 @@ package body Ada_Analyzer is
                   First := P;
                   Prev_Token := Tok_Left_Paren;
 
+                  if Subprogram_Decl and then Num_Parens = 0 then
+                     Is_Parameter := True;
+                  end if;
+
                   if not Is_Empty (Paren_Stack) then
                      Push (Paren_Stack, Top (Paren_Stack).all);
                   elsif Top_Token.Token = Tok_Type then
@@ -2905,6 +2923,25 @@ package body Ada_Analyzer is
                   end if;
 
                when ')' =>
+                  if (Top_Token.Token = Tok_Colon
+                      or else Top_Token.Token = Tok_Identifier)
+                    and then Top_Token.Is_Parameter
+                  then
+                     if Top_Token.Token = Tok_Identifier then
+                        --  This handles cases where we have a family entry.
+                        --  For example:
+                        --    entry E (Integer);
+                        --  here Integer is a type, so we don't want it in the
+                        --  constructs. But is has already been pushed. The
+                        --  code below disactivate its addition to the
+                        --  constructs
+
+                        Top_Token.Token := Tok_Colon;
+                     end if;
+
+                     Pop (Tokens);
+                  end if;
+
                   First := P;
                   Prev_Token := Tok_Right_Paren;
                   Close_Parenthesis;
@@ -3022,6 +3059,13 @@ package body Ada_Analyzer is
                         if P < Buffer'Last
                           and then Buffer (P + 1) = '='
                         then
+                           if Buffer (P) = ':'
+                             and then Top_Token.Token = Tok_Colon
+                             and then Top_Token.Is_Parameter
+                           then
+                              Pop (Tokens);
+                           end if;
+
                            Handle_Two_Chars ('=');
 
                            if Buffer (P) = '/' then
@@ -3193,6 +3237,10 @@ package body Ada_Analyzer is
                         then
                            Pop (Tokens);
                         end if;
+                     end if;
+
+                     if Subprogram_Decl then
+                        Is_Parameter := True;
                      end if;
 
                   else
@@ -3410,9 +3458,10 @@ package body Ada_Analyzer is
 
             if (Top_Token.Declaration
                 or else Top_Token.Type_Declaration
-                or else Top_Token.Record_Type)
+                or else Top_Token.Record_Type
+                or else Is_Parameter)
               and then not In_Generic
-              and then Num_Parens = 0
+              and then (Num_Parens = 0 or else Is_Parameter)
               and then (Prev_Token not in Reserved_Token_Type
                         or else Prev_Token = Tok_Declare
                         or else Prev_Token = Tok_Is
@@ -3433,6 +3482,7 @@ package body Ada_Analyzer is
                   Val.Sloc_Name   := Val.Sloc;
                   Val.Declaration := True;
                   Val.Visibility  := Top_Token.Visibility_Section;
+                  Val.Is_Parameter := Is_Parameter;
                   Push (Tokens, Val);
                end;
             end if;
