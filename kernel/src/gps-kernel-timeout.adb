@@ -56,6 +56,7 @@ package body GPS.Kernel.Timeout is
       Console              : Interactive_Console;
       Delete_Id            : Gtk.Handlers.Handler_Id;
       Show_In_Task_Manager : Boolean;
+      Strip_CR             : Boolean;
       Show_Output          : Boolean;
       Show_Command         : Boolean;
       Show_Exit_Status     : Boolean;
@@ -323,6 +324,22 @@ package body GPS.Kernel.Timeout is
       Fd     : Process_Descriptor_Access;
       Result : Expect_Match;
 
+      function Conditional_Strip_CR (S : String) return String;
+      --  Return a stripped from CR string if Data tells so
+
+      --------------------------
+      -- Conditional_Strip_CR --
+      --------------------------
+
+      function Conditional_Strip_CR (S : String) return String is
+      begin
+         if Data.Strip_CR then
+            return Strip_CR (S);
+         else
+            return S;
+         end if;
+      end Conditional_Strip_CR;
+
    begin
       if Data = null or else Data.Died then
          return False;
@@ -337,7 +354,8 @@ package body GPS.Kernel.Timeout is
             Data.Timeout := -1;
 
             declare
-               Output : constant String := Strip_CR (Expect_Out (Fd.all));
+               Output : constant String :=
+                          Conditional_Strip_CR (Expect_Out (Fd.all));
             begin
                if Data.Console /= null
                  and then Data.Show_Output
@@ -504,6 +522,7 @@ package body GPS.Kernel.Timeout is
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
       Timeout              : Integer := -1;
+      Strip_CR             : Boolean := True;
       Cmd                  : out Command_Access;
       Created_Command      : out Scheduled_Command_Access)
    is
@@ -548,6 +567,7 @@ package body GPS.Kernel.Timeout is
       C.Data.Show_Output          := Show_Output;
       C.Data.Show_Command         := Show_Command;
       C.Data.Show_Exit_Status     := Show_Exit_Status;
+      C.Data.Strip_CR             := Strip_CR;
       C.Data.Synchronous          := Synchronous;
       C.Data.Expect_Regexp        := Expect_Regexp;
       C.Data.D                    := (Kernel        => Kernel,
@@ -680,7 +700,8 @@ package body GPS.Kernel.Timeout is
       Queue_Id             : String := "";
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
-      Timeout              : Integer := -1)
+      Timeout              : Integer := -1;
+      Strip_CR             : Boolean := True)
    is
       Cmd             : Command_Access;
       Created_Command : Scheduled_Command_Access;
@@ -705,6 +726,7 @@ package body GPS.Kernel.Timeout is
          Synchronous          => Synchronous,
          Show_Exit_Status     => Show_Exit_Status,
          Timeout              => Timeout,
+         Strip_CR             => Strip_CR,
          Cmd                  => Cmd,
          Created_Command      => Created_Command);
    end Launch_Process;
