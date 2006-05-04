@@ -1178,9 +1178,21 @@ package body Builder_Module is
       LI           : LI_Handler;
       New_Handler  : Boolean := False;
 
+      procedure Errors (Msg : String);
+      --  Print the Msg as an error in the GPS console
+
+      ------------
+      -- Errors --
+      ------------
+
+      procedure Errors (Msg : String) is
+      begin
+         Insert (D.Kernel, Msg, Mode => Error);
+      end Errors;
+
    begin
       if D.LI /= 0 and then D.Iter.all /= null then
-         Continue (D.Iter.all.all, Not_Finished);
+         Continue (D.Iter.all.all, Errors'Unrestricted_Access, Not_Finished);
       else
          Not_Finished := True;
       end if;
@@ -1205,8 +1217,11 @@ package body Builder_Module is
                  (Handler      => LI,
                   Lang_Handler => Get_Language_Handler (D.Kernel),
                   Project      => Get_Project (D.Kernel),
+                  Errors       => Errors'Unrestricted_Access,
                   Recursive    => True));
-            Continue (D.Iter.all.all, Not_Finished);
+            Continue (D.Iter.all.all,
+                      Errors'Unrestricted_Access,
+                      Not_Finished);
          end if;
       end loop;
 
@@ -1506,6 +1521,7 @@ package body Builder_Module is
 
          --  If the name of the main is not a source file, we might not be
          --  able to resolve it.
+
          Main := Create (Mains (M).all, Project);
          if Main = VFS.No_File then
             Main := Create_From_Base
