@@ -63,16 +63,16 @@ package body Navigation_Module is
    type Location_Marker_Array_Access is access Location_Marker_Array;
 
    type Navigation_Module_Record is new Module_ID_Record with record
-      Markers          : Location_Marker_Array_Access;
+      Markers        : Location_Marker_Array_Access;
       --  The list of markers from the history of locations
 
-      Current_Marker   : Natural := 0;
+      Current_Marker : Natural := 0;
       --  The current position in Markers
 
-      Last_Marker      : Natural := 0;
+      Last_Marker    : Natural := 0;
       --  The last marker set in Markers
 
-      Back_Button : Gtk.Widget.Gtk_Widget;
+      Back_Button    : Gtk.Widget.Gtk_Widget;
       Forward_Button : Gtk.Widget.Gtk_Widget;
       --  Back and forward buttons on the toolbar.
       --  ??? This might be put elsewhere.
@@ -205,8 +205,8 @@ package body Navigation_Module is
    --  list of markers.
 
    procedure Move_In_Marker_History
-     (Kernel           : access Kernel_Handle_Record'Class;
-      Move_Back        : Boolean);
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Move_Back : Boolean);
    --  Move backward or forward in the list of markers. The effect is
    --  immediately visible in the GPS interface
 
@@ -231,7 +231,7 @@ package body Navigation_Module is
    is
       D : constant Marker_Hooks_Args_Access := Marker_Hooks_Args_Access (Data);
       Module : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
+                 Navigation_Module (Navigation_Module_ID);
    begin
       if Module.Markers = null then
          Module.Markers := new Location_Marker_Array
@@ -260,10 +260,10 @@ package body Navigation_Module is
    procedure Save_History_Markers
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename : constant String := Get_Home_Dir (Kernel) & "locations.xml";
-      File, Child : Node_Ptr;
+      Filename    : constant String := Get_Home_Dir (Kernel) & "locations.xml";
       M           : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
+                      Navigation_Module (Navigation_Module_ID);
+      File, Child : Node_Ptr;
    begin
       if M.Markers /= null then
          Trace (Me, "Saving " & Filename);
@@ -292,10 +292,10 @@ package body Navigation_Module is
    procedure Load_History_Markers
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename : constant String := Get_Home_Dir (Kernel) & "locations.xml";
-      File, Child : Node_Ptr;
+      Filename    : constant String := Get_Home_Dir (Kernel) & "locations.xml";
       M           : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
+                      Navigation_Module (Navigation_Module_ID);
+      File, Child : Node_Ptr;
       Marker      : Location_Marker;
       Err         : String_Access;
    begin
@@ -345,7 +345,7 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Kernel);
       Module : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
+                 Navigation_Module (Navigation_Module_ID);
    begin
       Can_Move_Back := Module.Markers /= null
         and then Module.Current_Marker > Module.Markers'First;
@@ -358,12 +358,12 @@ package body Navigation_Module is
    ----------------------------
 
    procedure Move_In_Marker_History
-     (Kernel           : access Kernel_Handle_Record'Class;
-      Move_Back        : Boolean)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Move_Back : Boolean)
    is
       pragma Unreferenced (Kernel);
       Module : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
+                 Navigation_Module (Navigation_Module_ID);
    begin
       if Move_Back then
          if Module.Markers /= null
@@ -388,7 +388,7 @@ package body Navigation_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Module : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
+                 Navigation_Module (Navigation_Module_ID);
    begin
       if Module.Markers /= null
         and then Module.Current_Marker >= Module.Markers'First
@@ -413,9 +413,9 @@ package body Navigation_Module is
       File   : Virtual_File) return Natural
    is
       S_Line : constant String :=
-        Execute_GPS_Shell_Command
-          (Kernel, "Editor.cursor_get_line",
-           (1 => Full_Name (File).all'Unrestricted_Access));
+                 Execute_GPS_Shell_Command
+                   (Kernel, "Editor.cursor_get_line",
+                    (1 => Full_Name (File).all'Unrestricted_Access));
    begin
       return Natural'Value (S_Line);
    exception
@@ -458,9 +458,9 @@ package body Navigation_Module is
       File   : Virtual_File) return Natural
    is
       S_Line : constant String :=
-        Execute_GPS_Shell_Command
-          (Kernel, "Editor.get_last_line",
-           (1 => Full_Name (File).all'Unrestricted_Access));
+                 Execute_GPS_Shell_Command
+                   (Kernel, "Editor.get_last_line",
+                    (1 => Full_Name (File).all'Unrestricted_Access));
    begin
       return Natural'Value (S_Line);
    exception
@@ -479,11 +479,11 @@ package body Navigation_Module is
    is
       Line_Img : aliased String := Image (Line);
       S_Line   : constant String :=
-        Execute_GPS_Shell_Command
-          (Kernel,
-           "Editor.block_get_end",
-           (Full_Name (File).all'Unrestricted_Access,
-            Line_Img'Unchecked_Access));
+                   Execute_GPS_Shell_Command
+                     (Kernel,
+                      "Editor.block_get_end",
+                      (Full_Name (File).all'Unrestricted_Access,
+                       Line_Img'Unchecked_Access));
    begin
       return Natural'Value (S_Line);
    exception
@@ -502,11 +502,11 @@ package body Navigation_Module is
    is
       Line_Img : aliased String := Image (Line);
       S_Line   : constant String :=
-        Execute_GPS_Shell_Command
-          (Kernel,
-           "Editor.block_get_start",
-           (Full_Name (File).all'Unrestricted_Access,
-            Line_Img'Unchecked_Access));
+                   Execute_GPS_Shell_Command
+                     (Kernel,
+                      "Editor.block_get_start",
+                      (Full_Name (File).all'Unrestricted_Access,
+                       Line_Img'Unchecked_Access));
    begin
       return Natural'Value (S_Line);
    exception
@@ -525,11 +525,11 @@ package body Navigation_Module is
    is
       Line_Img : aliased String := Image (Line);
       B_Type   : constant String :=
-        Execute_GPS_Shell_Command
-          (Kernel,
-           "Editor.block_get_type",
-           (Full_Name (File).all'Unrestricted_Access,
-            Line_Img'Unchecked_Access));
+                   Execute_GPS_Shell_Command
+                     (Kernel,
+                      "Editor.block_get_type",
+                      (Full_Name (File).all'Unrestricted_Access,
+                       Line_Img'Unchecked_Access));
    begin
       return Language_Category'Value (B_Type);
    exception
@@ -668,7 +668,7 @@ package body Navigation_Module is
       pragma Unreferenced (Widget);
 
       Context : constant Selection_Context :=
-        Get_Current_Context (Kernel);
+                  Get_Current_Context (Kernel);
 
       File    : Virtual_File;
       Line    : Natural;           -- Current line being processed.
@@ -686,6 +686,7 @@ package body Navigation_Module is
 
          if B_Type in Construct_Category
            or else B_Type in Enclosing_Entity_Category
+           or else B_Type = Cat_Structure
          then
             B_Start := Get_Block_Start (Kernel, File, Line);
 
@@ -711,12 +712,12 @@ package body Navigation_Module is
       pragma Unreferenced (Widget);
 
       Context : constant Selection_Context :=
-        Get_Current_Context (Kernel);
+                  Get_Current_Context (Kernel);
 
-      File   : Virtual_File;
-      Line   : Natural;           -- Current line being processed.
-      B_End  : Natural;           -- Block's first line.
-      B_Type : Language_Category; -- Block's category
+      File    : Virtual_File;
+      Line    : Natural;           -- Current line being processed.
+      B_End   : Natural;           -- Block's first line.
+      B_Type  : Language_Category; -- Block's category
 
    begin
       if Has_File_Information (Context)
@@ -729,6 +730,7 @@ package body Navigation_Module is
 
          if B_Type in Construct_Category
            or else B_Type in Enclosing_Entity_Category
+           or else B_Type = Cat_Structure
          then
             B_End := Get_Block_End (Kernel, File, Line);
 
@@ -753,8 +755,8 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Context : constant Selection_Context :=
-        Get_Current_Context (Kernel);
+      Context   : constant Selection_Context :=
+                    Get_Current_Context (Kernel);
 
       File      : Virtual_File;
       Line      : Natural;           -- Current line being processed.
@@ -802,7 +804,7 @@ package body Navigation_Module is
       pragma Unreferenced (Widget);
 
       Results : constant Location_View :=
-        Get_Or_Create_Location_View (Kernel, False);
+                  Get_Or_Create_Location_View (Kernel, False);
    begin
       if Results /= null then
          Next_Item (Results);
@@ -824,7 +826,7 @@ package body Navigation_Module is
       pragma Unreferenced (Widget);
 
       Context : constant Selection_Context :=
-        Get_Current_Context (Kernel);
+                  Get_Current_Context (Kernel);
 
       File    : Virtual_File;
       Line    : Natural;           -- Current line being processed.
@@ -870,7 +872,7 @@ package body Navigation_Module is
       pragma Unreferenced (Widget);
 
       Results : constant Location_View :=
-        Get_Or_Create_Location_View (Kernel, False);
+                  Get_Or_Create_Location_View (Kernel, False);
    begin
       if Results /= null then
          Next_Item (Results, Backwards => True);
@@ -891,7 +893,7 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
       Context : constant Selection_Context :=
-        Get_Current_Context (Kernel);
+                  Get_Current_Context (Kernel);
    begin
       Push_State (Kernel, Busy);
 
@@ -1023,7 +1025,7 @@ package body Navigation_Module is
      (Handle : access Kernel_Handle_Record'Class)
    is
       Data : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
+               Navigation_Module (Navigation_Module_ID);
       Can_Move_Back, Can_Move_Forward : Boolean;
    begin
       Check_Marker_History_Status (Handle, Can_Move_Back, Can_Move_Forward);
