@@ -27,7 +27,8 @@ BLOCKS_DEFS = {
     'CAT_FUNCTION'       : [r'end \1;', r'\s*function\s+([^ \n]+).*'],
     'CAT_DECLARE_BLOCK'  : [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
     'CAT_PACKAGE'        : [r'end \2;', r'\s*package\s+(body\s+)?([^\n]+).*'],
-    'CAT_STRUCTURE'      : ['end record;', '']
+    'CAT_STRUCTURE'      : ['end record;', ''],
+    'CAT_CLASS'          : ['end record;', '']
     }
 
 import re, string, GPS
