@@ -392,11 +392,6 @@ package body Remote_Sync_Module is
       Cb_Data.Buffer := null;
       LF_Index := Output'First - 1;
 
-      if Old_Buff /= null then
-         Trace (Me, "Old_Buff = '" & Old_Buff.all & "'");
-      end if;
-      Trace (Me, "Output ='" & Output & "'");
-
       LF_Index := Output'First - 1;
       for J in reverse Output'Range loop
          if Output (J) = ASCII.LF
@@ -404,7 +399,6 @@ package body Remote_Sync_Module is
          then
             if J /= Output'Last then
                Cb_Data.Buffer := new String'(Output (J + 1 .. Output'Last));
-               Trace (Me, "Cb_Data.Buffer = '" & Cb_Data.Buffer.all & "'");
             end if;
 
             LF_Index := J;
@@ -427,8 +421,7 @@ package body Remote_Sync_Module is
             Buffer          : constant String :=
                                 Cat (Stripped_Buffer, Cb_Data.Buffer);
          begin
-            Trace (Me, "Parse_Rsync_Output: " & ASCII.LF &
-                   Stripped_Buffer);
+            Trace (Me, "Parse_Rsync_Output: " & ASCII.LF & Buffer);
 
             --  Retrieve password prompt if any
             Match (Get_Default_Password_Regexp,
