@@ -6,6 +6,12 @@ Known Problems fixed in GPS 4.0.0
   Workaround: GPS really expects all object directories to be writable, since
               this is where it puts a lot of temporary files
 
+- F502-040 Generating C/C++ cross-references leaves zombie processes
+  Problem:    If you update the C/C++ cross-references, it happens that some
+              zombie dbimp processes are left
+  Workaround: These processes do not occupy any CPU cycle, and are properly
+              destroyed when GPS exits
+
 - F425-013 Crash when quiting while build is running
   Problem:    GPS crashes when it is closed while processing a build command
   Workaround: Interrupt first on going builds from the task manager dialog
