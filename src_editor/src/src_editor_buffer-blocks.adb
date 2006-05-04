@@ -94,6 +94,7 @@ package body Src_Editor_Buffer.Blocks is
       while Current /= null loop
          if Current.Category in Construct_Category
            or else Current.Category in Enclosing_Entity_Category
+           or else Current.Category = Cat_Structure
          then
             Line_Start := Editable_Line_Type (Current.Sloc_Start.Line);
             Line_End   := Editable_Line_Type (Current.Sloc_End.Line);
@@ -127,14 +128,14 @@ package body Src_Editor_Buffer.Blocks is
             end if;
          end if;
 
-         --  Fill the folding information.
+         --  Fill the folding information
          --  ??? This needs to be optimized.
 
          if Buffer.Block_Folding
            and then Current.Category not in Cat_Subtype .. Cat_Include
            and then Current.Sloc_End.Line /= Current.Sloc_Start.Line
          then
-            --  Do nothing if the block is folded.
+            --  Do nothing if the block is folded
 
             if Get_Buffer_Line
               (Buffer, Editable_Line_Type (Current.Sloc_Start.Line + 1)) /= 0
