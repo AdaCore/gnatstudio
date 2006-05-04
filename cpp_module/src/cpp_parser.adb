@@ -3116,6 +3116,7 @@ package body CPP_Parser is
                   DBIMP_Path     => Iterator.Handler.DBIMP_Path.all,
                   Temp_Name      => Iterator.Tmp_Filename,
                   PD             => Iterator.PD);
+               Iterator.Process_Running := True;
                Free (DB_Dirs);
             else
                Iterator.Process_Running := False;
