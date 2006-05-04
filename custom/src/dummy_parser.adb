@@ -42,6 +42,7 @@ package body Dummy_Parser is
      (Handler   : access Dummy_LI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project   : Projects.Project_Type;
+      Errors    : Projects.Error_Report;
       Recursive : Boolean := False)
       return LI_Handler_Iterator'Class;
    --  See doc for inherited subprograms
@@ -49,7 +50,9 @@ package body Dummy_Parser is
    type Dummy_LI_Handler_Iterator is new LI_Handler_Iterator with null record;
    procedure Destroy (Iterator : in out Dummy_LI_Handler_Iterator);
    procedure Continue
-     (Iterator : in out Dummy_LI_Handler_Iterator; Finished : out Boolean);
+     (Iterator : in out Dummy_LI_Handler_Iterator;
+      Errors   : Projects.Error_Report;
+      Finished : out Boolean);
    --  See doc for inherited subprograms
 
    -------------
@@ -67,9 +70,11 @@ package body Dummy_Parser is
    --------------
 
    procedure Continue
-     (Iterator : in out Dummy_LI_Handler_Iterator; Finished : out Boolean)
+     (Iterator : in out Dummy_LI_Handler_Iterator;
+      Errors   : Projects.Error_Report;
+      Finished : out Boolean)
    is
-      pragma Unreferenced (Iterator);
+      pragma Unreferenced (Iterator, Errors);
    begin
       Finished := True;
    end Continue;
@@ -123,10 +128,11 @@ package body Dummy_Parser is
      (Handler   : access Dummy_LI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project   : Projects.Project_Type;
+      Errors    : Projects.Error_Report;
       Recursive : Boolean := False)
       return LI_Handler_Iterator'Class
    is
-      pragma Unreferenced (Handler, Project, Recursive, Lang_Handler);
+      pragma Unreferenced (Handler, Project, Recursive, Lang_Handler, Errors);
       Iter : Dummy_LI_Handler_Iterator;
    begin
       return Iter;
