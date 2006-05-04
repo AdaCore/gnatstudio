@@ -40,17 +40,15 @@ with Gtk.Style;              use Gtk.Style;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Pango.Font;             use Pango.Font;
+with Pango.Layout;           use Pango.Layout;
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Traces;                    use Traces;
 
 package body Completion_Window is
-
-   Max_Width          : constant := 150;
-   Notes_Window_Width : constant := 300;
-   Max_Height         : constant := 200;
 
    Markup_Column : constant := 0;
    Index_Column  : constant := 1;
@@ -87,9 +85,20 @@ package body Completion_Window is
       Params : Glib.Values.GValues);
    --  Callback after a text insertion.
 
+   procedure Delete_Text_Handler
+     (Window : access Completion_Window_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback after a text deletion.
+
    procedure On_Selection_Changed
      (Window : access Completion_Window_Record'Class);
    --  Callback on a selection change in the tree view.
+
+   procedure Adjust_Selected
+     (Window : access Completion_Window_Record'Class;
+      UTF8   : String);
+   --  Show only the items that begin with UTF8. Delete the window if there is
+   --  none.
 
    procedure Free (X : in out Information_Record);
    --  Free memory associated to X.
@@ -116,10 +125,94 @@ package body Completion_Window is
       end loop;
 
       Unchecked_Free (Window.Info);
-
       Destroy (Window.Notes_Window);
       Destroy (Window);
    end Delete;
+
+   ---------------------
+   -- Adjust_Selected --
+   ---------------------
+
+   procedure Adjust_Selected
+     (Window : access Completion_Window_Record'Class;
+      UTF8   : String)
+   is
+      Prev   : Gtk_Tree_Iter;
+      Curr   : Gtk_Tree_Iter;
+
+      Selection : Gtk_Tree_Selection;
+      Model     : Gtk_Tree_Model;
+
+      Previously_Selected : Natural := 0;
+
+      function Equals (A, B : String) return Boolean;
+      --  Perform a case-conscious comparison.
+
+      function Equals (A, B : String) return Boolean is
+      begin
+         if Window.Case_Sensitive then
+            return A = B;
+         else
+            return To_Lower (A) = To_Lower (B);
+         end if;
+      end Equals;
+
+   begin
+      Selection := Get_Selection (Window.View);
+
+      --  Find the entry currently being selected
+      Get_Selected (Selection, Model, Curr);
+
+      if Curr /= Null_Iter then
+         Previously_Selected :=
+           Natural (Get_Int (Window.Model, Curr, Index_Column));
+      end if;
+
+      --  Clear the model
+
+      Clear (Window.Model);
+
+      --  Browse through the completion possibilities and filter out the
+      --  lines that don't match.
+
+      Prev := Null_Iter;
+
+      for J in 1 .. Window.Index - 1 loop
+         if Window.Info (J).Text'Length >= UTF8'Length
+           and then Equals
+             (Window.Info (J).Text
+              (Window.Info (J).Text'First
+                 .. Window.Info (J).Text'First - 1 + UTF8'Length), UTF8)
+         then
+            Append (Window.Model, Curr);
+
+            Set (Window.Model, Curr, Markup_Column,
+                 Window.Info (J).Markup.all);
+            Set (Window.Model, Curr, Index_Column, Gint (J));
+
+            if J = Previously_Selected then
+               Iter_Copy (Curr, Prev);
+            end if;
+         end if;
+      end loop;
+
+      --  Re-select the item previously selected, or, if there was none,
+      --  select the first iter
+
+      if Prev /= Null_Iter then
+         Select_Iter (Selection, Prev);
+      else
+         Prev := Get_Iter_First (Window.Model);
+
+         if Prev = Null_Iter then
+            --  If there is no entry in the tree, delete the window.
+            Delete (Window);
+            return;
+         else
+            Select_Iter (Selection, Prev);
+         end if;
+      end if;
+   end Adjust_Selected;
 
    -------------------------
    -- Insert_Text_Handler --
@@ -132,72 +225,41 @@ package body Completion_Window is
       Iter   : Gtk_Text_Iter;
       Beg    : Gtk_Text_Iter;
 
-      Prev   : Gtk_Tree_Iter;
-      Curr   : Gtk_Tree_Iter;
-
-      Selection : Gtk_Tree_Selection;
-      Model     : Gtk_Tree_Model;
-
-      Previously_Selected : Natural := 0;
    begin
+      Get_Text_Iter (Nth (Params, 1), Iter);
+      Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
+      Adjust_Selected (Window, Get_Text (Window.Buffer, Beg, Iter));
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Insert_Text_Handler;
+
+   -------------------------
+   -- Delete_Text_Handler --
+   -------------------------
+
+   procedure Delete_Text_Handler
+     (Window : access Completion_Window_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Iter   : Gtk_Text_Iter;
+      Beg    : Gtk_Text_Iter;
+   begin
+      if Window.In_Deletion then
+         return;
+      end if;
+
       Get_Text_Iter (Nth (Params, 1), Iter);
       Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
 
       declare
          UTF8 : constant UTF8_String := Get_Text (Window.Buffer, Beg, Iter);
       begin
-         Selection := Get_Selection (Window.View);
-
-         --  Find the entry currently being selected
-         Get_Selected (Selection, Model, Curr);
-
-         if Curr /= Null_Iter then
-            Previously_Selected :=
-              Natural (Get_Int (Window.Model, Curr, Index_Column));
-         end if;
-
-         --  Clear the model
-
-         Clear (Window.Model);
-
-         --  Browse through the completion possibilities and filter out the
-         --  lines that don't match.
-
-         Prev := Null_Iter;
-
-         for J in 1 .. Window.Index - 1 loop
-            if Window.Info (J).Text'Length >= UTF8'Length
-              and then Window.Info (J).Text
-              (Window.Info (J).Text'First
-               .. Window.Info (J).Text'First - 1 + UTF8'Length) = UTF8
-            then
-               Append (Window.Model, Curr);
-
-               Set (Window.Model, Curr, Markup_Column,
-                    Window.Info (J).Markup.all);
-               Set (Window.Model, Curr, Index_Column, Gint (J));
-
-               if J = Previously_Selected then
-                  Iter_Copy (Curr, Prev);
-               end if;
-            end if;
-         end loop;
-
-         --  Re-select the item previously selected, or, if there was none,
-         --  select the first iter
-
-         if Prev /= Null_Iter then
-            Select_Iter (Selection, Prev);
+         if UTF8 = "" then
+            Delete (Window);
          else
-            Prev := Get_Iter_First (Window.Model);
-
-            if Prev = Null_Iter then
-               --  If there is no entry in the tree, delete the window.
-               Delete (Window);
-               return;
-            else
-               Select_Iter (Selection, Prev);
-            end if;
+            Adjust_Selected (Window, UTF8);
          end if;
       end;
 
@@ -205,7 +267,7 @@ package body Completion_Window is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Insert_Text_Handler;
+   end Delete_Text_Handler;
 
    --------------------------
    -- On_Selection_Changed --
@@ -216,6 +278,7 @@ package body Completion_Window is
    is
       Sel   : Gtk_Tree_Selection;
       Iter  : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
       Model : Gtk_Tree_Model;
       Index : Natural;
    begin
@@ -225,6 +288,10 @@ package body Completion_Window is
       if Iter = Null_Iter then
          Hide_All (Window.Notes_Window);
       else
+         Path := Get_Path (Model, Iter);
+         Scroll_To_Cell (Window.View, Path, null, False, 0.1, 0.1);
+         Path_Free (Path);
+
          Index := Natural (Get_Int (Window.Model, Iter, Index_Column));
 
          if Window.Info (Index).Notes.all /= "" then
@@ -298,6 +365,7 @@ package body Completion_Window is
                Get_Iter_At_Mark
                  (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
 
+               Window.In_Deletion := True;
                Delete (Window.Buffer, Text_Begin, Text_End);
 
                Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
@@ -447,10 +515,11 @@ package body Completion_Window is
    ----------
 
    procedure Show
-     (Window : Completion_Window_Access;
-      View   : Gtk_Text_View;
-      Buffer : Gtk_Text_Buffer;
-      Iter   : Gtk_Text_Iter)
+     (Window         : Completion_Window_Access;
+      View           : Gtk_Text_View;
+      Buffer         : Gtk_Text_Buffer;
+      Iter           : Gtk_Text_Iter;
+      Case_Sensitive : Boolean)
    is
       Iter_Coords : Gdk_Rectangle;
       Window_X, Window_Y : Gint;
@@ -464,10 +533,13 @@ package body Completion_Window is
 
       Dummy_X, Dummy_Y, D     : Gint;
       Root_Width, Root_Height : Gint;
+
+      Max_Width, Notes_Window_Width, Max_Height : Gint;
    begin
       Window.Text := View;
       Window.Buffer := Buffer;
       Window.Mark := Create_Mark (Buffer, "", Iter);
+      Window.Case_Sensitive := Case_Sensitive;
 
       --  Set the position.
 
@@ -490,9 +562,29 @@ package body Completion_Window is
 
       --  ??? Uposition should take into account the current desktop.
 
+      declare
+         Font : constant Pango_Font_Description :=
+           Get_Font_Description (Get_Style (View));
+         Char_Width, Char_Height : Gint;
+         Layout : Pango_Layout;
+      begin
+         Modify_Font (Window.View, Font);
+         Modify_Font (Window.Notes_Label, Font);
+
+         Layout := Create_Pango_Layout (Window.View);
+         Set_Font_Description (Layout, Font);
+         Set_Text (Layout, "0m");
+         Get_Pixel_Size (Layout, Char_Width, Char_Height);
+         Unref (Layout);
+
+         Max_Width := Char_Width * 20;
+         Max_Height := Char_Height * 20;
+         Notes_Window_Width := Max_Width * 2;
+      end;
+
       --  Compute the real width and height of the window
 
-      Width := Gint'Min (Max_Width, Requisition.Width) + 5;
+      Width := Gint'Min (Requisition.Width + 10, Max_Width) + 5;
 
       if Requisition.Height > Max_Height then
          --  Display an integer number of lines in the tree view.
@@ -522,15 +614,8 @@ package body Completion_Window is
          Set_UPosition (Window.Notes_Window, X - Notes_Window_Width - 4, Y);
       end if;
 
-      declare
-         Font : constant Pango_Font_Description :=
-           Get_Font_Description (Get_Style (View));
-      begin
-         Modify_Font (Window.View, Font);
-         Modify_Font (Window.Notes_Label, Font);
-      end;
-
       Show_All (Window);
+      Grab_Focus (Window.Text);
 
       Object_Connect
         (Window.Text, "focus_out_event",
@@ -549,7 +634,7 @@ package body Completion_Window is
          After => True);
 
       Object_Connect
-        (Buffer, "delete_range", Insert_Text_Handler'Access, Window,
+        (Buffer, "delete_range", Delete_Text_Handler'Access, Window,
          After => True);
 
       Object_Connect
