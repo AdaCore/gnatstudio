@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.0.0
 
+- F502-040 C/C++ cross-references and read-only object directories
+  Problem:    No error is reported when the object directory of a project is
+              read-only and you are trying to generate the C/C++ xref info.
+  Workaround: GPS really expects all object directories to be writable, since
+              this is where it puts a lot of temporary files
+
 - F425-013 Crash when quiting while build is running
   Problem:    GPS crashes when it is closed while processing a build command
   Workaround: Interrupt first on going builds from the task manager dialog
