@@ -149,15 +149,15 @@ package body Collapsing_Pane is
         (Pane,
          "destroy", On_Destroy'Access, Pane);
       Original_Color := Get_Bg (Get_Style (Pane), State_Normal);
-      Alloc_Color
-        (Get_Colormap (Pane),
-         Background_Color,
-         Success => Success);
       Set_Rgb
         (Background_Color,
          Guint16 (Float (Red (Original_Color)) / 1.1),
          Guint16 (Float (Green (Original_Color)) / 1.1),
          Guint16 (Float (Blue (Original_Color)) / 1.1));
+      Alloc_Color
+        (Get_Colormap (Pane),
+         Background_Color,
+         Success => Success);
       Modify_Bg (Pane, State_Normal, Background_Color);
       Modify_Fg (Pane, State_Normal, Background_Color);
       Modify_Base (Pane, State_Normal, Background_Color);
