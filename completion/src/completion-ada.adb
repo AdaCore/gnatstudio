@@ -78,7 +78,7 @@ package body Completion.Ada is
                           (Data (It),
                            Id,
                            Next (Token) = Token_List.Null_Node,
-                           Start_Offset,
+                           Data (Token).Token_Name_First - 1,
                            Filter));
 
                      It := Next (It);
@@ -90,7 +90,7 @@ package body Completion.Ada is
                Tmp := Get_Composition
                  (Data (Previous_It),
                   Get_Name (Get_Buffer (Manager).all, Data (Token)),
-                  Start_Offset,
+                  Data (Token).Token_Name_First - 1,
                   Next (Token) = Token_List.Null_Node);
             end if;
 
