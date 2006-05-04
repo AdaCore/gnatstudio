@@ -324,7 +324,10 @@ package body Project_Explorers_Common is
          while Constructs.Current /= null loop
             if Constructs.Current.Name /= null then
                Category := Filter_Category (Constructs.Current.Category);
-               if Category /= Cat_Unknown then
+               if Category /= Cat_Unknown
+                 and then Category /= Cat_Parameter
+                 and then Category /= Cat_Field
+               then
                   if Categories (Category) = Null_Iter then
                      Categories (Category) := Append_Category_Node
                        (Model,
