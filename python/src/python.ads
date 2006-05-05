@@ -485,8 +485,10 @@ package Python is
    --  Return True on success, False if an exception occured (it is your
    --  responsability to check the current exception)
 
-   type Interpreter_State is  (Py_Single_Input, Py_File_Input, Py_Eval_Input);
-   pragma Convention (C, Interpreter_State);
+   type Interpreter_State is private;
+   Py_Single_Input : constant Interpreter_State;
+   Py_File_Input   : constant Interpreter_State;
+   Py_Eval_Input   : constant Interpreter_State;
    --  The state of the interpreter when evaluating a string.
    --    - Single_Input: evaluate any command in the interpreter. This will
    --      return the resulting object.
@@ -547,11 +549,11 @@ package Python is
    --  although the user would have to type this in the terminal used to start
    --  your application.
 
-   type Why_Trace_Func is
-     (PyTrace_Call,
-      PyTrace_Exception,
-      PyTrace_Line,
-      PyTrace_Return);
+   type Why_Trace_Func is private;
+   PyTrace_Call      : constant Why_Trace_Func;
+   PyTrace_Exception : constant Why_Trace_Func;
+   PyTrace_Line      : constant Why_Trace_Func;
+   PyTrace_Return    : constant Why_Trace_Func;
 
    type Py_Trace_Func is access function
      (User_Arg : PyObject;
@@ -574,13 +576,20 @@ private
 
    type Dummy is null record;
 
-   for Interpreter_State use (Py_Single_Input => 256,
-                              Py_File_Input   => 257,
-                              Py_Eval_Input   => 258);
+   type Interpreter_State is new Integer;
+
+   Py_Single_Input : constant Interpreter_State := 256;
+   Py_File_Input   : constant Interpreter_State := 257;
+   Py_Eval_Input   : constant Interpreter_State := 258;
    --  Values are copied from Python.h, and must be synchronized. They will
    --  probably never change, though, so this should be safe.
 
-   pragma Convention (C, Why_Trace_Func);
+   type Why_Trace_Func is new Integer;
+   PyTrace_Call      : constant Why_Trace_Func := 0;
+   PyTrace_Exception : constant Why_Trace_Func := 1;
+   PyTrace_Line      : constant Why_Trace_Func := 2;
+   PyTrace_Return    : constant Why_Trace_Func := 3;
+
    pragma Convention (C, Py_Trace_Func);
    pragma Import (C, PyDict_New, "PyDict_New");
    pragma Import (C, PyEval_SetProfile, "PyEval_SetProfile");
