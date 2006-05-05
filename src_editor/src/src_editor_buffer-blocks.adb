@@ -94,7 +94,6 @@ package body Src_Editor_Buffer.Blocks is
       while Current /= null loop
          if Current.Category in Construct_Category
            or else Current.Category in Enclosing_Entity_Category
-           or else Current.Category in Cat_Class .. Cat_Union
          then
             Line_Start := Editable_Line_Type (Current.Sloc_Start.Line);
             Line_End   := Editable_Line_Type (Current.Sloc_End.Line);
