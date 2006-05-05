@@ -22,7 +22,6 @@ with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;
-with Ada.Tags;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Expect;                use GNAT.Expect;
