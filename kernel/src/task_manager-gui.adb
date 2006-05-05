@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2005                      --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -104,10 +104,10 @@ package body Task_Manager.GUI is
       Params : GValues);
    --  Callback for a "realize" signal. Initializes the graphical components.
 
-   procedure On_View_Selection_Changed
-     (Object : access GObject_Record'Class;
-      Params : GValues);
-   --  Callback for a "changed" signal.
+   function On_Button_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for a "button_press_event".
 
    function On_Progress_Bar_Button_Pressed
      (Object  : access Gtk_Widget_Record'Class;
@@ -528,15 +528,14 @@ package body Task_Manager.GUI is
                 "Unexpected exception: " & Exception_Information (E));
    end On_View_Destroy;
 
-   -------------------------------
-   -- On_View_Selection_Changed --
-   -------------------------------
+   ---------------------------
+   -- On_Button_Press_Event --
+   ---------------------------
 
-   procedure On_View_Selection_Changed
-     (Object : access GObject_Record'Class;
-      Params : GValues)
+   function On_Button_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
    is
-      pragma Unreferenced (Params);
       Iface : constant Task_Manager_Interface :=
         Task_Manager_Interface (Object);
       Iter  : Gtk_Tree_Iter;
@@ -544,7 +543,8 @@ package body Task_Manager.GUI is
       Path  : Gtk_Tree_Path;
 
    begin
-      Get_Selected (Get_Selection (Iface.Tree), Model, Iter);
+      Model := Get_Model (Iface.Tree);
+      Iter := Find_Iter_For_Event (Iface.Tree, Model, Event);
 
       if Iter = Null_Iter then
          Iface.Manager.Referenced_Command := -1;
@@ -560,11 +560,14 @@ package body Task_Manager.GUI is
          Path_Free (Path);
       end if;
 
+      return False;
+
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end On_View_Selection_Changed;
+         return False;
+   end On_Button_Press_Event;
 
    -------------
    -- Refresh --
@@ -925,12 +928,12 @@ package body Task_Manager.GUI is
          GObject (View),
          After => False);
 
-      Object_Callback.Object_Connect
-        (Get_Selection (View.Tree),
-         "changed",
-         On_View_Selection_Changed'Access,
-         GObject (View),
-         After => True);
+      Return_Callback.Object_Connect
+        (View.Tree,
+         "button_press_event",
+         Return_Callback.To_Marshaller (On_Button_Press_Event'Access),
+         View,
+         After => False);
 
       Manager_Contextual_Menus.Register_Contextual_Menu
         (View.Tree, (View.Manager, -1),
