@@ -2945,10 +2945,6 @@ package body GPS.Kernel.Remote is
 
          else
             if Active (Me) then
-               Trace (Me, "local filesystem " &
-                      Ada.Tags.External_Tag (Get_Local_Filesystem'Tag));
-               Trace (Me, "from_path: " & Path_From.all);
-               Trace (Me, "unix form: " & U_Frompath);
                Trace (Me, "result: '" &
                       Concat (To_Filesystem,
                               Path_To.all,
@@ -3022,11 +3018,6 @@ package body GPS.Kernel.Remote is
          --  Not configured mirror path. Try to convert all paths
          Path_From := No_Path;
          Path_To   := No_Path;
-      end if;
-
-      if Active (Me) then
-         Trace (Me, "Path_From: " & Path_From.all);
-         Trace (Me, "Path_To: " & Path_To.all);
       end if;
 
       --  At this point, we have the from and to moint points. Let's translate
