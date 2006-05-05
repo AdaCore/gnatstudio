@@ -348,9 +348,11 @@ following choices:
 @table @b
 @item Start with default project in directory
 @cindex project
-If you select this option and click on the @code{OK} button, GPS copy in
+If you select this option and click on the @code{OK} button, GPS will
+first look for a project called @file{default.gpr} in the current directory
+and load it if found. Otherwise, it will copy in
 the current directory the default project found under
-@code{<prefix>/share/gps/default.gpr} and load it.
+@file{<prefix>/share/gps/default.gpr} and load it.
 GPS will remove this copy when exiting or loading another project, if the
 copy has not been modified during the session.
 
