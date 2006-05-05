@@ -523,11 +523,10 @@ package body Remote_Sync_Module is
                end if;
             end if;
 
-            if Cb_Data.Synchronous and then Cb_Data.Dialog_Running then
+            if Cb_Data.Synchronous and then not Cb_Data.Dialog_Running then
+               Pulse (Cb_Data.Dialog.Progress);
 
-               if not Cb_Data.Dialog_Running then
-                  Pulse (Cb_Data.Dialog.Progress);
-               end if;
+            elsif Cb_Data.Synchronous and then Cb_Data.Dialog_Running then
 
                --  Get file transfered
                Match (File_Regexp,
