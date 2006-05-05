@@ -14,6 +14,12 @@ of the feature.
 New features in GPS 4.0.0
 -------------------------
 
+F503-004 Block information on record/union/class
+
+  GPS computes block information for record/union/class and has associated
+  navigation actions to move to the start or the end of such block. Block
+  folding is also possible which is very convenient for large records.
+
 F409-010 Ada auto block completion
 
   A new action named Block_Completion has been implemented. This action will
