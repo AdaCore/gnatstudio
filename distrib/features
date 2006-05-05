@@ -20,12 +20,16 @@ F503-004 Block information on record/union/class
   navigation actions to move to the start or the end of such block. Block
   folding is also possible which is very convenient for large records.
 
+  Keywords: Editor, Block
+
 F409-010 Ada auto block completion
 
   A new action named Block_Completion has been implemented. This action will
   close the current Ada statement or unit. It handles if, case, loop
   (with optional label), declare block (with optional label), procedure,
   function and package.
+
+  Keywords: Editor, Block
 
 F407-003 Improved Call Tree Views
 
