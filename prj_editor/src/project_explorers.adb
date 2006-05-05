@@ -295,9 +295,7 @@ package body Project_Explorers is
 
    procedure Tree_Select_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues);
-   --  Called every time a node is expanded. It is responsible for
-   --  automatically adding the children of the current node if they are not
-   --  there already.
+   --  Called every time a new row is selected
 
    --------------------
    -- Updating nodes --
