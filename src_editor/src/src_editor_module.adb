@@ -112,10 +112,6 @@ package body Src_Editor_Module is
    --  Key used to store the most recently open files in the Open From Project
    --  dialog.
 
-   editor_xpm : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, editor_xpm, "mini_page_xpm");
-   editor_modified_xpm : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, editor_modified_xpm, "modified_page_xpm");
    fold_block_xpm : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, fold_block_xpm, "fold_block_xpm");
    unfold_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
@@ -684,6 +680,13 @@ package body Src_Editor_Module is
       pragma Unreferenced (Dummy);
    begin
       if Node.Tag.all = "Source_Editor" then
+         if File_Pixbuf = null then
+            File_Pixbuf := Render_Icon
+              (Get_Main_Window (User), "gps-file", Icon_Size_Menu);
+            File_Modified_Pixbuf := Render_Icon
+              (Get_Main_Window (User), "gps-file-modified", Icon_Size_Menu);
+         end if;
+
          File := Get_Field (Node, "File");
 
          if File /= null and then File.all /= "" then
@@ -1162,9 +1165,12 @@ package body Src_Editor_Module is
          Set_Child (Get_View (Editor), Child);
 
          if Get_Modified (Get_Buffer (Editor)) then
-            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_modified_xpm));
+            Set_Icon (Child, File_Modified_Pixbuf);
+            Ref (File_Modified_Pixbuf);
+
          else
-            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
+            Set_Icon (Child, File_Pixbuf);
+            Ref (File_Pixbuf);
          end if;
 
          Widget_Callback.Connect
@@ -3172,6 +3178,8 @@ package body Src_Editor_Module is
       Unref (Remove_Blank_Lines_Pixbuf);
       Unref (Hide_Block_Pixbuf);
       Unref (Unhide_Block_Pixbuf);
+      Unref (File_Pixbuf);
+      Unref (File_Modified_Pixbuf);
       Src_Editor_Module_Id := null;
    end Destroy;
 
