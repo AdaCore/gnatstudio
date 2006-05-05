@@ -85,16 +85,12 @@ package body Python is
       Format : String;
       Value1 : System.Address) return Boolean
    is
-      function Internal (Arg : PyObject; Format : String; V1 : System.Address)
-         return Integer;
-      pragma Import (C, Internal, "PyArg_ParseTuple");
+      function Internal
+        (Arg : PyObject; Format : String; V1 : System.Address) return Integer;
+      pragma Import (C, Internal, "ada_py_arg_parsetuple_ptr");
    begin
       return Internal (Arg, Format & ASCII.NUL, Value1) = 1;
    end PyArg_ParseTuple;
-
-   ----------------------
-   -- PyArg_ParseTuple --
-   ----------------------
 
    function PyArg_ParseTuple
      (Arg    : PyObject;
@@ -104,14 +100,10 @@ package body Python is
       function Internal
         (Arg : PyObject; Format : String; V1, V2 : System.Address)
          return Integer;
-      pragma Import (C, Internal, "PyArg_ParseTuple");
+      pragma Import (C, Internal, "ada_py_arg_parsetuple_ptr2");
    begin
       return Internal (Arg, Format & ASCII.NUL, Value1, Value2) = 1;
    end PyArg_ParseTuple;
-
-   ----------------------
-   -- PyArg_ParseTuple --
-   ----------------------
 
    function PyArg_ParseTuple
      (Arg    : PyObject;
@@ -121,14 +113,10 @@ package body Python is
       function Internal
         (Arg : PyObject; Format : String; V1, V2, V3 : System.Address)
          return Integer;
-      pragma Import (C, Internal, "PyArg_ParseTuple");
+      pragma Import (C, Internal, "ada_py_arg_parsetuple_ptr3");
    begin
       return Internal (Arg, Format & ASCII.NUL, Value1, Value2, Value3) = 1;
    end PyArg_ParseTuple;
-
-   ----------------------
-   -- PyArg_ParseTuple --
-   ----------------------
 
    function PyArg_ParseTuple
      (Arg    : PyObject;
@@ -138,15 +126,11 @@ package body Python is
       function Internal
         (Arg : PyObject; Format : String; V1, V2, V3, V4 : System.Address)
          return Integer;
-      pragma Import (C, Internal, "PyArg_ParseTuple");
+      pragma Import (C, Internal, "ada_py_arg_parsetuple_ptr4");
    begin
       return Internal
         (Arg, Format & ASCII.NUL, Value1, Value2, Value3, Value4) = 1;
    end PyArg_ParseTuple;
-
-   ----------------------
-   -- PyArg_ParseTuple --
-   ----------------------
 
    function PyArg_ParseTuple
      (Arg    : PyObject;
@@ -156,7 +140,7 @@ package body Python is
       function Internal
         (Arg : PyObject; Format : String; V1, V2, V3, V4, V5 : System.Address)
          return Integer;
-      pragma Import (C, Internal, "PyArg_ParseTuple");
+      pragma Import (C, Internal, "ada_py_arg_parsetuple_ptr5");
    begin
       return Internal
         (Arg, Format & ASCII.NUL, Value1, Value2, Value3, Value4, Value5) = 1;
@@ -266,11 +250,10 @@ package body Python is
    function PyObject_CallMethod
      (Object : PyObject; Name : String) return PyObject
    is
-      function Internal (Object : PyObject; Name : String; Format : String)
-         return PyObject;
-      pragma Import (C, Internal, "PyObject_CallMethod");
+      function Internal (Object : PyObject; Name : String) return PyObject;
+      pragma Import (C, Internal, "ada_py_object_callmethod");
    begin
-      return Internal (Object, Name & ASCII.NUL, "" & ASCII.NUL);
+      return Internal (Object, Name & ASCII.NUL);
    end PyObject_CallMethod;
 
    -------------------------
@@ -281,11 +264,10 @@ package body Python is
      (Object : PyObject; Name : String; Arg1 : PyObject) return PyObject
    is
       function Internal
-        (Object : PyObject; Name : String; Format : String; Arg : PyObject)
-         return PyObject;
-      pragma Import (C, Internal, "PyObject_CallMethod");
+        (Object : PyObject; Name : String; Arg : PyObject) return PyObject;
+      pragma Import (C, Internal, "ada_py_object_callmethod_obj");
    begin
-      return Internal (Object, Name & ASCII.NUL, "(O)", Arg1);
+      return Internal (Object, Name & ASCII.NUL, Arg1);
    end PyObject_CallMethod;
 
    -------------------------
@@ -296,11 +278,10 @@ package body Python is
      (Object : PyObject; Name : String; Arg1 : Integer) return PyObject
    is
       function Internal
-        (Object : PyObject; Name : String; Format : String; Arg : Integer)
-         return PyObject;
-      pragma Import (C, Internal, "PyObject_CallMethod");
+        (Object : PyObject; Name : String; Arg : Integer) return PyObject;
+      pragma Import (C, Internal, "ada_py_object_callmethod_int");
    begin
-      return Internal (Object, Name & ASCII.NUL, "(i)", Arg1);
+      return Internal (Object, Name & ASCII.NUL, Arg1);
    end PyObject_CallMethod;
 
    -----------------------

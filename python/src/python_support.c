@@ -24,7 +24,7 @@
 #undef DEBUG
 /* #define DEBUG */
 
-PyObject * ada_Py_InitModule4
+PyObject *ada_Py_InitModule4
     (char *name, PyMethodDef *methods,
      char *doc, PyObject *self,
      int apiver)
@@ -32,7 +32,7 @@ PyObject * ada_Py_InitModule4
   return Py_InitModule4 (name, methods, doc, self, apiver);
 }
 
-PyObject * ada_pycfunction_newex
+PyObject *ada_pycfunction_newex
   (PyMethodDef *ml, PyObject* self, PyObject* module)
 {
   PyObject* method = PyCFunction_New (ml, self);
@@ -48,11 +48,15 @@ PyObject * ada_pycfunction_newex
   return method;
 }
 
-int ada_pyget_refcount (PyObject* obj) {
+int
+ada_pyget_refcount (PyObject* obj)
+{
    return obj->ob_refcnt;
 }
 
-char* ada_py_refcount_msg (PyObject* obj) {
+char*
+ada_py_refcount_msg (PyObject* obj)
+{
    static char msg[200];
    if (obj) {
       snprintf (msg, 199, "%p (%s, rc=%d)",
@@ -63,65 +67,88 @@ char* ada_py_refcount_msg (PyObject* obj) {
    return msg;
 }
 
-void ada_py_print_refcount (PyObject* obj, char* msg) {
-  if (obj) {
+void
+ada_py_print_refcount (PyObject* obj, char* msg)
+{
+  if (obj)
     printf ("DEBUG %s %s\n", msg, ada_py_refcount_msg (obj));
-  }
 }
 
-void ada_py_incref (PyObject* obj) {
+void
+ada_py_incref (PyObject* obj)
+{
   Py_INCREF (obj);
 #ifdef DEBUG
   ada_py_print_refcount (obj, "after incref");
 #endif
 }
 
-void ada_py_decref (PyObject* obj) {
+void
+ada_py_decref (PyObject* obj)
+{
 #ifdef DEBUG
   ada_py_print_refcount (obj, "before decref");
 #endif
   Py_DECREF (obj);
 }
 
-void ada_py_xincref (PyObject* obj) {
+void
+ada_py_xincref (PyObject* obj)
+{
   Py_XINCREF (obj);
 #ifdef DEBUG
   ada_py_print_refcount (obj, "after xincref");
 #endif
 }
 
-void ada_py_xdecref (PyObject* obj) {
+void
+ada_py_xdecref (PyObject* obj)
+{
 #ifdef DEBUG
   ada_py_print_refcount (obj, "before xdecref");
 #endif
   Py_XDECREF (obj);
 }
 
-int ada_pystring_check (PyObject* obj) {
+int
+ada_pystring_check (PyObject* obj)
+{
   return PyString_Check (obj);
 }
 
-int ada_pyint_check (PyObject* obj) {
+int
+ada_pyint_check (PyObject* obj)
+{
   return PyInt_Check (obj);
 }
 
-int ada_pyfunction_check (PyObject* obj) {
+int
+ada_pyfunction_check (PyObject* obj)
+{
   return PyFunction_Check (obj);
 }
 
-PyObject* ada_pyfunction_get_globals (PyObject* obj) {
+PyObject*
+ada_pyfunction_get_globals (PyObject* obj)
+{
   return PyFunction_GET_GLOBALS (obj);
 }
 
-PyObject* ada_pyfunction_get_code (PyObject* obj) {
+PyObject*
+ada_pyfunction_get_code (PyObject* obj)
+{
   return PyFunction_GET_CODE (obj);
 }
 
-PyObject* ada_pyfunction_get_closure (PyObject* obj) {
+PyObject*
+ada_pyfunction_get_closure (PyObject* obj)
+{
   return PyFunction_GET_CLOSURE (obj);
 }
 
-PyObject* ada_pyfunction_get_defaults (PyObject* obj) {
+PyObject*
+ada_pyfunction_get_defaults (PyObject* obj)
+{
   return PyFunction_GET_DEFAULTS (obj);
 }
 
@@ -178,7 +205,8 @@ PyObject* ada_PyEval_EvalCodeEx
 }
 
 /*
-PyObject* ada_py_object_new (PyObject* base)
+PyObject*
+ada_py_object_new (PyObject* base)
 {
    if (PyClass_Check (base)) {
       return PyInstance_NewRaw (base, NULL);
@@ -195,47 +223,67 @@ PyObject* ada_py_object_new (PyObject* base)
 */
 
 
-int ada_pycobject_check (PyObject* obj) {
+int
+ada_pycobject_check (PyObject* obj)
+{
   return PyCObject_Check (obj);
 }
 
-int ada_pytuple_check (PyObject* obj) {
+int
+ada_pytuple_check (PyObject* obj)
+{
   return PyTuple_Check (obj);
 }
 
-int ada_pylist_check (PyObject* obj) {
+int
+ada_pylist_check (PyObject* obj)
+{
   return PyList_Check (obj);
 }
 
-int ada_pyinstance_check (PyObject* obj) {
+int
+ada_pyinstance_check (PyObject* obj)
+{
   return PyInstance_Check (obj);
 }
 
-int ada_pymethod_check (PyObject* obj) {
+int
+ada_pymethod_check (PyObject* obj)
+{
   return PyMethod_Check (obj);
 }
 
-PyTypeObject* ada_gettypeobject (PyObject* obj) {
+PyTypeObject*
+ada_gettypeobject (PyObject* obj)
+{
   return (PyTypeObject*)(obj->ob_type);
 }
 
-int ada_python_api_version () {
+int
+ada_python_api_version ()
+{
   return PYTHON_API_VERSION;
 }
 
-PyObject* ada_py_none () {
+PyObject* ada_py_none ()
+{
   return Py_None;
 }
 
-PyObject* ada_py_false() {
+PyObject* ada_py_false()
+{
   return Py_False;
 }
 
-PyObject* ada_py_true() {
+PyObject*
+ada_py_true()
+{
   return Py_True;
 }
 
-PyObject* ada_pyclass_name(PyObject* obj) {
+PyObject*
+ada_pyclass_name(PyObject* obj)
+{
   if (PyClass_Check (obj)) {
       return ((PyClassObject*)obj)->cl_name;
   } else {
@@ -244,7 +292,8 @@ PyObject* ada_pyclass_name(PyObject* obj) {
   }
 }
 
-int ada_pyclass_is_subclass (PyObject* class, PyObject* base)
+int
+ada_pyclass_is_subclass (PyObject* class, PyObject* base)
 {
   if (PyClass_Check (class)) {
       return PyClass_IsSubclass (class, base);
@@ -253,6 +302,57 @@ int ada_pyclass_is_subclass (PyObject* class, PyObject* base)
   }
 }
 
+PyObject *
+ada_py_object_callmethod (PyObject *o, char *m)
+{
+  return PyObject_CallMethod (o, m, "");
+}
+
+PyObject *
+ada_py_object_callmethod_obj (PyObject *o, char *m, PyObject *arg)
+{
+  return PyObject_CallMethod (o, m, "(O)", arg);
+}
+
+PyObject *
+ada_py_object_callmethod_int (PyObject *o, char *m, int arg)
+{
+  PyObject_CallMethod (o, m, "(i)", arg);
+}
+
+int
+ada_py_arg_parsetuple_ptr (PyObject *o, char *fmt, void *arg1)
+{
+  PyArg_ParseTuple (o, fmt, arg1);
+}
+
+int
+ada_py_arg_parsetuple_ptr2 (PyObject *o, char *fmt, void *arg1, void *arg2)
+{
+  PyArg_ParseTuple (o, fmt, arg1, arg2);
+}
+
+int
+ada_py_arg_parsetuple_ptr3
+  (PyObject *o, char *fmt, void *arg1, void * arg2, void *arg3)
+{
+  PyArg_ParseTuple (o, fmt, arg1, arg2, arg3);
+}
+
+int
+ada_py_arg_parsetuple_ptr4
+  (PyObject *o, char *fmt, void *arg1, void * arg2, void *arg3, void *arg4)
+{
+  PyArg_ParseTuple (o, fmt, arg1, arg2, arg3, arg4);
+}
+
+int
+ada_py_arg_parsetuple_ptr5
+  (PyObject *o, char *fmt,
+   void *arg1, void * arg2, void *arg3, void *arg4, void *arg5)
+{
+  PyArg_ParseTuple (o, fmt, arg1, arg2, arg3, arg4, arg5);
+}
 
 /******************************************************
  Support for pygtk
@@ -268,11 +368,15 @@ typedef struct {
     GObject *obj;
 } LocalPyGObject;
 
-GObject* ada_widget_from_pyobject (PyObject* object) {
+GObject*
+ada_widget_from_pyobject (PyObject* object)
+{
    return ((LocalPyGObject*)object)->obj;
 }
 
-PyObject* ada_pyobject_from_widget (GObject* object) {
+PyObject*
+ada_pyobject_from_widget (GObject* object)
+{
    return NULL;
    //  ??? Not integrated yet, since this would mean we need the pygtk
    //  sources around to compile GPS itself, which we do not want

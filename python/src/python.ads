@@ -94,6 +94,8 @@ package Python is
    --  For instance, to call it with an object and a integer as a parameter,
    --  you would use:
    --    result = PyObject_CallMethod (object, "method", "(Oi)", other_obj, 1);
+   --  except that due to ABI differences, you need to use a C wrapper,
+   --  otherwise things will break on e.g. x86_64
    --
    --  format has the same form as in the calls to Py_BuildValue
 
