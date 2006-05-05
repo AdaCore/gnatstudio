@@ -5668,7 +5668,9 @@ package body Src_Editor_Buffer is
       end if;
 
       while L > 1 loop
-         if Block.Block_Type in Enclosing_Entity_Category then
+         if Block.Block_Type in Namespace_Category
+           or else Block.Block_Type in Subprogram_Category
+         then
             if Block.Name /= null then
                return Block;
             else
