@@ -1066,6 +1066,7 @@ package body GPS.Kernel.Modules is
       Trace (Me, "Set Last_Context_For_Contextual");
 
       User.Kernel.Last_Context_For_Contextual := Context;
+      User.Kernel.Last_Context_From_Contextual := True;
 
       if User.Kernel.Last_Event_For_Contextual /= null then
          Free (User.Kernel.Last_Event_For_Contextual);
@@ -1385,17 +1386,18 @@ package body GPS.Kernel.Modules is
       Command : Interactive_Action)
    is
    begin
-      if Command.Kernel.Last_Context_For_Contextual = No_Context then
-         Trace (Me, "Creating last_context_for_contextual (Map_Menu)");
+      if Command.Kernel.Last_Context_For_Contextual = No_Context
+        or else Command.Kernel.Last_Context_From_Contextual = False
+      then
          Command.Kernel.Last_Context_For_Contextual :=
            Get_Current_Context (Command.Kernel);
       end if;
 
       Set_Sensitive
         (Gtk_Widget (Item),
-         Filter_Matches (Command.Filter,
-                         Command.Kernel.Last_Context_For_Contextual));
-
+         Filter_Matches
+           (Command.Filter,
+            Command.Kernel.Last_Context_For_Contextual));
    exception
       when E : others =>
          Trace (Exception_Handle,
