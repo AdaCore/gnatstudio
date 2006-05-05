@@ -250,10 +250,15 @@ package body Outline_View is
                --  and select the closest one to the current line
 
                if Outline.Show_File_Node then
-                  Iter := Children (Model, Get_Iter_First (Model));
+                  if Get_Iter_First (Model) /= Null_Iter then
+                     Iter := Children (Model, Get_Iter_First (Model));
+                  else
+                     Iter := Null_Iter;
+                  end if;
                else
                   Iter := Get_Iter_First (Model);
                end if;
+
                while Iter /= Null_Iter loop
                   if Equal
                     (Get_String (Model, Iter, Entity_Name_Column),
