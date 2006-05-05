@@ -369,8 +369,9 @@ package body GPS.Kernel.Remote is
    type Server_List_Editor is access all Server_List_Editor_Record'Class;
 
    procedure Gtk_New
-     (Dialog : out Server_List_Editor;
-      Kernel : Kernel_Handle);
+     (Dialog         : out Server_List_Editor;
+      Kernel         : Kernel_Handle;
+      Default_Server : String);
    --  Creates the server_list_editor dialog
 
    procedure On_Changed (W : access Gtk_Widget_Record'Class);
@@ -1289,8 +1290,9 @@ package body GPS.Kernel.Remote is
    -------------
 
    procedure Gtk_New
-     (Dialog : out Server_List_Editor;
-      Kernel : Kernel_Handle)
+     (Dialog         : out Server_List_Editor;
+      Kernel         : Kernel_Handle;
+      Default_Server : String)
    is
       Nb_Machines : Natural;
       Tips        : Gtk_Tooltips;
@@ -1342,10 +1344,23 @@ package body GPS.Kernel.Remote is
          Hide_Expander      => False);
       Add (Scrolled, Dialog.Machine_Tree);
 
+      --  Add/Restore/Remove buttons
+      Gtk_New_Vbox (VBox, Homogeneous => False);
+      Attach (Main_Table, VBox, 0, 1, 1, 2,
+              Fill or Expand, 0);
+      Gtk_New (Dialog.Add_Machine_Button, -"Add server");
+      Pack_Start (VBox, Dialog.Add_Machine_Button, False, False);
+      Gtk_New (Dialog.Restore_Button, -"Remove local changes");
+      Pack_Start (VBox, Dialog.Restore_Button, False, False);
+      Gtk_New (Dialog.Remove_Button, -"Remove server");
+      Pack_Start (VBox, Dialog.Remove_Button, False, False);
+      Set_Sensitive (Dialog.Restore_Button, False);
+      Set_Sensitive (Dialog.Remove_Button, False);
+
       --  Machine configuration
 
       Gtk_New_Vbox (VBox, Homogeneous => False);
-      Attach (Main_Table, VBox, 1, 2, 0, 1);
+      Attach (Main_Table, VBox, 1, 2, 0, 2);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
@@ -1514,19 +1529,6 @@ package body GPS.Kernel.Remote is
       Set_Alignment (Label, 0.0, 0.5);
       Pack_End (VBox, Label, False, False, Padding => 5);
 
-      --  Add/Restore/Remove buttons
-      Gtk_New_Vbox (VBox, Homogeneous => False);
-      Attach (Main_Table, VBox, 2, 3, 0, 1,
-              Fill or Expand, Expand);
-      Gtk_New (Dialog.Add_Machine_Button, -"Add server");
-      Pack_Start (VBox, Dialog.Add_Machine_Button, False, False);
-      Gtk_New (Dialog.Restore_Button, -"Remove local changes");
-      Pack_Start (VBox, Dialog.Restore_Button, False, False);
-      Gtk_New (Dialog.Remove_Button, -"Remove server");
-      Pack_Start (VBox, Dialog.Remove_Button, False, False);
-      Set_Sensitive (Dialog.Restore_Button, False);
-      Set_Sensitive (Dialog.Remove_Button, False);
-
       --  Callbacks connections
 
       Widget_Callback.Object_Connect
@@ -1596,7 +1598,7 @@ package body GPS.Kernel.Remote is
             Set (Model, Iter, User_Def_Col, False);
          end if;
 
-         if J = 1 then
+         if J = 1 or else Get_Nickname (J) = Default_Server then
             Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
          end if;
       end loop;
@@ -2243,7 +2245,8 @@ package body GPS.Kernel.Remote is
    ---------------------------
 
    procedure Configure_Server_List
-     (Kernel : GPS.Kernel.Kernel_Handle)
+     (Kernel         : GPS.Kernel.Kernel_Handle;
+      Default_Server : String := "")
    is
       Dialog : Server_List_Editor;
       Resp   : Gtk_Response_Type;
@@ -2252,7 +2255,7 @@ package body GPS.Kernel.Remote is
         (Item_Record, Item_Access);
 
    begin
-      Gtk_New (Dialog, Kernel);
+      Gtk_New (Dialog, Kernel, Default_Server);
 
       loop
          Resp := Run (Dialog);
@@ -2317,8 +2320,7 @@ package body GPS.Kernel.Remote is
          Queue_Id     : constant String  := Nth_Arg (Data, 5);
          Src_Path     : constant String  := Nth_Arg (Data, 6);
          Dest_Path    : constant String  := Nth_Arg (Data, 7);
-         Sync_Deleted : constant Boolean := Nth_Arg (Data, 8);
-         Synchronous  : constant Boolean := Nth_Arg (Data, 9);
+         Synchronous  : constant Boolean := Nth_Arg (Data, 8);
 
       begin
          return Rsync_Hooks_Args'
@@ -2335,7 +2337,6 @@ package body GPS.Kernel.Remote is
             Queue_Id         => Queue_Id,
             Src_Path         => Src_Path,
             Dest_Path        => Dest_Path,
-            Sync_Deleted     => Sync_Deleted,
             Synchronous      => Synchronous);
       end;
    end From_Callback_Data_Sync_Hook;
@@ -2351,7 +2352,7 @@ package body GPS.Kernel.Remote is
       return GPS.Kernel.Scripts.Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 9));
+        new Callback_Data'Class'(Create (Script, 8));
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Data.Tool_Name);
@@ -2360,8 +2361,7 @@ package body GPS.Kernel.Remote is
       Set_Nth_Arg (D.all, 5, Data.Queue_Id);
       Set_Nth_Arg (D.all, 6, Data.Src_Path);
       Set_Nth_Arg (D.all, 7, Data.Dest_Path);
-      Set_Nth_Arg (D.all, 8, Data.Sync_Deleted);
-      Set_Nth_Arg (D.all, 9, Data.Synchronous);
+      Set_Nth_Arg (D.all, 8, Data.Synchronous);
       return D;
    end Create_Callback_Data;
 
@@ -2590,10 +2590,10 @@ package body GPS.Kernel.Remote is
          Trace (Me, "Start synchronization of build_server");
          --  First sync 'once' dirs
          Synchronize
-           (Kernel_Handle (Kernel), Build_Server, GPS_Server, "", False, True);
+           (Kernel_Handle (Kernel), Build_Server, GPS_Server, "", True);
          --  Then sync 'Always' dirs
          Synchronize
-           (Kernel_Handle (Kernel), Build_Server, GPS_Server, "", False);
+           (Kernel_Handle (Kernel), Build_Server, GPS_Server, "");
       end if;
 
    exception
@@ -3190,7 +3190,6 @@ package body GPS.Kernel.Remote is
       From           : String;
       To             : String;
       Queue_Id       : String;
-      Sync_Deleted   : Boolean;
       Sync_Once_Dirs : Boolean := False)
    is
       Mirror         : Mirror_Path_Access;
@@ -3202,12 +3201,11 @@ package body GPS.Kernel.Remote is
    begin
       --  Make sure that local nickname is empty string, not Local_Nickname
       if From = Local_Nickname then
-         Synchronize (Kernel, "", To, Queue_Id, Sync_Deleted, Sync_Once_Dirs);
+         Synchronize (Kernel, "", To, Queue_Id, Sync_Once_Dirs);
          return;
 
       elsif To = Local_Nickname then
-         Synchronize (Kernel, From, "", Queue_Id, Sync_Deleted,
-                      Sync_Once_Dirs);
+         Synchronize (Kernel, From, "", Queue_Id, Sync_Once_Dirs);
          return;
       end if;
 
@@ -3276,7 +3274,6 @@ package body GPS.Kernel.Remote is
                    Queue_Id         => Queue_Id,
                    Src_Path         => From_Path.all,
                    Dest_Path        => To_Path.all,
-                   Sync_Deleted     => Sync_Deleted,
                    Synchronous      => Queue_Id = "");
 
             begin
@@ -3326,7 +3323,6 @@ package body GPS.Kernel.Remote is
       From           : Server_Type;
       To             : Server_Type;
       Queue_Id       : String;
-      Sync_Deleted   : Boolean;
       Sync_Once_Dirs : Boolean := False) is
    begin
       Synchronize
@@ -3334,7 +3330,6 @@ package body GPS.Kernel.Remote is
          From           => Get_Nickname (From),
          To             => Get_Nickname (To),
          Queue_Id       => Queue_Id,
-         Sync_Deleted   => Sync_Deleted,
          Sync_Once_Dirs => Sync_Once_Dirs);
    end Synchronize;
 
