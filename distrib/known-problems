@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.0.0
 
+- F505-004 Contextual menu items in Task Manager not working the first time
+  Problem:    When the Task Manager doesn't have the focus, the contextual
+              menu items might not work the first time they are clicked.
+  Workaround: Give the focus to the Task Manager before clicking, or click on
+              corresponding progress bars, or click twice.
+
 - F502-040 C/C++ cross-references and read-only object directories
   Problem:    No error is reported when the object directory of a project is
               read-only and you are trying to generate the C/C++ xref info.
@@ -21,7 +27,7 @@ Known Problems fixed in GPS 4.0.0
   Problem:    When doing a search in a source editor the outline view is
               cleared right after the search dialog pops up (only in the case
               it is a floating window).
-  Workaound:  Once the search dialog has been closed give the focus (by 
+  Workaound:  Once the search dialog has been closed give the focus (by
               clicking) to another window in the GPS dektop and then give it
               back to the current source editor.
 
