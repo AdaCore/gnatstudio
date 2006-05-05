@@ -162,6 +162,15 @@ PyObject* ada_PyEval_EvalCodeEx
    PyObject *defs,
    PyObject *closure)
 {
+  PyObject *
+  PyEval_EvalCodeEx(PyObject *co,
+                    PyObject *globals,  
+                    PyObject *locals,   
+                    PyObject **args, int argc,
+                    PyObject **kwds, int kwdc,
+                    PyObject **defs, int defc,
+                    PyObject *closure); 
+
    /* Code copied from funcobject.c::function_call() */
 
   PyObject **k, **d;
@@ -194,7 +203,7 @@ PyObject* ada_PyEval_EvalCodeEx
      nk = 0;
   }
 
-  result = (PyObject*) PyEval_EvalCodeEx
+  result = PyEval_EvalCodeEx
     (co, globals, locals,
     &PyTuple_GET_ITEM (args, 0), PyTuple_Size (args), k, nk, d, nd, closure);
 
