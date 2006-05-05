@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                             ACT-Europe                            --
+--                     Copyright (C) 2001-2006                       --
+--                               AdaCore                             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Widget;      use Gtk.Widget;
 with Gdk.Pixbuf;      use Gdk.Pixbuf;
 
 package Debugger_Pixmaps is
@@ -27,7 +28,6 @@ package Debugger_Pixmaps is
    Line_Has_Breakpoint_Pixbuf  : Gdk_Pixbuf := Null_Pixbuf;
    Current_Line_Pixbuf         : Gdk_Pixbuf := Null_Pixbuf;
 
-   procedure Init_Graphics;
-   --  Initialize the pixbufs.
+   procedure Init_Graphics (Widget : Gtk_Widget);
 
 end Debugger_Pixmaps;
