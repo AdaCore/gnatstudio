@@ -730,7 +730,7 @@ private
       --  never tested and cases where it is null because there is none to be
       --  found.
 
-      File_Checked      : Boolean               := False;
+      File_Checked    : Boolean := False;
       --  The current file is sometimes a virtual file (one temporarily
       --  generated for a diff for instance). In such cases, it is converted to
       --  the actual reference file. File_Checked indicates whether this
@@ -862,6 +862,10 @@ private
       --  This variable should remain not null and unchanged while a contextual
       --  menu or standard menu is displayed and executed, so that user scripts
       --  have access to it.
+
+      Last_Context_From_Contextual : Boolean := False;
+      --  Whether Last_Context_For_Contextual has been obtain from a contextual
+      --  menu.
 
       Last_Event_For_Contextual   : Gdk.Event.Gdk_Event;
       --  The event triggering the last contextual menu
