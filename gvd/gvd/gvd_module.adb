@@ -2512,6 +2512,8 @@ package body GVD_Module is
             Create_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
          end if;
       end if;
+
+      Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));
    end Preferences_Changed;
 
    ---------------------
@@ -2733,8 +2735,6 @@ package body GVD_Module is
       Add_Hook (Kernel, Debugger_Executable_Changed_Hook,
                 Wrapper (On_Executable_Changed'Access),
                 Name => "gvd.debugger_ext_changed");
-
-      Init_Graphics;
    end Register_Module;
 
    -------------
