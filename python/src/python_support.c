@@ -33,10 +33,10 @@ ada_Py_InitModule4
   return Py_InitModule4 (name, methods, doc, self, apiver);
 }
 
-PyObject *ada_pycfunction_newex
-  (PyMethodDef *ml, PyObject* self, PyObject* module)
+PyObject *
+ada_pycfunction_newex (PyMethodDef *ml, PyObject *self, PyObject *module)
 {
-  PyObject* method = PyCFunction_New (ml, self);
+  PyObject *method = PyCFunction_New (ml, self);
 
 #if (PY_MAJOR_VERSION > 2 \
      || (PY_MAJOR_VERSION == 2 \
