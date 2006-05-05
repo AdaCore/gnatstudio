@@ -43,6 +43,7 @@ with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
 
 with Commands;           use Commands;
 with Filesystem;         use Filesystem;
+with Filesystem.Windows; use Filesystem.Windows;
 with Password_Manager;   use Password_Manager;
 with String_Utils;       use String_Utils;
 with Traces;             use Traces;
@@ -191,7 +192,6 @@ package body Remote_Sync_Module is
       Dest_FS       : Filesystem_Access;
       Machine       : Machine_Descriptor;
       Success       : Boolean;
-      Transport_Arg : String_Access;
       Cb_Data       : Rsync_Callback_Data;
       Ret_Data      : aliased Return_Data;
 
@@ -202,28 +202,49 @@ package body Remote_Sync_Module is
       -- Build_Arg --
       ---------------
 
-      function Build_Arg return String_List is
+      function Build_Arg return String_List
+      is
          Rsync_Args    : constant String_List
            := Clone (Rsync_Module.Rsync_Args.all);
+
+         function Transport_Arg return String_List;
+         --  Argument for transport
+
+         function Use_Links_Arg return String_List;
+         --  Argument for link transfer
+
+         -------------------
+         -- Transport_Arg --
+         -------------------
+
+         function Transport_Arg return String_List is
+         begin
+            if Machine.Access_Name.all = "ssh" then
+               return (1 => new String'("--rsh=ssh"));
+            else
+               return (1 .. 0 => null);
+            end if;
+         end Transport_Arg;
+
+         -------------------
+         -- Use_Links_Arg --
+         -------------------
+
+         function Use_Links_Arg return String_List is
+         begin
+            --  No support for symbolic links under windows...
+            if Dest_FS.all in Windows_Filesystem_Record'Class then
+               return (1 => new String'("-L"));
+            else
+               return (1 .. 0 => null);
+            end if;
+         end Use_Links_Arg;
+
       begin
-         if Transport_Arg /= null then
-            if Rsync_Data.Sync_Deleted then
-               return (1 => new String'("--delete")) &
-                      Rsync_Args & Transport_Arg & Src_Path & Dest_Path;
-            else
-               return (1 => new String'("--update")) &
-                      Rsync_Args & Transport_Arg & Src_Path & Dest_Path;
-            end if;
-         else
-            if Rsync_Data.Sync_Deleted then
-               return (1 => new String'("--delete")) &
-                      Rsync_Args & Src_Path & Dest_Path;
-            else
-               return (1 => new String'("--update")) &
-                      Rsync_Args & Src_Path & Dest_Path;
-            end if;
-         end if;
+         return Rsync_Args & Use_Links_Arg & Transport_Arg &
+           Src_Path & Dest_Path;
       end Build_Arg;
+
    begin
       --  Check that we want to use rsync
       if Rsync_Data.Tool_Name /= "rsync" then
@@ -279,10 +300,6 @@ package body Remote_Sync_Module is
          return False;
       end if;
 
-      if Machine.Access_Name.all = "ssh" then
-         Transport_Arg := new String'("--rsh=ssh");
-      end if;
-
       Ret_Data.Status := 0;
       Cb_Data := (Network_Name      => Machine.Network_Name,
                   User_Name         => Machine.User_Name,
@@ -322,7 +339,6 @@ package body Remote_Sync_Module is
 
       Free (Src_Path);
       Free (Dest_Path);
-      Free (Transport_Arg);
 
       return Ret_Data.Status = 0 and then Success;
    end On_Rsync_Hook;
