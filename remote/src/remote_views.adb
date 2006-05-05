@@ -37,12 +37,10 @@ with Gtk.Button;          use Gtk.Button;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.Image;           use Gtk.Image;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.List;            use Gtk.List;
 with Gtk.List_Item;       use Gtk.List_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Style;           use Gtk.Style;
 with Gtk.Table;           use Gtk.Table;
 with Gtk.Tooltips;        use Gtk.Tooltips;
@@ -214,7 +212,6 @@ package body Remote_Views is
       Full_Table   : Gtk_Table;
       Color        : Gdk_Color;
       Success      : Boolean;
-      Pix          : Gtk_Image;
 
    begin
       Gtk.Scrolled_Window.Initialize (View);
@@ -316,29 +313,27 @@ package body Remote_Views is
       Set_Text (View.Modified_Style, State_Normal, Color);
 
       --  "Check", "Apply" and "Sync" buttons
+      Gtk_New (View.Sync_Button, -"Sync");
+      Set_Tip
+        (Tooltips, View.Sync_Button,
+         -("Force update of directories marked as 'Synchonize Once' from the" &
+           " selected build server"));
+      Attach (View.Main_Table, View.Sync_Button,
+              0, 1, 1, 2, Fill or Expand, 0, 5, 5);
+      Set_Sensitive (View.Sync_Button, False);
+      View_Callback.Connect
+        (View.Sync_Button, "clicked", On_Sync_Clicked'Access,
+         (View => Remote_View (View), Server => GPS_Server));
+
       Gtk_New (View.Check_Button, -"Check");
       Set_Tip
         (Tooltips, View.Check_Button,
          -"Check your configuration against current project");
       Attach (View.Main_Table, View.Check_Button,
-              0, 1, 1, 2, Fill or Expand, 0, 5, 5);
+              1, 2, 1, 2, Fill or Expand, 0, 5, 5);
       Set_Sensitive (View.Check_Button, False);
       View_Callback.Connect
         (View.Check_Button, "clicked", On_Check_Clicked'Access,
-         (View => Remote_View (View), Server => GPS_Server));
-
-      Gtk_New (View.Sync_Button);
-      Gtk_New (Pix, Stock_Refresh, Icon_Size_Menu);
-      Add (View.Sync_Button, Pix);
-      Set_Tip
-        (Tooltips, View.Sync_Button,
-         -("Force update of directories marked as 'Synchronize Once' from the"
-           & " selected build server"));
-      Attach (View.Main_Table, View.Sync_Button,
-              1, 2, 1, 2, Fill or Expand, 0, 5, 5);
-      Set_Sensitive (View.Sync_Button, False);
-      View_Callback.Connect
-        (View.Sync_Button, "clicked", On_Sync_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New (View.Connect_Button, -"Apply");
@@ -825,7 +820,6 @@ package body Remote_Views is
          From           => Get_Text (Get_Entry (User.View.Build_Combo)),
          To             => "",
          Queue_Id       => "",
-         Sync_Deleted   => True,
          Sync_Once_Dirs => True);
    end On_Sync_Clicked;
 
@@ -838,8 +832,14 @@ package body Remote_Views is
       User : Remote_Data)
    is
       pragma Unreferenced (View);
+      Build_Txt : constant String :=
+                    Get_Text (Get_Entry (User.View.Build_Combo));
    begin
-      Configure_Server_List (User.View.Kernel);
+      if Build_Txt /= Local_Nickname then
+         Configure_Server_List (User.View.Kernel, Build_Txt);
+      else
+         Configure_Server_List (User.View.Kernel);
+      end if;
 
    exception
       when E : others =>
