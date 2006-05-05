@@ -25,6 +25,7 @@ with Gtk.Menu;       use Gtk.Menu;
 with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
 with Gtk.Tree_View;  use Gtk.Tree_View;
+with Gtk.Widget;     use Gtk.Widget;
 with Gtkada.MDI;     use Gtkada.MDI;
 
 with GPS.Kernel;     use GPS.Kernel;
@@ -99,7 +100,7 @@ package Project_Explorers_Common is
    Open_Pixbufs  : Pixbuf_Array;
    Close_Pixbufs : Pixbuf_Array;
 
-   procedure Init_Graphics;
+   procedure Init_Graphics (Widget : Gtk_Widget);
    --  Initialize the pixbufs.
 
    ---------------------------------
