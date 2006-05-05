@@ -178,6 +178,7 @@ case "${host}" in
     case "${host}" in
       *-linux-gnu* )
         opsys=gnu-linux
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lutil -lm ${PYTHON_LIBS}"
 	PRINT_CMD="a2ps"
         ;;
     esac
