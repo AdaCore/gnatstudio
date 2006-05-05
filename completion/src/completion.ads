@@ -25,10 +25,11 @@
 --  it might depend on different datas. You can see for example the subprogram
 --  Full_Test in the test driver Completion.Test.
 
+with Glib;         use Glib;
+
 with Basic_Types;  use Basic_Types;
 with Language;     use Language;
 with Generic_List;
-with Glib;         use Glib;
 
 package Completion is
 
@@ -147,8 +148,8 @@ package Completion is
    --  identifier can be different from the completion propsed and the label.
    --  By default, return the completion.
 
-   function Characters_To_Replace (Proposal : Completion_Proposal)
-      return Natural;
+   function Characters_To_Replace
+     (Proposal : Completion_Proposal) return Natural;
    --  Return the number of characters to be replaced by the completion, that
    --  were already written in the buffer but might be not fully accurate (e.g.
    --  bad cased).
@@ -167,14 +168,13 @@ package Completion is
      (Proposal   : Completion_Proposal;
       Identifier : String;
       Offset     : Positive;
-      Is_Partial : Boolean)
-      return Completion_List;
+      Is_Partial : Boolean) return Completion_List;
    --  Return the possible children of this completion, and filter them
    --  according to a (possibly partial) name. Return Null_Completion_Proposal
    --  if nothing found.
 
-   function Get_Number_Of_Parameters (Proposal : Completion_Proposal)
-     return Natural is abstract;
+   function Get_Number_Of_Parameters
+     (Proposal : Completion_Proposal) return Natural is abstract;
    --  If the completion proposal is a subprogram, then this will return the
    --  number of its parameters, otherwise 0.
 
@@ -209,8 +209,8 @@ package Completion is
    --  Gets the next proposal of the completion list, Null_Completion_Iterator
    --  if none.
 
-   function Get_Proposal (This : Completion_Iterator)
-      return Completion_Proposal'Class;
+   function Get_Proposal
+     (This : Completion_Iterator) return Completion_Proposal'Class;
    --  Return the actual proposal for the given iterator.
 
    Null_Completion_Iterator : constant Completion_Iterator;
@@ -277,8 +277,7 @@ private
      (Proposal   : Simple_Completion_Proposal;
       Identifier : String;
       Offset     : Positive;
-      Is_Partial : Boolean)
-      return Completion_List;
+      Is_Partial : Boolean) return Completion_List;
    --  See inherited documentation
 
    function Get_Number_Of_Parameters (Proposal : Simple_Completion_Proposal)
