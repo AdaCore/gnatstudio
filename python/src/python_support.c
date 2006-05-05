@@ -24,10 +24,11 @@
 #undef DEBUG
 /* #define DEBUG */
 
-PyObject *ada_Py_InitModule4
-    (char *name, PyMethodDef *methods,
-     char *doc, PyObject *self,
-     int apiver)
+PyObject *
+ada_Py_InitModule4
+  (char *name, PyMethodDef *methods,
+   char *doc, PyObject *self,
+   int apiver)
 {
   return Py_InitModule4 (name, methods, doc, self, apiver);
 }
