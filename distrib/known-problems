@@ -18,6 +18,16 @@ Known Problems fixed in GPS 4.0.0
   Workaround: These processes do not occupy any CPU cycle, and are properly
               destroyed when GPS exits
 
+- F501-002 Some VCS functions not available through the VCS menu
+  Problem:    If GPS is started with no open source editor selecting a file
+              in the project or the VCS explorer will not be sufficient to
+               be able to access VCS actions through the main VCS menu.
+              There is a similar problem with directories.
+  Workaround: Display a contextual menu by right clicking on a file or
+              directory entry. VCS actions are always available though the VCS
+              contextual submenu. But doing this will also enable them in the
+              main VCS menu.
+
 - F425-013 Crash when quiting while build is running
   Problem:    GPS crashes when it is closed while processing a build command
   Workaround: Interrupt first on going builds from the task manager dialog
