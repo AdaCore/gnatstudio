@@ -69,6 +69,7 @@ with Gtkada;
 with Gtkada.Combo;               use Gtkada.Combo;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.Multi_Paned;         use Gtkada.Multi_Paned;
 with Collapsing_Pane;            use Collapsing_Pane;
 
 with GPS.Intl;                   use GPS.Intl;
@@ -1296,7 +1297,7 @@ package body GPS.Kernel.Remote is
    is
       Nb_Machines : Natural;
       Tips        : Gtk_Tooltips;
-      Main_Table  : Gtk_Table;
+      Main_Table  : Gtkada_Multi_Paned;
       Frame       : Gtk_Frame;
       Scrolled    : Gtk_Scrolled_Window;
       Model       : Gtk_Tree_Store;
@@ -1316,17 +1317,23 @@ package body GPS.Kernel.Remote is
          -"Servers configuration",
          Get_Main_Window (Kernel),
          Modal + Destroy_With_Parent);
-      Set_Position (Dialog, Win_Pos_Mouse);
-      Set_Default_Size (Dialog, 670, 450);
+      Set_Position (Dialog, Win_Pos_Center_On_Parent);
+      Set_Default_Size (Dialog, 600, 400);
       Gtk_New (Tips);
 
       Dialog.Kernel := Kernel;
 
-      Gtk_New (Main_Table, Rows => 3, Columns => 1, Homogeneous => False);
+      Gtk_New (Main_Table);
       Pack_Start (Get_Vbox (Dialog), Main_Table);
 
+      Gtk_New_Vbox (VBox, Homogeneous => False);
+      Add_Child (Main_Table, VBox,
+                 Fixed_Size => True,
+                 Width      => -1,
+                 Height     => -1);
+
       Gtk_New (Frame);
-      Attach (Main_Table, Frame, 0, 1, 0, 1);
+      Pack_Start (VBox, Frame, Expand => True, Fill => True);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -1345,9 +1352,6 @@ package body GPS.Kernel.Remote is
       Add (Scrolled, Dialog.Machine_Tree);
 
       --  Add/Restore/Remove buttons
-      Gtk_New_Vbox (VBox, Homogeneous => False);
-      Attach (Main_Table, VBox, 0, 1, 1, 2,
-              Fill or Expand, 0);
       Gtk_New (Dialog.Add_Machine_Button, -"Add server");
       Pack_Start (VBox, Dialog.Add_Machine_Button, False, False);
       Gtk_New (Dialog.Restore_Button, -"Remove local changes");
@@ -1360,7 +1364,8 @@ package body GPS.Kernel.Remote is
       --  Machine configuration
 
       Gtk_New_Vbox (VBox, Homogeneous => False);
-      Attach (Main_Table, VBox, 1, 2, 0, 2);
+      Split (Main_Table, Root_Pane, VBox, Orientation_Horizontal,
+             Width => 450);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
@@ -1455,6 +1460,19 @@ package body GPS.Kernel.Remote is
       end;
 
       Line_Nb := Line_Nb + 1;
+      Gtk_New (Label, -"Extra init commands:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Attach (Dialog.Right_Table, Label, 0, 1, Line_Nb, Line_Nb + 1,
+              Fill or Expand, 0, 10);
+      Gtk_New (Dialog.Init_Cmds_View);
+      Set_Wrap_Mode (Dialog.Init_Cmds_View, Wrap_Char);
+      Set_Left_Margin (Dialog.Init_Cmds_View, 10);
+      Set_Indent (Dialog.Init_Cmds_View, -10);
+      Set_Pixels_Below_Lines (Dialog.Init_Cmds_View, 3);
+      Attach (Dialog.Right_Table, Dialog.Init_Cmds_View, 1, 2,
+              Line_Nb, Line_Nb + 1, Fill or Expand, 0);
+
+      Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Pane, -"Advanced configuration");
       Set_State (Dialog.Advanced_Pane, Collapsed);
       Attach (Dialog.Right_Table, Dialog.Advanced_Pane,
@@ -1491,24 +1509,12 @@ package body GPS.Kernel.Remote is
       Attach (Dialog.Advanced_Table, Dialog.Max_Nb_Connected_Spin, 1, 2, 2, 3,
               Fill or Expand, 0);
 
-      Gtk_New (Label, -"Extra init commands:");
+      Gtk_New (Label, -"Debug console:");
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4,
               Fill or Expand, 0, 10);
-      Gtk_New (Dialog.Init_Cmds_View);
-      Set_Wrap_Mode (Dialog.Init_Cmds_View, Wrap_Char);
-      Set_Left_Margin (Dialog.Init_Cmds_View, 10);
-      Set_Indent (Dialog.Init_Cmds_View, -10);
-      Set_Pixels_Below_Lines (Dialog.Init_Cmds_View, 3);
-      Attach (Dialog.Advanced_Table, Dialog.Init_Cmds_View, 1, 2, 3, 4,
-              Fill or Expand);
-
-      Gtk_New (Label, -"Debug console:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Advanced_Table, Label, 0, 1, 4, 5,
-              Fill or Expand, 0, 10);
       Gtk_New (Dialog.Debug_Button);
-      Attach (Dialog.Advanced_Table, Dialog.Debug_Button, 1, 2, 4, 5, 0, 0);
+      Attach (Dialog.Advanced_Table, Dialog.Debug_Button, 1, 2, 3, 4, 0, 0);
 
       --  Remote paths configuration
       Line_Nb := Line_Nb + 1;
