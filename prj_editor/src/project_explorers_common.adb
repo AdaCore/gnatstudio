@@ -23,6 +23,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gtk.Enums;                 use Gtk.Enums;
 with Glib.Convert;              use Glib.Convert;
 
 with Basic_Types;               use Basic_Types;
@@ -33,7 +34,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Unknown;          use Language.Unknown;
 with Language_Handlers;         use Language_Handlers;
-with Pixmaps_IDE;               use Pixmaps_IDE;
 with Pixmaps_Prj;               use Pixmaps_Prj;
 with Projects.Registry;         use Projects, Projects.Registry;
 with String_Utils;              use String_Utils;
@@ -70,7 +70,7 @@ package body Project_Explorers_Common is
    -- Init_Graphics --
    -------------------
 
-   procedure Init_Graphics is
+   procedure Init_Graphics (Widget : Gtk_Widget) is
    begin
       --  If initialization has already been done, exit.
       if Open_Pixbufs (Project_Node) /= null then
@@ -78,9 +78,11 @@ package body Project_Explorers_Common is
       end if;
 
       Open_Pixbufs (Project_Node)  :=
-        Gdk_New_From_Xpm_Data (project_xpm);
+        Render_Icon (Widget, "gps-project", Icon_Size_Menu);
       Close_Pixbufs (Project_Node) :=
-        Gdk_New_From_Xpm_Data (project_closed_xpm);
+        Render_Icon (Widget, "gps-project", Icon_Size_Menu);
+
+      --  ??? We need to use new pixbufs for these.
       Open_Pixbufs (Modified_Project_Node)  :=
         Gdk_New_From_Xpm_Data (project_modified_xpm);
       Close_Pixbufs (Modified_Project_Node) :=
@@ -89,26 +91,29 @@ package body Project_Explorers_Common is
         Gdk_New_From_Xpm_Data (project_ext_xpm);
       Close_Pixbufs (Extends_Project_Node) :=
         Gdk_New_From_Xpm_Data (project_ext_closed_xpm);
+
       Open_Pixbufs (Directory_Node)  :=
-        Gdk_New_From_Xpm_Data (mini_ofolder_xpm);
+        Render_Icon (Widget, "gps-folder-open", Icon_Size_Menu);
       Close_Pixbufs (Directory_Node) :=
-        Gdk_New_From_Xpm_Data (mini_folder_xpm);
+        Render_Icon (Widget, "gps-folder-closed", Icon_Size_Menu);
       Open_Pixbufs (Obj_Directory_Node)  :=
-        Gdk_New_From_Xpm_Data (mini_folder_object_xpm);
+        Render_Icon (Widget, "gps-folder-obj-open", Icon_Size_Menu);
       Close_Pixbufs (Obj_Directory_Node) :=
-        Gdk_New_From_Xpm_Data (mini_folder_object_xpm);
+        Render_Icon (Widget, "gps-folder-obj-closed", Icon_Size_Menu);
+
       Open_Pixbufs (Exec_Directory_Node)  :=
-        Gdk_New_From_Xpm_Data (mini_folder_exec_xpm);
+        Render_Icon (Widget, "gps-folder-exec-open", Icon_Size_Menu);
       Close_Pixbufs (Exec_Directory_Node) :=
-        Gdk_New_From_Xpm_Data (mini_folder_exec_xpm);
+        Render_Icon (Widget, "gps-folder-exec-closed", Icon_Size_Menu);
       Open_Pixbufs (File_Node)  :=
-        Gdk_New_From_Xpm_Data (mini_page_xpm);
+        Render_Icon (Widget, "gps-file", Icon_Size_Menu);
       Close_Pixbufs (File_Node) :=
-        Gdk_New_From_Xpm_Data (mini_page_xpm);
+        Render_Icon (Widget, "gps-file", Icon_Size_Menu);
+
       Open_Pixbufs (Category_Node)  :=
-        Gdk_New_From_Xpm_Data (var_xpm);
+        Render_Icon (Widget, "gps-box", Icon_Size_Menu);
       Close_Pixbufs (Category_Node) :=
-        Gdk_New_From_Xpm_Data (var_xpm);
+        Render_Icon (Widget, "gps-box", Icon_Size_Menu);
    end Init_Graphics;
 
    -----------------
