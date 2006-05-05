@@ -53,7 +53,6 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Types;              use Gtkada.Types;
 
 with Commands.Editor;           use Commands.Editor;
 with Entities.Queries;          use Entities.Queries;
@@ -92,11 +91,6 @@ with VFS;                       use VFS;
 package body Src_Editor_Box is
 
    Me : constant Debug_Handle := Create ("Source_Editor");
-
-   editor_xpm          : aliased Chars_Ptr_Array (0 .. 0);
-   editor_modified_xpm : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, editor_xpm, "mini_page_xpm");
-   pragma Import (C, editor_modified_xpm, "modified_page_xpm");
 
    procedure Setup (Data : Source_Editor_Box; Id : Handler_Id);
    package Box_Callback is new Gtk.Handlers.User_Callback_With_Setup
@@ -543,15 +537,18 @@ package body Src_Editor_Box is
       case Get_Status (Box.Source_Buffer) is
          when Unmodified =>
             Set_Text (Box.Modified_Label, -"Unmodified");
-            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
+            Set_Icon (Child, File_Pixbuf);
+            Ref (File_Pixbuf);
 
          when Saved =>
             Set_Text (Box.Modified_Label, -"Saved");
-            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
+            Set_Icon (Child, File_Pixbuf);
+            Ref (File_Pixbuf);
 
          when Modified =>
             Set_Text (Box.Modified_Label, -"Modified");
-            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_modified_xpm));
+            Set_Icon (Child, File_Modified_Pixbuf);
+            Ref (File_Modified_Pixbuf);
       end case;
 
       File_Status_Changed
