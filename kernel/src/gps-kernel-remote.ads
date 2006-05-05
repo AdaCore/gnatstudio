@@ -85,15 +85,11 @@ package GPS.Kernel.Remote is
       From           : Server_Type;
       To             : Server_Type;
       Queue_Id       : String;
-      Sync_Deleted   : Boolean;
       Sync_Once_Dirs : Boolean := False);
    --  Perform a file system synchronisation between From and To.
    --  If Queue_Id is not an empty string, then the synchronisation is
    --   launched as an asynchronous command using the queue_id. Else, it is
    --   launched synchronously.
-   --  If Sync_Deleted is set, then deleted files in src server will be
-   --   deleted on To server. Else, an update is performed (only newer files
-   --   are copied).
    --  If Sync_Once_Dirs is set, then only mirrors paths marked as 'sync once'
    --   are synchronized.
 
@@ -102,7 +98,6 @@ package GPS.Kernel.Remote is
       From           : String;
       To             : String;
       Queue_Id       : String;
-      Sync_Deleted   : Boolean;
       Sync_Once_Dirs : Boolean := False);
    --  Same as above, with From and To servers identified by their nickname
 
@@ -158,8 +153,6 @@ package GPS.Kernel.Remote is
      (Tool_Name_Length, Src_Name_Length, Dest_Name_Length, Queue_Id_Length,
       Src_Path_Length, Dest_Path_Length : Natural)
    is new Hooks_Data with record
-      Sync_Deleted : Boolean;
-      --  Delete dest files if local files were deleted
       Synchronous  : Boolean;
       --  Tells if the synchronisation call shall be performed synchronously
       Tool_Name    : String (1 .. Tool_Name_Length);
@@ -219,7 +212,8 @@ package GPS.Kernel.Remote is
    ----------------------------
 
    procedure Configure_Server_List
-     (Kernel : GPS.Kernel.Kernel_Handle);
+     (Kernel         : GPS.Kernel.Kernel_Handle;
+      Default_Server : String := "");
    --  Runs the server list editor dialog
 
    procedure Assign
