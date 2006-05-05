@@ -444,7 +444,10 @@ package Language is
       Cat_Exception_Handler);
 
    subtype Enclosing_Entity_Category is Language_Category
-     range Cat_Package .. Cat_Entry;
+     range Cat_Package .. Cat_Union;
+
+   subtype Namespace_Category is Enclosing_Entity_Category
+     range Cat_Package .. Cat_Namespace;
 
    subtype Subprogram_Category is Enclosing_Entity_Category
      range Cat_Task .. Cat_Entry;
