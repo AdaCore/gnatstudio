@@ -106,6 +106,27 @@
        <alternate                     file="../icons/18px/stack_down_18.png" size="small_toolbar" />
     </icon>
 
+    <icon id="gps-debugger-break"     file="../icons/16px/debug_break.png" />
+    <icon id="gps-debugger-current"   file="../icons/16px/debug_current.png" />
+
+    <!-- General-purpose icons -->
+
+    <icon id="gps-file"               file="../icons/16px/file.png" />
+    <icon id="gps-file-modified"      file="../icons/16px/file_altered.png" />
+
+    <icon id="gps-folder-closed"      file="../icons/16px/folder_closed.png" />
+    <icon id="gps-folder-open"        file="../icons/16px/folder_open.png" />
+
+    <icon id="gps-folder-exec-closed" file="../icons/16px/folder_e_closed.png" />
+    <icon id="gps-folder-exec-open"   file="../icons/16px/folder_e_open.png" />
+
+    <icon id="gps-folder-obj-closed"  file="../icons/16px/folder_o_closed.png" />
+    <icon id="gps-folder-obj-open"    file="../icons/16px/folder_o_open.png" />
+
+    <icon id="gps-project"            file="../icons/16px/project_folder_blue.png" />
+
+    <icon id="gps-box"            file="../icons/16px/variable.png" />
+
     <!-- VCS icons -->
 
     <icon id="gps-vcs-added"          file="../icons/20px/vcs-added.png" />
