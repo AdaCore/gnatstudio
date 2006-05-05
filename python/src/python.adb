@@ -256,10 +256,6 @@ package body Python is
       return Internal (Object, Name & ASCII.NUL);
    end PyObject_CallMethod;
 
-   -------------------------
-   -- PyObject_CallMethod --
-   -------------------------
-
    function PyObject_CallMethod
      (Object : PyObject; Name : String; Arg1 : PyObject) return PyObject
    is
@@ -269,10 +265,6 @@ package body Python is
    begin
       return Internal (Object, Name & ASCII.NUL, Arg1);
    end PyObject_CallMethod;
-
-   -------------------------
-   -- PyObject_CallMethod --
-   -------------------------
 
    function PyObject_CallMethod
      (Object : PyObject; Name : String; Arg1 : Integer) return PyObject
