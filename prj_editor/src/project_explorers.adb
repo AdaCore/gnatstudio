@@ -634,7 +634,7 @@ package body Project_Explorers is
       Gtk_New (Label, -"Project View");
       Pack_Start (Explorer, Scrolled, Fill => True, Expand => True);
 
-      Init_Graphics;
+      Init_Graphics (Gtk_Widget (Explorer));
       Gtk_New (Explorer.Tree, Columns_Types);
       Set_Headers_Visible (Explorer.Tree, False);
       Set_Column_Types (Gtk_Tree_View (Explorer.Tree));

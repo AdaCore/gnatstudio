@@ -640,7 +640,7 @@ package body Project_Explorers_Files is
          ID              => Explorer_Files_Module_Id,
          Context_Func    => Explorer_Context_Factory'Access);
 
-      Init_Graphics;
+      Init_Graphics (Gtk_Widget (Explorer));
 
       Refresh (Explorer);
 
