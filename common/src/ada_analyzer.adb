@@ -1643,7 +1643,8 @@ package body Ada_Analyzer is
             case Constructs.Current.Category is
                when Cat_Variable | Cat_Local_Variable | Cat_Field |
                     Cat_Declare_Block | Cat_Simple_Block |
-                    Cat_Type | Cat_Subtype | Enclosing_Entity_Category
+                    Cat_Type | Cat_Subtype | Namespace_Category |
+                    Subprogram_Category
                =>
                   --  Adjust the Sloc_End to the next semicolon for enclosing
                   --  entities and variable declarations.
