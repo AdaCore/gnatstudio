@@ -1284,6 +1284,10 @@ package body GNAT.Expect.TTY.Remote is
          --  that the session is killed (thus terminating the remote process).
          Interrupt (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd);
       end if;
+
+   exception
+      when Constraint_Error =>
+         Descriptor.Terminated := True;
    end Interrupt;
 
    -----------
