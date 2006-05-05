@@ -686,7 +686,6 @@ package body Navigation_Module is
 
          if B_Type in Construct_Category
            or else B_Type in Enclosing_Entity_Category
-           or else B_Type in Cat_Class .. Cat_Union
          then
             B_Start := Get_Block_Start (Kernel, File, Line);
 
@@ -730,7 +729,6 @@ package body Navigation_Module is
 
          if B_Type in Construct_Category
            or else B_Type in Enclosing_Entity_Category
-           or else B_Type in Cat_Class .. Cat_Union
          then
             B_End := Get_Block_End (Kernel, File, Line);
 
