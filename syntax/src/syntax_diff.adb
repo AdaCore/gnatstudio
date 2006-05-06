@@ -146,7 +146,7 @@ package body Syntax_Diff is
    function Filter_Category (Category : Language_Category) return Boolean is
    begin
       case Category is
-         when Enclosing_Entity_Category | Dependency_Category |
+         when Namespace_Category | Subprogram_Category | Dependency_Category |
               Data_Type_Category | Cat_Representation_Clause |
               Cat_Local_Variable | Cat_Parameter | Cat_Literal | Cat_Field |
               Cat_Exception_Handler | Construct_Category
