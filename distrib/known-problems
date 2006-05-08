@@ -25,8 +25,8 @@ Known Problems fixed in GPS 4.0.0
               There is a similar problem with directories.
   Workaround: Display a contextual menu by right clicking on a file or
               directory entry. VCS actions are always available though the VCS
-              contextual submenu. But doing this will also enable them in the
-              main VCS menu.
+              contextual submenu. Doing this will also enable them in the main
+              VCS menu.
 
 - F425-013 Crash when quiting while build is running
   Problem:    GPS crashes when it is closed while processing a build command
