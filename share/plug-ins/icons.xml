@@ -107,7 +107,7 @@
     </icon>
 
     <icon id="gps-debugger-break"     file="../icons/16px/debug_break.png" />
-    <icon id="gps-debugger-current"   file="../icons/16px/debug_current.png" />
+    <icon id="gps-debugger-current"   file="../icons/16px/debug_indicator.png" />
 
     <!-- General-purpose icons -->
 
