@@ -55,7 +55,6 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Pixmaps_IDE;               use Pixmaps_IDE;
 
 with VFS;                       use VFS;
 with File_Utils;                use File_Utils;
@@ -85,24 +84,25 @@ package body Directory_Tree is
    Open_Pixbufs  : Pixbuf_Array;
    Close_Pixbufs : Pixbuf_Array;
 
-   procedure Init_Graphics;
+   procedure Init_Graphics (Widget : Gtk_Widget);
    --  Initialize the pixbufs.
+   --  Widget serves as reference to get the theme engine.
 
    -------------------
    -- Init_Graphics --
    -------------------
 
-   procedure Init_Graphics is
+   procedure Init_Graphics (Widget : Gtk_Widget) is
    begin
       --  If initialization has already been done, exit.
       if Open_Pixbufs (Directory_Node) /= null then
          return;
       end if;
 
-      Open_Pixbufs (Directory_Node)  :=
-        Gdk_New_From_Xpm_Data (mini_ofolder_xpm);
-      Close_Pixbufs (Directory_Node) :=
-        Gdk_New_From_Xpm_Data (mini_folder_xpm);
+      Open_Pixbufs (Directory_Node)  := Render_Icon
+        (Widget, "gps-folder-open", Icon_Size_Menu);
+      Close_Pixbufs (Directory_Node) := Render_Icon
+        (Widget, "gps-folder-closed", Icon_Size_Menu);
 
    end Init_Graphics;
 
@@ -1402,7 +1402,7 @@ package body Directory_Tree is
 
       Set_Column_Types (Tree.File_Tree);
 
-      Init_Graphics;
+      Init_Graphics (Gtk_Widget (Tree));
 
       Widget_Callback.Object_Connect
         (Tree.File_Tree, "row_expanded",
