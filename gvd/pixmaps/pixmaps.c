@@ -12,7 +12,6 @@
 #include "mini-folder_xpm"
 #include "mini-ofolder_xpm"
 #include "mini_page_xpm"
-#include "modified_page_xpm"
 #include "package_xpm"
 #include "paint_xpm"
 #include "stop_xpm"
