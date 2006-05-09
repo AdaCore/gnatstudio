@@ -37,6 +37,7 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -56,8 +57,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
-with Language_Handlers;     use Language_Handlers;
-with Pixmaps_IDE;               use Pixmaps_IDE;
+with Language_Handlers;         use Language_Handlers;
 with Project_Explorers_Common;  use Project_Explorers_Common;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
@@ -540,8 +540,10 @@ package body Outline_View is
          Set_Expander_Column (Outline.Tree, Get_Column (Outline.Tree, 0));
       end if;
 
-      Outline.Icon := Gdk_New_From_Xpm_Data (var_xpm);
-      Outline.File_Icon := Gdk_New_From_Xpm_Data (mini_page_xpm);
+      Outline.Icon := Render_Icon
+        (Get_Main_Window (Kernel), "gps-box", Icon_Size_Menu);
+      Outline.File_Icon := Render_Icon
+        (Get_Main_Window (Kernel), "gps-file", Icon_Size_Menu);
 
       Modify_Font (Outline.Tree, Get_Pref (View_Fixed_Font));
 

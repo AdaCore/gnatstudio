@@ -45,6 +45,7 @@ with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
@@ -58,7 +59,6 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
-with Pixmaps_IDE;              use Pixmaps_IDE;
 with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
@@ -1503,8 +1503,10 @@ package body GPS.Location_View is
       Alloc_Color
         (Get_Default_Colormap, View.Non_Leaf_Color, False, True, Success);
 
-      View.Category_Pixbuf := Gdk_New_From_Xpm_Data (var_xpm);
-      View.File_Pixbuf     := Gdk_New_From_Xpm_Data (mini_page_xpm);
+      View.Category_Pixbuf := Render_Icon
+        (Get_Main_Window (Kernel), "gps-box", Gtk.Enums.Icon_Size_Menu);
+      View.File_Pixbuf     := Render_Icon
+        (Get_Main_Window (Kernel), "gps-file", Gtk.Enums.Icon_Size_Menu);
 
       --  Initialize the tree.
 
