@@ -679,14 +679,17 @@ package body Src_Editor_Module is
       Dummy  : Boolean;
       pragma Unreferenced (Dummy);
    begin
-      if Node.Tag.all = "Source_Editor" then
-         if File_Pixbuf = null then
-            File_Pixbuf := Render_Icon
-              (Get_Main_Window (User), "gps-file", Icon_Size_Menu);
-            File_Modified_Pixbuf := Render_Icon
-              (Get_Main_Window (User), "gps-file-modified", Icon_Size_Menu);
-         end if;
+      if File_Pixbuf = Null_Pixbuf then
+         File_Pixbuf := Render_Icon
+           (Get_Main_Window (User), "gps-file", Icon_Size_Menu);
+      end if;
 
+      if File_Modified_Pixbuf = Null_Pixbuf then
+         File_Modified_Pixbuf := Render_Icon
+           (Get_Main_Window (User), "gps-file-modified", Icon_Size_Menu);
+      end if;
+
+      if Node.Tag.all = "Source_Editor" then
          File := Get_Field (Node, "File");
 
          if File /= null and then File.all /= "" then
@@ -1167,7 +1170,6 @@ package body Src_Editor_Module is
          if Get_Modified (Get_Buffer (Editor)) then
             Set_Icon (Child, File_Modified_Pixbuf);
             Ref (File_Modified_Pixbuf);
-
          else
             Set_Icon (Child, File_Pixbuf);
             Ref (File_Pixbuf);
@@ -3178,14 +3180,8 @@ package body Src_Editor_Module is
       Unref (Remove_Blank_Lines_Pixbuf);
       Unref (Hide_Block_Pixbuf);
       Unref (Unhide_Block_Pixbuf);
-
-      if File_Pixbuf /= null then
-         Unref (File_Pixbuf);
-      end if;
-
-      if File_Modified_Pixbuf /= null then
-         Unref (File_Modified_Pixbuf);
-      end if;
+      Unref (File_Pixbuf);
+      Unref (File_Modified_Pixbuf);
 
       Src_Editor_Module_Id := null;
    end Destroy;
