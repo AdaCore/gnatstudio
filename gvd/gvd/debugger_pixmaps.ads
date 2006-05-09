@@ -29,5 +29,9 @@ package Debugger_Pixmaps is
    Current_Line_Pixbuf         : Gdk_Pixbuf := Null_Pixbuf;
 
    procedure Init_Graphics (Widget : Gtk_Widget);
+   --  Initialize the module-wide pixbufs.
+   --  This procedure will use the theme engine associated with Widget to look
+   --  up any stock ids. (Therefore this widget can be any visible widget in
+   --  the standard style).
 
 end Debugger_Pixmaps;
