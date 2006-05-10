@@ -207,7 +207,7 @@ package body Vdiff2_Command_Block is
          Execute_GPS_Shell_Command (Kernel, "Editor.close", Args2);
       end if;
 
-      if Diff.Files (3) /= VFS.No_File then
+      if Files (3) /= VFS.No_File then
          Args3 := (1 => new String'(Full_Name (Files (3)).all));
          Execute_GPS_Shell_Command (Kernel, "Editor.close", Args3);
          --  At this point all the memory associated with Diff is freed
