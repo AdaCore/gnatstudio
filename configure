@@ -4810,7 +4810,13 @@ case "${host}" in
       *-sco3.2v5* )             opsys=sco5 ;;
       *-sysv4.2uw* | *-sysv5uw* ) opsys=unixware ;;
       *-386bsd* )               opsys=386bsd ;;
-      *-freebsd* )              opsys=freebsd ;;
+      *-freebsd* )              
+        opsys=freebsd
+        
+        # If we do not link with -Wl,-export-dynamic, commands like
+        # "import time" will raise errors in the interpreter
+        PYTHON_LIBS="-lutil -lm ${PYTHON_LIBS}"
+        ;;
       *-nextstep* )             opsys=nextstep ;;
       *win32* | *mingw32* | *cygwin* )
 	machine=intel386 opsys=windows
