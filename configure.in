@@ -56,7 +56,12 @@ AC_CHECK_HEADERS(sys/stropts.h)
 AC_CHECK_FUNCS(getpt)
 AC_CHECK_FUNCS(grantpt)
 AC_CHECK_FUNCS(unlockpt)
-AC_CHECK_FUNCS(openpty)
+AC_CHECK_FUNCS(openpty,,
+   AC_CHECK_LIB(util,openpty,
+     [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS="$TARGET_LFLAGS -lutil"],
+     AC_CHECK_LIB(bsd,openpty, [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS="$TARGET_LFLAGS -lbsd"])
+   )
+)
 AC_CHECK_FUNCS(_getpty)
 AC_CHECK_FUNCS(ptsname)
 AC_CHECK_FUNCS(setpgid)
@@ -88,15 +93,15 @@ case "${host}" in
   ## IBM, AIX machines
   rs6000-ibm-aix4.1* | powerpc-ibm-aix4.1*  )
     machine=ibmrs6000 opsys=aix4-1
-    TARGET_LFLAGS="-Wl,-bbigtoc"
+    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
   ;;
   powerpc-ibm-aix4.2* | powerpc-ibm-aix4.3* | powerpc-ibm-aix5.*  )
     machine=ibmrs6000 opsys=aix4-2
-    TARGET_LFLAGS="-Wl,-bbigtoc"
+    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
   ;;
   rs6000-ibm-aix4.0* | powerpc-ibm-aix4.0*  )
     machine=ibmrs6000 opsys=aix4
-    TARGET_LFLAGS="-Wl,-bbigtoc"
+    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
   ;;
 
   ## PowerPC
@@ -163,7 +168,7 @@ case "${host}" in
   ia64-*-* )
     case "${host}" in
       *-linux-gnu* )
-	PYTHON_LIBS="-ldl -lutil ${PYTHON_LIBS}"
+	PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
         opsys=gnu-linux
 	PRINT_CMD="a2ps"
         ;;
@@ -178,7 +183,7 @@ case "${host}" in
     case "${host}" in
       *-linux-gnu* )
         opsys=gnu-linux
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lutil -lm ${PYTHON_LIBS}"
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
 	PRINT_CMD="a2ps"
         ;;
     esac
@@ -203,23 +208,20 @@ case "${host}" in
 
 	# If we do not link with -Wl,-export-dynamic, commands like
 	# "import time" will raise errors in the interpreter
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lutil -lm ${PYTHON_LIBS}"
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
 	;;
 
       *-sco3.2v4* )             opsys=sco4  ;;
       *-sco3.2v5* )             opsys=sco5 ;;
       *-sysv4.2uw* | *-sysv5uw* ) opsys=unixware ;;
       *-386bsd* )               opsys=386bsd ;;
-      *-freebsd* )              
-        opsys=freebsd
-        PYTHON_LIBS="-lutil ${PYTHON_LIBS}" 
-        ;;
+      *-freebsd* )              opsys=freebsd ;;
       *-nextstep* )             opsys=nextstep ;;
       *win32* | *mingw32* | *cygwin* )
 	machine=intel386 opsys=windows
 	STRIP_CR=True
 	CAN_OUTPUT=False
-	TARGET_LFLAGS="-luser32 -lcomdlg32 -mwindows -Wl,--stack=0x10000000"
+	TARGET_LFLAGS="$TARGET_LFLAGS -luser32 -lcomdlg32 -mwindows -Wl,--stack=0x10000000"
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c start"

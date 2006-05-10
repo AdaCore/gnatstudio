@@ -4149,6 +4149,152 @@ if test `eval echo '${'$as_ac_var'}'` = yes; then
 #define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
+else
+  echo "$as_me:$LINENO: checking for openpty in -lutil" >&5
+echo $ECHO_N "checking for openpty in -lutil... $ECHO_C" >&6
+if test "${ac_cv_lib_util_openpty+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lutil  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char openpty ();
+int
+main ()
+{
+openpty ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_util_openpty=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_util_openpty=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_util_openpty" >&5
+echo "${ECHO_T}$ac_cv_lib_util_openpty" >&6
+if test $ac_cv_lib_util_openpty = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_OPENPTY 1
+_ACEOF
+ TARGET_LFLAGS="$TARGET_LFLAGS -lutil"
+else
+  echo "$as_me:$LINENO: checking for openpty in -lbsd" >&5
+echo $ECHO_N "checking for openpty in -lbsd... $ECHO_C" >&6
+if test "${ac_cv_lib_bsd_openpty+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lbsd  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char openpty ();
+int
+main ()
+{
+openpty ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_bsd_openpty=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_bsd_openpty=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_bsd_openpty" >&5
+echo "${ECHO_T}$ac_cv_lib_bsd_openpty" >&6
+if test $ac_cv_lib_bsd_openpty = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_OPENPTY 1
+_ACEOF
+ TARGET_LFLAGS="$TARGET_LFLAGS -lbsd"
+fi
+
+
+fi
+
+
 fi
 done
 
@@ -4688,15 +4834,15 @@ case "${host}" in
   ## IBM, AIX machines
   rs6000-ibm-aix4.1* | powerpc-ibm-aix4.1*  )
     machine=ibmrs6000 opsys=aix4-1
-    TARGET_LFLAGS="-Wl,-bbigtoc"
+    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
   ;;
   powerpc-ibm-aix4.2* | powerpc-ibm-aix4.3* | powerpc-ibm-aix5.*  )
     machine=ibmrs6000 opsys=aix4-2
-    TARGET_LFLAGS="-Wl,-bbigtoc"
+    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
   ;;
   rs6000-ibm-aix4.0* | powerpc-ibm-aix4.0*  )
     machine=ibmrs6000 opsys=aix4
-    TARGET_LFLAGS="-Wl,-bbigtoc"
+    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
   ;;
 
   ## PowerPC
@@ -4763,7 +4909,7 @@ case "${host}" in
   ia64-*-* )
     case "${host}" in
       *-linux-gnu* )
-	PYTHON_LIBS="-ldl -lutil ${PYTHON_LIBS}"
+	PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
         opsys=gnu-linux
 	PRINT_CMD="a2ps"
         ;;
@@ -4778,7 +4924,7 @@ case "${host}" in
     case "${host}" in
       *-linux-gnu* )
         opsys=gnu-linux
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lutil -lm ${PYTHON_LIBS}"
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
 	PRINT_CMD="a2ps"
         ;;
     esac
@@ -4803,23 +4949,20 @@ case "${host}" in
 
 	# If we do not link with -Wl,-export-dynamic, commands like
 	# "import time" will raise errors in the interpreter
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lutil -lm ${PYTHON_LIBS}"
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
 	;;
 
       *-sco3.2v4* )             opsys=sco4  ;;
       *-sco3.2v5* )             opsys=sco5 ;;
       *-sysv4.2uw* | *-sysv5uw* ) opsys=unixware ;;
       *-386bsd* )               opsys=386bsd ;;
-      *-freebsd* )
-        opsys=freebsd
-        PYTHON_LIBS="-lutil ${PYTHON_LIBS}"
-        ;;
+      *-freebsd* )              opsys=freebsd ;;
       *-nextstep* )             opsys=nextstep ;;
       *win32* | *mingw32* | *cygwin* )
 	machine=intel386 opsys=windows
 	STRIP_CR=True
 	CAN_OUTPUT=False
-	TARGET_LFLAGS="-luser32 -lcomdlg32 -mwindows -Wl,--stack=0x10000000"
+	TARGET_LFLAGS="$TARGET_LFLAGS -luser32 -lcomdlg32 -mwindows -Wl,--stack=0x10000000"
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c start"
@@ -5237,9 +5380,10 @@ for ac_i in : $LIBOBJS; do test "x$ac_i" = x: && continue
   # 1. Remove the extension, and $U if already installed.
   ac_i=`echo "$ac_i" |
 	 sed 's/\$U\././;s/\.o$//;s/\.obj$//'`
-  # 2. Add them.
-  ac_libobjs="$ac_libobjs $ac_i\$U.$ac_objext"
-  ac_ltlibobjs="$ac_ltlibobjs $ac_i"'$U.lo'
+  # 2. Prepend LIBOBJDIR.  When used with automake>=1.10 LIBOBJDIR
+  #    will be set to the directory where LIBOBJS objects are built.
+  ac_libobjs="$ac_libobjs \${LIBOBJDIR}$ac_i\$U.$ac_objext"
+  ac_ltlibobjs="$ac_ltlibobjs \${LIBOBJDIR}$ac_i"'$U.lo'
 done
 LIBOBJS=$ac_libobjs
 
