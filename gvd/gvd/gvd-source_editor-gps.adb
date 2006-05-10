@@ -273,7 +273,12 @@ package body GVD.Source_Editor.GPS is
          Editor.Current_File,
          "Current Line",
          --  ??? we should get that from elsewhere.
-         new Line_Information_Array'(Line => Empty_Line_Information));
+         new Line_Information_Array'
+           (Line => Line_Information_Record'
+              (Text               => null,
+               Tooltip_Text       => null,
+               Image              => Current_Line_Pixbuf,
+               Associated_Command => null)));
       Set_Current_Source_Location (Tab, Editor.Current_File, Line);
    end Set_Line;
 
