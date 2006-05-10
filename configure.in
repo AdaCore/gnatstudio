@@ -212,9 +212,6 @@ case "${host}" in
       *-386bsd* )               opsys=386bsd ;;
       *-freebsd* )              
         opsys=freebsd
-
-        # If we do not link with -Wl,-export-dynamic, commands like
-        # "import time" will raise errors in the interpreter
         PYTHON_LIBS="-lutil ${PYTHON_LIBS}" 
         ;;
       *-nextstep* )             opsys=nextstep ;;
