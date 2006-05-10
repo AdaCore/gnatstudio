@@ -59,7 +59,11 @@
  */
 #if defined(__STDC__) || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
+
+#ifndef __CONCAT  
 #define	__CONCAT(x,y)	x ## y
+#endif
+
 #define	__STRING(x)	#x
 
 #define	__const		const		/* define reserved names to standard */
@@ -75,7 +79,11 @@
 
 #else	/* !(__STDC__ || __cplusplus) */
 #define	__P(protos)	()		/* traditional C preprocessor */
+
+#ifndef __CONCAT
 #define	__CONCAT(x,y)	x/**/y
+#endif
+
 #define	__STRING(x)	"x"
 
 #ifndef __GNUC__
@@ -112,14 +120,20 @@
 #define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #define	__dead		__volatile
+
+#ifndef __pure
 #define	__pure		__const
+#endif
+
 #endif
 #endif
 
 /* Delete pseudo-keywords wherever they are not available or needed. */
 #ifndef __dead
 #define	__dead
+#ifndef __pure
 #define	__pure
+#endif
 #endif
 
 #endif /* !_CDEFS_H_ */
