@@ -19,6 +19,9 @@ clean:
 	$(RM) obj/*.ali obj/*.o
 	$(MAKE) -s -C gps -f Makefile.gps $@
 
+test-clean:
+	(cd scripts; ./testsuites clean)
+
 install-common:
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sharedir)
