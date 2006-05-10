@@ -4810,12 +4810,9 @@ case "${host}" in
       *-sco3.2v5* )             opsys=sco5 ;;
       *-sysv4.2uw* | *-sysv5uw* ) opsys=unixware ;;
       *-386bsd* )               opsys=386bsd ;;
-      *-freebsd* )              
+      *-freebsd* )
         opsys=freebsd
-        
-        # If we do not link with -Wl,-export-dynamic, commands like
-        # "import time" will raise errors in the interpreter
-        PYTHON_LIBS="-lutil -lm ${PYTHON_LIBS}"
+        PYTHON_LIBS="-lutil ${PYTHON_LIBS}"
         ;;
       *-nextstep* )             opsys=nextstep ;;
       *win32* | *mingw32* | *cygwin* )
@@ -5240,10 +5237,9 @@ for ac_i in : $LIBOBJS; do test "x$ac_i" = x: && continue
   # 1. Remove the extension, and $U if already installed.
   ac_i=`echo "$ac_i" |
 	 sed 's/\$U\././;s/\.o$//;s/\.obj$//'`
-  # 2. Prepend LIBOBJDIR.  When used with automake>=1.10 LIBOBJDIR
-  #    will be set to the directory where LIBOBJS objects are built.
-  ac_libobjs="$ac_libobjs \${LIBOBJDIR}$ac_i\$U.$ac_objext"
-  ac_ltlibobjs="$ac_ltlibobjs \${LIBOBJDIR}$ac_i"'$U.lo'
+  # 2. Add them.
+  ac_libobjs="$ac_libobjs $ac_i\$U.$ac_objext"
+  ac_ltlibobjs="$ac_ltlibobjs $ac_i"'$U.lo'
 done
 LIBOBJS=$ac_libobjs
 
