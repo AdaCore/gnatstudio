@@ -121,14 +121,26 @@ GPS.parse_xml ("""
 def add_subprogram_box():
    """ Insert in the current editor a box just before the current subprogram
        starts """
-   match = navigation_utils.__find_subprogram_decl()
-   if match[0] != None:
-      prefix = ' ' * len (match[0].group (1))
-      box = prefix + ('-' * (6 + len (match[0].group (3)))) + "\n"
-      GPS.Editor.replace_text (GPS.current_context().file().name(), match[1], 1,
-                    box + prefix + "-- " + match[0].group (3) + " --\n" + box + "\n",
-                    0, 0)
 
+   ed = GPS.EditorBuffer.get (GPS.current_context().file())
+   line = GPS.current_context().location().line()
+   col = GPS.current_context().location().column()
+   loc = GPS.EditorLocation (ed, line, col)
+
+   subprogram_name = loc.subprogram_name()
+
+   if subprogram_name == "":
+      return
+
+   decl_line = loc.block_start_line()
+   decl_loc = GPS.EditorLocation (ed, loc.block_start_line (), 1)
+
+   dashes = '-' * (len (subprogram_name) + 6)
+   box = dashes + "\n" + "-- " + subprogram_name + " --\n" + dashes + "\n\n" 
+
+   ed.insert (decl_loc, box)
+   ed.indent (decl_loc, decl_loc.forward_line (3))
+ 
 def next_line(nb_line):
    """  Move cursor vertically nb_line down . """
 ##        Use this function since binding a key to ""Move to next line""
