@@ -586,7 +586,7 @@ package body Project_Explorers is
          return On_Button_Press
            (T.Kernel,
             MDI_Explorer_Child (Find_MDI_Child (Get_MDI (T.Kernel), T)),
-            T.Tree, T.Tree.Model, Event, True);
+            T.Tree, T.Tree.Model, Event, False);
       end if;
    exception
       when E : others =>
