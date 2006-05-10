@@ -41,12 +41,13 @@ Known Problems fixed in GPS 4.0.0
               clicking) to another window in the GPS dektop and then give it
               back to the current source editor.
 
-- F403-006 Freeze under Windows when file modified externally
-  Problem:    Under Windows, when a file is modified outside GPS, and you
-              move the GPS main window before the 'file changed on disk'
-              dialog is displayed, GPS freezes the desktop.
+- F403-006 Freeze when file modified externally
+  Problem:    Under some conditions, when a file is modified outside GPS,
+              and you e.g.  move the GPS main window before the 'file changed
+              on disk' dialog is displayed, GPS freezes the desktop.
   Workaround: First click on GPS before moving it. If GPS freezes, use
-              alt-tab or ctrl-alt-del to unlock your desktop.
+              alt-tab or ctrl-alt-del to unlock your desktop (under Windows),
+              use switch to another desktop under other OSes.
 
 - F403-003 Typing 'q' in the debugger console crashes GPS under unix
   Problem:    Once a debug session is started, typing 'q', 'qu', or 'qui' in
