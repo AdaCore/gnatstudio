@@ -64,6 +64,13 @@
    </documentation_file>
 
    <documentation_file>
+      <name>arm05.html</name>
+      <descr>Ada 2005 Reference Manual</descr>
+      <menu>/Help/GNAT/Ada 2005 Reference Manual</menu>
+      <category>GNAT</category>
+   </documentation_file>
+
+   <documentation_file>
       <name>gdb.html</name>
       <descr>Using the GNU Debugger</descr>
       <menu>/Help/GNU Tools/Using the GNU Debugger</menu>
