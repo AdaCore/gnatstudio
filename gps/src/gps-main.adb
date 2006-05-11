@@ -796,15 +796,20 @@ procedure GPS.Main is
             when 'P' =>
                Project_Name := Create (Normalize_Pathname (Parameter));
 
-               if not Is_Regular_File (Project_Name)
-                 and then Is_Regular_File
-                   (Full_Name (Project_Name).all & Project_File_Extension)
-               then
-                  Project_Name := Create
-                    (Full_Name (Project_Name).all & Project_File_Extension);
+               if not Is_Regular_File (Project_Name) then
+                  if Is_Regular_File
+                    (Full_Name (Project_Name).all & Project_File_Extension)
+                  then
+                     Project_Name := Create
+                       (Full_Name (Project_Name).all & Project_File_Extension);
+                  else
+                     Project_Name := VFS.No_File;
+                  end if;
                end if;
 
-               Trace (Me, "Found project: " & Full_Name (Project_Name).all);
+               if Project_Name /= VFS.No_File then
+                  Trace (Me, "Found project: " & Full_Name (Project_Name).all);
+               end if;
 
             when ASCII.NUL =>
                exit;
