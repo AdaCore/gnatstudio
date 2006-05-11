@@ -1,5 +1,5 @@
 AC_DEFUN(AM_CONFIG_HEADER,
-[AC_PREREQ([2.12])
+[AC_PREREQ([2.53])
 AC_CONFIG_HEADER([$1])
 dnl When config.status generates a header, we must update the stamp-h file.
 dnl This file resides in the same directory as the config header
@@ -67,30 +67,11 @@ EOF
    AC_MSG_RESULT(yes)
 ])
 
-
-#############################################################
-#
-#  Checking for gnatprep
-#
-#############################################################
-
-
-AC_DEFUN(AM_PATH_GNATPREP,
-[
-   AC_PATH_PROG(GNATPREP, gnatprep, no)
-
-   if test x$GNATPREP = xno ; then
-      AC_MSG_ERROR(I could not find gnatprep. See the file 'INSTALL' for more details.)
-   fi
-
-])
-
 #############################################################
 #
 #  Checking for python
 #
 #############################################################
-
 
 AC_DEFUN(AM_PATH_PYTHON,
 [
@@ -262,15 +243,3 @@ main ()
   rm -f conf.gtktest
 ])
 
-#############################################################
-#
-#  A small macro to create a file after preprocessing it using gnatprep
-#
-#############################################################
-
-
-AC_DEFUN(AM_GNATPREP,
-[   
-   echo "creating $1"
-   $GNATPREP $1.in $1 config.defs
-])
