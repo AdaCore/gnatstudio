@@ -28,6 +28,13 @@ Known Problems fixed in GPS 4.0.0
               contextual submenu. Doing this will also enable them in the main
               VCS menu.
 
+- F427-012 Wrong indentation of generic subprogram parameters
+  Problem:    The following kind of Ada construct is not properly handled by
+              GPS:
+              generic
+                 with procedure P is <>;
+  Workaround: Fix the indentation manually
+
 - F425-013 Crash when quiting while build is running
   Problem:    GPS crashes when it is closed while processing a build command
   Workaround: Interrupt first on going builds from the task manager dialog
