@@ -2074,7 +2074,6 @@ package body Src_Editor_Module is
    is
       D               : constant Source_File_Hooks_Args :=
                           Source_File_Hooks_Args (Data.all);
-      Iter            : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child           : MDI_Child;
       No_Location     : Boolean := False;
       Column          : Visible_Column_Type := D.Column;
@@ -2090,17 +2089,11 @@ package body Src_Editor_Module is
          --  Close all file editors corresponding to File.
 
          loop
-            Child := Get (Iter);
+            Child := Find_Editor (Kernel, D.File);
 
             exit when Child = null;
 
-            if Get_Widget (Child).all in Source_Editor_Box_Record'Class
-              and then Get_Filename (Child) = D.File
-            then
-               Close_Child (Child);
-            end if;
-
-            Next (Iter);
+            Close_Child (Child);
          end loop;
 
          return True;
