@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.0.0
 
+- Unexpected crashes when closing editors using GPS shell or Visual Comparison
+  Problem:    When closing editors created with Visual Comparison, or when
+              using GPS shell commands to close editors, in some particular
+              cases GPS might crash.
+  Workaround: No known workaround.
+
 - F505-004 Contextual menu items in Task Manager not working the first time
   Problem:    When the Task Manager doesn't have the focus, the contextual
               menu items might not work the first time they are clicked.
@@ -80,7 +86,7 @@ Known Problems fixed in GPS 4.0.0
               this nested subprogram.
   Workaround: Put the cursor above all nested subprograms in the subprogram
               block you want a box to be generated for.
-              
+
 - F322-010 Cannot open GNAT run-time files under Windows
   Problem:    Under Windows, using GPS 3.1.3, if you install GPS and GNAT
               under the same directory, GPS is not be able to display the
