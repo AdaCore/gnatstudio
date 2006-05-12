@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 4.0.0
 
-- Unexpected crashes when closing editors using GPS shell or Visual Comparison
+- F512-005 Unexpected crashes when closing editors from Comparison or shell
   Problem:    When closing editors created with Visual Comparison, or when
               using GPS shell commands to close editors, in some particular
               cases GPS might crash.
