@@ -136,13 +136,14 @@ package body GPS.Kernel.Project is
       Default             : constant String := Share_Dir & "default.gpr";
       Readonly            : constant String := Share_Dir & "readonly.gpr";
       Found               : Boolean;
-      Is_Readonly         : Boolean := False;
+      Is_Default          : Boolean := False;
+
       Had_Project_Desktop : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
 
    begin
       --  Save all open children, and close everything. A new desktop will be
-      --  open in the end anway
+      --  open in the end anyway
 
       if not Save_MDI_Children (Kernel, Force => False) then
          return;
@@ -154,10 +155,10 @@ package body GPS.Kernel.Project is
          Found := True;
       elsif Is_Writable (Directory) and then Is_Regular_File (Default) then
          Copy_File (Default, Full_Name (Project).all, Found);
+         Is_Default := True;
       elsif Is_Regular_File (Readonly) then
          Project := VFS.Create (Readonly);
          Found := True;
-         Is_Readonly := True;
       else
          Found := False;
       end if;
@@ -165,7 +166,7 @@ package body GPS.Kernel.Project is
       if Found then
          Load_Project (Kernel, Project);
 
-         if not Is_Readonly then
+         if Is_Default then
             Set_Status (Get_Project (Kernel), Projects.Default);
          end if;
       else
