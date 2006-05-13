@@ -88,7 +88,7 @@ package body Gtkada.Color_Combo is
       Signal_Parameters : constant Signal_Parameter_Types :=
         (1 => (1 => GType_None));
    begin
-      Gtk.Extra.Combo_Box.Initialize (Combo);
+      Gtk.Extra.Combo_Button.Initialize (Combo);
 
       Initialize_Class_Record
         (Combo,
