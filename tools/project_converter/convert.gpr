@@ -1,19 +1,15 @@
+with "../../shared";
 with "../../gnat";
 with "../../common/common";
 with "../../widgets/widgets";
+with "../../prj_editor/prj_editor";
 
 project Convert is
-   for Languages use ("C", "Ada");
-
    for Main use ("convert_prj");
-   for Source_Dirs use (".", "../../prj_editor/src", "../../kernel/src_info",
-                        "../../kernel/src", "../../gvd/pixmaps");
-   for Object_Dir use "obj";
+   --  for Source_Dirs use (".");
+   for Object_Dir use "obj/";
    for Exec_Dir use ".";
    
-   package Compiler is
-      for Default_Switches ("Ada") use
-         ("-gnaty", "-gnatQ", "-g", "-gnatwjmeurk");
-   end Compiler;
+   package Compiler renames Shared.Compiler;
 
 end Convert;
