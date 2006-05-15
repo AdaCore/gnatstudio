@@ -106,8 +106,13 @@
        <alternate                     file="../icons/18px/stack_down_18.png" size="small_toolbar" />
     </icon>
 
-    <icon id="gps-debugger-break"     file="../icons/16px/debug_break.png" />
-    <icon id="gps-debugger-current"   file="../icons/16px/debug_indicator.png" />
+    <icon id="gps-debugger-break"     file="../icons/16px/debug_break.png">
+       <alternate                     file="../icons/16px/debug_break.png" size="menu" />
+    </icon>
+
+    <icon id="gps-debugger-current"   file="../icons/16px/debug_indicator.png">
+       <alternate                     file="../icons/16px/debug_indicator.png" size="menu" />
+    </icon>
 
     <!-- General-purpose icons -->
 
@@ -125,7 +130,7 @@
 
     <icon id="gps-project"            file="../icons/16px/project_folder_blue.png" />
 
-    <icon id="gps-box"            file="../icons/16px/variable.png" />
+    <icon id="gps-box"                file="../icons/16px/variable.png" />
 
     <!-- VCS icons -->
 
