@@ -6,10 +6,8 @@ with "../../prj_editor/prj_editor";
 
 project Convert is
    for Main use ("convert_prj");
-   --  for Source_Dirs use (".");
    for Object_Dir use "obj/";
    for Exec_Dir use ".";
    
    package Compiler renames Shared.Compiler;
-
 end Convert;
