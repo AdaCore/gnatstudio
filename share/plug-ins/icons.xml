@@ -106,6 +106,13 @@
        <alternate                     file="../icons/18px/stack_down_18.png" size="small_toolbar" />
     </icon>
 
+    <!-- Note that the icon file is specified twice. The first occurrence is
+         a general-purpose one (this is the reference image which will be scaled
+         at different sizes if needed, the other is the image to use as-is for
+         the "menu" size (16x16).
+         It's necessary to specify both, because the actual icon is 9x9 pixels,
+          and we don't want gtk+ to scale it to 16x16. -->
+
     <icon id="gps-debugger-break"     file="../icons/16px/debug_break.png">
        <alternate                     file="../icons/16px/debug_break.png" size="menu" />
     </icon>
