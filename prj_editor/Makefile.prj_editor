@@ -20,7 +20,7 @@ include $(BASE_DIR)/Makefile.widgets
 BASE_DIR=$(PRJ_EDITOR_BASE_DIR)/../vsearch
 include $(BASE_DIR)/Makefile.vsearch
 
-PRJ_EDITOR_SRC_DIRS = $(PRJ_EDITOR_BASE_DIR)/src $(PRJ_EDITOR_BASE_DIR)/pixmaps $(PRJ_EDITOR_BASE_DIR)/testsuite
+PRJ_EDITOR_SRC_DIRS = $(PRJ_EDITOR_BASE_DIR)/src $(PRJ_EDITOR_BASE_DIR)/testsuite
 SRC_DIRS += $(PRJ_EDITOR_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(PRJ_EDITOR_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
