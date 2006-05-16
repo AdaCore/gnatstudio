@@ -216,9 +216,15 @@ package body VFS_Module is
       elsif Command = "dump_file" then
          declare
             Filename : constant String := Nth_Arg (Data, 2);
+            File     : Virtual_File;
             Writable : Writable_File;
          begin
-            Writable := Write_File (Create (Filename), Append => True);
+            if not Is_Absolute_Path (Filename) then
+               File := Create (OS_Utils.Get_Tmp_Dir & Filename);
+            else
+               File := Create (Filename);
+            end if;
+            Writable := Write_File (File, Append => True);
 
             if Nth_Arg (Data, 3, Default => False) then
                Write (Writable, Nth_Arg (Data, 1) & ASCII.LF);
@@ -227,7 +233,7 @@ package body VFS_Module is
             end if;
 
             Close (Writable);
-            Set_Return_Value (Data, Filename);
+            Set_Return_Value (Data, Full_Name (File).all);
          end;
       end if;
    end VFS_Command_Handler;
