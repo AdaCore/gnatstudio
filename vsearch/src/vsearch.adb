@@ -938,8 +938,21 @@ package body Vsearch is
       pragma Unreferenced (Has_Next);
 
       C           : Search_Commands.Generic_Asynchronous_Command_Access;
-
+      Button      : Message_Dialog_Buttons;
    begin
+      Button := Message_Dialog
+        (Msg      => (-"You are about to replace all occurrences of """)
+         & Get_Text (Vsearch.Pattern_Entry) & """."
+         & ASCII.LF & (-"Continue?"),
+         Dialog_Type => Warning,
+         Title       => -"Replacing all occurrences",
+         Buttons     => Button_OK or Button_Cancel,
+         Parent      => Gtk_Window (Get_Toplevel (Vsearch)));
+
+      if (Button and Button_OK) = 0 then
+         return;
+      end if;
+
       Create_Context (Vsearch, True);
 
       Search_Commands.Create
