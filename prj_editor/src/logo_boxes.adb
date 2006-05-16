@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,19 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Bitmap;    use Gdk.Bitmap;
 with Gdk.Color;     use Gdk.Color;
-with Gdk.Pixmap;    use Gdk.Pixmap;
 with Gtk.Box;       use Gtk.Box;
 with Gtk.Dialog;    use Gtk.Dialog;
+with Gtk.Image;     use Gtk.Image;
 with Gtk.Enums;     use Gtk.Enums;
 with Gtk.Event_Box; use Gtk.Event_Box;
 with Gtk.Label;     use Gtk.Label;
-with Gtk.Pixmap;    use Gtk.Pixmap;
 with Gtk.Style;     use Gtk.Style;
 with Gtk.Widget;    use Gtk.Widget;
-
-with Pixmaps_Prj;   use Pixmaps_Prj;
 
 package body Logo_Boxes is
 
@@ -66,9 +62,7 @@ package body Logo_Boxes is
       Style       : Gtk_Style;
       Box, Vbox   : Gtk_Box;
       Event       : Gtk_Event_Box;
-      Pix         : Gdk_Pixmap;
-      Mask        : Gdk_Bitmap;
-      Gpix        : Gtk_Pixmap;
+      Image       : Gtk_Image;
    begin
       Gtk.Dialog.Initialize
         (Dialog  => Win,
@@ -100,10 +94,10 @@ package body Logo_Boxes is
       Set_Border_Width (Win.Side_Box, 7);
       Add (Event, Win.Side_Box);
 
-      Create_From_Xpm_D
-        (Pix, null, Get_Default_Colormap, Mask, Null_Color, logo_xpm);
-      Gtk_New (Gpix, Pix, Mask);
-      Pack_Start (Win.Side_Box, Gpix, Expand => False, Padding => 10);
+      Gtk_New
+        (Image,
+         Pixbuf => Render_Icon (Win, "adacore-logo", Icon_Size_Large_Toolbar));
+      Pack_Start (Win.Side_Box, Image, Expand => False, Padding => 10);
 
       if not Show_Toc then
          Set_Size_Request (Event, 0, 0);
