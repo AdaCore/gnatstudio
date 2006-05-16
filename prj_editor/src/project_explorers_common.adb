@@ -34,7 +34,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Unknown;          use Language.Unknown;
 with Language_Handlers;         use Language_Handlers;
-with Pixmaps_Prj;               use Pixmaps_Prj;
 with Projects.Registry;         use Projects, Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
@@ -78,19 +77,20 @@ package body Project_Explorers_Common is
       end if;
 
       Open_Pixbufs (Project_Node)  :=
-        Render_Icon (Widget, "gps-project", Icon_Size_Menu);
+        Render_Icon (Widget, "gps-project-open", Icon_Size_Menu);
       Close_Pixbufs (Project_Node) :=
-        Render_Icon (Widget, "gps-project", Icon_Size_Menu);
+        Render_Icon (Widget, "gps-project-closed", Icon_Size_Menu);
 
-      --  ??? We need to use new pixbufs for these.
       Open_Pixbufs (Modified_Project_Node)  :=
-        Gdk_New_From_Xpm_Data (project_modified_xpm);
+        Render_Icon (Widget, "gps-project-modified-open", Icon_Size_Menu);
       Close_Pixbufs (Modified_Project_Node) :=
-        Gdk_New_From_Xpm_Data (project_modified_closed_xpm);
+        Render_Icon (Widget, "gps-project-modified-closed", Icon_Size_Menu);
+
+      --  ??? Would be nice to have different pixbufs for these.
       Open_Pixbufs (Extends_Project_Node)  :=
-        Gdk_New_From_Xpm_Data (project_ext_xpm);
+        Render_Icon (Widget, "gps-project-open", Icon_Size_Menu);
       Close_Pixbufs (Extends_Project_Node) :=
-        Gdk_New_From_Xpm_Data (project_ext_closed_xpm);
+        Render_Icon (Widget, "gps-project-closed", Icon_Size_Menu);
 
       Open_Pixbufs (Directory_Node)  :=
         Render_Icon (Widget, "gps-folder-open", Icon_Size_Menu);
