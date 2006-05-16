@@ -246,6 +246,14 @@ Known Problems fixed in GPS 4.0.0
               might be lost or corrupted when saving the file.
   Workaround: Disable the "Strip blanks" preference when working in UTF-8
 
+- EC02-015 Search/Replace and Undo/Redo not working on files containing TABs
+  Problem:    When using "Replace All" functionality on files containing TABs,
+              this might corrupt the lines containing text being replaced,
+              also breaking Undo/Redo on the files
+  Workaround: Search and replace each occurrence manually in files containing
+              TABs. You can use keyboard shortcuts for "Search next" and
+              "Paste" to make the work easier.
+
 - EB16-002 Wrong parenthesis highlighting
   Problem:    Parentheses in comments are taken into account when doing the
               highlighting of matching parenthesis.
