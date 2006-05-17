@@ -26,9 +26,11 @@ BLOCKS_DEFS = {
     'CAT_PROCEDURE'      : [r'end \1;', r'\s*procedure\s+([^ \n]+).*'],
     'CAT_FUNCTION'       : [r'end \1;', r'\s*function\s+([^ \n]+).*'],
     'CAT_DECLARE_BLOCK'  : [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
-    'CAT_PACKAGE'        : [r'end \2;', r'\s*package\s+(body\s+)?([^\n]+).*'],
+    'CAT_PACKAGE'        : [r'end \2;', r'\s*package\s+(body\s+)?([^ \n]+).*'],
     'CAT_STRUCTURE'      : ['end record;', ''],
-    'CAT_CLASS'          : ['end record;', '']
+    'CAT_CLASS'          : ['end record;', ''],
+    'CAT_PROTECTED'      : [r'end \2;', r'\s*protected\s+(body\s+)?([^ \n]+).*'],
+    'CAT_ENTRY'          : [r'end \1;', r'\s*entry\s+([^ \n]+).*']
     }
 
 import re, string, GPS
