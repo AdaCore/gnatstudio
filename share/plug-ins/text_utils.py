@@ -132,6 +132,18 @@ def add_subprogram_box():
    if subprogram_name == "":
       return
 
+   while (loc.block_type() != "CAT_PROCEDURE") \
+	and (loc.block_type() != "CAT_FUNCTION") \
+	and (loc.block_type() != "CAT_ENTRY") \
+	and (loc.block_type() != "CAT_PROTECTED") \
+	and (loc.block_type() != "CAT_TASK") \
+	and (loc.block_type() != "CAT_PACKAGE") and (line > 0):
+	line = loc.block_start_line() - 1
+	loc = GPS.EditorLocation (ed, line, col)
+
+   if line == 0:
+	return
+
    decl_line = loc.block_start_line()
    decl_loc = GPS.EditorLocation (ed, loc.block_start_line (), 1)
 
@@ -140,7 +152,7 @@ def add_subprogram_box():
 
    ed.insert (decl_loc, box)
    ed.indent (decl_loc, decl_loc.forward_line (3))
- 
+   
 def next_line(nb_line):
    """  Move cursor vertically nb_line down . """
 ##        Use this function since binding a key to ""Move to next line""
