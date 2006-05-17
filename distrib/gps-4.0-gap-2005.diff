@@ -17,48 +17,44 @@
   
      for Source_Dirs use ();
   
-*** gnat_src/ali.ads.old 2006-03-24 11:11:30.000000000 +0100
---- gnat_src/ali.ads     2006-03-24 11:13:15.000000000 +0100
-***************
-*** 38,43 ****
---- 38,46 ----
-
-  package ALI is
-
-+    No_Restrictions : Restrictions_Info;
-+    --  Stub for GPS compilation: unused by GPS.
+--- gnat_src/ali.ads	5 May 2006 13:17:47 -0000	1.124
++++ gnat_src/ali.ads	17 May 2006 12:34:20 -0000
+@@ -38,6 +38,9 @@
+ 
+ package ALI is
+ 
++   No_Restrictions : Restrictions_Info;
++   --  Stub for GPS compilation: unused by GPS.
 +
-     --------------
-     -- Id Types --
-     --------------
-*** gnat_src/targparm.ads.old    2006-03-24 10:56:35.000000000 +0100
---- gnat_src/targparm.ads        2006-03-24 11:35:36.000000000 +0100
-***************
-*** 81,86 ****
---- 81,89 ----
-
-  package Targparm is
-
-+    No_Restrictions : Restrictions_Info;
-+    --  Stub for GPS compilation: unused by GPS.
+    --------------
+    -- Id Types --
+    --------------
+--- gnat_src/targparm.ads	22 Mar 2006 11:15:19 -0000	1.58
++++ gnat_src/targparm.ads	17 May 2006 12:34:27 -0000
+@@ -81,6 +81,9 @@
+ 
+ package Targparm is
+ 
++   No_Restrictions : Restrictions_Info;
++   --  Stub for GPS compilation: unused by GPS.
 +
-     ---------------------------
-     -- Configuration Pragmas --
-     ---------------------------
---- gnat_src/osint.adb	19 Feb 2006 01:36:23 -0000	1.329
-+++ gnat_src/osint.adb	13 Mar 2006 08:46:18 -0000
-@@ -750,7 +750,7 @@
+    ---------------------------
+    -- Configuration Pragmas --
+    ---------------------------
+--- gnat_src/osint.adb	4 May 2006 03:23:56 -0000	1.335
++++ gnat_src/osint.adb	17 May 2006 12:34:36 -0000
+@@ -735,7 +735,7 @@
        end if;
  
-       Get_Name_String (Name);
--      Exec_Suffix := Get_Target_Executable_Suffix;
-+      Exec_Suffix := Get_Executable_Suffix;
- 
-       for J in Exec_Suffix'Range loop
-          Name_Len := Name_Len + 1;
---- gnat_src/osint.ads	20 Nov 2005 20:55:03 -0000	1.141
-+++ gnat_src/osint.ads	13 Mar 2006 08:46:19 -0000
-@@ -558,7 +558,7 @@
+       if Executable_Extension_On_Target = No_Name then
+-         Exec_Suffix := Get_Target_Executable_Suffix;
++         Exec_Suffix := Get_Executable_Suffix;
+       else
+          Get_Name_String (Executable_Extension_On_Target);
+          Exec_Suffix := new String'(Name_Buffer (1 .. Name_Len));
+--- gnat_src/osint.ads	21 Mar 2006 02:10:35 -0000	1.143
++++ gnat_src/osint.ads	17 May 2006 12:34:39 -0000
+@@ -561,7 +561,7 @@
     --  No_File, that indicates that the file whose name was returned by the
     --  last call to Next_Main_Source (and stored here) is to be read.
  
@@ -67,8 +63,8 @@
     --  The suffix used for the target object files
  
     Output_FD : File_Descriptor;
---- gnat_src/prj-nmsc.adb	31 Jan 2006 19:59:48 -0000	1.169
-+++ gnat_src/prj-nmsc.adb	13 Mar 2006 08:46:27 -0000
+--- gnat_src/prj-nmsc.adb	8 Apr 2006 02:10:41 -0000	1.174
++++ gnat_src/prj-nmsc.adb	17 May 2006 12:35:08 -0000
 @@ -60,7 +60,7 @@
     ALI_Suffix   : constant String := ".ali";
     --  File suffix for ali files
@@ -78,14 +74,3 @@
     --  File suffix for object files
  
     type Name_Location is record
---- gnat_src/prj-util.adb	19 Feb 2006 01:36:15 -0000	1.39
-+++ gnat_src/prj-util.adb	13 Mar 2006 08:46:28 -0000
-@@ -180,7 +180,7 @@
-            and then Executable.Value /= Empty_Name
-          then
-             declare
--               Exec_Suffix : String_Access := Get_Target_Executable_Suffix;
-+               Exec_Suffix : String_Access := Get_Executable_Suffix;
-                Result      : Name_Id := Executable.Value;
- 
-             begin
