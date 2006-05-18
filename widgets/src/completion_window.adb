@@ -93,6 +93,11 @@ package body Completion_Window is
       Params : Glib.Values.GValues);
    --  Callback after a text deletion.
 
+   function On_Button_Pressed
+     (Window : access Completion_Window_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback on a button press in the tree view.
+
    procedure On_Selection_Changed
      (Window : access Completion_Window_Record'Class);
    --  Callback on a selection change in the tree view.
@@ -105,6 +110,10 @@ package body Completion_Window is
 
    procedure Free (X : in out Information_Record);
    --  Free memory associated to X.
+
+   procedure Complete_And_Exit
+     (Window : access Completion_Window_Record'Class);
+   --  Complete using the current selection and exit.
 
    ----------
    -- Free --
@@ -272,6 +281,26 @@ package body Completion_Window is
                 "Unexpected exception: " & Exception_Information (E));
    end Delete_Text_Handler;
 
+   -----------------------
+   -- On_Button_Pressed --
+   -----------------------
+
+   function On_Button_Pressed
+     (Window : access Completion_Window_Record'Class;
+      Event  : Gdk_Event) return Boolean is
+   begin
+      if Get_Event_Type (Event) = Gdk_2button_Press then
+         Complete_And_Exit (Window);
+      end if;
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end On_Button_Pressed;
+
    --------------------------
    -- On_Selection_Changed --
    --------------------------
@@ -330,6 +359,38 @@ package body Completion_Window is
          return False;
    end On_Focus_Out;
 
+   -----------------------
+   -- Complete_And_Exit --
+   -----------------------
+
+   procedure Complete_And_Exit (Window : access Completion_Window_Record'Class)
+   is
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+
+      Pos        : Natural;
+      Text_Begin : Gtk_Text_Iter;
+      Text_End   : Gtk_Text_Iter;
+   begin
+      Get_Selected (Get_Selection (Window.View), Model, Iter);
+
+      if Iter /= Null_Iter then
+         Pos := Natural (Get_Int (Window.Model, Iter, Index_Column));
+
+         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+         Get_Iter_At_Mark
+           (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
+
+         Window.In_Deletion := True;
+         Delete (Window.Buffer, Text_Begin, Text_End);
+
+         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+         Insert (Window.Buffer, Text_Begin, Window.Info (Pos).Text.all);
+      end if;
+
+      Delete (Window);
+   end Complete_And_Exit;
+
    ------------------
    -- On_Key_Press --
    ------------------
@@ -344,10 +405,6 @@ package body Completion_Window is
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
 
-      Pos        : Natural;
-      Text_Begin : Gtk_Text_Iter;
-      Text_End   : Gtk_Text_Iter;
-
    begin
       Key := Get_Key_Val (Event);
 
@@ -359,23 +416,7 @@ package body Completion_Window is
             return True;
 
          when GDK_Return =>
-            Get_Selected (Get_Selection (Window.View), Model, Iter);
-
-            if Iter /= Null_Iter then
-               Pos := Natural (Get_Int (Window.Model, Iter, Index_Column));
-
-               Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
-               Get_Iter_At_Mark
-                 (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
-
-               Window.In_Deletion := True;
-               Delete (Window.Buffer, Text_Begin, Text_End);
-
-               Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
-               Insert (Window.Buffer, Text_Begin, Window.Info (Pos).Text.all);
-            end if;
-
-            Delete (Window);
+            Complete_And_Exit (Window);
             return True;
 
          when GDK_Down | GDK_KP_Down =>
@@ -639,6 +680,11 @@ package body Completion_Window is
       Object_Connect
         (Buffer, "delete_range", Delete_Text_Handler'Access, Window,
          After => True);
+
+      Object_Connect
+        (Window.View, "button_press_event",
+         To_Marshaller (On_Button_Pressed'Access), Window,
+         After => False);
 
       Object_Connect
         (Get_Selection (Window.View), "changed",
