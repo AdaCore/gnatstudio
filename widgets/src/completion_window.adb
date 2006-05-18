@@ -53,6 +53,9 @@ package body Completion_Window is
    Markup_Column : constant := 0;
    Index_Column  : constant := 1;
 
+   Max_Window_Width : constant := 300;
+   --  Maximum width of the window, in pixels.
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (String, String_Access);
 
@@ -584,7 +587,7 @@ package body Completion_Window is
 
       --  Compute the real width and height of the window
 
-      Width := Gint'Min (Requisition.Width + 10, Max_Width) + 5;
+      Width := Gint'Min (Max_Window_Width, Max_Width) + 5;
 
       if Requisition.Height > Max_Height then
          --  Display an integer number of lines in the tree view.
