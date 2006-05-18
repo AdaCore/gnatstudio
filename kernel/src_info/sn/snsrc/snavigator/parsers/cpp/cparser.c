@@ -4197,7 +4197,7 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
                 , Declaration->charno_beg
                 );
 
-           if ( scope ) {
+           if ( scope && Declarator->types.buf) {
                 sprintf (data, "class=%s;arg_types=%s", scope, Declarator->types.buf);
            } else {
                *data = 0;
@@ -4363,7 +4363,12 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
                 , Declarator->charno_end
                 );
 
-           sprintf (data, "class=%s;arg_types=%s", scope, Declarator->types.buf);
+           if (Declarator->types.buf)
+           {
+              sprintf (data, "class=%s;arg_types=%s", scope, Declarator->types.buf);
+           } else {
+               *data = 0;
+           }
            for ( tp = g_tp; tp; tp = tp->next ) {
                  Put_symbol( PAF_TEMPLATE_ARG_DEF
                            , name
@@ -4613,7 +4618,10 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                 , Declarator->charno_end
                 );
 
-       sprintf (data, "class=%s;arg_types=%s", scope, Declarator->types.buf);
+       if (Declarator->types.buf)
+       {
+          sprintf (data, "class=%s;arg_types=%s", scope, Declarator->types.buf);
+       }
        for ( tp = g_tp; tp; tp = tp->next ) {
          Put_symbol( PAF_TEMPLATE_ARG_DEF
                    , name
