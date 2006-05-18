@@ -124,7 +124,7 @@
     <!-- General-purpose icons -->
 
     <icon id="gps-file"               file="../icons/16px/file.png" />
-    <icon id="gps-file-modified"      file="../icons/16px/file_altered.png" />
+    <icon id="gps-file-modified"      file="../icons/16px/file_pencil.png" />
 
     <icon id="gps-folder-closed"      file="../icons/16px/folder_closed.png" />
     <icon id="gps-folder-open"        file="../icons/16px/folder_open.png" />
@@ -137,8 +137,8 @@
 
     <icon id="gps-project-open"                file="../icons/16px/project_box.png" />
     <icon id="gps-project-closed"              file="../icons/16px/project_box.png" />
-    <icon id="gps-project-modified-open"       file="../icons/16px/project_box_altered.png" />
-    <icon id="gps-project-modified-closed"     file="../icons/16px/project_box_altered.png" />
+    <icon id="gps-project-modified-open"       file="../icons/16px/project_box_pencil.png" />
+    <icon id="gps-project-modified-closed"     file="../icons/16px/project_box_pencil.png" />
 
     <icon id="gps-box"                file="../icons/16px/variable.png" />
 
