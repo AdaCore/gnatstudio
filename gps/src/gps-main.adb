@@ -33,6 +33,7 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Glib.Error;                use Glib.Error;
 with Glib.Messages;             use Glib.Messages;
 with Glib.Object;               use Glib.Object;
+with Glib.Properties;           use Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
 with Gtk;                       use Gtk;
@@ -337,10 +338,8 @@ procedure GPS.Main is
 
          Close (FD);
          Gtk_New (Splash, Window_Popup);
-         Set_Policy (Splash,
-                     Allow_Shrink => False,
-                     Allow_Grow   => False,
-                     Auto_Shrink  => False);
+         Set_Property (Splash, Allow_Shrink_Property, False);
+         Set_Property (Splash, Allow_Grow_Property, False);
          Set_Position (Splash, Win_Pos_Center);
          Gdk_New_From_File (Pixbuf, File, Error);
          Gtk_New (Image, Pixbuf);
