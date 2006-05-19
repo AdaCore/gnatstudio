@@ -59,6 +59,19 @@ package GNAT.Expect.TTY is
    procedure Interrupt (Pid : Integer);
    --  Interrupt a process given its pid
 
+   procedure Send
+     (Descriptor   : in out TTY_Process_Descriptor;
+      Str          : String;
+      Add_LF       : Boolean := True;
+      Empty_Buffer : Boolean := False);
+   --  See parent
+
+   procedure Set_Use_Pipes
+     (Descriptor : in out TTY_Process_Descriptor;
+      Use_Pipes  : in     Boolean);
+   --  Tell Expect.TTY wether to use Pipes or Console (on windows). Need to be
+   --  set before spawning the process. Default is to use Pipes.
+
 private
 
    procedure Close
@@ -95,7 +108,8 @@ private
       Args  : in System.Address);
 
    type TTY_Process_Descriptor is new Process_Descriptor with record
-      Process : System.Address;  --  Underlying structure used in C.
+      Process   : System.Address;  --  Underlying structure used in C.
+      Use_Pipes : Boolean := True;
    end record;
 
 end GNAT.Expect.TTY;
