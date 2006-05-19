@@ -320,6 +320,8 @@ package body Remote_Sync_Module is
       --  catch.
       --  Do not strip CR's as file progression is output by rsync using CR
       --  characters.
+      --  Do not use pipes in order to be able to retrieve password prompts on
+      --  Windows
       Launch_Process
         (Kernel_Handle (Kernel),
          Command       => "rsync",
@@ -335,7 +337,8 @@ package body Remote_Sync_Module is
          Queue_Id      => Rsync_Data.Queue_Id,
          Synchronous   => Rsync_Data.Synchronous,
          Timeout       => Machine.Timeout,
-         Strip_CR      => False);
+         Strip_CR      => False,
+         Use_Pipes     => False);
 
       Free (Src_Path);
       Free (Dest_Path);
