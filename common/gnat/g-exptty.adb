@@ -113,6 +113,47 @@ package body GNAT.Expect.TTY is
       Internal (Pid);
    end Interrupt;
 
+   ----------
+   -- Send --
+   ----------
+
+   procedure Send
+     (Descriptor   : in out TTY_Process_Descriptor;
+      Str          : String;
+      Add_LF       : Boolean := True;
+      Empty_Buffer : Boolean := False)
+   is
+      Header : String (1 .. 5);
+      Length : Natural;
+      Ret    : Boolean;
+
+      procedure Internal
+        (Process : System.Address;
+         S       : in out String;
+         Length  : in     Natural;
+         Ret     :    out Boolean);
+      pragma Import (C, Internal, "gvd_send_header");
+   begin
+
+      Length := Str'Length;
+
+      if Add_LF then
+         Length := Length + 1;
+      end if;
+
+      Internal (Descriptor.Process, Header, Length, Ret);
+      if Ret then
+         --  Need to use the header.
+         GNAT.Expect.Send
+           (Process_Descriptor (Descriptor),
+            Header & Str, Add_LF, Empty_Buffer);
+      else
+         GNAT.Expect.Send
+           (Process_Descriptor (Descriptor),
+            Str, Add_LF, Empty_Buffer);
+      end if;
+   end Send;
+
    -----------------------
    -- Pseudo_Descriptor --
    -----------------------
@@ -193,11 +234,30 @@ package body GNAT.Expect.TTY is
    is
       pragma Unreferenced (Pipe1, Pipe2, Pipe3, Cmd);
       function Internal
-        (Process : System.Address; Argv : System.Address) return Process_Id;
+        (Process : System.Address; Argv : System.Address; Use_Pipes : Integer)
+         return Process_Id;
       pragma Import (C, Internal, "gvd_setup_child_communication");
 
+      Int_Use_Pipes : Integer;
    begin
-      Pid.Pid := Internal (Pid.Process, Args);
+      if Pid.Use_Pipes then
+         Int_Use_Pipes := 1;
+      else
+         Int_Use_Pipes := 0;
+      end if;
+
+      Pid.Pid := Internal (Pid.Process, Args, Int_Use_Pipes);
    end Set_Up_Child_Communications;
+
+   -------------------
+   -- Set_Use_Pipes --
+   -------------------
+
+   procedure Set_Use_Pipes
+     (Descriptor : in out TTY_Process_Descriptor;
+      Use_Pipes  : in     Boolean) is
+   begin
+      Descriptor.Use_Pipes := Use_Pipes;
+   end Set_Use_Pipes;
 
 end GNAT.Expect.TTY;
