@@ -93,7 +93,8 @@ package GPS.Kernel.Timeout is
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
       Timeout              : Integer := -1;
-      Strip_CR             : Boolean := True);
+      Strip_CR             : Boolean := True;
+      Use_Pipes            : Boolean := True);
    --  Launch a given command with arguments on server 'Server'.
    --  Arguments must be freed by the user.
    --
@@ -140,6 +141,9 @@ package GPS.Kernel.Timeout is
    --  characters.
    --
    --  Callback_Data is freed automatically when the process terminates.
+   --
+   --  Use_Pipes tells if process communication shall be performed with pipes
+   --   or through the console on Windows
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
@@ -162,6 +166,7 @@ package GPS.Kernel.Timeout is
       Show_Exit_Status     : Boolean := False;
       Timeout              : Integer := -1;
       Strip_CR             : Boolean := True;
+      Use_Pipes            : Boolean := True;
       Cmd                  : out Command_Access;
       Created_Command      : out Scheduled_Command_Access);
    --  Same as above, and returns the created Command_Access.
@@ -186,6 +191,7 @@ package GPS.Kernel.Timeout is
       Show_In_Task_Manager : Boolean := True;
       Queue_Id             : String := "";
       Show_Exit_Status     : Boolean := False;
+      Use_Pipes            : Boolean := True;
       Fd                   : out GNAT.Expect.Process_Descriptor_Access;
       Created_Command      : out Scheduled_Command_Access);
    --  Same as above, and returns the created File_Descriptor.
