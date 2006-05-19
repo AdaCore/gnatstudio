@@ -131,6 +131,7 @@ package GPS.Kernel.Remote is
       Console          : Interactive_Consoles.Interactive_Console := null;
       Show_Command     : Boolean := True;
       Directory        : String := "";
+      Use_Pipes        : Boolean := True;
       Error_Manager    : Error_Display := null);
    --  Launch given arguments on Server. Returns a valid Process
    --  descriptor and success set to true upon success.
@@ -140,6 +141,8 @@ package GPS.Kernel.Remote is
    --  line to the console.
    --  If directory is set, change default dir to Directory before launching
    --  the command. Returns to current dir after spawning.
+   --  Use_Pipes tells wether we are using pipes when spawning the process, or
+   --  consoles (on Windows).
 
    --------------------------
    -- Synchronization Hook --
