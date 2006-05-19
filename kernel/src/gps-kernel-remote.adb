@@ -3356,6 +3356,7 @@ package body GPS.Kernel.Remote is
       Console          : Interactive_Consoles.Interactive_Console := null;
       Show_Command     : Boolean := True;
       Directory        : String := "";
+      Use_Pipes        : Boolean := True;
       Error_Manager    : Error_Display := null)
    is
       Exec                  : String_Access;
@@ -3447,6 +3448,7 @@ package body GPS.Kernel.Remote is
 
       if Is_Local (Server) then
          Pd := new GNAT.Expect.TTY.TTY_Process_Descriptor;
+         Set_Use_Pipes (TTY_Process_Descriptor (Pd.all), Use_Pipes);
 
          --  If using an external terminal, use Execute_Command preference
          --  ??? incompatible with gnat.expect.tty.remote...
