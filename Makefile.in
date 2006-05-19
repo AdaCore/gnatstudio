@@ -46,6 +46,7 @@ else
 	$(INSTALL_PROGRAM) distrib/.gps_wrapper $(bindir)/gps
 endif
 	$(MAKE) -C kernel/src_info/sn/snsrc install
+	$(MAKE) -C common/expect install
 
 install-strip: install-common
 ifeq ($(OS),Windows_NT)
@@ -55,6 +56,7 @@ else
 	$(INSTALL_PROGRAM) distrib/.gps_wrapper $(bindir)/gps
 endif
 	$(MAKE) -C kernel/src_info/sn/snsrc install-strip
+	$(MAKE) -C common/expect install-strip
 
 test: force
 	@cd scripts; ./testsuites
