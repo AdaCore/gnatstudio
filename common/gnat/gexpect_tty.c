@@ -926,6 +926,16 @@ gvd_free_process (struct GVD_Process** process)
    *process = NULL;
 }
 
+/***********************
+ ** gvd_send_header ()
+ ***********************/
+
+void
+gvd_send_header (struct GVD_Process* p, char header[5], int size, int *ret)
+{
+  *ret = 0;
+}
+
 /********************************
  **  gvd_setup_communication ()
  ********************************/
@@ -1092,7 +1102,8 @@ gvd_setup_communication (struct GVD_Process** process_out) /* output param */
  ***************************************************************/
 
 int
-gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
+gvd_setup_child_communication (struct GVD_Process* process, char** argv,
+                               int usePipes)
 {
   char* current_dir = ".";
   int pid = 0;
@@ -1240,7 +1251,7 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
   if (process->pty_flag)
     child_setup_tty (xforkout);
   child_setup (xforkin, xforkout, xforkout,
-	       new_argv, 1, current_dir, process);
+	       argv, 1, current_dir, process);
 
   process->pid=pid;
   return pid;
@@ -1609,6 +1620,7 @@ struct GVD_Process {
   PROCESS_INFORMATION procinfo;
   HANDLE w_infd, w_outfd;
   HANDLE w_forkin, w_forkout;
+  BOOL usePipe;
 };
 
 /* Control whether create_child cause the process to inherit GPS'
@@ -1937,11 +1949,15 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
   memset (&start, 0, sizeof (start));
   start.cb = sizeof (start);
 
-  start.dwFlags = STARTF_USESTDHANDLES;
-  start.hStdInput = process->w_forkin;
-  start.hStdOutput = process->w_forkout;
-  /* child's stderr is always redirected to outfd */
-  start.hStdError = process->w_forkout;
+  if (process->usePipe == TRUE) {
+    start.dwFlags = STARTF_USESTDHANDLES;
+    start.hStdInput = process->w_forkin;
+    start.hStdOutput = process->w_forkout;
+   /* child's stderr is always redirected to outfd */
+   start.hStdError = process->w_forkout;
+  } else {
+    start.dwFlags = 0;
+  }
 
   /* Explicitly specify no security */
   if (!InitializeSecurityDescriptor (&sec_desc, SECURITY_DESCRIPTOR_REVISION))
@@ -1958,12 +1974,11 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
 
-  /* if app is not a gui application, use the CREATE_NEW_CONSOLE flag and
-     hide it as its input/output are redirected */
-  if (NILP (is_gui_app (argv[0]))) {
-     start.dwFlags |= STARTF_USESHOWWINDOW;
-     start.wShowWindow = SW_HIDE;
-   }
+  /* if app is not a gui application, hide the console */
+  if (is_gui_app (argv[0]) == FALSE) {
+    start.dwFlags |= STARTF_USESHOWWINDOW;
+    start.wShowWindow = SW_HIDE;
+  }
 
   if (!CreateProcess (NULL, cmdline, &sec_attrs, NULL, TRUE,
 		      flags, env, ".", &start, &process->procinfo))
@@ -1981,6 +1996,35 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
   return -1;
 }
 
+/***********************
+ ** gvd_send_header ()
+ ***********************/
+
+#define EXP_SLAVE_CREATE 'c'
+#define EXP_SLAVE_KEY    'k'
+#define EXP_SLAVE_MOUSE  'm'
+#define EXP_SLAVE_WRITE  'w'
+#define EXP_SLAVE_KILL   'x'
+
+#define EXP_KILL_TERMINATE  0x1
+#define EXP_KILL_CTRL_C     0x2
+#define EXP_KILL_CTRL_BREAK 0x4
+
+void
+gvd_send_header (struct GVD_Process* p, char header[5], int size, int *ret)
+{
+  if (p->usePipe == FALSE) {
+    header[0] = EXP_SLAVE_WRITE;
+    header[1] = size & 0xff;
+    header[2] = (size & 0xff00) >> 8;
+    header[3] = (size & 0xff0000) >> 16;
+    header[4] = (size & 0xff000000) >> 24;
+    *ret = 1;
+  } else {
+    *ret = 0;
+  }
+}
+
 /********************************
  **  gvd_setup_communication ()
  ********************************/
@@ -1996,12 +2040,21 @@ gvd_setup_communication (struct GVD_Process** process_out) /* output param */
   return 0;
 }
 
+#define EXP_PIPE_BASENAME "\\\\.\\pipe\\ExpectPipe"
+
 int
-gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
+gvd_setup_child_communication (struct GVD_Process* process, char** argv,
+                               int Use_Pipes)
 {
   int cpid;
   HANDLE parent;
   SECURITY_ATTRIBUTES sec_attrs;
+  char slavePath [MAX_PATH];
+  char **nargv;
+  int argc;
+  int i;
+  HANDLE hSlaveOutDrv = NULL;	/* Handle to communicate with slave driver */
+  HANDLE hSlaveInDrv = NULL;
 
   parent = GetCurrentProcess ();
 
@@ -2010,28 +2063,136 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
   sec_attrs.bInheritHandle = TRUE;
   sec_attrs.lpSecurityDescriptor = NULL;
 
-  /* Create in and out pipes */
-  if (!CreatePipe (&process->w_forkin, &process->w_infd, &sec_attrs, 0))
-    report_file_error ("Creation of child's IN handle", Qnil);
-  if (!CreatePipe (&process->w_outfd, &process->w_forkout, &sec_attrs, 0))
-    report_file_error ("Creation of child's OUT handle", Qnil);
+  if (Use_Pipes) {
+    /* Create in and out pipes */
+    if (!CreatePipe (&process->w_forkin, &process->w_infd, &sec_attrs, 0))
+      report_file_error ("Creation of child's IN handle", Qnil);
+    if (!CreatePipe (&process->w_outfd, &process->w_forkout, &sec_attrs, 0))
+      report_file_error ("Creation of child's OUT handle", Qnil);
 
-  /* Do not inherit the parent's side of the pipes */
-  SetHandleInformation (&process->w_infd, HANDLE_FLAG_INHERIT, 0);
-  SetHandleInformation (&process->w_outfd, HANDLE_FLAG_INHERIT, 0);
+    /* Do not inherit the parent's side of the pipes */
+    SetHandleInformation (&process->w_infd, HANDLE_FLAG_INHERIT, 0);
+    SetHandleInformation (&process->w_outfd, HANDLE_FLAG_INHERIT, 0);
+
+    /* use native argv */
+    nargv = argv;
+    process->usePipe = TRUE;
+
+  } else {
+    char pipeNameIn[100];
+    char pipeNameOut[100];
+    static int pipeNameId = 0;
+
+    process->w_infd = NULL;
+    process->w_outfd = NULL;
+
+    sprintf(pipeNameIn, "%sIn%08x%08x", EXP_PIPE_BASENAME,
+	    GetCurrentProcessId(), pipeNameId);
+    sprintf(pipeNameOut, "%sOut%08x%08x", EXP_PIPE_BASENAME,
+	    GetCurrentProcessId(), pipeNameId);
+    pipeNameId++;
+
+    hSlaveInDrv = CreateNamedPipe(pipeNameIn,
+				  PIPE_ACCESS_OUTBOUND,
+				  PIPE_TYPE_BYTE | PIPE_WAIT, 1, 8192, 8192,
+				  20000, NULL);
+    if (hSlaveInDrv == NULL) {
+      goto end;
+    }
+
+    hSlaveOutDrv = CreateNamedPipe(pipeNameOut,
+				   PIPE_ACCESS_INBOUND,
+				   PIPE_TYPE_BYTE | PIPE_WAIT, 1, 8192, 8192,
+				   20000, NULL);
+    if (hSlaveOutDrv == NULL) {
+      goto end;
+    }
+
+    for (argc=0; argv[argc] != NULL; argc++) ;
+    argc = argc + 3;
+
+    if (SearchPath (NULL, "explaunch.exe", NULL,
+                    MAX_PATH, slavePath, NULL) == 0) {
+      goto end;
+    }
+    nargv = (char **) malloc (sizeof (char*) * argc + 1);
+    nargv[0] = slavePath;
+    nargv[1] = pipeNameIn;
+    nargv[2] = pipeNameOut;
+
+    for (i = 0; i <= argc; i++)
+      nargv[i + 3] = argv[i];
+    process->usePipe = FALSE;
+  }
 
   /* Spawn the child. */
-  cpid = nt_spawnve (new_argv[0], new_argv, NULL, process);
+  cpid = nt_spawnve (nargv[0], nargv, NULL, process);
 
-  /* close the duplicated handles passed to the child */
-  CloseHandle (process->w_forkin);
-  CloseHandle (process->w_forkout);
+  if (process->usePipe == TRUE) {
+    /* close the duplicated handles passed to the child */
+    CloseHandle (process->w_forkin);
+    CloseHandle (process->w_forkout);
+
+  } else {
+    UCHAR buf[8];		/* enough space for child status info */
+    DWORD count;
+    BOOL bRet;
+    DWORD dwRet;
+
+    /*
+     * Wait for connection with the slave driver
+     */
+    bRet = ConnectNamedPipe(hSlaveOutDrv, NULL);
+    if (bRet == FALSE) {
+      dwRet = GetLastError();
+      if (dwRet == ERROR_PIPE_CONNECTED) {
+	;
+      } else {
+	goto end;
+      }
+    }
+
+    bRet = ConnectNamedPipe(hSlaveInDrv, NULL);
+    if (bRet == FALSE) {
+      dwRet = GetLastError();
+      if (dwRet == ERROR_PIPE_CONNECTED) {
+	;
+      } else {
+	goto end;
+      }
+    }
+
+    process->w_infd = hSlaveInDrv;
+    process->w_outfd = hSlaveOutDrv;
+
+    /*
+     * wait for slave driver to initialize before allowing user to send to it
+     */
+    bRet = ReadFile(process->w_outfd, buf, 8, &count, NULL);
+    if (bRet == FALSE) {
+      cpid = -1;
+    }
+
+    dwRet = buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
+    if (dwRet != 0) {
+      cpid = -1;
+    }
+
+    cpid = buf[4] | (buf[5] << 8) | (buf[6] << 16) | (buf[7] << 24);
+    process->pid = cpid;
+  }
 
   if (cpid == -1)
     /* An error occurred while trying to spawn the process.  */
     report_file_error ("Spawning child process", Qnil);
 
   return cpid;
+ end:
+  if (hSlaveInDrv != NULL)
+    CloseHandle (hSlaveInDrv);
+  if (hSlaveOutDrv != NULL)
+    CloseHandle (hSlaveOutDrv);
+  return -1;
 }
 
 int
@@ -2042,7 +2203,7 @@ gvd_setup_parent_communication
   *out = _open_osfhandle ((long) process->w_outfd, 0);
   /* child's stderr is always redirected to outfd */
   *err = _open_osfhandle ((long) process->w_outfd, 0);
-  *pid = process->procinfo.dwProcessId;
+  *pid = process->pid;
 }
 
 
