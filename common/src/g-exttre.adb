@@ -461,6 +461,19 @@ package body GNAT.Expect.TTY.Remote is
             when Expect_Timeout =>
                Trace (Me, "got timeout in Wait_For_Prompt (intermediate=" &
                       Boolean'Image (Intermediate) & ")");
+               if Descriptor.Machine.Desc.Dbg /= null
+                 and then Descriptor.Machine.Sessions (Session_Nb).Pd.Buffer /=
+                 null
+               then
+                  Print
+                    (Descriptor.Machine.Desc.Dbg,
+                     "<Timeout> Cannot get a valid prompt. Received so far:",
+                     Input);
+                  Print
+                    (Descriptor.Machine.Desc.Dbg,
+                     Descriptor.Machine.Sessions (Session_Nb).Pd.Buffer.all,
+                     Output);
+               end if;
                Close (Descriptor.Machine.Sessions (Session_Nb).Pd);
 
                Raise_Exception
@@ -744,6 +757,8 @@ package body GNAT.Expect.TTY.Remote is
 
          Log ("spawn",
               Argument_List_To_String (New_Args.all, False));
+         --  Do not use pipes, as they prevent password retrieval on windows
+         Set_Use_Pipes (Descriptor.Machine.Sessions (Session_Nb).Pd, False);
          Non_Blocking_Spawn
            (Descriptor  => Descriptor.Machine.Sessions (Session_Nb).Pd,
             Command     => New_Args (New_Args'First).all,
@@ -834,6 +849,8 @@ package body GNAT.Expect.TTY.Remote is
         Descriptor.Machine.Sessions (Session_Nb).Pd.Error_Fd;
       Descriptor.Pid        :=
         Descriptor.Machine.Sessions (Session_Nb).Pd.Pid;
+      Descriptor.Process    :=
+        Descriptor.Machine.Sessions (Session_Nb).Pd.Process;
       --  Set Terminated state as it is not started yet !
       Descriptor.Terminated := True;
       Descriptor.Busy       := False;
@@ -1510,7 +1527,8 @@ package body GNAT.Expect.TTY.Remote is
       Prev       : Machine_Descriptor_Access;
       Pd         : constant TTY_Process_Descriptor :=
                      (Process_Descriptor with
-                        Process => System.Null_Address);
+                      Process   => System.Null_Address,
+                      Use_Pipes => False);
    begin
       Descriptor := new Machine_Descriptor_Item'
         (Max_Nb_Connections => Desc.Max_Nb_Connections,
