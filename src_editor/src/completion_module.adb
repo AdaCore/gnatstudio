@@ -662,7 +662,11 @@ package body Completion_Module is
                   Get_Iter_At_Mark
                     (Buffer, It, Get_Insert (Buffer));
 
-                  Backward_Chars (It, Gint (To_Replace), Movement);
+                  if To_Replace /= 0 then
+                     Backward_Chars (It, Gint (To_Replace), Movement);
+                  else
+                     Movement := True;
+                  end if;
 
                   if Movement then
                      Start_Completion (View, Win);
