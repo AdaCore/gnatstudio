@@ -474,6 +474,7 @@ package body Project_Explorers_Common is
                   if Get_Event_Type (Event) = Gdk_2button_Press
                     or else Get_Event_Type (Event) = Gdk_3button_Press
                   then
+                     Cancel_Child_Drag (Child);
                      Open_File_Editor
                        (Kernel,
                         Create
