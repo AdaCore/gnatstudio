@@ -130,11 +130,12 @@ package body GNAT.Expect.TTY is
       procedure Internal
         (Process : System.Address;
          S       : in out String;
-         Length  : in     Natural;
-         Ret     :    out Boolean);
+         Length  : Natural;
+         Ret     : out Boolean);
+      --  ??? missing spec
       pragma Import (C, Internal, "gvd_send_header");
-   begin
 
+   begin
       Length := Str'Length;
 
       if Add_LF then
@@ -142,11 +143,14 @@ package body GNAT.Expect.TTY is
       end if;
 
       Internal (Descriptor.Process, Header, Length, Ret);
+
       if Ret then
-         --  Need to use the header.
+         --  Need to use the header
+
          GNAT.Expect.Send
            (Process_Descriptor (Descriptor),
             Header & Str, Add_LF, Empty_Buffer);
+
       else
          GNAT.Expect.Send
            (Process_Descriptor (Descriptor),
@@ -229,8 +233,8 @@ package body GNAT.Expect.TTY is
       Pipe1 : in out Pipe_Type;
       Pipe2 : in out Pipe_Type;
       Pipe3 : in out Pipe_Type;
-      Cmd   : in String;
-      Args  : in System.Address)
+      Cmd   : String;
+      Args  : System.Address)
    is
       pragma Unreferenced (Pipe1, Pipe2, Pipe3, Cmd);
       function Internal
@@ -238,15 +242,8 @@ package body GNAT.Expect.TTY is
          return Process_Id;
       pragma Import (C, Internal, "gvd_setup_child_communication");
 
-      Int_Use_Pipes : Integer;
    begin
-      if Pid.Use_Pipes then
-         Int_Use_Pipes := 1;
-      else
-         Int_Use_Pipes := 0;
-      end if;
-
-      Pid.Pid := Internal (Pid.Process, Args, Int_Use_Pipes);
+      Pid.Pid := Internal (Pid.Process, Args, Boolean'Pos (Pid.Use_Pipes));
    end Set_Up_Child_Communications;
 
    -------------------
@@ -255,7 +252,7 @@ package body GNAT.Expect.TTY is
 
    procedure Set_Use_Pipes
      (Descriptor : in out TTY_Process_Descriptor;
-      Use_Pipes  : in     Boolean) is
+      Use_Pipes  : Boolean) is
    begin
       Descriptor.Use_Pipes := Use_Pipes;
    end Set_Use_Pipes;

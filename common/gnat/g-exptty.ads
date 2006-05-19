@@ -53,7 +53,7 @@ package GNAT.Expect.TTY is
    procedure Close_Pseudo_Descriptor
      (Descriptor : in out TTY_Process_Descriptor);
    --  Free memory and ressources associated with Descriptor.
-   --  Do *not* close the associated TTY, it is the caller's responsibility
+   --  Will *not* close the associated TTY, it is the caller's responsibility
    --  to call GNAT.TTY.Close_TTY.
 
    procedure Interrupt (Pid : Integer);
@@ -68,7 +68,7 @@ package GNAT.Expect.TTY is
 
    procedure Set_Use_Pipes
      (Descriptor : in out TTY_Process_Descriptor;
-      Use_Pipes  : in     Boolean);
+      Use_Pipes  : Boolean);
    --  Tell Expect.TTY wether to use Pipes or Console (on windows). Need to be
    --  set before spawning the process. Default is to use Pipes.
 
@@ -104,8 +104,8 @@ private
       Pipe1 : in out Pipe_Type;
       Pipe2 : in out Pipe_Type;
       Pipe3 : in out Pipe_Type;
-      Cmd   : in String;
-      Args  : in System.Address);
+      Cmd   : String;
+      Args  : System.Address);
 
    type TTY_Process_Descriptor is new Process_Descriptor with record
       Process   : System.Address;  --  Underlying structure used in C.
