@@ -57,6 +57,7 @@ package body GPS.Kernel.Timeout is
       Delete_Id            : Gtk.Handlers.Handler_Id;
       Show_In_Task_Manager : Boolean;
       Strip_CR             : Boolean;
+      Use_Pipes            : Boolean;
       Show_Output          : Boolean;
       Show_Command         : Boolean;
       Show_Exit_Status     : Boolean;
@@ -228,7 +229,8 @@ package body GPS.Kernel.Timeout is
                 Command.Data.Use_Ext_Terminal,
                 Command.Data.Console,
                 Command.Data.Show_Command,
-                Command.Data.Directory.all);
+                Command.Data.Directory.all,
+                Command.Data.Use_Pipes);
          Free (Command.Data.Args);
          --  Set Started here so that even if spawn fails we don't pass twice
          --  here
@@ -523,6 +525,7 @@ package body GPS.Kernel.Timeout is
       Show_Exit_Status     : Boolean := False;
       Timeout              : Integer := -1;
       Strip_CR             : Boolean := True;
+      Use_Pipes            : Boolean := True;
       Cmd                  : out Command_Access;
       Created_Command      : out Scheduled_Command_Access)
    is
@@ -564,6 +567,7 @@ package body GPS.Kernel.Timeout is
       C.Data.Show_Command         := Show_Command;
       C.Data.Show_Exit_Status     := Show_Exit_Status;
       C.Data.Strip_CR             := Strip_CR;
+      C.Data.Use_Pipes            := Use_Pipes;
       C.Data.Synchronous          := Synchronous;
       C.Data.Expect_Regexp        := Expect_Regexp;
       C.Data.D                    := (Kernel        => Kernel,
@@ -630,6 +634,7 @@ package body GPS.Kernel.Timeout is
       Show_In_Task_Manager : Boolean := True;
       Queue_Id             : String := "";
       Show_Exit_Status     : Boolean := False;
+      Use_Pipes            : Boolean := True;
       Fd                   : out GNAT.Expect.Process_Descriptor_Access;
       Created_Command      : out Scheduled_Command_Access)
    is
@@ -654,6 +659,7 @@ package body GPS.Kernel.Timeout is
          Queue_Id             => Queue_Id,
          Synchronous          => False,
          Show_Exit_Status     => Show_Exit_Status,
+         Use_Pipes            => Use_Pipes,
          Cmd                  => C,
          Created_Command      => Created_Command);
       if Success
@@ -697,7 +703,8 @@ package body GPS.Kernel.Timeout is
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
       Timeout              : Integer := -1;
-      Strip_CR             : Boolean := True)
+      Strip_CR             : Boolean := True;
+      Use_Pipes            : Boolean := True)
    is
       Cmd             : Command_Access;
       Created_Command : Scheduled_Command_Access;
@@ -723,6 +730,7 @@ package body GPS.Kernel.Timeout is
          Show_Exit_Status     => Show_Exit_Status,
          Timeout              => Timeout,
          Strip_CR             => Strip_CR,
+         Use_Pipes            => Use_Pipes,
          Cmd                  => Cmd,
          Created_Command      => Created_Command);
    end Launch_Process;
