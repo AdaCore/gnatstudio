@@ -97,6 +97,7 @@ package body Welcome is
       Sep          : Gtk_Separator;
       Size         : Gtk_Size_Group;
       Stock_Button : Gtk_Widget;
+      pragma Warnings (Off, Stock_Button);
 
    begin
       Screen := new Welcome_Screen_Record;
