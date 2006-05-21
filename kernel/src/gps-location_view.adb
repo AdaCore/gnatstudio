@@ -915,6 +915,7 @@ package body GPS.Location_View is
       Category_Path : Gtk_Tree_Path;
       Model         : Gtk_Tree_Model;
       Success       : Boolean := True;
+      pragma Warnings (Off, Success);
 
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
