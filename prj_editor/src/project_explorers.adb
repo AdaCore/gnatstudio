@@ -2647,9 +2647,14 @@ package body Project_Explorers is
       procedure Expand_Recursive (The_Path : Gtk_Tree_Path);
       --  Expand Path and all parents of Path that are not expanded.
 
+      ----------------------
+      -- Expand_Recursive --
+      ----------------------
+
       procedure Expand_Recursive (The_Path : Gtk_Tree_Path) is
          Parent : constant Gtk_Tree_Path := Copy (The_Path);
          Dummy  : Boolean;
+         pragma Warnings (Off, Dummy);
       begin
          Dummy := Up (Parent);
 
