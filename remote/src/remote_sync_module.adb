@@ -370,20 +370,17 @@ package body Remote_Sync_Module is
       LF_Index        : Integer;
       pragma Unreferenced (Dead);
 
-      function Cat (S1 : String_Access;
-                    S2 : String) return String;
+      function Cat (S1 : String_Access; S2 : String) return String;
       --  Cat a string access and a string
 
-      function Cat (S1 : String;
-                    S2 : String_Access) return String;
+      function Cat (S1 : String; S2 : String_Access) return String;
       --  Cat a string access and a string
 
       ---------
       -- Cat --
       ---------
 
-      function Cat (S1 : String_Access;
-                    S2 : String) return String is
+      function Cat (S1 : String_Access; S2 : String) return String is
       begin
          if S1 = null then
             return S2;
@@ -396,8 +393,7 @@ package body Remote_Sync_Module is
       -- Cat --
       ---------
 
-      function Cat (S1 : String;
-                    S2 : String_Access) return String is
+      function Cat (S1 : String; S2 : String_Access) return String is
       begin
          if S2 = null then
             return S1;
@@ -409,9 +405,9 @@ package body Remote_Sync_Module is
    begin
       Old_Buff := Cb_Data.Buffer;
       Cb_Data.Buffer := null;
-      LF_Index := Output'First - 1;
 
       LF_Index := Output'First - 1;
+
       for J in reverse Output'Range loop
          if Output (J) = ASCII.LF
            or else Output (J) = ASCII.CR
