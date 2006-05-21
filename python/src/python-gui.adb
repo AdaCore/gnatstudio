@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
---                            AdaCore                                --
+--                      Copyright (C) 2003-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -161,6 +161,7 @@ package body Python.GUI is
       Main_Module    : PyObject;
       Sigint         : constant Integer := 2;
       Old_Handler    : System.Address;
+      pragma Warnings (Off, Old_Handler);
       Prompt         : PyObject;
       Ignored        : Integer;
       pragma Unreferenced (Ignored);
