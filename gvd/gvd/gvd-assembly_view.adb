@@ -571,7 +571,7 @@ package body GVD.Assembly_View is
          Forward_Line (Iter, Result);
       end loop;
 
-      Result := False;
+      Found := False;
    end Iter_From_Address;
 
    -----------------------
