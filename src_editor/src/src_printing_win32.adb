@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2003-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -285,6 +285,7 @@ package body Src_Printing is
       Printer   : HDC)
    is
       Prior_Font : HFONT;
+      pragma Warnings (Off, Prior_Font);
       Result     : BOOL;
       pragma Unreferenced (Result);
 
@@ -311,6 +312,7 @@ package body Src_Printing is
       Page_Height : INT;
       Last_Line   : INT;
       Prior_Font  : HFONT;
+      pragma Warnings (Off, Prior_Font);
       Banner      : constant String := "Page" & INT'Image (This_Page);
       Result      : BOOL;
       pragma Unreferenced (Result);
