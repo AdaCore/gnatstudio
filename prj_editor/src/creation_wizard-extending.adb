@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
---                            AdaCore                                --
+--                      Copyright (C) 2005-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -343,6 +343,7 @@ package body Creation_Wizard.Extending is
       Iter       : Imported_Project_Iterator := Start (Root_Project);
       File_Names : Argument_List (Files'Range);
       Success    : Boolean;
+      pragma Warnings (Off, Success);
       Error      : Import_Project_Error;
       Created    : Boolean := False;
       pragma Unreferenced (Error);
