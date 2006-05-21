@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2005                       --
+--                      Copyright (C) 2004-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -323,6 +323,7 @@ package body Adp_Converter is
       Name_Zero : aliased constant String := Filename & ASCII.NUL;
       F         : File_Descriptor;
       Length    : Long_Integer;
+      pragma Warnings (Off, Length);
       Buffer    : String_Access;
    begin
       F := Open_Read (Name_Zero'Address, Text);
