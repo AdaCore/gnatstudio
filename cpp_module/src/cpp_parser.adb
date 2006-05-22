@@ -3169,19 +3169,36 @@ package body CPP_Parser is
      (System_Dir : String;
       Handler    : access Entities.LI_Handler_Record'Class) return String
    is
-      H           : constant CPP_Handler := CPP_Handler (Handler);
-      Exec_Suffix : GNAT.OS_Lib.String_Access := Get_Executable_Suffix;
+      H            : constant CPP_Handler := CPP_Handler (Handler);
+      Exec_Suffix  : GNAT.OS_Lib.String_Access := Get_Executable_Suffix;
+      DBIMP_Dir    : GNAT.OS_Lib.String_Access := Getenv ("DBIMP_PATH");
+      CBrowser_Dir : GNAT.OS_Lib.String_Access := Getenv ("CBROWSER_PATH");
    begin
       Free (H.DBIMP_Path);
       Free (H.CBrowser_Path);
 
-      H.DBIMP_Path := new String'
-        (Name_As_Directory (System_Dir) & "bin" &
-         Directory_Separator & DBIMP & Exec_Suffix.all);
-      H.CBrowser_Path := new String'
-        (Name_As_Directory (System_Dir) & "bin"
-         & Directory_Separator & CBrowser & Exec_Suffix.all);
+      if DBIMP_Dir.all = "" then
+         H.DBIMP_Path := new String'
+           (Name_As_Directory (System_Dir) & "bin" &
+            Directory_Separator & DBIMP & Exec_Suffix.all);
+      else
+         H.DBIMP_Path := new String'
+           (DBIMP_Dir.all & Directory_Separator & DBIMP & Exec_Suffix.all);
+      end if;
+
+      if CBrowser_Dir.all = "" then
+         H.CBrowser_Path := new String'
+           (Name_As_Directory (System_Dir) & "bin"
+            & Directory_Separator & CBrowser & Exec_Suffix.all);
+      else
+         H.CBrowser_Path := new String'
+           (CBrowser_Dir.all
+            & Directory_Separator & CBrowser & Exec_Suffix.all);
+      end if;
+
       Free (Exec_Suffix);
+      Free (DBIMP_Dir);
+      Free (CBrowser_Dir);
 
       if not Is_Regular_File (H.DBIMP_Path.all) then
          Free (H.DBIMP_Path);
