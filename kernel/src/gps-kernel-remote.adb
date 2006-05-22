@@ -1317,7 +1317,7 @@ package body GPS.Kernel.Remote is
          Get_Main_Window (Kernel),
          Modal + Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Center_On_Parent);
-      Set_Default_Size (Dialog, 600, 400);
+      Set_Default_Size (Dialog, 640, 400);
       Gtk_New (Tips);
 
       Dialog.Kernel := Kernel;
