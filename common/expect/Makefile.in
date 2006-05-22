@@ -10,11 +10,6 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = -limagehlp
-NM = @NM@
-AS = @AS@
-LD = @LD@
-DLLTOOL = @DLLTOOL@
-WINDRES = @WINDRES@
 
 EXPLAUNCH_OBJS = \
 	expWinSlaveDrv.o \
