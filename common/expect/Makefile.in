@@ -7,7 +7,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CC = @CC@
-CFLAGS = @CFLAGS@
+CFLAGS = -g -O2
 LDFLAGS = @LDFLAGS@
 LIBS = -limagehlp
 
@@ -28,6 +28,10 @@ EXPLAUNCH_DEPS = \
 	tclHash.h
 
 EXPLAUNCH = explaunch.exe
+
+ifeq ($(DEBUG), 1)
+	CFLAGS += -DEXPLAUNCH_DEBUG
+endif
 
 all: $(EXPLAUNCH)
 
