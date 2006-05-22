@@ -28,10 +28,6 @@ package Filesystem is
    type Filesystem_Record is abstract tagged null record;
    type Filesystem_Access is access all Filesystem_Record'Class;
 
-   procedure Initialize_Module (FS : Filesystem_Record) is abstract;
-   --  Initialize the module.
-   --  Need to be called once per actual filesystem class.
-
    function To_Unix
      (FS         : Filesystem_Record;
       Path       : String;

@@ -26,8 +26,6 @@ package Filesystem.Unix is
 
    --  See filesystem.ads for specs of the following routines
 
-   procedure Initialize_Module (FS : Unix_Filesystem_Record);
-
    function To_Unix
      (FS         : Unix_Filesystem_Record;
       Path       : String;

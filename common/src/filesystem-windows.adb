@@ -30,24 +30,6 @@ with VFS;
 
 package body Filesystem.Windows is
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
-
-   procedure Initialize_Module (FS : Windows_Filesystem_Record) is
-   begin
-      Add_Shell_Descriptor
-        ("cmd.exe", "cmd",
-         Generic_Prompt      => "^[^#$>\n]*[#$%>] *$",
-         Configured_Prompt   => "^---GPSPROMPT--#.*$",
-         FS                  => FS,
-         Init_Commands       => (1 => new String'("PROMPT ---GPSPROMPT--#")),
-         Exit_Commands       => (1 => new String'("exit")),
-         Cd_Command          => "cd %d",
-         Get_Status_Command  => "echo %errorlevel%",
-         Get_Status_Ptrn     => "^([0-9]*)\s*$");
-   end Initialize_Module;
-
    -------------
    -- To_Unix --
    -------------

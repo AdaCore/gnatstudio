@@ -26,8 +26,6 @@ package Filesystem.Windows is
 
    --  See filesystem.ads for specs of the following routines
 
-   procedure Initialize_Module (FS : Windows_Filesystem_Record);
-
    function To_Unix
      (FS         : Windows_Filesystem_Record;
       Path       : String;
