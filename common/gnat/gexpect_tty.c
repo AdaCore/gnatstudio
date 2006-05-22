@@ -2274,10 +2274,31 @@ find_child_console (HWND hwnd, child_process * cp)
 int
 gvd_interrupt_process (struct GVD_Process* p)
 {
+  char buf[2];
+  DWORD written;
+  BOOL bret;
+
+  if (p->usePipe == TRUE) {
+    bret = FALSE;
+  } else {
+    buf[0] = EXP_SLAVE_KILL;
+    buf[1] = EXP_KILL_CTRL_C;
+    bret = WriteFile (p->w_infd, buf, 2, &written, NULL);
+  }
+
+  if (bret == FALSE) {
+    gvd_interrupt_pid (p->procinfo.dwProcessId);
+  }
+}
+
+int
+gvd_interrupt_pid (int pid)
+{
   volatile child_process cp;
   int rc = 0;
 
-  cp.procinfo = &p->procinfo;
+  cp.procinfo = (LPPROCESS_INFORMATION) malloc (sizeof (PROCESS_INFORMATION));
+  cp.procinfo->dwProcessId = pid;
 
   if (os_subtype == OS_UNKNOWN)
     cache_system_info ();
@@ -2355,25 +2376,29 @@ gvd_interrupt_process (struct GVD_Process* p)
   return rc;
 }
 
-int
-gvd_interrupt_pid (int pid)
-{
-  struct GVD_Process process;
-
-  process.procinfo.dwProcessId = pid;
-  gvd_interrupt_process (&process);
-}
-
 /* kill a process, as this implementation use CreateProcess on Win32 we need
    to use Win32 TerminateProcess API */
 int
 gvd_terminate_process (struct GVD_Process* p)
 {
-  DWORD rc;
+  char buf[2];
+  DWORD written;
+  BOOL bret;
 
-  if (!TerminateProcess (p->procinfo.hProcess, 1))
-    return -1;
-  else
+  if (p->usePipe == TRUE) {
+    bret = FALSE;
+  } else {
+    buf[0] = EXP_SLAVE_KILL;
+    buf[1] = EXP_KILL_TERMINATE;
+    bret = WriteFile (p->w_infd, buf, 2, &written, NULL);
+  }
+
+  if (bret == FALSE) {
+    if (!TerminateProcess (p->procinfo.hProcess, 1))
+      return -1;
+    else
+      return 0;
+  } else
     return 0;
 }
 
