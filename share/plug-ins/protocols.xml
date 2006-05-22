@@ -6,7 +6,7 @@
 
   <remote_connection_config name="ssh">
     <start_command>ssh</start_command>
-    <start_command_common_args>-t -t -C %h</start_command_common_args>
+    <start_command_common_args>-C %h</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
     <extra_ptrn auto_answer="true" answer="yes">^.*continue connecting \(yes/no\)\? *</extra_ptrn>
   </remote_connection_config>
@@ -31,7 +31,7 @@
 
   <remote_connection_config name="plink ssh">
     <start_command>plink</start_command>
-    <start_command_common_args>-C -t -ssh %h</start_command_common_args>
+    <start_command_common_args>-C -ssh %h</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
     <extra_ptrn auto_answer="true" answer="y">^Store key in cache\? \(y/n\) *</extra_ptrn>
     <use_cr_lf>True</use_cr_lf>
@@ -116,7 +116,7 @@
       <cmd>exit</cmd>
     </exit_commands>
     <cd_command>cd %d</cd_command>
-    <get_status_command>echo $?</get_status_command>
+    <get_status_command>echo $status</get_status_command>
     <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
   </remote_shell_config>
 
@@ -137,7 +137,7 @@
       <cmd>exit</cmd>
     </exit_commands>
     <cd_command>cd %d</cd_command>
-    <get_status_command>echo $?</get_status_command>
+    <get_status_command>echo $status</get_status_command>
     <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
   </remote_shell_config>
 
