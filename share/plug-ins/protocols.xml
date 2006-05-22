@@ -55,6 +55,110 @@
     <use_cr_lf>True</use_cr_lf>
   </remote_connection_config>
 
+  <!-- SH shell -->
+
+  <remote_shell_config name="sh">
+    <start_command>sh -i</start_command>
+    <!-- use default generic_prompt -->
+    <gps_prompt>---GPSPROMPT--#</gps_prompt>
+    <filesystem>unix</filesystem>
+    <init_commands>
+      <cmd>PS1=---GPSPROMPT--#</cmd>
+      <cmd>COLUMNS=2048</cmd>
+      <cmd>LANG=C</cmd>
+      <cmd>export LANG COLUMNS</cmd>
+      <cmd>unalias ls</cmd>
+    </init_commands>
+    <exit_commands>
+      <cmd>exit</cmd>
+    </exit_commands>
+    <cd_command>cd %d</cd_command>
+    <get_status_command>echo $?</get_status_command>
+    <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
+  </remote_shell_config>
+
+  <!-- BASH shell -->
+
+  <remote_shell_config name="bash">
+    <start_command>bash -i</start_command>
+    <!-- use default generic_prompt -->
+    <gps_prompt>---GPSPROMPT--#</gps_prompt>
+    <filesystem>unix</filesystem>
+    <init_commands>
+      <cmd>export PS1=---GPSPROMPT--#</cmd>
+      <cmd>unset PROMPT_COMMAND</cmd>
+      <cmd>export COLUMNS=2048</cmd>
+      <cmd>export LANG=C</cmd>
+      <cmd>unalias ls</cmd>
+    </init_commands>
+    <exit_commands>
+      <cmd>exit</cmd>
+    </exit_commands>
+    <cd_command>cd %d</cd_command>
+    <get_status_command>echo $?</get_status_command>
+    <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
+  </remote_shell_config>
+
+  <!-- CSH shell -->
+
+  <remote_shell_config name="csh">
+    <start_command>csh -i</start_command>
+    <!-- use default generic_prompt -->
+    <gps_prompt>---GPSPROMPT--#</gps_prompt>
+    <filesystem>unix</filesystem>
+    <init_commands>
+      <cmd>set prompt=---GPSPROMPT--#</cmd>
+      <cmd>setenv COLUMNS=2048</cmd>
+      <cmd>setenv LANG=C</cmd>
+      <cmd>unalias ls</cmd>
+    </init_commands>
+    <exit_commands>
+      <cmd>exit</cmd>
+    </exit_commands>
+    <cd_command>cd %d</cd_command>
+    <get_status_command>echo $?</get_status_command>
+    <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
+  </remote_shell_config>
+
+  <!-- TCSH shell -->
+
+  <remote_shell_config name="tcsh">
+    <start_command>tcsh -i</start_command>
+    <!-- use default generic_prompt -->
+    <gps_prompt>---GPSPROMPT--#</gps_prompt>
+    <filesystem>unix</filesystem>
+    <init_commands>
+      <cmd>set prompt=---GPSPROMPT--#</cmd>
+      <cmd>setenv COLUMNS=2048</cmd>
+      <cmd>setenv LANG=C</cmd>
+      <cmd>unalias ls</cmd>
+    </init_commands>
+    <exit_commands>
+      <cmd>exit</cmd>
+    </exit_commands>
+    <cd_command>cd %d</cd_command>
+    <get_status_command>echo $?</get_status_command>
+    <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
+  </remote_shell_config>
+
+  <!-- CMD.EXE shell -->
+
+  <remote_shell_config name="cmd.exe">
+    <start_command>cmd.exe</start_command>
+    <!-- use default generic_prompt -->
+    <gps_prompt>---GPSPROMPT--#</gps_prompt>
+    <filesystem>windows</filesystem>
+    <init_commands>
+      <cmd>PROMPT ---GPSPROMPT--#</cmd>
+    </init_commands>
+    <exit_commands>
+      <cmd>exit</cmd>
+    </exit_commands>
+    <cd_command>cd %d</cd_command>
+    <get_status_command>echo %errorlevel%</get_status_command>
+    <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
+  </remote_shell_config>
+
   <!-- RSYNC CONFIGURATION -->
 
   <rsync_configuration>
