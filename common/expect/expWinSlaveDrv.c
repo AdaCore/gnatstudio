@@ -233,9 +233,10 @@ main(argc, argv)
   /* Make sure a console is there */
   AllocConsole();
 
+  /* Use OVERLAPPED flag so that we can use asynchronous reads */
   hMasterInput = CreateFile(argv[1], GENERIC_READ,
 			    FILE_SHARE_READ,
-			    NULL, OPEN_EXISTING, 0, NULL);
+			    NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
   if (hMasterInput == NULL) {
     EXP_LOG ("ERROR: could not create master input pipe (%d)", GetLastError());
     exit (1);
@@ -341,13 +342,15 @@ ExpProcessInput(HANDLE hMaster, HANDLE hConsoleInW, HANDLE hConsoleOut,
     bRet = ExpReadMaster(hMaster, &buffer[dwHave],
                          dwNeeded-dwHave, &driverInCnt, &dwResult);
     if ((bRet == TRUE && driverInCnt == 0) ||
-      (bRet == FALSE && dwResult == ERROR_BROKEN_PIPE)) {
-        ExpKillProcessList();
-        ExitProcess(1);
+	(bRet == FALSE && dwResult == ERROR_BROKEN_PIPE))
+      {
+	/* Nominal exit of the process */
+	ExpKillProcessList();
+	ExitProcess(exitVal);
       } else if (bRet == FALSE) {
-        EXP_LOG("Unexpected error 0x%x", dwResult);
-        ExpKillProcessList();
-        ExitProcess(1);
+	EXP_LOG("Unexpected error 0x%x", dwResult);
+	ExpKillProcessList();
+	ExitProcess(1);
       }
 
     dwHave += driverInCnt;
@@ -978,8 +981,8 @@ WaitQueueThread(LPVOID *arg)
     CloseHandle(ExpWaitMutex);
 
     /*
-     * When this thread exits, the main thread will be free to return.  Just set
-     * the event so that the main thread knows what's up.
+     * When this thread exits, the main thread will be free to return.  Just
+     * set the event so that the main thread knows what's up.
      */
     EXP_LOG ("Set shutdown handle", NULL);
     SetEvent(hShutdown);
