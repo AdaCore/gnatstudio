@@ -12,7 +12,25 @@
 <documentation_file>
    <shell>Editor.edit "a-calend.ads"</shell>
    <descr>Ada.Calendar</descr>
-   <menu>/Help/GNAT Runtime/Ada/Calendar</menu>
+   <menu>/Help/GNAT Runtime/Ada/Calendar/&lt;Calendar&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-calari.ads"</shell>
+   <descr>Ada.Calendar.Arithmetic</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Calendar/Arithmetic</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-calfor.ads"</shell>
+   <descr>Ada.Calendar.Formatting</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Calendar/Formatting</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-catizo.ads"</shell>
+   <descr>Ada.Calendar.Time_Zones</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Calendar/Time__Zones</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -196,6 +214,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-crdlli.ads"</shell>
+   <descr>Ada.Containers.Restricted_Doubly_Linked_Lists</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Restricted__Doubly__Linked__Lists</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-convec.ads"</shell>
    <descr>Ada.Containers.Vectors</descr>
    <menu>/Help/GNAT Runtime/Ada 2005/Ada/Containers/Vectors</menu>
@@ -226,9 +250,27 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-dispat.ads"</shell>
+   <descr>Ada.Dispatching</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Dispatching/&lt;Dispatching&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-diroro.ads"</shell>
+   <descr>Ada.Dispatching.Round_Robin</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Dispatching/Round__Robin</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-dynpri.ads"</shell>
    <descr>Ada.Dynamic_Priorities</descr>
    <menu>/Help/GNAT Runtime/Ada/Dynamic__Priorities</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-envvar.ads"</shell>
+   <descr>Ada.Environment_Variables</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Environment__Variables</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -492,7 +534,13 @@
 <documentation_file>
    <shell>Editor.edit "a-reatim.ads"</shell>
    <descr>Ada.Real_Time</descr>
-   <menu>/Help/GNAT Runtime/Ada/Real__Time</menu>
+   <menu>/Help/GNAT Runtime/Ada/Real__Time/&lt;Real__Time&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-rttiev.ads"</shell>
+   <descr>Ada.Real_Time.Timing_Events</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Real__Time/Timing__Events</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -606,7 +654,13 @@
 <documentation_file>
    <shell>Editor.edit "a-strbou.ads"</shell>
    <descr>Ada.Strings.Bounded</descr>
-   <menu>/Help/GNAT Runtime/Ada/Strings/Bounded</menu>
+   <menu>/Help/GNAT Runtime/Ada/Strings/Bounded/&lt;Bounded&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-stboha.ads"</shell>
+   <descr>Ada.Strings.Bounded.Hash</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Bounded/Hash</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -618,7 +672,13 @@
 <documentation_file>
    <shell>Editor.edit "a-strfix.ads"</shell>
    <descr>Ada.Strings.Fixed</descr>
-   <menu>/Help/GNAT Runtime/Ada/Strings/Fixed</menu>
+   <menu>/Help/GNAT Runtime/Ada/Strings/Fixed/&lt;Fixed&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-stfiha.ads"</shell>
+   <descr>Ada.Strings.Fixed.Hash</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Fixed/Hash</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -672,13 +732,25 @@
 <documentation_file>
    <shell>Editor.edit "a-stwibo.ads"</shell>
    <descr>Ada.Strings.Wide_Bounded</descr>
-   <menu>/Help/GNAT Runtime/Ada/Strings/Wide__Bounded</menu>
+   <menu>/Help/GNAT Runtime/Ada/Strings/Wide__Bounded/&lt;Wide__Bounded&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-swbwha.ads"</shell>
+   <descr>Ada.Strings.Wide_Bounded.Wide_Hash</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Bounded/Wide__Hash</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
    <shell>Editor.edit "a-stwifi.ads"</shell>
    <descr>Ada.Strings.Wide_Fixed</descr>
-   <menu>/Help/GNAT Runtime/Ada/Strings/Wide__Fixed</menu>
+   <menu>/Help/GNAT Runtime/Ada/Strings/Wide__Fixed/&lt;Wide__Fixed&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-swfwha.ads"</shell>
+   <descr>Ada.Strings.Wide_Fixed.Wide_Hash</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Fixed/Wide__Hash</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -720,13 +792,25 @@
 <documentation_file>
    <shell>Editor.edit "a-stzbou.ads"</shell>
    <descr>Ada.Strings.Wide_Wide_Bounded</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Bounded</menu>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Bounded/&lt;Wide__Wide__Bounded&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-szbzha.ads"</shell>
+   <descr>Ada.Strings.Wide_Wide_Bounded.Wide_Wide_Hash</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Bounded/Wide__Wide__Hash</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
    <shell>Editor.edit "a-stzfix.ads"</shell>
    <descr>Ada.Strings.Wide_Wide_Fixed</descr>
-   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Fixed</menu>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Fixed/&lt;Wide__Wide__Fixed&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-szfzha.ads"</shell>
+   <descr>Ada.Strings.Wide_Wide_Fixed.Wide_Wide_Hash</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Strings/Wide__Wide__Fixed/Wide__Wide__Hash</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
