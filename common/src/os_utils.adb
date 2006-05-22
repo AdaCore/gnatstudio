@@ -216,9 +216,11 @@ package body OS_Utils is
    ---------------
 
    function Read_File (File : String) return String_Access is
-      FD     : File_Descriptor := Invalid_FD;
-      Buffer : String_Access;
-      Length : Integer;
+      FD           : File_Descriptor := Invalid_FD;
+      Buffer       : String_Access;
+      Length       : Integer;
+      Dummy_Length : Integer;
+      pragma Unreferenced (Dummy_Length);
 
    begin
       FD := Open_Read (Locale_From_UTF8 (File), Fmode => Binary);
@@ -230,7 +232,7 @@ package body OS_Utils is
 
       Length := Integer (File_Length (FD));
       Buffer := new String (1 .. Length);
-      Length := Read (FD, Buffer.all'Address, Length);
+      Dummy_Length := Read (FD, Buffer.all'Address, Length);
       Close (FD);
       return Buffer;
    end Read_File;
