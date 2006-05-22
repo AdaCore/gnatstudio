@@ -2416,10 +2416,7 @@ package body GPS.Kernel.Remote is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Unix_FS    : Unix_Filesystem_Record;
-      Windows_FS : Windows_Filesystem_Record;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       --  Register synchronisation hook
       Register_Hook_Data_Type
@@ -2447,9 +2444,6 @@ package body GPS.Kernel.Remote is
       Remote_Module.Kernel := Kernel_Handle (Kernel);
       Register_Module
         (Remote_Module, Kernel, "remote");
-
-      Initialize_Module (Unix_FS);
-      Initialize_Module (Windows_FS);
 
       --  Connect to project_changing hook
       Add_Hook (Kernel, Project_Changing_Hook,
@@ -2617,7 +2611,7 @@ package body GPS.Kernel.Remote is
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
    is
-      pragma Unreferenced (File, Level);
+      pragma Unreferenced (Level);
       Child                     : Node_Ptr;
       Name                      : String_Ptr;
       Start_Command             : String_Ptr;
@@ -2640,6 +2634,165 @@ package body GPS.Kernel.Remote is
          Parse_Remote_Path_Node
            (Module.Kernel, Node, System_Defined);
 
+      elsif Node.Tag.all = "remote_shell_config" then
+         Trace (Me, "Customize: 'remote_shell_config'");
+
+         declare
+            Shell_Name             : constant String
+                                      := Get_Attribute (Node, "name", "");
+            Shell_Cmd              : String_Ptr;
+            Default_Generic_Prompt : aliased String
+                                      := "^[^\n]*[#$%>] *$";
+            Generic_Prompt         : String_Ptr;
+            GPS_Prompt             : String_Ptr;
+            FS_Str                 : String_Ptr;
+            Windows_FS             : aliased Windows_Filesystem_Record;
+            Unix_FS                : aliased Unix_Filesystem_Record;
+            FS                     : Filesystem_Access;
+            Init_Cmds_Child        : Node_Ptr;
+            Exit_Cmds_Child        : Node_Ptr;
+            Nb_Init_Cmds           : Natural;
+            Nb_Exit_Cmds           : Natural;
+            Cd_Cmd                 : String_Ptr;
+            Get_Status_Cmd         : String_Ptr;
+            Get_Status_Ptrn        : String_Ptr;
+
+         begin
+            if Shell_Name = "" then
+               Console.Insert
+                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                  ": missing 'name' attribute in remote_shell_config",
+                  Mode => Error);
+               return;
+            end if;
+
+            Shell_Cmd := Get_Field (Node, "start_command");
+            if Shell_Cmd = null then
+               Console.Insert
+                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                  ": missing 'start_command' child in remote_shell_config",
+                  Mode => Error);
+               return;
+            end if;
+
+            Generic_Prompt := Get_Field (Node, "generic_prompt");
+            if Generic_Prompt = null then
+               Generic_Prompt := Default_Generic_Prompt'Unchecked_Access;
+            end if;
+
+            GPS_Prompt := Get_Field (Node, "gps_prompt");
+            if GPS_Prompt = null then
+               Console.Insert
+                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                  ": missing 'gps_prompt' child in remote_shell_config",
+                  Mode => Error);
+               return;
+            end if;
+
+            FS_Str := Get_Field (Node, "filesystem");
+            if FS_Str = null then
+               Console.Insert
+                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                  ": missing 'filesystem' child in remote_shell_config",
+                  Mode => Error);
+               return;
+            end if;
+            if FS_Str.all = "windows" then
+               FS := Windows_FS'Unchecked_Access;
+            elsif FS_Str.all = "unix" then
+               FS := Unix_FS'Unchecked_Access;
+            else
+               Console.Insert
+                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                  ": 'filesystem' child has " & FS_Str.all &
+                  " value. Only 'windows' or 'unix' values are supported",
+                  Mode => Error);
+               return;
+            end if;
+
+            Init_Cmds_Child := Find_Tag (Node.Child, "init_commands");
+            Child := Init_Cmds_Child.Child;
+            Nb_Init_Cmds := 0;
+
+            while Child /= null loop
+               Child := Child.Next;
+               Nb_Init_Cmds := Nb_Init_Cmds + 1;
+            end loop;
+
+            Exit_Cmds_Child := Find_Tag (Node.Child, "exit_commands");
+            Child := Exit_Cmds_Child.Child;
+            Nb_Exit_Cmds := 0;
+
+            while Child /= null loop
+               Child := Child.Next;
+               Nb_Exit_Cmds := Nb_Exit_Cmds + 1;
+            end loop;
+
+            Cd_Cmd := Get_Field (Node, "cd_command");
+            if Cd_Cmd = null then
+               Console.Insert
+                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                  ": missing 'cd_command' child in remote_shell_config",
+                  Mode => Error);
+               return;
+            end if;
+
+            Get_Status_Cmd := Get_Field (Node, "get_status_command");
+            if Get_Status_Cmd = null then
+               Console.Insert
+                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                  ": missing 'get_status_command' child in " &
+                  "remote_shell_config",
+                  Mode => Error);
+               return;
+            end if;
+
+            Get_Status_Ptrn := Get_Field (Node, "get_status_ptrn");
+            if Get_Status_Ptrn = null then
+               Console.Insert
+                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                  ": missing 'get_status_ptrn' child in remote_shell_config",
+                  Mode => Error);
+               return;
+            end if;
+
+            declare
+               Init_Cmds : GNAT.OS_Lib.String_List (1 .. Nb_Init_Cmds);
+               Exit_Cmds : GNAT.OS_Lib.String_List (1 .. Nb_Exit_Cmds);
+               Idx       : Natural;
+            begin
+               Child := Init_Cmds_Child.Child;
+               Idx := Init_Cmds'First;
+
+               while Child /= null loop
+                  Init_Cmds (Idx) := new String'(Child.Value.all);
+                  Idx := Idx + 1;
+                  Child := Child.Next;
+               end loop;
+
+               Child := Exit_Cmds_Child.Child;
+               Idx   := Exit_Cmds'First;
+
+               while Child /= null loop
+                  Exit_Cmds (Idx) := new String'(Child.Value.all);
+                  Idx := Idx + 1;
+                  Child := Child.Next;
+               end loop;
+
+               Add_Shell_Descriptor
+                 (Shell_Name,
+                  Shell_Cmd.all,
+                  Generic_Prompt.all,
+                  GPS_Prompt.all,
+                  FS.all,
+                  Init_Cmds,
+                  Exit_Cmds,
+                  Cd_Cmd.all,
+                  Get_Status_Cmd.all,
+                  Get_Status_Ptrn.all);
+            end;
+         end;
+
       elsif Node.Tag.all = "remote_connection_config" then
          Trace (Me, "Initialize_Remote_Config: 'remote_connection_config'");
 
@@ -2649,7 +2802,7 @@ package body GPS.Kernel.Remote is
             Console.Insert
               (Module.Kernel,
                -("XML Error: remote_connection_config tag is missing a " &
-                 "name attribute"),
+                 "name attribute in " & Full_Name (File).all),
                Add_LF => True, Mode => Error);
             return;
          end if;
@@ -2660,7 +2813,7 @@ package body GPS.Kernel.Remote is
             Console.Insert
               (Module.Kernel,
                -("XML Error: remote_connection_config is missing a " &
-               "start_command field"),
+               "start_command field in " & Full_Name (File).all),
                Add_LF => True, Mode => Error);
             return;
          end if;
