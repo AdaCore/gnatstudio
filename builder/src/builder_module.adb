@@ -323,9 +323,12 @@ package body Builder_Module is
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Compute Xref information menu
 
-   procedure Load_Xref_In_Memory
+   procedure On_Load_Xref_In_Memory
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Load Xref info
+
+   procedure Load_Xref_In_Memory (Kernel : Kernel_Handle);
+   --  Load the Xref info in memory, in a background task.
 
    procedure On_Run
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
@@ -1313,19 +1316,31 @@ package body Builder_Module is
       Result := Execute_Again;
    end Load_Xref_Iterate;
 
+   ----------------------------
+   -- On_Load_Xref_In_Memory --
+   ----------------------------
+
+   procedure On_Load_Xref_In_Memory
+     (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Object);
+   begin
+      Load_Xref_In_Memory (Kernel);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Load_Xref_In_Memory;
+
    -------------------------
    -- Load_Xref_In_Memory --
    -------------------------
 
-   procedure Load_Xref_In_Memory
-     (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Object);
+   procedure Load_Xref_In_Memory (Kernel : Kernel_Handle) is
       C              : Load_Xref_Commands.Generic_Asynchronous_Command_Access;
       Projects_Count : Natural := 0;
       Iter           : Imported_Project_Iterator :=
                          Start (Get_Project (Kernel));
-
    begin
       while Current (Iter) /= No_Project loop
          Projects_Count := Projects_Count + 1;
@@ -1343,11 +1358,6 @@ package body Builder_Module is
          Load_Xref_Iterate'Access);
       Launch_Background_Command
         (Kernel, Command_Access (C), False, True, "");
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Load_Xref_In_Memory;
 
    ------------
@@ -1855,6 +1865,9 @@ package body Builder_Module is
       Show_All (Menu1);
       Show_All (Menu2);
 
+      if Get_Pref (Load_Xref_Info_On_Project_Load) then
+         Load_Xref_In_Memory (Kernel_Handle (Kernel));
+      end if;
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1979,7 +1992,7 @@ package body Builder_Module is
          On_Compute_Xref'Access);
       Register_Menu
         (Kernel, Build, -"Load Xref info in memory", "",
-         Load_Xref_In_Memory'Access);
+         On_Load_Xref_In_Memory'Access);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Tools, Mitem);
