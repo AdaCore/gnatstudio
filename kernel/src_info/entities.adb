@@ -70,6 +70,7 @@ package body Entities is
    use Entity_Reference_Arrays;
    use Dependency_Arrays;
    use Instantiation_Arrays;
+   use Entities_Search_Tries;
 
    Entity_Information_Type : Glib.GType := Glib.GType_None;
 
@@ -570,7 +571,7 @@ package body Entities is
       if Active (Assert_Me) then
          Trace (Assert_Me, "Reseting " & Full_Name (File.Name).all);
          if Base_Name (Get_Filename (File)) = "atree.ads" then
-            Dump (File, Show_Entities => True, Full => True);
+            Debug.Dump (File, Show_Entities => True, Full => True);
          end if;
       end if;
 
@@ -902,6 +903,12 @@ package body Entities is
             if Active (Debug_Me) then
                Entity.Name := Shared;
             else
+               if Entity.Declaration.File.Handler /= null then
+                  Remove
+                    (Entity.Declaration.File.Handler,
+                     Entity);
+               end if;
+
                Free (Entity.Name);
                Unchecked_Free (Entity);
             end if;
@@ -1770,11 +1777,17 @@ package body Entities is
             Child_Types           => Null_Entity_Information_List,
             References            => Null_Entity_Reference_List,
             Is_Valid              => True,
-            Ref_Count             => 1);
+            Ref_Count             => 1,
+            Trie_Tree_Array       => null,
+            Trie_Tree_Index       => 0);
          Append (UEI.List.all, E);
 
          if Must_Add_To_File then
             Set (File.Entities, UEI);
+
+            if File.Handler /= null then
+               Insert (File.Handler, E);
+            end if;
          end if;
 
       elsif E /= null then
@@ -2655,5 +2668,199 @@ package body Entities is
       Entity := To_EI (Get_Boxed (Value));
       return Entity;
    end From_GValue;
+
+   ------------------------------
+   -- Get_Index_In_Search_Tree --
+   ------------------------------
+
+   function Get_Name (Entities : Entity_Array_Node)
+      return GNAT.OS_Lib.String_Access
+   is
+   begin
+      return Entities.Name;
+   end Get_Name;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Entities : in out Entity_Array_Node) is
+      procedure Internal_Free is new Ada.Unchecked_Deallocation
+        (Entity_Information_Array, Entity_Array_Access);
+   begin
+      GNAT.OS_Lib.Free (Entities.Name);
+      Internal_Free (Entities.Entities);
+   end Free;
+
+   ------------
+   -- Insert --
+   ------------
+
+   procedure Insert
+     (Handler : access LI_Handler_Record'Class;
+      Entity  : Entity_Information)
+   is
+      Node : Entity_Array_Node;
+      Name : String := Get_Name (Entity).all;
+   begin
+      if Handler.Name_Index = null then
+         Handler.Name_Index := new Entities_Search_Tries.Trie_Tree;
+      end if;
+
+      if Case_Insensitive_Identifiers (Handler) then
+         Name := To_Lower (Name);
+      end if;
+
+      Node := Get (Handler.Name_Index, Name);
+
+      --  If there were no such node, create it
+
+      if Node.Name = null then
+         Node.Name := new String'(Name);
+         Node.Entities := new Entity_Information_Array'(1 => Entity);
+         Insert (Handler.Name_Index.all, Node);
+         Entity.Trie_Tree_Array := Node.Entities;
+         Entity.Trie_Tree_Index := 1;
+      end if;
+
+      --  Search an empty slot in the entities array
+
+      for J in Node.Entities.all'Range loop
+         if Node.Entities.all (J) = null then
+            Node.Entities.all (J) := Entity;
+            Entity.Trie_Tree_Array := Node.Entities;
+            Entity.Trie_Tree_Index := J;
+
+            return;
+         end if;
+      end loop;
+
+      --  If we did not find any empty slot, create a new and bigger array
+
+      declare
+         Old_Array : constant Entity_Array_Access := Node.Entities;
+         Old_Name  : constant GNAT.OS_Lib.String_Access := Node.Name;
+      begin
+         Node.Entities := new Entity_Information_Array
+           (1 .. Old_Array.all'Length * 2);
+
+         for J in Old_Array.all'Range loop
+            Old_Array.all (J).Trie_Tree_Array := Node.Entities;
+         end loop;
+
+         Node.Entities (Old_Array.all'Last + 1) := Entity;
+         Entity.Trie_Tree_Array := Node.Entities;
+         Entity.Trie_Tree_Index := Old_Array.all'Last + 1;
+
+         Node.Name := new String'(Old_Name.all);
+
+         --  This operation will free Old_Array and Old_Name
+         Insert (Handler.Name_Index.all, Node);
+      end;
+   end Insert;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove
+     (Handler : access LI_Handler_Record'Class;
+      Entity  : Entity_Information)
+   is
+      pragma Unreferenced (Handler);
+   begin
+      if Entity.Trie_Tree_Array /= null then
+         Entity.Trie_Tree_Array (Entity.Trie_Tree_Index) := null;
+      end if;
+   end Remove;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (LI : access LI_Handler_Record; Prefix : String)
+      return LI_Entities_Iterator
+   is
+      It : LI_Entities_Iterator;
+   begin
+      if LI.Name_Index = null then
+         return Null_LI_Entities_Iterator;
+      end if;
+
+      It := (It => Start (LI.Name_Index, Prefix), Index => 1);
+
+      if Is_Valid (It) then
+         return It;
+      end if;
+
+      Next (It);
+
+      return It;
+   end Start;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (It : LI_Entities_Iterator) return Entity_Information is
+   begin
+      return Get (It.It).Entities.all (It.Index);
+   end Get;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (It : in out LI_Entities_Iterator) is
+   begin
+      It.Index := It.Index + 1;
+
+      if Is_Valid (It) then
+         return;
+      end if;
+
+      while not At_End (It) loop
+         while not At_End (It)
+           and then It.Index > Get (It.It).Entities.all'Last
+         loop
+            Next (It.It);
+            It.Index := 1;
+         end loop;
+
+         exit when At_End (It)
+           or else Get (It.It).Entities.all (It.Index) /= null;
+
+         It.Index := It.Index + 1;
+      end loop;
+   end Next;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (It : LI_Entities_Iterator) return Boolean is
+   begin
+      return Length (It.It) = 0;
+   end At_End;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (It : LI_Entities_Iterator) return Boolean is
+   begin
+      return At_End (It) or else
+        (It.Index <= Get (It.It).Entities.all'Last
+         and then Get (It.It).Entities.all (It.Index) /= null);
+   end Is_Valid;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (It : in out LI_Entities_Iterator) is
+   begin
+      Free (It.It);
+   end Free;
 
 end Entities;
