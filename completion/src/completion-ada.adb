@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Completion.Expression_Parser; use Completion.Expression_Parser;
-with Glib.Unicode;                 use Glib.Unicode;
 
 package body Completion.Ada is
 
@@ -35,9 +34,10 @@ package body Completion.Ada is
 
       Completing_Expression : Token_List.List;
 
-      function Analyze_Token
-        (Token : Token_List.List_Node; Previous_It : Completion_Iterator)
-         return Completion_List;
+      procedure Analyze_Token
+        (Token       : Token_List.List_Node;
+         Previous_It : Completion_Iterator;
+         Result      : in out Completion_List);
 
       -------------------
       -- Analyze_Token --
@@ -45,23 +45,21 @@ package body Completion.Ada is
 
       Filter : Possibilities_Filter := All_Visible_Entities;
 
-      function Analyze_Token
-        (Token : Token_List.List_Node; Previous_It : Completion_Iterator)
-         return Completion_List
+      procedure Analyze_Token
+        (Token       : Token_List.List_Node;
+         Previous_It : Completion_Iterator;
+         Result      : in out Completion_List)
       is
          Tmp           : Completion_List;
          Tmp_It        : Completion_Iterator;
-         Returned_List : Completion_List;
 
-         function Handle_Identifier (Id : String) return Completion_List;
+         procedure Handle_Identifier (Id : String);
 
          -----------------------
          -- Handle_Identifier --
          -----------------------
 
-         function Handle_Identifier (Id : String) return Completion_List is
-            Returned_List : Completion_List;
-            Extra_Size    : Natural;
+         procedure Handle_Identifier (Id : String) is
          begin
             if Token = First (Completing_Expression)
               or else (Filter and All_Accessible_Units) /= 0
@@ -72,14 +70,13 @@ package body Completion.Ada is
                   It := First (Manager.Resolvers);
 
                   while It /= Completion_Resolver_List_Pckg.Null_Node loop
-                     Concat
-                       (Tmp,
-                        Get_Possibilities
-                          (Data (It),
-                           Id,
-                           Next (Token) = Token_List.Null_Node,
-                           Data (Token).Token_Name_First - 1,
-                           Filter));
+                     Get_Possibilities
+                       (Data (It),
+                        Id,
+                        Next (Token) = Token_List.Null_Node,
+                        Data (Token).Token_Name_First - 1,
+                        Filter,
+                        Tmp);
 
                      It := Next (It);
                   end loop;
@@ -87,65 +84,64 @@ package body Completion.Ada is
 
                Filter := All_Visible_Entities;
             else
-               Tmp := Get_Composition
-                 (Data (Previous_It),
-                  Get_Name (Get_Buffer (Manager).all, Data (Token)),
+               Get_Composition
+                 (Get_Proposal (Previous_It),
                   Data (Token).Token_Name_First - 1,
-                  Next (Token) = Token_List.Null_Node);
+                  Tmp);
+               Tmp.Searched_Identifier := new String'
+                 (Get_Name (Get_Buffer (Manager).all, Data (Token)));
+               Tmp.Is_Partial := Next (Token)
+                 = Token_List.Null_Node;
             end if;
 
             Tmp_It := First (Tmp);
 
             if Next (Token) = Token_List.Null_Node then
-               Extra_Size := Integer (UTF8_Strlen (Id));
-
-               while Tmp_It /= Null_Completion_Iterator loop
-                  Data_Ref (Tmp_It).Extra_Characters := Extra_Size;
-
-                  Tmp_It := Next (Tmp_It);
-               end loop;
-
-               return Tmp;
+               Result := Tmp;
             else
-               while Tmp_It /= Null_Completion_Iterator loop
-                  Concat
-                    (Returned_List,
-                     Analyze_Token (Next (Token), Tmp_It));
+               Free (Result);
 
-                  Tmp_It := Next (Tmp_It);
+               while not At_End (Tmp_It) loop
+                  Analyze_Token (Next (Token), Tmp_It, Result);
+
+                  Next (Tmp_It);
                end loop;
-            end if;
 
-            return Returned_List;
+               Free (Tmp);
+            end if;
          end Handle_Identifier;
 
       begin
          case Data (Token).Tok_Type is
             when Tok_Dot =>
                if Next (Token) = Token_List.Null_Node then
-                  return Get_Composition (Data (Previous_It), Start_Offset);
+                  Get_Composition
+                    (Get_Proposal (Previous_It), Start_Offset, Result);
                else
-                  return Analyze_Token (Next (Token), Previous_It);
+                  Analyze_Token (Next (Token), Previous_It, Result);
                end if;
 
             when Tok_Comma =>
                pragma Assert (Next (Token) = Token_List.Null_Node);
 
-               declare
-                  Real_Proposal : Completion_Proposal'Class :=
-                    Get_Proposal (Previous_It);
-               begin
-                  Set_Mode (Real_Proposal, Show_Parameters);
-                  Append (Returned_List, Real_Proposal);
-
-                  return Returned_List;
-               end;
+               --  ???  Temporary deactivated this code, since it's not
+               --  implemented anyway
+--                 declare
+--                    Real_Proposal : Completion_Proposal'Class :=
+--                      Get_Proposal (Previous_It);
+--                 begin
+--                    Set_Mode (Real_Proposal, Show_Parameters);
+--                    Append (Returned_List, Real_Proposal);
+--
+--                    return Returned_List;
+--                 end;
+               null;
 
             when Tok_All =>
                if Next (Token) = Token_List.Null_Node then
                   --  If it's the last token, it might not be the keyword all,
                   --  see if we have something here
-                  return Handle_Identifier ("all");
+                  Handle_Identifier ("all");
                else
                   --  If not, we are really on the 'all' keyword, and we need
                   --  to dereference it
@@ -153,24 +149,24 @@ package body Completion.Ada is
                end if;
 
             when Tok_Identifier =>
-               return Handle_Identifier
+               Handle_Identifier
                  (Get_Name (Get_Buffer (Manager).all, Data (Token)));
+
+               return;
 
             when Tok_Expression =>
                if Get_Number_Of_Parameters (Get_Proposal (Previous_It))
-                 < Data (Token).Number_Of_Parameters
+                 >= Data (Token).Number_Of_Parameters
                then
-                  return Null_Completion_List;
+                  Analyze_Token (Next (Token), Previous_It, Result);
                end if;
-
-               return Analyze_Token (Next (Token), Previous_It);
 
             when Tok_With =>
                pragma Assert (Token = First (Completing_Expression));
 
                Filter := All_Accessible_Units;
 
-               return Analyze_Token (Next (Token), Previous_It);
+               Analyze_Token (Next (Token), Previous_It, Result);
 
             when Tok_Use =>
                null;
@@ -178,16 +174,17 @@ package body Completion.Ada is
             when others =>
                null;
          end case;
-
-         return Null_Completion_List;
       end Analyze_Token;
 
+      Result : Completion_List;
    begin
       Completing_Expression := Parse_Current_List
         (Get_Buffer (Manager).all, Start_Offset);
 
-      return Analyze_Token
-        (First (Completing_Expression), Null_Completion_Iterator);
+      Analyze_Token
+        (First (Completing_Expression), Null_Completion_Iterator, Result);
+
+      return Result;
    end Get_Initial_Completion_List;
 
 end Completion.Ada;
