@@ -36,6 +36,7 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
@@ -686,6 +687,7 @@ package body Custom_Module is
          Pixmap  : String_Access := new String'("");
          Image   : Gtk_Image;
          Command : Action_Record_Access;
+         Space   : Gtk_Separator_Tool_Item;
 
       begin
          if Action = "" then
@@ -731,7 +733,10 @@ package body Custom_Module is
             end if;
 
          else
-            Append_Space (Get_Toolbar (Kernel));
+            Gtk_New (Space);
+            Insert
+              (Get_Toolbar (Kernel), Space,
+               Get_N_Items (Get_Toolbar (Kernel)));
          end if;
 
          Free (Title);
