@@ -52,6 +52,12 @@ procedure Completion.Test is
    File   : File_Type;
    Buffer : Strings.Unbounded.Unbounded_String;
 
+   Max_Accepted_Time_For_Creation : constant Duration := 0.1;
+   --  Maximum time for the resolution, in seconds
+
+   Max_Accepted_Time_For_Iteration : constant Duration := 0.1;
+   --  Maximum time for the resolution, in seconds
+
    procedure Next_Complete_Tag
      (Buffer      : String;
       Index       : in out Natural;
@@ -112,19 +118,50 @@ procedure Completion.Test is
 
    procedure Display (List : Completion_List; Name : String) is
       Iter : Completion_Iterator;
+
+      Start_Date  : Time;
+      Time_Passed : Duration;
    begin
       Put_Line (" *** " & Name & " *** ");
 
+      Start_Date := Clock;
+
       Iter := First (List);
 
-      while Iter /= Null_Completion_Iterator loop
+      --  This first dummy loop checks that we can iterate over the elements of
+      --  the list in a reasonable time.
+
+      while not At_End (Iter) loop
+         declare
+            Proposal : Completion_Proposal'Class := Get_Proposal (Iter);
+         begin
+            if Get_Completion (Proposal) = "***" then
+               Put_Line ("Dummy test");
+            end if;
+         end;
+
+         Next (Iter);
+      end loop;
+
+      Time_Passed := Clock - Start_Date;
+
+      if Time_Passed > Max_Accepted_Time_For_Iteration then
+         Put_Line ("Iteration on completion is too long: " &
+                   Duration'Image (Time_Passed));
+      end if;
+
+      Iter := First (List);
+
+      --  This loop displays the contents of the list.
+
+      while not At_End (Iter) loop
          Text_IO.Put (Get_Completion (Get_Proposal (Iter)) & " (");
          Text_IO.Put
            (Language_Category'Image
              (Get_Category (Get_Proposal (Iter))) & ")");
          New_Line;
 
-         Iter := Next (Iter);
+         Next (Iter);
       end loop;
    end Display;
 
@@ -247,6 +284,7 @@ procedure Completion.Test is
 
       Loaded  : Boolean;
 
+      Handler : Language_Handler;
    begin
       Analyze_Ada_Source
         (Buffer          => Buffer,
@@ -272,13 +310,25 @@ procedure Completion.Test is
 
       Recompute_View (Registry, Project_Error'Unrestricted_Access);
 
+      Handler := Create_Lang_Handler;
+      --  It's important to have called that before the update of the xrefs !
+
+      declare
+         Files : constant VFS.File_Array_Access :=
+           Get_Source_Files (Get_Root_Project (Registry), True);
+      begin
+         for J in Files.all'Range loop
+            Update_Xref (Get_Or_Create (Db, Files (J)));
+         end loop;
+      end;
+
       Compute_All_Call_Graphs (Db);
 
       return new Entity_Completion_Resolver'
         (New_Entity_Completion_Resolver
            (new Construct_Tree'(To_Construct_Tree (Constructs.all)),
             Get_Root_Project (Registry),
-            Create_Lang_Handler));
+            Handler));
    end Get_Entity_Completion_Resolver;
 
    ------------------------
@@ -313,16 +363,17 @@ procedure Completion.Test is
 
          Start_Date := Clock;
 
-         Result := Get_Possibilities
+         Get_Possibilities
            (Resolver => Resolver,
             Identifier => Buffer (Start_Word .. End_Word),
             Is_Partial => True,
             Offset     => End_Word,
-            Filter     => All_Visible_Entities);
+            Filter     => All_Visible_Entities,
+            Result     => Result);
 
          Time_Passed := Clock - Start_Date;
 
-         if Time_Passed > 1.0 then
+         if Time_Passed > Max_Accepted_Time_For_Creation then
             Text_IO.Put_Line
               ("Completion is too long: "
                & Duration'Image (Time_Passed)
@@ -330,6 +381,8 @@ procedure Completion.Test is
          end if;
 
          Display (Result, Buffer (Start_Word .. End_Word));
+
+         Free (Result);
       end loop;
    end Extract_Constructs;
 
@@ -371,7 +424,7 @@ procedure Completion.Test is
 
          Time_Passed := Clock - Start_Date;
 
-         if Time_Passed > 1.0 then
+         if Time_Passed > Max_Accepted_Time_For_Creation then
             Text_IO.Put_Line
               ("Completion is too long: "
                & Duration'Image (Time_Passed)
@@ -398,6 +451,9 @@ procedure Completion.Test is
         new Ada_Completion_Manager;
       Resolver : constant Completion_Resolver_Access :=
         Get_Entity_Completion_Resolver (Buffer, Project);
+
+      Start_Date  : Time;
+      Time_Passed : Duration;
    begin
       Tag_Index := 1;
 
@@ -410,14 +466,28 @@ procedure Completion.Test is
 
          exit when Tag_Index = 0;
 
-         Result := Get_Possibilities
+         Start_Date := Clock;
+
+         Get_Possibilities
            (Resolver   => Resolver,
             Identifier => Buffer (Start_Word .. End_Word),
             Is_Partial => True,
             Offset     => End_Word,
-            Filter     => All_Visible_Entities);
+            Filter     => All_Visible_Entities,
+            Result     => Result);
+
+         Time_Passed := Clock - Start_Date;
+
+         if Time_Passed > Max_Accepted_Time_For_Creation then
+            Text_IO.Put_Line
+              ("Completion is too long: "
+               & Duration'Image (Time_Passed)
+               & " seconds.");
+         end if;
 
          Display (Result, Buffer (Start_Word .. End_Word));
+
+         Free (Result);
       end loop;
 
    end Extract_Entities;
@@ -428,6 +498,7 @@ procedure Completion.Test is
 
    procedure Full_Test (Buffer : String; Project : String) is
       Result      : Completion_List;
+
       Tag_Index   : Natural;
 
       Start_Word  : Natural;
@@ -436,11 +507,14 @@ procedure Completion.Test is
       Manager  : constant Completion_Manager_Access :=
         new Ada_Completion_Manager;
 
+      Start_Date  : Time;
+      Time_Passed : Duration;
    begin
       Tag_Index := 1;
 
       Set_Buffer (Manager.all, new String'(Buffer));
-      Register_Resolver (Manager, Get_Construct_Completion_Resolver (Buffer));
+      Register_Resolver
+        (Manager, Get_Construct_Completion_Resolver (Buffer));
       Register_Resolver
         (Manager, Get_Entity_Completion_Resolver
          (Buffer, Project));
@@ -451,15 +525,27 @@ procedure Completion.Test is
 
          exit when Tag_Index = 0;
 
+         Start_Date := Clock;
+
          Result := Get_Initial_Completion_List
            (Manager      => Manager.all,
             Start_Offset => End_Word);
+
+         Time_Passed := Clock - Start_Date;
+
+         if Time_Passed > Max_Accepted_Time_For_Creation then
+            Text_IO.Put_Line
+              ("Completion is too long: "
+               & Duration'Image (Time_Passed)
+               & " seconds.");
+         end if;
 
          Display (Result, Buffer (Start_Word .. End_Word));
       end loop;
    end Full_Test;
 
 begin
+
    if Argument_Count < 2 then
       Put_Line ("Usage : <command> <file_name> <mode>");
       return;
