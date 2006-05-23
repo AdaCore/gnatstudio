@@ -238,6 +238,7 @@ package GPS.Kernel.Preferences is
    Invalid_Variable_Ref_Background : Param_Spec_Color;
    Generate_Relative_Paths         : Param_Spec_Boolean;
    Trusted_Mode                    : Param_Spec_Boolean;
+   Load_Xref_Info_On_Project_Load  : Param_Spec_Boolean;
 
    -- Wizards --
    Wizard_Title_Font : Param_Spec_Font;
