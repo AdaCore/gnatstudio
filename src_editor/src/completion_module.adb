@@ -590,7 +590,8 @@ package body Completion_Module is
                begin
                   Iter := First (List);
 
-                  while Iter /= Null_Completion_Iterator loop
+                  while not At_End (Iter) loop
+
                      declare
                         T : constant String :=
                           Get_Completion (Get_Proposal (Iter));
@@ -602,13 +603,12 @@ package body Completion_Module is
                      end;
 
                      if To_Replace = 0 then
-                        To_Replace := Characters_To_Replace
-                          (Get_Proposal (Iter));
+                        To_Replace := Get_Completed_String (List)'Length;
                      end if;
 
                      Content_Displayed := True;
 
-                     Iter := Next (Iter);
+                     Next (Iter);
                   end loop;
                end Display;
 
@@ -633,8 +633,6 @@ package body Completion_Module is
 
                Register_Resolver (Manager, Constructs_Resolver);
 
-               --  ??? The following line causes the registration of the
-               --  Entity_Resolver, which is currently known to be very slow
                Register_Resolver (Manager, Entity_Resolver);
 
                Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
