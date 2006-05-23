@@ -18,11 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Entities.Queries;        use Entities.Queries;
-with VFS;                     use VFS;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Language.Ada; use Language.Ada;
 
 package body Completion.Entities_Extractor is
+
+   use Completion_List_Pckg;
 
    ------------------------------------
    -- New_Entity_Completion_Resolver --
@@ -67,31 +68,37 @@ package body Completion.Entities_Extractor is
    -- Get_Composition --
    ---------------------
 
-   function Get_Composition
-     (Proposal : Entity_Completion_Proposal; Offset : Positive)
-      return Completion_List
+   procedure Get_Composition
+     (Proposal : Entity_Completion_Proposal;
+      Offset   : Positive;
+      Result   : in out Completion_List)
    is
-      Result : Completion_List := Null_Completion_List;
       pragma Unreferenced (Offset);
    begin
-      if Get_Kind (Proposal.Entity).Is_Type then
-         declare
-            It : Calls_Iterator := Get_All_Called_Entities (Proposal.Entity);
-         begin
-            while not At_End (It) loop
-               Append
-                 (Result,
-                  Entity_Completion_Proposal'
-                    (Proposal.Mode, Proposal.Resolver, 0, Get (It)));
+      if Get_Kind (Proposal.Entity).Kind = Package_Kind then
+         --  Appends an iterator on the package children
+         Append
+           (Result.List,
+            Source_File_Component'
+              (Resolver => Get_Resolver (Proposal),
+               Files    => Get_Source_Files
+                 (Entity_Completion_Resolver (Proposal.Resolver.all).Project,
+                  True),
+               Parent => Proposal.Entity));
 
-               Next (It);
-            end loop;
-
-            Destroy (It);
-         end;
+         --  Appends an iterator on the package contents
+         Append
+           (Result.List,
+            Calls_Wrapper'
+              (Resolver => Get_Resolver (Proposal),
+               Scope    => Proposal.Entity));
+      elsif Get_Kind (Proposal.Entity).Is_Type then
+         Append
+           (Result.List,
+            Calls_Wrapper'
+              (Resolver => Get_Resolver (Proposal),
+               Scope    => Proposal.Entity));
       end if;
-
-      return Result;
    end Get_Composition;
 
    ------------------------------
@@ -115,185 +122,6 @@ package body Completion.Entities_Extractor is
    begin
       null;
    end Free;
-
-   --------------------
-   -- Get_Completion --
-   --------------------
-
-   function Get_Completion (Proposal : Unit_Completion_Proposal)
-      return UTF8_String
-   is
-   begin
-      return Get_Name (Proposal.Info).all;
-   end Get_Completion;
-
-   ------------------
-   -- Get_Category --
-   ------------------
-
-   function Get_Category (Proposal : Unit_Completion_Proposal)
-     return Language_Category
-   is
-      pragma Unreferenced (Proposal);
-   begin
-      return Cat_With;
-   end Get_Category;
-
-   --------------------
-   -- Get_Compositon --
-   --------------------
-
-   function Get_Composition
-     (Proposal : Unit_Completion_Proposal; Offset : Positive)
-      return Completion_List
-   is
-      pragma Unreferenced (Offset);
-
-      Files        : VFS.File_Array_Access :=
-        Get_Source_Files
-          (Entity_Completion_Resolver (Proposal.Resolver.all).Project, True);
-      Current_File : Source_File;
-      Result       : Completion_List;
-      Resolver     : Entity_Completion_Resolver := Entity_Completion_Resolver
-        (Proposal.Resolver.all);
-
-      procedure Add_Nested_Packages (Unit_Info : Entity_Information);
-
-      -------------------------
-      -- Add_Nested_Packages --
-      -------------------------
-
-      procedure Add_Nested_Packages (Unit_Info : Entity_Information)
-      is
-         It   : Calls_Iterator;
-         Info : Entity_Information;
-      begin
-         It := Get_All_Called_Entities (Unit_Info);
-
-         while not At_End (It) loop
-            Info := Get (It);
-
-            if Get_File (Get_Declaration_Of (Info))
-              = Get_File (Get_Declaration_Of (Unit_Info))
-              and then Get_Kind (Info).Kind = Package_Kind then
-               Append
-                 (Result,
-                  Unit_Completion_Proposal'
-                    (Show_Identifiers, Proposal.Resolver, 0, Info, True));
-            end if;
-
-            Next (It);
-         end loop;
-
-         Destroy (It);
-      end Add_Nested_Packages;
-
-   begin
-      if not Proposal.Nested then
-         for J in Files.all'Range loop
-            Current_File := Get_Source_Info
-              (Get_LI_Handler_From_File (Resolver.Handler, Files.all (J)),
-               Files.all (J));
-
-            if Current_File /= null then
-               if Match
-                 (Get_Full_Name (Proposal.Info) & ".",
-                  Get_Unit_Name (Current_File), True)
-               then
-                  --  If it's a child unit, then just add it
-
-                  Append
-                    (Result,
-                     Unit_Completion_Proposal'
-                       (Show_Identifiers,
-                        Completion_Resolver_Access (Proposal.Resolver),
-                        0,
-                        Get_Unit_Info (Current_File),
-                        False));
-
-               elsif Match
-                 (Get_Full_Name (Proposal.Info),
-                  Get_Unit_Name (Current_File), True)
-               then
-                  --  If it's this unit, then see if there are nested packages
-
-                  Add_Nested_Packages (Get_Unit_Info (Current_File));
-
-               end if;
-            end if;
-
-         end loop;
-
-         Unchecked_Free (Files);
-
-      else
-         Add_Nested_Packages (Proposal.Info);
-      end if;
-
-      return Result;
-   end Get_Composition;
-
-   -----------------------------
-   -- Get_Number_Of_Parameter --
-   -----------------------------
-
-   function Get_Number_Of_Parameters (Proposal : Unit_Completion_Proposal)
-     return Natural
-   is
-      pragma Unreferenced (Proposal);
-   begin
-      return 0;
-   end Get_Number_Of_Parameters;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Proposal : in out Unit_Completion_Proposal) is
-      pragma Unreferenced (Proposal);
-   begin
-      null;
-   end Free;
-
-   ----------------
-   -- Get_Entity --
-   ----------------
-
-   function Get_Entities
-     (Name         : String;
-      Unit_Info    : Entity_Information;
-      View_Private : Boolean;
-      Resolver     : Completion_Resolver_Access;
-      Is_Partial   : Boolean := False) return Completion_List
-   is
-      It     : Calls_Iterator;
-      Result : Completion_List;
-   begin
-      It := Get_All_Called_Entities (Unit_Info);
-
-      while not At_End (It) loop
-         declare
-            Info        : constant Entity_Information := Get (It);
-            Entity_Name : constant String := Get_Name (Info).all;
-         begin
-            if Match (Name, Entity_Name, Is_Partial)
-              and then
-                (View_Private or else Get_Attributes (Info) (Global))
-            then
-               Append
-                 (Result,
-                  Entity_Completion_Proposal'
-                    (Show_Identifiers, Resolver, 0, Get (It)));
-            end if;
-         end;
-
-         Next (It);
-      end loop;
-
-      Destroy (It);
-
-      return Result;
-   end Get_Entities;
 
    -------------------------
    -- Get_Source_For_Unit --
@@ -331,76 +159,33 @@ package body Completion.Entities_Extractor is
    -- Get_Possibilities --
    -----------------------
 
-   function Get_Possibilities
+   procedure Get_Possibilities
      (Resolver   : access Entity_Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
       Offset     : Natural;
-      Filter     : Possibilities_Filter) return Completion_List
+      Filter     : Possibilities_Filter;
+      Result     : in out Completion_List)
    is
-      It     : Construct_Tree_Iterator := First (Resolver.Tree.all);
-      Result : Completion_List;
+      pragma Unreferenced (Offset);
    begin
-      if (Filter and All_Visible_Entities) /= 0 then
-         while It /= Null_Construct_Tree_Iterator
-           and then Get_Construct (It).Sloc_Start.Index <= Offset
-         loop
-            if Get_Construct (It).Category = Cat_With then
-               null;
-            elsif Get_Construct (It).Category = Cat_Use then
-               declare
-                  File : constant Source_File := Get_Source_For_Unit
-                    (Resolver.Handler,
-                     Resolver.Project,
-                     Get_Construct (It).Name.all);
-               begin
-                  Concat
-                    (Result,
-                     Get_Entities
-                       (Identifier,
-                        Get_Unit_Info (File),
-                        False,
-                        Completion_Resolver_Access (Resolver),
-                        Is_Partial));
-               end;
-            end if;
+      if ((Filter and All_Visible_Entities) /= 0)
+          or else ((Filter and All_Accessible_Units) /= 0)
+      then
+         Append
+           (Result.List,
+            Entity_Tree_Wrapper'
+              (Completion_List_Pckg.Virtual_List_Component with
+               Handler    => Get_LI_Handler_By_Name
+                 (Resolver.Handler, Get_Name (Ada_Lang)),
+               Resolver   => Completion_Resolver_Access (Resolver),
+               Name       => new String'(Identifier),
+               Is_Partial => Is_Partial,
+               Filter     => Filter));
 
-            It := Next (Resolver.Tree.all, It, Jump_Over);
-         end loop;
+         Result.Is_Partial := Is_Partial;
+         Result.Searched_Identifier := new String'(Identifier);
       end if;
-
-      if (Filter and All_Accessible_Units) /= 0 then
-         declare
-            Files        : VFS.File_Array_Access :=
-              Get_Source_Files (Resolver.Project, True);
-            Current_File : Source_File;
-         begin
-            for J in Files.all'Range loop
-               Current_File := Get_Source_Info
-                 (Get_LI_Handler_From_File (Resolver.Handler, Files.all (J)),
-                  Files.all (J));
-
-               if Current_File /= null
-                 and then Match
-                   (Identifier, Get_Unit_Name (Current_File), Is_Partial)
-               then
-                  Append
-                    (Result,
-                     Unit_Completion_Proposal'
-                       (Show_Identifiers,
-                        Completion_Resolver_Access (Resolver),
-                        0,
-                        Get_Unit_Info (Current_File),
-                        False));
-               end if;
-
-            end loop;
-
-            Unchecked_Free (Files);
-         end;
-      end if;
-
-      return Result;
    end Get_Possibilities;
 
    ----------
@@ -418,20 +203,23 @@ package body Completion.Entities_Extractor is
    -------------------
 
    function Get_Unit_Info (Source : Source_File) return Entity_Information is
-      It        : Entity_Iterator;
-      --  Result    : Completion_List;
-      --  Unit_Name : String := Get_Unit_Name (Source);
+      It        : Entities.Queries.Entity_Iterator;
    begin
       Find_All_Entities_In_File (It, Source);
 
       while not At_End (It) loop
          declare
-            Info        : constant Entity_Information := Get (It);
-            --  Entity_Name : constant String := Get_Name (Info).all;
-            Scope       : constant Entity_Information :=
+            Info      : constant Entity_Information := Get (It);
+            Scope     : constant Entity_Information :=
               Get_Caller (Declaration_As_Reference (Info));
+            Reference : constant Entity_Reference :=
+              Declaration_As_Reference (Info);
          begin
-            if Scope = null and then Get_Kind (Info).Kind = Package_Kind then
+            if Scope = null
+              and then Is_Container (Get_Kind (Info).Kind)
+              and then Get_Location
+                (Reference).File = Source
+            then
                Destroy (It);
                return Info;
             end if;
@@ -444,5 +232,315 @@ package body Completion.Entities_Extractor is
 
       return null;
    end Get_Unit_Info;
+
+   -----------
+   -- First --
+   -----------
+
+   function First (Tree : Entity_Tree_Wrapper)
+      return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
+   is
+   begin
+      return Entity_Iterator_Wrapper'
+        (It         => Start (Tree.Handler, To_Lower (Tree.Name.all)),
+         Resolver   => Tree.Resolver,
+         Is_Partial => Tree.Is_Partial,
+         Name       => Tree.Name,
+         Filter     => Tree.Filter);
+   end First;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (It : Entity_Iterator_Wrapper) return Boolean is
+   begin
+      return At_End (It.It);
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (It : in out Entity_Iterator_Wrapper) is
+   begin
+      if (It.Filter and All_Visible_Entities) /= 0 then
+         Next (It.It);
+      elsif (It.Filter and All_Accessible_Units) /= 0 then
+         Next (It.It);
+
+         while not At_End (It)
+           and then Get_Kind (Get (It.It)).Kind /= Package_Kind
+         loop
+            Next (It.It);
+         end loop;
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (This : Entity_Iterator_Wrapper)
+      return Completion_Proposal'Class
+   is
+   begin
+      return  Entity_Completion_Proposal'
+        (Mode             => Show_Identifiers,
+         Resolver         => This.Resolver,
+         Entity           => Get (This.It));
+   end Get;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Entity_Iterator_Wrapper) is
+   begin
+      Free (This.It);
+   end Free;
+
+   -----------
+   -- First --
+   -----------
+
+   function First (Scope : Calls_Wrapper)
+      return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
+   is
+      It : Calls_Iterator_Wrapper :=
+        (It       => Get_All_Called_Entities (Scope.Scope),
+         Resolver => Scope.Resolver,
+         Scope    => Scope.Scope);
+   begin
+      if not Is_Valid (It) then
+         Next (It);
+      end if;
+
+      return It;
+   end First;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (It : Calls_Iterator_Wrapper) return Boolean is
+   begin
+      return At_End (It.It);
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (It : in out Calls_Iterator_Wrapper) is
+   begin
+
+      Next (It.It);
+
+      while not Is_Valid (It) loop
+         Next (It.It);
+      end loop;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (This : Calls_Iterator_Wrapper)
+      return Completion_Proposal'Class
+   is
+   begin
+      return  Entity_Completion_Proposal'
+        (Mode             => Show_Identifiers,
+         Resolver         => This.Resolver,
+         Entity           => Get (This.It));
+   end Get;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Calls_Iterator_Wrapper) is
+   begin
+      Destroy (This.It);
+   end Free;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (It : Calls_Iterator_Wrapper) return Boolean is
+      It_Reference : Entity_Reference;
+      Scope_Reference : Entity_Reference;
+   begin
+      if At_End (It) then
+         return True;
+      end if;
+
+      It_Reference := Declaration_As_Reference (Get (It.It));
+      Scope_Reference := Declaration_As_Reference (It.Scope);
+
+      return Get_Location (It_Reference).File
+        = Get_Location (Scope_Reference).File;
+   end Is_Valid;
+
+   -----------
+   -- First --
+   -----------
+
+   function First (Parent : Child_Wrapper)
+      return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
+   is
+      It : Child_Iterator_Wrapper;
+   begin
+      Get_Child_Types (It.It, Parent.Parent);
+      It.Resolver := Parent.Resolver;
+
+      return It;
+   end First;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (It : Child_Iterator_Wrapper) return Boolean is
+   begin
+      return At_End (It.It);
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (It : in out Child_Iterator_Wrapper) is
+   begin
+      Next (It.It);
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (This : Child_Iterator_Wrapper)
+      return Completion_Proposal'Class is
+   begin
+      return Entity_Completion_Proposal'
+        (Mode             => Show_Identifiers,
+         Resolver         => This.Resolver,
+         Entity           => Get (This.It));
+   end Get;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Child_Iterator_Wrapper) is
+   begin
+      Destroy (This.It);
+   end Free;
+
+   -----------
+   -- First --
+   -----------
+
+   function First (List : Source_File_Component)
+      return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
+   is
+      It : Source_File_Iterator;
+   begin
+      It.Files := List.Files;
+      It.It := List.Files.all'First;
+      It.Resolver := List.Resolver;
+      It.Parent := List.Parent;
+
+      Set_Unit (It);
+
+      if It.Unit = null
+        or else It.Parent = null
+        or else Get_Parent_Package (It.Unit) /= It.Parent
+      then
+         Next (It);
+      end if;
+
+      return It;
+   end First;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (It : Source_File_Iterator) return Boolean is
+   begin
+      return It.It > It.Files.all'Last;
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (It : in out Source_File_Iterator) is
+   begin
+      It.It := It.It + 1;
+      Set_Unit (It);
+
+      while not At_End (It)
+        and then
+          (It.Unit = null
+           or else It.Parent = null
+           or else Get_Parent_Package (It.Unit) /= It.Parent)
+      loop
+         It.It := It.It + 1;
+         Set_Unit (It);
+      end loop;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (This : Source_File_Iterator)
+      return Completion_Proposal'Class
+   is
+   begin
+      return Entity_Completion_Proposal'
+        (Mode     => Show_Identifiers,
+         Resolver => This.Resolver,
+         Entity   => This.Unit);
+   end Get;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Source_File_Component) is
+   begin
+      Unchecked_Free (This.Files);
+   end Free;
+
+   --------------
+   -- Set_Unit --
+   --------------
+
+   procedure Set_Unit (It : in out Source_File_Iterator) is
+   begin
+      if At_End (It) then
+         It.Unit := null;
+      else
+         declare
+            Source : constant Source_File :=
+              Get_Source_Info
+                (Get_LI_Handler_From_File
+                     (Entity_Completion_Resolver (It.Resolver.all).Handler,
+                      It.Files.all (It.It)),
+                 It.Files.all (It.It));
+         begin
+            if Source = null then
+               It.Unit := null;
+            else
+               It.Unit := Get_Unit_Info (Source);
+            end if;
+         end;
+      end if;
+   end Set_Unit;
 
 end Completion.Entities_Extractor;
