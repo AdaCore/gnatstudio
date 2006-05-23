@@ -2745,7 +2745,9 @@ package body Entities is
            (1 .. Old_Array.all'Length * 2);
 
          for J in Old_Array.all'Range loop
-            Old_Array.all (J).Trie_Tree_Array := Node.Entities;
+            if Old_Array.all (J) /= null then
+               Old_Array.all (J).Trie_Tree_Array := Node.Entities;
+            end if;
          end loop;
 
          Node.Entities (Old_Array.all'Last + 1) := Entity;
