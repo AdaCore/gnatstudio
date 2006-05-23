@@ -308,8 +308,8 @@ package body Tries is
    ------------
 
    procedure Insert
-     (Tree    : in out Trie_Tree;
-      Data    : Data_Type)
+     (Tree : in out Trie_Tree;
+      Data : Data_Type)
    is
       Pointer : Cell_Pointer;
       Index   : constant String_Access := Get_Index (Data);
