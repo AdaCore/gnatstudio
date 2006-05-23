@@ -904,8 +904,8 @@ On the right side of the main tree, a list displays the locations of calls for
 the selected entity. Clicking on entries in this list opens editors showing
 the corresponding location.
 
-The Callgraph View supports keyboard navigation: @code{Up} and @code{Down} 
-keys navigate between listed locations, @code{Left} collapses the current 
+The Callgraph View supports keyboard navigation: @code{Up} and @code{Down}
+keys navigate between listed locations, @code{Left} collapses the current
 level, @code{Right} expands the current level, and @code{Return} jumps to the
 currently selected location.
 
@@ -9037,6 +9037,11 @@ The restrictions are the following:
   you cannot have directories with names ending with ".ads" or ".adb"
 
 @end itemize
+
+@item Load Xref info on project load
+@cindex load xref info on project load
+Whether the Xref information should be automatically loaded into memory when
+a new project is loaded. @xref{Load xref info in memory}
 
 @end table
 
