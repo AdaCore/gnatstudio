@@ -23,14 +23,30 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Completion is
 
+   use Completion_List_Pckg;
+
    ----------
    -- Free --
    ----------
 
    procedure Free (List : in out Completion_List) is
    begin
-      Completion_List_Pckg.Free (Completion_List_Pckg.List (List));
+      Free (List.List);
    end Free;
+
+   --------------------------
+   -- Get_Completed_String --
+   --------------------------
+
+   function Get_Completed_String (This : Completion_List) return String
+   is
+   begin
+      if This.Searched_Identifier /= null then
+         return This.Searched_Identifier.all;
+      else
+         return "";
+      end if;
+   end Get_Completed_String;
 
    ----------
    -- Next --
@@ -136,16 +152,6 @@ package body Completion is
       Proposal.Mode := Mode;
    end Set_Mode;
 
-   ---------------------------
-   -- Characters_To_Replace --
-   ---------------------------
-
-   function Characters_To_Replace (Proposal : Completion_Proposal)
-      return Natural is
-   begin
-      return Proposal.Extra_Characters;
-   end Characters_To_Replace;
-
    ---------------
    -- Get_Label --
    ---------------
@@ -166,46 +172,6 @@ package body Completion is
       return Get_Completion (Completion_Proposal'Class (Proposal));
    end Get_Id;
 
-   ---------------------
-   -- Get_Composition --
-   ---------------------
-
-   function Get_Composition
-     (Proposal   : Completion_Proposal;
-      Identifier : String;
-      Offset     : Positive;
-      Is_Partial : Boolean) return Completion_List
-   is
-      Composition : constant Completion_List := Get_Composition
-        (Completion_Proposal'Class (Proposal), Offset);
-      It          : Completion_Iterator := First (Composition);
-      Result_List : Completion_List;
-   begin
-      while It /= Null_Completion_Iterator loop
-         declare
-            Name : constant String := Get_Id (Get_Proposal (It));
-         begin
-            if Is_Partial then
-               if Identifier'Length < Name'Length
-                 and then Name
-                   (Name'First .. Name'First + Identifier'Length - 1)
-                 = Identifier
-               then
-                  Append (Result_List, Get_Proposal (It));
-               end if;
-            else
-               if Identifier = Name then
-                  Append (Result_List, Get_Proposal (It));
-               end if;
-            end if;
-
-            It := Next (It);
-         end;
-      end loop;
-
-      return Result_List;
-   end Get_Composition;
-
    -----------------
    -- Get_Manager --
    ------------------
@@ -216,39 +182,36 @@ package body Completion is
       return Proposal.Resolver;
    end Get_Resolver;
 
-   ----------------------------
-   -- Refine_Completion_List --
-   ----------------------------
-
-   function Refine_Completion_List
-     (Previous_Completion : Completion_List;
-      Character_Added     : Character) return Completion_List
-   is
-      pragma Unreferenced (Previous_Completion, Character_Added);
-
-      Result : Completion_List;
-   begin
-      return Result;
-   end Refine_Completion_List;
-
    -----------
    -- First --
    -----------
 
    function First (This : Completion_List) return Completion_Iterator is
    begin
-      return Completion_Iterator
-        (Completion_List_Pckg.First (Completion_List_Pckg.List (This)));
+      return Completion_Iterator'
+        (It                  => First (This.List),
+         Is_Partial          => This.Is_Partial,
+         Searched_Identifier => This.Searched_Identifier);
    end First;
 
    ----------
    -- Next --
    ----------
 
-   function Next (This : Completion_Iterator) return Completion_Iterator is
+   procedure Next (This : in out Completion_Iterator) is
    begin
-      return Completion_Iterator
-        (Completion_List_Pckg.Next (Completion_List_Pckg.List_Node (This)));
+      Next (This.It);
+
+      while not At_End (This.It)
+        and then
+          (This.Searched_Identifier /= null
+           and then not
+             Match (This.Searched_Identifier.all,
+                    Get_Id (Get_Proposal (This)),
+                    This.Is_Partial))
+      loop
+         Next (This.It);
+      end loop;
    end Next;
 
    ------------------
@@ -258,7 +221,7 @@ package body Completion is
    function Get_Proposal (This : Completion_Iterator)
      return Completion_Proposal'Class is
    begin
-      return Data (This);
+      return Get (This.It);
    end Get_Proposal;
 
    --------------------
@@ -287,13 +250,14 @@ package body Completion is
    -- Get_Composition --
    ---------------------
 
-   function Get_Composition
-     (Proposal : Simple_Completion_Proposal; Offset : Positive)
-      return Completion_List
+   procedure Get_Composition
+     (Proposal : Simple_Completion_Proposal;
+      Offset   : Positive;
+      Result   : in out Completion_List)
    is
-      pragma Unreferenced (Proposal, Offset);
+      pragma Unreferenced (Proposal, Offset, Result);
    begin
-      return Null_Completion_List;
+      null;
    end Get_Composition;
 
    ---------------------
@@ -339,20 +303,40 @@ package body Completion is
    function Match (Seeked_Name, Tested_Name : String; Is_Partial : Boolean)
       return Boolean
    is
-      Lower_Seeked_Name : constant String := To_Lower (Seeked_Name);
-      Lower_Tested_Name : constant String := To_Lower (Tested_Name);
    begin
-      if Seeked_Name'Length > Tested_Name'Length then
+      if (not Is_Partial and then Seeked_Name'Length /= Tested_Name'Length)
+        or else Seeked_Name'Length > Tested_Name'Length
+      then
          return False;
       end if;
 
-      return (Is_Partial
-              and then Lower_Tested_Name
-                (Lower_Tested_Name'First
-                 .. Lower_Tested_Name'First + Lower_Seeked_Name'Length - 1)
-              = Lower_Seeked_Name)
-        or else (not Is_Partial
-                   and then Lower_Tested_Name = Lower_Seeked_Name);
+      for J in 1 .. Seeked_Name'Length loop
+         if To_Lower (Tested_Name (J + Tested_Name'First - 1)) /=
+           To_Lower (Seeked_Name (J + Seeked_Name'First - 1))
+         then
+            return False;
+         end if;
+      end loop;
+
+      return True;
    end Match;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Completion_Iterator) is
+   begin
+      Free (This.It);
+   end Free;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (This : Completion_Iterator) return Boolean is
+   begin
+      return At_End (This.It);
+   end At_End;
 
 end Completion;

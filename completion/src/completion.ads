@@ -30,6 +30,8 @@ with Glib;         use Glib;
 with Basic_Types;  use Basic_Types;
 with Language;     use Language;
 with Generic_List;
+with Virtual_Lists;
+with Virtual_Lists.Extensive;
 
 package Completion is
 
@@ -38,6 +40,12 @@ package Completion is
 
    procedure Free (List : in out Completion_List);
    --  Free the memory associated to the completion list.
+
+   function Get_Completed_String (This : Completion_List) return String;
+   --  Return the string that have been analyzed and is in the process of
+   --  being completed. This is just the part of the string already in the
+   --  buffer, and should be replaced by the string found in the completion,
+   --  in order to have the proper casing.
 
    Null_Completion_List : constant Completion_List;
 
@@ -64,14 +72,15 @@ package Completion is
 
    All_Visible_Entities : Possibilities_Filter := 1;
    All_Accessible_Units : Possibilities_Filter := 2;
+   Everything           : Possibilities_Filter := 16#FFFFFF#;
 
-   function Get_Possibilities
+   procedure Get_Possibilities
      (Resolver   : access Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
       Offset     : Natural;
-      Filter     : Possibilities_Filter)
-      return Completion_List is abstract;
+      Filter     : Possibilities_Filter;
+      Result     : in out Completion_List) is abstract;
    --  Return the possible completion for the given identifier, using the
    --  resolver given in parameter. If Is_Partial is false, then only
    --  identifiers matching exactly the profile will be returned. Even in this
@@ -148,30 +157,16 @@ package Completion is
    --  identifier can be different from the completion propsed and the label.
    --  By default, return the completion.
 
-   function Characters_To_Replace
-     (Proposal : Completion_Proposal) return Natural;
-   --  Return the number of characters to be replaced by the completion, that
-   --  were already written in the buffer but might be not fully accurate (e.g.
-   --  bad cased).
-
    function Get_Category (Proposal : Completion_Proposal)
      return Language_Category is abstract;
    --  Return the category of the object proposed for the completion
 
-   function Get_Composition
-     (Proposal : Completion_Proposal; Offset : Positive)
-      return Completion_List is abstract;
+   procedure Get_Composition
+     (Proposal : Completion_Proposal;
+      Offset   : Positive;
+      Result   : in out Completion_List) is abstract;
    --  Return the possible children of this completion,
    --  Null_Completion_Proposal if none.
-
-   function Get_Composition
-     (Proposal   : Completion_Proposal;
-      Identifier : String;
-      Offset     : Positive;
-      Is_Partial : Boolean) return Completion_List;
-   --  Return the possible children of this completion, and filter them
-   --  according to a (possibly partial) name. Return Null_Completion_Proposal
-   --  if nothing found.
 
    function Get_Number_Of_Parameters
      (Proposal : Completion_Proposal) return Natural is abstract;
@@ -188,12 +183,6 @@ package Completion is
    procedure Free (Proposal : in out Completion_Proposal) is abstract;
    --  Free the memory associated to the proposal.
 
-   function Refine_Completion_List
-     (Previous_Completion : Completion_List;
-      Character_Added     : Character) return Completion_List;
-   --  Refine a completion list considering that the user added the character
-   --  given in parameter.
-
    -------------------------
    -- Completion_Iterator --
    -------------------------
@@ -205,15 +194,21 @@ package Completion is
    function First (This : Completion_List) return Completion_Iterator;
    --  Return the first proposal of the completion list.
 
-   function Next (This : Completion_Iterator) return Completion_Iterator;
-   --  Gets the next proposal of the completion list, Null_Completion_Iterator
-   --  if none.
+   procedure Next (This : in out Completion_Iterator);
+   --  Gets the next proposal of the completion list.
 
    function Get_Proposal
      (This : Completion_Iterator) return Completion_Proposal'Class;
    --  Return the actual proposal for the given iterator.
 
+   procedure Free (This : in out Completion_Iterator);
+   --  Free the data associated to a completion iterator.
+
+   function At_End (This : Completion_Iterator) return Boolean;
+   --  Return true if the iterator is after the last element of its list.
+
    Null_Completion_Iterator : constant Completion_Iterator;
+   --  Default value for an empty iterator.
 
 private
 
@@ -234,27 +229,45 @@ private
    type Completion_Proposal is abstract tagged record
       Mode             : Proposal_Mode := Show_Identifiers;
       Resolver         : Completion_Resolver_Access;
-      Extra_Characters : Natural := 0;
    end record;
 
    procedure Free_Proposal (Proposal : in out Completion_Proposal'Class);
    --  Used to instantiate the generic list (this is not actually doing
    --  anything)
 
-   package Completion_List_Pckg is new
-     Generic_List (Completion_Proposal'Class, Free_Proposal);
+   ---------------------
+   -- Completion_List --
+   ---------------------
 
-   use Completion_List_Pckg;
+   package Completion_List_Pckg is new Virtual_Lists
+     (Completion_Proposal'Class, Free => Free_Proposal);
 
-   type Completion_List is new Completion_List_Pckg.List;
+   package Completion_List_Extensive_Pckg is new
+     Completion_List_Pckg.Extensive;
+
+   type Completion_List is record
+      List                : Completion_List_Pckg.Virtual_List;
+      Is_Partial          : Boolean;
+      Searched_Identifier : String_Access;
+   end record;
+
+   type Completion_Iterator is record
+      It                  : Completion_List_Pckg.Virtual_List_Iterator;
+      Is_Partial          : Boolean;
+      Searched_Identifier : String_Access;
+   end record;
 
    Null_Completion_List : constant Completion_List :=
-     Completion_List (Completion_List_Pckg.Null_List);
-
-   type Completion_Iterator is new Completion_List_Pckg.List_Node;
+     (Completion_List_Pckg.Null_Virtual_List, False, null);
 
    Null_Completion_Iterator : constant Completion_Iterator :=
-     Completion_Iterator (Completion_List_Pckg.Null_Node);
+     (It                  => Completion_List_Pckg.Null_Virtual_List_Iterator,
+      Is_Partial          => False,
+      Searched_Identifier => null);
+
+   --------------------------------
+   -- Simple_Completion_Proposal --
+   --------------------------------
 
    type Simple_Completion_Proposal is new Completion_Proposal with record
       Name : String_Access;
@@ -268,9 +281,10 @@ private
      return Language_Category;
    --  See inherited documentation
 
-   function Get_Composition
-     (Proposal : Simple_Completion_Proposal; Offset : Positive)
-      return Completion_List;
+   procedure Get_Composition
+     (Proposal : Simple_Completion_Proposal;
+      Offset   : Positive;
+      Result   : in out Completion_List);
    --  See inherited documentation
 
    function Get_Composition
