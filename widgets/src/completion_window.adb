@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                   use Glib;
 with Glib.Values;            use Glib.Values;
 
 with Gdk.Event;              use Gdk.Event;
@@ -136,6 +135,7 @@ package body Completion_Window is
          Free (Window.Info (Window.Index));
       end loop;
 
+      Delete_Mark (Window.Buffer, Window.Mark);
       Unchecked_Free (Window.Info);
       Destroy (Window.Notes_Window);
       Destroy (Window);
@@ -255,8 +255,8 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Iter   : Gtk_Text_Iter;
-      Beg    : Gtk_Text_Iter;
+      Iter    : Gtk_Text_Iter;
+      Beg     : Gtk_Text_Iter;
    begin
       if Window.In_Deletion then
          return;
@@ -265,15 +265,15 @@ package body Completion_Window is
       Get_Text_Iter (Nth (Params, 1), Iter);
       Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
 
-      declare
-         UTF8 : constant UTF8_String := Get_Text (Window.Buffer, Beg, Iter);
-      begin
-         if UTF8 = "" then
-            Delete (Window);
-         else
+      if Get_Offset (Iter) < Window.Initial_Offset then
+         Delete (Window);
+      else
+         declare
+            UTF8 : constant UTF8_String := Get_Text (Window.Buffer, Beg, Iter);
+         begin
             Adjust_Selected (Window, UTF8);
-         end if;
-      end;
+         end;
+      end if;
 
    exception
       when E : others =>
@@ -578,11 +578,16 @@ package body Completion_Window is
       Dummy_X, Dummy_Y, D     : Gint;
       Root_Width, Root_Height : Gint;
 
+      Cursor                  : Gtk_Text_Iter;
       Max_Width, Notes_Window_Width, Max_Height : Gint;
    begin
       Window.Text := View;
       Window.Buffer := Buffer;
       Window.Mark := Create_Mark (Buffer, "", Iter);
+
+      Get_Iter_At_Mark (Buffer, Cursor, Get_Insert (Buffer));
+      Window.Initial_Offset := Get_Offset (Cursor);
+
       Window.Case_Sensitive := Case_Sensitive;
 
       --  Set the position.
