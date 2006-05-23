@@ -23,6 +23,10 @@ with Language.Ada;       use Language.Ada;
 
 package body Completion.Constructs_Extractor is
 
+   use Completion_List_Pckg;
+   use Completion_List_Extensive_Pckg;
+   use Extensive_List_Pckg;
+
    ---------------------------------------
    -- New_Construct_Completion_Resolver --
    ---------------------------------------
@@ -67,9 +71,10 @@ package body Completion.Constructs_Extractor is
    -- Get_Compositon --
    --------------------
 
-   function Get_Composition
-     (Proposal : Construct_Completion_Proposal; Offset : Positive)
-      return Completion_List
+   procedure Get_Composition
+     (Proposal : Construct_Completion_Proposal;
+      Offset   : Positive;
+      Result   : in out Completion_List)
    is
       Tree : constant Construct_Tree_Access :=
                Construct_Completion_Resolver (Proposal.Resolver.all).Tree;
@@ -77,20 +82,22 @@ package body Completion.Constructs_Extractor is
       Parent_Sloc_Start, Parent_Sloc_End : Source_Location;
       Parent_Found                       : Boolean;
 
-      function Get_Composition_Of_Type
-        (Type_Iterator : Construct_Tree_Iterator; Recursive : Boolean := True)
-         return Completion_List;
+      procedure Get_Composition_Of_Type
+        (Type_Iterator : Construct_Tree_Iterator;
+         Result        : in out Completion_List;
+         Recursive     : Boolean := True);
 
       -----------------------------
       -- Get_Composition_Of_Type --
       -----------------------------
 
-      function Get_Composition_Of_Type
-        (Type_Iterator : Construct_Tree_Iterator; Recursive : Boolean := True)
-         return Completion_List
+      procedure Get_Composition_Of_Type
+        (Type_Iterator : Construct_Tree_Iterator;
+         Result        : in out Completion_List;
+         Recursive     : Boolean := True)
       is
          Child_Iterator : Construct_Tree_Iterator;
-         Result         : Completion_List;
+         List           : Extensive_List_Pckg.List;
       begin
          Get_Referenced_Entity
            (Ada_Lang,
@@ -111,11 +118,12 @@ package body Completion.Constructs_Extractor is
                              (Tree.all, Type_Iterator, Parent_Name);
             begin
                if Parents'Length >= 1 then
-                  Concat (Result, Get_Composition_Of_Type
+                  Get_Composition_Of_Type
                     (Parents (1),
+                     Result,
                      not Is_Access
                          (Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
-                          Get_Construct (Type_Iterator).all)));
+                          Get_Construct (Type_Iterator).all));
                end if;
             end;
          end if;
@@ -126,11 +134,10 @@ package body Completion.Constructs_Extractor is
            Get_Parent_Scope (Tree.all, Child_Iterator) = Type_Iterator
          loop
             Append
-              (Result,
+              (List,
                Construct_Completion_Proposal'
                  (Show_Identifiers,
                   Get_Resolver (Proposal),
-                  0,
                   Child_Iterator,
                   False));
                Child_Iterator := Next (Tree.all, Child_Iterator, Jump_Over);
@@ -142,16 +149,15 @@ package body Completion.Constructs_Extractor is
            and then not Proposal.Is_All
          then
             Append
-              (Result,
+              (List,
                Construct_Completion_Proposal'
                  (Show_Identifiers,
                   Get_Resolver (Proposal),
-                  0,
                   Proposal.Tree_Node,
                   True));
          end if;
 
-         return Result;
+         Append (Result.List, To_Extensive_List (List));
       end Get_Composition_Of_Type;
 
    begin
@@ -179,7 +185,9 @@ package body Completion.Constructs_Extractor is
                if Visible_Types'Length >= 1 then
                   Type_Iterator := Visible_Types (1);
 
-                  return Get_Composition_Of_Type (Type_Iterator);
+                  Get_Composition_Of_Type (Type_Iterator, Result);
+
+                  return;
                else
                   --  If type is not found in the current file, then we
                   --  have to look elsewhere
@@ -189,28 +197,29 @@ package body Completion.Constructs_Extractor is
                                      Next (Proposal.Resolver);
                      Completions : Completion_List;
                      It          : Completion_Iterator;
-                     Result      : Completion_List;
                   begin
                      if Resolver /= null then
-                        Completions := Get_Possibilities
+                        Get_Possibilities
                           (Next (Proposal.Resolver),
                            To_String (Id),
                            False,
                            Get_Construct (Proposal.Tree_Node).
                              Sloc_Start.Index,
-                           All_Visible_Entities);
+                           All_Visible_Entities,
+                           Completions);
 
                         It := First (Completions);
 
-                        while It /= Null_Completion_Iterator loop
-                           Concat
-                             (Result, Get_Composition
-                                (Get_Proposal (It), 1));
+                        while not At_End (It) loop
+                           Get_Composition
+                             (Get_Proposal (It),
+                              1,
+                              Result);
 
-                           It := Next (It);
+                           Next (It);
                         end loop;
 
-                        return Result;
+                        return;
                      end if;
                   end;
                end if;
@@ -221,9 +230,9 @@ package body Completion.Constructs_Extractor is
                Spec_It         : Construct_Tree_Iterator;
                Body_It         : Construct_Tree_Iterator;
                Child_Iterator  : Construct_Tree_Iterator;
-               Result          : Completion_List;
                Spec_Visibility : Boolean;
                Body_Visibility : Boolean;
+               List            : Extensive_List_Pckg.List;
             begin
                Spec_It := Get_Spec (Tree.all, Proposal.Tree_Node);
                Body_It := Get_First_Body (Tree.all, Proposal.Tree_Node);
@@ -252,11 +261,10 @@ package body Completion.Constructs_Extractor is
                       = Visibility_Public
                   then
                      Append
-                       (Result,
+                       (List,
                         Construct_Completion_Proposal'
                           (Show_Identifiers,
                            Get_Resolver (Proposal),
-                           0,
                            Child_Iterator,
                            False));
                   end if;
@@ -276,11 +284,10 @@ package body Completion.Constructs_Extractor is
                     Get_Parent_Scope (Tree.all, Child_Iterator) = Body_It
                   loop
                      Append
-                       (Result,
+                       (List,
                         Construct_Completion_Proposal'
                           (Show_Identifiers,
                            Get_Resolver (Proposal),
-                           0,
                            Child_Iterator,
                            False));
 
@@ -289,13 +296,13 @@ package body Completion.Constructs_Extractor is
                   end loop;
                end if;
 
-               return Result;
+               Append (Result.List, To_Extensive_List (List));
+
+               return;
             end;
          when others =>
             null;
       end case;
-
-      return Null_Completion_List;
    end Get_Composition;
 
    ------------------------------
@@ -324,32 +331,37 @@ package body Completion.Constructs_Extractor is
    -- Get_Possibilities --
    -----------------------
 
-   function Get_Possibilities
+   procedure Get_Possibilities
      (Resolver   : access Construct_Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
       Offset     : Natural;
-      Filter     : Possibilities_Filter) return Completion_List
+      Filter     : Possibilities_Filter;
+      Result     : in out Completion_List)
    is
-      Result       : Completion_List;
       Result_Array : constant Construct_Tree_Iterator_Array :=
                        Get_Visible_Constructs
                          (Resolver.Tree.all, Offset, Identifier,
                           True, Is_Partial);
+
+      List         : Extensive_List_Pckg.List;
    begin
+      Result.Searched_Identifier := new String'(Identifier);
+      Result.Is_Partial := Is_Partial;
+
       if (Filter and All_Visible_Entities) /= 0 then
          for J in Result_Array'Range loop
             Append
-              (Result, Construct_Completion_Proposal'
+              (List,
+               Construct_Completion_Proposal'
                  (Show_Identifiers,
                   Completion_Resolver_Access (Resolver),
-                  0,
                   Result_Array (J),
                   False));
          end loop;
-      end if;
 
-      return Result;
+         Append (Result.List, To_Extensive_List (List));
+      end if;
    end Get_Possibilities;
 
    ----------

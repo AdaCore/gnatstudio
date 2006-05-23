@@ -31,12 +31,13 @@ package Completion.Constructs_Extractor is
       return Construct_Completion_Resolver;
    --  Create a new resolver, based on a construct tree
 
-   function Get_Possibilities
+   procedure Get_Possibilities
      (Resolver   : access Construct_Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
       Offset     : Natural;
-      Filter     : Possibilities_Filter) return Completion_List;
+      Filter     : Possibilities_Filter;
+      Result     : in out Completion_List);
    --  See inherited documentation
 
    procedure Free (This : in out Construct_Completion_Resolver);
@@ -61,9 +62,10 @@ private
      return Language_Category;
    --  See inherited documentation
 
-   function Get_Composition
-     (Proposal : Construct_Completion_Proposal; Offset : Positive)
-      return Completion_List;
+   procedure Get_Composition
+     (Proposal : Construct_Completion_Proposal;
+      Offset   : Positive;
+      Result   : in out Completion_List);
    --  See inherited documentation
 
    function Get_Number_Of_Parameters (Proposal : Construct_Completion_Proposal)
