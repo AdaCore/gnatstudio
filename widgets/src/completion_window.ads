@@ -28,6 +28,7 @@
 --  completions. Each line in this list can be associated with an additional
 --  text, which will be displayed in a secondary window when the line is
 --  selected.
+with Glib;           use Glib;
 
 with Gtk.Window;     use Gtk.Window;
 
@@ -104,6 +105,10 @@ private
       Text   : Gtk_Text_View;
       Buffer : Gtk_Text_Buffer;
       Mark   : Gtk_Text_Mark;
+      --  The mark from which the text should be replaced
+
+      Initial_Offset : Gint;
+      --  Offset of cursor position when the window is first shown.
 
       Info   : Information_Array_Access;
       Index  : Natural;
