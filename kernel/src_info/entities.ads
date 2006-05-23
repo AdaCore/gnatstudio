@@ -27,6 +27,7 @@ with Dynamic_Arrays;
 with Projects.Registry;
 with Language;
 with Basic_Types;
+with Tries;
 
 --  This package contains the list of all files and entities used in the
 --  current project.
@@ -784,6 +785,28 @@ package Entities is
    --  This name is used to print messages in the console when computing the
    --  xref database
 
+   type LI_Entities_Iterator is private;
+
+   function Start (LI : access LI_Handler_Record; Prefix : String)
+      return LI_Entities_Iterator;
+   --  Return a LI_Entities_Iterator pointing at the first entity of the given
+   --  prefix.
+
+   function Get (It : LI_Entities_Iterator) return Entity_Information;
+   --  Return the Entity_Information pointed by the given iterator.
+
+   procedure Next (It : in out LI_Entities_Iterator);
+   --  Move the iterator to the next element.
+
+   function At_End (It : LI_Entities_Iterator) return Boolean;
+   --  Return true if the iterator is at the end of the analyzed elements, wich
+   --  means after the last one.
+
+   procedure Free (It : in out LI_Entities_Iterator);
+   --  Free the memory associated to the iterator.
+
+   Null_LI_Entities_Iterator : constant LI_Entities_Iterator;
+
    -------------
    -- GValues --
    -------------
@@ -922,6 +945,52 @@ private
    end record;
    No_Entity_Reference : constant Entity_Reference := (null, 0);
 
+   --------------------------
+   -- LI_Entities_Iterator --
+   --------------------------
+
+   type Entity_Array_Access is access all Entity_Information_Array;
+
+   type Entity_Array_Node is record
+      Entities : Entity_Array_Access;
+      Name     : GNAT.OS_Lib.String_Access;
+   end record;
+
+   function Get_Name (Entities : Entity_Array_Node)
+      return GNAT.OS_Lib.String_Access;
+   --  Return the name of the entity, in lower case if the language is
+   --  case-insensitive
+
+   procedure Free (Entities : in out Entity_Array_Node);
+
+   package Entities_Search_Tries is new Tries
+     (Data_Type => Entity_Array_Node,
+      No_Data   => (null, null),
+      Get_Index => Get_Name,
+      Free      => Free);
+
+   type LI_Entities_Iterator is record
+      It    : Entities_Search_Tries.Iterator;
+      Index : Natural;
+   end record;
+
+   function Is_Valid (It : LI_Entities_Iterator) return Boolean;
+   --  Return true if the iterator points on a valid element, or is at end,
+   --  false if it shouldn't be used by the user.
+
+   procedure Insert
+     (Handler : access LI_Handler_Record'Class;
+      Entity  : Entity_Information);
+   --  Insert an entity in an entity trie tree.
+
+   procedure Remove
+     (Handler : access LI_Handler_Record'Class;
+      Entity  : Entity_Information);
+   --  Removes an entity from an entity trie tree.
+
+   Null_LI_Entities_Iterator : constant LI_Entities_Iterator :=
+     (Entities_Search_Tries.Null_Iterator, 0);
+
    ------------------------
    -- Entity_Information --
    ------------------------
@@ -996,6 +1065,13 @@ private
       --  from the File's Entities list), since when we reparse a file we want
       --  to keep using the same Entity_Information for entities that haven't
       --  changed.
+
+      Trie_Tree_Array : Entity_Array_Access;
+      --  This is the array where all the entities with the same name are
+      --  stored.
+
+      Trie_Tree_Index : Natural;
+      --  This is the index of the entity among the entities of the same name.
    end record;
 
    --------------------
@@ -1217,7 +1293,9 @@ private
    end record;
    type Entities_Database is access Entities_Database_Record;
 
-   type LI_Handler_Record is abstract tagged limited null record;
+   type LI_Handler_Record is abstract tagged limited record
+      Name_Index : Entities_Search_Tries.Trie_Tree_Access := null;
+   end record;
 
    Real_References_Filter : constant Reference_Kind_Filter :=
      (Reference                                => True,
