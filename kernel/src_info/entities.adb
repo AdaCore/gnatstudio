@@ -2725,9 +2725,9 @@ package body Entities is
 
       --  Search an empty slot in the entities array
 
-      for J in Node.Entities.all'Range loop
-         if Node.Entities.all (J) = null then
-            Node.Entities.all (J) := Entity;
+      for J in Node.Entities'Range loop
+         if Node.Entities (J) = null then
+            Node.Entities (J) := Entity;
             Entity.Trie_Tree_Array := Node.Entities;
             Entity.Trie_Tree_Index := J;
 
@@ -2742,19 +2742,20 @@ package body Entities is
          Old_Name  : constant GNAT.OS_Lib.String_Access := Node.Name;
       begin
          Node.Entities := new Entity_Information_Array
-           (1 .. Old_Array.all'Length * 2);
+           (1 .. Old_Array'Length * 2);
+         Node.Entities (1 .. Old_Array'Length) := Old_Array.all;
 
-         for J in Old_Array.all'Range loop
-            if Old_Array.all (J) /= null then
-               Old_Array.all (J).Trie_Tree_Array := Node.Entities;
+         Node.Name := new String'(Old_Name.all);
+
+         for J in Old_Array'Range loop
+            if Old_Array (J) /= null then
+               Old_Array (J).Trie_Tree_Array := Node.Entities;
             end if;
          end loop;
 
-         Node.Entities (Old_Array.all'Last + 1) := Entity;
+         Node.Entities (Old_Array'Length + 1) := Entity;
          Entity.Trie_Tree_Array := Node.Entities;
-         Entity.Trie_Tree_Index := Old_Array.all'Last + 1;
-
-         Node.Name := new String'(Old_Name.all);
+         Entity.Trie_Tree_Index := Old_Array'Length + 1;
 
          --  This operation will free Old_Array and Old_Name
          Insert (Handler.Name_Index.all, Node);
@@ -2823,14 +2824,17 @@ package body Entities is
 
       while not At_End (It) loop
          while not At_End (It)
-           and then It.Index > Get (It.It).Entities.all'Last
+           and then It.Index > Get (It.It).Entities'Last
          loop
             Next (It.It);
-            It.Index := 1;
+
+            if not At_End (It) then
+               It.Index := Get (It.It).Entities'First;
+            end if;
          end loop;
 
          exit when At_End (It)
-           or else Get (It.It).Entities.all (It.Index) /= null;
+           or else Get (It.It).Entities (It.Index) /= null;
 
          It.Index := It.Index + 1;
       end loop;
