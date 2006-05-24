@@ -74,7 +74,7 @@
     </exit_commands>
     <cd_command>cd %d</cd_command>
     <get_status_command>echo $?</get_status_command>
-    <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
+    <get_status_ptrn>^([0-9]+)\s*$</get_status_ptrn>
   </remote_shell_config>
 
   <!-- BASH shell -->
@@ -96,7 +96,7 @@
     </exit_commands>
     <cd_command>cd %d</cd_command>
     <get_status_command>echo $?</get_status_command>
-    <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
+    <get_status_ptrn>^([0-9]+)\s*$</get_status_ptrn>
   </remote_shell_config>
 
   <!-- CSH shell -->
@@ -117,7 +117,7 @@
     </exit_commands>
     <cd_command>cd %d</cd_command>
     <get_status_command>echo $status</get_status_command>
-    <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
+    <get_status_ptrn>^([0-9]+)\s*$</get_status_ptrn>
   </remote_shell_config>
 
   <!-- TCSH shell -->
@@ -138,7 +138,7 @@
     </exit_commands>
     <cd_command>cd %d</cd_command>
     <get_status_command>echo $status</get_status_command>
-    <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
+    <get_status_ptrn>^([0-9]+)\s*$</get_status_ptrn>
   </remote_shell_config>
 
   <!-- CMD.EXE shell -->
@@ -156,7 +156,7 @@
     </exit_commands>
     <cd_command>cd %d</cd_command>
     <get_status_command>echo %errorlevel%</get_status_command>
-    <get_status_ptrn>^([0-9]*)\s*$</get_status_ptrn>
+    <get_status_ptrn>^([0-9]+)\s*$</get_status_ptrn>
   </remote_shell_config>
 
   <!-- RSYNC CONFIGURATION -->
