@@ -1512,7 +1512,8 @@ package body String_Utils is
          Index := Index + 1;
       end loop;
 
-      if Result (Result'First) = '"'
+      if Result'Length > 1
+        and then Result (Result'First) = '"'
         and then Result (Index - 1) = '"'
       then
          return Result (Result'First + 1 .. Index - 2);
