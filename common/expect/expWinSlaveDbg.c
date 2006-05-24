@@ -54,14 +54,6 @@
 #include "expWinSlave.h"
 #include <assert.h>
 
-#if 0
-#  define LOG_ENTRY(function) ExpSyslog("Expect SlaveDriver: " function)
-#  define LOG_EXIT(function) ExpSyslog("Expect SlaveDriver: " function " exited")
-#else
-#  define LOG_ENTRY(function)
-#  define LOG_EXIT(function)
-#endif
-
 #ifndef PCOORD
 #define PCOORD COORD*
 #endif
@@ -106,6 +98,8 @@ typedef struct _ExpCreateProcessInfo {
     PVOID piPtr;		/* Pointer to PROCESS_INFORMATION in slave */
     DWORD flags;
 } ExpCreateProcessInfo;
+
+extern BOOL ExpReading;
 
 typedef struct _CreateProcessThreadArgs {
     ExpCreateProcessInfo *cp;
@@ -263,20 +257,6 @@ static void		OnWriteConsoleOutputCharacterA(ExpProcess *,
 			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
 static void		OnWriteConsoleOutputCharacterW(ExpProcess *,
 			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
-#if 0 /* XXX: Testing purposes only */
-static void		OnExpGetExecutablePathA(ExpProcess *, ExpThreadInfo *,
-			    ExpBreakpoint *, PDWORD, DWORD);
-static void		OnExpGetExecutablePathW(ExpProcess *, ExpThreadInfo *,
-			    ExpBreakpoint *, PDWORD, DWORD);
-static void		OnSearchPathW(ExpProcess *, ExpThreadInfo *,
-			    ExpBreakpoint *, PDWORD, DWORD);
-static void		OnlstrcpynW(ExpProcess *, ExpThreadInfo *,
-			    ExpBreakpoint *, PDWORD, DWORD);
-static void		OnlstrrchrW(ExpProcess *, ExpThreadInfo *,
-			    ExpBreakpoint *, PDWORD, DWORD);
-static void		OnGetFileAttributesW(ExpProcess *, ExpThreadInfo *,
-			    ExpBreakpoint *, PDWORD, DWORD);
-#endif
 
 static void		OnXBreakpoint(ExpProcess *, LPDEBUG_EVENT);
 static void		OnXCreateProcess(ExpProcess *, LPDEBUG_EVENT);
@@ -306,10 +286,8 @@ ExpBreakInfo BreakArrayKernel32[] = {
 #endif
   {"SetConsoleMode", 2, OnSetConsoleMode, EXP_BREAK_OUT},
 #if 0
-  {"SetConsoleActiveScreenBuffer", 1, OnSetConsoleActiveScreenBuffer, EXP_BREAK_OUT},
-#endif
-  {"SetConsoleCursorPosition", 2, OnSetConsoleCursorPosition, EXP_BREAK_OUT},
-#if 0
+    {"SetConsoleActiveScreenBuffer", 1, OnSetConsoleActiveScreenBuffer, EXP_BREAK_OUT},
+    {"SetConsoleCursorPosition", 2, OnSetConsoleCursorPosition, EXP_BREAK_OUT},
     {"SetConsoleWindowInfo", 2, OnSetConsoleWindowInfo, EXP_BREAK_OUT},
     {"ScrollConsoleScreenBufferA", 5, OnScrollConsoleScreenBuffer, EXP_BREAK_OUT},
     {"ScrollConsoleScreenBufferW", 5, OnScrollConsoleScreenBuffer, EXP_BREAK_OUT},
@@ -525,6 +503,8 @@ ExpSlaveDebugThread(LPVOID *lparg)
     BOOLEAN bRet;
     PROCESS_INFORMATION procinfo;
 
+    ExpReading = FALSE;
+
     arg->result = 0;
 
     HConsole = arg->hConsole;
@@ -543,7 +523,7 @@ ExpSlaveDebugThread(LPVOID *lparg)
       arg->result =
 	ExpCreateProcess(arg->argc, arg->argv,
 			 NULL, NULL, NULL, /* stdin, stdout, stderr */
-			 FALSE, FALSE,
+			 FALSE, FALSE, /* AllocConsole, HideConsole */
 			 TRUE, /* debug */
 			 TRUE /* newProcessGroup */,
 			 &arg->process, &procinfo);
@@ -1829,7 +1809,7 @@ OnWriteConsoleA(ExpProcess *proc, ExpThreadInfo *threadInfo,
 {
     CHAR buf[1024];
     PVOID ptr;
-    DWORD n;
+    DWORD i, n;
     PCHAR p;
     BOOL bRet;
 
@@ -1856,14 +1836,30 @@ OnWriteConsoleA(ExpProcess *proc, ExpThreadInfo *threadInfo,
     ptr = (PVOID) threadInfo->args[1];
     ReadSubprocessMemory(proc, ptr, p, n * sizeof(CHAR));
 
-    p[n]='\0';
-    EXP_LOG ("(debug): OnWriteConsoleA >> \n'%s'", p);
-    bRet = ExpWriteMaster(HMaster, p, n);
+    for (i = 0; i < n; i++)
+      if (p[i] == '\n') {
+        if (ExpReading == TRUE) {
+          PCHAR p2;
+          EXP_LOG ("Removed some chars: '%s'", p);
+          p2 = malloc ((n - i) * sizeof(CHAR));
+          memcpy (p2, &p[i + 1], n - i);
+          if (p != buf)
+            free (p);
+          p = p2;
+          n -= i + 1;
+          i = -1;
+          ExpReading = FALSE;
+        } else {
+          EXP_LOG ("(debug): OnWriteConsoleA >> \\n detected", NULL);
+        }
+      }
+    if (ExpReading == FALSE) {
+      bRet = ExpWriteMaster(HMaster, p, n);
+    }
 
     if (p != buf) {
 	free(p);
     }
-    CursorKnown = FALSE;
 }
 
 /*
@@ -1895,7 +1891,7 @@ OnWriteConsoleW(ExpProcess *proc, ExpThreadInfo *threadInfo,
     PCHAR a;
     int asize;
     BOOL bRet;
-    int w;
+    int w, i;
 
     LOG_ENTRY("WriteConsoleW");
 
@@ -1922,13 +1918,26 @@ OnWriteConsoleW(ExpProcess *proc, ExpThreadInfo *threadInfo,
      */
 
     w = WideCharToMultiByte(CP_ACP, 0, p, n, a, asize, NULL, NULL);
-    bRet = ExpWriteMaster(HMaster, a, w);
+    for (i = 0; i < w; i++)
+      if (a[i] == '\n') {
+        if (ExpReading == TRUE) {
+          PCHAR a2;
+          a2 = malloc ((w - i - 1) * sizeof(CHAR));
+          memcpy (a2, &a[i + 1], w - i - 1);
+          if (p != buf)
+            free (a);
+          a = a2;
+          i = 0;
+          ExpReading = FALSE;
+        } else {
+          EXP_LOG ("(debug): OnWriteConsoleW >> \\n detected", NULL);
+        }
+      }
 
     if (p != buf) {
 	free(p);
 	free(a);
     }
-    CursorKnown = FALSE;
 }
 
 /*
@@ -2111,26 +2120,38 @@ CreateVtSequence(ExpProcess *proc, COORD newPos, DWORD n)
   DWORD count;
   BOOL b;
 
-  oldPos = CursorPosition;
+  LOG_ENTRY ("CreateVtSequence");
 
-  if (CursorKnown && (newPos.Y > oldPos.Y) && (newPos.X == 0)) {
-    memset(buf, '\n', newPos.Y - oldPos.Y);
-    count = newPos.Y - oldPos.Y;
-  } else if (CursorKnown && (newPos.Y = oldPos.Y) && (newPos.X == 0) && (oldPos.X != 0)) {
-    buf[0]='\r';
-    count = 1;
-  } else {
-    count = 0;
-  }
+/*   oldPos = CursorPosition; */
 
-  newPos.X += (SHORT) (n % ConsoleSize.X);
-  newPos.Y += (SHORT) (n / ConsoleSize.X);
-  CursorPosition = newPos;
-  CursorKnown = TRUE;
+/*   EXP_LOG ("Old X: %d", oldPos.X); */
+/*   EXP_LOG ("Old Y: %d", oldPos.Y); */
+/*   EXP_LOG ("CursorKnown: %d", CursorKnown); */
 
-  if (count > 0) {
-    b = ExpWriteMaster(HMaster, buf, count);
-  }
+/*   if (CursorKnown && (newPos.X == 0) && (oldPos.X != 0)) { */
+/*     if (ExpReading == TRUE) { */
+/*       ExpReading = FALSE; */
+/*       count = 0; */
+/*     } else { */
+/*       buf[0]='\n'; */
+/*       count = 1; */
+/*     } */
+/*   } else { */
+/*     count = 0; */
+/*   } */
+
+/*   newPos.X += (SHORT) (n % ConsoleSize.X); */
+/*   newPos.Y += (SHORT) (n / ConsoleSize.X); */
+/*   CursorPosition = newPos; */
+/*   CursorKnown = TRUE; */
+
+/*   EXP_LOG ("New X: %d", newPos.X); */
+/*   EXP_LOG ("New Y: %d", newPos.Y); */
+
+/*   if ((count > 0) && (ExpReading == FALSE)) { */
+/*     b = ExpWriteMaster(HMaster, buf, count); */
+/*   } */
+/*   LOG_EXIT ("CreateVtSequence"); */
 }
 
 /*
@@ -2417,6 +2438,9 @@ OnSetConsoleMode(ExpProcess *proc, ExpThreadInfo *threadInfo,
   }
   if (found) {
     ExpConsoleInputMode = threadInfo->args[1];
+    EXP_LOG("New console mode 0x%x", ExpConsoleInputMode);
+  } else {
+    EXP_LOG("New console (unknown) mode 0x%x", ExpConsoleInputMode);
   }
 }
 
@@ -2476,7 +2500,7 @@ OnSetConsoleCursorPosition(ExpProcess *proc, ExpThreadInfo *threadInfo,
 
     if (*returnValue == FALSE) {
 	return;
-    }
+  }
 
     CreateVtSequence(proc, *((PCOORD) &threadInfo->args[1]), 0);
 }
