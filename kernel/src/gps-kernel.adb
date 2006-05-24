@@ -1400,7 +1400,7 @@ package body GPS.Kernel is
       end if;
 
       --  Then check all toplevel windows and stop at the one that has
-      --  the focus
+      --  the focus.
 
       if W = null then
          List := List_Toplevels;

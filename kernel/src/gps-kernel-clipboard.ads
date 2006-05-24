@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -42,8 +42,8 @@ package GPS.Kernel.Clipboard is
    --  done with this keyboard.
 
    procedure Cut_Clipboard
-     (Clipboard        : access Clipboard_Record;
-      Widget           : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Clipboard : access Clipboard_Record;
+      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Cut the current selection from widget to the clipboard. This saves the
    --  previous contents of the clipboard.
    --  Default_Editable indicates whether the buffer is considered as editable
@@ -53,7 +53,7 @@ package GPS.Kernel.Clipboard is
    procedure Copy_Clipboard
      (Clipboard : access Clipboard_Record;
       Widget    : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Cut the current selection from widget to the clipboard. This saves the
+   --  Copy the current selection from widget to the clipboard. This saves the
    --  previous contents of the clipboard.
 
    procedure Paste_Clipboard
@@ -73,7 +73,7 @@ package GPS.Kernel.Clipboard is
    --  no the same where Paste_Clipboard last left it.
 
    procedure Merge_Clipboard
-     (Clipboard : access Clipboard_Record;
+     (Clipboard      : access Clipboard_Record;
       Index1, Index2 : Natural);
    --  Merge the two entries in the clipboard, and remove the second one.
 
