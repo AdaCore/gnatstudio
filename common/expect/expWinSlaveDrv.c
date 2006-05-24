@@ -73,6 +73,7 @@
 HANDLE hShutdown;   /* Event is set when the slave driver is shutting down. */
 
 int    ExpDebug;
+BOOL   ExpReading;
 
 typedef struct ExpFunctionKey {
     char *sequence;
@@ -199,6 +200,7 @@ main(argc, argv)
   HANDLE hThread;
   DWORD threadId;
   ExpSlaveDebugArg debugInfo;
+  SMALL_RECT consoleWindow;
 
   int n;
 
@@ -261,6 +263,15 @@ main(argc, argv)
 
   ExpConsoleInputMode = ENABLE_PROCESSED_INPUT;
   SetConsoleMode (hConsoleInW, ExpConsoleInputMode);
+  /*
+   * Reduce the size of the console window so that LF are correctly transmitted
+   * with the LF character instead of a cursor position change
+   */
+  consoleWindow.Top = 0;
+  consoleWindow.Left = 0;
+  consoleWindow.Bottom = 1;
+  consoleWindow.Right = 1;
+  SetConsoleWindowInfo (hConsoleOut, TRUE, &consoleWindow);
 
   /*
    * The subprocess needs to be created in the debugging thread.
@@ -412,6 +423,7 @@ ExpProcessInput(HANDLE hMaster, HANDLE hConsoleInW, HANDLE hConsoleOut,
           {
             EXP_LOG("Unable to write to slave: 0x%x", GetLastError());
           }
+	ExpReading = TRUE;
         dwTotalNeeded -= dwNeeded;
         if (dwTotalNeeded) {
           dwNeeded = (dwTotalNeeded > BUFSIZE) ?
@@ -511,8 +523,7 @@ ExpWriteMaster(HANDLE hFile, LPCVOID buf, DWORD n)
     int i;
 
     // Debug
-    for (i=0; i<n; i++)
-      buf2[i]=((CHAR *)buf)[i];
+    memcpy (buf2, buf, n);
     buf2[n]='\0';
     EXP_LOG ("ExpWriteMaster :'%s'", buf2);
     // End Debug
@@ -1101,4 +1112,3 @@ SetArgv(char *cmdLine, int *argcPtr, char ***argvPtr)
     *argcPtr = argc;
     *argvPtr = argv;
 }
-
