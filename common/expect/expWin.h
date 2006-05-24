@@ -38,31 +38,30 @@ extern FILE *log_file;
     log_file=fopen(filename,"w");
 #define EXP_LOG(format, args) \
     if (log_file!=NULL) \
-      fprintf(log_file, "Expect SlaveDriver %s: %d " format "\n", __FILE__, __LINE__, args)
+      fprintf(log_file, "Expect SlaveDriver %s: %d " format "\n", \
+              __FILE__, __LINE__, args)
 #define panic(log) \
     if (log_file!=NULL) \
-      fprintf(log_file, "Expect SlaveDriver panic at %s: %d %s\n", __FILE__,__LINE__,log)
+      fprintf(log_file, "Expect SlaveDriver panic at %s: %d %s\n", \
+              __FILE__,__LINE__,log)
+#define LOG_ENTRY(log) \
+    if (log_file!=NULL) \
+      fprintf(log_file, ">>>%s\n", log)
+#define LOG_EXIT(log) \
+    if (log_file!=NULL) \
+      fprintf(log_file, "<<<%s\n", log)
 #define EXP_END \
     fclose (log_file)
 #define EXP_DEBUG 1
 
 #else /* !SLAVEDRV */
 
-#ifndef EXP_BEGIN
 #define EXP_BEGIN(filename)
-#endif
-
-#ifndef EXP_LOG
 #define EXP_LOG(format, args)
-#endif
-
-#ifndef panic
 #define panic(log)
-#endif
-
-#ifndef EXP_END
+#define LOG_ENTRY(log)
+#define LOG_EXIT(log)
 #define EXP_END
-#endif
 #endif /* !SLAVEDRV */
 
 
