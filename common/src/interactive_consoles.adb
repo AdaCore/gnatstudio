@@ -18,13 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;      use Ada.Exceptions;
 with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
+with System;              use System;
+
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
+
 with Glib;                use Glib;
 with Glib.Convert;
 with Glib.Values;         use Glib.Values;
 with Glib.Object;         use Glib.Object;
 with Glib.Properties;     use Glib.Properties;
-
 with Gdk.Types;           use Gdk.Types;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Event;           use Gdk.Event;
@@ -45,14 +49,10 @@ with Gtkada.Handlers;     use Gtkada.Handlers;
 with Pango.Font;          use Pango.Font;
 with Pango.Enums;         use Pango.Enums;
 
-with System;               use System;
-with Histories;            use Histories;
-with String_Utils;         use String_Utils;
-with GUI_Utils;            use GUI_Utils;
-
-with Traces;               use Traces;
-with Ada.Exceptions;       use Ada.Exceptions;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with Traces;              use Traces;
+with Histories;           use Histories;
+with String_Utils;        use String_Utils;
+with GUI_Utils;           use GUI_Utils;
 
 package body Interactive_Consoles is
 
@@ -344,7 +344,7 @@ package body Interactive_Consoles is
       Event  : Gdk_Event) return Boolean
    is
       Console     : constant Interactive_Console :=
-        Interactive_Console (Object);
+                      Interactive_Console (Object);
       Key         : constant Gdk_Key_Type  := Get_Key_Val (Event);
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
@@ -446,7 +446,7 @@ package body Interactive_Consoles is
 
             declare
                Command : constant String :=
-                 Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
+                           Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
                H       : String_List_Access;
             begin
                if Command = ""
@@ -575,9 +575,9 @@ package body Interactive_Consoles is
       Params  : Glib.Values.GValues)
    is
       C         : constant Interactive_Console :=
-        Interactive_Console (Console);
+                    Interactive_Console (Console);
       Mark      : constant Gtk_Text_Mark :=
-        Get_Text_Mark (Glib.Values.Nth (Params, 2));
+                    Get_Text_Mark (Glib.Values.Nth (Params, 2));
       Mark_Name : constant String := Get_Name (Mark);
 
    begin
@@ -642,15 +642,15 @@ package body Interactive_Consoles is
    -------------
 
    procedure Gtk_New
-     (Console   : out Interactive_Console;
-      Prompt    : String;
-      Handler   : Command_Handler;
-      User_Data : System.Address;
-      Font      : Pango.Font.Pango_Font_Description;
-      History_List : Histories.History;
-      Key          : Histories.History_Key;
-      Highlight    : Gdk_Color := Null_Color;
-      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
+     (Console             : out Interactive_Console;
+      Prompt              : String;
+      Handler             : Command_Handler;
+      User_Data           : System.Address;
+      Font                : Pango.Font.Pango_Font_Description;
+      History_List        : Histories.History;
+      Key                 : Histories.History_Key;
+      Highlight           : Gdk_Color := Null_Color;
+      Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False) is
    begin
       Console := new Interactive_Console_Record;
@@ -677,7 +677,7 @@ package body Interactive_Consoles is
    is
       Iter : Gtk_Text_Iter;
    begin
-      --  Initialize the text buffer and the text view.
+      --  Initialize the text buffer and the text view
 
       Console.Prompt := new String'(Prompt);
       Set_Command_Handler (Console, Handler, User_Data);
@@ -742,7 +742,7 @@ package body Interactive_Consoles is
 
       Widget_Callback.Object_Connect
         (Console.Buffer, "mark_set",
-         Cb => Mark_Set_Handler'Access,
+         Cb          => Mark_Set_Handler'Access,
          Slot_Object => Console);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
@@ -850,8 +850,7 @@ package body Interactive_Consoles is
    ---------------
 
    function Get_Chars
-     (Console : access Interactive_Console_Record)
-     return String
+     (Console : access Interactive_Console_Record) return String
    is
       Start, The_End : Gtk_Text_Iter;
    begin
@@ -937,9 +936,7 @@ package body Interactive_Consoles is
 
          --  We also execute empty commands, since they might be relevant
          --  in some contexts (python for instance)
-         if Command /= null
-           and then Command.all /= ""
-         then
+         if Command /= null and then Command.all /= "" then
             Get_End_Iter (Console.Buffer, Last_Iter);
             Insert (Console.Buffer, Last_Iter, Command.all);
 
@@ -1007,7 +1004,7 @@ package body Interactive_Consoles is
    ----------------
 
    procedure Set_Prompt
-     (Console : access Interactive_Console_Record; Prompt  : String) is
+     (Console : access Interactive_Console_Record; Prompt : String) is
    begin
       Free (Console.Prompt);
       Console.Prompt := new String'(Prompt);
@@ -1033,8 +1030,8 @@ package body Interactive_Consoles is
       Whole_Line : Boolean) return String
    is
       Last_Iter, Prompt_Iter : Gtk_Text_Iter;
-      End_Mark : Gtk_Text_Mark;
-      Success  : Boolean;
+      End_Mark               : Gtk_Text_Mark;
+      Success                : Boolean;
    begin
       if Whole_Line then
          Get_End_Iter (Console.Buffer, Last_Iter);

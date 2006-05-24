@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -48,10 +48,10 @@ package GPS.Kernel.Console is
    --  If Add_LF is True, automatically add a line separator.
 
    procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class);
-   --  If the message window is present in the MDI, raise it.
+   --  If the message window is present in the MDI, raise it
 
    procedure Clear (Kernel : access Kernel_Handle_Record'Class);
-   --  Clear all the text in the Console.
+   --  Clear all the text in the Console
 
    function Create_Interactive_Console
      (Kernel              : access Kernel_Handle_Record'Class;

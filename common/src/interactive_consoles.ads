@@ -50,8 +50,7 @@ package Interactive_Consoles is
      function
        (Console   : access Interactive_Console_Record'Class;
         Input     : String;
-        User_Data : System.Address)
-        return String;
+        User_Data : System.Address) return String;
 
    type Interrupt_Handler is access function
      (Console   : access Interactive_Console_Record'Class;
@@ -61,15 +60,15 @@ package Interactive_Consoles is
    --  done.
 
    procedure Gtk_New
-     (Console      : out Interactive_Console;
-      Prompt       : String;
-      Handler      : Command_Handler;
-      User_Data    : System.Address;
-      Font         : Pango.Font.Pango_Font_Description;
-      History_List : Histories.History;
-      Key          : Histories.History_Key;
-      Highlight    : Gdk_Color := Null_Color;
-      Wrap_Mode    : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
+     (Console             : out Interactive_Console;
+      Prompt              : String;
+      Handler             : Command_Handler;
+      User_Data           : System.Address;
+      Font                : Pango.Font.Pango_Font_Description;
+      History_List        : Histories.History;
+      Key                 : Histories.History_Key;
+      Highlight           : Gdk_Color := Null_Color;
+      Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False);
    --  Create a new console.
    --  History_List and Key are used to handle the history of commands entered
@@ -79,15 +78,15 @@ package Interactive_Consoles is
    --  command.
 
    procedure Initialize
-     (Console   : access Interactive_Console_Record'Class;
-      Prompt    : String;
-      Handler   : Command_Handler;
-      User_Data : System.Address;
-      Font      : Pango.Font.Pango_Font_Description;
-      History_List : Histories.History;
-      Key          : Histories.History_Key;
-      Highlight    : Gdk_Color := Null_Color;
-      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode;
+     (Console             : access Interactive_Console_Record'Class;
+      Prompt              : String;
+      Handler             : Command_Handler;
+      User_Data           : System.Address;
+      Font                : Pango.Font.Pango_Font_Description;
+      History_List        : Histories.History;
+      Key                 : Histories.History_Key;
+      Highlight           : Gdk_Color := Null_Color;
+      Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False);
    --  Internal initialization function.
 
@@ -156,8 +155,7 @@ package Interactive_Consoles is
    --  Set the color used for highlighting tags.
 
    function Get_Chars
-     (Console : access Interactive_Console_Record)
-      return String;
+     (Console : access Interactive_Console_Record) return String;
    --  Return the contents of the console window.
 
    function Get_History

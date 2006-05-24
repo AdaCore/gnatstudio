@@ -47,8 +47,8 @@ package body Adp_Converter is
    --  Return True if Line is past the end of the buffer
 
    procedure Move_To_Next_Line
-     (Buffer : String;
-      Line   : in out Source_Line;
+     (Buffer        : String;
+      Line          : in out Source_Line;
       Starting_With : String := "");
    --  Move Iter to the next line starting with Starting_With.
    --  On exit, Line.Start points to the first significant character of
@@ -245,8 +245,8 @@ package body Adp_Converter is
    -----------------------
 
    procedure Move_To_Next_Line
-     (Buffer : String;
-      Line   : in out Source_Line;
+     (Buffer        : String;
+      Line          : in out Source_Line;
       Starting_With : String := "")
    is
       Prefix : constant String := Starting_With & '=';

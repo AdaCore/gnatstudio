@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -64,7 +64,7 @@ package body GPS.Kernel.Console is
    type Console_Module_Id_Access is access all Console_Module_Id_Record'Class;
 
    procedure Destroy (Module : in out Console_Module_Id_Record);
-   --  Called when the module is destroyed.
+   --  Called when the module is destroyed
 
    Console_Module_Id   : Console_Module_Id_Access;
    Console_Module_Name : constant String := "GPS.Kernel.Console";
@@ -82,26 +82,25 @@ package body GPS.Kernel.Console is
 
    procedure On_Save_Console_As
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for File->Messages->Save As... menu.
+   --  Callback for File->Messages->Save As... menu
 
    procedure On_Load_To_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for File->Messages->Load Contents... menu.
+   --  Callback for File->Messages->Load Contents... menu
 
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for File->Messages->Clear menu.
+   --  Callback for File->Messages->Clear menu
 
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree.
+   --  Restore the status of the explorer from a saved XML tree
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
+      User   : Kernel_Handle) return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
 
    procedure On_Preferences_Changed
@@ -346,8 +345,8 @@ package body GPS.Kernel.Console is
    procedure Initialize_Console
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Console     : GPS_Message;
-      Child       : GPS_MDI_Child;
+      Console : GPS_Message;
+      Child   : GPS_MDI_Child;
 
    begin
       --  ??? Using an interactive_console seems overkill, since the user
@@ -437,12 +436,14 @@ package body GPS.Kernel.Console is
                         Module              => Module_ID (Module),
                         Desktop_Independent => True);
                Child := MDI_Child (NChild);
+
             else
                Gtk_New
                  (Child, Console,
                   Group               => Group_Consoles,
                   Focus_Widget        => Gtk_Widget (Get_View (Console)));
             end if;
+
             Set_Title (Child, Title, Title);
             Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
             Raise_Child (Child);
@@ -489,8 +490,7 @@ package body GPS.Kernel.Console is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-     return Node_Ptr
+      User   : Kernel_Handle) return Node_Ptr
    is
       pragma Unreferenced (User);
       N : Node_Ptr;
@@ -511,8 +511,8 @@ package body GPS.Kernel.Console is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      File     : constant String := '/' & (-"File");
-      Console  : constant String := File & '/' & (-"_Messages");
+      File    : constant String := '/' & (-"File");
+      Console : constant String := File & '/' & (-"_Messages");
    begin
       Console_Module_Id := new Console_Module_Id_Record;
       Register_Module
@@ -525,8 +525,10 @@ package body GPS.Kernel.Console is
 
       Initialize_Console (Kernel);
 
-      Register_Menu (Kernel, Console,
-                     Ref_Item => "Change Directory...", Add_Before => False);
+      Register_Menu
+        (Kernel, Console,
+         Ref_Item => "Change Directory...", Add_Before => False);
+
       Register_Menu
         (Kernel, Console, -"_Clear", "", On_Clear_Console'Access);
       Register_Menu
