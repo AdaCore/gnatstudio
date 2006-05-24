@@ -286,10 +286,13 @@ package body Filesystem.Windows is
       Local_Full_Name : String) return Boolean
    is
       pragma Unreferenced (FS);
+      --  Redirect stderr to stdout for synchronisation purpose
+      --  (stderr is asynchronous on windows)
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("dir"),
          new String'("/a-d"),
-         new String'("""" & Local_Full_Name & """"));
+         new String'("""" & Local_Full_Name & """"),
+         new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -333,7 +336,8 @@ package body Filesystem.Windows is
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("erase"),
          new String'("/f"),
-         new String'("""" & Local_Full_Name & """"));
+         new String'("""" & Local_Full_Name & """"),
+         new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -382,7 +386,8 @@ package body Filesystem.Windows is
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("dir"),
          new String'("/ad"),
-         new String'("""" & Local_Full_Name & """"));
+         new String'("""" & Local_Full_Name & """"),
+         new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -495,9 +500,10 @@ package body Filesystem.Windows is
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
-        (1 => new String'("attrib"),
-         2 => new String'("-r"),
-         3 => new String'("""" & Local_Full_Name & """"));
+        (new String'("attrib"),
+         new String'("-r"),
+         new String'("""" & Local_Full_Name & """"),
+         new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -543,7 +549,8 @@ package body Filesystem.Windows is
          declare
             Args : GNAT.OS_Lib.Argument_List :=
               (new String'("vol"),
-               new String'(Drive & ":"));
+               new String'(Drive & ":"),
+               new String'("2>&1"));
          begin
             Sync_Execute (Host, Args, Status);
             Basic_Types.Free (Args);
@@ -568,7 +575,8 @@ package body Filesystem.Windows is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
         (new String'("mkdir"),
-         new String'("""" & Local_Dir_Name & """"));
+         new String'("""" & Local_Dir_Name & """"),
+         new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -591,7 +599,8 @@ package body Filesystem.Windows is
       Args : GNAT.OS_Lib.Argument_List :=
         (1 => new String'("rmdir"),
          2 => new String'("/q"),
-         3 => new String'("""" & Local_Dir_Name & """"));
+         3 => new String'("""" & Local_Dir_Name & """"),
+         4 => new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -630,16 +639,19 @@ package body Filesystem.Windows is
             return (new String'("dir"),
                     new String'("/ad"),
                     new String'("/b"),
-                    new String'(Local_Dir_Name));
+                    new String'(Local_Dir_Name),
+                    new String'("2>&1"));
          elsif Files_Only then
             return (new String'("dir"),
                     new String'("/a-d"),
                     new String'("/b"),
-                    new String'(Local_Dir_Name));
+                    new String'(Local_Dir_Name),
+                    new String'("2>&1"));
          else
             return (new String'("dir"),
                     new String'("/b"),
-                    new String'(Local_Dir_Name));
+                    new String'(Local_Dir_Name),
+                    new String'("2>&1"));
          end if;
       end Create_Args;
 
