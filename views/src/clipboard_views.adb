@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
---                            AdaCore                                --
+--                      Copyright (C) 2005-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -253,7 +253,7 @@ package body Clipboard_Views is
       Event : Gdk_Event) return Integer
    is
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
+                Gtk_Tree_Store (Get_Model (View.Tree));
       Iter : Gtk_Tree_Iter;
    begin
       Iter := Find_Iter_For_Event (View.Tree, Model, Event);
@@ -292,7 +292,7 @@ package body Clipboard_Views is
      (Clip  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean
    is
-      View  : constant Clipboard_View_Access := Clipboard_View_Access (Clip);
+      View : constant Clipboard_View_Access := Clipboard_View_Access (Clip);
       Selected : Integer;
    begin
       if Get_Button (Event) = 1
@@ -339,7 +339,7 @@ package body Clipboard_Views is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       View : constant Clipboard_View_Access :=
-        Generic_View.Get_Or_Create_View (Kernel, Focus => False);
+               Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
    end On_Preferences_Changed;
@@ -360,8 +360,8 @@ package body Clipboard_Views is
       Start_Truncated : Boolean;
       End_Truncated   : Boolean;
       Result          : Unbounded_String;
-      Ellipsis      : String (1 .. 6);
-      Ellipsis_Last : Integer;
+      Ellipsis        : String (1 .. 6);
+      Ellipsis_Last   : Integer;
 
    begin
       Clear (Model);
@@ -445,7 +445,7 @@ package body Clipboard_Views is
      (View   : access Clipboard_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Tooltip  : Clipboard_View_Tooltips_Access;
+      Tooltip : Clipboard_View_Tooltips_Access;
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Scrolled_Window.Initialize (View);
