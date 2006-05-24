@@ -898,17 +898,18 @@ package body Entities is
             --  This might free Entity.Shared_Name!
             Entity.Ref_Count := Natural'Last;
             Remove (Entity.Declaration.File.Entities, Entity);
+
+--              if Entity.Declaration.File.Handler /= null then
+--                 Remove
+--                   (Entity.Declaration.File.Handler,
+--                    Entity);
+--              end if;
+
             Entity.Ref_Count := 0;
 
             if Active (Debug_Me) then
                Entity.Name := Shared;
             else
-               if Entity.Declaration.File.Handler /= null then
-                  Remove
-                    (Entity.Declaration.File.Handler,
-                     Entity);
-               end if;
-
                Free (Entity.Name);
                Unchecked_Free (Entity);
             end if;
@@ -1149,6 +1150,13 @@ package body Entities is
                   Free  (EL.Table (E).Child_Types);
                   Free  (EL.Table (E).References);
                   Free (EL.Table (E).Called_Entities);
+
+--                    if EL.Table (E).Declaration.File.Handler /= null then
+--                       Remove
+--                         (EL.Table (E).Declaration.File.Handler,
+--                          EL.Table (E));
+--                    end if;
+
                   Unchecked_Free (EL.Table (E));
                end if;
             end loop;
@@ -1785,9 +1793,9 @@ package body Entities is
          if Must_Add_To_File then
             Set (File.Entities, UEI);
 
-            if File.Handler /= null then
-               Insert (File.Handler, E);
-            end if;
+--              if File.Handler /= null then
+--                 Insert (File.Handler, E);
+--              end if;
          end if;
 
       elsif E /= null then
