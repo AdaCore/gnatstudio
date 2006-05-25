@@ -762,6 +762,7 @@ package body Revision_Views is
             View);
 
          Gtk_New (GPS_MDI_Child (Child), View,
+                  Focus_Widget   => Gtk_Widget (View.Tree),
                   Default_Width  => Get_Pref (Default_Widget_Width),
                   Default_Height => Get_Pref (Default_Widget_Height),
                   Group          => Group_Consoles,
