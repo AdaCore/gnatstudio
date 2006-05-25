@@ -18,6 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Tags; use Ada.Tags;
+
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+with System;                   use System;
+
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Gtk.Clipboard;            use Gtk.Clipboard;
@@ -25,17 +33,16 @@ with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Widget;               use Gtk.Widget;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with System;                   use System;
-with Traces;                   use Traces;
+
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with Traces;                   use Traces;
 with XML_Parsers;
-with Ada.Unchecked_Conversion;
-with Ada.Unchecked_Deallocation;
+with GUI_Utils; use GUI_Utils;
 
 package body GPS.Kernel.Clipboard is
 
@@ -251,6 +258,7 @@ package body GPS.Kernel.Clipboard is
       if Widget.all in Gtk_Editable_Record'Class then
          Cut_Clipboard (Gtk_Editable (Widget));
          Append_To_Clipboard (Clipboard);
+
       elsif Widget.all in Gtk_Text_View_Record'Class then
          Buffer := Get_Buffer (Gtk_Text_View (Widget));
          Cut_Clipboard
@@ -274,9 +282,14 @@ package body GPS.Kernel.Clipboard is
       if Widget.all in Gtk_Editable_Record'Class then
          Copy_Clipboard (Gtk_Editable (Widget));
          Append_To_Clipboard (Clipboard);
+
       elsif Widget.all in Gtk_Text_View_Record'Class then
          Buffer := Get_Buffer (Gtk_Text_View (Widget));
          Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
+         Append_To_Clipboard (Clipboard);
+
+      elsif Widget.all in Gtk_Tree_View_Record'Class then
+         Set_Text (Gtk.Clipboard.Get, Get_Selection (Gtk_Tree_View (Widget)));
          Append_To_Clipboard (Clipboard);
       end if;
    end Copy_Clipboard;
@@ -293,7 +306,7 @@ package body GPS.Kernel.Clipboard is
       Buffer : Gtk_Text_Buffer;
       Result : Boolean;
       pragma Unreferenced (Result);
-      Iter : Gtk_Text_Iter;
+      Iter   : Gtk_Text_Iter;
    begin
       Clipboard.Last_Is_From_System := False;
 
@@ -340,6 +353,7 @@ package body GPS.Kernel.Clipboard is
             Paste_Clipboard (Gtk_Editable (Widget));
             Clipboard.Last_Position :=
               Integer (Get_Position (Gtk_Editable (Widget)));
+
          elsif Widget.all in Gtk_Text_View_Record'Class then
             Buffer := Get_Buffer (Gtk_Text_View (Widget));
 
@@ -385,7 +399,7 @@ package body GPS.Kernel.Clipboard is
       end if;
 
       --  If the position is not the same as at the end of the previous paste,
-      --  do nothing
+      --  do nothing.
 
       if Widget.all in Gtk_Editable_Record'Class then
          if Clipboard.Last_Position /=
@@ -424,7 +438,7 @@ package body GPS.Kernel.Clipboard is
 
       --  Prepare the next paste.
       --  If we have just pasted the system's clipboard, do not move the
-      --  current position
+      --  current position.
 
       if not Clipboard.Last_Is_From_System then
          Clipboard.Last_Paste := Clipboard.Last_Paste + 1;
@@ -488,7 +502,7 @@ package body GPS.Kernel.Clipboard is
    ---------------------
 
    procedure Merge_Clipboard
-     (Clipboard : access Clipboard_Record;
+     (Clipboard      : access Clipboard_Record;
       Index1, Index2 : Natural)
    is
       Str : String_Access;
