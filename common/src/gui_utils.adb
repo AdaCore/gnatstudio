@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;           use Ada.Exceptions;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Text_IO;              use Ada.Text_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
@@ -208,8 +209,8 @@ package body GUI_Utils is
    ---------------------------
 
    procedure Add_Unique_List_Entry
-     (List : access Gtk.List.Gtk_List_Record'Class;
-      Text : String;
+     (List    : access Gtk.List.Gtk_List_Record'Class;
+      Text    : String;
       Prepend : Boolean := False)
    is
       Item : Gtk_List_Item;
@@ -242,11 +243,11 @@ package body GUI_Utils is
    ----------------------------
 
    function Add_Unique_Combo_Entry
-     (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Text        : String;
-      Item_String : String := "";
+     (Combo           : access Gtk.Combo.Gtk_Combo_Record'Class;
+      Text            : String;
+      Item_String     : String := "";
       Use_Item_String : Boolean := False;
-      Prepend     : Boolean := False) return Gtk.List_Item.Gtk_List_Item
+      Prepend         : Boolean := False) return Gtk.List_Item.Gtk_List_Item
    is
       Item : Gtk_List_Item;
    begin
@@ -817,9 +818,9 @@ package body GUI_Utils is
       Wrap_Width : Glib.Gint := -1;
       Use_Markup : Boolean := False)
    is
-      Margin : constant := 2;
-      GC     : Gdk_GC;
-      Layout : Pango_Layout;
+      Margin        : constant := 2;
+      GC            : Gdk_GC;
+      Layout        : Pango_Layout;
       Width, Height : Gint;
    begin
       if Text = "" then
@@ -985,8 +986,8 @@ package body GUI_Utils is
    --------------------------
 
    procedure Search_Entity_Bounds
-     (Start_Iter   : in out Gtk.Text_Iter.Gtk_Text_Iter;
-      End_Iter     : out Gtk.Text_Iter.Gtk_Text_Iter)
+     (Start_Iter : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter)
    is
       Ignored : Boolean;
 
@@ -1040,7 +1041,7 @@ package body GUI_Utils is
       Meta    : constant String := "alt-";
       Control : constant String := "control-";
       Max : constant Natural := Shift'Length + Control'Length + Meta'Length;
-      Buffer : String (1 .. Max);
+      Buffer   : String (1 .. Max);
       Current : Natural := Buffer'First;
    begin
       if Key = 0 then
@@ -1121,7 +1122,7 @@ package body GUI_Utils is
    is
       pragma Unreferenced (In_Widget);
       Text  : constant String :=
-        Image (Get_Key_Val (Event), Get_State (Event));
+                Image (Get_Key_Val (Event), Get_State (Event));
    begin
       if Text /= Special_Key_Binding then
          Deep_Copy (From => Event, To => Output.all);
@@ -1202,7 +1203,7 @@ package body GUI_Utils is
       Uneditable_Tag  : Gtk_Text_Tag;
       User_Data       : System.Address)
    is
-      Buffer : constant Gtk_Text_Buffer := Get_Buffer (View);
+      Buffer                 : constant Gtk_Text_Buffer := Get_Buffer (View);
       Prompt_Iter, Last_Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Prompt_Iter, Prompt_End_Mark);
@@ -1210,20 +1211,20 @@ package body GUI_Utils is
 
       declare
          use String_List_Utils.String_List;
-         Text        : constant String :=
-           Get_Slice (Buffer, Prompt_Iter, Last_Iter);
-         Completions : List :=  Completion (Text, User_Data);
-         Prefix      : constant String := Longest_Prefix (Completions);
-         Node        : List_Node;
-         Line        : Gint;
-         Offset      : Gint;
+         Text          : constant String :=
+                           Get_Slice (Buffer, Prompt_Iter, Last_Iter);
+         Completions   : List :=  Completion (Text, User_Data);
+         Prefix        : constant String := Longest_Prefix (Completions);
+         Node          : List_Node;
+         Line          : Gint;
+         Offset        : Gint;
          More_Than_One : constant Boolean :=
-           Completions /= Null_List
-           and then Next (First (Completions)) /= Null_Node;
-         Success     : Boolean;
-         Prev_Begin  : Gtk_Text_Iter;
-         Prev_Last   : Gtk_Text_Iter;
-         Pos         : Gtk_Text_Iter;
+                           Completions /= Null_List
+                           and then Next (First (Completions)) /= Null_Node;
+         Success       : Boolean;
+         Prev_Begin    : Gtk_Text_Iter;
+         Prev_Last     : Gtk_Text_Iter;
+         Pos           : Gtk_Text_Iter;
       begin
          if More_Than_One then
             Node := First (Completions);
@@ -1299,6 +1300,10 @@ package body GUI_Utils is
          Changed    : Boolean);
       --  Called for each key shortcut the user has defined interactively
 
+      ----------------------
+      -- Save_Dynamic_Key --
+      ----------------------
+
       procedure Save_Dynamic_Key
         (Data       : System.Address;
          Accel_Path : String;
@@ -1328,9 +1333,10 @@ package body GUI_Utils is
    -- Query_Password --
    --------------------
 
-   function Query_User (Parent        : Gtk.Window.Gtk_Window;
-                        Prompt        : String;
-                        Password_Mode : Boolean) return String
+   function Query_User
+     (Parent        : Gtk.Window.Gtk_Window;
+      Prompt        : String;
+      Password_Mode : Boolean) return String
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
@@ -1787,13 +1793,57 @@ package body GUI_Utils is
      (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
    is
-      Path   : Gtk_Tree_Path;
-      Tmp    : Boolean;
+      Path : Gtk_Tree_Path;
+      Tmp  : Boolean;
       pragma Unreferenced (Tmp);
    begin
       Path := Get_Path (Get_Model (Tree), Iter);
       Tmp := Expand_Row (Tree, Path, Open_All => False);
       Path_Free (Path);
    end Expand_Row;
+
+   -------------------
+   -- Get_Selection --
+   -------------------
+
+   function Get_Selection
+     (Tree : access Gtk.Tree_View.Gtk_Tree_View_Record'Class) return String
+   is
+      Sel    : Gtk_Tree_Selection;
+      Model  : Gtk_Tree_Model;
+      Iter   : Gtk_Tree_Iter;
+      Nc     : Gint;
+      Result : Unbounded_String;
+   begin
+      Sel := Gtk.Tree_View.Get_Selection (Tree);
+
+      Get_Selected (Sel, Model, Iter);
+
+      if Iter = Null_Iter then
+         return "";
+
+      else
+         Nc := Get_N_Columns (Model);
+
+         for K in 0 .. Nc - 1 loop
+            if Get_Column_Type (Model, K) = GType_String then
+               --  We only copy the string columns
+               declare
+                  V : constant String :=
+                        Gtk.Tree_Model.Get_String (Model, Iter, K);
+               begin
+                  if V /= "" then
+                     if Result /= Null_Unbounded_String then
+                        Append (Result, ' ');
+                     end if;
+                     Append (Result, V);
+                  end if;
+               end;
+            end if;
+         end loop;
+
+         return To_String (Result);
+      end if;
+   end Get_Selection;
 
 end GUI_Utils;
