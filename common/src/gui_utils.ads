@@ -222,6 +222,10 @@ package GUI_Utils is
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Expand the node at Iter
 
+   function Get_Selection
+     (Tree : access Gtk.Tree_View.Gtk_Tree_View_Record'Class) return String;
+   --  Return the content of the current selection
+
    type Editable_Cb is access procedure
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
