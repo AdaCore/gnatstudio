@@ -18,31 +18,29 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Tags; use Ada.Tags;
-
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with System;                   use System;
+with System;                     use System;
 
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Glib.Xml_Int;             use Glib.Xml_Int;
-with Gtk.Clipboard;            use Gtk.Clipboard;
-with Gtk.Editable;             use Gtk.Editable;
-with Gtk.Text_View;            use Gtk.Text_View;
-with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
-with Gtk.Text_Iter;            use Gtk.Text_Iter;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Widget;               use Gtk.Widget;
+with Glib.Properties.Creation;   use Glib.Properties.Creation;
+with Glib.Xml_Int;               use Glib.Xml_Int;
+with Gtk.Clipboard;              use Gtk.Clipboard;
+with Gtk.Editable;               use Gtk.Editable;
+with Gtk.Text_View;              use Gtk.Text_View;
+with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
+with Gtk.Tree_View;              use Gtk.Tree_View;
+with Gtk.Widget;                 use Gtk.Widget;
 
-with GPS.Intl;                 use GPS.Intl;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with Traces;                   use Traces;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with Traces;                     use Traces;
+with GUI_Utils;                  use GUI_Utils;
 with XML_Parsers;
-with GUI_Utils; use GUI_Utils;
 
 package body GPS.Kernel.Clipboard is
 
