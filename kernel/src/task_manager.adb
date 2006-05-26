@@ -34,10 +34,11 @@ package body Task_Manager is
    package Task_Manager_Timeout is new Gtk.Main.Timeout (Task_Manager_Access);
 
    function Get_Or_Create_Task_Queue
-     (Manager  : Task_Manager_Access;
-      Queue_Id : String;
-      Active   : Boolean;
-      Show_Bar : Boolean) return Integer;
+     (Manager    : Task_Manager_Access;
+      Queue_Id   : String;
+      Active     : Boolean;
+      Show_Bar   : Boolean;
+      Block_Exit : Boolean) return Integer;
    --  Return an index in Manager.Queues corresponding to Queue_Id;
 
    function Active_Incremental
@@ -377,16 +378,18 @@ package body Task_Manager is
    ------------------------------
 
    function Get_Or_Create_Task_Queue
-     (Manager  : Task_Manager_Access;
-      Queue_Id : String;
-      Active   : Boolean;
-      Show_Bar : Boolean) return Integer is
+     (Manager    : Task_Manager_Access;
+      Queue_Id   : String;
+      Active     : Boolean;
+      Show_Bar   : Boolean;
+      Block_Exit : Boolean) return Integer is
    begin
       if Manager.Queues = null then
          Manager.Queues := new Task_Queue_Array (1 .. 1);
          Manager.Queues (1) := new Task_Queue_Record;
          Manager.Queues (1).Id := new String'(Queue_Id);
          Manager.Queues (1).Show_Bar := Show_Bar;
+         Manager.Queues (1).Block_Exit := Block_Exit;
 
          if Active then
             Manager.Passive_Index := 2;
@@ -424,6 +427,7 @@ package body Task_Manager is
                New_Queues (New_Queues'First).Id := new String'(Queue_Id);
 
                New_Queues (New_Queues'First).Show_Bar := Show_Bar;
+               New_Queues (New_Queues'First).Block_Exit := Block_Exit;
 
                Unchecked_Free (Manager.Queues);
                Manager.Queues := new Task_Queue_Array'(New_Queues);
@@ -440,6 +444,7 @@ package body Task_Manager is
                New_Queues (New_Queues'Last).Id := new String'(Queue_Id);
 
                New_Queues (New_Queues'Last).Show_Bar := Show_Bar;
+               New_Queues (New_Queues'Last).Block_Exit := Block_Exit;
 
                Unchecked_Free (Manager.Queues);
                Manager.Queues := new Task_Queue_Array'(New_Queues);
@@ -455,14 +460,16 @@ package body Task_Manager is
    -----------------
 
    procedure Add_Command
-     (Manager  : Task_Manager_Access;
-      Command  : Command_Access;
-      Active   : Boolean;
-      Show_Bar : Boolean;
-      Queue_Id : String := "")
+     (Manager    : Task_Manager_Access;
+      Command    : Command_Access;
+      Active     : Boolean;
+      Show_Bar   : Boolean;
+      Queue_Id   : String := "";
+      Block_Exit : Boolean := True)
    is
       Task_Queue : constant Integer :=
-        Get_Or_Create_Task_Queue (Manager, Queue_Id, Active, Show_Bar);
+        Get_Or_Create_Task_Queue
+          (Manager, Queue_Id, Active, Show_Bar, Block_Exit);
    begin
       Command_Queues.Append (Manager.Queues (Task_Queue).Queue, Command);
 
@@ -613,8 +620,9 @@ package body Task_Manager is
 
       for J in Manager.Queues'Range loop
          if Manager.Queues (J).Status in Running .. Paused then
-            if Consider_Silent
-              or else Manager.Queues (J).Show_Bar
+            if Manager.Queues (J).Block_Exit
+              and then (Consider_Silent
+                        or else Manager.Queues (J).Show_Bar)
             then
                return True;
             end if;
