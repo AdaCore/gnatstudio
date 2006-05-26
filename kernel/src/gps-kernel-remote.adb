@@ -2253,9 +2253,10 @@ package body GPS.Kernel.Remote is
      (Kernel         : GPS.Kernel.Kernel_Handle;
       Default_Server : String := "")
    is
-      Dialog : Server_List_Editor;
-      Resp   : Gtk_Response_Type;
-      Item   : Item_Access;
+      Dialog  : Server_List_Editor;
+      Resp    : Gtk_Response_Type;
+      Item    : Item_Access;
+      Updated : Boolean;
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Item_Record, Item_Access);
 
@@ -2273,12 +2274,31 @@ package body GPS.Kernel.Remote is
             if Save (Dialog, True) then
                --  For all config, apply in g-exttre
 
-               Item := Dialog.Machines;
-               Remove_All_Machine_Descriptors;
+               for N in 1 .. Get_Nb_Machine_Descriptor loop
+                  declare
+                     Desc     : Machine_Descriptor :=
+                                  Get_Machine_Descriptor (N);
+                     Nickname : constant String :=
+                                  Desc.Nickname.all;
+                  begin
+                     Item := Dialog.Machines;
+                     Updated := False;
 
-               while Item /= null loop
-                  Add_Machine_Descriptor (Item.Desc);
-                  Item := Item.Next;
+                     while Item /= null loop
+                        if Item.Desc.Nickname.all = Nickname then
+                           Add_Machine_Descriptor (Item.Desc);
+                           Updated := True;
+                           exit;
+                        end if;
+
+                        Item := Item.Next;
+                     end loop;
+
+                     --  Not found in dialog: has been removed
+                     if not Updated then
+                        Remove_Machine_Descriptor (Desc);
+                     end if;
+                  end;
                end loop;
 
                --  Save mirror paths
