@@ -1566,25 +1566,31 @@ package body GNAT.Expect.TTY.Remote is
       Prev := null;
 
       while Current /= null loop
+
          if Current.Desc.Nickname.all = Desc.Nickname.all then
             --  Same nickname : replace it
             Descriptor.Next := Current.Next;
+
             if Prev /= null then
                Prev.Next := Descriptor;
             else
                Machine_Descriptor_List := Descriptor;
             end if;
+
             Close (Current);
             Unref (Current.Desc);
+
             return;
 
          elsif Current.Desc.Nickname.all > Desc.Nickname.all then
             Descriptor.Next := Current;
+
             if Prev /= null then
                Prev.Next := Descriptor;
             else
                Machine_Descriptor_List := Descriptor;
             end if;
+
             return;
          end if;
 
