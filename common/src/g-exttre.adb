@@ -1202,6 +1202,12 @@ package body GNAT.Expect.TTY.Remote is
 
                Send (Desc, Descriptor.Shell.Get_Status_Cmd.all);
 
+               if Descriptor.Machine.Desc.Dbg /= null then
+                  Print (Descriptor.Machine.Desc.Dbg,
+                         Descriptor.Shell.Get_Status_Cmd.all,
+                         Input);
+               end if;
+
                --  Skip echo if needed
 
                if Descriptor.Machine.Echoing then
@@ -1267,6 +1273,11 @@ package body GNAT.Expect.TTY.Remote is
                   --  Shell does not respond to command. Kill it
 
                   raise Process_Died;
+
+               elsif Descriptor.Machine.Desc.Dbg /= null then
+                  Print (Descriptor.Machine.Desc.Dbg,
+                         Expect_Out (Desc),
+                         Output);
                end if;
             end if;
 
@@ -1277,6 +1288,7 @@ package body GNAT.Expect.TTY.Remote is
          Descriptor.Output_Fd  := GNAT.OS_Lib.Invalid_FD;
          Descriptor.Error_Fd   := GNAT.OS_Lib.Invalid_FD;
          Descriptor.Pid        := Invalid_Pid;
+         Descriptor.Process    := Null_Address;
          Descriptor.Session_Nb := 0;
          Close_Pseudo_Descriptor (Descriptor);
 
