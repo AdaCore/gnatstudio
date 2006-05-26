@@ -1357,7 +1357,7 @@ package body Builder_Module is
             Max_Projects     => Projects_Count),
          Load_Xref_Iterate'Access);
       Launch_Background_Command
-        (Kernel, Command_Access (C), False, True, "");
+        (Kernel, Command_Access (C), False, True, "", Block_Exit => False);
    end Load_Xref_In_Memory;
 
    ------------
