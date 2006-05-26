@@ -2108,20 +2108,18 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
       goto end;
     }
 
-    for (argc=0; argv[argc] != NULL; argc++) ;
-    argc = argc + 3;
-
     if (SearchPath (NULL, "explaunch.exe", NULL,
                     MAX_PATH, slavePath, NULL) == 0) {
       goto end;
     }
-    nargv = (char **) malloc (sizeof (char*) * argc + 1);
+    for (argc=0; argv[argc] != NULL; argc++) ;
+    argc += 1;
+    nargv = (char **) malloc (sizeof (char*) * (argc + 4));
     nargv[0] = slavePath;
     nargv[1] = pipeNameIn;
     nargv[2] = pipeNameOut;
 
-    for (i = 0; i <= argc; i++)
-      nargv[i + 3] = argv[i];
+    for (i = 0; i < argc; i++) nargv[i + 3] = argv[i];
     process->usePipe = FALSE;
   }
 
