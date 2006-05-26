@@ -59,7 +59,8 @@ package GPS.Kernel.Task_Manager is
       Active          : Boolean;
       Show_Bar        : Boolean;
       Queue_Id        : String := "";
-      Destroy_On_Exit : Boolean := True);
+      Destroy_On_Exit : Boolean := True;
+      Block_Exit      : Boolean := True);
    --  Add a command to the Task_Manager.
    --  If Queue_Id is not empty, the queue will be appended at the end of the
    --  queue corresponding to the Id if it exists, or a new queue with this
@@ -70,6 +71,8 @@ package GPS.Kernel.Task_Manager is
    --  otherwise it will only be visible in the Task Manager window.
    --  Memory associated to Command will be freed by the Task Manager
    --  after execution, unless Destroy_On_Exit is false.
+   --  If Block_Exit is True, GPS will show a confirmation dialog if user exits
+   --  while this command is running.
    --  See comments in task_manager.ads for details.
 
    function Launch_Background_Command
@@ -78,7 +81,8 @@ package GPS.Kernel.Task_Manager is
       Active          : Boolean;
       Show_Bar        : Boolean;
       Queue_Id        : String := "";
-      Destroy_On_Exit : Boolean := True) return Scheduled_Command_Access;
+      Destroy_On_Exit : Boolean := True;
+      Block_Exit      : Boolean := True) return Scheduled_Command_Access;
    --  Same as above, but returns the command actually inserted in the task
    --  manager.
 
