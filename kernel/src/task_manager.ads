@@ -43,14 +43,17 @@ package Task_Manager is
    type Task_Manager_Access is access all Task_Manager_Record;
 
    procedure Add_Command
-     (Manager  : Task_Manager_Access;
-      Command  : Command_Access;
-      Active   : Boolean;
-      Show_Bar : Boolean;
-      Queue_Id : String := "");
+     (Manager    : Task_Manager_Access;
+      Command    : Command_Access;
+      Active     : Boolean;
+      Show_Bar   : Boolean;
+      Queue_Id   : String := "";
+      Block_Exit : Boolean := True);
    --  Add a command to be handled by the task manager.
    --  The command will be executed at once.
    --  The progress bar will be shown for this command if Show_Bar is True.
+   --  If Block_Exit is True, GPS should display a confirmation dialog if
+   --  exiting while this command is running.
 
    procedure Interrupt_Queue
      (Manager : Task_Manager_Access;
@@ -133,6 +136,8 @@ private
       Need_Refresh : Boolean := False;
 
       Show_Bar     : Boolean := False;
+
+      Block_Exit   : Boolean := True;
 
       Bar          : Gtk.Progress_Bar.Gtk_Progress_Bar := null;
    end record;
