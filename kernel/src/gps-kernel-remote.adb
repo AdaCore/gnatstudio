@@ -80,7 +80,6 @@ with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
-with Config;                     use Config;
 with Filesystem.Unix;            use Filesystem.Unix;
 with Filesystem.Windows;         use Filesystem.Windows;
 with GUI_Utils;                  use GUI_Utils;
