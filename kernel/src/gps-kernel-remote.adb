@@ -3459,15 +3459,6 @@ package body GPS.Kernel.Remote is
                         "Please verify your network configuration")),
                      Mode => Error);
 
-                  if Host = Config.Windows then
-                     GPS.Kernel.Console.Insert
-                       (Kernel,
-                        -("(Hint) on Windows hosts, some remote access tools "
-                          & "from cygwin do not support passwords when used "
-                          & "from GPS. Make sure that you use password-less "
-                          & "connection in this case"));
-                  end if;
-
                   Trace (Me, "No remote sync was registered or errors during" &
                          " calls");
                   return;
