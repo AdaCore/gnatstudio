@@ -9041,7 +9041,7 @@ The restrictions are the following:
 @item Load Xref info on project load
 @cindex load xref info on project load
 Whether the Xref information should be automatically loaded into memory when
-a new project is loaded. @xref{Load xref info in memory}
+a new project is loaded. @xref{Support for Cross-References}.
 
 @end table
 
