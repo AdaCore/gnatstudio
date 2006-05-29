@@ -1122,10 +1122,6 @@ package body GNAT.Expect.TTY.Remote is
          end if;
       end if;
 
-      if Desc.Machine.Desc.Dbg /= null then
-         Print (Desc.Machine.Desc.Dbg, Desc.Buffer.all, Output);
-      end if;
-
       if not Desc.Terminated then
          --  Catch a prompt
          Match (Desc.Shell.Prompt.all,
@@ -1133,6 +1129,12 @@ package body GNAT.Expect.TTY.Remote is
                 Matched);
 
          if Matched (0) /= No_Match then
+            if Desc.Machine.Desc.Dbg /= null then
+               Print
+                 (Desc.Machine.Desc.Dbg,
+                  Desc.Buffer (1 .. Matched (0).Last), Output);
+            end if;
+
             Tmp_Buf := new String'
               (Desc.Buffer (1 .. Matched (0).First - 1));
             Desc.Buffer_Index := Matched (0).First - 1;
@@ -1946,6 +1948,12 @@ package body GNAT.Expect.TTY.Remote is
      (Descriptor : in out Remote_Process_Descriptor;
       Result : Expect_Match) is
    begin
+      if not Descriptor.Terminated
+        and then Descriptor.Machine.Desc.Dbg /= null
+      then
+         Print (Descriptor.Machine.Desc.Dbg, Expect_Out (Descriptor), Output);
+      end if;
+
       if Descriptor.Terminated and then Result = Expect_Timeout then
          raise Process_Died;
       end if;
