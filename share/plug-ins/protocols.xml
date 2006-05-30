@@ -4,9 +4,10 @@
 
   <!-- SSH -->
 
+  <!-- tty allocation required for some platforms like solaris -->
   <remote_connection_config name="ssh">
     <start_command>ssh</start_command>
-    <start_command_common_args>-C %h</start_command_common_args>
+    <start_command_common_args>-t -t -C %h</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
     <extra_ptrn auto_answer="true" answer="yes">^.*continue connecting \(yes/no\)\? *</extra_ptrn>
   </remote_connection_config>
@@ -31,7 +32,7 @@
 
   <remote_connection_config name="plink ssh">
     <start_command>plink</start_command>
-    <start_command_common_args>-C -ssh %h</start_command_common_args>
+    <start_command_common_args>-t -C -ssh %h</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
     <extra_ptrn auto_answer="true" answer="y">^Store key in cache\? \(y/n\) *</extra_ptrn>
     <use_cr_lf>True</use_cr_lf>
