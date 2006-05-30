@@ -601,7 +601,7 @@ package body Filesystem.Unix is
          if Dirs_Only then
                return
                  (new String'("ls"),
-                  new String'("-AbL1F"),
+                  new String'("-AbL1p"),
                   new String'(Local_Dir_Name),
                   new String'("|"),
                   new String'("grep"),
@@ -610,7 +610,7 @@ package body Filesystem.Unix is
          elsif Files_Only then
                return
                  (new String'("ls"),
-                  new String'("-AbL1F"),
+                  new String'("-AbL1p"),
                   new String'(Local_Dir_Name),
                   new String'("|"),
                   new String'("grep"),
