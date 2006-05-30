@@ -2255,6 +2255,7 @@ package body GPS.Kernel.Remote is
       Dialog  : Server_List_Editor;
       Resp    : Gtk_Response_Type;
       Item    : Item_Access;
+      Prev    : Item_Access;
       Updated : Boolean;
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Item_Record, Item_Access);
@@ -2273,6 +2274,7 @@ package body GPS.Kernel.Remote is
             if Save (Dialog, True) then
                --  For all config, apply in g-exttre
 
+               --  Update/Remove already set machines
                for N in 1 .. Get_Nb_Machine_Descriptor loop
                   declare
                      Desc     : Machine_Descriptor :=
@@ -2281,15 +2283,23 @@ package body GPS.Kernel.Remote is
                                   Desc.Nickname.all;
                   begin
                      Item := Dialog.Machines;
+                     Prev := null;
                      Updated := False;
 
                      while Item /= null loop
                         if Item.Desc.Nickname.all = Nickname then
                            Add_Machine_Descriptor (Item.Desc);
+                           Unref (Item.Desc);
+                           if Prev = null then
+                              Dialog.Machines := Item.Next;
+                           else
+                              Prev.Next := Item.Next;
+                           end if;
+                           Unchecked_Free (Item);
                            Updated := True;
                            exit;
                         end if;
-
+                        Prev := Item;
                         Item := Item.Next;
                      end loop;
 
@@ -2298,6 +2308,15 @@ package body GPS.Kernel.Remote is
                         Remove_Machine_Descriptor (Desc);
                      end if;
                   end;
+               end loop;
+
+               --  Set new machines
+               while Dialog.Machines /= null loop
+                  Item := Dialog.Machines;
+                  Add_Machine_Descriptor (Item.Desc);
+                  Unref (Item.Desc);
+                  Dialog.Machines := Item.Next;
+                  Unchecked_Free (Item);
                end loop;
 
                --  Save mirror paths
