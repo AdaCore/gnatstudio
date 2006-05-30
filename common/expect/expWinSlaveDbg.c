@@ -522,7 +522,6 @@ ExpSlaveDebugThread(LPVOID *lparg)
       SetConsoleCtrlHandler(NULL, FALSE);
       arg->result =
 	ExpCreateProcess(arg->argc, arg->argv,
-			 NULL, NULL, NULL, /* stdin, stdout, stderr */
 			 FALSE, FALSE, /* AllocConsole, HideConsole */
 			 TRUE, /* debug */
 			 TRUE /* newProcessGroup */,
