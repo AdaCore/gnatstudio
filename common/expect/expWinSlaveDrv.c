@@ -201,6 +201,7 @@ main(argc, argv)
   DWORD threadId;
   ExpSlaveDebugArg debugInfo;
   SMALL_RECT consoleWindow;
+  CONSOLE_SCREEN_BUFFER_INFO consoleSBInfo;
 
   int n;
 
@@ -267,10 +268,12 @@ main(argc, argv)
    * Reduce the size of the console window so that LF are correctly transmitted
    * with the LF character instead of a cursor position change
    */
+  GetConsoleScreenBufferInfo (hConsoleOut, &consoleSBInfo);
   consoleWindow.Top = 0;
   consoleWindow.Left = 0;
   consoleWindow.Bottom = 1;
-  consoleWindow.Right = 1;
+  consoleWindow.Right = consoleSBInfo.dwSize.X - 1;
+  EXP_LOG ("right edge of console window : %d", consoleWindow.Right);
   SetConsoleWindowInfo (hConsoleOut, TRUE, &consoleWindow);
 
   /*
