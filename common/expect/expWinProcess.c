@@ -529,8 +529,7 @@ Exp_GetCurrentDir (char *dir, int *length)
  */
 
 DWORD
-ExpCreateProcess(argc, argv, inputHandle, outputHandle, errorHandle,
-		 allocConsole, hideConsole, debug, newProcessGroup,
+ExpCreateProcess(argc, argv, allocConsole, hideConsole, debug, newProcessGroup,
 		 pidPtr, globalProcInfo)
     int argc;			/* Number of arguments in following array. */
     char **argv;		/* Array of argument strings.  argv[0]
@@ -538,19 +537,6 @@ ExpCreateProcess(argc, argv, inputHandle, outputHandle, errorHandle,
 				 * converted to native format (using the
 				 * Tcl_TranslateFileName call).  Additional
 				 * arguments have not been converted. */
-    HANDLE inputHandle;		/* If non-NULL, gives the file to use as
-				 * input for the child process.  If inputHandle
-				 * is NULL, the child will receive no standard
-				 * input. */
-    HANDLE outputHandle;		/* If non-NULL, gives the file that
-				 * receives output from the child process.  If
-				 * outputHandle is NULL, output from the child
-				 * will be discarded. */
-    HANDLE errorHandle;		/* If non-NULL, gives the file that
-				 * receives errors from the child process.  If
-				 * errorFile file is not writeable or is NULL,
-				 * errors from the child will be discarded.
-				 * errorFile may be the same as outputFile. */
     int allocConsole;		/* Should a console be allocated */
     int hideConsole;		/* Hide or display the created console */
     int debug;			/* Is this process going to be debugged? */
@@ -600,59 +586,6 @@ ExpCreateProcess(argc, argv, inputHandle, outputHandle, errorHandle,
     ZeroMemory(&startInfo, sizeof(startInfo));
     startInfo.cb = sizeof(startInfo);
 
-    if (inputHandle || outputHandle || errorHandle) {
-	startInfo.dwFlags   = STARTF_USESTDHANDLES;
-	if (! inputHandle) {
-	    inputHandle = GetStdHandle(STD_INPUT_HANDLE);
-	}
-	if (! outputHandle) {
-	    outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	}
-	if (! errorHandle) {
-	    errorHandle = GetStdHandle(STD_ERROR_HANDLE);
-	}
-    }
-
-    startInfo.hStdInput	= INVALID_HANDLE_VALUE;
-    startInfo.hStdOutput= INVALID_HANDLE_VALUE;
-    startInfo.hStdError = INVALID_HANDLE_VALUE;
-
-    /*
-     * Duplicate all the handles which will be passed off as stdin, stdout
-     * and stderr of the child process. The duplicate handles are set to
-     * be inheritable, so the child process can use them.
-     */
-
-    if (inputHandle != NULL) {
-	DuplicateHandle(hProcess, inputHandle, hProcess, &startInfo.hStdInput,
-			0, TRUE, DUPLICATE_SAME_ACCESS);
-	if (startInfo.hStdInput == INVALID_HANDLE_VALUE) {
-	    EXP_LOG("couldn't duplicate input handle: 0x%x", GetLastError());
-	    result = GetLastError();
-	    goto end;
-	}
-    }
-
-    if (outputHandle != NULL) {
-	DuplicateHandle(hProcess, outputHandle, hProcess,
-			&startInfo.hStdOutput, 0, TRUE, DUPLICATE_SAME_ACCESS);
-	if (startInfo.hStdOutput == INVALID_HANDLE_VALUE) {
-	    EXP_LOG("couldn't duplicate output handle: 0x%x", GetLastError());
-	    result = GetLastError();
-	    goto end;
-	}
-    }
-
-    if (errorHandle != NULL) {
-	DuplicateHandle(hProcess, errorHandle, hProcess,
-			&startInfo.hStdError, 0, TRUE, DUPLICATE_SAME_ACCESS);
-	if (startInfo.hStdError == INVALID_HANDLE_VALUE) {
-	    EXP_LOG("couldn't duplicate error handle: 0x%x", GetLastError());
-	    result = GetLastError();
-	    goto end;
-	}
-    }
-
     /*
      * If we do not have a console window, then we must run DOS and
      * WIN32 console mode applications as detached processes. This tells
@@ -686,7 +619,7 @@ ExpCreateProcess(argc, argv, inputHandle, outputHandle, errorHandle,
 	    startInfo.wShowWindow = SW_SHOW;
 	}
 	startInfo.dwFlags |= STARTF_USESHOWWINDOW;
-	createFlags = CREATE_NEW_CONSOLE;
+        createFlags = CREATE_NEW_CONSOLE;
 	if (applType == EXP_APPL_DOS) {
 	    Tcl_DStringAppend(&cmdLine, "cmd.exe /c ", -1);
 	}
@@ -722,8 +655,8 @@ ExpCreateProcess(argc, argv, inputHandle, outputHandle, errorHandle,
     BuildCommandLine(argc, argv, &cmdLine);
     EXP_LOG ("CmdLine : %s", cmdLine);
 
-    b = CreateProcess(NULL, Tcl_DStringValue(&cmdLine), NULL, NULL, TRUE,
-	    createFlags, NULL, ".", &startInfo, globalProcInfo);
+    b = CreateProcess(NULL, Tcl_DStringValue(&cmdLine), NULL, NULL, FALSE,
+                      createFlags, NULL, ".", &startInfo, globalProcInfo);
     if (! b) {
 	result = GetLastError();
 	goto end;
