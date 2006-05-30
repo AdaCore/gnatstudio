@@ -86,8 +86,7 @@ extern FILE *log_file;
 extern DWORD		ExpApplicationType(const char *originalName,
 			    char *fullPath, char *imageName);
 extern DWORD		ExpCreateProcess(int argc, char **argv,
-			    HANDLE inputHandle, HANDLE outputHandle,
-			    HANDLE errorHandle, int allocConsole,
+			    int allocConsole,
 			    int hideConsole, int debug, int newProcessGroup,
 			    PHANDLE pidPtr, LPPROCESS_INFORMATION globalProcInfo);
 extern HANDLE		Exp_WaitPid(HANDLE pid, LPDWORD statPtr, DWORD options);
