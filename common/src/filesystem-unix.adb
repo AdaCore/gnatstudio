@@ -600,22 +600,19 @@ package body Filesystem.Unix is
          --  when using (t)csh
          if Dirs_Only then
                return
-                 (new String'("ls"),
-                  new String'("-AbL1p"),
-                  new String'(Local_Dir_Name),
-                  new String'("|"),
-                  new String'("grep"),
-                  new String'("/$"));
+                 (new String'("sh"),
+                  new String'("-c"),
+                  new String'("ls -AbL1p '" &
+                              Local_Dir_Name &
+                              "' | grep /$ 2> /dev/null"));
 
          elsif Files_Only then
                return
-                 (new String'("ls"),
-                  new String'("-AbL1p"),
-                  new String'(Local_Dir_Name),
-                  new String'("|"),
-                  new String'("grep"),
-                  new String'("-v"),
-                  new String'("/$"));
+                 (new String'("sh"),
+                  new String'("-c"),
+                  new String'("ls -AbL1p '" &
+                              Local_Dir_Name &
+                              "' | grep -v /$ 2> /dev/null"));
 
          else
             return (new String'("ls"),
