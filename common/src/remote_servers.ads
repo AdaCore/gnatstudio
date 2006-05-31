@@ -22,7 +22,7 @@
 
 package Remote_Servers is
 
-   type Remote_Server_Type is
+   type Server_Type is
      (GPS_Server,
       Build_Server,
       Execution_Server,
@@ -30,19 +30,19 @@ package Remote_Servers is
 
    Local_Nickname : constant String;
 
-   subtype Distant_Server_Type is Remote_Server_Type
+   subtype Distant_Server_Type is Server_Type
      range Build_Server .. Debug_Server;
 
-   procedure Assign (Server   : Remote_Server_Type;
+   procedure Assign (Server   : Server_Type;
                      Nickname : String);
 
-   function Is_Local (Server : Remote_Server_Type) return Boolean;
+   function Is_Local (Server : Server_Type) return Boolean;
    --  Tell is the server is the localhost
 
-   function Get_Nickname (Server : Remote_Server_Type) return String;
+   function Get_Nickname (Server : Server_Type) return String;
    --  Get the nickname of a server
 
-   function Get_Printable_Nickname (Server : Remote_Server_Type) return String;
+   function Get_Printable_Nickname (Server : Server_Type) return String;
    --  Get the nickname of a server. If server is local, Local_Nickname is
    --  returned
 
