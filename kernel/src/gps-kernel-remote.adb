@@ -85,7 +85,6 @@ with Filesystem.Windows;         use Filesystem.Windows;
 with GUI_Utils;                  use GUI_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
 with Projects;                   use Projects;
-with Remote_Servers;             use Remote_Servers;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
@@ -124,13 +123,14 @@ package body GPS.Kernel.Remote is
    --  Tell where the descriptor comes from: system wide setup of user defined
    --  setup
 
-   type Synchronisation_Type is (Never, Once, Always);
+   type Synchronisation_Type is (Never, Once_To_Local, Once_To_Remote, Always);
    --  Synchronisation mechanism used for a given remote path.
 
    Synchronisation_String : constant array (Synchronisation_Type) of String_Ptr
-                          := (Never  => new String'("Never"),
-                              Once   => new String'("Once"),
-                              Always => new String'("Always"));
+                          := (Never          => new String'("Never"),
+                              Once_To_Local  => new String'("Once to local"),
+                              Once_To_Remote => new String'("Once to remote"),
+                              Always         => new String'("Always"));
 
    --------------------------
    -- Connection debugging --
@@ -3425,11 +3425,22 @@ package body GPS.Kernel.Remote is
             when Never =>
                Need_Sync := False;
 
-            when Once =>
-               Need_Sync := Sync_Once_Dirs;
+            when Once_To_Local =>
+               if To = "" then
+                  Need_Sync := Sync_Once_Dirs;
+               else
+                  Need_Sync := False;
+               end if;
+
+            when Once_To_Remote =>
+               if To /= "" then
+                  Need_Sync := Sync_Once_Dirs;
+               else
+                  Need_Sync := False;
+               end if;
 
             when Always =>
-               Need_Sync := not Sync_Once_Dirs;
+               Need_Sync := True;
          end case;
 
          if Need_Sync then
@@ -3447,7 +3458,7 @@ package body GPS.Kernel.Remote is
             end if;
 
             declare
-               Data      : aliased Rsync_Hooks_Args :=
+               Data : aliased Rsync_Hooks_Args :=
                  (Hooks_Data with
                    Tool_Name_Length => Machine.Rsync_Func.all'Length,
                    Src_Name_Length  => From'Length,
@@ -3471,10 +3482,11 @@ package body GPS.Kernel.Remote is
                then
                   GPS.Kernel.Console.Insert
                     (Kernel,
-                     -"Directories" & From_Path.all & " and " & To_Path.all &
-                     (-("are not synchronized properly (" &
-                        Machine.Rsync_Func.all & " failed): " &
-                        "Please verify your network configuration")),
+                     Machine.Rsync_Func.all & (-" failure: ") &
+                     (-"Directories ") & From_Path.all &
+                     (-" and ") & To_Path.all &
+                     (-" are not synchronized properly. ") &
+                     (-"Please verify your network configuration"),
                      Mode => Error);
 
                   Trace (Me, "No remote sync was registered or errors during" &
