@@ -157,6 +157,11 @@
     <icon id="gps-vcs-unknown"        file="../icons/20px/vcs-unknown.png" />
     <icon id="gps-vcs-up-to-date"     file="../icons/20px/vcs-up-to-date.png" />
     <icon id="gps-vcs-has-conflicts"  file="../icons/20px/vcs-has-conflicts.png" />
+
+    <!-- GPS remote icons -->
+
+    <icon id="gps-sync-to-local"      file="../icons/16px/sync_to_local.png" />
+    <icon id="gps-sync-to-remote"     file="../icons/16px/sync_to_remote.png" />
   </stock>
 
 </GPS>
