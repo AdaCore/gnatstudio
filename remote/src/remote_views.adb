@@ -700,6 +700,7 @@ package body Remote_Views is
                Set_Text (Get_Entry (User.View.Servers_Combo (GPS_Server)),
                          -"(Advanced configuration)");
                Txt_Set := True;
+               Advanced := True;
 
                exit Servers_Loop;
             end if;
