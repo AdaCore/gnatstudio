@@ -46,7 +46,7 @@ package GPS.Kernel.Macros is
       Context : GPS.Kernel.Selection_Context;
       Quoted  : Boolean;
       Done    : access Boolean;
-      Server  : Remote_Servers.Remote_Server_Type := Remote_Servers.GPS_Server)
+      Server  : Remote_Servers.Server_Type := Remote_Servers.GPS_Server)
       return String;
    --  Return the replacement suitable for %Param.
    --  This should mostly be used from String_Utils.Substitute.

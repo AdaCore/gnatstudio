@@ -29,7 +29,7 @@ package body Remote_Servers is
       --  Identifier of the server
    end record;
 
-   type Servers_Config is array (Remote_Server_Type) of Server_Config;
+   type Servers_Config is array (Server_Type) of Server_Config;
 
    Servers : Servers_Config :=
                (others => (Is_Local => True, Nickname => new String'("")));
@@ -41,7 +41,7 @@ package body Remote_Servers is
    ------------
 
    procedure Assign
-     (Server   : Remote_Server_Type;
+     (Server   : Server_Type;
       Nickname : String)
    is
    begin
@@ -59,7 +59,7 @@ package body Remote_Servers is
    -- Is_Local --
    --------------
 
-   function Is_Local (Server : Remote_Server_Type) return Boolean is
+   function Is_Local (Server : Server_Type) return Boolean is
    begin
       return Servers (Server).Is_Local;
    end Is_Local;
@@ -68,7 +68,7 @@ package body Remote_Servers is
    -- Get_Nickname --
    ------------------
 
-   function Get_Nickname (Server : Remote_Server_Type) return String is
+   function Get_Nickname (Server : Server_Type) return String is
    begin
       if Is_Local (Server) then
          return "";
@@ -81,7 +81,7 @@ package body Remote_Servers is
    -- Get_Printable_Nickname --
    ----------------------------
 
-   function Get_Printable_Nickname (Server : Remote_Server_Type) return String
+   function Get_Printable_Nickname (Server : Server_Type) return String
    is
    begin
       if Is_Local (Server) then

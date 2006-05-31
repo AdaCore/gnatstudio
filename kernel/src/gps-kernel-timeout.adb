@@ -39,9 +39,10 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
@@ -52,7 +53,7 @@ package body GPS.Kernel.Timeout is
 
    type Console_Process_Data is new GObject_Record with record
       Args                 : String_List_Access := null;
-      Server               : Server_Type;
+      Server               : Remote_Servers.Server_Type;
       Console              : Interactive_Console;
       Delete_Id            : Gtk.Handlers.Handler_Id;
       Show_In_Task_Manager : Boolean;
@@ -508,7 +509,7 @@ package body GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
-      Server               : Server_Type := GPS_Server;
+      Server               : Remote_Servers.Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;
@@ -687,7 +688,7 @@ package body GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
-      Server               : Server_Type := GPS_Server;
+      Server               : Remote_Servers.Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;

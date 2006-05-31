@@ -44,18 +44,18 @@ package File_Utils is
    --  separated with Path_Separator
 
    function Is_Case_Sensitive
-     (Server : Remote_Server_Type := GPS_Server) return Boolean;
+     (Server : Server_Type := GPS_Server) return Boolean;
    --  Return true if filenames are case sensitive on the server.
 
    function File_Equal
      (File1, File2 : String;
-      Server : Remote_Server_Type := GPS_Server) return Boolean;
+      Server : Server_Type := GPS_Server) return Boolean;
    --  Perform a comparison of file, taking into account the case sensitivity
    --  depending on Server's OS.
 
    function Relative_Path_Name
      (File_Name, Base_Name : String;
-      Server    : Remote_Server_Type := GPS_Server) return String;
+      Server    : Server_Type := GPS_Server) return String;
    --  Modifies File_Name so that it is relative to Base_Name.
    --  Both names are first normalized to platform specific conventions, but
    --  the links are not resolved. The case sensitivity of Server is used.

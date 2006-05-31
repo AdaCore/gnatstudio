@@ -137,7 +137,7 @@ package body File_Utils is
    -----------------------
 
    function Is_Case_Sensitive
-     (Server : Remote_Server_Type := GPS_Server) return Boolean
+     (Server : Server_Type := GPS_Server) return Boolean
    is
       function Internal return Integer;
       pragma Import (C, Internal, "__gnat_get_file_names_case_sensitive");
@@ -156,7 +156,7 @@ package body File_Utils is
 
    function File_Equal
      (File1, File2 : String;
-      Server : Remote_Server_Type := GPS_Server) return Boolean is
+      Server : Server_Type := GPS_Server) return Boolean is
    begin
       return Equal
         (File1, File2, Case_Sensitive => Is_Case_Sensitive (Server));
@@ -333,7 +333,7 @@ package body File_Utils is
 
    function Relative_Path_Name
      (File_Name, Base_Name : String;
-      Server    : Remote_Server_Type := GPS_Server) return String
+      Server    : Server_Type := GPS_Server) return String
    is
       Base       : constant String := Name_As_Directory
         (Normalize_Pathname (Base_Name, Resolve_Links => False));

@@ -28,12 +28,12 @@ with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;
 with Filesystem;           use Filesystem;
 with Interactive_Consoles;
-with Remote_Servers;
+with Remote_Servers;       use Remote_Servers;
 with VFS;
 
 package GPS.Kernel.Remote is
 
-   subtype Server_Type is Remote_Servers.Remote_Server_Type;
+   subtype Server_Type is Remote_Servers.Server_Type;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

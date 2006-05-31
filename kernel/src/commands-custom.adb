@@ -656,7 +656,7 @@ package body Commands.Custom is
         Get_Attribute (Command, "server", "gps_server");
       Check_Password : constant Boolean :=
         Get_Attribute (Command, "check-password", "false") = "true";
-      Server_T      : Server_Type;
+      Server_T      : Remote_Servers.Server_Type;
    begin
       if Show_Task_Manager = "" then
          Show_TM := Default_Show_In_Task_Manager or else Progress_Regexp /= "";
@@ -671,7 +671,7 @@ package body Commands.Custom is
       end if;
 
       begin
-         Server_T := Server_Type'Value (Server);
+         Server_T := Remote_Servers.Server_Type'Value (Server);
       exception
          when Constraint_Error =>
             Server_T := GPS_Server;
@@ -851,8 +851,8 @@ package body Commands.Custom is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Success        : Boolean := True;
-      Current_Server : Server_Type := GPS_Server;
-      Old_Server     : Server_Type := GPS_Server;
+      Current_Server : Remote_Servers.Server_Type := GPS_Server;
+      Old_Server     : Remote_Servers.Server_Type := GPS_Server;
 
       function Dollar_Substitution
         (Param  : String;

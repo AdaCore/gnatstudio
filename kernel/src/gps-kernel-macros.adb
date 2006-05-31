@@ -133,7 +133,7 @@ package body GPS.Kernel.Macros is
       Context : GPS.Kernel.Selection_Context;
       Quoted  : Boolean;
       Done    : access Boolean;
-      Server  : Remote_Servers.Remote_Server_Type := Remote_Servers.GPS_Server)
+      Server  : Remote_Servers.Server_Type := Remote_Servers.GPS_Server)
       return String
    is
       Project : Project_Type := No_Project;
