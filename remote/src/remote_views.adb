@@ -346,7 +346,7 @@ package body Remote_Views is
                 To   => Build_Server));
          end if;
 
-         Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 5);
+         Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 0);
          Pack_Start (Hbox, View.To_Local_Buttons (S));
          Pack_Start (Hbox, View.To_Remote_Buttons (S));
 
@@ -662,6 +662,7 @@ package body Remote_Views is
       Txt_Set  : Boolean;
       Modified : Boolean;
       Remote   : Boolean;
+      Advanced : Boolean;
    begin
       if Active (Me) then
          Trace (Me, "Combo for Server " & Server_Type'Image (User.Server) &
@@ -687,6 +688,7 @@ package body Remote_Views is
       --  Update simple view combo
 
       Txt_Set := False;
+      Advanced := False;
 
       Servers_Loop :
       for S1 in Distant_Server_Type'Range loop
@@ -745,6 +747,11 @@ package body Remote_Views is
             end if;
          end if;
       end loop;
+
+      if Advanced then
+         Set_Sensitive (User.View.To_Local_Buttons (GPS_Server), False);
+         Set_Sensitive (User.View.To_Remote_Buttons (GPS_Server), False);
+      end if;
 
       Set_Modified
         (User.View, Get_Entry (User.View.Servers_Combo (GPS_Server)),
