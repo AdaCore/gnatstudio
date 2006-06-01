@@ -1549,11 +1549,12 @@ package body Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Editor : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      Entity : Entity_Information :=
-        Get_Entity (Context.Context, Ask_If_Overloaded => True);
+      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Editor      : constant Source_Editor_Box :=
+                      Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Entity      : constant Entity_Information :=
+                      Get_Entity (Context.Context, Ask_If_Overloaded => True);
+      Entity_Type : Entity_Information;
    begin
       if Entity = null then
          --  Probably means that we either could not locate the ALI file,
@@ -1568,15 +1569,28 @@ package body Src_Editor_Box is
                  & " Information, depending on the language")),
             Mode           => Error);
          return Commands.Failure;
+
       else
-         Entity := Get_Type_Of (Entity);
-         Go_To_Closest_Match
-           (Kernel,
-            Filename => Get_Filename (Get_File (Get_Declaration_Of (Entity))),
-            Line     => Convert (Get_Line (Get_Declaration_Of (Entity))),
-            Column   => Get_Column (Get_Declaration_Of (Entity)),
-            Entity   => Entity);
-         return Commands.Success;
+         Entity_Type := Get_Type_Of (Entity);
+
+         if Is_Predefined_Entity (Entity_Type) then
+            Console.Insert
+              (Kernel,
+               -Get_Name (Entity).all & " is of predefined type "
+               & Get_Name (Entity_Type).all);
+            return Commands.Failure;
+
+         else
+            Go_To_Closest_Match
+              (Kernel,
+               Filename => Get_Filename
+                 (Get_File (Get_Declaration_Of (Entity_Type))),
+               Line     => Convert
+                 (Get_Line (Get_Declaration_Of (Entity_Type))),
+               Column   => Get_Column (Get_Declaration_Of (Entity_Type)),
+               Entity   => Entity_Type);
+            return Commands.Success;
+         end if;
       end if;
    end Execute;
 
