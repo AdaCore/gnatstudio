@@ -72,9 +72,11 @@ private
    --  See inherited documentation
 
    procedure Get_Composition
-     (Proposal : Entity_Completion_Proposal;
-      Offset   : Positive;
-      Result   : in out Completion_List);
+     (Proposal   : Entity_Completion_Proposal;
+      Identifier : String;
+      Offset     : Positive;
+      Is_Partial : Boolean;
+      Result     : in out Completion_List);
    --  See inherited documentation
 
    function Get_Number_Of_Parameters (Proposal : Entity_Completion_Proposal)
@@ -102,11 +104,15 @@ private
 
    type Entity_Tree_Wrapper is new Completion_List_Pckg.Virtual_List_Component
    with record
-      Handler    : LI_Handler;
-      Resolver   : Completion_Resolver_Access;
-      Name       : String_Access;
-      Is_Partial : Boolean;
-      Filter     : Possibilities_Filter;
+      Handler       : LI_Handler;
+      Resolver      : Completion_Resolver_Access;
+      Name          : String_Access;
+      Is_Partial    : Boolean;
+      Filter        : Possibilities_Filter;
+
+      Parent_Entity : Entity_Information;
+      --  When this field is set, then only children or or callers of this
+      --  entity will be returned.
    end record;
 
    type Entity_Iterator_Wrapper is new
@@ -117,6 +123,10 @@ private
       Is_Partial : Boolean;
       Name       : String_Access;
       Filter     : Possibilities_Filter;
+
+      Parent_Entity : Entity_Information;
+      --  When this field is set, then only children or or callers of this
+      --  entity will be returned.
    end record;
 
    function First (Tree : Entity_Tree_Wrapper)
@@ -125,6 +135,10 @@ private
 
    function At_End (It : Entity_Iterator_Wrapper) return Boolean;
    --  See inherited documentation
+
+   function Is_Valid (It : Entity_Iterator_Wrapper) return Boolean;
+   --  Return true if the iterator is OK to be returned to the user, which
+   --  means that either it points on an expected value or it's at end.
 
    procedure Next (It : in out Entity_Iterator_Wrapper);
    --  See inherited documentation
