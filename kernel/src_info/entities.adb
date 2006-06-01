@@ -899,11 +899,11 @@ package body Entities is
             Entity.Ref_Count := Natural'Last;
             Remove (Entity.Declaration.File.Entities, Entity);
 
---              if Entity.Declaration.File.Handler /= null then
---                 Remove
---                   (Entity.Declaration.File.Handler,
---                    Entity);
---              end if;
+            if Entity.Declaration.File.Handler /= null then
+               Remove
+                 (Entity.Declaration.File.Handler,
+                  Entity);
+            end if;
 
             Entity.Ref_Count := 0;
 
@@ -1151,11 +1151,11 @@ package body Entities is
                   Free  (EL.Table (E).References);
                   Free (EL.Table (E).Called_Entities);
 
---                    if EL.Table (E).Declaration.File.Handler /= null then
---                       Remove
---                         (EL.Table (E).Declaration.File.Handler,
---                          EL.Table (E));
---                    end if;
+                  if EL.Table (E).Declaration.File.Handler /= null then
+                     Remove
+                       (EL.Table (E).Declaration.File.Handler,
+                        EL.Table (E));
+                  end if;
 
                   Unchecked_Free (EL.Table (E));
                end if;
@@ -1790,12 +1790,12 @@ package body Entities is
             Trie_Tree_Index       => 0);
          Append (UEI.List.all, E);
 
+         if File.Handler /= null then
+            Insert (File.Handler, E);
+         end if;
+
          if Must_Add_To_File then
             Set (File.Entities, UEI);
-
---              if File.Handler /= null then
---                 Insert (File.Handler, E);
---              end if;
          end if;
 
       elsif E /= null then
@@ -2729,6 +2729,8 @@ package body Entities is
          Insert (Handler.Name_Index.all, Node);
          Entity.Trie_Tree_Array := Node.Entities;
          Entity.Trie_Tree_Index := 1;
+
+         return;
       end if;
 
       --  Search an empty slot in the entities array
@@ -2800,11 +2802,9 @@ package body Entities is
 
       It := (It => Start (LI.Name_Index, Prefix), Index => 1);
 
-      if Is_Valid (It) then
-         return It;
+      if not Is_Valid (It) then
+         Next (It);
       end if;
-
-      Next (It);
 
       return It;
    end Start;
@@ -2854,7 +2854,7 @@ package body Entities is
 
    function At_End (It : LI_Entities_Iterator) return Boolean is
    begin
-      return Length (It.It) = 0;
+      return At_End (It.It);
    end At_End;
 
    --------------
@@ -2873,8 +2873,9 @@ package body Entities is
    ----------
 
    procedure Free (It : in out LI_Entities_Iterator) is
+      pragma Unreferenced (It);
    begin
-      Free (It.It);
+      null;
    end Free;
 
 end Entities;
