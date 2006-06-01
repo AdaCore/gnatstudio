@@ -2618,7 +2618,7 @@ package body Src_Editor_Module.Shell is
 
                elsif Name = "editable" then
                   Set_Return_Value
-                    (Data, Get_Property (Tag, Editable_Property));
+                    (Data, Get_Property (Tag, Gtk.Text_Tag.Editable_Property));
 
                else
                   Set_Error_Msg (Data, -"Invalid property");
@@ -2689,7 +2689,8 @@ package body Src_Editor_Module.Shell is
 
                elsif Name = "editable" then
                   Set_Property
-                    (Tag, Editable_Property, Boolean'(Nth_Arg (Data, 3)));
+                    (Tag, Gtk.Text_Tag.Editable_Property,
+                     Boolean'(Nth_Arg (Data, 3)));
 
                else
                   Set_Error_Msg (Data, -"Invalid property");

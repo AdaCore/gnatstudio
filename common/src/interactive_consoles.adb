@@ -704,7 +704,8 @@ package body Interactive_Consoles is
       Unref (Console.Buffer);
 
       Gtk_New (Console.Uneditable_Tag);
-      Set_Property (Console.Uneditable_Tag, Editable_Property, False);
+      Set_Property
+        (Console.Uneditable_Tag, Gtk.Text_Tag.Editable_Property, False);
       Add (Get_Tag_Table (Console.Buffer), Console.Uneditable_Tag);
 
       Gtk_New (Console.External_Messages_Tag);
