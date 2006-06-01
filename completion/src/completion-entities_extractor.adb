@@ -278,6 +278,13 @@ package body Completion.Entities_Extractor is
 
       Entity := Get (It.It);
 
+      --  In any case, we always return global symbols. Non global symbols are
+      --  hidden by this engine.
+
+      if not Get_Attributes (Entity) (Global) then
+         return False;
+      end if;
+
       if (It.Filter and All_Accessible_Units) /= 0 then
          Result := Get_Kind (Entity).Kind = Package_Kind
            and then
