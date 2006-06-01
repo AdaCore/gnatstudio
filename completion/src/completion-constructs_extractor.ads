@@ -63,9 +63,11 @@ private
    --  See inherited documentation
 
    procedure Get_Composition
-     (Proposal : Construct_Completion_Proposal;
-      Offset   : Positive;
-      Result   : in out Completion_List);
+     (Proposal   : Construct_Completion_Proposal;
+      Identifier : String;
+      Offset     : Positive;
+      Is_Partial : Boolean;
+      Result     : in out Completion_List);
    --  See inherited documentation
 
    function Get_Number_Of_Parameters (Proposal : Construct_Completion_Proposal)

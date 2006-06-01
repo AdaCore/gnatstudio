@@ -72,10 +72,17 @@ package body Completion.Constructs_Extractor is
    --------------------
 
    procedure Get_Composition
-     (Proposal : Construct_Completion_Proposal;
-      Offset   : Positive;
-      Result   : in out Completion_List)
+     (Proposal   : Construct_Completion_Proposal;
+      Identifier : String;
+      Offset     : Positive;
+      Is_Partial : Boolean;
+      Result     : in out Completion_List)
    is
+      --  ??? Those two variables should be used here in a function
+      --  Add_To_Result, checking the item we are attempting to add.
+
+      pragma Unreferenced (Identifier, Is_Partial);
+
       Tree : constant Construct_Tree_Access :=
                Construct_Completion_Resolver (Proposal.Resolver.all).Tree;
 
@@ -213,7 +220,9 @@ package body Completion.Constructs_Extractor is
                         while not At_End (It) loop
                            Get_Composition
                              (Get_Proposal (It),
+                              "",
                               1,
+                              True,
                               Result);
 
                            Next (It);
