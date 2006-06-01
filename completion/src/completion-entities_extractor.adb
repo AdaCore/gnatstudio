@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Language.Ada; use Language.Ada;
+with Language.Ada;            use Language.Ada;
 
 package body Completion.Entities_Extractor is
 
@@ -69,29 +69,27 @@ package body Completion.Entities_Extractor is
    ---------------------
 
    procedure Get_Composition
-     (Proposal : Entity_Completion_Proposal;
-      Offset   : Positive;
-      Result   : in out Completion_List)
+     (Proposal   : Entity_Completion_Proposal;
+      Identifier : String;
+      Offset     : Positive;
+      Is_Partial : Boolean;
+      Result     : in out Completion_List)
    is
       pragma Unreferenced (Offset);
    begin
       if Get_Kind (Proposal.Entity).Kind = Package_Kind then
-         --  Appends an iterator on the package children
          Append
            (Result.List,
-            Source_File_Component'
-              (Resolver => Get_Resolver (Proposal),
-               Files    => Get_Source_Files
-                 (Entity_Completion_Resolver (Proposal.Resolver.all).Project,
-                  True),
-               Parent => Proposal.Entity));
-
-         --  Appends an iterator on the package contents
-         Append
-           (Result.List,
-            Calls_Wrapper'
-              (Resolver => Get_Resolver (Proposal),
-               Scope    => Proposal.Entity));
+            Entity_Tree_Wrapper'
+              (Completion_List_Pckg.Virtual_List_Component with
+               Handler       => Get_LI_Handler_By_Name
+                 (Entity_Completion_Resolver
+                    (Proposal.Resolver.all).Handler, Get_Name (Ada_Lang)),
+               Resolver      => Proposal.Resolver,
+               Name          => new String'(Identifier),
+               Is_Partial    => Is_Partial,
+               Filter        => All_Accessible_Units,
+               Parent_Entity => Proposal.Entity));
       elsif Get_Kind (Proposal.Entity).Is_Type then
          Append
            (Result.List,
@@ -176,12 +174,13 @@ package body Completion.Entities_Extractor is
            (Result.List,
             Entity_Tree_Wrapper'
               (Completion_List_Pckg.Virtual_List_Component with
-               Handler    => Get_LI_Handler_By_Name
+               Handler       => Get_LI_Handler_By_Name
                  (Resolver.Handler, Get_Name (Ada_Lang)),
-               Resolver   => Completion_Resolver_Access (Resolver),
-               Name       => new String'(Identifier),
-               Is_Partial => Is_Partial,
-               Filter     => Filter));
+               Resolver      => Completion_Resolver_Access (Resolver),
+               Name          => new String'(Identifier),
+               Is_Partial    => Is_Partial,
+               Filter        => Filter,
+               Parent_Entity => null));
 
          Result.Is_Partial := Is_Partial;
          Result.Searched_Identifier := new String'(Identifier);
@@ -203,7 +202,7 @@ package body Completion.Entities_Extractor is
    -------------------
 
    function Get_Unit_Info (Source : Source_File) return Entity_Information is
-      It        : Entities.Queries.Entity_Iterator;
+      It : Entities.Queries.Entity_Iterator;
    begin
       Find_All_Entities_In_File (It, Source);
 
@@ -240,13 +239,19 @@ package body Completion.Entities_Extractor is
    function First (Tree : Entity_Tree_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
+      It : Entity_Iterator_Wrapper := Entity_Iterator_Wrapper'
+        (It            => Start (Tree.Handler, To_Lower (Tree.Name.all)),
+         Resolver      => Tree.Resolver,
+         Is_Partial    => Tree.Is_Partial,
+         Name          => Tree.Name,
+         Filter        => Tree.Filter,
+         Parent_Entity => Tree.Parent_Entity);
    begin
-      return Entity_Iterator_Wrapper'
-        (It         => Start (Tree.Handler, To_Lower (Tree.Name.all)),
-         Resolver   => Tree.Resolver,
-         Is_Partial => Tree.Is_Partial,
-         Name       => Tree.Name,
-         Filter     => Tree.Filter);
+      if not Is_Valid (It) then
+         Next (It);
+      end if;
+
+      return It;
    end First;
 
    ------------
@@ -258,23 +263,46 @@ package body Completion.Entities_Extractor is
       return At_End (It.It);
    end At_End;
 
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (It : Entity_Iterator_Wrapper) return Boolean is
+      Entity : Entity_Information;
+
+      Result : Boolean;
+   begin
+      if At_End (It) then
+         return True;
+      end if;
+
+      Entity := Get (It.It);
+
+      if (It.Filter and All_Accessible_Units) /= 0 then
+         Result := Get_Kind (Entity).Kind = Package_Kind
+           and then
+             (It.Parent_Entity = null
+              or else It.Parent_Entity = Get_Parent_Package (Entity)
+              or else It.Parent_Entity = Get_Caller
+                (Declaration_As_Reference (Entity)));
+
+         return Result;
+      end if;
+
+      return True;
+   end Is_Valid;
+
    ----------
    -- Next --
    ----------
 
    procedure Next (It : in out Entity_Iterator_Wrapper) is
    begin
-      if (It.Filter and All_Visible_Entities) /= 0 then
-         Next (It.It);
-      elsif (It.Filter and All_Accessible_Units) /= 0 then
-         Next (It.It);
+      Next (It.It);
 
-         while not At_End (It)
-           and then Get_Kind (Get (It.It)).Kind /= Package_Kind
-         loop
-            Next (It.It);
-         end loop;
-      end if;
+      while not Is_Valid (It) loop
+         Next (It.It);
+      end loop;
    end Next;
 
    ---------
@@ -351,9 +379,9 @@ package body Completion.Entities_Extractor is
    is
    begin
       return  Entity_Completion_Proposal'
-        (Mode             => Show_Identifiers,
-         Resolver         => This.Resolver,
-         Entity           => Get (This.It));
+        (Mode     => Show_Identifiers,
+         Resolver => This.Resolver,
+         Entity   => Get (This.It));
    end Get;
 
    ----------
@@ -425,9 +453,9 @@ package body Completion.Entities_Extractor is
       return Completion_Proposal'Class is
    begin
       return Entity_Completion_Proposal'
-        (Mode             => Show_Identifiers,
-         Resolver         => This.Resolver,
-         Entity           => Get (This.It));
+        (Mode     => Show_Identifiers,
+         Resolver => This.Resolver,
+         Entity   => Get (This.It));
    end Get;
 
    ----------
