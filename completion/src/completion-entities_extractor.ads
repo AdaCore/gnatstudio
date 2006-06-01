@@ -61,6 +61,9 @@ private
 
    type Entity_Completion_Proposal is new Completion_Proposal with record
       Entity : Entity_Information;
+
+      Is_All : Boolean;
+      --  In this case, we display only "all"
    end record;
 
    function Get_Completion (Proposal : Entity_Completion_Proposal)
@@ -153,16 +156,20 @@ private
 
    type Calls_Wrapper is new Completion_List_Pckg.Virtual_List_Component
    with record
-      Scope    : Entity_Information;
-      Resolver : Completion_Resolver_Access;
+      Scope      : Entity_Information;
+      Resolver   : Completion_Resolver_Access;
+      Name       : String_Access;
+      Is_Partial : Boolean;
    end record;
 
    type Calls_Iterator_Wrapper is new
      Completion_List_Pckg.Virtual_List_Component_Iterator
    with record
-      It       : Calls_Iterator;
-      Scope    : Entity_Information;
-      Resolver : Completion_Resolver_Access;
+      It         : Calls_Iterator;
+      Scope      : Entity_Information;
+      Resolver   : Completion_Resolver_Access;
+      Name       : String_Access;
+      Is_Partial : Boolean;
    end record;
 
    function First (Scope : Calls_Wrapper)
@@ -177,6 +184,9 @@ private
 
    function Get (This : Calls_Iterator_Wrapper)
       return Completion_Proposal'Class;
+   --  See inherited documentation
+
+   procedure Free (This : in out Calls_Wrapper);
    --  See inherited documentation
 
    procedure Free (This : in out Calls_Iterator_Wrapper);
@@ -257,6 +267,41 @@ private
    --  See inherited documentation
 
    procedure Set_Unit (It : in out Source_File_Iterator);
+   --  See inherited documentation
+
+   -- Entity_Iterator --
+
+   --  This is intended to be used when only one known entity has to be added
+   --  to the list.
+
+   type Unique_Entity_Wrapper is new
+     Completion_List_Pckg.Virtual_List_Component
+   with record
+      Entity   : Entity_Information;
+      Resolver : Completion_Resolver_Access;
+      Is_All   : Boolean;
+   end record;
+
+   type Unique_Entity_Iterator_Wrapper is new
+     Completion_List_Pckg.Virtual_List_Component_Iterator
+   with record
+      Entity   : Entity_Information;
+      Resolver : Completion_Resolver_Access;
+      Is_All   : Boolean;
+   end record;
+
+   function First (Wrapper : Unique_Entity_Wrapper)
+      return Completion_List_Pckg.Virtual_List_Component_Iterator'Class;
+   --  See inherited documentation
+
+   function At_End (It : Unique_Entity_Iterator_Wrapper) return Boolean;
+   --  See inherited documentation
+
+   procedure Next (It : in out Unique_Entity_Iterator_Wrapper);
+   --  See inherited documentation
+
+   function Get (This : Unique_Entity_Iterator_Wrapper)
+      return Completion_Proposal'Class;
    --  See inherited documentation
 
 end Completion.Entities_Extractor;
