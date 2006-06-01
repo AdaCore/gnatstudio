@@ -49,7 +49,11 @@ package body Completion.Entities_Extractor is
    function Get_Completion (Proposal : Entity_Completion_Proposal)
       return UTF8_String is
    begin
-      return Get_Name (Proposal.Entity).all;
+      if Proposal.Is_All then
+         return "all";
+      else
+         return Get_Name (Proposal.Entity).all;
+      end if;
    end Get_Completion;
 
    ------------------
@@ -76,6 +80,7 @@ package body Completion.Entities_Extractor is
       Result     : in out Completion_List)
    is
       pragma Unreferenced (Offset);
+      Type_Of : Entity_Information := null;
    begin
       if Get_Kind (Proposal.Entity).Kind = Package_Kind then
          Append
@@ -90,20 +95,39 @@ package body Completion.Entities_Extractor is
                Is_Partial    => Is_Partial,
                Filter        => All_Accessible_Units,
                Parent_Entity => Proposal.Entity));
-      elsif Get_Kind (Proposal.Entity).Is_Type then
-         Append
-           (Result.List,
-            Calls_Wrapper'
-              (Resolver => Get_Resolver (Proposal),
-               Scope    => Proposal.Entity));
       else
-         --  If it's nothing else, then try to return the type
+         if Get_Kind (Proposal.Entity).Is_Type then
+            Type_Of := Proposal.Entity;
+         else
+            Type_Of := Get_Type_Of (Proposal.Entity);
+         end if;
 
-         Append
-           (Result.List,
-            Calls_Wrapper'
-              (Resolver => Get_Resolver (Proposal),
-               Scope    => Get_Type_Of (Proposal.Entity)));
+         if Get_Kind (Type_Of).Kind = Access_Kind then
+            Append
+              (Result.List,
+               Calls_Wrapper'
+                 (Resolver   => Get_Resolver (Proposal),
+                  Scope      => Pointed_Type (Type_Of),
+                  Name       => new String'(Identifier),
+                  Is_Partial => Is_Partial));
+
+            if Match (Identifier, "all", Is_Partial) then
+               Append
+                 (Result.List,
+                  Unique_Entity_Wrapper'
+                    (Resolver => Proposal.Resolver,
+                     Entity   => Pointed_Type (Type_Of),
+                     Is_All   => True));
+            end if;
+         else
+            Append
+              (Result.List,
+               Calls_Wrapper'
+                 (Resolver   => Get_Resolver (Proposal),
+                  Scope      => Type_Of,
+                  Name       => new String'(Identifier),
+                  Is_Partial => Is_Partial));
+         end if;
       end if;
    end Get_Composition;
 
@@ -331,7 +355,8 @@ package body Completion.Entities_Extractor is
       return  Entity_Completion_Proposal'
         (Mode             => Show_Identifiers,
          Resolver         => This.Resolver,
-         Entity           => Get (This.It));
+         Entity           => Get (This.It),
+         Is_All           => False);
    end Get;
 
    ----------
@@ -351,9 +376,11 @@ package body Completion.Entities_Extractor is
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
       It : Calls_Iterator_Wrapper :=
-        (It       => Get_All_Called_Entities (Scope.Scope),
-         Resolver => Scope.Resolver,
-         Scope    => Scope.Scope);
+        (It         => Get_All_Called_Entities (Scope.Scope),
+         Resolver   => Scope.Resolver,
+         Scope      => Scope.Scope,
+         Name       => Scope.Name,
+         Is_Partial => Scope.Is_Partial);
    begin
       if not Is_Valid (It) then
          Next (It);
@@ -396,8 +423,18 @@ package body Completion.Entities_Extractor is
       return  Entity_Completion_Proposal'
         (Mode     => Show_Identifiers,
          Resolver => This.Resolver,
-         Entity   => Get (This.It));
+         Entity   => Get (This.It),
+         Is_All   => False);
    end Get;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Calls_Wrapper) is
+   begin
+      Free (This.Name);
+   end Free;
 
    ----------
    -- Free --
@@ -424,7 +461,10 @@ package body Completion.Entities_Extractor is
       Scope_Reference := Declaration_As_Reference (It.Scope);
 
       return Get_Location (It_Reference).File
-        = Get_Location (Scope_Reference).File;
+        = Get_Location (Scope_Reference).File
+        and then Match (It.Name.all,
+                        Get_Name (Get (It.It)).all,
+                        It.Is_Partial);
    end Is_Valid;
 
    -----------
@@ -470,7 +510,8 @@ package body Completion.Entities_Extractor is
       return Entity_Completion_Proposal'
         (Mode     => Show_Identifiers,
          Resolver => This.Resolver,
-         Entity   => Get (This.It));
+         Entity   => Get (This.It),
+         Is_All   => False);
    end Get;
 
    ----------
@@ -548,7 +589,8 @@ package body Completion.Entities_Extractor is
       return Entity_Completion_Proposal'
         (Mode     => Show_Identifiers,
          Resolver => This.Resolver,
-         Entity   => This.Unit);
+         Entity   => This.Unit,
+         Is_All   => False);
    end Get;
 
    ----------
@@ -585,5 +627,51 @@ package body Completion.Entities_Extractor is
          end;
       end if;
    end Set_Unit;
+
+   -----------
+   -- First --
+   -----------
+
+   function First (Wrapper : Unique_Entity_Wrapper)
+      return Completion_List_Pckg.Virtual_List_Component_Iterator'Class is
+   begin
+      return Unique_Entity_Iterator_Wrapper'
+        (Resolver => Wrapper.Resolver,
+         Entity   => Wrapper.Entity,
+         Is_All   => Wrapper.Is_All);
+   end First;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (It : Unique_Entity_Iterator_Wrapper) return Boolean is
+   begin
+      return It.Entity = null;
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (It : in out Unique_Entity_Iterator_Wrapper) is
+   begin
+      It.Entity := null;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (This : Unique_Entity_Iterator_Wrapper)
+      return Completion_Proposal'Class
+   is
+   begin
+      return Entity_Completion_Proposal'
+        (Mode     => Show_Identifiers,
+         Resolver => This.Resolver,
+         Entity   => This.Entity,
+         Is_All   => This.Is_All);
+   end Get;
 
 end Completion.Entities_Extractor;
