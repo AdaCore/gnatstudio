@@ -78,10 +78,8 @@ package body Completion.Constructs_Extractor is
       Is_Partial : Boolean;
       Result     : in out Completion_List)
    is
-      --  ??? Those two variables should be used here in a function
-      --  Add_To_Result, checking the item we are attempting to add.
-
-      pragma Unreferenced (Identifier, Is_Partial);
+      --  ??? Identifier & Is_Partial variables should be used here in a
+      --  function Add_To_Result, checking the item we are attempting to add.
 
       Tree : constant Construct_Tree_Access :=
                Construct_Completion_Resolver (Proposal.Resolver.all).Tree;
@@ -220,9 +218,9 @@ package body Completion.Constructs_Extractor is
                         while not At_End (It) loop
                            Get_Composition
                              (Get_Proposal (It),
-                              "",
+                              Identifier,
                               1,
-                              True,
+                              Is_Partial,
                               Result);
 
                            Next (It);
