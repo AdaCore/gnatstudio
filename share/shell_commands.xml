@@ -947,7 +947,7 @@ This is different than setting instance properties through Python's standard mec
       <description>Return the location of the declaration for the entity. The file's name is is "&lt;predefined&gt;" for predefined entities</description>
       <example lang="python">
           entity=GPS.Entity  ("integer")
-          if entity.declaration().file().name == "&lt;predefined&gt;":
+          if entity.declaration().file().name() == "&lt;predefined&gt;":
              print "This is a predefined entity"
       </example>
   </shell_doc>
