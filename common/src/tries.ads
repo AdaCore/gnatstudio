@@ -69,9 +69,8 @@ package Tries is
    --  As a special case, if Prefix is the empty string, the whole contents
    --  of the table will be returned.
 
-   function Length (Iter : Iterator) return Natural;
-   --  Return the number of elements that remains to be returned by Iter,
-   --  including the current one.
+   function At_End (Iter : Iterator) return Boolean;
+   --  Return True if the iterator is at the end of the search.
 
    procedure Next (Iter : in out Iterator);
    --  Move to the next entry
@@ -79,8 +78,9 @@ package Tries is
    function Get (Iter : Iterator) return Data_Type;
    --  Return the current entry or null if there are no more entries
 
-   procedure Free (Iter : in out Iterator);
-   --  Free the memory occupied by the iterator
+   function Is_Valid (Iter : Iterator) return Boolean;
+   --  Return true if the iterator is meant to be used by the user (including
+   --  the case where it is at the end).
 
    Null_Iterator : constant Iterator;
 
@@ -132,22 +132,31 @@ private
    --  building the tree, but consumes less space and is faster to traverse,
    --  which is the emphasis for this tree.
 
+   type Cell_Child;
+
+   type Cell_Child_Access is access all Cell_Child;
+
    type Cell_Child is record
       First_Char_Of_Key : Character;
 
-      Index_Length : Natural := 0;
+      Index_Length      : Natural := 0;
       --  The number of characters that should be considered in
       --  Get_Index (Data) for this node.
 
-      Data : Data_Type := No_Data;
+      Data              : Data_Type := No_Data;
       --  If there is any data associated with that cell
 
-      Children : Cell_Child_Array_Access;
+      Children          : Cell_Child_Array_Access;
       --  The various children of the cell
 
-      Num_Children : Natural := 0;
+      Num_Children      : Natural := 0;
+
+      Children_Length   : Natural := 0;
+
+      Parent_Cell       : Cell_Child_Access;
+
+      Number_In_Parent  : Natural := 0;
    end record;
-   type Cell_Child_Access is access all Cell_Child;
 
    type Cell_Child_Array is array (Positive) of aliased Cell_Child;
 
@@ -157,24 +166,21 @@ private
 
    Empty_Trie_Tree : constant Trie_Tree :=
      (Child => (Index_Length => 0, First_Char_Of_Key => 'a',
-                Data => No_Data, Children => null, Num_Children => 0));
+                Data => No_Data, Children => null, Num_Children => 0,
+                Number_In_Parent => 1, Parent_Cell => null,
+                Children_Length => 0));
 
    type Data_Type_Array is array (Positive) of Data_Type;
+
    type Data_Type_Array_Access is access Data_Type_Array;
 
    type Iterator is record
-      Cells : Data_Type_Array_Access;
-      --  All the cells that must be returned
-
-      Num_Cells : Natural := 0;
-
-      Last  : Integer := 0;
-      --  The last relevant cell in Cells
-
-      Current : Integer := 1;
+      Root_Cell     : Cell_Child_Access;
+      Current_Cell  : Cell_Child_Access;
+      Current_Index : Natural;
    end record;
 
-   Null_Iterator : constant Iterator := (null, 0, 0, 1);
+   Null_Iterator : constant Iterator := (null, null, 0);
 
    type Cell_Pointer is record
       Cell              : Cell_Child_Access;
