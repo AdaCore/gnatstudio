@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.0.0
 
+- F530-004 Goto type declaration wrong on predefined types
+  Problem:    When the contextual menu 'Goto type declaration of XXX' is 
+              invoked, if XXX is of a predefined type GPS opens an empty file
+              named either '<case_insensitive_predefined>' or
+              '<case_sensitive_predefined>'.
+  Workaround: Simply ignore this file and close it.
+
 - F512-005 Unexpected crashes when closing editors from Comparison or shell
   Problem:    When closing editors created with Visual Comparison, or when
               using GPS shell commands to close editors, in some particular
