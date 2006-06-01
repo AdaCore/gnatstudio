@@ -96,6 +96,14 @@ package body Completion.Entities_Extractor is
             Calls_Wrapper'
               (Resolver => Get_Resolver (Proposal),
                Scope    => Proposal.Entity));
+      else
+         --  If it's nothing else, then try to return the type
+
+         Append
+           (Result.List,
+            Calls_Wrapper'
+              (Resolver => Get_Resolver (Proposal),
+               Scope    => Get_Type_Of (Proposal.Entity)));
       end if;
    end Get_Composition;
 
