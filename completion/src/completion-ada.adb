@@ -86,8 +86,13 @@ package body Completion.Ada is
             else
                Get_Composition
                  (Get_Proposal (Previous_It),
+                  Get_Name (Get_Buffer (Manager).all, Data (Token)),
                   Data (Token).Token_Name_First - 1,
+                  Next (Token) = Token_List.Null_Node,
                   Tmp);
+
+               --  ??? See how these two could be handled in a more smooth way.
+               --  We duplicate information with the call above.
                Tmp.Searched_Identifier := new String'
                  (Get_Name (Get_Buffer (Manager).all, Data (Token)));
                Tmp.Is_Partial := Next (Token)
@@ -116,7 +121,11 @@ package body Completion.Ada is
             when Tok_Dot =>
                if Next (Token) = Token_List.Null_Node then
                   Get_Composition
-                    (Get_Proposal (Previous_It), Start_Offset, Result);
+                    (Get_Proposal (Previous_It),
+                     "",
+                     Start_Offset,
+                     True,
+                     Result);
                else
                   Analyze_Token (Next (Token), Previous_It, Result);
                end if;
