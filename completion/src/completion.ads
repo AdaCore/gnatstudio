@@ -162,9 +162,12 @@ package Completion is
    --  Return the category of the object proposed for the completion
 
    procedure Get_Composition
-     (Proposal : Completion_Proposal;
-      Offset   : Positive;
-      Result   : in out Completion_List) is abstract;
+     (Proposal   : Completion_Proposal;
+      Identifier : String;
+      Offset     : Positive;
+      Is_Partial : Boolean;
+      Result     : in out Completion_List) is abstract;
+   --  See inherited documentation is abstract;
    --  Return the possible children of this completion,
    --  Null_Completion_Proposal if none.
 
@@ -282,16 +285,11 @@ private
    --  See inherited documentation
 
    procedure Get_Composition
-     (Proposal : Simple_Completion_Proposal;
-      Offset   : Positive;
-      Result   : in out Completion_List);
-   --  See inherited documentation
-
-   function Get_Composition
      (Proposal   : Simple_Completion_Proposal;
       Identifier : String;
       Offset     : Positive;
-      Is_Partial : Boolean) return Completion_List;
+      Is_Partial : Boolean;
+      Result     : in out Completion_List);
    --  See inherited documentation
 
    function Get_Number_Of_Parameters (Proposal : Simple_Completion_Proposal)

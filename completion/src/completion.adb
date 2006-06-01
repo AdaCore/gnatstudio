@@ -251,28 +251,15 @@ package body Completion is
    ---------------------
 
    procedure Get_Composition
-     (Proposal : Simple_Completion_Proposal;
-      Offset   : Positive;
-      Result   : in out Completion_List)
-   is
-      pragma Unreferenced (Proposal, Offset, Result);
-   begin
-      null;
-   end Get_Composition;
-
-   ---------------------
-   -- Get_Composition --
-   ---------------------
-
-   function Get_Composition
      (Proposal   : Simple_Completion_Proposal;
       Identifier : String;
       Offset     : Positive;
-      Is_Partial : Boolean) return Completion_List
+      Is_Partial : Boolean;
+      Result     : in out Completion_List)
    is
-      pragma Unreferenced (Proposal, Identifier, Offset, Is_Partial);
+      pragma Unreferenced (Proposal, Identifier, Offset, Is_Partial, Result);
    begin
-      return Null_Completion_List;
+      null;
    end Get_Composition;
 
    ------------------------------
