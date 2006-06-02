@@ -114,6 +114,11 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class);
    --  Complete using the current selection and exit.
 
+   function Complete_Common_Prefix
+     (Window : access Completion_Window_Record'Class) return Boolean;
+   --  Complete the text up to the biggest common prefix in the list.
+   --  Return True if completion actually occurred.
+
    ----------
    -- Free --
    ----------
@@ -238,6 +243,10 @@ package body Completion_Window is
       Beg    : Gtk_Text_Iter;
 
    begin
+      if Window.In_Deletion then
+         return;
+      end if;
+
       Get_Text_Iter (Nth (Params, 1), Iter);
       Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
       Adjust_Selected (Window, Get_Text (Window.Buffer, Beg, Iter));
@@ -358,6 +367,78 @@ package body Completion_Window is
                 "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_Focus_Out;
+
+   ----------------------------
+   -- Complete_Common_Prefix --
+   ----------------------------
+
+   function Complete_Common_Prefix
+     (Window : access Completion_Window_Record'Class) return Boolean
+   is
+      Text_Begin : Gtk_Text_Iter;
+      Text_End   : Gtk_Text_Iter;
+
+      Iter : Gtk_Tree_Iter;
+      J    : Natural;
+   begin
+      --  Compute the common prefix
+      Iter := Get_Iter_First (Window.Model);
+      J := Natural (Get_Int (Window.Model, Iter, Index_Column));
+
+      Next (Window.Model, Iter);
+
+      declare
+         Prefix : constant String := Window.Info (J).Text.all;
+         Last   : Natural := Prefix'Last;
+         First  : constant Natural := Prefix'First;
+      begin
+         while Iter /= Null_Iter loop
+            J := Natural (Get_Int (Window.Model, Iter, Index_Column));
+
+            for K in Window.Info (J).Text'First .. Natural'Min
+              (Window.Info (J).Text'Last,
+               Last - First + Window.Info (J).Text'First)
+            loop
+               if (Window.Case_Sensitive
+                   and then Window.Info (J).Text (K) /= Prefix
+                   (K - Window.Info (J).Text'First + First))
+                 or else
+                   To_Lower (Window.Info (J).Text (K)) /=
+                 To_Lower (Prefix (K - Window.Info (J).Text'First + First))
+               then
+                  Last := K - Window.Info (J).Text'First + First - 1;
+                  exit;
+               end if;
+
+               Last := K - Window.Info (J).Text'First + First;
+            end loop;
+
+            Next (Window.Model, Iter);
+         end loop;
+
+         --  Complete up to the common prefix
+         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+         Get_Iter_At_Mark
+           (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
+
+         if Get_Text (Window.Buffer, Text_Begin, Text_End)
+           = Prefix (First .. Last)
+         then
+            return False;
+         end if;
+
+         Trace (Exception_Handle,
+                "replacing with #" & Prefix (First .. Last) & "#");
+
+         Window.In_Deletion := True;
+         Delete (Window.Buffer, Text_Begin, Text_End);
+         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+         Insert (Window.Buffer, Text_Begin, Prefix (First .. Last));
+         Window.In_Deletion := False;
+      end;
+
+      return True;
+   end Complete_Common_Prefix;
 
    -----------------------
    -- Complete_And_Exit --
@@ -568,7 +649,9 @@ package body Completion_Window is
       Iter_Coords : Gdk_Rectangle;
       Window_X, Window_Y : Gint;
       Gdk_X, Gdk_Y       : Gint;
-      Dummy : Boolean;
+      Dummy              : Boolean;
+      Dummy2             : Boolean;
+      pragma Unreferenced (Dummy2);
 
       Rows               : Gint;
       Width, Height      : Gint;
@@ -697,6 +780,7 @@ package body Completion_Window is
          After => True);
 
       On_Selection_Changed (Window);
+      Dummy2 := Complete_Common_Prefix (Window);
    end Show;
 
    -----------------
@@ -708,15 +792,17 @@ package body Completion_Window is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
    begin
-      Sel := Get_Selection (Window.View);
-      Get_Selected (Sel, Model, Iter);
-      Next (Window.Model, Iter);
+      if not Complete_Common_Prefix (Window) then
+         Sel := Get_Selection (Window.View);
+         Get_Selected (Sel, Model, Iter);
+         Next (Window.Model, Iter);
 
-      if Iter = Null_Iter then
-         Iter := Get_Iter_First (Window.Model);
+         if Iter = Null_Iter then
+            Iter := Get_Iter_First (Window.Model);
+         end if;
+
+         Select_Iter (Sel, Iter);
       end if;
-
-      Select_Iter (Sel, Iter);
    end Select_Next;
 
 end Completion_Window;
