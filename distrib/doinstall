@@ -105,8 +105,10 @@ install_binaries() {
   cd $basedir
 
   if [ -f $basedir/bin/gprmake ]; then
-     rm $basedir/bin/gprmake
+     rm -f $basedir/bin/gprmake
   fi
+
+  rm -rf $basedir/lib/gps $basedir/bin/gps*
 
   # Do the installation through tar, to preserve symbolic links
   # We also explicitly work on specific directories to avoid
