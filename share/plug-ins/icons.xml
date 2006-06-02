@@ -10,100 +10,100 @@
 
     <icon id="gtk-paste"              label="Paste"
                                       file="../icons/24px/clipboard_24.png" >
-       <alternate                     file="../icons/16px/clipboard_16.png" size="menu" />
-       <alternate                     file="../icons/18px/clipboard_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/clipboard_16.png" size="1" />
+       <alternate                     file="../icons/18px/clipboard_18.png" size="2" />
     </icon>
 
     <icon id="gtk-copy"               label="Copy"
                                       file="../icons/24px/copy_24.png" >
-       <alternate                     file="../icons/16px/copy_16.png" size="menu" />
-       <alternate                     file="../icons/18px/copy_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/copy_16.png" size="1" />
+       <alternate                     file="../icons/18px/copy_18.png" size="2" />
     </icon>
 
     <icon id="gtk-cut"                label="Cut"
                                       file="../icons/24px/cut_24.png" >
-       <alternate                     file="../icons/16px/cut_16.png" size="menu" />
-       <alternate                     file="../icons/18px/cut_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/cut_16.png" size="1" />
+       <alternate                     file="../icons/18px/cut_18.png" size="2" />
     </icon>
 
     <icon id="gps-navigate-forward"   label="Forward"
                                       file="../icons/24px/goto_next_24.png" >
-       <alternate                     file="../icons/16px/goto_next_16.png" size="menu" />
-       <alternate                     file="../icons/18px/goto_next_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/goto_next_16.png" size="1" />
+       <alternate                     file="../icons/18px/goto_next_18.png" size="2" />
     </icon>
 
     <icon id="gps-navigate-back"      label="Back"
                                       file="../icons/24px/goto_previous_24.png" >
-       <alternate                     file="../icons/16px/goto_previous_16.png" size="menu" />
-       <alternate                     file="../icons/18px/goto_previous_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/goto_previous_16.png" size="1" />
+       <alternate                     file="../icons/18px/goto_previous_18.png" size="2" />
     </icon>
 
     <icon id="gtk-new"                label="New"
                                       file="../icons/24px/newfile_24.png" >
-       <alternate                     file="../icons/16px/newfile_16.png" size="menu" />
-       <alternate                     file="../icons/18px/newfile_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/newfile_16.png" size="1" />
+       <alternate                     file="../icons/18px/newfile_18.png" size="2" />
     </icon>
 
     <icon id="gtk-open"               label="Open"
                                       file="../icons/24px/open_24.png" >
-       <alternate                     file="../icons/16px/open_16.png" size="menu" />
-       <alternate                     file="../icons/18px/open_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/open_16.png" size="1" />
+       <alternate                     file="../icons/18px/open_18.png" size="2" />
     </icon>
 
     <icon id="gtk-redo"               label="Redo"
                                       file="../icons/24px/redo_24.png" >
-       <alternate                     file="../icons/16px/redo_16.png" size="menu" />
-       <alternate                     file="../icons/18px/redo_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/redo_16.png" size="1" />
+       <alternate                     file="../icons/18px/redo_18.png" size="2" />
     </icon>
 
     <icon id="gtk-save"               label="Save"
                                       file="../icons/24px/save_24.png" >
-       <alternate                     file="../icons/16px/save_16.png" size="menu" />
-       <alternate                     file="../icons/18px/save_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/save_16.png" size="1" />
+       <alternate                     file="../icons/18px/save_18.png" size="2" />
     </icon>
 
     <icon id="gtk-undo"               label="Undo"
                                       file="../icons/24px/undo_24.png" >
-       <alternate                     file="../icons/16px/undo_16.png" size="menu" />
-       <alternate                     file="../icons/18px/undo_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/undo_16.png" size="1" />
+       <alternate                     file="../icons/18px/undo_18.png" size="2" />
     </icon>
 
     <!-- Debugger icons -->
 
     <icon id="gps-debugger-run"       label="Go"
                                       file="../icons/24px/play_24.png" >
-       <alternate                     file="../icons/16px/play_16.png" size="menu" />
-       <alternate                     file="../icons/18px/play_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/play_16.png" size="1" />
+       <alternate                     file="../icons/18px/play_18.png" size="2" />
     </icon>
 
     <icon id="gps-debugger-step"      label="Step"
                                       file="../icons/24px/step_24.png" >
-       <alternate                     file="../icons/16px/step_16.png" size="menu" />
-       <alternate                     file="../icons/18px/step_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/step_16.png" size="1" />
+       <alternate                     file="../icons/18px/step_18.png" size="2" />
     </icon>
 
     <icon id="gps-debugger-next"      label="Next"
                                       file="../icons/24px/next_24.png" >
-       <alternate                     file="../icons/16px/next_16.png" size="menu" />
-       <alternate                     file="../icons/18px/next_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/next_16.png" size="1" />
+       <alternate                     file="../icons/18px/next_18.png" size="2" />
     </icon>
 
     <icon id="gps-debugger-finish"    label="Finish"
                                       file="../icons/24px/finish_24.png" >
-       <alternate                     file="../icons/16px/finish_16.png" size="menu" />
-       <alternate                     file="../icons/18px/finish_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/finish_16.png" size="1" />
+       <alternate                     file="../icons/18px/finish_18.png" size="2" />
     </icon>
 
     <icon id="gps-debugger-up"        label="Up"
                                       file="../icons/24px/stack_up_24.png" >
-       <alternate                     file="../icons/16px/stack_up_16.png" size="menu" />
-       <alternate                     file="../icons/18px/stack_up_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/stack_up_16.png" size="1" />
+       <alternate                     file="../icons/18px/stack_up_18.png" size="2" />
     </icon>
 
     <icon id="gps-debugger-down"      label="Down"
                                       file="../icons/24px/stack_down_24.png" >
-       <alternate                     file="../icons/16px/stack_down_16.png" size="menu" />
-       <alternate                     file="../icons/18px/stack_down_18.png" size="small_toolbar" />
+       <alternate                     file="../icons/16px/stack_down_16.png" size="1" />
+       <alternate                     file="../icons/18px/stack_down_18.png" size="2" />
     </icon>
 
     <!-- Note that the icon file is specified twice. The first occurrence is
@@ -114,11 +114,11 @@
          and we don't want gtk+ to scale it to 16x16. -->
 
     <icon id="gps-debugger-break"     file="../icons/16px/debug_break.png">
-       <alternate                     file="../icons/16px/debug_break.png" size="menu" />
+       <alternate                     file="../icons/16px/debug_break.png" size="1" />
     </icon>
 
     <icon id="gps-debugger-current"   file="../icons/16px/debug_indicator.png">
-       <alternate                     file="../icons/16px/debug_indicator.png" size="menu" />
+       <alternate                     file="../icons/16px/debug_indicator.png" size="1" />
     </icon>
 
     <!-- General-purpose icons -->
@@ -143,7 +143,7 @@
     <icon id="gps-box"                file="../icons/16px/variable.png" />
 
     <icon id="adacore-logo"           file="../icons/other/adacore_logo.png">
-       <alternate                     file="../icons/other/adacore_logo.png" size="large_toolbar" />
+       <alternate                     file="../icons/other/adacore_logo.png" size="3" />
     </icon>
 
     <!-- VCS icons -->
