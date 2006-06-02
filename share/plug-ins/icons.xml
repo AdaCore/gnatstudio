@@ -162,6 +162,13 @@
 
     <icon id="gps-sync-to-local"      file="../icons/16px/sync_to_local.png" />
     <icon id="gps-sync-to-remote"     file="../icons/16px/sync_to_remote.png" />
+
+    <!-- GPS window icon -->
+   
+    <icon id="gps-icon-16"            file="../icons/16px/gps_16.png" />
+    <icon id="gps-icon-32"            file="../icons/32px/gps_32.png" />
+    <icon id="gps-icon-48"            file="../icons/48px/gps_48.png" />
+
   </stock>
 
 </GPS>
