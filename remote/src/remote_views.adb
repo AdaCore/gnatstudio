@@ -232,8 +232,6 @@ package body Remote_Views is
       Color          : Gdk_Color;
       Success        : Boolean;
       Hbox           : Gtk_Hbox;
-      Settings_Box   : Gtk_Hbox;
-      Settings_Label : Gtk_Label;
       Buttons_Box    : Gtk_Hbox;
       Pix            : Gtk_Image;
       To_Local_Img   : Gtk_Image;
@@ -427,13 +425,9 @@ package body Remote_Views is
         (View.Connect_Button, "clicked", On_Connect_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
-      Gtk_New (View.Config_List_Button);
+      Gtk_New (View.Config_List_Button, -"Settings");
       Gtk_New (Pix, Stock_Preferences, Icon_Size_Button);
-      Gtk_New (Settings_Label, -"Settings");
-      Gtk_New_Hbox (Settings_Box, Spacing => 5);
-      Pack_Start (Settings_Box, Pix);
-      Pack_Start (Settings_Box, Settings_Label);
-      Add (View.Config_List_Button, Settings_Box);
+      Set_Image (View.Config_List_Button, Pix);
       Set_Tip
         (Tooltips, View.Config_List_Button,
          -"Configure the list of available servers");
