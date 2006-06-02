@@ -1030,8 +1030,7 @@ package body Custom_Module is
                               Size : Gtk.Enums.Gtk_Icon_Size;
                            begin
                               Size := Gtk.Enums.Gtk_Icon_Size'Value
-                                ("Icon_Size_" &
-                                 Get_Attribute (Files, "size"));
+                                (Get_Attribute (Files, "size"));
                               Set_Size (Source, Size);
                               Set_Size_Wildcarded (Source, False);
                            exception
