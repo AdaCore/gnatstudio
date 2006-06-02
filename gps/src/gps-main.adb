@@ -1443,6 +1443,12 @@ procedure GPS.Main is
          Python_Module.Load_Python_Startup_Files (GPS_Main.Kernel);
       end if;
 
+      --  Set default icon for dialogs and windows
+      --  ??? as soon as gdk_pixbuf is modified to derive from Glib.GObject
+      --   construct an icon list from gps-icon-16, gps-icon-32 and gps-icon-48
+      --   and call Set_Default_Icon_List
+      Set_Default_Icon (Render_Icon (GPS_Main, "gps-icon-32", -1));
+
       --  Print a welcome message in the console, but before parsing the error
       --  messages, so that these are visible
 
