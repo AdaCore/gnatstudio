@@ -125,13 +125,13 @@ package body GNAT.Expect.TTY is
    is
       Header : String (1 .. 5);
       Length : Natural;
-      Ret    : Boolean;
+      Ret    : Natural;
 
       procedure Internal
         (Process : System.Address;
          S       : in out String;
          Length  : Natural;
-         Ret     : out Boolean);
+         Ret     : out Natural);
       --  ??? missing spec
       pragma Import (C, Internal, "gvd_send_header");
 
@@ -144,7 +144,7 @@ package body GNAT.Expect.TTY is
 
       Internal (Descriptor.Process, Header, Length, Ret);
 
-      if Ret then
+      if Ret = 1 then
          --  Need to use the header
 
          GNAT.Expect.Send
