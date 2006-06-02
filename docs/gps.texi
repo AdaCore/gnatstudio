@@ -11932,22 +11932,22 @@ size for which this alternate source should be used.
 Possible sizes are:
 
 @table @code
-@item menu
+@item 1
 Menu item (ideal size: 16x16 pixels)
 
-@item small_toolbar
+@item 2
 Button in a small toolbar (ideal size: 18x18 pixels)
 
-@item large_toolbar
+@item 3
 Button in a large toolbar (ideal size: 24x24 pixels)
 
-@item button
+@item 4
 Image for a standard button (ideal size: 20x20 pixels)
 
-@item dnd
+@item 5
 Image used during drag-and-drop operation (ideal size: 32x32 pixels)
 
-@item dialog
+@item 6
 Main image in a dialog (ideal size: 48x48 pixels)
 
 @end table
