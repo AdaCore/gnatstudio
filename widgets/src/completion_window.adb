@@ -427,9 +427,6 @@ package body Completion_Window is
             return False;
          end if;
 
-         Trace (Exception_Handle,
-                "replacing with #" & Prefix (First .. Last) & "#");
-
          Window.In_Deletion := True;
          Delete (Window.Buffer, Text_Begin, Text_End);
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
