@@ -14,7 +14,7 @@ of the feature.
 New features in GPS 4.0.0
 -------------------------
 
-F503-004 Block information on record/union/class
+F503-004 Block information on record/union/class (2006-05-05)
 
   GPS computes block information for record/union/class and has associated
   navigation actions to move to the start or the end of such block. Block
@@ -22,7 +22,7 @@ F503-004 Block information on record/union/class
 
   Keywords: Editor, Block
 
-F409-010 Ada auto block completion
+F409-010 Ada auto block completion (2006-05-02)
 
   A new action named Block_Completion has been implemented. This action will
   close the current Ada statement or unit. It handles if, case, loop
