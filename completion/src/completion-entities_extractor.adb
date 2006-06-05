@@ -112,10 +112,16 @@ package body Completion.Entities_Extractor is
                Filter        => All_Accessible_Units,
                Parent_Entity => Proposal.Entity));
       else
-         if Get_Kind (Proposal.Entity).Is_Type then
+         if Get_Kind (Proposal.Entity).Kind = Function_Or_Operator then
+            Type_Of := Get_Returned_Type (Proposal.Entity);
+         elsif Get_Kind (Proposal.Entity).Is_Type then
             Type_Of := Proposal.Entity;
          else
             Type_Of := Get_Type_Of (Proposal.Entity);
+         end if;
+
+         if Type_Of = null then
+            return;
          end if;
 
          if Get_Kind (Type_Of).Kind = Access_Kind then
@@ -154,9 +160,20 @@ package body Completion.Entities_Extractor is
    function Get_Number_Of_Parameters (Proposal : Entity_Completion_Proposal)
      return Natural
    is
-      pragma Unreferenced (Proposal);
+      Number      : Integer := 0;
+      It          : Subprogram_Iterator;
+      Dummy_Param : Entity_Information;
    begin
-      return 0;
+      It := Get_Subprogram_Parameters (Proposal.Entity);
+      Get (It, Dummy_Param);
+
+      while  Dummy_Param /= null loop
+         Number := Number + 1;
+         Next (It);
+         Get (It, Dummy_Param);
+      end loop;
+
+      return Number;
    end Get_Number_Of_Parameters;
 
    ----------
