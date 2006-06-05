@@ -797,6 +797,20 @@ package body VFS is
       return File;
    end Get_Current_Dir;
 
+   ------------------
+   -- Get_Home_Dir --
+   ------------------
+
+   function Get_Home_Dir (Host : String) return Virtual_File is
+   begin
+      if Host = "" or else Host = Local_Nickname then
+         return Create (Locale_To_UTF8 (Getenv ("HOME").all));
+      else
+         return Create (Host,
+                        Home_Dir (Get_Filesystem (Host), Host));
+      end if;
+   end Get_Home_Dir;
+
    ----------------------
    -- Ensure_Directory --
    ----------------------
