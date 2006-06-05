@@ -2396,6 +2396,7 @@ package body GPS.Kernel.Remote is
       Resp    : Gtk_Response_Type;
       Item    : Item_Access;
       Updated : Boolean;
+      N       : Natural;
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Item_Record, Item_Access);
 
@@ -2413,8 +2414,10 @@ package body GPS.Kernel.Remote is
             if Save (Dialog, True) then
                --  For all config, apply in g-exttre
 
-               --  Update/Remove already set machines
-               for N in 1 .. Get_Nb_Machine_Descriptor loop
+               --  Update already set machines
+               N := 1;
+
+               while N <= Get_Nb_Machine_Descriptor loop
                   declare
                      Desc     : Machine_Descriptor :=
                                   Get_Machine_Descriptor (N);
@@ -2440,6 +2443,8 @@ package body GPS.Kernel.Remote is
                      --  Not found in dialog: has been removed
                      if not Updated then
                         Remove_Machine_Descriptor (Desc);
+                     else
+                        N := N + 1;
                      end if;
                   end;
                end loop;
