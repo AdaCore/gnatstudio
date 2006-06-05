@@ -276,6 +276,37 @@ package body Filesystem.Windows is
       return True;
    end Has_Devices;
 
+   --------------
+   -- Home_Dir --
+   --------------
+
+   function Home_Dir
+     (FS   : Windows_Filesystem_Record;
+      Host : String) return String
+   is
+      Args : GNAT.OS_Lib.Argument_List :=
+               (1 => new String'("echo"),
+                2 => new String'("%HOME%"));
+      Output : String_Access;
+      Status : Boolean;
+
+   begin
+      Sync_Execute (Host, Args, Output, Status);
+      Basic_Types.Free (Args);
+
+      if Status then
+         declare
+            Result : constant String := Output.all;
+         begin
+            Free (Output);
+            return Result;
+         end;
+
+      else
+         return Get_Root (FS, "");
+      end if;
+   end Home_Dir;
+
    ---------------------
    -- Is_Regular_File --
    ---------------------

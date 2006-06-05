@@ -123,6 +123,12 @@ package Filesystem is
    -- Operations on files --
    -------------------------
 
+   function Home_Dir
+     (FS   : Filesystem_Record;
+      Host : String) return String is abstract;
+   --  Return the home directory on the specified host.
+   --  If home dir cannot be determined, return root directory
+
    function Is_Regular_File
      (FS              : Filesystem_Record;
       Host            : String;

@@ -240,6 +240,37 @@ package body Filesystem.Unix is
       return False;
    end Has_Devices;
 
+   --------------
+   -- Home_Dir --
+   --------------
+
+   function Home_Dir
+     (FS   : Unix_Filesystem_Record;
+      Host : String) return String
+   is
+      Args : GNAT.OS_Lib.Argument_List :=
+               (new String'("echo"),
+                new String'("$HOME"));
+      Output : String_Access;
+      Status : Boolean;
+
+   begin
+      Sync_Execute (Host, Args, Output, Status);
+      Basic_Types.Free (Args);
+
+      if Status then
+         declare
+            Result : constant String := Output.all;
+         begin
+            Free (Output);
+            return Result;
+         end;
+
+      else
+         return Get_Root (FS, "");
+      end if;
+   end Home_Dir;
+
    ---------------------
    -- Is_Regular_File --
    ---------------------
@@ -251,9 +282,9 @@ package body Filesystem.Unix is
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("test"),
-         new String'("-r"),
-         new String'(Local_Full_Name));
+                         (new String'("test"),
+                          new String'("-r"),
+                          new String'(Local_Full_Name));
       Status : Boolean;
 
    begin

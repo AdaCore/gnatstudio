@@ -82,6 +82,10 @@ package Filesystem.Windows is
    -- Operations on files --
    -------------------------
 
+   function Home_Dir
+     (FS   : Windows_Filesystem_Record;
+      Host : String) return String;
+
    function Is_Regular_File
      (FS              : Windows_Filesystem_Record;
       Host            : String;

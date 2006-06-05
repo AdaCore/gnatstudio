@@ -82,6 +82,10 @@ package Filesystem.Unix is
    -- Operations on files --
    -------------------------
 
+   function Home_Dir
+     (FS   : Unix_Filesystem_Record;
+      Host : String) return String;
+
    function Is_Regular_File
      (FS              : Unix_Filesystem_Record;
       Host            : String;
