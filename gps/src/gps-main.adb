@@ -983,6 +983,7 @@ procedure GPS.Main is
       Idle_Id           : Idle_Handler_Id;
       Project           : Projects.Project_Type;
       Screen            : Welcome_Screen;
+      Icon              : Gdk_Pixbuf;
       pragma Unreferenced (Data, Idle_Id);
 
       procedure Setup_Debug;
@@ -1447,7 +1448,12 @@ procedure GPS.Main is
       --  ??? as soon as gdk_pixbuf is modified to derive from Glib.GObject
       --   construct an icon list from gps-icon-16, gps-icon-32 and gps-icon-48
       --   and call Set_Default_Icon_List
-      Set_Default_Icon (Render_Icon (GPS_Main, "gps-icon-32", -1));
+
+      Icon := Render_Icon (GPS_Main, "gps-icon-32", -1);
+
+      if Icon /= null then
+         Set_Default_Icon (Icon);
+      end if;
 
       --  Print a welcome message in the console, but before parsing the error
       --  messages, so that these are visible
