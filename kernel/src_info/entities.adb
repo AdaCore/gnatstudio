@@ -881,12 +881,14 @@ package body Entities is
                       & Entity.Declaration.Line'Img
                       & " ref_count=" & Entity.Ref_Count'Img);
             end if;
+
             Isolate (Entity, Clear_References => True);
 
             --  If we are debugging, we do not free the memory, to keep a
             --  debuggable structure. Use a temporary variable to store the
             --  future name: otherwise, the entity will not be properly removed
             --  from the htable since it won't be found there.
+
             if Active (Debug_Me) then
                Shared := new String'
                  (Entity.Name.all
@@ -896,13 +898,16 @@ package body Entities is
             --  Temporarily fool the system, otherwise we cannot remove the
             --  entity from the trie because of a call to Get_Name.
             --  This might free Entity.Shared_Name!
+            --  ??? Review this comment, sinc we now use a htable instead of
+            --  a trie. Also, wouldn't Entity.Ref_Count := 1 be sufficient
+            --  and potentially avoid a Constaint_Error if someone temporarily
+            --  does a Ref in Remove ?
+
             Entity.Ref_Count := Natural'Last;
             Remove (Entity.Declaration.File.Entities, Entity);
 
             if Entity.Declaration.File.Handler /= null then
-               Remove
-                 (Entity.Declaration.File.Handler,
-                  Entity);
+               Remove (Entity.Declaration.File.Handler, Entity);
             end if;
 
             Entity.Ref_Count := 0;
@@ -915,6 +920,7 @@ package body Entities is
             end if;
 
             --  Only reset to null when the entity is indeed no longer valid.
+
             Entity := null;
          end if;
       end if;
