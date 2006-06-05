@@ -67,6 +67,7 @@ with Gtk.Window;                 use Gtk.Window;
 with Gtkada;
 with Gtkada.Combo;               use Gtkada.Combo;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.Multi_Paned;         use Gtkada.Multi_Paned;
 with Collapsing_Pane;            use Collapsing_Pane;
@@ -227,6 +228,8 @@ package body GPS.Kernel.Remote is
    with record
       Attribute  : Descriptor_Attribute;
       Rsync_Func : String_Access;
+      Applied    : Boolean;
+      --  tells if the machine configuration has been applied.
    end record;
 
    type Item_Record;
@@ -253,18 +256,20 @@ package body GPS.Kernel.Remote is
    -- Server list dialog --
    ------------------------
 
-   Name_Col      : constant := 0;
-   Modified_Col  : constant := 1;
-   User_Def_Col  : constant := 2;
+   Name_Col     : constant := 0;
+   Modified_Col : constant := 1;
+   User_Def_Col : constant := 2;
 
    Enter_Local_Path_String  : constant String := -"<enter local path here>";
    Enter_Remote_Path_String : constant String := -"<enter remote path here>";
 
    type Path_Row_Record is record
-      Local_Entry   : Gtk_Entry;
-      Remote_Entry  : Gtk_Entry;
-      Sync_Combo    : Gtkada_Combo;
-      Remove_Button : Gtk_Button;
+      Local_Entry          : Gtk_Entry;
+      Local_Browse_Button  : Gtk_Button;
+      Remote_Entry         : Gtk_Entry;
+      Remote_Browse_Button : Gtk_Button;
+      Sync_Combo           : Gtkada_Combo;
+      Remove_Button        : Gtk_Button;
    end record;
    type Path_Row is access all Path_Row_Record;
    --  This widget is the graphical representation of a mirror path.
@@ -279,15 +284,13 @@ package body GPS.Kernel.Remote is
       Add_Path_Button : Gtk_Button;
       List            : Path_Row_List.Glist;
       Nb_Rows         : Guint;
-      On_Change_W     : Gtk_Widget;
-      On_Change_P     : Widget_Callback.Simple_Handler;
+      Dialog          : Gtk_Dialog;
    end record;
    type Paths_Widget is access all Paths_Widget_Record'Class;
 
    procedure Gtk_New
      (Widget      : out Paths_Widget;
-      On_Change_W : Gtk_Widget;
-      On_Change_P : Widget_Callback.Simple_Handler);
+      Dialog      : Gtk_Dialog);
 
    procedure Set_Path_List
      (Widget    : Paths_Widget;
@@ -333,8 +336,15 @@ package body GPS.Kernel.Remote is
    procedure On_Remove_Path_Clicked (W : access Path_Cb_Data'Class);
    --  One of the Remove_Path button is clicked.
 
+   procedure On_Browse_Local (Widget : access Path_Cb_Data'Class);
+   --  Select a local directory
+
+   procedure On_Browse_Remote (Widget : access Path_Cb_Data'Class);
+   --  Select a remote directory
+
    type Server_List_Editor_Record is new Gtk_Dialog_Record with record
       Kernel                : Kernel_Handle;
+      Selected_Machine      : Item_Access;
       Machines              : Item_Access;
       Machine_Tree          : Gtk_Tree_View;
       --  Machine config pannel
@@ -373,8 +383,14 @@ package body GPS.Kernel.Remote is
       Default_Server : String);
    --  Creates the server_list_editor dialog
 
-   procedure On_Changed (W : access Gtk_Widget_Record'Class);
+   procedure On_Changed (W                 : access Gtk_Widget_Record'Class;
+                         Connection_Params : Boolean);
    --  Called when one of the entries has changed
+   --  Connection_Params tells if connection configuration changed. If set, the
+   --   machine cannot be browsed until 'Apply' is called.
+
+   package Widget_Boolean_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Boolean);
 
    function Save
      (Dialog        : Server_List_Editor;
@@ -728,6 +744,7 @@ package body GPS.Kernel.Remote is
          Timeout             => Timeout,
          Extra_Init_Commands => Extra_Init_Cmds,
          Attribute           => Attribute,
+         Applied             => True,
          Ref                 => 0,
          Dbg                 => Dbg);
 
@@ -969,9 +986,8 @@ package body GPS.Kernel.Remote is
    -------------
 
    procedure Gtk_New
-     (Widget : out Paths_Widget;
-      On_Change_W : Gtk_Widget;
-      On_Change_P : Widget_Callback.Simple_Handler)
+     (Widget      : out Paths_Widget;
+      Dialog      : Gtk_Dialog)
    is
       Pix    : Gtk_Image;
       Label  : Gtk_Label;
@@ -979,23 +995,22 @@ package body GPS.Kernel.Remote is
       Widget := new Paths_Widget_Record;
       Gtk.Frame.Initialize (Widget, -"Path Translations");
 
-      Widget.On_Change_W := On_Change_W;
-      Widget.On_Change_P := On_Change_P;
+      Widget.Dialog      := Dialog;
 
-      Gtk_New (Widget.Table, 1, 4, False);
+      Gtk_New (Widget.Table, 1, 6, False);
       Add (Widget, Widget.Table);
 
       Gtk_New (Label, -"Local Path");
-      Attach (Widget.Table, Label, 0, 1, 0, 1, Expand or Fill, 0);
+      Attach (Widget.Table, Label, 0, 2, 0, 1, Expand or Fill, 0);
       Gtk_New (Label, -"Remote Path");
-      Attach (Widget.Table, Label, 1, 2, 0, 1, Expand or Fill, 0);
+      Attach (Widget.Table, Label, 2, 4, 0, 1, Expand or Fill, 0);
       Gtk_New (Label, -"Sync");
-      Attach (Widget.Table, Label, 2, 3, 0, 1, 0, 0);
+      Attach (Widget.Table, Label, 4, 5, 0, 1, 0, 0);
 
       Gtk_New (Widget.Add_Path_Button);
       Gtk_New (Pix, Stock_Add, Icon_Size_Menu);
       Add (Widget.Add_Path_Button, Pix);
-      Attach (Widget.Table, Widget.Add_Path_Button, 3, 4, 1, 2, 0, 0);
+      Attach (Widget.Table, Widget.Add_Path_Button, 5, 6, 1, 2, 0, 0);
 
       Widget.List := Path_Row_List.Null_List;
       Widget_Callback.Object_Connect
@@ -1025,7 +1040,7 @@ package body GPS.Kernel.Remote is
       Ref (Widget.Add_Path_Button);
       Remove (Widget.Table, Widget.Add_Path_Button);
 
-      Resize (Widget.Table, 1, 4);
+      Resize (Widget.Table, 1, 6);
 
       Widget.Nb_Rows := 1;
       Path := Path_List;
@@ -1037,7 +1052,7 @@ package body GPS.Kernel.Remote is
       end loop;
 
       Attach (Widget.Table, Widget.Add_Path_Button,
-              3, 4, Widget.Nb_Rows, Widget.Nb_Rows + 1, 0, 0);
+              5, 6, Widget.Nb_Rows, Widget.Nb_Rows + 1, 0, 0);
       Show_All (Widget.Table);
       Unref (Widget.Add_Path_Button);
    end Set_Path_List;
@@ -1100,10 +1115,22 @@ package body GPS.Kernel.Remote is
       Attach (Widget.Table, Row.Local_Entry, 0, 1, Row_Number, Row_Number + 1,
               Fill or Expand, 0, 0, 2);
 
+      Gtk_New (Row.Local_Browse_Button);
+      Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
+      Add (Row.Local_Browse_Button, Pix);
+      Attach (Widget.Table, Row.Local_Browse_Button,
+              1, 2, Row_Number, Row_Number + 1, 0, 0, 0, 0);
+
       Gtk_New (Row.Remote_Entry);
       Set_Width_Chars (Row.Remote_Entry, 15);
-      Attach (Widget.Table, Row.Remote_Entry, 1, 2, Row_Number, Row_Number + 1,
+      Attach (Widget.Table, Row.Remote_Entry, 2, 3, Row_Number, Row_Number + 1,
               Fill or Expand, 0, 0, 2);
+
+      Gtk_New (Row.Remote_Browse_Button);
+      Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
+      Add (Row.Remote_Browse_Button, Pix);
+      Attach (Widget.Table, Row.Remote_Browse_Button,
+              3, 4, Row_Number, Row_Number + 1, 0, 0, 0, 0);
 
       Gtk_New (Row.Sync_Combo);
       Set_Text (Get_Entry (Row.Sync_Combo),
@@ -1117,14 +1144,14 @@ package body GPS.Kernel.Remote is
 
       Set_Value_In_List (Row.Sync_Combo);
       Set_Width_Chars (Get_Entry (Row.Sync_Combo), 6);
-      Attach (Widget.Table, Row.Sync_Combo, 2, 3, Row_Number, Row_Number + 1,
+      Attach (Widget.Table, Row.Sync_Combo, 4, 5, Row_Number, Row_Number + 1,
               0, 0, 0, 2);
 
       Gtk_New (Row.Remove_Button);
       Gtk_New (Pix, Stock_Remove, Icon_Size_Menu);
       Add (Row.Remove_Button, Pix);
       Attach
-        (Widget.Table, Row.Remove_Button, 3, 4, Row_Number, Row_Number + 1,
+        (Widget.Table, Row.Remove_Button, 4, 5, Row_Number, Row_Number + 1,
          0, 0, 0, 2);
 
       Path_Row_List.Append (Widget.List, Row);
@@ -1146,15 +1173,20 @@ package body GPS.Kernel.Remote is
                    Synchronisation_String (Path.Sync).all);
       end if;
 
-      Widget_Callback.Object_Connect
-        (Row.Local_Entry, "changed", Widget.On_Change_P, Widget.On_Change_W);
-      Widget_Callback.Object_Connect
-        (Row.Remote_Entry, "changed", Widget.On_Change_P, Widget.On_Change_W);
-      Widget_Callback.Object_Connect
-        (Row.Sync_Combo, "changed", Widget.On_Change_P, Widget.On_Change_W);
       Data := new Path_Cb_Data;
       Data.Widget := Widget;
       Data.Row    := Row;
+
+      Widget_Boolean_Callback.Object_Connect
+        (Row.Local_Entry, "changed", On_Changed'Access, Widget.Dialog, False);
+      Path_Callback.Object_Connect
+        (Row.Local_Browse_Button, "clicked", On_Browse_Local'Access, Data);
+      Widget_Boolean_Callback.Object_Connect
+        (Row.Remote_Entry, "changed", On_Changed'Access, Widget.Dialog, False);
+      Path_Callback.Object_Connect
+        (Row.Remote_Browse_Button, "clicked", On_Browse_Remote'Access, Data);
+      Widget_Boolean_Callback.Object_Connect
+        (Row.Sync_Combo, "changed", On_Changed'Access, Widget.Dialog, False);
       Path_Callback.Object_Connect
         (Row.Remove_Button, "clicked", On_Remove_Path_Clicked'Access, Data);
       Show_All (Widget.Table);
@@ -1192,7 +1224,9 @@ package body GPS.Kernel.Remote is
         (Path_Row_Record, Path_Row);
    begin
       Remove (Widget.Table, Row.Local_Entry);
+      Remove (Widget.Table, Row.Local_Browse_Button);
       Remove (Widget.Table, Row.Remote_Entry);
+      Remove (Widget.Table, Row.Remote_Browse_Button);
       Remove (Widget.Table, Row.Sync_Combo);
       Remove (Widget.Table, Row.Remove_Button);
       Path_Row_List.Remove (Widget.List, Row);
@@ -1276,13 +1310,101 @@ package body GPS.Kernel.Remote is
    procedure On_Remove_Path_Clicked (W : access Path_Cb_Data'Class) is
    begin
       Remove_Path_Row (W.Widget, W.Row);
-      W.Widget.On_Change_P (W.Widget.On_Change_W);
+      On_Changed (W.Widget.Dialog, False);
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Remove_Path_Clicked;
+
+   ---------------------
+   -- On_Browse_Local --
+   ---------------------
+
+   procedure On_Browse_Local (Widget : access Path_Cb_Data'Class) is
+      Current_Dir : constant String :=
+                      Get_Text (Widget.Row.Local_Entry);
+      Start_Dir   : Virtual_File := No_File;
+   begin
+      if Current_Dir /= Enter_Local_Path_String then
+         Start_Dir := Create (Current_Dir);
+
+         if not Is_Directory (Start_Dir) then
+            Start_Dir := No_File;
+         end if;
+      end if;
+
+      declare
+         Dir : constant VFS.Virtual_File :=
+                 Select_Directory
+                   (Base_Directory => Start_Dir,
+                    Parent         => Gtk_Window (Widget.Widget.Dialog));
+      begin
+         if Dir /= No_File then
+            Set_Text (Widget.Row.Local_Entry, Full_Name (Dir).all);
+            On_Changed (Widget.Widget.Dialog, False);
+         end if;
+      end;
+   end On_Browse_Local;
+
+   ----------------------
+   -- On_Browse_Remote --
+   ----------------------
+
+   procedure On_Browse_Remote (Widget : access Path_Cb_Data'Class) is
+      Current_Dir  : constant String :=
+                       Get_Text (Widget.Row.Remote_Entry);
+      Start_Dir    : Virtual_File := No_File;
+      Dialog       : constant Server_List_Editor :=
+                       Server_List_Editor (Widget.Widget.Dialog);
+      Gtk_Resp     : Message_Dialog_Buttons;
+      pragma Unreferenced (Gtk_Resp);
+   begin
+      if Dialog.Selected_Machine = null then
+         --  Should never happend... however, still preferable to catch
+         --  this case !
+         Trace (Me, "Dialog.Selected_Machine null while calling " &
+                "On_Browse_Remote. This should never happend !");
+
+         return;
+      end if;
+
+      if not Machine_Descriptor_Record
+        (Dialog.Selected_Machine.Desc.all).Applied
+      then
+         Gtk_Resp := Message_Dialog
+           (-"Cannot browse the selected server until Apply button is pressed",
+            Dialog_Type => Error,
+            Buttons     => Button_OK);
+         return;
+      end if;
+
+      if Current_Dir /= Enter_Local_Path_String then
+         Start_Dir := Create
+           (Dialog.Selected_Machine.Desc.Nickname.all, Current_Dir);
+
+         if not Is_Directory (Start_Dir) then
+            Start_Dir := No_File;
+         end if;
+      end if;
+
+      if Start_Dir = No_File then
+         Start_Dir := Create (Dialog.Selected_Machine.Desc.Nickname.all, "");
+      end if;
+
+      declare
+         Dir : constant VFS.Virtual_File :=
+                 Select_Directory
+                   (Base_Directory => Start_Dir,
+                    Parent         => Gtk_Window (Widget.Widget.Dialog));
+      begin
+         if Dir /= No_File then
+            Set_Text (Widget.Row.Remote_Entry, Full_Name (Dir).all);
+            On_Changed (Widget.Widget.Dialog, False);
+         end if;
+      end;
+   end On_Browse_Remote;
 
    -------------
    -- Gtk_New --
@@ -1517,7 +1639,7 @@ package body GPS.Kernel.Remote is
       --  Remote paths configuration
       Line_Nb := Line_Nb + 1;
       Gtk_New
-        (Dialog.Paths_List_Widget, Gtk_Widget (Dialog), On_Changed'Access);
+        (Dialog.Paths_List_Widget, Gtk_Dialog (Dialog));
       Attach (Dialog.Right_Table, Dialog.Paths_List_Widget,
               0, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10, 0);
@@ -1535,28 +1657,30 @@ package body GPS.Kernel.Remote is
 
       --  Callbacks connections
 
-      Widget_Callback.Object_Connect
-        (Dialog.Network_Name_Entry, "changed", On_Changed'Access, Dialog);
-      Widget_Callback.Object_Connect
-        (Dialog.User_Name_Entry, "changed", On_Changed'Access, Dialog);
-      Widget_Callback.Object_Connect
+      Widget_Boolean_Callback.Object_Connect
+        (Dialog.Network_Name_Entry, "changed", On_Changed'Access,
+         Dialog, True);
+      Widget_Boolean_Callback.Object_Connect
+        (Dialog.User_Name_Entry, "changed", On_Changed'Access, Dialog, True);
+      Widget_Boolean_Callback.Object_Connect
         (Get_Entry (Dialog.Remote_Access_Combo),
-         "changed", On_Changed'Access, Dialog);
-      Widget_Callback.Object_Connect
+         "changed", On_Changed'Access, Dialog, True);
+      Widget_Boolean_Callback.Object_Connect
         (Get_Entry (Dialog.Remote_Shell_Combo),
-         "changed", On_Changed'Access, Dialog);
-      Widget_Callback.Object_Connect
+         "changed", On_Changed'Access, Dialog, True);
+      Widget_Boolean_Callback.Object_Connect
         (Get_Entry (Dialog.Remote_Sync_Combo),
-         "changed", On_Changed'Access, Dialog);
-      Widget_Callback.Object_Connect
-        (Dialog.Max_Nb_Connected_Spin, "changed", On_Changed'Access, Dialog);
-      Widget_Callback.Object_Connect
-        (Dialog.Timeout_Spin, "changed", On_Changed'Access, Dialog);
-      Widget_Callback.Object_Connect
+         "changed", On_Changed'Access, Dialog, False);
+      Widget_Boolean_Callback.Object_Connect
+        (Dialog.Max_Nb_Connected_Spin, "changed", On_Changed'Access, Dialog,
+         False);
+      Widget_Boolean_Callback.Object_Connect
+        (Dialog.Timeout_Spin, "changed", On_Changed'Access, Dialog, True);
+      Widget_Boolean_Callback.Object_Connect
         (Get_Buffer (Dialog.Init_Cmds_View), "changed",
-         On_Changed'Access, Dialog);
-      Widget_Callback.Object_Connect
-        (Dialog.Debug_Button, "clicked", On_Changed'Access, Dialog);
+         On_Changed'Access, Dialog, False);
+      Widget_Boolean_Callback.Object_Connect
+        (Dialog.Debug_Button, "clicked", On_Changed'Access, Dialog, False);
       Widget_Callback.Object_Connect
         (Get_Selection (Dialog.Machine_Tree), "changed",
          On_Selection_Changed'Access,
@@ -1624,7 +1748,9 @@ package body GPS.Kernel.Remote is
    -- On_Changed --
    ----------------
 
-   procedure On_Changed (W : access Gtk_Widget_Record'Class) is
+   procedure On_Changed (W                 : access Gtk_Widget_Record'Class;
+                         Connection_Params : Boolean)
+   is
       Dialog    : Server_List_Editor_Record
                     renames Server_List_Editor_Record (W.all);
       Model     : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -1637,6 +1763,11 @@ package body GPS.Kernel.Remote is
 
          --  Set this iter as modified
          Set (Gtk_Tree_Store (Model), Iter, Modified_Col, True);
+
+         if Connection_Params and then Dialog.Selected_Machine /= null then
+            Machine_Descriptor_Record
+              (Dialog.Selected_Machine.Desc.all).Applied := False;
+         end if;
 
          --  User defined item
          Set (Gtk_Tree_Store (Model), Iter, User_Def_Col, True);
@@ -1813,6 +1944,7 @@ package body GPS.Kernel.Remote is
 
       declare
          Nickname : constant String := Get_String (Model, Iter, Name_Col);
+         Applied  : Boolean;
       begin
          Trace (Me, "Save machine " & Nickname);
 
@@ -1834,6 +1966,8 @@ package body GPS.Kernel.Remote is
          end loop;
 
          if Item /= null then
+            Applied := Machine_Descriptor_Record (Item.Desc.all).Applied;
+
             --  Free replaced descriptor
             Unref (Item.Desc);
 
@@ -1862,6 +1996,7 @@ package body GPS.Kernel.Remote is
                Extra_Init_Commands => new Argument_List'
                  (Get_Command_List (Dialog.Init_Cmds_View)),
                Attribute           => Attribute,
+               Applied             => Applied,
                Ref                 => 1,
                Dbg                 => Dbg);
          end if;
@@ -1886,10 +2021,10 @@ package body GPS.Kernel.Remote is
 
          Free (Path_Item.Path_List);
 
-            Path_Item.Path_List := Get_Path_List
-              (Dialog.Paths_List_Widget,
-               Get_Filesystem_From_Shell
-                 (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))));
+         Path_Item.Path_List := Get_Path_List
+           (Dialog.Paths_List_Widget,
+            Get_Filesystem_From_Shell
+              (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))));
       end;
 
       return True;
@@ -1947,6 +2082,8 @@ package body GPS.Kernel.Remote is
                exit when Item.Desc.Nickname.all = Nickname;
                Item := Item.Next;
             end loop;
+
+            Dialog.Selected_Machine := Item;
 
             if Item = null then
                return;
@@ -2067,6 +2204,7 @@ package body GPS.Kernel.Remote is
                   Timeout             => 10000,
                   Max_Nb_Connections  => 3,
                   Attribute           => User_Defined,
+                  Applied             => False,
                   Ref                 => 1,
                   Dbg                 => null),
                Next => Dialog.Machines);
@@ -2139,6 +2277,8 @@ package body GPS.Kernel.Remote is
                --  Modified item
 
                Set (Gtk_Tree_Store (Model), Iter, Modified_Col, True);
+               Machine_Descriptor_Record
+                 (Dialog.Selected_Machine.Desc.all).Applied := False;
 
                --  Not user defined item
                Set (Gtk_Tree_Store (Model), Iter, User_Def_Col, False);
@@ -2255,7 +2395,6 @@ package body GPS.Kernel.Remote is
       Dialog  : Server_List_Editor;
       Resp    : Gtk_Response_Type;
       Item    : Item_Access;
-      Prev    : Item_Access;
       Updated : Boolean;
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Item_Record, Item_Access);
@@ -2283,23 +2422,18 @@ package body GPS.Kernel.Remote is
                                   Desc.Nickname.all;
                   begin
                      Item := Dialog.Machines;
-                     Prev := null;
                      Updated := False;
 
                      while Item /= null loop
                         if Item.Desc.Nickname.all = Nickname then
+                           Machine_Descriptor_Record (Item.Desc.all).Applied :=
+                             True;
                            Add_Machine_Descriptor (Item.Desc);
-                           Unref (Item.Desc);
-                           if Prev = null then
-                              Dialog.Machines := Item.Next;
-                           else
-                              Prev.Next := Item.Next;
-                           end if;
-                           Unchecked_Free (Item);
                            Updated := True;
+
                            exit;
                         end if;
-                        Prev := Item;
+
                         Item := Item.Next;
                      end loop;
 
@@ -2311,12 +2445,15 @@ package body GPS.Kernel.Remote is
                end loop;
 
                --  Set new machines
-               while Dialog.Machines /= null loop
-                  Item := Dialog.Machines;
-                  Add_Machine_Descriptor (Item.Desc);
-                  Unref (Item.Desc);
-                  Dialog.Machines := Item.Next;
-                  Unchecked_Free (Item);
+               Item := Dialog.Machines;
+
+               while Item /= null loop
+                  if not Machine_Descriptor_Record (Item.Desc.all).Applied then
+                     Machine_Descriptor_Record (Item.Desc.all).Applied := True;
+                     Add_Machine_Descriptor (Item.Desc);
+                  end if;
+
+                  Item := Item.Next;
                end loop;
 
                --  Save mirror paths
@@ -2328,6 +2465,7 @@ package body GPS.Kernel.Remote is
 
                Save_Remote_Config (Kernel);
                Run_Hook (Kernel, Server_List_Changed_Hook);
+
             end if;
          end if;
 
