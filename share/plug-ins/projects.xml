@@ -165,7 +165,8 @@
        hide_in="wizard library_wizard"
        label="Protocol">
        <choice>wtx</choice>
-       <choice>vxworks</choice>
+       <choice>dfw</choice>
+       <choice>dfw-rtp</choice>
        <choice>remote</choice>
        <string />
    </project_attribute>
