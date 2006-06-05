@@ -645,6 +645,13 @@ package body Tries is
          --  Find the closest cell that matches the prefix
          Find_Cell_Child (Tree.all, Prefix, Pointer);
 
+         if Pointer.Scenario in 4 .. 5 then
+            Iter.Current_Cell := null;
+            Iter.Root_Cell := null;
+
+            return Iter;
+         end if;
+
          Iter.Current_Cell := Pointer.Cell;
          Iter.Current_Index := 1;
       end if;
