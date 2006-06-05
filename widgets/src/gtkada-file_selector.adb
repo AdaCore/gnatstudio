@@ -1130,7 +1130,7 @@ package body Gtkada.File_Selector is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
 
-      H   : Virtual_File := Create (Locale_To_UTF8 (Getenv ("HOME").all));
+      H   : Virtual_File := Get_Home_Dir (Get_Host (Win.Current_Directory));
    begin
       if H /= No_File then
          Change_Directory
