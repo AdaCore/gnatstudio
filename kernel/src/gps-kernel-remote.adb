@@ -1151,7 +1151,7 @@ package body GPS.Kernel.Remote is
       Gtk_New (Pix, Stock_Remove, Icon_Size_Menu);
       Add (Row.Remove_Button, Pix);
       Attach
-        (Widget.Table, Row.Remove_Button, 4, 5, Row_Number, Row_Number + 1,
+        (Widget.Table, Row.Remove_Button, 5, 6, Row_Number, Row_Number + 1,
          0, 0, 0, 2);
 
       Path_Row_List.Append (Widget.List, Row);
