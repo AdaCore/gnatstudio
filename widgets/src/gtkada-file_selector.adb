@@ -287,9 +287,9 @@ package body Gtkada.File_Selector is
       else
          Add_Unique_Combo_Entry
            (Location_Combo,
-            "(" & Get_Host (Dir) & "): " & Full_Name (Dir, True).all);
+            Get_Host (Dir) & ":|" & Full_Name (Dir, True).all);
          Set_Text (Get_Entry (Location_Combo),
-                   "(" & Get_Host (Dir) & "): " & Full_Name (Dir, True).all);
+                   Get_Host (Dir) & ":|" & Full_Name (Dir, True).all);
       end if;
    end Set_Location;
 
@@ -300,14 +300,11 @@ package body Gtkada.File_Selector is
    function Get_Location (Location_Combo : Gtk_Combo) return Virtual_File is
       Str : constant String := Get_Text (Get_Entry (Location_Combo));
    begin
-      if Str'Length > 0 and then Str (Str'First) = '(' then
-         for J in Str'Range loop
-            if J + 2 <= Str'Last and then Str (J .. J + 2) = "): " then
-               return Create (Str (Str'First + 1 .. J - 1),
-                              Str (J + 3 .. Str'Last));
-            end if;
-         end loop;
-      end if;
+      for J in Str'First .. Str'Last - 1 loop
+         if Str (J .. J + 1) = ":|" then
+            return Create (Str (Str'First .. J - 1), Str (J + 2 .. Str'Last));
+         end if;
+      end loop;
 
       return Create (Str);
    end Get_Location;
@@ -492,6 +489,7 @@ package body Gtkada.File_Selector is
       if Use_Native_Dialog
         and then NativeFileSelectionSupported /= 0
         and then not Remote_Browsing
+        and then Is_Local (Base_Directory)
       then
          --  Save working directory
          Working_Dir := Get_Current_Dir;
@@ -676,6 +674,7 @@ package body Gtkada.File_Selector is
    begin
       if Use_Native_Dialog
         and then NativeFileSelectionSupported /= 0
+        and then Is_Local (Base_Directory)
       then
          --  Save working directory
          Working_Dir := Get_Current_Dir;
@@ -2010,7 +2009,8 @@ package body Gtkada.File_Selector is
 
       Pack_Start (Hbox1, Toolbar1, True, True, 3);
 
-      File_Selector_Window.Display_Remote := Remote_Browsing;
+      File_Selector_Window.Display_Remote :=
+        Remote_Browsing or not Is_Local (Initial_Directory);
 
       if Remote_Browsing then
          Gtk_New_Hbox (Hbox2, False, 0);
