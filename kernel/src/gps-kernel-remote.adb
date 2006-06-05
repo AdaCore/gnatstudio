@@ -266,8 +266,12 @@ package body GPS.Kernel.Remote is
    type Path_Row_Record is record
       Local_Entry          : Gtk_Entry;
       Local_Browse_Button  : Gtk_Button;
+      Local_Frame          : Gtk_Frame;
+      Local_Hbox           : Gtk_Hbox;
       Remote_Entry         : Gtk_Entry;
       Remote_Browse_Button : Gtk_Button;
+      Remote_Frame         : Gtk_Frame;
+      Remote_Hbox          : Gtk_Hbox;
       Sync_Combo           : Gtkada_Combo;
       Remove_Button        : Gtk_Button;
    end record;
@@ -1001,16 +1005,16 @@ package body GPS.Kernel.Remote is
       Add (Widget, Widget.Table);
 
       Gtk_New (Label, -"Local Path");
-      Attach (Widget.Table, Label, 0, 2, 0, 1, Expand or Fill, 0);
+      Attach (Widget.Table, Label, 0, 1, 0, 1, Expand or Fill, 0);
       Gtk_New (Label, -"Remote Path");
-      Attach (Widget.Table, Label, 2, 4, 0, 1, Expand or Fill, 0);
+      Attach (Widget.Table, Label, 1, 2, 0, 1, Expand or Fill, 0);
       Gtk_New (Label, -"Sync");
-      Attach (Widget.Table, Label, 4, 5, 0, 1, 0, 0);
+      Attach (Widget.Table, Label, 2, 3, 0, 1, 0, 0);
 
       Gtk_New (Widget.Add_Path_Button);
       Gtk_New (Pix, Stock_Add, Icon_Size_Menu);
       Add (Widget.Add_Path_Button, Pix);
-      Attach (Widget.Table, Widget.Add_Path_Button, 5, 6, 1, 2, 0, 0);
+      Attach (Widget.Table, Widget.Add_Path_Button, 5, 4, 1, 2, 0, 0);
 
       Widget.List := Path_Row_List.Null_List;
       Widget_Callback.Object_Connect
@@ -1040,7 +1044,7 @@ package body GPS.Kernel.Remote is
       Ref (Widget.Add_Path_Button);
       Remove (Widget.Table, Widget.Add_Path_Button);
 
-      Resize (Widget.Table, 1, 6);
+      Resize (Widget.Table, 1, 4);
 
       Widget.Nb_Rows := 1;
       Path := Path_List;
@@ -1052,7 +1056,7 @@ package body GPS.Kernel.Remote is
       end loop;
 
       Attach (Widget.Table, Widget.Add_Path_Button,
-              5, 6, Widget.Nb_Rows, Widget.Nb_Rows + 1, 0, 0);
+              3, 4, Widget.Nb_Rows, Widget.Nb_Rows + 1, 0, 0);
       Show_All (Widget.Table);
       Unref (Widget.Add_Path_Button);
    end Set_Path_List;
@@ -1110,27 +1114,43 @@ package body GPS.Kernel.Remote is
    begin
       Row := new Path_Row_Record;
 
+      Gtk_New (Row.Local_Frame);
+      Attach (Widget.Table, Row.Local_Frame, 0, 1, Row_Number, Row_Number + 1,
+              Fill or Expand or Shrink, 0, 0, 2);
+
+      Gtk_New_Hbox (Row.Local_Hbox, Spacing => 0);
+      Add (Row.Local_Frame, Row.Local_Hbox);
+
       Gtk_New (Row.Local_Entry);
-      Set_Width_Chars (Row.Local_Entry, 15);
-      Attach (Widget.Table, Row.Local_Entry, 0, 1, Row_Number, Row_Number + 1,
-              Fill or Expand, 0, 0, 2);
+      Set_Width_Chars (Row.Local_Entry, 16);
+      Pack_Start (Row.Local_Hbox, Row.Local_Entry, True, True);
 
       Gtk_New (Row.Local_Browse_Button);
       Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
       Add (Row.Local_Browse_Button, Pix);
-      Attach (Widget.Table, Row.Local_Browse_Button,
-              1, 2, Row_Number, Row_Number + 1, 0, 0, 0, 0);
+      Set_Relief (Row.Local_Browse_Button, Relief_None);
+      Set_Border_Width (Row.Local_Browse_Button, 0);
+      Unset_Flags (Row.Local_Browse_Button, Can_Focus or Can_Default);
+      Pack_Start (Row.Local_Hbox, Row.Local_Browse_Button, False, False);
+
+      Gtk_New (Row.Remote_Frame);
+      Attach (Widget.Table, Row.Remote_Frame, 1, 2, Row_Number, Row_Number + 1,
+              Fill or Expand or Shrink, 0, 0, 2);
+
+      Gtk_New_Hbox (Row.Remote_Hbox, Spacing => 0);
+      Add (Row.Remote_Frame, Row.Remote_Hbox);
 
       Gtk_New (Row.Remote_Entry);
-      Set_Width_Chars (Row.Remote_Entry, 15);
-      Attach (Widget.Table, Row.Remote_Entry, 2, 3, Row_Number, Row_Number + 1,
-              Fill or Expand, 0, 0, 2);
+      Set_Width_Chars (Row.Remote_Entry, 16);
+      Pack_Start (Row.Remote_Hbox, Row.Remote_Entry, True, True);
 
       Gtk_New (Row.Remote_Browse_Button);
       Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
       Add (Row.Remote_Browse_Button, Pix);
-      Attach (Widget.Table, Row.Remote_Browse_Button,
-              3, 4, Row_Number, Row_Number + 1, 0, 0, 0, 0);
+      Set_Relief (Row.Remote_Browse_Button, Relief_None);
+      Set_Border_Width (Row.Remote_Browse_Button, 0);
+      Unset_Flags (Row.Remote_Browse_Button, Can_Focus or Can_Default);
+      Pack_Start (Row.Remote_Hbox, Row.Remote_Browse_Button, False, False);
 
       Gtk_New (Row.Sync_Combo);
       Set_Text (Get_Entry (Row.Sync_Combo),
@@ -1143,15 +1163,15 @@ package body GPS.Kernel.Remote is
       end loop;
 
       Set_Value_In_List (Row.Sync_Combo);
-      Set_Width_Chars (Get_Entry (Row.Sync_Combo), 6);
-      Attach (Widget.Table, Row.Sync_Combo, 4, 5, Row_Number, Row_Number + 1,
+      Set_Width_Chars (Get_Entry (Row.Sync_Combo), 14);
+      Attach (Widget.Table, Row.Sync_Combo, 2, 3, Row_Number, Row_Number + 1,
               0, 0, 0, 2);
 
       Gtk_New (Row.Remove_Button);
       Gtk_New (Pix, Stock_Remove, Icon_Size_Menu);
       Add (Row.Remove_Button, Pix);
       Attach
-        (Widget.Table, Row.Remove_Button, 5, 6, Row_Number, Row_Number + 1,
+        (Widget.Table, Row.Remove_Button, 3, 4, Row_Number, Row_Number + 1,
          0, 0, 0, 2);
 
       Path_Row_List.Append (Widget.List, Row);
@@ -1223,10 +1243,8 @@ package body GPS.Kernel.Remote is
       procedure Free is new Ada.Unchecked_Deallocation
         (Path_Row_Record, Path_Row);
    begin
-      Remove (Widget.Table, Row.Local_Entry);
-      Remove (Widget.Table, Row.Local_Browse_Button);
-      Remove (Widget.Table, Row.Remote_Entry);
-      Remove (Widget.Table, Row.Remote_Browse_Button);
+      Remove (Widget.Table, Row.Local_Frame);
+      Remove (Widget.Table, Row.Remote_Frame);
       Remove (Widget.Table, Row.Sync_Combo);
       Remove (Widget.Table, Row.Remove_Button);
       Path_Row_List.Remove (Widget.List, Row);
@@ -1439,7 +1457,7 @@ package body GPS.Kernel.Remote is
          Get_Main_Window (Kernel),
          Modal + Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Center_On_Parent);
-      Set_Default_Size (Dialog, 640, 400);
+      Set_Default_Size (Dialog, 700, 400);
       Gtk_New (Tips);
 
       Dialog.Kernel := Kernel;
@@ -1450,7 +1468,7 @@ package body GPS.Kernel.Remote is
       Gtk_New_Vbox (VBox, Homogeneous => False);
       Add_Child (Main_Table, VBox,
                  Fixed_Size => True,
-                 Width      => -1,
+                 Width      => 150,
                  Height     => -1);
 
       Gtk_New (Frame);
@@ -1486,7 +1504,7 @@ package body GPS.Kernel.Remote is
 
       Gtk_New_Vbox (VBox, Homogeneous => False);
       Split (Main_Table, Root_Pane, VBox, Orientation_Horizontal,
-             Width => 450);
+             Width => -1);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
