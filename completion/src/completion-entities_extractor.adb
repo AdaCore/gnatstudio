@@ -20,6 +20,7 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Language.Ada;            use Language.Ada;
+with Doc_Utils;               use Doc_Utils;
 
 package body Completion.Entities_Extractor is
 
@@ -55,6 +56,21 @@ package body Completion.Entities_Extractor is
          return Get_Name (Proposal.Entity).all;
       end if;
    end Get_Completion;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation (Proposal : Entity_Completion_Proposal)
+      return UTF8_String
+   is
+   begin
+      return Get_Documentation
+        (Lang_Handler              => Entity_Completion_Resolver
+           (Proposal.Resolver.all).Handler,
+         Entity                    => Proposal.Entity,
+         Declaration_File_Contents => "");
+   end Get_Documentation;
 
    ------------------
    -- Get_Category --

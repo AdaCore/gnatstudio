@@ -172,6 +172,18 @@ package body Completion is
       return Get_Completion (Completion_Proposal'Class (Proposal));
    end Get_Id;
 
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation (Proposal : Completion_Proposal)
+      return UTF8_String
+   is
+      pragma Unreferenced (Proposal);
+   begin
+      return "";
+   end Get_Documentation;
+
    -----------------
    -- Get_Manager --
    ------------------

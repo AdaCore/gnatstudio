@@ -70,6 +70,10 @@ private
       return UTF8_String;
    --  See inherited documentation
 
+   function Get_Documentation (Proposal : Entity_Completion_Proposal)
+      return UTF8_String;
+   --  See inherited documentation
+
    function Get_Category (Proposal : Entity_Completion_Proposal)
      return Language_Category;
    --  See inherited documentation

@@ -157,6 +157,10 @@ package Completion is
    --  identifier can be different from the completion propsed and the label.
    --  By default, return the completion.
 
+   function Get_Documentation (Proposal : Completion_Proposal)
+      return UTF8_String;
+   --  Return the documentation corresponding to the proposal.
+
    function Get_Category (Proposal : Completion_Proposal)
      return Language_Category is abstract;
    --  Return the category of the object proposed for the completion
