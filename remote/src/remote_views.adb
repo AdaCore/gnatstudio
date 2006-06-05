@@ -88,9 +88,9 @@ package body Remote_Views is
       Check_Button          : Gtk_Button;
       Connect_Button        : Gtk_Button;
       Config_List_Button    : Gtk_Button;
-      Combo_Selected        : Boolean := False;
       Normal_Style          : Gtk_Style;
       Modified_Style        : Gtk_Style;
+      Connecting            : Boolean := False;
    end record;
    type Remote_View is access all Remote_View_Record'Class;
 
@@ -601,7 +601,7 @@ package body Remote_Views is
    is
       pragma Unreferenced (Kernel, Data);
    begin
-      if not Func.View.Combo_Selected then
+      if not Func.View.Connecting then
          Set_Servers (Func.View);
       end if;
    end Execute;
@@ -752,7 +752,7 @@ package body Remote_Views is
         (User.View, Get_Entry (User.View.Servers_Combo (GPS_Server)),
          Modified);
       Set_Sensitive (User.View.Check_Button, Remote and then Modified);
-      Set_Sensitive (User.View.Connect_Button, Remote and then Modified);
+      Set_Sensitive (User.View.Connect_Button, Modified);
 
    exception
       when E : others =>
@@ -883,6 +883,8 @@ package body Remote_Views is
       pragma Unreferenced (W);
 
    begin
+      User.View.Connecting := True;
+
       for S in Distant_Server_Type'Range loop
          declare
             Server_Name : constant String :=
@@ -898,19 +900,10 @@ package body Remote_Views is
             end if;
          end;
       end loop;
-   end On_Connect_Clicked;
 
---     ---------------------
---     -- On_Sync_Clicked --
---     ---------------------
---
---     procedure On_Sync_Clicked
---       (W    : access Gtk_Widget_Record'Class;
---        User : Remote_Data) is
---        pragma Unreferenced (W);
---     begin
---        Popup (User.View.Sync_Menu);
---     end On_Sync_Clicked;
+      User.View.Connecting := False;
+      Set_Servers (User.View);
+   end On_Connect_Clicked;
 
    --------------------------
    -- On_Sync_Menu_Clicked --
