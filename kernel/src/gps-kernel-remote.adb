@@ -1390,7 +1390,8 @@ package body GPS.Kernel.Remote is
       end if;
 
       if Start_Dir = No_File then
-         Start_Dir := Create (Dialog.Selected_Machine.Desc.Nickname.all, "");
+         Start_Dir :=
+           Get_Root (Create (Dialog.Selected_Machine.Desc.Nickname.all, ""));
       end if;
 
       declare
