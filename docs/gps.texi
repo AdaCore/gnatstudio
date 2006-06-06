@@ -186,8 +186,7 @@ Working in a Cross Environment
 Using GPS for Remote Development
 * Requirements::
 * Setup the remote servers::
-* Working with a remote project::
-* Customize::
+* Setup a remote project::
 * Limitations::
 
 Customizing and Extending GPS
@@ -219,6 +218,7 @@ Customizing through XML files
 * Adding documentation::
 * Adding stock icons::
 * Defining a documentation format::
+* Remote programming customization::
 
 Adding support for new tools
 * Defining supported languages::
@@ -7289,7 +7289,7 @@ Open a view of the current source editor.
 @xref{The Project View}.
 
 @item Remote
-@xref{Working with a remote project}.
+@xref{Setup a remote project}.
 
 @item Scenario
 @xref{Scenarios and Configuration Variables}.
@@ -7743,8 +7743,7 @@ machine, you can specify the name of this machine by setting the
 @menu
 * Requirements::
 * Setup the remote servers::
-* Working with a remote project::
-* Customize::
+* Setup a remote project::
 * Limitations::
 @end menu
 
@@ -7775,35 +7774,61 @@ need to be met:
 @itemize
 @item
 Have a remote connection to the host using 'rsh', 'ssh' or 'telnet'. Note that
-GPS can now handle passwords for such connections, with some limitations on
-Windows. @xref{Limitations}, for the list of limitations.
+GPS can now handle passwords for such connections.
 
 @item
-Either have a Network Filesystem (i.e. NFS or SMB) sharing the project files
-between the host and the target, or having rsync on both client and server.
+Either have a Network Filesystem (i.e. NFS, SMB or equivalent) sharing the
+project files between the host and the target, or having rsync installled on
+both client and server.
+
 @item
-Subprojects must be withed by the main project using relative paths, or both
-machines must share the same absolute path.
+Subprojects must be withed by the main project using relative paths, or the
+same absolute paths exist on the involved machines.
 @end itemize
 
 @noindent
 The full remote development setup is performed in several steps:
 @itemize
-@item Setup the remote servers you will connect to
-@item Determine the paths shared between the host and the target server
-@item Load your remote project, or compile your local project on the server
+@item Setup the remote servers configuration.
+@item Setup a remote project.
 @end itemize
 
+@c -----------------------------------------------------------------------
 @node Setup the remote servers
 @section Setup the remote servers
+@c -----------------------------------------------------------------------
+
+@menu
+* The remote configuration dialog::
+* Connection settings::
+* Paths settings::
+@end menu
+
+@c -----------------------------------------------------------------------
+@node The remote configuration dialog
+@subsection The remote configuration dialog
+@c -----------------------------------------------------------------------
 
 @noindent
-First you need to open the remote view, that will allow you to setup your
-remote configuration, and control what server will be used to compile, run or
-debug your project. You can open it using the menu @code{Tools->Views->Remote}
-(@xref{Working with a remote project}.)
+In order to configure remote servers, you need to open the remote
+configuration dialog. A predefined configuration can also be set when
+installing GPS, using xml files. @xref{Defining a remote server}, and 
+@xref{Defining a remote path translation}, for more information.
 
-Once the Remote View is opened, click on @code{Servers configuration} to open
+The remote configuration dialog is opened via the remote view. You can
+open it using the menu @code{Tools->Views->Remote}.
+
+@iftex
+@cindex screen shot
+@image{remote-view, 4.8cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{remote-view}
+@end ifhtml
+
+Once the Remote View is opened, click on @code{Settings} to open
 the servers configuration dialog.
 
 @iftex
@@ -7817,24 +7842,33 @@ the servers configuration dialog.
 @end ifhtml
 
 @noindent
-This dialog is composed of several parts:
+This dialog is composed of two parts:
 @itemize
 @item
 The left part of the dialog contains the list of configured servers,
-identified by their nickname. Each nickname must be unique.
+identified by their nickname. Three buttons allow you to create, reinitialize
+or delete a server.
 @item
-The middle part of the dialog contains the selected server's configuration.
-@item
-The right part allows you to create, reinitialize or delete a server.
+The right part of the dialog contains the selected server's configuration.
 @end itemize
 
-So you need first to create a new server. For this, click on the button
-@code{Add Server} on the right part of the dialog. Enter a nickname identifying
-the server you want to connect to (this is not necessarily the network name of
-this server). This new server is then automatically selected, and the center
-part of the dialog shows its configuration, which is empty for the most part.
+You need first to create a new server. For this, click on the button
+@code{Add Server} on the bottom left part of the dialog. Enter a nickname
+identifying the server you want to connect to (this is not necessarily the
+network name of this server). Note that this nickname identifies the server and
+thus needs to be unique. This new server is then automatically selected,
+and the right part of the dialog shows its configuration, which is empty for
+the most part.
 
-You now have to enter all mandatory fields, identified by an asterisk:
+@c -----------------------------------------------------------------------
+@node Connection settings
+@subsection Connection settings
+@c -----------------------------------------------------------------------
+
+The first configuration part that needs to be filled concerns the way
+we will connect to this server:
+
+You have to enter first all mandatory fields, identified by an asterisk:
 @itemize
 @item
 The network name is the name used to connect to this server via your network.
@@ -7844,11 +7878,15 @@ qualified network name.
 The remote access tool is the tool used to connect to this server. You select
 it using the drop down list. The following tools are supported natively by
 GPS: ssh, rsh, telnet and plink (Windows tool) in ssh, rsh or telnet mode.
-@xref{Customize}, if you need to add a specific tool.
+@xref{Defining a remote connection tool}, if you need to add a
+specific tool.
+Note also that if one of those tools is not installed (e.g. is not in
+you path), then it won't appear in the tools list.
 @item
 The shell tells GPS what shell runs on the remote server. The following unix
 shells are supported by GPS: sh, bash, csh and tcsh. Windows' shell is also
-supported (cmd.exe).
+supported (cmd.exe). @xref{Limitations}, for cygwin's shell usage on
+windows: it is preferable to use cmd.exe as a remote shell on Windows servers.
 @end itemize
 
 @noindent
@@ -7861,121 +7899,164 @@ configuration pane.
 The remote sync tool is used to synchronize remote and local filesystems, if
 these are not shared filesystems. For now, only rsync is supported.
 @item
-The user name specifies the name used to connect to the server. If unspecified,
-the remote access tool will most of the time use your current login name. If
-not, and a user name is requested, gps will prompt you for a user name when
-requested.
-@item
-The timeout value is used to determine if a connection to a remote host is
-dead. All elementary operations performed on the remote host (i.e. operations
-that are normally almost immediate to perform) will use this timeout value. By
-default, this value is set to 10s. If you have a very slow network connection
-or a very overloaded server, set this timeout to a higher value.
-@item
-The maximum number of connections determines the maximum number of simultaneous
-connections GPS is allowed to perform to this server. In fact, if you want to
-compile, debug and execute at the same time on the machine, GPS will need
-more that one ssh or rsh connection to do this. The default value is 3.
-@item
 The Extra Init Commands field represent initialization commands sent to the
 server upon connection: when GPS connects to your remote machine, the chosen
 shell is launched, and your default initialization files are read (i.e. .bashrc
 file for the bash shell). Then GPS sends these extra init commands, allowing
 you for example to specify a compilation toolchain.
+@item
+(In Advanced configuration pane) The user name specifies the name used to connect to the server. If unspecified,
+the remote access tool will most of the time use your current login name. If
+not, and a user name is requested, gps will prompt you for a user name when
+requested.
+@item
+(In Advanced configuration pane) The timeout value is used to determine if a connection to a remote host is
+dead. All elementary operations performed on the remote host (i.e. operations
+that are normally almost immediate to perform) will use this timeout value. By
+default, this value is set to 10s. If you have a very slow network connection
+or a very overloaded server, set this timeout to a higher value.
+@item
+(In Advanced configuration pane) The maximum number of connections determines the maximum number of simultaneous
+connections GPS is allowed to perform to this server. In fact, if you want to
+compile, debug and execute at the same time on the machine, GPS will need
+more that one connection to do this. The default value is 3.
+@item
+(In Advanced configuration pane) The Debug console allow you to easily
+debug a remote connection. If checked, it will open a console
+reporting all exchanges between GPS and the selected server.
 @end itemize
 
+@c -----------------------------------------------------------------------
+@node Paths settings
+@subsection Paths settings
+@c -----------------------------------------------------------------------
+
 The last configuration part is to define the path translations between
-your local host and the remote server. GPS will use these path translations to
-locally load your project, and remotely compile, execute or debug it. All your
-project's dependencies must then reside in a path that is defined here, even
-those implicitely loaded through ADA_PROJECT_PATH.
+your local host and the remote server.
+
+The remote paths definition will allow GPS to translate your locally loaded
+project (e.g. the project that resides in your local filesystem) to
+paths used on the remote server. This part also tells GPS how to keep
+those paths synchronized between the local machine and the remote server.
+
+All your project's dependencies must then reside in a path that is defined
+here. Note that you can retrieve those paths by using @code{gnat list
+-v -Pyour_project}.
+
+To add a new path, click on the @code{+} button, and enter the corresponding
+local and remote paths. 
+
+You can easily select the desired paths by clicking on the icon next
+to the path's entry. Remote browsing is allowed only when the
+connection configuration is set (@xref{Connection settings}.) Clicking
+on @code{Apply} will apply your connection configuration and allow you
+to browse the remote host to select the remote paths.
+
+Four kind of paths synchronisation can be set for each defined path:
+@itemize
+@item @code{None}: no synchronisation is required from GPS, the paths
+are shared using an OS mechanism like NFS.
+@item @code{Always}: source path of your project. They are kept
+synchronised by GPS before and after every remote action.
+@item @code{Once to local}/@code{Once to remote}: project's
+dependencies. They are synchronized once when a remote project is
+loaded or when a local project is set remote. They can be still
+manually synchronized using the Remote View (@xref{The remote view}.)
+@end itemize
 
 The way those paths need to be configured depend on your network architecture.
+
 @itemize
-@item If your project is on a filesystem that is shared between your host and
+@item
+If your project is on a filesystem that is shared between your host and
 the remote host (using NFS of SMB filestems, for example), then only the roots
 of those filesystems need to be specified, using each server's native paths (on
 Windows, the paths will be expressed using X:\my\mounted\directory\ while on
 unix, the paths will be expressed using /mnt/path/).
-@item In case the project's files are synchronized using rsync, then defining
+@item
+In case the project's files are synchronized using rsync, then defining
 a too generic path translation will lead to very slow synchronization. You will
-then need to define the most specific paths as possible, in order to speed up
-the synchronization process as much as possible.
+then need to define as specific paths as possible, in order to speed up
+the synchronization process.
 @end itemize
 
-To add a new path, click on the @code{+} button, and enter the corresponding
-local and remote paths. You can specify by checking the @code{Need Sync} button
-wether the paths are shared (button unchecked) or need synchronization (button
-checked).
-
-Once the steps above are done, the configuration is now performed, and
-validated when clicking on the @code{OK} button.
-
 @c -----------------------------------------------------------------------
-@node Working with a remote project
-@section Working with a remote project
+@node Setup a remote project
+@section Setup a remote project
 @cindex remote project
 @c -----------------------------------------------------------------------
 
 @menu
-* Remote operations on a local project::
-* Locally editing remote project::
+* Remote operations::
+* The remote view::
+* Loading a remote project::
 @end menu
 
-@noindent
 @c -----------------------------------------------------------------------
-@node Remote operations on a local project
-@subsection Remote operations on a local project
+@node Remote operations
+@subsection Remote operations
 @c -----------------------------------------------------------------------
 
+@noindent
 GPS defines three different remote operation categories: Build operations,
-Debug operations and Execution operations. The Remote view
-(@code{Tools->Views->Remote}) allows you to assign to each operation category
-a configured server (when the Servers assignment tab is fully expanded) or
-assign at once all categories to a unique server (when the Servers assignment
-tab is collapsed).
+Debug operations and Execution operations. All compiler related
+operations are performed on the Build_Server. The debugger is run on
+the Debug_Server, and the project's resulting programs are run on the
+Execution_Server. The GPS_Server (the local machine) is used for all
+other operations.
+
+@c -----------------------------------------------------------------------
+@node The remote view
+@subsection The remote view
+@c -----------------------------------------------------------------------
+
+The Remote view (@code{Tools->Views->Remote}) allows you to assign to
+each operation category a configured server (when the Servers
+assignment tab is fully expanded) or assign at once all categories to
+a unique server (when the Servers assignment tab is collapsed) for the
+currently loaded project.
 
 @iftex
 @cindex screen shot
-@image{remote-view, 4.8cm}
+@image{remote-view-full, 4.8cm}
 @end iftex
 
 @ifhtml
 @cindex screen shot
-@image{remote-view}
+@image{remote-view-full}
 @end ifhtml
 
 @noindent
 When a server is selected for a particular category, the change is not
 immediately performed. Thus, the server's name will appear in red. You can
 check the configuration before applying it by pressing the
-@code{Check configuration} button. This will test for correct remote hosts
+@code{Check} button. This will test for correct remote hosts
 connection, and will check that the project path exists on the build server and
 has an equivalence on the local machine.
 
-Once the configuration checked, you need to click the @code{Connect} button,
-which will perform the actual connection to the servers:
+Clicking on the @code{Apply} button will perform the following actions:
 @itemize
 @item Read the default project paths on the Build machine and translate them
 into local paths.
-@item Synchronize when requested the remote paths and the local paths.
-@item Load the translated local project
+@item Synchronize from the build server the paths marked as Sync @code{Always} or @code{Once to
+local}.
+@item Load the translated local project.
 @item Assign the Build, Execution and Debug servers.
 @end itemize
 
 If one of the above operations fail, then errors are reported in the
-@code{Messages} view, and the previous project is kept/reloaded.
+@code{Messages} view, and the previous project is kept.
 
-Next, working with the remote project is exactly the same as working locally:
-source editing, browsing, debugging behave the same.
+Once a remote server is assigned, this remote configuration will be
+automatically loaded each time the project is loaded.
 
 @c -----------------------------------------------------------------------
-@node Locally editing remote project
-@subsection Locally editing remote project
+@node Loading a remote project
+@subsection Loading a remote project
 @c -----------------------------------------------------------------------
 
 @noindent
-If the project you want to load/edit is already on a distant server, you can
+If the project you want to work with is already on a distant server, you can
 directly load it on your local GPS.
 
 To do this, you need to use the @code{Project->Open From Host} menu.
@@ -7984,32 +8065,35 @@ Navigate to your project, select it. The project will be loaded as described
 above, with all remote operations categories assigned to the selected server by
 default.
 
-@node Customize
-@section Customize
-@c ??? to be done
+You can reload your project using the local files on your machine, the
+remote configuration will then be automatically reapplied.
 
+@c -----------------------------------------------------------------------
 @node Limitations
 @section Limitations
+@c -----------------------------------------------------------------------
 
 The GPS remote mode involves a few limitations:
 
 @itemize
-@item Password support: GPS supports password asking when launching remote
-connection tools such as rsh, ssh, telnet or rsync. However, Cygwin's
-versions of such tools under Windows do not ask for such passwords when
-launched by another process. In this case, a password-less connection is
-required. PuTTY's command line tool plink does not suffer such limitations, so
-passwords are correctly handled in this case. However, the PuTTY project do
-not offer any implementation of rsync, and Cygwin rsync does not work with
-PuTTY ssh.
-
 @item Execution: you cannot use an external terminal to remotely execute your
 application. The @code{Use external terminal} checkbox of the run dialog will
 then have no effect if the program is run remotely.
 
-@item Debugging: you cannot use a separate execution window. To make sure
-the execution window is not used, go to menu @code{Edit->Preferences}, select
-the @code{Debugger} tab, and make sure the @code{Execution window} is disabled.
+@item Debugging: you cannot use a separate execution window. The
+@code{Use separate execution window} option is ignored for remote
+debugging sessions.
+
+@item Cygwin on remote host: the GNATPro compilation toolchain does
+not understand cygwin's mounted directories. In order to use GPS with
+a remote Windows server using cygwin's bash, you need to use
+directories that are the same on Windows and Cygwin (absolute
+paths). For example, a project having a C:\my_project will be accepted
+if cygwin's path is /my_project, but will not if
+/cygdrive/c/my_project is used.
+
+Note that even if you use cygwin's sshd on such a server, you can
+still access it using cmd.exe (@xref{Connection settings}.)
 @end itemize
 
 @c --------------------------------------------------------------------
@@ -9309,6 +9393,7 @@ due to technical limitations in the graphical toolkit that GPS uses.
 * Adding documentation::
 * Adding stock icons::
 * Defining a documentation format::
+* Remote programming customization::
 @end menu
 
 @noindent
@@ -9428,6 +9513,14 @@ described in later sections. It includes:
   (@pxref{Defining project attributes})
 @item <docgen_backend>
   (@pxref{Defining a documentation format})
+@item <remote_machine_descriptor>
+  (@pxref{Defining a remote server})
+@item <remote_path_config>
+  (@pxref{Defining a remote path translation})
+@item <remote_connection_config>
+  (@pxref{Defining a remote connection tool})
+@item <rsync_configuration>
+  (@pxref{Configuring rsync usage})
 @end table
 
 @c -----------------------------------------------------------------------
@@ -9519,6 +9612,8 @@ This tag accepts the following attributes:
    This attribute can be used to execute the external command on a remote
    server. The accepted values are @code{"gps_server"} (default),
    @code{"build_server"}, @code{"execution_server"} and @code{"debug_server"}.
+   @xref{Remote operations}, for explanation of
+   what these servers are.
 
    @item check-password (optional)
    This attribute can be used to tell GPS to check and handle password prompts
@@ -12183,6 +12278,269 @@ complete description.
 
 Note that each HTML template files, provided with GPS, contains a
 complete description of the usage of each tag in the header comments.
+
+@c --------------------------------------------------------------------------
+@node Remote programming customization
+@subsection Remote programming customization
+@cindex remote
+@c --------------------------------------------------------------------------
+
+@menu
+* Defining a remote connection tool::
+* Defining a shell::
+* Configuring rsync usage::
+* Defining a remote server::
+* Defining a remote path translation::
+@end menu
+
+@noindent
+
+The configuration of the remote programming functionality has two
+separate parts: the tools configuration (remote connection tools,
+shells, and rsync parameters) and the servers configuration. 
+
+The first part (see @ref{Defining a remote connection tool},
+@ref{Defining a shell} and @ref{Configuring rsync usage}) is handled
+by a pre-installed file in the plug-ins directory called
+'protocols.xml'. 
+
+The second part (see @ref{Defining a remote server} and @ref{Defining
+a remote path translation}), when configured via the user interface
+(see @ref{Setup the remote servers}), will create a remote.xml file in
+the user's gps directory. System-wide servers can be also installed.
+
+@c --------------------------------------------------------------------
+@node Defining a remote connection tool
+@subsubsection Defining a remote connection tool
+@cindex remote
+@c --------------------------------------------------------------------
+
+@noindent
+Several remote access tools are already defined in GPS: ssh, rsh,
+telnet and plink. It is possible to add other tools, using the node
+@code{remote_connection_config}.
+
+The attributes for this node are:
+
+@table @code
+@item name (string) (mandatory)
+The name of the tool. This name does not necessarilly correspond to
+the command used to launch the tool.
+
+@end table
+
+The following children are defined:
+
+@table @code
+@item start_command (mandatory)
+The command used to launch the tool.
+
+@item start_command_common_args (optional)
+The common arguments that are provided to the tool.
+
+@item start_command_user_args (optional)
+The arguments used to define a specific user during connection.
+
+@item user_prompt_ptrn (optional)
+A regular expression, used to catch user name prompts from the
+connection tool. If undefined, a default regular expression is used.
+
+@item password_prompt_ptrn (optional)
+A regular expression, used to catch password prompts from the
+connection tool. If undefined, a default regular expression is used.
+
+@item passphrase_prompt_ptrn (optional)
+A regular expression, used to catch passphrase prompts from the
+connection tool. If undefined, a default regular expression is used.
+
+@item use_cr_lf (optional)
+Boolean value, used to tell GPS if the connection tool requires CR+LF
+characters to determine an end of line, or if LF is sufficient. Set to
+false by default.
+
+@item extra_ptrn (optional)
+Complex child. Used to catch extra prompts from the connection tool,
+other than password, passphrase or usename prompts. This tag has an
+attribute @code{auto_answer} telling if GPS automatically answers to
+this prompt, or ask the user. If auto_answer is ``true'', then this
+tag needs an ``answer'' child, whose value is used for the answer. If
+auto_answer is ``false'', then this tag needs a ``question'' child,
+whose value is used as question to the end user.
+
+@end table
+
+@c --------------------------------------------------------------------
+@node Defining a shell
+@subsubsection Defining a shell
+@cindex remote
+@c --------------------------------------------------------------------
+
+@noindent
+Several shells are already defined in GPS: sh, bash, csh, tcsh and
+cmd.exe (Windows). It is possible to add other shells, using the node
+@code{remote_shell_config}.
+
+The attributes for this node are:
+
+@table @code
+@item name (string) (mandatory)
+The name of the shell. This name does not necessarilly correspond to
+the command used to launch the shell.
+
+@end table
+
+The following children are defined:
+
+@table @code
+@item start_command (mandatory)
+The command used to launch the shell. If arguments are required, they
+should be put here, separated with spaces.
+
+@item generic_prompt (optional)
+The regular expression used to identify a prompt after the initial
+connection. If not set, a default value is used.
+
+@item gps_prompt (mandatory)
+The regular expression used to identify a prompt after the initial
+setup is performed. If not set, a default value is used.
+
+@item filesystem (mandatory)
+Takes the following values: @code{unix} or @code{windows}. This is the
+filesystem used by the shell.
+
+@item init_commands (optional)
+Complex child. Each @code{cmd} child contains a command used to
+initialise a new session.
+
+@item exit_commands (optional)
+Complex child. Each @code{cmd} child contains a command used to
+exit a session.
+
+@item cd_command (mandatory)
+Command used to go to a directory. @code{%d} is replaced by the
+directory's full name.
+
+@item get_status_command (mandatory)
+Command used to retrieve the status of the last command launched.
+
+@item get_status_ptrn (mandatory)
+Regular expression used to retrieve the status returned by
+@code{get_status_command}. A pair of parenthesis is required, and
+identifies the status.
+
+@end table
+
+@c --------------------------------------------------------------------
+@node Configuring rsync usage
+@subsubsection Configuring rsync usage
+@cindex rsync
+@c --------------------------------------------------------------------
+
+@noindent
+GPS has native support for the rsync tool, for paths synchronization
+during remote programming operations.
+
+By default, GPS will use --rsh=ssh option if ssh is the main
+connection tool for the concerned server. It will also define the -L
+switch when transfering files to a Windows local host.
+
+It is possible to define additional arguments to furnish to rsync
+using the @code{rsync_configuration} tag.
+
+This tag accepts the child tagged @code{arguments}, and containing
+additional arguments to pass to rsync.
+
+@c --------------------------------------------------------------------
+@node Defining a remote server
+@subsubsection Defining a remote server
+@cindex server
+@cindex remote
+@c --------------------------------------------------------------------
+
+@noindent
+Remote servers can be defined via the user interface, as described in
+@ref{Setup the remote servers}. This user interface will create a
+remote.xml file in the user's gps directory, which in turn can be
+installed in any plug-ins directory to set the values
+system-wide. This file will define for each server the node
+@code{remote_machine_descriptor}.
+
+The attributes for this node are:
+@table @code
+@item nickname (mandatory)
+Identifies uniquely the server in GPS.
+
+@item network_name (mandatory)
+The server's network name or IP address.
+
+@item remote_access (mandatory)
+The tool's name used to access the server. Shall point to one of the
+tools defined in @ref{Defining a remote connection tool}.
+
+@item remote_shell (mandatory)
+The shell's name used to access the server. Shall point to one of the
+shells defined in @ref{Defining a shell}.
+
+@item remote_sync (mandatory)
+The remote file synchronisation tool used to synchronise files between
+the local host and the server. Only ``rsync'' is allowed for now.
+
+@item debug_console (optional)
+Can take values @code{True} or @code{False}. Tells if a debug console
+shall be displayed during connection with a remote host. False by
+default.
+@end table
+
+The children for this node are:
+@table @code
+@item extra_init_commands (optional)
+Complex child. Can contain @code{cmd} children whose values are used
+to set server specific initialisation commands.
+
+@item max_nb_connections (optional)
+Positive number representing the maximum number of simultaneous
+connections GPS can launch.
+
+@item timeout (optional)
+Positive number representing a timeout value (in ms) used for every
+action performed on the remote host.
+@end table 
+
+@c --------------------------------------------------------------------
+@node Defining a remote path translation
+@subsubsection Defining a remote path translation
+@cindex server
+@cindex path
+@cindex remote
+@c --------------------------------------------------------------------
+
+@noindent
+Remote path translation can also be defined via the user interface, as
+described in @ref{Setup the remote servers}. The remote paths
+translation are defined with the node @code{remote_path_config}.
+
+The attributes for this node are:
+@table @code
+@item server_name (mandatory)
+The server name concerned by the paths translation.
+@end table
+
+The @code{remote_path_config} node contains @code{mirror_path}
+children.
+
+The attributes for the node @code{mirror_path} are:
+@table @code
+@item local_path (mandatory)
+The absolute local path, expressed using the local filesystem
+standards.
+@item remote_path (mandatory)
+The absolute remote path, expressed using the remote filesystem
+standards.
+@item sync (mandatory)
+Take the value @code{NEVER}, @code{ONCE_TO_LOCAL},
+@code{ONCE_TO_REMOTE} or @code{ALWAYS}. Tells the synchronisation
+mechanism used for the paths (@xref{Paths settings}.)
+@end table
 
 @c --------------------------------------------------------------------------
 @node Adding support for new tools
