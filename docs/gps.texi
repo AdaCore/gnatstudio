@@ -2701,6 +2701,7 @@ remote host. Files are transfered in-line, that is the connection is established
 the first time you access the remote host, and kept open for all further
 access.
 
+@cindex password
 Although ssh can be setup not to require a password, GPS will automatically
 detect if a password is asked and open a dialog to query it.
 
@@ -6583,6 +6584,7 @@ stage. Therefore, before working on a project using version control
 system, make sure that the system is properly set-up before launching
 GPS.
 
+@cindex password
 Note: the set-up must make sure that the VCS commands can be launched without
 entering a password.
 
@@ -7773,6 +7775,7 @@ need to be met:
 
 @itemize
 @item
+@cindex password
 Have a remote connection to the host using 'rsh', 'ssh' or 'telnet'. Note that
 GPS can now handle passwords for such connections.
 
@@ -8084,8 +8087,8 @@ then have no effect if the program is run remotely.
 @code{Use separate execution window} option is ignored for remote
 debugging sessions.
 
-@item Cygwin on remote host: the GNATPro compilation toolchain does
-not understand cygwin's mounted directories. In order to use GPS with
+@item Cygwin on remote host: the GNAT compilation toolchain does not
+understand cygwin's mounted directories. In order to use GPS with
 a remote Windows server using cygwin's bash, you need to use
 directories that are the same on Windows and Cygwin (absolute
 paths). For example, a project having a C:\my_project will be accepted
@@ -9616,6 +9619,7 @@ This tag accepts the following attributes:
    what these servers are.
 
    @item check-password (optional)
+   @cindex password
    This attribute can be used to tell GPS to check and handle password prompts
    from the external command. The accepted values are @code{"false"} (default)
    and @code{"true"}.
@@ -12302,7 +12306,7 @@ shells, and rsync parameters) and the servers configuration.
 The first part (see @ref{Defining a remote connection tool},
 @ref{Defining a shell} and @ref{Configuring rsync usage}) is handled
 by a pre-installed file in the plug-ins directory called
-'protocols.xml'. 
+@file{protocols.xml}.
 
 The second part (see @ref{Defining a remote server} and @ref{Defining
 a remote path translation}), when configured via the user interface
@@ -12346,6 +12350,7 @@ A regular expression, used to catch user name prompts from the
 connection tool. If undefined, a default regular expression is used.
 
 @item password_prompt_ptrn (optional)
+@cindex password
 A regular expression, used to catch password prompts from the
 connection tool. If undefined, a default regular expression is used.
 
@@ -12362,10 +12367,12 @@ false by default.
 Complex child. Used to catch extra prompts from the connection tool,
 other than password, passphrase or usename prompts. This tag has an
 attribute @code{auto_answer} telling if GPS automatically answers to
-this prompt, or ask the user. If auto_answer is ``true'', then this
-tag needs an ``answer'' child, whose value is used for the answer. If
-auto_answer is ``false'', then this tag needs a ``question'' child,
+this prompt, or ask the user. If auto_answer is @code{true}, then this
+tag needs an @code{answer} child, whose value is used for the answer. If
+auto_answer is @code{false}, then this tag needs a @code{question} child,
 whose value is used as question to the end user.
+
+@c ??? need an example
 
 @end table
 
@@ -12444,8 +12451,8 @@ By default, GPS will use --rsh=ssh option if ssh is the main
 connection tool for the concerned server. It will also define the -L
 switch when transfering files to a Windows local host.
 
-It is possible to define additional arguments to furnish to rsync
-using the @code{rsync_configuration} tag.
+It is possible to define additional arguments to rsync using the
+@code{rsync_configuration} tag.
 
 This tag accepts the child tagged @code{arguments}, and containing
 additional arguments to pass to rsync.
@@ -12482,20 +12489,19 @@ The shell's name used to access the server. Shall point to one of the
 shells defined in @ref{Defining a shell}.
 
 @item remote_sync (mandatory)
-The remote file synchronisation tool used to synchronise files between
-the local host and the server. Only ``rsync'' is allowed for now.
+The remote file synchronisation tool used to synchronize files between
+the local host and the server. Only @code{rsync} is recognized currently.
 
 @item debug_console (optional)
-Can take values @code{True} or @code{False}. Tells if a debug console
-shall be displayed during connection with a remote host. False by
-default.
+Can take the value @code{True} or @code{False}. Tells if a debug console
+should be displayed during connection with a remote host. False by default.
 @end table
 
 The children for this node are:
 @table @code
 @item extra_init_commands (optional)
 Complex child. Can contain @code{cmd} children whose values are used
-to set server specific initialisation commands.
+to set server specific initialization commands.
 
 @item max_nb_connections (optional)
 Positive number representing the maximum number of simultaneous
@@ -12537,9 +12543,9 @@ standards.
 The absolute remote path, expressed using the remote filesystem
 standards.
 @item sync (mandatory)
-Take the value @code{NEVER}, @code{ONCE_TO_LOCAL},
-@code{ONCE_TO_REMOTE} or @code{ALWAYS}. Tells the synchronisation
-mechanism used for the paths (@xref{Paths settings}.)
+Specify the synchronization mechanism used for the paths
+(see @ref{Paths settings}). Possible values are
+@code{NEVER}, @code{ONCE_TO_LOCAL}, @code{ONCE_TO_REMOTE} and @code{ALWAYS}.
 @end table
 
 @c --------------------------------------------------------------------------
