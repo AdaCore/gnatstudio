@@ -409,7 +409,6 @@ package body VFS is
          return VFS.No_File;
       else
          The_Dir := Create (Get_Host (File), The_Dir_Name);
-         The_Dir.Value.Kind := Directory;
          return The_Dir;
       end if;
    end Dir;
