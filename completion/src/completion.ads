@@ -70,8 +70,10 @@ package Completion is
 
    type Possibilities_Filter is mod 2 ** 32;
 
-   All_Visible_Entities : Possibilities_Filter := 1;
-   All_Accessible_Units : Possibilities_Filter := 2;
+   All_Visible_Packages : Possibilities_Filter := 2#0000_0001#;
+   All_Visible_Entities : Possibilities_Filter :=
+     2#0000_0010# or All_Visible_Packages;
+   All_Accessible_Units : Possibilities_Filter := 2#0000_0100#;
    Everything           : Possibilities_Filter := 16#FFFFFF#;
 
    procedure Get_Possibilities
