@@ -953,8 +953,10 @@ package body Remote_Views is
         (User.View.Kernel,
          From           => Str_From_Server (User.From),
          To             => Str_From_Server (User.To),
-         Queue_Id       => "",
-         Sync_Once_Dirs => True);
+         Blocking       => False,
+         Print_Output   => True,
+         Sync_Once_Dirs => True,
+         Queue_Id       => "");
    end On_Sync_Menu_Clicked;
 
    ----------------------------
