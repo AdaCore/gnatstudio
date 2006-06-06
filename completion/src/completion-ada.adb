@@ -43,7 +43,7 @@ package body Completion.Ada is
       -- Analyze_Token --
       -------------------
 
-      Filter : Possibilities_Filter := All_Visible_Entities;
+      Filter : Possibilities_Filter := Everything;
 
       procedure Analyze_Token
         (Token       : Token_List.List_Node;
@@ -166,6 +166,7 @@ package body Completion.Ada is
             when Tok_Expression =>
                if Get_Number_Of_Parameters (Get_Proposal (Previous_It))
                  >= Data (Token).Number_Of_Parameters
+                 and then Next (Token) /= Token_List.Null_Node
                then
                   Analyze_Token (Next (Token), Previous_It, Result);
                end if;
