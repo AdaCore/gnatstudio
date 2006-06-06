@@ -96,21 +96,38 @@ package body Completion.Entities_Extractor is
       Result     : in out Completion_List)
    is
       pragma Unreferenced (Offset);
-      Type_Of : Entity_Information := null;
+      Type_Of      : Entity_Information := null;
+      Calls_Filter : Possibilities_Filter := Everything;
    begin
       if Get_Kind (Proposal.Entity).Kind = Package_Kind then
-         Append
-           (Result.List,
-            Entity_Tree_Wrapper'
-              (Completion_List_Pckg.Virtual_List_Component with
-               Handler       => Get_LI_Handler_By_Name
-                 (Entity_Completion_Resolver
-                    (Proposal.Resolver.all).Handler, Get_Name (Ada_Lang)),
-               Resolver      => Proposal.Resolver,
-               Name          => new String'(Identifier),
-               Is_Partial    => Is_Partial,
-               Filter        => All_Accessible_Units,
-               Parent_Entity => Proposal.Entity));
+         if (Proposal.Filter and All_Accessible_Units) /= 0 then
+            Append
+              (Result.List,
+               Entity_Tree_Wrapper'
+                 (Completion_List_Pckg.Virtual_List_Component with
+                  Handler       => Get_LI_Handler_By_Name
+                    (Entity_Completion_Resolver
+                       (Proposal.Resolver.all).Handler, Get_Name (Ada_Lang)),
+                  Resolver      => Proposal.Resolver,
+                  Name          => new String'(Identifier),
+                  Is_Partial    => Is_Partial,
+                  Filter        => All_Accessible_Units,
+                  Next_Filter   => Proposal.Filter,
+                  Parent_Entity => Proposal.Entity));
+
+            Calls_Filter := Calls_Filter and not All_Visible_Packages;
+         end if;
+
+         if (Proposal.Filter and All_Visible_Entities) /= 0 then
+            Append
+              (Result.List,
+               Calls_Wrapper'
+                 (Resolver   => Get_Resolver (Proposal),
+                  Scope      => Proposal.Entity,
+                  Name       => new String'(Identifier),
+                  Is_Partial => Is_Partial,
+                  Filter     => Calls_Filter));
+         end if;
       else
          if Get_Kind (Proposal.Entity).Kind = Function_Or_Operator then
             Type_Of := Get_Returned_Type (Proposal.Entity);
@@ -131,7 +148,8 @@ package body Completion.Entities_Extractor is
                  (Resolver   => Get_Resolver (Proposal),
                   Scope      => Pointed_Type (Type_Of),
                   Name       => new String'(Identifier),
-                  Is_Partial => Is_Partial));
+                  Is_Partial => Is_Partial,
+                  Filter     => Calls_Filter));
 
             if Match (Identifier, "all", Is_Partial) then
                Append
@@ -148,7 +166,8 @@ package body Completion.Entities_Extractor is
                  (Resolver   => Get_Resolver (Proposal),
                   Scope      => Type_Of,
                   Name       => new String'(Identifier),
-                  Is_Partial => Is_Partial));
+                  Is_Partial => Is_Partial,
+                  Filter     => Calls_Filter));
          end if;
       end if;
    end Get_Composition;
@@ -245,6 +264,7 @@ package body Completion.Entities_Extractor is
                Name          => new String'(Identifier),
                Is_Partial    => Is_Partial,
                Filter        => Filter,
+               Next_Filter   => Filter,
                Parent_Entity => null));
 
          Result.Is_Partial := Is_Partial;
@@ -310,6 +330,7 @@ package body Completion.Entities_Extractor is
          Is_Partial    => Tree.Is_Partial,
          Name          => Tree.Name,
          Filter        => Tree.Filter,
+         Next_Filter   => Tree.Next_Filter,
          Parent_Entity => Tree.Parent_Entity);
    begin
       if not Is_Valid (It) then
@@ -334,8 +355,6 @@ package body Completion.Entities_Extractor is
 
    function Is_Valid (It : Entity_Iterator_Wrapper) return Boolean is
       Entity : Entity_Information;
-
-      Result : Boolean;
    begin
       if At_End (It) then
          return True;
@@ -350,15 +369,18 @@ package body Completion.Entities_Extractor is
          return False;
       end if;
 
+      if (It.Filter and All_Visible_Entities) /= 0 then
+         return True;
+      end if;
+
       if (It.Filter and All_Accessible_Units) /= 0 then
-         Result := Get_Kind (Entity).Kind = Package_Kind
+         return Get_Kind (Entity).Kind = Package_Kind
            and then
              (It.Parent_Entity = null
               or else It.Parent_Entity = Get_Parent_Package (Entity)
               or else It.Parent_Entity = Get_Caller
                 (Declaration_As_Reference (Entity)));
 
-         return Result;
       end if;
 
       return True;
@@ -389,7 +411,8 @@ package body Completion.Entities_Extractor is
         (Mode             => Show_Identifiers,
          Resolver         => This.Resolver,
          Entity           => Get (This.It),
-         Is_All           => False);
+         Is_All           => False,
+         Filter           => This.Next_Filter);
    end Get;
 
    ----------
@@ -413,7 +436,8 @@ package body Completion.Entities_Extractor is
          Resolver   => Scope.Resolver,
          Scope      => Scope.Scope,
          Name       => Scope.Name,
-         Is_Partial => Scope.Is_Partial);
+         Is_Partial => Scope.Is_Partial,
+         Filter     => Scope.Filter);
    begin
       if not Is_Valid (It) then
          Next (It);
@@ -457,7 +481,8 @@ package body Completion.Entities_Extractor is
         (Mode     => Show_Identifiers,
          Resolver => This.Resolver,
          Entity   => Get (This.It),
-         Is_All   => False);
+         Is_All   => False,
+         Filter   => This.Filter);
    end Get;
 
    ----------
@@ -495,6 +520,8 @@ package body Completion.Entities_Extractor is
 
       return Get_Location (It_Reference).File
         = Get_Location (Scope_Reference).File
+        and then ((It.Filter and All_Visible_Packages) /= 0
+                  or else Get_Kind (Get (It.It)).Kind /= Package_Kind)
         and then Match (It.Name.all,
                         Get_Name (Get (It.It)).all,
                         It.Is_Partial);
@@ -544,7 +571,8 @@ package body Completion.Entities_Extractor is
         (Mode     => Show_Identifiers,
          Resolver => This.Resolver,
          Entity   => Get (This.It),
-         Is_All   => False);
+         Is_All   => False,
+         Filter   => Everything);
    end Get;
 
    ----------
@@ -623,7 +651,8 @@ package body Completion.Entities_Extractor is
         (Mode     => Show_Identifiers,
          Resolver => This.Resolver,
          Entity   => This.Unit,
-         Is_All   => False);
+         Is_All   => False,
+         Filter   => Everything);
    end Get;
 
    ----------
@@ -704,7 +733,8 @@ package body Completion.Entities_Extractor is
         (Mode     => Show_Identifiers,
          Resolver => This.Resolver,
          Entity   => This.Entity,
-         Is_All   => This.Is_All);
+         Is_All   => This.Is_All,
+         Filter   => Everything);
    end Get;
 
 end Completion.Entities_Extractor;
