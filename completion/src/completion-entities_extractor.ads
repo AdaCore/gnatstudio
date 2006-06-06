@@ -64,6 +64,8 @@ private
 
       Is_All : Boolean;
       --  In this case, we display only "all"
+
+      Filter : Possibilities_Filter;
    end record;
 
    function Get_Completion (Proposal : Entity_Completion_Proposal)
@@ -116,6 +118,7 @@ private
       Name          : String_Access;
       Is_Partial    : Boolean;
       Filter        : Possibilities_Filter;
+      Next_Filter   : Possibilities_Filter;
 
       Parent_Entity : Entity_Information;
       --  When this field is set, then only children or or callers of this
@@ -125,11 +128,12 @@ private
    type Entity_Iterator_Wrapper is new
      Completion_List_Pckg.Virtual_List_Component_Iterator
    with record
-      It         : LI_Entities_Iterator;
-      Resolver   : Completion_Resolver_Access;
-      Is_Partial : Boolean;
-      Name       : String_Access;
-      Filter     : Possibilities_Filter;
+      It          : LI_Entities_Iterator;
+      Resolver    : Completion_Resolver_Access;
+      Is_Partial  : Boolean;
+      Name        : String_Access;
+      Filter      : Possibilities_Filter;
+      Next_Filter : Possibilities_Filter;
 
       Parent_Entity : Entity_Information;
       --  When this field is set, then only children or or callers of this
@@ -164,6 +168,7 @@ private
       Resolver   : Completion_Resolver_Access;
       Name       : String_Access;
       Is_Partial : Boolean;
+      Filter     : Possibilities_Filter;
    end record;
 
    type Calls_Iterator_Wrapper is new
@@ -174,6 +179,7 @@ private
       Resolver   : Completion_Resolver_Access;
       Name       : String_Access;
       Is_Partial : Boolean;
+      Filter     : Possibilities_Filter;
    end record;
 
    function First (Scope : Calls_Wrapper)
