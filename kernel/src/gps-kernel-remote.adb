@@ -1398,6 +1398,19 @@ package body GPS.Kernel.Remote is
          return;
       end if;
 
+      --  Check connection before browsing the remote host
+      Start_Dir := Get_Root
+        (Create (Dialog.Selected_Machine.Desc.Nickname.all, ""));
+
+      if not Is_Directory (Start_Dir) then
+         Gtk_Resp := Message_Dialog
+           (-"Could not establish communication with selected host",
+            Dialog_Type => Error,
+            Buttons     => Button_OK);
+         return;
+      end if;
+
+      --  Determine Start directory
       if Current_Dir /= Enter_Local_Path_String then
          Start_Dir := Create
            (Dialog.Selected_Machine.Desc.Nickname.all, Current_Dir);
