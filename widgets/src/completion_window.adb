@@ -140,7 +140,10 @@ package body Completion_Window is
          Free (Window.Info (Window.Index));
       end loop;
 
-      Delete_Mark (Window.Buffer, Window.Mark);
+      if Window.Mark /= null then
+         Delete_Mark (Window.Buffer, Window.Mark);
+      end if;
+
       Unchecked_Free (Window.Info);
       Destroy (Window.Notes_Window);
       Destroy (Window);
