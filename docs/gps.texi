@@ -15324,14 +15324,6 @@ but normal users can't.
 A: You should check the permissions of the directory $HOME/.gps and its
 subdirectories, they should be owned by the user.
 
-@item GPS crashes at start up with the X error
-Q: Whenever I run gps from an ssh session, I get an error of the form:
-The program 'gps_exe' received an X Window System error.
-This probably reflects a bug in the program.
-The error was 'BadPixmap (invalid Pixmap parameter)'.
-
-A: You need to use ssh -Y to run GPS properly through ssh
-
 @item GPS crashes whenever I open a source editor
 This is usually due to font problems. Editing the file
 @file{$HOME/.gps/preferences} and changing the name of the fonts, e.g
