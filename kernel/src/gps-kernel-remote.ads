@@ -84,21 +84,28 @@ package GPS.Kernel.Remote is
      (Kernel         : Kernel_Handle;
       From           : Server_Type;
       To             : Server_Type;
-      Queue_Id       : String;
-      Sync_Once_Dirs : Boolean := False);
+      Blocking       : Boolean;
+      Print_Output   : Boolean;
+      Sync_Once_Dirs : Boolean;
+      Queue_Id       : String  := "");
    --  Perform a file system synchronisation between From and To.
-   --  If Queue_Id is not an empty string, then the synchronisation is
-   --   launched as an asynchronous command using the queue_id. Else, it is
-   --   launched synchronously.
-   --  If Sync_Once_Dirs is set, then only mirrors paths marked as 'sync once'
-   --   are synchronized.
+   --  If Blocking is set, the call is synchronous. Else an asynchronous
+   --  command is used.
+   --  If Print_Output is set, then asynchronous command will print rsync's
+   --  output on the Messages console.
+   --  If Sync_Once_Dirs is set, then mirror paths marked as 'sync once' will
+   --  also be rsynced
+   --  If Blocking is not set and queue_id is not an empty string, then the
+   --  specified queue id will be used for the command.
 
    procedure Synchronize
      (Kernel         : Kernel_Handle;
       From           : String;
       To             : String;
-      Queue_Id       : String;
-      Sync_Once_Dirs : Boolean := False);
+      Blocking       : Boolean;
+      Print_Output   : Boolean;
+      Sync_Once_Dirs : Boolean;
+      Queue_Id       : String  := "");
    --  Same as above, with From and To servers identified by their nickname
 
    ---------------------------------
@@ -158,6 +165,8 @@ package GPS.Kernel.Remote is
    is new Hooks_Data with record
       Synchronous  : Boolean;
       --  Tells if the synchronisation call shall be performed synchronously
+      Print_Output : Boolean;
+      --  Tells if rsync output is displayed on the Messages window.
       Tool_Name    : String (1 .. Tool_Name_Length);
       --  What hook function shall perform the action
       Src_Name     : String (1 .. Src_Name_Length);
