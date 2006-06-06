@@ -2539,6 +2539,7 @@ package body GPS.Kernel.Remote is
          Src_Path     : constant String  := Nth_Arg (Data, 6);
          Dest_Path    : constant String  := Nth_Arg (Data, 7);
          Synchronous  : constant Boolean := Nth_Arg (Data, 8);
+         Print_Output : constant Boolean := Nth_Arg (Data, 9);
 
       begin
          return Rsync_Hooks_Args'
@@ -2555,7 +2556,8 @@ package body GPS.Kernel.Remote is
             Queue_Id         => Queue_Id,
             Src_Path         => Src_Path,
             Dest_Path        => Dest_Path,
-            Synchronous      => Synchronous);
+            Synchronous      => Synchronous,
+            Print_Output     => Print_Output);
       end;
    end From_Callback_Data_Sync_Hook;
 
@@ -2570,7 +2572,7 @@ package body GPS.Kernel.Remote is
       return GPS.Kernel.Scripts.Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 8));
+        new Callback_Data'Class'(Create (Script, 9));
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Data.Tool_Name);
@@ -2580,6 +2582,7 @@ package body GPS.Kernel.Remote is
       Set_Nth_Arg (D.all, 6, Data.Src_Path);
       Set_Nth_Arg (D.all, 7, Data.Dest_Path);
       Set_Nth_Arg (D.all, 8, Data.Synchronous);
+      Set_Nth_Arg (D.all, 9, Data.Print_Output);
       return D;
    end Create_Callback_Data;
 
@@ -2800,12 +2803,11 @@ package body GPS.Kernel.Remote is
 
       if not Is_Local (D.File) then
          Trace (Me, "Start synchronization of build_server");
-         --  First sync 'once' dirs
          Synchronize
-           (Kernel_Handle (Kernel), Build_Server, GPS_Server, "", True);
-         --  Then sync 'Always' dirs
-         Synchronize
-           (Kernel_Handle (Kernel), Build_Server, GPS_Server, "");
+           (Kernel_Handle (Kernel), Build_Server, GPS_Server,
+            Blocking       => True,
+            Print_Output   => False,
+            Sync_Once_Dirs => True);
       end if;
 
    exception
@@ -2924,7 +2926,13 @@ package body GPS.Kernel.Remote is
             end if;
 
             Init_Cmds_Child := Find_Tag (Node.Child, "init_commands");
-            Child := Init_Cmds_Child.Child;
+
+            if Init_Cmds_Child /= null then
+               Child := Init_Cmds_Child.Child;
+            else
+               Child := null;
+            end if;
+
             Nb_Init_Cmds := 0;
 
             while Child /= null loop
@@ -2933,7 +2941,13 @@ package body GPS.Kernel.Remote is
             end loop;
 
             Exit_Cmds_Child := Find_Tag (Node.Child, "exit_commands");
-            Child := Exit_Cmds_Child.Child;
+
+            if Exit_Cmds_Child /= null then
+               Child := Exit_Cmds_Child.Child;
+            else
+               Child := null;
+            end if;
+
             Nb_Exit_Cmds := 0;
 
             while Child /= null loop
@@ -3543,6 +3557,21 @@ package body GPS.Kernel.Remote is
       end if;
    end Get_Filesystem;
 
+   Id : Natural := 0;
+   function Get_New_Queue_Id return String;
+   --  Returns a new unique queue id
+
+   ----------------------
+   -- Get_New_Queue_Id --
+   ----------------------
+
+   function Get_New_Queue_Id return String is
+      Str_Id : constant String := Natural'Image (Id);
+   begin
+      Id := Id + 1;
+      return "gps-kernel-remote-sync" & Str_Id;
+   end Get_New_Queue_Id;
+
    -----------------
    -- Synchronize --
    -----------------
@@ -3551,8 +3580,10 @@ package body GPS.Kernel.Remote is
      (Kernel         : Kernel_Handle;
       From           : String;
       To             : String;
-      Queue_Id       : String;
-      Sync_Once_Dirs : Boolean := False)
+      Blocking       : Boolean;
+      Print_Output   : Boolean;
+      Sync_Once_Dirs : Boolean;
+      Queue_Id       : String  := "")
    is
       Mirror         : Mirror_Path_Access;
       From_Path      : String_Access;
@@ -3560,14 +3591,33 @@ package body GPS.Kernel.Remote is
       Path_List_Item : Mirrors_List_Access;
       Machine        : Machine_Descriptor_Record;
       Need_Sync      : Boolean;
+
+      function Get_Queue_Id return String;
+      --  Get a new queue id if needed
+
+      function Get_Queue_Id return String is
+      begin
+         if Queue_Id /= "" then
+            return Queue_Id;
+         elsif not Blocking then
+            return Get_New_Queue_Id;
+         else
+            return "";
+         end if;
+      end Get_Queue_Id;
+
+      The_Queue_Id : constant String := Get_Queue_Id;
    begin
       --  Make sure that local nickname is empty string, not Local_Nickname
       if From = Local_Nickname then
-         Synchronize (Kernel, "", To, Queue_Id, Sync_Once_Dirs);
+         Synchronize
+           (Kernel, "", To, Blocking, Print_Output, Sync_Once_Dirs, Queue_Id);
          return;
 
       elsif To = Local_Nickname then
-         Synchronize (Kernel, From, "", Queue_Id, Sync_Once_Dirs);
+         Synchronize
+           (Kernel, From, "", Blocking, Print_Output, Sync_Once_Dirs,
+            Queue_Id);
          return;
       end if;
 
@@ -3635,19 +3685,20 @@ package body GPS.Kernel.Remote is
             declare
                Data : aliased Rsync_Hooks_Args :=
                  (Hooks_Data with
-                   Tool_Name_Length => Machine.Rsync_Func.all'Length,
-                   Src_Name_Length  => From'Length,
-                   Dest_Name_Length => To'Length,
-                   Queue_Id_Length  => Queue_Id'Length,
-                   Src_Path_Length  => From_Path'Length,
-                   Dest_Path_Length => To_Path'Length,
-                   Tool_Name        => Machine.Rsync_Func.all,
-                   Src_Name         => From,
-                   Dest_Name        => To,
-                   Queue_Id         => Queue_Id,
-                   Src_Path         => From_Path.all,
-                   Dest_Path        => To_Path.all,
-                   Synchronous      => Queue_Id = "");
+                  Tool_Name_Length => Machine.Rsync_Func.all'Length,
+                  Src_Name_Length  => From'Length,
+                  Dest_Name_Length => To'Length,
+                  Queue_Id_Length  => The_Queue_Id'Length,
+                  Src_Path_Length  => From_Path'Length,
+                  Dest_Path_Length => To_Path'Length,
+                  Tool_Name        => Machine.Rsync_Func.all,
+                  Src_Name         => From,
+                  Dest_Name        => To,
+                  Queue_Id         => The_Queue_Id,
+                  Src_Path         => From_Path.all,
+                  Dest_Path        => To_Path.all,
+                  Synchronous      => Blocking,
+                  Print_Output     => Print_Output);
 
             begin
                Trace (Me, "run sync hook for " & Data.Src_Path);
@@ -3687,15 +3738,19 @@ package body GPS.Kernel.Remote is
      (Kernel         : Kernel_Handle;
       From           : Server_Type;
       To             : Server_Type;
-      Queue_Id       : String;
-      Sync_Once_Dirs : Boolean := False) is
+      Blocking       : Boolean;
+      Print_Output   : Boolean;
+      Sync_Once_Dirs : Boolean;
+      Queue_Id       : String  := "") is
    begin
       Synchronize
         (Kernel         => Kernel,
          From           => Get_Nickname (From),
          To             => Get_Nickname (To),
-         Queue_Id       => Queue_Id,
-         Sync_Once_Dirs => Sync_Once_Dirs);
+         Blocking       => Blocking,
+         Print_Output   => Print_Output,
+         Sync_Once_Dirs => Sync_Once_Dirs,
+         Queue_Id       => Queue_Id);
    end Synchronize;
 
    --------------
