@@ -538,7 +538,11 @@ package body GPS.Kernel.Timeout is
       Push_State (Kernel, Processing);
 
       if not Is_Local (Server) then
-         Synchronize (Kernel, GPS_Server, Server, Q_Id);
+         Synchronize (Kernel, GPS_Server, Server,
+                      Blocking       => False,
+                      Print_Output   => False,
+                      Sync_Once_Dirs => False,
+                      Queue_Id       => Q_Id);
       end if;
 
       C := new Monitor_Command;
@@ -602,7 +606,11 @@ package body GPS.Kernel.Timeout is
       end if;
 
       if not Is_Local (Server) then
-         Synchronize (Kernel, Server, GPS_Server, Q_Id);
+         Synchronize (Kernel, Server, GPS_Server,
+                      Blocking       => False,
+                      Print_Output   => False,
+                      Sync_Once_Dirs => False,
+                      Queue_Id       => Q_Id);
       end if;
 
       Success := True;
