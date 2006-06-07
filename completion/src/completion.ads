@@ -209,6 +209,7 @@ package Completion is
    function Get_Proposal
      (This : Completion_Iterator) return Completion_Proposal'Class;
    --  Return the actual proposal for the given iterator.
+   --  ??? Should user free the returned value?
 
    procedure Free (This : in out Completion_Iterator);
    --  Free the data associated to a completion iterator.
