@@ -3170,11 +3170,25 @@ package body Src_Editor_Module is
       end if;
 
       --  Destroy graphics
-      Unref (Remove_Blank_Lines_Pixbuf);
-      Unref (Hide_Block_Pixbuf);
-      Unref (Unhide_Block_Pixbuf);
-      Unref (File_Pixbuf);
-      Unref (File_Modified_Pixbuf);
+      if Remove_Blank_Lines_Pixbuf /= null then
+         Unref (Remove_Blank_Lines_Pixbuf);
+      end if;
+
+      if Hide_Block_Pixbuf /= null then
+         Unref (Hide_Block_Pixbuf);
+      end if;
+
+      if Unhide_Block_Pixbuf /= null then
+         Unref (Unhide_Block_Pixbuf);
+      end if;
+
+      if File_Pixbuf /= null then
+         Unref (File_Pixbuf);
+      end if;
+
+      if File_Modified_Pixbuf /= null then
+         Unref (File_Modified_Pixbuf);
+      end if;
 
       Src_Editor_Module_Id := null;
    end Destroy;
