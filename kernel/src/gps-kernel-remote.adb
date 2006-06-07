@@ -50,6 +50,7 @@ with Gtk.Label;                  use Gtk.Label;
 with Gtk.List;                   use Gtk.List;
 with Gtk.List_Item;              use Gtk.List_Item;
 with Gtk.Main;                   use Gtk.Main;
+with Gtk.Paned;                  use Gtk.Paned;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
 with Gtk.Stock;                  use Gtk.Stock;
@@ -69,7 +70,6 @@ with Gtkada.Combo;               use Gtkada.Combo;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.Handlers;            use Gtkada.Handlers;
-with Gtkada.Multi_Paned;         use Gtkada.Multi_Paned;
 with Collapsing_Pane;            use Collapsing_Pane;
 
 with GPS.Intl;                   use GPS.Intl;
@@ -1449,7 +1449,7 @@ package body GPS.Kernel.Remote is
    is
       Nb_Machines : Natural;
       Tips        : Gtk_Tooltips;
-      Main_Table  : Gtkada_Multi_Paned;
+      Main_Table  : Gtk_Paned;
       Frame       : Gtk_Frame;
       Scrolled    : Gtk_Scrolled_Window;
       Model       : Gtk_Tree_Store;
@@ -1470,19 +1470,16 @@ package body GPS.Kernel.Remote is
          Get_Main_Window (Kernel),
          Modal + Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Center_On_Parent);
-      Set_Default_Size (Dialog, 700, 400);
+      Set_Default_Size (Dialog, -1, 400);
       Gtk_New (Tips);
 
       Dialog.Kernel := Kernel;
 
-      Gtk_New (Main_Table);
+      Gtk_New_Hpaned (Main_Table);
       Pack_Start (Get_Vbox (Dialog), Main_Table);
 
       Gtk_New_Vbox (VBox, Homogeneous => False);
-      Add_Child (Main_Table, VBox,
-                 Fixed_Size => True,
-                 Width      => 150,
-                 Height     => -1);
+      Pack1 (Main_Table, VBox, Resize => False, Shrink => False);
 
       Gtk_New (Frame);
       Pack_Start (VBox, Frame, Expand => True, Fill => True);
@@ -1516,8 +1513,7 @@ package body GPS.Kernel.Remote is
       --  Machine configuration
 
       Gtk_New_Vbox (VBox, Homogeneous => False);
-      Split (Main_Table, Root_Pane, VBox, Orientation_Horizontal,
-             Width => -1);
+      Pack2 (Main_Table, VBox, Resize => True, Shrink => False);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
@@ -1634,6 +1630,19 @@ package body GPS.Kernel.Remote is
       Gtk_New (Dialog.Advanced_Table,
                Rows => 4, Columns => 2, Homogeneous => False);
       Set_Expanded_Widget (Dialog.Advanced_Pane, Dialog.Advanced_Table);
+      --  ??? The following uses Gtk_Expander instead of Collapsing_Pane
+--        Gtk_New (Frame);
+--        Attach (Dialog.Right_Table, Frame,
+--                0, 2, Line_Nb, Line_Nb + 1,
+--                Fill or Expand, 0, 10, 10);
+--
+--        Gtk_New (Dialog.Advanced_Pane, -"Advanced configuration");
+--        Set_Expanded (Dialog.Advanced_Pane, False);
+--        Add (Frame, Dialog.Advanced_Pane);
+--
+--        Gtk_New (Dialog.Advanced_Table,
+--                 Rows => 4, Columns => 2, Homogeneous => False);
+--        Add (Dialog.Advanced_Pane, Dialog.Advanced_Table);
 
       Gtk_New (Label, -"User name:");
       Set_Alignment (Label, 0.0, 0.5);
