@@ -168,7 +168,9 @@ package body Completion_Module is
    -- Completion_Command --
    ------------------------
 
-   type Completion_Command is new Interactive_Command with record
+   type Completion_Command (Smart_Completion : Boolean) is
+     new Interactive_Command
+   with record
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
    function Execute
@@ -524,11 +526,7 @@ package body Completion_Module is
          Buffer := Source_Buffer (Get_Buffer (View));
       end if;
 
-      if Active (Me_Adv) then
-         --  For now, only register the advanced completion mechanism when the
-         --  trace is active. This completion mechanism is currently being
-         --  developped. See ??? comment below.
-
+      if Command.Smart_Completion then
          if View /= null
            and then not In_Completion (View)
          then
@@ -783,6 +781,7 @@ package body Completion_Module is
    is
       Edit               : constant String := '/' & (-"Edit") & '/';
       Command            : Interactive_Command_Access;
+      Command_Smart      : Interactive_Command_Access;
       Src_Action_Context : constant Action_Filter :=
                              new Src_Editor_Action_Context;
 
@@ -793,7 +792,7 @@ package body Completion_Module is
          Kernel      => Kernel,
          Module_Name => "Completion");
 
-      Command := new Completion_Command;
+      Command := new Completion_Command (Smart_Completion => False);
       Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Complete identifier", Command,
@@ -809,6 +808,24 @@ package body Completion_Module is
                      Accel_Mods => Control_Mask,
                      Callback   => null,
                      Command    => Command,
+                     Filter     => Src_Action_Context);
+
+      Command_Smart := new Completion_Command (Smart_Completion => True);
+      Completion_Command (Command_Smart.all).Kernel := Kernel_Handle (Kernel);
+      Register_Action
+        (Kernel, "Complete identifier (advanced)", Command_Smart,
+         -("Complete current identifier based on advanced entities database"),
+         Src_Action_Context);
+      Bind_Default_Key
+        (Kernel      => Kernel,
+         Action      => "Complete Identifier (advanced)",
+         Default_Key => "alt-c");
+      Register_Menu (Kernel, Edit, -"Smart Completion",
+                     Ref_Item   => -"Complete _Identifier",
+                     Accel_Key  => GDK_C,
+                     Accel_Mods => Mod1_Mask,
+                     Callback   => null,
+                     Command    => Command_Smart,
                      Filter     => Src_Action_Context);
    end Register_Module;
 
