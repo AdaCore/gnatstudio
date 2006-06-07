@@ -5,13 +5,25 @@ Known Problems fixed in GPS 4.0.0
               invoked, if XXX is of a predefined type GPS opens an empty file
               named either '<case_insensitive_predefined>' or
               '<case_sensitive_predefined>'.
-  Workaround: Simply ignore this file and close it.
+  Workaround: Simply ignore this file and close it
+
+- F515-015 GPS cannot start on untrusted X server configuration
+  Problem:    When using a X server configured in untrusted mode
+              (e.g. when using ssh -X), GPS will fail to start with an error
+              message of the form:
+
+              The program 'gps_exe' received an X Window System error.
+              This probably reflects a bug in the program.
+              The error was 'BadWindow (invalid Window parameter)'.
+
+  Workaround: Configure your X server to use the trusted mode (e.g. use
+              ssh -Y instead of ssh -X).
 
 - F512-005 Unexpected crashes when closing editors from Comparison or shell
   Problem:    When closing editors created with Visual Comparison, or when
               using GPS shell commands to close editors, in some particular
               cases GPS might crash.
-  Workaround: No known workaround.
+  Workaround: No known workaround
 
 - F505-004 Contextual menu items in Task Manager not working the first time
   Problem:    When the Task Manager doesn't have the focus, the contextual
@@ -23,7 +35,7 @@ Known Problems fixed in GPS 4.0.0
   Problem:    No error is reported when the object directory of a project is
               read-only and you are trying to generate the C/C++ xref info.
   Workaround: GPS really expects all object directories to be writable, since
-              this is where it puts a lot of temporary files
+              this is where it puts a lot of temporary files.
 
 - F502-040 Generating C/C++ cross-references leaves zombie processes
   Problem:    If you update the C/C++ cross-references, it happens that some
