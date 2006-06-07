@@ -728,7 +728,8 @@ package Entities is
 
    procedure Destroy (Handler : in out LI_Handler_Record);
    procedure Destroy (Handler : in out LI_Handler);
-   --  Free the memory occupied by Handler. By default, this does nothing
+   --  Free the memory occupied by Handler. This should be called by any
+   --  child implementer.
 
    function Get_Source_Info
      (Handler               : access LI_Handler_Record;
