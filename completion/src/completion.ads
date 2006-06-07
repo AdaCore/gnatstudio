@@ -256,23 +256,18 @@ private
 
    type Completion_List is record
       List                : Completion_List_Pckg.Virtual_List;
-      Is_Partial          : Boolean;
       Searched_Identifier : String_Access;
    end record;
 
    type Completion_Iterator is record
       It                  : Completion_List_Pckg.Virtual_List_Iterator;
-      Is_Partial          : Boolean;
-      Searched_Identifier : String_Access;
    end record;
 
    Null_Completion_List : constant Completion_List :=
-     (Completion_List_Pckg.Null_Virtual_List, False, null);
+     (Completion_List_Pckg.Null_Virtual_List, null);
 
    Null_Completion_Iterator : constant Completion_Iterator :=
-     (It                  => Completion_List_Pckg.Null_Virtual_List_Iterator,
-      Is_Partial          => False,
-      Searched_Identifier => null);
+     (It => Completion_List_Pckg.Null_Virtual_List_Iterator);
 
    --------------------------------
    -- Simple_Completion_Proposal --
