@@ -1795,8 +1795,8 @@ package body Projects is
    -- Current --
    -------------
 
-   function Current (Iterator : Imported_Project_Iterator)
-      return Project_Type
+   function Current
+     (Iterator : Imported_Project_Iterator) return Project_Type
    is
       P : Project_Type;
    begin
