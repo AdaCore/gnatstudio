@@ -29,10 +29,14 @@ pragma Warnings (On);
 with Glib;               use Glib;
 with Glib.Xml_Int;       use Glib.Xml_Int;
 with Gtk.Box;            use Gtk.Box;
+with Gtk.Button;         use Gtk.Button;
 with Gtk.Dialog;         use Gtk.Dialog;
 with Gtk.Label;          use Gtk.Label;
-with Gtk.Progress_Bar;   use Gtk.Progress_Bar;
 with Gtk.Main;
+with Gtk.Progress_Bar;   use Gtk.Progress_Bar;
+with Gtk.Stock;          use Gtk.Stock;
+with Gtk.Widget;         use Gtk.Widget;
+with Gtkada.Handlers;    use Gtkada.Handlers;
 
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
@@ -71,6 +75,8 @@ package body Remote_Sync_Module is
    type Rsync_Dialog_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
       Progress      : Gtk.Progress_Bar.Gtk_Progress_Bar;
       File_Progress : Gtk.Progress_Bar.Gtk_Progress_Bar;
+      Abort_Button  : Gtk_Button;
+      Aborted       : Boolean;
    end record;
    type Rsync_Dialog is access all Rsync_Dialog_Record'Class;
 
@@ -100,12 +106,13 @@ package body Remote_Sync_Module is
       Data   : access Hooks_Data'Class) return Boolean;
    --  run RSync hook
 
-   procedure Parse_Rsync_Output
-     (Data : Process_Data; Output : String);
+   procedure On_Abort_Clicked (Dialog : access Gtk_Widget_Record'Class);
+   --  Abort button pressed
+
+   procedure Parse_Rsync_Output (Data : Process_Data; Output : String);
    --  Called whenever new output from rsync is available
 
-   procedure Rsync_Terminated
-     (Data : Process_Data; Status : Integer);
+   procedure Rsync_Terminated (Data : Process_Data; Status : Integer);
    --  Called when rsync exits.
 
    ---------------------
@@ -174,6 +181,9 @@ package body Remote_Sync_Module is
       Pack_Start (Get_Vbox (Dialog), Dialog.Progress);
       Gtk_New (Dialog.File_Progress);
       Pack_Start (Get_Vbox (Dialog), Dialog.File_Progress);
+      Gtk_New_From_Stock (Dialog.Abort_Button, Stock_Cancel);
+      Add_Action_Widget (Dialog, Dialog.Abort_Button, Gtk_Response_Cancel);
+      Dialog.Aborted := False;
       Show_All (Dialog);
    end Gtk_New;
 
@@ -185,15 +195,16 @@ package body Remote_Sync_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean
    is
-      Rsync_Data    : Rsync_Hooks_Args renames Rsync_Hooks_Args (Data.all);
-      Src_Path      : String_Access;
-      Dest_Path     : String_Access;
-      Src_FS        : Filesystem_Access;
-      Dest_FS       : Filesystem_Access;
-      Machine       : Machine_Descriptor;
-      Success       : Boolean;
-      Cb_Data       : Rsync_Callback_Data;
-      Ret_Data      : aliased Return_Data;
+      Rsync_Data        : Rsync_Hooks_Args renames Rsync_Hooks_Args (Data.all);
+      Src_Path          : String_Access;
+      Dest_Path         : String_Access;
+      Src_FS            : Filesystem_Access;
+      Dest_FS           : Filesystem_Access;
+      Machine           : Machine_Descriptor;
+      Success           : Boolean;
+      Cb_Data           : Rsync_Callback_Data;
+      Ret_Data          : aliased Return_Data;
+      Real_Print_Output : Boolean;
 
       function  Build_Arg return String_List;
       --  Build rsync arguments
@@ -313,7 +324,17 @@ package body Remote_Sync_Module is
       if Rsync_Data.Synchronous then
          Gtk_New (Cb_Data.Dialog, Kernel,
                   Rsync_Data.Src_Path, Rsync_Data.Dest_Path);
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Cb_Data.Dialog.Abort_Button, "clicked", On_Abort_Clicked'Access,
+            Cb_Data.Dialog);
          Gtk.Main.Grab_Add (Cb_Data.Dialog);
+      end if;
+
+      Real_Print_Output :=
+        not Rsync_Data.Synchronous and then Rsync_Data.Print_Output;
+
+      if Real_Print_Output then
+         Raise_Console (Kernel);
       end if;
 
       --  Do not set Line_By_Line as this will prevent the password prompt
@@ -327,8 +348,8 @@ package body Remote_Sync_Module is
          Command       => "rsync",
          Arguments     => Build_Arg,
          Console       => Get_Console (Kernel),
-         Show_Command  => Rsync_Data.Print_Output,
-         Show_Output   => Rsync_Data.Print_Output,
+         Show_Command  => True,
+         Show_Output   => Real_Print_Output,
          Success       => Success,
          Line_By_Line  => False,
          Callback      => Parse_Rsync_Output'Access,
@@ -346,6 +367,16 @@ package body Remote_Sync_Module is
       return Ret_Data.Status = 0 and then Success;
    end On_Rsync_Hook;
 
+   ----------------------
+   -- On_Abort_Clicked --
+   ----------------------
+
+   procedure On_Abort_Clicked
+     (Dialog : access Gtk_Widget_Record'Class) is
+   begin
+      Rsync_Dialog (Dialog).Aborted := True;
+   end On_Abort_Clicked;
+
    ------------------------
    -- Parse_Rsync_Output --
    ------------------------
@@ -353,21 +384,26 @@ package body Remote_Sync_Module is
    procedure Parse_Rsync_Output
      (Data : Process_Data; Output : String)
    is
-      Progress_Regexp : constant Pattern_Matcher := Compile
+      Progress_Regexp      : constant Pattern_Matcher := Compile
         ("^.*\(([0-9]*), [0-9.%]* of ([0-9]*)", Multiple_Lines);
-      File_Regexp     : constant Pattern_Matcher := Compile
+      File_Regexp          : constant Pattern_Matcher := Compile
         ("^([^ ][^\n\r]*[^\n\r/])$", Multiple_Lines or Single_Line);
       File_Progress_Regexp : constant Pattern_Matcher := Compile
         ("^ *[0-9]* *([0-9]*)%", Multiple_Lines);
-      Matched         : Match_Array (0 .. 2);
-      File_Nb         : Natural;
-      Total_Files     : Natural;
-      Force           : Boolean;
-      Cb_Data         : Rsync_Callback_Data renames
+      Files_Considered_Regexp : constant Pattern_Matcher := Compile
+        ("^ *[0-9]+ *files[.]*", Multiple_Lines or Single_Line);
+      Matched              : Match_Array (0 .. 2);
+      Last_Matched         : Match_Array (0 .. 2);
+      File_Nb              : Natural;
+      Total_Files          : Natural;
+      Force                : Boolean;
+      Cb_Data              : Rsync_Callback_Data renames
         Rsync_Callback_Data (Data.Callback_Data.all);
-      Dead            : Boolean;
-      Old_Buff        : String_Access;
-      LF_Index        : Integer;
+      Dead                 : Boolean;
+      Old_Buff             : String_Access;
+      LF_Index             : Integer;
+      Last                 : Natural;
+
       pragma Unreferenced (Dead);
 
       function Cat (S1 : String_Access; S2 : String) return String;
@@ -427,7 +463,10 @@ package body Remote_Sync_Module is
          Free (Old_Buff);
       end if;
 
-      if not Data.Process_Died then
+      if Cb_Data.Dialog.Aborted then
+         Interrupt (Data.Descriptor.all);
+
+      elsif not Data.Process_Died then
 
          declare
             Stripped_Buffer : constant String :=
@@ -496,18 +535,32 @@ package body Remote_Sync_Module is
             end if;
 
             --  Retrieve progression.
-            Match (Progress_Regexp,
-                   Stripped_Buffer,
-                   Matched);
+            Last_Matched (0) := No_Match;
+            Last := Stripped_Buffer'First;
+
+            loop
+               Match (Progress_Regexp,
+                      Stripped_Buffer (Last .. Stripped_Buffer'Last),
+                      Matched);
+
+               if Matched (0) = No_Match then
+                  --  Set back last match
+                  Matched := Last_Matched;
+                  exit;
+               end if;
+
+               Last := Matched (0).Last + 1;
+               Last_Matched := Matched;
+            end loop;
 
             if Matched (0) /= No_Match then
+               Cb_Data.Dialog_Running := True;
                File_Nb := Natural'Value
                  (Stripped_Buffer (Matched (1).First .. Matched (1).Last));
                Total_Files := Natural'Value
                  (Stripped_Buffer (Matched (2).First .. Matched (2).Last));
 
                if Cb_Data.Synchronous then
-                  Cb_Data.Dialog_Running := True;
                   Set_Fraction (Cb_Data.Dialog.Progress,
                                 Gdouble (File_Nb) / Gdouble (Total_Files));
                   Set_Text (Cb_Data.Dialog.Progress,
@@ -523,14 +576,55 @@ package body Remote_Sync_Module is
             end if;
 
             if Cb_Data.Synchronous and then not Cb_Data.Dialog_Running then
+               --  Get number of files to consider
                Pulse (Cb_Data.Dialog.Progress);
+               Last := Stripped_Buffer'Last - 1;
+
+               Last := Stripped_Buffer'First;
+
+               loop
+                  Match (Files_Considered_Regexp,
+                         Stripped_Buffer (Last .. Stripped_Buffer'Last),
+                         Matched);
+
+                  if Matched (0) = No_Match then
+                     --  Set back last match
+                     Matched := Last_Matched;
+                     exit;
+                  end if;
+
+                  Last := Matched (0).Last + 1;
+                  Last_Matched := Matched;
+               end loop;
+
+               if Matched (0) /= No_Match then
+                  Set_Fraction (Cb_Data.Dialog.Progress, 0.0);
+                  Set_Text
+                    (Cb_Data.Dialog.File_Progress,
+                     -"Files to consider: " &
+                     Stripped_Buffer (Matched (0).First .. Matched (0).Last));
+               end if;
 
             elsif Cb_Data.Synchronous and then Cb_Data.Dialog_Running then
 
                --  Get file transfered
-               Match (File_Regexp,
-                      Stripped_Buffer,
-                      Matched);
+               Last_Matched (0) := No_Match;
+               Last := Stripped_Buffer'First;
+
+               loop
+                  Match (File_Regexp,
+                         Stripped_Buffer (Last .. Stripped_Buffer'Last),
+                         Matched);
+
+                  if Matched (0) = No_Match then
+                     --  Set back last match
+                     Matched := Last_Matched;
+                     exit;
+                  end if;
+
+                  Last := Matched (0).Last;
+                  Last_Matched := Matched;
+               end loop;
 
                if Matched (0) /= No_Match then
                   Set_Text (Cb_Data.Dialog.File_Progress,
