@@ -61,6 +61,10 @@ package Task_Manager is
    --  Interrupt the Queue that contains Command.
    --  Do nothing if there is no such queue.
 
+   function Head
+     (Manager : Task_Manager_Access; Id : String) return Command_Access;
+   --  Return the Head command from the Queue of the given id, null if none.
+
    procedure Interrupt_Latest_Task (Manager : Task_Manager_Access);
    --  Interrupt the task that was started last
 

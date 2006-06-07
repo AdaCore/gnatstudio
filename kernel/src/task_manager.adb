@@ -509,6 +509,28 @@ package body Task_Manager is
       end loop;
    end Interrupt_Queue;
 
+   ----------
+   -- Head --
+   ----------
+
+   function Head
+     (Manager : Task_Manager_Access; Id : String) return Command_Access
+   is
+      use Command_Queues;
+   begin
+      if Manager.Queues = null then
+         return null;
+      end if;
+
+      for J in Manager.Queues'Range loop
+         if Manager.Queues (J).Id.all = Id then
+            return Head (Manager.Queues (J).Queue);
+         end if;
+      end loop;
+
+      return null;
+   end Head;
+
    -----------------------
    -- Set_Progress_Area --
    -----------------------
