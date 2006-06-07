@@ -20,6 +20,8 @@
 
 with Ada.Exceptions;   use Ada.Exceptions;
 
+with Glib.Main;        use Glib.Main;
+
 with Gtk.Progress_Bar; use Gtk.Progress_Bar;
 with Gtk.Main;         use Gtk.Main;
 with Traces;           use Traces;
@@ -31,7 +33,8 @@ package body Task_Manager is
    Timeout : constant := 100;
 
    package Task_Manager_Idle is new Gtk.Main.Idle (Task_Manager_Access);
-   package Task_Manager_Timeout is new Gtk.Main.Timeout (Task_Manager_Access);
+   package Task_Manager_Timeout is new Glib.Main.Generic_Sources
+     (Task_Manager_Access);
 
    function Get_Or_Create_Task_Queue
      (Manager    : Task_Manager_Access;
@@ -346,15 +349,16 @@ package body Task_Manager is
       Active  : Boolean)
    is
       Idle_Handler    : Idle_Handler_Id;
-      Timeout_Handler : Timeout_Handler_Id;
+      Timeout_Handler : G_Source_Id;
       Result          : Command_Return_Type;
       pragma Unreferenced (Idle_Handler, Timeout_Handler, Result);
    begin
       if not Manager.Running_Passive then
          Manager.Running_Passive := True;
 
-         Timeout_Handler := Task_Manager_Timeout.Add
-           (Timeout, Passive_Incremental'Access, Manager);
+         Timeout_Handler := Task_Manager_Timeout.Timeout_Add
+           (Timeout, Passive_Incremental'Access, Manager,
+            Priority => Glib.Main.Priority_Default_Idle);
 
          Result := Execute (Manager.Push_Command);
       end if;
