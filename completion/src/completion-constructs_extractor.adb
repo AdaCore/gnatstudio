@@ -87,10 +87,42 @@ package body Completion.Constructs_Extractor is
       Parent_Sloc_Start, Parent_Sloc_End : Source_Location;
       Parent_Found                       : Boolean;
 
+      procedure Add_To_List
+        (List      : in out Extensive_List_Pckg.List;
+         Tree_Node : Construct_Tree_Iterator;
+         Is_All    : Boolean := False;
+         Name      : String := "");
+
       procedure Get_Composition_Of_Type
         (Type_Iterator : Construct_Tree_Iterator;
          Result        : in out Completion_List;
          Recursive     : Boolean := True);
+
+      procedure Add_To_List
+        (List      : in out Extensive_List_Pckg.List;
+         Tree_Node : Construct_Tree_Iterator;
+         Is_All    : Boolean := False;
+         Name      : String := "") is
+      begin
+         if (Name = ""
+             and then Match
+               (Identifier,
+                Get_Construct (Tree_Node).Name.all,
+                Is_Partial))
+           or else Match
+             (Identifier,
+              Name,
+              Is_Partial)
+         then
+            Append
+              (List,
+               Construct_Completion_Proposal'
+                 (Show_Identifiers,
+                  Get_Resolver (Proposal),
+                  Tree_Node,
+                  Is_All));
+         end if;
+      end Add_To_List;
 
       -----------------------------
       -- Get_Composition_Of_Type --
@@ -138,14 +170,8 @@ package body Completion.Constructs_Extractor is
          while
            Get_Parent_Scope (Tree.all, Child_Iterator) = Type_Iterator
          loop
-            Append
-              (List,
-               Construct_Completion_Proposal'
-                 (Show_Identifiers,
-                  Get_Resolver (Proposal),
-                  Child_Iterator,
-                  False));
-               Child_Iterator := Next (Tree.all, Child_Iterator, Jump_Over);
+            Add_To_List (List, Child_Iterator, False);
+            Child_Iterator := Next (Tree.all, Child_Iterator, Jump_Over);
          end loop;
 
          if Is_Access
@@ -153,13 +179,7 @@ package body Completion.Constructs_Extractor is
             Get_Construct (Type_Iterator).all)
            and then not Proposal.Is_All
          then
-            Append
-              (List,
-               Construct_Completion_Proposal'
-                 (Show_Identifiers,
-                  Get_Resolver (Proposal),
-                  Proposal.Tree_Node,
-                  True));
+            Add_To_List (List, Proposal.Tree_Node, True, "all");
          end if;
 
          Append (Result.List, To_Extensive_List (List));
@@ -267,13 +287,7 @@ package body Completion.Constructs_Extractor is
                       Get_Construct (Child_Iterator).Visibility
                       = Visibility_Public
                   then
-                     Append
-                       (List,
-                        Construct_Completion_Proposal'
-                          (Show_Identifiers,
-                           Get_Resolver (Proposal),
-                           Child_Iterator,
-                           False));
+                     Add_To_List (List, Child_Iterator, False);
                   end if;
 
                   Child_Iterator := Next
@@ -290,13 +304,7 @@ package body Completion.Constructs_Extractor is
                   while
                     Get_Parent_Scope (Tree.all, Child_Iterator) = Body_It
                   loop
-                     Append
-                       (List,
-                        Construct_Completion_Proposal'
-                          (Show_Identifiers,
-                           Get_Resolver (Proposal),
-                           Child_Iterator,
-                           False));
+                     Add_To_List (List, Child_Iterator, False);
 
                      Child_Iterator := Next
                        (Tree.all, Child_Iterator, Jump_Over);
@@ -354,7 +362,6 @@ package body Completion.Constructs_Extractor is
       List         : Extensive_List_Pckg.List;
    begin
       Result.Searched_Identifier := new String'(Identifier);
-      Result.Is_Partial := Is_Partial;
 
       if (Filter and All_Visible_Entities) /= 0 then
          for J in Result_Array'Range loop
