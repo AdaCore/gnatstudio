@@ -595,9 +595,10 @@ package body Completion_Module is
                           Get_Completion (Get_Proposal (Iter));
                      begin
                         Add_Contents
-                          (Win, To_Showable_String (Get_Proposal (Iter)), T,
-                           Category_Name
-                             (Get_Category (Get_Proposal (Iter))));
+                          (Win,
+                           To_Showable_String (Get_Proposal (Iter)),
+                           T,
+                           Get_Documentation (Get_Proposal (Iter)));
                      end;
 
                      if To_Replace = 0 then
@@ -819,11 +820,11 @@ package body Completion_Module is
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Complete Identifier (advanced)",
-         Default_Key => "alt-c");
+         Default_Key => "alt-space");
       Register_Menu (Kernel, Edit, -"Smart Completion",
                      Ref_Item   => -"Complete _Identifier",
-                     Accel_Key  => GDK_C,
-                     Accel_Mods => Mod1_Mask,
+                     Accel_Key  => GDK_space,
+                     Accel_Mods => Control_Mask,
                      Callback   => null,
                      Command    => Command_Smart,
                      Filter     => Src_Action_Context);
