@@ -201,9 +201,7 @@ package body Completion is
    function First (This : Completion_List) return Completion_Iterator is
    begin
       return Completion_Iterator'
-        (It                  => First (This.List),
-         Is_Partial          => This.Is_Partial,
-         Searched_Identifier => This.Searched_Identifier);
+        (It => First (This.List));
    end First;
 
    ----------
@@ -213,17 +211,6 @@ package body Completion is
    procedure Next (This : in out Completion_Iterator) is
    begin
       Next (This.It);
-
-      while not At_End (This.It)
-        and then
-          (This.Searched_Identifier /= null
-           and then not
-             Match (This.Searched_Identifier.all,
-                    Get_Id (Get_Proposal (This)),
-                    This.Is_Partial))
-      loop
-         Next (This.It);
-      end loop;
    end Next;
 
    ------------------
