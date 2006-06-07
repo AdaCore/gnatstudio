@@ -91,12 +91,8 @@ package body Completion.Ada is
                   Next (Token) = Token_List.Null_Node,
                   Tmp);
 
-               --  ??? See how these two could be handled in a more smooth way.
-               --  We duplicate information with the call above.
                Tmp.Searched_Identifier := new String'
                  (Get_Name (Get_Buffer (Manager).all, Data (Token)));
-               Tmp.Is_Partial := Next (Token)
-                 = Token_List.Null_Node;
             end if;
 
             Tmp_It := First (Tmp);
