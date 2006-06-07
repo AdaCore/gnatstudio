@@ -236,6 +236,18 @@ package body Completion.Expression_Parser is
 
             when '.' =>
                Push (Token);
+
+               if Length (Result) > 0
+                 and then Head (Result).Tok_Type = Tok_Dot
+               then
+                  --  In this case, we have a range construct, like A .. B.
+                  --  It's the end of the expression.
+
+                  Pop;
+
+                  exit;
+               end if;
+
                Token.Tok_Type := Tok_Dot;
                Push (Token);
 
