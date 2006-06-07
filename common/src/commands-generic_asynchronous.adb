@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2005                      --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -86,5 +86,27 @@ package body Commands.Generic_Asynchronous is
          return Command.Description.all;
       end if;
    end Name;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Command : access Generic_Asynchronous_Command;
+      Data    : Data_Type) is
+   begin
+      Unchecked_Free (Command.Data);
+      Command.Data := new Data_Type'(Data);
+   end Set_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Command : access Generic_Asynchronous_Command)
+      return Data_Type is
+   begin
+      return Command.Data.all;
+   end Get_Data;
 
 end Commands.Generic_Asynchronous;

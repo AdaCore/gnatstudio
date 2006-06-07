@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2005                      --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -59,6 +59,15 @@ package Commands.Generic_Asynchronous is
 
    function Name (Command : access Generic_Asynchronous_Command) return String;
    --  Return the name of the command
+
+   procedure Set_Data
+     (Command : access Generic_Asynchronous_Command;
+      Data : Data_Type);
+   --  Change the data associated to a command
+
+   function Get_Data (Command : access Generic_Asynchronous_Command)
+      return Data_Type;
+   --  Return the data associated to this command.
 
 private
 
