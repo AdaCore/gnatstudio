@@ -2142,9 +2142,13 @@ package body Entities.Queries is
    ------------------------
 
    function Get_Parent_Package
-     (Pkg : Entity_Information) return Entity_Information is
+     (Pkg : Entity_Information; Force_Load_Xrefs : Boolean := True)
+      return Entity_Information is
    begin
-      Update_Xref (Pkg.Declaration.File);
+      if Force_Load_Xrefs then
+         Update_Xref (Pkg.Declaration.File);
+      end if;
+
       for R in Entity_Reference_Arrays.First .. Last (Pkg.References) loop
          if Pkg.References.Table (R).Kind = Parent_Package then
             return Get_Entity_From_Ref (Pkg, Pkg.References.Table (R));

@@ -403,7 +403,8 @@ package Entities.Queries is
    --  from. In Ada, this includes the parent type of a type or subtype
 
    function Get_Parent_Package
-     (Pkg : Entity_Information) return Entity_Information;
+     (Pkg : Entity_Information; Force_Load_Xrefs : Boolean := True)
+      return Entity_Information;
    --  Return the parent package for the package Pkg.
    --  This is not intended to be use for nested packages.
 
