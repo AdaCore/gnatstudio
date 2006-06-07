@@ -267,7 +267,6 @@ package body Completion.Entities_Extractor is
                Next_Filter   => Filter,
                Parent_Entity => null));
 
-         Result.Is_Partial := Is_Partial;
          Result.Searched_Identifier := new String'(Identifier);
       end if;
    end Get_Possibilities;
@@ -365,7 +364,13 @@ package body Completion.Entities_Extractor is
       --  In any case, we always return global symbols. Non global symbols are
       --  hidden by this engine.
 
-      if not Get_Attributes (Entity) (Global) then
+      if not Get_Attributes (Entity) (Global)
+        or else not Match (It.Name.all, Get_Name (Entity).all, It.Is_Partial)
+      --  ??? It would be good if the underlying iterator was able to make
+      --  the difference between full names and partial names. This way, the
+      --  above test would not be needed, and we would simply not iterate over
+      --  unmatching names.
+      then
          return False;
       end if;
 
@@ -377,7 +382,7 @@ package body Completion.Entities_Extractor is
          return Get_Kind (Entity).Kind = Package_Kind
            and then
              (It.Parent_Entity = null
-              or else It.Parent_Entity = Get_Parent_Package (Entity)
+              or else It.Parent_Entity = Get_Parent_Package (Entity, False)
               or else It.Parent_Entity = Get_Caller
                 (Declaration_As_Reference (Entity)));
 
@@ -461,7 +466,6 @@ package body Completion.Entities_Extractor is
 
    procedure Next (It : in out Calls_Iterator_Wrapper) is
    begin
-
       Next (It.It);
 
       while not Is_Valid (It) loop
@@ -509,17 +513,14 @@ package body Completion.Entities_Extractor is
 
    function Is_Valid (It : Calls_Iterator_Wrapper) return Boolean is
       It_Reference : Entity_Reference;
-      Scope_Reference : Entity_Reference;
    begin
       if At_End (It) then
          return True;
       end if;
 
       It_Reference := Declaration_As_Reference (Get (It.It));
-      Scope_Reference := Declaration_As_Reference (It.Scope);
 
-      return Get_Location (It_Reference).File
-        = Get_Location (Scope_Reference).File
+      return Get_Caller (It_Reference) = It.Scope
         and then ((It.Filter and All_Visible_Packages) /= 0
                   or else Get_Kind (Get (It.It)).Kind /= Package_Kind)
         and then Match (It.Name.all,
@@ -602,7 +603,7 @@ package body Completion.Entities_Extractor is
 
       if It.Unit = null
         or else It.Parent = null
-        or else Get_Parent_Package (It.Unit) /= It.Parent
+        or else Get_Parent_Package (It.Unit, False) /= It.Parent
       then
          Next (It);
       end if;
@@ -632,7 +633,7 @@ package body Completion.Entities_Extractor is
         and then
           (It.Unit = null
            or else It.Parent = null
-           or else Get_Parent_Package (It.Unit) /= It.Parent)
+           or else Get_Parent_Package (It.Unit, False) /= It.Parent)
       loop
          It.It := It.It + 1;
          Set_Unit (It);
