@@ -1884,9 +1884,14 @@ package body Entities is
    -------------
 
    procedure Destroy (Handler : in out LI_Handler_Record) is
-      pragma Unreferenced (Handler);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Entities_Search_Tries.Trie_Tree,
+         Entities_Search_Tries.Trie_Tree_Access);
    begin
-      null;
+      if Handler.Name_Index /= null then
+         Clear (Handler.Name_Index.all);
+         Unchecked_Free (Handler.Name_Index);
+      end if;
    end Destroy;
 
    -------------
