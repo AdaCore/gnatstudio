@@ -31,7 +31,6 @@ with Gtk.Box;                use Gtk.Box;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Frame;              use Gtk.Frame;
 with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
@@ -52,6 +51,8 @@ package body Completion_Window is
 
    Markup_Column : constant := 0;
    Index_Column  : constant := 1;
+
+   Minimal_Items_To_Show : constant := 50;
 
    Max_Window_Width : constant := 300;
    --  Maximum width of the window, in pixels.
@@ -90,6 +91,11 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues);
    --  Callback after a text insertion.
+
+   procedure Mark_Set_Handler
+     (Window : access Completion_Window_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback after a Mark set on the buffer.
 
    procedure Delete_Text_Handler
      (Window : access Completion_Window_Record'Class;
@@ -188,6 +194,15 @@ package body Completion_Window is
       Info  : Information_Record;
       Iter  : Gtk_Tree_Iter;
    begin
+      if At_End (Window.Iter) then
+         return;
+      end if;
+
+      if Window.More_Iter /= Null_Iter then
+         Remove (Window.Model, Window.More_Iter);
+         Window.More_Iter := Null_Iter;
+      end if;
+
       while not At_End (Window.Iter) loop
          Info :=
            (new String'(To_Showable_String (Get_Proposal (Window.Iter))),
@@ -226,16 +241,18 @@ package body Completion_Window is
             Set (Window.Model, Iter, Index_Column, Gint (Window.Index - 1));
             --  ??? End of code duplication
 
-            if Added = 0 then
-               Select_Iter (Get_Selection (Window.View), Iter);
-            end if;
-
             Added := Added + 1;
          end if;
 
-         exit when Added = Number;
          Next (Window.Iter);
+         exit when Added = Number;
       end loop;
+
+      if not At_End (Window.Iter) then
+         Append (Window.Model, Window.More_Iter);
+         Set (Window.Model, Window.More_Iter, Markup_Column,
+              "<span color=""grey""><i> (more...) </i></span>");
+      end if;
    end Expand_Selection;
 
    ---------------------
@@ -251,6 +268,8 @@ package body Completion_Window is
 
       Selection : Gtk_Tree_Selection;
       Model     : Gtk_Tree_Model;
+
+      Appended  : Natural := 0;
 
       Previously_Selected : Natural := 0;
 
@@ -280,6 +299,7 @@ package body Completion_Window is
       --  Clear the model
 
       Clear (Window.Model);
+      Window.More_Iter := Null_Iter;
 
       --  Browse through the completion possibilities and filter out the
       --  lines that don't match.
@@ -294,6 +314,7 @@ package body Completion_Window is
                  .. Window.Info (J).Text'First - 1 + UTF8'Length), UTF8)
          then
             Append (Window.Model, Curr);
+            Appended := Appended + 1;
 
             Set (Window.Model, Curr, Markup_Column,
                  Window.Info (J).Markup.all);
@@ -304,6 +325,11 @@ package body Completion_Window is
             end if;
          end if;
       end loop;
+
+      --  Expand the selection to show more items, if needed.
+      if Appended < Minimal_Items_To_Show then
+         Expand_Selection (Window, UTF8, Minimal_Items_To_Show - Appended);
+      end if;
 
       --  Re-select the item previously selected, or, if there was none,
       --  select the first iter
@@ -322,6 +348,31 @@ package body Completion_Window is
          end if;
       end if;
    end Adjust_Selected;
+
+   ----------------------
+   -- Mark_Set_Handler --
+   ----------------------
+
+   procedure Mark_Set_Handler
+     (Window : access Completion_Window_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Mark : constant Gtk_Text_Mark :=
+        Get_Text_Mark (Glib.Values.Nth (Params, 2));
+      Cursor : Gtk_Text_Iter;
+   begin
+      if Get_Name (Mark) = "insert" then
+         Get_Iter_At_Mark (Window.Buffer, Cursor, Mark);
+
+         if Window.Initial_Line  /= Get_Line (Cursor) then
+            Delete (Window);
+         end if;
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Mark_Set_Handler;
 
    -------------------------
    -- Insert_Text_Handler --
@@ -420,6 +471,16 @@ package body Completion_Window is
 
       if Iter = Null_Iter then
          Hide_All (Window.Notes_Window);
+
+      elsif Iter = Window.More_Iter then
+         Path := Get_Path (Window.Model, Iter);
+
+         if Prev (Path) then
+            Iter := Get_Iter (Window.Model, Path);
+            Expand_Selection (Window, "", Minimal_Items_To_Show);
+            Select_Iter (Sel, Iter);
+         end if;
+
       else
          Path := Get_Path (Model, Iter);
          Scroll_To_Cell (Window.View, Path, null, False, 0.1, 0.1);
@@ -486,6 +547,11 @@ package body Completion_Window is
    begin
       --  Compute the common prefix
       Iter := Get_Iter_First (Window.Model);
+
+      if Iter = Null_Iter then
+         return False;
+      end if;
+
       J := Natural (Get_Int (Window.Model, Iter, Index_Column));
 
       Next (Window.Model, Iter);
@@ -495,7 +561,9 @@ package body Completion_Window is
          Last   : Natural := Prefix'Last;
          First  : constant Natural := Prefix'First;
       begin
-         while Iter /= Null_Iter loop
+         while Iter /= Null_Iter
+           and then Iter /= Window.More_Iter
+         loop
             J := Natural (Get_Int (Window.Model, Iter, Index_Column));
 
             for K in Window.Info (J).Text'First .. Natural'Min
@@ -611,14 +679,10 @@ package body Completion_Window is
 
             if Prev (Path) then
                Iter := Get_Iter (Window.Model, Path);
-            else
-               Iter := Nth_Child
-                 (Window.Model, Null_Iter, N_Children (Window.Model) - 1);
+               Select_Iter (Sel, Iter);
             end if;
 
             Path_Free (Path);
-
-            Select_Iter (Sel, Iter);
             return True;
 
          when others =>
@@ -762,6 +826,7 @@ package body Completion_Window is
 
       Cursor                  : Gtk_Text_Iter;
       Max_Width, Notes_Window_Width, Max_Height : Gint;
+      Tree_Iter               : Gtk_Tree_Iter;
    begin
       Window.Text := View;
       Window.Buffer := Buffer;
@@ -769,6 +834,7 @@ package body Completion_Window is
 
       Get_Iter_At_Mark (Buffer, Cursor, Get_Insert (Buffer));
       Window.Initial_Offset := Get_Offset (Cursor);
+      Window.Initial_Line   := Get_Line (Cursor);
 
       Window.Case_Sensitive := Case_Sensitive;
 
@@ -840,9 +906,9 @@ package body Completion_Window is
       Set_Default_Size (Window.Notes_Window, Notes_Window_Width, Height);
 
       if Root_Width - (X + Width + 4) > Notes_Window_Width then
-         Set_UPosition (Window.Notes_Window, X + Width + 4, Y);
+         Set_UPosition (Window.Notes_Window, X + Width, Y);
       else
-         Set_UPosition (Window.Notes_Window, X - Notes_Window_Width - 4, Y);
+         Set_UPosition (Window.Notes_Window, X - Notes_Window_Width, Y);
       end if;
 
       Show_All (Window);
@@ -866,6 +932,8 @@ package body Completion_Window is
         (Buffer, "insert_text", Insert_Text_Handler'Access, Window,
          After => True);
 
+      Object_Connect (Buffer, "mark_set", Mark_Set_Handler'Access, Window);
+
       Object_Connect
         (Buffer, "delete_range", Delete_Text_Handler'Access, Window,
          After => True);
@@ -880,9 +948,16 @@ package body Completion_Window is
          To_Marshaller (On_Selection_Changed'Access), Window,
          After => True);
 
-      --  ??? For now, only the first 200 matches will be displayed.
-      --  Need to implement the mechanism & behavior to show the next matches.
-      Expand_Selection (Window, "", 200);
+      Expand_Selection (Window, "", Minimal_Items_To_Show);
+
+      Tree_Iter := Get_Iter_First (Window.Model);
+
+      if Tree_Iter = Null_Iter then
+         Delete (Window);
+         return;
+      else
+         Select_Iter (Get_Selection (Window.View), Tree_Iter);
+      end if;
 
       On_Selection_Changed (Window);
       Dummy2 := Complete_Common_Prefix (Window);
@@ -900,10 +975,13 @@ package body Completion_Window is
       if not Complete_Common_Prefix (Window) then
          Sel := Get_Selection (Window.View);
          Get_Selected (Sel, Model, Iter);
-         Next (Window.Model, Iter);
 
-         if Iter = Null_Iter then
-            Iter := Get_Iter_First (Window.Model);
+         if Iter /= Null_Iter then
+            Next (Window.Model, Iter);
+
+            if Iter = Null_Iter then
+               Iter := Get_Iter_First (Window.Model);
+            end if;
          end if;
 
          Select_Iter (Sel, Iter);
