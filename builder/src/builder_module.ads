@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -56,5 +56,9 @@ package Builder_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
+
+   procedure Interrupt_Xrefs_Loading
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Interrupts all xrefs loading.
 
 end Builder_Module;
