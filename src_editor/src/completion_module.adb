@@ -535,7 +535,6 @@ package body Completion_Module is
                It  : Gtk_Text_Iter;
 
                Result            : Completion_List;
-               Content_Displayed : Boolean := False;
 
                Manager  : constant Completion_Manager_Access :=
                  new Ada_Completion_Manager;
@@ -547,69 +546,6 @@ package body Completion_Module is
 
                Constructs      : Construct_List;
                Constructs_Tree : Construct_Tree_Access;
-
-               procedure Display (List : Completion_List);
-
-               -------------
-               -- Display --
-               -------------
-
-               procedure Display (List : Completion_List) is
-                  Iter : Completion_Iterator;
-
-                  function To_Showable_String
-                    (P : Completion_Proposal'Class) return String;
-                  --  Return the string to display in the main window.
-
-                  function To_Showable_String
-                    (P : Completion_Proposal'Class) return String
-                  is
-                     function Proposal_To_Color return String;
-                     --  Return a color representing the proposal.
-
-                     function Proposal_To_Color return String is
-                        R : constant Completion_Resolver_Access :=
-                          Get_Resolver (P);
-                     begin
-                        if R = Entity_Resolver then
-                           return "blue";
-                        elsif R = Constructs_Resolver then
-                           return "dark green";
-                        else
-                           return "black";
-                        end if;
-                     end Proposal_To_Color;
-
-                  begin
-                     return "<span foreground=""" & Proposal_To_Color &
-                     """>" & Get_Label (P) & "</span>";
-                  end To_Showable_String;
-
-               begin
-                  Iter := First (List);
-
-                  while not At_End (Iter) loop
-
-                     declare
-                        T : constant String :=
-                          Get_Completion (Get_Proposal (Iter));
-                     begin
-                        Add_Contents
-                          (Win,
-                           To_Showable_String (Get_Proposal (Iter)),
-                           T,
-                           Get_Documentation (Get_Proposal (Iter)));
-                     end;
-
-                     if To_Replace = 0 then
-                        To_Replace := Get_Completed_String (List)'Length;
-                     end if;
-
-                     Content_Displayed := True;
-
-                     Next (Iter);
-                  end loop;
-               end Display;
 
             begin
                Constructs := Get_Constructs (Buffer, Exact);
@@ -645,44 +581,39 @@ package body Completion_Module is
 
                Gtk_New (Win);
 
-               Display (Result);
+               --  ??? When should these be freed ?
 
-               Free (Constructs_Resolver);
-               Free (Entity_Resolver);
+               --                 Free (Constructs_Resolver);
+               --                 Free (Entity_Resolver);
                --  ??? Missing Free function.
                --                 Free (Manager);
-               Free (Result);
-               Free (Constructs_Tree);
+               --                 Free (Result);
+               --                 Free (Constructs_Tree);
+
                Free (The_Text);
 
-               if Content_Displayed then
-                  Get_Iter_At_Mark
-                    (Buffer, It, Get_Insert (Buffer));
+               Get_Iter_At_Mark
+                 (Buffer, It, Get_Insert (Buffer));
 
-                  if To_Replace /= 0 then
-                     Backward_Chars (It, Gint (To_Replace), Movement);
-                  else
-                     Movement := True;
-                  end if;
+               To_Replace := Get_Completed_String (Result)'Length;
 
-                  if Movement then
-                     Start_Completion (View, Win);
-
-                     Widget_Callback.Object_Connect
-                       (Win, "destroy", Widget_Callback.To_Marshaller
-                          (On_Completion_Destroy'Access), View);
-
-                     Show
-                       (Win, Gtk_Text_View (View),
-                        Gtk_Text_Buffer (Buffer), It,
-                        Get_Language_Context
-                          (Get_Language (Buffer)).Case_Sensitive);
-                  else
-                     Delete (Win);
-                  end if;
-               else
-                  Delete (Win);
+               if To_Replace /= 0 then
+                  Backward_Chars (It, Gint (To_Replace), Movement);
                end if;
+
+               Start_Completion (View, Win);
+
+               Widget_Callback.Object_Connect
+                 (Win, "destroy", Widget_Callback.To_Marshaller
+                    (On_Completion_Destroy'Access), View);
+
+               Set_Completion_Iterator (Win, First (Result));
+
+               Show
+                 (Win, Gtk_Text_View (View),
+                  Gtk_Text_Buffer (Buffer), It,
+                  Get_Language_Context
+                    (Get_Language (Buffer)).Case_Sensitive);
             end;
          end if;
 
