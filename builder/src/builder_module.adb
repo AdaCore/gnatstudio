@@ -113,9 +113,9 @@ package body Builder_Module is
    Syntax_Check   : aliased String := "-gnats";
    --  ??? Shouldn't have hard-coded options.
 
-   Std_Sources_Load_Chunk : constant Integer := 50;
-   --  The size of the chunk of files loaded by the xrefs loader from the ada
-   --  standart library.
+   Sources_Load_Chunk : constant Integer := 20;
+   --  The size of the chunk of files loaded by the xrefs loader.
+   --  ??? This should be configurable
 
    type Files_Callback_Data is new Callback_Data_Record with record
       Files  : File_Array_Access;
@@ -176,12 +176,12 @@ package body Builder_Module is
 
    type Load_Xref_Data is record
       Kernel           : Kernel_Handle;
-      LI               : Natural;
-      Project          : Imported_Project_Iterator;
       Current_Progress : Natural;
-      Max_Projects     : Natural;
+      Total_Progress   : Natural;
       Std_Files        : File_Array_Access;
-      Index_In_Files   : Natural;
+      Project_Files    : File_Array_Access;
+      Index_In_Std     : Natural;
+      Index_In_Project : Natural;
       Stop             : Boolean := False;
    end record;
    type Load_Xref_Data_Access is access Load_Xref_Data;
@@ -1287,6 +1287,7 @@ package body Builder_Module is
         (Load_Xref_Data, Load_Xref_Data_Access);
    begin
       Unchecked_Free (D.Std_Files);
+      Unchecked_Free (D.Project_Files);
       Unchecked_Free (D);
    end Free;
 
@@ -1300,16 +1301,36 @@ package body Builder_Module is
       Result    : out Command_Return_Type)
    is
       D            : Load_Xref_Data_Access renames Xref_Data;
-      Handler      : constant Language_Handler :=
-                       Language_Handler (Get_Language_Handler (D.Kernel));
-      Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
-      LI           : LI_Handler;
-      Count : Integer;
-      pragma Unreferenced (Count);
 
-      Std_Start, Std_Stop : Integer;
+      procedure Load_From_File_Array
+        (Files : File_Array_Access; Index : in out Natural);
 
-      Std_Load_Total : Integer := 0;
+      procedure Load_From_File_Array
+        (Files : File_Array_Access; Index : in out Natural)
+      is
+         Start, Stop : Integer;
+      begin
+         Start := Index;
+         Stop := Index + Sources_Load_Chunk;
+
+         if Stop > Files'Last then
+            Stop := Files'Last;
+         end if;
+
+         for J in Start .. Stop loop
+            Update_Xref
+              (Get_Or_Create
+                 (Get_Database (D.Kernel), Files (J)));
+         end loop;
+
+         Index := Stop;
+         D.Current_Progress := D.Current_Progress + 1;
+         Set_Progress
+           (Command,
+            (Running,
+             D.Current_Progress,
+             D.Total_Progress));
+      end Load_From_File_Array;
 
    begin
       if D.Stop then
@@ -1317,62 +1338,19 @@ package body Builder_Module is
          return;
       end if;
 
-      if D.Std_Files /= null then
-         Std_Load_Total := D.Std_Files'Length / Std_Sources_Load_Chunk;
-
-         if D.Std_Files'Length mod Std_Sources_Load_Chunk /= 0 then
-            Std_Load_Total := Std_Load_Total + 1;
-         end if;
-      end if;
-
       if D.Std_Files /= null
-        and then D.Index_In_Files < D.Std_Files'Last
+        and then D.Index_In_Std < D.Std_Files'Last
       then
-         Std_Start := D.Index_In_Files;
-         Std_Stop := Std_Start + Std_Sources_Load_Chunk;
-
-         if Std_Stop > D.Std_Files'Last then
-            Std_Stop := D.Std_Files'Last;
-         end if;
-
-         for J in Std_Start .. Std_Stop loop
-            Update_Xref
-              (Get_Or_Create
-                 (Get_Database (D.Kernel), D.Std_Files (J)));
-         end loop;
-
-         D.Index_In_Files := Std_Stop;
-         D.Current_Progress := D.Current_Progress + 1;
-         Set_Progress
-           (Command,
-            (Running,
-             D.Current_Progress,
-             D.Max_Projects * Num_Handlers + Std_Load_Total));
+         Load_From_File_Array (D.Std_Files, D.Index_In_Std);
+         Result := Execute_Again;
+      elsif D.Project_Files /= null
+        and then D.Index_In_Project < D.Project_Files'Last
+      then
+         Load_From_File_Array (D.Project_Files, D.Index_In_Project);
+         Result := Execute_Again;
       else
-         D.LI := D.LI + 1;
-         if D.LI > Num_Handlers then
-            Next (D.Project);
-            if Current (D.Project) = No_Project then
-               Result := Success;
-               return;
-            end if;
-            D.LI := 1;
-         end if;
-
-         LI := Get_Nth_Handler (Handler, D.LI);
-         if LI /= null then
-            Count := Parse_All_LI_Information
-              (LI, Current (D.Project), Recursive => False);
-         end if;
-
-         D.Current_Progress := D.Current_Progress + 1;
-         Set_Progress
-           (Command,
-            (Running,
-             D.Current_Progress,
-             D.Max_Projects *  Num_Handlers + Std_Load_Total));
+         Result := Success;
       end if;
-      Result := Execute_Again;
    end Load_Xref_Iterate;
 
    ----------------------------
@@ -1446,6 +1424,9 @@ package body Builder_Module is
          return False;
       end Kill_Command;
 
+      Std_Files      : File_Array_Access;
+      Project_Files  : File_Array_Access;
+      Total_Progress : Natural;
    begin
       if Kill_Command (Queue_Name) then
          --  If there is already something on queue 0, then kill it and load
@@ -1466,17 +1447,31 @@ package body Builder_Module is
          Next (Iter);
       end loop;
 
+      Std_Files := Get_Predefined_Source_Files (Get_Registry (Kernel).all);
+      Project_Files := Get_Source_Files
+        (Get_Root_Project (Get_Registry (Kernel).all), True);
+
+      Total_Progress := Std_Files'Length / Sources_Load_Chunk +
+        Project_Files'Length / Sources_Load_Chunk;
+
+      if Std_Files'Length mod Sources_Load_Chunk /= 0 then
+         Total_Progress := Total_Progress + 1;
+      end if;
+
+      if Project_Files'Length mod Sources_Load_Chunk /= 0 then
+         Total_Progress := Total_Progress + 1;
+      end if;
+
       Load_Xref_Commands.Create
         (C, -"Load xref info",
          new Load_Xref_Data'
            (Kernel_Handle (Kernel),
-            LI               => 0,
-            Project          => Start (Root_Project => Get_Project (Kernel)),
             Current_Progress => 0,
-            Max_Projects     => Projects_Count,
-            Std_Files        => Get_Predefined_Source_Files
-              (Get_Registry (Kernel).all),
-            Index_In_Files   => 1,
+            Total_Progress   => Total_Progress,
+            Std_Files        => Std_Files,
+            Project_Files    => Project_Files,
+            Index_In_Std     => 1,
+            Index_In_Project => 1,
             Stop             => False),
          Load_Xref_Iterate'Access);
 
