@@ -149,6 +149,10 @@ package body Builder_Module is
    --  Kills a given xrefs queue, provided that the command contained in this
    --  queue is a xref loading command.
 
+   procedure Interrupt_Xrefs_Loading
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Interrupts all xrefs loading.
+
    --------------------------------
    -- Computing cross-references --
    --------------------------------
@@ -364,6 +368,9 @@ package body Builder_Module is
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called every time the project view has changed, ie potentially the list
    --  of main units.
+
+   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
+   --  Called every time a new project is loaded
 
    procedure Compile_Command
      (Data    : in out Callback_Data'Class;
@@ -2155,14 +2162,21 @@ package body Builder_Module is
         (Kernel, Tools, -"_Interrupt", Stock_Stop, On_Tools_Interrupt'Access,
          null, GDK_C, Control_Mask + Shift_Mask);
 
-      Add_Hook (Kernel, Project_View_Changed_Hook,
-                Wrapper (On_View_Changed'Access),
-                Name => "builder_module.on_view_changed");
+      Add_Hook
+        (Kernel => Kernel,
+         Hook   => Project_View_Changed_Hook,
+         Func   => Wrapper (On_View_Changed'Access),
+         Name   => "builder_module.on_view_changed");
       Add_Hook
         (Kernel => Kernel,
          Hook   => Compilation_Finished_Hook,
          Func   => Wrapper (On_Compilation_Finished'Access),
          Name   => "load_xrefs");
+      Add_Hook
+        (Kernel => Kernel,
+         Hook   => Project_Changed_Hook,
+         Func   => Wrapper (On_Project_Changed'Access),
+         Name   => "interrupt_xrefs_loading");
 
       Register_Command
         (Kernel, "compile",
@@ -2203,5 +2217,14 @@ package body Builder_Module is
          Unchecked_Free (D);
       end if;
    end Deep_Free;
+
+   ------------------------
+   -- On_Project_Changed --
+   ------------------------
+
+   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Interrupt_Xrefs_Loading (Kernel);
+   end On_Project_Changed;
 
 end Builder_Module;
