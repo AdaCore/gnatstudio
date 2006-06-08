@@ -112,9 +112,10 @@ __gps_ensure_valid_output (void)
       handle = (HANDLE) _get_osfhandle (fileno (stdout));
 
       if (handle == INVALID_HANDLE_VALUE)
-	{ 
-	  kernel32_dll = LoadLibrary ("kernel32.dll");
-          proc = (AttachConsoleFunc) GetProcAddress (kernel32_dll, "AttachConsole");
+        {
+          kernel32_dll = LoadLibrary ("kernel32.dll");
+          proc = (AttachConsoleFunc) GetProcAddress
+            (kernel32_dll, "AttachConsole");
           if (proc)
 	    {
 	      if (! (*proc) (ATTACH_PARENT_CONSOLE))
@@ -131,14 +132,14 @@ __gps_ensure_valid_output (void)
 #endif
 }
 
-/**********************************************************
- ** user_login_name ()
+/*********************************************************
+ ** __gps_user_login_name ()
  ** Return the real user name.
  ** Return value must be freed by caller
- **********************************************************/
+ *********************************************************/
 
 char*
-user_login_name (void)
+__gps_user_login_name (void)
 {
 #ifdef _WIN32
   DWORD size = UNLEN;
@@ -174,4 +175,50 @@ user_login_name (void)
 #endif
 
   return result;
+}
+
+/**********************************************************
+ ** __gps_get_tmp_dir ()
+ ** Return the tmp directory.
+ ** Return value must be freed by caller
+ **********************************************************/
+
+char*
+__gps_get_tmp_dir (void)
+{
+  static char *result = NULL;
+
+  /* test static result to see if result has already been found */
+  if (result != NULL)
+    return strdup (result);
+
+/* ??? we should use windows interface to retrieve the tmp directory
+ * However, we're too close to the release to change the current behavior. As
+ * soon as we are ready to do so, replace the following #if 0 by #ifdef WIN32
+ */
+#if 0
+  DWORD dwRet;
+
+  result = malloc ((MAX_PATH + 1) * sizeof (char));
+  dwRet = GetTempPath (MAX_PATH, result);
+  if (dwRet > 0) {
+    result[dwRet] = '\0';
+    if (__gnat_is_directory (result))
+      return strdup (result);
+  }
+  free (result);
+#endif
+
+  result = getenv ("TMPDIR");
+  if (result)
+    if (__gnat_is_directory (result))
+      return strdup (result);
+
+  result = getenv ("TMP");
+  if (result)
+    if (__gnat_is_directory (result))
+      return strdup (result);
+
+  result = NULL;
+  return strdup ("/tmp");
 }
