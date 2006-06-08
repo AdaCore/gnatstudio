@@ -75,6 +75,7 @@ with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
+with Remote_Servers;            use Remote_Servers;
 with Remote_Views;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_Utils;
@@ -211,8 +212,7 @@ procedure GPS.Main is
    Dir                    : String_Access;
    Batch_File             : String_Access;
    Batch_Script           : String_Access;
-   --  ??? re-enable this...
-   --     Tools_Host             : String_Access;
+   Tools_Host             : String_Access;
    Target                 : String_Access;
    Protocol               : String_Access;
    Debugger_Name          : String_Access;
@@ -662,7 +662,7 @@ procedure GPS.Main is
       Initialize_Option_Scan;
       loop
          case Getopt ("-version -help P: -server= -hide " &
-                      "-debug? -debugger= -target= -load= -eval= " &
+                      "-debug? -debugger= -host= -target= -load= -eval= " &
                       "-readonly -traceoff= -traceon= -tracefile= -tracelist")
          is
             -- long option names --
@@ -693,11 +693,10 @@ procedure GPS.Main is
                         Help;
                         OS_Exit (0);
 
-                        --  ??? re-enable this...
---                       elsif Full_Switch = "-host" then
---                          --  --host
---                          Free (Tools_Host);
---                          Tools_Host := new String'(Parameter);
+                     elsif Full_Switch = "-host" then
+                        --  --host
+                        Free (Tools_Host);
+                        Tools_Host := new String'(Parameter);
 
                      else
                         --  --hide
@@ -1505,6 +1504,16 @@ procedure GPS.Main is
 
       if Splash /= null then
          Destroy (Splash);
+      end if;
+
+      --  After loading the project, force remote host assignment if
+      --  Tools_Host is not null
+
+      if Tools_Host /= null then
+         for S in Distant_Server_Type'Range loop
+            GPS.Kernel.Remote.Assign
+              (GPS_Main.Kernel, S, Tools_Host.all, Reload_Prj => True);
+         end loop;
       end if;
 
       --  Execute the startup scripts now, even though it is recommended that
