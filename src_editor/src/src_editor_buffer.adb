@@ -1309,9 +1309,9 @@ package body Src_Editor_Buffer is
       Buffer.Setting_Mark := True;
 
       if Get_Name (Mark) = "insert" then
-            Buffer.Insert_Mark := Mark;
-            Emit_New_Cursor_Position (Buffer);
-            Cursor_Move_Hook (Buffer);
+         Buffer.Insert_Mark := Mark;
+         Emit_New_Cursor_Position (Buffer);
+         Cursor_Move_Hook (Buffer);
       end if;
 
       Buffer.Setting_Mark := False;
