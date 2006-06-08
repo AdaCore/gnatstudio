@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Interfaces.C;              use Interfaces.C;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with GNAT.Case_Util;            use GNAT.Case_Util;
@@ -41,51 +42,19 @@ package body OS_Utils is
    -----------------
 
    function Get_Tmp_Dir return String is
-      S : String_Access;
+      function Internal return chars_ptr;
+      pragma Import (C, Internal, "__gps_get_tmp_dir");
 
-      function Normalize (Path : String_Access) return String;
-      --  Normalize Path as a directory and Free it on return
-
-      ---------------
-      -- Normalize --
-      ---------------
-
-      function Normalize (Path : String_Access) return String is
-         P   : String_Access := Path;
-         Val : constant String := Path.all;
-      begin
-         Free (P);
-
-         if Val (Val'Last) = Dir_Separator then
-            return Val;
-         else
-            return Val & Dir_Separator;
-         end if;
-      end Normalize;
-
+      C_Str : chars_ptr := Internal;
+      Str   : constant String := Format_Pathname (To_Ada (Value (C_Str)));
    begin
-      --  Try in the following order:
-      --  TMPDIR env var
-      --  TEMP env var
-      --  system specific function (GetWindows () & "\Temp" under Windows)
-      --  ??? not implemented yet
-      --  if the above failed, fall back to /tmp
+      Free (C_Str);
 
-      S := Getenv ("TMPDIR");
-
-      if S.all /= "" then
-         return Normalize (S);
+      if Str (Str'Last) = Dir_Separator then
+         return Str;
+      else
+         return Str & Dir_Separator;
       end if;
-
-      Free (S);
-      S := Getenv ("TEMP");
-
-      if S.all /= "" then
-         return Normalize (S);
-      end if;
-
-      Free (S);
-      return "/tmp/";
    end Get_Tmp_Dir;
 
    ---------------------
