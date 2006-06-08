@@ -172,7 +172,27 @@ package body Completion.Ada is
 
                Filter := All_Accessible_Units;
 
-               Analyze_Token (Next (Token), Previous_It, Result);
+               if Next (Token) /= Token_List.Null_Node then
+                  Analyze_Token (Next (Token), Previous_It, Result);
+               else
+                  declare
+                     It : Completion_Resolver_List_Pckg.List_Node;
+                  begin
+                     It := First (Manager.Resolvers);
+
+                     while It /= Completion_Resolver_List_Pckg.Null_Node loop
+                        Get_Possibilities
+                          (Data (It),
+                           "",
+                           True,
+                           Data (Token).Token_Name_First - 1,
+                           All_Accessible_Units,
+                           Tmp);
+
+                        It := Next (It);
+                     end loop;
+                  end;
+               end if;
 
             when Tok_Use =>
                null;
