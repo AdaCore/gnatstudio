@@ -774,6 +774,12 @@ package body Ada_Analyzer is
       --  P should be at the first non word character, which means that
       --  if the identifier does not contain any dot, P - 1 will be returned.
 
+      procedure Look_For_End_Of_Data_Declaration
+        (Sloc : in out Source_Location);
+      --  Search the first ; character, or the first closing parenthesis,
+      --  skipping nested ones. Intended to go at the end of a variable or
+      --  parameter declaration.
+
       procedure Look_For (Sloc : in out Source_Location; Char : Character);
       --  Search Char in Buffer starting from Sloc.
       --  Sloc is updated to the first occurrence of Char in Buffer, or
@@ -1462,6 +1468,50 @@ package body Ada_Analyzer is
          return Prev;
       end End_Of_Identifier;
 
+      --------------------------------------
+      -- Look_For_End_Of_Data_Declaration --
+      --------------------------------------
+
+      procedure Look_For_End_Of_Data_Declaration
+        (Sloc : in out Source_Location)
+      is
+         C           : Character;
+         In_Comments : Boolean := False;
+         Paren_Depth : Integer := 0;
+      begin
+         for J in Sloc.Index .. Buffer_Last loop
+            C := Buffer (J);
+
+            if not In_Comments
+              and then Paren_Depth = 0
+              and then (C = ';' or else C = ')')
+            then
+               Sloc.Index := J;
+               return;
+
+            elsif C = '-' and then Buffer (J - 1) = '-' then
+               In_Comments := True;
+
+            elsif C = ASCII.LF then
+               In_Comments := False;
+               Sloc.Line := Sloc.Line + 1;
+               Sloc.Column := 1;
+
+            elsif C = '(' then
+               Paren_Depth := Paren_Depth + 1;
+               Sloc.Column := Sloc.Column + 1;
+
+            elsif C = ')' then
+               Paren_Depth := Paren_Depth - 1;
+               Sloc.Column := Sloc.Column + 1;
+
+            elsif C /= ASCII.CR then
+               Sloc.Column := Sloc.Column + 1;
+
+            end if;
+         end loop;
+      end Look_For_End_Of_Data_Declaration;
+
       --------------
       -- Look_For --
       --------------
@@ -1641,6 +1691,14 @@ package body Ada_Analyzer is
             end if;
 
             case Constructs.Current.Category is
+               when Cat_Parameter =>
+                  --  Adjust the Sloc_End to the next semicolon for enclosing
+                  --  entities and variable declarations, or next closing
+                  --  parenthesis
+
+                  Look_For_End_Of_Data_Declaration
+                    (Constructs.Current.Sloc_End);
+
                when Cat_Variable | Cat_Local_Variable | Cat_Field |
                     Cat_Declare_Block | Cat_Simple_Block |
                     Cat_Type | Cat_Subtype | Namespace_Category |
