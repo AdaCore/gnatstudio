@@ -241,6 +241,12 @@ package body Completion.Expression_Parser is
             when '(' =>
                Push (Token);
 
+               if Length (Result) = 0 then
+                  Token.Tok_Type := Tok_Expression;
+                  Token.Number_Of_Parameters := 0;
+                  Push (Token);
+               end if;
+
             when '.' =>
                Push (Token);
 
@@ -289,7 +295,9 @@ package body Completion.Expression_Parser is
                      Token.Token_Name_Last := Offset;
 
                      if Length (Result) = 0 and then Blank_Before then
+                        Token := Null_Token;
                         Push_Pckg (Offset);
+                        exit;
                      end if;
 
                      if Length (Result) > 0
