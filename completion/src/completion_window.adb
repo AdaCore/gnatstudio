@@ -193,6 +193,33 @@ package body Completion_Window is
       Added : Natural := 0;
       Info  : Information_Record;
       Iter  : Gtk_Tree_Iter;
+
+      function Is_Prefix (S1, S2 : String) return Boolean;
+      --  Return True if S1 is a prefix of S2, case-sensitivity taken into
+      --  account.
+
+      ---------------
+      -- Is_Prefix --
+      ---------------
+
+      function Is_Prefix (S1, S2 : String) return Boolean is
+      begin
+         if S1'Length = 0 then
+            return True;
+         end if;
+
+         if S1'Length <= S2'Length then
+            if Window.Case_Sensitive then
+               return S2 (S2'First .. S2'First + S1'Length) = S1;
+            else
+               return To_Lower (S2 (S2'First .. S2'First + S1'Length))
+                 = To_Lower (S1);
+            end if;
+         end if;
+
+         return False;
+      end Is_Prefix;
+
    begin
       if At_End (Window.Iter) then
          return;
@@ -228,13 +255,7 @@ package body Completion_Window is
          end if;
          --  ??? End of code duplication
 
-         if UTF8_Filter = ""
-           or else (Info.Text.all'Length >= UTF8_Filter'Length
-                    and then Info.Text.all
-                      (Info.Text'First ..
-                         Info.Text'First + UTF8_Filter'Length - 1)
-                    = UTF8_Filter)
-         then
+         if Is_Prefix (UTF8_Filter, Info.Text.all) then
             --  ??? some code duplication with Add_Contents
             Append (Window.Model, Iter);
             Set (Window.Model, Iter, Markup_Column, Info.Markup.all);
