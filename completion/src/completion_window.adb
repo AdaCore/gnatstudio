@@ -38,6 +38,8 @@ with Gtk.Style;              use Gtk.Style;
 with Gtk.Scrollbar;          use Gtk.Scrollbar;
 with Gtk.Widget;             use Gtk.Widget;
 
+with Gtk.Viewport;           use Gtk.Viewport;
+
 with Pango.Font;             use Pango.Font;
 with Pango.Layout;           use Pango.Layout;
 
@@ -160,6 +162,7 @@ package body Completion_Window is
       end if;
 
       Unchecked_Free (X.Proposal);
+      --  ??? Should we free X.Proposal ?
    end Free;
 
    ------------
@@ -169,7 +172,7 @@ package body Completion_Window is
    procedure Delete (Window : access Completion_Window_Record'Class) is
    begin
       for J in 1 .. Window.Index - 1 loop
-         Free (Window.Info (Window.Index));
+         Free (Window.Info (J));
       end loop;
 
       if Window.Mark /= null then
@@ -235,7 +238,6 @@ package body Completion_Window is
            (new String'(To_Showable_String (Get_Proposal (Window.Iter))),
             new String'(Get_Completion (Get_Proposal (Window.Iter))),
             null,
-            --  ??? make sure null notes is supported everywhere,
             new Completion_Proposal'Class'(Get_Proposal (Window.Iter)),
             True);
 
@@ -512,8 +514,7 @@ package body Completion_Window is
          if Window.Info (Index).Notes = null then
             if Window.Info (Index).Proposal /= null then
                Window.Info (Index).Notes := new String'
-                 (Escape_Text (Get_Documentation
-                  (Window.Info (Index).Proposal.all)));
+                 (Get_Documentation (Window.Info (Index).Proposal.all));
             else
                Window.Info (Index).Notes := new String'
                  ("<i>No documentation available</i>");
@@ -738,8 +739,11 @@ package body Completion_Window is
       Text   : Gtk_Cell_Renderer_Text;
       Dummy  : Gint;
       Frame  : Gtk_Frame;
+      Scroll : Gtk_Scrolled_Window;
       VBox   : Gtk_Vbox;
       HBox   : Gtk_Hbox;
+
+      Viewport : Gtk_Viewport;
 
       pragma Unreferenced (Dummy);
    begin
@@ -761,7 +765,7 @@ package body Completion_Window is
       Add (Window, Frame);
 
       Gtk_New (Window.Tree_Scroll);
-      Set_Policy (Window.Tree_Scroll, Policy_Automatic, Policy_Always);
+      Set_Policy (Window.Tree_Scroll, Policy_Automatic, Policy_Automatic);
       Add (Window.Tree_Scroll, Window.View);
       Add (Frame, Window.Tree_Scroll);
 
@@ -772,11 +776,19 @@ package body Completion_Window is
 
       Gtk_New (Window.Notes_Window, Window_Popup);
       Gtk_New (Window.Notes_Label);
+      Set_Line_Wrap (Window.Notes_Label, False);
+      Set_Use_Markup (Window.Notes_Label, True);
       Gtk_New_Vbox (VBox);
       Gtk_New_Hbox (HBox);
       Gtk_New (Frame);
+      Gtk_New (Scroll);
+      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
+      Add (Frame, Scroll);
       Add (Window.Notes_Window, Frame);
-      Add (Frame, VBox);
+      Gtk_New (Viewport);
+      Set_Shadow_Type (Viewport, Shadow_None);
+      Add (Scroll, Viewport);
+      Add (Viewport, VBox);
       Pack_Start (VBox, HBox, False, False, 3);
       Pack_Start (HBox, Window.Notes_Label, False, False, 3);
    end Initialize;
