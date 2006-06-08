@@ -219,6 +219,8 @@ __gps_get_tmp_dir (void)
     if (__gnat_is_directory (result))
       return strdup (result);
 
-  result = NULL;
-  return strdup ("/tmp");
+  /* need to duplicate twice: one is for caching, the second one will be freed
+   * by user */
+  result = strdup ("/tmp");
+  return strdup (result);
 }
