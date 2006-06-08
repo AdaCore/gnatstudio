@@ -2165,6 +2165,10 @@ Select the whole contents of the current source editor.
 Open a file selection dialog and insert the contents of this file in
 the current source editor, at the current cursor location.
 
+@item Create Bookmark
+Creates a new Bookmark at cursor position. For more information,
+@xref{Bookmarks}
+
 @item Comment Lines
 @cindex comment
 Comment the current selection or line based on the current programming
@@ -2240,6 +2244,9 @@ Create a new test suite. See AUnit documentation for more details.
 Create a new test harness. See AUnit documentation for more details.
 
 @end table
+
+@item Aliases
+Display the Aliases editor. @xref{Defining text aliases}.
 
 @item Key shortcuts
 @cindex key shortcuts
@@ -2997,6 +3004,14 @@ Go to previous tag/location. @xref{The Locations Tree}.
 @cindex next tag
 @cindex locations tree
 Go to next tag/location. @xref{The Locations Tree}.
+
+@item Back
+@cindex Back
+Go to previous location.
+
+@item Forward
+@cindex Forward
+Go to next location.
 
 @end table
 
@@ -7815,7 +7830,7 @@ The full remote development setup is performed in several steps:
 @noindent
 In order to configure remote servers, you need to open the remote
 configuration dialog. A predefined configuration can also be set when
-installing GPS, using xml files. @xref{Defining a remote server}, and 
+installing GPS, using xml files. @xref{Defining a remote server}, and
 @xref{Defining a remote path translation}, for more information.
 
 The remote configuration dialog is opened via the remote view. You can
@@ -7947,7 +7962,7 @@ here. Note that you can retrieve those paths by using @code{gnat list
 -v -Pyour_project}.
 
 To add a new path, click on the @code{+} button, and enter the corresponding
-local and remote paths. 
+local and remote paths.
 
 You can easily select the desired paths by clicking on the icon next
 to the path's entry. Remote browsing is allowed only when the
@@ -12301,7 +12316,7 @@ complete description of the usage of each tag in the header comments.
 
 The configuration of the remote programming functionality has two
 separate parts: the tools configuration (remote connection tools,
-shells, and rsync parameters) and the servers configuration. 
+shells, and rsync parameters) and the servers configuration.
 
 The first part (see @ref{Defining a remote connection tool},
 @ref{Defining a shell} and @ref{Configuring rsync usage}) is handled
@@ -12510,7 +12525,7 @@ connections GPS can launch.
 @item timeout (optional)
 Positive number representing a timeout value (in ms) used for every
 action performed on the remote host.
-@end table 
+@end table
 
 @c --------------------------------------------------------------------
 @node Defining a remote path translation
