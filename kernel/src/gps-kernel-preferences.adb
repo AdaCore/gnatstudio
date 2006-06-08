@@ -1005,17 +1005,18 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Trusted_Mode), -"Project");
 
-      Load_Xref_Info_On_Project_Load := Param_Spec_Boolean
+      Automatic_Xrefs_Load := Param_Spec_Boolean
         (Gnew_Boolean
-           (Name    => "Load-Xref-Info-On-Project-Load",
-            Default => True,
+           (Name    => "Load-Xref-Info-Automatically",
+            Default => False,
             Blurb   => -("Whether to load the Xref info in memory whenever a"
-              & " new project is loaded into memory. Enabling this greatly"
-              & " improves the efficiency of advanced auto-completion."),
-            Nick    => -"Load Xref info on project load"));
+              & " new project is loaded into memory, or a new file is"
+              & " compiled. Enabling this greatly improves the efficiency of"
+              & " advanced auto-completion."),
+            Nick    => -"Load Xref info automatically"));
       Register_Property
         (Kernel.Preferences,
-         Param_Spec (Load_Xref_Info_On_Project_Load),
+         Param_Spec (Automatic_Xrefs_Load),
          -"Project");
 
       -- Wizards --
