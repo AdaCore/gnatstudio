@@ -210,9 +210,9 @@ package body Completion_Window is
 
          if S1'Length <= S2'Length then
             if Window.Case_Sensitive then
-               return S2 (S2'First .. S2'First + S1'Length) = S1;
+               return S2 (S2'First .. S2'First + S1'Length - 1) = S1;
             else
-               return To_Lower (S2 (S2'First .. S2'First + S1'Length))
+               return To_Lower (S2 (S2'First .. S2'First + S1'Length - 1))
                  = To_Lower (S1);
             end if;
          end if;
