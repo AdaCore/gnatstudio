@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Values;            use Glib.Values;
+with Glib.Convert;           use Glib.Convert;
 
 with Gdk.Event;              use Gdk.Event;
 with Gdk.Rectangle;          use Gdk.Rectangle;
@@ -30,12 +31,12 @@ with Gtk.Box;                use Gtk.Box;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Frame;              use Gtk.Frame;
 with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Style;              use Gtk.Style;
+with Gtk.Scrollbar;          use Gtk.Scrollbar;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Pango.Font;             use Pango.Font;
@@ -60,6 +61,9 @@ package body Completion_Window is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Information_Array, Information_Array_Access);
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Completion_Proposal'Class, Completion_Proposal_Access);
 
    package Return_Cb is new Gtk.Handlers.Return_Callback
      (Completion_Window_Record, Boolean);
@@ -107,6 +111,13 @@ package body Completion_Window is
    --  Show only the items that begin with UTF8. Delete the window if there is
    --  none.
 
+   procedure Expand_Selection
+     (Window      : access Completion_Window_Record'Class;
+      UTF8_Filter : String;
+      Number      : Natural);
+   --  Expand the current selection until Number entries have been added or
+   --  the completion iter has reach the end.
+
    procedure Free (X : in out Information_Record);
    --  Free memory associated to X.
 
@@ -119,6 +130,16 @@ package body Completion_Window is
    --  Complete the text up to the biggest common prefix in the list.
    --  Return True if completion actually occurred.
 
+   function To_Showable_String
+     (P : Completion_Proposal'Class) return String;
+   --  Return the string to display in the main window.
+
+   function To_Showable_String
+     (P : Completion_Proposal'Class) return String is
+   begin
+      return Escape_Text (Get_Label (P));
+   end To_Showable_String;
+
    ----------
    -- Free --
    ----------
@@ -127,7 +148,12 @@ package body Completion_Window is
    begin
       Unchecked_Free (X.Markup);
       Unchecked_Free (X.Text);
-      Unchecked_Free (X.Notes);
+
+      if X.Notes /= null then
+         Unchecked_Free (X.Notes);
+      end if;
+
+      Unchecked_Free (X.Proposal);
    end Free;
 
    ------------
@@ -148,6 +174,69 @@ package body Completion_Window is
       Destroy (Window.Notes_Window);
       Destroy (Window);
    end Delete;
+
+   ----------------------
+   -- Expand_Selection --
+   ----------------------
+
+   procedure Expand_Selection
+     (Window      : access Completion_Window_Record'Class;
+      UTF8_Filter : String;
+      Number      : Natural)
+   is
+      Added : Natural := 0;
+      Info  : Information_Record;
+      Iter  : Gtk_Tree_Iter;
+   begin
+      while not At_End (Window.Iter) loop
+         Info :=
+           (new String'(To_Showable_String (Get_Proposal (Window.Iter))),
+            new String'(Get_Completion (Get_Proposal (Window.Iter))),
+            null,
+            --  ??? make sure null notes is supported everywhere,
+            new Completion_Proposal'Class'(Get_Proposal (Window.Iter)),
+            True);
+
+         --  ??? some code duplication with Add_Contents
+         Window.Info (Window.Index) := Info;
+         Window.Index := Window.Index + 1;
+
+         if Window.Index > Window.Info'Last then
+            declare
+               A : Information_Array (1 .. Window.Info'Last * 2);
+            begin
+               A (1 .. Window.Index - 1) :=
+                 Window.Info (1 .. Window.Index - 1);
+               Unchecked_Free (Window.Info);
+               Window.Info := new Information_Array'(A);
+            end;
+         end if;
+         --  ??? End of code duplication
+
+         if UTF8_Filter = ""
+           or else (Info.Text.all'Length >= UTF8_Filter'Length
+                    and then Info.Text.all
+                      (Info.Text'First ..
+                         Info.Text'First + UTF8_Filter'Length - 1)
+                    = UTF8_Filter)
+         then
+            --  ??? some code duplication with Add_Contents
+            Append (Window.Model, Iter);
+            Set (Window.Model, Iter, Markup_Column, Info.Markup.all);
+            Set (Window.Model, Iter, Index_Column, Gint (Window.Index - 1));
+            --  ??? End of code duplication
+
+            if Added = 0 then
+               Select_Iter (Get_Selection (Window.View), Iter);
+            end if;
+
+            Added := Added + 1;
+         end if;
+
+         exit when Added = Number;
+         Next (Window.Iter);
+      end loop;
+   end Expand_Selection;
 
    ---------------------
    -- Adjust_Selected --
@@ -337,6 +426,17 @@ package body Completion_Window is
          Path_Free (Path);
 
          Index := Natural (Get_Int (Window.Model, Iter, Index_Column));
+
+         if Window.Info (Index).Notes = null then
+            if Window.Info (Index).Proposal /= null then
+               Window.Info (Index).Notes := new String'
+                 (Escape_Text (Get_Documentation
+                  (Window.Info (Index).Proposal.all)));
+            else
+               Window.Info (Index).Notes := new String'
+                 ("<i>No documentation available</i>");
+            end if;
+         end if;
 
          if Window.Info (Index).Notes.all /= "" then
             Set_Markup (Window.Notes_Label, Window.Info (Index).Notes.all);
@@ -553,7 +653,6 @@ package body Completion_Window is
       Text   : Gtk_Cell_Renderer_Text;
       Dummy  : Gint;
       Frame  : Gtk_Frame;
-      Scroll : Gtk_Scrolled_Window;
       VBox   : Gtk_Vbox;
       HBox   : Gtk_Hbox;
 
@@ -576,10 +675,10 @@ package body Completion_Window is
       Gtk_New (Frame);
       Add (Window, Frame);
 
-      Gtk_New (Scroll);
-      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
-      Add (Scroll, Window.View);
-      Add (Frame, Scroll);
+      Gtk_New (Window.Tree_Scroll);
+      Set_Policy (Window.Tree_Scroll, Policy_Automatic, Policy_Always);
+      Add (Window.Tree_Scroll, Window.View);
+      Add (Frame, Window.Tree_Scroll);
 
       Window.Info := new Information_Array (1 .. 1024);
       Window.Index := 1;
@@ -614,6 +713,7 @@ package body Completion_Window is
         (new String'(Markup),
          new String'(Completion),
          new String'(Notes),
+         null,
          True);
 
       Window.Info (Window.Index) := Info;
@@ -630,7 +730,6 @@ package body Completion_Window is
       end if;
 
       Append (Window.Model, Iter);
-
       Set (Window.Model, Iter, Markup_Column, Markup);
       Set (Window.Model, Iter, Index_Column, Gint (Window.Index - 1));
    end Add_Contents;
@@ -747,6 +846,8 @@ package body Completion_Window is
       end if;
 
       Show_All (Window);
+      Hide_All (Get_Vscrollbar (Window.Tree_Scroll));
+
       Grab_Focus (Window.Text);
 
       Object_Connect
@@ -779,6 +880,10 @@ package body Completion_Window is
          To_Marshaller (On_Selection_Changed'Access), Window,
          After => True);
 
+      --  ??? For now, only the first 200 matches will be displayed.
+      --  Need to implement the mechanism & behavior to show the next matches.
+      Expand_Selection (Window, "", 200);
+
       On_Selection_Changed (Window);
       Dummy2 := Complete_Common_Prefix (Window);
    end Show;
@@ -804,5 +909,16 @@ package body Completion_Window is
          Select_Iter (Sel, Iter);
       end if;
    end Select_Next;
+
+   -----------------------------
+   -- Set_Completion_Iterator --
+   -----------------------------
+
+   procedure Set_Completion_Iterator
+     (Window : Completion_Window_Access;
+      Iter   : Completion_Iterator) is
+   begin
+      Window.Iter := Iter;
+   end Set_Completion_Iterator;
 
 end Completion_Window;
