@@ -576,7 +576,7 @@ package body Completion_Module is
                Result := Get_Initial_Completion_List
                  (Manager      => Manager.all,
                   Start_Offset => Natural
-                    (Get_Offset (It)) + The_Text.all'First);
+                    (Get_Offset (It)) - 1 + The_Text.all'First);
                Trace (Me_Adv, "Getting completions done");
 
                Gtk_New (Win);
