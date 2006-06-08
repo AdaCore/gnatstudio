@@ -1111,8 +1111,10 @@ package body GPS.Kernel.Remote is
       Row  : Path_Row;
       Data : Path_Cb_Data_Access;
       Item : Gtk_List_Item;
+      Tips : Gtk_Tooltips;
    begin
       Row := new Path_Row_Record;
+      Tips := Get_Tooltips (Server_List_Editor (Widget.Dialog).Kernel);
 
       Gtk_New (Row.Local_Frame);
       Attach (Widget.Table, Row.Local_Frame, 0, 1, Row_Number, Row_Number + 1,
@@ -1124,6 +1126,9 @@ package body GPS.Kernel.Remote is
       Gtk_New (Row.Local_Entry);
       Set_Width_Chars (Row.Local_Entry, 16);
       Pack_Start (Row.Local_Hbox, Row.Local_Entry, True, True);
+      Set_Tip
+        (Tips, Row.Local_Entry,
+         -("Enter here the local path"));
 
       Gtk_New (Row.Local_Browse_Button);
       Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
@@ -1132,6 +1137,9 @@ package body GPS.Kernel.Remote is
       Set_Border_Width (Row.Local_Browse_Button, 0);
       Unset_Flags (Row.Local_Browse_Button, Can_Focus or Can_Default);
       Pack_Start (Row.Local_Hbox, Row.Local_Browse_Button, False, False);
+      Set_Tip
+        (Tips, Row.Local_Browse_Button,
+         -"Use this button to select a local path with a file explorer");
 
       Gtk_New (Row.Remote_Frame);
       Attach (Widget.Table, Row.Remote_Frame, 1, 2, Row_Number, Row_Number + 1,
@@ -1143,6 +1151,9 @@ package body GPS.Kernel.Remote is
       Gtk_New (Row.Remote_Entry);
       Set_Width_Chars (Row.Remote_Entry, 16);
       Pack_Start (Row.Remote_Hbox, Row.Remote_Entry, True, True);
+      Set_Tip
+        (Tips, Row.Remote_Entry,
+         -("Enter here the remote path"));
 
       Gtk_New (Row.Remote_Browse_Button);
       Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
@@ -1151,6 +1162,11 @@ package body GPS.Kernel.Remote is
       Set_Border_Width (Row.Remote_Browse_Button, 0);
       Unset_Flags (Row.Remote_Browse_Button, Can_Focus or Can_Default);
       Pack_Start (Row.Remote_Hbox, Row.Remote_Browse_Button, False, False);
+      Set_Tip
+        (Tips, Row.Remote_Browse_Button,
+         -("Use this button to select a remote path with a file explorer. " &
+           "Note that the machine configuration shall be properly set and " &
+           "applied"));
 
       Gtk_New (Row.Sync_Combo);
       Set_Text (Get_Entry (Row.Sync_Combo),
@@ -1166,6 +1182,19 @@ package body GPS.Kernel.Remote is
       Set_Width_Chars (Get_Entry (Row.Sync_Combo), 14);
       Attach (Widget.Table, Row.Sync_Combo, 2, 3, Row_Number, Row_Number + 1,
               0, 0, 0, 2);
+      Set_Tip
+        (Tips, Get_Entry (Row.Sync_Combo),
+         -("Four kind of paths synchronisation can be set for each defined " &
+           "path:" & ASCII.LF &
+            "* None: no synchronisation is required from GPS, the paths " &
+           "are shared using an OS mechanism like NFS." & ASCII.LF &
+           "* Always: source path of your project. They are kept " &
+           "synchronised by GPS before and after every remote action." &
+           ASCII.LF &
+           "* Once to local/Once to remote: project's dependencies. They are" &
+           " synchronized once when a remote project is loaded or when a " &
+           "local project is set remote. They can be still manually " &
+           "synchronized using the Remote View"));
 
       Gtk_New (Row.Remove_Button);
       Gtk_New (Pix, Stock_Remove, Icon_Size_Menu);
@@ -1460,6 +1489,7 @@ package body GPS.Kernel.Remote is
       Empty_List  : Boolean := True;
       Line_Nb     : Guint;
       VBox        : Gtk_Vbox;
+      Event       : Gtk_Event_Box;
       pragma Unreferenced (Tmp);
 
    begin
@@ -1471,7 +1501,7 @@ package body GPS.Kernel.Remote is
          Modal + Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Center_On_Parent);
       Set_Default_Size (Dialog, -1, 400);
-      Gtk_New (Tips);
+      Tips := Get_Tooltips (Kernel);
 
       Dialog.Kernel := Kernel;
 
@@ -1502,10 +1532,17 @@ package body GPS.Kernel.Remote is
 
       --  Add/Restore/Remove buttons
       Gtk_New (Dialog.Add_Machine_Button, -"Add server");
+      Set_Tip (Tips, Dialog.Add_Machine_Button,
+               -"Add a new server in the servers list");
       Pack_Start (VBox, Dialog.Add_Machine_Button, False, False);
       Gtk_New (Dialog.Restore_Button, -"Remove local changes");
+      Set_Tip (Tips, Dialog.Restore_Button,
+               -("Reinitialize the selected server's parameters to their " &
+                 "default values"));
       Pack_Start (VBox, Dialog.Restore_Button, False, False);
       Gtk_New (Dialog.Remove_Button, -"Remove server");
+      Set_Tip (Tips, Dialog.Remove_Button,
+               -"Remove the selected server from the servers list");
       Pack_Start (VBox, Dialog.Remove_Button, False, False);
       Set_Sensitive (Dialog.Restore_Button, False);
       Set_Sensitive (Dialog.Remove_Button, False);
@@ -1542,6 +1579,11 @@ package body GPS.Kernel.Remote is
       Attach (Dialog.Right_Table, Dialog.Network_Name_Entry,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
+      Set_Tip
+        (Tips, Dialog.Network_Name_Entry,
+         -("The network name is the name used to connect to this server via " &
+           "your network. It can be either an IP address, a host name of " &
+           "your local network, or a fully qualified network name."));
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label);
@@ -1557,6 +1599,10 @@ package body GPS.Kernel.Remote is
       Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
+      Set_Tip
+        (Tips, Get_Entry (Dialog.Remote_Access_Combo),
+         -("The remote access tool is the tool used to connect to this " &
+           "server."));
 
       for J in 1 .. Get_Nb_Remote_Access_Descriptor loop
          Gtk_New (Item, Locale_To_UTF8 (Get_Remote_Access_Name (J)));
@@ -1577,6 +1623,9 @@ package body GPS.Kernel.Remote is
       Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
+      Set_Tip
+        (Tips, Get_Entry (Dialog.Remote_Shell_Combo),
+         -"The shell tells GPS what shell runs on the remote server.");
 
       for J in 1 .. Get_Nb_Shell_Descriptor loop
          Gtk_New (Item, Locale_To_UTF8 (Get_Shell_Descriptor_Name (J)));
@@ -1595,6 +1644,10 @@ package body GPS.Kernel.Remote is
       Attach (Dialog.Right_Table, Dialog.Remote_Sync_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
+      Set_Tip
+        (Tips, Get_Entry (Dialog.Remote_Sync_Combo),
+         -("The sync tool is used to synchronize remote and local " &
+           "filesystems, if these are not shared filesystems."));
 
       declare
          Rsync_List : constant GNAT.OS_Lib.String_List :=
@@ -1617,8 +1670,18 @@ package body GPS.Kernel.Remote is
       Set_Left_Margin (Dialog.Init_Cmds_View, 10);
       Set_Indent (Dialog.Init_Cmds_View, -10);
       Set_Pixels_Below_Lines (Dialog.Init_Cmds_View, 3);
-      Attach (Dialog.Right_Table, Dialog.Init_Cmds_View, 1, 2,
+      Gtk_New (Event);
+      Add (Event, Dialog.Init_Cmds_View);
+      Attach (Dialog.Right_Table, Event, 1, 2,
               Line_Nb, Line_Nb + 1, Fill or Expand, 0);
+      Set_Tip
+        (Tips, Event,
+         -("The Extra Init Commands field represents initialization commands" &
+           " sent to the server upon connection: when GPS connects to your " &
+           "remote machine, the chosen shell is launched, and your default " &
+           "initialization files are read (e.g. .bashrc file for the bash " &
+           "shell). Then GPS sends these extra init commands, allowing you " &
+           "for example to specify a compilation toolchain."));
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Pane, -"Advanced configuration");
@@ -1651,6 +1714,12 @@ package body GPS.Kernel.Remote is
       Gtk_New (Dialog.User_Name_Entry);
       Attach (Dialog.Advanced_Table, Dialog.User_Name_Entry, 1, 2, 0, 1,
               Fill or Expand, 0);
+      Set_Tip
+        (Tips, Dialog.User_Name_Entry,
+         -("The user name specifies the name used to connect to the server. " &
+           "If unspecified, the remote access tool will most of the time " &
+           "use your current login name. If not, and a user name is " &
+           "requested, gps will prompt you for a user name when requested.)"));
 
       Gtk_New (Label, -"Timeout value (in s):");
       Set_Alignment (Label, 0.0, 0.5);
@@ -1660,6 +1729,14 @@ package body GPS.Kernel.Remote is
       Set_Digits (Dialog.Timeout_Spin, 0);
       Attach (Dialog.Advanced_Table, Dialog.Timeout_Spin, 1, 2, 1, 2,
               Fill or Expand, 0);
+      Set_Tip
+        (Tips, Dialog.Timeout_Spin,
+         -("The timeout value is used to determine if a connection to a " &
+           "remote host is dead. All elementary operations performed on the " &
+           "remote host (i.e. operations that are normally almost immediate " &
+           "to perform) will use this timeout value. By default, this value " &
+           "is set to 10s. If you have a very slow network connection or a " &
+           "very overloaded server, set this timeout to a higher value."));
 
       Gtk_New (Label, -"Max number of connections:");
       Set_Alignment (Label, 0.0, 0.5);
@@ -1669,6 +1746,13 @@ package body GPS.Kernel.Remote is
       Set_Digits (Dialog.Max_Nb_Connected_Spin, 0);
       Attach (Dialog.Advanced_Table, Dialog.Max_Nb_Connected_Spin, 1, 2, 2, 3,
               Fill or Expand, 0);
+      Set_Tip
+        (Tips, Dialog.Max_Nb_Connected_Spin,
+         -("The maximum number of connections determines the maximum number " &
+           "of simultaneous connections GPS is allowed to perform to this " &
+           "server. In fact, if you want to compile, debug and execute at " &
+           "the same time on the machine, GPS will need more that one " &
+           "connection to do this. The default value is 3."));
 
       Gtk_New (Label, -"Debug console:");
       Set_Alignment (Label, 0.0, 0.5);
@@ -1676,6 +1760,11 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0, 10);
       Gtk_New (Dialog.Debug_Button);
       Attach (Dialog.Advanced_Table, Dialog.Debug_Button, 1, 2, 3, 4, 0, 0);
+      Set_Tip
+        (Tips, Dialog.Debug_Button,
+         -("The Debug console allow you to easily debug a remote connection." &
+           " If checked, it will open a console reporting all exchanges " &
+           "between GPS and the selected server."));
 
       --  Remote paths configuration
       Line_Nb := Line_Nb + 1;
@@ -1779,8 +1868,6 @@ package body GPS.Kernel.Remote is
       Tmp := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Tmp := Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply);
       Tmp := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Enable (Tips);
 
       Show_All (Dialog);
    end Gtk_New;
