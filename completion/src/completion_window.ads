@@ -37,10 +37,11 @@ with Gtk.Label;      use Gtk.Label;
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.List_Store; use Gtk.List_Store;
 
-with Gtk.Text_View; use Gtk.Text_View;
-with Gtk.Text_Buffer; use Gtk.Text_Buffer;
-with Gtk.Text_Iter; use Gtk.Text_Iter;
-with Gtk.Text_Mark; use Gtk.Text_Mark;
+with Gtk.Text_View;          use Gtk.Text_View;
+with Gtk.Text_Buffer;        use Gtk.Text_Buffer;
+with Gtk.Text_Iter;          use Gtk.Text_Iter;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Text_Mark;          use Gtk.Text_Mark;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 
 with Completion;    use Completion;
@@ -124,6 +125,7 @@ private
       --  The mark from which the text should be replaced
 
       Initial_Offset : Gint;
+      Initial_Line   : Gint;
       --  Offset of cursor position when the window is first shown.
 
       Info   : Information_Array_Access;
@@ -135,6 +137,9 @@ private
 
       Case_Sensitive : Boolean;
       In_Deletion    : Boolean := False;
+
+      More_Iter      : Gtk_Tree_Iter := Null_Iter;
+      --  Indicates the iter which says ("more...");
 
       Iter           : Completion_Iterator;
       --  The iter corresponding to the current completion engine, if any.
