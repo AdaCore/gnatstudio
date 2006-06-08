@@ -1401,7 +1401,9 @@ package body Builder_Module is
    is
       pragma Unreferenced (Data);
    begin
-      Load_Xref_In_Memory (Kernel);
+      if Get_Pref (Automatic_Xrefs_Load) then
+         Load_Xref_In_Memory (Kernel);
+      end if;
    end On_Compilation_Finished;
 
    -------------------------
@@ -1992,7 +1994,7 @@ package body Builder_Module is
       Show_All (Menu1);
       Show_All (Menu2);
 
-      if Get_Pref (Load_Xref_Info_On_Project_Load) then
+      if Get_Pref (Automatic_Xrefs_Load) then
          Load_Xref_In_Memory (Kernel_Handle (Kernel));
       end if;
    exception
