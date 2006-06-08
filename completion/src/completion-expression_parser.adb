@@ -179,9 +179,11 @@ package body Completion.Expression_Parser is
          if Check_Prev_Word (Offset, "with") then
             Token.Tok_Type := Tok_With;
             Push (Token);
+            Offset := Offset - 4;
          elsif Check_Prev_Word (Offset, "use") then
             Token.Tok_Type := Tok_Use;
             Push (Token);
+            Offset := Offset - 3;
          end if;
       end Push_Pckg;
 
@@ -223,8 +225,13 @@ package body Completion.Expression_Parser is
               or else Buffer (Offset - Word'Length) = ASCII.HT);
       end Check_Prev_Word;
 
+      Blank_Here, Blank_Before : Boolean := False;
+
    begin
       while Offset > 0 loop
+
+         Blank_Here := False;
+
          case Buffer (Offset) is
             when ')' =>
                Push (Token);
@@ -263,6 +270,7 @@ package body Completion.Expression_Parser is
 
             when ' ' | ASCII.HT | ASCII.CR =>
                Push (Token);
+               Blank_Here := True;
 
             when ASCII.LF =>
                Skip_Comment_Line (Offset);
@@ -279,6 +287,10 @@ package body Completion.Expression_Parser is
 
                   if Token.Token_Name_Last = 0 then
                      Token.Token_Name_Last := Offset;
+
+                     if Length (Result) = 0 and then Blank_Before then
+                        Push_Pckg (Offset);
+                     end if;
 
                      if Length (Result) > 0
                        and then Head (Result).Tok_Type = Tok_Identifier
@@ -299,9 +311,11 @@ package body Completion.Expression_Parser is
          end case;
 
          Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+         Blank_Before := Blank_Here;
       end loop;
 
       Push (Token);
+
       return Result;
    end Parse_Current_List;
 
