@@ -187,7 +187,7 @@ package body Completion.Constructs_Extractor is
 
    begin
       case Get_Construct (Proposal.Tree_Node).Category is
-         when Cat_Variable | Cat_Local_Variable | Cat_Field =>
+         when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter =>
             Get_Referenced_Entity
               (Ada_Lang,
                Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
