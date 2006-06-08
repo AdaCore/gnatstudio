@@ -57,8 +57,4 @@ package Builder_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
-   procedure Interrupt_Xrefs_Loading
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Interrupts all xrefs loading.
-
 end Builder_Module;
