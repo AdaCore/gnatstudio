@@ -117,6 +117,9 @@ package body Builder_Module is
    --  The size of the chunk of files loaded by the xrefs loader.
    --  ??? This should be configurable
 
+   Xrefs_Loading_Queue_0 : constant String := "xrefs_loading_0";
+   Xrefs_Loading_Queue_1 : constant String := "xrefs_loading_1";
+
    type Files_Callback_Data is new Callback_Data_Record with record
       Files  : File_Array_Access;
 
@@ -139,6 +142,12 @@ package body Builder_Module is
    function Is_Dynamic_Menu_Item
      (W : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
    --  Return True if W is a Dynamic menu item
+
+   function Kill_Xrefs_Queue
+     (Kernel : access Kernel_Handle_Record'Class; Queue_Name : String)
+      return Boolean;
+   --  Kills a given xrefs queue, provided that the command contained in this
+   --  queue is a xref loading command.
 
    --------------------------------
    -- Computing cross-references --
@@ -1384,6 +1393,52 @@ package body Builder_Module is
       end if;
    end On_Compilation_Finished;
 
+   ----------------------
+   -- Kill_Xrefs_Queue --
+   ----------------------
+
+   function Kill_Xrefs_Queue
+     (Kernel : access Kernel_Handle_Record'Class; Queue_Name : String)
+      return Boolean
+   is
+      use Load_Xref_Commands;
+
+      Old_Command : Scheduled_Command_Access;
+      Old_Data    : Load_Xref_Data_Access;
+   begin
+      Old_Command := Scheduled_Command_Access
+        (Head (Get_Task_Manager (Kernel), Queue_Name));
+
+      if Old_Command /= null then
+         --  If there is already something in the queue, then interrupt it.
+
+         Old_Data := Get_Data
+           (Load_Xref_Commands.Generic_Asynchronous_Command_Access
+              (Get_Command (Old_Command)));
+         Old_Data.Stop := True;
+         Set_Data (Load_Xref_Commands.Generic_Asynchronous_Command_Access
+                   (Get_Command (Old_Command)), Old_Data);
+
+         return True;
+      end if;
+
+      return False;
+   end Kill_Xrefs_Queue;
+
+   -----------------------------
+   -- Interrupt_Xrefs_Loading --
+   -----------------------------
+
+   procedure Interrupt_Xrefs_Loading
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Dummy : Boolean;
+      pragma Unreferenced (Dummy);
+   begin
+      Dummy := Kill_Xrefs_Queue (Kernel, Xrefs_Loading_Queue_0);
+      Dummy := Kill_Xrefs_Queue (Kernel, Xrefs_Loading_Queue_1);
+   end Interrupt_Xrefs_Loading;
+
    -------------------------
    -- Load_Xref_In_Memory --
    -------------------------
@@ -1397,44 +1452,20 @@ package body Builder_Module is
       Iter           : Imported_Project_Iterator :=
         Start (Get_Project (Kernel));
 
-      Queue_Name  : String := "xrefs_loading_0";
-
-      function Kill_Command (Queue_Name : String) return Boolean;
-
-      function Kill_Command (Queue_Name : String) return Boolean is
-         Old_Command : Scheduled_Command_Access;
-         Old_Data    : Load_Xref_Data_Access;
-      begin
-         Old_Command := Scheduled_Command_Access
-           (Head (Get_Task_Manager (Kernel), Queue_Name));
-
-         if Old_Command /= null then
-            --  If there is already something in the queue, then interrupt it.
-
-            Old_Data := Get_Data
-              (Load_Xref_Commands.Generic_Asynchronous_Command_Access
-                 (Get_Command (Old_Command)));
-            Old_Data.Stop := True;
-            Set_Data (Load_Xref_Commands.Generic_Asynchronous_Command_Access
-                      (Get_Command (Old_Command)), Old_Data);
-
-            return True;
-         end if;
-
-         return False;
-      end Kill_Command;
+      Queue_Name  : String := Xrefs_Loading_Queue_0;
 
       Std_Files      : File_Array_Access;
       Project_Files  : File_Array_Access;
       Total_Progress : Natural;
    begin
-      if Kill_Command (Queue_Name) then
+      if Kill_Xrefs_Queue (Kernel, Queue_Name) then
          --  If there is already something on queue 0, then kill it and load
          --  queue 1.
-         Queue_Name := "xrefs_loading_1";
+         Queue_Name := Xrefs_Loading_Queue_1;
       else
          declare
-            Dummy : constant Boolean := Kill_Command ("xrefs_loading_1");
+            Dummy : constant Boolean :=
+              Kill_Xrefs_Queue (Kernel, Xrefs_Loading_Queue_1);
             pragma Unreferenced (Dummy);
             --  Just in case there is something on queue 1
          begin
