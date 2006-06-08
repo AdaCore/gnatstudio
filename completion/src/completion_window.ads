@@ -41,6 +41,9 @@ with Gtk.Text_View; use Gtk.Text_View;
 with Gtk.Text_Buffer; use Gtk.Text_Buffer;
 with Gtk.Text_Iter; use Gtk.Text_Iter;
 with Gtk.Text_Mark; use Gtk.Text_Mark;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+
+with Completion;    use Completion;
 
 package Completion_Window is
 
@@ -76,6 +79,11 @@ package Completion_Window is
    --  to start on the given mark.
    --  Show the window.
 
+   procedure Set_Completion_Iterator
+     (Window : Completion_Window_Access;
+      Iter   : Completion_Iterator);
+   --  Sets the completion iterator for the window.
+
    procedure Select_Next (Window : Completion_Window_Access);
    --  Select the next item in the window.
 
@@ -88,11 +96,16 @@ private
 
    type String_Access is access String;
 
+   type Completion_Proposal_Access is access Completion_Proposal'Class;
+
    type Information_Record is record
       Markup  : String_Access;
       Text    : String_Access;
       Notes   : String_Access;
-      Visible : Boolean := True;
+      --  This can be null, in which case it indicates that it must be computed
+      --  from Proposal.
+      Proposal : Completion_Proposal_Access;
+      Visible  : Boolean := True;
    end record;
 
    type Information_Array is array (Positive range <>) of Information_Record;
@@ -101,6 +114,9 @@ private
    type Completion_Window_Record is new Gtk_Window_Record with record
       View  : Gtk_Tree_View;
       Model : Gtk_List_Store;
+
+      Tree_Scroll : Gtk_Scrolled_Window;
+      --  The scrolled window that contains the tree view.
 
       Text   : Gtk_Text_View;
       Buffer : Gtk_Text_Buffer;
@@ -119,6 +135,9 @@ private
 
       Case_Sensitive : Boolean;
       In_Deletion    : Boolean := False;
+
+      Iter           : Completion_Iterator;
+      --  The iter corresponding to the current completion engine, if any.
    end record;
 
 end Completion_Window;
