@@ -116,7 +116,6 @@ package body Completion.Entities_Extractor is
    is
       pragma Unreferenced (Offset);
       Type_Of         : Entity_Information := null;
-      Pointed_Type_Of : Entity_Information := null;
       Calls_Filter : Possibilities_Filter := Everything;
    begin
       if Get_Kind (Proposal.Entity).Kind = Package_Kind then
@@ -163,37 +162,43 @@ package body Completion.Entities_Extractor is
 
          if Get_Kind (Type_Of).Kind = Access_Kind then
 
-            Pointed_Type_Of := Pointed_Type (Type_Of);
-
-            if Pointed_Type_Of /= null then
-               Append
-                 (Result.List,
-                  Calls_Wrapper'
-                    (Resolver   => Get_Resolver (Proposal),
-                     Scope      => Pointed_Type_Of,
-                     Name       => new String'(Identifier),
-                     Is_Partial => Is_Partial,
-                     Filter     => Calls_Filter));
-            end if;
+            Type_Of := Pointed_Type (Type_Of);
 
             if Match (Identifier, "all", Is_Partial) then
                Append
                  (Result.List,
                   Unique_Entity_Wrapper'
                     (Resolver => Proposal.Resolver,
-                     Entity   => Pointed_Type_Of,
+                     Entity   => Type_Of,
                      Is_All   => True));
             end if;
-         else
-            Append
-              (Result.List,
-               Calls_Wrapper'
-                 (Resolver   => Get_Resolver (Proposal),
-                  Scope      => Type_Of,
-                  Name       => new String'(Identifier),
-                  Is_Partial => Is_Partial,
-                  Filter     => Calls_Filter));
+
          end if;
+
+         declare
+            Parents : constant Entity_Information_Array :=
+              Get_Parent_Types (Type_Of, True);
+         begin
+            for J in reverse Parents'Range loop
+               Append
+                 (Result.List,
+                  Calls_Wrapper'
+                    (Resolver   => Get_Resolver (Proposal),
+                     Scope      => Parents (J),
+                     Name       => new String'(Identifier),
+                     Is_Partial => Is_Partial,
+                     Filter     => Calls_Filter));
+            end loop;
+         end;
+
+         Append
+           (Result.List,
+            Calls_Wrapper'
+              (Resolver   => Get_Resolver (Proposal),
+               Scope      => Type_Of,
+               Name       => new String'(Identifier),
+               Is_Partial => Is_Partial,
+               Filter     => Calls_Filter));
       end if;
    end Get_Composition;
 
