@@ -3124,6 +3124,11 @@ highlight_category, style_category and warning_category reference the colors to 
      <description>Remove a category from the location window. This removes all associated files</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Locations.dump">
+     <param name="file">A string</param>
+     <description>Dump the contents of the Locations View to the specified file, in XML format.</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   Debugger class
     ###################################################################-->
