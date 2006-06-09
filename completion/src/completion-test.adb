@@ -104,7 +104,6 @@ procedure Completion.Test is
       end if;
 
       Word_End := Index - 1;
-      Skip_Blanks (Buffer, Word_End, -1);
       Word_Start := Word_End;
       Skip_Word (Buffer, Word_Start, -1);
       Word_Start := Word_Start + 1;
