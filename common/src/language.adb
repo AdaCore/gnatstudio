@@ -639,11 +639,11 @@ package body Language is
       end Find_Line_Start;
 
    begin
-      if Buffer = "" or else To > From + 1 then
+      if Buffer'Length <= 1 or else To > From + 1 then
          return;
       end if;
 
-      Start_Of_Line   := Find_Line_Start (Buffer, Buffer'Last);
+      Start_Of_Line   := Find_Line_Start (Buffer, Buffer'Last - 1);
       Start_Prev_Line := Find_Line_Start (Buffer, Start_Of_Line - 1);
 
       --  Compute the indentation level
