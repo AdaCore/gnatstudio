@@ -350,32 +350,39 @@ package body Completion.Constructs_Extractor is
      (Resolver   : access Construct_Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
-      Offset     : Natural;
+      Offset     : Integer;
       Filter     : Possibilities_Filter;
       Result     : in out Completion_List)
    is
-      Result_Array : constant Construct_Tree_Iterator_Array :=
-                       Get_Visible_Constructs
-                         (Resolver.Tree.all, Offset, Identifier,
-                          True, Is_Partial);
-
-      List         : Extensive_List_Pckg.List;
    begin
-      Result.Searched_Identifier := new String'(Identifier);
-
-      if (Filter and All_Visible_Entities) /= 0 then
-         for J in Result_Array'Range loop
-            Append
-              (List,
-               Construct_Completion_Proposal'
-                 (Show_Identifiers,
-                  Completion_Resolver_Access (Resolver),
-                  Result_Array (J),
-                  False));
-         end loop;
-
-         Append (Result.List, To_Extensive_List (List));
+      if Offset < 0 then
+         return;
       end if;
+
+      declare
+         Result_Array : constant Construct_Tree_Iterator_Array :=
+           Get_Visible_Constructs
+             (Resolver.Tree.all, Offset, Identifier,
+              True, Is_Partial);
+
+         List         : Extensive_List_Pckg.List;
+      begin
+         Result.Searched_Identifier := new String'(Identifier);
+
+         if (Filter and All_Visible_Entities) /= 0 then
+            for J in Result_Array'Range loop
+               Append
+                 (List,
+                  Construct_Completion_Proposal'
+                    (Show_Identifiers,
+                     Completion_Resolver_Access (Resolver),
+                     Result_Array (J),
+                     False));
+            end loop;
+
+            Append (Result.List, To_Extensive_List (List));
+         end if;
+      end;
    end Get_Possibilities;
 
    ----------
