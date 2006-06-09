@@ -80,7 +80,7 @@ package Completion is
      (Resolver   : access Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
-      Offset     : Natural;
+      Offset     : Integer;
       Filter     : Possibilities_Filter;
       Result     : in out Completion_List) is abstract;
    --  Return the possible completion for the given identifier, using the
@@ -91,6 +91,9 @@ package Completion is
    --  problems, and return only the visible possibilities. Offset should be
    --  the offset of the place from where we try to find the corresponding
    --  identifier, and visiblity will be calculated for this offset.
+   --  If offset is lower than zero, it means that the completion is done from
+   --  the very begining of the file, and therefore nothing from the file
+   --  should be extracted.
 
    procedure Free (Resolver : in out Completion_Resolver) is abstract;
    --  Free the data of a Resolver.
@@ -129,6 +132,14 @@ package Completion is
    type Completion_Proposal is abstract tagged private;
    --  This is the type of a proposal.
 
+   type File_Location (Name_Length : Natural) is record
+      File_Path : String (1 .. Name_Length);
+      Line      : Natural;
+      Column    : Basic_Types.Visible_Column_Type;
+   end record;
+
+   Null_File_Location : constant File_Location;
+
    function Get_Resolver (Proposal : Completion_Proposal)
      return Completion_Resolver_Access;
    --  Returns the resolver that have been used to create this proposal.
@@ -162,6 +173,10 @@ package Completion is
    function Get_Documentation (Proposal : Completion_Proposal)
       return UTF8_String;
    --  Return the documentation corresponding to the proposal.
+
+   function Get_Location (Proposal : Completion_Proposal) return File_Location;
+   --  Return the location of the object pointed by the given proposal, null
+   --  if none. By default, return Null_Location.
 
    function Get_Category (Proposal : Completion_Proposal)
      return Language_Category is abstract;
@@ -240,6 +255,8 @@ private
       Mode             : Proposal_Mode := Show_Identifiers;
       Resolver         : Completion_Resolver_Access;
    end record;
+
+   Null_File_Location : constant File_Location := (0, "", 0, 0);
 
    procedure Free_Proposal (Proposal : in out Completion_Proposal'Class);
    --  Used to instantiate the generic list (this is not actually doing
