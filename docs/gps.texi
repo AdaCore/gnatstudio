@@ -2167,7 +2167,7 @@ the current source editor, at the current cursor location.
 
 @item Create Bookmark
 Creates a new Bookmark at cursor position. For more information,
-@xref{Bookmarks}
+@xref{Bookmarks}.
 
 @item Comment Lines
 @cindex comment
@@ -2177,6 +2177,17 @@ language syntax.
 @item Uncomment Lines
 @cindex uncomment
 Remove the comment delimiters from the current selection or line.
+
+@item Smart Completion
+@cindex smart completion
+Complete the identifier prefix under the cursor, and list the results in a
+pop-up list. This command can take advantage of the cross-reference information
+database and offer entity completions from the entire project, along with
+documentation extracted from comments surrounding declarations. To take
+advantage of this features, the cross-reference information must be loaded in
+memory. This can be done manually using the menu
+@code{Build->Load xref info in memory}, or this can be done automatically on
+GPS startup.
 
 @item Complete Identifier
 @cindex complete identifier
@@ -2905,6 +2916,9 @@ A special case has been put in place so that both @file{file.h} and
 case where an entity is defined in @file{foo.h} and implemented in
 @file{foo.cpp}, nothing special needs to be done. The specific file extensions
 depend on the naming scheme specified in your project.
+
+A preference can be set to have GPS load the cross-information automatically
+on startup, @xref{The Preferences Dialog}.
 
 @c --------------------------------------------------------------------
 @node The Navigate Menu
