@@ -2189,6 +2189,7 @@ memory. This can be done manually using the menu
 @code{Build->Load xref info in memory}, or this can be done automatically on
 GPS startup via a preference.
 @c ??? xref to pref
+@c ??? missing screenshot
 
 @item Complete Identifier
 @cindex complete identifier
