@@ -412,7 +412,13 @@ package body Completion.Entities_Extractor is
       end if;
 
       if (It.Filter and All_Accessible_Units) /= 0 then
-         return Get_Kind (Entity).Kind = Package_Kind
+         return
+           (Get_Kind (Entity).Kind = Package_Kind
+            or else
+              (Caller = null
+               and then
+                 (Get_Kind (Entity).Kind = Procedure_Kind
+                 or else Get_Kind (Entity).Kind = Function_Or_Operator)))
            and then
              (It.Parent_Entity = null
               or else It.Parent_Entity = Get_Parent_Package (Entity, False)
