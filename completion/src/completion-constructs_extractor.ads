@@ -35,7 +35,7 @@ package Completion.Constructs_Extractor is
      (Resolver   : access Construct_Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
-      Offset     : Natural;
+      Offset     : Integer;
       Filter     : Possibilities_Filter;
       Result     : in out Completion_List);
    --  See inherited documentation
