@@ -402,7 +402,7 @@ package body Completion.Entities_Extractor is
 
       Caller := Get_Caller (Declaration_As_Reference (Entity));
 
-      if Caller /= null and then Get_Kind (Caller).Kind /= Package_Kind then
+      if Caller /= null and then Get_Kind (Caller).Kind = Record_Kind then
          --  Do no add fields
          return False;
       end if;
