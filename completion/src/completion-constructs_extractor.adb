@@ -119,6 +119,8 @@ package body Completion.Constructs_Extractor is
          end if;
       end Add_To_List;
 
+      List : Extensive_List_Pckg.List;
+
    begin
       case Get_Construct (Proposal.Tree_Node).Category is
          when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter
@@ -155,12 +157,19 @@ package body Completion.Constructs_Extractor is
                Free (List);
             end;
 
+            if Is_Access
+              (Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
+               Get_Construct (Proposal.Tree_Node).all)
+              and then not Proposal.Is_All
+            then
+               Add_To_List (List, Proposal.Tree_Node, True, "all");
+            end if;
+
             if Get_Construct (Proposal.Tree_Node).Category
                in Cat_Class .. Cat_Subtype
             then
                declare
                   Child_Iterator : Construct_Tree_Iterator;
-                  List           : Extensive_List_Pckg.List;
                   Type_Iterator  : constant Construct_Tree_Iterator
                     := Proposal.Tree_Node;
                begin
@@ -173,18 +182,10 @@ package body Completion.Constructs_Extractor is
                      Child_Iterator := Next
                        (Tree.all, Child_Iterator, Jump_Over);
                   end loop;
-
-                  if Is_Access
-                    (Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
-                     Get_Construct (Type_Iterator).all)
-                    and then not Proposal.Is_All
-                  then
-                     Add_To_List (List, Proposal.Tree_Node, True, "all");
-                  end if;
-
-                  Append (Result.List, To_Extensive_List (List));
                end;
             end if;
+
+            Append (Result.List, To_Extensive_List (List));
 
          when Cat_Package =>
             declare
@@ -193,7 +194,6 @@ package body Completion.Constructs_Extractor is
                Child_Iterator  : Construct_Tree_Iterator;
                Spec_Visibility : Boolean;
                Body_Visibility : Boolean;
-               List            : Extensive_List_Pckg.List;
             begin
                Spec_It := Get_Spec (Tree.all, Proposal.Tree_Node);
                Body_It := Get_First_Body (Tree.all, Proposal.Tree_Node);
