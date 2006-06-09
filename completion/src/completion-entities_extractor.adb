@@ -115,7 +115,8 @@ package body Completion.Entities_Extractor is
       Result     : in out Completion_List)
    is
       pragma Unreferenced (Offset);
-      Type_Of      : Entity_Information := null;
+      Type_Of         : Entity_Information := null;
+      Pointed_Type_Of : Entity_Information := null;
       Calls_Filter : Possibilities_Filter := Everything;
    begin
       if Get_Kind (Proposal.Entity).Kind = Package_Kind then
@@ -161,21 +162,26 @@ package body Completion.Entities_Extractor is
          end if;
 
          if Get_Kind (Type_Of).Kind = Access_Kind then
-            Append
-              (Result.List,
-               Calls_Wrapper'
-                 (Resolver   => Get_Resolver (Proposal),
-                  Scope      => Pointed_Type (Type_Of),
-                  Name       => new String'(Identifier),
-                  Is_Partial => Is_Partial,
-                  Filter     => Calls_Filter));
+
+            Pointed_Type_Of := Pointed_Type (Type_Of);
+
+            if Pointed_Type_Of /= null then
+               Append
+                 (Result.List,
+                  Calls_Wrapper'
+                    (Resolver   => Get_Resolver (Proposal),
+                     Scope      => Pointed_Type_Of,
+                     Name       => new String'(Identifier),
+                     Is_Partial => Is_Partial,
+                     Filter     => Calls_Filter));
+            end if;
 
             if Match (Identifier, "all", Is_Partial) then
                Append
                  (Result.List,
                   Unique_Entity_Wrapper'
                     (Resolver => Proposal.Resolver,
-                     Entity   => Pointed_Type (Type_Of),
+                     Entity   => Pointed_Type_Of,
                      Is_All   => True));
             end if;
          else
@@ -373,6 +379,7 @@ package body Completion.Entities_Extractor is
 
    function Is_Valid (It : Entity_Iterator_Wrapper) return Boolean is
       Entity : Entity_Information;
+      Caller : Entity_Information;
    begin
       if At_End (It) then
          return True;
@@ -393,6 +400,13 @@ package body Completion.Entities_Extractor is
          return False;
       end if;
 
+      Caller := Get_Caller (Declaration_As_Reference (Entity));
+
+      if Caller /= null and then Get_Kind (Caller).Kind /= Package_Kind then
+         --  Do no add fields
+         return False;
+      end if;
+
       if (It.Filter and All_Visible_Entities) /= 0 then
          return True;
       end if;
@@ -402,8 +416,7 @@ package body Completion.Entities_Extractor is
            and then
              (It.Parent_Entity = null
               or else It.Parent_Entity = Get_Parent_Package (Entity, False)
-              or else It.Parent_Entity = Get_Caller
-                (Declaration_As_Reference (Entity)));
+              or else It.Parent_Entity = Caller);
 
       end if;
 
