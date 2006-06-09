@@ -30,8 +30,9 @@
           <choice default="true" >gnatmake</choice>
           <choice>powerpc-wrs-vxworks-gnatmake</choice>
           <choice>powerpc-wrs-vxworksae-gnatmake</choice>
+          <choice>powerpc-wrs-vxworks6-gnatmake</choice>
           <choice>powerpc-elf-gnatmake</choice>
-          <choice>i386-wrs-vxworks-gnatmake</choice>
+          <choice>i586-wrs-vxworks-gnatmake</choice>
           <choice>m68k-wrs-vxworks-gnatmake</choice>
           <choice>mips-wrs-vxworks-gnatmake</choice>
           <choice>sparc-wrs-vxworks-gnatmake</choice>
@@ -60,8 +61,9 @@
        <choice default="true" >gnatls</choice>
        <choice>powerpc-wrs-vxworks-gnatls</choice>
        <choice>powerpc-wrs-vxworksae-gnatls</choice>
+       <choice>powerpc-wrs-vxworks6-gnatls</choice>
        <choice>powerpc-elf-gnatls</choice>
-       <choice>i386-wrs-vxworks-gnatls</choice>
+       <choice>i586-wrs-vxworks-gnatls</choice>
        <choice>m68k-wrs-vxworks-gnatls</choice>
        <choice>mips-wrs-vxworks-gnatls</choice>
        <choice>sparc-wrs-vxworks-gnatls</choice>
@@ -85,8 +87,9 @@
        <choice default="true" >gnat</choice>
        <choice>powerpc-wrs-vxworks-gnat</choice>
        <choice>powerpc-wrs-vxworksae-gnat</choice>
+       <choice>powerpc-wrs-vxworks6-gnat</choice>
        <choice>powerpc-elf-gnat</choice>
-       <choice>i386-wrs-vxworks-gnat</choice>
+       <choice>i586-wrs-vxworks-gnat</choice>
        <choice>m68k-wrs-vxworks-gnat</choice>
        <choice>mips-wrs-vxworks-gnat</choice>
        <choice>sparc-wrs-vxworks-gnat</choice>
@@ -110,8 +113,9 @@
        <choice default="true" >gdb</choice>
        <choice>powerpc-wrs-vxworks-gdb</choice>
        <choice>powerpc-wrs-vxworksae-gdb</choice>
+       <choice>powerpc-wrs-vxworks6-gdb</choice>
        <choice>powerpc-elf-gdb</choice>
-       <choice>i386-wrs-vxworks-gdb</choice>
+       <choice>i586-wrs-vxworks-gdb</choice>
        <choice>m68k-wrs-vxworks-gdb</choice>
        <choice>mips-wrs-vxworks-gdb</choice>
        <choice>sparc-wrs-vxworks-gdb</choice>
