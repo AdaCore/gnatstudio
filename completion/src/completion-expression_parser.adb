@@ -178,12 +178,16 @@ package body Completion.Expression_Parser is
       begin
          if Check_Prev_Word (Offset, "with") then
             Token.Tok_Type := Tok_With;
-            Push (Token);
+            Token.Token_Name_Last := Offset;
             Offset := Offset - 4;
+            Token.Token_Name_First := Offset;
+            Push (Token);
          elsif Check_Prev_Word (Offset, "use") then
             Token.Tok_Type := Tok_Use;
-            Push (Token);
+            Token.Token_Name_Last := Offset;
             Offset := Offset - 3;
+            Token.Token_Name_First := Offset;
+            Push (Token);
          end if;
       end Push_Pckg;
 
