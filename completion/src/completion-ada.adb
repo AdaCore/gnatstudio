@@ -27,8 +27,9 @@ package body Completion.Ada is
    ---------------------------------
 
    function Get_Initial_Completion_List
-     (Manager      : Ada_Completion_Manager;
-      Start_Offset : Natural) return Completion_List
+     (Manager        : Ada_Completion_Manager;
+      Start_Offset   : Natural;
+      End_Is_Partial : Boolean := True) return Completion_List
    is
       use Token_List;
 
@@ -73,7 +74,8 @@ package body Completion.Ada is
                      Get_Possibilities
                        (Data (It),
                         Id,
-                        Next (Token) = Token_List.Null_Node,
+                        Next (Token) = Token_List.Null_Node
+                          and then End_Is_Partial,
                         Data (Token).Token_Name_First - 1,
                         Filter,
                         Tmp);
@@ -88,7 +90,8 @@ package body Completion.Ada is
                  (Get_Proposal (Previous_It),
                   Get_Name (Get_Buffer (Manager).all, Data (Token)),
                   Data (Token).Token_Name_First - 1,
-                  Next (Token) = Token_List.Null_Node,
+                  Next (Token) = Token_List.Null_Node
+                     and then End_Is_Partial,
                   Tmp);
 
                Tmp.Searched_Identifier := new String'
