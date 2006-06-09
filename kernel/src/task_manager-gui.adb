@@ -737,7 +737,11 @@ package body Task_Manager.GUI is
 
          Name_String := new String'(Name (Command));
 
-         Fraction := Gdouble (Progress.Current) / Gdouble (Progress.Total);
+         if Progress.Total = 0 then
+            Fraction := 0.0;
+         else
+            Fraction := Gdouble (Progress.Current) / Gdouble (Progress.Total);
+         end if;
 
          if Manager.Queues (Index).Total > 1 then
             Fraction := (Fraction + Gdouble (Manager.Queues (Index).Done))
