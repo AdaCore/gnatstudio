@@ -22,6 +22,17 @@ F503-004 Block information on record/union/class (2006-05-05)
 
   Keywords: Editor, Block
 
+F424-012 Smart Ada code completion (2006-06-09)
+
+  GPS can now complete Ada identifiers using the entities database. Possible
+  completions include simple identifier completion, and completion after '.'
+  in many cases.
+
+  The completion engine extracts documentation from comments surrounding
+  declarations, and displays them interactively.
+
+  Keywords: Editor, Completion
+
 F409-010 Ada auto block completion (2006-05-02)
 
   A new action named Block_Completion has been implemented. This action will
