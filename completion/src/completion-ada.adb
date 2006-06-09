@@ -187,7 +187,7 @@ package body Completion.Ada is
                            True,
                            Data (Token).Token_Name_First - 1,
                            All_Accessible_Units,
-                           Tmp);
+                           Result);
 
                         It := Next (It);
                      end loop;
@@ -207,8 +207,10 @@ package body Completion.Ada is
       Completing_Expression := Parse_Current_List
         (Get_Buffer (Manager).all, Start_Offset);
 
-      Analyze_Token
-        (First (Completing_Expression), Null_Completion_Iterator, Result);
+      if First (Completing_Expression) /= Token_List.Null_Node then
+         Analyze_Token
+           (First (Completing_Expression), Null_Completion_Iterator, Result);
+      end if;
 
       return Result;
    end Get_Initial_Completion_List;
