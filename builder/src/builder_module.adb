@@ -113,7 +113,7 @@ package body Builder_Module is
    Syntax_Check   : aliased String := "-gnats";
    --  ??? Shouldn't have hard-coded options.
 
-   Sources_Load_Chunk : constant Integer := 10;
+   Sources_Load_Chunk : constant Integer := 1;
    --  The size of the chunk of files loaded by the xrefs loader.
    --  ??? This should be configurable
 
@@ -1516,7 +1516,7 @@ package body Builder_Module is
       Launch_Background_Command
         (Kernel,
          Command_Access (C),
-         False,
+         True,
          True,
          Queue_Name,
          Block_Exit => False);
