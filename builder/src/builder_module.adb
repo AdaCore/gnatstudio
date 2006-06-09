@@ -113,7 +113,7 @@ package body Builder_Module is
    Syntax_Check   : aliased String := "-gnats";
    --  ??? Shouldn't have hard-coded options.
 
-   Sources_Load_Chunk : constant Integer := 20;
+   Sources_Load_Chunk : constant Integer := 10;
    --  The size of the chunk of files loaded by the xrefs loader.
    --  ??? This should be configurable
 
