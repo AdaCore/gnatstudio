@@ -176,6 +176,16 @@ package body Outline_View is
       Data   : access Hooks_Data'Class);
    --  Called when a file has been saved
 
+   procedure File_Closed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when a file has been closed
+
+   procedure File_Edited
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when a file has been edited
+
    ----------------------
    -- Location_Changed --
    ----------------------
@@ -630,19 +640,22 @@ package body Outline_View is
    -------------
 
    procedure Refresh (View : access Gtk_Widget_Record'Class) is
-      Outline : constant Outline_View_Access := Outline_View_Access (View);
-      Model      : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (Outline.Tree));
-      Iter, Root : Gtk_Tree_Iter := Null_Iter;
-      Lang       : Language_Access;
-      Handler    : LI_Handler;
-      Languages  : constant Language_Handler :=
-        Language_Handler (Get_Language_Handler (Outline.Kernel));
-      Constructs : Construct_List;
+      Outline       : constant Outline_View_Access :=
+                        Outline_View_Access (View);
+      Model         : constant Gtk_Tree_Store :=
+                        Gtk_Tree_Store (Get_Model (Outline.Tree));
+      Iter, Root    : Gtk_Tree_Iter := Null_Iter;
+      Lang          : Language_Access;
+      Handler       : LI_Handler;
+      Languages     : constant Language_Handler :=
+                        Language_Handler
+                          (Get_Language_Handler (Outline.Kernel));
+      Constructs    : Construct_List;
       Show_Profiles : constant Boolean :=
-        Get_Pref (Outline_View_Profiles);
-      Sort_Column : constant Gint := Freeze_Sort (Model);
-      Args : Argument_List (1 .. 4);
+                        Get_Pref (Outline_View_Profiles);
+      Sort_Column   : constant Gint := Freeze_Sort (Model);
+      Args          : Argument_List (1 .. 4);
+
    begin
       Push_State (Outline.Kernel, Busy);
       Clear (Outline);
@@ -766,7 +779,15 @@ package body Outline_View is
                    Watch => GObject (Outline));
          Add_Hook (Kernel, File_Saved_Hook,
                    Wrapper (File_Saved'Access),
-                   Name => "outline.file_saved",
+                   Name  => "outline.file_saved",
+                   Watch => GObject (Outline));
+         Add_Hook (Kernel, File_Closed_Hook,
+                   Wrapper (File_Closed'Access),
+                   Name  => "outline.file_closed",
+                   Watch => GObject (Outline));
+         Add_Hook (Kernel, File_Edited_Hook,
+                   Wrapper (File_Edited'Access),
+                   Name  => "outline.file_edited",
                    Watch => GObject (Outline));
       end if;
 
@@ -796,6 +817,58 @@ package body Outline_View is
          end if;
       end if;
    end File_Saved;
+
+   -----------------
+   -- File_Closed --
+   -----------------
+
+   procedure File_Closed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Outline : Outline_View_Access;
+      Child   : MDI_Child;
+   begin
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Outline_View_Record'Tag);
+
+      if Child /= null then
+         Outline := Outline_View_Access (Get_Widget (Child));
+
+         if Outline.File = D.File then
+            Outline.File := VFS.No_File;
+            Refresh (Outline);
+         end if;
+      end if;
+   end File_Closed;
+
+   -----------------
+   -- File_Edited --
+   -----------------
+
+   procedure File_Edited
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Outline : Outline_View_Access;
+      Child   : MDI_Child;
+   begin
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Outline_View_Record'Tag);
+
+      if Child /= null then
+         Outline := Outline_View_Access (Get_Widget (Child));
+
+         if Outline.File = D.File then
+            Refresh (Outline);
+         elsif Outline.File = VFS.No_File then
+            Outline.File := D.File;
+            Refresh (Outline);
+         end if;
+      end if;
+   end File_Edited;
 
    ------------------------
    -- On_Context_Changed --
