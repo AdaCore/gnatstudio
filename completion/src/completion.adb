@@ -184,6 +184,17 @@ package body Completion is
       return "";
    end Get_Documentation;
 
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location (Proposal : Completion_Proposal) return File_Location
+   is
+      pragma Unreferenced (Proposal);
+   begin
+      return Null_File_Location;
+   end Get_Location;
+
    -----------------
    -- Get_Manager --
    ------------------
