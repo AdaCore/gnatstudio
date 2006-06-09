@@ -24,12 +24,12 @@ with Gtk.Button;        use Gtk.Button;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Box;           use Gtk.Box;
+with Gtk.Expander;
 with Gtk.Label;         use Gtk.Label;
 with Gtk.Check_Button;  use Gtk.Check_Button;
 with Gtk.Table;         use Gtk.Table;
 with Gtk.GEntry;        use Gtk.GEntry;
 with Gtk.Combo;         use Gtk.Combo;
-with Collapsing_Pane;   use Collapsing_Pane;
 with Gdk.Pixbuf;
 with GNAT.OS_Lib;
 
@@ -138,7 +138,6 @@ private
       Pattern_Entry       : Gtk_Entry;
       Buttons_Table       : Gtk_Table;
       Options_Frame       : Gtk_Box;
-      Options_Vbox        : Gtk_Table;
       Select_Editor_Check : Gtk_Check_Button;
       Case_Check          : Gtk_Check_Button;
       Whole_Word_Check    : Gtk_Check_Button;
@@ -156,7 +155,7 @@ private
       Replace_Only_Button    : Gtk.Button.Gtk_Button;
       Continue               : Boolean := True;
       Extra_Information      : Gtk.Widget.Gtk_Widget;
-      Options_Box            : Collapsing_Pane.Collapsing_Pane;
+      Options_Box            : Gtk.Expander.Gtk_Expander;
       Search_Idle_Handler    : Gtk.Main.Idle_Handler_Id := 0;
       Last_Search_Context    : Find_Utils.Search_Context_Access;
       Find_Next              : Boolean := False;
