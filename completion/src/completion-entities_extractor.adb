@@ -62,8 +62,7 @@ package body Completion.Entities_Extractor is
    -----------------------
 
    function Get_Documentation (Proposal : Entity_Completion_Proposal)
-      return UTF8_String
-   is
+      return UTF8_String is
    begin
       return Get_Documentation
         (Lang_Handler              => Entity_Completion_Resolver
@@ -71,6 +70,26 @@ package body Completion.Entities_Extractor is
          Entity                    => Proposal.Entity,
          Declaration_File_Contents => "");
    end Get_Documentation;
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location (Proposal : Entity_Completion_Proposal)
+      return Completion.File_Location
+   is
+      Location : constant Entities.File_Location :=
+        Get_Location (Declaration_As_Reference (Proposal.Entity));
+      Name     : constant String :=
+        Full_Name (Get_Filename (Location.File)).all;
+      Result   : Completion.File_Location (Name'Length);
+   begin
+      Result.File_Path := Name;
+      Result.Line      := Location.Line;
+      Result.Column    := Location.Column;
+
+      return Result;
+   end Get_Location;
 
    ------------------
    -- Get_Category --
@@ -245,7 +264,7 @@ package body Completion.Entities_Extractor is
      (Resolver   : access Entity_Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
-      Offset     : Natural;
+      Offset     : Integer;
       Filter     : Possibilities_Filter;
       Result     : in out Completion_List)
    is

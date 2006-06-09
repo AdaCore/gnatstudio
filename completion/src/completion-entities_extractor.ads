@@ -43,7 +43,7 @@ package Completion.Entities_Extractor is
      (Resolver   : access Entity_Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
-      Offset     : Natural;
+      Offset     : Integer;
       Filter     : Possibilities_Filter;
       Result     : in out Completion_List);
    --  See inherited documentation
@@ -74,6 +74,10 @@ private
 
    function Get_Documentation (Proposal : Entity_Completion_Proposal)
       return UTF8_String;
+   --  See inherited documentation
+
+   function Get_Location (Proposal : Entity_Completion_Proposal)
+      return Completion.File_Location;
    --  See inherited documentation
 
    function Get_Category (Proposal : Entity_Completion_Proposal)
