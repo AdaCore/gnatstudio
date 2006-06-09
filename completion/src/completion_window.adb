@@ -1017,7 +1017,14 @@ package body Completion_Window is
             end if;
          end if;
 
-         Select_Iter (Sel, Iter);
+         --  Iter can be null here if there is an exception returned by the
+         --  completion engine, when expanding the completions list, for
+         --  instance.
+         --  Add protection against this, since calling Select_Iter with an
+         --  empty iter can cause a storage_error.
+         if Iter /= Null_Iter then
+            Select_Iter (Sel, Iter);
+         end if;
       end if;
    end Select_Next;
 
