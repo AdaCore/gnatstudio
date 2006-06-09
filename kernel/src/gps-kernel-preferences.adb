@@ -882,7 +882,7 @@ package body GPS.Kernel.Preferences is
       File_Pattern_Index := Param_Spec_Int (Gnew_Int
         (Name    => "Messages-File-Regexp-Index",
          Minimum => 1,
-         Maximum => 9,
+         Maximum => 99,
          Default => 1,
          Blurb   => -"Index of filename in the pattern",
          Nick    => -"File index"));
@@ -892,7 +892,7 @@ package body GPS.Kernel.Preferences is
       Line_Pattern_Index := Param_Spec_Int (Gnew_Int
         (Name    => "Messages-Line-Regexp-Index",
          Minimum => 1,
-         Maximum => 9,
+         Maximum => 99,
          Default => 2,
          Blurb   => -"Index of line number in the pattern",
          Nick    => -"Line index"));
@@ -902,7 +902,7 @@ package body GPS.Kernel.Preferences is
       Column_Pattern_Index := Param_Spec_Int (Gnew_Int
         (Name    => "Messages-Column-Regexp-Index",
          Minimum => 0,
-         Maximum => 9,
+         Maximum => 99,
          Default => 4,
          Blurb   => -"Index of column number in the pattern, 0 if none",
          Nick    => -"Column index"));
@@ -912,7 +912,7 @@ package body GPS.Kernel.Preferences is
       Message_Pattern_Index := Param_Spec_Int (Gnew_Int
         (Name    => "Messages-Message-Regexp-Index",
          Minimum => 0,
-         Maximum => 9,
+         Maximum => 99,
          Default => 5,
          Blurb   => -"Index of message in the pattern, 0 if none",
          Nick    => -"Message index"));
@@ -922,7 +922,7 @@ package body GPS.Kernel.Preferences is
       Warning_Pattern_Index := Param_Spec_Int (Gnew_Int
         (Name    => "Messages-Warning-Regexp-Index",
          Minimum => 0,
-         Maximum => 9,
+         Maximum => 99,
          Default => 6,
          Blurb   => -"Index of warning indication in the pattern, 0 if none",
          Nick    => -"Warning index"));
@@ -932,12 +932,57 @@ package body GPS.Kernel.Preferences is
       Style_Pattern_Index := Param_Spec_Int (Gnew_Int
         (Name    => "Messages-Style-Regexp-Index",
          Minimum => 0,
-         Maximum => 9,
+         Maximum => 99,
          Default => 7,
          Blurb   => -"Index of style indication in the pattern, 0 if none",
          Nick    => -"Style index"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Style_Pattern_Index), -"Messages");
+
+      Secondary_File_Pattern := Param_Spec_String
+        (Gnew_String
+           (Name  => "Messages-Secondary-File-Regpat",
+            Nick  => -"Secondary File pattern",
+            Blurb =>
+            -"Pattern used to detect secondary file locations in messages",
+            Default =>
+              "([^: ]+):(\d+)(:(\d+):)?"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Secondary_File_Pattern), -"Messages");
+
+      Secondary_File_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-Secondary-File-Regexp-Index",
+         Minimum => 1,
+         Maximum => 99,
+         Default => 1,
+         Blurb   => -"Index of secondary filename in the pattern",
+         Nick    => -"Secondary File index"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Secondary_File_Pattern_Index),
+         -"Messages");
+
+      Secondary_Line_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-Secondary-Line-Regexp-Index",
+         Minimum => 1,
+         Maximum => 99,
+         Default => 2,
+         Blurb   => -"Index of secondary location line number in the pattern",
+         Nick    => -"Secondary Line index"));
+      Register_Property
+        (Kernel.Preferences,
+         Param_Spec (Secondary_Line_Pattern_Index), -"Messages");
+
+      Secondary_Column_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-Secondary-Column-Regexp-Index",
+         Minimum => 0,
+         Maximum => 99,
+         Default => 3,
+         Blurb   =>
+         -"Index of secondary column number in the pattern, 0 if none",
+         Nick    => -"Secondary Column index"));
+      Register_Property
+        (Kernel.Preferences,
+         Param_Spec (Secondary_Column_Pattern_Index), -"Messages");
 
       -- Project Editor --
 
