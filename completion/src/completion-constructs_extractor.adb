@@ -93,11 +93,6 @@ package body Completion.Constructs_Extractor is
          Is_All    : Boolean := False;
          Name      : String := "");
 
-      procedure Get_Composition_Of_Type
-        (Type_Iterator : Construct_Tree_Iterator;
-         Result        : in out Completion_List;
-         Recursive     : Boolean := True);
-
       procedure Add_To_List
         (List      : in out Extensive_List_Pckg.List;
          Tree_Node : Construct_Tree_Iterator;
@@ -124,70 +119,11 @@ package body Completion.Constructs_Extractor is
          end if;
       end Add_To_List;
 
-      -----------------------------
-      -- Get_Composition_Of_Type --
-      -----------------------------
-
-      procedure Get_Composition_Of_Type
-        (Type_Iterator : Construct_Tree_Iterator;
-         Result        : in out Completion_List;
-         Recursive     : Boolean := True)
-      is
-         Child_Iterator : Construct_Tree_Iterator;
-         List           : Extensive_List_Pckg.List;
-      begin
-         Get_Referenced_Entity
-           (Ada_Lang,
-            Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
-            Get_Construct (Type_Iterator).all,
-            Parent_Sloc_Start,
-            Parent_Sloc_End,
-            Parent_Found);
-
-         if Recursive and then Parent_Found then
-            declare
-               Parent_Name : constant String :=
-                 Get_Buffer (Get_Resolver (Proposal).Manager.all).all
-                 (Parent_Sloc_Start.Index .. Parent_Sloc_End.Index);
-
-               Parents : constant Construct_Tree_Iterator_Array :=
-                           Get_Visible_Constructs
-                             (Tree.all, Type_Iterator, Parent_Name);
-            begin
-               if Parents'Length >= 1 then
-                  Get_Composition_Of_Type
-                    (Parents (1),
-                     Result,
-                     not Is_Access
-                         (Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
-                          Get_Construct (Type_Iterator).all));
-               end if;
-            end;
-         end if;
-
-         Child_Iterator := Next (Tree.all, Type_Iterator, Jump_Into);
-
-         while
-           Get_Parent_Scope (Tree.all, Child_Iterator) = Type_Iterator
-         loop
-            Add_To_List (List, Child_Iterator, False);
-            Child_Iterator := Next (Tree.all, Child_Iterator, Jump_Over);
-         end loop;
-
-         if Is_Access
-           (Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
-            Get_Construct (Type_Iterator).all)
-           and then not Proposal.Is_All
-         then
-            Add_To_List (List, Proposal.Tree_Node, True, "all");
-         end if;
-
-         Append (Result.List, To_Extensive_List (List));
-      end Get_Composition_Of_Type;
-
    begin
       case Get_Construct (Proposal.Tree_Node).Category is
-         when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter =>
+         when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter
+            | Cat_Class .. Cat_Subtype =>
+
             Get_Referenced_Entity
               (Ada_Lang,
                Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
@@ -197,60 +133,58 @@ package body Completion.Constructs_Extractor is
                Parent_Found);
 
             declare
-               Id : constant Composite_Identifier := To_Composite_Identifier
-                 (Get_Buffer (Get_Resolver (Proposal).Manager.all).all
-                    (Parent_Sloc_Start.Index .. Parent_Sloc_End.Index));
-               Type_Iterator  : Construct_Tree_Iterator;
+               List : Completion_List := Get_Initial_Completion_List
+                 (Get_Resolver (Proposal).Manager.all,
+                  Parent_Sloc_End.Index,
+                  False);
 
-               Visible_Types  : constant Construct_Tree_Iterator_Array :=
-                 Get_Visible_Constructs
-                   (Tree.all,
-                    Get_Construct (Proposal.Tree_Node).Sloc_Start.Index, Id);
+               It : Completion_Iterator := First (List);
+
             begin
-               if Visible_Types'Length >= 1 then
-                  Type_Iterator := Visible_Types (1);
+               while not At_End (It) loop
+                  Get_Composition
+                    (Get_Proposal (It),
+                     Identifier,
+                     1,
+                     Is_Partial,
+                     Result);
 
-                  Get_Composition_Of_Type (Type_Iterator, Result);
+                  Next (It);
+               end loop;
 
-                  return;
-               else
-                  --  If type is not found in the current file, then we
-                  --  have to look elsewhere
-
-                  declare
-                     Resolver    : constant Completion_Resolver_Access :=
-                                     Next (Proposal.Resolver);
-                     Completions : Completion_List;
-                     It          : Completion_Iterator;
-                  begin
-                     if Resolver /= null then
-                        Get_Possibilities
-                          (Next (Proposal.Resolver),
-                           To_String (Id),
-                           False,
-                           Get_Construct (Proposal.Tree_Node).
-                             Sloc_Start.Index,
-                           All_Visible_Entities,
-                           Completions);
-
-                        It := First (Completions);
-
-                        while not At_End (It) loop
-                           Get_Composition
-                             (Get_Proposal (It),
-                              Identifier,
-                              1,
-                              Is_Partial,
-                              Result);
-
-                           Next (It);
-                        end loop;
-
-                        return;
-                     end if;
-                  end;
-               end if;
+               Free (List);
             end;
+
+            if Get_Construct (Proposal.Tree_Node).Category
+               in Cat_Class .. Cat_Subtype
+            then
+               declare
+                  Child_Iterator : Construct_Tree_Iterator;
+                  List           : Extensive_List_Pckg.List;
+                  Type_Iterator  : constant Construct_Tree_Iterator
+                    := Proposal.Tree_Node;
+               begin
+                  Child_Iterator := Next (Tree.all, Type_Iterator, Jump_Into);
+
+                  while
+                    Get_Parent_Scope (Tree.all, Child_Iterator) = Type_Iterator
+                  loop
+                     Add_To_List (List, Child_Iterator, False);
+                     Child_Iterator := Next
+                       (Tree.all, Child_Iterator, Jump_Over);
+                  end loop;
+
+                  if Is_Access
+                    (Get_Buffer (Get_Resolver (Proposal).Manager.all).all,
+                     Get_Construct (Type_Iterator).all)
+                    and then not Proposal.Is_All
+                  then
+                     Add_To_List (List, Proposal.Tree_Node, True, "all");
+                  end if;
+
+                  Append (Result.List, To_Extensive_List (List));
+               end;
+            end if;
 
          when Cat_Package =>
             declare
@@ -315,6 +249,7 @@ package body Completion.Constructs_Extractor is
 
                return;
             end;
+
          when others =>
             null;
       end case;
