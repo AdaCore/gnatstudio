@@ -2183,11 +2183,12 @@ Remove the comment delimiters from the current selection or line.
 Complete the identifier prefix under the cursor, and list the results in a
 pop-up list. This command can take advantage of the cross-reference information
 database and offer entity completions from the entire project, along with
-documentation extracted from comments surrounding declarations. To take
-advantage of this features, the cross-reference information must be loaded in
+documentation extracted from comments surrounding declarations. To take full
+advantage of this feature, the cross-reference information must be loaded in
 memory. This can be done manually using the menu
 @code{Build->Load xref info in memory}, or this can be done automatically on
-GPS startup.
+GPS startup via a preference.
+@c ??? xref to pref
 
 @item Complete Identifier
 @cindex complete identifier
@@ -2919,6 +2920,7 @@ depend on the naming scheme specified in your project.
 
 A preference can be set to have GPS load the cross-information automatically
 on startup, @xref{The Preferences Dialog}.
+@c ??? need to xref to specific pref, this xref is too general
 
 @c --------------------------------------------------------------------
 @node The Navigate Menu
