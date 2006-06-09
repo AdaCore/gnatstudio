@@ -1222,7 +1222,6 @@ package body GPS.Location_View is
 
       declare
          Potential_Parent : Gtk_Tree_Iter := Null_Iter;
-         Message_Valid : Boolean := False;
       begin
          --  If we have a secondary file, look for a potential parent iter:
          --  an iter with same line and same column.
@@ -1240,7 +1239,6 @@ package body GPS.Location_View is
                     and then Get_Int (Model, Iter, Column_Column) =
                     Gint (Column)
                   then
-                     Message_Valid := True;
                      exit;
                   end if;
 
@@ -1262,8 +1260,6 @@ package body GPS.Location_View is
             end if;
 
             if Potential_Parent = Null_Iter then
-               Message_Valid := True;
-
                --  If we have not found a potential parent, add an iter and
                --  fill it with primary information, and then create an iter
                --  with just the secondary information.
@@ -1313,24 +1309,14 @@ package body GPS.Location_View is
 
                Loc := Data (Node);
 
-               if Message_Valid then
-                  Fill_Iter
-                    (View, Model, Iter, " ", File, Loc.Message.all,
-                     Safe_Value
-                       (Create_Mark
-                          (View.Kernel,
-                           Loc.File, Loc.Line, Loc.Column, 0), -1),
-                     Line, Column, Length, Highlight, Highlight_Category);
-               else
-                  Fill_Iter
-                    (View, Model, Iter, "", File, "",
-                     Safe_Value
-                       (Create_Mark
-                          (View.Kernel,
-                           Loc.File, Loc.Line, Loc.Column, 0), -1),
-                     Line, Column, Length, Highlight, Highlight_Category);
-               end if;
-
+               Fill_Iter
+                 (View, Model, Iter, " ", Loc.File, Loc.Message.all,
+                  Safe_Value
+                    (Create_Mark
+                       (View.Kernel,
+                        Loc.File, Loc.Line, Loc.Column, 0), -1),
+                  Loc.Line, Loc.Column, Length,
+                  Highlight, Highlight_Category);
                Path := Get_Path (Model, Potential_Parent);
                Dummy := Expand_Row (View.Tree, Path, False);
                Path_Free (Path);
@@ -1353,6 +1339,8 @@ package body GPS.Location_View is
                  (Create_Mark (View.Kernel, File, Line, Column, Length), -1),
                Line, Column, Length, Highlight,
                Highlight_Category);
+
+            Parent_Iter := Iter;
          end if;
       end;
 
@@ -2189,10 +2177,11 @@ package body GPS.Location_View is
    is
       View  : Location_View;
       Child : MDI_Child;
-      Node  : Location_List.List_Node;
+      Node, Sub  : Location_List.List_Node;
       Loc   : Location_Record;
-      Iter  : Gtk_Tree_Iter;
-
+      Iter, Parent_Iter : Gtk_Tree_Iter;
+      Appended : Boolean;
+      Path : Gtk_Tree_Path;
    begin
       Child := Get_Or_Create_Location_View_MDI
         (Kernel, Allow_Creation => False);
@@ -2205,11 +2194,10 @@ package body GPS.Location_View is
       Read_Secondary_Pattern_Preferences (View);
 
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
-
       Node := First (View.Stored_Locations);
 
       while Node /= Location_List.Null_Node loop
-         Loc := Data (Node);
+         Loc := Data (Node).all;
          Add_Location
            (View     => View,
             Model    => View.Tree.Model,
@@ -2226,7 +2214,36 @@ package body GPS.Location_View is
             Remove_Duplicates  => False,
             Enable_Counter     => True,
             Sort_In_File       => False,
-            Parent_Iter        => Iter);
+            Parent_Iter        => Parent_Iter);
+
+         Sub := First (Loc.Children);
+
+         Appended := Sub /= Location_List.Null_Node;
+
+         while Sub /= Location_List.Null_Node loop
+            Append (View.Tree.Model, Iter, Parent_Iter);
+
+            Loc := Data (Sub).all;
+
+            Fill_Iter
+              (View, View.Tree.Model, Iter, " ",
+               Loc.File, Loc.Message.all,
+               Safe_Value
+                 (Create_Mark (View.Kernel, Loc.File, Loc.Line, Loc.Column,
+                  Loc.Length), -1),
+               Loc.Line, Loc.Column, Loc.Length, False,
+               Get_Or_Create_Style
+                 (Kernel_Handle (Kernel), Loc.Highlight_Category.all));
+
+            Sub := Next (Sub);
+         end loop;
+
+         if Appended then
+            Path := Get_Path (View.Tree.Model, Parent_Iter);
+            Appended := Expand_Row (View.Tree, Path, False);
+            Path_Free (Path);
+         end if;
+
          Node := Next (Node);
       end loop;
 
@@ -2246,6 +2263,45 @@ package body GPS.Location_View is
       Child : MDI_Child;
       View : Location_View;
       Category, File, Location : Node_Ptr;
+
+      procedure Read_Location
+        (Iter     : Node_Ptr;
+         L        : in out Location_List.List;
+         Category : String);
+      --  Read a file location recursively;
+
+      procedure Read_Location
+        (Iter     : Node_Ptr;
+         L        : in out Location_List.List;
+         Category : String)
+      is
+         N   : Node_Ptr;
+         Loc : Location_Record_Access;
+      begin
+         Loc := new Location_Record'
+           (Category => new String'(Category),
+            File     => Create (Get_Attribute (Iter, "file")),
+            Line     => Integer'Value (Get_Attribute (Iter, "line", "0")),
+            Column   => Visible_Column_Type'Value
+              (Get_Attribute (Iter, "column", "0")),
+            Length   => Integer'Value
+              (Get_Attribute (Iter, "length", "0")),
+            Highlight => True or else Boolean'Value
+              (Get_Attribute (Iter, "highlight", "False")),
+            Message  => new String'
+              (Get_Attribute (Iter, "message", "")),
+            Highlight_Category => new String'
+              (Get_Attribute (Iter, "category", "")),
+            Children => Location_List.Null_List);
+         Append (L, Loc);
+
+         N := Iter.Child;
+         while N /= null loop
+            Read_Location (N, Loc.Children, Category);
+            N := N.Next;
+         end loop;
+      end Read_Location;
+
    begin
       if Node.Tag.all = "Location_View_Record" then
          Child := Get_Or_Create_Location_View_MDI
@@ -2256,8 +2312,6 @@ package body GPS.Location_View is
             declare
                Category_Name : constant String :=
                  Get_Attribute (Category, "name");
-               File_Name     : Virtual_File;
-               Loc           : Location_Record;
             begin
                --  Do not load errors in the project file back, since in fact
                --  they have already been overwritten if required when the
@@ -2265,29 +2319,12 @@ package body GPS.Location_View is
                if Category_Name /= "Project" then
                   File := Category.Child;
                   while File /= null loop
-                     File_Name := Create
-                       (Full_Filename => Get_Attribute (File, "name"));
-
                      Location := File.Child;
-                     while Location /= null loop
-                        Loc :=
-                          (Category => new String'(Category_Name),
-                           File     => File_Name,
-                           Line     => Integer'Value
-                             (Get_Attribute (Location, "line", "0")),
-                           Column   => Visible_Column_Type'Value
-                             (Get_Attribute (Location, "column", "0")),
-                           Length   => Integer'Value
-                             (Get_Attribute (Location, "length", "0")),
-                           Highlight => True or else Boolean'Value
-                             (Get_Attribute (Location, "highlight", "False")),
-                           Message  => new String'
-                             (Get_Attribute (Location, "message", "")),
-                           Highlight_Category => new String'
-                             (Get_Attribute (Location, "category", "")));
-                        Location := Location.Next;
 
-                        Append (View.Stored_Locations, Loc);
+                     while Location /= null loop
+                        Read_Location
+                          (Location, View.Stored_Locations, Category_Name);
+                        Location := Location.Next;
                      end loop;
 
                      File := File.Next;
@@ -2315,10 +2352,52 @@ package body GPS.Location_View is
       pragma Unreferenced (User);
       N : Node_Ptr;
       View : Location_View;
-      Category, File, Location : Node_Ptr;
+      Category, File  : Node_Ptr;
       Category_Iter : Gtk_Tree_Iter;
       File_Iter     : Gtk_Tree_Iter;
       Location_Iter : Gtk_Tree_Iter;
+
+      procedure Add_Location_Iter
+        (Iter     : Gtk_Tree_Iter;
+         Parent   : Node_Ptr);
+      --  Add the location and children recursively.
+
+      procedure Add_Location_Iter
+        (Iter     : Gtk_Tree_Iter;
+         Parent   : Node_Ptr)
+      is
+         Child : Gtk_Tree_Iter;
+         Loc   : Node_Ptr;
+      begin
+         Loc := new Node;
+         Loc.Tag := new String'("Location");
+         Add_Child (Parent, Loc, True);
+         Set_Attribute
+           (Loc, "file", Full_Name (Get_File (View, Iter)).all);
+         Set_Attribute (Loc, "line",
+           Gint'Image (Get_Int (View.Tree.Model, Iter, Line_Column)));
+         Set_Attribute
+           (Loc, "column",
+            Gint'Image (Get_Int (View.Tree.Model, Iter, Column_Column)));
+         Set_Attribute
+           (Loc, "length",
+            Gint'Image (Get_Int (View.Tree.Model, Iter, Length_Column)));
+         Set_Attribute (Loc, "message", Get_Message (View, Iter));
+         Set_Attribute
+           (Loc, "category",
+            Get_Name (Get_Highlighting_Style (View, Iter)));
+         Set_Attribute
+           (Loc, "highlight",
+            Boolean'Image
+              (Get_Boolean (View.Tree.Model, Iter, Highlight_Column)));
+
+         Child := Children (View.Tree.Model, Iter);
+
+         while Child /= Null_Iter loop
+            Add_Location_Iter (Child, Loc);
+            Next (View.Tree.Model, Child);
+         end loop;
+      end Add_Location_Iter;
 
    begin
       if Widget.all in Location_View_Record'Class then
@@ -2327,6 +2406,7 @@ package body GPS.Location_View is
 
          View := Location_View (Widget);
          Category_Iter := Get_Iter_First (View.Tree.Model);
+
          while Category_Iter /= Null_Iter loop
             Category := new Node;
             Category.Tag := new String'("Category");
@@ -2348,32 +2428,7 @@ package body GPS.Location_View is
                Location_Iter := Children (View.Tree.Model, File_Iter);
 
                while Location_Iter /= Null_Iter loop
-                  Location := new Node;
-                  Location.Tag := new String'("Location");
-                  Add_Child (File, Location, True);
-                  Set_Attribute (Location, "line",
-                                 Gint'Image
-                                   (Get_Int (View.Tree.Model, Location_Iter,
-                                             Line_Column)));
-                  Set_Attribute (Location, "column",
-                                 Gint'Image
-                                   (Get_Int (View.Tree.Model, Location_Iter,
-                                             Column_Column)));
-                  Set_Attribute (Location, "length",
-                                 Gint'Image
-                                   (Get_Int (View.Tree.Model, Location_Iter,
-                                             Length_Column)));
-                  Set_Attribute (Location, "message",
-                                 Get_Message (View, Location_Iter));
-                  Set_Attribute (Location, "category",
-                                 Get_Name (Get_Highlighting_Style
-                                             (View, Location_Iter)));
-                  Set_Attribute (Location, "highlight",
-                                 Boolean'Image
-                                   (Get_Boolean
-                                      (View.Tree.Model, Location_Iter,
-                                       Highlight_Column)));
-
+                  Add_Location_Iter (Location_Iter, File);
                   Next (View.Tree.Model, Location_Iter);
                end loop;
 
@@ -2775,11 +2830,15 @@ package body GPS.Location_View is
    -- Free --
    ----------
 
-   procedure Free (X : in out Location_Record) is
+   procedure Free (X : in out Location_Record_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Location_Record, Location_Record_Access);
    begin
       Free (X.Category);
       Free (X.Message);
       Free (X.Highlight_Category);
+      Free (X.Children);
+      Unchecked_Free (X);
    end Free;
 
    -----------------
