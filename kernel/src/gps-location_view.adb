@@ -175,6 +175,11 @@ package body GPS.Location_View is
    -- Local subprograms --
    -----------------------
 
+   procedure Dump_To_File
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File);
+   --  Dump the contents of the Locations View in File, in XML format.
+
    procedure Read_Secondary_Pattern_Preferences
      (View : access Location_View_Record'Class);
    --  Read the preferences corresponding to the secondary file location
@@ -2465,6 +2470,13 @@ package body GPS.Location_View is
          Class         => Locations_Class,
          Static_Method => True,
          Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "dump",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class         => Locations_Class,
+         Static_Method => True,
+         Handler      => Default_Command_Handler'Access);
    end Register_Commands;
 
    -----------------------------
@@ -2513,25 +2525,33 @@ package body GPS.Location_View is
       elsif Command = "add" then
          Name_Parameters (Data, Locations_Add_Parameters);
          declare
-            Highlight : constant String  := Nth_Arg (Data, 6, "");
+            File : constant VFS.Virtual_File := Create (Nth_Arg (Data, 1));
          begin
-            Insert_Location
-              (Get_Kernel (Data),
-               Category           => Nth_Arg (Data, 1),
-               File               => Get_Data
-                 (Nth_Arg (Data, 2, (Get_File_Class (Get_Kernel (Data))))),
-               Line               => Nth_Arg (Data, 3),
-               Column             => Visible_Column_Type
-                 (Nth_Arg (Data, 4, Default => 1)),
-               Text               => Nth_Arg (Data, 5),
-               Length             => Nth_Arg (Data, 7, 0),
-               Highlight          => Highlight /= "",
-               Highlight_Category => Get_Or_Create_Style
-                 (Get_Kernel (Data), Highlight, False),
-               Quiet              => True);
+            Dump_To_File (Get_Kernel (Data), File);
          end;
+
+      elsif Command = "dump" then
+         Name_Parameters (Data, Locations_Add_Parameters);
+         Dump_To_File (Get_Kernel (Data), Create (Nth_Arg (Data, 1)));
       end if;
    end Default_Command_Handler;
+
+   ------------------
+   -- Dump_To_File --
+   ------------------
+
+   procedure Dump_To_File
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File)
+   is
+      View   : constant Location_View :=
+        Get_Or_Create_Location_View (Kernel);
+      N      : Node_Ptr;
+   begin
+      N := Save_Desktop (View, Kernel_Handle (Kernel));
+      Print (N, Full_Name (File).all);
+      Free (N);
+   end Dump_To_File;
 
    --------------------------
    -- Parse_File_Locations --
