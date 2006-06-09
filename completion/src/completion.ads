@@ -198,11 +198,15 @@ package Completion is
    --  number of its parameters, otherwise 0.
 
    function Get_Initial_Completion_List
-     (Manager      : Completion_Manager;
-      Start_Offset : Natural) return Completion_List is abstract;
+     (Manager        : Completion_Manager;
+      Start_Offset   : Natural;
+      End_Is_Partial : Boolean := True) return Completion_List is abstract;
    --  Generates an initial completion list, for the cursor pointing at the
    --  given offset. This operation is time consuming, so it would be good
    --  to use the one below afterwards, until the completion process is done.
+   --  It End_Is_Partial is true, then the position given is possibly an
+   --  incomplete identifier. Otherwise, the expression will be analyzed as a
+   --  complete expression.
 
    procedure Free (Proposal : in out Completion_Proposal) is abstract;
    --  Free the memory associated to the proposal.
