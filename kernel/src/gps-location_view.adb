@@ -20,8 +20,8 @@
 
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
-with GNAT.Regpat;              use GNAT.Regpat;
 with System;
 
 with Gdk.Event;                use Gdk.Event;
@@ -154,9 +154,36 @@ package body GPS.Location_View is
       6 => Highlight_Cst'Access,
       7 => Length_Cst'Access);
 
+   -----------------
+   -- Local types --
+   -----------------
+
+   type Location is record
+      File    : VFS.Virtual_File := VFS.No_File;
+      Line    : Positive := 1;
+      Column  : Visible_Column_Type := 1;
+      Message : String_Access;
+   end record;
+
+   procedure Free (X : in out Location);
+   --  Free memory associated to X.
+
+   package Locations_List is new Generic_List (Location, Free);
+   use Locations_List;
+
    -----------------------
    -- Local subprograms --
    -----------------------
+
+   procedure Read_Secondary_Pattern_Preferences
+     (View : access Location_View_Record'Class);
+   --  Read the preferences corresponding to the secondary file location
+   --  detection.
+
+   function Extract_Locations
+     (View    : access Location_View_Record'Class;
+      Message : String) return Locations_List.List;
+   --  Return a list of file locations contained in Message.
 
    function To_Style is new Ada.Unchecked_Conversion
      (System.Address, Style_Access);
@@ -238,7 +265,8 @@ package body GPS.Location_View is
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
       Enable_Counter     : Boolean;
-      Sort_In_File       : Boolean);
+      Sort_In_File       : Boolean;
+      Parent_Iter        : in out Gtk_Tree_Iter);
    --  Add a file locaton in Category (the name of the node in the location
    --  window).
    --  File is an absolute file name. If File is not currently open, do not
@@ -628,7 +656,7 @@ package body GPS.Location_View is
 
       Path := Get_Path (View.Tree.Model, Iter);
 
-      while Success and then Get_Depth (Path) /= 3 loop
+      while Success and then Get_Depth (Path) < 3 loop
          Success := Expand_Row (View.Tree, Path, False);
          Down (Path);
          Select_Path (Get_Selection (View.Tree), Path);
@@ -934,7 +962,7 @@ package body GPS.Location_View is
          Select_Path (Get_Selection (View.Tree), Path);
       end loop;
 
-      if Get_Depth (Path) /= 3 then
+      if Get_Depth (Path) < 3 then
          Path_Free (Path);
 
          return;
@@ -988,7 +1016,7 @@ package body GPS.Location_View is
       end if;
 
       Select_Path (Get_Selection (View.Tree), Path);
-      Scroll_To_Cell (View.Tree, Path, null, True, 0.1, 0.1);
+      Scroll_To_Cell (View.Tree, Path, null, False, 0.1, 0.1);
       Goto_Location (View);
 
       Path_Free (File_Path);
@@ -1103,17 +1131,23 @@ package body GPS.Location_View is
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
       Enable_Counter     : Boolean;
-      Sort_In_File       : Boolean)
+      Sort_In_File       : Boolean;
+      Parent_Iter        : in out Gtk_Tree_Iter)
    is
       Category_Iter    : Gtk_Tree_Iter;
       File_Iter        : Gtk_Tree_Iter;
-      Iter, Iter2      : Gtk_Tree_Iter;
+      Iter, Iter2      : Gtk_Tree_Iter := Null_Iter;
       Category_Created : Boolean;
       Dummy            : Boolean;
       pragma Unreferenced (Dummy);
 
-      Path               : Gtk_Tree_Path;
-      Added : Boolean := False;
+      Path              : Gtk_Tree_Path;
+      Added             : Boolean := False;
+
+      Locs              : Locations_List.List;
+      Loc               : Location;
+      Node              : Locations_List.List_Node;
+      Has_Secondary_Location : Boolean := False;
    begin
       if not Is_Absolute_Path (File) then
          return;
@@ -1161,10 +1195,6 @@ package body GPS.Location_View is
          end loop;
       end if;
 
-      if not Added then
-         Append (Model, Iter, File_Iter);
-      end if;
-
       if Enable_Counter then
          Set (Model, File_Iter, Number_Of_Items_Column,
               Get_Int (Model, File_Iter, Number_Of_Items_Column) + 1);
@@ -1180,19 +1210,145 @@ package body GPS.Location_View is
            (View.Kernel, File, Line, Column, Length, Highlight_Category);
       end if;
 
+      --  Look for secondary file information and loop on information found.
+
+      Locs := Extract_Locations (View, Message);
+      Has_Secondary_Location := not Is_Empty (Locs);
+
       declare
-         Output : constant String := Create_Mark
-           (View.Kernel, File, Line, Column, Length);
+         Potential_Parent : Gtk_Tree_Iter := Null_Iter;
+         Message_Valid : Boolean := False;
       begin
-         Fill_Iter
-           (View,
-            Model,
-            Iter,
-            Image (Line) & ":" & Image (Integer (Column)), File,
-            Message,
-            Safe_Value (Output, -1),
-            Line, Column, Length, Highlight,
-            Highlight_Category);
+         --  If we have a secondary file, look for a potential parent iter:
+         --  an iter with same line and same column.
+         --  Most likely Parent_Iter will fill that role.
+
+         if Has_Secondary_Location then
+            if Parent_Iter = Null_Iter then
+               --  No parent iter, browse the list for an iter with acceptable
+               --  line and column.
+
+               Iter := Children (Model, File_Iter);
+
+               while Iter /= Null_Iter loop
+                  if Get_Int (Model, Iter, Line_Column) = Gint (Line)
+                    and then Get_Int (Model, Iter, Column_Column) =
+                    Gint (Column)
+                  then
+                     Message_Valid := True;
+                     exit;
+                  end if;
+
+                  Next (Model, Iter);
+               end loop;
+
+               Potential_Parent := Iter;
+
+            else
+               --  We have a parent, check that the line and column are the
+               --  same.
+               if Get_Int (Model, Parent_Iter, Line_Column) = Gint (Line)
+                 and then Get_Int (Model, Parent_Iter, Column_Column) =
+                 Gint (Column)
+               then
+                  --  We have an acceptable potential parent.
+                  Potential_Parent := Parent_Iter;
+               end if;
+            end if;
+
+            if Potential_Parent = Null_Iter then
+               Message_Valid := True;
+
+               --  If we have not found a potential parent, add an iter and
+               --  fill it with primary information, and then create an iter
+               --  with just the secondary information.
+
+               if not Added then
+                  Append (Model, Iter, File_Iter);
+               end if;
+
+               Fill_Iter
+                 (View, Model, Iter,
+                  Image (Line) & ":" & Image (Integer (Column)),
+                  File, Message,
+                  Safe_Value
+                    (Create_Mark (View.Kernel, File, Line, Column, Length),
+                     -1),
+                  Line, Column, Length, Highlight,
+                  Highlight_Category);
+
+               Potential_Parent := Iter;
+            else
+               --  We have found a potential parent, look after it if there
+               --  are iters with the same line and column.
+
+               Iter := Potential_Parent;
+
+               while Iter /= Null_Iter loop
+                  if Get_Int (Model, Iter, Line_Column) = Gint (Line)
+                    and then Get_Int (Model, Iter, Column_Column) =
+                    Gint (Column)
+                  then
+                     Potential_Parent := Iter;
+                  else
+                     exit;
+                  end if;
+
+                  Next (Model, Iter);
+               end loop;
+            end if;
+
+            --  We now have a filled potential parent, add iters for the
+            --  secondary information.
+
+            Node := First (Locs);
+
+            while Node /= Locations_List.Null_Node loop
+               Append (Model, Iter, Potential_Parent);
+
+               Loc := Data (Node);
+
+               if Message_Valid then
+                  Fill_Iter
+                    (View, Model, Iter, " ", File, Loc.Message.all,
+                     Safe_Value
+                       (Create_Mark
+                          (View.Kernel,
+                           Loc.File, Loc.Line, Loc.Column, 0), -1),
+                     Line, Column, Length, Highlight, Highlight_Category);
+               else
+                  Fill_Iter
+                    (View, Model, Iter, "", File, "",
+                     Safe_Value
+                       (Create_Mark
+                          (View.Kernel,
+                           Loc.File, Loc.Line, Loc.Column, 0), -1),
+                     Line, Column, Length, Highlight, Highlight_Category);
+               end if;
+
+               Path := Get_Path (Model, Potential_Parent);
+               Dummy := Expand_Row (View.Tree, Path, False);
+               Path_Free (Path);
+
+               Node := Next (Node);
+            end loop;
+
+         else
+            --  Fill Iter with main information.
+
+            if not Added then
+               Append (Model, Iter, File_Iter);
+            end if;
+
+            Fill_Iter
+              (View, Model, Iter,
+               Image (Line) & ":" & Image (Integer (Column)),
+               File, Message,
+               Safe_Value
+                 (Create_Mark (View.Kernel, File, Line, Column, Length), -1),
+               Line, Column, Length, Highlight,
+               Highlight_Category);
+         end if;
       end;
 
       if Category_Created then
@@ -1246,7 +1402,6 @@ package body GPS.Location_View is
 
    begin
       Gtk_New (Pixbuf_Rend);
-
       Set_Rules_Hint (Tree, False);
 
       Gtk_New (View.Action_Column);
@@ -1421,7 +1576,7 @@ package body GPS.Location_View is
             After => False);
          Append (Menu, Mitem);
 
-      elsif Get_Depth (Path) = 3 then
+      elsif Get_Depth (Path) >= 3 then
          Gtk_New (Mitem, -"Jump to location");
          Gtkada.Handlers.Widget_Callback.Object_Connect
            (Mitem, "activate", Goto_Location'Access, Explorer,
@@ -1556,6 +1711,8 @@ package body GPS.Location_View is
                 Name => "location_view.preferences_changed",
                 Watch => GObject (View));
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
+
+      Read_Secondary_Pattern_Preferences (View);
    end Initialize;
 
    ---------------------
@@ -1568,11 +1725,16 @@ package body GPS.Location_View is
    is
       Tree : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
       Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path;
    begin
       Get_Tree_Iter (Nth (Params, 1), Iter);
-      Scroll_To_Cell
-        (Tree, Get_Path (Get_Model (Tree), Iter), null, True, 0.1, 0.1);
+      Path := Get_Path (Get_Model (Tree), Iter);
 
+      if Get_Depth (Path) < 3 then
+         Scroll_To_Cell (Tree, Path, null, True, 0.1, 0.1);
+      end if;
+
+      Path_Free (Path);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1600,6 +1762,7 @@ package body GPS.Location_View is
       Sort_In_File       : Boolean := False)
    is
       View : constant Location_View := Get_Or_Create_Location_View (Kernel);
+      Iter : Gtk_Tree_Iter;
    begin
       if View /= null then
          if Has_Markups then
@@ -1611,7 +1774,8 @@ package body GPS.Location_View is
                Quiet             => Quiet,
                Remove_Duplicates => Remove_Duplicates,
                Enable_Counter    => Enable_Counter,
-               Sort_In_File      => Sort_In_File);
+               Sort_In_File      => Sort_In_File,
+               Parent_Iter       => Iter);
          else
             Add_Location
               (View, View.Tree.Model,
@@ -1621,7 +1785,8 @@ package body GPS.Location_View is
                Quiet             => Quiet,
                Remove_Duplicates => Remove_Duplicates,
                Enable_Counter    => Enable_Counter,
-               Sort_In_File      => Sort_In_File);
+               Sort_In_File      => Sort_In_File,
+               Parent_Iter       => Iter);
          end if;
 
          Gtkada.MDI.Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
@@ -1739,7 +1904,9 @@ package body GPS.Location_View is
       pragma Unreferenced (Success);
 
    begin
-      if Get_Button (Event) = 1 then
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Button_Press
+      then
          Get_Path_At_Pos
            (Explorer.Tree,
             Gint (X),
@@ -1751,7 +1918,7 @@ package body GPS.Location_View is
             Row_Found);
 
          if Path /= null then
-            if Get_Depth (Path) /= 3 then
+            if Get_Depth (Path) < 3 then
                Path_Free (Path);
                return False;
             else
@@ -1987,6 +2154,27 @@ package body GPS.Location_View is
       return True;
    end Location_Hook;
 
+   ----------------------------------------
+   -- Read_Secondary_Pattern_Preferences --
+   ----------------------------------------
+
+   procedure Read_Secondary_Pattern_Preferences
+     (View : access Location_View_Record'Class)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Pattern_Matcher, Pattern_Matcher_Access);
+   begin
+      if View.Secondary_File_Pattern /= null then
+         Unchecked_Free (View.Secondary_File_Pattern);
+      end if;
+
+      View.Secondary_File_Pattern := new Pattern_Matcher'
+        (Compile (Get_Pref (Secondary_File_Pattern)));
+      View.SFF := Natural (Get_Pref (Secondary_File_Pattern_Index));
+      View.SFL := Natural (Get_Pref (Secondary_Line_Pattern_Index));
+      View.SFC := Natural (Get_Pref (Secondary_Column_Pattern_Index));
+   end Read_Secondary_Pattern_Preferences;
+
    -------------------------
    -- Preferences_Changed --
    -------------------------
@@ -1996,8 +2184,10 @@ package body GPS.Location_View is
    is
       View  : Location_View;
       Child : MDI_Child;
-      Node  : List_Node;
+      Node  : Location_List.List_Node;
       Loc   : Location_Record;
+      Iter  : Gtk_Tree_Iter;
+
    begin
       Child := Get_Or_Create_Location_View_MDI
         (Kernel, Allow_Creation => False);
@@ -2007,11 +2197,13 @@ package body GPS.Location_View is
       end if;
 
       View := Location_View (Get_Widget (Child));
+      Read_Secondary_Pattern_Preferences (View);
+
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
 
       Node := First (View.Stored_Locations);
 
-      while Node /= Null_Node loop
+      while Node /= Location_List.Null_Node loop
          Loc := Data (Node);
          Add_Location
            (View     => View,
@@ -2028,7 +2220,8 @@ package body GPS.Location_View is
             Quiet              => True,
             Remove_Duplicates  => False,
             Enable_Counter     => True,
-            Sort_In_File       => False);
+            Sort_In_File       => False,
+            Parent_Iter        => Iter);
          Node := Next (Node);
       end loop;
 
@@ -2366,6 +2559,7 @@ package body GPS.Location_View is
       Model  : Gtk_Tree_Store;
       Expand : Boolean := Quiet;
 
+      Iter   : Gtk_Tree_Iter := Null_Iter;
       function Get_File_Location return Pattern_Matcher;
       --  Return the pattern matcher for the file location
 
@@ -2415,11 +2609,12 @@ package body GPS.Location_View is
 
       File_Location : constant Pattern_Matcher := Get_File_Location;
       File_Index    : constant Integer :=
-                        Get_Index (File_Pattern_Index, File_Index_In_Regexp);
+        Get_Index (File_Pattern_Index, File_Index_In_Regexp);
       Line_Index    : constant Integer :=
-                        Get_Index (Line_Pattern_Index, Line_Index_In_Regexp);
+        Get_Index (Line_Pattern_Index, Line_Index_In_Regexp);
       Col_Index     : constant Integer :=
-                        Get_Index (Column_Pattern_Index, Col_Index_In_Regexp);
+        Get_Index (Column_Pattern_Index, Col_Index_In_Regexp);
+
       Msg_Index     : constant Integer :=
                         Get_Index (Message_Pattern_Index, Msg_Index_In_Regexp);
       Style_Index   : constant Integer :=
@@ -2433,6 +2628,7 @@ package body GPS.Location_View is
       Real_Last  : Natural;
       Line       : Natural := 1;
       Column     : Visible_Column_Type := 1;
+
       Length     : Natural := 0;
       C          : Style_Access;
 
@@ -2479,6 +2675,10 @@ package body GPS.Location_View is
          Match (File_Location, Text (Start .. Real_Last), Matched);
 
          if Matched (0) /= No_Match then
+            Trace (Me, " line found #" &
+                   Text (Matched (0).First ..
+                  Matched (0).Last) & "#");
+
             if Matched (Line_Index) /= No_Match then
                Line := Integer'Value
                  (Text
@@ -2528,8 +2728,8 @@ package body GPS.Location_View is
                Quiet              => Expand,
                Remove_Duplicates  => False,
                Enable_Counter     => False,
-               Sort_In_File       => False);
-
+               Sort_In_File       => False,
+               Parent_Iter        => Iter);
             Expand := False;
          end if;
 
@@ -2615,5 +2815,68 @@ package body GPS.Location_View is
 
       return Result;
    end Get_Highlighting_Style;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Location) is
+   begin
+      Free (X.Message);
+   end Free;
+
+   -----------------------
+   -- Extract_Locations --
+   -----------------------
+
+   function Extract_Locations
+     (View    : access Location_View_Record'Class;
+      Message : String) return Locations_List.List
+   is
+      Result : Locations_List.List;
+
+      Matched : Match_Array (0 .. 9);
+      Loc     : Location;
+      Start   : Natural := Message'First;
+   begin
+      while Start <= Message'Last loop
+         Match
+           (View.Secondary_File_Pattern.all,
+            Message (Start .. Message'Last), Matched);
+
+         exit when Matched (0) = No_Match;
+
+         Loc.File := Create
+           (Message (Matched (View.SFF).First .. Matched (View.SFF).Last));
+
+         Loc.Message := new String'
+           (Message (Message'First .. Matched (0).First - 1)
+            & "<span color=""blue""><u>"
+            & Message (Matched (0).First .. Matched (0).Last)
+            & "</u></span>"
+            & Message (Matched (0).Last + 1 .. Message'Last));
+
+         if Matched (View.SFL) /= No_Match then
+            Loc.Line :=
+              Safe_Value
+                (Message (Matched (View.SFL).First ..
+                   Matched (View.SFL).Last), 1);
+         end if;
+
+         if Matched (View.SFC) /= No_Match then
+            Loc.Column :=
+              Visible_Column_Type
+                (Safe_Value
+                     (Message (Matched (View.SFF).First ..
+                        Matched (View.SFF).Last), 1));
+         end if;
+
+         Append (Result, Loc);
+         Loc := (No_File, 1, 1, null);
+         Start := Matched (1).Last + 1;
+      end loop;
+
+      return Result;
+   end Extract_Locations;
 
 end GPS.Location_View;
