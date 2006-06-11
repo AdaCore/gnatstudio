@@ -163,6 +163,14 @@ package GPS.Location_View is
    --  relevant parenthesis pair in the regexp.
 
 private
+   type Location_Record;
+   type Location_Record_Access is access Location_Record;
+
+   procedure Free (X : in out Location_Record_Access);
+   --  Free memory associated to X
+
+   package Location_List is new Generic_List (Location_Record_Access, Free);
+   use Location_List;
 
    type Location_Record is record
       Category           : String_Access;
@@ -173,13 +181,10 @@ private
       Highlight          : Boolean;
       Message            : String_Access;
       Highlight_Category : String_Access;
+
+      Children           : List;
    end record;
 
-   procedure Free (X : in out Location_Record);
-   --  Free memory associated to X
-
-   package Location_List is new Generic_List (Location_Record, Free);
-   use Location_List;
 
    type Pattern_Matcher_Access is access Pattern_Matcher;
 
