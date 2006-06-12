@@ -32,6 +32,7 @@ package body Completion is
    procedure Free (List : in out Completion_List) is
    begin
       Free (List.List);
+      Free (List.Searched_Identifier);
    end Free;
 
    --------------------------
