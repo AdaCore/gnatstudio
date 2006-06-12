@@ -172,7 +172,7 @@ package body Completion.Ada is
                   Analyze_Token (Next (Token), Previous_It, Result);
                end if;
 
-            when Tok_With =>
+            when Tok_With | Tok_Use =>
                pragma Assert (Token = First (Completing_Expression));
 
                Filter := All_Accessible_Units;
@@ -198,9 +198,6 @@ package body Completion.Ada is
                      end loop;
                   end;
                end if;
-
-            when Tok_Use =>
-               null;
 
             when others =>
                null;
