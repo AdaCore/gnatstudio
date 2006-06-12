@@ -4582,18 +4582,7 @@ The second part of the window is a row of buttons, to start the search
 There are five check boxes in this options box.
 
 @table @b
-@item @code{"Case Sensitive"}
-@cindex case sensitive
-By default, patterns are case insensitive (upper-case letters and
-lower-case letters are considered as equivalent). You can change this
-behavior by clicking on this check box.
-
-@item @code{"Whole Word Only"}
-@cindex whole word
-If activated, this check box will force the search engine to ignore
-substrings. "sensitive" will no longer match "insensitive".
-
-@item @code{"Regular Expression"}
+@item @code{"Regexp"}
 @cindex regular expression
 This button commutes between fixed string patterns and regular
 expressions. You can also commute between these two modes
@@ -4604,30 +4593,45 @@ Python regular expressions grammar, and is documented in the GNAT run time file
 dialog (@code{File->Open From Project...}) and type g-regpat.ads. See
 @ref{Open From Project} for more information on this dialog.
 
-@item @code{Select Window on Match}
+@item @code{"Whole Word"}
+@cindex whole word
+If activated, this check box will force the search engine to ignore
+substrings. "sensitive" will no longer match "insensitive".
+
+@item @code{Select Window}
 @cindex select window on match
 When this button is selected, the focus is given to the editor that contains
 the match, so that you can start editing the text immediatly. If the button is
 not selected, the focus is left on the search window, so that you can press
 Enter to search for the next occurrence.
 
-@item @code{Close Dialog on Search}
-@cindex close dialog on search
+@item @code{"Case Sensitive"}
+@cindex case sensitive
+By default, patterns are case insensitive (upper-case letters and
+lower-case letters are considered as equivalent). You can change this
+behavior by clicking on this check box.
+
+@item @code{Close on Match}
+@cindex close dialog on match
 This button only appears if the search window is floating. If this button is
-then activated, the search window will be automatically closed when an
+enabled, the search window will be automatically closed when an
 occurrence of the search string is found.
 
 @end table
 
-Pressing the @code{Next} / @code{Prev} buttons performs an interactive search.
-It stops as soon as one occurrence of the pattern is found. You then have
-to press the @code{Next} button (or the equivalent shortcut
+Pressing the @code{Find} / @code{Previous} buttons performs an interactive
+search.
+It stops as soon as one occurrence of the pattern is found.
+search. Once a first occurrence has been found, the @code{Find} button is
+renamed to @code{Next}.
+You then have to press the @code{Next} button (or the equivalent shortcut
 @key{Ctrl-N}) to go to the next occurrence.
 
-If you use the @code{Search all} button, the search widget will start
+If you use the @code{Find all} button, the search widget will start
 searching for all occurrences right away, and put the results in a new
-window called @code{Locations} (initially found in the bottom dock of
-the GPS window).
+window called @code{Locations}, @xref{The Locations Tree}.
+
+@c ??? Replace, Replace&Find, Repl All button not documented
 
 @cindex MDI
 @cindex Multiple Document Interface
