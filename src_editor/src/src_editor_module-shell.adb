@@ -1751,23 +1751,30 @@ package body Src_Editor_Module.Shell is
                                 & " Use EditorBuffer.get() instead"));
 
       elsif Command = "get" then
-         Name_Parameters (Data, (1 => File_Cst'Access));
-         File_Inst := Nth_Arg
-           (Data, 1, Get_File_Class (Kernel),
-            Default => No_Class_Instance, Allow_Null => True);
+         Name_Parameters (Data, (1 => File_Cst'Access,
+                                 2 => Force_Cst'Access));
+         declare
+            File : constant Virtual_File :=
+                     Get_Data (Data, 1);
+            Force : constant Boolean :=
+                      Nth_Arg (Data, 2, Default => False);
+         begin
+            if File /= VFS.No_File then
+               Child := Find_Editor (Kernel, File);
+            else
+               Child := Find_Current_Editor (Kernel);
+            end if;
 
-         if File_Inst = No_Class_Instance then
-            Child := Find_Current_Editor (Kernel);
-         else
-            File := Get_Data (File_Inst);
-            Child := Find_Editor (Kernel, File);
-         end if;
+            if Child = null then
+               Box := Open_File (Get_Kernel (Data), File);
+            else
+               Box := Get_Source_Box_From_MDI (Child);
 
-         if Child = null then
-            Box := Open_File (Get_Kernel (Data), File);
-         else
-            Box := Get_Source_Box_From_MDI (Child);
-         end if;
+               if Force then
+                  Check_Timestamp_And_Reload (Box, False, True);
+               end if;
+            end if;
+         end;
 
          Set_Return_Value
            (Data, Create_Editor_Buffer
@@ -2806,7 +2813,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, Constructor_Method, 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "get", 0, 1, Buffer_Cmds'Access, EditorBuffer, True);
+        (Kernel, "get", 0, 2, Buffer_Cmds'Access, EditorBuffer, True);
       Register_Command
         (Kernel, "list", 0, 0, Buffer_Cmds'Access, EditorBuffer, True);
       Register_Command
