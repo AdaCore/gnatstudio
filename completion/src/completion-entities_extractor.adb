@@ -80,11 +80,9 @@ package body Completion.Entities_Extractor is
    is
       Location : constant Entities.File_Location :=
         Get_Location (Declaration_As_Reference (Proposal.Entity));
-      Name     : constant String :=
-        Full_Name (Get_Filename (Location.File)).all;
-      Result   : Completion.File_Location (Name'Length);
+      Result   : Completion.File_Location;
    begin
-      Result.File_Path := Name;
+      Result.File_Path := Get_Filename (Location.File);
       Result.Line      := Location.Line;
       Result.Column    := Location.Column;
 
@@ -115,7 +113,7 @@ package body Completion.Entities_Extractor is
       Result     : in out Completion_List)
    is
       pragma Unreferenced (Offset);
-      Type_Of         : Entity_Information := null;
+      Type_Of      : Entity_Information := null;
       Calls_Filter : Possibilities_Filter := Everything;
    begin
       if Get_Kind (Proposal.Entity).Kind = Package_Kind then
