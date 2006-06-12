@@ -36,6 +36,7 @@ with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Table;           use Gtk.Table;
 with Gtk.Tooltips;        use Gtk.Tooltips;
 with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Viewport;        use Gtk.Viewport;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Combo;        use Gtkada.Combo;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
@@ -170,14 +171,23 @@ package body Scenario_Views is
    is
       Hook : Refresh_Hook;
       Label : Gtk_Label;
+      Viewport : Gtk_Viewport;
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Scrolled_Window.Initialize (View, null, null);
       Set_Policy (View, Policy_Never, Policy_Automatic);
       Set_Shadow_Type (View, Shadow_None);
 
+      --  Do not use Add_With_Viewport, since otherwise we do not have
+      --  access to the viewport itself to change its shadow
+      Gtk_New (Viewport);
+      Set_Shadow_Type (Viewport, Shadow_None);
+      Add (View, Viewport);
+
       Gtk_New_Vbox (View.Vbox, Homogeneous => False);
-      Add_With_Viewport (View, View.Vbox);
+      Add (Viewport, View.Vbox);
+
+      --   Add_With_Viewport (View, View.Vbox);
 
       Gtk_New
         (View.Table,
