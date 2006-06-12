@@ -461,10 +461,6 @@ package body Vsearch is
    procedure Close_Vsearch (Search : access Gtk_Widget_Record'Class) is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Search);
    begin
-      Set_History
-        (Get_History (Vsearch.Kernel).all, Options_Collapsed_Hist_Key,
-         Get_State (Vsearch.Options_Box) = Collapsed);
-
       Store_Position (Vsearch);
       Close (Get_MDI (Vsearch.Kernel), Search, Force => True);
 
@@ -1096,6 +1092,15 @@ package body Vsearch is
                Fixed_Size => True);
          end if;
       end if;
+
+      Set_History
+        (Get_History (Vsearch.Kernel).all, Options_Collapsed_Hist_Key,
+         Get_State (Vsearch.Options_Box) = Collapsed);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Toggled;
 
    -------------------------
@@ -1374,7 +1379,10 @@ package body Vsearch is
 
       Tooltips              : Gtk_Tooltips;
       Enclosing_Options_Box : Gtk_Box;
+
    begin
+      Vsearch.Kernel := Handle;
+
       Initialize_Vbox (Vsearch, False, 0);
 
       Gtk_New (Vsearch.Table, 3, 2, False);
@@ -1423,7 +1431,7 @@ package body Vsearch is
       Set_Tip (Tooltips, Vsearch.Pattern_Entry,
                -"The searched word or pattern");
 
-      Gtk_New (Vsearch.Buttons_Table, 2, 3, True);
+      Gtk_New (Vsearch.Buttons_Table, 2, 3, False);
       Set_Row_Spacings (Vsearch.Buttons_Table, 3);
       Set_Col_Spacings (Vsearch.Buttons_Table, 3);
       Pack_Start (Vsearch, Vsearch.Buttons_Table, False, False, 0);
@@ -1433,6 +1441,19 @@ package body Vsearch is
 
       Gtk_New (Vsearch.Options_Box, -"Options");
       Pack_Start (Enclosing_Options_Box, Vsearch.Options_Box, Expand => False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all,
+         Key           => Options_Collapsed_Hist_Key,
+         Default_Value => True);
+
+      if Get_History
+        (Get_History (Handle).all, Options_Collapsed_Hist_Key)
+      then
+         Set_State (Vsearch.Options_Box, Collapsed);
+      else
+         Set_State (Vsearch.Options_Box, Expanded);
+      end if;
+
       Widget_Callback.Object_Connect
         (Vsearch.Options_Box, "toggled", On_Toggled'Access, Vsearch);
 
@@ -1446,32 +1467,66 @@ package body Vsearch is
       Gtk_New (Vsearch.Options_Vbox, 3, 2, False);
       Pack_Start (Vsearch.Options_Frame, Vsearch.Options_Vbox, Padding => 3);
 
-      Gtk_New (Vsearch.Case_Check, -"Case Sensitive");
-      Set_Active (Vsearch.Case_Check, False);
-      Attach (Vsearch.Options_Vbox,
-              Vsearch.Case_Check, 1, 2, 1, 2);
+      Gtk_New (Vsearch.Regexp_Check, -"Regexp");
+      Set_Tip
+        (Get_Tooltips (Handle), Vsearch.Regexp_Check,
+         -"The pattern is a regular expression");
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all, "regexp_search", False);
+      Associate
+        (Get_History (Handle).all, "regexp_search", Vsearch.Regexp_Check);
+      Attach (Vsearch.Options_Vbox, Vsearch.Regexp_Check, 0, 1, 0, 1);
 
       Gtk_New (Vsearch.Whole_Word_Check, -"Whole Word");
-      Set_Active (Vsearch.Whole_Word_Check, False);
-      Attach (Vsearch.Options_Vbox,
-              Vsearch.Whole_Word_Check, 1, 2, 0, 1);
+      Set_Tip
+        (Get_Tooltips (Handle), Vsearch.Whole_Word_Check,
+         -("Select this if the pattern should only match a whole word, never"
+           & " part of a word"));
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all, "whole_word_search", False);
+      Associate
+        (Get_History (Handle).all, "whole_word_search",
+         Vsearch.Whole_Word_Check);
+      Attach (Vsearch.Options_Vbox, Vsearch.Whole_Word_Check, 1, 2, 0, 1);
 
-      Gtk_New (Vsearch.Regexp_Check, -"Regular Expression");
-      Set_Active (Vsearch.Regexp_Check, False);
-      Attach (Vsearch.Options_Vbox,
-              Vsearch.Regexp_Check, 0, 1, 0, 1);
+      Gtk_New (Vsearch.Auto_Hide_Check, -"Close on Search");
+      Set_Tip
+        (Get_Tooltips (Handle), Vsearch.Auto_Hide_Check,
+         -("If this is selected, the search dialog is closed when a match is"
+           & " found. You can still search for the next occurrence by using"
+           & " the appropriate shortcut (Ctrl-N by default)"));
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all, Auto_Hide_Hist_Key, False);
+      Associate
+        (Get_History (Handle).all, Auto_Hide_Hist_Key,
+         Vsearch.Auto_Hide_Check);
+      Attach (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check, 0, 1, 1, 2);
+
+      Gtk_New (Vsearch.Case_Check, -"Case Sensitive");
+      Set_Tip
+        (Get_Tooltips (Handle), Vsearch.Case_Check,
+         -("Select this to differenciate upper from lower casing in search"
+           & " results"));
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all, "case_sensitive_search", False);
+      Associate
+        (Get_History (Handle).all, "case_sensitive_search",
+         Vsearch.Case_Check);
+      Attach (Vsearch.Options_Vbox, Vsearch.Case_Check, 1, 2, 1, 2);
 
       Gtk_New (Vsearch.Select_Editor_Check, -"Select Window on Match");
-      Set_Active (Vsearch.Select_Editor_Check, False);
-      Attach (Vsearch.Options_Vbox,
-              Vsearch.Select_Editor_Check, 0, 1, 1, 2);
-
-      Gtk_New (Vsearch.Auto_Hide_Check, -"Close Dialog on Search");
-      Set_Active (Vsearch.Auto_Hide_Check, False);
-      Attach (Vsearch.Options_Vbox,
-              Vsearch.Auto_Hide_Check, 0, 1, 2, 3);
-
-      Vsearch.Kernel := Handle;
+      Set_Tip
+        (Get_Tooltips (Handle), Vsearch.Select_Editor_Check,
+         -("When a match is found, give the focus to the matching editor. If"
+           & " unselected, the focus is left on the search window, which means"
+           & " you can keep typing Enter to go to the next search, but can't"
+           & " modify the editor directly"));
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all, Select_Window_Hist_Key, False);
+      Associate
+        (Get_History (Handle).all, Select_Window_Hist_Key,
+         Vsearch.Select_Editor_Check);
+      Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 0, 2, 2, 3);
 
       --  Create the widget
 
@@ -1489,7 +1544,7 @@ package body Vsearch is
       Widget_Callback.Object_Connect
         (Vsearch.Search_Next_Button, "clicked", On_Search'Access, Vsearch);
 
-      Gtk_New_With_Mnemonic (Vsearch.Search_Previous_Button, -"_Prev");
+      Gtk_New_With_Mnemonic (Vsearch.Search_Previous_Button, -"_Previous");
       Attach
         (Vsearch.Buttons_Table,
          Vsearch.Search_Previous_Button, 1, 2, 0, 1, Fill);
@@ -1522,20 +1577,19 @@ package body Vsearch is
          On_Replace'Access, Vsearch);
       Set_Sensitive (Vsearch_Access (Vsearch).Replace_Button, False);
 
-      Gtk_New_With_Mnemonic
-        (Vsearch.Replace_Search_Button, -"Replace & Find");
+      Gtk_New_With_Mnemonic (Vsearch.Replace_Search_Button, -"Replace & Find");
       Attach
         (Vsearch.Buttons_Table,
          Vsearch.Replace_Search_Button, 1, 2, 1, 2, Fill);
       Set_Tip
         (Get_Tooltips (Handle),
-         Vsearch.Replace_Search_Button, -"Replace and find");
+         Vsearch.Replace_Search_Button, -"Replace, then find next occurrence");
       Widget_Callback.Object_Connect
         (Vsearch.Replace_Search_Button, "clicked",
          On_Replace_Search'Access, Vsearch);
       Set_Sensitive (Vsearch_Access (Vsearch).Replace_Search_Button, False);
 
-      Gtk_New_With_Mnemonic (Vsearch.Replace_All_Button, -"Replace All");
+      Gtk_New_With_Mnemonic (Vsearch.Replace_All_Button, -"Repl All");
       Attach
         (Vsearch.Buttons_Table, Vsearch.Replace_All_Button, 2, 3, 1, 2, Fill);
       Set_Tip
@@ -1585,40 +1639,6 @@ package body Vsearch is
         (Get_History (Handle).all, Pattern_Hist_Key, Vsearch.Pattern_Combo,
          Clear_Combo => False, Prepend => True);
 
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Handle).all, Options_Collapsed_Hist_Key, False);
-
-      if Get_History
-        (Get_History (Handle).all, Options_Collapsed_Hist_Key)
-      then
-         Set_State (Vsearch.Options_Box, Collapsed);
-      else
-         Set_State (Vsearch.Options_Box, Expanded);
-      end if;
-
-      Associate
-        (Get_History (Handle).all,
-         "case_sensitive_search",
-         Vsearch.Case_Check);
-
-      Associate
-        (Get_History (Handle).all,
-         "whole_word_search",
-         Vsearch.Whole_Word_Check);
-      Associate
-        (Get_History (Handle).all,
-         "regexp_search",
-         Vsearch.Regexp_Check);
-
-      Associate
-        (Get_History (Vsearch.Kernel).all,
-         Auto_Hide_Hist_Key,
-         Vsearch.Auto_Hide_Check);
-      Associate
-        (Get_History (Vsearch.Kernel).all,
-         Select_Window_Hist_Key,
-         Vsearch.Select_Editor_Check);
-
       Add_Hook (Handle, Search_Reset_Hook,
                 Wrapper (Set_First_Next_Mode_Cb'Access),
                 Name => "vsearch.search_reset");
@@ -1634,8 +1654,8 @@ package body Vsearch is
    -- On_Delete --
    ---------------
 
-   function On_Delete (Search : access Gtk_Widget_Record'Class)
-                       return Boolean
+   function On_Delete
+     (Search : access Gtk_Widget_Record'Class) return Boolean
    is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Search);
    begin
