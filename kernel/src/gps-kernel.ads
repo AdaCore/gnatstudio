@@ -635,6 +635,7 @@ package GPS.Kernel is
    File_Edited_Hook              : constant String := "file_edited";
    File_Saved_Hook               : constant String := "file_saved";
    File_Closed_Hook              : constant String := "file_closed";
+   File_Changed_Detected_Hook    : constant String := "file_changed_detected";
    File_Changed_On_Disk_Hook     : constant String := "file_changed_on_disk";
    Compilation_Finished_Hook     : constant String := "compilation_finished";
 
