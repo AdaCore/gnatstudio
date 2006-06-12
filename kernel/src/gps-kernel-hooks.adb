@@ -1451,6 +1451,8 @@ package body GPS.Kernel.Hooks is
         (Kernel, File_Changed_On_Disk_Hook, File_Hook_Type);
       Register_Hook_No_Return
         (Kernel, Source_Lines_Revealed_Hook, Context_Hook_Type);
+      Register_Hook_Return_Boolean
+        (Kernel, File_Changed_Detected_Hook, File_Hook_Type);
 
       Register_Command
         (Kernel, Constructor_Method,
