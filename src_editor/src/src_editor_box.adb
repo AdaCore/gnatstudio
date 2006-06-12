@@ -117,9 +117,9 @@ package body Src_Editor_Box is
    --  Same as the public Get_Contextual_Menu, Event_Widget is ignored.
 
    procedure Show_Cursor_Position
-     (Box    : Source_Editor_Box;
+     (Box    : access Source_Editor_Box_Record'Class;
       Line   : Editable_Line_Type;
-      Column : Integer);
+      Column : Character_Offset_Type);
    --  Redraw the cursor position in the Line/Column areas of the status bar
 
    procedure Show_Which_Function
@@ -492,13 +492,13 @@ package body Src_Editor_Box is
    --------------------------
 
    procedure Show_Cursor_Position
-     (Box    : Source_Editor_Box;
+     (Box    : access Source_Editor_Box_Record'Class;
       Line   : Editable_Line_Type;
-      Column : Integer) is
+      Column : Character_Offset_Type) is
    begin
       Set_Text
         (Box.Cursor_Loc_Label,
-         Image (Integer (Line)) & ':' & Image (Column));
+         Image (Integer (Line)) & ':' & Image (Integer (Column)));
    end Show_Cursor_Position;
 
    -------------------------
@@ -640,16 +640,26 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box)
    is
       pragma Unreferenced (Buffer);
+      Child : MDI_Child;
 
    begin
       Box.Current_Line :=
         Editable_Line_Type (Values.Get_Int (Values.Nth (Params, 1)));
 
-      if Has_Focus_Is_Set (Box.Source_View) then
+      --  In case there are multiple views, we only want to change the one that
+      --  last had the focus. Otherwise, they would all end up with the same
+      --  line number, which is inaccurate.
+      --  The box might not have the focus currently: if we are for instance
+      --  changing the current line from the "Go to line" dialog, the latter
+      --  still has the focus at this point.
+
+      Child := Find_Editor (Box.Kernel, Get_Filename (Box.Source_Buffer));
+      if Child /= null and then Get_Widget (Child) = Gtk_Widget (Box) then
          Show_Cursor_Position
            (Box,
             Line   => Box.Current_Line,
-            Column => Integer (Values.Get_Int (Values.Nth (Params, 2))));
+            Column => Character_Offset_Type
+              (Values.Get_Int (Values.Nth (Params, 2))));
       end if;
 
    exception
