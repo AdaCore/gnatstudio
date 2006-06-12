@@ -61,6 +61,8 @@ with Projects.Registry;               use Projects.Registry;
 with Gtk.Text_View;                   use Gtk.Text_View;
 with Gtk.Text_Buffer;                 use Gtk.Text_Buffer;
 
+with Language.Ada;                    use Language.Ada;
+
 package body Completion_Module is
 
    Me : constant Debug_Handle := Create ("Completion");
@@ -552,7 +554,7 @@ package body Completion_Module is
 
                Trace (Me_Adv, "Constructing tree...");
                Constructs_Tree := new Construct_Tree'
-                 (To_Construct_Tree (Constructs));
+                 (To_Construct_Tree (Ada_Lang, The_Text.all, Constructs));
                Trace (Me_Adv, "Constructing tree complete");
 
                Set_Buffer (Manager.all, The_Text);
