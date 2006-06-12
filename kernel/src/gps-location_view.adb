@@ -25,6 +25,7 @@ with GNAT.OS_Lib;
 with System;
 
 with Gdk.Event;                use Gdk.Event;
+with Gdk.Rectangle;            use Gdk.Rectangle;
 
 with Glib.Convert;
 with Glib.Object;              use Glib.Object;
@@ -1896,6 +1897,9 @@ package body GPS.Location_View is
       Success   : Command_Return_Type;
       pragma Unreferenced (Success);
 
+      Cell_Rect : Gdk_Rectangle;
+      Back_Rect : Gdk_Rectangle;
+
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Press
@@ -1909,6 +1913,24 @@ package body GPS.Location_View is
             Buffer_X,
             Buffer_Y,
             Row_Found);
+
+         if Column /= Explorer.Action_Column then
+            Get_Cell_Area
+              (Explorer.Tree, Path,
+               Explorer.Sorting_Column, Cell_Rect);
+            Get_Background_Area
+              (Explorer.Tree, Path,
+               Explorer.Sorting_Column, Back_Rect);
+
+            --  If we are clicking before the beginning of the cell, allow the
+            --  event to pass. This allows clicking on expanders.
+            if Buffer_X > Back_Rect.X
+              and then Buffer_X < Cell_Rect.X
+            then
+               Path_Free (Path);
+               return False;
+            end if;
+         end if;
 
          if Path /= null then
             if Get_Depth (Path) < 3 then
