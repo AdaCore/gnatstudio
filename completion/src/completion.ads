@@ -33,6 +33,8 @@ with Generic_List;
 with Virtual_Lists;
 with Virtual_Lists.Extensive;
 
+with VFS; use VFS;
+
 package Completion is
 
    type Completion_List is private;
@@ -132,8 +134,8 @@ package Completion is
    type Completion_Proposal is abstract tagged private;
    --  This is the type of a proposal.
 
-   type File_Location (Name_Length : Natural) is record
-      File_Path : String (1 .. Name_Length);
+   type File_Location is record
+      File_Path : Virtual_File;
       Line      : Natural;
       Column    : Basic_Types.Visible_Column_Type;
    end record;
@@ -260,7 +262,7 @@ private
       Resolver         : Completion_Resolver_Access;
    end record;
 
-   Null_File_Location : constant File_Location := (0, "", 0, 0);
+   Null_File_Location : constant File_Location := (No_File, 0, 0);
 
    procedure Free_Proposal (Proposal : in out Completion_Proposal'Class);
    --  Used to instantiate the generic list (this is not actually doing
