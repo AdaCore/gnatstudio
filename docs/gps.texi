@@ -4567,7 +4567,7 @@ Search in the project browser (@pxref{The Project Browser}).
 @end table
 
 The second part of the window is a row of buttons, to start the search
-(or continue to the next occurrence), or to display the options.
+(or continue to the next occurrence), and to display the options.
 
 @iftex
 @cindex screen shot
@@ -4593,23 +4593,23 @@ Python regular expressions grammar, and is documented in the GNAT run time file
 dialog (@code{File->Open From Project...}) and type g-regpat.ads. See
 @ref{Open From Project} for more information on this dialog.
 
-@item @code{"Whole Word"}
-@cindex whole word
-If activated, this check box will force the search engine to ignore
-substrings. "sensitive" will no longer match "insensitive".
-
-@item @code{Select Window}
-@cindex select window on match
-When this button is selected, the focus is given to the editor that contains
-the match, so that you can start editing the text immediatly. If the button is
-not selected, the focus is left on the search window, so that you can press
-Enter to search for the next occurrence.
-
 @item @code{"Case Sensitive"}
 @cindex case sensitive
 By default, patterns are case insensitive (upper-case letters and
 lower-case letters are considered as equivalent). You can change this
 behavior by clicking on this check box.
+
+@item @code{"Whole Word"}
+@cindex whole word
+If activated, this check box will force the search engine to ignore
+substrings. "sensitive" will no longer match "insensitive".
+
+@item @code{Select on Match}
+@cindex select window on match
+When this button is selected, the focus is given to the editor that contains
+the match, so that you can start editing the text immediatly. If the button is
+not selected, the focus is left on the search window, so that you can press
+Enter to search for the next occurrence.
 
 @item @code{Close on Match}
 @cindex close dialog on match
