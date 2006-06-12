@@ -729,6 +729,8 @@ package body Builder_Module is
          Clear_Compilation_Output (Kernel, False);
       end if;
 
+      Interrupt_Xrefs_Loading (Kernel);
+
       case Syntax is
          when GNAT_Syntax =>
             Cmd := new String'(Get_Attribute_Value
@@ -926,6 +928,8 @@ package body Builder_Module is
       if Builder_Module_ID.Build_Count = 0 then
          Clear_Compilation_Output (Kernel, Shadow);
       end if;
+
+      Interrupt_Xrefs_Loading (Kernel);
 
       Cb_Data := new Files_Callback_Data;
 
@@ -1162,6 +1166,8 @@ package body Builder_Module is
       if Builder_Module_ID.Build_Count = 0 then
          Clear_Compilation_Output (Kernel, False);
       end if;
+
+      Interrupt_Xrefs_Loading (Kernel);
 
       declare
          Args : Argument_List_Access := Argument_String_To_List (Cmd);
