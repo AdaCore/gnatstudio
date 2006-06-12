@@ -51,8 +51,6 @@ package body Completion.Ada is
          Previous_It : Completion_Iterator;
          Result      : in out Completion_List)
       is
-         Tmp           : Completion_List;
-         Tmp_It        : Completion_Iterator;
 
          procedure Handle_Identifier (Id : String);
 
@@ -61,6 +59,8 @@ package body Completion.Ada is
          -----------------------
 
          procedure Handle_Identifier (Id : String) is
+            Tmp    : Completion_List;
+            Tmp_It : Completion_Iterator;
          begin
             if Token = First (Completing_Expression)
               or else (Filter and All_Accessible_Units) /= 0
@@ -101,10 +101,14 @@ package body Completion.Ada is
             Tmp_It := First (Tmp);
 
             if Next (Token) = Token_List.Null_Node then
-               Result := Tmp;
-            else
-               Free (Result);
+               Completion_List_Pckg.Concat (Result.List, Tmp.List);
 
+               if Result.Searched_Identifier = null then
+                  Result.Searched_Identifier := Tmp.Searched_Identifier;
+               else
+                  Free (Tmp.Searched_Identifier);
+               end if;
+            else
                while not At_End (Tmp_It) loop
                   Analyze_Token (Next (Token), Tmp_It, Result);
 
@@ -159,8 +163,6 @@ package body Completion.Ada is
             when Tok_Identifier =>
                Handle_Identifier
                  (Get_Name (Get_Buffer (Manager).all, Data (Token)));
-
-               return;
 
             when Tok_Expression =>
                if Get_Number_Of_Parameters (Get_Proposal (Previous_It))
