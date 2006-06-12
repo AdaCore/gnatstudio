@@ -88,7 +88,9 @@ package Src_Editor_Module is
    function Find_Editor
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child;
-   --  Return the first child that contains an editor that edits file.
+   --  Return the first child that contains an editor that edits file. This is
+   --  the view that last had the focus, in case multiple views exist for this
+   --  file.
    --  null is returned if there are no such editor
    --  File can either be a file name or a buffer identifier.
 
