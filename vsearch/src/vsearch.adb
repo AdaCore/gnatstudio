@@ -1461,11 +1461,10 @@ package body Vsearch is
       Set_Expanded_Widget (Vsearch.Options_Box, Vsearch.Options_Frame);
 
       Gtk_New_Vbox (Vsearch.Context_Specific, Homogeneous => False);
-      Pack_Start
-        (Vsearch.Options_Frame, Vsearch.Context_Specific, False, Padding => 3);
+      Pack_Start (Vsearch.Options_Frame, Vsearch.Context_Specific, False);
 
       Gtk_New (Vsearch.Options_Vbox, 3, 2, False);
-      Pack_Start (Vsearch.Options_Frame, Vsearch.Options_Vbox, Padding => 3);
+      Pack_Start (Vsearch.Options_Frame, Vsearch.Options_Vbox);
 
       Gtk_New (Vsearch.Regexp_Check, -"Regexp");
       Set_Tip
