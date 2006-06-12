@@ -1477,6 +1477,18 @@ package body Vsearch is
         (Get_History (Handle).all, "regexp_search", Vsearch.Regexp_Check);
       Attach (Vsearch.Options_Vbox, Vsearch.Regexp_Check, 0, 1, 0, 1);
 
+      Gtk_New (Vsearch.Case_Check, -"Case Sensitive");
+      Set_Tip
+        (Get_Tooltips (Handle), Vsearch.Case_Check,
+         -("Select this to differenciate upper from lower casing in search"
+           & " results"));
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all, "case_sensitive_search", False);
+      Associate
+        (Get_History (Handle).all, "case_sensitive_search",
+         Vsearch.Case_Check);
+      Attach (Vsearch.Options_Vbox, Vsearch.Case_Check, 1, 2, 0, 1);
+
       Gtk_New (Vsearch.Whole_Word_Check, -"Whole Word");
       Set_Tip
         (Get_Tooltips (Handle), Vsearch.Whole_Word_Check,
@@ -1487,7 +1499,21 @@ package body Vsearch is
       Associate
         (Get_History (Handle).all, "whole_word_search",
          Vsearch.Whole_Word_Check);
-      Attach (Vsearch.Options_Vbox, Vsearch.Whole_Word_Check, 1, 2, 0, 1);
+      Attach (Vsearch.Options_Vbox, Vsearch.Whole_Word_Check, 0, 1, 1, 2);
+
+      Gtk_New (Vsearch.Select_Editor_Check, -"Select on Match");
+      Set_Tip
+        (Get_Tooltips (Handle), Vsearch.Select_Editor_Check,
+         -("When a match is found, give the focus to the matching editor. If"
+           & " unselected, the focus is left on the search window, which means"
+           & " you can keep typing Enter to go to the next search, but can't"
+           & " modify the editor directly"));
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all, Select_Window_Hist_Key, False);
+      Associate
+        (Get_History (Handle).all, Select_Window_Hist_Key,
+         Vsearch.Select_Editor_Check);
+      Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 1, 2, 1, 2);
 
       Gtk_New (Vsearch.Auto_Hide_Check, -"Close on Match");
       Set_Tip
@@ -1500,33 +1526,7 @@ package body Vsearch is
       Associate
         (Get_History (Handle).all, Auto_Hide_Hist_Key,
          Vsearch.Auto_Hide_Check);
-      Attach (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check, 0, 1, 1, 2);
-
-      Gtk_New (Vsearch.Case_Check, -"Case Sensitive");
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Case_Check,
-         -("Select this to differenciate upper from lower casing in search"
-           & " results"));
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Handle).all, "case_sensitive_search", False);
-      Associate
-        (Get_History (Handle).all, "case_sensitive_search",
-         Vsearch.Case_Check);
-      Attach (Vsearch.Options_Vbox, Vsearch.Case_Check, 1, 2, 1, 2);
-
-      Gtk_New (Vsearch.Select_Editor_Check, -"Select Window on Match");
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Select_Editor_Check,
-         -("When a match is found, give the focus to the matching editor. If"
-           & " unselected, the focus is left on the search window, which means"
-           & " you can keep typing Enter to go to the next search, but can't"
-           & " modify the editor directly"));
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Handle).all, Select_Window_Hist_Key, False);
-      Associate
-        (Get_History (Handle).all, Select_Window_Hist_Key,
-         Vsearch.Select_Editor_Check);
-      Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 0, 2, 2, 3);
+      Attach (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check, 0, 2, 2, 3);
 
       --  Create the widget
 
