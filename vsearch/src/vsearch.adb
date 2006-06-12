@@ -1489,7 +1489,7 @@ package body Vsearch is
          Vsearch.Whole_Word_Check);
       Attach (Vsearch.Options_Vbox, Vsearch.Whole_Word_Check, 1, 2, 0, 1);
 
-      Gtk_New (Vsearch.Auto_Hide_Check, -"Close on Search");
+      Gtk_New (Vsearch.Auto_Hide_Check, -"Close on Match");
       Set_Tip
         (Get_Tooltips (Handle), Vsearch.Auto_Hide_Check,
          -("If this is selected, the search dialog is closed when a match is"
