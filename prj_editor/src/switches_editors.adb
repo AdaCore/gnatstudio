@@ -1722,6 +1722,9 @@ package body Switches_Editors is
       for P in Editor.Pages'Range loop
          Editor.Pages (P) := Get_Nth_Switches_Page (Kernel, P);
 
+         --  ??? Since the kernel will always return the same page, is this
+         --  really necessary ? Especially since we might end up connecting to
+         --  it several times in fact.
          Widget_Callback.Connect
            (Editor.Pages (P), "destroy", Page_Destroyed'Access);
 
@@ -1977,6 +1980,8 @@ package body Switches_Editors is
 
             if To_Remove then
                if File_Name /= VFS.No_File then
+                  Trace (Me, "Removing file-specific switches for "
+                         & Base_Name (File_Name));
                   Delete_Attribute
                     (Project            => Rename_Prj,
                      Scenario_Variables => Scenario_Variables,
@@ -1989,6 +1994,8 @@ package body Switches_Editors is
             elsif not Is_Default_Value then
                if File_Name /= VFS.No_File then
                   if Args'Length /= 0 then
+                     Trace (Me, "Changing switches for "
+                            & Base_Name (File_Name));
                      Update_Attribute_Value_In_Scenario
                        (Project            => Rename_Prj,
                         Scenario_Variables => Scenario_Variables,
@@ -1998,6 +2005,8 @@ package body Switches_Editors is
                         Attribute_Index    => Base_Name (File_Name),
                         Prepend            => False);
                   else
+                     Trace (Me, "Removing switches for "
+                            & Base_Name (File_Name));
                      Delete_Attribute
                        (Project            => Rename_Prj,
                         Scenario_Variables => Scenario_Variables,
@@ -2007,6 +2016,8 @@ package body Switches_Editors is
                   end if;
 
                elsif Args'Length /= 0 then
+                  Trace (Me, "Changing default switches for "
+                         & Page.Pkg.all & " " & Page.Attribute_Index.all);
                   Update_Attribute_Value_In_Scenario
                     (Project            => Rename_Prj,
                      Scenario_Variables => Scenario_Variables,
@@ -2017,6 +2028,8 @@ package body Switches_Editors is
                      Prepend            => False);
 
                else
+                  Trace (Me, "Removing default switches for "
+                         & Page.Pkg.all & " " & Page.Attribute_Index.all);
                   Delete_Attribute
                     (Project            => Rename_Prj,
                      Scenario_Variables => Scenario_Variables,
@@ -2201,7 +2214,7 @@ package body Switches_Editors is
             --  Now that the default widget values have been set, recompute
             --  the command line to find out the status of the switches that
             --  haven't been initialized yet, for instance a radio button with
-            --  no correspondance on the command line.
+            --  no corresponding command line.
             Refresh_Page (Switches.Pages (P));
          end;
       end loop;
@@ -2251,11 +2264,12 @@ package body Switches_Editors is
    is
       Switches  : Switches_Edit;
       Dialog    : Gtk_Dialog;
-      Button    : Gtk_Widget;
+      Button, Button_OK    : Gtk_Widget;
       B         : Gtk_Button;
       Box       : Gtk_Box;
       Selector  : Scenario_Selector;
       Modified  : Boolean;
+      pragma Unreferenced (Button_OK);
 
    begin
       if Files'Length > 1 then
@@ -2297,7 +2311,7 @@ package body Switches_Editors is
 
       Fill_Editor (Switches, Project, Files);
 
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Button_OK := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
 
       if Files'Length /= 0 then
          Gtk_New_From_Stock (B, Stock_Revert_To_Saved);
