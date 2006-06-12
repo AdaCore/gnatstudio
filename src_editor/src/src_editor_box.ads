@@ -160,10 +160,10 @@ package Src_Editor_Box is
    --  Success is set to false if the buffer could not be saved.
    --  If filename is null, use the filename associated with Editor.
 
-   function Check_Timestamp_And_Reload
+   procedure Check_Timestamp_And_Reload
      (Editor        : access Source_Editor_Box_Record;
       Interactive   : Boolean;
-      Always_Reload : Boolean) return Boolean;
+      Always_Reload : Boolean);
    --  Check whether the timestamp changed on the disk.
    --  If yes, then
    --    if Interactive is True, display a dialog asking the user whether he
