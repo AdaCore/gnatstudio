@@ -544,8 +544,6 @@ package body Src_Editor_Module is
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
       Box   : Source_Editor_Box;
-      Dummy : Boolean;
-      pragma Unreferenced (Dummy);
    begin
       loop
          Child := Get (Iter);
@@ -558,7 +556,7 @@ package body Src_Editor_Module is
             if D.File = VFS.No_File
               or else D.File = Get_Filename (Box)
             then
-               Dummy := Check_Timestamp_And_Reload
+               Check_Timestamp_And_Reload
                  (Box,
                   Interactive   => False,
                   Always_Reload => False);
@@ -1127,8 +1125,6 @@ package body Src_Editor_Module is
       Editor  : Source_Editor_Box;
       Child   : GPS_MDI_Child;
       Child2  : MDI_Child;
-      Dummy   : Boolean;
-      pragma Unreferenced (Dummy);
 
    begin
       Trace (Me, "Open file " & Full_Name (File).all
@@ -1138,7 +1134,7 @@ package body Src_Editor_Module is
          Child2 := Find_Editor (Kernel, File);
 
          if Child2 /= null then
-            Dummy := Check_Timestamp_And_Reload
+            Check_Timestamp_And_Reload
               (Source_Editor_Box (Get_Widget (Child2)),
                Interactive   => False,
                Always_Reload => Force);
