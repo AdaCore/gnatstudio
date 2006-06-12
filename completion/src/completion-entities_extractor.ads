@@ -25,7 +25,6 @@ with Entities.Queries;         use Entities.Queries;
 with Language.Tree;            use Language.Tree;
 with Projects;                 use Projects;
 with Language_Handlers;        use Language_Handlers;
-with VFS;                      use VFS;
 
 package Completion.Entities_Extractor is
 
