@@ -124,7 +124,7 @@ package body Completion.Constructs_Extractor is
    begin
       case Get_Construct (Proposal.Tree_Node).Category is
          when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter
-            | Cat_Class .. Cat_Subtype =>
+            | Cat_Class .. Cat_Subtype | Subprogram_Category =>
 
             Get_Referenced_Entity
               (Ada_Lang,
@@ -262,9 +262,21 @@ package body Completion.Constructs_Extractor is
    function Get_Number_Of_Parameters (Proposal : Construct_Completion_Proposal)
      return Natural
    is
-      pragma Unreferenced (Proposal);
+      Resolver : Construct_Completion_Resolver :=
+        Construct_Completion_Resolver (Proposal.Resolver.all);
+      Total : Integer := 0;
+      It    : Construct_Tree_Iterator :=
+        Next (Resolver.Tree.all, Proposal.Tree_Node, Jump_Into);
    begin
-      return 0;
+      while Get_Parent_Scope (Resolver.Tree.all, It) = Proposal.Tree_Node loop
+         if Get_Construct (It).Category = Cat_Parameter then
+            Total := Total + 1;
+         end if;
+
+         It := Next (Resolver.Tree.all, It, Jump_Over);
+      end loop;
+
+      return Total;
    end Get_Number_Of_Parameters;
 
    ----------
