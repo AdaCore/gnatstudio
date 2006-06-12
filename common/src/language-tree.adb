@@ -23,6 +23,7 @@ with String_Utils;      use String_Utils;
 with Generic_List;
 
 with Ada.Unchecked_Deallocation;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Language.Tree is
 
@@ -52,7 +53,10 @@ package body Language.Tree is
    -----------------------
 
    function To_Construct_Tree
-     (List : Construct_List; Compute_Scopes : Boolean := True)
+     (Language       : Language_Access;
+      Buffer         : String;
+      List           : Construct_List;
+      Compute_Scopes : Boolean := True)
       return Construct_Tree
    is
       Size              : Natural := 0;
@@ -65,6 +69,17 @@ package body Language.Tree is
       --  Set the spec, public body and private body info for this iterator.
       --  If Base_Scope is null, then the search will start at the entity after
       --  Base_Iter, otherwise it will start at the first child of Base_Sope.
+
+      function Check_Profiles
+        (Tree : Construct_Tree; Prof1, Prof2 : Construct_Tree_Iterator)
+         return Boolean;
+      --  Return true if the two profiles are equivalent, false otherwise.
+
+      function Is_Equivalent_Category
+        (Construct1, Construct2 : Construct_Information) return Boolean;
+      --  Return true if the two categories are equivalent, which is larger
+      --  than a strict equality (for example, a Cat_Type and a Cat_Record
+      --  are equivalent, since they can denote the same object).
 
       -------------------
       -- Compute_Scope --
@@ -81,6 +96,7 @@ package body Language.Tree is
          Spec_Index         : Natural := 0;
          First_Body_Index   : Natural := 0;
          Second_Body_Index  : Natural := 0;
+
       begin
          if Get_Construct (Base_Iter).Name = null then
             return;
@@ -100,21 +116,15 @@ package body Language.Tree is
             if Get_Construct (Local_Iter).Name /= null
               and then Get_Construct (Local_Iter).Name.all
               = Get_Construct (Base_Iter).Name.all
-              and then Get_Construct (Base_Iter).Category
-              = Get_Construct (Local_Iter).Category
+              and then Is_Equivalent_Category
+                (Get_Construct (Base_Iter).all, Get_Construct (Local_Iter).all)
             then
                if Get_Construct (Base_Iter).Category
                  in Subprogram_Category
                then
-                  null;
-                  --  ??? We can't really do anything here as long as we don't
-                  --  have any information on the parameters. We could get
-                  --  the buffer (would need to add a parameter there) and
-                  --  normalize the parameters list. Since this is not yet
-                  --  handled by the auto-completion, we can just wait before
-                  --  implementing this case.
-
-                  return;
+                  if not Check_Profiles (Tree, Base_Iter, Local_Iter) then
+                     return;
+                  end if;
                end if;
 
                if Tree (Base_Iter.Index).Spec_Index = 0 then
@@ -178,6 +188,95 @@ package body Language.Tree is
          end if;
 
       end Compute_Scope;
+
+      --------------------
+      -- Check_Profiles --
+      --------------------
+
+      function Check_Profiles
+        (Tree : Construct_Tree; Prof1, Prof2 : Construct_Tree_Iterator)
+         return Boolean
+      is
+         Iter1, Iter2 : Construct_Tree_Iterator;
+
+         Ref1_Sloc_Start : Source_Location;
+         Ref1_Sloc_End   : Source_Location;
+         Ref1_Success    : Boolean;
+
+         Ref2_Sloc_Start : Source_Location;
+         Ref2_Sloc_End   : Source_Location;
+         Ref2_Success    : Boolean;
+      begin
+         Iter1 := Next (Tree, Prof1, Jump_Into);
+         Iter2 := Next (Tree, Prof2, Jump_Into);
+
+         while Get_Parent_Scope (Tree, Iter1) = Prof1
+           and then Get_Parent_Scope (Tree, Iter2) = Prof2
+         loop
+            if (Get_Construct (Prof1).Category = Cat_Parameter
+                and then Get_Construct (Prof2).Category = Cat_Parameter
+                and then
+                  ((Get_Language_Context (Language).Case_Sensitive and then
+                      To_Lower (Get_Construct (Prof1).Name.all) /=
+                      To_Lower (Get_Construct (Prof2).Name.all))
+                   or else Get_Construct (Prof1).Name.all /=
+                     Get_Construct (Prof2).Name.all))
+              or else (Get_Construct (Prof1).Category = Cat_Parameter
+                       xor Get_Construct (Prof2).Category = Cat_Parameter)
+            then
+               return False;
+            end if;
+
+            Iter1 := Next (Tree, Iter1);
+            Iter2 := Next (Tree, Iter2);
+         end loop;
+
+         --  In case of functions, we should also check return types here !
+
+         Get_Referenced_Entity
+           (Lang       => Language,
+            Buffer     => Buffer,
+            Construct  => Get_Construct (Prof1).all,
+            Sloc_Start => Ref1_Sloc_Start,
+            Sloc_End   => Ref1_Sloc_End,
+            Success    => Ref1_Success);
+
+         Get_Referenced_Entity
+           (Lang       => Language,
+            Buffer     => Buffer,
+            Construct  => Get_Construct (Prof2).all,
+            Sloc_Start => Ref2_Sloc_Start,
+            Sloc_End   => Ref2_Sloc_End,
+            Success    => Ref2_Success);
+
+         if Ref1_Success xor Ref2_Success then
+            return False;
+         elsif Ref1_Success then
+            return
+              (Get_Language_Context (Language).Case_Sensitive and then
+               To_Lower (Buffer (Ref1_Sloc_Start.Index .. Ref1_Sloc_End.Index))
+               = To_Lower
+                 (Buffer (Ref2_Sloc_Start.Index .. Ref2_Sloc_End.Index)))
+              or else Buffer (Ref1_Sloc_Start.Index .. Ref1_Sloc_End.Index)
+              = Buffer (Ref2_Sloc_Start.Index .. Ref2_Sloc_End.Index);
+         else
+            return True;
+         end if;
+
+      end Check_Profiles;
+
+      ----------------------------
+      -- Is_Equivalent_Category --
+      ----------------------------
+
+      function Is_Equivalent_Category
+        (Construct1, Construct2 : Construct_Information) return Boolean
+      is
+      begin
+         return Construct1.Category = Construct2.Category
+           or else (Construct1.Category in Type_Category
+                    and then Construct2.Category in Type_Category);
+      end Is_Equivalent_Category;
 
    begin
       Current_Construct := List.First;
@@ -1000,6 +1099,14 @@ package body Language.Tree is
             if Get_Construct (It).Name.all
               = Get_Construct (Data (Node)).Name.all
             then
+               --  If we found the spec of an entity of wich we already have
+               --  the body, then replace the body by the spec.
+
+               if Get_Spec (Tree, Data (Node)) = It then
+                  Set_Data (Node, It);
+                  return;
+               end if;
+
                --  If we found an other node wich is not a subprogram, then the
                --  one we found is not visible.
 
