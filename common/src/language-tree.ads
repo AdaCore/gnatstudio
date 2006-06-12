@@ -39,7 +39,9 @@ package Language.Tree is
    --  Free the data associated to a construct tree access
 
    function To_Construct_Tree
-     (List           : Construct_List;
+     (Language       : Language_Access;
+      Buffer         : String;
+      List           : Construct_List;
       Compute_Scopes : Boolean := True)
       return Construct_Tree;
    --  Return the construct tree corresponding to the construct list given in
