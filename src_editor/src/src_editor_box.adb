@@ -63,6 +63,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -72,7 +73,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language.Ada;              use Language.Ada;
-with Language_Handlers;     use Language_Handlers;
+with Language_Handlers;          use Language_Handlers;
 with Pango.Layout;              use Pango.Layout;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
@@ -941,12 +942,8 @@ package body Src_Editor_Box is
       B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
       if B.Timestamp_Mode = Check_At_Modify then
-         if not Check_Timestamp_And_Reload
-           (B, Interactive => True, Always_Reload => False)
-         then
-            --  Do not propagate the key press event
-            return True;
-         end if;
+         Check_Timestamp_And_Reload
+           (B, Interactive => True, Always_Reload => False);
 
          B.Timestamp_Mode := Check_At_Focus;
       end if;
@@ -1004,13 +1001,8 @@ package body Src_Editor_Box is
       if B.Timestamp_Mode = Check_At_Focus then
          B.Timestamp_Mode := Checking;
 
-         if not Check_Timestamp_And_Reload
-           (B, Interactive => True, Always_Reload => False)
-         then
-            --  We'll ask again next time the user wants to modify the file
-            B.Timestamp_Mode := Check_At_Modify;
-            return False;
-         end if;
+         Check_Timestamp_And_Reload
+           (B, Interactive => True, Always_Reload => False);
 
          Check_Writable (B);
 
@@ -1948,10 +1940,10 @@ package body Src_Editor_Box is
    -- Check_Timestamp_And_Reload --
    --------------------------------
 
-   function Check_Timestamp_And_Reload
+   procedure Check_Timestamp_And_Reload
      (Editor        : access Source_Editor_Box_Record;
       Interactive   : Boolean;
-      Always_Reload : Boolean) return Boolean
+      Always_Reload : Boolean)
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
@@ -1961,6 +1953,7 @@ package body Src_Editor_Box is
       Success  : Boolean;
       Line     : Editable_Line_Type;
       Column   : Character_Offset_Type;
+      Data     : aliased File_Hooks_Args;
    begin
       if Get_Filename (Editor.Source_Buffer) /= VFS.No_File then
          if Always_Reload
@@ -1969,30 +1962,38 @@ package body Src_Editor_Box is
             if Always_Reload or else not Interactive then
                Response := Gtk_Response_No;
             else
-               Dialog := Create_Gtk_Dialog
-                 (Msg        => Base_Name (Get_Filename (Editor.Source_Buffer))
-                  & (-" changed on disk.")
-                  & ASCII.LF & ASCII.LF
-                  & (-"Click on Ignore to keep this editing session.")
-                  & ASCII.LF
-                  & (-"Click on Reload to reload the file from disk")
-                  & ASCII.LF
-                  & (-"and discard your current changes."),
-                  Dialog_Type   => Confirmation,
-                  Title         => -"File changed on disk",
-                  Justification => Justify_Left,
-                  Parent        => Get_Current_Window (Editor.Kernel));
+               Data.File := Get_Filename (Editor.Source_Buffer);
 
-               Button := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
-               Button := Add_Button (Dialog, -"Reload", Gtk_Response_No);
+               if not Run_Hook_Until_Success
+                 (Editor.Kernel, File_Changed_Detected_Hook,
+                  Data'Unchecked_Access)
+               then
 
-               --  Ungrab the pointer if needed, to avoid freezing the
-               --  interface if the user is e.g. moving the GPS window
+                  Dialog := Create_Gtk_Dialog
+                    (Base_Name (Get_Filename (Editor.Source_Buffer))
+                     & (-" changed on disk.")
+                     & ASCII.LF & ASCII.LF
+                     & (-"Click on Ignore to keep this editing session.")
+                     & ASCII.LF
+                     & (-"Click on Reload to reload the file from disk")
+                     & ASCII.LF
+                     & (-"and discard your current changes."),
+                     Dialog_Type   => Confirmation,
+                     Title         => -"File changed on disk",
+                     Justification => Justify_Left,
+                     Parent        => Get_Current_Window (Editor.Kernel));
 
-               Pointer_Ungrab;
-               Show_All (Dialog);
-               Response := Run (Dialog);
-               Destroy (Dialog);
+                  Button := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
+                  Button := Add_Button (Dialog, -"Reload", Gtk_Response_No);
+
+                  --  Ungrab the pointer if needed, to avoid freezing the
+                  --  interface if the user is e.g. moving the GPS window
+
+                  Pointer_Ungrab;
+                  Show_All (Dialog);
+                  Response := Run (Dialog);
+                  Destroy (Dialog);
+               end if;
             end if;
 
             case Response is
@@ -2013,8 +2014,6 @@ package body Src_Editor_Box is
             end case;
          end if;
       end if;
-
-      return True;
    end Check_Timestamp_And_Reload;
 
    -------------------------
