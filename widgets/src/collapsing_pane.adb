@@ -42,36 +42,42 @@ with Gtk.Enums; use Gtk.Enums;
 package body Collapsing_Pane is
 
    Collapsed_Xpm : constant Interfaces.C.Strings.chars_ptr_array :=
-     (New_String ("10 10 3 1"),
+     (New_String ("11 11 5 1"),
       New_String ("      c None"),
       New_String (".     c #FFFFFF"),
       New_String ("+     c #000000"),
-      New_String ("          "),
-      New_String (" ++       "),
-      New_String (" + ++     "),
-      New_String (" +   ++   "),
-      New_String (" +     ++ "),
-      New_String (" +     ++ "),
-      New_String (" +   ++   "),
-      New_String (" + ++     "),
-      New_String (" ++       "),
-      New_String ("          "));
+      New_String ("-     c #C0C0C0"),
+      New_String ("=     c #818181"),
+      New_String ("    -      "),
+      New_String ("    +-     "),
+      New_String ("    ++-    "),
+      New_String ("    + +-   "),
+      New_String ("    +  +-  "),
+      New_String ("    +  =+  "),
+      New_String ("    +  +-  "),
+      New_String ("    + +-   "),
+      New_String ("    ++-    "),
+      New_String ("    +-     "),
+      New_String ("    -      "));
 
    Expanded_Xpm : constant Interfaces.C.Strings.chars_ptr_array :=
-     (New_String ("10 10 3 1"),
+     (New_String ("11 11 5 1"),
       New_String ("      c None"),
       New_String (".     c #FFFFFF"),
       New_String ("+     c #000000"),
-      New_String ("          "),
-      New_String (" ++++++++ "),
-      New_String (" +      + "),
-      New_String ("  +    +  "),
-      New_String ("  +    +  "),
-      New_String ("   +  +   "),
-      New_String ("   +  +   "),
-      New_String ("    ++    "),
-      New_String ("    ++    "),
-      New_String ("          "));
+      New_String ("-     c #C0C0C0"),
+      New_String ("=     c #818181"),
+      New_String ("           "),
+      New_String ("           "),
+      New_String ("           "),
+      New_String ("           "),
+      New_String ("-+++++++++-"),
+      New_String (" -+-   -+- "),
+      New_String ("  -+- -+-  "),
+      New_String ("   -+=+-   "),
+      New_String ("    -+-    "),
+      New_String ("           "),
+      New_String ("           "));
 
    --------------------
    -- Signal Support --
