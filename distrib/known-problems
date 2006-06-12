@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.0.0
 
+- F612-010 Line number not refreshed after "Go to line"
+  Problem:    If you change the current line in editor with the "Go to line"
+              dialog, the line number is not refreshed in the editor's status
+              bar until you move the cursor
+  Workaround: Move the cursor one character to the left or right to force a
+              refresh
+
 - F530-004 Goto type declaration wrong on predefined types
   Problem:    When the contextual menu 'Goto type declaration of XXX' is 
               invoked, if XXX is of a predefined type GPS opens an empty file
