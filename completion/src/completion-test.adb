@@ -229,7 +229,8 @@ procedure Completion.Test is
 
       return new Construct_Completion_Resolver'
         (New_Construct_Completion_Resolver
-           (new Construct_Tree'(To_Construct_Tree (Constructs.all))));
+           (new Construct_Tree'(To_Construct_Tree
+            (Ada_Lang, Buffer, Constructs.all))));
    end Get_Construct_Completion_Resolver;
 
    ------------------------------------
@@ -325,7 +326,8 @@ procedure Completion.Test is
 
       return new Entity_Completion_Resolver'
         (New_Entity_Completion_Resolver
-           (new Construct_Tree'(To_Construct_Tree (Constructs.all)),
+           (new Construct_Tree'(To_Construct_Tree
+            (Ada_Lang, Buffer, Constructs.all)),
             Get_Root_Project (Registry),
             Handler));
    end Get_Entity_Completion_Resolver;
@@ -366,7 +368,7 @@ procedure Completion.Test is
            (Resolver => Resolver,
             Identifier => Buffer (Start_Word .. End_Word),
             Is_Partial => True,
-            Offset     => End_Word,
+            Offset     => Start_Word - 1,
             Filter     => All_Visible_Entities,
             Result     => Result);
 
