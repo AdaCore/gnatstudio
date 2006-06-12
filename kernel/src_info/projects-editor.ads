@@ -194,6 +194,7 @@ package Projects.Editor is
      (Tree  : Prj.Project_Tree_Ref;
       Value : Prj.Variable_Value) return GNAT.OS_Lib.Argument_List;
    --  Convert a variable value to a list of arguments.
+   --  The result must be freed by the caller.
 
    procedure Add_Scenario_Variable_Values
      (Root_Project : Project_Type;
