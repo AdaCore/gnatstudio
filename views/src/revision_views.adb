@@ -84,7 +84,6 @@ package body Revision_Views is
    type Revision_View_Record is new Generic_Views.View_Record with record
       Kernel       : Kernel_Handle;
       Tree         : Gtk_Tree_View;
-      Model        : Gtk_Tree_Store;
       Prev1, Prev2 : Unbounded_String;
       Parent       : Gtk_Tree_Iter := Null_Iter;
       Mode         : Mode_Kind := Link;
@@ -295,6 +294,9 @@ package body Revision_Views is
    procedure Add_Link_If_Not_Present
      (View : Revision_View; Log_1, Log_2 : Log_Data)
    is
+      Model : constant Gtk_Tree_Store :=
+                Gtk_Tree_Store (Get_Model (View.Tree));
+
       procedure Move (From : in out Gtk_Tree_Iter; To : Gtk_Tree_Iter);
       --  Move line pointed by From into To
 
@@ -306,7 +308,7 @@ package body Revision_Views is
          Line : constant Line_Data := Get_Data_From_Iter (View, From);
       begin
          Fill_Info (View, To, Line);
-         Remove (View.Model, From);
+         Remove (Model, From);
       end Move;
 
       Rev_1 : Gtk_Tree_Iter := Find_Revision (View, Log_1);
@@ -328,10 +330,10 @@ package body Revision_Views is
                Has_Link : Boolean;
                Parent   : Gtk_Tree_Iter := Rev_2;
             begin
-               Path := Get_Path (View.Model, Rev_1);
+               Path := Get_Path (Model, Rev_1);
 
                loop
-                  Append (View.Model, Iter, Parent);
+                  Append (Model, Iter, Parent);
 
                   if Parent = Rev_2 then
                      --  The first node becomes the parent of the next
@@ -339,8 +341,8 @@ package body Revision_Views is
                      Parent := Iter;
                   end if;
 
-                  Tmp := Get_Iter (View.Model, Path);
-                  Has_Link := Get_Boolean (View.Model, Tmp, Link_Column);
+                  Tmp := Get_Iter (Model, Path);
+                  Has_Link := Get_Boolean (Model, Tmp, Link_Column);
 
                   exit when not Prev (Path);
 
@@ -361,11 +363,11 @@ package body Revision_Views is
                --  Check if we need to reparent Rev_1 under Rev_2
 
                if To_String (Log_1.Revision) /= To_String (View.Prev2) then
-                  Append (View.Model, Iter, Rev_2);
+                  Append (Model, Iter, Rev_2);
                   Move (Rev_1, Iter);
                   View.Parent := Rev_2;
                else
-                  Set (View.Model, Rev_2, Link_Column, True);
+                  Set (Model, Rev_2, Link_Column, True);
                end if;
             end if;
       end case;
@@ -378,10 +380,12 @@ package body Revision_Views is
    procedure Add_Log_If_Not_Present
      (View : Revision_View; Log : Log_Data; Expand : Boolean)
    is
-      Iter : Gtk_Tree_Iter := Find_Revision (View, Log);
+      Model : constant Gtk_Tree_Store :=
+                Gtk_Tree_Store (Get_Model (View.Tree));
+      Iter  : Gtk_Tree_Iter := Find_Revision (View, Log);
    begin
       if Iter = Null_Iter then
-         Append (View.Model, Iter, View.Parent);
+         Append (Model, Iter, View.Parent);
          Fill_Info (View, Iter, (Log, False));
          View.Prev2 := View.Prev1;
          View.Prev1 := Log.Revision;
@@ -393,7 +397,7 @@ package body Revision_Views is
                Tmp  : Boolean;
                pragma Warnings (Off, Tmp);
             begin
-               Path := Get_Path (View.Model, Iter);
+               Path := Get_Path (Model, Iter);
                Tmp := Expand_Row (View.Tree, Path, Open_All => True);
                Path_Free (Path);
             end;
@@ -445,7 +449,8 @@ package body Revision_Views is
       function Get_Parent_Revision (Iter : Gtk_Tree_Iter) return String;
       --  Return the revision for Iter's parent
 
-      V : constant Revision_View := Revision_View (Object);
+      V     : constant Revision_View := Revision_View (Object);
+      Model : constant Gtk_Tree_Model := Get_Model (V.Tree);
 
       -------------------------
       -- Get_Parent_Revision --
@@ -461,13 +466,13 @@ package body Revision_Views is
          Look_For_Revision : while J /= Null_Iter loop
             declare
                Rev : constant String :=
-                       Get_String (V.Model, J, Rev_Info_Column);
+                       Get_String (Model, J, Rev_Info_Column);
             begin
                if Rev /= "" then
                   return Rev;
                end if;
 
-               J := Parent (V.Model, J);
+               J := Parent (Model, J);
             end;
          end loop Look_For_Revision;
 
@@ -479,13 +484,17 @@ package body Revision_Views is
       Tag  : Unbounded_String;
 
    begin
-      Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
+      Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+
+      if Iter = Null_Iter then
+         return;
+      end if;
 
       declare
-         R : constant String := Get_String (V.Model, Iter, Rev_Info_Column);
+         R : constant String := Get_String (Model, Iter, Rev_Info_Column);
       begin
          if R /= "" then
-            if Has_Child (V.Model, Iter) then
+            if Has_Child (Model, Iter) then
                --  We are on a revision node
                Rev := To_Unbounded_String (R);
 
@@ -537,6 +546,8 @@ package body Revision_Views is
       Iter : Gtk_Tree_Iter;
       Line : Line_Data)
    is
+      Model : constant Gtk_Tree_Store :=
+                Gtk_Tree_Store (Get_Model (View.Tree));
       function To_Proxy is new
         Ada.Unchecked_Conversion (System.Address, C_Proxy);
 
@@ -544,20 +555,20 @@ package body Revision_Views is
       Info  : Unbounded_String;
       --  The info column contains the date plus tags/branches
    begin
-      Set (View.Model, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
-      Set (View.Model, Iter, Revision_Column, To_String (Line.Log.Revision));
-      Set (View.Model, Iter, Rev_Info_Column, To_String (Line.Log.Revision));
-      Set (View.Model, Iter, Author_Column, To_String (Line.Log.Author));
-      Set (View.Model, Iter, Date_Column, To_String (Line.Log.Date));
-      Set (View.Model, Iter, Log_Column, To_String (Line.Log.Log));
-      Set (View.Model, Iter, Link_Column, Line.Link);
+      Set (Model, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
+      Set (Model, Iter, Revision_Column, To_String (Line.Log.Revision));
+      Set (Model, Iter, Rev_Info_Column, To_String (Line.Log.Revision));
+      Set (Model, Iter, Author_Column, To_String (Line.Log.Author));
+      Set (Model, Iter, Date_Column, To_String (Line.Log.Date));
+      Set (Model, Iter, Log_Column, To_String (Line.Log.Log));
+      Set (Model, Iter, Link_Column, Line.Link);
       Info := Line.Log.Date;
 
       --  Create log entry
 
-      Append (View.Model, Child, Iter);
-      Set (View.Model, Child, Color_Column, C_Proxy'(null));
-      Set (View.Model, Child, Info_Column, To_String (Line.Log.Log));
+      Append (Model, Child, Iter);
+      Set (Model, Child, Color_Column, C_Proxy'(null));
+      Set (Model, Child, Info_Column, To_String (Line.Log.Log));
 
       --  Tags & Branches
 
@@ -577,9 +588,9 @@ package body Revision_Views is
             Node := SL.First (List);
 
             while Node /= SL.Null_Node loop
-               Append (View.Model, Child, Iter);
-               Set (View.Model, Child, Info_Column, "tag: " & SL.Data (Node));
-               Set (View.Model, Child, Rev_Info_Column, SL.Data (Node));
+               Append (Model, Child, Iter);
+               Set (Model, Child, Info_Column, "tag: " & SL.Data (Node));
+               Set (Model, Child, Rev_Info_Column, SL.Data (Node));
                if First then
                   Append (Info, SL.Data (Node));
                   First := False;
@@ -593,7 +604,7 @@ package body Revision_Views is
          end if;
       end;
 
-      Set (View.Model, Iter, Info_Column, To_String (Info));
+      Set (Model, Iter, Info_Column, To_String (Info));
    end Fill_Info;
 
    ------------------------
@@ -604,13 +615,15 @@ package body Revision_Views is
      (View : access Revision_View_Record'Class;
       Iter : Gtk_Tree_Iter) return Line_Data
    is
+      Model : constant Gtk_Tree_Store :=
+                Gtk_Tree_Store (Get_Model (View.Tree));
       Log : Log_Data;
    begin
-      Log.Revision := +Get_String (View.Model, Iter, Rev_Info_Column);
-      Log.Author := +Get_String (View.Model, Iter, Author_Column);
-      Log.Date := +Get_String (View.Model, Iter, Date_Column);
-      Log.Log := +Get_String (View.Model, Iter, Log_Column);
-      return (Log, Get_Boolean (View.Model, Iter, Link_Column));
+      Log.Revision := +Get_String (Model, Iter, Rev_Info_Column);
+      Log.Author := +Get_String (Model, Iter, Author_Column);
+      Log.Date := +Get_String (Model, Iter, Date_Column);
+      Log.Log := +Get_String (Model, Iter, Log_Column);
+      return (Log, Get_Boolean (Model, Iter, Link_Column));
    end Get_Data_From_Iter;
 
    ----------------
@@ -672,8 +685,6 @@ package body Revision_Views is
       Set_Attribute (Author_Column);
       Set_Attribute (Info_Column);
 
-      View.Model := Gtk_Tree_Store (Get_Model (View.Tree));
-
       Free (Names);
    end Initialize;
 
@@ -698,6 +709,8 @@ package body Revision_Views is
      (View : access Revision_View_Record'Class;
       Log  : Log_Data) return Gtk_Tree_Iter
    is
+      Model  : constant Gtk_Tree_Store :=
+                 Gtk_Tree_Store (Get_Model (View.Tree));
       Rev    : constant String := To_String (Log.Revision);
       Result : Gtk_Tree_Iter := Null_Iter;
 
@@ -715,22 +728,22 @@ package body Revision_Views is
          Iter_Copy (Iter, J);
 
          while not Quit and then J /= Null_Iter loop
-            if Has_Child (View.Model, J) then
-               Iterate (Children (View.Model, J));
+            if Has_Child (Model, J) then
+               Iterate (Children (Model, J));
             end if;
 
-            if Get_String (View.Model, J, Rev_Info_Column) = Rev then
+            if Get_String (Model, J, Rev_Info_Column) = Rev then
                Quit := True;
                Iter_Copy (J, Result);
                return;
             end if;
 
-            Next (View.Model, J);
+            Next (Model, J);
          end loop;
       end Iterate;
 
    begin
-      Iterate (Get_Iter_First (View.Model));
+      Iterate (Get_Iter_First (Model));
       return Result;
    end Find_Revision;
 
