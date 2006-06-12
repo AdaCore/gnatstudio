@@ -1596,7 +1596,7 @@ package body Vsearch is
       Set_Sensitive (Vsearch_Access (Vsearch).Replace_Button, False);
 
       Gtk_New_With_Mnemonic
-        (Vsearch.Replace_Search_Button, -"Repl.&Find");
+        (Vsearch.Replace_Search_Button, -"Repl&Find");
       Attach
         (Vsearch.Buttons_Table,
          Vsearch.Replace_Search_Button, 1, 2, 1, 2, Fill);
@@ -1608,7 +1608,7 @@ package body Vsearch is
          On_Replace_Search'Access, Vsearch);
       Set_Sensitive (Vsearch_Access (Vsearch).Replace_Search_Button, False);
 
-      Gtk_New_With_Mnemonic (Vsearch.Replace_All_Button, -"Repl. All");
+      Gtk_New_With_Mnemonic (Vsearch.Replace_All_Button, -"Repl All");
       Attach
         (Vsearch.Buttons_Table, Vsearch.Replace_All_Button, 2, 3, 1, 2, Fill);
       Set_Tip
