@@ -1539,7 +1539,7 @@ package body Codefix.Errors_Parser is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
-           (Compile ("""([^""]+)"" is never assigned a value")));
+           (Compile ("""([^""]+)"" is never read and never assigned")));
    end Initialize;
 
    procedure Fix
@@ -1554,15 +1554,7 @@ package body Codefix.Errors_Parser is
 
       Construct_Info : Construct_Information;
    begin
-      begin
-         Construct_Info := Get_Unit (Current_Text, Message);
-      exception
-         when Codefix_Panic =>
-            --  This can happen when the cursor is on a parameter, since
-            --  parameters are not yet stored by the parser
-
-            raise Uncorrectable_Message;
-      end;
+      Construct_Info := Get_Unit (Current_Text, Message);
 
       if Construct_Info.Category = Cat_Variable
         or else Construct_Info.Category = Cat_Local_Variable
