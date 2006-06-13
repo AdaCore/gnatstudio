@@ -51,8 +51,8 @@ package body Completion.Entities_Extractor is
    -- Get_Completion --
    --------------------
 
-   function Get_Completion (Proposal : Entity_Completion_Proposal)
-      return UTF8_String is
+   function Get_Completion
+     (Proposal : Entity_Completion_Proposal) return UTF8_String is
    begin
       if Proposal.Is_All then
          return "all";
@@ -65,8 +65,8 @@ package body Completion.Entities_Extractor is
    -- Get_Documentation --
    -----------------------
 
-   function Get_Documentation (Proposal : Entity_Completion_Proposal)
-      return UTF8_String
+   function Get_Documentation
+     (Proposal : Entity_Completion_Proposal) return UTF8_String
    is
       Buffer        : Unbounded_String;
       It            : Subprogram_Iterator :=
@@ -82,6 +82,11 @@ package body Completion.Entities_Extractor is
          Entity                    => Proposal.Entity,
          Declaration_File_Contents => "");
    begin
+      --  ??? NB: A lot of this code is actually duplicated from the one we use
+      --  for tooltips. In order to factorize it, we should construct the
+      --  documentation only with markups (we use a bench of pango / gtk
+      --  features to format the text of the tooltip).
+
       Buffer := To_Unbounded_String
         (Attributes_To_String (Get_Attributes (Proposal.Entity))
          & ' '
@@ -125,14 +130,14 @@ package body Completion.Entities_Extractor is
                Append (Buffer, " : ");
 
                case Get_Type (It) is
-               when In_Parameter =>
-                  Append (Buffer, "in     ");
-               when Out_Parameter =>
-                  Append (Buffer, "out    ");
-               when In_Out_Parameter =>
-                  Append (Buffer, "in out ");
-               when Access_Parameter =>
-                  Append (Buffer, "access ");
+                  when In_Parameter =>
+                     Append (Buffer, "in     ");
+                  when Out_Parameter =>
+                     Append (Buffer, "out    ");
+                  when In_Out_Parameter =>
+                     Append (Buffer, "in out ");
+                  when Access_Parameter =>
+                     Append (Buffer, "access ");
                end case;
 
                if Get_Type (It) = Access_Parameter then
@@ -181,8 +186,8 @@ package body Completion.Entities_Extractor is
    -- Get_Location --
    ------------------
 
-   function Get_Location (Proposal : Entity_Completion_Proposal)
-      return Completion.File_Location
+   function Get_Location
+     (Proposal : Entity_Completion_Proposal) return Completion.File_Location
    is
       Location : constant Entities.File_Location :=
         Get_Location (Declaration_As_Reference (Proposal.Entity));
@@ -199,8 +204,8 @@ package body Completion.Entities_Extractor is
    -- Get_Category --
    ------------------
 
-   function Get_Category (Proposal : Entity_Completion_Proposal)
-     return Language_Category
+   function Get_Category
+     (Proposal : Entity_Completion_Proposal) return Language_Category
    is
       pragma Unreferenced (Proposal);
    begin
@@ -310,8 +315,8 @@ package body Completion.Entities_Extractor is
    -- Get_Number_Of_Parameters --
    ------------------------------
 
-   function Get_Number_Of_Parameters (Proposal : Entity_Completion_Proposal)
-     return Natural
+   function Get_Number_Of_Parameters
+     (Proposal : Entity_Completion_Proposal) return Natural
    is
       Number      : Integer := 0;
       It          : Subprogram_Iterator;
@@ -454,7 +459,8 @@ package body Completion.Entities_Extractor is
    -- First --
    -----------
 
-   function First (Tree : Entity_Tree_Wrapper)
+   function First
+     (Tree : Entity_Tree_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
       It : Entity_Iterator_Wrapper := Entity_Iterator_Wrapper'
@@ -555,8 +561,8 @@ package body Completion.Entities_Extractor is
    -- Get --
    ---------
 
-   function Get (This : Entity_Iterator_Wrapper)
-      return Completion_Proposal'Class
+   function Get
+     (This : Entity_Iterator_Wrapper) return Completion_Proposal'Class
    is
    begin
       return  Entity_Completion_Proposal'
@@ -580,7 +586,8 @@ package body Completion.Entities_Extractor is
    -- First --
    -----------
 
-   function First (Scope : Calls_Wrapper)
+   function First
+     (Scope : Calls_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
       It : Calls_Iterator_Wrapper :=
@@ -624,8 +631,8 @@ package body Completion.Entities_Extractor is
    -- Get --
    ---------
 
-   function Get (This : Calls_Iterator_Wrapper)
-      return Completion_Proposal'Class
+   function Get
+     (This : Calls_Iterator_Wrapper) return Completion_Proposal'Class
    is
    begin
       return  Entity_Completion_Proposal'
@@ -679,7 +686,8 @@ package body Completion.Entities_Extractor is
    -- First --
    -----------
 
-   function First (Parent : Child_Wrapper)
+   function First
+     (Parent : Child_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
       It : Child_Iterator_Wrapper;
@@ -712,8 +720,8 @@ package body Completion.Entities_Extractor is
    -- Get --
    ---------
 
-   function Get (This : Child_Iterator_Wrapper)
-      return Completion_Proposal'Class is
+   function Get
+     (This : Child_Iterator_Wrapper) return Completion_Proposal'Class is
    begin
       return Entity_Completion_Proposal'
         (Mode     => Show_Identifiers,
@@ -736,7 +744,8 @@ package body Completion.Entities_Extractor is
    -- First --
    -----------
 
-   function First (List : Source_File_Component)
+   function First
+     (List : Source_File_Component)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
       It : Source_File_Iterator;
@@ -791,8 +800,8 @@ package body Completion.Entities_Extractor is
    -- Get --
    ---------
 
-   function Get (This : Source_File_Iterator)
-      return Completion_Proposal'Class
+   function Get
+     (This : Source_File_Iterator) return Completion_Proposal'Class
    is
    begin
       return Entity_Completion_Proposal'
@@ -842,7 +851,8 @@ package body Completion.Entities_Extractor is
    -- First --
    -----------
 
-   function First (Wrapper : Unique_Entity_Wrapper)
+   function First
+     (Wrapper : Unique_Entity_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class is
    begin
       return Unique_Entity_Iterator_Wrapper'
@@ -873,8 +883,8 @@ package body Completion.Entities_Extractor is
    -- Get --
    ---------
 
-   function Get (This : Unique_Entity_Iterator_Wrapper)
-      return Completion_Proposal'Class
+   function Get
+     (This : Unique_Entity_Iterator_Wrapper) return Completion_Proposal'Class
    is
    begin
       return Entity_Completion_Proposal'
