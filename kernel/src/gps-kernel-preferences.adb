@@ -1060,9 +1060,19 @@ package body GPS.Kernel.Preferences is
               & " advanced auto-completion."),
             Nick    => -"Load Xref info automatically"));
       Register_Property
+        (Kernel.Preferences, Param_Spec (Automatic_Xrefs_Load), -"Project");
+
+      Automatic_Xrefs_Load_Set := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name    => "Load-Xref-Info-Automatically-Set",
+            Default => False,
+            Blurb   => -("Whether the user has manually launched"
+              & " smart completion at least once"),
+            Nick    => -"Load Xref info automatically set",
+            Flags   => Param_Readable));
+      Register_Property
         (Kernel.Preferences,
-         Param_Spec (Automatic_Xrefs_Load),
-         -"Project");
+         Param_Spec (Automatic_Xrefs_Load_Set), -"Project");
 
       -- Wizards --
 
