@@ -103,7 +103,8 @@ package GNAT.Expect.TTY.Remote is
       Password_Prompt_Ptrn      : String_Ptr;
       Passphrase_Prompt_Ptrn    : String_Ptr;
       Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts;
-      Use_Cr_Lf                 : Boolean := False);
+      Use_Cr_Lf                 : Boolean := False;
+      Use_Pipes                 : Boolean := False);
    --  Adds a new Remote Access Descriptor
    --  Name : identifier of this descriptor
    --  Start_Command : command used to launch the remote access utility
@@ -120,6 +121,9 @@ package GNAT.Expect.TTY.Remote is
    --  Extra_Prompt_Array        : extra specific prompts.
    --  Use_Cr_Lf                 : tell if CR character needs to be added when
    --                               sending commands to the tool.
+   --  Use_Pipes                 : tell if the tool is launched in pipe or tty
+   --                               mode. Only applicable on Windows (no effect
+   --                               on other machines)
 
    procedure Add_Shell_Descriptor
      (Name                : String;
@@ -427,6 +431,8 @@ private
       --  What shell is on the remote server
       Machine              : Machine_Descriptor_Access := null;
       --  What machine this descriptor is connected to
+      Use_Cr_Lf            : Boolean := False;
+      --  Tell if CR shall be sent along with LF
       Session_Nb           : Natural := 0;
       --  Session number on this machine
       Terminated           : Boolean := False;
