@@ -581,7 +581,7 @@ package body Completion_Module is
                     (Get_Offset (It)) - 1 + The_Text.all'First);
                Trace (Me_Adv, "Getting completions done");
 
-               Gtk_New (Win);
+               Gtk_New (Win, Command.Kernel);
 
                --  ??? When should these be freed ?
 
