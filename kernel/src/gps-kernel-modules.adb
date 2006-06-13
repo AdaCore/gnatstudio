@@ -30,7 +30,7 @@ with Gdk.Types;                 use Gdk.Types;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Module;               use Glib.Module;
 with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
+--  with Glib.Properties;           use Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
@@ -166,6 +166,9 @@ package body GPS.Kernel.Modules is
 
    package Kernel_Contextuals is new GUI_Utils.User_Contextual_Menus
      (Contextual_Menu_User_Data);
+
+   function Get_Focus_Widget return Gtk_Widget;
+   --  Return the widget that currently has the keyboard focus
 
    procedure Contextual_Action
      (Kernel : access GObject_Record'Class; Action : Contextual_Menu_Access);
@@ -328,8 +331,6 @@ package body GPS.Kernel.Modules is
    -- Get_Focus_Widget --
    ----------------------
 
-   function Get_Focus_Widget return Gtk_Widget;
-
    function Get_Focus_Widget return Gtk_Widget is
       use Widget_List;
       List : Widget_List.Glist := List_Toplevels;
@@ -345,7 +346,7 @@ package body GPS.Kernel.Modules is
          --   starting from the default desktop, make a child floating, and
          --   close it using the keyboard shortcut for File->Close
          if Get_Object (W) /= System.Null_Address
-           and then Get_Property (W, Has_Toplevel_Focus_Property)
+           and then Is_Active (Gtk_Window (W))
          then
             Free (List);
             return Get_Focus (Gtk_Window (W));
@@ -387,28 +388,12 @@ package body GPS.Kernel.Modules is
       else
          --  We have an explicit widget with the keyboard focus. Check whether
          --  it belongs to an MDI child. If not, it is probably part of some
-         --  popup dialog, and therefore there is no module.
+         --  popup dialog, and therefore There is no module.
          --  As a special case, if the focus widget's parent is a notebook,
          --  we check whether the associated page is a MDI child, and behave
          --  as if that child had the focus (EC19-008)
 
-         while W /= null loop
-            if W.all in MDI_Child_Record'Class then
-               C := MDI_Child (W);
-               exit;
-
-            elsif W.all in Gtk_Notebook_Record'Class
-              and then Get_Nth_Page
-                (Gtk_Notebook (W), Get_Current_Page (Gtk_Notebook (W))).all
-                in MDI_Child_Record'Class
-            then
-               C := MDI_Child
-                 (Get_Nth_Page
-                    (Gtk_Notebook (W), Get_Current_Page (Gtk_Notebook (W))));
-               exit;
-            end if;
-            W := Get_Parent (W);
-         end loop;
+         C := Find_MDI_Child_From_Widget (W);
       end if;
 
       if C = null
