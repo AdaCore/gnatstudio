@@ -21,6 +21,10 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Language.Ada;            use Language.Ada;
 with Doc_Utils;               use Doc_Utils;
+with GPS.Intl;                use GPS.Intl;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+
+with GNAT.Strings;            use GNAT.Strings;
 
 package body Completion.Entities_Extractor is
 
@@ -62,13 +66,115 @@ package body Completion.Entities_Extractor is
    -----------------------
 
    function Get_Documentation (Proposal : Entity_Completion_Proposal)
-      return UTF8_String is
-   begin
-      return Get_Documentation
+      return UTF8_String
+   is
+      Buffer        : Unbounded_String;
+      It            : Subprogram_Iterator :=
+        Get_Subprogram_Parameters (Proposal.Entity);
+      Parameter     : Entity_Information;
+      Returned      : Entity_Information;
+      Type_Of       : Entity_Information;
+      Max_Char_Name : Integer;
+
+      Comments      : constant String := Get_Documentation
         (Lang_Handler              => Entity_Completion_Resolver
            (Proposal.Resolver.all).Handler,
          Entity                    => Proposal.Entity,
          Declaration_File_Contents => "");
+   begin
+      Buffer := To_Unbounded_String
+        (Attributes_To_String (Get_Attributes (Proposal.Entity))
+         & ' '
+         & (-Kind_To_String (Get_Kind (Proposal.Entity))) & ' '
+         & Get_Full_Name (Proposal.Entity, ".") & ""
+         & ASCII.LF);
+
+      if Comments /= "" then
+         Append (Buffer, ASCII.LF & Comments & ASCII.LF);
+      end if;
+
+      if Get_Kind (Proposal.Entity).Kind = Function_Or_Operator or else
+        Get_Kind (Proposal.Entity).Kind = Procedure_Kind
+      then
+         Get (It, Parameter);
+
+         if Parameter /= null then
+            Append
+              (Buffer, ASCII.LF & "<b>Parameters: </b>" & ASCII.LF);
+            Max_Char_Name := 0;
+
+            while Parameter /= null loop
+               if Get_Name (Parameter)'Length > Max_Char_Name then
+                  Max_Char_Name := Get_Name (Parameter)'Length;
+               end if;
+
+               Next (It);
+               Get (It, Parameter);
+            end loop;
+
+            It := Get_Subprogram_Parameters (Proposal.Entity);
+            Get (It, Parameter);
+
+            while Parameter /= null loop
+               Append (Buffer, Get_Name (Parameter).all);
+
+               for J in Get_Name (Parameter)'Length + 1 .. Max_Char_Name loop
+                  Append (Buffer, " ");
+               end loop;
+
+               Append (Buffer, " : ");
+
+               case Get_Type (It) is
+               when In_Parameter =>
+                  Append (Buffer, "in     ");
+               when Out_Parameter =>
+                  Append (Buffer, "out    ");
+               when In_Out_Parameter =>
+                  Append (Buffer, "in out ");
+               when Access_Parameter =>
+                  Append (Buffer, "access ");
+               end case;
+
+               if Get_Type (It) = Access_Parameter then
+                  Type_Of := Pointed_Type (Parameter);
+               else
+                  Type_Of := Get_Type_Of (Parameter);
+               end if;
+
+               if Type_Of /= null then
+
+                  if Get_Name (Type_Of) /= null then
+                     Append
+                       (Buffer,
+                        Get_Name (Type_Of).all & ASCII.LF);
+                  end if;
+               else
+                  Append
+                    (Buffer, ASCII.LF);
+               end if;
+
+               Next (It);
+               Get (It, Parameter);
+            end loop;
+         end if;
+      end if;
+
+      if Get_Kind (Proposal.Entity).Kind = Function_Or_Operator then
+         Returned := Get_Returned_Type (Proposal.Entity);
+
+         if Returned /= null then
+            Append
+              (Buffer, ASCII.LF & "<b>Return: </b>" & ASCII.LF);
+
+            if Get_Name (Returned) /= null then
+               Append
+                 (Buffer,
+                  Get_Name (Returned).all & ASCII.LF);
+            end if;
+         end if;
+      end if;
+
+      return To_String (Buffer);
    end Get_Documentation;
 
    ------------------
