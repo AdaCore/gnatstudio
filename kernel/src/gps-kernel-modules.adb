@@ -30,7 +30,6 @@ with Gdk.Types;                 use Gdk.Types;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Module;               use Glib.Module;
 with Glib.Object;               use Glib.Object;
---  with Glib.Properties;           use Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
