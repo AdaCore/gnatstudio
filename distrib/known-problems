@@ -7,6 +7,12 @@ Known Problems fixed in GPS 4.0.0
   Workaround: Move the cursor one character to the left or right to force a
               refresh
 
+- F516-004 Cross references into multi-unit source files in Ada
+  Problem:    If you have used gnatname so that you can use source files
+              containing several Ada units, GPS is not able to do
+              cross-references inside these files
+  Woraround:  After each compilation, select Build->Load xref in memory
+
 - F530-004 Goto type declaration wrong on predefined types
   Problem:    When the contextual menu 'Goto type declaration of XXX' is 
               invoked, if XXX is of a predefined type GPS opens an empty file
