@@ -174,6 +174,24 @@ when the GPS window is fully visible to the user:
      <description>Hook called whenever a file has been saved</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ file_changed_detected">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <return>A boolean</return>
+     <description>Hook called whenever GPS detects that an opened file changed on the disk. You can connect to this hook if you want to change the default behavior, which is asking if the user wants to reload the file. Your function should return 1 if the action is handled by the function, and return 0 if the default behavior is desired.</description>
+     <example lang="python">
+import GPS
+
+def on_file_changed (hook, file):
+    # automatically reload the file without prompting the user
+    ed = GPS.EditorBuffer.get (file, force = 1)
+    return 1
+
+# install a handler on "file_changed_detected" hook
+GPS.Hook ("file_changed_detected").add (on_file_changed)
+     </example>
+  </shell_doc>
+
   <shell_doc name="@hook@ file_changed_on_disk">
      <param name="hook">A string, the name of the hook</param>
      <param name="file">An instance of GPS.File</param>
