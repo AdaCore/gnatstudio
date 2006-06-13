@@ -67,20 +67,20 @@ private
       Filter : Possibilities_Filter;
    end record;
 
-   function Get_Completion (Proposal : Entity_Completion_Proposal)
-      return UTF8_String;
+   function Get_Completion
+     (Proposal : Entity_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
-   function Get_Documentation (Proposal : Entity_Completion_Proposal)
-      return UTF8_String;
+   function Get_Documentation
+     (Proposal : Entity_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
-   function Get_Location (Proposal : Entity_Completion_Proposal)
-      return Completion.File_Location;
+   function Get_Location
+     (Proposal : Entity_Completion_Proposal) return Completion.File_Location;
    --  See inherited documentation
 
-   function Get_Category (Proposal : Entity_Completion_Proposal)
-     return Language_Category;
+   function Get_Category
+     (Proposal : Entity_Completion_Proposal) return Language_Category;
    --  See inherited documentation
 
    procedure Get_Composition
@@ -91,8 +91,8 @@ private
       Result     : in out Completion_List);
    --  See inherited documentation
 
-   function Get_Number_Of_Parameters (Proposal : Entity_Completion_Proposal)
-     return Natural;
+   function Get_Number_Of_Parameters
+     (Proposal : Entity_Completion_Proposal) return Natural;
    --  See inherited documentation
 
    procedure Free (Proposal : in out Entity_Completion_Proposal);
@@ -157,8 +157,8 @@ private
    procedure Next (It : in out Entity_Iterator_Wrapper);
    --  See inherited documentation
 
-   function Get (This : Entity_Iterator_Wrapper)
-      return Completion_Proposal'Class;
+   function Get
+     (This : Entity_Iterator_Wrapper) return Completion_Proposal'Class;
    --  See inherited documentation
 
    procedure Free (This : in out Entity_Iterator_Wrapper);
@@ -185,7 +185,8 @@ private
       Filter     : Possibilities_Filter;
    end record;
 
-   function First (Scope : Calls_Wrapper)
+   function First
+     (Scope : Calls_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class;
    --  See inherited documentation
 
@@ -195,8 +196,8 @@ private
    procedure Next (It : in out Calls_Iterator_Wrapper);
    --  See inherited documentation
 
-   function Get (This : Calls_Iterator_Wrapper)
-      return Completion_Proposal'Class;
+   function Get
+     (This : Calls_Iterator_Wrapper) return Completion_Proposal'Class;
    --  See inherited documentation
 
    procedure Free (This : in out Calls_Wrapper);
@@ -235,8 +236,8 @@ private
    procedure Next (It : in out Child_Iterator_Wrapper);
    --  See inherited documentation
 
-   function Get (This : Child_Iterator_Wrapper)
-      return Completion_Proposal'Class;
+   function Get
+     (This : Child_Iterator_Wrapper) return Completion_Proposal'Class;
    --  See inherited documentation
 
    procedure Free (This : in out Child_Iterator_Wrapper);
@@ -262,7 +263,8 @@ private
       Parent   : Entity_Information;
    end record;
 
-   function First (List : Source_File_Component)
+   function First
+     (List : Source_File_Component)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class;
    --  See inherited documentation
 
@@ -272,8 +274,8 @@ private
    procedure Next (It : in out Source_File_Iterator);
    --  See inherited documentation
 
-   function Get (This : Source_File_Iterator)
-      return Completion_Proposal'Class;
+   function Get
+     (This : Source_File_Iterator) return Completion_Proposal'Class;
    --  See inherited documentation
 
    procedure Free (This : in out Source_File_Component);
@@ -303,7 +305,8 @@ private
       Is_All   : Boolean;
    end record;
 
-   function First (Wrapper : Unique_Entity_Wrapper)
+   function First
+     (Wrapper : Unique_Entity_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class;
    --  See inherited documentation
 
@@ -313,8 +316,8 @@ private
    procedure Next (It : in out Unique_Entity_Iterator_Wrapper);
    --  See inherited documentation
 
-   function Get (This : Unique_Entity_Iterator_Wrapper)
-      return Completion_Proposal'Class;
+   function Get
+     (This : Unique_Entity_Iterator_Wrapper) return Completion_Proposal'Class;
    --  See inherited documentation
 
 end Completion.Entities_Extractor;
