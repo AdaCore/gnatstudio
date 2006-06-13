@@ -47,7 +47,10 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
+with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with VFS;                       use VFS;
 
 package body Completion_Window is
 
@@ -112,6 +115,10 @@ package body Completion_Window is
    procedure On_Selection_Changed
      (Window : access Completion_Window_Record'Class);
    --  Callback on a selection change in the tree view.
+
+   procedure On_Location_Button_Clicked
+     (Window : access Completion_Window_Record'Class);
+   --  Callback on a click on the location button
 
    procedure Adjust_Selected
      (Window : access Completion_Window_Record'Class;
@@ -476,6 +483,24 @@ package body Completion_Window is
          return False;
    end On_Button_Pressed;
 
+   --------------------------------
+   -- On_Location_Button_Clicked --
+   --------------------------------
+
+   procedure On_Location_Button_Clicked
+     (Window : access Completion_Window_Record'Class) is
+   begin
+      Open_File_Editor
+        (Window.Kernel,
+         Window.Location_Location.File_Path,
+         Window.Location_Location.Line,
+         Window.Location_Location.Column);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Location_Button_Clicked;
+
    --------------------------
    -- On_Selection_Changed --
    --------------------------
@@ -488,6 +513,21 @@ package body Completion_Window is
       Path  : Gtk_Tree_Path;
       Model : Gtk_Tree_Model;
       Index : Natural;
+
+      function Location_To_Label (Loc : File_Location) return String;
+      --  Return a pango markup label corresponding to Loc.
+
+      function Location_To_Label (Loc : File_Location) return String is
+      begin
+         if Loc.Column = 0 then
+            return "<span color=""blue""><u>" & Base_Name (Loc.File_Path)
+              & ":" & Loc.Line'Img & "</u></span>";
+         else
+            return "<span color=""blue""><u>" & Base_Name (Loc.File_Path)
+              & ":" & Loc.Line'Img & ":" & Loc.Column'Img & "</u></span>";
+         end if;
+      end Location_To_Label;
+
    begin
       Sel := Get_Selection (Window.View);
       Get_Selected (Sel, Model, Iter);
@@ -511,21 +551,38 @@ package body Completion_Window is
 
          Index := Natural (Get_Int (Window.Model, Iter, Index_Column));
 
+         Show_All (Window.Notes_Window);
+
          if Window.Info (Index).Notes = null then
             if Window.Info (Index).Proposal /= null then
                Window.Info (Index).Notes := new String'
                  (Get_Documentation (Window.Info (Index).Proposal.all));
-            else
-               Window.Info (Index).Notes := new String'
-                 ("<i>No documentation available</i>");
             end if;
          end if;
 
-         if Window.Info (Index).Notes.all /= "" then
-            Set_Markup (Window.Notes_Label, Window.Info (Index).Notes.all);
-            Show_All (Window.Notes_Window);
+         declare
+            Loc : File_Location :=
+              Get_Location (Window.Info (Index).Proposal.all);
+         begin
+            if Loc = Null_File_Location then
+               Hide_All (Window.Location_Title);
+               Hide_All (Window.Location_Button);
+               Set_Markup (Window.Location_Label, "");
+            else
+               Show_All (Window.Location_Title);
+               Show_All (Window.Location_Button);
+               Set_Markup
+                 (Window.Location_Label, Location_To_Label (Loc));
+            end if;
+
+            Window.Location_Location := Loc;
+         end;
+
+         if Window.Info (Index).Notes.all = "" then
+            Set_Markup
+              (Window.Notes_Label, "<i>No documentation available</i>");
          else
-            Hide_All (Window.Notes_Window);
+            Set_Markup (Window.Notes_Label, Window.Info (Index).Notes.all);
          end if;
       end if;
 
@@ -724,10 +781,13 @@ package body Completion_Window is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Window : out Completion_Window_Access) is
+   procedure Gtk_New
+     (Window : out Completion_Window_Access;
+      Kernel : Kernel_Handle) is
    begin
       Window := new Completion_Window_Record;
       Completion_Window.Initialize (Window);
+      Window.Kernel := Kernel;
    end Gtk_New;
 
    ----------------
@@ -742,7 +802,6 @@ package body Completion_Window is
       Scroll : Gtk_Scrolled_Window;
       VBox   : Gtk_Vbox;
       HBox   : Gtk_Hbox;
-
       Viewport : Gtk_Viewport;
 
       pragma Unreferenced (Dummy);
@@ -779,7 +838,6 @@ package body Completion_Window is
       Set_Line_Wrap (Window.Notes_Label, False);
       Set_Use_Markup (Window.Notes_Label, True);
       Gtk_New_Vbox (VBox);
-      Gtk_New_Hbox (HBox);
       Gtk_New (Frame);
       Gtk_New (Scroll);
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
@@ -789,6 +847,28 @@ package body Completion_Window is
       Set_Shadow_Type (Viewport, Shadow_None);
       Add (Scroll, Viewport);
       Add (Viewport, VBox);
+
+      Gtk_New_Hbox (HBox);
+      Pack_Start (VBox, HBox, False, False, 3);
+
+      Gtk_New (Window.Location_Title);
+      Set_Use_Markup (Window.Location_Title, True);
+      Set_Markup (Window.Location_Title, "<b>Declaration at: </b>");
+      Pack_Start (HBox, Window.Location_Title, False, False, 3);
+
+      Gtk_New (Window.Location_Button, "");
+      Gtk_New (Window.Location_Label);
+      Pack_Start (HBox, Window.Location_Button, False, False, 3);
+      Add (Window.Location_Button, Window.Location_Label);
+      Set_Use_Markup (Window.Location_Label, True);
+
+      Set_Relief (Window.Location_Button, Relief_None);
+      Object_Connect
+        (Window.Location_Button, "clicked",
+         To_Marshaller (On_Location_Button_Clicked'Access), Window,
+         After => False);
+
+      Gtk_New_Hbox (HBox);
       Pack_Start (VBox, HBox, False, False, 3);
       Pack_Start (HBox, Window.Notes_Label, False, False, 3);
    end Initialize;
