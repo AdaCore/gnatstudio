@@ -96,11 +96,10 @@ GPS.parse_xml ("""
       <shell lang="python">text_utils.end_of_buffer()</shell>
    </action>
 
-   <action name="set mark" output="none">
+   <action name="set mark command" output="none">
       <filter id="Source editor" />
       <shell lang="python">text_utils.set_mark_command()</shell>
    </action>
-   <key action="set-mark-command">control-space</key>
 
    <action name="kill region" output="none">
       <filter id="Source editor" />
@@ -178,72 +177,45 @@ def kill_line():
        only white spaces. This is a better emulation of Emacs's behavior
        than the one provided by default by gtk+, which doesn't handle
        whitespaces correctly  """
-   # Will not work in new files, since there is no file name set. We would
-   # need to access directly the current editor instead of current context.
-   context  = GPS.current_context ()
-   buffer   = GPS.EditorBuffer.get(context.file ())
-   location = context.location ()
-   start    = GPS.EditorLocation (buffer, location.line (), location.column ())
+   buffer   = GPS.EditorBuffer.get()
+   start    = buffer.current_view().cursor()
 
    # In case the current location points to a line terminator we just cut it
-   if buffer.get_chars (start, start) == "\n":
+   if start.get_char() == "\n":
       buffer.cut (start, start)
-      return
-
-   end       = start.end_of_line ()
-   str       = buffer.get_chars (start, end)
-   strip_str = str.rstrip ()
-
-   if len (str) > 0 and str [len (str) - 1] == '\n' and strip_str != "":
-      end = end.forward_char (-1)
-
-   buffer.cut (start, end)
+   else:
+      end       = start.end_of_line ()
+      str       = buffer.get_chars (start, end)
+      strip_str = str.rstrip ()
+      if len (str) > 0 and str [len (str) - 1] == '\n' and strip_str != "":
+         end = end.forward_char (-1)
+      buffer.cut (start, end)
 
 def beginning_of_buffer():
    """  Move the cursor to the beginning of the buffer. """
-   file = GPS.current_context().file().name()
-   GPS.Editor.edit (file, 1, 1)
+   buffer = GPS.EditorBuffer.get()
+   buffer.current_view().goto (buffer.beginning_of_buffer())
 
 def end_of_buffer():
    """  Move the cursor to the end of the buffer. """
-   file = GPS.current_context().file().name()
-   line = GPS.Editor.get_last_line(file)
-   str  = GPS.Editor.get_chars (file, line, 1)
-   if str == "":
-      GPS.Editor.edit (file, line, 1)
-   else:
-      GPS.Editor.edit (file, line, 1 + len (str))
+   buffer = GPS.EditorBuffer.get()
+   buffer.current_view().goto (buffer.end_of_buffer())
 
 def goto_beginning_of_line():
    """  Goto the beginning of line. """
-   try:
-      file = GPS.current_context().file().name()
-      line = GPS.current_context().location().line()
-      GPS.Editor.cursor_set_position (file, line, 1)
-   except:
-      pass
+   view = GPS.EditorBuffer.get().current_view()
+   view.goto (view.cursor().beginning_of_line())
 
 def end_of_line(file, line):
    """   Goto to the end of the line in file. """
-   str  = GPS.Editor.get_chars (file, line, 1, 0)
-   # we must test this special case if we want to test
-   # if there is an end of line character in str
-   if str == "":
-      GPS.Editor.cursor_set_position (file, line, 1)
-   # test if there is an end of line character
-   elif str [len (str) - 1] == '\n':
-      GPS.Editor.cursor_set_position (file, line, len (str))
-   else:
-      GPS.Editor.cursor_set_position (file, line, len (str) + 1)
+   buffer = GPS.EditorBuffer.get (GPS.File (file))
+   loc  = GPS.EditorLocation (buffer, line, 1)
+   buffer.current_view().goto (loc.end_of_line())
 
 def goto_end_of_line():
    """   Goto the end of line. """
-   try:
-      file = GPS.current_context().file().name()
-      line = GPS.current_context().location().line()
-      end_of_line (file, line);
-   except:
-      pass
+   view = GPS.EditorBuffer.get().current_view()
+   view.goto (view.cursor().end_of_line())
 
 def transpose_chars():
    """Interchange characters around cursor, moving forward one character. """
