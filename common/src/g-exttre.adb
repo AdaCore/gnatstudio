@@ -1891,7 +1891,11 @@ package body GNAT.Expect.TTY.Remote is
    function Get_Filesystem
      (Nickname : String) return Filesystem_Record'Class is
    begin
-      return Get_Shell_Descriptor (Nickname).Filesystem.all;
+      if Nickname = "" then
+         return Get_Local_Filesystem;
+      else
+         return Get_Shell_Descriptor (Nickname).Filesystem.all;
+      end if;
    end Get_Filesystem;
 
    --------------------------
