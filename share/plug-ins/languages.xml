@@ -63,7 +63,7 @@
     <Categories>
       <Category>
         <Name>procedure</Name>
-        <Pattern>^sub\s+([-\w\d+_:]+)\s{</Pattern>
+        <Pattern>^sub\s+([-\w\d+_:]+)\s*(\([^)]*\))?\s*{</Pattern>
         <Index>1</Index>
         <Icon>subprogram_xpm</Icon>
       </Category>
