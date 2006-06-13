@@ -32,6 +32,7 @@ with Glib;           use Glib;
 
 with Gtk.Window;     use Gtk.Window;
 
+with Gtk.Button;     use Gtk.Button;
 with Gtk.Label;      use Gtk.Label;
 
 with Gtk.Tree_View;  use Gtk.Tree_View;
@@ -45,13 +46,16 @@ with Gtk.Text_Mark;          use Gtk.Text_Mark;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 
 with Completion;    use Completion;
+with GPS.Kernel;    use GPS.Kernel;
 
 package Completion_Window is
 
    type Completion_Window_Record is new Gtk_Window_Record with private;
    type Completion_Window_Access is access all Completion_Window_Record'Class;
 
-   procedure Gtk_New (Window : out Completion_Window_Access);
+   procedure Gtk_New
+     (Window : out Completion_Window_Access;
+      Kernel : Kernel_Handle);
    --  Create a new Completion_Window.
 
    procedure Initialize (Window : access Completion_Window_Record'Class);
@@ -113,6 +117,8 @@ private
    type Information_Array_Access is access Information_Array;
 
    type Completion_Window_Record is new Gtk_Window_Record with record
+      Kernel : Kernel_Handle;
+
       View  : Gtk_Tree_View;
       Model : Gtk_List_Store;
 
@@ -134,6 +140,11 @@ private
 
       Notes_Window : Gtk_Window;
       Notes_Label  : Gtk_Label;
+
+      Location_Label  : Gtk_Label;
+      Location_Title  : Gtk_Label;
+      Location_Button : Gtk_Button;
+      Location_Location : File_Location;
 
       Case_Sensitive : Boolean;
       In_Deletion    : Boolean := False;
