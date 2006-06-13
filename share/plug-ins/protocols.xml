@@ -6,7 +6,7 @@
 
   <!-- tty allocation required for some platforms like solaris -->
   <remote_connection_config name="ssh">
-    <start_command>ssh</start_command>
+    <start_command use_pipes="false">ssh</start_command>
     <start_command_common_args>-t -t -C %h</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
     <extra_ptrn auto_answer="true" answer="yes">^.*continue connecting \(yes/no\)\? *</extra_ptrn>
@@ -15,7 +15,7 @@
   <!-- RSH -->
 
   <remote_connection_config name="rsh">
-    <start_command>rsh</start_command>
+    <start_command use_pipes="false">rsh</start_command>
     <start_command_common_args>%h</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
   </remote_connection_config>
@@ -23,7 +23,7 @@
   <!-- TELNET -->
 
   <remote_connection_config name="telnet">
-    <start_command>telnet</start_command>
+    <start_command use_pipes="false">telnet</start_command>
     <start_command_common_args>%h</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
   </remote_connection_config>
@@ -31,7 +31,7 @@
   <!-- PLINK SSH -->
 
   <remote_connection_config name="plink ssh">
-    <start_command>plink</start_command>
+    <start_command use_pipes="true">plink</start_command>
     <start_command_common_args>-t -C -ssh %h</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
     <extra_ptrn auto_answer="true" answer="y">^Store key in cache\? \(y/n\) *</extra_ptrn>
@@ -41,7 +41,7 @@
   <!-- PLINK RSH -->
 
   <remote_connection_config name="plink rsh">
-    <start_command>plink</start_command>
+    <start_command use_pipes="true">plink</start_command>
     <start_command_common_args>-rsh %h</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
     <use_cr_lf>True</use_cr_lf>
@@ -50,7 +50,7 @@
   <!-- PLINK TELNET -->
 
   <remote_connection_config name="plink telnet">
-    <start_command>plink</start_command>
+    <start_command use_pipes="true">plink</start_command>
     <start_command_common_args>-telnet %h</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
     <use_cr_lf>True</use_cr_lf>
