@@ -73,6 +73,11 @@ F315-016 New Revision View (2006-03-19)
 
   Keywords: VCS
 
+F302-022 Fixing messages "Var is never read and never asigned" (2006-06-13)
+
+  The new GNAT message "Var is never read and never asigned" is now 
+  automatically fixed in GPS, by removing or commenting the useless variable.
+
 F223-022 New preference for the debugger: "Always open main unit" (2006-02-27)
 
   A new preference was added to the debugger support, so that it is now
