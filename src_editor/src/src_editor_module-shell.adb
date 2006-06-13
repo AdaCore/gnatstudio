@@ -1744,6 +1744,7 @@ package body Src_Editor_Module.Shell is
       Success   : Boolean;
       Tag       : Gtk_Text_Tag;
       Iter, Iter2 : aliased Gtk_Text_Iter;
+      Force       : Boolean;
 
    begin
       if Command = Constructor_Method then
@@ -1753,28 +1754,32 @@ package body Src_Editor_Module.Shell is
       elsif Command = "get" then
          Name_Parameters (Data, (1 => File_Cst'Access,
                                  2 => Force_Cst'Access));
-         declare
-            File : constant Virtual_File :=
-                     Get_Data (Data, 1);
-            Force : constant Boolean :=
-                      Nth_Arg (Data, 2, Default => False);
-         begin
-            if File /= VFS.No_File then
-               Child := Find_Editor (Kernel, File);
-            else
-               Child := Find_Current_Editor (Kernel);
-            end if;
+         File_Inst := Nth_Arg
+           (Data, 1, Get_File_Class (Kernel),
+            Default => No_Class_Instance, Allow_Null => True);
+         Force := Nth_Arg (Data, 2, Default => False);
 
-            if Child = null then
-               Box := Open_File (Get_Kernel (Data), File);
-            else
-               Box := Get_Source_Box_From_MDI (Child);
+         if File_Inst = No_Class_Instance then
+            File := VFS.No_File;
+         else
+            File := Get_Data (File_Inst);
+         end if;
 
-               if Force then
-                  Check_Timestamp_And_Reload (Box, False, True);
-               end if;
+         if File /= VFS.No_File then
+            Child := Find_Editor (Kernel, File);
+         else
+            Child := Find_Current_Editor (Kernel);
+         end if;
+
+         if Child = null then
+            Box := Open_File (Get_Kernel (Data), File);
+         else
+            Box := Get_Source_Box_From_MDI (Child);
+
+            if File /= VFS.No_File and Force then
+               Check_Timestamp_And_Reload (Box, False, True);
             end if;
-         end;
+         end if;
 
          Set_Return_Value
            (Data, Create_Editor_Buffer
