@@ -2933,6 +2933,7 @@ package body GPS.Kernel.Remote is
       Passphrase_Prompt_Ptrn    : String_Ptr;
       Extra_Ptrn_Length         : Natural;
       Use_Cr_Lf                 : Boolean;
+      Use_Pipes                 : Boolean;
 
    begin
       if Node.Tag.all = "remote_machine_descriptor" then
@@ -3130,13 +3131,21 @@ package body GPS.Kernel.Remote is
             return;
          end if;
 
-         Start_Command := Get_Field (Node, "start_command");
+         Child := Find_Tag (Node.Child, "start_command");
+
+         if Child /= null then
+            Use_Pipes :=
+              Boolean'Value (Get_Attribute (Child, "use_pipes", "false"));
+            Start_Command := Child.Value;
+         else
+            Start_Command := null;
+         end if;
 
          if Start_Command = null then
             Console.Insert
               (Module.Kernel,
                -("XML Error: remote_connection_config is missing a " &
-               "start_command field in " & Full_Name (File).all),
+                 "start_command field in " & Full_Name (File).all),
                Add_LF => True, Mode => Error);
             return;
          end if;
@@ -3221,7 +3230,8 @@ package body GPS.Kernel.Remote is
                Password_Prompt_Ptrn      => Password_Prompt_Ptrn,
                Passphrase_Prompt_Ptrn    => Passphrase_Prompt_Ptrn,
                Extra_Prompt_Array        => Extra_Ptrns,
-               Use_Cr_Lf                 => Use_Cr_Lf);
+               Use_Cr_Lf                 => Use_Cr_Lf,
+               Use_Pipes                 => Use_Pipes);
          end;
 
          Glib.Xml_Int.Free (Name);
