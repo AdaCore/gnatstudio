@@ -119,6 +119,12 @@ package Filesystem is
      (FS : Filesystem_Record) return Boolean is abstract;
    --  Tell if the Filesystem handles devices (hard disk letters for windows)
 
+   function Multi_Unit_Index_Char
+     (FS : Filesystem_Record) return Character;
+   --  The character used by GNAT when creating ALI files for multi-unit files
+   --  on the given filesystem (this is generally '~' expect on VMS where it is
+   --  set to '$').
+
    -------------------------
    -- Operations on files --
    -------------------------

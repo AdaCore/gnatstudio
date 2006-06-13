@@ -80,4 +80,15 @@ package body Filesystem is
       return Root & Sub;
    end Concat;
 
+   ---------------------------
+   -- Multi_Unit_Index_Char --
+   ---------------------------
+
+   function Multi_Unit_Index_Char
+     (FS : Filesystem_Record) return Character
+   is
+      pragma Unreferenced (FS);
+   begin
+      return '~';
+   end Multi_Unit_Index_Char;
 end Filesystem;
