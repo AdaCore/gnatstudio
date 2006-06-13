@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
@@ -25,6 +26,7 @@ with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
+with Basic_Types;               use Basic_Types;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with VFS;                       use VFS;
@@ -33,9 +35,13 @@ with Projects;                  use Projects;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Glib.Convert;              use Glib.Convert;
+with Filesystem;                use Filesystem;
 with File_Utils;                use File_Utils;
+with Remote_Servers;            use Remote_Servers;
 
-with Basic_Types;               use Basic_Types;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 
 with ALI;                       use ALI;
 with Types;                     use Types;
@@ -44,6 +50,9 @@ with Namet;                     use Namet;
 package body ALI_Parser is
    Me        : constant Debug_Handle := Create ("ALI", Off);
    Assert_Me : constant Debug_Handle := Create ("ALI.Assert", Off);
+
+   ALI_Ext  : constant String := ".ali";
+   --  Extension for ALI files
 
    type ALI_Handler_Record is new LI_Handler_Record with record
       Db       : Entities_Database;
@@ -353,6 +362,14 @@ package body ALI_Parser is
    --  Search for the full name of the ALI file. We also search the parent
    --  unit's ALi file, in case the file is a separate.
 
+   function Find_Multi_Unit_ALI
+     (Handler         : access ALI_Handler_Record'Class;
+      Source_Filename : Virtual_File;
+      Project         : Project_Type) return Virtual_File;
+   --  Parse all ALI files in the object directory of Project and its extending
+   --  projects, looking for LI files representing multi-unit source files.
+   --  If one is found for Source_Filename, return its name.
+
    function Get_Source_Info_Internal
      (Handler               : access ALI_Handler_Record'Class;
       Source_Filename       : VFS.Virtual_File;
@@ -361,8 +378,9 @@ package body ALI_Parser is
    --  Same as Get_Source_Info, but it is possible not to reset the internal
    --  GNAT tables first. This must be used when calling this recursively
 
-   function Get_ALI_Filename (Base_Name : String) return String;
-   --  Return the most likely candidate for an ALI file, given a source name
+   function Get_ALI_Filename
+     (Base_Name  : String) return String;
+   --  Return the most likely candidate for an ALI file, given a source name.
 
    --------------------
    -- Char_To_E_Kind --
@@ -1457,9 +1475,10 @@ package body ALI_Parser is
    -- Get_ALI_Filename --
    ----------------------
 
-   function Get_ALI_Filename (Base_Name : String) return String is
+   function Get_ALI_Filename
+     (Base_Name : String) return String
+   is
       Last_Dot : Natural := Base_Name'Last;
-      ALI_Ext  : constant String := ".ali";
    begin
       --  Search the last dot in the filename
 
@@ -1476,6 +1495,107 @@ package body ALI_Parser is
       return Base_Name (Base_Name'First .. Last_Dot - 1) & ALI_Ext;
    end Get_ALI_Filename;
 
+   -------------------------
+   -- Find_Multi_Unit_ALI --
+   -------------------------
+
+   function Find_Multi_Unit_ALI
+     (Handler         : access ALI_Handler_Record'Class;
+      Source_Filename : Virtual_File;
+      Project         : Project_Type) return Virtual_File
+   is
+      --  The separator character depends on the file system ('$' in most
+      --  cases, '~' on VMS).
+      Char      : constant Character := Multi_Unit_Index_Char
+        (Get_Filesystem (Get_Nickname (Build_Server)));
+
+      P        : Project_Type := Project;
+      Dir      : Dir_Type;
+      Filename : String (1 .. 1024);
+      Last     : Natural;
+      Index    : Natural;
+      LI       : LI_File;
+      F        : Virtual_File;
+
+   begin
+      --  Start searching in the extending projects, in case the file was
+      --  recompiled in their context
+
+      while Extending_Project (P) /= No_Project loop
+         P := Extending_Project (P);
+      end loop;
+
+      --  Search for all candidate ALI files. We might end up parsing too many,
+      --  but the result is not lost, since put in the entities database, and
+      --  therefore we'll know the name of the ALI files for the other units
+      --  next time, and thus save this expensive loop.
+
+      while P /= No_Project loop
+         declare
+            Path : constant String := Object_Path (P, False);
+         begin
+            Open (Dir, Path);
+            loop
+               Read (Dir, Filename, Last);
+               exit when Last < Filename'First;
+
+               if Last > ALI_Ext'Length
+                 and then Filename (Last - ALI_Ext'Length + 1 .. Last) =
+                 ALI_Ext
+               then
+                  --  If we have a '~' followed by a digit, we likely are
+                  --  seeing a multi-unit source file ALI, so parse it anyway.
+                  --  We need to test for the digit afterward, otherwise we
+                  --  would end up reloading all a~*.ali files from the runtime
+                  --  which is too expensive.
+
+                  Index := Last - ALI_Ext'Length;
+                  while Index > Filename'First
+                    and then Filename (Index) /= Char
+                  loop
+                     Index := Index - 1;
+                  end loop;
+
+                  if Index > Filename'First
+                    and then Is_Digit (Filename (Index + 1))
+                  then
+                     F := Create
+                       (Name_As_Directory (Path)
+                        & Filename (Filename'First .. Last));
+                     LI := Get_Or_Create
+                       (Db        => Handler.Db,
+                        File      => F,
+                        Project   => P);
+
+                     --  Do not reset ALI below, since we are in the process of
+                     --  parsing an ALI file, and need to parse a second one.
+                     --  We still need to keep the data for the first in
+                     --  memory, though
+                     if LI /= null
+                       and then Update_ALI (Handler, LI, Reset_ALI => False)
+                       and then Check_LI_And_Source (LI, Source_Filename)
+                     then
+                        return F;
+                     end if;
+                  end if;
+               end if;
+
+            end loop;
+
+            Close (Dir);
+         end;
+
+         --  Check other projects earlier in the extending tree
+         if P /= Project then
+            P := Parent_Project (P);
+         else
+            P := No_Project;
+         end if;
+      end loop;
+
+      return VFS.No_File;
+   end Find_Multi_Unit_ALI;
+
    -----------------------------
    -- LI_Filename_From_Source --
    -----------------------------
@@ -1489,11 +1609,7 @@ package body ALI_Parser is
    begin
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body | Unit_Separate =>
-            --  When using non-standard naming schemes, separate units are
-            --  reported as bodies, but they have no direct ALI file. Thus, in
-            --  addition to checking directly for an ALI file, we also check
-            --  for ALI file from the parent unit.
-
+            --  Check the most likely ALI file (<file>.ali)
             LI := Locate_ALI
               (Handler,
                Get_ALI_Filename (Base_Name (Source_Filename)),
@@ -1514,6 +1630,11 @@ package body ALI_Parser is
                end loop;
 
                if Last >= Unit'First then
+                  --  When using non-standard naming schemes, separate units
+                  --  are reported as bodies, but they have no direct ALI file.
+                  --  Thus, in addition to checking directly for an ALI file,
+                  --  we also check for ALI file from the parent unit.
+
                   return Locate_ALI
                     (Handler,
                      Get_ALI_Filename
@@ -1522,8 +1643,15 @@ package body ALI_Parser is
                            Language => Ada_String)),
                      Source_Filename,
                      Project);
+
                else
-                  return VFS.No_File;
+                  --  We might have a multi-unit source file, in which case we
+                  --  need to traverse all directories and look for candidates.
+                  --  This is a little slower, therefore the above algorithm is
+                  --  preferred.
+
+                  return Find_Multi_Unit_ALI
+                    (Handler, Source_Filename, Project);
                end if;
             end;
 
@@ -1537,14 +1665,27 @@ package body ALI_Parser is
                  (Other_File_Base_Name (Project, Source_Filename)),
                Source_Filename,
                Project);
+
             if LI /= VFS.No_File then
                return LI;
-            else
-               return Locate_ALI
-                 (Handler,
-                  Get_ALI_Filename (Base_Name (Source_Filename)),
-                  Source_Filename, Project);
             end if;
+
+            --  No ALI for the body ? Use the one for the spec as a fallback
+
+            LI := Locate_ALI
+              (Handler,
+               Get_ALI_Filename (Base_Name (Source_Filename)),
+               Source_Filename, Project);
+
+            if LI /= VFS.No_File then
+               return LI;
+            end if;
+
+            --  Still not found ? We might have a multi-unit source file, check
+            --  this.
+
+            return Find_Multi_Unit_ALI
+              (Handler, Source_Filename, Project);
       end case;
    end LI_Filename_From_Source;
 
