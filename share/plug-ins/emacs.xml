@@ -30,6 +30,8 @@
 
      <key action="/Navigate/Find or Replace...">control-s</key>
 
+     <key action="delete horizontal space">alt-backslash</key>
+
      <key action="/Window/Split Horizontally">control-x 3</key>
      <key action="/Window/Split Vertically">control-x 2</key>
 

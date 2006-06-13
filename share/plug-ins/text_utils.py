@@ -111,6 +111,11 @@ GPS.parse_xml ("""
       <shell lang="python">text_utils.kill_ring_save()</shell>
    </action>
 
+   <action name="delete horizontal space" output="none">
+      <filter id="Source editor" />
+      <shell lang="python">text_utils.delete_horizontal_space()</shell>
+   </action>
+
    <action name="center cursor on screen"  output="none">
       <filter id="Source editor" />
       <shell lang="python">text_utils.center_cursor()</shell>
@@ -192,33 +197,57 @@ def kill_line():
       buffer.cut (start, end)
 
 def beginning_of_buffer():
-   """  Move the cursor to the beginning of the buffer. """
+   """Move the cursor to the beginning of the buffer"""
    buffer = GPS.EditorBuffer.get()
    buffer.current_view().goto (buffer.beginning_of_buffer())
 
 def end_of_buffer():
-   """  Move the cursor to the end of the buffer. """
+   """Move the cursor to the end of the buffer"""
    buffer = GPS.EditorBuffer.get()
    buffer.current_view().goto (buffer.end_of_buffer())
 
 def goto_beginning_of_line():
-   """  Goto the beginning of line. """
+   """Goto the beginning of line"""
    view = GPS.EditorBuffer.get().current_view()
    view.goto (view.cursor().beginning_of_line())
 
 def end_of_line(file, line):
-   """   Goto to the end of the line in file. """
+   """Goto to the end of the line in file"""
    buffer = GPS.EditorBuffer.get (GPS.File (file))
    loc  = GPS.EditorLocation (buffer, line, 1)
-   buffer.current_view().goto (loc.end_of_line())
+   buffer.current_view().goto (loc.end_of_line() - 1)
 
 def goto_end_of_line():
-   """   Goto the end of line. """
+   """Goto the end of line"""
    view = GPS.EditorBuffer.get().current_view()
    view.goto (view.cursor().end_of_line())
 
+def is_space (char):
+   return char == ' ' or char == '\t'
+
+def delete_horizontal_space(backward=1, forward=1):
+   """Delete all spaces and tabs around the cursor in the current editor.
+The two parameters can be used to control in what directions white spaces are
+searched for"""
+   buffer = GPS.EditorBuffer.get()
+   start = buffer.current_view().cursor()
+   end = start
+   if forward:
+      max = end.end_of_line()
+      while is_space (end.get_char()) and end < max:
+        end = end.forward_char(1)
+      if end != max:
+        end = end.forward_char(-1)
+   if backward:
+      max = start.beginning_of_line()
+      while is_space (start.get_char()) and start > max:
+        start = start.forward_char (-1)
+      if start != max:
+        start = start.forward_char (1)
+   buffer.delete (start, end)
+
 def transpose_chars():
-   """Interchange characters around cursor, moving forward one character. """
+   """Transpose characters around cursor, moving forward one character. """
    # This procedure gives the same behaviour as the emacs one except on
    # end of lines
 
