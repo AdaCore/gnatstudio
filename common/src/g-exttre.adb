@@ -87,6 +87,7 @@ package body GNAT.Expect.TTY.Remote is
       Passphrase_Prompt_Ptrn : Pattern_Matcher_Access   := null;
       Extra_Prompt_Array     : Extra_Prompts_Access     := null;
       Use_Cr_Lf              : Boolean                  := False;
+      Use_Pipes              : Boolean                  := False;
       Max_Password_Prompt    : Natural                  := 3;
       Next                   : Remote_Descriptor_Access := null;
    end record;
@@ -336,7 +337,11 @@ package body GNAT.Expect.TTY.Remote is
          end if;
       end if;
 
-      Send (TTY_Descriptor, Str, Add_LF, Empty_Buffer);
+      if Descriptor.Use_Cr_Lf and then Add_LF then
+         Send (TTY_Descriptor, Str & ASCII.CR, Add_LF, Empty_Buffer);
+      else
+         Send (TTY_Descriptor, Str, Add_LF, Empty_Buffer);
+      end if;
    exception
       when Process_Died =>
          Internal_Handle_Exceptions (Descriptor);
@@ -677,24 +682,26 @@ package body GNAT.Expect.TTY.Remote is
 
       Descriptor.Session_Nb := Session_Nb;
 
+      Remote_Desc := Remote_Descriptor_List;
+
+      while Remote_Desc /= null loop
+         exit when Remote_Desc.Name.all =
+           Descriptor.Machine.Desc.Access_Name.all;
+
+         Remote_Desc := Remote_Desc.Next;
+      end loop;
+
+      if Remote_Desc = null then
+         Raise_Exception (Invalid_Nickname'Identity,
+                          "Invalid remote access tool name for " &
+                          Descriptor.Machine.Desc.Nickname.all &
+                          ": " & Descriptor.Machine.Desc.Access_Name.all);
+      end if;
+
+      Descriptor.Use_Cr_Lf := Remote_Desc.Use_Cr_Lf;
+
       if Descriptor.Machine.Sessions (Session_Nb).State = OFF then
          --  Launch a new session
-
-         Remote_Desc := Remote_Descriptor_List;
-
-         while Remote_Desc /= null loop
-            exit when Remote_Desc.Name.all =
-              Descriptor.Machine.Desc.Access_Name.all;
-
-            Remote_Desc := Remote_Desc.Next;
-         end loop;
-
-         if Remote_Desc = null then
-            Raise_Exception (Invalid_Nickname'Identity,
-                             "Invalid remote access tool name for " &
-                             Descriptor.Machine.Desc.Nickname.all &
-                             ": " & Descriptor.Machine.Desc.Access_Name.all);
-         end if;
 
          --  Construction of the arguments:
 
@@ -761,7 +768,8 @@ package body GNAT.Expect.TTY.Remote is
          Log ("spawn",
               Argument_List_To_String (New_Args.all, False));
          --  Do not use pipes, as they prevent password retrieval on windows
-         Set_Use_Pipes (Descriptor.Machine.Sessions (Session_Nb).Pd, False);
+         Set_Use_Pipes (Descriptor.Machine.Sessions (Session_Nb).Pd,
+                        Remote_Desc.Use_Pipes);
          Non_Blocking_Spawn
            (Descriptor  => Descriptor.Machine.Sessions (Session_Nb).Pd,
             Command     => New_Args (New_Args'First).all,
@@ -1408,7 +1416,8 @@ package body GNAT.Expect.TTY.Remote is
       Password_Prompt_Ptrn      : String_Ptr;
       Passphrase_Prompt_Ptrn    : String_Ptr;
       Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts;
-      Use_Cr_Lf                 : Boolean := False)
+      Use_Cr_Lf                 : Boolean := False;
+      Use_Pipes                 : Boolean := False)
    is
       --  ??? Add max_password_prompt in parameters
       Remote          : constant Remote_Descriptor_Access :=
@@ -1460,6 +1469,7 @@ package body GNAT.Expect.TTY.Remote is
          Passphrase_Prompt_Ptrn => Passphrase_Ptrn,
          Extra_Prompt_Array     => new Extra_Prompts'(Extra_Prompt_Array),
          Use_Cr_Lf              => Use_Cr_Lf,
+         Use_Pipes              => Use_Pipes,
          Max_Password_Prompt    => 3,
          Next                   => Remote_Descriptor_List);
       Remote_Descriptor_List := Remote;
