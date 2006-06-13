@@ -37,6 +37,8 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Intl;                  use GPS.Intl;
 with Language;                  use Language;
@@ -60,8 +62,11 @@ with Projects.Registry;               use Projects.Registry;
 
 with Gtk.Text_View;                   use Gtk.Text_View;
 with Gtk.Text_Buffer;                 use Gtk.Text_Buffer;
+with Gtk.Enums;                       use Gtk.Enums;
 
 with Language.Ada;                    use Language.Ada;
+
+with Gtkada.Dialogs;                  use Gtkada.Dialogs;
 
 package body Completion_Module is
 
@@ -120,6 +125,9 @@ package body Completion_Module is
 
       Case_Sensitive : Boolean;
       --  Whether the current completion should be done case sensitive or not
+
+      Smart_Completion_Launched : Boolean := False;
+      --  Whether the smart completion has been launched once.
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -152,6 +160,23 @@ package body Completion_Module is
 
    procedure On_Completion_Destroy (Win : access Gtk_Widget_Record'Class);
    --  Called when the completion widget is destroyed.
+
+   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed.
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Completion_Module.Smart_Completion_Launched :=
+        Get_Pref (Automatic_Xrefs_Load_Set) or else
+      Get_Pref (Automatic_Xrefs_Load);
+   end Preferences_Changed;
 
    ---------------------------
    -- On_Completion_Destroy --
@@ -532,6 +557,37 @@ package body Completion_Module is
          if View /= null
            and then not In_Completion (View)
          then
+            --  Display the dialog if necessary.
+
+            if not Completion_Module.Smart_Completion_Launched then
+               Set_Pref (Command.Kernel, Automatic_Xrefs_Load_Set, True);
+               Completion_Module.Smart_Completion_Launched := True;
+
+               declare
+                  Buttons : Message_Dialog_Buttons;
+               begin
+                  Buttons := Message_Dialog
+                    (Msg            =>
+                     -("You are using smart completion for the first time."
+                       & ASCII.LF & ASCII.LF
+                       & "This feature benefits from the GPS Xref engine."
+                       & ASCII.LF
+                       & "To take full advantage of this, GPS can be"
+                       & " configured to "
+                       & ASCII.LF
+                       & "load the Xref information automatically at startup."
+                       & ASCII.LF & ASCII.LF
+                       & "Do you want to activate this now?"),
+                     Buttons        => Button_Yes or Button_No,
+                     Default_Button => Button_Yes,
+                     Justification  => Justify_Left);
+
+                  if (Buttons and Button_Yes) /= 0 then
+                     Set_Pref (Command.Kernel, Automatic_Xrefs_Load, True);
+                  end if;
+               end;
+            end if;
+
             declare
                Win : Completion_Window_Access;
                It  : Gtk_Text_Iter;
@@ -761,6 +817,10 @@ package body Completion_Module is
                      Callback   => null,
                      Command    => Command_Smart,
                      Filter     => Src_Action_Context);
+
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "src_editor.preferences_changed");
    end Register_Module;
 
 end Completion_Module;
