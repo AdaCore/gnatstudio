@@ -1303,6 +1303,8 @@ package body GPS.Location_View is
             --  We now have a filled potential parent, add iters for the
             --  secondary information.
 
+            Parent_Iter := Potential_Parent;
+
             Node := First (Locs);
 
             while Node /= Locations_List.Null_Node loop
@@ -2201,7 +2203,7 @@ package body GPS.Location_View is
       Child : MDI_Child;
       Node, Sub  : Location_List.List_Node;
       Loc   : Location_Record;
-      Iter, Parent_Iter : Gtk_Tree_Iter;
+      Iter, Parent_Iter : Gtk_Tree_Iter := Null_Iter;
       Appended : Boolean;
       Path : Gtk_Tree_Path;
    begin
