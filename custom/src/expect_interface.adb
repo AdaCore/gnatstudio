@@ -18,8 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;            use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with GNAT.Expect;             use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
+pragma Warnings (On);
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
 
@@ -30,7 +34,6 @@ with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
 with Traces;                  use Traces;
 with Commands;                use Commands;
 
@@ -67,11 +70,17 @@ package body Expect_Interface is
       Command    : Argument_List_Access;
       On_Match   : GPS.Kernel.Scripts.Subprogram_Type;
       On_Exit    : GPS.Kernel.Scripts.Subprogram_Type;
-      Fd         : GNAT.Expect.Process_Descriptor_Access;
+      Pd         : Process_Descriptor_Access;
+      Status     : Integer;
+      Terminated : Boolean;
+      Inst       : Class_Instance;
 
       Processed_Output : String_Access;
       Unmatched_Output : String_Access;
    end record;
+
+   function Name (X : access Custom_Action_Record) return String;
+   --  Returns the name of the command
 
    procedure Free (X : in out Custom_Action_Record);
    --  Free memory associated to X.
@@ -92,10 +101,6 @@ package body Expect_Interface is
       return Class_Type;
    --  Return the process class
 
-   type Instance_Callback_Data is new Callback_Data_Record with record
-      Inst : Class_Instance;
-   end record;
-
    type Action_Property is new Instance_Property_Record with record
       Action : Custom_Action_Access;
    end record;
@@ -104,13 +109,10 @@ package body Expect_Interface is
    -- Local subprograms --
    -----------------------
 
-   procedure Exit_Cb (Data : Process_Data; Status : Integer);
+   procedure Exit_Cb (D : Custom_Action_Access);
    --  Called when an external process has finished running
 
-   procedure Exit_Cb (Inst : Class_Instance; Status : Integer);
-   --  Same as above with different profile
-
-   procedure Output_Cb (Data : Process_Data; Output : String);
+   procedure Output_Cb (D : Custom_Action_Access; Output : String);
    --  Called when an external process has produced some output.
 
    procedure Concat (S : in out String_Access; S2 : String);
@@ -136,6 +138,19 @@ package body Expect_Interface is
       Pattern  : String := "";
       Till_End : Boolean := True) return Exit_Type;
    --  Execute a call to Expect, but process the gtk+ events periodically.
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (X : access Custom_Action_Record) return String is
+   begin
+      if X.Command /= null then
+         return X.Command (X.Command'First).all;
+      end if;
+
+      return "expect";
+   end Name;
 
    ----------
    -- Free --
@@ -170,9 +185,35 @@ package body Expect_Interface is
    function Execute
      (Command : access Custom_Action_Record) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
+      Result : Expect_Match;
    begin
+      if Command.Pd /= null then
+         Expect (Command.Pd.all, Result,
+                 ".+", Timeout => 200);
+         if Result /= Expect_Timeout then
+            Output_Cb (Custom_Action_Access (Command),
+                       Expect_Out (Command.Pd.all));
+         end if;
+      end if;
+
       return Execute_Again;
+
+   exception
+      when Process_Died =>
+
+         if Command.Pd /= null then
+            Output_Cb (Custom_Action_Access (Command),
+                       Expect_Out (Command.Pd.all));
+         end if;
+
+         Close (Command.Pd.all, Command.Status);
+         Exit_Cb (Custom_Action_Access (Command));
+
+         if Command.Status /= 0 then
+            return Failure;
+         else
+            return Success;
+         end if;
    end Execute;
 
    --------------
@@ -233,52 +274,39 @@ package body Expect_Interface is
    -- Exit_Cb --
    -------------
 
-   procedure Exit_Cb (Inst : Class_Instance; Status : Integer) is
-      Data : constant Custom_Action_Access := Get_Data (Inst);
+   procedure Exit_Cb (D : Custom_Action_Access)
+   is
       Tmp  : Boolean;
       pragma Unreferenced (Tmp);
    begin
-      if Data.Fd /= null then
+      if D.Pd /= null then
          Trace (Me, "Exited");
-         if Data.On_Exit /= null then
+
+         if D.On_Exit /= null then
             declare
                C : Callback_Data'Class := Create
-                 (Get_Script (Inst), Arguments_Count => 3);
+                 (Get_Script (D.Inst), Arguments_Count => 3);
             begin
-               Set_Nth_Arg (C, 1, Inst);
-               Set_Nth_Arg (C, 2, Status);
-               Set_Nth_Arg (C, 3, To_String (Data.Processed_Output)
-                            & To_String (Data.Unmatched_Output));
-               Tmp := Execute (Data.On_Exit, C);
+               Set_Nth_Arg (C, 1, D.Inst);
+               Set_Nth_Arg (C, 2, D.Status);
+               Set_Nth_Arg (C, 3, To_String (D.Processed_Output)
+                            & To_String (D.Unmatched_Output));
+               Tmp := Execute (D.On_Exit, C);
                Free (C);
             end;
          end if;
 
-         Data.Fd := null;
+         D.Pd := null;
       end if;
 
       --  ??? Add exception handler ?
-   end Exit_Cb;
-
-   -------------
-   -- Exit_Cb --
-   -------------
-
-   procedure Exit_Cb (Data : Process_Data; Status : Integer) is
-      Inst : constant Class_Instance :=
-        Instance_Callback_Data (Data.Callback_Data.all).Inst;
-   begin
-      Exit_Cb (Inst, Status);
    end Exit_Cb;
 
    ---------------
    -- Output_Cb --
    ---------------
 
-   procedure Output_Cb (Data : Process_Data; Output : String) is
-      Inst : constant Class_Instance :=
-        Instance_Callback_Data (Data.Callback_Data.all).Inst;
-      D    : constant Custom_Action_Access := Get_Data (Inst);
+   procedure Output_Cb (D : Custom_Action_Access; Output : String) is
       Matches   : Match_Array (0 .. Max_Paren_Count);
       Beg_Index : Natural;
       End_Index : Natural;
@@ -329,9 +357,8 @@ package body Expect_Interface is
          Action_To_Execute := D.On_Match;
          Match
            (D.Pattern.all,
-            D.Unmatched_Output.all,
-            Matches,
-            Beg_Index, End_Index);
+            D.Unmatched_Output (Beg_Index .. End_Index),
+            Matches);
 
          if Matches (0) = No_Match then
             exit;
@@ -340,11 +367,11 @@ package body Expect_Interface is
 
             declare
                C : Callback_Data'Class := Create
-                 (Get_Script (Inst), Arguments_Count => 3);
+                 (Get_Script (D.Inst), Arguments_Count => 3);
                Tmp  : Boolean;
                pragma Unreferenced (Tmp);
             begin
-               Set_Nth_Arg (C, 1, Inst);
+               Set_Nth_Arg (C, 1, D.Inst);
                Set_Nth_Arg
                  (C, 2,
                   D.Unmatched_Output (Matches (0).First .. Matches (0).Last));
@@ -407,67 +434,54 @@ package body Expect_Interface is
       Pattern  : String := "";
       Till_End : Boolean := True) return Exit_Type
    is
-      Result : Expect_Match;
-      T      : Integer := Integer'Min (Timeout, 200);
-      Iter   : Integer := 1;
       Regexp : constant Pattern_Matcher := Compile (Pattern, Multiple_Lines);
       Dead   : Boolean;
-      pragma Unreferenced (Dead);
+      Start  : Ada.Calendar.Time;
+      pragma Unreferenced (Kernel, Dead);
 
    begin
-      Block_Commands (Kernel, True);
-      if Timeout < 0 then
-         T := 200;
-      end if;
+      Start := Ada.Calendar.Clock;
 
       if Active (Me) then
          Trace (Me, "Expect " & Pattern & " Timeout=" & Timeout'Img);
       end if;
 
-      while Action.Fd /= null loop
-         Expect (Descriptor => Action.Fd.all,
-                 Result     => Result,
-                 Regexp     => Regexp,
-                 Timeout    => T);
+      while Action.Pd /= null loop
+         --  Check for timeout
 
-         if Result = Expect_Timeout then
-            if not Till_End
-              and then Timeout /= -1
-              and then Iter * T >= Timeout
-            then
-               if Active (Me) then
-                  Trace (Me, "Interactive_Expect: Timeout after "
-                         & Integer'Image (T * Iter) & " >= "
-                         & Integer'Image (Timeout));
-               end if;
-
-               Block_Commands (Kernel, False);
-               return Exit_Type'(Timed_Out);
+         if not Till_End
+           and then Timeout /= -1
+           and then Ada.Calendar.Clock > Start + (Duration (Timeout) / 1000.0)
+         then
+            if Active (Me) then
+               Trace (Me, "Interactive_Expect: Timeout");
             end if;
 
-            while Gtk.Main.Events_Pending loop
-               Dead := Gtk.Main.Main_Iteration;
-            end loop;
+            return Exit_Type'(Timed_Out);
+         end if;
 
-         elsif not Till_End then
+         if not Till_End
+           and then Action.Unmatched_Output /= null
+           and then Match (Regexp, Action.Unmatched_Output.all)
+         then
             if Active (Me) then
                Trace (Me, "Interactive_Expect: Matched " & Pattern);
             end if;
 
-            Block_Commands (Kernel, False);
             return Exit_Type'(Matched);
          end if;
 
-         Iter := Iter + 1;
+         while Gtk.Main.Events_Pending loop
+            Dead := Gtk.Main.Main_Iteration;
+         end loop;
+
       end loop;
 
-      Block_Commands (Kernel, False);
       return Exit_Type'(Died);
 
    exception
-      when Process_Died =>
-         Trace (Me, "Interactive_Expect: Process died");
-         Block_Commands (Kernel, False);
+      when others =>
+         Trace (Me, "Interactive_Expect: exception");
          return Exit_Type'(Died);
    end Interactive_Expect;
 
@@ -485,9 +499,9 @@ package body Expect_Interface is
       Process_Class   : constant Class_Type :=
         Get_Process_Class (Get_Kernel (Data));
       E               : Exit_Type;
-      Status          : Integer;
       Created_Command : Scheduled_Command_Access;
-      pragma Unreferenced (E);
+      Dead            : Boolean;
+      pragma Unreferenced (E, Dead);
 
    begin
       if Command = Constructor_Method then
@@ -495,8 +509,8 @@ package body Expect_Interface is
 
          declare
             Inst : constant Class_Instance := Nth_Arg (Data, 1, Process_Class);
-            Command_Line  : constant String := Nth_Arg (Data, 2);
-            Regexp        : constant String := Nth_Arg (Data, 3, "");
+            Command_Line    : constant String := Nth_Arg (Data, 2);
+            Regexp          : constant String := Nth_Arg (Data, 3, "");
             Success       : Boolean;
          begin
             if Command_Line = "" then
@@ -510,6 +524,7 @@ package body Expect_Interface is
             D.Command  := Argument_String_To_List (Command_Line);
             D.On_Match := Nth_Arg (Data, 4, null);
             D.On_Exit  := Nth_Arg (Data, 5, null);
+            D.Inst     := Inst;
 
             if Regexp /= "" then
                D.Pattern :=
@@ -517,24 +532,26 @@ package body Expect_Interface is
             end if;
 
             --  All the parameters are correct: launch the process.
-
-            Launch_Process
-              (Kernel          => Kernel,
-               Command         => D.Command (D.Command'First).all,
-               Arguments  => D.Command (D.Command'First + 1 .. D.Command'Last),
-               Console         => null,
-               Callback        => Output_Cb'Access,
-               Exit_Cb         => Exit_Cb'Access,
-               Success         => Success,
-               Show_Command    => False,
-               Callback_Data   => new Instance_Callback_Data'(Inst => Inst),
-               Show_In_Task_Manager => Nth_Arg (Data, 6, True),
-               Line_By_Line    => False,
-               Directory       => "",
-               Fd              => D.Fd,
-               Created_Command => Created_Command);
+            D.Pd := new TTY_Process_Descriptor;
+            begin
+               Non_Blocking_Spawn
+                 (D.Pd.all,
+                  Command => D.Command (D.Command'First).all,
+                  Args    => D.Command (D.Command'First + 1 .. D.Command'Last),
+                  Buffer_Size => 0);
+               Success := True;
+            exception
+               when Invalid_Process =>
+                  Success := False;
+            end;
 
             if Success then
+               Created_Command := Launch_Background_Command
+                 (Kernel          => Kernel,
+                  Command         => D,
+                  Active          => False,
+                  Show_Bar        => True);
+
                Set_Instance (Created_Command, Get_Script (Data), Inst);
                Set_Property
                  (Inst, Process_Class_Name, Action_Property'(Action => D));
@@ -548,22 +565,22 @@ package body Expect_Interface is
       elsif Command = "send" then
          Name_Parameters (Data, Send_Args);
          D := Get_Data (Data, 1);
-         if D.Fd /= null then
-            Send (D.Fd.all,
+         if D.Pd /= null then
+            Send (D.Pd.all,
                   Str => Nth_Arg (Data, 2),
                   Add_LF => Nth_Arg (Data, 3, True));
          end if;
 
       elsif Command = "interrupt" then
          D := Get_Data (Data, 1);
-         if D.Fd /= null then
-            Interrupt (D.Fd.all);
+         if D.Pd /= null then
+            Interrupt (D.Pd.all);
          end if;
 
       elsif Command = "kill" then
          D := Get_Data (Data, 1);
-         if D.Fd /= null then
-            Close (D.Fd.all);
+         if D.Pd /= null then
+            Close (D.Pd.all);
          end if;
 
       elsif Command = "wait" then
@@ -572,12 +589,8 @@ package body Expect_Interface is
            (Kernel   => Get_Kernel (Data),
             Action   => D,
             Timeout  => -1,
-            Pattern  => "@#$%^&",
+            Pattern  => "",
             Till_End => True);
-         if D.Fd /= null then
-            Close (D.Fd.all, Status);
-            Exit_Cb (Nth_Arg (Data, 1, Process_Class), Status);
-         end if;
 
       elsif Command = "expect" then
          Name_Parameters (Data, Expect_Args);
@@ -588,8 +601,8 @@ package body Expect_Interface is
             Timeout  => Nth_Arg (Data, 3, -1),
             Pattern  => Nth_Arg (Data, 2),
             Till_End => False);
-         if D.Fd /= null then
-            Set_Return_Value (Data, Expect_Out (D.Fd.all));
+         if D.Pd /= null then
+            Set_Return_Value (Data, Expect_Out (D.Pd.all));
          else
             Set_Return_Value (Data, "Process terminated");
          end if;
@@ -617,7 +630,7 @@ package body Expect_Interface is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
-         Maximum_Args => 4,
+         Maximum_Args => 6,
          Class         => Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
       Register_Command
