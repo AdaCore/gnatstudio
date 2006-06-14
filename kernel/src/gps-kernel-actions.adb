@@ -27,6 +27,7 @@ with Ada.Unchecked_Deallocation;
 with Commands.Interactive;      use Commands.Interactive;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body GPS.Kernel.Actions is
 
@@ -91,10 +92,22 @@ package body GPS.Kernel.Actions is
       Name        : String;
       Command     : access Commands.Interactive.Interactive_Command'Class;
       Description : String := "";
-      Filter      : Action_Filter := null)
+      Filter      : Action_Filter := null;
+      Category    : String := "General";
+      Defined_In  : VFS.Virtual_File := VFS.No_File)
    is
       Old : constant Action_Record_Access := Lookup_Action (Kernel, Name);
       Overriden : Boolean := False;
+      Cat : String_Access;
+      Future : constant String := ASCII.LF &
+        (-("Future references to this action will execute the last"
+         & " definition encountered"));
+      Overrides_Builtin : constant String :=
+        -"Action overrides a builtin action" & ASCII.LF;
+      Overrides_Old : constant String :=
+        -"Action already defined in ";
+      Overridden_In : constant String :=
+        -" and overriden in ";
    begin
       --  Initialize the kernel actions table.
       if Kernel.Actions = null then
@@ -102,13 +115,41 @@ package body GPS.Kernel.Actions is
       end if;
 
       if Old /= null then
-         Insert (Kernel,
-                 '"' & Name & """: "
-                 & (-("Action is defined several times. Future"
-                     & " references to this action will execute the last"
-                     & " definition encountered")),
-                 Mode => Error);
+         if Old.Defined_In /= VFS.No_File then
+            if Defined_In /= VFS.No_File then
+               Insert
+                 (Kernel,
+                  '"' & Name & """: " & Overrides_Old
+                  & Full_Name (Old.Defined_In).all
+                  & Overridden_In & Full_Name (Defined_In).all
+                  & Future,
+                  Mode => Error);
+            else
+               Insert
+                 (Kernel,
+                  '"' & Name & """: " & Overrides_Old
+                  & Full_Name (Old.Defined_In).all & Future,
+                  Mode => Error);
+            end if;
+         else
+            if Defined_In /= VFS.No_File then
+               Insert
+                 (Kernel,
+                  '"' & Name & """: " & Overrides_Builtin
+                  & (-" New definition in ")
+                  & Full_Name (Defined_In).all & Future,
+                  Mode => Error);
+            else
+               Insert (Kernel, '"' & Name & """: " & Overrides_Builtin
+                       & Future, Mode => Error);
+            end if;
+         end if;
+
          Overriden := True;
+      end if;
+
+      if Category /= "" then
+         Cat := new String'(Category);
       end if;
 
       Set (Actions_Htable_Access (Kernel.Actions).Table,
@@ -117,8 +158,10 @@ package body GPS.Kernel.Actions is
              (Commands.Interactive.Interactive_Command_Access (Command),
               Filter,
               new String'(Description),
-              Modified  => False,
-              Overriden => Overriden));
+              Modified   => False,
+              Category   => Cat,
+              Defined_In => Defined_In,
+              Overriden  => Overriden));
    end Register_Action;
 
    -----------
@@ -190,6 +233,8 @@ package body GPS.Kernel.Actions is
               (Command     => Interactive_Command_Access (Command),
                Filter      => null,
                Description => null,
+               Category    => null,
+               Defined_In  => VFS.No_File,
                Modified    => False,
                Overriden   => False);
             Set (Actions_Htable_Access (Kernel.Actions).Table, Name, Action);

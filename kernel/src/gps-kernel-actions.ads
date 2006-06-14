@@ -25,6 +25,7 @@
 
 with Commands.Interactive;
 with GNAT.OS_Lib;
+with VFS;
 
 package GPS.Kernel.Actions is
 
@@ -34,12 +35,18 @@ package GPS.Kernel.Actions is
       Description : GNAT.OS_Lib.String_Access;
       Modified    : Boolean;
       Overriden   : Boolean;
+      Category    : GNAT.OS_Lib.String_Access;
+      Defined_In  : VFS.Virtual_File;
    end record;
    --  Command is freed automatically by the kernel.
-   --  Context indicates when the action can be executed. If null, this means
-   --  the action can always be executed. The context mustn't deallocated
+   --  Filter indicates when the action can be executed. If null, this means
+   --  the action can always be executed. The filter mustn't be deallocated
    --  in the life of GPS, since there might be actions bound to it at any
    --  time.
+   --  Category is used in the key bindings editor to group actions. If null,
+   --  the action should not be shown in the keybinding editor.
+   --  Defined_In indicates in which file the action was defined. This is
+   --  optional and could be No_File to indicate builtin actions.
 
    type Action_Record_Access is access Action_Record;
 
@@ -48,12 +55,19 @@ package GPS.Kernel.Actions is
       Name        : String;
       Command     : access Commands.Interactive.Interactive_Command'Class;
       Description : String := "";
-      Filter      : Action_Filter := null);
+      Filter      : Action_Filter := null;
+      Category    : String := "General";
+      Defined_In  : VFS.Virtual_File := VFS.No_File);
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user
    --  should be registered.
    --  Name must be unique in GPS.
    --  Action will be freed automatically by the kernel.
+   --  Category is used in the key bindings editor to group actions and make
+   --  them easier to find by the user. If it is the empty string, the action
+   --  will not be shown in the keybinding editor.
+   --  Defined_In indicates in which file the action is defined. By default, it
+   --  is considered as a builtin action.
 
    function Lookup_Action
      (Kernel : access Kernel_Handle_Record'Class;
