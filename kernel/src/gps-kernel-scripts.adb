@@ -868,7 +868,7 @@ package body GPS.Kernel.Scripts is
             Err : constant String :=
               GPS.Kernel.Custom.Add_Customization_String
                 (Kernel, Nth_Arg (Data, 1),
-                 From_File  => "<inline>",
+                 From_File  => Current_Script (Get_Script (Data)),
                  Start_Line => 1);
          begin
             if Err /= "" then

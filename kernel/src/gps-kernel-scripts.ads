@@ -652,6 +652,11 @@ package GPS.Kernel.Scripts is
       return Kernel_Handle is abstract;
    --  Return the kernel in which Script is registered
 
+   function Current_Script
+     (Script : access Scripting_Language_Record) return String is abstract;
+   --  Return the name of the current script (file or inline script) that we
+   --  are executing. When unknown, the empty string should be returned.
+
    --------------------------
    -- Commands and methods --
    --------------------------
