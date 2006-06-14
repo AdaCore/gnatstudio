@@ -345,9 +345,10 @@ package body KeyManager_Module is
    --  Get or create a secondary keymap in Table.
 
    function Find_Parent
-     (Model : Gtk_Tree_Store; Filter : Action_Filter) return Gtk_Tree_Iter;
-   --  Find the parent node for Context.
-   --  Returns null if there is no such node
+     (Model  : Gtk_Tree_Store;
+      Action : Action_Record_Access) return Gtk_Tree_Iter;
+   --  Find the parent node for Action.
+   --  Create the parent node if needed
 
    pragma Warnings (Off);
    --  These two UCs are safe aliasing-wise, so kill warning
@@ -1106,13 +1107,23 @@ package body KeyManager_Module is
    -----------------
 
    function Find_Parent
-     (Model : Gtk_Tree_Store; Filter : Action_Filter) return Gtk_Tree_Iter is
+     (Model  : Gtk_Tree_Store;
+      Action : Action_Record_Access) return Gtk_Tree_Iter
+   is
+      Parent : Gtk_Tree_Iter;
    begin
-      if Filter = null or else Get_Name (Filter) = "" then
-         return Find_Node (Model, -"General", Action_Column);
+      if Action = null or else Action.Category = null then
+         return Null_Iter;
+
       else
-         return Find_Node (Model, Get_Name (Filter), Action_Column);
+         Parent := Find_Node (Model, Action.Category.all, Action_Column);
+         if Parent = Null_Iter then
+            Parent := Set (Model, Null_Iter,
+                           Descr => Action.Category.all);
+         end if;
       end if;
+
+      return Parent;
    end Find_Parent;
 
    ---------
@@ -1301,7 +1312,7 @@ package body KeyManager_Module is
                elsif Binding.Action (Binding.Action'First) /= '/' then
                   Action := Lookup_Action (Handler.Kernel, Binding.Action.all);
                   if Action /= null then
-                     Parent := Find_Parent (Editor.Model, Action.Filter);
+                     Parent := Find_Parent (Editor.Model, Action);
                      if Parent /= Null_Iter then
                         Parent := Children (Editor.Model, Parent);
                         while Parent /= Null_Iter loop
@@ -1325,6 +1336,15 @@ package body KeyManager_Module is
                            Next (Editor.Model, Parent);
                         end loop;
                      end if;
+                  else
+                     Insert
+                       (Editor.Kernel,
+                        -"Key " & Prefix & Image
+                          (Get_Key (Iter).Key, Get_Key (Iter).Modifier)
+                        & (-" is bound to unknown action") & " """
+                        & Binding.Action.all
+                        & """",
+                        Mode => Error);
                   end if;
                end if;
                Binding := Next (Binding);
@@ -1346,32 +1366,25 @@ package body KeyManager_Module is
       Gtk.Accel_Map.Foreach
         (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
 
-      --  Add all actions in the table
+      --  Add all actions in the table (no keybinding yet, these are added
+      --  in a second loop)
       loop
          Action := Get (Action_Iter);
          exit when Action = null;
 
-         Parent := Find_Parent (Editor.Model, Action.Filter);
-         if Parent = Null_Iter then
-            if Action.Filter = null or else Get_Name (Action.Filter) = "" then
-               Parent := Set (Editor.Model, Null_Iter, -"General");
-            else
-               Parent := Set
-                 (Editor.Model, Null_Iter,
-                  Get_Name (Action.Filter));
-            end if;
+         Parent := Find_Parent (Editor.Model, Action);
+         if Parent /= Null_Iter then
+            Parent := Set
+              (Model   => Editor.Model,
+               Parent  => Parent,
+               Descr   => Get (Action_Iter),
+               Changed => False,
+               Key     => -Disabled_String);
          end if;
-
-         Parent := Set
-           (Model   => Editor.Model,
-            Parent  => Parent,
-            Descr   => Get (Action_Iter),
-            Changed => False,
-            Key     => -Disabled_String);
          Next (Editor.Kernel, Action_Iter);
       end loop;
 
-      --  Add the key bindings definition
+      --  Add the key bindings to the actions
       Process_Table (Handler.Table, "");
 
       Thaw_Sort (Editor.Model, Sort_Id);
