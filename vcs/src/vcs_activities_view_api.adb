@@ -702,8 +702,8 @@ package body VCS_Activities_View_API is
       if Has_Activity_Information (Context) then
          Activity_Section := not Has_File_Information (Context)
            and then not Has_Directory_Information (Context);
-         Activity := Value (Activity_Information (Context));
-         Active := not Is_Closed (Activity);
+         Activity         := Value (Activity_Information (Context));
+         Active           := not Is_Closed (Activity);
          File_Section     := Has_File_Information (Context)
            or else Has_Directory_Information (Context);
       else
@@ -722,7 +722,6 @@ package body VCS_Activities_View_API is
          Set_Sensitive
            (Check,
             VCS /= null
-            and then Absolute_Filenames_Supported (VCS)
             and then Atomic_Commands_Supported (VCS)
             and then not Is_Closed (Activity));
 
