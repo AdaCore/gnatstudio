@@ -43,7 +43,7 @@ package GPS.Kernel.Clipboard is
 
    procedure Cut_Clipboard
      (Clipboard : access Clipboard_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class);
+      Widget    : access Glib.Object.GObject_Record'Class);
    --  Cut the current selection from widget to the clipboard. This saves the
    --  previous contents of the clipboard.
    --  Default_Editable indicates whether the buffer is considered as editable
@@ -52,13 +52,13 @@ package GPS.Kernel.Clipboard is
 
    procedure Copy_Clipboard
      (Clipboard : access Clipboard_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class);
+      Widget    : access Glib.Object.GObject_Record'Class);
    --  Copy the current selection from widget to the clipboard. This saves the
    --  previous contents of the clipboard.
 
    procedure Paste_Clipboard
      (Clipboard     : access Clipboard_Record;
-      Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Widget        : access Glib.Object.GObject_Record'Class;
       Index_In_List : Natural := 0);
    --  Paste the last clipboard entry made by Cut or Copy (or the one last
    --  pasted by Paste_Previous).

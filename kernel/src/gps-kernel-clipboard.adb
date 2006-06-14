@@ -249,7 +249,7 @@ package body GPS.Kernel.Clipboard is
 
    procedure Cut_Clipboard
      (Clipboard : access Clipboard_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class)
+      Widget    : access Glib.Object.GObject_Record'Class)
    is
       Buffer : Gtk_Text_Buffer;
    begin
@@ -264,6 +264,13 @@ package body GPS.Kernel.Clipboard is
             Gtk.Clipboard.Get,
             Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
          Append_To_Clipboard (Clipboard);
+
+      elsif Widget.all in Gtk_Text_Buffer_Record'Class then
+         Cut_Clipboard
+           (Gtk_Text_Buffer (Widget),
+            Gtk.Clipboard.Get,
+            Default_Editable => True);
+         Append_To_Clipboard (Clipboard);
       end if;
    end Cut_Clipboard;
 
@@ -273,7 +280,7 @@ package body GPS.Kernel.Clipboard is
 
    procedure Copy_Clipboard
      (Clipboard : access Clipboard_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class)
+      Widget    : access Glib.Object.GObject_Record'Class)
    is
       Buffer : Gtk_Text_Buffer;
    begin
@@ -283,6 +290,11 @@ package body GPS.Kernel.Clipboard is
 
       elsif Widget.all in Gtk_Text_View_Record'Class then
          Buffer := Get_Buffer (Gtk_Text_View (Widget));
+         Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
+         Append_To_Clipboard (Clipboard);
+
+      elsif Widget.all in Gtk_Text_Buffer_Record'Class then
+         Buffer := Gtk_Text_Buffer (Widget);
          Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
          Append_To_Clipboard (Clipboard);
 
@@ -298,7 +310,7 @@ package body GPS.Kernel.Clipboard is
 
    procedure Paste_Clipboard
      (Clipboard     : access Clipboard_Record;
-      Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Widget        : access Glib.Object.GObject_Record'Class;
       Index_In_List : Natural := 0)
    is
       Buffer : Gtk_Text_Buffer;
@@ -352,8 +364,15 @@ package body GPS.Kernel.Clipboard is
             Clipboard.Last_Position :=
               Integer (Get_Position (Gtk_Editable (Widget)));
 
-         elsif Widget.all in Gtk_Text_View_Record'Class then
-            Buffer := Get_Buffer (Gtk_Text_View (Widget));
+         else
+            if Widget.all in Gtk_Text_View_Record'Class then
+               Buffer := Get_Buffer (Gtk_Text_View (Widget));
+            elsif Widget.all in Gtk_Text_Buffer_Record'Class then
+               Buffer := Gtk_Text_Buffer (Widget);
+            else
+               Clipboard.Last_Widget := null;
+               return;
+            end if;
 
             --  Delete the selected region if it exists.
             --  ??? This works around a bug which it seems is in gtk+,
@@ -374,8 +393,6 @@ package body GPS.Kernel.Clipboard is
             Paste_Clipboard
               (Buffer, Gtk.Clipboard.Get,
                Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
-         else
-            Clipboard.Last_Widget := null;
          end if;
       end if;
    end Paste_Clipboard;
