@@ -81,6 +81,9 @@ package body Python_Module is
       GPS_Missing_Args         : PyObject;
       GPS_Invalid_Arg          : PyObject;
       GPS_Unexpected_Exception : PyObject;
+
+      Current_File             : GNAT.OS_Lib.String_Access;
+      --  The script we are currently executing
    end record;
    type Python_Scripting is access all Python_Scripting_Record'Class;
 
@@ -157,6 +160,8 @@ package body Python_Module is
    function Get_Name (Script : access Python_Scripting_Record) return String;
    function Get_Kernel
      (Script : access Python_Scripting_Record) return Kernel_Handle;
+   function Current_Script
+     (Script : access Python_Scripting_Record) return String;
    --  See doc from inherited subprograms
 
    ------------------------
@@ -932,11 +937,15 @@ package body Python_Module is
             exit when Last = 0;
 
             if Last > 3 and then File (Last - 2 .. Last) = ".py" then
+               Free (Python_Module_Id.Script.Current_File);
+               Python_Module_Id.Script.Current_File :=
+                 new String'(File (1 .. Last));
                Execute_Command
                  (Python_Module_Id.Script,
                   "import " & Base_Name (File (1 .. Last), ".py"),
                   Hide_Output => True,
                   Errors => Errors);
+               Free (Python_Module_Id.Script.Current_File);
             end if;
          end loop;
 
@@ -951,11 +960,15 @@ package body Python_Module is
       if Is_Regular_File (Sys & "autoexec.py") then
          Trace (Me, "Load python files from " & Sys & "autoexec.py");
 
+         Free (Python_Module_Id.Script.Current_File);
+         Python_Module_Id.Script.Current_File :=
+           new String'(Sys & "autoexec.py");
          Execute_Command
            (Python_Module_Id.Script,
             "execfile (""" & Sys & "autoexec.py"")",
             Hide_Output => True,
             Errors => Errors);
+         Free (Python_Module_Id.Script.Current_File);
       else
          Trace (Me,
                 "File " & Sys & "autoexec.py doesn't exist, nothing done");
@@ -1908,9 +1921,12 @@ package body Python_Module is
       Hide_Output        : Boolean := False;
       Errors             : out Boolean) is
    begin
+      Free (Script.Current_File);
+      Script.Current_File := new String'(Filename);
       Execute_Command
         (Script, "execfile (r'" & Filename & "')",
          Console, Hide_Output, True, Errors);
+      Free (Script.Current_File);
    end Execute_File;
 
    --------------
@@ -1943,6 +1959,21 @@ package body Python_Module is
    begin
       return Script.Kernel;
    end Get_Kernel;
+
+   --------------------
+   -- Current_Script --
+   --------------------
+
+   function Current_Script
+     (Script : access Python_Scripting_Record) return String
+   is
+   begin
+      if Script.Current_File = null then
+         return "<python script>";
+      else
+         return Script.Current_File.all;
+      end if;
+   end Current_Script;
 
    -------------------------
    -- Number_Of_Arguments --

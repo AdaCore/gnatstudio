@@ -163,6 +163,8 @@ package body Shell_Script is
    function Get_Kernel
      (Script : access Shell_Scripting_Record)
       return Kernel_Handle;
+   function Current_Script
+     (Script : access Shell_Scripting_Record) return String;
    --  See doc from inherited subprograms
 
    function New_Instance
@@ -1415,6 +1417,18 @@ package body Shell_Script is
    begin
       return Script.Kernel;
    end Get_Kernel;
+
+   --------------------
+   -- Current_Script --
+   --------------------
+
+   function Current_Script
+     (Script : access Shell_Scripting_Record) return String
+   is
+      pragma Unreferenced (Script);
+   begin
+      return "<shell script>";
+   end Current_Script;
 
    -------------------------
    -- Number_Of_Arguments --
