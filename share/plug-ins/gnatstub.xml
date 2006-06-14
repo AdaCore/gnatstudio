@@ -4,7 +4,7 @@
       This external tool creates the Ada body from an Ada spec -->
 
 <GPS>
-   <action name="Generate body" output="none" >
+   <action name="Generate body" output="none" category="Editor">
       <description>Generate the body for an Ada spec file</description>
       <!-- This action only applies to Ada files -->
       <filter language="ada"

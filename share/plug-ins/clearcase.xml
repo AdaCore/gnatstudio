@@ -6,7 +6,7 @@
 
    <!-- ClearCase describe -->
 
-   <action name="clearcase_describe" show-command="true" output="none">
+   <action name="clearcase_describe" show-command="true" output="none" category="">
       <shell output="">echo "Describing $2-"</shell>
       <external>cleartool describe -fmt "%En\\n%Xn\\n%f\\n%m %Rf\\n" "$2-"</external>
       <shell>VCS.status_parse "ClearCase Native" "%1" $1 FALSE</shell>
@@ -14,7 +14,7 @@
 
    <!-- ClearCase annotate -->
 
-   <action name="clearcase_annotate" show-command="true" output="none">
+   <action name="clearcase_annotate" show-command="true" output="none" category="">
       <shell output="">echo "Querying annotations for $1"</shell>
       <external>cleartool annotate -nheader -force -fmt "%Sd\\040%-16.16u\\040%-40.39Vn:" -out - "$1"</external>
       <shell>VCS.annotations_parse "ClearCase Native" "$1" "%1"</shell>
@@ -22,14 +22,14 @@
 
    <!-- ClearCase local status -->
 
-   <action name="clearcase_local_status" show-command="true" output="none">
+   <action name="clearcase_local_status" show-command="true" output="none" category="">
       <external>cleartool ls -short "$2-"</external>
       <shell>VCS.status_parse "ClearCase Native" "%1" FALSE TRUE</shell>
    </action>
 
    <!-- ClearCase checkin -->
 
-   <action name="clearcase_checkin" show-command="true" output="none">
+   <action name="clearcase_checkin" show-command="true" output="none" category="">
       <shell output="">echo "Checking in file(s) $2-"</shell>
       <shell>dump "$1" TRUE</shell>
       <external>cleartool ci -cfile "%1" "$2-"</external>
@@ -44,7 +44,7 @@
    <!-- ClearCase history -->
 
 
-   <action name="clearcase_history" show-command="true" output="none">
+   <action name="clearcase_history" show-command="true" output="none" category="">
       <external>cleartool lshistory "$1"</external>
       <shell>dump "%1" TRUE</shell>
       <shell>Editor.edit "%1"</shell>
@@ -52,7 +52,7 @@
       <shell>delete "%2"</shell>
    </action>
 
-   <action name="clearcase_history_rev" show-command="true" output="none">
+   <action name="clearcase_history_rev" show-command="true" output="none" category="">
       <external>cleartool lshistory "$2"</external>
       <shell>dump "%1" TRUE</shell>
       <shell>Editor.edit "%1" 1</shell>
@@ -66,7 +66,7 @@
 
    <!-- ClearCase update -->
 
-   <action name="clearcase_update" show-command="true" output="none">
+   <action name="clearcase_update" show-command="true" output="none" category="">
       <external>cleartool update $*</external>
       <on-failure>
          <shell output="">echo "Clearcase error:"</shell>
@@ -79,7 +79,7 @@
 
    <!-- ClearCase diff -->
 
-   <action name="clearcase_diff_patch" show-command="true" output="none">
+   <action name="clearcase_diff_patch" show-command="true" output="none" category="">
       <external>cleartool diff -diff_format  "${1}@@/main/LATEST" "$2"</external>
 
       <on-failure>
@@ -87,7 +87,7 @@
       </on-failure>
    </action>
 
-   <action name="clearcase_diff_head" show-command="true" output="none">
+   <action name="clearcase_diff_head" show-command="true" output="none" category="">
       <external>cleartool diff -diff_format  "${1}@@/main/LATEST" "$1"</external>
 
       <on-failure>
@@ -101,7 +101,7 @@
       <shell>echo No differences found</shell>
    </action>
 
-   <action name="clearcase_diff" show-command="true" output="none">
+   <action name="clearcase_diff" show-command="true" output="none" category="">
       <external>cleartool diff -diff_format "${2}@@${1}" "$2" </external>
 
       <on-failure>
@@ -117,7 +117,7 @@
 
    <!-- ClearCase checkout -->
 
-   <action name="clearcase_checkout" show-command="true" output="none">
+   <action name="clearcase_checkout" show-command="true" output="none" category="">
       <shell>MDI.input_dialog "Checking out file(s)" "Comment:=GPS check-out"</shell>
       <external>cleartool co -c "%1" "$*"</external>
       <on-failure>
@@ -131,7 +131,7 @@
 
    <!-- Clearcase uncheckout -->
 
-   <action name="clearcase_uncheckout" show-command="true" output="none">
+   <action name="clearcase_uncheckout" show-command="true" output="none" category="">
       <external>cleartool uncheckout -keep "$*"</external>
       <on-failure>
          <shell output="">echo "Clearcase error:"</shell>
@@ -144,7 +144,7 @@
 
    <!-- ClearCase Add -->
 
-   <action name="clearcase_add" show-command="true" output="">
+   <action name="clearcase_add" show-command="true" output="" category="">
       <shell>dump "$1" TRUE</shell>
       <external>cleartool co -cfile "%1" .</external>
       <external>cleartool mkelem -cfile "%2" "$2"</external>
@@ -155,7 +155,7 @@
 
    <!-- ClearCase Add (no commit) -->
 
-   <action name="clearcase_add_no_commit" show-command="true" output="">
+   <action name="clearcase_add_no_commit" show-command="true" output="" category="">
       <shell>dump "$1" TRUE</shell>
       <external>cleartool co -cfile "%1" .</external>
       <external>cleartool mkelem -cfile "%2" "$2"</external>
@@ -165,7 +165,7 @@
 
    <!-- ClearCase Remove -->
 
-   <action name="clearcase_remove" show-command="true" output="">
+   <action name="clearcase_remove" show-command="true" output="" category="">
       <shell>dump "$1" TRUE</shell>
       <external>cleartool co -cfile "%1" .</external>
       <external>cleartool rm -cfile "%2" "$2"</external>
@@ -176,7 +176,7 @@
 
    <!-- ClearCase Remove (no commit) -->
 
-   <action name="clearcase_remove_no_commit" show-command="true" output="">
+   <action name="clearcase_remove_no_commit" show-command="true" output="" category="">
       <shell>dump "$1" TRUE</shell>
       <external>cleartool co -cfile "%1" .</external>
       <external>cleartool rm -cfile "%2" "$2"</external>
@@ -186,7 +186,7 @@
 
    <!-- ClearCase -->
 
-   <vcs name="ClearCase Native" absolute_names="FALSE">
+   <vcs name="ClearCase Native" absolute_names="FALSE" category="">
       <status_files     action="clearcase_describe"         label="Describe"/>
       <local_status_files action="clearcase_local_status"   label="ls"/>
       <open             action="clearcase_checkout"         label="Check out"/>

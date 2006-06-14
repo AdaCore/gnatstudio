@@ -12,7 +12,7 @@ mark_set  = False
 
 ## Register the actions
 GPS.parse_xml ("""
-   <action name="subprogram box" output="none">
+   <action name="subprogram box" output="none" category="Editor">
       <filter_and>
          <filter id="Source editor" />
          <filter language="ada" />
@@ -20,40 +20,27 @@ GPS.parse_xml ("""
       <shell lang="python">text_utils.add_subprogram_box()</shell>
    </action>
 
-   <action name="next line" output="none">
+   <action name="next line" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.next_line(1)</shell>
    </action>
 
-   <action name="previous line" output="none">
+   <action name="previous line" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.next_line(-1)</shell>
    </action>
 
-   <!-- There is currently no way to know what is the visible part of
-        a buffer so scroll down goes only 15 line down -->
-   <action name="scroll down" output="none">
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.next_line(15)</shell>
-   </action>
-
-   <!-- Idem for scroll up -->
-   <action name="scroll up" output="none">
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.next_line(-15)</shell>
-   </action>
-
-   <action name="kill line" output="none">
+   <action name="kill line" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.kill_line()</shell>
    </action>
 
-   <action name="open line" output="none">
+   <action name="open line" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.open_line()</shell>
    </action>
 
-   <action name="kill forward" output="none">
+   <action name="kill forward" output="none" category="Editor">
       <filter id="Source editor" />
       <shell>current_context</shell>
       <shell>FileContext.file %1</shell>
@@ -63,12 +50,12 @@ GPS.parse_xml ("""
       <shell>Editor.replace_text %3 %2 %1 "" 0 1</shell>
    </action>
 
-   <action name="transpose chars" output="none">
+   <action name="transpose chars" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.transpose_chars()</shell>
    </action>
 
-   <action name="save current editor"  output="none">
+   <action name="save current editor"  output="none" category="Editor">
       <filter id="Source editor" />
       <shell>current_context</shell>
       <shell>FileContext.file %1</shell>
@@ -76,47 +63,47 @@ GPS.parse_xml ("""
       <shell>Editor.save_buffer %1</shell>
    </action>
 
-   <action name="goto beginning of line" output="none">
+   <action name="goto beginning of line" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.goto_beginning_of_line()</shell>
    </action>
 
-   <action name="goto end of line" output="none">
+   <action name="goto end of line" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python" >text_utils.goto_end_of_line()</shell>
    </action>
 
-   <action name="goto beginning of buffer" output="none">
+   <action name="goto beginning of buffer" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.beginning_of_buffer()</shell>
    </action>
 
-   <action name="goto end of buffer" output="none">
+   <action name="goto end of buffer" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.end_of_buffer()</shell>
    </action>
 
-   <action name="set mark command" output="none">
+   <action name="set mark command" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.set_mark_command()</shell>
    </action>
 
-   <action name="kill region" output="none">
+   <action name="kill region" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.kill_region()</shell>
    </action>
 
-   <action name="kill ring save"  output="none">
+   <action name="kill ring save"  output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.kill_ring_save()</shell>
    </action>
 
-   <action name="delete horizontal space" output="none">
+   <action name="delete horizontal space" output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.delete_horizontal_space()</shell>
    </action>
 
-   <action name="center cursor on screen"  output="none">
+   <action name="center cursor on screen"  output="none" category="Editor">
       <filter id="Source editor" />
       <shell lang="python">text_utils.center_cursor()</shell>
    </action>
@@ -265,12 +252,13 @@ searched for"""
    end = start
    if forward:
       max = end.end_of_line()
-      while is_space (end.get_char()) and end < max:
+      while is_space (end.get_char()) and end.get_char() != '\n' and end < max:
         end = end.forward_char(1)
       if end != max:
         end = end.forward_char(-1)
    if backward:
       max = start.beginning_of_line()
+      start.forward_char (-1)
       while is_space (start.get_char()) and start > max:
         start = start.forward_char (-1)
       if start != max:

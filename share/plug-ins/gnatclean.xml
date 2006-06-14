@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <GPS>
-  <action name="build-clean-root-project">
+  <action name="build-clean-root-project" category="Builder">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
     <shell output="none">Project.root</shell>
     <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
@@ -12,7 +12,7 @@
   <menu action="build-clean-root-project" after="Make">
     <title>/Build/C_lean/_Root Project</title>
   </menu>
-  <action name="build-clean-all-root-project">
+  <action name="build-clean-all-root-project" category="Builder">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
     <shell output="none">Project.root</shell>
     <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
@@ -25,7 +25,7 @@
     <title>/Build/C_lean/_All</title>
   </menu>
 
-  <action name="build-clean-subproject">
+  <action name="build-clean-subproject" category="Builder">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
     <shell output="none">Project.root</shell>
     <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>

@@ -3,7 +3,7 @@
       This is a pretty printer for Ada files -->
 
 <GPS>
-   <action name="Pretty print" output="none" >
+   <action name="Pretty print" output="none" category="Editor" >
       <description>Reformat the current Ada source file, and reload the reformated version. Specific formating options can be set in the project file</description>
       <!-- This action only applies to Ada files -->
       <filter language="ada"

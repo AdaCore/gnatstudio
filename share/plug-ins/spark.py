@@ -274,7 +274,7 @@ a = """<?xml version="1.0"?>
   <!-- want to use metafiles or the simplifier, you'll also have  -->
   <!-- to select metafile and VCG as project languages.           -->
 
-  <action name="Examine file">
+  <action name="Examine file" category="Spark">
      <filter language="SPARK" />
      <filter language="Ada" />
      <shell>MDI.save_all false</shell>
@@ -285,7 +285,7 @@ a = """<?xml version="1.0"?>
      <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
   </action>
 
-  <action name="SPARKFormat file">
+  <action name="SPARKFormat file" category="Spark">
      <filter language="SPARK" />
      <filter language="Ada" />
      <shell>MDI.save_all false</shell>
@@ -295,7 +295,7 @@ a = """<?xml version="1.0"?>
      <shell>Editor.edit %f 0 0 0 true</shell>
   </action>
 
-  <action name="Examine metafile">
+  <action name="Examine metafile" category="Spark">
      <filter language="Metafile" />
      <shell>MDI.save_all false</shell>
 	 <shell>Locations.remove_category Examiner</shell>
@@ -305,18 +305,18 @@ a = """<?xml version="1.0"?>
      <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
   </action>
 
-  <action name="SPARK help" output="SPARK Help">
+  <action name="SPARK help" output="SPARK Help" category="Spark">
      <external>spark /help</external>
   </action>
 
-  <action name="Simplify file">
+  <action name="Simplify file" category="Spark">
     <filter language="VCG" />
     <shell>Project %p</shell>
     <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
     <external output="Simplifier Output">spadesimp %f %1</external>
   </action>
 
-  <action name="Simplify all">
+  <action name="Simplify all" category="Spark">
     <shell>Project %P</shell>
     <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
     <shell>Project %P</shell>
@@ -324,7 +324,7 @@ a = """<?xml version="1.0"?>
     <external output="SPARKSimp Output">sparksimp %1 ~sargs %3 </external>
   </action>
 
-  <action name="POGS">
+  <action name="POGS" category="Spark">
     <shell>MDI.save_all false</shell>
     <shell>cd %d</shell>
     <shell>Project %p</shell>
@@ -334,7 +334,7 @@ a = """<?xml version="1.0"?>
     <shell lang="python">GPS.Editor.edit(spark.pogs_file(), 0, 0, 0, -1)</shell>
   </action>
 
-  <action name="SPARKmake">
+  <action name="SPARKmake" category="Spark">
      <filter language="SPARK" />
      <filter language="Ada" />
      <shell>MDI.save_all false</shell>

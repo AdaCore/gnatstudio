@@ -10,7 +10,7 @@ import GPS
 import string
 
 GPS.parse_xml ("""
-  <action name="sort selected lines ascending" output="none">
+  <action name="sort selected lines ascending" output="none" category="Editor">
      <filter id="Source editor" />
      <description>Sorts current selection</description>
      <shell lang="python" >sort_selection.sort_selection(0)</shell>
@@ -20,7 +20,7 @@ GPS.parse_xml ("""
      <title>/Edit/Sort Ascending</title>
   </menu>
 
-   <action name="sort selected lines descending" output="none">
+   <action name="sort selected lines descending" output="none" category="Editor">
       <filter id="Source editor" />
       <description>Sorts current selection</description>
       <shell lang="python" >sort_selection.sort_selection(1)</shell>

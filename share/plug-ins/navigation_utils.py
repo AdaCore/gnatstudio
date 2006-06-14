@@ -7,12 +7,12 @@ import string, re
 ## Register the GPS actions
 
 GPS.parse_xml ("""
-   <action name="goto declaration or body" output="none">
+   <action name="goto declaration or body" output="none" category="Editor">
      <filter id="Source editor" />
      <shell lang="python">navigation_utils.goto_declaration_body()</shell>
    </action>
 
-   <action name="goto other file" output="none">
+   <action name="goto other file" output="none" category="Editor">
      <filter id="Source editor" />
      <shell lang="python">navigation_utils.goto_other_file()</shell>
    </action>

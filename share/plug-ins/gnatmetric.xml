@@ -4,7 +4,7 @@
       This external tool generates a set of software metrics -->
 
 <GPS>
-  <action name="metrics project" >
+  <action name="metrics project" category="Metrics" >
      <filter_and>
        <filter id="Project only" />
        <filter language="ada" />
@@ -25,7 +25,7 @@
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
 
-  <action name="metrics root project" >
+  <action name="metrics root project"  category="Metrics">
      <description>Run GNAT Metrics on a root project</description>
      <shell show-command="false">Editor.save</shell>
      <shell output="none">Project.root</shell>
@@ -42,7 +42,7 @@
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
 
-  <action name="metrics file" >
+  <action name="metrics file" category="Metrics" >
      <filter_and>
        <filter id="File" />
        <filter language="ada" />

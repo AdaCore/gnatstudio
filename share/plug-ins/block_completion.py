@@ -36,7 +36,7 @@ BLOCKS_DEFS = {
 import re, string, GPS
 
 GPS.parse_xml ("""
-   <action name="Block_Completion">
+   <action name="Block_Completion" category="Editor">
       <description>End the current block.</description>
       <filter language="ada" error="Block_Completion requires an Ada file" />
       <shell lang="python" output="none">block_completion.block_complete("%F");</shell>

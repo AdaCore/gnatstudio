@@ -135,6 +135,7 @@ of commands to perform if the command fails</xsd:documentation>
          <xsd:element name="description" type="xsd:string" minOccurs="0" maxOccurs="1" />
        </xsd:choice>
        <xsd:attribute name="name"         use="required" type="xsd:string" />
+       <xsd:attribute name="category"     use="optional" type="xsd:string"   default="General"/>
        <xsd:attribute name="output"       use="optional" type="xsd:string"   default=""/>
        <xsd:attribute name="show-command" use="optional" type="boolean"      default="true"/>
        <xsd:attribute name="show-task-manager" use="optional" type="boolean"      default="false"/>
