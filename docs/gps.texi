@@ -9610,6 +9610,13 @@ other hand, several progress bars might be displayed for your action if you
 show the progress bar here, which might be an issue depending on the
 context.
 This attribute can be overriden for each external command.
+
+@item category (optional, default "General")
+The category in the keybindings editor (menu @code{Edit/Key bindings}) in which
+the action should be shown to the user. If you specify an empty string, the
+action is considered as an implementation detail, and not displayed in the
+editor. The user will thus not be able to assign it a keybinding through the
+graphical user interface (although this is still doable through XML commands).
 @end table
 
 If you are defining the same action multiple times, the last definition will
