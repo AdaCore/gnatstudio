@@ -256,6 +256,7 @@ package body GPS.Kernel.Clipboard is
       if Widget.all in Gtk_Editable_Record'Class then
          Cut_Clipboard (Gtk_Editable (Widget));
          Append_To_Clipboard (Clipboard);
+         Clear (Gtk.Clipboard.Get);
 
       elsif Widget.all in Gtk_Text_View_Record'Class then
          Buffer := Get_Buffer (Gtk_Text_View (Widget));
@@ -264,6 +265,7 @@ package body GPS.Kernel.Clipboard is
             Gtk.Clipboard.Get,
             Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
          Append_To_Clipboard (Clipboard);
+         Clear (Gtk.Clipboard.Get);
 
       elsif Widget.all in Gtk_Text_Buffer_Record'Class then
          Cut_Clipboard
@@ -271,6 +273,7 @@ package body GPS.Kernel.Clipboard is
             Gtk.Clipboard.Get,
             Default_Editable => True);
          Append_To_Clipboard (Clipboard);
+         Clear (Gtk.Clipboard.Get);
       end if;
    end Cut_Clipboard;
 
@@ -284,23 +287,31 @@ package body GPS.Kernel.Clipboard is
    is
       Buffer : Gtk_Text_Buffer;
    begin
+      --  The calls to Clear are required so that if the user does a paste,
+      --  the GPS clipboard is used (and therefore one can access the previous
+      --  entry immediately). If we don't do that, the user has to press
+      --  "previous" twice.
       if Widget.all in Gtk_Editable_Record'Class then
          Copy_Clipboard (Gtk_Editable (Widget));
          Append_To_Clipboard (Clipboard);
+         Clear (Gtk.Clipboard.Get);
 
       elsif Widget.all in Gtk_Text_View_Record'Class then
          Buffer := Get_Buffer (Gtk_Text_View (Widget));
          Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
          Append_To_Clipboard (Clipboard);
+         Clear (Gtk.Clipboard.Get);
 
       elsif Widget.all in Gtk_Text_Buffer_Record'Class then
          Buffer := Gtk_Text_Buffer (Widget);
          Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
          Append_To_Clipboard (Clipboard);
+         Clear (Gtk.Clipboard.Get);
 
       elsif Widget.all in Gtk_Tree_View_Record'Class then
          Set_Text (Gtk.Clipboard.Get, Get_Selection (Gtk_Tree_View (Widget)));
          Append_To_Clipboard (Clipboard);
+         Clear (Gtk.Clipboard.Get);
       end if;
    end Copy_Clipboard;
 
@@ -338,6 +349,7 @@ package body GPS.Kernel.Clipboard is
       if Index_In_List = 0
         and then Wait_Is_Text_Available (Gtk.Clipboard.Get)
       then
+         Trace (Me, "Pasting system clipboard");
          Clipboard.Last_Widget := Gtk_Widget (Widget);
          Clipboard.Last_Is_From_System := True;
 
@@ -349,6 +361,7 @@ package body GPS.Kernel.Clipboard is
            Wait_For_Text (Gtk.Clipboard.Get)'Length;
 
       elsif Clipboard.List (Clipboard.Last_Paste) /= null then
+         Trace (Me, "Pasting GPS clipboard");
          Set_Text (Gtk.Clipboard.Get,
                    Clipboard.List (Clipboard.Last_Paste).all);
          Clipboard.Last_Widget := Gtk_Widget (Widget);
