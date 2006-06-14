@@ -2557,6 +2557,24 @@ package body Src_Editor_Module is
            -"Move to the next sentence in the current source editor",
          Src_Action_Context);
 
+      Command := new Move_Command;
+      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Move_Command (Command.all).Kind := Page;
+      Move_Command (Command.all).Step := -1;
+      Register_Action
+        (Kernel, "Move to previous page", Command,
+           -"Move to the previous page in the current source editor",
+         Src_Action_Context);
+
+      Command := new Move_Command;
+      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Move_Command (Command.all).Kind := Page;
+      Move_Command (Command.all).Step := 1;
+      Register_Action
+        (Kernel, "Move to next page", Command,
+           -"Move to the next page in the current source editor",
+         Src_Action_Context);
+
       Command := new Scroll_Command;
       Scroll_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
