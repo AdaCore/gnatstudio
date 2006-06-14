@@ -47,7 +47,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Password_Manager;          use Password_Manager;
@@ -1165,7 +1164,6 @@ package body Commands.Custom is
                Substitution_Char => GPS.Kernel.Macros.Special_Character,
                Callback          => Substitution'Unrestricted_Access,
                Recursive         => False);
-            Dummy_Command   : Scheduled_Command_Access;
          begin
             Trace (Me, "Executing external command " & Component.Command.all);
 
@@ -1217,8 +1215,7 @@ package body Commands.Custom is
                Synchronous          => Context.Synchronous,
                Directory            => To_Remote (To_String (Context.Dir),
                                                   Component.Server),
-               Cmd                  => Command.Sub_Command,
-               Created_Command      => Dummy_Command);
+               Created_Command      => Command.Sub_Command);
             Free (Args);
 
             Command.Execution.External_Process_Console := Console;
@@ -1893,7 +1890,7 @@ package body Commands.Custom is
    begin
       if Command.Execution /= null then
          Command.Execution.Cmd_Index := Command.Components'First;
-         Interrupt_Queue (Command.Kernel, Command.Sub_Command);
+         Interrupt_Queue (Command.Kernel, Get_Command (Command.Sub_Command));
       end if;
    end Interrupt;
 
