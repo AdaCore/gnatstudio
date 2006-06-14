@@ -99,6 +99,7 @@ package body Src_Editor_Module.Shell is
    Location_Cst          : aliased constant String := "location";
    From_Cst              : aliased constant String := "from";
    To_Cst                : aliased constant String := "to";
+   Append_Cst            : aliased constant String := "append";
    Text_Cst              : aliased constant String := "text";
    Read_Only_Cst         : aliased constant String := "read_only";
    Value_Cst             : aliased constant String := "value";
@@ -2041,23 +2042,31 @@ package body Src_Editor_Module.Shell is
       elsif Command = "copy"
         or else Command = "cut"
       then
-         Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
-         if Buffer /= null then
-            External_End_Action (Buffer);
-            Select_Region
-              (Buffer,
-               Start_Line   => Get_Line (Iter),
-               Start_Column => Get_Line_Offset (Iter),
-               End_Line     => Get_Line (Iter2),
-               End_Column   => Get_Line_Offset (Iter2));
-            if Command = "copy" then
-               Copy_Clipboard (Get_Clipboard (Kernel), Buffer);
-            else
-               Cut_Clipboard (Get_Clipboard (Kernel), Buffer);
+         Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access,
+                                 3 => Append_Cst'Access));
+         declare
+            Append : constant Boolean := Nth_Arg (Data, 4, False);
+         begin
+            Get_Buffer (Buffer, Data, 1);
+            Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
+            if Buffer /= null then
+               External_End_Action (Buffer);
+               Select_Region
+                 (Buffer,
+                  Start_Line   => Get_Line (Iter),
+                  Start_Column => Get_Line_Offset (Iter),
+                  End_Line     => Get_Line (Iter2),
+                  End_Column   => Get_Line_Offset (Iter2));
+               if Command = "copy" then
+                  Copy_Clipboard (Get_Clipboard (Kernel), Buffer);
+               else
+                  Cut_Clipboard (Get_Clipboard (Kernel), Buffer);
+               end if;
+               if Append then
+                  Merge_Clipboard (Get_Clipboard (Kernel), 1, 2);
+               end if;
             end if;
-         end if;
+         end;
 
       elsif Command = "paste" then
          Name_Parameters (Data, (1 => Location_Cst'Access));
@@ -2903,9 +2912,9 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "selection_end", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "copy", 0, 2, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "copy", 0, 3, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "cut", 0, 2, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "cut", 0, 3, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "paste", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
