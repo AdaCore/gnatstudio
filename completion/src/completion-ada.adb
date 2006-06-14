@@ -165,11 +165,23 @@ package body Completion.Ada is
                  (Get_Name (Get_Buffer (Manager).all, Data (Token)));
 
             when Tok_Expression =>
-               if Get_Number_Of_Parameters (Get_Proposal (Previous_It))
-                 >= Data (Token).Number_Of_Parameters
-                 and then Next (Token) /= Token_List.Null_Node
-               then
-                  Analyze_Token (Next (Token), Previous_It, Result);
+               if Next (Token) /= Token_List.Null_Node then
+                  if Get_Category
+                    (Get_Proposal (Previous_It)) in Subprogram_Category
+                  then
+
+                     if Get_Number_Of_Parameters (Get_Proposal (Previous_It))
+                       >= Data (Token).Number_Of_Parameters
+                     then
+                        Analyze_Token (Next (Token), Previous_It, Result);
+                     end if;
+                  else
+                     --  In this case, the previous proposal may be e.g. an
+                     --  array. Since we don't know how many dimensions it
+                     --  have, we must do this blindly
+
+                     Analyze_Token (Next (Token), Previous_It, Result);
+                  end if;
                end if;
 
             when Tok_With | Tok_Use =>
