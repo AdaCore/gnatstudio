@@ -3653,6 +3653,18 @@ the same line/column even if new lines are added in the buffer. This location is
      <description>Return the first line of the block surrounding the location. The definition of a block depends on the programming language</description>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorLocation.block_start">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>An instance of GPS.EditorLocation</return>
+     <description>Return the location of the beginning of the current block</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.block_end">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>An instance of GPS.EditorLocation</return>
+     <description>Return the location of the end of the current block</description>
+  </shell_doc>
+
   <shell_doc name="GPS.EditorLocation.block_type">
      <param name="self">The instance of GPS.EditorLocation</param>
      <return>A string</return>
