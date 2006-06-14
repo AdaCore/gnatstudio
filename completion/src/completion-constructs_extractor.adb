@@ -31,8 +31,8 @@ package body Completion.Constructs_Extractor is
    -- New_Construct_Completion_Resolver --
    ---------------------------------------
 
-   function New_Construct_Completion_Resolver (Tree : Construct_Tree_Access)
-      return Construct_Completion_Resolver
+   function New_Construct_Completion_Resolver
+     (Tree : Construct_Tree_Access) return Construct_Completion_Resolver
    is
    begin
       return (Manager => null, Tree => Tree);
@@ -42,8 +42,8 @@ package body Completion.Constructs_Extractor is
    -- Get_Completion --
    --------------------
 
-   function Get_Completion (Proposal : Construct_Completion_Proposal)
-      return UTF8_String is
+   function Get_Completion
+     (Proposal : Construct_Completion_Proposal) return UTF8_String is
    begin
       if Proposal.Is_All then
          return "all";
@@ -56,8 +56,8 @@ package body Completion.Constructs_Extractor is
    -- Get_Type --
    --------------
 
-   function Get_Category (Proposal : Construct_Completion_Proposal)
-     return Language_Category
+   function Get_Category
+     (Proposal : Construct_Completion_Proposal) return Language_Category
    is
    begin
       if Proposal.Is_All then
@@ -78,9 +78,6 @@ package body Completion.Constructs_Extractor is
       Is_Partial : Boolean;
       Result     : in out Completion_List)
    is
-      --  ??? Identifier & Is_Partial variables should be used here in a
-      --  function Add_To_Result, checking the item we are attempting to add.
-
       Tree : constant Construct_Tree_Access :=
                Construct_Completion_Resolver (Proposal.Resolver.all).Tree;
 
@@ -259,8 +256,8 @@ package body Completion.Constructs_Extractor is
    -- Get_Number_Of_Parameters --
    ------------------------------
 
-   function Get_Number_Of_Parameters (Proposal : Construct_Completion_Proposal)
-     return Natural
+   function Get_Number_Of_Parameters
+     (Proposal : Construct_Completion_Proposal) return Natural
    is
       Resolver : Construct_Completion_Resolver :=
         Construct_Completion_Resolver (Proposal.Resolver.all);

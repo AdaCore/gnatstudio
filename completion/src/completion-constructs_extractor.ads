@@ -27,8 +27,8 @@ package Completion.Constructs_Extractor is
    type Construct_Completion_Resolver is new Completion_Resolver with private;
    --  This resolver is based on the constructs found in a given file
 
-   function New_Construct_Completion_Resolver (Tree : Construct_Tree_Access)
-      return Construct_Completion_Resolver;
+   function New_Construct_Completion_Resolver
+     (Tree : Construct_Tree_Access) return Construct_Completion_Resolver;
    --  Create a new resolver, based on a construct tree
 
    procedure Get_Possibilities
@@ -54,12 +54,12 @@ private
       Is_All    : Boolean := False;
    end record;
 
-   function Get_Completion (Proposal : Construct_Completion_Proposal)
-      return UTF8_String;
+   function Get_Completion
+     (Proposal : Construct_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
-   function Get_Category (Proposal : Construct_Completion_Proposal)
-     return Language_Category;
+   function Get_Category
+     (Proposal : Construct_Completion_Proposal) return Language_Category;
    --  See inherited documentation
 
    procedure Get_Composition
@@ -70,8 +70,8 @@ private
       Result     : in out Completion_List);
    --  See inherited documentation
 
-   function Get_Number_Of_Parameters (Proposal : Construct_Completion_Proposal)
-     return Natural;
+   function Get_Number_Of_Parameters
+     (Proposal : Construct_Completion_Proposal) return Natural;
    --  See inherited documentation
 
    procedure Free (Proposal : in out Construct_Completion_Proposal);
