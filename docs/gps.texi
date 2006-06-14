@@ -12374,6 +12374,17 @@ The following children are defined:
 @table @code
 @item start_command (mandatory)
 The command used to launch the tool.
+This tag support the @code{use_pipes} attribute. This attribute select on
+Windows the way GPS will launch the remote tools, and can take the following
+values:
+@table @code
+@item true
+use pipes to launch the tool.
+@item false (default)
+use a tty emulation, which is a bit slower but allow
+ password prompts retrieval with some tools.
+@end table
+Note that this argument has effects only on Windows platforms.
 
 @item start_command_common_args (optional)
 The common arguments that are provided to the tool.
