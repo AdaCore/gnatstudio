@@ -166,7 +166,6 @@ package GPS.Kernel.Timeout is
       Timeout              : Integer := -1;
       Strip_CR             : Boolean := True;
       Use_Pipes            : Boolean := True;
-      Cmd                  : out Command_Access;
       Created_Command      : out Scheduled_Command_Access);
    --  Same as above, and returns the created Command_Access.
    --  Cmd is allocated by this procedure, and will be cleaned automatically,
