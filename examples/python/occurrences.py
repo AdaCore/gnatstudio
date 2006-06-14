@@ -11,13 +11,13 @@
 import GPS
 
 GPS.parse_xml ("""
-  <action name="Mark occurrences" >
+  <action name="Mark occurrences" category="Editor">
      <filter id="Source editor" />
      <description>Mark all the occurrences of the selected element in the current editor</description>
      <shell lang="python" >occurrences.mark_selected()</shell>
   </action>
 
-  <action name="Remove marked occurrences" >
+  <action name="Remove marked occurrences" category="Editor">
      <filter id="Source editor" />
      <description>Remove all highlightings done through Mark Occurrences</description>
      <shell lang="python" >occurrences.unmark_selected()</shell>

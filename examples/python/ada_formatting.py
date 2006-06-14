@@ -656,7 +656,7 @@ def align_assignments ():
 
 
 GPS.parse_xml ("""
-     <action name="Align formal parameters" output="none">
+     <action name="Align formal parameters" output="none" category="Ada">
         <description>Aligns colons, modes, and types of Ada formal parameters in current selection</description>
         <filter module="Source_Editor" language="ada" />
         <shell lang="python">ada_formatting.align_formal_params()</shell>
@@ -665,7 +665,7 @@ GPS.parse_xml ("""
         <Title>Align/Formal parameters</Title>
      </contextual>     
 
-     <action name="Align colons" output="none">
+     <action name="Align colons" output="none" category="Ada">
         <description>Aligns colons and trailing text in current selection</description>
         <filter module="Source_Editor" language="ada" />
         <shell lang="python">ada_formatting.align_colons()</shell>
@@ -674,7 +674,7 @@ GPS.parse_xml ("""
         <Title>Align/Colons</Title>
      </contextual>
      
-     <action name="Align use clauses" output="none">
+     <action name="Align use clauses" output="none" category="Ada">
         <description>Aligns Ada use-clauses in current selection</description>
         <filter module="Source_Editor" language="ada" />
         <shell lang="python">ada_formatting.align_use_clauses()</shell>
@@ -683,7 +683,7 @@ GPS.parse_xml ("""
         <Title>Align/Use clauses</Title>
      </contextual>
 
-     <action name="Align reserved is" output="none">
+     <action name="Align reserved is" output="none" category="Ada">
         <description>Aligns reserved word 'is' in current selection</description>
         <filter module="Source_Editor" language="ada" />
         <shell lang="python">ada_formatting.align_reserved_is()</shell>
@@ -692,7 +692,7 @@ GPS.parse_xml ("""
         <Title>Align/Reserved word 'is'</Title>
      </contextual>
 
-     <action name="Align arrows" output="none">
+     <action name="Align arrows" output="none" category="Ada">
         <description>Aligns Ada arrow symbol '=>' in current selection</description>
         <filter module="Source_Editor" language="ada" />
         <shell lang="python">ada_formatting.align_arrows()</shell>
@@ -701,7 +701,7 @@ GPS.parse_xml ("""
         <Title>Align/Arrow symbols</Title>
      </contextual>
 
-     <action name="Align assignments" output="none">
+     <action name="Align assignments" output="none" category="Ada">
         <description>Aligns Ada assignment symbol ':=' in current selection</description>
         <filter module="Source_Editor" language="ada" />
         <shell lang="python">ada_formatting.align_assignments()</shell>
@@ -710,7 +710,7 @@ GPS.parse_xml ("""
         <Title>Align/Assignment symbols</Title>
      </contextual>
 
-     <action name="Align record representation clause" output="none">
+     <action name="Align record representation clause" output="none" category="Ada">
         <description>Aligns content of record representation clause in current selection</description>
         <filter module="Source_Editor" language="ada" />
         <shell lang="python">ada_formatting.align_record_rep_clause()</shell>

@@ -18,7 +18,7 @@ def add_bookmark ():
                              "bookmarks")
 
 GPS.parse_xml ("""
-  <action name="add bookmark" >
+  <action name="add bookmark" category="General">
      <filter id="Source editor" />
      <description>Add a bookmark for the current line</description>
      <shell lang="python" output="none">bookmarks.add_bookmark()</shell>

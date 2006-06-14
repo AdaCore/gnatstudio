@@ -8,16 +8,16 @@
 import GPS, os.path
 
 GPS.parse_xml ("""
-  <action name="simple_project_from_dialog" show-command="false">
+  <action name="simple_project_from_dialog" show-command="false" category="Projects">
      <shell lang="python">simple_project.create_from_dialog()</shell>
   </action>
 
-  <action name="simple_project_from_current" show-command="false">
+  <action name="simple_project_from_current" show-command="false" category="Projects">
     <filter id="Source editor" />
     <shell lang="python">simple_project.create_from_context()</shell>
   </action>
 
-  <action name="simple_project_and_main" show-command="false">
+  <action name="simple_project_and_main" show-command="false" category="Projects">
     <shell lang="python">simple_project.create_project_and_main()</shell>
   </action>
 

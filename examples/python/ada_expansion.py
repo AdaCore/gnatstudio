@@ -98,7 +98,7 @@ min_abbreviation = 3
 
 
 GPS.parse_xml ("""
-   <action name="Conditionally expand Ada syntax" output="none">
+   <action name="Conditionally expand Ada syntax" output="none" category="Ada">
       <description>Ada syntax-based reserved word and construct expansion</description>
       <filter module="Source_Editor" language="ada" />
       <shell lang="python">ada_expansion.expand_syntax()</shell>

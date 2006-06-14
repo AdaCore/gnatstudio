@@ -10,7 +10,7 @@
 import GPS
 
 GPS.parse_xml ("""
-   <action name='Compile all main units'>
+   <action name='Compile all main units' category="Builder">
        <shell lang='python'>build.compile_recursive()</shell>
    </action>
    <menu action='Compile all main units'>

@@ -31,7 +31,7 @@ def goto_Ada_tab_stop ():
 
 
 GPS.parse_xml ("""
-   <action name="goto next Ada tab stop" output="none">
+   <action name="goto next Ada tab stop" output="none" category="Ada">
       <description>Inserts text to next tab stop defined by user's Ada indentation preference</description>
       <filter module="Source_Editor" language="Ada"/>
       <shell lang="python">tab_expansion.goto_Ada_tab_stop()</shell>

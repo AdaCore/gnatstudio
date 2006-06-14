@@ -21,12 +21,12 @@ paste_key="control-t"
 
 def get_customization_string (suffix):
    return """
-  <action name="copy_clipboard"""+suffix+"""">
+  <action name="copy_clipboard"""+suffix+"""" category="General">
     <filter id="Source editor" />
     <description>Copy the current selection to the named clipboard """+suffix+"""</description>
     <shell lang="python" >clipboards.copy_to_clipboard(\""""+suffix+"""")</shell>
   </action>
-  <action name="paste_clipboard"""+suffix+"""">
+  <action name="paste_clipboard"""+suffix+"""" category="General">
     <filter id="Source editor" />
     <description>Paste the contents of the named clipboard """+suffix+"""</description>
     <shell lang="python">clipboards.paste_from_clipboard(\""""+suffix+"""")</shell>
