@@ -30,7 +30,6 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 
-with Gtk.Clipboard;             use Gtk.Clipboard;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
@@ -2054,10 +2053,9 @@ package body Src_Editor_Module.Shell is
                End_Line     => Get_Line (Iter2),
                End_Column   => Get_Line_Offset (Iter2));
             if Command = "copy" then
-               Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
+               Copy_Clipboard (Get_Clipboard (Kernel), Buffer);
             else
-               Cut_Clipboard
-                 (Buffer, Gtk.Clipboard.Get, Default_Editable => True);
+               Cut_Clipboard (Get_Clipboard (Kernel), Buffer);
             end if;
          end if;
 
@@ -2069,7 +2067,7 @@ package body Src_Editor_Module.Shell is
             Set_Error_Msg (Data, -"Location is not in the same buffer");
          elsif Buffer /= null then
             Place_Cursor (Buffer, Iter);
-            Paste_Clipboard (Buffer, Gtk.Clipboard.Get);
+            Paste_Clipboard (Get_Clipboard (Kernel), Buffer);
          end if;
 
       elsif Command = "blocks_fold" then
