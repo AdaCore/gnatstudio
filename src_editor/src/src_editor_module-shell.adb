@@ -256,6 +256,11 @@ package body Src_Editor_Module.Shell is
    function Create_Editor_Location
      (Script   : access Scripting_Language_Record'Class;
       Location : Gtk_Text_Iter) return Class_Instance;
+   function Create_Editor_Location
+     (Script   : access Scripting_Language_Record'Class;
+      Buffer   : Source_Buffer;
+      Line     : Gint;
+      Column   : Gint) return Class_Instance;
    --  Return an instance of EditorLocation
 
    procedure Get_Location
@@ -580,6 +585,26 @@ package body Src_Editor_Module.Shell is
       Set_Location_Data
         (Inst, Source_Buffer (Get_Buffer (Location)),
          Get_Line (Location), Get_Line_Offset (Location));
+      return Inst;
+   end Create_Editor_Location;
+
+   ----------------------------
+   -- Create_Editor_Location --
+   ----------------------------
+
+   function Create_Editor_Location
+     (Script   : access Scripting_Language_Record'Class;
+      Buffer   : Source_Buffer;
+      Line     : Gint;
+      Column   : Gint) return Class_Instance
+   is
+      EditorLoc : constant Class_Type :=
+                    New_Class
+                      (Get_Kernel (Script), Editor_Location_Class_Name);
+      Inst      : constant Class_Instance := New_Instance (Script, EditorLoc);
+   begin
+      --  Line numbers start at 0 in gtk+
+      Set_Location_Data (Inst, Buffer, Line - 1, Column - 1);
       return Inst;
    end Create_Editor_Location;
 
@@ -2347,6 +2372,7 @@ package body Src_Editor_Module.Shell is
                       Buffer_Line_Type (Get_Line (Iter) + 1);
             Block : constant Block_Record :=
                       Get_Block (Source_Buffer (Get_Buffer (Iter)), Line);
+            Iter2 : Gtk_Text_Iter;
          begin
             if Command = "block_end_line" then
                Set_Return_Value (Data, Integer (Block.Last_Line));
@@ -2356,6 +2382,28 @@ package body Src_Editor_Module.Shell is
 
             elsif Command = "block_level" then
                Set_Return_Value (Data, Block.Indentation_Level);
+
+            elsif Command = "block_start" then
+               Set_Return_Value
+                 (Data, Create_Editor_Location
+                    (Get_Script (Data),
+                     Source_Buffer (Get_Buffer (Iter)),
+                     Line   => Gint (Block.First_Line),
+                     Column => 1));
+
+            elsif Command = "block_end" then
+               Get_Iter_At_Line_Offset
+                 (Source_Buffer (Get_Buffer (Iter)), Iter2,
+                  Line_Number => Gint (Block.Last_Line),
+                  Char_Offset => 1);
+               Forward_Lines
+                 (Iter2,
+                  Count  => -1,
+                  Result => Success);
+               Forward_To_Line_End (Iter2, Success);
+               Set_Return_Value
+                 (Data, Create_Editor_Location
+                    (Get_Script (Data), Iter2));
 
             elsif Command = "block_type" then
                Set_Return_Value
@@ -2780,6 +2828,10 @@ package body Src_Editor_Module.Shell is
         (Kernel, "block_end_line", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "block_start_line", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "block_start", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "block_end", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "block_level", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
