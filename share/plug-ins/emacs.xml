@@ -8,7 +8,7 @@
      <key action="kill line">control-k</key>
      <key action="kill forward">control-d</key>
      <key action="transpose chars">control-t</key>
-     <key action="save current editor">control-x control-s</key>
+     <key action="/File/Save">control-x control-s</key>
      <key action="goto beginning of line">control-a</key>
      <key action="goto end of line">control-e</key>
      <key action="goto beginning of buffer">alt-less</key>
