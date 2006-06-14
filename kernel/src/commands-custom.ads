@@ -69,6 +69,7 @@ with Commands.Interactive; use Commands.Interactive;
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Remote;    use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Interactive_Consoles;
 
 package Commands.Custom is
@@ -295,7 +296,7 @@ private
       --  The current context for the execution of the command. If this is
       --  null, no command is currently executing
 
-      Sub_Command : Command_Access;
+      Sub_Command : Scheduled_Command_Access;
    end record;
 
    procedure To_XML
