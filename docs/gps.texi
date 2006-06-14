@@ -4631,7 +4631,15 @@ If you use the @code{Find all} button, the search widget will start
 searching for all occurrences right away, and put the results in a new
 window called @code{Locations}, @xref{The Locations Tree}.
 
-@c ??? Replace, Replace&Find, Repl All button not documented
+The @code{Replace} and @code{Replace & Find} buttons are grayed out as long as
+no occurence of the pattern is found. In order to enable them, you have to
+start a search, e.g. by pressing the @code{Find} button. Pressing @code{Replace}
+will replace the current occurence (and therefore the two buttons will be
+grayed out), and @code{Replace & Find} will replace the occurence and then
+jump to the next one, if any. If you don't want to replace the current 
+occurence, you can jump directly to the next one by pressing @code{Next}.
+
+The @code{Repl all} button will replace all the occurences found.
 
 @cindex MDI
 @cindex Multiple Document Interface
