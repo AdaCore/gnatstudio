@@ -14,7 +14,7 @@
 -->
 
 <enter>
-   <action name="newline no auto-indent" >
+   <action name="newline no auto-indent" category="Editor">
       <shell>current_context</shell>
       <shell>FileContext.file %1</shell>
       <shell>File.name %1</shell>

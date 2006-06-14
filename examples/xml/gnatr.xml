@@ -9,7 +9,7 @@
 -->
 
 <gnatr>
-   <action name="compile current file with -gnatR" output="gnatR" >
+   <action name="compile current file with -gnatR" output="gnatR" category="Builder" >
       <external >gnatmake -f -gnatc -P%P -gnatR -u %F</external>
       <filter id="Source editor" />
    </action>
