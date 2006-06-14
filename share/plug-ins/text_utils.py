@@ -122,40 +122,37 @@ GPS.parse_xml ("""
    </action>
 """)
 
+## The blocks for which we want to display boxes
+subprogram_box_blocks={}
+for b in ["CAT_PROCEDURE", "CAT_FUNCTION", "CAT_ENTRY",
+          "CAT_PROTECTED", "CAT_TASK", "CAT_PACKAGE"]:
+  subprogram_box_blocks[b]=1
+
 def add_subprogram_box():
    """ Insert in the current editor a box just before the current subprogram
        starts """
 
-   ed = GPS.EditorBuffer.get (GPS.current_context().file())
-   line = GPS.current_context().location().line()
-   col = GPS.current_context().location().column()
-   loc = GPS.EditorLocation (ed, line, col)
+   buffer  = GPS.EditorBuffer.get ()
+   loc     = buffer.current_view().cursor()
+   initial = loc.create_mark()
+   min     = buffer.beginning_of_buffer()
 
-   subprogram_name = loc.subprogram_name()
+   while (not subprogram_box_blocks.has_key (loc.block_type())) and (loc > min):
+      loc = loc.block_start() - 1
 
-   if subprogram_name == "":
-      return
+   if loc > min:
+      name = loc.block_name()
+      loc = loc.block_start().beginning_of_line();
+      dashes = '-' * (len (name) + 6)
+      box = dashes + "\n" + "-- " + name + " --\n" + dashes + "\n\n" 
 
-   while (loc.block_type() != "CAT_PROCEDURE") \
-	and (loc.block_type() != "CAT_FUNCTION") \
-	and (loc.block_type() != "CAT_ENTRY") \
-	and (loc.block_type() != "CAT_PROTECTED") \
-	and (loc.block_type() != "CAT_TASK") \
-	and (loc.block_type() != "CAT_PACKAGE") and (line > 0):
-	line = loc.block_start_line() - 1
-	loc = GPS.EditorLocation (ed, line, col)
-
-   if line == 0:
-	return
-
-   decl_line = loc.block_start_line()
-   decl_loc = GPS.EditorLocation (ed, loc.block_start_line (), 1)
-
-   dashes = '-' * (len (subprogram_name) + 6)
-   box = dashes + "\n" + "-- " + subprogram_name + " --\n" + dashes + "\n\n" 
-
-   ed.insert (decl_loc, box)
-   ed.indent (decl_loc, decl_loc.forward_line (3))
+      # Start an undo group so that the whole process can be undone with a
+      # single click
+      buffer.start_undo_group()
+      buffer.insert (loc, box)
+      buffer.indent (loc, loc.forward_line (3))
+      buffer.current_view().goto (initial.location())
+      buffer.finish_undo_group()
    
 def next_line(nb_line):
    """  Move cursor vertically nb_line down . """
