@@ -174,24 +174,58 @@ def next_line(nb_line):
       else:
          GPS.Editor.cursor_set_position (file, line_to_go, col)
 
+########################################
+## Implementation of kill_line
+## The goal is to have an implementation as close to Emacs as possible.
+## This means that the killed line must be added to the clipboard, and
+## that multiple successive calls at the same location should merge
+## their clipboard entries
+########################################
+
+last_kill_line = None
+moved_by_kill_line = False
+
 def kill_line():
    """ Kills the end-of-line, or the whole line if it is empty or contains
        only white spaces. This is a better emulation of Emacs's behavior
        than the one provided by default by gtk+, which doesn't handle
-       whitespaces correctly  """
+       whitespaces correctly.
+       When called several times from the same line, entries are appended in
+       the clipboard"""
+   global last_kill_line
+   global moved_by_kill_line
    buffer   = GPS.EditorBuffer.get()
    start    = buffer.current_view().cursor()
+   append   = last_kill_line and last_kill_line == start
+   last_kill_line     = start
+   moved_by_kill_line = True
 
    # In case the current location points to a line terminator we just cut it
    if start.get_char() == "\n":
-      buffer.cut (start, start)
+      buffer.cut (start, start, append)
    else:
       end       = start.end_of_line ()
       str       = buffer.get_chars (start, end)
       strip_str = str.rstrip ()
       if len (str) > 0 and str [len (str) - 1] == '\n' and strip_str != "":
          end = end.forward_char (-1)
-      buffer.cut (start, end)
+      buffer.cut (start, end, append)
+
+def on_location_changed (hook, file, line, column):
+   ## This hook is called asynchronously: it will be called after kill_line
+   ## has finished executing, in which case we do not want to reset the
+   ## variable, so that multiple calls at the same location append to the
+   ## clipboard
+   global last_kill_line
+   global moved_by_kill_line
+   if not moved_by_kill_line:
+      last_kill_line = None
+   moved_by_kill_line = False
+GPS.Hook ("location_changed").add (on_location_changed)
+
+################################################
+## Moving the cursor
+################################################
 
 def beginning_of_buffer():
    """Move the cursor to the beginning of the buffer"""
@@ -245,16 +279,15 @@ searched for"""
 
 def transpose_chars():
    """Transpose characters around cursor, moving forward one character. """
-   # This procedure gives the same behaviour as the emacs one except on
-   # end of lines
-
-   file = GPS.current_context().file().name()
-   line = GPS.current_context().location().line()
-   col  = GPS.current_context().location().column()
-   str  = GPS.Editor.get_chars (file, line, col, 1, 1)
-   # do nothing when the cursor is on the first character of the file
-   if len (str) == 2:
-      GPS.Editor.replace_text (file, line, col, str [1] + str[0], 1, 1)
+   buffer = GPS.EditorBuffer.get()
+   cursor = buffer.current_view().cursor()
+   if cursor > buffer.beginning_of_buffer():
+      c = cursor.get_char()
+      buffer.start_undo_group()
+      buffer.delete (cursor, cursor)
+      buffer.insert (cursor - 1, c)
+      buffer.current_view().goto (cursor + 1)
+      buffer.finish_undo_group()
 
 def open_line():
    """ Insert a newline and leave cursor before it."""
