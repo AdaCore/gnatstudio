@@ -187,6 +187,7 @@ package body GPS.Kernel.Custom is
       --  can override them
 
       if Kernel.Customization_Strings /= null then
+         Trace (Me, "Executing customization strings previously registered");
          Execute_Customization_String
            (Kernel,
             No_File,
@@ -280,7 +281,7 @@ package body GPS.Kernel.Custom is
          if Kernel.Custom_Files_Loaded then
             begin
                Execute_Customization_String
-                 (Kernel, No_File, Node.Child, Hard_Coded);
+                 (Kernel, Create (From_File), Node.Child, Hard_Coded);
                Free (Node);
             exception
                when others =>
