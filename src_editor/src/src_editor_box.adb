@@ -2036,7 +2036,7 @@ package body Src_Editor_Box is
 
          Set_Cursor_Position (Editor.Source_Buffer, Editable_Line, Column);
          Save_Cursor_Position (Editor.Source_View);
-         Scroll_To_Cursor_Location (Editor.Source_View, True);
+         Scroll_To_Cursor_Location (Editor.Source_View, False);
 
       elsif Is_Valid_Position (Editor.Source_Buffer, Editable_Line) then
          --  We used to generate an error message (Invalid column number),
@@ -2051,7 +2051,7 @@ package body Src_Editor_Box is
 
          Set_Cursor_Position (Editor.Source_Buffer, Editable_Line, 1);
          Save_Cursor_Position (Editor.Source_View);
-         Scroll_To_Cursor_Location (Editor.Source_View, True);
+         Scroll_To_Cursor_Location (Editor.Source_View, False);
 
       else
          if Column = 1 then
