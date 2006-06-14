@@ -1611,7 +1611,7 @@ gvd_waitpid (struct GVD_Process* p)
 
 #define NILP(x) ((x) == 0)
 #define Qnil 0
-#define report_file_error(x, y) fprintf (stderr, "Error: "x"\n");
+#define report_file_error(x, y) fprintf (stderr, "Error: %s\n", x);
 #define INTEGERP(x) 1
 #define XINT(x) x
 
@@ -1652,6 +1652,8 @@ is_gui_app (char *exe)
   DWORD  SectionOffset;
   DWORD  CoffHeaderOffset;
   DWORD  MoreDosHeader[16];
+  CHAR   *file;
+  size_t nlen;
 
   ULONG  ntSignature;
 
@@ -1662,8 +1664,19 @@ is_gui_app (char *exe)
 
   /*
    *  Open the reference file.
-   */
-  hImage = CreateFile(exe,
+  */
+  nlen = strlen (exe);
+  file = exe;
+  if (nlen > 2) {
+    if (exe[0] == '"') {
+      // remove quotes
+      nlen -= 2;
+      file = malloc ((nlen + 1) * sizeof (char));
+      memcpy (file, &exe[1], nlen);
+      file [nlen] = '\0';
+    }
+  }
+  hImage = CreateFile(file,
                       GENERIC_READ,
                       FILE_SHARE_READ,
                       NULL,
@@ -1671,9 +1684,15 @@ is_gui_app (char *exe)
                       FILE_ATTRIBUTE_NORMAL,
                       NULL);
 
+  if (file != exe) {
+    free (file);
+  }
+
   if (INVALID_HANDLE_VALUE == hImage)
     {
-      report_file_error ("Could not open exe\n", Qnil);
+      report_file_error ("Could not open exe: ", Qnil);
+      report_file_error (exe, Qnil);
+      report_file_error ("\n", Qnil);
       return -1;
     }
 
@@ -1953,8 +1972,8 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
     start.dwFlags = STARTF_USESTDHANDLES;
     start.hStdInput = process->w_forkin;
     start.hStdOutput = process->w_forkout;
-   /* child's stderr is always redirected to outfd */
-   start.hStdError = process->w_forkout;
+    /* child's stderr is always redirected to outfd */
+    start.hStdError = process->w_forkout;
   } else {
     start.dwFlags = 0;
   }
@@ -1980,8 +1999,9 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
     start.wShowWindow = SW_HIDE;
   }
 
+  /* Set initial directory to null character to use current directory */
   if (!CreateProcess (NULL, cmdline, &sec_attrs, NULL, TRUE,
-		      flags, env, ".", &start, &process->procinfo))
+		      flags, env, NULL, &start, &process->procinfo))
     goto EH_Fail;
 
   pid = (int) process->procinfo.dwProcessId;
