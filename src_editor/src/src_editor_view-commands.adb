@@ -18,30 +18,34 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;       use Basic_Types;
-
-with Gtk.Text_Iter;     use Gtk.Text_Iter;
-
-with Commands;          use Commands;
-with GPS.Kernel;        use GPS.Kernel;
-with Src_Editor_Buffer; use Src_Editor_Buffer;
+with Basic_Types;         use Basic_Types;
+with Gtk.Adjustment;      use Gtk.Adjustment;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Text_Iter;       use Gtk.Text_Iter;
+with Commands;            use Commands;
+with GPS.Kernel;          use GPS.Kernel;
+with Src_Editor_Buffer;   use Src_Editor_Buffer;
 with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
-with Src_Editor_View;   use Src_Editor_View;
-
-with Language;          use Language;
+with Src_Editor_View;     use Src_Editor_View;
+with Language;            use Language;
 
 package body Src_Editor_View.Commands is
 
    procedure Move_Iter
-     (Iter : in out Gtk_Text_Iter; Kind : Movement_Type; Step : Integer);
-   --  Move the iterator according to Kind
+     (Iter : in out Gtk_Text_Iter;
+      Kind : Movement_Type;
+      Step : Integer);
+   --  Move the iterator according to Kind. Kind should be different from
+   --  Page
 
    ---------------
    -- Move_Iter --
    ---------------
 
    procedure Move_Iter
-     (Iter : in out Gtk_Text_Iter; Kind : Movement_Type; Step : Integer)
+     (Iter : in out Gtk_Text_Iter;
+      Kind : Movement_Type;
+      Step : Integer)
    is
       Ignored : Boolean;
       Offset  : Gint;
@@ -82,6 +86,18 @@ package body Src_Editor_View.Commands is
                  (Iter, Gint'Min
                     (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
             end if;
+
+         when Page =>
+            null;
+--              if Step > 0 then
+--                 for S in 1 .. Step loop
+--                    Forward_Display_Line (View, Iter, Ignored);
+--                 end loop;
+--              else
+--                 for S in 1 .. -Step loop
+--                    Backward_Display_Line (View, Iter, Ignored);
+--                 end loop;
+--              end if;
       end case;
    end Move_Iter;
 
@@ -100,13 +116,37 @@ package body Src_Editor_View.Commands is
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Iter   : Gtk_Text_Iter;
       Mark   : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
+      Scrolled : Gtk_Scrolled_Window;
+      Adj      : Gtk_Adjustment;
+      Moved    : Boolean;
+      pragma Unreferenced (Moved);
 
    begin
-      Get_Iter_At_Mark (Buffer, Iter, Mark);
-      Move_Iter (Iter, Command.Kind, Command.Step);
-      Move_Mark (Buffer, Mark, Iter);
-      Place_Cursor (Buffer, Iter);
-      return Success;
+      if Command.Kind = Page then
+         Scrolled := Gtk_Scrolled_Window (Get_Parent (View));
+         Adj      := Get_Vadjustment (Scrolled);
+         if Command.Step > 0 then
+            Set_Value
+              (Adj,
+               Get_Value (Adj)
+               + Gdouble (Command.Step) * Get_Page_Increment (Adj));
+         else
+            Set_Value
+              (Adj,
+               Get_Value (Adj)
+               + Gdouble (Command.Step) * Get_Page_Increment (Adj));
+         end if;
+         Moved := Place_Cursor_Onscreen (View);
+         Moved := Move_Mark_Onscreen (View, Mark);
+         return Success;
+
+      else
+         Get_Iter_At_Mark (Buffer, Iter, Mark);
+         Move_Iter (Iter, Command.Kind, Command.Step);
+         Move_Mark (Buffer, Mark, Iter);
+         Place_Cursor (Buffer, Iter);
+         return Success;
+      end if;
    end Execute;
 
    -------------
