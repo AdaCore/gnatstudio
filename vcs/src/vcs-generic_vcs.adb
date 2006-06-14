@@ -412,12 +412,11 @@ package body VCS.Generic_VCS is
       Index             : Natural := 1;
       First_Args_Length : Natural := 0;
       Dir               : GNAT.Strings.String_Access;
+      Pref_Len          : Natural; -- length of the file's common prefix
 
       use type GNAT.OS_Lib.String_List_Access;
    begin
-      if The_Action = null
-        or else Is_Empty (Files)
-      then
+      if The_Action = null or else Is_Empty (Files) then
          return;
       end if;
 
@@ -425,49 +424,41 @@ package body VCS.Generic_VCS is
          First_Args_Length := First_Args'Length;
       end if;
 
-      if Ref.Absolute_Names then
-         --  In this case we want to compute the root directory common to
-         --  all files to avoid a too long command line if possible.
-         --  ??? This is a nice feature and note also that it workaround a
-         --  problem on Windows when using Cygwin Subversion which does not
-         --  understand the standard drive specifiction (c:/ or c:\). It only
-         --  support the Cygwin /cygdrive/c format. So here we have a potential
-         --  problem if we have files on multiple drives. This should be a very
-         --  rare case and it is certainly not possible to support atomic
-         --  commit across multiple drive/repository anyway.
+      --  Compute the largest common prefix for all files
 
-         Node := First (Files);
+      Node := First (Files);
 
-         declare
-            Prefix : constant String :=
-                       GNAT.Directory_Operations.Dir_Name (Data (Node));
-            Last   : Natural := Prefix'Last;
-         begin
-            while Node /= Null_Node loop
-               declare
-                  Filename : constant String := Data (Node);
-               begin
-                  while Prefix (1 .. Last) /= Filename (1 .. Last)
-                    or else (Last /= 0
-                             and then Prefix (Last) /= '/'
-                             and then Prefix (Last) /= '\')
-                  loop
-                     Last := Last - 1;
-                  end loop;
-               end;
-               exit when Last = 0;
-               Node := Next (Node);
-            end loop;
+      declare
+         Prefix : constant String :=
+                    GNAT.Directory_Operations.Dir_Name (Data (Node));
+         Last   : Natural := Prefix'Last;
+      begin
+         while Node /= Null_Node loop
+            declare
+               Filename : constant String := Data (Node);
+            begin
+               while Prefix (1 .. Last) /= Filename (1 .. Last)
+                 or else (Last /= 0
+                          and then Prefix (Last) /= '/'
+                          and then Prefix (Last) /= '\')
+               loop
+                  Last := Last - 1;
+               end loop;
+            end;
+            exit when Last = 0;
+            Node := Next (Node);
+         end loop;
 
-            if Last = 0 then
-               --  No common prefix, run the command from the current directory
-               Dir := new String'(".");
-            else
-               --  We have found a common prefix, set Dir
-               Dir := new String'(Locale_From_UTF8 (Prefix (1 .. Last)));
-            end if;
-         end;
-      end if;
+         if Last = 0 then
+            --  No common prefix, run the command from the current directory
+            Dir := new String'(".");
+            Pref_Len := 0;
+         else
+            --  We have found a common prefix, set Dir
+            Dir := new String'(Locale_From_UTF8 (Prefix (1 .. Last)));
+            Pref_Len := Dir.all'Length;
+         end if;
+      end;
 
       --  Handles files
 
@@ -494,56 +485,42 @@ package body VCS.Generic_VCS is
                end loop;
             end if;
 
-            if Ref.Absolute_Names then
-               Dir := new String'(Dir.all);
-            else
-               Dir := new String'(Dir_Name (Locale_From_UTF8 (Data (Node))));
-            end if;
+            Dir := new String'(Dir.all);
 
             while Node /= Null_Node loop
-               exit when (not Ref.Absolute_Names
-                          and then GNAT.Directory_Operations.Dir_Name
-                            (Locale_From_UTF8 (Data (Node))) /= Dir.all)
-                 or else Index - First_Args_Length >= Command_Line_Limit;
+               exit when Index - First_Args_Length >= Command_Line_Limit;
 
-               if Ref.Absolute_Names then
-                  --  The VCS works on absolute names
-                  declare
-                     Filename : constant String := Data (Node);
-                     Pref_Len : Natural := Dir.all'Length;
-                  begin
-                     if Dir.all = "." then
-                        --  No prefix found
-                        Pref_Len := 0;
-                     end if;
-
+               declare
+                  Filename : constant String := Data (Node);
+               begin
+                  if Ref.Absolute_Names then
+                     --  The VCS works on absolute names
                      if Ref.Dir_Sep = System_Default then
-                        Args (Index) := new String'
-                          (Filename (1 + Pref_Len .. Filename'Last));
+                        Args (Index) := new String'(Filename);
                      else
                         Args (Index) := new String'
-                          (Format_Pathname
-                             (Filename (1 + Pref_Len .. Filename'Last),
-                              Ref.Dir_Sep));
+                          (Format_Pathname (Filename, Ref.Dir_Sep));
                      end if;
-                  end;
 
-               else
-                  --  The VCS works on the local directory
-                  declare
-                     Base : constant String := Base_Name (Data  (Node));
-                  begin
-                     if Base = "" then
-                        --  The data is a directory. In this case, since we
-                        --  are launching the command from the local directory
-                        --  transform the directory to ".".
+                  else
+                     --  The VCS works on relative names
+                     declare
+                        Suffix : constant String :=
+                                   Filename (1 + Pref_Len .. Filename'Last);
+                     begin
+                        if Suffix = "" then
+                           --  Empty, we have a directory that is the base dir
+                           Args (Index) := new String'(".");
 
-                        Args (Index) := new String'(".");
-                     else
-                        Args (Index) := new String'(Base);
-                     end if;
-                  end;
-               end if;
+                        elsif Ref.Dir_Sep = System_Default then
+                           Args (Index) := new String'(Suffix);
+                        else
+                           Args (Index) := new String'
+                          (Format_Pathname (Suffix, Ref.Dir_Sep));
+                        end if;
+                     end;
+                  end if;
+               end;
 
                Index := Index + 1;
                Node := Next (Node);
@@ -604,7 +581,12 @@ package body VCS.Generic_VCS is
          Args := new GNAT.OS_Lib.String_List (1 .. 1);
       end if;
 
-      Args (Args'Last) := new String'(Locale_From_UTF8 (Base_Name (File)));
+      if Ref.Absolute_Names then
+         Args (Args'Last) :=
+           new String'(Locale_From_UTF8 (Full_Name (File).all));
+      else
+         Args (Args'Last) := new String'(Locale_From_UTF8 (Base_Name (File)));
+      end if;
 
       Custom := Create_Proxy
         (The_Action.Command,
