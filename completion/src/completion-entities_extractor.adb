@@ -227,37 +227,40 @@ package body Completion.Entities_Extractor is
       Type_Of      : Entity_Information := null;
       Calls_Filter : Possibilities_Filter := Everything;
 
-      procedure Handle_Access_Type (Type_Of : in out Entity_Information);
+      procedure Handle_Referenced_Type (Type_Of : in out Entity_Information);
       --  If the type given in parameter is an access type, then it's replaced
       --  by its pointed type and the "all" is added to the list of completions
       --  if needed.
 
-      procedure Handle_Access_Type (Type_Of : in out Entity_Information) is
+      procedure Handle_Referenced_Type (Type_Of : in out Entity_Information) is
       begin
-         if Get_Kind (Type_Of).Kind = Access_Kind
-           and then Pointed_Type (Type_Of) /= null
-         then
-            --  In the following case:
-            --
-            --  type B is access A;
-            --  type C is new B;
-            --
-            --  B is an access type, but we can't directly access its pointed
-            --  type. In this case, Pointed_Type (Type_Of) is null, and we do
-            --  not want to go in this condition.
 
-            Type_Of := Pointed_Type (Type_Of);
+         --  In the following case:
+         --
+         --  type B is access A;
+         --  type C is new B;
+         --
+         --  B is an access type, but we can't directly access its pointed
+         --  type. In this case, Pointed_Type (Type_Of) is null, and we do
+         --  not want to go in this condition.
 
-            if Match (Identifier, "all", Is_Partial) then
-               Append
-                 (Result.List,
-                  Unique_Entity_Wrapper'
-                    (Resolver => Proposal.Resolver,
-                     Entity   => Type_Of,
-                     Is_All   => True));
+         if Pointed_Type (Type_Of) /= null then
+            if Get_Kind (Type_Of).Kind = Access_Kind then
+               Type_Of := Pointed_Type (Type_Of);
+
+               if Match (Identifier, "all", Is_Partial) then
+                  Append
+                    (Result.List,
+                     Unique_Entity_Wrapper'
+                       (Resolver => Proposal.Resolver,
+                        Entity   => Type_Of,
+                        Is_All   => True));
+               end if;
+            elsif Get_Kind (Type_Of).Kind = Array_Kind then
+               Type_Of := Pointed_Type (Type_Of);
             end if;
          end if;
-      end Handle_Access_Type;
+      end Handle_Referenced_Type;
 
    begin
       if Get_Kind (Proposal.Entity).Kind = Package_Kind then
@@ -294,15 +297,17 @@ package body Completion.Entities_Extractor is
             Type_Of := Get_Returned_Type (Proposal.Entity);
          elsif Get_Kind (Proposal.Entity).Is_Type then
             Type_Of := Proposal.Entity;
-         else
+         elsif Get_Type_Of (Proposal.Entity) /= null then
             Type_Of := Get_Type_Of (Proposal.Entity);
+         else
+            Type_Of := Proposal.Entity;
          end if;
 
          if Type_Of = null then
             return;
          end if;
 
-         Handle_Access_Type (Type_Of);
+         Handle_Referenced_Type (Type_Of);
 
          declare
             Parents     : constant Entity_Information_Array :=
@@ -312,7 +317,7 @@ package body Completion.Entities_Extractor is
             for J in reverse Parents'Range loop
                Parent_Type := Parents (J);
 
-               Handle_Access_Type (Parent_Type);
+               Handle_Referenced_Type (Parent_Type);
 
                Append
                  (Result.List,
