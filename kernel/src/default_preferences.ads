@@ -40,6 +40,7 @@ with Gtk.Tooltips;
 with Gtk.Widget;
 with Gtk.Window;
 with Pango.Font;
+
 package Default_Preferences is
 
    type Preferences_Manager_Record is tagged private;
