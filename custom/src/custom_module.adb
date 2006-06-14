@@ -593,6 +593,8 @@ package body Custom_Module is
          Child   : Node_Ptr;
          Command : Custom_Command_Access;
          Description : String_Access := new String'("");
+         Category    : constant String :=
+           Get_Attribute (Node, "category", "General");
          Filter_A    : Action_Filter;
          Implicit_Filter : Action_Filter;
       begin
@@ -629,6 +631,7 @@ package body Custom_Module is
             elsif To_Lower (Child.Tag.all) = "description" then
                Free (Description);
                Description := new String'(Child.Value.all);
+
             else
                Insert
                  (Kernel,
@@ -672,6 +675,8 @@ package body Custom_Module is
             Name        => Name,
             Command     => Command,
             Description => Description.all,
+            Defined_In  => File,
+            Category    => Category,
             Filter      => Filter_A);
          Free (Description);
       end Parse_Action_Node;
