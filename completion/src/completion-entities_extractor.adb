@@ -84,7 +84,7 @@ package body Completion.Entities_Extractor is
    begin
       --  ??? NB: A lot of this code is actually duplicated from the one we use
       --  for tooltips. In order to factorize it, we should construct the
-      --  documentation only with markups (we use a bench of pango / gtk
+      --  documentation only with markups (we use a bunch of pango / gtk
       --  features to format the text of the tooltip).
 
       Buffer := To_Unbounded_String
@@ -226,6 +226,39 @@ package body Completion.Entities_Extractor is
       pragma Unreferenced (Offset);
       Type_Of      : Entity_Information := null;
       Calls_Filter : Possibilities_Filter := Everything;
+
+      procedure Handle_Access_Type (Type_Of : in out Entity_Information);
+      --  If the type given in parameter is an access type, then it's replaced
+      --  by its pointed type and the "all" is added to the list of completions
+      --  if needed.
+
+      procedure Handle_Access_Type (Type_Of : in out Entity_Information) is
+      begin
+         if Get_Kind (Type_Of).Kind = Access_Kind
+           and then Pointed_Type (Type_Of) /= null
+         then
+            --  In the following case:
+            --
+            --  type B is access A;
+            --  type C is new B;
+            --
+            --  B is an access type, but we can't directly access its pointed
+            --  type. In this case, Pointed_Type (Type_Of) is null, and we do
+            --  not want to go in this condition.
+
+            Type_Of := Pointed_Type (Type_Of);
+
+            if Match (Identifier, "all", Is_Partial) then
+               Append
+                 (Result.List,
+                  Unique_Entity_Wrapper'
+                    (Resolver => Proposal.Resolver,
+                     Entity   => Type_Of,
+                     Is_All   => True));
+            end if;
+         end if;
+      end Handle_Access_Type;
+
    begin
       if Get_Kind (Proposal.Entity).Kind = Package_Kind then
          if (Proposal.Filter and All_Accessible_Units) /= 0 then
@@ -269,31 +302,23 @@ package body Completion.Entities_Extractor is
             return;
          end if;
 
-         if Get_Kind (Type_Of).Kind = Access_Kind then
-
-            Type_Of := Pointed_Type (Type_Of);
-
-            if Match (Identifier, "all", Is_Partial) then
-               Append
-                 (Result.List,
-                  Unique_Entity_Wrapper'
-                    (Resolver => Proposal.Resolver,
-                     Entity   => Type_Of,
-                     Is_All   => True));
-            end if;
-
-         end if;
+         Handle_Access_Type (Type_Of);
 
          declare
-            Parents : constant Entity_Information_Array :=
+            Parents     : constant Entity_Information_Array :=
               Get_Parent_Types (Type_Of, True);
+            Parent_Type : Entity_Information;
          begin
             for J in reverse Parents'Range loop
+               Parent_Type := Parents (J);
+
+               Handle_Access_Type (Parent_Type);
+
                Append
                  (Result.List,
                   Calls_Wrapper'
                     (Resolver   => Get_Resolver (Proposal),
-                     Scope      => Parents (J),
+                     Scope      => Parent_Type,
                      Name       => new String'(Identifier),
                      Is_Partial => Is_Partial,
                      Filter     => Calls_Filter));
