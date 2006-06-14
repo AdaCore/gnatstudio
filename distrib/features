@@ -316,6 +316,15 @@ E202-011 New search dialog (2006-04-07)
   one.
   Added a confirmation dialog on the button "Replace all" (F503-013)
 
+DB18-004 Multiply defined actions in XML files (2006-06-14)
+
+  When an action is defined several times in the customization XML or python
+  files, an error message is displayed that indicates the conflict. This error
+  message now provides the name of the involved files to help finding the
+  definitions of the action
+
+  Keywords: Customization
+
 D611-009 New preference "Save editor in desktop" (2006-04-04)
 
   This preference determines when source editors are saved in the desktop:
