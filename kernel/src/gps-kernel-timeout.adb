@@ -33,7 +33,7 @@ with Glib.Object;                use Glib.Object;
 with Glib.Values;
 
 with Gtk.Handlers;               use Gtk.Handlers;
-with Gtk.Main;                   use Gtk.Main;
+with Glib.Main;                  use Glib.Main;
 
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
@@ -83,11 +83,12 @@ package body GPS.Kernel.Timeout is
       Start_Time           : Ada.Calendar.Time;
       --  Start time of the process
 
-      Id                   : Timeout_Handler_Id;
+      Id                   : G_Source_Id;
    end record;
    type Console_Process is access all Console_Process_Data'Class;
 
-   package Console_Process_Timeout is new Gtk.Main.Timeout (Console_Process);
+   package Console_Process_Timeout is new
+     Glib.Main.Generic_Sources (Console_Process);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
@@ -113,8 +114,8 @@ package body GPS.Kernel.Timeout is
    --  Handler for user input on the console
 
    type Monitor_Command is new Root_Command with record
-      Name    : String_Access;
-      Data    : Console_Process;
+      Name : String_Access;
+      Data : Console_Process;
    end record;
    type Monitor_Command_Access is access all Monitor_Command'Class;
    --  Command that can be used to monitor an external process through the task
@@ -176,14 +177,13 @@ package body GPS.Kernel.Timeout is
 
    procedure Free (D : in out Monitor_Command) is
       PID    : GNAT.Expect.Process_Id;
-      Status : Integer;
    begin
       if not D.Data.Died and then D.Data.D.Descriptor /= null then
          PID := Get_Pid (D.Data.D.Descriptor.all);
 
          if PID /= Null_Pid and then PID /= GNAT.Expect.Invalid_Pid then
             Interrupt (D.Data.D.Descriptor.all);
-            Close (D.Data.D.Descriptor.all, Status);
+            Close (D.Data.D.Descriptor.all);
          end if;
       end if;
 
@@ -202,7 +202,7 @@ package body GPS.Kernel.Timeout is
    function Execute
      (Command : access Monitor_Command) return Command_Return_Type
    is
-      Timeout : constant Guint32 := 50;
+      Timeout : constant Guint := 50;
       Success : Boolean;
    begin
       if not Command.Data.Started then
@@ -239,7 +239,7 @@ package body GPS.Kernel.Timeout is
 
          if Success then
             if not Command.Data.Synchronous then
-               Command.Data.Id := Console_Process_Timeout.Add
+               Command.Data.Id := Console_Process_Timeout.Timeout_Add
                  (Timeout, Process_Cb'Access, Command.Data);
             end if;
 
@@ -463,7 +463,7 @@ package body GPS.Kernel.Timeout is
 
    exception
       when E : others =>
-         Timeout_Remove (Process.Id);
+         Remove (Process.Id);
          Unchecked_Free (Process.Expect_Regexp);
          Cleanup (Process);
          Unref (Process);
@@ -527,7 +527,6 @@ package body GPS.Kernel.Timeout is
       Timeout              : Integer := -1;
       Strip_CR             : Boolean := True;
       Use_Pipes            : Boolean := True;
-      Cmd                  : out Command_Access;
       Created_Command      : out Scheduled_Command_Access)
    is
       C             : Monitor_Command_Access;
@@ -555,8 +554,6 @@ package body GPS.Kernel.Timeout is
       else
          Expect_Regexp := new Pattern_Matcher'(Compile (".*$", Single_Line));
       end if;
-
-      Cmd := Command_Access (C);
 
       C.Name := new String'(Command);
       Initialize (C.Data);
@@ -647,7 +644,6 @@ package body GPS.Kernel.Timeout is
       Fd                   : out GNAT.Expect.Process_Descriptor_Access;
       Created_Command      : out Scheduled_Command_Access)
    is
-      C : Command_Access;
    begin
       Launch_Process
         (Kernel               => Kernel,
@@ -669,17 +665,19 @@ package body GPS.Kernel.Timeout is
          Synchronous          => False,
          Show_Exit_Status     => Show_Exit_Status,
          Use_Pipes            => Use_Pipes,
-         Cmd                  => C,
          Created_Command      => Created_Command);
       if Success
-        and then Execute (Monitor_Command_Access (C)) = Execute_Again
+        and then Execute (Monitor_Command_Access
+                            (Get_Command (Created_Command)))
+        = Execute_Again
       then
-         Fd := Monitor_Command (C.all).Data.D.Descriptor;
+         Fd := Monitor_Command_Access
+           (Get_Command (Created_Command)).Data.D.Descriptor;
       else
          Fd := null;
          Success := False;
          --  Interrupt just launched command because program did not start
-         Interrupt_Queue (Kernel, C);
+         Interrupt_Queue (Kernel, Get_Command (Created_Command));
       end if;
    exception
       when E : others =>
@@ -715,7 +713,6 @@ package body GPS.Kernel.Timeout is
       Strip_CR             : Boolean := True;
       Use_Pipes            : Boolean := True)
    is
-      Cmd             : Command_Access;
       Created_Command : Scheduled_Command_Access;
    begin
       Launch_Process
@@ -740,7 +737,6 @@ package body GPS.Kernel.Timeout is
          Timeout              => Timeout,
          Strip_CR             => Strip_CR,
          Use_Pipes            => Use_Pipes,
-         Cmd                  => Cmd,
          Created_Command      => Created_Command);
    end Launch_Process;
 
@@ -758,7 +754,7 @@ package body GPS.Kernel.Timeout is
       Button  : Message_Dialog_Buttons;
    begin
       if Console.Died then
-         Timeout_Remove (Console.Id);
+         Remove (Console.Id);
          Unref (Console);
          return False;
       end if;
@@ -771,7 +767,7 @@ package body GPS.Kernel.Timeout is
          Button_Yes);
 
       if Button = Button_Yes then
-         Timeout_Remove (Console.Id);
+         Remove (Console.Id);
          Cleanup (Console);
          Unchecked_Free (Console.Expect_Regexp);
          Unref (Console);
@@ -783,7 +779,7 @@ package body GPS.Kernel.Timeout is
 
    exception
       when E : others =>
-         Timeout_Remove (Console.Id);
+         Remove (Console.Id);
          Unchecked_Free (Console.Expect_Regexp);
          Cleanup (Console);
          Unref (Console);
