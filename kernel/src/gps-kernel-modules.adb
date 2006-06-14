@@ -46,7 +46,6 @@ pragma Warnings (Off, Gtk.Image_Menu_Item);
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Selection;             use Gtk.Selection;
 with Gtk.Toolbar;               use Gtk.Toolbar;
