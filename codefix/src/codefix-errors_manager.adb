@@ -220,6 +220,7 @@ package body Codefix.Errors_Manager is
             if Previous_Message /= Invalid_Error_Message
               and then Is_Style_Or_Warning (Previous_Message)
               and then not Is_Style_Or_Warning (Current_Message)
+              and then Get_Line (Previous_Message) = Get_Line (Current_Message)
             then
                --  Remove previous from list
                Memorized_Corrections.Remove_Nodes
@@ -230,6 +231,7 @@ package body Codefix.Errors_Manager is
             elsif Previous_Message /= Invalid_Error_Message
               and then Is_Style_Or_Warning (Current_Message)
               and then not Is_Style_Or_Warning (Previous_Message)
+              and then Get_Line (Previous_Message) = Get_Line (Current_Message)
             then
                --  Ignore this error
                null;
