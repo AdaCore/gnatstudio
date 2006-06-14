@@ -790,7 +790,7 @@ package body Completion_Module is
          Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
-         Action      => "Complete Identifier",
+         Action      => "Complete identifier",
          Default_Key => "control-slash");
       Register_Menu (Kernel, Edit, -"Complete _Identifier",
                      Ref_Item   => -"Refill",
@@ -808,7 +808,7 @@ package body Completion_Module is
          Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
-         Action      => "Complete Identifier (advanced)",
+         Action      => "Complete identifier (advanced)",
          Default_Key => "alt-space");
       Register_Menu (Kernel, Edit, -"Smart Completion",
                      Ref_Item   => -"Complete _Identifier",
