@@ -307,9 +307,3 @@ def kill_ring_save():
         GPS.Editor.select_text (line, mark_line, col, mark_col)
         GPS.Editor.copy()
         GPS.Editor.cursor_set_position (file, line, col)
-
-def center_cursor():
-   """ Insert a newline and leave cursor before it."""
-   file = GPS.current_context().file().name()
-   line = GPS.current_context().location().line()
-   GPS.Editor.edit (file, line)
