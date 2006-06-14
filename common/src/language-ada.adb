@@ -597,6 +597,7 @@ package body Language.Ada is
             if Entity = Keyword_Text then
                if Word = "access" or else Word = "new"
                  or else Word = "return" or else Word = "renames"
+                 or else Word = "of"
                  or else (Word = "is"
                           and then Construct.Category = Cat_Subtype)
                then
