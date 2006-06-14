@@ -2239,6 +2239,7 @@ package body Aliases_Module is
         (Kernel,
          Name        => "Expand alias",
          Command     => Command,
+         Category    => "Editor",
          Description => -"Expand the alias found just before the cursor");
       Bind_Default_Key
         (Kernel,

@@ -2479,7 +2479,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Format selection",
          Command, -"Format the current line or selection",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Format selection",
@@ -2492,7 +2493,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to next word", Command,
            -"Move to the next word in the current source editor",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2501,7 +2503,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to previous word", Command,
            -"Move to the previous word in the current source editor",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2510,7 +2513,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to next line", Command,
            -"Move to the next line in the current source editor",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2519,7 +2523,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to previous line", Command,
            -"Move to the previous line in the current source editor",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2528,7 +2533,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to next character", Command,
            -"Move to the next character in the current source editor",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2537,7 +2543,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to previous character", Command,
            -"Move to the previous character in the current source editor",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2546,7 +2553,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to previous sentence", Command,
            -"Move to the previous sentence in the current source editor",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2555,7 +2563,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to next sentence", Command,
            -"Move to the next sentence in the current source editor",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2564,7 +2573,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to previous page", Command,
            -"Move to the previous page in the current source editor",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2573,14 +2583,16 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Move to next page", Command,
            -"Move to the next page in the current source editor",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Scroll_Command;
       Scroll_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Center cursor on screen", Command,
            -"Scroll the current source editor so that the cursor is centered",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Delete_Command;
       Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2589,7 +2601,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Delete word forward", Command,
            -"Delete the word following the current cursor position",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Command := new Delete_Command;
       Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2598,7 +2611,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Delete word backward", Command,
            -"Delete the word preceding the current cursor position",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Line_Numbers_Area_Filter := new In_Line_Numbers_Area_Filter;
 
@@ -2680,7 +2694,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "No casing/indentation on next key",
          Command, -"Disable the casing and indentation on next key",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "No casing/indentation on next key",
@@ -2693,7 +2708,8 @@ package body Src_Editor_Module is
          Command,
          -("Insert spaces until a column multiple of the indentation level"
            & " as set in the Preferences for the corresponding language"),
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Insert TAB with spaces",
@@ -2765,7 +2781,8 @@ package body Src_Editor_Module is
       Close_Command (Command.all).Close_All := False;
       Register_Action
         (Kernel, "Close current window", Command,
-           -"Close the currently selected window");
+         -"Close the currently selected window",
+        Category => "MDI");
 
       Register_Menu
         (Kernel,
@@ -2783,7 +2800,8 @@ package body Src_Editor_Module is
       Close_Command (Command.all).Close_All := True;
       Register_Action
         (Kernel, "Close all windows", Command,
-           -"Close all open windows, asking for confirmation when relevant");
+         -"Close all open windows, asking for confirmation when relevant",
+         Category => "MDI");
 
       Register_Menu
         (Kernel,
@@ -2903,7 +2921,8 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "Jump to matching delimiter", Command,
          -"Jump to the matching delimiter ()[]{}",
-         Src_Action_Context);
+         Category => "Editor",
+         Filter => Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Jump to matching delimiter",

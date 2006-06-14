@@ -787,7 +787,8 @@ package body Completion_Module is
       Register_Action
         (Kernel, "Complete identifier", Command,
          -("Complete current identifier based on the contents of the editor"),
-         Src_Action_Context);
+         Category => "Editor",
+         Filter   => Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Complete identifier",
@@ -805,7 +806,8 @@ package body Completion_Module is
       Register_Action
         (Kernel, "Complete identifier (advanced)", Command_Smart,
          -("Complete current identifier based on advanced entities database"),
-         Src_Action_Context);
+         Category => "Editor",
+         Filter   => Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "Complete identifier (advanced)",

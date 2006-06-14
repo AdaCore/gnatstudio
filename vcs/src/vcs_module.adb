@@ -388,7 +388,9 @@ package body VCS_Module is
          Parent_String : Basic_Types.String_Access;
       begin
          Create (Command, Kernel_Handle (Kernel), Callback);
-         Register_Action (Kernel, Action_Label, Command, Description, Filter);
+         Register_Action
+           (Kernel, Action_Label, Command, Description, Filter,
+            Category => "VCS");
 
          if Filter = Dir_Filter then
             Parent_String := new String'("/" & (-"Directory"));
