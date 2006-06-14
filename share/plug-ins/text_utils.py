@@ -13,6 +13,7 @@ mark_set  = False
 ## Register the actions
 GPS.parse_xml ("""
    <action name="subprogram box" output="none" category="Editor">
+      <description>Search backward for the first subprogram or package declaration. Before the start of this declaration, insert a comment box containing the name of the subprogram. This provides helpful separations between subprograms, and is similar to the style used in the GNAT compiler or GPS themselves</description>
       <filter_and>
          <filter id="Source editor" />
          <filter language="ada" />
@@ -21,74 +22,68 @@ GPS.parse_xml ("""
    </action>
 
    <action name="next line" output="none" category="Editor">
+      <description>Move the cursor to the next line</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.next_line(1)</shell>
    </action>
 
    <action name="previous line" output="none" category="Editor">
+      <description>Move the cursor to the previous line</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.next_line(-1)</shell>
    </action>
 
    <action name="kill line" output="none" category="Editor">
+      <description>This is similar to Emacs' kill-line function. It deletes the end of the line after the cursor's current column. If the cursor is at the end of the line, it deletes the newline character and therefore joins the current line and the next.
+The text that is deleted is copied to the clipboard. If you call this action multiple times from the same location, all deleted text is merged into a single clipboard, so that a single Paste will put it all back</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.kill_line()</shell>
    </action>
 
    <action name="open line" output="none" category="Editor">
+      <description>Insert a new line, but leaves the cursor at its current place</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.open_line()</shell>
    </action>
 
-   <action name="kill forward" output="none" category="Editor">
-      <filter id="Source editor" />
-      <shell>current_context</shell>
-      <shell>FileContext.file %1</shell>
-      <shell>File.name %1</shell>
-      <shell>Editor.cursor_get_line %1</shell>
-      <shell>Editor.cursor_get_column %2</shell>
-      <shell>Editor.replace_text %3 %2 %1 "" 0 1</shell>
-   </action>
-
    <action name="transpose chars" output="none" category="Editor">
+      <description>Swap the two characters around the cursor</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.transpose_chars()</shell>
    </action>
 
-   <action name="save current editor"  output="none" category="Editor">
-      <filter id="Source editor" />
-      <shell>current_context</shell>
-      <shell>FileContext.file %1</shell>
-      <shell>File.name %1</shell>
-      <shell>Editor.save_buffer %1</shell>
-   </action>
-
    <action name="goto beginning of line" output="none" category="Editor">
+      <description>Move the cursor to the beginning of the current line</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.goto_beginning_of_line()</shell>
    </action>
 
    <action name="goto end of line" output="none" category="Editor">
+      <description>Move the cursor to the end of the current line</description>
       <filter id="Source editor" />
       <shell lang="python" >text_utils.goto_end_of_line()</shell>
    </action>
 
    <action name="goto beginning of buffer" output="none" category="Editor">
+      <description>Move the cursor to the beginning of the buffer</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.beginning_of_buffer()</shell>
    </action>
 
    <action name="goto end of buffer" output="none" category="Editor">
+      <description>Move the cursor to the end of the buffer</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.end_of_buffer()</shell>
    </action>
 
    <action name="set mark command" output="none" category="Editor">
+      <description>This is similar to Emacs's behavior: a mark is put at the current cursor position. You can then move the cursor elsewhere, and delete the text between this mark and the new cursor position</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.set_mark_command()</shell>
    </action>
 
    <action name="kill region" output="none" category="Editor">
+      <description>Delete the area of text between the mark set by "set mark command" and the current cursor position. This emulates Emacs' behavior</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.kill_region()</shell>
    </action>
@@ -99,11 +94,13 @@ GPS.parse_xml ("""
    </action>
 
    <action name="delete horizontal space" output="none" category="Editor">
+      <description>Delete all white spaces on the current line before and after the cursor</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.delete_horizontal_space()</shell>
    </action>
 
    <action name="center cursor on screen"  output="none" category="Editor">
+      <description>Scroll the current editor so that the cursor is centered on the screen</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.center_cursor()</shell>
    </action>
@@ -143,8 +140,9 @@ def add_subprogram_box():
    
 def next_line(nb_line):
    """  Move cursor vertically nb_line down . """
-##        Use this function since binding a key to ""Move to next line""
-##        does not work after a search.
+   ## Use this function since binding a key to ""Move to next line""
+   ## does not work after a search.
+   ## ??? Is this still true
    file = GPS.current_context().file().name()
    line_to_go = GPS.current_context().location().line() + nb_line
    last_line = GPS.Editor.get_last_line(file)
@@ -252,10 +250,9 @@ searched for"""
    end = start
    if forward:
       max = end.end_of_line()
-      while is_space (end.get_char()) and end.get_char() != '\n' and end < max:
+      while is_space (end.get_char()) and end < max:
         end = end.forward_char(1)
-      if end != max:
-        end = end.forward_char(-1)
+      end = end - 1
    if backward:
       max = start.beginning_of_line()
       start.forward_char (-1)
