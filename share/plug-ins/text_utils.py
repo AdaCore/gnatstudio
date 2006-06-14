@@ -46,6 +46,12 @@ The text that is deleted is copied to the clipboard. If you call this action mul
       <shell lang="python">text_utils.open_line()</shell>
    </action>
 
+   <action name="kill forward" output="none" category="Editor">
+      <description>Deletes the character just after the cursor</description>
+      <filter id="Source editor" />
+      <shell lang="python">text_utils.delete_forward()</shell>
+   </action>
+
    <action name="transpose chars" output="none" category="Editor">
       <description>Swap the two characters around the cursor</description>
       <filter id="Source editor" />
@@ -158,6 +164,12 @@ def next_line(nb_line):
          end_of_line (file, line_to_go)
       else:
          GPS.Editor.cursor_set_position (file, line_to_go, col)
+
+def delete_forward():
+   """Delete the character just after the cursor in the current editor"""
+   buffer = GPS.EditorBuffer.get()
+   cursor = buffer.current_view().cursor()
+   buffer.delete (cursor, cursor)
 
 ########################################
 ## Implementation of kill_line
