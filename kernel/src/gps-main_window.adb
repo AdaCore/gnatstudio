@@ -624,6 +624,7 @@ package body GPS.Main_Window is
         (Main_Window.Kernel,
          Name        => "Move to next window",
          Command     => Command,
+         Category    => "MDI",
          Description =>
            -("Select the next window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
@@ -640,6 +641,7 @@ package body GPS.Main_Window is
         (Main_Window.Kernel,
          Name        => "Move to previous window",
          Command     => Command,
+         Category    => "MDI",
          Description =>
            -("Select the previous window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
@@ -656,6 +658,7 @@ package body GPS.Main_Window is
         (Main_Window.Kernel,
          Name        => "Select other window",
          Command     => Command,
+         Category    => "MDI",
          Description =>
            -("Select the next splitted window in the central area of GPS."));
 
@@ -666,6 +669,7 @@ package body GPS.Main_Window is
         (Main_Window.Kernel,
          Name        => "Split horizontally",
          Command     => Command2,
+         Category    => "MDI",
          Description => -("Split the current window in two horizontally"));
 
       Command2        := new MDI_Window_Actions_Command;
@@ -675,6 +679,7 @@ package body GPS.Main_Window is
         (Main_Window.Kernel,
          Name        => "Split vertically",
          Command     => Command2,
+         Category    => "MDI",
          Description => -("Split the current window in two vertically"));
 
       Command2        := new MDI_Window_Actions_Command;
@@ -684,6 +689,7 @@ package body GPS.Main_Window is
         (Main_Window.Kernel,
          Name        => "Clone window",
          Command     => Command2,
+         Category    => "MDI",
          Description =>
          -("Create a duplicate of the current window if possible. Not all"
            & " windows support this operation."));
