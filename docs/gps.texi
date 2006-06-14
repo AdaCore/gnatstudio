@@ -9393,10 +9393,9 @@ It also provides an easy way to redefine the menu shortcuts.
 Actions are referenced by their name, and are grouped into categories. These
 categories indicate when the action applies. For instance, the indentation
 command only applies in source editors, whereas the command to change the
-current window applies anywhere in GPS. The categories correspond in fact to
-filters that indicate when the action can be executed. You can create your own
-new categories by using the @code{<filter>} tag in the customization files
-(@pxref{Customizing through XML files}).
+current window applies anywhere in GPS. 
+The categories can be explicitly specified when you created your own actions
+through XML files (@pxref{Defining Actions}).
 
 Through the key manager, you can define key bindings similar to what Emacs
 uses (@key{control-x} followed by @key{control-k} for instance). To register
