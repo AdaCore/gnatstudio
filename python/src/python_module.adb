@@ -939,7 +939,7 @@ package body Python_Module is
             if Last > 3 and then File (Last - 2 .. Last) = ".py" then
                Free (Python_Module_Id.Script.Current_File);
                Python_Module_Id.Script.Current_File :=
-                 new String'(File (1 .. Last));
+                 new String'(Name_As_Directory (Dir) & File (1 .. Last));
                Execute_Command
                  (Python_Module_Id.Script,
                   "import " & Base_Name (File (1 .. Last), ".py"),
