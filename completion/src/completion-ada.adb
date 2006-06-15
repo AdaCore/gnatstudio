@@ -36,9 +36,9 @@ package body Completion.Ada is
       Completing_Expression : Token_List.List;
 
       procedure Analyze_Token
-        (Token       : Token_List.List_Node;
-         Previous_It : Completion_Iterator;
-         Result      : in out Completion_List);
+        (Token             : Token_List.List_Node;
+         Previous_Proposal : Completion_Proposal'Class;
+         Result            : in out Completion_List);
 
       -------------------
       -- Analyze_Token --
@@ -47,9 +47,9 @@ package body Completion.Ada is
       Filter : Possibilities_Filter := Everything;
 
       procedure Analyze_Token
-        (Token       : Token_List.List_Node;
-         Previous_It : Completion_Iterator;
-         Result      : in out Completion_List)
+        (Token             : Token_List.List_Node;
+         Previous_Proposal : Completion_Proposal'Class;
+         Result            : in out Completion_List)
       is
 
          procedure Handle_Identifier (Id : String);
@@ -87,7 +87,7 @@ package body Completion.Ada is
                Filter := All_Visible_Entities;
             else
                Get_Composition
-                 (Get_Proposal (Previous_It),
+                 (Previous_Proposal,
                   Get_Name (Get_Buffer (Manager).all, Data (Token)),
                   Data (Token).Token_Name_First - 1,
                   Next (Token) = Token_List.Null_Node
@@ -110,7 +110,7 @@ package body Completion.Ada is
                end if;
             else
                while not At_End (Tmp_It) loop
-                  Analyze_Token (Next (Token), Tmp_It, Result);
+                  Analyze_Token (Next (Token), Get_Proposal (Tmp_It), Result);
 
                   Next (Tmp_It);
                end loop;
@@ -124,13 +124,14 @@ package body Completion.Ada is
             when Tok_Dot =>
                if Next (Token) = Token_List.Null_Node then
                   Get_Composition
-                    (Get_Proposal (Previous_It),
+                    (Previous_Proposal,
                      "",
                      Start_Offset,
                      True,
                      Result);
                else
-                  Analyze_Token (Next (Token), Previous_It, Result);
+                  Analyze_Token
+                    (Next (Token), Previous_Proposal, Result);
                end if;
 
             when Tok_Comma =>
@@ -166,22 +167,16 @@ package body Completion.Ada is
 
             when Tok_Expression =>
                if Next (Token) /= Token_List.Null_Node then
-                  if Get_Category
-                    (Get_Proposal (Previous_It)) in Subprogram_Category
-                  then
+                  declare
+                     Local_Proposal : Completion_Proposal'Class :=
+                       Previous_Proposal;
+                  begin
+                     Append_Expression
+                       (Local_Proposal,
+                        Data (Token).Number_Of_Parameters);
 
-                     if Get_Number_Of_Parameters (Get_Proposal (Previous_It))
-                       >= Data (Token).Number_Of_Parameters
-                     then
-                        Analyze_Token (Next (Token), Previous_It, Result);
-                     end if;
-                  else
-                     --  In this case, the previous proposal may be e.g. an
-                     --  array. Since we don't know how many dimensions it
-                     --  have, we must do this blindly
-
-                     Analyze_Token (Next (Token), Previous_It, Result);
-                  end if;
+                     Analyze_Token (Next (Token), Local_Proposal, Result);
+                  end;
                end if;
 
             when Tok_With | Tok_Use =>
@@ -190,7 +185,7 @@ package body Completion.Ada is
                Filter := All_Accessible_Units;
 
                if Next (Token) /= Token_List.Null_Node then
-                  Analyze_Token (Next (Token), Previous_It, Result);
+                  Analyze_Token (Next (Token), Previous_Proposal, Result);
                else
                   declare
                      It : Completion_Resolver_List_Pckg.List_Node;
@@ -223,7 +218,7 @@ package body Completion.Ada is
 
       if First (Completing_Expression) /= Token_List.Null_Node then
          Analyze_Token
-           (First (Completing_Expression), Null_Completion_Iterator, Result);
+           (First (Completing_Expression), Null_Completion_Proposal, Result);
       end if;
 
       return Result;
