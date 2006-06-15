@@ -28,8 +28,10 @@ package Completion.Constructs_Extractor is
    --  This resolver is based on the constructs found in a given file
 
    function New_Construct_Completion_Resolver
-     (Tree : Construct_Tree_Access) return Construct_Completion_Resolver;
-   --  Create a new resolver, based on a construct tree
+     (Tree : Construct_Tree_Access; Current_File : Virtual_File)
+      return Construct_Completion_Resolver;
+   --  Create a new resolver, based on a construct tree, and the current
+   --  analyzed file.
 
    procedure Get_Possibilities
      (Resolver   : access Construct_Completion_Resolver;
@@ -46,12 +48,14 @@ package Completion.Constructs_Extractor is
 private
 
    type Construct_Completion_Resolver is new Completion_Resolver with record
-      Tree : Construct_Tree_Access;
+      Tree         : Construct_Tree_Access;
+      Current_File : Virtual_File;
    end record;
 
    type Construct_Completion_Proposal is new Completion_Proposal with record
-      Tree_Node : Construct_Tree_Iterator;
-      Is_All    : Boolean := False;
+      Tree_Node            : Construct_Tree_Iterator;
+      Is_All               : Boolean := False;
+      Params_In_Expression : Integer := 0;
    end record;
 
    function Get_Completion
@@ -60,6 +64,14 @@ private
 
    function Get_Category
      (Proposal : Construct_Completion_Proposal) return Language_Category;
+   --  See inherited documentation
+
+   function Get_Documentation
+     (Proposal : Construct_Completion_Proposal) return UTF8_String;
+   --  See inherited documentation
+
+   function Get_Location
+     (Proposal : Construct_Completion_Proposal) return File_Location;
    --  See inherited documentation
 
    procedure Get_Composition
@@ -72,6 +84,11 @@ private
 
    function Get_Number_Of_Parameters
      (Proposal : Construct_Completion_Proposal) return Natural;
+   --  See inherited documentation
+
+   procedure Append_Expression
+     (Proposal             : in out Construct_Completion_Proposal;
+      Number_Of_Parameters : Natural);
    --  See inherited documentation
 
    procedure Free (Proposal : in out Construct_Completion_Proposal);
