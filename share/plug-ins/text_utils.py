@@ -263,16 +263,16 @@ searched for"""
    if forward:
       max = end.end_of_line()
       while is_space (end.get_char()) and end < max:
-        end = end.forward_char(1)
+        end = end + 1
       end = end - 1
    if backward:
       max = start.beginning_of_line()
-      start.forward_char (-1)
-      while is_space (start.get_char()) and start > max:
-        start = start.forward_char (-1)
-      if start != max:
-        start = start.forward_char (1)
-   buffer.delete (start, end)
+      start = start - 1
+      while is_space (start.get_char()) and start >= max:
+        start = start - 1
+      start = start + 1
+   if start <= end:
+      buffer.delete (start, end)
 
 def transpose_chars():
    """Transpose characters around cursor, moving forward one character. """
