@@ -20,95 +20,21 @@
 
 with Basic_Types;
 
-with Entities;              use Entities;
-with Entities.Queries;      use Entities.Queries;
-with Language;              use Language;
-with String_Utils;          use String_Utils;
-with Find_Utils;            use Find_Utils;
-with Traces;                use Traces;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with VFS;                   use VFS;
-with Language_Handlers; use Language_Handlers;
+with Entities;               use Entities;
+with Entities.Queries;       use Entities.Queries;
+with Language;               use Language;
+with String_Utils;           use String_Utils;
+with Find_Utils;             use Find_Utils;
+with Traces;                 use Traces;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with VFS;                    use VFS;
+with Language_Handlers;      use Language_Handlers;
+with Language.Documentation; use Language.Documentation;
 
 package body Doc_Utils is
 
    Me         : constant Debug_Handle := Create ("Doc_Utils");
    Extract_Me : constant Debug_Handle := Create ("COMMENT_EXTRACTION");
-
-   procedure Get_Documentation_Before
-     (Context       : Language_Context;
-      Buffer        : String;
-      Decl_Index    : Natural;
-      Comment_Start : out Natural;
-      Comment_End   : out Natural);
-   procedure Get_Documentation_After
-     (Context       : Language_Context;
-      Buffer        : String;
-      Decl_Index    : Natural;
-      Comment_Start : out Natural;
-      Comment_End   : out Natural);
-   --  Get the comment just before or just after Decl_Index, skipping code
-   --  lines as needed.
-
-   ------------------------------
-   -- Get_Documentation_Before --
-   ------------------------------
-
-   procedure Get_Documentation_Before
-     (Context       : Language_Context;
-      Buffer        : String;
-      Decl_Index    : Natural;
-      Comment_Start : out Natural;
-      Comment_End   : out Natural)
-   is
-      Current : Integer;
-   begin
-      Current := Decl_Index;
-      Comment_Start := Current;
-      Skip_To_Previous_Comment_Start (Context, Buffer, Comment_Start);
-
-      if Comment_Start /= 0 then
-         Comment_End := Comment_Start;
-         Skip_To_Current_Comment_Block_End (Context, Buffer, Comment_End);
-         Comment_End := Line_End (Buffer, Comment_End);
-
-         if Active (Me) then
-            Trace (Me,
-                   "Get_Documentation: Found a comment before the entity,"
-                   & " from" & Comment_Start'Img & " to" & Comment_End'Img);
-         end if;
-      end if;
-   end Get_Documentation_Before;
-
-   -----------------------------
-   -- Get_Documentation_After --
-   -----------------------------
-
-   procedure Get_Documentation_After
-     (Context       : Language_Context;
-      Buffer        : String;
-      Decl_Index    : Natural;
-      Comment_Start : out Natural;
-      Comment_End   : out Natural) is
-   begin
-      --  Else look after the comment after the declaration (which is the
-      --  first block of comments after the declaration line, and not
-      --  separated by a blank line)
-      Comment_Start := Decl_Index;
-      Skip_To_Next_Comment_Start (Context, Buffer, Comment_Start);
-
-      if Comment_Start /= 0 then
-         Comment_End := Comment_Start;
-         Skip_To_Current_Comment_Block_End (Context, Buffer, Comment_End);
-         Comment_End := Line_End (Buffer, Comment_End);
-
-         if Active (Me) then
-            Trace (Me,
-                   "Get_Documentation: Found a comment after the entity,"
-                   & " from" & Comment_Start'Img & " to" & Comment_End'Img);
-         end if;
-      end if;
-   end Get_Documentation_After;
 
    -----------------------
    -- Get_Documentation --
