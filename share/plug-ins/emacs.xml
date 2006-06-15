@@ -39,7 +39,7 @@
 
      <key action="Select other window">control-x o</key>
 
-     <key action="center cursor on screen">control-l</key>
+     <key action="Center cursor on screen">control-l</key>
 
      <key action="Delete word backward">alt-BackSpace</key>
 

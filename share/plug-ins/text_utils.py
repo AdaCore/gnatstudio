@@ -105,11 +105,6 @@ The text that is deleted is copied to the clipboard. If you call this action mul
       <shell lang="python">text_utils.delete_horizontal_space()</shell>
    </action>
 
-   <action name="center cursor on screen"  output="none" category="Editor">
-      <description>Scroll the current editor so that the cursor is centered on the screen</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.center_cursor()</shell>
-   </action>
 """)
 
 ## The blocks for which we want to display boxes
