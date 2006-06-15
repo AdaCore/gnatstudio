@@ -53,7 +53,8 @@ package body Completion is
    -- Next --
    ----------
 
-   function Next (Resolver : access Completion_Resolver'Class)
+   function Next
+     (Resolver : access Completion_Resolver'Class)
       return Completion_Resolver_Access
    is
       It : Completion_Resolver_List_Pckg.List_Node := First
@@ -79,10 +80,10 @@ package body Completion is
    ----------------
 
    procedure Set_Buffer
-     (Manager : in out Completion_Manager; Buffer : String_Access)
+     (Manager : in out Completion_Manager; Buffer : String)
    is
    begin
-      Manager.Buffer := Buffer;
+      Manager.Buffer := new String'(Buffer);
    end Set_Buffer;
 
    ----------
@@ -95,6 +96,7 @@ package body Completion is
           (Completion_Manager'Class, Completion_Manager_Access);
    begin
       Free (This.Resolvers, False);
+      Free (This.Buffer);
       Internal_Free (This);
    end Free;
 
@@ -157,8 +159,8 @@ package body Completion is
    -- Get_Label --
    ---------------
 
-   function Get_Label (Proposal : Completion_Proposal)
-      return UTF8_String is
+   function Get_Label
+     (Proposal : Completion_Proposal)  return UTF8_String is
    begin
       return Get_Completion (Completion_Proposal'Class (Proposal));
    end Get_Label;
@@ -177,8 +179,8 @@ package body Completion is
    -- Get_Documentation --
    -----------------------
 
-   function Get_Documentation (Proposal : Completion_Proposal)
-      return UTF8_String
+   function Get_Documentation
+     (Proposal : Completion_Proposal) return UTF8_String
    is
       pragma Unreferenced (Proposal);
    begin
@@ -195,6 +197,19 @@ package body Completion is
    begin
       return Null_File_Location;
    end Get_Location;
+
+   -----------------------
+   -- Append_Expression --
+   -----------------------
+
+   procedure Append_Expression
+     (Proposal             : in out Completion_Proposal;
+      Number_Of_Parameters : Natural)
+   is
+      pragma Unreferenced (Proposal, Number_Of_Parameters);
+   begin
+      null;
+   end Append_Expression;
 
    -----------------
    -- Get_Manager --
@@ -229,8 +244,8 @@ package body Completion is
    -- Get_Proposal --
    ------------------
 
-   function Get_Proposal (This : Completion_Iterator)
-     return Completion_Proposal'Class is
+   function Get_Proposal
+     (This : Completion_Iterator) return Completion_Proposal'Class is
    begin
       return Get (This.It);
    end Get_Proposal;
@@ -239,8 +254,8 @@ package body Completion is
    -- Get_Completion --
    --------------------
 
-   function Get_Completion (Proposal : Simple_Completion_Proposal)
-      return UTF8_String is
+   function Get_Completion
+     (Proposal : Simple_Completion_Proposal) return UTF8_String is
    begin
       return Proposal.Name.all;
    end Get_Completion;
@@ -249,8 +264,8 @@ package body Completion is
    -- Get_Category --
    ------------------
 
-   function Get_Category (Proposal : Simple_Completion_Proposal)
-      return Language_Category
+   function Get_Category
+     (Proposal : Simple_Completion_Proposal) return Language_Category
    is
       pragma Unreferenced (Proposal);
    begin
@@ -277,8 +292,8 @@ package body Completion is
    -- Get_Number_Of_Parameters --
    ------------------------------
 
-   function Get_Number_Of_Parameters (Proposal : Simple_Completion_Proposal)
-      return Natural
+   function Get_Number_Of_Parameters
+     (Proposal : Simple_Completion_Proposal) return Natural
    is
       pragma Unreferenced (Proposal);
    begin
@@ -298,8 +313,8 @@ package body Completion is
    -- Match --
    -----------
 
-   function Match (Seeked_Name, Tested_Name : String; Is_Partial : Boolean)
-      return Boolean
+   function Match
+     (Seeked_Name, Tested_Name : String; Is_Partial : Boolean) return Boolean
    is
    begin
       if (not Is_Partial and then Seeked_Name'Length /= Tested_Name'Length)
