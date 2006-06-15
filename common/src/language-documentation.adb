@@ -122,77 +122,81 @@ package body Language.Documentation is
                Clean   => True));
       end if;
 
-      declare
-         Sub_Iter      : Construct_Tree_Iterator :=
-           Next (Tree, Node, Jump_Into);
-         Has_Parameter : Boolean := False;
-         Biggest_Parameter_Name : Integer := 0;
-      begin
-         while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
-            if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-               if Get_Construct (Sub_Iter).Name'Length
-                 > Biggest_Parameter_Name
-               then
-                  Biggest_Parameter_Name :=
-                    Get_Construct (Sub_Iter).Name'Length;
-               end if;
-            end if;
+      if Get_Construct (Node).Category in Subprogram_Category then
 
-            Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
-         end loop;
-
-         Sub_Iter := Next (Tree, Node, Jump_Into);
-
-         while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
-            if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-               if not Has_Parameter then
-                  Append (Result, ASCII.LF & "<b>Parameters:</b>"
-                          & ASCII.LF);
-                  Has_Parameter := True;
+         declare
+            Sub_Iter      : Construct_Tree_Iterator :=
+              Next (Tree, Node, Jump_Into);
+            Has_Parameter : Boolean := False;
+            Biggest_Parameter_Name : Integer := 0;
+         begin
+            while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  if Get_Construct (Sub_Iter).Name'Length
+                    > Biggest_Parameter_Name
+                  then
+                     Biggest_Parameter_Name :=
+                       Get_Construct (Sub_Iter).Name'Length;
+                  end if;
                end if;
 
-               Get_Referenced_Entity
-                 (Language,
-                  Buffer,
-                  Get_Construct (Sub_Iter).all,
-                  Type_Start,
-                  Type_End,
-                  Success);
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+            end loop;
 
-               Append
-                 (Result,
-                  Get_Construct (Sub_Iter).Name.all);
+            Sub_Iter := Next (Tree, Node, Jump_Into);
 
-               for J in Get_Construct (Sub_Iter).Name'Length + 1
-                 .. Biggest_Parameter_Name
-               loop
-                  Append (Result, " ");
-               end loop;
+            while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  if not Has_Parameter then
+                     Append (Result, ASCII.LF & "<b>Parameters:</b>"
+                             & ASCII.LF);
+                     Has_Parameter := True;
+                  end if;
 
-               Append
-                 (Result,
-                  " : " & Buffer (Type_Start.Index .. Type_End.Index)
-                  & ASCII.LF);
+                  Get_Referenced_Entity
+                    (Language,
+                     Buffer,
+                     Get_Construct (Sub_Iter).all,
+                     Type_Start,
+                     Type_End,
+                     Success);
 
-            end if;
+                  Append
+                    (Result,
+                     Get_Construct (Sub_Iter).Name.all);
 
-            Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
-         end loop;
-      end;
+                  for J in Get_Construct (Sub_Iter).Name'Length + 1
+                    .. Biggest_Parameter_Name
+                  loop
+                     Append (Result, " ");
+                  end loop;
 
-      Get_Referenced_Entity
-        (Language,
-         Buffer,
-         Get_Construct (Node).all,
-         Type_Start,
-         Type_End,
-         Success);
+                  Append
+                    (Result,
+                     " : " & Buffer (Type_Start.Index .. Type_End.Index)
+                     & ASCII.LF);
 
-      if Success then
-         Append
-           (Result,
-            ASCII.LF & "<b>Return:</b>"
-            & ASCII.LF & Buffer (Type_Start.Index .. Type_End.Index));
+               end if;
+
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+            end loop;
+         end;
+
+         Get_Referenced_Entity
+           (Language,
+            Buffer,
+            Get_Construct (Node).all,
+            Type_Start,
+            Type_End,
+            Success);
+
+         if Success then
+            Append
+              (Result,
+               ASCII.LF & "<b>Return:</b>"
+               & ASCII.LF & Buffer (Type_Start.Index .. Type_End.Index));
+         end if;
+
       end if;
 
       return To_String (Result);
