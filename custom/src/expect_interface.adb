@@ -34,6 +34,7 @@ with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 with Commands;                use Commands;
 
@@ -186,13 +187,16 @@ package body Expect_Interface is
      (Command : access Custom_Action_Record) return Command_Return_Type
    is
       Result : Expect_Match;
+      All_Match : constant Pattern_Matcher :=
+                    Compile (".+", Single_Line);
    begin
       if Command.Pd /= null then
-         Expect (Command.Pd.all, Result,
-                 ".+", Timeout => 200);
+         Expect
+           (Command.Pd.all, Result,
+            All_Match, Timeout => 200);
          if Result /= Expect_Timeout then
             Output_Cb (Custom_Action_Access (Command),
-                       Expect_Out (Command.Pd.all));
+                       Strip_CR (Expect_Out (Command.Pd.all)));
          end if;
       end if;
 
@@ -203,7 +207,7 @@ package body Expect_Interface is
 
          if Command.Pd /= null then
             Output_Cb (Custom_Action_Access (Command),
-                       Expect_Out (Command.Pd.all));
+                       Strip_CR (Expect_Out (Command.Pd.all)));
          end if;
 
          Close (Command.Pd.all, Command.Status);
