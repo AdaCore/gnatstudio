@@ -24,6 +24,7 @@ with System;                     use System;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
+with Glib.Object;                use Glib.Object;
 with Glib.Properties.Creation;   use Glib.Properties.Creation;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 with Gtk.Clipboard;              use Gtk.Clipboard;
@@ -328,6 +329,7 @@ package body GPS.Kernel.Clipboard is
       Result : Boolean;
       pragma Unreferenced (Result);
       Iter   : Gtk_Text_Iter;
+      Default_Editable : Boolean;
    begin
       Clipboard.Last_Is_From_System := False;
 
@@ -350,7 +352,7 @@ package body GPS.Kernel.Clipboard is
         and then Wait_Is_Text_Available (Gtk.Clipboard.Get)
       then
          Trace (Me, "Pasting system clipboard");
-         Clipboard.Last_Widget := Gtk_Widget (Widget);
+         Clipboard.Last_Widget := GObject (Widget);
          Clipboard.Last_Is_From_System := True;
 
          --  The following call is not really efficient, since Wait_For_Text
@@ -364,7 +366,7 @@ package body GPS.Kernel.Clipboard is
          Trace (Me, "Pasting GPS clipboard");
          Set_Text (Gtk.Clipboard.Get,
                    Clipboard.List (Clipboard.Last_Paste).all);
-         Clipboard.Last_Widget := Gtk_Widget (Widget);
+         Clipboard.Last_Widget := GObject (Widget);
          Clipboard.Last_Length := Clipboard.List (Clipboard.Last_Paste)'Length;
 
       else
@@ -380,8 +382,10 @@ package body GPS.Kernel.Clipboard is
          else
             if Widget.all in Gtk_Text_View_Record'Class then
                Buffer := Get_Buffer (Gtk_Text_View (Widget));
+               Default_Editable := Get_Editable (Gtk_Text_View (Widget));
             elsif Widget.all in Gtk_Text_Buffer_Record'Class then
                Buffer := Gtk_Text_Buffer (Widget);
+               Default_Editable := True;
             else
                Clipboard.Last_Widget := null;
                return;
@@ -405,7 +409,7 @@ package body GPS.Kernel.Clipboard is
             --  compute the last position first
             Paste_Clipboard
               (Buffer, Gtk.Clipboard.Get,
-               Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
+               Default_Editable => Default_Editable);
          end if;
       end if;
    end Paste_Clipboard;
