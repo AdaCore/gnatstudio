@@ -1,8 +1,8 @@
 /*********************************************************************
  *                               G P S                               *
  *                                                                   *
- *                      Copyright (C) 2002-2004                      *
- *                            ACT-Europe                             *
+ *                      Copyright (C) 2002-2006                      *
+ *                              AdaCore                              *
  *                                                                   *
  * GPS is free  software;  you can redistribute it and/or modify  it *
  * under the terms of the GNU General Public License as published by *
@@ -20,7 +20,7 @@
 
 /* Provide dummy symbols needed by gcc on some platforms */
 
-#ifdef hpux
+#if defined (__hppa__) && defined (__hpux__)
 
 /* These symbols are expected by libgcc under HP-UX when GCC is
    configure with --enable-threads */
