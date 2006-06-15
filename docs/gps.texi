@@ -12388,7 +12388,7 @@ The following children are defined:
 @table @code
 @item start_command (mandatory)
 The command used to launch the tool.
-This tag support the @code{use_pipes} attribute. This attribute select on
+This tag supports the @code{use_pipes} attribute. This attribute selects on
 Windows the way GPS will launch the remote tools, and can take the following
 values:
 @table @code
