@@ -137,6 +137,9 @@ package GVD.Types is
    --   any          pd         "any" only allowed in kernel domain
    --   any          all        "any" only allowed in kernel domain
 
+   type Watchpoint_Trigger is (Read, Write, Read_Write);
+   --  The kind of memory access that triggers a watchpoint
+
    type Breakpoint_Data is record
       Num         : Breakpoint_Identifier;
       --  breakpoint number (internal to the debugger)
@@ -152,6 +155,10 @@ package GVD.Types is
 
       Address     : Address_Type;
       --  The address of the breakpoint.
+
+      Trigger     : Watchpoint_Trigger;
+      --  The action that causes the watchpoint to break the program.  The
+      --  value set here is valid only for watchpoints.
 
       Expression  : String_Access;
       --  The name of the variable to watch for watchpoints. This is left to
@@ -174,7 +181,7 @@ package GVD.Types is
       --  Additionnal information
 
       Ignore      : Natural := 0;
-      --  Number of hits that will be ignored before actually stoping
+      --  Number of hits that will be ignored before actually stopping
 
       Condition   : String_Access;
       --  Condition on which this breakpoint is activated

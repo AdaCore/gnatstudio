@@ -1590,6 +1590,9 @@ package body Debugger.Gdb is
       return Looking_At (Command, Command'First, "break")
         or else Looking_At (Command, Command'First + 1, "break")
         or else Looking_At (Command, Command'First, "b ")
+        or else Looking_At (Command, Command'First, "watch")
+        or else Looking_At (Command, Command'First, "awatch")
+        or else Looking_At (Command, Command'First, "rwatch")
         or else Looking_At (Command, Command'First, "delete")
         or else Looking_At (Command, Command'First, "del ")
         or else Looking_At (Command, Command'First, "disable")
@@ -1933,6 +1936,48 @@ package body Debugger.Gdb is
          end if;
       end if;
    end Set_Scope_Action;
+
+   -----------
+   -- Watch --
+   -----------
+
+   procedure Watch
+     (Debugger  : access Gdb_Debugger;
+      Name      : String;
+      Trigger   : GVD.Types.Watchpoint_Trigger;
+      Condition : String := "";
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      function Command return String;
+      --  Returns the appropriate GDB watchpoint command based on the
+      --  Trigger argument.
+
+      -------------
+      -- Command --
+      -------------
+
+      function Command return String is
+      begin
+         case Trigger is
+            when GVD.Types.Read =>
+               return "rwatch";
+            when GVD.Types.Write =>
+               return "watch";
+            when GVD.Types.Read_Write =>
+               return "awatch";
+         end case;
+      end Command;
+
+   begin
+      if Condition = "" then
+         Send (Debugger, Command & " " & Name, Mode => Mode);
+      else
+         Send
+           (Debugger,
+            Command & " " & Name & " if " & Condition,
+            Mode => Mode);
+      end if;
+   end Watch;
 
    ------------
    -- Finish --
@@ -3051,8 +3096,14 @@ package body Debugger.Gdb is
       --          echo "toto"
       --          print A
       --          cont
-      --  First line if the condition, second line is ignore count, the rest
-      --  are the commands to execute upon stopping
+      --  2   hw watchpoint  keep y              x
+      --          stop only if x = 1000
+      --          ignore next 300 hits
+      --          print x
+      --
+      --  For both the breakpoint and watchpoint, the first line is the
+      --  condition, the second line is the ignore count, and the rest are
+      --  the commands to execute upon stopping.
 
       declare
          Br      : Breakpoint_Array (1 .. Num_Breakpoints);
@@ -3071,11 +3122,23 @@ package body Debugger.Gdb is
                Br (Num).Num := Breakpoint_Identifier'Value
                  (S (Matched (1).First .. Matched (1).Last));
 
-               if S (Matched (2).First) = 'b' then
-                  Br (Num).The_Type := Breakpoint;
-               else
-                  Br (Num).The_Type := Watchpoint;
-               end if;
+               case S (Matched (2).First) is
+                  when 'b' =>
+                     --  "breakpoint"
+                     Br (Num).The_Type := Breakpoint;
+                  when 'a' =>
+                     --  "acc watchpoint"
+                     Br (Num).The_Type := Watchpoint;
+                     Br (Num).Trigger  := Read_Write;
+                  when 'r' =>
+                     --  "read watchpoint"
+                     Br (Num).The_Type := Watchpoint;
+                     Br (Num).Trigger  := Read;
+                  when others =>
+                     --  "hw watchpoint"
+                     Br (Num).The_Type := Watchpoint;
+                     Br (Num).Trigger  := Write;
+               end case;
 
                case S (Matched (3).First) is
                   when 'k' => Br (Num).Disposition := Keep;

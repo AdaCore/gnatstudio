@@ -80,4 +80,8 @@ package Breakpoints_Editor is
      (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1);
    --  Set the breakpoint that is currently described in the exception page.
 
+   procedure Set_Watchpoint
+     (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1);
+   --  Set the watchpoint that is currently described in the variables page.
+
 end Breakpoints_Editor;

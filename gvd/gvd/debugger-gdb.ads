@@ -287,6 +287,13 @@ package Debugger.Gdb is
       Num      : GVD.Types.Breakpoint_Identifier := 0;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   procedure Watch
+     (Debugger  : access Gdb_Debugger;
+      Name      : String;
+      Trigger   : GVD.Types.Watchpoint_Trigger;
+      Condition : String := "";
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    procedure Finish
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);

@@ -150,11 +150,6 @@ package body Breakpoints_Editor is
            (Get_Entry (Editor.Regexp_Combo), "activate",
             Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
             Editor);
-
-         --  ??? Disable watchpoint page for now, until we support them
-         --  properly
-
-         Set_Sensitive (Editor.Hbox3, False);
       end if;
 
       Set_Page (Editor.Notebook1, 0);
@@ -812,5 +807,61 @@ package body Breakpoints_Editor is
          Select_Iter (Get_Selection (Editor.Breakpoint_List), Selected_Iter);
       end if;
    end Update_Breakpoint_List;
+
+   --------------------
+   -- Set_Watchpoint --
+   --------------------
+
+   procedure Set_Watchpoint
+     (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1)
+   is
+      Watchpoint_Name : constant String :=
+        Get_Text (Editor.Watchpoint_Name);
+      Watchpoint_Type : constant String :=
+        Get_Text (Get_Entry (Editor.Watchpoint_Type));
+      Watchpoint_Cond : constant String :=
+        Get_Text (Editor.Watchpoint_Cond);
+
+      Trigger : GVD.Types.Watchpoint_Trigger;
+      --  Encodes the value we get from Watchpoint_Type for the call to Watch
+
+      Br : Breakpoint_Data;
+      --  Used to manipulate breakpoint list if Current is set
+
+      Remove : Boolean := False;
+      --  If set, will remove the currently selected breakpoint from the
+      --  breakpoint list.
+   begin
+      if Current /= -1 then
+         Br := Editor.Process.Breakpoints (Current);
+      end if;
+
+      if Watchpoint_Type = -"read" then
+         Trigger := GVD.Types.Read;
+      elsif Watchpoint_Type = -"read or written" then
+         Trigger := GVD.Types.Read_Write;
+      else
+         --  presumably, Watchpoint_Type = -"written"
+         Trigger := GVD.Types.Write;
+      end if;
+
+      if Current = -1
+        or else Br.Expression.all /= Watchpoint_Name
+        or else Br.Trigger /= Trigger
+        or else Br.Condition.all /= Watchpoint_Cond
+      then
+         Remove := True;
+         Watch
+           (Editor.Process.Debugger,
+            Name      => Watchpoint_Name,
+            Trigger   => Trigger,
+            Condition => Watchpoint_Cond,
+            Mode      => GVD.Types.Visible);
+      end if;
+
+      if Remove and Current /= -1 then
+         Remove_Breakpoint (Editor.Process.Debugger, Br.Num);
+      end if;
+   end Set_Watchpoint;
 
 end Breakpoints_Editor;

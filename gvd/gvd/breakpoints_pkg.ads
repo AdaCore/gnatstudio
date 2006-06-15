@@ -91,6 +91,8 @@ package Breakpoints_Pkg is
       Watchpoint_Name : Gtk_Entry;
       Label10 : Gtk_Label;
       Watchpoint_Type : Gtk_Combo;
+      Label12 : Gtk_Label;
+      Watchpoint_Cond : Gtk_Entry;
       Combo_Entry3 : Gtk_Entry;
       Vseparator2 : Gtk_Vseparator;
       Vbuttonbox3 : Gtk_Vbutton_Box;

@@ -489,8 +489,8 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Command : String) return Boolean is abstract;
    --  Return True if Command changes the list of breakpoints.
-   --  This is a superset of Is_Execution_COmmand, since some breakpoints might
-   --  be delete automatically when some breakpoints are reached.
+   --  This is a superset of Is_Execution_Command, since some breakpoints might
+   --  be deleted automatically when some breakpoints are reached.
 
    function Is_Started (Debugger : access Debugger_Root)
      return Boolean;
@@ -677,6 +677,22 @@ package Debugger is
    --  GDB_COMMAND: change-breakpoint-scope/change-breakpoint-action
    --  Set the default scope/action of a debugging session if Num = 0:
    --  GDB_COMMAND: set break-command-scope/set break-command-action
+
+   -----------------
+   -- Watchpoints --
+   -----------------
+
+   procedure Watch
+     (Debugger  : access Debugger_Root;
+      Name      : String;
+      Trigger   : GVD.Types.Watchpoint_Trigger;
+      Condition : String := "";
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Set a watchpoint for the variable or memory location in Name.
+   --  Trigger specifies that the watchpoint is activated by a read, write,
+   --  or either to the memory location.  If a condition string is given,
+   --  then program execution will stop only when it evaluates as true.
+   --  GDB_COMMAND: "(watch|rwatch|awatch) <name> [if <condition>]"
 
    ----------------
    -- Exceptions --

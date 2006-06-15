@@ -188,9 +188,8 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Add_Watchpoint_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Object);
    begin
-      null;
+      Set_Watchpoint (Breakpoint_Editor_Access (Object));
 
    exception
       when E : others =>

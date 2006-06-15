@@ -23,7 +23,7 @@ with Gtk.Adjustment;   use Gtk.Adjustment;
 with Gtk.Stock;        use Gtk.Stock;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Enums;        use Gtk.Enums;
-with GPS.Intl;       use GPS.Intl;
+with GPS.Intl;         use GPS.Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 
@@ -302,6 +302,20 @@ package body Breakpoints_Pkg is
       Set_Max_Length (Breakpoints.Combo_Entry3, 0);
       Set_Text (Breakpoints.Combo_Entry3, -"read");
       Set_Visibility (Breakpoints.Combo_Entry3, True);
+
+      Gtk_New (Breakpoints.Label12, -("Condition:"));
+      Set_Alignment (Breakpoints.Label12, 0.0, 0.5);
+      Set_Padding (Breakpoints.Label12, 0, 0);
+      Set_Justify (Breakpoints.Label12, Justify_Left);
+      Set_Line_Wrap (Breakpoints.Label12, False);
+      Pack_Start (Breakpoints.Vbox7, Breakpoints.Label12, False, False, 5);
+
+      Gtk_New (Breakpoints.Watchpoint_Cond);
+      Set_Editable (Breakpoints.Watchpoint_Cond, True);
+      Set_Max_Length (Breakpoints.Watchpoint_Cond, 0);
+      Set_Text (Breakpoints.Watchpoint_Cond, -"");
+      Set_Visibility (Breakpoints.Watchpoint_Cond, True);
+      Pack_Start (Breakpoints.Vbox7, Breakpoints.Watchpoint_Cond, False, False, 0);
 
       Gtk_New_Vseparator (Breakpoints.Vseparator2);
       Pack_Start (Breakpoints.Hbox3, Breakpoints.Vseparator2, False, False, 0);
