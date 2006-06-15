@@ -257,7 +257,17 @@ package body Completion.Entities_Extractor is
                         Is_All   => True));
                end if;
             elsif Get_Kind (Type_Of).Kind = Array_Kind then
+               if Proposal.Params_In_Expression < 1 then
+                  --  We don't know the number of dimensions of an array, we
+                  --  we know that it's at least 1.
+                  Type_Of := null;
+
+                  return;
+               end if;
+
                Type_Of := Pointed_Type (Type_Of);
+
+               Handle_Referenced_Type (Type_Of);
             end if;
          end if;
       end Handle_Referenced_Type;
@@ -294,6 +304,12 @@ package body Completion.Entities_Extractor is
          end if;
       else
          if Get_Kind (Proposal.Entity).Kind = Function_Or_Operator then
+            if Proposal.Params_In_Expression
+              > Get_Number_Of_Parameters (Proposal)
+            then
+               return;
+            end if;
+
             Type_Of := Get_Returned_Type (Proposal.Entity);
          elsif Get_Kind (Proposal.Entity).Is_Type then
             Type_Of := Proposal.Entity;
@@ -309,6 +325,10 @@ package body Completion.Entities_Extractor is
 
          Handle_Referenced_Type (Type_Of);
 
+         if Type_Of = null then
+            return;
+         end if;
+
          declare
             Parents     : constant Entity_Information_Array :=
               Get_Parent_Types (Type_Of, True);
@@ -318,6 +338,8 @@ package body Completion.Entities_Extractor is
                Parent_Type := Parents (J);
 
                Handle_Referenced_Type (Parent_Type);
+
+               exit when Parent_Type = null;
 
                Append
                  (Result.List,
@@ -363,6 +385,18 @@ package body Completion.Entities_Extractor is
 
       return Number;
    end Get_Number_Of_Parameters;
+
+   -----------------------
+   -- Append_Expression --
+   -----------------------
+
+   procedure Append_Expression
+     (Proposal             : in out Entity_Completion_Proposal;
+      Number_Of_Parameters : Natural)
+   is
+   begin
+      Proposal.Params_In_Expression := Number_Of_Parameters;
+   end Append_Expression;
 
    ----------
    -- Free --
@@ -596,11 +630,12 @@ package body Completion.Entities_Extractor is
    is
    begin
       return  Entity_Completion_Proposal'
-        (Mode             => Show_Identifiers,
-         Resolver         => This.Resolver,
-         Entity           => Get (This.It),
-         Is_All           => False,
-         Filter           => This.Next_Filter);
+        (Mode                 => Show_Identifiers,
+         Resolver             => This.Resolver,
+         Entity               => Get (This.It),
+         Is_All               => False,
+         Filter               => This.Next_Filter,
+         params_In_Expression => 0);
    end Get;
 
    ----------
@@ -666,11 +701,12 @@ package body Completion.Entities_Extractor is
    is
    begin
       return  Entity_Completion_Proposal'
-        (Mode     => Show_Identifiers,
-         Resolver => This.Resolver,
-         Entity   => Get (This.It),
-         Is_All   => False,
-         Filter   => This.Filter);
+        (Mode                 => Show_Identifiers,
+         Resolver             => This.Resolver,
+         Entity               => Get (This.It),
+         Is_All               => False,
+         Filter               => This.Filter,
+         params_In_Expression => 0);
    end Get;
 
    ----------
@@ -754,11 +790,12 @@ package body Completion.Entities_Extractor is
      (This : Child_Iterator_Wrapper) return Completion_Proposal'Class is
    begin
       return Entity_Completion_Proposal'
-        (Mode     => Show_Identifiers,
-         Resolver => This.Resolver,
-         Entity   => Get (This.It),
-         Is_All   => False,
-         Filter   => Everything);
+        (Mode                 => Show_Identifiers,
+         Resolver             => This.Resolver,
+         Entity               => Get (This.It),
+         Is_All               => False,
+         Filter               => Everything,
+         Params_In_Expression => 0);
    end Get;
 
    ----------
@@ -835,11 +872,12 @@ package body Completion.Entities_Extractor is
    is
    begin
       return Entity_Completion_Proposal'
-        (Mode     => Show_Identifiers,
-         Resolver => This.Resolver,
-         Entity   => This.Unit,
-         Is_All   => False,
-         Filter   => Everything);
+        (Mode                 => Show_Identifiers,
+         Resolver             => This.Resolver,
+         Entity               => This.Unit,
+         Is_All               => False,
+         Filter               => Everything,
+         Params_In_Expression => 0);
    end Get;
 
    ----------
@@ -918,11 +956,12 @@ package body Completion.Entities_Extractor is
    is
    begin
       return Entity_Completion_Proposal'
-        (Mode     => Show_Identifiers,
-         Resolver => This.Resolver,
-         Entity   => This.Entity,
-         Is_All   => This.Is_All,
-         Filter   => Everything);
+        (Mode                 => Show_Identifiers,
+         Resolver             => This.Resolver,
+         Entity               => This.Entity,
+         Is_All               => This.Is_All,
+         Filter               => Everything,
+         Params_In_Expression => 0);
    end Get;
 
 end Completion.Entities_Extractor;
