@@ -113,7 +113,7 @@ package Completion is
    --  free the referenced resolvers which have to be freed separately.
 
    procedure Set_Buffer
-     (Manager : in out Completion_Manager; Buffer : String_Access);
+     (Manager : in out Completion_Manager; Buffer : String);
    --  Set the buffer from where the competion is done. This has to be called
    --  before any completion attempt.
 
@@ -142,8 +142,10 @@ package Completion is
 
    Null_File_Location : constant File_Location;
 
-   function Get_Resolver (Proposal : Completion_Proposal)
-     return Completion_Resolver_Access;
+   Null_Completion_Proposal : constant Completion_Proposal'Class;
+
+   function Get_Resolver
+     (Proposal : Completion_Proposal) return Completion_Resolver_Access;
    --  Returns the resolver that have been used to create this proposal.
 
    type Proposal_Mode is (Show_Parameters, Show_Identifiers);
@@ -158,8 +160,8 @@ package Completion is
      (Proposal : in out Completion_Proposal; Mode : Proposal_Mode);
    --  Set the display mode
 
-   function Get_Completion (Proposal : Completion_Proposal) return UTF8_String
-     is abstract;
+   function Get_Completion
+     (Proposal : Completion_Proposal) return UTF8_String is abstract;
    --  Return the text that has to be used for the completion, may be different
    --  from the label.
 
@@ -172,16 +174,16 @@ package Completion is
    --  identifier can be different from the completion propsed and the label.
    --  By default, return the completion.
 
-   function Get_Documentation (Proposal : Completion_Proposal)
-      return UTF8_String;
+   function Get_Documentation
+     (Proposal : Completion_Proposal) return UTF8_String;
    --  Return the documentation corresponding to the proposal.
 
    function Get_Location (Proposal : Completion_Proposal) return File_Location;
    --  Return the location of the object pointed by the given proposal, null
    --  if none. By default, return Null_Location.
 
-   function Get_Category (Proposal : Completion_Proposal)
-     return Language_Category is abstract;
+   function Get_Category
+     (Proposal : Completion_Proposal) return Language_Category is abstract;
    --  Return the category of the object proposed for the completion
 
    procedure Get_Composition
@@ -198,6 +200,17 @@ package Completion is
      (Proposal : Completion_Proposal) return Natural is abstract;
    --  If the completion proposal is a subprogram, then this will return the
    --  number of its parameters, otherwise 0.
+
+   procedure Append_Expression
+     (Proposal             : in out Completion_Proposal;
+      Number_Of_Parameters : Natural);
+   --  This function specify the expression that have been found after the
+   --  proposal given in parameters. Some proposals, like functions or arrays,
+   --  need this before returning their composition. The default implementation
+   --  of this function do nothing.
+   --  ??? This is currently a simple minded way of checking the profile of
+   --  a subprogram. We could do a little more analyzsis there, e.g. extract
+   --  named parameters if any.
 
    function Get_Initial_Completion_List
      (Manager        : Completion_Manager;
@@ -230,7 +243,7 @@ package Completion is
    function Get_Proposal
      (This : Completion_Iterator) return Completion_Proposal'Class;
    --  Return the actual proposal for the given iterator.
-   --  ??? Should user free the returned value?
+   --  The returned value should NOT be freed by the user.
 
    procedure Free (This : in out Completion_Iterator);
    --  Free the data associated to a completion iterator.
@@ -301,12 +314,12 @@ private
       Name : String_Access;
    end record;
 
-   function Get_Completion (Proposal : Simple_Completion_Proposal)
-      return UTF8_String;
+   function Get_Completion
+     (Proposal : Simple_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
-   function Get_Category (Proposal : Simple_Completion_Proposal)
-     return Language_Category;
+   function Get_Category
+     (Proposal : Simple_Completion_Proposal) return Language_Category;
    --  See inherited documentation
 
    procedure Get_Composition
@@ -317,17 +330,21 @@ private
       Result     : in out Completion_List);
    --  See inherited documentation
 
-   function Get_Number_Of_Parameters (Proposal : Simple_Completion_Proposal)
-     return Natural;
+   function Get_Number_Of_Parameters
+     (Proposal : Simple_Completion_Proposal) return Natural;
    --  See inherited documentation
 
    procedure Free (Proposal : in out Simple_Completion_Proposal);
    --  See inherited documentation
 
-   function Match (Seeked_Name, Tested_Name : String; Is_Partial : Boolean)
-      return Boolean;
+   function Match
+     (Seeked_Name, Tested_Name : String; Is_Partial : Boolean) return Boolean;
    --  Return true if Tested_Name matches Seeked_Name, possibly only partially
    --  (in which case Seeked_Name is the beginning of Tested_Name), false
    --  otherwise
+
+   Null_Completion_Proposal : constant Completion_Proposal'Class :=
+     Simple_Completion_Proposal'
+       (Resolver => null, Mode => Show_Identifiers, Name => null);
 
 end Completion;
