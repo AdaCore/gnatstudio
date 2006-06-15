@@ -65,6 +65,11 @@ private
       --  In this case, we display only "all"
 
       Filter : Possibilities_Filter;
+
+      Params_In_Expression : Integer := 0;
+      --  In the case of arrays and subprograms, we have to check if the
+      --  expression has an accurate number of parameters in order to check
+      --  if it's potentially the proper one.
    end record;
 
    function Get_Completion
@@ -93,6 +98,11 @@ private
 
    function Get_Number_Of_Parameters
      (Proposal : Entity_Completion_Proposal) return Natural;
+   --  See inherited documentation
+
+   procedure Append_Expression
+     (Proposal             : in out Entity_Completion_Proposal;
+      Number_Of_Parameters : Natural);
    --  See inherited documentation
 
    procedure Free (Proposal : in out Entity_Completion_Proposal);
