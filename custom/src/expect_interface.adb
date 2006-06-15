@@ -193,7 +193,7 @@ package body Expect_Interface is
       if Command.Pd /= null then
          Expect
            (Command.Pd.all, Result,
-            All_Match, Timeout => 200);
+            All_Match, Timeout => 1);
          if Result /= Expect_Timeout then
             Output_Cb (Custom_Action_Access (Command),
                        Strip_CR (Expect_Out (Command.Pd.all)));
@@ -320,6 +320,11 @@ package body Expect_Interface is
    begin
       Trace (Me, "Output: " & Output);
 
+      --  Always put Output in Unmatched_Output in case interactive_expect
+      --  want them.
+
+      Concat (D.Unmatched_Output, Output);
+
       if D.Pattern = null
         and then D.On_Exit = null
       then
@@ -342,10 +347,6 @@ package body Expect_Interface is
       end if;
 
       --  If we reach this point, this means expects have been registered.
-
-      --  Add the output to the unmatched output.
-
-      Concat (D.Unmatched_Output, Output);
 
       --  Attempt to match the regexp in the output.
 
@@ -438,9 +439,10 @@ package body Expect_Interface is
       Pattern  : String := "";
       Till_End : Boolean := True) return Exit_Type
    is
-      Regexp : constant Pattern_Matcher := Compile (Pattern, Multiple_Lines);
-      Dead   : Boolean;
-      Start  : Ada.Calendar.Time;
+      Regexp  : constant Pattern_Matcher := Compile (Pattern, Multiple_Lines);
+      Dead    : Boolean;
+      Start   : Ada.Calendar.Time;
+      Matches : Match_Array (0 .. 0);
       pragma Unreferenced (Kernel, Dead);
 
    begin
@@ -466,18 +468,43 @@ package body Expect_Interface is
 
          if not Till_End
            and then Action.Unmatched_Output /= null
-           and then Match (Regexp, Action.Unmatched_Output.all)
          then
-            if Active (Me) then
-               Trace (Me, "Interactive_Expect: Matched " & Pattern);
-            end if;
+            Match (Regexp, Action.Unmatched_Output.all, Matches);
 
-            return Exit_Type'(Matched);
+            if Matches (0) /= No_Match then
+               if Action.Processed_Output /= null then
+                  Free (Action.Processed_Output);
+               end if;
+
+               Action.Processed_Output := new String'
+                 (Action.Unmatched_Output
+                    (Matches (0).First .. Matches (0).Last));
+
+               if Matches (0).Last = Action.Unmatched_Output'Last then
+                  Free (Action.Unmatched_Output);
+               else
+                  declare
+                     Str : constant String :=
+                             Action.Unmatched_Output
+                               (Matches (0).Last + 1 ..
+                                  Action.Unmatched_Output'Last);
+                  begin
+                     Free (Action.Unmatched_Output);
+                     Action.Unmatched_Output := new String'(Str);
+                  end;
+               end if;
+
+               if Active (Me) then
+                  Trace (Me, "Interactive_Expect: Matched " & Pattern);
+               end if;
+
+               return Exit_Type'(Matched);
+            end if;
          end if;
 
-         while Gtk.Main.Events_Pending loop
+         if Gtk.Main.Events_Pending then
             Dead := Gtk.Main.Main_Iteration;
-         end loop;
+         end if;
 
       end loop;
 
@@ -513,16 +540,18 @@ package body Expect_Interface is
 
          declare
             Inst : constant Class_Instance := Nth_Arg (Data, 1, Process_Class);
-            Command_Line    : constant String := Nth_Arg (Data, 2);
-            Regexp          : constant String := Nth_Arg (Data, 3, "");
-            Success       : Boolean;
+            Command_Line : constant String := Nth_Arg (Data, 2);
+            Regexp       : constant String := Nth_Arg (Data, 3, "");
+            Show_Bar     : constant Boolean := Nth_Arg (Data, 6, True);
+            Success      : Boolean;
          begin
             if Command_Line = "" then
                Set_Error_Msg (Data, -"Argument for command cannot be empty");
                return;
             end if;
 
-            Trace (Me, "Spawning " & Command_Line);
+            Trace (Me, "Spawning Show_Bar=" & Boolean'Image (Show_Bar) &
+                   ": "& Command_Line);
 
             D          := new Custom_Action_Record;
             D.Command  := Argument_String_To_List (Command_Line);
@@ -554,7 +583,7 @@ package body Expect_Interface is
                  (Kernel          => Kernel,
                   Command         => D,
                   Active          => False,
-                  Show_Bar        => True);
+                  Show_Bar        => Show_Bar);
 
                Set_Instance (Created_Command, Get_Script (Data), Inst);
                Set_Property
@@ -606,7 +635,12 @@ package body Expect_Interface is
             Pattern  => Nth_Arg (Data, 2),
             Till_End => False);
          if D.Pd /= null then
-            Set_Return_Value (Data, Expect_Out (D.Pd.all));
+            if D.Processed_Output /= null then
+               Set_Return_Value (Data, D.Processed_Output.all);
+               Free (D.Processed_Output);
+            else
+               Set_Return_Value (Data, "");
+            end if;
          else
             Set_Return_Value (Data, "Process terminated");
          end if;
