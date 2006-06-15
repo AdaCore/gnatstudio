@@ -170,7 +170,7 @@ package body Collapsing_Pane is
 
       Gtk_New_Vbox (Pane.Main_Box, Homogeneous => False);
       Add (Pane, Pane.Main_Box);
-      Set_Border_Width (Pane.Main_Box, 3);
+      Set_Border_Width (Pane.Main_Box, 1);
 
       Gtk_New (Pane.Label_Box);
       Add_Events (Pane.Label_Box, Button_Release_Mask);
@@ -183,15 +183,15 @@ package body Collapsing_Pane is
       Return_Callback.Object_Connect
         (Pane.Label_Box,
          "enter_notify_event", On_Enter_Label'Access, Pane);
-      Alloc_Color
-        (Get_Colormap (Pane.Label_Box),
-         Prelight_Color,
-         Success => Success);
       Set_Rgb
         (Prelight_Color,
          16#FFFF#,
          16#FFFF#,
          16#FFFF#);
+      Alloc_Color
+        (Get_Colormap (Pane.Label_Box),
+         Prelight_Color,
+         Success => Success);
       Modify_Bg
         (Pane.Label_Box, State_Prelight, Prelight_Color);
       Pack_Start
