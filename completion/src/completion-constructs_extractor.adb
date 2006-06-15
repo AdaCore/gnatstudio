@@ -18,8 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada_Analyzer.Utils; use Ada_Analyzer.Utils;
-with Language.Ada;       use Language.Ada;
+with Ada_Analyzer.Utils;     use Ada_Analyzer.Utils;
+with Language.Ada;           use Language.Ada;
+with Language.Documentation; use Language.Documentation;
 
 package body Completion.Constructs_Extractor is
 
@@ -32,10 +33,11 @@ package body Completion.Constructs_Extractor is
    ---------------------------------------
 
    function New_Construct_Completion_Resolver
-     (Tree : Construct_Tree_Access) return Construct_Completion_Resolver
+     (Tree : Construct_Tree_Access; Current_File : Virtual_File)
+      return Construct_Completion_Resolver
    is
    begin
-      return (Manager => null, Tree => Tree);
+      return (Manager => null, Tree => Tree, Current_File => Current_File);
    end New_Construct_Completion_Resolver;
 
    --------------------
@@ -66,6 +68,34 @@ package body Completion.Constructs_Extractor is
          return Get_Construct (Proposal.Tree_Node).Category;
       end if;
    end Get_Category;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation
+     (Proposal : Construct_Completion_Proposal) return UTF8_String is
+   begin
+      return Get_Documentation
+        (Ada_Lang,
+         Get_Buffer (Proposal.Resolver.Manager.all).all,
+         Construct_Completion_Resolver (Proposal.Resolver.all).Tree.all,
+         Proposal.Tree_Node);
+   end Get_Documentation;
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location
+     (Proposal : Construct_Completion_Proposal) return File_Location is
+   begin
+      return (Construct_Completion_Resolver
+              (Proposal.Resolver.all).Current_File,
+              Get_Construct (Proposal.Tree_Node).Sloc_Start.Line,
+              Visible_Column_Type
+                (Get_Construct (Proposal.Tree_Node).Sloc_Start.Column));
+   end Get_Location;
 
    --------------------
    -- Get_Compositon --
@@ -112,7 +142,8 @@ package body Completion.Constructs_Extractor is
                  (Show_Identifiers,
                   Get_Resolver (Proposal),
                   Tree_Node,
-                  Is_All));
+                  Is_All,
+                  0));
          end if;
       end Add_To_List;
 
@@ -122,6 +153,14 @@ package body Completion.Constructs_Extractor is
       case Get_Construct (Proposal.Tree_Node).Category is
          when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter
             | Cat_Class .. Cat_Subtype | Subprogram_Category =>
+
+            if Get_Construct (Proposal.Tree_Node).Category in
+              Subprogram_Category
+              and then Proposal.Params_In_Expression
+                > Get_Number_Of_Parameters (Proposal)
+            then
+               return;
+            end if;
 
             Get_Referenced_Entity
               (Ada_Lang,
@@ -276,6 +315,18 @@ package body Completion.Constructs_Extractor is
       return Total;
    end Get_Number_Of_Parameters;
 
+   -----------------------
+   -- Append_Expression --
+   -----------------------
+
+   procedure Append_Expression
+     (Proposal             : in out Construct_Completion_Proposal;
+      Number_Of_Parameters : Natural)
+   is
+   begin
+      Proposal.Params_In_Expression := Number_Of_Parameters;
+   end Append_Expression;
+
    ----------
    -- Free --
    ----------
@@ -321,7 +372,8 @@ package body Completion.Constructs_Extractor is
                     (Show_Identifiers,
                      Completion_Resolver_Access (Resolver),
                      Result_Array (J),
-                     False));
+                     False,
+                     0));
             end loop;
 
             Append (Result.List, To_Extensive_List (List));
