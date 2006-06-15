@@ -834,6 +834,7 @@ package body Commands.Custom is
       Item := new Custom_Command;
       Item.Kernel := Kernel;
       Item.Default_Output_Destination := new String'(Default_Output);
+      Item.Default_Show_Command := Show_Command;
       Item.Name := new String'(Name);
       Item.Components := From_XML
         (Kernel, Command, Name,
