@@ -230,7 +230,8 @@ procedure Completion.Test is
       return new Construct_Completion_Resolver'
         (New_Construct_Completion_Resolver
            (new Construct_Tree'(To_Construct_Tree
-            (Ada_Lang, Buffer, Constructs.all))));
+            (Ada_Lang, Buffer, Constructs.all)),
+            Create_From_Base (Argument (1))));
    end Get_Construct_Completion_Resolver;
 
    ------------------------------------
@@ -353,7 +354,7 @@ procedure Completion.Test is
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, new String'(Buffer));
+      Set_Buffer (Manager.all, Buffer);
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
@@ -408,7 +409,7 @@ procedure Completion.Test is
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, new String'(Buffer));
+      Set_Buffer (Manager.all, Buffer);
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
@@ -458,7 +459,7 @@ procedure Completion.Test is
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, new String'(Buffer));
+      Set_Buffer (Manager.all, Buffer);
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
@@ -513,7 +514,7 @@ procedure Completion.Test is
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, new String'(Buffer));
+      Set_Buffer (Manager.all, Buffer);
       Register_Resolver
         (Manager, Get_Construct_Completion_Resolver (Buffer));
       Register_Resolver
