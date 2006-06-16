@@ -127,7 +127,8 @@ package body GPS.Kernel.Project is
    procedure Load_Default_Project
      (Kernel               : access Kernel_Handle_Record'Class;
       Directory            : VFS.Virtual_File;
-      Load_Default_Desktop : Boolean := True)
+      Load_Default_Desktop : Boolean := True;
+      Clear                : Boolean := True)
    is
       Project             : Virtual_File :=
                               Create_From_Dir (Directory, "default.gpr");
@@ -164,7 +165,7 @@ package body GPS.Kernel.Project is
       end if;
 
       if Found then
-         Load_Project (Kernel, Project);
+         Load_Project (Kernel, Project, Clear => Clear);
 
          if Is_Default then
             Set_Status (Get_Project (Kernel), Projects.Default);
@@ -244,7 +245,8 @@ package body GPS.Kernel.Project is
    procedure Load_Project
      (Kernel  : access Kernel_Handle_Record'class;
       Project : VFS.Virtual_File;
-      No_Save : Boolean := False)
+      No_Save : Boolean := False;
+      Clear   : Boolean := True)
    is
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console.
@@ -299,6 +301,11 @@ package body GPS.Kernel.Project is
          --  editor needs to be loaded to display error messages
 
          Close_All_Children (Kernel);
+
+         --  Clear the console so that obsolete messages are not displayed
+         if Clear then
+            Console.Clear (Kernel);
+         end if;
       end if;
 
       if Is_Regular_File (Project) then
@@ -328,6 +335,7 @@ package body GPS.Kernel.Project is
                Data.File := Root_Project;
                Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
 
+               Had_Project_Desktop := Load_Desktop (Kernel);
                Pop_State (Kernel_Handle (Kernel));
                return;
             end if;
@@ -342,16 +350,10 @@ package body GPS.Kernel.Project is
          --  LI information, otherwise this cache might contain dangling
          --  references to projects that have been freed.
 
-         if not Same_Project then
-            Entities.Reset (Get_Database (Kernel));
-         end if;
+         Entities.Reset (Get_Database (Kernel));
 
-         if Get_Predefined_Source_Path (Kernel.Registry.all) = ""
-           or else not Is_Local (Build_Server)
-         then
-            Trace (Me, "Recompute predefined paths");
-            Compute_Predefined_Paths (Kernel);
-         end if;
+         Trace (Me, "Recompute predefined paths");
+         Compute_Predefined_Paths (Kernel);
 
          Remove_Location_Category (Kernel, Location_Category);
          Load (Registry           => Kernel.Registry.all,
@@ -360,6 +362,7 @@ package body GPS.Kernel.Project is
                New_Project_Loaded => New_Project_Loaded);
 
          if not New_Project_Loaded then
+            Had_Project_Desktop := Load_Desktop (Kernel);
             Pop_State (Kernel_Handle (Kernel));
             return;
          end if;
@@ -379,6 +382,7 @@ package body GPS.Kernel.Project is
          Console.Insert (Kernel, (-"Cannot find project file ")
                          & Full_Name (Project).all,
                          Mode => Console.Error, Add_Lf => False);
+         Had_Project_Desktop := Load_Desktop (Kernel);
       end if;
    end Load_Project;
 
