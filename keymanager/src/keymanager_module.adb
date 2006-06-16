@@ -935,6 +935,7 @@ package body KeyManager_Module is
       Has_Secondary : constant Boolean := Handler.Secondary_Keymap /= null;
       Context : Selection_Context;
       Context_Computed : Boolean := False;
+      Found_Action : Boolean := False;
 
    begin
       --  We could test Modif /= 0 if we allowed only key shortcuts with a
@@ -962,6 +963,7 @@ package body KeyManager_Module is
          while Binding /= No_Key loop
             if Binding.Action = null then
                Handler.Secondary_Keymap := Get_Keymap (Binding);
+               Found_Action := True;
 
             else
                Command := Lookup_Action (Kernel, Binding.Action.all);
@@ -981,6 +983,7 @@ package body KeyManager_Module is
                              and then Filter_Matches (Command.Filter, Context))
                   then
                      Trace (Me, "Executing action " & Binding.Action.all);
+                     Found_Action := True;
 
                      Launch_Background_Command
                        (Kernel,
@@ -1008,7 +1011,11 @@ package body KeyManager_Module is
       --  more actions, since we want to execute everything related to that
       --  key. However, do not let events through if they are in a secondary
       --  keymap, since the shortcuts is too complex for gtk+ anyway.
-      return Has_Secondary;
+
+      --  ??? On the other hand, if we let it through this means that for
+      --  instance alt-w will open the Window menu, even after some action has
+      --  been executed.
+      return Found_Action or Has_Secondary;
 
    exception
       when E : others =>
