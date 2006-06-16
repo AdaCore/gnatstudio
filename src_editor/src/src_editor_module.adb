@@ -2923,10 +2923,6 @@ package body Src_Editor_Module is
          -"Jump to the matching delimiter ()[]{}",
          Category => "Editor",
          Filter => Src_Action_Context);
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Jump to matching delimiter",
-         Default_Key => "control-apostrophe");
       Register_Menu (Kernel, Navigate, -"Goto Matching _Delimiter",
                      Ref_Item   => -"Goto Body",
                      Callback   => null,

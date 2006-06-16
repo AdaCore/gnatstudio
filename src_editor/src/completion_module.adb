@@ -775,7 +775,7 @@ package body Completion_Module is
       Command_Smart      : Interactive_Command_Access;
       Src_Action_Context : constant Action_Filter :=
                              new Src_Editor_Action_Context;
-
+      Action             : Action_Record_Access;
    begin
       Completion_Module := new Completion_Module_Record;
       Register_Module
@@ -785,40 +785,32 @@ package body Completion_Module is
 
       Command := new Completion_Command (Smart_Completion => False);
       Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Register_Action
+      Action := Register_Action
         (Kernel, "Complete identifier", Command,
          -("Complete current identifier based on the contents of the editor"),
          Category => "Editor",
          Filter   => Src_Action_Context);
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Complete identifier",
-         Default_Key => "control-slash");
       Register_Menu (Kernel, Edit, -"Complete _Identifier",
                      Ref_Item   => -"Refill",
                      Accel_Key  => GDK_slash,
                      Accel_Mods => Control_Mask,
                      Callback   => null,
-                     Command    => Command,
+                     Action     => Action,
                      Filter     => Src_Action_Context);
 
       Command_Smart := new Completion_Command (Smart_Completion => True);
       Completion_Command (Command_Smart.all).Kernel := Kernel_Handle (Kernel);
-      Register_Action
+      Action := Register_Action
         (Kernel, "Complete identifier (advanced)", Command_Smart,
          -("Complete current identifier based on advanced entities database"),
          Category => "Editor",
          Filter   => Src_Action_Context);
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Complete identifier (advanced)",
-         Default_Key => "alt-space");
       Register_Menu (Kernel, Edit, -"Smart Completion",
                      Ref_Item   => -"Complete _Identifier",
                      Accel_Key  => GDK_space,
                      Accel_Mods => Control_Mask,
                      Callback   => null,
-                     Command    => Command_Smart,
+                     Action     => Action,
                      Filter     => Src_Action_Context);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
