@@ -98,6 +98,7 @@ package body GPS.Kernel.Project is
            and then Handle.Gnatls_Cache.all = Gnatls
            and then Handle.Gnatls_Server.all = Get_Nickname (Build_Server)
          then
+            Basic_Types.Free (Langs);
             return;
          end if;
 
@@ -350,8 +351,12 @@ package body GPS.Kernel.Project is
          --  LI information, otherwise this cache might contain dangling
          --  references to projects that have been freed.
 
-         Entities.Reset (Get_Database (Kernel));
+         if not Same_Project then
+            Entities.Reset (Get_Database (Kernel));
+         end if;
 
+         --  Always call Compute_Predefined_Paths who detects if recomputation
+         --  is really needed.
          Trace (Me, "Recompute predefined paths");
          Compute_Predefined_Paths (Kernel);
 
