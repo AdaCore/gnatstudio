@@ -20,6 +20,8 @@
 
 with Language.Tree; use Language.Tree;
 
+with Traces;        use Traces;
+
 package Language.Documentation is
 
    procedure Get_Documentation_Before
@@ -27,13 +29,15 @@ package Language.Documentation is
       Buffer        : String;
       Decl_Index    : Natural;
       Comment_Start : out Natural;
-      Comment_End   : out Natural);
+      Comment_End   : out Natural;
+      Debug         : Debug_Handle := null);
    procedure Get_Documentation_After
      (Context       : Language_Context;
       Buffer        : String;
       Decl_Index    : Natural;
       Comment_Start : out Natural;
-      Comment_End   : out Natural);
+      Comment_End   : out Natural;
+      Debug         : Debug_Handle := null);
    --  Get the comment just before or just after Decl_Index, skipping code
    --  lines as needed.
 
