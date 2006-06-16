@@ -37,7 +37,6 @@ with Glib.Properties;           use Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
 with Gtk;                       use Gtk;
-with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
@@ -71,7 +70,6 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Main_Window;
 with GPS.Menu;
-with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
@@ -975,8 +973,6 @@ procedure GPS.Main is
    ------------------
 
    function Finish_Setup (Data : Process_Data) return Boolean is
-      Key               : constant String :=
-                            Get_Home_Dir (GPS_Main.Kernel) & "custom_key";
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
       Idle_Id           : Idle_Handler_Id;
@@ -1204,13 +1200,6 @@ procedure GPS.Main is
 
    begin
       Cleanup_Needed := True;
-
-      --  Load the custom key bindings, if any
-
-      if Is_Regular_File (Key) then
-         Trace (Me, "Loading key bindings from " & Key);
-         Gtk.Accel_Map.Load (Key);
-      end if;
 
       --  Register the default filters, so that other modules can create
       --  contextual menus
@@ -1446,6 +1435,10 @@ procedure GPS.Main is
          Python_Module.Load_Python_Startup_Files (GPS_Main.Kernel);
       end if;
 
+      --  Load the custom keys last, so that they override everything else set
+      --  so far.
+      KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
+
       --  Set default icon for dialogs and windows
       --  ??? as soon as gdk_pixbuf is modified to derive from Glib.GObject
       --   construct an icon list from gps-icon-16, gps-icon-32 and gps-icon-48
@@ -1674,15 +1667,6 @@ procedure GPS.Main is
       if Started and then Get_Pref (Save_Desktop_On_Exit) then
          Save_Desktop (Kernel);
       end if;
-
-      begin
-         Save_Accel_Map
-           (File_Utils.Name_As_Directory (Dir.all) & "custom_key");
-      exception
-         when E : others =>
-            Trace (Exception_Handle,
-                   "Unexpected exception: " & Exception_Information (E));
-      end;
 
       if Status (Project) = Default then
          Trace (Me, "Remove default project on disk, no longer used");
