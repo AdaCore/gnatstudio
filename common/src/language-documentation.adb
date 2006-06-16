@@ -33,7 +33,8 @@ package body Language.Documentation is
       Buffer        : String;
       Decl_Index    : Natural;
       Comment_Start : out Natural;
-      Comment_End   : out Natural)
+      Comment_End   : out Natural;
+      Debug         : Debug_Handle := null)
    is
       Current : Integer;
    begin
@@ -45,6 +46,12 @@ package body Language.Documentation is
          Comment_End := Comment_Start;
          Skip_To_Current_Comment_Block_End (Context, Buffer, Comment_End);
          Comment_End := Line_End (Buffer, Comment_End);
+
+         if Active (Debug) then
+            Trace (Debug,
+                   "Get_Documentation: Found a comment before the entity,"
+                   & " from" & Comment_Start'Img & " to" & Comment_End'Img);
+         end if;
       end if;
    end Get_Documentation_Before;
 
@@ -57,7 +64,8 @@ package body Language.Documentation is
       Buffer        : String;
       Decl_Index    : Natural;
       Comment_Start : out Natural;
-      Comment_End   : out Natural) is
+      Comment_End   : out Natural;
+      Debug         : Debug_Handle := null) is
    begin
       --  Else look after the comment after the declaration (which is the
       --  first block of comments after the declaration line, and not
@@ -69,6 +77,12 @@ package body Language.Documentation is
          Comment_End := Comment_Start;
          Skip_To_Current_Comment_Block_End (Context, Buffer, Comment_End);
          Comment_End := Line_End (Buffer, Comment_End);
+
+         if Active (Debug) then
+            Trace (Debug,
+                   "Get_Documentation: Found a comment after the entity,"
+                   & " from" & Comment_Start'Img & " to" & Comment_End'Img);
+         end if;
       end if;
    end Get_Documentation_After;
 
