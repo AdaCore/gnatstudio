@@ -605,6 +605,8 @@ package GPS.Kernel.Modules is
    --  Filter parameter matches. If none of these are defined, the menu item is
    --  always visible.
    --  Sensitive indicates whether the menu item is created sensitive or not.
+   --  Do not bind a default key to the action if you are already binding one
+   --  to the menu. This would result in executing the action twice otherwise.
 
    function Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
