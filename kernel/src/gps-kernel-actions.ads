@@ -58,6 +58,15 @@ package GPS.Kernel.Actions is
       Filter      : Action_Filter := null;
       Category    : String := "General";
       Defined_In  : VFS.Virtual_File := VFS.No_File);
+   function Register_Action
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Name        : String;
+      Command     : access Commands.Interactive.Interactive_Command'Class;
+      Description : String := "";
+      Filter      : Action_Filter := null;
+      Category    : String := "General";
+      Defined_In  : VFS.Virtual_File := VFS.No_File)
+      return Action_Record_Access;
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user
    --  should be registered.

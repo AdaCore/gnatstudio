@@ -96,6 +96,27 @@ package body GPS.Kernel.Actions is
       Category    : String := "General";
       Defined_In  : VFS.Virtual_File := VFS.No_File)
    is
+      Action : Action_Record_Access;
+      pragma Unreferenced (Action);
+   begin
+      Action := Register_Action
+        (Kernel, Name, Command, Description, Filter, Category, Defined_In);
+   end Register_Action;
+
+   ---------------------
+   -- Register_Action --
+   ---------------------
+
+   function Register_Action
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Name        : String;
+      Command     : access Commands.Interactive.Interactive_Command'Class;
+      Description : String := "";
+      Filter      : Action_Filter := null;
+      Category    : String := "General";
+      Defined_In  : VFS.Virtual_File := VFS.No_File)
+      return Action_Record_Access
+   is
       Old : constant Action_Record_Access := Lookup_Action (Kernel, Name);
       Overriden : Boolean := False;
       Cat : String_Access;
@@ -108,6 +129,7 @@ package body GPS.Kernel.Actions is
         -"Action already defined in ";
       Overridden_In : constant String :=
         -" and overriden in ";
+      Action : Action_Record_Access;
    begin
       --  Initialize the kernel actions table.
       if Kernel.Actions = null then
@@ -152,16 +174,17 @@ package body GPS.Kernel.Actions is
          Cat := new String'(Category);
       end if;
 
-      Set (Actions_Htable_Access (Kernel.Actions).Table,
-           Name,
-           new Action_Record'
-             (Commands.Interactive.Interactive_Command_Access (Command),
-              Filter,
-              new String'(Description),
-              Modified   => False,
-              Category   => Cat,
-              Defined_In => Defined_In,
-              Overriden  => Overriden));
+      Action := new Action_Record'
+        (Commands.Interactive.Interactive_Command_Access (Command),
+         Filter,
+         new String'(Description),
+         Modified   => False,
+         Category   => Cat,
+         Defined_In => Defined_In,
+         Overriden  => Overriden);
+
+      Set (Actions_Htable_Access (Kernel.Actions).Table, Name, Action);
+      return Action;
    end Register_Action;
 
    -----------
