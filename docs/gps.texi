@@ -10622,6 +10622,17 @@ preexisting binding. The second example below deactivates the standard binding.
 Multiple actions can be bound to the same key binding. They will all be
 executed in turn, followed by any menu for which this key is an accelerator.
 
+When GPS processes a @code{<key>} tag, it does the following:
+@itemize @bullet
+@item Removes all actions bound to that key.
+   This ensures that if you press the key, any action associated with it by
+   default in GPS or in some other XML file will no longer be executed, and
+   only the last one will be executed.
+@item Adds the new key to the list of shortcuts that can execute the
+   action. Any existing shortcut on the action is preserved, and
+   therefore there are multiple possible shortcuts for this action.
+@end itemize
+
 @c ----------------------------------------------------------------
 @node Preferences support in custom files
 @subsection Preferences support in custom files
