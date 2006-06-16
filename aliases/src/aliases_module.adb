@@ -29,6 +29,8 @@ with System.Assertions;
 
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Event;                use Gdk.Event;
+with Gdk.Types;                use Gdk.Types;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
@@ -2217,6 +2219,7 @@ package body Aliases_Module is
    is
       Edit : constant String := "/" & (-"Edit");
       Command : Interactive_Alias_Expansion_Command_Access;
+      Action  : Action_Record_Access;
    begin
       Aliases_Module_Id := new Aliases_Module_Id_Record;
       Register_Module
@@ -2235,16 +2238,20 @@ package body Aliases_Module is
 
       Command := new Interactive_Alias_Expansion_Command;
       Command.Kernel := Kernel_Handle (Kernel);
-      Register_Action
+      Action := Register_Action
         (Kernel,
          Name        => "Expand alias",
          Command     => Command,
          Category    => "Editor",
          Description => -"Expand the alias found just before the cursor");
-      Bind_Default_Key
-        (Kernel,
-         Action      => "Expand alias",
-         Default_Key => "control-o");
+      Register_Menu
+        (Kernel, Edit, -"Expand alias",
+         Ref_Item   => -"Refill",
+         Accel_Key  => GDK_LC_o,
+         Accel_Mods => Control_Mask,
+         Callback   => null,
+         Action     => Action,
+         Filter     => Lookup_Filter (Kernel, "Source editor"));
 
       Register_Special_Alias_Entity
         (Kernel, "Expand previous alias", 'O', Special_Entities'Access);
