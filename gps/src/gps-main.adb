@@ -1008,7 +1008,8 @@ procedure GPS.Main is
          Auto_Load_Project := False;
 
          if Is_Regular_File (Project_Name) then
-            Load_Project (GPS_Main.Kernel, Project_Name);
+            --  Do not clear to keep the welcome message on kernel's console
+            Load_Project (GPS_Main.Kernel, Project_Name, Clear => False);
             Project := Get_Project (GPS_Main.Kernel);
          else
             Load_Empty_Project (GPS_Main.Kernel);
@@ -1109,7 +1110,8 @@ procedure GPS.Main is
          if Batch_File /= null then
             Load_Default_Project
               (GPS_Main.Kernel, Get_Current_Dir,
-               Load_Default_Desktop => True);
+               Load_Default_Desktop => True,
+               Clear                => False);
             return True;
          end if;
 
@@ -1167,7 +1169,8 @@ procedure GPS.Main is
                if not Auto_Load_Project and then not File_Opened then
                   Load_Default_Project
                     (GPS_Main.Kernel, Get_Current_Dir,
-                     Load_Default_Desktop => True);
+                     Load_Default_Desktop => True,
+                     Clear                => False);
                end if;
 
                if S (S'First) = '=' then
@@ -1492,7 +1495,8 @@ procedure GPS.Main is
       end if;
 
       if Auto_Load_Project and then Project_Name /= VFS.No_File then
-         Load_Project (GPS_Main.Kernel, Project_Name);
+         --  Do not clear to keep the welcome message on kernel's console
+         Load_Project (GPS_Main.Kernel, Project_Name, Clear => False);
          Load_Sources;
       end if;
 
