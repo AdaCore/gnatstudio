@@ -57,22 +57,28 @@ package GPS.Kernel.Project is
    procedure Load_Project
      (Kernel  : access Kernel_Handle_Record'Class;
       Project : VFS.Virtual_File;
-      No_Save : Boolean := False);
+      No_Save : Boolean := False;
+      Clear   : Boolean := True);
    --  Load project Project as the current project.
    --  This emits the "project_changed" and "project_view_changed" signals.
    --  If the project isn't found, nothing is done (the previous project is
    --  kept).
    --  If No_Save is True, then the current project will not be saved if it was
    --  modified.
+   --  If Clear is true, the Messages window is cleared before loading the
+   --  project
 
    procedure Load_Default_Project
      (Kernel               : access Kernel_Handle_Record'Class;
       Directory            : VFS.Virtual_File;
-      Load_Default_Desktop : Boolean := True);
+      Load_Default_Desktop : Boolean := True;
+      Clear                : Boolean := True);
    --  Create and load a default project in Directory.
    --  If Load_Desktop is true, then all current MDI children are removed, and
    --  the default desktop is reloaded. The "project_changed" hook is run if
    --  needed.
+   --  If Clear is true, the Messages window is cleared before loading the
+   --  default project
 
    procedure Load_Empty_Project
      (Kernel : access Kernel_Handle_Record'Class);
