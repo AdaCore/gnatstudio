@@ -135,6 +135,13 @@ F128-002 VCS supports directories (2006-02-07)
 
   Keywords: VCS
 
+F119-003 Window position no longer saved in the desktop
+
+  The GPS window position is no longer saved in the desktop. This is in fact
+  better handled by the windowing system, which has better knowledge of the
+  number of screens connected to the machine among others (GPS would try
+  to restore to the second screen even if it is no longer attached) 
+
 F104-029 New "indent comments" preference (2006-03-24)
 
   A new preference to enable or disable indentation of Ada comments is
