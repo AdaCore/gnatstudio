@@ -253,20 +253,26 @@ package body KeyManager_Module is
    --  Free the memoru occupied by the key manager
 
    procedure Bind_Default_Key_Internal
-     (Table       : in out Key_Htable.HTable;
-      Action      : String;
-      Default_Key : String;
-      Changed     : Boolean := False;
-      Remove_All_Others : Boolean := False);
-   --  Add a new key shortcut for Action (do not remove any existing
-   --  binding). Default_Key can include secondary keymaps, as in
-   --  "control-c control-k".
-   --  If Remove_All_Others is True, then any existing binding for the action
-   --  is removed. Otherwise, the new binding is added to the list of shortcuts
-   --  for this action.
-   --  If Default_Key is the empty string, then any existing binding is removed
-   --  and the action is saved in the user's files so that it will be
-   --  unattached the next time GPS is started.
+     (Table                                : in out Key_Htable.HTable;
+      Action                               : String;
+      Key                                  : String;
+      Save_In_Keys_XML                     : Boolean;
+      Remove_Existing_Shortcuts_For_Action : Boolean;
+      Remove_Existing_Actions_For_Shortcut : Boolean);
+   --  Add a new key shortcut for Action.
+   --  If Remove_Existings_Shortcuts_For_Action, then any binding to this
+   --  action is first cancelled. Otherwise, the binding is added to the list
+   --  of valid shortcuts for this action.
+   --  Key can include secondary keymaps, as in "control-c control-k".
+   --  If Remove_Existing_Actions_For_Shortcut is True, then any action and
+   --  menu currently bound to Key will be detached. Otherwise, the action will
+   --  be executed in addition to all other actions and menus bound to this
+   --  key.
+   --  IIf Key is the empty string, then any binding for the action is removed,
+   --  and the action is saved in keys.xml so that it will be unattached the
+   --  next time GPS is started.
+   --  If Save_In_Keys_XML is true, then the action will be saved in keys.xml
+   --  when GPS exits, and reloaded the next time it is started.
 
    procedure Load_Custom_Keys
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -701,17 +707,17 @@ package body KeyManager_Module is
    -------------------------------
 
    procedure Bind_Default_Key_Internal
-     (Table       : in out Key_Htable.HTable;
-      Action      : String;
-      Default_Key : String;
-      Changed     : Boolean := False;
-      Remove_All_Others : Boolean := False)
-   is
+     (Table                                : in out Key_Htable.HTable;
+      Action                               : String;
+      Key                                  : String;
+      Save_In_Keys_XML                     : Boolean;
+      Remove_Existing_Shortcuts_For_Action : Boolean;
+      Remove_Existing_Actions_For_Shortcut : Boolean)
+  is
       procedure Bind_Internal
         (Table       : in out Key_Htable.HTable;
          Default_Key : Gdk.Types.Gdk_Key_Type;
-         Default_Mod : Gdk.Types.Gdk_Modifier_Type;
-         Changed     : Boolean := False);
+         Default_Mod : Gdk.Types.Gdk_Modifier_Type);
       --  Internal version that allows setting the Changed attribute.
 
       procedure Remove_In_Keymap (Table : in out Key_Htable.HTable);
@@ -724,28 +730,29 @@ package body KeyManager_Module is
       procedure Bind_Internal
         (Table       : in out Key_Htable.HTable;
          Default_Key : Gdk.Types.Gdk_Key_Type;
-         Default_Mod : Gdk.Types.Gdk_Modifier_Type;
-         Changed     : Boolean := False)
+         Default_Mod : Gdk.Types.Gdk_Modifier_Type)
       is
          Tmp, Binding3, Binding2 : Key_Description_List;
       begin
-         Binding3 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
+         if not Remove_Existing_Actions_For_Shortcut then
+            Binding3 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
 
-         --  Check whether the same action is already attached to this key.
-         --  ??? When we have a menu, we should check the underlying action
-         --  if there is any.
-         Tmp := Binding3;
-         while Tmp /= null loop
-            if Tmp.Action /= null and then Tmp.Action.all = Action then
-               return;
-            end if;
-            Tmp := Next (Tmp);
-         end loop;
+            --  Check whether the same action is already attached to this key.
+            --  ??? When we have a menu, we should check the underlying action
+            --  if there is any.
+            Tmp := Binding3;
+            while Tmp /= null loop
+               if Tmp.Action /= null and then Tmp.Action.all = Action then
+                  return;
+               end if;
+               Tmp := Next (Tmp);
+            end loop;
+         end if;
 
          --  Else append Action to the list of actions for this key
          Binding2 := new Key_Description'
            (Action         => new String'(Action),
-            Changed        => Changed,
+            Changed        => Save_In_Keys_XML,
             Next           => null);
 
          if Binding3 /= null then
@@ -826,46 +833,46 @@ package body KeyManager_Module is
          end loop;
       end Remove_In_Keymap;
 
-      Key   : Gdk_Key_Type;
+      Partial_Key : Gdk_Key_Type;
       Modif : Gdk_Modifier_Type;
       First, Last : Integer;
       Keymap  : Keymap_Access;
    begin
       --  Are we trying to cancel all bindings to Action ?
-      if Remove_All_Others
-        or else Default_Key = ""
+      if Remove_Existing_Shortcuts_For_Action
+        or else Key = ""
       then
          Remove_In_Keymap (Table);
       end if;
 
-      if Default_Key = "" or else Default_Key = -Disabled_String then
+      if Key = "" or else Key = -Disabled_String then
          --  Bind to an invalid key, so that when saving we know this should be
          --  removed
-         Bind_Internal (Table, 0, 0, Changed);
+         Bind_Internal (Table, 0, 0);
          return;
       end if;
 
-      First := Default_Key'First;
-      while First <= Default_Key'Last loop
+      First := Key'First;
+      while First <= Key'Last loop
          Last := First + 1;
-         while Last <= Default_Key'Last and then Default_Key (Last) /= ' ' loop
+         while Last <= Key'Last and then Key (Last) /= ' ' loop
             Last := Last + 1;
          end loop;
 
-         Value (Default_Key (First .. Last - 1), Key, Modif);
+         Value (Key (First .. Last - 1), Partial_Key, Modif);
 
-         if Last > Default_Key'Last then
+         if Last > Key'Last then
             if Keymap = null then
-               Bind_Internal (Table, Key, Modif, Changed);
+               Bind_Internal (Table, Partial_Key, Modif);
             else
-               Bind_Internal (Keymap.Table, Key, Modif, Changed);
+               Bind_Internal (Keymap.Table, Partial_Key, Modif);
             end if;
 
          else
             if Keymap = null then
-               Get_Secondary_Keymap (Table, Key, Modif, Keymap);
+               Get_Secondary_Keymap (Table, Partial_Key, Modif, Keymap);
             else
-               Get_Secondary_Keymap (Keymap.Table, Key, Modif, Keymap);
+               Get_Secondary_Keymap (Keymap.Table, Partial_Key, Modif, Keymap);
             end if;
          end if;
 
@@ -983,8 +990,8 @@ package body KeyManager_Module is
                              and then Filter_Matches (Command.Filter, Context))
                   then
                      Trace (Me, "Executing action " & Binding.Action.all);
-                     Found_Action := True;
 
+                     Found_Action := True;
                      Launch_Background_Command
                        (Kernel,
                         Create_Proxy
@@ -1116,10 +1123,11 @@ package body KeyManager_Module is
                --  the last definition is taken into account
                Bind_Default_Key_Internal
                  (Manager.Table,
-                  Action            => Get_Attribute (Child, "action"),
-                  Default_Key       => Child.Value.all,
-                  Remove_All_Others => True,
-                  Changed           => True);
+                  Action           => Get_Attribute (Child, "action"),
+                  Key              => Child.Value.all,
+                  Save_In_Keys_XML => True,
+                  Remove_Existing_Shortcuts_For_Action => True,
+                  Remove_Existing_Actions_For_Shortcut => True);
                Child := Child.Next;
             end loop;
 
@@ -1628,10 +1636,11 @@ package body KeyManager_Module is
             if Key /= "" then
                Bind_Default_Key_Internal
                  (Ed.Bindings,
-                  Action      => Get_String (Ed.Model, Iter, Action_Column),
-                  Default_Key => Key,
-                  Remove_All_Others => True,
-                  Changed     => True);
+                  Action         => Get_String (Ed.Model, Iter, Action_Column),
+                  Key              => Key,
+                  Save_In_Keys_XML => True,
+                  Remove_Existing_Actions_For_Shortcut => True,
+                  Remove_Existing_Shortcuts_For_Action => True);
                Refresh_Editor (Ed);
 
                --  ??? Waiting for F613-014
@@ -1689,9 +1698,10 @@ package body KeyManager_Module is
          Bind_Default_Key_Internal
            (Ed.Bindings,
             Action            => Get_String (Ed.Model, Iter, Action_Column),
-            Default_Key       => "",
-            Remove_All_Others => True,
-            Changed           => True);
+            Key               => "",
+            Save_In_Keys_XML  => True,
+            Remove_Existing_Shortcuts_For_Action => True,
+            Remove_Existing_Actions_For_Shortcut => True);
          Refresh_Editor (Ed);
       end if;
 
@@ -1892,9 +1902,10 @@ package body KeyManager_Module is
             Bind_Default_Key_Internal
               (Editor.Bindings,
                Action            => Accel_Path (First .. Accel_Path'Last),
-               Default_Key       => Image (Accel_Key, Accel_Mods),
-               Changed           => False,
-               Remove_All_Others => False);
+               Key               => Image (Accel_Key, Accel_Mods),
+               Save_In_Keys_XML  => False,
+               Remove_Existing_Actions_For_Shortcut => False,
+               Remove_Existing_Shortcuts_For_Action => False);
          end if;
       end Process_Menu_Binding;
 
@@ -2390,9 +2401,10 @@ package body KeyManager_Module is
             Bind_Default_Key_Internal
               (Keymanager_Module.Key_Manager.Table,
                Action            => Action,
-               Remove_All_Others => False,
-               Changed           => False,
-               Default_Key       => Node.Value.all);
+               Remove_Existing_Shortcuts_For_Action => False,
+               Remove_Existing_Actions_For_Shortcut => True,
+               Save_In_Keys_XML  => False,
+               Key               => Node.Value.all);
          end;
       end if;
    end Customize;
