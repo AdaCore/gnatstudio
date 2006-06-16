@@ -143,7 +143,7 @@ package body Aliases_Module is
       Must_Reindent => False);
 
    package Aliases_Hash is new String_Hash
-     (Alias_Record, Free, No_Alias);
+     (Alias_Record, Free, No_Alias, Case_Sensitive => False);
    use Aliases_Hash.String_Hash_Table;
 
    type Expansion_Function_Record;
@@ -821,8 +821,8 @@ package body Aliases_Module is
          return Ada.Strings.Unbounded.To_String (Result);
       end Find_And_Replace_Cursor;
 
-      Alias  : constant Alias_Record := Get
-        (Aliases_Module_Id.Aliases, Name);
+      Alias  : constant Alias_Record :=
+                 Get (Aliases_Module_Id.Aliases, Name);
       Values : Param_Substitution_Access;
       Dialog : Gtk_Dialog;
       Box    : Gtk_Box;
@@ -931,7 +931,7 @@ package body Aliases_Module is
       pragma Unreferenced (Context);
 
       W         : constant Gtk_Widget :=
-        Get_Current_Focus_Widget (Command.Kernel);
+                    Get_Current_Focus_Widget (Command.Kernel);
       Had_Focus : Boolean;
 
    begin
