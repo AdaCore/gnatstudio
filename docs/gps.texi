@@ -10108,14 +10108,12 @@ Such filters can be defined in one of two places in the customization files:
 @item At the toplevel.
 At the same level as other tags such as @code{<action>}, @code{<menu>} or
 @code{<button>} tags, you can define named filters. These are general filters,
-that can be referenced elsewhere without requiring code duplication. They
-also appear explicitly in the key shortcuts editor if at least one action is
-depending on them.
+that can be referenced elsewhere without requiring code duplication.
 
 @item As a child of the @code{<action>} tag.
 Such filters are anonymous, although they provide exactly the same capabilities
 as the ones above. These are mostly meant for simple filters, or filters that
-you use only once, or don't want to appear in the key shortcuts manager.
+you use only once.
 @end enumerate
 
 There are three different kinds of tags:
@@ -10149,8 +10147,7 @@ following set of common attributes:
 @item name       (optional)
 This attribute is used to create named filters, that can be reused elsewhere
 in actions or compound filters through the @code{id} attribute. The name can
-take any form. This is also the name that appears in the context of the
-key shortcuts editor.
+take any form.
 
 @item error      (optional)
 This is the error message printed in the GPS console if the filter doesn't
@@ -10179,8 +10176,7 @@ can make an action depend on a named filter:
 </test_filter>
 @end smallexample
 
-  A number of filters are predefined by GPS itself. The full list appears in
-  the key shortcut editor, and is listed here:
+  A number of filters are predefined by GPS itself.
 
   @table @code
   @item Source editor
@@ -10623,9 +10619,8 @@ preexisting binding. The second example below deactivates the standard binding.
 </key>
 @end smallexample
 
-Multiple actions can be bound to the same key binding. The first one with a
-filter valid for the current context is executed. If no action with a filter
-can be executed, then the first action with no filter will be executed.
+Multiple actions can be bound to the same key binding. They will all be
+executed in turn, followed by any menu for which this key is an accelerator.
 
 @c ----------------------------------------------------------------
 @node Preferences support in custom files
