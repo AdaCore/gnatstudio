@@ -1446,18 +1446,21 @@ package body Call_Graph_Views is
       Command := new Entity_Calls_Command;
       Register_Contextual_Menu
         (Kernel, "Entity calls",
-         Label    => "References/%e calls (in tree)",
-         Ref_Item => "Entity calls in browser",
-         Filter   => Filter,
-         Action   => Command);
+         Label      => "%e calls",
+         Filter     => Filter,
+         Action     => Command,
+         Ref_Item   => "Goto file spec<->body",
+         Add_Before => False);
 
       Command := new Entity_Called_By_Command;
       Register_Contextual_Menu
         (Kernel, "Entity called by",
-         Label    => "References/%e is called by (in tree)",
-         Ref_Item => "Entity called by in browser",
-         Filter   => Filter,
-         Action   => Command);
+         Label      => "%e is called by",
+         Filter     => Filter,
+         Action     => Command,
+         Ref_Item   => "Entity calls",
+         Add_Before => False);
+
    end Register_Module;
 
 end Call_Graph_Views;

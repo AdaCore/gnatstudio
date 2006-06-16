@@ -2628,8 +2628,6 @@ package body Src_Editor_Module is
         (Kernel, "Goto declaration of entity",
          Action     => Command,
          Label      => -"Goto declaration of %e",
-         Ref_Item   => "Examine entity",
-         Add_Before => True,
          Filter     => Action_Filter
            (not Line_Numbers_Area_Filter
             and Create (Module => Src_Editor_Module_Name)));
@@ -2641,8 +2639,6 @@ package body Src_Editor_Module is
         (Kernel, "Goto body of entity",
          Action     => Command,
          Label      => Label,
-         Ref_Item   => "Goto declaration of entity",
-         Add_Before => False,
          Filter     => Filter);
 
       Command := new Goto_Type_Command;
@@ -2651,8 +2647,6 @@ package body Src_Editor_Module is
         (Kernel, "Goto type of entity",
          Action     => Command,
          Label      => -"Goto type declaration of %e",
-         Ref_Item   => "Goto body of entity",
-         Add_Before => False,
          Filter     => Filter);
 
       Command := new Goto_Other_File_Command;
@@ -2661,14 +2655,7 @@ package body Src_Editor_Module is
         (Kernel, "Goto file spec<->body",
          Action     => Command,
          Label      => -"Goto file spec<->body",
-         Ref_Item   => "Goto type of entity",
-         Add_Before => False,
          Filter     => Filter);
-
-      Register_Contextual_Submenu
-        (Kernel, "References",
-         Ref_Item   => "Goto file spec<->body",
-         Add_Before => False);
 
       Command := new Edit_File_Command;
       Register_Contextual_Menu
@@ -2716,10 +2703,10 @@ package body Src_Editor_Module is
          Default_Key => "");
 
       Register_Module
-        (Module                  => Src_Editor_Module_Id,
-         Kernel                  => Kernel,
-         Module_Name             => Src_Editor_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Src_Editor_Module_Id,
+         Kernel      => Kernel,
+         Module_Name => Src_Editor_Module_Name,
+         Priority    => Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 

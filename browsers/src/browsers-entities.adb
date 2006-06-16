@@ -483,17 +483,23 @@ package body Browsers.Entities is
       Command : Interactive_Command_Access;
    begin
       Entity_Browser_Module := new Entity_Browser_Module_Record;
+
       Register_Module
-        (Module                  => Entity_Browser_Module,
-         Kernel                  => Kernel,
-         Module_Name             => "Entity_Browser");
+        (Module      => Entity_Browser_Module,
+         Kernel      => Kernel,
+         Module_Name => "Entity_Browser");
+
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
       Command := new Examine_Entity_Command;
+
       Register_Contextual_Menu
         (Kernel, "Examine entity",
-         Label  => -"Examine entity %e",
-         Action => Command);
+         Label      => -"Browsers/Examine entity %e",
+         Action     => Command,
+         Ref_Item   => "Entity called by in browser",
+         Add_Before => False);
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & (-"Tools") & '/' & (-"Browsers"),

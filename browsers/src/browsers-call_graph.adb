@@ -2113,51 +2113,44 @@ package body Browsers.Call_Graph is
       Filter := new Container_Entity_Filter;
       Register_Filter (Kernel, Filter, "Entity is container");
 
-      Command := new Entity_Calls_Command;
-      Register_Contextual_Menu
-        (Kernel, "Entity calls in browser",
-         Label  => "References/%e calls (in browser)",
-         Filter => Filter,
-         Action => Command);
-
-      Register_Contextual_Menu
-        (Kernel, "",
-         Label  => "References/",
-         Filter => Filter,
-         Action => null);
-      --  Separator
-
-      Command := new Entity_Called_By_Command;
-      Register_Contextual_Menu
-        (Kernel, "Entity called by in browser",
-         Label  => "References/%e is called by (in browser)",
-         Filter => Filter,
-         Action => Command);
-
-      Register_Contextual_Menu
-        (Kernel, "",
-         Label  => "References/",
-         Filter => Filter,
-         Action => null);
-      --  Separator
+      Register_Contextual_Submenu
+        (Kernel, "References",
+         Ref_Item   => "Goto file spec<->body",
+         Add_Before => False);
 
       Command := new Find_All_Refs_Command;
       Register_Contextual_Menu
         (Kernel, "Find all references",
-         Label  => "References/Find all references to %e",
-         Action => Command);
+         Label      => "References/Find all references to %e",
+         Action     => Command,
+         Ref_Item   => "Entity called by",
+         Add_Before => False);
 
       Command := new Find_Specific_Refs_Command;
       Register_Contextual_Menu
         (Kernel, "Find references...",
-         Label  => "References/Find references to %e...",
-         Action => Command);
+         Label      => "References/Find references to %e...",
+         Action     => Command);
 
       Command := new Find_All_Refs_Command;
       Find_All_Refs_Command (Command.all).Locals_Only := True;
       Register_Contextual_Menu
         (Kernel, "Find all local references",
          Label  => "References/Find all local references to %e",
+         Action => Command);
+
+      Command := new Entity_Calls_Command;
+      Register_Contextual_Menu
+        (Kernel, "Entity calls in browser",
+         Label  => "Browsers/%e calls",
+         Filter => Filter,
+         Action => Command);
+
+      Command := new Entity_Called_By_Command;
+      Register_Contextual_Menu
+        (Kernel, "Entity called by in browser",
+         Label  => "Browsers/%e is called by",
+         Filter => Filter,
          Action => Command);
 
       Command := new Edit_Spec_Command;
