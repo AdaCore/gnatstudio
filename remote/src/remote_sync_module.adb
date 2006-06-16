@@ -578,8 +578,6 @@ package body Remote_Sync_Module is
             if Cb_Data.Synchronous and then not Cb_Data.Dialog_Running then
                --  Get number of files to consider
                Pulse (Cb_Data.Dialog.Progress);
-               Last := Stripped_Buffer'Last - 1;
-
                Last := Stripped_Buffer'First;
 
                loop
