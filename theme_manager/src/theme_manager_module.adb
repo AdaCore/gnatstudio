@@ -293,6 +293,7 @@ package body Theme_Manager_Module is
             Add_Child (Themes.Xml, Deep_Copy (Node.Child), Append => True);
 
             if Theme_Active then
+               Trace (Me, "Loading theme " & Name);
                Load_XML_Theme (Kernel, File, Node.Child);
             end if;
          end;
@@ -401,6 +402,7 @@ package body Theme_Manager_Module is
             if Setting then
                while Themes /= null loop
                   if Themes.Name.all = Name then
+                     Trace (Me, "Loading theme " & Name);
                      Load_XML_Theme
                        (Ed.Kernel, VFS.No_File, Themes.Xml.Child);
                      exit;
