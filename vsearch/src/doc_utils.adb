@@ -115,7 +115,8 @@ package body Doc_Utils is
          Buffer        => Buffer.all,
          Decl_Index    => Index,
          Comment_Start => Beginning,
-         Comment_End   => Current);
+         Comment_End   => Current,
+         Debug         => Me);
 
       if Beginning = 0 then
          --  No documentation has been found before the entity.
@@ -127,7 +128,8 @@ package body Doc_Utils is
             Buffer        => Buffer.all,
             Decl_Index    => Index,
             Comment_Start => Beginning,
-            Comment_End   => Current);
+            Comment_End   => Current,
+            Debug         => Me);
 
          --  ??? The documentation should be returned only if followed with a
          --  blank line.
@@ -180,7 +182,8 @@ package body Doc_Utils is
                      Buffer        => Buffer.all,
                      Decl_Index    => Index,
                      Comment_Start => Beginning,
-                     Comment_End   => Current);
+                     Comment_End   => Current,
+                     Debug         => Me);
                end if;
             end if;
          end;
@@ -216,7 +219,8 @@ package body Doc_Utils is
                      Buffer        => Buffer.all,
                      Decl_Index    => Index,
                      Comment_Start => Beginning,
-                     Comment_End   => Current);
+                     Comment_End   => Current,
+                     Debug         => Me);
                end if;
             end if;
          end if;
