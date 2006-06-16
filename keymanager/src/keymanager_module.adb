@@ -20,13 +20,15 @@
 
 with Ada.Calendar;            use Ada.Calendar;
 with Ada.Exceptions;          use Ada.Exceptions;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with System.Assertions;       use System.Assertions;
+
+with Pango.Enums;             use Pango.Enums;
 
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
@@ -41,10 +43,12 @@ with Gtk.Accel_Map;           use Gtk.Accel_Map;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Button;              use Gtk.Button;
 with Gtk.Cell_Renderer_Text;  use Gtk.Cell_Renderer_Text;
+with Gtk.Check_Button;        use Gtk.Check_Button;
 with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Event_Box;           use Gtk.Event_Box;
 with Gtk.Frame;               use Gtk.Frame;
+with Gtk.Hbutton_Box;         use Gtk.Hbutton_Box;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
@@ -53,13 +57,17 @@ with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Separator;           use Gtk.Separator;
 with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
+with Gtk.Text_Iter;           use Gtk.Text_Iter;
+with Gtk.Text_Tag;            use Gtk.Text_Tag;
 with Gtk.Text_View;           use Gtk.Text_View;
+with Gtk.Tooltips;            use Gtk.Tooltips;
 with Gtk.Tree_Model;          use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;   use Gtk.Tree_Model_Filter;
+with Gtk.Tree_Model_Sort;     use Gtk.Tree_Model_Sort;
 with Gtk.Tree_Selection;      use Gtk.Tree_Selection;
 with Gtk.Tree_Store;          use Gtk.Tree_Store;
 with Gtk.Tree_View;           use Gtk.Tree_View;
 with Gtk.Tree_View_Column;    use Gtk.Tree_View_Column;
-with Gtk.Vbutton_Box;         use Gtk.Vbutton_Box;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
 
@@ -108,7 +116,6 @@ package body KeyManager_Module is
       Key      : Gdk_Key_Type;
       Modifier : Gdk_Modifier_Type;
    end record;
-   No_Binding : constant Key_Binding := (100000, 1000000);
 
    type Keymap_Record;
    type Keymap_Access is access Keymap_Record;
@@ -133,11 +140,18 @@ package body KeyManager_Module is
    function Next (Key : Key_Description_List) return Key_Description_List;
    --  Return the next element in the list
 
+   procedure Set_Keymap
+     (Key : in out Key_Description_List; Keymap : Keymap_Access);
    function Get_Keymap (Key : Key_Description_List) return Keymap_Access;
    --  Return the secondary keymap associated with Key.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Key_Description, Key_Description_List);
+
+   procedure Free_Non_Recursive (Element : in out Key_Description_List);
+   --  Free Element, but not its sibling.
+   --  Warning: this breaks the list in which Element was, since the previous
+   --  element will still point to Element.
 
    function Hash (Key : Key_Binding) return Keys_Header_Num;
    procedure Free (Element : in out Key_Description_List);
@@ -153,11 +167,20 @@ package body KeyManager_Module is
       Equal        => "=");
    use Key_Htable;
 
+   procedure Clone
+     (From : Key_Htable.HTable; To : out Key_Htable.HTable);
+   procedure Clone
+     (From : Key_Description_List; To : out Key_Description_List);
+   --  Deep-copy of From
+
    type Keymap_Record is record
       Table : Key_Htable.HTable;
    end record;
    for Keymap_Record'Alignment use
      Integer'Min (16, Standard'Maximum_Alignment);
+   --  Mapping between keys and actions. This table doesn't include the
+   --  shortcuts for menus in general, although it might after the key
+   --  shortcuts editor has been opened.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Keymap_Record, Keymap_Access);
@@ -220,12 +243,6 @@ package body KeyManager_Module is
    --  ??? Global variable, could be queries from the kernel
    Keymanager_Module : Keymanager_Module_ID;
 
-   procedure Bind_Default_Key
-     (Handler     : access Key_Manager_Record;
-      Action      : String;
-      Default_Key : String);
-   --  Bind Default_Key to Action, see doc in GPS.Kernel.Bind_Default_Key
-
    function Process_Event
      (Handler : access Key_Manager_Record;
       Kernel  : access Kernel_Handle_Record'Class;
@@ -236,12 +253,20 @@ package body KeyManager_Module is
    --  Free the memoru occupied by the key manager
 
    procedure Bind_Default_Key_Internal
-     (Handler     : access Key_Manager_Record;
+     (Table       : in out Key_Htable.HTable;
       Action      : String;
       Default_Key : String;
-      Changed     : Boolean := False);
-   --  Same as above, except Default_Key can also include secondary keymaps
-   --  as in "control-c control-k"
+      Changed     : Boolean := False;
+      Remove_All_Others : Boolean := False);
+   --  Add a new key shortcut for Action (do not remove any existing
+   --  binding). Default_Key can include secondary keymaps, as in
+   --  "control-c control-k".
+   --  If Remove_All_Others is True, then any existing binding for the action
+   --  is removed. Otherwise, the new binding is added to the list of shortcuts
+   --  for this action.
+   --  If Default_Key is the empty string, then any existing binding is removed
+   --  and the action is saved in the user's files so that it will be
+   --  unattached the next time GPS is started.
 
    procedure Load_Custom_Keys
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -303,36 +328,54 @@ package body KeyManager_Module is
    --  Exit the current nest main loop, if any
 
    type Keys_Editor_Record is new Gtk_Dialog_Record with record
-      Kernel      : Kernel_Handle;
-      View        : Gtk_Tree_View;
-      Model       : Gtk_Tree_Store;
-      Help        : Gtk_Text_Buffer;
-      Action_Name : Gtk_Label;
+      Kernel             : Kernel_Handle;
+      Bindings           : Key_Htable.HTable;
+      View               : Gtk_Tree_View;
+      Model              : Gtk_Tree_Store;
+      Filter             : Gtk_Tree_Model_Filter;
+      Sort               : Gtk_Tree_Model_Sort;
+      Help               : Gtk_Text_Buffer;
+      Action_Name        : Gtk_Label;
+      With_Shortcut_Only : Gtk_Check_Button;
+      Flat_List          : Gtk_Check_Button;
+      Remove_Button      : Gtk_Button;
+      Grab_Button        : Gtk_Button;
    end record;
    type Keys_Editor is access all Keys_Editor_Record'Class;
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class);
    --  Fill the contents of the editor
 
+   procedure Refresh_Editor (Editor : access Keys_Editor_Record'Class);
+   --  Refresh the list of key bindings in editor. Better use this one than
+   --  Fill_Editor when possible, since this will preserve expanded/closed
+   --  nodes
+
    procedure Save_Editor (Editor : access Keys_Editor_Record'Class);
    --  Save the contents of the editor
+
+   procedure On_Toggle_Flat_List (Editor : access Gtk_Widget_Record'Class);
+   --  Called when the user toggles the "View Flat List" filter button
+
+   procedure On_Toggle_Shortcuts_Only
+     (Editor : access Gtk_Widget_Record'Class);
+   --  Called when the user toggles "View only actions with shortcuts"
+
+   package Keys_Editor_Visible_Funcs is new Gtk.Tree_Model_Filter.Visible_Funcs
+     (Keys_Editor);
+   function Action_Is_Visible
+     (Model : access Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk_Tree_Iter;
+      Data  : Keys_Editor) return Boolean;
+   --  Selects whether a given row should be visible in the key shortcuts
+   --  editor.
 
    function Set
      (Model      : Gtk_Tree_Store;
       Parent     : Gtk_Tree_Iter;
       Descr      : String;
-      Changed    : Boolean := False;
-      Key        : String := "";
-      Accel_Path : String := "") return Gtk_Tree_Iter;
+      Key        : String := "") return Gtk_Tree_Iter;
    --  Add a new line into the model
-
-   procedure Lookup_Command_By_Name
-     (Handler : access Key_Manager_Record;
-      Action  : String;
-      Keymap  : out Keymap_Access;
-      Key     : out Key_Binding;
-      Binding : out Key_Description_List);
-   --  Search the description of a command in the table
 
    procedure Add_Selection_Changed (Editor : access Gtk_Widget_Record'Class);
    --  Called when the selection has changed
@@ -364,13 +407,20 @@ package body KeyManager_Module is
    --  intercepts all events going through the application
 
    function Lookup_Key_From_Action
-     (Handler : Key_Manager_Access; Action : String) return String;
-   --  Return the key binding set for a specific action
+     (Table             : Key_Htable.HTable;
+      Action            : String;
+      Default           : String := "none";
+      Use_Markup        : Boolean := True) return String;
+   --  Return the list of key bindings set for a specific action. The returned
+   --  string can be displayed as is to the user, but is not suitable for
+   --  parsing as a keybinding. The list of keybindings includes the
+   --  accelerators set by gtk+ for its menus (in which case Accel_Path_Prefix
+   --  needs to be defined)
+   --  If Use_Markup is true, then the "or" that separates several shortcuts
+   --  is displayed with a different font.
 
    Action_Column     : constant := 0;
    Key_Column        : constant := 1;
-   Changed_Column    : constant := 2;
-   Accel_Path_Column : constant := 3;
 
    -------------
    -- Destroy --
@@ -534,6 +584,20 @@ package body KeyManager_Module is
       end if;
    end Get_Keymap;
 
+   ----------------
+   -- Set_Keymap --
+   ----------------
+
+   procedure Set_Keymap
+     (Key : in out Key_Description_List; Keymap : Keymap_Access)
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (Keymap_Access, Key_Description_List);
+   begin
+      Key.Action := null;
+      Key.Next := Convert (Keymap);
+   end Set_Keymap;
+
    ----------
    -- Hash --
    ----------
@@ -545,6 +609,25 @@ package body KeyManager_Module is
           mod Integer (Keys_Header_Num'Last + 1));
    end Hash;
 
+   ------------------------
+   -- Free_Non_Recursive --
+   ------------------------
+
+   procedure Free_Non_Recursive (Element : in out Key_Description_List) is
+      Keymap  : Keymap_Access;
+   begin
+      if Element.Action = null then
+         Keymap := Get_Keymap (Element);
+         if Keymap /= null then
+            Reset (Keymap.Table);
+            Unchecked_Free (Keymap);
+         end if;
+      else
+         Free (Element.Action);
+      end if;
+      Unchecked_Free (Element);
+   end Free_Non_Recursive;
+
    ----------
    -- Free --
    ----------
@@ -552,153 +635,128 @@ package body KeyManager_Module is
    procedure Free (Element : in out Key_Description_List) is
       Current : Key_Description_List := Element;
       N       : Key_Description_List;
-      Keymap  : Keymap_Access;
    begin
       while Current /= null loop
          N := Next (Current);
-
-         if Current.Action = null then
-            Keymap := Get_Keymap (Current);
-            Reset (Keymap.Table);
-            Unchecked_Free (Keymap);
-         else
-            Free (Current.Action);
-         end if;
-         Unchecked_Free (Current);
+         Free_Non_Recursive (Current);
          Current := N;
       end loop;
    end Free;
 
-   ----------------------------
-   -- Lookup_Command_By_Name --
-   ----------------------------
+   -----------
+   -- Clone --
+   -----------
 
-   procedure Lookup_Command_By_Name
-     (Handler : access Key_Manager_Record;
-      Action  : String;
-      Keymap  : out Keymap_Access;
-      Key     : out Key_Binding;
-      Binding : out Key_Description_List)
+   procedure Clone
+     (From : Key_Description_List; To : out Key_Description_List)
    is
-      procedure Process_Table
-        (Table : in out Key_Htable.HTable;
-         Map   : Keymap_Access;
-         Found : out Boolean);
-      --  Process a keymap..
-
-      procedure Process_Table
-        (Table : in out Key_Htable.HTable;
-         Map   : Keymap_Access;
-         Found : out Boolean)
-      is
-         Iter : Key_Htable.Iterator;
-         Bind : Key_Description_List;
-      begin
-         Get_First (Table, Iter);
-         loop
-            Bind := Get_Element (Iter);
-            exit when Bind = No_Key;
-
-            while Bind /= null loop
-               if Bind.Action /= null then
-                  if Bind.Action.all = Action then
-                     Key     := Get_Key (Iter);
-                     Binding := Bind;
-                     Found   := True;
-                     Keymap  := Map;
-                     return;
-                  end if;
-               else
-                  Process_Table (Get_Keymap (Bind).Table,
-                                 Get_Keymap (Bind),
-                                 Found);
-                  --  Cannot process Bind.Next, which is a keymap
-                  return;
-               end if;
-               Bind := Next (Bind);
-            end loop;
-
-            Get_Next (Table, Iter);
-         end loop;
-         Found := False;
-      end Process_Table;
-
-      Found : Boolean;
+      Tmp    : Key_Description_List := From;
+      Tmp_To : Key_Description_List;
+      Keymap : Keymap_Access;
    begin
-      --  We do not use the most efficient method, since we simply
-      --  traverse a list, but there aren't hundreds of keybindings...
+      To := null;
+      while Tmp /= null loop
+         if To = null then
+            Tmp_To := new Key_Description;
+            To     := Tmp_To;
+         else
+            Tmp_To.Next := new Key_Description;
+            Tmp_To      := Tmp_To.Next;
+         end if;
 
-      Process_Table (Handler.Table, null, Found);
+         if Tmp.Action /= null then
+            Tmp_To.Action := new String'(Tmp.Action.all);
+         elsif Get_Keymap (Tmp) /= null then
+            Keymap := new Keymap_Record;
+            Clone (From => Get_Keymap (Tmp).Table, To => Keymap.Table);
+            Set_Keymap (Tmp_To, Keymap);
+         else
+            Tmp_To.Action := null;
+         end if;
+         Tmp_To.Changed := Tmp.Changed;
+         Tmp := Next (Tmp);
+      end loop;
+   end Clone;
 
-      if not Found then
-         Keymap  := null;
-         Key     := No_Binding;
-         Binding := null;
-      end if;
-   end Lookup_Command_By_Name;
+   -----------
+   -- Clone --
+   -----------
 
-   ----------------------
-   -- Bind_Default_Key --
-   ----------------------
-
-   procedure Bind_Default_Key
-     (Handler     : access Key_Manager_Record;
-      Action      : String;
-      Default_Key : String) is
+   procedure Clone
+     (From : Key_Htable.HTable; To : out Key_Htable.HTable)
+   is
+      Iter : Key_Htable.Iterator;
+      List : Key_Description_List;
    begin
-      Bind_Default_Key_Internal
-        (Handler, Action, Default_Key, Changed => False);
-   end Bind_Default_Key;
+      Get_First (From, Iter);
+      while Get_Element (Iter) /= null loop
+         Clone (From => Get_Element (Iter), To => List);
+         Set (To, Get_Key (Iter), List);
+         Get_Next (From, Iter);
+      end loop;
+   end Clone;
 
    -------------------------------
    -- Bind_Default_Key_Internal --
    -------------------------------
 
    procedure Bind_Default_Key_Internal
-     (Handler     : access Key_Manager_Record;
+     (Table       : in out Key_Htable.HTable;
       Action      : String;
       Default_Key : String;
-      Changed     : Boolean := False)
+      Changed     : Boolean := False;
+      Remove_All_Others : Boolean := False)
    is
-      Binding : Key_Description_List;
-      Bind    : Key_Binding;
-
-      procedure Bind_Default_Key_Internal
+      procedure Bind_Internal
         (Table       : in out Key_Htable.HTable;
-         Action      : String;
          Default_Key : Gdk.Types.Gdk_Key_Type;
          Default_Mod : Gdk.Types.Gdk_Modifier_Type;
          Changed     : Boolean := False);
       --  Internal version that allows setting the Changed attribute.
 
-      -------------------------------
-      -- Bind_Default_Key_Internal --
-      -------------------------------
+      procedure Remove_In_Keymap (Table : in out Key_Htable.HTable);
+      --  Remove all bindings to Action in Table and its secondary keymaps
 
-      procedure Bind_Default_Key_Internal
+      -------------------
+      -- Bind_Internal --
+      -------------------
+
+      procedure Bind_Internal
         (Table       : in out Key_Htable.HTable;
-         Action      : String;
          Default_Key : Gdk.Types.Gdk_Key_Type;
          Default_Mod : Gdk.Types.Gdk_Modifier_Type;
          Changed     : Boolean := False)
       is
-         Binding3, Binding2 : Key_Description_List;
+         Tmp, Binding3, Binding2 : Key_Description_List;
       begin
-         --  We do not need to remove the previous entry, since the table was
-         --  reset before saving the keybindings
+         Binding3 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
+
+         --  Check whether the same action is already attached to this key.
+         --  ??? When we have a menu, we should check the underlying action
+         --  if there is any.
+         Tmp := Binding3;
+         while Tmp /= null loop
+            if Tmp.Action /= null and then Tmp.Action.all = Action then
+               return;
+            end if;
+            Tmp := Next (Tmp);
+         end loop;
+
+         --  Else append Action to the list of actions for this key
          Binding2 := new Key_Description'
            (Action         => new String'(Action),
             Changed        => Changed,
             Next           => null);
-         Binding3 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
 
          if Binding3 /= null then
+            --  Do not touch the first element, so that we do not need to
+            --  reinsert the element in the htable.
             Binding2.Next := Binding3.Next;
             Binding3.Next := Binding2;
 
             if Binding3.Action = null then
                --  Since Binding3 is a secondary keymap, we need to insert the
-               --  new key before it
+               --  new key before it. Secondary keymaps are always at the end.
                declare
                   Tmp : constant Key_Description := Binding2.all;
                begin
@@ -708,27 +766,82 @@ package body KeyManager_Module is
                   Binding3.Changed := Tmp.Changed;
                end;
             end if;
+
          else
             Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
          end if;
-      end Bind_Default_Key_Internal;
+      end Bind_Internal;
+
+      ----------------------
+      -- Remove_In_Keymap --
+      ----------------------
+
+      procedure Remove_In_Keymap
+        (Table : in out Key_Htable.HTable)
+      is
+         Iter : Key_Htable.Iterator;
+         List, Previous, Tmp : Key_Description_List;
+      begin
+         Get_First (Table, Iter);
+         while Get_Element (Iter) /= null loop
+            List := Get_Element (Iter);
+            Previous := null;
+            while List /= null loop
+               if List.Action = null then
+                  if Get_Keymap (List) /= null then
+                     Remove_In_Keymap (Get_Keymap (List).Table);
+                  end if;
+                  Previous := List;
+                  List := Next (List);
+
+               elsif List.Action.all = Action then
+                  if Previous = null then
+                     if Next (List) /= null then
+                        --  Remove list from the list of keybindings, without
+                        --  modifying the htable itself to avoid invalidating
+                        --  the iterator
+                        Tmp := Next (List);
+                        Free (List.Action);
+                        List.all := Tmp.all;
+                        Unchecked_Free (Tmp);
+                     else
+                        --  There was a single element with this key binding:
+                        Free (List.Action);
+                        List.Next := null;
+                     end if;
+
+                  else
+                     Previous.Next := Next (List);
+                     Free_Non_Recursive (List);
+                     List := Next (Previous);
+                  end if;
+
+               else
+                  Previous := List;
+                  List := Next (List);
+               end if;
+            end loop;
+
+            Get_Next (Table, Iter);
+         end loop;
+      end Remove_In_Keymap;
 
       Key   : Gdk_Key_Type;
       Modif : Gdk_Modifier_Type;
       First, Last : Integer;
       Keymap  : Keymap_Access;
    begin
-      Lookup_Command_By_Name (Handler, Action, Keymap, Bind, Binding);
-      if Binding /= null then
-         --  Keep the current key binding, since it was probably
-         --  customized by the user
-         Binding.Changed := Binding.Changed or else Changed;
-         return;
+      --  Are we trying to cancel all bindings to Action ?
+      if Remove_All_Others
+        or else Default_Key = ""
+      then
+         Remove_In_Keymap (Table);
       end if;
 
       if Default_Key = "" or else Default_Key = -Disabled_String then
-         Bind_Default_Key_Internal
-           (Handler.Table, Action, 0, 0, Changed);
+         --  Bind to an invalid key, so that when saving we know this should be
+         --  removed
+         Bind_Internal (Table, 0, 0, Changed);
          return;
       end if;
 
@@ -743,16 +856,14 @@ package body KeyManager_Module is
 
          if Last > Default_Key'Last then
             if Keymap = null then
-               Bind_Default_Key_Internal
-                 (Handler.Table, Action, Key, Modif, Changed);
+               Bind_Internal (Table, Key, Modif, Changed);
             else
-               Bind_Default_Key_Internal
-                 (Keymap.Table, Action, Key, Modif, Changed);
+               Bind_Internal (Keymap.Table, Key, Modif, Changed);
             end if;
 
          else
             if Keymap = null then
-               Get_Secondary_Keymap (Handler.Table, Key, Modif, Keymap);
+               Get_Secondary_Keymap (Table, Key, Modif, Keymap);
             else
                Get_Secondary_Keymap (Keymap.Table, Key, Modif, Keymap);
             end if;
@@ -821,11 +932,9 @@ package body KeyManager_Module is
       Modif   : Gdk_Modifier_Type := Get_State (Event);
       Binding : Key_Description_List;
       Command : Action_Record_Access;
-      Any_Context_Command : Action_Record_Access := null;
       Has_Secondary : constant Boolean := Handler.Secondary_Keymap /= null;
       Context : Selection_Context;
       Context_Computed : Boolean := False;
-      Custom  : Command_Access;
 
    begin
       --  We could test Modif /= 0 if we allowed only key shortcuts with a
@@ -847,10 +956,12 @@ package body KeyManager_Module is
 
          Handler.Secondary_Keymap := null;
 
+         --  Execute all commands bound to this key. The order is somewhat
+         --  random, since it depends in what order the key shortcuts were
+         --  defined.
          while Binding /= No_Key loop
             if Binding.Action = null then
                Handler.Secondary_Keymap := Get_Keymap (Binding);
-               return True;
 
             else
                Command := Lookup_Action (Kernel, Binding.Action.all);
@@ -860,84 +971,43 @@ package body KeyManager_Module is
                     (Kernel, -"Action not defined: " & Binding.Action.all);
 
                elsif Command.Command /= null then
-                  --  We'll have to test last the commands that apply anywhere,
-                  --  to give a chance to more specialized commands to get
-                  --  called first.
-                  if Command.Filter = null then
-                     Any_Context_Command := Command;
-                     Trace (Me, "Candidate action in any context: "
-                            & Binding.Action.all);
+                  if not Context_Computed then
+                     Context := Get_Current_Context (Kernel);
+                     Context_Computed := True;
+                  end if;
 
-                  else
-                     if not Context_Computed then
-                        Context := Get_Current_Context (Kernel);
-                        Context_Computed := True;
-                     end if;
+                  if Command.Filter = null
+                    or else (Context /= No_Context
+                             and then Filter_Matches (Command.Filter, Context))
+                  then
+                     Trace (Me, "Executing action " & Binding.Action.all);
 
-                     if Context /= No_Context
-                       and then Filter_Matches (Command.Filter, Context)
-                     then
-                        Trace (Me, "Executing action " & Binding.Action.all);
-
-                        Launch_Background_Command
-                          (Kernel,
-                           Create_Proxy
-                             (Command.Command,
-                              (Event,
-                               Context,
-                               False,
-                               null,
-                               null,
-                               new String'(Binding.Action.all))),
-                           Destroy_On_Exit => False,
-                           Active          => True,
-                           Show_Bar        => False,
-                           Queue_Id        => "");
-                        return True;
-                     end if;
+                     Launch_Background_Command
+                       (Kernel,
+                        Create_Proxy
+                          (Command.Command,
+                           (Event,
+                            Context,
+                            False,
+                            null,
+                            null,
+                            new String'(Binding.Action.all))),
+                        Destroy_On_Exit => False,
+                        Active          => True,
+                        Show_Bar        => False,
+                        Queue_Id        => "");
                   end if;
                end if;
             end if;
 
             Binding := Next (Binding);
          end loop;
-
-         if Any_Context_Command /= null then
-            Trace (Me, "Executing any context action");
-
-            if not Context_Computed then
-               Context := Get_Current_Context (Kernel);
-               Context_Computed := True;
-            end if;
-
-            if Any_Context_Command.Description = null then
-               Custom :=
-                 Create_Proxy
-                   (Any_Context_Command.Command,
-                    (Event, Context, False,  null, null, null));
-            else
-               Custom :=
-                 Create_Proxy
-                   (Any_Context_Command.Command,
-                    (Event,
-                     Context,
-                     False,
-                     null,
-                     null,
-                     new String'(Any_Context_Command.Description.all)));
-            end if;
-
-            Launch_Background_Command
-              (Kernel, Custom,
-               Destroy_On_Exit => False,
-               Active          => True,
-               Show_Bar        => False,
-               Queue_Id        => "");
-            return True;
-         end if;
       end if;
 
-      --  Never pass through an event from a secondary keymap
+      --  Let gtk+ handle all events even if we have already processed one or
+      --  more actions, since we want to execute everything related to that
+      --  key. However, do not let events through if they are in a secondary
+      --  keymap, since the shortcuts is too complex for gtk+ anyway.
       return Has_Secondary;
 
    exception
@@ -984,11 +1054,13 @@ package body KeyManager_Module is
                   Add_Child (File, Child);
 
                elsif Binding.Action = null then
-                  Save_Table (Get_Keymap (Binding).Table,
-                              Prefix
-                              & Image (Get_Key (Iter).Key,
-                                       Get_Key (Iter).Modifier)
-                              & ' ');
+                  if Get_Keymap (Binding) /= null then
+                     Save_Table (Get_Keymap (Binding).Table,
+                       Prefix
+                       & Image (Get_Key (Iter).Key,
+                         Get_Key (Iter).Modifier)
+                       & ' ');
+                  end if;
                end if;
 
                Binding := Next (Binding);
@@ -1033,11 +1105,14 @@ package body KeyManager_Module is
             Child := File.Child;
 
             while Child /= null loop
+               --  Remove all other bindings previously defined, so that only
+               --  the last definition is taken into account
                Bind_Default_Key_Internal
-                 (Manager,
-                  Action      => Get_Attribute (Child, "action"),
-                  Default_Key => Child.Value.all,
-                  Changed     => True);
+                 (Manager.Table,
+                  Action            => Get_Attribute (Child, "action"),
+                  Default_Key       => Child.Value.all,
+                  Remove_All_Others => True,
+                  Changed           => True);
                Child := Child.Next;
             end loop;
 
@@ -1134,21 +1209,13 @@ package body KeyManager_Module is
      (Model      : Gtk_Tree_Store;
       Parent     : Gtk_Tree_Iter;
       Descr      : String;
-      Changed    : Boolean := False;
-      Key        : String := "";
-      Accel_Path : String := "") return Gtk_Tree_Iter
+      Key        : String := "") return Gtk_Tree_Iter
    is
       procedure Set
         (Tree, Iter : System.Address;
          Col1       : Gint; Value1 : String;
-         Col2       : Gint; Value2 : String;
-         Col3       : Gint; Value3 : Gboolean);
-      pragma Import (C, Set, "ada_gtk_tree_store_set_ptr_ptr_int");
-
-      procedure Set2
-        (Tree, Iter : System.Address;
-         Col4       : Gint; Value4 : String);
-      pragma Import (C, Set2, "ada_gtk_tree_store_set_ptr");
+         Col2       : Gint; Value2 : String);
+      pragma Import (C, Set, "ada_gtk_tree_store_set_ptr_ptr");
 
       Iter : Gtk_Tree_Iter;
 
@@ -1157,11 +1224,7 @@ package body KeyManager_Module is
       Set
         (Get_Object (Model), Iter'Address,
          Col1 => Action_Column,     Value1 => Descr & ASCII.NUL,
-         Col2 => Key_Column,        Value2 => Key & ASCII.NUL,
-         Col3 => Changed_Column,    Value3 => Boolean'Pos (Changed));
-      Set2
-        (Get_Object (Model), Iter'Address,
-         Col4 => Accel_Path_Column, Value4 => Accel_Path & ASCII.NUL);
+         Col2 => Key_Column,        Value2 => Key & ASCII.NUL);
       return Iter;
    end Set;
 
@@ -1170,19 +1233,22 @@ package body KeyManager_Module is
    ----------------------------
 
    function Lookup_Key_From_Action
-     (Handler : Key_Manager_Access; Action : String) return String
+     (Table             : Key_Htable.HTable;
+      Action            : String;
+      Default           : String := "none";
+      Use_Markup        : Boolean := True) return String
    is
-      function Process_Table
-        (Table : Key_Htable.HTable; Prefix : String) return String;
+      use Ada.Strings.Unbounded;
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+
+      procedure Process_Table (Table : Key_Htable.HTable; Prefix : String);
       --  Process a specific binding table
 
       -------------------
       -- Process_Table --
       -------------------
 
-      function Process_Table
-        (Table : Key_Htable.HTable; Prefix : String) return String
-      is
+      procedure Process_Table (Table : Key_Htable.HTable; Prefix : String) is
          Iter    : Key_Htable.Iterator;
          Binding : Key_Description_List;
       begin
@@ -1193,19 +1259,27 @@ package body KeyManager_Module is
 
             while Binding /= null loop
                if Binding.Action = null then
-                  declare
-                     Sub : constant String := Process_Table
+                  if Get_Keymap (Binding) /= null then
+                     Process_Table
                        (Get_Keymap (Binding).Table,
                         Prefix
                         & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier)
                         & ' ');
-                  begin
-                     if Sub /= "" then
-                        return Sub;
+                  end if;
+
+               elsif Binding.Action.all = Action
+                 and then Get_Key (Iter).Key /= 0
+               then
+                  if Result /= Null_Unbounded_String then
+                     if Use_Markup then
+                        Result := Result & " <b>or</b> ";
+                     else
+                        Result := Result & " or ";
                      end if;
-                  end;
-               elsif Binding.Action.all = Action then
-                  return Prefix
+                  end if;
+
+                  Result := Result
+                    & Prefix
                     & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier);
                end if;
 
@@ -1214,19 +1288,59 @@ package body KeyManager_Module is
 
             Get_Next (Table, Iter);
          end loop;
-         return "";
       end Process_Table;
+
    begin
-      return Process_Table (Handler.Table, "");
+      --  The table also includes the menu accelerators set by gtk+, so by
+      --  traversing the table we get access to everything.
+      Process_Table (Table, "");
+
+      if Result = Null_Unbounded_String then
+         return Default;
+      else
+         return To_String (Result);
+      end if;
    end Lookup_Key_From_Action;
+
+   --------------------
+   -- Refresh_Editor --
+   --------------------
+
+   procedure Refresh_Editor (Editor : access Keys_Editor_Record'Class) is
+      procedure Refresh_Iter (Iter : Gtk_Tree_Iter);
+      --  Refresh for Iter and its sibling
+
+      procedure Refresh_Iter (Iter : Gtk_Tree_Iter) is
+         It : Gtk_Tree_Iter;
+      begin
+         Iter_Copy (Source => Iter, Dest => It);
+         while It /= Null_Iter loop
+            if Children (Editor.Model, It) /= Null_Iter then
+               Refresh_Iter (Children (Editor.Model, It));
+            else
+               Set
+                 (Editor.Model, It, Key_Column,
+                  Lookup_Key_From_Action
+                    (Editor.Bindings,
+                     Action => Get_String (Editor.Model, It, Action_Column),
+                     Default => ""));
+            end if;
+
+            Next (Editor.Model, It);
+         end loop;
+      end Refresh_Iter;
+
+   begin
+      Refresh_Iter (Get_Iter_First (Editor.Model));
+   end Refresh_Editor;
 
    -----------------
    -- Fill_Editor --
    -----------------
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class) is
-      Menu_Iter : Gtk_Tree_Iter;
-      Handler   : constant Key_Manager_Access := Keymanager_Module.Key_Manager;
+      Menu_Iter : Gtk_Tree_Iter := Null_Iter;
+      Flat_List : constant Boolean := Get_Active (Editor.Flat_List);
 
       procedure Process_Menu_Binding
         (Data       : System.Address;
@@ -1234,12 +1348,7 @@ package body KeyManager_Module is
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean);
-      --  Called for each key binding associated with menus
-
-      procedure Process_Table
-        (Table : in out Key_Htable.HTable; Prefix : String);
-      --  Process the contents of a specific keymap. This sets the keybindings
-      --  for all associated actions
+      --  Called for each known accel path.
 
       --------------------------
       -- Process_Menu_Binding --
@@ -1253,7 +1362,7 @@ package body KeyManager_Module is
          Changed    : Boolean)
       is
          Iter : Gtk_Tree_Iter;
-         pragma Unreferenced (Data, Changed, Iter);
+         pragma Unreferenced (Data, Changed, Iter, Accel_Key, Accel_Mods);
          First : Natural := Accel_Path'First;
       begin
          while First <= Accel_Path'Last
@@ -1262,97 +1371,15 @@ package body KeyManager_Module is
             First := First + 1;
          end loop;
 
-         if Accel_Key /= 0 then
-            Iter := Set
-              (Model      => Editor.Model,
-               Parent     => Menu_Iter,
-               Descr      => Accel_Path (First .. Accel_Path'Last),
-               Changed    => False,
-               Accel_Path => Accel_Path (Accel_Path'First .. First - 1),
-               Key        => Image (Accel_Key, Accel_Mods));
-         else
-            Iter := Set
-              (Model      => Editor.Model,
-               Parent     => Menu_Iter,
-               Descr      => Accel_Path (First .. Accel_Path'Last),
-               Changed    => True,
-               Accel_Path => Accel_Path (Accel_Path'First .. First - 1),
-               Key        => Lookup_Key_From_Action
-                 (Handler, Accel_Path (First .. Accel_Path'Last)));
-         end if;
+         Iter := Set
+           (Model      => Editor.Model,
+            Parent     => Menu_Iter,
+            Descr      => Accel_Path (First .. Accel_Path'Last),
+            Key        => Lookup_Key_From_Action
+              (Editor.Bindings,
+               Action            => Accel_Path (First .. Accel_Path'Last),
+               Default           => ""));
       end Process_Menu_Binding;
-
-      -------------------
-      -- Process_Table --
-      -------------------
-
-      procedure Process_Table
-        (Table : in out Key_Htable.HTable; Prefix : String)
-      is
-         Iter    : Key_Htable.Iterator;
-         Binding : Key_Description_List;
-         Parent  : Gtk_Tree_Iter;
-         Action  : Action_Record_Access;
-      begin
-         Get_First (Table, Iter);
-         loop
-            Binding := Get_Element (Iter);
-            exit when Binding = No_Key;
-
-            while Binding /= null loop
-               if Binding.Action = null then
-                  Process_Table
-                    (Get_Keymap (Binding).Table,
-                     Prefix
-                     & Image (Get_Key (Iter).Key,
-                              Get_Key (Iter).Modifier) & ' ');
-
-               --  Hide actions associated with menus, since they are only
-               --  internal details
-               elsif Binding.Action (Binding.Action'First) /= '/' then
-                  Action := Lookup_Action (Handler.Kernel, Binding.Action.all);
-                  if Action /= null then
-                     Parent := Find_Parent (Editor.Model, Action);
-                     if Parent /= Null_Iter then
-                        Parent := Children (Editor.Model, Parent);
-                        while Parent /= Null_Iter loop
-                           if Get_String (Editor.Model, Parent, Action_Column)
-                             = Binding.Action.all
-                           then
-                              Set
-                                (Editor.Model,
-                                 Parent,
-                                 Key_Column,
-                                 Prefix
-                                 & Image (Get_Key (Iter).Key,
-                                          Get_Key (Iter).Modifier));
-                              Set
-                                (Editor.Model,
-                                 Parent,
-                                 Changed_Column,
-                                 Binding.Changed);
-                              exit;
-                           end if;
-                           Next (Editor.Model, Parent);
-                        end loop;
-                     end if;
-                  else
-                     Insert
-                       (Editor.Kernel,
-                        -"Key " & Prefix & Image
-                          (Get_Key (Iter).Key, Get_Key (Iter).Modifier)
-                        & (-" is bound to unknown action") & " """
-                        & Binding.Action.all
-                        & """",
-                        Mode => Error);
-                  end if;
-               end if;
-               Binding := Next (Binding);
-            end loop;
-
-            Get_Next (Table, Iter);
-         end loop;
-      end Process_Table;
 
       Sort_Id     : constant Gint := Freeze_Sort (Editor.Model);
       Parent      : Gtk_Tree_Iter;
@@ -1361,31 +1388,47 @@ package body KeyManager_Module is
    begin
       Clear (Editor.Model);
 
-      Menu_Iter := Set (Editor.Model, Null_Iter, -Menu_Context_Name);
+      if not Flat_List then
+         Menu_Iter := Set (Editor.Model, Null_Iter, -Menu_Context_Name);
+      end if;
 
-      Gtk.Accel_Map.Foreach
+      Gtk.Accel_Map.Foreach_Unfiltered
         (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
 
-      --  Add all actions in the table (no keybinding yet, these are added
-      --  in a second loop)
+      --  Add all known actions in the table. This doesn't include menus
+      --  in general
       loop
          Action := Get (Action_Iter);
          exit when Action = null;
 
-         Parent := Find_Parent (Editor.Model, Action);
-         if Parent /= Null_Iter then
+         if not Flat_List then
+            declare
+               Title : constant String := Get (Action_Iter);
+            begin
+               if Title (Title'First) = '/' then
+                  Parent := Menu_Iter;
+               else
+                  Parent := Find_Parent (Editor.Model, Action);
+               end if;
+            end;
+         else
+            Parent := Null_Iter;
+         end if;
+
+         if Action.Category /= null
+           and then (Flat_List or else Parent /= Null_Iter)
+         then
             Parent := Set
               (Model   => Editor.Model,
                Parent  => Parent,
                Descr   => Get (Action_Iter),
-               Changed => False,
-               Key     => -Disabled_String);
+               Key     => Lookup_Key_From_Action
+                 (Editor.Bindings,
+                  Get (Action_Iter),
+                  Default           => -Disabled_String));
          end if;
          Next (Editor.Kernel, Action_Iter);
       end loop;
-
-      --  Add the key bindings to the actions
-      Process_Table (Handler.Table, "");
 
       Thaw_Sort (Editor.Model, Sort_Id);
    end Fill_Editor;
@@ -1396,86 +1439,83 @@ package body KeyManager_Module is
 
    procedure Save_Editor (Editor : access Keys_Editor_Record'Class) is
       Handler   : constant Key_Manager_Access := Keymanager_Module.Key_Manager;
-      Context_Iter : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
-      Child        : Gtk_Tree_Iter;
-      Key          : Gdk_Key_Type;
-      Modif        : Gdk_Modifier_Type;
+
+      procedure Process_Menu_Binding
+        (Data       : System.Address;
+         Accel_Path : String;
+         Accel_Key  : Gdk.Types.Gdk_Key_Type;
+         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
+         Changed    : Boolean);
+      --  Called for each known accel path.
+
+      --------------------------
+      -- Process_Menu_Binding --
+      --------------------------
+
+      procedure Process_Menu_Binding
+        (Data       : System.Address;
+         Accel_Path : String;
+         Accel_Key  : Gdk.Types.Gdk_Key_Type;
+         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
+         Changed    : Boolean)
+      is
+         pragma Unreferenced (Data, Changed, Accel_Key, Accel_Mods);
+         First   : Natural := Accel_Path'First;
+         Iter    : Key_Htable.Iterator;
+         Binding : Key_Description_List;
+         Found   : Boolean := False;
+      begin
+         while First <= Accel_Path'Last
+           and then Accel_Path (First) /= '/'
+         loop
+            First := First + 1;
+         end loop;
+
+         --  If the menu is associated with at least one short key binding (ie
+         --  from the toplevel keymap), we change it so that it shows up in the
+         --  menu as well).
+         Get_First (Handler.Table, Iter);
+         Foreach_Binding :
+         loop
+            Binding := Get_Element (Iter);
+            exit Foreach_Binding when Binding = No_Key;
+
+            while Binding /= null loop
+               if Binding.Action /= null
+                 and then Binding.Action.all =
+                   Accel_Path (First .. Accel_Path'Last)
+               then
+                  Found := True;
+                  Change_Entry
+                    (Accel_Path => Accel_Path,
+                     Accel_Key  => Get_Key (Iter).Key,
+                     Accel_Mods => Get_Key (Iter).Modifier,
+                     Replace    => True);
+                  exit Foreach_Binding;
+               end if;
+
+               Binding := Binding.Next;
+            end loop;
+
+            Get_Next (Handler.Table, Iter);
+         end loop Foreach_Binding;
+
+         if not Found then
+            Change_Entry
+              (Accel_Path => Accel_Path,
+               Accel_Key  => 0,
+               Accel_Mods => 0,
+               Replace    => True);
+         end if;
+      end Process_Menu_Binding;
+
    begin
       Reset (Handler.Table);
+      Clone (From => Editor.Bindings, To => Handler.Table);
 
-      while Context_Iter /= Null_Iter loop
-         --  Special handling for menus
-
-         if Get_String (Editor.Model, Context_Iter, Action_Column) =
-           -Menu_Context_Name
-         then
-            Child := Children (Editor.Model, Context_Iter);
-            while Child /= Null_Iter loop
-               declare
-                  Str : constant String :=
-                    Get_String (Editor.Model, Child, Key_Column);
-                  Short_Keybinding : constant Boolean :=
-                    Str /= -Disabled_String
-                    and then Ada.Strings.Fixed.Index (Str, " ") < Str'First;
-                  Name : constant String :=
-                    Get_String (Editor.Model, Child, Accel_Path_Column)
-                    & Get_String (Editor.Model, Child, Action_Column);
-               begin
-                  if Short_Keybinding then
-                     Value (Str, Key, Modif);
-                     Change_Entry
-                       (Accel_Path => Name,
-                        Accel_Key  => Key,
-                        Accel_Mods => Modif,
-                        Replace    => True);
-                  else
-                     Change_Entry
-                       (Accel_Path => Name,
-                        Accel_Key  => 0,
-                        Accel_Mods => 0,
-                        Replace    => True);
-
-                     --  A long key binding ? => Create an action to wrap the
-                     --  menu
-                     if Str /= -Disabled_String then
-                        Bind_Default_Key_Internal
-                          (Handler,
-                           Action      =>
-                             Get_String (Editor.Model, Child, Action_Column),
-                           Default_Key => Str,
-                           Changed     => Get_Boolean
-                             (Editor.Model, Child, Changed_Column));
-                     end if;
-                  end if;
-               end;
-               Next (Editor.Model, Child);
-            end loop;
-
-         --  Standard key bindings
-         else
-            Child := Children (Editor.Model, Context_Iter);
-            while Child /= Null_Iter loop
-               declare
-                  Str : constant String :=
-                    Get_String (Editor.Model, Child, Key_Column);
-                  Changed : constant Boolean := Get_Boolean
-                    (Editor.Model, Child, Changed_Column);
-               begin
-                  if Str /= -Disabled_String or else Changed then
-                     Bind_Default_Key_Internal
-                       (Handler,
-                        Action       =>
-                          Get_String (Editor.Model, Child, Action_Column),
-                        Default_Key  => Str,
-                        Changed      => Changed);
-                  end if;
-               end;
-               Next (Editor.Model, Child);
-            end loop;
-         end if;
-
-         Next (Editor.Model, Context_Iter);
-      end loop;
+      --  Update the gtk+ accelerators for the menus to reflect the keybindings
+      Gtk.Accel_Map.Foreach_Unfiltered
+        (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
    end Save_Editor;
 
    -----------------
@@ -1508,6 +1548,8 @@ package body KeyManager_Module is
       Id    : Timeout_Handler_Id;
 
    begin
+      Keymanager_Module.Key_Manager.Active := False;
+
       Key_Grab (Widget, Key, Modif);
 
       if Key /= GDK_Escape or else Modif /= 0 then
@@ -1537,12 +1579,19 @@ package body KeyManager_Module is
          end loop;
       end if;
 
+      Keymanager_Module.Key_Manager.Active := True;
+
       declare
          K : constant String := Grabbed.all;
       begin
          Free (Grabbed);
          return K;
       end;
+
+   exception
+      when others =>
+         Keymanager_Module.Key_Manager.Active := True;
+         raise;
    end Grab_Multiple_Key;
 
    -----------------
@@ -1551,31 +1600,58 @@ package body KeyManager_Module is
 
    procedure On_Grab_Key (Editor : access Gtk_Widget_Record'Class) is
       Ed        : constant Keys_Editor := Keys_Editor (Editor);
-      Handler   : constant Key_Manager_Access := Keymanager_Module.Key_Manager;
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
-      Model     : Gtk_Tree_Model;
-      Iter      : Gtk_Tree_Iter;
+      Sort_Model : Gtk_Tree_Model;
+      Sort_Iter, Filter_Iter, Iter : Gtk_Tree_Iter;
+--        Old_Action : Action_Record_Access;
    begin
-      Get_Selected (Selection, Model, Iter);
+      Get_Selected (Selection, Sort_Model, Sort_Iter);
+      Convert_Iter_To_Child_Iter (Ed.Sort, Filter_Iter, Sort_Iter);
+      Convert_Iter_To_Child_Iter (Ed.Filter, Iter, Filter_Iter);
 
       --  Only edit for leaf nodes (otherwise these are contexts)
 
       if Iter /= Null_Iter
-        and then Children (Model, Iter) = Null_Iter
+        and then Children (Ed.Model, Iter) = Null_Iter
       then
-         Handler.Active := False;
-
          declare
             Key     : constant String := Grab_Multiple_Key
               (Ed.View, Allow_Multiple => True);
          begin
             if Key /= "" then
-               Set (Ed.Model, Iter, Key_Column, Key);
-               Set (Ed.Model, Iter, Changed_Column, True);
+               Bind_Default_Key_Internal
+                 (Ed.Bindings,
+                  Action      => Get_String (Ed.Model, Iter, Action_Column),
+                  Default_Key => Key,
+                  Remove_All_Others => True,
+                  Changed     => True);
+               Refresh_Editor (Ed);
+
+               --  ??? Waiting for F613-014
+               --  Do we already have an action with such a binding ?
+--                 Old_Action := Lookup_Action_From_Key (Key);
+--                 if Old_Action /= null then
+--                    if Message_Dialog
+--                   (Msg => -"An action is already attached to this shortcut:"
+--                       & ASCII.LF
+--                       & Old_Action.Name.all & ASCII.LF
+--                       & (-"Do you want to override it ?"),
+--                       Dialog_Type => Confirmation,
+--                       Buttons => Button_OK or Button_Cancel,
+--                       Title   => -"Key shortcuts already exists",
+--                       Parent  => Get_Window (Ed.Kernel)) = Button_OK
+--                    then
+--                       Old_Action := null;
+--                    end if;
+--                 end if;
+
+--                 if Old_Action = null then
+--                    Trace (Me, "Binding changed to " & Key);
+--                    Set (Ed.Model, Iter, Key_Column, Key);
+--                    Set (Ed.Model, Iter, Changed_Column, True);
+--                 end if;
             end if;
          end;
-
-         Handler.Active := True;
       end if;
 
    exception
@@ -1591,18 +1667,25 @@ package body KeyManager_Module is
    procedure On_Remove_Key (Editor : access Gtk_Widget_Record'Class) is
       Ed        : constant Keys_Editor := Keys_Editor (Editor);
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
-      Model     : Gtk_Tree_Model;
-      Iter      : Gtk_Tree_Iter;
+      Sort_Model     : Gtk_Tree_Model;
+      Iter, Filter_Iter, Sort_Iter  : Gtk_Tree_Iter;
    begin
-      Get_Selected (Selection, Model, Iter);
+      Get_Selected (Selection, Sort_Model, Sort_Iter);
+      Convert_Iter_To_Child_Iter (Ed.Sort, Filter_Iter, Sort_Iter);
+      Convert_Iter_To_Child_Iter (Ed.Filter, Iter, Filter_Iter);
 
       --  Only edit for leaf nodes (otherwise these are contexts)
 
       if Iter /= Null_Iter
-        and then Children (Model, Iter) = Null_Iter
+        and then Children (Ed.Model, Iter) = Null_Iter
       then
-         Set (Ed.Model, Iter, Key_Column, -Disabled_String);
-         Set (Ed.Model, Iter, Changed_Column, True);
+         Bind_Default_Key_Internal
+           (Ed.Bindings,
+            Action            => Get_String (Ed.Model, Iter, Action_Column),
+            Default_Key       => "",
+            Remove_All_Others => True,
+            Changed           => True);
+         Refresh_Editor (Ed);
       end if;
 
    exception
@@ -1620,7 +1703,41 @@ package body KeyManager_Module is
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
+      Text_Iter : Gtk_Text_Iter;
       Action    : Action_Record_Access;
+      Comp_Iter : Component_Iterator;
+      Bold      : Gtk_Text_Tag;
+
+      procedure Insert_Details
+        (Comp_Iter : in out Component_Iterator; Prefix : String);
+      --  Insert the detail for the components of the action
+
+      --------------------
+      -- Insert_Details --
+      --------------------
+
+      procedure Insert_Details
+        (Comp_Iter : in out Component_Iterator; Prefix : String)
+      is
+         Comp    : Command_Component;
+         Failure : Component_Iterator;
+      begin
+         loop
+            Comp := Get (Comp_Iter);
+            exit when Comp = null;
+
+            Insert
+              (Ed.Help, Text_Iter, Prefix & Get_Name (Comp) & ASCII.LF);
+
+            Failure := On_Failure (Comp_Iter);
+            if Failure /= null then
+               Insert (Ed.Help, Text_Iter, Prefix & "on-failure:" & ASCII.LF);
+               Insert_Details (Failure, Prefix & "   ");
+            end if;
+
+            Next (Comp_Iter);
+         end loop;
+      end Insert_Details;
 
    begin
       Get_Selected (Selection, Model, Iter);
@@ -1629,6 +1746,9 @@ package body KeyManager_Module is
       if Iter /= Null_Iter
         and then Children (Model, Iter) = Null_Iter
       then
+         Set_Sensitive (Ed.Remove_Button, True);
+         Set_Sensitive (Ed.Grab_Button, True);
+
          Action := Lookup_Action (Ed.Kernel, Get_String (Model, Iter, 0));
 
          if Action.Description /= null then
@@ -1637,7 +1757,48 @@ package body KeyManager_Module is
             Set_Text (Ed.Help, "");
          end if;
 
+         Get_End_Iter (Ed.Help, Text_Iter);
+
+         Bold := Create_Tag (Ed.Help);
+         Set_Property (Bold, Gtk.Text_Tag.Weight_Property,
+                       Pango_Weight_Bold);
+
+         Insert_With_Tags
+           (Ed.Help, Text_Iter, ASCII.LF & ASCII.LF & (-"Key shortcuts: "),
+            Bold);
+         Insert
+           (Ed.Help, Text_Iter,
+            Lookup_Key_From_Action
+              (Ed.Bindings,
+               Action            => Get_String (Model, Iter, Action_Column),
+               Default           => -"none",
+               Use_Markup        => False));
+
+         Insert_With_Tags
+           (Ed.Help, Text_Iter, ASCII.LF & (-"Declared in: "),
+            Bold);
+         if Action.Defined_In /= VFS.No_File then
+            Insert (Ed.Help, Text_Iter, Full_Name (Action.Defined_In).all);
+
+            Comp_Iter := Start (Action.Command);
+            if Get (Comp_Iter) /= null then
+               Insert_With_Tags
+                 (Ed.Help, Text_Iter,
+                  ASCII.LF & (-"Implementation details:") & ASCII.LF,
+                  Bold);
+               Insert_Details (Comp_Iter, "  ");
+            end if;
+
+         else
+            Insert (Ed.Help, Text_Iter, -"built-in");
+         end if;
+
          Set_Text (Ed.Action_Name, Get_String (Model, Iter, 0));
+      else
+         Set_Sensitive (Ed.Remove_Button, False);
+         Set_Sensitive (Ed.Grab_Button, False);
+         Set_Text (Ed.Help, "");
+         Set_Text (Ed.Action_Name, "");
       end if;
 
    exception
@@ -1645,6 +1806,40 @@ package body KeyManager_Module is
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
    end Add_Selection_Changed;
+
+   -------------------------
+   -- On_Toggle_Flat_List --
+   -------------------------
+
+   procedure On_Toggle_Flat_List (Editor : access Gtk_Widget_Record'Class) is
+   begin
+      Fill_Editor (Keys_Editor (Editor));
+   end On_Toggle_Flat_List;
+
+   ------------------------------
+   -- On_Toggle_Shortcuts_Only --
+   ------------------------------
+
+   procedure On_Toggle_Shortcuts_Only
+     (Editor : access Gtk_Widget_Record'Class) is
+   begin
+      Refilter (Keys_Editor (Editor).Filter);
+   end On_Toggle_Shortcuts_Only;
+
+   -----------------------
+   -- Action_Is_Visible --
+   -----------------------
+
+   function Action_Is_Visible
+     (Model : access Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk_Tree_Iter;
+      Data  : Keys_Editor) return Boolean
+   is
+   begin
+      return not Get_Active (Data.With_Shortcut_Only)
+        or else Get_String (Model, Iter, 1) /= ""
+        or else N_Children (Model, Iter) > 0;
+   end Action_Is_Visible;
 
    ------------------
    -- On_Edit_Keys --
@@ -1654,10 +1849,52 @@ package body KeyManager_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Editor    : Keys_Editor;
+
+      procedure Process_Menu_Binding
+        (Data       : System.Address;
+         Accel_Path : String;
+         Accel_Key  : Gdk.Types.Gdk_Key_Type;
+         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
+         Changed    : Boolean);
+      --  Called for each known accelerator path
+
+      procedure Process_Menu_Binding
+        (Data       : System.Address;
+         Accel_Path : String;
+         Accel_Key  : Gdk.Types.Gdk_Key_Type;
+         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
+         Changed    : Boolean)
+      is
+         pragma Unreferenced (Data, Changed);
+         First : Natural := Accel_Path'First;
+      begin
+         if Accel_Key /= 0 then
+            while First <= Accel_Path'Last
+              and then Accel_Path (First) /= '/'
+            loop
+               First := First + 1;
+            end loop;
+
+            --  Ignore the Changed parameter: it indicates whether the key
+            --  was modified interactively by the user (or through a call to
+            --  Change_Entry). In the first case, this is handled internally
+            --  by gtk+, we do not need to save it in keys.xml. In the second
+            --  case, the call to Change_Entry was done through
+            --  Bind_Default_Key_Internal and therefore it is already marked as
+            --  modified
+            Bind_Default_Key_Internal
+              (Editor.Bindings,
+               Action            => Accel_Path (First .. Accel_Path'Last),
+               Default_Key       => Image (Accel_Key, Accel_Mods),
+               Changed           => False,
+               Remove_All_Others => False);
+         end if;
+      end Process_Menu_Binding;
+
       Scrolled  : Gtk_Scrolled_Window;
-      Bbox      : Gtk_Vbutton_Box;
-      Box, Hbox : Gtk_Box;
-      Button    : Gtk_Button;
+      Bbox      : Gtk_Hbutton_Box;
+      Hbox, Vbox, Filter_Box : Gtk_Box;
+--        Button    : Gtk_Button;
       Col       : Gtk_Tree_View_Column;
       Render    : Gtk_Cell_Renderer_Text;
       Num       : Gint;
@@ -1676,14 +1913,50 @@ package body KeyManager_Module is
          Title  => -"Key shortcuts",
          Parent => Get_Current_Window (Kernel),
          Flags  => Destroy_With_Parent or Modal);
-      Set_Default_Size (Editor, 640, 480);
+      Set_Default_Size (Editor, 900, 700);
       Editor.Kernel  := Kernel;
 
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Editor), Box);
+      Clone
+        (From => Keymanager_Module.Key_Manager.Table,
+         To   => Editor.Bindings);
+      --  Add the menu accelerators as well. From then one, they will be stored
+      --  in the htable. This makes it easier to change the keybinding
+      Gtk.Accel_Map.Foreach_Unfiltered
+        (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
+
+      Gtk_New_Vbox (Vbox, Homogeneous => False);
+      Pack_Start (Get_Vbox (Editor), Vbox, Expand => True, Fill => True);
+
+      Gtk_New_Hbox (Filter_Box, Homogeneous => False);
+      Pack_Start (Vbox, Filter_Box, Expand => False);
+
+      Gtk_New (Editor.With_Shortcut_Only, -"Shortcuts only");
+      Set_Tip
+        (Get_Tooltips (Editor.Kernel), Editor.With_Shortcut_Only,
+         -("Show only actions that are associated with a key shortcut"));
+      Set_Active (Editor.With_Shortcut_Only, False);
+      Pack_Start (Filter_Box, Editor.With_Shortcut_Only, Expand => False);
+      Widget_Callback.Object_Connect
+        (Editor.With_Shortcut_Only, "toggled", On_Toggle_Shortcuts_Only'Access,
+         Editor);
+
+      Gtk_New (Editor.Flat_List, -"Flat list");
+      Set_Tip
+        (Get_Tooltips (Editor.Kernel), Editor.Flat_List,
+         -("If selected, actions are not grouped into categories, but"
+           & " displayed as a single long list. This might help to find some"
+           & " specific actions"));
+      Set_Active (Editor.Flat_List, False);
+      Pack_Start (Filter_Box, Editor.Flat_List, Expand => False);
+      Widget_Callback.Object_Connect
+        (Editor.Flat_List, "toggled", On_Toggle_Flat_List'Access, Editor);
+
+      --  ??? Will be implemented shortly
+--        Gtk_New_From_Stock (Button, Stock_Find);
+--        Pack_Start (Filter_Box, Button, Expand => False);
 
       Gtk_New_Vpaned (Pane);
-      Pack_Start (Box, Pane);
+      Pack_Start (Vbox, Pane, Expand => True, Fill => True);
 
       --  List of macros
 
@@ -1691,18 +1964,27 @@ package body KeyManager_Module is
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Pack1 (Pane, Scrolled, True, True);
 
+      --  The model we will modify
       Gtk_New
         (Editor.Model,
          (Action_Column     => GType_String,
-          Key_Column        => GType_String,
-          Changed_Column    => GType_Boolean,
-          Accel_Path_Column => GType_String));
-      Gtk_New (Editor.View, Editor.Model);
+          Key_Column        => GType_String));
+
+      --  A filter model on top of it, so that we can filter out some rows
+      Gtk_New (Editor.Filter, Editor.Model);
+      Keys_Editor_Visible_Funcs.Set_Visible_Func
+        (Editor.Filter, Action_Is_Visible'Access, Editor);
+
+      --  A sort model on top of the filter, so that rows can be sorted.
+      Gtk_New_With_Model (Editor.Sort, Editor.Filter);
+
+      Gtk_New (Editor.View, Editor.Sort);
       Add (Scrolled, Editor.View);
 
       --  Bottom area
       Gtk_New (Frame);
-      Pack2 (Pane, Frame, False, False);
+      Pack2 (Pane, Frame, False, True);
+      Set_Size_Request (Frame, -1, 200);
 
       Gtk_New_Vbox (Hbox, Homogeneous => False);
       Add (Frame, Hbox);
@@ -1711,6 +1993,26 @@ package body KeyManager_Module is
 
       Create_Blue_Label (Editor.Action_Name, Event);
       Pack_Start (Hbox,  Event, Expand => False);
+
+      Gtk_New (Bbox);
+      Set_Layout (Bbox, Buttonbox_Start);
+      Pack_Start (Hbox, Bbox, Expand => False);
+
+      Gtk_New_From_Stock (Editor.Remove_Button, Stock_Remove);
+      Set_Sensitive (Editor.Remove_Button, False);
+      Pack_Start (Bbox, Editor.Remove_Button);
+      Widget_Callback.Object_Connect
+        (Editor.Remove_Button, "clicked", On_Remove_Key'Access, Editor);
+
+      Gtk_New (Editor.Grab_Button, -"Grab");
+      Set_Sensitive (Editor.Grab_Button, False);
+      Pack_Start (Bbox, Editor.Grab_Button);
+      Widget_Callback.Object_Connect
+        (Editor.Grab_Button, "clicked", On_Grab_Key'Access, Editor);
+
+      Widget_Callback.Object_Connect
+        (Get_Selection (Editor.View), "changed",
+         Add_Selection_Changed'Access, Editor);
 
       Gtk_New_Hseparator (Sep);
       Pack_Start (Hbox, Sep, Expand => False);
@@ -1727,25 +2029,7 @@ package body KeyManager_Module is
       Set_Editable (Text, False);
       Add (Scrolled, Text);
 
-      --  Buttons area
-
-      Gtk_New (Bbox);
-      Set_Layout (Bbox, Buttonbox_Start);
-      Pack_Start (Box, Bbox, Expand => False);
-
-      Gtk_New_From_Stock (Button, Stock_Remove);
-      Pack_Start (Bbox, Button);
-      Widget_Callback.Object_Connect
-        (Button, "clicked", On_Remove_Key'Access, Editor);
-
-      Gtk_New (Button, -"Grab");
-      Pack_Start (Bbox, Button);
-      Widget_Callback.Object_Connect
-        (Button, "clicked", On_Grab_Key'Access, Editor);
-
-      Widget_Callback.Object_Connect
-        (Get_Selection (Editor.View), "changed",
-         Add_Selection_Changed'Access, Editor);
+      --  The tree
 
       Gtk_New (Render);
 
@@ -1764,7 +2048,7 @@ package body KeyManager_Module is
       Num := Append_Column (Editor.View, Col);
       Set_Title (Col, -"Shortcut");
       Pack_Start (Col, Render, False);
-      Add_Attribute (Col, Render, "text", Key_Column);
+      Add_Attribute (Col, Render, "markup", Key_Column);
       Set_Clickable (Col, True);
       Set_Resizable (Col, True);
       Set_Sort_Column_Id (Col, Key_Column);
@@ -1780,6 +2064,7 @@ package body KeyManager_Module is
          Save_Editor (Editor);
       end if;
 
+      Reset (Editor.Bindings);
       Destroy (Editor);
 
    exception
@@ -2095,10 +2380,12 @@ package body KeyManager_Module is
                raise Assert_Failure;
             end if;
 
-            Bind_Default_Key
-              (Keymanager_Module.Key_Manager,
-               Action      => Action,
-               Default_Key => Node.Value.all);
+            Bind_Default_Key_Internal
+              (Keymanager_Module.Key_Manager.Table,
+               Action            => Action,
+               Remove_All_Others => False,
+               Changed           => False,
+               Default_Key       => Node.Value.all);
          end;
       end if;
    end Customize;
