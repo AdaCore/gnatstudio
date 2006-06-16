@@ -37,9 +37,11 @@ with Gdk.Types;               use Gdk.Types;
 with Glib.Convert;            use Glib.Convert;
 with Glib.Object;             use Glib.Object;
 with Glib.Xml_Int;            use Glib.Xml_Int;
+with Glib.Values;             use Glib.Values;
 with Glib;                    use Glib;
 
 with Gtk.Accel_Map;           use Gtk.Accel_Map;
+with Gtk.Arguments;           use Gtk.Arguments;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Button;              use Gtk.Button;
 with Gtk.Cell_Renderer_Text;  use Gtk.Cell_Renderer_Text;
@@ -251,6 +253,15 @@ package body KeyManager_Module is
 
    procedure Free (Handler : in out Key_Manager_Record);
    --  Free the memoru occupied by the key manager
+
+   procedure On_Accel_Map_Changed
+     (Map    : access GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : Kernel_Handle);
+   --  Monitor changes in the global gtk+ accelerator map. Any change in there,
+   --  most notably through the dynamic key bindings feature, has impacts on
+   --  the GPS shortcuts (since assigning a new accelerator to a menu should
+   --  disable all actions currently associated with the same shortcut)
 
    procedure Bind_Default_Key_Internal
      (Table                                : in out Key_Htable.HTable;
@@ -2425,6 +2436,42 @@ package body KeyManager_Module is
       end if;
    end Customize;
 
+   --------------------------
+   -- On_Accel_Map_Changed --
+   --------------------------
+
+   procedure On_Accel_Map_Changed
+     (Map    : access GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : Kernel_Handle)
+   is
+      Accel_Path : constant String := To_String (Args, 1);
+      Accel_Key  : constant Gdk_Key_Type := Gdk_Key_Type (To_Guint (Args, 2));
+      Accel_Mods : constant Gdk_Modifier_Type :=
+        Gdk_Modifier_Type (Get_Flags (Nth (Args, 3)));
+      pragma Unreferenced (Map, Kernel);
+      First : Natural := Accel_Path'First;
+   begin
+      while First <= Accel_Path'Last
+        and then Accel_Path (First) /= '/'
+      loop
+         First := First + 1;
+      end loop;
+
+      --  Remove any other keybinding associated with that action, as well as
+      --  any action associated with that key.
+      --  We do not need to store the keybinding/action link ourselves, since
+      --  this is stored in the accel map already
+      Bind_Default_Key_Internal
+        (Table  => Keymanager_Module.Key_Manager.Table,
+         Action => Accel_Path (First .. Accel_Path'Last),
+         Key                                  => Image (Accel_Key, Accel_Mods),
+         Save_In_Keys_XML                     => False,
+         Remove_Existing_Shortcuts_For_Action => True,
+         Remove_Existing_Actions_For_Shortcut => True,
+         Update_Menus                         => False);
+   end On_Accel_Map_Changed;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2446,6 +2493,10 @@ package body KeyManager_Module is
       Event_Handler_Set
         (General_Event_Handler'Access,
          Convert (Kernel_Handle (Kernel)));
+
+      Kernel_Callback.Connect
+        (Gtk.Accel_Map.Get, Gtk.Accel_Map.Signal_Changed,
+         On_Accel_Map_Changed'Access, Kernel_Handle (Kernel));
 
       if Active (Use_Macro) then
          Register_Menu
