@@ -30,4 +30,10 @@ package KeyManager_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus for KeyManager module
 
+   procedure Load_Custom_Keys
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Load the customized key bindings. This needs to be done after all
+   --  XML files and themes have been loaded, so that the user's choice
+   --  overrides everything
+
 end KeyManager_Module;

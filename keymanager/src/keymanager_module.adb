@@ -214,6 +214,9 @@ package body KeyManager_Module is
       Kernel           : Kernel_Handle;
       Table            : Key_Htable.HTable;
 
+      Custom_Keys_Loaded : Boolean := False;
+      --  Whether the user's custom keys have been loaded
+
       Secondary_Keymap : Keymap_Access := null;
       --  The secondary keymap currently in use, or null if using the primary.
 
@@ -294,11 +297,6 @@ package body KeyManager_Module is
    --  edited in the key shortcut editor, since this is synchronized only when
    --  the editor is saved. If Update_Menus is True, then
    --  Remove_Existing_Actions_For_Shortcut also applies to menus.
-
-   procedure Load_Custom_Keys
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Manager : access Key_Manager_Record);
-   --  Load the customized key bindings
 
    procedure Macro_Command_Handler
      (Data    : in out Callback_Data'Class;
@@ -1124,8 +1122,7 @@ package body KeyManager_Module is
    ----------------------
 
    procedure Load_Custom_Keys
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Manager : access Key_Manager_Record)
+     (Kernel  : access Kernel_Handle_Record'Class)
    is
       Filename : constant String := Get_Home_Dir (Kernel) & "keys.xml";
       File, Child : Node_Ptr;
@@ -1134,6 +1131,9 @@ package body KeyManager_Module is
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename);
          XML_Parsers.Parse (Filename, File, Err);
+
+         Keymanager_Module.Key_Manager.Custom_Keys_Loaded := True;
+
 
          if File = null then
             Insert (Kernel, Err.all, Mode => Error);
@@ -1144,7 +1144,7 @@ package body KeyManager_Module is
                --  Remove all other bindings previously defined, so that only
                --  the last definition is taken into account
                Bind_Default_Key_Internal
-                 (Manager.Table,
+                 (Keymanager_Module.Key_Manager.Table,
                   Action           => Get_Attribute (Child, "action"),
                   Key              => Child.Value.all,
                   Save_In_Keys_XML => True,
@@ -1928,7 +1928,7 @@ package body KeyManager_Module is
               (Editor.Bindings,
                Action            => Accel_Path (First .. Accel_Path'Last),
                Key               => Image (Accel_Key, Accel_Mods),
-               Save_In_Keys_XML  => False,
+               Save_In_Keys_XML  => True,
                Remove_Existing_Actions_For_Shortcut => False,
                Remove_Existing_Shortcuts_For_Action => False,
                Update_Menus      => False);
@@ -2466,7 +2466,7 @@ package body KeyManager_Module is
         (Table  => Keymanager_Module.Key_Manager.Table,
          Action => Accel_Path (First .. Accel_Path'Last),
          Key                                  => Image (Accel_Key, Accel_Mods),
-         Save_In_Keys_XML                     => False,
+         Save_In_Keys_XML  => Keymanager_Module.Key_Manager.Custom_Keys_Loaded,
          Remove_Existing_Shortcuts_For_Action => True,
          Remove_Existing_Actions_For_Shortcut => True,
          Update_Menus                         => False);
@@ -2483,7 +2483,6 @@ package body KeyManager_Module is
       Macro_Menu : constant String := "/" & (-"Tools/Macro");
    begin
       Manager.Kernel := Kernel_Handle (Kernel);
-      Load_Custom_Keys (Kernel, Manager);
 
       Keymanager_Module := new Keymanager_Module_Record;
       Keymanager_Module.Key_Manager := Manager;
