@@ -556,6 +556,11 @@ package body Completion_Module is
       if Command.Smart_Completion then
          if View /= null
            and then not In_Completion (View)
+           and then Get_Language (Buffer) = Ada_Lang
+         --  ??? This is a short term solution. In the long term (as soon as
+         --  we have more than one language to handle), we want to have a
+         --  function returning the proper manager, taking a language in
+         --  parameter.
          then
             --  Display the dialog if necessary.
 
