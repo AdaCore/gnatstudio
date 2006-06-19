@@ -463,7 +463,7 @@ package body Remote_Sync_Module is
          Free (Old_Buff);
       end if;
 
-      if Cb_Data.Dialog.Aborted then
+      if Cb_Data.Dialog /= null and then Cb_Data.Dialog.Aborted then
          Interrupt (Data.Descriptor.all);
 
       elsif not Data.Process_Died then
