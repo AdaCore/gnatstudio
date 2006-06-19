@@ -83,7 +83,7 @@ F315-016 New Revision View (2006-03-19)
 
 F302-022 Fixing messages "Var is never read and never asigned" (2006-06-13)
 
-  The new GNAT message "Var is never read and never asigned" is now 
+  The new GNAT message "Var is never read and never asigned" is now
   automatically fixed in GPS, by removing or commenting the useless variable.
 
 F223-022 New preference for the debugger: "Always open main unit" (2006-02-27)
@@ -148,7 +148,7 @@ F119-003 Window position no longer saved in the desktop
   The GPS window position is no longer saved in the desktop. This is in fact
   better handled by the windowing system, which has better knowledge of the
   number of screens connected to the machine among others (GPS would try
-  to restore to the second screen even if it is no longer attached) 
+  to restore to the second screen even if it is no longer attached)
 
 F104-029 New "indent comments" preference (2006-03-24)
 
@@ -362,6 +362,11 @@ D319-023 GPS VCS Explorer supports ignore file (2006-02-16)
 
   Keywords: VCS
 
+C830-001 Improved behavior of Open From Project dialog (2006-04-04)
+
+  The Open From Project dialog now also takes into account the 'Enter' key
+  when a file is selected.
+
 C502-013 Ability to comment out code when code fixing (2006-01-09)
 
   A new preference was added that indicates if codefix should propose to
@@ -369,8 +374,10 @@ C502-013 Ability to comment out code when code fixing (2006-01-09)
 
   Keywords: Code fixing
 
-C830-001 Improved behavior of Open From Project dialog (2006-04-04)
+C328-004 Remote programming capability (2006-06-19)
 
-  The Open From Project dialog now also takes into account the 'Enter' key
-  when a file is selected.
+  Remote development capabilities have been greatly enhanced in GPS. Please
+  refer to GPS documentation for a complete description of this functionality.
+  The --host switch behavior has been changed to fit the new functionality.
 
+  Keywords: Remote programming
