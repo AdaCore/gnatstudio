@@ -822,7 +822,7 @@ package body Src_Editor_Module is
       end if;
 
       if Pref = From_Project and then
-        (Status (Get_Project (User)) = Default
+        (Status (Get_Project (User)) /= From_File
          or else Get_Project_From_File
            (Get_Registry (User).all, File, False) = No_Project)
       then
