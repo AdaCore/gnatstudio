@@ -105,6 +105,9 @@ private
       Number_Of_Parameters : Natural);
    --  See inherited documentation
 
+   function Is_Valid (Proposal : Entity_Completion_Proposal) return Boolean;
+   --  See inherited documentation
+
    procedure Free (Proposal : in out Entity_Completion_Proposal);
    --  See inherited documentation
 
