@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005 - 2006                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,12 +20,16 @@
 
 with Glib;        use Glib;
 with Glib.Object; use Glib.Object;
+with Gdk.Pixbuf;  use Gdk.Pixbuf;
 with Gdk.Color;   use Gdk.Color;
-with Gtk.Button;  use Gtk.Button;
+with Gdk.Event;   use Gdk.Event;
 with Gtk.Enums;   use Gtk.Enums;
+with Gtk.Event_Box; use Gtk.Event_Box;
 with Gtk.Image;   use Gtk.Image;
+with Gtk.Handlers; use Gtk.Handlers;
 with Gtk.Label;   use Gtk.Label;
 with Gtk.Widget;  use Gtk.Widget;
+with Gtk.Window;  use Gtk.Window;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
 with VFS;         use VFS;
@@ -34,72 +38,108 @@ with GPS.Intl;  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
-with GNAT.OS_Lib;    use GNAT.OS_Lib;
 with Ada.Exceptions; use Ada.Exceptions;
 
 package body Welcome_Page is
 
-   procedure On_Overview
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Pic_Data is record
+      Image     : Gtk_Image;
+      Mouse_On  : Gdk_Pixbuf;
+      Mouse_Off : Gdk_Pixbuf;
+   end record;
+
+   package Kernel_Return_Package is new User_Return_Callback
+     (GObject_Record, Boolean, Kernel_Handle);
+   use Kernel_Return_Package;
+
+   package Reacting_Button_Package is new User_Return_Callback
+     (GObject_Record, Boolean, Pic_Data);
+   use Reacting_Button_Package;
+
+   function Create_Reacting_Button
+     (Window : Gtk_Window;
+      Mouse_On, Mouse_Off : String) return Gtk_Event_Box;
+   --  Create a button that has Mouse_On and Mouse_Off as on-mouse-over images.
+   --  Window is used as base for creating the graphical contexts.
+
+   function On_Overview
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) return Boolean;
    --  Display the overview page.
 
-   procedure On_Tutorial
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   function On_Tutorial
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) return Boolean;
    --  Display the overview page.
 
-   procedure On_UG
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   function On_UG
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) return Boolean;
    --  Display the overview page.
+
+   function On_Enter
+     (Widget : access GObject_Record'Class; Data : Pic_Data) return Boolean;
+   --  Called when mouse enters Widget.
+
+   function On_Leave
+     (Widget : access GObject_Record'Class; Data : Pic_Data) return Boolean;
+   --  Called when mouse leaves Widget.
 
    -----------------
    -- On_Overview --
    -----------------
 
-   procedure On_Overview
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   function On_Overview
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) return Boolean
    is
       pragma Unreferenced (Widget);
    begin
       Open_Html (Kernel, Create_From_Base ("gps-welcome.html"));
-
+      return False;
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Overview;
 
    -----------------
    -- On_Tutorial --
    -----------------
 
-   procedure On_Tutorial
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   function On_Tutorial
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) return Boolean
    is
       pragma Unreferenced (Widget);
    begin
       Open_Html (Kernel, Create_From_Base ("gps-tutorial.html"));
-
+      return False;
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+      return False;
    end On_Tutorial;
 
    -----------
    -- On_UG --
    -----------
 
-   procedure On_UG
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   function On_UG
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) return Boolean
    is
       pragma Unreferenced (Widget);
    begin
       Open_Html (Kernel, Create_From_Base ("gps.html"));
-
+      return False;
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+      return False;
    end On_UG;
 
    --------------------------
@@ -119,30 +159,105 @@ package body Welcome_Page is
       Raise_Child (Child);
    end Display_Welcome_Page;
 
+   --------------
+   -- On_Enter --
+   --------------
+
+   function On_Enter
+     (Widget : access GObject_Record'Class; Data : Pic_Data) return Boolean
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Set (Data.Image, Data.Mouse_On);
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end On_Enter;
+
+   --------------
+   -- On_Leave --
+   --------------
+
+   function On_Leave
+     (Widget : access GObject_Record'Class; Data : Pic_Data) return Boolean
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Set (Data.Image, Data.Mouse_Off);
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end On_Leave;
+
+   ----------------------------
+   -- Create_Reacting_Button --
+   ----------------------------
+
+   function Create_Reacting_Button
+     (Window : Gtk_Window;
+      Mouse_On, Mouse_Off : String) return Gtk_Event_Box
+   is
+      Data   : Pic_Data;
+      Box    : Gtk_Event_Box;
+   begin
+      Data.Mouse_On := Render_Icon (Window, Mouse_On, Icon_Size_Large_Toolbar);
+      Data.Mouse_Off := Render_Icon
+        (Window, Mouse_Off, Icon_Size_Large_Toolbar);
+
+      Gtk_New (Data.Image, Pixbuf => Data.Mouse_Off);
+      Gtk_New (Box);
+
+      Add (Box, Data.Image);
+
+      Set_Events (Box,
+                  Get_Events (Data.Image)
+                  or Pointer_Motion_Hint_Mask
+                  or Button_Press_Mask
+                  or Enter_Notify_Mask
+                  or Leave_Notify_Mask);
+
+      Connect (Box, "enter_notify_event",
+               To_Marshaller (On_Enter'Access), Data);
+
+      Connect (Box, "leave_notify_event",
+               To_Marshaller (On_Leave'Access), Data);
+
+      return Box;
+   end Create_Reacting_Button;
+
    -------------------------
    -- Create_Welcome_Page --
    -------------------------
 
    function Create_Welcome_Page (Kernel : Kernel_Handle) return MDI_Child is
       Main_Box : Welcome_Page_Access;
+      Main_Vbox : Gtk_Vbox;
       Hbox     : Gtk_Hbox;
       Vbox     : Gtk_Vbox;
-      Button   : Gtk_Button;
       Label    : Gtk_Label;
       Child    : MDI_Child;
       Image    : Gtk_Image;
       Scroll   : Gtk_Scrolled_Window;
-
-      Pics_Dir : constant String := Get_System_Dir (Kernel)
-        & "share" & Directory_Separator & "doc" & Directory_Separator
-        & "gps" & Directory_Separator & "html" & Directory_Separator;
+      Box      : Gtk_Event_Box;
       Requisition : Gtk_Requisition;
+      Win      : Gtk_Window;
 
    begin
       Main_Box := new Welcome_Page_Record;
       Initialize_Vbox (Main_Box);
 
-      Gtk_New (Image, Pics_Dir & "gps_title.gif");
+      Win := Get_Main_Window (Kernel);
+
+      Gtk_New
+        (Image,
+         Pixbuf => Render_Icon
+           (Win, "welcome-header", Icon_Size_Large_Toolbar));
       Pack_Start (Main_Box, Image);
 
       Gtk_New (Scroll);
@@ -152,58 +267,67 @@ package body Welcome_Page is
       Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 3);
       Pack_Start (Main_Box, Hbox);
 
+      Gtk_New_Vbox (Main_Vbox);
+      Pack_Start (Hbox, Main_Vbox);
+
       Gtk_New (Label,
-        -("GPS is a complete integrated development environment that gives"
-          & " access to a wide range of tools and integrates them smoothly.")
-        & ASCII.LF & ASCII.LF &
-        (-("For more information, click on one of the buttons below, which"
-          & " will launch an HTML browser. To configure the HTML browser"
-           & " under unix systems, you can go to the menu Edit->Preferences"
-           & " and select the 'External Commands' section.")));
+        -("GNAT Programming Studio is a powerful and simple-to-use IDE that"
+          & " streamlines your software development process"
+          & " from the initial coding stage through testing,"
+          & " debugging, system integration, and maintenance."));
       Set_Line_Wrap (Label, True);
-      Pack_Start (Hbox, Label);
+      Pack_Start (Main_Vbox, Label, True, True, 3);
       Requisition := Get_Child_Requisition (Image);
       Set_Size_Request (Label, Requisition.Width, -1);
 
+      Gtk_New_Vbox (Vbox);
       Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 3);
-      Pack_Start (Main_Box, Hbox);
+      Pack_Start (Main_Vbox, Vbox, True, True, 3);
+      Pack_Start (Vbox, Hbox, False, False, 3);
+      Set_Size_Request (Hbox, Requisition.Width, -1);
+      Set_Size_Request (Vbox, Requisition.Width, -1);
 
+      Box := Create_Reacting_Button
+        (Win, "button-overview", "button-overview-over");
       Gtk_New_Vbox (Vbox);
+      Pack_Start (Vbox, Box, False, False, 3);
+      Connect
+        (Box, "button_press_event",
+         To_Marshaller (On_Overview'Access), Kernel);
       Pack_Start (Hbox, Vbox, False, False, 3);
 
-      Gtk_New (Button, "");
-      Gtk_New (Image, Pics_Dir & "overview.png");
-      Add (Button, Image);
-      Set_Relief (Button, Relief_None);
-      Pack_Start (Vbox, Button, False, False);
-      Kernel_Callback.Connect (Button, "clicked", On_Overview'Access, Kernel);
-      Gtk_New (Label, -"Overview");
-      Pack_Start (Vbox, Label, False, False);
-      Grab_Focus (Button);
-
+      Box := Create_Reacting_Button
+        (Win, "button-guide", "button-guide-over");
       Gtk_New_Vbox (Vbox);
+      Pack_Start (Vbox, Box, False, False, 3);
+      Connect
+        (Box, "button_press_event",
+         To_Marshaller (On_UG'Access), Kernel);
       Pack_Start (Hbox, Vbox, False, False, 3);
 
-      Gtk_New (Button, "");
-      Gtk_New (Image, Pics_Dir & "tutorial.png");
-      Add (Button, Image);
-      Set_Relief (Button, Relief_None);
-      Pack_Start (Vbox, Button, False, False);
-      Kernel_Callback.Connect (Button, "clicked", On_Tutorial'Access, Kernel);
-      Gtk_New (Label, -"Tutorial");
-      Pack_Start (Vbox, Label, False, False);
-
+      Box := Create_Reacting_Button
+        (Win, "button-tutorial", "button-tutorial-over");
       Gtk_New_Vbox (Vbox);
+      Pack_Start (Vbox, Box, False, False, 3);
+      Connect
+        (Box, "button_press_event",
+         To_Marshaller (On_Tutorial'Access), Kernel);
       Pack_Start (Hbox, Vbox, False, False, 3);
 
-      Gtk_New (Button, "");
-      Gtk_New (Image, Pics_Dir & "user_guide.png");
-      Add (Button, Image);
-      Set_Relief (Button, Relief_None);
-      Pack_Start (Vbox, Button, False, False);
-      Kernel_Callback.Connect (Button, "clicked", On_UG'Access, Kernel);
-      Gtk_New (Label, -"User's Guide");
-      Pack_Start (Vbox, Label, False, False);
+      Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 3);
+      Pack_Start (Main_Vbox, Hbox, True, True, 3);
+      Gtk_New (Label);
+      Set_Use_Markup (Label, True);
+
+      Set_Markup
+        (Label, -("<span color=""dark grey"">Note the overview, "
+         & "tutorial and user's guide require an HTML browser. If you are "
+         & "having difficulties viewing under UNIX systems you can configure "
+         & "your browser by going to the menu Edit&gt;Preferences and "
+         & "visiting the section 'External Commands'</span>"));
+      Set_Line_Wrap (Label, True);
+      Pack_Start (Hbox, Label, False, False, 3);
+      Set_Size_Request (Label, Requisition.Width, -1);
 
       Show_All (Scroll);
 
