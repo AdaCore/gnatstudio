@@ -606,8 +606,11 @@ package body Call_Graph_Views is
       if Get_Event_Type (Event) = Button_Press then
          Iter := Find_Iter_For_Event
            (View.Locations_Tree, View.Locations_Model, Event);
-         Select_Iter (Get_Selection (View.Locations_Tree), Iter);
-         Select_Current_Location (View);
+
+         if Iter /= Null_Iter then
+            Select_Iter (Get_Selection (View.Locations_Tree), Iter);
+            Select_Current_Location (View);
+         end if;
       end if;
 
       return False;
