@@ -539,7 +539,8 @@ package body Projects.Registry is
      (Registry           : in out Project_Registry;
       Root_Project_Path  : VFS.Virtual_File;
       Errors             : Projects.Error_Report;
-      New_Project_Loaded : out Boolean)
+      New_Project_Loaded : out Boolean;
+      Status             : out Boolean)
    is
       Previous_Project : Virtual_File;
       Previous_Default : Boolean;
@@ -584,15 +585,14 @@ package body Projects.Registry is
          Success    : Boolean;
 
       begin
-         if Registry.Data /= null
-           and then Status (Registry.Data.Root) = From_File
-         then
-            Previous_Project := Project_Path (Registry.Data.Root);
-            Previous_Default := Status (Registry.Data.Root) = Default;
-         else
-            Previous_Project := VFS.No_File;
-            Previous_Default := False;
-         end if;
+         case Projects.Status (Registry.Data.Root) is
+            when From_File | Default =>
+               Previous_Project := Project_Path (Registry.Data.Root);
+            when Empty | From_Executable =>
+               Previous_Project := VFS.No_File;
+         end case;
+
+         Previous_Default := Projects.Status (Registry.Data.Root) = Default;
 
          if not Is_Regular_File (Root_Project_Path) then
             Trace (Me, "Load: " & Full_Name (Root_Project_Path).all
@@ -638,6 +638,8 @@ package body Projects.Registry is
                           & ASCII.LF & (-"Reverting to previous project"));
                end if;
 
+               --  We know that we failed to load the desired project
+               --  Do not try to retrieve this status (use Dummy as status).
                Internal_Load
                  (Registry,
                   Previous_Project,
@@ -648,6 +650,7 @@ package body Projects.Registry is
                Load_Empty_Project (Registry);
             end if;
 
+            Status := False;
             return;
          end if;
 
@@ -691,6 +694,7 @@ package body Projects.Registry is
       end Internal_Load;
 
    begin
+      Status := True;
       Internal_Load (Registry, Root_Project_Path, Errors, New_Project_Loaded);
    end Load;
 
@@ -705,6 +709,7 @@ package body Projects.Registry is
    is
       Iter               : Imported_Project_Iterator;
       New_Project_Loaded : Boolean;
+      Status             : Boolean;
    begin
       Iter     := Start (Registry.Data.Root);
       Reloaded := False;
@@ -727,7 +732,8 @@ package body Projects.Registry is
            (Registry           => Registry,
             Root_Project_Path  => Project_Path (Registry.Data.Root),
             Errors             => Errors,
-            New_Project_Loaded => New_Project_Loaded);
+            New_Project_Loaded => New_Project_Loaded,
+            Status             => Status);
       else
          Trace (Me, "Reload_If_Needed: nothing to do");
       end if;
@@ -755,7 +761,7 @@ package body Projects.Registry is
       Prj.Tree.Initialize (Registry.Data.Tree);
       Load_Custom_Project
         (Registry, Create_Project (Registry, "empty", Get_Current_Dir));
-      Set_Status (Registry.Data.Root, Default);
+      Set_Status (Registry.Data.Root, Empty);
    end Load_Empty_Project;
 
    --------------------
