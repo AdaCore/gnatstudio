@@ -135,7 +135,8 @@ package body Commands.Builder is
       --  we should not have a hard coded regexp here, and especially not
       --  recompile it every time.
       Matcher : constant Pattern_Matcher := Compile
-        ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.\n", Single_Line);
+        ("completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n",
+         Single_Line);
       Start   : Integer := Output'First;
       Matched : Match_Array (0 .. 3);
       Buffer  : Unbounded_String;
