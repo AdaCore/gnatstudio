@@ -11210,7 +11210,8 @@ by the text you have associated with it.
 Alias names may be composed of any character except newlines, but must start
 with a letter. GPS will jump to the start of each word before the current
 cursor position, and if the characters between this word start and the
-cursor position is an alias name, this alias is expanded.
+cursor position is an alias name (the comparison is case insensitive), this
+alias is expanded.
 
 @iftex
 @cindex screen shot
