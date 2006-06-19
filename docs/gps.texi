@@ -2191,14 +2191,14 @@ memory. This can be done manually using the menu
 GPS startup via a preference. The first time you use this feature, GPS will
 ask you wether you want this enabled or not.
 
-GPS is also able to complete a pointed notation. For example, if you type
+GPS is also able to complete a dotted notation. For example, if you type
 
 @smallexample
 with Ada.
 @end smallexample
 
 and then hit the completion key, you will be offered all the child and nested
-packages of Ada. You can aslo write the begining of the package, e.g.:
+packages of Ada. You can also write the beginning of the package, e.g.:
 
 @smallexample
 with Ada.Text
@@ -2234,15 +2234,17 @@ Completing V. will propose Field1 and Field2.
 @image{smart-completion}
 @end ifhtml
 
-
 Limitations:
 
-- GPS is not able to complete identifiers declared in the private part of a
- package.
+@table @i
+@item GPS is not able to complete identifiers declared in the private part of
+a package.
 
-- Completion does not work with generics.
+@item Completion does not work with generics
 
-- Only available for Ada.
+@item This feature is current only available for Ada
+
+@end table
 
 @item Complete Identifier
 @cindex complete identifier
@@ -10156,7 +10158,6 @@ instance, you can use them to specify that the command only applies to Ada
 files, or only if a source editor is currently selected.
 
 @end enumerate
-
 
 @subsubsection The filters tags
 
