@@ -134,12 +134,14 @@ package Projects.Registry is
      (Registry           : in out Project_Registry;
       Root_Project_Path  : VFS.Virtual_File;
       Errors             : Projects.Error_Report;
-      New_Project_Loaded : out Boolean);
+      New_Project_Loaded : out Boolean;
+      Status             : out Boolean);
    --  Load a new project tree.
    --  Root_Project_Path might be relative to the current directory.
    --  On exit, New_Project_Loaded is set to True if a new project, different
    --  from the current one, was loaded.
    --  Recompute_View should be called afterward
+   --  Status tells if Root_Project_Path has correctly been loaded.
 
    procedure Reload_If_Needed
      (Registry : in out Project_Registry;
