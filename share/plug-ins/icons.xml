@@ -146,6 +146,38 @@
        <alternate                     file="../icons/other/adacore_logo.png" size="3" />
     </icon>
 
+    <icon id="button-guide"           file="../icons/other/button_guide.png">
+       <alternate                     file="../icons/other/button_guide.png" size="3" />
+    </icon>
+
+    <icon id="button-guide-over"      file="../icons/other/button_guide_over.png">
+       <alternate                     file="../icons/other/button_guide_over.png" size="3" />
+    </icon>
+
+    <icon id="button-overview"        file="../icons/other/button_overview.png">
+       <alternate                     file="../icons/other/button_overview.png" size="3" />
+    </icon>
+
+    <icon id="button-overview-over"   file="../icons/other/button_overview_over.png">
+       <alternate                     file="../icons/other/button_overview_over.png" size="3" />
+    </icon>
+
+    <icon id="button-tutorial"        file="../icons/other/button_tutorial.png">
+       <alternate                     file="../icons/other/button_tutorial.png" size="3" />
+    </icon>
+
+    <icon id="button-tutorial-over"   file="../icons/other/button_tutorial_over.png">
+       <alternate                     file="../icons/other/button_tutorial_over.png" size="3" />
+    </icon>
+
+    <icon id="get-started"            file="../icons/other/get_started.png">
+       <alternate                     file="../icons/other/get_started.png" size="3" />
+    </icon>
+
+    <icon id="welcome-header"         file="../icons/other/welcome_header.png">
+       <alternate                     file="../icons/other/welcome_header.png" size="3" />
+    </icon>
+
     <!-- VCS icons -->
 
     <icon id="gps-vcs-added"          file="../icons/20px/vcs-added.png" />
@@ -164,7 +196,7 @@
     <icon id="gps-sync-to-remote"     file="../icons/16px/sync_to_remote.png" />
 
     <!-- GPS window icon -->
-   
+
     <icon id="gps-icon-16"            file="../icons/16px/gps_16.png" />
     <icon id="gps-icon-32"            file="../icons/32px/gps_32.png" />
     <icon id="gps-icon-48"            file="../icons/48px/gps_48.png" />
