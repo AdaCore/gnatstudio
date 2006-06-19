@@ -249,6 +249,8 @@ package body GPS.Kernel.Scripts is
    Recursive_Cst  : aliased constant String := "recursive";
    Default_Cst    : aliased constant String := "default_to_root";
    Nth_Cst        : aliased constant String := "nth";
+   Local_Cst      : aliased constant String := "local";
+
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -258,7 +260,8 @@ package body GPS.Kernel.Scripts is
    Entity_Cmd_Parameters   : constant Cst_Argument_List :=
      (Name_Cst'Access, File_Cst'Access, Line_Cst'Access, Col_Cst'Access);
    File_Cmd_Parameters     : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access);
+     (1 => Name_Cst'Access,
+      2 => Local_Cst'Access);
    File_Project_Parameters : constant Cst_Argument_List :=
      (1 => Default_Cst'Access);
    Open_Cmd_Parameters     : constant Cst_Argument_List :=
@@ -1150,11 +1153,25 @@ package body GPS.Kernel.Scripts is
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
+
          declare
             Instance : constant Class_Instance :=
-              Nth_Arg (Data, 1, Get_File_Class (Kernel));
+                         Nth_Arg (Data, 1, Get_File_Class (Kernel));
          begin
-            Set_Data (Instance, Create (Nth_Arg (Data, 2), Kernel));
+            if Number_Of_Arguments (Data) > 2 then
+               declare
+                  From_Current : constant Boolean := Nth_Arg (Data, 3);
+               begin
+                  if From_Current then
+                     Set_Data
+                       (Instance,
+                        Create_From_Dir (Get_Current_Dir, Nth_Arg (Data, 2)));
+                     return;
+                  end if;
+               end;
+            end if;
+
+            Set_Data (Instance, Create (Nth_Arg (Data, 2)));
          end;
 
       elsif Command = "name" then
@@ -1863,7 +1880,7 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
-         Maximum_Args => 1,
+         Maximum_Args => 2,
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
       Register_Command
