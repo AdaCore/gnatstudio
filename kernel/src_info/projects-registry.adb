@@ -584,7 +584,9 @@ package body Projects.Registry is
          Success    : Boolean;
 
       begin
-         if Registry.Data /= null then
+         if Registry.Data /= null
+           and then Status (Registry.Data.Root) = From_File
+         then
             Previous_Project := Project_Path (Registry.Data.Root);
             Previous_Default := Status (Registry.Data.Root) = Default;
          else
