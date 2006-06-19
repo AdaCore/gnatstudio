@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with System.Memory; use System.Memory;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -54,6 +55,15 @@ package body Tries is
    --  This function is used when the children array of a cell has been
    --  reallocated. In this case, all children have to update their link to
    --  their parent.
+
+   procedure Increment_Clock (Tree : in out Trie_Tree);
+   --  This function increment the change counter of the tree. If such a
+   --  counted is not yet created, it gets.
+
+   procedure Adjust_If_Need
+     (Tree_Root_Cell : Cell_Child_Access; Iter : in out Iterator);
+   --  If the iterator is no more consistent with the data, then adjust it. If
+   --  it's not possible, the iterator will be then set to At_End.
 
    --------------------
    --  Find_Cell_Child:
@@ -143,8 +153,17 @@ package body Tries is
    -----------
 
    procedure Clear (Tree : in out Trie_Tree) is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Mod_Counter, Mod_Access);
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Cell_Child, Cell_Child_Access);
    begin
-      Free (Tree.Child);
+      if Tree.Child /= null then
+         Free (Tree.Child.all);
+         Free (Tree.Child);
+      end if;
+
+      Free (Tree.Mod_Clock);
    end Clear;
 
    ----------
@@ -183,10 +202,10 @@ package body Tries is
          Put (")");
       end Dump;
    begin
-      if Tree.Child.Children = null then
+      if Tree.Child = null or else Tree.Child.Children = null then
          Put ("('')");
       else
-         Dump (Tree.Child, 0);
+         Dump (Tree.Child.all, 0);
       end if;
    end Dump;
 
@@ -195,16 +214,18 @@ package body Tries is
    ---------------------
 
    procedure Find_Cell_Child
-     (Tree : in out Trie_Tree; Index : String; Pointer : out Cell_Pointer)
+     (Root_Cell : Cell_Child_Access;
+      Index     : String;
+      Pointer   : out Cell_Pointer)
    is
-      Current  : Cell_Child_Access := Tree.Child'Unchecked_Access;
+      Current  : Cell_Child_Access := Root_Cell;
       Start    : Integer := Index'First;
       Ind      : String_Access;
       Ind_First, Ind_Last : Natural;
       Child    : Integer;
    begin
       --  If we are processing the root node
-      if Tree.Child.Children = null then
+      if Root_Cell.Children = null then
          Pointer.Cell_Parent := null;
          Pointer.Cell        := Current;
          Pointer.Last        := Index'First;
@@ -321,9 +342,14 @@ package body Tries is
          return;
       end if;
 
-      Find_Cell_Child (Tree, Index.all, Pointer);
+      if Tree.Child = null then
+         Tree.Child := new Cell_Child;
+      end if;
+
+      Find_Cell_Child (Tree.Child, Index.all, Pointer);
 
       if Pointer.Cell /= null then
+         Increment_Clock (Tree);
          Insert (Index.all, Pointer, Data);
       end if;
    end Insert;
@@ -501,9 +527,14 @@ package body Tries is
    procedure Remove (Tree : in out Trie_Tree; Index : String) is
       Pointer : Cell_Pointer;
    begin
-      Find_Cell_Child (Tree, Index, Pointer);
+      if Tree.Child = null then
+         Tree.Child := new Cell_Child;
+      end if;
+
+      Find_Cell_Child (Tree.Child, Index, Pointer);
 
       if Pointer.Cell /= null then
+         Increment_Clock (Tree);
          Remove (Tree, Pointer);
       end if;
    end Remove;
@@ -536,7 +567,7 @@ package body Tries is
                --  data, we can simply remove it.
                elsif Pointer.Cell_Parent.Num_Children = 2
                  and then Pointer.Cell_Parent.Data = No_Data
-                 and then Pointer.Cell_Parent /= Tree.Child'Unchecked_Access
+                 and then Pointer.Cell_Parent /= Tree.Child
                then
                   declare
                      Tmp : Cell_Child := Pointer.Cell_Parent.all;
@@ -590,7 +621,7 @@ package body Tries is
                Free (Convert (Tmp));
 
             else
-               Tree.Child := Pointer.Cell.all;
+               Tree.Child.all := Pointer.Cell.all;
             end if;
          end if;
 
@@ -609,7 +640,11 @@ package body Tries is
    function Get (Tree : access Trie_Tree; Index : String) return Data_Type is
       Pointer : Cell_Pointer;
    begin
-      Find_Cell_Child (Tree.all, Index, Pointer);
+      if Tree.Child = null then
+         Tree.Child := new Cell_Child;
+      end if;
+
+      Find_Cell_Child (Tree.Child, Index, Pointer);
 
       if Pointer.Scenario = 3 then
          return Pointer.Cell.Data;
@@ -636,14 +671,27 @@ package body Tries is
 
    function Start (Tree : access Trie_Tree; Prefix : String) return Iterator is
       Pointer   : Cell_Pointer;
-      Iter      : Iterator;
+      Iter      : Iterator := Null_Iterator;
    begin
+      if Tree.Child = null then
+         Iter.Current_Cell := null;
+         Iter.Root_Cell := null;
+
+         return Iter;
+      end if;
+
+      Iter.Mod_Clock := Tree.Mod_Clock;
+
+      if Iter.Mod_Clock /= null then
+         Iter.Initial_Timestamp := Iter.Mod_Clock.all;
+      end if;
+
       if Prefix = "" then
-         Iter.Current_Cell := Tree.Child'Access;
+         Iter.Current_Cell := Tree.Child;
          Iter.Current_Index := 1;
       else
          --  Find the closest cell that matches the prefix
-         Find_Cell_Child (Tree.all, Prefix, Pointer);
+         Find_Cell_Child (Tree.Child, Prefix, Pointer);
 
          if Pointer.Scenario in 4 .. 5 then
             Iter.Current_Cell := null;
@@ -656,7 +704,11 @@ package body Tries is
          Iter.Current_Index := 1;
       end if;
 
+      Iter.Trie_Root_Cell := Tree.Child;
       Iter.Root_Cell := Iter.Current_Cell;
+      Iter.Root_Name := new String'(Prefix);
+      Iter.Current_Name := new String'("");
+      Iter.Current_Name_Length := 0;
 
       if not Is_Valid (Iter) then
          Next (Iter);
@@ -671,6 +723,12 @@ package body Tries is
 
    procedure Next (Iter : in out Iterator) is
    begin
+      Adjust_If_Need (Iter.Trie_Root_Cell, Iter);
+
+      if At_End (Iter) then
+         return;
+      end if;
+
       if Iter.Current_Cell = Iter.Root_Cell
         and then Iter.Current_Cell.Children = null
       then
@@ -704,6 +762,30 @@ package body Tries is
             Next (Iter);
          end if;
       end if;
+
+      if not At_End (Iter) then
+         declare
+            Full_Name : constant String :=
+              Get_Index (Iter.Current_Cell.Data).all;
+            Suffix    : constant String :=
+              Full_Name
+                (Full_Name'First + Iter.Root_Name'Length .. Full_Name'Last);
+
+         begin
+            if Iter.Current_Name'Length < Suffix'Length then
+               Free (Iter.Current_Name);
+               Iter.Current_Name := new String'(Suffix);
+            else
+               --  ??? To minimize memory copy, we could just copy the delta
+               --  between this and its parent.
+               Iter.Current_Name.all
+                 (Iter.Current_Name'First
+                  .. Iter.Current_Name'First + Suffix'Length - 1) := Suffix;
+            end if;
+
+            Iter.Current_Name_Length := Suffix'Length;
+         end;
+      end if;
    end Next;
 
    ---------
@@ -712,6 +794,12 @@ package body Tries is
 
    function Get (Iter : Iterator) return Data_Type is
    begin
+      if Iter.Mod_Clock /= null
+        and then Iter.Mod_Clock.all /= Iter.Initial_Timestamp
+      then
+         return No_Data;
+      end if;
+
       if not At_End (Iter) then
          return Iter.Current_Cell.Data;
       else
@@ -737,5 +825,69 @@ package body Tries is
       return At_End (Iter)
         or else Iter.Current_Cell.Data /= No_Data;
    end Is_Valid;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Iter : in out Iterator) is
+   begin
+      Free (Iter.Root_Name);
+      Free (Iter.Current_Name);
+   end Free;
+
+   ---------------------
+   -- Increment_Clock --
+   ---------------------
+
+   procedure Increment_Clock (Tree : in out Trie_Tree) is
+   begin
+      if Tree.Mod_Clock = null then
+         Tree.Mod_Clock := new Mod_Counter'(0);
+      end if;
+
+      Tree.Mod_Clock.all := Tree.Mod_Clock.all + 1;
+   end Increment_Clock;
+
+   --------------------
+   -- Adjust_If_Need --
+   --------------------
+
+   procedure Adjust_If_Need
+     (Tree_Root_Cell : Cell_Child_Access; Iter : in out Iterator)
+   is
+      Pointer : Cell_Pointer;
+   begin
+      if Iter.Mod_Clock /= null
+        and then Iter.Mod_Clock.all /= Iter.Initial_Timestamp
+      then
+         --  Here, there have been modifications. We try to retreive the cells
+         --  as they were. If we can't, it's the end of the iteration.
+
+         Find_Cell_Child (Tree_Root_Cell, Iter.Root_Name.all, Pointer);
+
+         if Pointer.Scenario /= 3 then
+            Iter.Current_Cell := null;
+            return;
+         end if;
+
+         Iter.Root_Cell := Pointer.Cell;
+
+         Find_Cell_Child
+           (Tree_Root_Cell, Iter.Root_Name.all & Iter.Current_Name
+              (Iter.Current_Name'First
+               .. Iter.Current_Name'First + Iter.Current_Name_Length - 1),
+            Pointer);
+
+         if Pointer.Scenario /= 3 then
+            Iter.Current_Cell := null;
+            return;
+         end if;
+
+         Iter.Current_Cell := Pointer.Cell;
+
+         Iter.Initial_Timestamp := Iter.Mod_Clock.all;
+      end if;
+   end Adjust_If_Need;
 
 end Tries;
