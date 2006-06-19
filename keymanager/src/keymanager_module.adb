@@ -127,6 +127,8 @@ package body KeyManager_Module is
    type Key_Description is record
       Action  : String_Access;
       Next    : Key_Description_List;
+      Keymap  : Keymap_Access := null;
+      --  This is the secondary keymap
       Changed : Boolean := False;
    end record;
    No_Key : constant Key_Description_List := null;
@@ -586,12 +588,7 @@ package body KeyManager_Module is
 
    function Next (Key : Key_Description_List) return Key_Description_List is
    begin
-      if Key.Action = null then
-         --  A secondary keymap in fact
-         return null;
-      else
-         return Key.Next;
-      end if;
+      return Key.Next;
    end Next;
 
    ----------------
@@ -599,14 +596,8 @@ package body KeyManager_Module is
    ----------------
 
    function Get_Keymap (Key : Key_Description_List) return Keymap_Access is
-      function Convert is new Ada.Unchecked_Conversion
-        (Key_Description_List, Keymap_Access);
    begin
-      if Key.Action = null then
-         return Convert (Key.Next);
-      else
-         return null;
-      end if;
+      return Key.Keymap;
    end Get_Keymap;
 
    ----------------
@@ -616,11 +607,8 @@ package body KeyManager_Module is
    procedure Set_Keymap
      (Key : in out Key_Description_List; Keymap : Keymap_Access)
    is
-      function Convert is new Ada.Unchecked_Conversion
-        (Keymap_Access, Key_Description_List);
    begin
-      Key.Action := null;
-      Key.Next := Convert (Keymap);
+      Key.Keymap := Keymap;
    end Set_Keymap;
 
    ----------
@@ -775,6 +763,7 @@ package body KeyManager_Module is
          Binding2 := new Key_Description'
            (Action         => new String'(Action),
             Changed        => Save_In_Keys_XML,
+            Keymap         => null,
             Next           => Binding3);
          Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
       end Bind_Internal;
@@ -910,8 +899,6 @@ package body KeyManager_Module is
       Modif  : Gdk_Modifier_Type;
       Keymap : out Keymap_Access)
    is
-      function Convert is new Ada.Unchecked_Conversion
-        (Keymap_Access, Key_Description_List);
       Binding  : Key_Description_List := Get (Table, (Key, Modif));
       Binding2 : Key_Description_List;
    begin
@@ -920,7 +907,8 @@ package body KeyManager_Module is
          Binding := new Key_Description'
            (Action  => null,
             Changed => False,
-            Next    => Convert (Keymap));
+            Keymap  => Keymap,
+            Next    => null);
          Set (Table, (Key, Modif), Binding);
 
       else
@@ -938,7 +926,8 @@ package body KeyManager_Module is
             Binding2 := new Key_Description'
               (Action  => null,
                Changed => False,
-               Next    => Convert (Keymap));
+               Keymap  => Keymap,
+               Next    => null);
             Binding.Next := Binding2;
          else
             Keymap := Get_Keymap (Binding2);
@@ -1457,14 +1446,22 @@ package body KeyManager_Module is
          if Action.Category /= null
            and then (Flat_List or else Parent /= Null_Iter)
          then
-            Parent := Set
-              (Model   => Editor.Model,
-               Parent  => Parent,
-               Descr   => Get (Action_Iter),
-               Key     => Lookup_Key_From_Action
+            declare
+               Key : constant String := Lookup_Key_From_Action
                  (Editor.Bindings,
                   Get (Action_Iter),
-                  Default           => -Disabled_String));
+                  Default           => -Disabled_String);
+            begin
+               --  If the action has a key, it was already added through the
+               --  Foreach_Unfiltered call above.
+               if Key = "" then
+                  Parent := Set
+                    (Model   => Editor.Model,
+                     Parent  => Parent,
+                     Descr   => Get (Action_Iter),
+                     Key     => "");
+               end if;
+            end;
          end if;
          Next (Editor.Kernel, Action_Iter);
       end loop;
