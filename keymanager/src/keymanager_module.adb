@@ -144,11 +144,6 @@ package body KeyManager_Module is
    function Next (Key : Key_Description_List) return Key_Description_List;
    --  Return the next element in the list
 
-   procedure Set_Keymap
-     (Key : in out Key_Description_List; Keymap : Keymap_Access);
-   function Get_Keymap (Key : Key_Description_List) return Keymap_Access;
-   --  Return the secondary keymap associated with Key.
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Key_Description, Key_Description_List);
 
@@ -591,26 +586,6 @@ package body KeyManager_Module is
       return Key.Next;
    end Next;
 
-   ----------------
-   -- Get_Keymap --
-   ----------------
-
-   function Get_Keymap (Key : Key_Description_List) return Keymap_Access is
-   begin
-      return Key.Keymap;
-   end Get_Keymap;
-
-   ----------------
-   -- Set_Keymap --
-   ----------------
-
-   procedure Set_Keymap
-     (Key : in out Key_Description_List; Keymap : Keymap_Access)
-   is
-   begin
-      Key.Keymap := Keymap;
-   end Set_Keymap;
-
    ----------
    -- Hash --
    ----------
@@ -627,17 +602,18 @@ package body KeyManager_Module is
    ------------------------
 
    procedure Free_Non_Recursive (Element : in out Key_Description_List) is
-      Keymap  : Keymap_Access;
    begin
-      if Element.Action = null then
-         Keymap := Get_Keymap (Element);
-         if Keymap /= null then
-            Reset (Keymap.Table);
-            Unchecked_Free (Keymap);
-         end if;
-      else
+      if Element.Action /= null then
          Free (Element.Action);
+         Element.Action := null;
       end if;
+
+      if Element.Keymap /= null then
+         Reset (Element.Keymap.Table);
+         Unchecked_Free (Element.Keymap);
+         Element.Keymap := null;
+      end if;
+
       Unchecked_Free (Element);
    end Free_Non_Recursive;
 
@@ -665,7 +641,6 @@ package body KeyManager_Module is
    is
       Tmp    : Key_Description_List := From;
       Tmp_To : Key_Description_List;
-      Keymap : Keymap_Access;
    begin
       To := null;
       while Tmp /= null loop
@@ -679,13 +654,13 @@ package body KeyManager_Module is
 
          if Tmp.Action /= null then
             Tmp_To.Action := new String'(Tmp.Action.all);
-         elsif Get_Keymap (Tmp) /= null then
-            Keymap := new Keymap_Record;
-            Clone (From => Get_Keymap (Tmp).Table, To => Keymap.Table);
-            Set_Keymap (Tmp_To, Keymap);
-         else
-            Tmp_To.Action := null;
          end if;
+
+         if Tmp.Keymap /= null then
+            Tmp_To.Keymap := new Keymap_Record;
+            Clone (From => Tmp.Keymap.Table, To => Tmp_To.Keymap.Table);
+         end if;
+
          Tmp_To.Changed := Tmp.Changed;
          Tmp := Next (Tmp);
       end loop;
@@ -781,12 +756,14 @@ package body KeyManager_Module is
          Get_First (Table, Iter);
          while Get_Element (Iter) /= null loop
             List := Get_Element (Iter);
+
             Previous := null;
             while List /= null loop
                if List.Action = null then
-                  if Get_Keymap (List) /= null then
-                     Remove_In_Keymap (Get_Keymap (List).Table);
+                  if List.Keymap /= null then
+                     Remove_In_Keymap (List.Keymap.Table);
                   end if;
+
                   Previous := List;
                   List := Next (List);
 
@@ -796,7 +773,7 @@ package body KeyManager_Module is
                         --  Remove list from the list of keybindings, without
                         --  modifying the htable itself to avoid invalidating
                         --  the iterator
-                        Tmp := Next (List);
+                        Tmp := List.Next;
                         Free (List.Action);
                         List.all := Tmp.all;
                         Unchecked_Free (Tmp);
@@ -930,7 +907,7 @@ package body KeyManager_Module is
                Next    => null);
             Binding.Next := Binding2;
          else
-            Keymap := Get_Keymap (Binding2);
+            Keymap := Binding2.Keymap;
          end if;
       end if;
    end Get_Secondary_Keymap;
@@ -978,7 +955,7 @@ package body KeyManager_Module is
          --  defined.
          while Binding /= No_Key loop
             if Binding.Action = null then
-               Handler.Secondary_Keymap := Get_Keymap (Binding);
+               Handler.Secondary_Keymap := Binding.Keymap;
                Found_Action := True;
 
             else
@@ -1077,8 +1054,8 @@ package body KeyManager_Module is
                   Add_Child (File, Child);
 
                elsif Binding.Action = null then
-                  if Get_Keymap (Binding) /= null then
-                     Save_Table (Get_Keymap (Binding).Table,
+                  if Binding.Keymap /= null then
+                     Save_Table (Binding.Keymap.Table,
                        Prefix
                        & Image (Get_Key (Iter).Key,
                          Get_Key (Iter).Modifier)
@@ -1285,9 +1262,9 @@ package body KeyManager_Module is
 
             while Binding /= null loop
                if Binding.Action = null then
-                  if Get_Keymap (Binding) /= null then
+                  if Binding.Keymap /= null then
                      Process_Table
-                       (Get_Keymap (Binding).Table,
+                       (Binding.Keymap.Table,
                         Prefix
                         & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier)
                         & ' ');
@@ -1889,52 +1866,6 @@ package body KeyManager_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Editor    : Keys_Editor;
-
-      procedure Process_Menu_Binding
-        (Data       : System.Address;
-         Accel_Path : String;
-         Accel_Key  : Gdk.Types.Gdk_Key_Type;
-         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
-         Changed    : Boolean);
-      --  Called for each known accelerator path
-
-      procedure Process_Menu_Binding
-        (Data       : System.Address;
-         Accel_Path : String;
-         Accel_Key  : Gdk.Types.Gdk_Key_Type;
-         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
-         Changed    : Boolean)
-      is
-         pragma Unreferenced (Data, Changed);
-         First : Natural := Accel_Path'First + 1;
-      begin
-         if Accel_Key /= 0 then
-            while First <= Accel_Path'Last
-              and then Accel_Path (First - 1) /= '>'
-            loop
-               First := First + 1;
-            end loop;
-
-            --  Ignore the Changed parameter: it indicates whether the key
-            --  was modified interactively by the user (or through a call to
-            --  Change_Entry). In the first case, this is handled internally
-            --  by gtk+, we do not need to save it in keys.xml. In the second
-            --  case, the call to Change_Entry was done through
-            --  Bind_Default_Key_Internal and therefore it is already marked as
-            --  modified
-            if Accel_Path (First .. Accel_Path'Last) /= "" then
-               Bind_Default_Key_Internal
-                 (Editor.Bindings,
-                  Action            => Accel_Path (First .. Accel_Path'Last),
-                  Key               => Image (Accel_Key, Accel_Mods),
-                  Save_In_Keys_XML  => True,
-                  Remove_Existing_Actions_For_Shortcut => False,
-                  Remove_Existing_Shortcuts_For_Action => False,
-                  Update_Menus      => False);
-            end if;
-         end if;
-      end Process_Menu_Binding;
-
       Scrolled  : Gtk_Scrolled_Window;
       Bbox      : Gtk_Hbutton_Box;
       Hbox, Vbox, Filter_Box : Gtk_Box;
@@ -1963,10 +1894,6 @@ package body KeyManager_Module is
       Clone
         (From => Keymanager_Module.Key_Manager.Table,
          To   => Editor.Bindings);
-      --  Add the menu accelerators as well. From then one, they will be stored
-      --  in the htable. This makes it easier to change the keybinding
-      Gtk.Accel_Map.Foreach_Unfiltered
-        (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
 
       Gtk_New_Vbox (Vbox, Homogeneous => False);
       Pack_Start (Get_Vbox (Editor), Vbox, Expand => True, Fill => True);
