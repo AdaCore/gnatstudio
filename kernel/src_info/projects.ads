@@ -550,11 +550,11 @@ package Projects is
    --  Return the empy string if Project is normalized, or an error message if
    --  otherwise.
 
-   type Project_Status is (From_File, Default, From_Executable);
+   type Project_Status is (From_File, Default, From_Executable, Empty);
    --  How the project was created: either read from a file, automatically
-   --  created from a directory, or automatically created from an executable
-   --  (debugger case). An actual project file exists on disk only in the
-   --  From_File case.
+   --  created from a directory, automatically created from an executable
+   --  (debugger case), or default empty project. An actual project file exists
+   --  on disk only in the From_File or Default cases.
 
    function Status (Project : Project_Type) return Project_Status;
    --  Return true if the project is a default project, ie not associated with
