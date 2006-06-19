@@ -76,11 +76,16 @@ package Tries is
    --  Move to the next entry
 
    function Get (Iter : Iterator) return Data_Type;
-   --  Return the current entry or null if there are no more entries
+   --  Return the current entry or null if there are no more entries. Note that
+   --  the iterator might be invalidated here, that's why it's in / out
+   --  parameter.
 
    function Is_Valid (Iter : Iterator) return Boolean;
    --  Return true if the iterator is meant to be used by the user (including
    --  the case where it is at the end).
+
+   procedure Free (Iter : in out Iterator);
+   --  Free the memory associated to an iterator.
 
    Null_Iterator : constant Iterator;
 
@@ -98,11 +103,6 @@ package Tries is
    --  of Find_Cell_Child.
 
    type Cell_Pointer is private;
-
-   procedure Find_Cell_Child
-     (Tree : in out Trie_Tree; Index : String; Pointer : out Cell_Pointer);
-   --  Access a specific cell in the tree. The result value should only be
-   --  used before the next write-access to the tree, or it becomes obsolete.
 
    procedure Insert (Index : String; Pointer : Cell_Pointer; Data : Data_Type);
    --  Insert a new entry in the tree.
@@ -136,8 +136,15 @@ private
 
    type Cell_Child_Access is access all Cell_Child;
 
+   procedure Find_Cell_Child
+     (Root_Cell : Cell_Child_Access;
+      Index     : String;
+      Pointer   : out Cell_Pointer);
+   --  Access a specific cell in the tree. The result value should only be
+   --  used before the next write-access to the tree, or it becomes obsolete.
+
    type Cell_Child is record
-      First_Char_Of_Key : Character;
+      First_Char_Of_Key : Character := 'a';
 
       Index_Length      : Natural := 0;
       --  The number of characters that should be considered in
@@ -160,27 +167,54 @@ private
 
    type Cell_Child_Array is array (Positive) of aliased Cell_Child;
 
+   type Mod_Counter is mod Integer'Last;
+   --  This type is made modal in order to avoid crashing when it reaches its
+   --  last values. This is almost save, as we use it to determine if there are
+   --  been any chances between two iterations on the iterator.
+
+   type Mod_Access is access all Mod_Counter;
+
    type Trie_Tree is record
-      Child : aliased Cell_Child;
+      Mod_Clock : Mod_Access;
+      --  This value is incremented each time a modification is done in the
+      --  trie trie. This way, if there is any change made during e.g. the
+      --  iteration, it's detected.
+
+      Child     : Cell_Child_Access := null;
    end record;
 
    Empty_Trie_Tree : constant Trie_Tree :=
-     (Child => (Index_Length => 0, First_Char_Of_Key => 'a',
-                Data => No_Data, Children => null, Num_Children => 0,
-                Number_In_Parent => 1, Parent_Cell => null,
-                Children_Length => 0));
+     (Mod_Clock => null,
+      Child     => null);
 
    type Data_Type_Array is array (Positive) of Data_Type;
 
    type Data_Type_Array_Access is access Data_Type_Array;
 
    type Iterator is record
-      Root_Cell     : Cell_Child_Access;
-      Current_Cell  : Cell_Child_Access;
+      Trie_Root_Cell    : Cell_Child_Access;
+      --  This is the cell at the root of the whole trie tree.
+
+      Mod_Clock         : Mod_Access;
+      Initial_Timestamp : Mod_Counter;
+
+      Root_Cell : Cell_Child_Access;
+      Root_Name : GNAT.OS_Lib.String_Access;
+
+      Current_Cell        : Cell_Child_Access;
+      Current_Name        : GNAT.OS_Lib.String_Access;
+      Current_Name_Length : Natural;
+      --  This is only the variable part of the current name. To get the actual
+      --  full name, it has to be concatened with Root_Name. Moreover, in order
+      --  to minimize memory allocation, we never change it to a smaller
+      --  string. Therefore, the actual size of the current variable part is
+      --  recorded in Current_Name_Length.
+
       Current_Index : Natural;
    end record;
 
-   Null_Iterator : constant Iterator := (null, null, 0);
+   Null_Iterator : constant Iterator :=
+     (null, null, 0, null, null, null, null, 0, 0);
 
    type Cell_Pointer is record
       Cell              : Cell_Child_Access;
