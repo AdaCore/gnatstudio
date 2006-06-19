@@ -212,6 +212,15 @@ package Completion is
    --  a subprogram. We could do a little more analyzsis there, e.g. extract
    --  named parameters if any.
 
+   function Is_Valid (Proposal : Completion_Proposal) return Boolean;
+   --  Return true if the proposal should be accessible by the user. By
+   --  default, this is always true. Unvalid proposal are automatically skipped
+   --  by the Next & First subprogram. However, an unvalid completion can be
+   --  returned by an iterator if changes are made between two iterations.
+   --  Users using such a behavior have to ensure that the iterator result of
+   --  the iterator is still valid after such a modification. A call to next
+   --  on the iterator will make the completion valid again.
+
    function Get_Initial_Completion_List
      (Manager        : Completion_Manager;
       Start_Offset   : Natural;
@@ -250,6 +259,13 @@ package Completion is
 
    function At_End (This : Completion_Iterator) return Boolean;
    --  Return true if the iterator is after the last element of its list.
+
+   function Is_Valid (It : Completion_Iterator) return Boolean;
+   --  Return true if the iterator should be used by the user, false otherwise.
+   --  iterators returned by Next and First subprograms are always valid (even
+   --  if, in the case of Next, the iterator given in parameter is not). A
+   --  valid iterator can be invalidated if the iterated structure changes
+   --  during the iteration.
 
    Null_Completion_Iterator : constant Completion_Iterator;
    --  Default value for an empty iterator.
