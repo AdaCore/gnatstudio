@@ -398,6 +398,15 @@ package body Completion.Entities_Extractor is
       Proposal.Params_In_Expression := Number_Of_Parameters;
    end Append_Expression;
 
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (Proposal : Entity_Completion_Proposal) return Boolean is
+   begin
+      return Proposal.Entity /= null;
+   end Is_Valid;
+
    ----------
    -- Free --
    ----------
@@ -566,6 +575,10 @@ package body Completion.Entities_Extractor is
 
       Entity := Get (It.It);
 
+      if Entity = null then
+         return False;
+      end if;
+
       --  In any case, we always return global symbols. Non global symbols are
       --  hidden by this engine.
 
@@ -635,7 +648,7 @@ package body Completion.Entities_Extractor is
          Entity               => Get (This.It),
          Is_All               => False,
          Filter               => This.Next_Filter,
-         params_In_Expression => 0);
+         Params_In_Expression => 0);
    end Get;
 
    ----------
