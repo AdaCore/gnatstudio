@@ -1,24 +1,5 @@
 Known Problems fixed in GPS 4.0.0
 
-- F602-022 GPS hangs when comparing doing VCS comparisons
-  Problem:    GPS hangs when using the VCS interface (and CVS in particular)
-              to compare a given file against HEAD or any other specific 
-              revision (or tag) under some special circumstances: the file
-              has to be part of a project which is spread over several
-              directory. Furthermore, there should be another file with the
-              same name under another directory of the project. This may
-              also appear when using the following layout, project/prj2/README
-              being the file to compare and /project/prj.gpr being the 
-              currently loaded and depending on prj1.gpr and prj2.gpr.
-                 /project/prj1/prj1.gpr
-                              /README
-                         /prj2/prj2.gpr
-                              /README
-                         /prj.gpr
-              In fact all VCS operations done on project/prj2/README are
-              actually executed on /project/prj1/README.
-  Workaround: Rename either one of the file before comparing the other.
-
 - F612-025 VCS not passing full pathnames
   Problem:    When Absolute_Names is set to True the VCS actions are not
               receiving the full pathname for the file to handle.
@@ -30,6 +11,25 @@ Known Problems fixed in GPS 4.0.0
               bar until you move the cursor
   Workaround: Move the cursor one character to the left or right to force a
               refresh
+
+- F602-022 GPS hangs when doing some VCS comparisons
+  Problem:    GPS hangs when using the VCS interface (and CVS in particular)
+              to compare a given file against HEAD or any other specific 
+              revision (or tag) under some special circumstances: the file
+              has to be part of a project which is spread over several
+              directories. Furthermore, there should be another file with the
+              same name under another directory of the project. This may
+              also appear when using the following layout, project/prj2/README
+              being the file to compare and /project/prj.gpr being the 
+              currently loaded and depending on prj1.gpr and prj2.gpr.
+                 /project/prj1/prj1.gpr
+                              /README
+                         /prj2/prj2.gpr
+                              /README
+                         /prj.gpr
+              In fact all VCS operations done on project/prj2/README are
+              actually executed on /project/prj1/README.
+  Workaround: Rename either one of the file before comparing the other
 
 - F516-004 Cross references into multi-unit source files in Ada
   Problem:    If you have used gnatname so that you can use source files
