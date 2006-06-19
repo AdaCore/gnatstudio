@@ -1134,7 +1134,6 @@ package body KeyManager_Module is
 
          Keymanager_Module.Key_Manager.Custom_Keys_Loaded := True;
 
-
          if File = null then
             Insert (Kernel, Err.all, Mode => Error);
          else
@@ -1401,22 +1400,24 @@ package body KeyManager_Module is
       is
          Iter : Gtk_Tree_Iter;
          pragma Unreferenced (Data, Changed, Iter, Accel_Key, Accel_Mods);
-         First : Natural := Accel_Path'First;
+         First : Natural := Accel_Path'First + 1;
       begin
          while First <= Accel_Path'Last
-           and then Accel_Path (First) /= '/'
+           and then Accel_Path (First - 1) /= '>'
          loop
             First := First + 1;
          end loop;
 
-         Iter := Set
-           (Model      => Editor.Model,
-            Parent     => Menu_Iter,
-            Descr      => Accel_Path (First .. Accel_Path'Last),
-            Key        => Lookup_Key_From_Action
-              (Editor.Bindings,
-               Action            => Accel_Path (First .. Accel_Path'Last),
-               Default           => ""));
+         if Accel_Path (First .. Accel_Path'Last) /= "" then
+            Iter := Set
+              (Model      => Editor.Model,
+               Parent     => Menu_Iter,
+               Descr      => Accel_Path (First .. Accel_Path'Last),
+               Key        => Lookup_Key_From_Action
+                 (Editor.Bindings,
+                  Action            => Accel_Path (First .. Accel_Path'Last),
+                  Default           => ""));
+         end if;
       end Process_Menu_Binding;
 
       Sort_Id     : constant Gint := Freeze_Sort (Editor.Model);
@@ -1498,13 +1499,13 @@ package body KeyManager_Module is
          Changed    : Boolean)
       is
          pragma Unreferenced (Data, Changed, Accel_Key, Accel_Mods);
-         First   : Natural := Accel_Path'First;
+         First   : Natural := Accel_Path'First + 1;
          Iter    : Key_Htable.Iterator;
          Binding : Key_Description_List;
          Found   : Boolean := False;
       begin
          while First <= Accel_Path'Last
-           and then Accel_Path (First) /= '/'
+           and then Accel_Path (First - 1) /= '>'
          loop
             First := First + 1;
          end loop;
@@ -1908,11 +1909,11 @@ package body KeyManager_Module is
          Changed    : Boolean)
       is
          pragma Unreferenced (Data, Changed);
-         First : Natural := Accel_Path'First;
+         First : Natural := Accel_Path'First + 1;
       begin
          if Accel_Key /= 0 then
             while First <= Accel_Path'Last
-              and then Accel_Path (First) /= '/'
+              and then Accel_Path (First - 1) /= '>'
             loop
                First := First + 1;
             end loop;
@@ -1924,14 +1925,16 @@ package body KeyManager_Module is
             --  case, the call to Change_Entry was done through
             --  Bind_Default_Key_Internal and therefore it is already marked as
             --  modified
-            Bind_Default_Key_Internal
-              (Editor.Bindings,
-               Action            => Accel_Path (First .. Accel_Path'Last),
-               Key               => Image (Accel_Key, Accel_Mods),
-               Save_In_Keys_XML  => True,
-               Remove_Existing_Actions_For_Shortcut => False,
-               Remove_Existing_Shortcuts_For_Action => False,
-               Update_Menus      => False);
+            if Accel_Path (First .. Accel_Path'Last) /= "" then
+               Bind_Default_Key_Internal
+                 (Editor.Bindings,
+                  Action            => Accel_Path (First .. Accel_Path'Last),
+                  Key               => Image (Accel_Key, Accel_Mods),
+                  Save_In_Keys_XML  => True,
+                  Remove_Existing_Actions_For_Shortcut => False,
+                  Remove_Existing_Shortcuts_For_Action => False,
+                  Update_Menus      => False);
+            end if;
          end if;
       end Process_Menu_Binding;
 
@@ -2450,10 +2453,10 @@ package body KeyManager_Module is
       Accel_Mods : constant Gdk_Modifier_Type :=
         Gdk_Modifier_Type (Get_Flags (Nth (Args, 3)));
       pragma Unreferenced (Map, Kernel);
-      First : Natural := Accel_Path'First;
+      First : Natural := Accel_Path'First + 1;
    begin
       while First <= Accel_Path'Last
-        and then Accel_Path (First) /= '/'
+        and then Accel_Path (First - 1) /= '>'
       loop
          First := First + 1;
       end loop;
