@@ -2191,6 +2191,22 @@ memory. This can be done manually using the menu
 GPS startup via a preference. The first time you use this feature, GPS will
 ask you wether you want this enabled or not.
 
+In order to use this feature, open any Ada file, and begin to type an
+identifier. It has to be an identifier declared either in the current file (and
+accessible from the cursor location) or in one of the packages of the project
+loaded. Move the cursor right after the last caracter of the uncomplete
+identifier and hit the completion key (which is @key{ctrl+space} by default).
+GPS will open a popup displaying all the known identifiers beginnig with the
+prefix you typed. You can then browse among the various proposals by clicking
+on the  @key{up} and @{down} keys, or using the left scrollbar. For each
+entity, a documentation box is filled. If the location of the entity is known,
+it's displayed as an hyperlink, and you can jump directly to its declaration by
+clicking on it.
+
+Typing new letters will reduce the range of proposal, as long as there remain
+solutions. Once you've selected the expected completion, you can valid by
+pressing @key{enter}.
+
 GPS is also able to complete a dotted notation. For example, if you type
 
 @smallexample
