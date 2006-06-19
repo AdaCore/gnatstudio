@@ -1770,8 +1770,16 @@ package body Switches_Editors is
    ----------------------
 
    procedure Editor_Destroyed (Editor : access Gtk_Widget_Record'Class) is
+      Edit : constant Switches_Edit := Switches_Edit (Editor);
    begin
-      Unchecked_Free (Switches_Edit (Editor).Pages);
+      --  When a Notebook is destroyed, it destroys its children whatever their
+      --  ref counting is. So we need to remove the children first before
+      --  destroying the Editor, who inherits its parent's behavior.
+      for P in Edit.Pages'Range loop
+         Remove (Edit, Edit.Pages (P));
+      end loop;
+
+      Unchecked_Free (Edit.Pages);
    end Editor_Destroyed;
 
    -----------------------
