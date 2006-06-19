@@ -350,7 +350,7 @@ package body Completion.Constructs_Extractor is
       Result     : in out Completion_List)
    is
    begin
-      if Offset < 0 then
+      if Offset <= 0 then
          return;
       end if;
 
