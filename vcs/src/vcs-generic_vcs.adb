@@ -437,6 +437,10 @@ package body VCS.Generic_VCS is
             declare
                Filename : constant String := Data (Node);
             begin
+               if Last > Filename'Last then
+                  Last := Filename'Last;
+               end if;
+
                while Prefix (1 .. Last) /= Filename (1 .. Last)
                  or else (Last /= 0
                           and then Prefix (Last) /= '/'
