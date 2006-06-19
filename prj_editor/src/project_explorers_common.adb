@@ -485,11 +485,16 @@ package body Project_Explorers_Common is
                      return True;
 
                   elsif Get_Event_Type (Event) = Button_Press then
-                     Child.Kernel        := Kernel;
-                     Child.Dnd_From_File := Create
-                       (Full_Filename =>
-                          Get_String (Model, Iter, Absolute_Name_Column));
-                     Child_Drag_Begin (Child, Event);
+                     --  Drag-and-drop does not work on floating MDI children.
+
+                     if Get_State (Child) /= Floating then
+                        Child.Kernel        := Kernel;
+                        Child.Dnd_From_File := Create
+                          (Full_Filename =>
+                             Get_String (Model, Iter, Absolute_Name_Column));
+
+                        Child_Drag_Begin (Child, Event);
+                     end if;
                      return False;
                   end if;
 
