@@ -3580,12 +3580,17 @@ package body GPS.Kernel.Remote is
 
       if Prj_File /= VFS.No_File then
          The_File := Prj_File;
-      else
+      elsif Status (Get_Project (Kernel)) = From_File then
          The_File := Project_Path (Get_Project (Kernel));
+      else
+         The_File := VFS.No_File;
       end if;
-      --  ??? take care of default project ?
 
-      Get_Property (Property, The_File, "servers_config", Found);
+      if The_File /= VFS.No_File then
+         Get_Property (Property, The_File, "servers_config", Found);
+      else
+         Found := False;
+      end if;
 
       if not Found then
          Trace (Me, "Property servers_config does not exist. Create it");
@@ -3606,10 +3611,13 @@ package body GPS.Kernel.Remote is
          Nickname => new String'(Get_Nickname (Server)));
 
       Prop := new Servers_Property'(Property);
-      Set_Property (The_File,
-                    "servers_config",
-                    Prop,
-                    Persistent => True);
+
+      if The_File /= VFS.No_File then
+         Set_Property (The_File,
+                       "servers_config",
+                       Prop,
+                       Persistent => True);
+      end if;
 
       --  Reload project if Build_Server has been assigned
 
