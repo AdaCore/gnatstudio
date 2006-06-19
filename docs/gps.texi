@@ -15515,6 +15515,8 @@ Options:
 Source files can be absolute or relative pathnames.
 If you prepend a file name with '=', this file will be
 searched anywhere on the project's source path
+@code{tools_host} corresponds to a remote host's nickname as defined in
+@ref{Setup the remote servers}.
 @end smallexample
 
 @c --------------------------------------------------------------------
