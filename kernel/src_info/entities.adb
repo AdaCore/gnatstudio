@@ -2825,8 +2825,16 @@ package body Entities is
    ---------
 
    function Get (It : LI_Entities_Iterator) return Entity_Information is
+      Entities : constant Entity_Array_Access := Get (It.It).Entities;
    begin
-      return Get (It.It).Entities.all (It.Index);
+      if Entities = null then
+         --  This may happen if some xrefs where loaded before the last
+         --  operation
+
+         return null;
+      else
+         return Entities.all (It.Index);
+      end if;
    end Get;
 
    ----------
@@ -2839,6 +2847,10 @@ package body Entities is
 
       if Is_Valid (It) then
          return;
+      end if;
+
+      if Get (It.It).Entities = null then
+         Next (It.It);
       end if;
 
       while not At_End (It) loop
@@ -2873,10 +2885,18 @@ package body Entities is
    --------------
 
    function Is_Valid (It : LI_Entities_Iterator) return Boolean is
+      Entities : Entity_Array_Access;
    begin
-      return At_End (It) or else
-        (It.Index <= Get (It.It).Entities.all'Last
-         and then Get (It.It).Entities.all (It.Index) /= null);
+      if At_End (It) then
+         return True;
+      end if;
+
+      Entities := Get (It.It).Entities;
+
+      return Entities /= null
+        and then
+          (It.Index <= Entities.all'Last
+           and then Entities.all (It.Index) /= null);
    end Is_Valid;
 
    ----------
@@ -2884,9 +2904,8 @@ package body Entities is
    ----------
 
    procedure Free (It : in out LI_Entities_Iterator) is
-      pragma Unreferenced (It);
    begin
-      null;
+      Free (It.It);
    end Free;
 
 end Entities;
