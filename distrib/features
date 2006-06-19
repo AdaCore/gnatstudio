@@ -14,6 +14,14 @@ of the feature.
 New features in GPS 4.0.0
 -------------------------
 
+F615-006 Alias expansion is case insensitive (2006-06-16)
+
+  The process of matching alias names is now case insensitive. This is
+  friendlier as it allows to expand an alias no matter the alias name casing.
+  This is particularly useful when the on the fly auto-casing is being used.
+
+  Keywords: Aliases
+
 F503-004 Block information on record/union/class (2006-05-05)
 
   GPS computes block information for record/union/class and has associated
