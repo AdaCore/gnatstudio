@@ -166,11 +166,8 @@ package body GPS.Kernel.Project is
       end if;
 
       if Found then
-         Load_Project (Kernel, Project, Clear => Clear);
-
-         if Is_Default then
-            Set_Status (Get_Project (Kernel), Projects.Default);
-         end if;
+         Load_Project (Kernel, Project,
+                       Clear => Clear, Is_Default => Is_Default);
       else
          Load_Empty_Project (Kernel);
       end if;
@@ -244,10 +241,11 @@ package body GPS.Kernel.Project is
    ------------------
 
    procedure Load_Project
-     (Kernel  : access Kernel_Handle_Record'class;
-      Project : VFS.Virtual_File;
-      No_Save : Boolean := False;
-      Clear   : Boolean := True)
+     (Kernel     : access Kernel_Handle_Record'class;
+      Project    : VFS.Virtual_File;
+      No_Save    : Boolean := False;
+      Clear      : Boolean := True;
+      Is_Default : Boolean := False)
    is
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console.
@@ -275,10 +273,11 @@ package body GPS.Kernel.Project is
       pragma Unreferenced (Had_Project_Desktop);
       Data                : aliased File_Hooks_Args;
 
-      Root_Project : constant Virtual_File :=
+      Root_Project  : constant Virtual_File :=
                        Project_Path (Get_Root_Project (Kernel.Registry.all));
-      Same_Project : constant Boolean := Project = Root_Project;
+      Same_Project  : constant Boolean := Project = Root_Project;
       Local_Project : VFS.Virtual_File;
+      Load_Status   : Boolean;
 
    begin
       --  Unless we are reloading the same project
@@ -364,7 +363,19 @@ package body GPS.Kernel.Project is
          Load (Registry           => Kernel.Registry.all,
                Root_Project_Path  => Local_Project,
                Errors             => Report_Error'Unrestricted_Access,
-               New_Project_Loaded => New_Project_Loaded);
+               New_Project_Loaded => New_Project_Loaded,
+               Status             => Load_Status);
+
+         if Load_Status and then Is_Default then
+            --  Successful load of default project
+            Set_Status (Get_Project (Kernel), Projects.Default);
+
+         elsif not Load_Status and then not Is_Default then
+            --  Tried to load a regular project, but failure occured
+            Load_Default_Project (Kernel, Dir (Local_Project), Clear => False);
+            Pop_State (Kernel_Handle (Kernel));
+            return;
+         end if;
 
          if not New_Project_Loaded then
             Had_Project_Desktop := Load_Desktop (Kernel);
