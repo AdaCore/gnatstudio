@@ -244,7 +244,7 @@
       <on-failure>
         <shell>dump "%1" TRUE</shell>
         <shell>File "%1"</shell>
-        <shell>File "$1"</shell>
+        <shell>File "$1" TRUE</shell>
         <shell>Hook "diff_action_hook"</shell>
         <shell>Hook.run %1 null %2 %3</shell>
         <shell>delete "%5"</shell>
@@ -259,7 +259,7 @@
       <on-failure>
         <shell>dump "%1" TRUE</shell>
         <shell>File "%1"</shell>
-        <shell>File "$2"</shell>
+        <shell>File "$2" TRUE</shell>
         <shell>Hook "diff_action_hook"</shell>
         <shell>Hook.run %1 null %2 %3</shell>
         <shell>delete "%5"</shell>
@@ -274,7 +274,7 @@
       <on-failure>
         <shell>dump "%1" TRUE</shell>
         <shell>File "%1"</shell>
-        <shell>File "$2"</shell>
+        <shell>File "$2" TRUE</shell>
         <shell>Hook "diff_action_hook"</shell>
         <shell>Hook.run %1 null %2 %3</shell>
         <shell>delete "%5"</shell>
