@@ -1364,6 +1364,10 @@ package body GUI_Utils is
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Dialog);
+      --  Make sure the dialog is presented to the user.
+      Present (Dialog);
+      Set_Urgency_Hint (Dialog, True);
+      Set_Keep_Above (Dialog, True);
 
       if Run (Dialog) = Gtk_Response_OK then
          declare
