@@ -574,7 +574,7 @@ make it easier to find projects in the explorer.
 This display is activated through the contextual menu entry
 @code{Show flat view}, which acts as a switch between the two displays.
 
-A special icon with an exclamation mark is displayed if the project
+A special icon with a pen mark is displayed if the project
 was modified, but not saved yet. You can choose to save it at any time
 by right-clicking on it. GPS will remind you to save it before any
 compilation, or save it automatically, if the corresponding preference
@@ -2180,6 +2180,7 @@ Remove the comment delimiters from the current selection or line.
 
 @item Smart Completion
 @cindex smart completion
+
 Complete the identifier prefix under the cursor, and list the results in a
 pop-up list. This command can take advantage of the cross-reference information
 database and offer entity completions from the entire project, along with
@@ -2187,9 +2188,61 @@ documentation extracted from comments surrounding declarations. To take full
 advantage of this feature, the cross-reference information must be loaded in
 memory. This can be done manually using the menu
 @code{Build->Load xref info in memory}, or this can be done automatically on
-GPS startup via a preference.
-@c ??? xref to pref
-@c ??? missing screenshot
+GPS startup via a preference. The first time you use this feature, GPS will
+ask you wether you want this enabled or not.
+
+GPS is also able to complete a pointed notation. For example, if you type
+
+@smallexample
+with Ada.
+@end smallexample
+
+and then hit the completion key, you will be offered all the child and nested
+packages of Ada. You can aslo write the begining of the package, e.g.:
+
+@smallexample
+with Ada.Text
+@end smallexample
+
+will offer you Text_IO.
+
+If you are in a code section, you will be able to complete the fields of
+a record, or the contents of a package, e.g.:
+
+@smallexample
+   type R is record
+      Field1 : Integer;
+      Field2 : Integer;
+   end record;
+
+   V : R;
+
+begin
+
+   V.
+@end smallexample
+
+Completing V. will propose Field1 and Field2.
+
+@iftex
+@cindex screen shot
+@image{smart-completion, 15cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{smart-completion}
+@end ifhtml
+
+
+Limitations:
+
+- GPS is not able to complete identifiers declared in the private part of a
+ package.
+
+- Completion does not work with generics.
+
+- Only available for Ada.
 
 @item Complete Identifier
 @cindex complete identifier
@@ -3685,7 +3738,7 @@ hierarchy.
 @cindex saving projects
 This item can be selected to save a single project in the hierarchy
 after it was modified. Modified but unsaved projects in the hierarchy
-have a special icon (a red exclamation mark is drawn on top of the
+have a special icon (a pen mark is drawn on top of the
 standard icon). If you would rather save all the modified projects in
 a single step, use the menu bar item @code{Project->Save All}.
 
@@ -3722,7 +3775,7 @@ explorer is automatically refreshed. No project is automatically
 saved. This provides a simple way to temporarily test new values for
 the project attributes.
 Unsaved modified projects are shown with a special icon in the project
-explorer, displaying a red exclamation mark on top of the standard
+explorer, displaying a pen mark on top of the standard
 icon:
 
 @iftex
@@ -4636,7 +4689,7 @@ no occurence of the pattern is found. In order to enable them, you have to
 start a search, e.g. by pressing the @code{Find} button. Pressing @code{Replace}
 will replace the current occurence (and therefore the two buttons will be
 grayed out), and @code{Replace & Find} will replace the occurence and then
-jump to the next one, if any. If you don't want to replace the current 
+jump to the next one, if any. If you don't want to replace the current
 occurence, you can jump directly to the next one by pressing @code{Next}.
 
 The @code{Repl all} button will replace all the occurences found.
@@ -9397,7 +9450,7 @@ It also provides an easy way to redefine the menu shortcuts.
 Actions are referenced by their name, and are grouped into categories. These
 categories indicate when the action applies. For instance, the indentation
 command only applies in source editors, whereas the command to change the
-current window applies anywhere in GPS. 
+current window applies anywhere in GPS.
 The categories can be explicitly specified when you created your own actions
 through XML files (@pxref{Defining Actions}).
 
