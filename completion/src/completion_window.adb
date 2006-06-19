@@ -240,6 +240,13 @@ package body Completion_Window is
          Window.More_Iter := Null_Iter;
       end if;
 
+      if not Is_Valid (Window.Iter) then
+         --  Since we don't know what happened before, we have to assume that
+         --  the current iterator does not have a valid proposal anymore. In
+         --  that case, we have to get the next element.
+         Next  (Window.Iter);
+      end if;
+
       while not At_End (Window.Iter) loop
          Info :=
            (new String'(To_Showable_String (Get_Proposal (Window.Iter))),
