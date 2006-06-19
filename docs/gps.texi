@@ -2198,7 +2198,7 @@ loaded. Move the cursor right after the last caracter of the uncomplete
 identifier and hit the completion key (which is @key{ctrl+space} by default).
 GPS will open a popup displaying all the known identifiers beginnig with the
 prefix you typed. You can then browse among the various proposals by clicking
-on the  @key{up} and @{down} keys, or using the left scrollbar. For each
+on the  @key{up} and @key{down} keys, or using the left scrollbar. For each
 entity, a documentation box is filled. If the location of the entity is known,
 it's displayed as an hyperlink, and you can jump directly to its declaration by
 clicking on it.
