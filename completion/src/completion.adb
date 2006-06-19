@@ -211,6 +211,16 @@ package body Completion is
       null;
    end Append_Expression;
 
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (Proposal : Completion_Proposal) return Boolean is
+      pragma Unreferenced (Proposal);
+   begin
+      return True;
+   end Is_Valid;
+
    -----------------
    -- Get_Manager --
    ------------------
@@ -226,9 +236,13 @@ package body Completion is
    -----------
 
    function First (This : Completion_List) return Completion_Iterator is
+      It : Completion_Iterator := (It => First (This.List));
    begin
-      return Completion_Iterator'
-        (It => First (This.List));
+      while not Is_Valid (It) loop
+         Next (It);
+      end loop;
+
+      return It;
    end First;
 
    ----------
@@ -238,7 +252,20 @@ package body Completion is
    procedure Next (This : in out Completion_Iterator) is
    begin
       Next (This.It);
+
+      while not Is_Valid (This) loop
+         Next (This.It);
+      end loop;
    end Next;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (It : Completion_Iterator) return Boolean is
+   begin
+      return At_End (It) or else Is_Valid (Get_Proposal (It));
+   end Is_Valid;
 
    ------------------
    -- Get_Proposal --
