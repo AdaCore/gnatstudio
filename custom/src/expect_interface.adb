@@ -337,11 +337,6 @@ package body Expect_Interface is
       --  Deal with the simple case when no expects have been registered.
 
       if D.On_Match = null then
-         --  ??? should look for expects here.
-
-         if D.On_Exit /= null then
-            Concat (D.Processed_Output, Output);
-         end if;
 
          return;
       end if;
