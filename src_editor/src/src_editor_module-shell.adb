@@ -2900,7 +2900,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "close", 0, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "save", 0, 1, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "save", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "characters_count", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
