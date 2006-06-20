@@ -113,9 +113,12 @@ package Completion is
    --  free the referenced resolvers which have to be freed separately.
 
    procedure Set_Buffer
-     (Manager : in out Completion_Manager; Buffer : String);
+     (Manager : in out Completion_Manager; Buffer : String_Access);
    --  Set the buffer from where the competion is done. This has to be called
    --  before any completion attempt.
+   --  Warning ! The pointer given in parameter must remain valid during the
+   --  whole life of the buffer, otherwise accessing it will result a memory
+   --  corruption.
 
    function Get_Buffer (Manager : Completion_Manager) return String_Access;
    --  Return the buffer associated to this manager.
