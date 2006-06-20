@@ -2014,9 +2014,12 @@ package body Builder_Module is
       Kernel_Callback.Connect
         (Mitem, "activate", On_Custom'Access,
          User_Data => Kernel_Handle (Kernel));
+      --  ??? This line means that the menu Build->Make->Custom will always
+      --  be shown with the accelerator F9, eventhough it can be associated to
+      --  another key through the Key Shortcuts editor.
       Add_Accelerator
         (Mitem, "activate", Group, GDK_F9, 0, Gtk.Accel_Group.Accel_Visible);
-      Set_Accel_Path (Mitem, "<gps>/Build/Make/Custom", Group);
+      Set_Accel_Path (Mitem, "<gps>/Build/Make/Custom...", Group);
 
       --  Should be able to run any program
 
