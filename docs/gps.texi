@@ -649,7 +649,7 @@ or the line on which the entity is defined.
 
 @cindex search
 @cindex find
-If you open the search dialog through the @code{Navigate->Find...}
+If you open the search dialog through the @code{Navigate->Find or Replace...}
 menu, you have the possibility to search for anything in the explorer,
 either a file or an entity. Note that searching for an entity can be slow
 if you have lots of files, and/or big files.
@@ -888,8 +888,8 @@ are called by a given entity, and, opposite, what entities are calling a
 given entity.
 
 This view is automatically displayed when you select one of the contextual
-menus @code{References/... calls (in tree)} and
-@code{References/... is called by (in tree)}. Every time you select one of
+menus @code{... calls} and
+@code{... is called by}. Every time you select one of
 these menus, a new view is opened to display that entity.
 
 Whenever you expand a node from the tree by clicking on the small expander
@@ -3003,7 +3003,7 @@ on startup, @xref{The Preferences Dialog}.
 @noindent
 
 @table @b
-@item Find/Replace...
+@item Find or Replace...
 @cindex find
 @cindex search
 @cindex replace
@@ -3017,6 +3017,14 @@ Find next occurrence of the current search. @xref{Searching and Replacing}.
 @cindex find previous
 Find previous occurrence of the current search.
 @xref{Searching and Replacing}.
+
+@item Find All References
+@anchor{Find All References}
+@cindex find all references
+Find all the references to the current entity in the project. The search
+is based on the semantic information extracted from the sources, this is not
+a simple text search. The result of the search is displayed in the location
+window, see @ref{The Locations Tree}.
 
 @item Goto Declaration
 @cindex goto declaration
@@ -3033,6 +3041,10 @@ This item is also accessible through the editor's contextual menu directly.
 This capability requires the availability of cross-reference information.
 @xref{Support for Cross-References}.
 
+@item Goto Matching Delimiter
+@cindex goto matching delimiter
+Go to the delimiter matching the one right before (for a closing delimiter) or
+right after (for an opening delimiter) the cursor if any.
 
 @item Goto Line...
 @cindex goto line
@@ -3049,14 +3061,6 @@ This item is also accessible through the editor's contextual menu
 @c @item Goto Parent Unit
 @c @cindex goto parent unit
 @c This item is also accessible through the editor's contextual menu
-
-@item Find All References
-@anchor{Find All References}
-@cindex find all references
-Find all the references to the current entity in the project. The search
-is based on the semantic information extracted from the sources, this is not
-a simple text search. The result of the search is displayed in the location
-window, see @ref{The Locations Tree}.
 
 This capability requires support for cross-references.
 This item is also accessible through the editor's contextual menu
@@ -3133,39 +3137,21 @@ This capability requires support for cross-references.
 Open the corresponding spec file if the current edited file is a body file,
 or body file otherwise. This option is only available for the Ada language.
 
+@item @i{Entity} calls
+Display a list of all subprograms called by @i{entity} in a tree view. This is generally more convenient than using the corresponding Browsers/ submenu if you expect lots of references, @xref{The Callgraph View}.
+
+@item @i{Entity} is called by
+Display a list of all subprograms calling @i{entity} in a tree view. This is generally more convenient than using the correponding Browsers/ submenu if you expect lots of references, @xref{The Callgraph View}.
+
 @item References
 @cindex references
 This item gives access to different capabilities related to listing or
 displaying references to the current entity or selection.
 
 @table @command
-@item @i{Entity} calls (in browser)
-@cindex call graph
-@cindex calls
-Open or raise the call graph browser on the specified entity and display all
-the subprograms called by @i{entity}. @xref{Call Graph}.
-
-@item @i{Entity} calls (in tree)
-This behaves as above, but will display its results in a tree. This is generally more convenient if you expect lots of references, @xref{The Callgraph View}.
-
-@item @i{Entity} is called by (in browser)
-@cindex call graph
-@cindex called by
-Open or raise the call graph browser on the specified entity and display all
-the subprograms calling @i{entity}. @xref{Call Graph}.
-
-Note that this capability requires a global look up in the project
-cross-references, which may take a significant amount of time the first
-time.  After a global look up, information is cached in memory, so that
-further global queries will be faster.
-
-@item @i{Entity} is called by (in tree)
-This behaves as above, but will display its results in a tree. This is generally more convenient if you expect lots of references, @xref{The Callgraph View}.
-
 @item Find all references to @i{entity}
 @cindex find all references
-@xref{Find All References}.
-Find all references to @i{entity} in all the files in the project
+Find all references to @i{entity} in all the files in the project, @xref{Find All References}.
 
 @item Find all references ...
 This menu is similar to the one above, except it is possible to select more
@@ -3201,7 +3187,30 @@ entities.
 Find all references to @i{entity} in the current file (or in the current
 top level unit for Ada sources).
 See @ref{Find All References} for more details.
+@end table
 
+@item Browsers
+@cindex browsers
+This item gives access to graph representations of callers and callees for
+subprograms. 
+
+@table @command
+@item @i{Entity} calls
+@cindex call graph
+@cindex calls
+Open or raise the call graph browser on the specified entity and display all
+the subprograms called by @i{entity}. @xref{Call Graph}.
+
+@item @i{Entity} is called by
+@cindex call graph
+@cindex called by
+Open or raise the call graph browser on the specified entity and display all
+the subprograms calling @i{entity}. @xref{Call Graph}.
+
+Note that this capability requires a global look up in the project
+cross-references, which may take a significant amount of time the first
+time.  After a global look up, information is cached in memory, so that
+further global queries will be faster.
 @end table
 
 @end table
@@ -5041,12 +5050,12 @@ calls them, the matching references are also hidden, to keep the contents
 of the browser simpler.
 
 @table @command
-@item References->@i{Entity} calls
+@item Browsers->@i{Entity} calls
 Display all the entities called by the selected entity. This has the
 same effect as clicking on the right title bar arrow if the item is
 already present in the call graph.
 
-@item References->@i{Entity} is called by
+@item Browsers->@i{Entity} is called by
 Display all the entities called by the selected entity. This has the
 same effect as clicking on the left title bar arrow if the item is
 already present in the call graph.
@@ -5241,7 +5250,7 @@ This browser is accessible through the contextual menu in the
 explorer and source editor, when clicking on an entity:
 
 @table @command
-@item Examine entity @i{entity}
+@item Browsers/Examine entity @i{entity}
 @cindex examine entity
 
 Open a new item in the entity browser that displays information for
