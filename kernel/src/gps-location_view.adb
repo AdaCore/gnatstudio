@@ -2774,10 +2774,6 @@ package body GPS.Location_View is
          Match (File_Location, Text (Start .. Real_Last), Matched);
 
          if Matched (0) /= No_Match then
-            Trace (Me, " line found #" &
-                   Text (Matched (0).First ..
-                  Matched (0).Last) & "#");
-
             if Matched (Line_Index) /= No_Match then
                Line := Integer'Value
                  (Text
