@@ -27,9 +27,9 @@ with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
+with Gtk.Handlers;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Commands.Editor;           use Commands.Editor;
@@ -131,6 +131,19 @@ package body Completion_Module is
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
+   type Smart_Completion_Data is record
+      Manager             : Completion_Manager_Access;
+      Entity_Resolver     : Completion_Resolver_Access;
+      Constructs_Resolver : Completion_Resolver_Access;
+      Result              : Completion_List;
+      The_Text            : Basic_Types.String_Access;
+      Constructs_Tree     : Construct_Tree_Access;
+   end record;
+
+   package Smart_Completion_Callback is new
+     Gtk.Handlers.User_Callback (Gtk_Widget_Record, Smart_Completion_Data);
+   use Smart_Completion_Callback;
+
    Completion_Module : Completion_Module_Access;
 
    procedure Destroy (Module : in out Completion_Module_Record);
@@ -158,7 +171,9 @@ package body Completion_Module is
    --  Move to the start of the next or previous word. This correctly takes
    --  into account '_' as part of a word.
 
-   procedure On_Completion_Destroy (Win : access Gtk_Widget_Record'Class);
+   procedure On_Completion_Destroy
+     (Win  : access Gtk_Widget_Record'Class;
+      Data : Smart_Completion_Data);
    --  Called when the completion widget is destroyed.
 
    procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
@@ -182,8 +197,19 @@ package body Completion_Module is
    -- On_Completion_Destroy --
    ---------------------------
 
-   procedure On_Completion_Destroy (Win : access Gtk_Widget_Record'Class) is
+   procedure On_Completion_Destroy
+     (Win  : access Gtk_Widget_Record'Class;
+      Data : Smart_Completion_Data)
+   is
+      D : Smart_Completion_Data := Data;
    begin
+      Free (D.Manager);
+      Free (D.Entity_Resolver);
+      Free (D.Constructs_Resolver);
+      Free (D.Result);
+      Free (D.The_Text);
+      Free (D.Constructs_Tree);
+
       End_Completion (Source_View (Win));
    exception
       when E : others =>
@@ -594,72 +620,51 @@ package body Completion_Module is
             end if;
 
             declare
-               Win : Completion_Window_Access;
-               It  : Gtk_Text_Iter;
-
-               Result            : Completion_List;
-
-               Manager  : constant Completion_Manager_Access :=
-                 new Ada_Completion_Manager;
-
-               Entity_Resolver     : Completion_Resolver_Access;
-               Constructs_Resolver : Completion_Resolver_Access;
-
-               The_Text : Basic_Types.String_Access := Get_String (Buffer);
-
-               Constructs      : Construct_List;
-               Constructs_Tree : Construct_Tree_Access;
+               Win  : Completion_Window_Access;
+               It   : Gtk_Text_Iter;
+               Data : Smart_Completion_Data;
+               Constructs : Construct_List;
 
             begin
+               Data.Manager := new Ada_Completion_Manager;
+               Data.The_Text := Get_String (Buffer);
                Constructs := Get_Constructs (Buffer, Exact);
 
                Trace (Me_Adv, "Constructing tree...");
-               Constructs_Tree := new Construct_Tree'
-                 (To_Construct_Tree (Ada_Lang, The_Text.all, Constructs));
+               Data.Constructs_Tree := new Construct_Tree'
+                 (To_Construct_Tree (Ada_Lang, Data.The_Text.all, Constructs));
                Trace (Me_Adv, "Constructing tree complete");
 
-               Set_Buffer (Manager.all, The_Text.all);
+               Set_Buffer (Data.Manager.all, Data.The_Text.all);
 
-               Constructs_Resolver := new Construct_Completion_Resolver'
+               Data.Constructs_Resolver := new Construct_Completion_Resolver'
                  (New_Construct_Completion_Resolver
-                    (Constructs_Tree, Get_Filename (Buffer)));
+                    (Data.Constructs_Tree, Get_Filename (Buffer)));
 
-               Entity_Resolver := new Entity_Completion_Resolver'
+               Data.Entity_Resolver := new Entity_Completion_Resolver'
                  (New_Entity_Completion_Resolver
-                    (Constructs_Tree,
+                    (Data.Constructs_Tree,
                      Get_Root_Project (Get_Registry (Get_Kernel (Buffer)).all),
                      Get_Language_Handler (Get_Kernel (Buffer))));
 
-               Register_Resolver (Manager, Constructs_Resolver);
-
-               Register_Resolver (Manager, Entity_Resolver);
+               Register_Resolver (Data.Manager, Data.Constructs_Resolver);
+               Register_Resolver (Data.Manager, Data.Entity_Resolver);
 
                Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
 
                Trace (Me_Adv, "Getting completions...");
-               Result := Get_Initial_Completion_List
-                 (Manager      => Manager.all,
+               Data.Result := Get_Initial_Completion_List
+                 (Manager      => Data.Manager.all,
                   Start_Offset => Natural
-                    (Get_Offset (It)) - 1 + The_Text.all'First);
+                    (Get_Offset (It)) - 1 + Data.The_Text.all'First);
                Trace (Me_Adv, "Getting completions done");
 
                Gtk_New (Win, Command.Kernel);
 
-               --  ??? When should these be freed ?
-
-               --                 Free (Constructs_Resolver);
-               --                 Free (Entity_Resolver);
-               --  ??? Missing Free function.
-               --                 Free (Manager);
-               --                 Free (Result);
-               --                 Free (Constructs_Tree);
-
-               Free (The_Text);
-
                Get_Iter_At_Mark
                  (Buffer, It, Get_Insert (Buffer));
 
-               To_Replace := Get_Completed_String (Result)'Length;
+               To_Replace := Get_Completed_String (Data.Result)'Length;
 
                if To_Replace /= 0 then
                   Backward_Chars (It, Gint (To_Replace), Movement);
@@ -667,11 +672,12 @@ package body Completion_Module is
 
                Start_Completion (View, Win);
 
-               Widget_Callback.Object_Connect
-                 (Win, "destroy", Widget_Callback.To_Marshaller
-                    (On_Completion_Destroy'Access), View);
+               Object_Connect
+                 (Win, "destroy",
+                  To_Marshaller (On_Completion_Destroy'Access),
+                  View, Data);
 
-               Set_Completion_Iterator (Win, First (Result));
+               Set_Completion_Iterator (Win, First (Data.Result));
 
                Show
                  (Win, Gtk_Text_View (View),
