@@ -80,10 +80,10 @@ package body Completion is
    ----------------
 
    procedure Set_Buffer
-     (Manager : in out Completion_Manager; Buffer : String)
+     (Manager : in out Completion_Manager; Buffer : String_Access)
    is
    begin
-      Manager.Buffer := new String'(Buffer);
+      Manager.Buffer := Buffer;
    end Set_Buffer;
 
    ----------
@@ -96,7 +96,6 @@ package body Completion is
           (Completion_Manager'Class, Completion_Manager_Access);
    begin
       Free (This.Resolvers, False);
-      Free (This.Buffer);
       Internal_Free (This);
    end Free;
 
