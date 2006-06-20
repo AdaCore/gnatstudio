@@ -1434,6 +1434,9 @@ package body Project_Properties is
                   As_List => Command = "get_tool_switches_as_list");
             end if;
          end;
+      elsif Command = "properties_editor" then
+         Edit_Properties (Get_Data (Data, 1), Kernel);
+
       elsif Command = "set_attribute_as_string" then
          Name_Parameters (Data, Set_Attribute_Parameters);
          declare
@@ -1582,6 +1585,12 @@ package body Project_Properties is
          Kernel                  => Kernel,
          Module_Name             => "Project_Properties");
 
+      Register_Command
+        (Kernel, "properties_editor",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel, "get_attribute_as_string",
          Minimum_Args => 1,
