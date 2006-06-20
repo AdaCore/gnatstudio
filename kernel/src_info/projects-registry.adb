@@ -585,14 +585,18 @@ package body Projects.Registry is
          Success    : Boolean;
 
       begin
-         case Projects.Status (Registry.Data.Root) is
-            when From_File | Default =>
-               Previous_Project := Project_Path (Registry.Data.Root);
-            when Empty | From_Executable =>
-               Previous_Project := VFS.No_File;
-         end case;
-
-         Previous_Default := Projects.Status (Registry.Data.Root) = Default;
+         if Registry.Data /= null then
+            case Projects.Status (Registry.Data.Root) is
+               when From_File | Default =>
+                  Previous_Project := Project_Path (Registry.Data.Root);
+               when Empty | From_Executable =>
+                  Previous_Project := VFS.No_File;
+            end case;
+            Previous_Default := Projects.Status (Registry.Data.Root) = Default;
+         else
+            Previous_Project := VFS.No_File;
+            Previous_Default := False;
+         end if;
 
          if not Is_Regular_File (Root_Project_Path) then
             Trace (Me, "Load: " & Full_Name (Root_Project_Path).all
