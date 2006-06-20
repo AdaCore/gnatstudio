@@ -635,7 +635,7 @@ package body Completion_Module is
                  (To_Construct_Tree (Ada_Lang, Data.The_Text.all, Constructs));
                Trace (Me_Adv, "Constructing tree complete");
 
-               Set_Buffer (Data.Manager.all, Data.The_Text.all);
+               Set_Buffer (Data.Manager.all, Data.The_Text);
 
                Data.Constructs_Resolver := new Construct_Completion_Resolver'
                  (New_Construct_Completion_Resolver
