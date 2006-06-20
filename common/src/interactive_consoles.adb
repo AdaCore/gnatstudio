@@ -87,6 +87,11 @@ package body Interactive_Consoles is
       Params : Glib.Values.GValues);
    --  Handler for the "selection_received" signal.
 
+   procedure Size_Allocate_Handler
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Handler for the "size_allocate" signal.
+
    function Delete_Event_Handler
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -280,6 +285,41 @@ package body Interactive_Consoles is
                 "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Release_Handler;
+
+   ---------------------------
+   -- Size_Allocate_Handler --
+   ---------------------------
+
+   procedure Size_Allocate_Handler
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Alloc   : Gtk_Allocation_Access;
+      Console : constant Interactive_Console := Interactive_Console (Widget);
+   begin
+      --  The purpose of this callback is to workaround a bug in Gtk+: when
+      --  the size of this console is too small, an infinite loop can occur,
+      --  with Gtk+ hesitating between displaying either the horizontal or the
+      --  vertical scrollbar, the presence of one causing the other one to be
+      --  removed, causing it to be also removed, and back again.
+      --
+      --  To fix this, we change the policy of the scrollbars to Always when
+      --  the width is too small.
+      Alloc := Get_Allocation (Nth (Params, 1));
+
+      --  The value 25 here is hoped to be large enough to be greater than the
+      --  width of one scrollbar in any theme.
+
+      if Alloc.Width < 25 then
+         Set_Policy (Console, Policy_Always, Policy_Always);
+      else
+         Set_Policy (Console, Policy_Automatic, Policy_Automatic);
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Size_Allocate_Handler;
 
    --------------------------------
    -- Selection_Received_Handler --
@@ -762,6 +802,12 @@ package body Interactive_Consoles is
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Console.View, "selection_received",
          Selection_Received_Handler'Access,
+         Gtk_Widget (Console),
+         After => False);
+
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Console.View, "size_allocate",
+         Size_Allocate_Handler'Access,
          Gtk_Widget (Console),
          After => False);
 
