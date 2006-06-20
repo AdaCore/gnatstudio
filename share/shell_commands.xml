@@ -740,7 +740,9 @@ GPS.parse_xml ("""
   <shell_doc name="GPS.File.__init__">
       <param name="self">The instance being constructed</param>
       <param name="name">Name of the file associated with this instance</param>
-      <description>Initializes a new instance of the class File. This doesn't need to be called explicitly, since GPS will call it automatically when you create such an instance. If name is a base file name (no directory is specified), then GPS will attempt to search for this file in the list of source directories of the project. If a directory is specified, or the base file name wasn't found in the source directories, then the file name is considered as relative to the current directory.</description>
+      <param name="local" default="false">A boolean</param>
+      <description>Initializes a new instance of the class File. This doesn't need to be called explicitly, since GPS will call it automatically when you create such an instance. If name is a base file name (no directory is specified), then GPS will attempt to search for this file in the list of source directories of the project. If a directory is specified, or the base file name wasn't found in the source directories, then the file name is considered as relative to the current directory. If local is "true" the specified file name is to be considered as
+local to the current directory.</description>
       <example lang="python">
          file=GPS.File("/tmp/work")
          print file.name()
