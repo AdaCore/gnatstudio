@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005 - 2006                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -30,7 +30,7 @@ package Completion_Module is
    --  many links with the rest of the source editor.
 
    procedure Reset_Completion_Data;
-   --  Reset the current completion data. This shouldn't be called every time
-   --  the user performs an operation that isn't a completion
+   --  Reset the current completion data. It should be called only when
+   --  the user performs a completion operation.
 
 end Completion_Module;
