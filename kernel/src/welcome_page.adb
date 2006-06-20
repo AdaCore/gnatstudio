@@ -271,7 +271,7 @@ package body Welcome_Page is
       Pack_Start (Hbox, Main_Vbox);
 
       Gtk_New (Label,
-        -("GNAT Programming Studio is a powerful and simple-to-use IDE that"
+        -("GPS is a powerful and simple-to-use IDE that"
           & " streamlines your software development process"
           & " from the initial coding stage through testing,"
           & " debugging, system integration, and maintenance."));
