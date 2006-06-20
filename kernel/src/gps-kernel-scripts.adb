@@ -1157,7 +1157,22 @@ package body GPS.Kernel.Scripts is
          declare
             Instance : constant Class_Instance :=
                          Nth_Arg (Data, 1, Get_File_Class (Kernel));
+            Name     : constant String := Nth_Arg (Data, 2);
+            File     : Virtual_File;
          begin
+            if Is_Absolute_Path (Name) then
+               Set_Data (Instance, Create (Name));
+               return;
+            end if;
+
+            --  Base name case. Find full name using the following rules:
+            --  1) If third argument is set to true, create from current dir
+            --  else
+            --  2) If Base Name can be found in project, use it
+            --  else
+            --  3) Create from current dir
+
+            --  If we really want to create from current directory
             if Number_Of_Arguments (Data) > 2 then
                declare
                   From_Current : constant Boolean := Nth_Arg (Data, 3);
@@ -1171,7 +1186,10 @@ package body GPS.Kernel.Scripts is
                end;
             end if;
 
-            Set_Data (Instance, Create (Nth_Arg (Data, 2)));
+            --  Kernel's Create_Form_Base will override File if needed
+            File := Create_From_Dir (Get_Current_Dir, Nth_Arg (Data, 2));
+            Set_Data (Instance,
+                      Create_From_Base (Full_Name (File).all, Kernel));
          end;
 
       elsif Command = "name" then
