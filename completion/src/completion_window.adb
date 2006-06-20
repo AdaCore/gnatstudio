@@ -540,7 +540,9 @@ package body Completion_Window is
       Get_Selected (Sel, Model, Iter);
 
       if Iter = Null_Iter then
-         Hide_All (Window.Notes_Window);
+         Hide_All (Window.Location_Title);
+         Hide_All (Window.Location_Button);
+         Set_Markup (Window.Location_Label, "");
 
       elsif Iter = Window.More_Iter then
          Path := Get_Path (Window.Model, Iter);
