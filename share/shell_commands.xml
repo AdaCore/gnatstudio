@@ -1281,6 +1281,11 @@ If force is True, then the user will not be asked whether to save the current pr
        <description>Return the project file</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Project.properties_editor">
+       <param name="self">An instance of GPS.Project</param>
+       <description>Launch a graphical properties editor for the project</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Project.ancestor_deps">
        <param name="self">An instance of GPS.Project</param>
        <return>A list of instances of GPS.Project</return>
