@@ -284,6 +284,7 @@ procedure Completion.Test is
       end Project_Error;
 
       Loaded  : Boolean;
+      Success : Boolean;
 
       Handler : Language_Handler;
    begin
@@ -305,9 +306,10 @@ procedure Completion.Test is
 
       Load
         (Registry           => Registry,
-         Root_Project_Path  => Create_From_Base (Project),
+         Root_Project_Path  => Create_From_Dir (Get_Current_Dir, Project),
          Errors             => Project_Error'Unrestricted_Access,
-         New_Project_Loaded => Loaded);
+         New_Project_Loaded => Loaded,
+         Status             => Success);
 
       Recompute_View (Registry, Project_Error'Unrestricted_Access);
 
