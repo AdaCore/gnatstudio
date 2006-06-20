@@ -14,13 +14,13 @@ Known Problems fixed in GPS 4.0.0
 
 - F602-022 GPS hangs when doing some VCS comparisons
   Problem:    GPS hangs when using the VCS interface (and CVS in particular)
-              to compare a given file against HEAD or any other specific 
+              to compare a given file against HEAD or any other specific
               revision (or tag) under some special circumstances: the file
               has to be part of a project which is spread over several
               directories. Furthermore, there should be another file with the
               same name under another directory of the project. This may
               also appear when using the following layout, project/prj2/README
-              being the file to compare and /project/prj.gpr being the 
+              being the file to compare and /project/prj.gpr being the
               currently loaded and depending on prj1.gpr and prj2.gpr.
                  /project/prj1/prj1.gpr
                               /README
@@ -38,7 +38,7 @@ Known Problems fixed in GPS 4.0.0
   Woraround:  After each compilation, select Build->Load xref in memory
 
 - F530-004 Goto type declaration wrong on predefined types
-  Problem:    When the contextual menu 'Goto type declaration of XXX' is 
+  Problem:    When the contextual menu 'Goto type declaration of XXX' is
               invoked, if XXX is of a predefined type GPS opens an empty file
               named either '<case_insensitive_predefined>' or
               '<case_sensitive_predefined>'.
@@ -79,6 +79,13 @@ Known Problems fixed in GPS 4.0.0
               zombie dbimp processes are left
   Workaround: These processes do not occupy any CPU cycle, and are properly
               destroyed when GPS exits
+
+- F502-037    Resizing MDI windows can cause GPS to freeze.
+  Problem:    When resizing a GPS window causes a window of the "interactive
+              console" category (such as the Messages window, the debugger
+              console, the shell console, execution windows, etc) to be resized
+              to a small width, GPS might freeze.
+  Workaround: Make sure no window of this type is resized to a small width.
 
 - F501-002 Some VCS functions not available through the VCS menu
   Problem:    If GPS is started with no open source editor selecting a file
