@@ -356,7 +356,7 @@ procedure Completion.Test is
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, Buffer);
+      Set_Buffer (Manager.all, new String'(Buffer));
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
@@ -411,7 +411,7 @@ procedure Completion.Test is
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, Buffer);
+      Set_Buffer (Manager.all, new String'(Buffer));
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
@@ -461,7 +461,7 @@ procedure Completion.Test is
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, Buffer);
+      Set_Buffer (Manager.all, new String'(Buffer));
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
@@ -516,7 +516,7 @@ procedure Completion.Test is
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, Buffer);
+      Set_Buffer (Manager.all, new String'(Buffer));
       Register_Resolver
         (Manager, Get_Construct_Completion_Resolver (Buffer));
       Register_Resolver
