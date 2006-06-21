@@ -426,44 +426,46 @@ package body VCS.Generic_VCS is
 
       --  Compute the largest common prefix for all files
 
-      Node := First (Files);
+      if Ref.Absolute_Names then
+         Node := First (Files);
 
-      declare
-         Prefix : constant String :=
-                    GNAT.Directory_Operations.Dir_Name (Data (Node));
-         Last   : Natural := Prefix'Last;
-      begin
-         while Node /= Null_Node loop
-            declare
-               Filename : constant String := Data (Node);
-            begin
-               if Last > Filename'Length then
-                  Last := Filename'Length;
-               end if;
+         declare
+            Prefix : constant String :=
+                       GNAT.Directory_Operations.Dir_Name (Data (Node));
+            Last   : Natural := Prefix'Last;
+         begin
+            while Node /= Null_Node loop
+               declare
+                  Filename : constant String := Data (Node);
+               begin
+                  if Last > Filename'Length then
+                     Last := Filename'Length;
+                  end if;
 
-               while Prefix (1 .. Last) /=
-                 Filename (Filename'First .. Filename'First + Last - 1)
-                 or else (Last /= 0
-                          and then Prefix (Last) /= '/'
-                          and then Prefix (Last) /= '\')
-               loop
-                  Last := Last - 1;
-               end loop;
-            end;
-            exit when Last = 0;
-            Node := Next (Node);
-         end loop;
+                  while Prefix (1 .. Last) /=
+                    Filename (Filename'First .. Filename'First + Last - 1)
+                    or else (Last /= 0
+                             and then Prefix (Last) /= '/'
+                             and then Prefix (Last) /= '\')
+                  loop
+                     Last := Last - 1;
+                  end loop;
+               end;
+               exit when Last = 0;
+               Node := Next (Node);
+            end loop;
 
-         if Last = 0 then
-            --  No common prefix, run the command from the current directory
-            Dir := new String'(".");
-            Pref_Len := 0;
-         else
-            --  We have found a common prefix, set Dir
-            Dir := new String'(Locale_From_UTF8 (Prefix (1 .. Last)));
-            Pref_Len := Dir.all'Length;
-         end if;
-      end;
+            if Last = 0 then
+               --  No common prefix, run the command from the current directory
+               Dir := new String'(".");
+               Pref_Len := 0;
+            else
+               --  We have found a common prefix, set Dir
+               Dir := new String'(Locale_From_UTF8 (Prefix (1 .. Last)));
+               Pref_Len := Dir.all'Length;
+            end if;
+         end;
+      end if;
 
       --  Handles files
 
@@ -490,10 +492,18 @@ package body VCS.Generic_VCS is
                end loop;
             end if;
 
-            Dir := new String'(Dir.all);
+            if Ref.Absolute_Names then
+               Dir := new String'(Dir.all);
+            else
+               Dir := new String'(Dir_Name (Locale_From_UTF8 (Data (Node))));
+               Pref_Len := Dir.all'Length;
+            end if;
 
             while Node /= Null_Node loop
-               exit when Index - First_Args_Length >= Command_Line_Limit;
+               exit when (not Ref.Absolute_Names
+                          and then GNAT.Directory_Operations.Dir_Name
+                            (Locale_From_UTF8 (Data (Node))) /= Dir.all)
+                 or else Index - First_Args_Length >= Command_Line_Limit;
 
                declare
                   Filename : constant String := Data (Node);
@@ -521,7 +531,7 @@ package body VCS.Generic_VCS is
                            Args (Index) := new String'(Suffix);
                         else
                            Args (Index) := new String'
-                          (Format_Pathname (Suffix, Ref.Dir_Sep));
+                             (Format_Pathname (Suffix, Ref.Dir_Sep));
                         end if;
                      end;
                   end if;
