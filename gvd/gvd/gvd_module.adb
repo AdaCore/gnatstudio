@@ -1415,7 +1415,11 @@ package body GVD_Module is
            Editor);
 
       Set_Mode (Editor, Source_Asm);
-      Gtk_New (Child, Assembly, Module => GVD_Module_ID);
+      Gtk_New
+        (Child  => Child,
+         Widget => Assembly,
+         Module => GVD_Module_ID,
+         Group  => Group_Debugger_Stack);
       Set_Title (Child, -"Assembly View");
       Put (Get_MDI (Kernel), Child, Initial_Position => Position_Right);
       Unref (Assembly);
