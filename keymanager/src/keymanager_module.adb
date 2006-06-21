@@ -1388,7 +1388,12 @@ package body KeyManager_Module is
             First := First + 1;
          end loop;
 
-         if Accel_Path (First .. Accel_Path'Last) /= "" then
+         if Accel_Path (First) = '/'
+         --  Only add menu accelerators through this mechanism.
+         --  Actions are handled by a separate loop, after the call to
+         --  Foreach_Unfiltered.
+           and then Accel_Path (First .. Accel_Path'Last) /= ""
+         then
             Iter := Set
               (Model      => Editor.Model,
                Parent     => Menu_Iter,
@@ -1437,22 +1442,14 @@ package body KeyManager_Module is
          if Action.Category /= null
            and then (Flat_List or else Parent /= Null_Iter)
          then
-            declare
-               Key : constant String := Lookup_Key_From_Action
+            Parent := Set
+              (Model   => Editor.Model,
+               Parent  => Parent,
+               Descr   => Get (Action_Iter),
+               Key     => Lookup_Key_From_Action
                  (Editor.Bindings,
                   Get (Action_Iter),
-                  Default           => -Disabled_String);
-            begin
-               --  If the action has a key, it was already added through the
-               --  Foreach_Unfiltered call above.
-               if Key = "" then
-                  Parent := Set
-                    (Model   => Editor.Model,
-                     Parent  => Parent,
-                     Descr   => Get (Action_Iter),
-                     Key     => "");
-               end if;
-            end;
+                  Default => -Disabled_String));
          end if;
          Next (Editor.Kernel, Action_Iter);
       end loop;
