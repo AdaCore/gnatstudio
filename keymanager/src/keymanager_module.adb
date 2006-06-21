@@ -40,6 +40,7 @@ with Glib.Xml_Int;            use Glib.Xml_Int;
 with Glib.Values;             use Glib.Values;
 with Glib;                    use Glib;
 
+with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Accel_Map;           use Gtk.Accel_Map;
 with Gtk.Arguments;           use Gtk.Arguments;
 with Gtk.Box;                 use Gtk.Box;
@@ -959,6 +960,19 @@ package body KeyManager_Module is
                Found_Action := True;
 
             else
+               --  First try to activate the key shortcut using the standard
+               --  Gtk+ mechanism.
+
+               if Accel_Groups_Activate
+                 (Get_Main_Window (Kernel), Key, Modif)
+               then
+                  Found_Action := True;
+                  exit;
+               end if;
+
+               --  If we have not found the accelerator using the Gtk+
+               --  mechanism, fallback on the standard mechanism to lookup the
+               --  action.
                Command := Lookup_Action (Kernel, Binding.Action.all);
 
                if Command = null then
