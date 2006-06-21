@@ -40,6 +40,7 @@ with Glib.Xml_Int;            use Glib.Xml_Int;
 with Glib.Values;             use Glib.Values;
 with Glib;                    use Glib;
 
+with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Accel_Map;           use Gtk.Accel_Map;
 with Gtk.Arguments;           use Gtk.Arguments;
 with Gtk.Box;                 use Gtk.Box;
@@ -959,6 +960,19 @@ package body KeyManager_Module is
                Found_Action := True;
 
             else
+               --  First try to activate the key shortcut using the standard
+               --  Gtk+ mechanism.
+
+               if Accel_Groups_Activate
+                 (Get_Main_Window (Kernel), Key, Modif)
+               then
+                  Found_Action := True;
+                  exit;
+               end if;
+
+               --  If we have not found the accelerator using the Gtk+
+               --  mechanism, fallback on the standard mechanism to lookup the
+               --  action.
                Command := Lookup_Action (Kernel, Binding.Action.all);
 
                if Command = null then
@@ -1374,7 +1388,12 @@ package body KeyManager_Module is
             First := First + 1;
          end loop;
 
-         if Accel_Path (First .. Accel_Path'Last) /= "" then
+         if Accel_Path (First) = '/'
+         --  Only add menu accelerators through this mechanism.
+         --  Actions are handled by a separate loop, after the call to
+         --  Foreach_Unfiltered.
+           and then Accel_Path (First .. Accel_Path'Last) /= ""
+         then
             Iter := Set
               (Model      => Editor.Model,
                Parent     => Menu_Iter,
@@ -1423,22 +1442,14 @@ package body KeyManager_Module is
          if Action.Category /= null
            and then (Flat_List or else Parent /= Null_Iter)
          then
-            declare
-               Key : constant String := Lookup_Key_From_Action
+            Parent := Set
+              (Model   => Editor.Model,
+               Parent  => Parent,
+               Descr   => Get (Action_Iter),
+               Key     => Lookup_Key_From_Action
                  (Editor.Bindings,
                   Get (Action_Iter),
-                  Default           => -Disabled_String);
-            begin
-               --  If the action has a key, it was already added through the
-               --  Foreach_Unfiltered call above.
-               if Key = "" then
-                  Parent := Set
-                    (Model   => Editor.Model,
-                     Parent  => Parent,
-                     Descr   => Get (Action_Iter),
-                     Key     => "");
-               end if;
-            end;
+                  Default => -Disabled_String));
          end if;
          Next (Editor.Kernel, Action_Iter);
       end loop;
