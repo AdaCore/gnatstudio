@@ -253,6 +253,7 @@ package body GVD.Assembly_View is
    procedure Destroy_Cb
      (Assembly_View : access GVD_Assembly_View_Record'Class) is
    begin
+      Assembly_View.View := null;
       Unref (Assembly_View.Font);
    end Destroy_Cb;
 
@@ -528,10 +529,12 @@ package body GVD.Assembly_View is
 
    procedure Highlight (Assembly_View : GVD_Assembly_View) is
    begin
-      Reset_Highlighting (Assembly_View);
-      Highlight_Address_Range (Assembly_View);
-      Highlight_Breakpoint_Lines (Assembly_View);
-      Highlight_Pc_Line (Assembly_View);
+      if Assembly_View.View /= null then
+         Reset_Highlighting (Assembly_View);
+         Highlight_Address_Range (Assembly_View);
+         Highlight_Breakpoint_Lines (Assembly_View);
+         Highlight_Pc_Line (Assembly_View);
+      end if;
    end Highlight;
 
    -----------------------
