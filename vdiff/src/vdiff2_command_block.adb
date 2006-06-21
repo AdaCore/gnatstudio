@@ -101,9 +101,7 @@ package body Vdiff2_Command_Block is
       Curr_Node     : Diff_Head_List.List_Node;
       Diff          : Diff_Head_Access;
       Selected_File : Virtual_File;
-
    begin
-
       if Has_File_Information (Context)
         and then Has_Directory_Information (Context)
       then
@@ -161,20 +159,6 @@ package body Vdiff2_Command_Block is
            (Msg     => -"No differences found.",
             Buttons => Button_OK,
             Parent  => Get_Current_Window (Kernel));
-
-         declare
-            Vdiff_List : constant Diff_Head_List_Access := Get_Vdiff_List;
-            Curr_Node  : constant Diff_Head_List.List_Node :=
-                          Get_Diff_Node
-                             (Item.Files (Item.Ref_File), Vdiff_List.all);
-         begin
-            Remove_Nodes
-              (Vdiff_List.all,
-               Prev (Vdiff_List.all, Curr_Node),
-               Curr_Node);
-         end;
-
-         return;
       end if;
 
       Free_List (Item.List);
