@@ -207,15 +207,17 @@ package body Debugger.Gdb.C is
          --  Begin of union or struct => skip to the end
          elsif Type_Str (Index) = '{' then
             declare
-               Num : Natural := 1;
+               Count : Natural := 1;
             begin
                Index := Index + 1;
-               while Num /= 0 loop
+
+               while Count /= 0 and then Index < Type_Str'Last loop
                   if Type_Str (Index) = '}' then
-                     Num := Num - 1;
+                     Count := Count - 1;
                   elsif Type_Str (Index) = '{' then
-                     Num := Num + 1;
+                     Count := Count + 1;
                   end if;
+
                   Index := Index + 1;
                end loop;
             end;
@@ -304,6 +306,8 @@ package body Debugger.Gdb.C is
    begin
       if Looking_At (Type_Str, Index, "const ") then
          Index := Index + 6;
+      elsif Looking_At (Type_Str, Index, "volatile ") then
+         Index := Index + 9;
       end if;
 
       C_Detect_Composite_Type (Lang, Type_Str, Entity, Index, Result);
@@ -605,8 +609,9 @@ package body Debugger.Gdb.C is
       Field_End  : out Natural;
       Result     : out Items.Generic_Type_Access)
    is
-      Tmp : Natural := Index;
+      Tmp            : Natural := Index;
       Semi_Colon_Pos : Natural;
+      Count          : Natural;
 
    begin
       --  Get the field name (last word before ;)
@@ -619,8 +624,24 @@ package body Debugger.Gdb.C is
 
       if Looking_At (Type_Str, Tmp, "struct {")
         or else Looking_At (Type_Str, Tmp, "union {")
+        or else Looking_At (Type_Str, Tmp, "volatile struct {")
+        or else Looking_At (Type_Str, Tmp, "volatile union {")
+        or else Looking_At (Type_Str, Tmp, "const struct {")
+        or else Looking_At (Type_Str, Tmp, "const union {")
       then
-         Skip_To_Char (Type_Str, Tmp, '}');
+         Skip_To_Char (Type_Str, Tmp, '{');
+         Tmp := Tmp + 1;
+         Count := 1;
+
+         while Count /= 0 and then Tmp < Type_Str'Last loop
+            if Type_Str (Tmp) = '{' then
+               Count := Count + 1;
+            elsif Type_Str (Tmp) = '}' then
+               Count := Count - 1;
+            end if;
+
+            Tmp := Tmp + 1;
+         end loop;
       end if;
 
       Skip_To_Char (Type_Str, Tmp, ';');
@@ -704,7 +725,8 @@ package body Debugger.Gdb.C is
 
                T : constant String := Type_Of
                  (Get_Debugger (Lang),
-                  Entity & "." & Type_Str (Name_Start .. Name_End));
+                  "(" & Entity & ")" & "." &
+                  Type_Str (Name_Start .. Name_End));
             begin
                Tmp := T'First;
                Parse_Type
@@ -736,12 +758,12 @@ package body Debugger.Gdb.C is
    is
       pragma Unreferenced (End_On);
 
-      Num_Fields : Natural := 0;
-      Field      : Natural := 1;
-      Initial    : constant Natural := Index;
-      R          : Record_Type_Access;
-      Field_Value : Generic_Type_Access;
-      Tmp         : Natural;
+      Num_Fields        : Natural := 0;
+      Field             : Natural := 1;
+      Initial           : constant Natural := Index;
+      R                 : Record_Type_Access;
+      Field_Value       : Generic_Type_Access;
+      Tmp               : Natural;
       End_Of_Name, Save : Natural;
 
    begin
@@ -750,13 +772,25 @@ package body Debugger.Gdb.C is
       while Index <= Type_Str'Last
         and then Type_Str (Index) /= '}'
       loop
-         --  embedded unions or structs
+         --  Embedded unions or structs
+
          if Type_Str (Index) = '{' then
-            Skip_To_Char (Type_Str, Index, '}');
+            Tmp := 1;
+
+            while Tmp /= 0 and then Index < Type_Str'Last loop
+               Index := Index + 1;
+
+               if Type_Str (Index) = '{' then
+                  Tmp := Tmp + 1;
+               elsif Type_Str (Index) = '}' then
+                  Tmp := Tmp - 1;
+               end if;
+            end loop;
 
          elsif Type_Str (Index) = ';' then
             Num_Fields := Num_Fields + 1;
          end if;
+
          Index := Index + 1;
       end loop;
 
