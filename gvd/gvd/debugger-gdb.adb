@@ -1021,32 +1021,27 @@ package body Debugger.Gdb is
       --  because gdb does not seem to take into account this variable at all.
       Cmd                 : Basic_Types.String_Access;
       Process             : Visual_Debugger;
+      Remote_Exec         : constant String :=
+                              To_Remote (Full_Name (Executable, True).all,
+                                         Debug_Server, True);
       Exec_Has_Spaces     : constant Boolean :=
-        Index (Full_Name (Executable).all, " ") /= 0;
-
-      function Translate_Path (S : VFS.Virtual_File) return String;
-      --  Convert full path of S using the debug server settings
-
-      function Translate_Path (S : VFS.Virtual_File) return String is
-      begin
-         return To_Remote (Full_Name (S).all, Debug_Server, True);
-      end Translate_Path;
+                              Index (Remote_Exec, " ") /= 0;
 
    begin
       Debugger.Executable := Executable;
 
       if Exec_Has_Spaces then
          if Debugger.Remote_Target = null then
-            Cmd := new String'("file """ & Translate_Path (Executable) & '"');
+            Cmd := new String'("file """ & Remote_Exec & '"');
          else
-            Cmd := new String'("load """ & Translate_Path (Executable) & '"');
+            Cmd := new String'("load """ & Remote_Exec & '"');
          end if;
 
       else
          if Debugger.Remote_Target = null then
-            Cmd := new String'("file " & Translate_Path (Executable));
+            Cmd := new String'("file " & Remote_Exec);
          else
-            Cmd := new String'("load " & Translate_Path (Executable));
+            Cmd := new String'("load " & Remote_Exec);
          end if;
       end if;
 
