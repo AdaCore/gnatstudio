@@ -25,6 +25,7 @@ with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
+with Ada.Strings.Unbounded;
 
 with Glib;               use Glib;
 with Glib.Xml_Int;       use Glib.Xml_Int;
@@ -224,6 +225,40 @@ package body Remote_Sync_Module is
          function Use_Links_Arg return String_List;
          --  Argument for link transfer
 
+         function Protect (S : String_Access) return String_Access;
+         --  Protects spaces and quotes
+
+         -------------
+         -- Protect --
+         -------------
+
+         function Protect (S : String_Access) return String_Access is
+            use Ada.Strings.Unbounded;
+            Out_Str : Unbounded_String;
+            Ret     : GNAT.OS_Lib.String_Access;
+            Ignore  : Boolean;
+         begin
+            Ignore := False;
+
+            for J in S'Range loop
+               if S (J) = '\' then
+                  Ignore := True;
+                  Out_Str := Out_Str & S (J);
+               elsif not Ignore and then (S (J) = ' ' or else S (J) = '"') then
+                  Ignore := False;
+                  Out_Str := Out_Str & '\' & S (J);
+               else
+                  Ignore := False;
+                  Out_Str := Out_Str & S (J);
+               end if;
+            end loop;
+
+            Ret := S;
+            Free (Ret);
+            Ret := new String'(To_String (Out_Str));
+            return Ret;
+         end Protect;
+
          -------------------
          -- Transport_Arg --
          -------------------
@@ -253,7 +288,7 @@ package body Remote_Sync_Module is
 
       begin
          return Rsync_Args & Use_Links_Arg & Transport_Arg &
-           Src_Path & Dest_Path;
+           Protect (Src_Path) & Protect (Dest_Path);
       end Build_Arg;
 
    begin
