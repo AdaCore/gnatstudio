@@ -22,6 +22,12 @@ F615-006 Alias expansion is case insensitive (2006-06-16)
 
   Keywords: Aliases
 
+F613-014 Key shortcuts editor improvements (2006-06-16)
+
+  The keyshortcuts editor has been improved: entries are sorted by categories,
+  and when several key bindings are associated with the same action, they are
+  all listed
+
 F503-004 Block information on record/union/class (2006-05-05)
 
   GPS computes block information for record/union/class and has associated
