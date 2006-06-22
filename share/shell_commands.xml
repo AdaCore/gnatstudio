@@ -3923,7 +3923,12 @@ It is possible to close all editors at once using a command like
   <shell_doc name="GPS.EditorBuffer.selection_end">
        <param name="self">An instance of GPS.EditorBuffer</param>
        <return>An instance of GPS.EditorLocation</return>
-       <description>Return the end of the selection. This will always be located after the start of the selection, no matter the order of parameters given to GPS.EditorBuffer.select</description>
+       <description>Return the character after the end of the selection. This will always be located after the start of the selection, no matter the order of parameters given to GPS.EditorBuffer.select. If the selection is empty, EditorBuffer.selection_start and EditorBuffer.selection_end will be equal.</description>
+       <example lang="python">
+       To get the contents of the current selection, one would use:
+           buffer = GPS.EditorBuffer.get()
+           selection = buffer.get_chars (buffer.selection_start(), buffer.selection_end() - 1)
+       </example>
   </shell_doc>
 
   <shell_doc name="GPS.EditorBuffer.copy">
