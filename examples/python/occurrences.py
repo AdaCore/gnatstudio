@@ -34,13 +34,15 @@ GPS.parse_xml ("""
 GPS.Editor.register_highlighting ("dynamic occurrences", "lightblue", True)
 
 def mark_selected ():
-   selection=GPS.Editor.get_chars (GPS.current_context().file().name())
+   buffer = GPS.EditorBuffer.get()
+   selection = buffer.get_chars (buffer.selection_start(), buffer.selection_end() - 1)
    context=GPS.current_context()
 
    if selection=="" and context.__class__ == GPS.EntityContext:
       selection=context.entity().name()
+
    if selection != "":
-      for m in context.file().search (selection):
+      for m in buffer.file().search (selection):
          GPS.Locations.add ("Local occurrences", m.file(), m.line(), m.column(),
               selection, highlight="dynamic occurrences", length=len(selection))
 
