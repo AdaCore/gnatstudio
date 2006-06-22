@@ -242,7 +242,7 @@ package body Buffer_Views is
             Child := Find_MDI_Child_By_Name
               (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
 
-            if Get_Button (Event) = 5 then
+            if Get_Button (Event) = 3 then
                --  Right click ?
                return False;
 
