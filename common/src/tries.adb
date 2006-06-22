@@ -861,32 +861,45 @@ package body Tries is
       if Iter.Mod_Clock /= null
         and then Iter.Mod_Clock.all /= Iter.Initial_Timestamp
       then
-         --  Here, there have been modifications. We try to retreive the cells
-         --  as they were. If we can't, it's the end of the iteration.
-
-         Find_Cell_Child (Tree_Root_Cell, Iter.Root_Name.all, Pointer);
-
-         if Pointer.Scenario /= 3 then
-            Iter.Current_Cell := null;
-            return;
-         end if;
-
-         Iter.Root_Cell := Pointer.Cell;
-
-         Find_Cell_Child
-           (Tree_Root_Cell, Iter.Root_Name.all & Iter.Current_Name
+         declare
+            Full_Name : constant String := Iter.Root_Name.all
+              & Iter.Current_Name
               (Iter.Current_Name'First
-               .. Iter.Current_Name'First + Iter.Current_Name_Length - 1),
-            Pointer);
+               .. Iter.Current_Name'First + Iter.Current_Name_Length - 1);
+         begin
+            --  Here, there have been modifications. We try to retreive the
+            --  cells as they were. If we can't, it's the end of the iteration.
 
-         if Pointer.Scenario /= 3 then
-            Iter.Current_Cell := null;
-            return;
-         end if;
+            if Iter.Root_Name.all = "" then
+               Iter.Current_Cell := Tree_Root_Cell;
+               Iter.Current_Index := 1;
+            else
+               Find_Cell_Child (Tree_Root_Cell, Iter.Root_Name.all, Pointer);
+            end if;
 
-         Iter.Current_Cell := Pointer.Cell;
+            if Pointer.Scenario /= 3 then
+               Iter.Current_Cell := null;
+               return;
+            end if;
 
-         Iter.Initial_Timestamp := Iter.Mod_Clock.all;
+            Iter.Root_Cell := Pointer.Cell;
+
+            if Full_Name = "" then
+               Iter.Current_Cell := Tree_Root_Cell;
+               Iter.Current_Index := 1;
+            else
+               Find_Cell_Child (Tree_Root_Cell, Full_Name, Pointer);
+            end if;
+
+            if Pointer.Scenario /= 3 then
+               Iter.Current_Cell := null;
+               return;
+            end if;
+
+            Iter.Current_Cell := Pointer.Cell;
+
+            Iter.Initial_Timestamp := Iter.Mod_Clock.all;
+         end;
       end if;
    end Adjust_If_Need;
 
