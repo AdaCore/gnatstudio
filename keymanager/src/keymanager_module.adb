@@ -2398,8 +2398,6 @@ package body KeyManager_Module is
 
       --  Remove any other keybinding associated with that action, as well as
       --  any action associated with that key.
-      --  We do not need to store the keybinding/action link ourselves, since
-      --  this is stored in the accel map already
       Bind_Default_Key_Internal
         (Table  => Keymanager_Module.Key_Manager.Table,
          Action => Accel_Path (First .. Accel_Path'Last),
@@ -2419,6 +2417,8 @@ package body KeyManager_Module is
    is
       Manager    : constant Key_Manager_Access := new Key_Manager_Record;
       Macro_Menu : constant String := "/" & (-"Tools/Macro");
+      Key : constant String := Get_Home_Dir (Kernel) & "custom_key";
+
    begin
       Manager.Kernel := Kernel_Handle (Kernel);
 
@@ -2434,6 +2434,16 @@ package body KeyManager_Module is
       Kernel_Callback.Connect
         (Gtk.Accel_Map.Get, Gtk.Accel_Map.Signal_Changed,
          On_Accel_Map_Changed'Access, Kernel_Handle (Kernel));
+
+      --  For backward compatibility with GPS 3.1.3, we load the accel map
+      --  custom keys as well. These will be overloaded when we load keys.xml
+      --  anyway. The file custom_key will never be overwritten by GPS from now
+      --  on.
+
+      if Is_Regular_File (Key) then
+         Trace (Me, "Loading key bindings from " & Key);
+         Gtk.Accel_Map.Load (Key);
+      end if;
 
       if Active (Use_Macro) then
          Register_Menu
