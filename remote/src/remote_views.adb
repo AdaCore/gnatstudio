@@ -896,7 +896,8 @@ package body Remote_Views is
                          " to " & Server_Name);
                end if;
 
-               GPS.Kernel.Remote.Assign (User.View.Kernel, S, Server_Name);
+               GPS.Kernel.Remote.Assign (User.View.Kernel, S, Server_Name,
+                                         Reload_Prj => S = Build_Server);
             end if;
          end;
       end loop;
