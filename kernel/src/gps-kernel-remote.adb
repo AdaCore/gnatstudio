@@ -4074,7 +4074,14 @@ package body GPS.Kernel.Remote is
          Success := False;
          On_Error
            (In_Use_Error_Manager,
-            -"Invalid command (" & Ada.Exceptions.Exception_Message (E) & ")");
+            -"Error while trying to execute " & Args (Args'First).all & ": " &
+            Ada.Exceptions.Exception_Message (E));
+      when E : Invalid_Nickname =>
+         Success := False;
+         On_Error
+           (In_Use_Error_Manager,
+            -"Remote configuration error: " &
+            Ada.Exceptions.Exception_Message (E));
    end Spawn;
 
 end GPS.Kernel.Remote;
