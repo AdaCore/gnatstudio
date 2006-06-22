@@ -1683,16 +1683,20 @@ Otherwise, the normal mode information is displayed.
 You can disable the automatic pop up of tool tips in the Editor section of
 the preferences dialog. @xref{The Preferences Dialog}.
 
-@item Word completion
+@item Code completion
 @cindex completion
+
+GPS provides two kind of code completion: a smart code completion based
+on semantic information (see @ref{Smart Completion}), and a text completion.
+
 It is useful when editing a file and using often the same words to get
 automatic word completion. This is possible by typing the @key{Ctrl-/} key
 combination (customizable through the key manager dialog) after a partial
 word: the next possible completion will be inserted in the editor. Typing this
 key again will cycle through the list of possible completions.
 
-Completions are searched in all currently open source files, by first looking
-at the closest words and then looking further in the source as needed.
+Text completions are searched in all currently open source files, by first
+looking at the closest words and then looking further in the source as needed.
 
 @item Delimiter highlighting
 @cindex delimiter
@@ -2179,7 +2183,8 @@ language syntax.
 Remove the comment delimiters from the current selection or line.
 
 @item Smart Completion
-@cindex smart completion
+@anchor{Smart Completion}
+@cindex completion
 
 Complete the identifier prefix under the cursor, and list the results in a
 pop-up list. This command can take advantage of the cross-reference information
