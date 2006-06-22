@@ -2604,9 +2604,22 @@ package body GPS.Location_View is
       elsif Command = "add" then
          Name_Parameters (Data, Locations_Add_Parameters);
          declare
-            File : constant VFS.Virtual_File := Create (Nth_Arg (Data, 1));
+            Highlight : constant String  := Nth_Arg (Data, 6, "");
          begin
-            Dump_To_File (Get_Kernel (Data), File);
+            Insert_Location
+              (Get_Kernel (Data),
+               Category           => Nth_Arg (Data, 1),
+               File               => Get_Data
+                 (Nth_Arg (Data, 2, (Get_File_Class (Get_Kernel (Data))))),
+               Line               => Nth_Arg (Data, 3),
+               Column             => Visible_Column_Type
+                 (Nth_Arg (Data, 4, Default => 1)),
+               Text               => Nth_Arg (Data, 5),
+               Length             => Nth_Arg (Data, 7, 0),
+               Highlight          => Highlight /= "",
+               Highlight_Category => Get_Or_Create_Style
+                 (Get_Kernel (Data), Highlight, False),
+               Quiet              => True);
          end;
 
       elsif Command = "dump" then
