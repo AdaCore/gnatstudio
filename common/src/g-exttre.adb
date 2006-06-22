@@ -979,9 +979,17 @@ package body GNAT.Expect.TTY.Remote is
          --  Now lauch the remote program
          Send (Desc, Argument_List_To_String (The_Args, False));
 
-         for J in The_Args'Range loop
-            Free (The_Args (J));
-         end loop;
+      exception
+         when Process_Died =>
+            --  Underlying session has died
+            for J in The_Args'Range loop
+               Free (The_Args (J));
+            end loop;
+            Internal_Handle_Exceptions (Desc);
+            Raise_Exception
+              (Process_Died'Identity,
+               "Disconnected from host " & Target_Nickname &
+               ". Please verify your network connections and retry.");
       end;
    end Remote_Spawn;
 
@@ -1209,7 +1217,7 @@ package body GNAT.Expect.TTY.Remote is
                    Status);
             Descriptor.Session_Died := True;
 
-         else
+         elsif not Descriptor.Session_Died then
             if Descriptor.Shell.Get_Status_Cmd /= null then
                --  Try to retrieve the terminated program's status
 
