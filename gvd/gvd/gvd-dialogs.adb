@@ -36,6 +36,7 @@ with GVD.Views;             use GVD.Views;
 with GVD;                   use GVD;
 with Glib;                  use Glib;
 with Glib.Object;           use Glib.Object;
+with Gdk.Event;             use Gdk.Event;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Stock;             use Gtk.Stock;
@@ -131,7 +132,9 @@ package body GVD.Dialogs is
       Position           => Position_Right,
       Initialize         => Initialize);
 
-   procedure On_Thread_Selection (Thread : access Gtk_Widget_Record'Class);
+   function On_Thread_Button_Release
+     (Thread : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
    --  Called when a thread was selected in the view
 
    ----------------
@@ -363,30 +366,31 @@ package body GVD.Dialogs is
       PD_Views.Register_Desktop_Functions (Kernel);
    end Register_Module;
 
-   -------------------------
-   -- On_Thread_Selection --
-   -------------------------
+   ------------------------------
+   -- On_Thread_Button_Release --
+   ------------------------------
 
-   procedure On_Thread_Selection (Thread : access Gtk_Widget_Record'Class) is
+   function On_Thread_Button_Release
+     (Thread : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
       T     : constant Thread_View := Thread_View (Thread);
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (T.Tree));
-      Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
+      Iter  : Gtk_Tree_Iter;
    begin
-      while Iter /= Null_Iter
-        and then not Iter_Is_Selected (Get_Selection (T.Tree), Iter)
-      loop
-         Next (Model, Iter);
-      end loop;
+      Iter := Find_Iter_For_Event (T.Tree, Model, Event);
 
       if Iter /= Null_Iter then
          T.Switch (T, Get_String (Model, Iter, 0));
       end if;
 
+      return False;
    exception
       when E : others =>
          Trace (Exception_Handle, "Unexpected exception: "
                 & Exception_Information (E));
-   end On_Thread_Selection;
+         return False;
+   end On_Thread_Button_Release;
 
    ---------------------
    -- Get_Thread_View --
@@ -483,6 +487,8 @@ package body GVD.Dialogs is
       Len         : Natural;
       Num_Columns : Thread_Fields;
       Iter        : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
+      Path        : Gtk_Tree_Path;
    begin
       if Get_Process (Thread) /= null
         and then Visible_Is_Set (Thread)
@@ -520,10 +526,19 @@ package body GVD.Dialogs is
 
                Add (Thread, Thread.Tree);
                Show_All (Thread.Tree);
-               Widget_Callback.Object_Connect
-                 (Get_Selection (Thread.Tree), "changed",
-                  On_Thread_Selection'Access, Thread);
+               Return_Callback.Object_Connect
+                 (Thread.Tree, "button_release_event",
+                  Return_Callback.To_Marshaller
+                    (On_Thread_Button_Release'Access),
+                  Thread, After => False);
             end;
+         end if;
+
+         --  Before clearing the tree, save the position of the selection.
+         Get_Selected (Get_Selection (Thread.Tree), Model, Iter);
+
+         if Iter /= Null_Iter then
+            Path := Get_Path (Model, Iter);
          end if;
 
          if Thread.Tree /= null then
@@ -539,6 +554,13 @@ package body GVD.Dialogs is
                     Value (Info (J).Information (Col)));
             end loop;
          end loop;
+
+         --  If a selection was found before clearing the tree, restore it.
+
+         if Path /= null then
+            Set_Cursor (Thread.Tree, Path, null, False);
+            Path_Free (Path);
+         end if;
 
          Free (Info);
       end if;
