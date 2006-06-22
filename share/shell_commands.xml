@@ -355,6 +355,21 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
      <description>Hook called when a new marker is added to the history list of previous locations, where the user can navigate back and forward</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ debugger_question_action_hook">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="debugger">An instance of GPS.Debugger</param>
+     <param name="question">A string</param>
+     <return>A string</return>
+     <description>Action hook called just before displaying an interactive dialog, when the debugger is asking a question to the user. This hook can be used to disable the dialog (and send the rreply directly to the debugger instead). It should return a non-empty string to pass to the debugger if the dialog should not be displayed. You cannot send commands to the debugger when inside this hook, since the debugger is blocked waiting for an answer</description>
+     <example lang="python">
+         def gps_question (hook, debugger, str):
+            return "1"   ## Always choose choice 1
+         GPS.Hook ("debugger_question_action_hook").add (gps_question)
+         debug=GPS.Debugger.get()
+         deubg.send ("print &amp;foo")
+     </example>
+  </shell_doc>
+
   <!--#################################################################
     ####   Top level functions
     ###################################################################-->
@@ -414,6 +429,14 @@ GPS. Each facility in GPS is provided in a separate module, so that users
 can choose whether to activate specific modules or not. Some modules can also
 be dynamically loaded</description>
      <see_also name="GPS.insmod()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.extract_method">
+      <param name="file">A string</param>
+      <param name="line_start">An integer</param>
+      <param name="line_end">An integer</param>
+      <param name="method_name" default="New_Method">A string</param>
+      <description>Extract the code from line_start to line_end in the specified file into a new subprogram with the given name. All needed local variables are declared properly in this new subprogram, and it is given parameters if needed</description>
   </shell_doc>
 
   <shell_doc name="GPS.exec_in_console">
