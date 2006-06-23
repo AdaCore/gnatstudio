@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2003                      --
+--                      Copyright (C) 2002-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -21,8 +21,8 @@
 --  Hash table searching routines
 
 --  This package contains two separate packages. The Simple_Htable package
---  provides a very simple abstraction that asosicates one element to one
---  key values and takes care of all allocation automatically using the heap.
+--  provides a very simple abstraction that associates one element to one
+--  key value and takes care of all allocation automatically using the heap.
 --  The Static_Htable package provides a more complex interface that allows
 --  complete control over allocation.
 
