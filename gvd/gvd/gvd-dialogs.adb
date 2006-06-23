@@ -489,6 +489,7 @@ package body GVD.Dialogs is
       Iter        : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Model;
       Path        : Gtk_Tree_Path;
+      Sel         : Gtk_Tree_Selection;
    begin
       if Get_Process (Thread) /= null
         and then Visible_Is_Set (Thread)
@@ -535,10 +536,14 @@ package body GVD.Dialogs is
          end if;
 
          --  Before clearing the tree, save the position of the selection.
-         Get_Selected (Get_Selection (Thread.Tree), Model, Iter);
+         Sel := Get_Selection (Thread.Tree);
 
-         if Iter /= Null_Iter then
-            Path := Get_Path (Model, Iter);
+         if Sel /= null then
+            Get_Selected (Sel, Model, Iter);
+
+            if Iter /= Null_Iter then
+               Path := Get_Path (Model, Iter);
+            end if;
          end if;
 
          if Thread.Tree /= null then
