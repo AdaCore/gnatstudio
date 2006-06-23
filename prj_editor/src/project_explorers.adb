@@ -2034,6 +2034,8 @@ package body Project_Explorers is
       elsif Get_Iter_First (T.Tree.Model) = Null_Iter then
          Iter := Add_Project_Node (T, Get_Project (T.Kernel));
          Path := Get_Path (T.Tree.Model, Iter);
+         Dummy := Collapse_Row (T.Tree, Path);
+         Compute_Children (T, Iter);
          Dummy := Expand_Row (T.Tree, Path, False);
          Path_Free (Path);
 
