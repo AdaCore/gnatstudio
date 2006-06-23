@@ -625,13 +625,16 @@ package body Src_Editor_Buffer is
          Free (A (J));
       end loop;
 
-      Len := A (A'Last).Length;
+      if A'Length > 0 then
+         Len := A (A'Last).Length;
 
-      if Len /= 0 then
-         Output (Index .. Index + Len - 1) := A (A'Last).Contents (1 .. Len);
+         if Len /= 0 then
+            Output (Index .. Index + Len - 1) :=
+              A (A'Last).Contents (1 .. Len);
+         end if;
+
+         Free (A (A'Last));
       end if;
-
-      Free (A (A'Last));
 
       return Output;
    end Get_Buffer_Lines;
