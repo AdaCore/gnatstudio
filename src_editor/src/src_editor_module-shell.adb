@@ -445,11 +445,11 @@ package body Src_Editor_Module.Shell is
             --  second one. This is harder to use in scripts, though, so we
             --  compensate for that here.
             if Compare (Iter1, Iter2) <= 0 then
-               if not Is_End (Iter2) then
+               if not (Is_End (Iter2) or else Ends_Line (Iter2)) then
                   Forward_Char (Iter2, Success);
                end if;
             else
-               if not Is_End (Iter1) then
+               if not (Is_End (Iter1) or else Ends_Line (Iter1)) then
                   Forward_Char (Iter1, Success);
                end if;
             end if;
@@ -2267,7 +2267,9 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "end_of_line" then
          Get_Location (Iter, Data, 1, Default => Iter);
-         Forward_To_Line_End (Iter, Success);
+         if not Ends_Line (Iter) then
+            Forward_To_Line_End (Iter, Success);
+         end if;
          Set_Return_Value
            (Data, Create_Editor_Location (Get_Script (Data), Iter));
 
