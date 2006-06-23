@@ -1125,6 +1125,13 @@ to a generic instantiation in Ada. If synchronous is True, then the result will 
       </example>
   </shell_doc>
 
+  <shell_doc name="GPS.ReferencesCommand">
+      <description>This is the type of the commands returned by the references extractor.</description>
+      <see_also name="GPS.Command" />
+      <see_also name="GPS.Entity.references" />
+  </shell_doc>
+
+  
   <shell_doc name="GPS.ReferencesCommand.get_result">
       <param name="self">The instance of GPS.ReferencesCommand</param>
       <return>A list of strings</return>
@@ -2861,6 +2868,10 @@ This command returns the output of the process up to the point where regexp matc
       <description>Interface to GPS command. This class is abstract, and shall be subclassed.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Command.__del__">
+      <description>Destructor of a GPS command. This should not be called manually by the user.</description>
+  </shell_doc>
+  
   <shell_doc name="GPS.Command.get">
       <param name="name">A string</param>
       <description>Return the list of commands of the name given in parameter, scheduled or running in the task manager</description>
