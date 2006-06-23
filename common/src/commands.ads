@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -380,16 +380,16 @@ private
       --  The following booleans are used to avoid cases when execution of
       --  a command might cause this command to be destroyed in the process.
 
-      Do_Not_Free : Boolean := False;
+      Do_Not_Free        : Boolean := False;
       --  Used to indicate that the command is currently being used
       --  and should not be freed.
 
-      To_Be_Freed : Boolean := False;
+      To_Be_Freed        : Boolean := False;
       --  Indicates that an attempt to free the command was made
       --  when Do_Not_Free was set, and that the command should be freed
       --  as soon as possible.
 
-      Group               : Natural := 0;
+      Group              : Natural := 0;
       --  The group the command belongs to. 0 indicates that the command does
       --  not correspond to a group.
    end record;
