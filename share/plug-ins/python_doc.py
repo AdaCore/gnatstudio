@@ -339,7 +339,9 @@ class GPSDocGenerator (DocGenerator):
         f.write (self.get_formated_documentation (module.__name__, "@hooks_list@"))
 
         f.write ("</table>")
-        for hook in GPS.Hook.list():
+        list = GPS.Hook.list()
+        list.sort()
+        for hook in list:
           f.write ("<table class='description'>\n")
           f.write ("  <caption>" + hook + "</caption>\n")
           f.write (self.get_formated_documentation (module.__name__, "@hook@ " + hook))
