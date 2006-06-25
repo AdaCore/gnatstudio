@@ -135,7 +135,9 @@ package body Line_Buffers is
       if Last - First = Replace'Length then
          --  Simple case, no need to reallocate buffer
 
-         Buffer.Current.Line (First .. Last - 1) := Replace;
+         if Replace'Length > 0 then
+            Buffer.Current.Line (First .. Last - 1) := Replace;
+         end if;
 
       else
          S := new String
@@ -144,7 +146,6 @@ package body Line_Buffers is
          S (First .. First + Replace'Length - 1) := Replace;
          S (First + Replace'Length .. S'Last) :=
            Buffer.Current.Line (Last .. Buffer.Current.Line'Last);
-
          Free (Buffer.Current.Line);
          Buffer.Current.Line := S;
       end if;
