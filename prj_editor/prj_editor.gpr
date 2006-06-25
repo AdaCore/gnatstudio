@@ -38,6 +38,10 @@ project Prj_Editor is
       for Default_Switches ("Ada") use ("-E");
    end Binder;
 
+   package Linker is
+      for Default_Switches ("Ada") use ("-shared-libgcc");
+   end Linker;
+
    package IDE renames Shared.IDE;
 
 end Prj_Editor;
