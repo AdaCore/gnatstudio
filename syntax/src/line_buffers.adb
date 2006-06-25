@@ -113,7 +113,9 @@ package body Line_Buffers is
    is
       S : String_Access;
    begin
-      if Buffer.First = null then
+      if Buffer.First = null
+        or else (Replace = "" and then Last = First)
+      then
          --  No replacing actually requested
          return;
       end if;
@@ -132,12 +134,14 @@ package body Line_Buffers is
 
       Buffer.Current_Line := Line;
 
+      if Buffer.Current = null then
+         return;
+      end if;
+
       if Last - First = Replace'Length then
          --  Simple case, no need to reallocate buffer
 
-         if Replace'Length > 0 then
-            Buffer.Current.Line (First .. Last - 1) := Replace;
-         end if;
+         Buffer.Current.Line (First .. Last - 1) := Replace;
 
       else
          S := new String
