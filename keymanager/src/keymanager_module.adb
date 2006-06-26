@@ -136,11 +136,6 @@ package body KeyManager_Module is
    --  Changed is set to True when the key was customized from within GPS
    --  itself, and should therefore be saved on exit. It is false for values
    --  read from the custom files.
-   --
-   --  To save memory, the following encoding is used: if Action is null,
-   --  this key binding is associated with a secondary keymap (for instance
-   --  as in "control-x control-k". In that case, Next is of type
-   --  Keymap_Access.
 
    function Next (Key : Key_Description_List) return Key_Description_List;
    --  Return the next element in the list
@@ -930,7 +925,6 @@ package body KeyManager_Module is
       Context : Selection_Context;
       Context_Computed : Boolean := False;
       Found_Action : Boolean := False;
-
    begin
       --  We could test Modif /= 0 if we allowed only key shortcuts with a
       --  modifier (control, alt, ...). However, this would prevent assigning
@@ -962,9 +956,11 @@ package body KeyManager_Module is
             else
                --  First try to activate the key shortcut using the standard
                --  Gtk+ mechanism.
-
-               if Accel_Groups_Activate
-                 (Get_Main_Window (Kernel), Key, Modif)
+               --  Do this lookup only if we are not currently processing a
+               --  secondary key.
+               if not Has_Secondary
+                 and then Accel_Groups_Activate
+                   (Get_Main_Window (Kernel), Key, Modif)
                then
                   Found_Action := True;
                   exit;
