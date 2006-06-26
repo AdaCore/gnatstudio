@@ -131,8 +131,14 @@ when the GPS window is fully visible to the user:
      <description>Hook called when the project view has been changed, for instance because one of the environment variables has changed. This means that the list of directories, files or switches might now be different. In the callbacks for this hook, you can safely query the new attribute values.</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ project_changing">
+    <param name="hook">A string, the name of the hook</param>
+    <param name="file">An instance of GPS.File</param>
+    <description>Hook called just before a new project is loaded.</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ project_changed">
-     <param namae="hook">A string, the name of the hook</param>
+     <param name="hook">A string, the name of the hook</param>
      <description>Hook called when the project has changed. A new project has been loaded, and all previous settings and caches are now obsolete. In the callbacks for this hook, the attribute values have not been computed from the project yet, and will only return the default values. Connect to the project_view_changed hook instead to query the actual values</description>
      <see_also name="@hook@ project_view_changed" />
   </shell_doc>
@@ -368,6 +374,22 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
          debug=GPS.Debugger.get()
          deubg.send ("print &amp;foo")
      </example>
+  </shell_doc>
+
+  <shell_doc name="@hook@ rsync_action_hook">
+    <description>For internal use onlyl</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ srv_config_hook">
+    <param name="hook">A string, the name of the hook</param>
+    <param name="server_type">A string, the server operations category. Can take the values "BUILD_SERVER", "EXECUTION_SERVER" or "DEBUG_SERVER"</param>
+    <param name="nickname">A string, the server's nickname</param>
+    <description>Hook called when a server is assigned to a server operations category.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ srv_list_hook">
+    <param name="hook">A string, the name of the hook</param>
+    <description>Hook called when the list of configured servers changed.</description>
   </shell_doc>
 
   <!--#################################################################
@@ -1131,7 +1153,7 @@ to a generic instantiation in Ada. If synchronous is True, then the result will 
       <see_also name="GPS.Entity.references" />
   </shell_doc>
 
-  
+
   <shell_doc name="GPS.ReferencesCommand.get_result">
       <param name="self">The instance of GPS.ReferencesCommand</param>
       <return>A list of strings</return>
@@ -2871,7 +2893,7 @@ This command returns the output of the process up to the point where regexp matc
   <shell_doc name="GPS.Command.__del__">
       <description>Destructor of a GPS command. This should not be called manually by the user.</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.Command.get">
       <param name="name">A string</param>
       <description>Return the list of commands of the name given in parameter, scheduled or running in the task manager</description>
