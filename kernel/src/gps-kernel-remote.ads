@@ -155,9 +155,9 @@ package GPS.Kernel.Remote is
    -- Synchronization Hook --
    --------------------------
 
-   Rsync_Action_Hook : constant String := "rsync_action_hooks";
+   Rsync_Action_Hook : constant String := "rsync_action_hook";
 
-   Rsync_Hook_Type : constant String := "rsync_action_hook";
+   Rsync_Hook_Type : constant String := "rsync_action_hook_t";
 
    type Rsync_Hooks_Args
      (Tool_Name_Length, Src_Name_Length, Dest_Name_Length, Queue_Id_Length,
@@ -192,9 +192,9 @@ package GPS.Kernel.Remote is
    -- Server Config Changed Hook --
    --------------------------------
 
-   Server_Config_Changed_Hook : constant String := "srv_config_hooks";
+   Server_Config_Changed_Hook : constant String := "srv_config_hook";
 
-   Server_Config_Changed_Hook_Type : constant String := "srv_config_hook";
+   Server_Config_Changed_Hook_Type : constant String := "srv_config_hook_t";
 
    type Server_Config_Changed_Hooks_Args
      (Nickname_Length : Natural) is new Hooks_Data with
@@ -216,7 +216,7 @@ package GPS.Kernel.Remote is
    -- Server List Changed Hook --
    ------------------------------
 
-   Server_List_Changed_Hook : constant String := "srv_list_hooks";
+   Server_List_Changed_Hook : constant String := "srv_list_hook";
    --  No data hook
 
    ----------------------------
