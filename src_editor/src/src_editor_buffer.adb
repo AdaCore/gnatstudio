@@ -4877,21 +4877,45 @@ package body Src_Editor_Buffer is
            Get_Editable_Line (Buffer, Buffer_Line_Type (Current_Line + 1));
          To_Line := Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1));
 
-         if Offset_Line /= 0 then
-            Buffer_Text := Get_Buffer_Lines (Buffer, Offset_Line, To_Line);
-            From_Line := From_Line - Offset_Line + 1;
-            To_Line := To_Line - Offset_Line + 1;
+         declare
+            Line_Cursor : Gint;
+         begin
+            Line_Cursor := Current_Line + 1;
+            while From_Line = 0 and then Line_Cursor < Line loop
+               Line_Cursor := Line_Cursor + 1;
+               From_Line :=
+                 Get_Editable_Line
+                   (Buffer, Buffer_Line_Type (Line_Cursor + 1));
+            end loop;
 
-         else
-            Buffer_Text := Get_Buffer_Lines (Buffer, 1, To_Line);
+            Line_Cursor := Line + 1;
+            while To_Line = 0 and then Line_Cursor > Current_Line loop
+               Line_Cursor := Line_Cursor - 1;
+               To_Line :=
+                 Get_Editable_Line
+                   (Buffer, Buffer_Line_Type (Line_Cursor + 1));
+            end loop;
+         end;
+
+         if From_Line /= 0 and then To_Line /= 0 then
+            --  the is at least one editable line in the selection of lines
+            --  to be reformatted.
+
+            if Offset_Line /= 0 then
+               Buffer_Text := Get_Buffer_Lines (Buffer, Offset_Line, To_Line);
+               From_Line := From_Line - Offset_Line + 1;
+               To_Line := To_Line - Offset_Line + 1;
+            else
+               Buffer_Text := Get_Buffer_Lines (Buffer, 1, To_Line);
+            end if;
+
+            Local_Format_Buffer
+              (Lang,
+               Buffer_Text.all,
+               Replace_Text'Unrestricted_Access,
+               Integer (From_Line), Integer (To_Line), Indent_Params);
+            Free (Buffer_Text);
          end if;
-
-         Local_Format_Buffer
-           (Lang,
-            Buffer_Text.all,
-            Replace_Text'Unrestricted_Access,
-            Integer (From_Line), Integer (To_Line), Indent_Params);
-         Free (Buffer_Text);
       end if;
 
       End_Action (Buffer);
