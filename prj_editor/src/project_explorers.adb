@@ -1335,7 +1335,9 @@ package body Project_Explorers is
          --  Remove the dummy node, and report that the node is up-to-date
 
          N := Children (Explorer.Tree.Model, Node);
-         Remove (Explorer.Tree.Model, N);
+         if N /= Null_Iter then
+            Remove (Explorer.Tree.Model, N);
+         end if;
 
          Set (Explorer.Tree.Model, Node, Up_To_Date_Column, True);
 
@@ -2035,7 +2037,7 @@ package body Project_Explorers is
          Iter := Add_Project_Node (T, Get_Project (T.Kernel));
          Path := Get_Path (T.Tree.Model, Iter);
          Dummy := Collapse_Row (T.Tree, Path);
-         Expand_Project_Node (T, Iter);
+         Compute_Children (T, Iter);
          Dummy := Expand_Row (T.Tree, Path, False);
          Path_Free (Path);
 
