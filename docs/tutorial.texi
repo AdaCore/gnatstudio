@@ -104,7 +104,8 @@ several areas:
 @itemize @bullet
 @item a menu bar at the top
 @item a tool bar under the menu bar
-@item a project explorer under the tool bar, on the left side
+@item a scenario view under the tool bar, on the left side
+@item a project explorer under the scenario view, on the left side
 @item a working area on the right of the project explorer
 @item a messages window under the working area
 @item a status bar at the bottom left
@@ -166,7 +167,7 @@ corresponding source editor.
 
 GPS has automatically jumped to the first error message
 (@i{sdc.adb, 28:6  : (style) bad indentation}),
-at the line (28) and column (06) of the error.
+at the line (28) and column (6) of the error.
 
 Fix the error by hand by inserting a space.
 
@@ -193,7 +194,8 @@ before building) can be configured in the preferences dialog.
 
 If you look at the bottom right of the GPS window, you will notice that a
 progress bar has appeared, displaying the current number of files compiled,
-and the number of remaining files.
+and the number of remaining files. This progress bar disappears when the
+build is finished.
 
 This should now report a successful build.
 
@@ -389,7 +391,7 @@ Now go back to the file @file{sdc.adb}, move the mouse over the procedure
 @code{Browsers->Sdc calls}: this will open a new window titled
 @i{Call graph browser}.
 
-Note that there is also another menu (@code{Browsers>Sdc calls})
+Note that there is also a top level contextual menu (@code{Sdc calls})
 which provides a tree view of the callers/callees.
 
 In the call graph, click on the right arrow of @code{Process} (one of the
@@ -589,7 +591,7 @@ button to close the properties window.
 @section Variable editor
 @noindent
 
-Select the window titles "Scenario View". This window contains a @code{Build}
+Select the window titled "Scenario View". This window contains a @code{Build}
 label.
 
 This is a configuration variable. With GPS and the GNAT
