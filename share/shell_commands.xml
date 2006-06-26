@@ -380,14 +380,14 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
     <description>For internal use onlyl</description>
   </shell_doc>
 
-  <shell_doc name="@hook@ srv_config_hook">
+  <shell_doc name="@hook@ server_config_hook">
     <param name="hook">A string, the name of the hook</param>
     <param name="server_type">A string, the server operations category. Can take the values "BUILD_SERVER", "EXECUTION_SERVER" or "DEBUG_SERVER"</param>
     <param name="nickname">A string, the server's nickname</param>
     <description>Hook called when a server is assigned to a server operations category.</description>
   </shell_doc>
 
-  <shell_doc name="@hook@ srv_list_hook">
+  <shell_doc name="@hook@ server_list_hook">
     <param name="hook">A string, the name of the hook</param>
     <description>Hook called when the list of configured servers changed.</description>
   </shell_doc>

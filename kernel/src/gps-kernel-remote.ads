@@ -192,9 +192,10 @@ package GPS.Kernel.Remote is
    -- Server Config Changed Hook --
    --------------------------------
 
-   Server_Config_Changed_Hook : constant String := "srv_config_hook";
+   Server_Config_Changed_Hook : constant String := "server_config_hook";
 
-   Server_Config_Changed_Hook_Type : constant String := "srv_config_hook_t";
+   Server_Config_Changed_Hook_Type : constant String :=
+                                       "server_config_hook_t";
 
    type Server_Config_Changed_Hooks_Args
      (Nickname_Length : Natural) is new Hooks_Data with
@@ -216,7 +217,7 @@ package GPS.Kernel.Remote is
    -- Server List Changed Hook --
    ------------------------------
 
-   Server_List_Changed_Hook : constant String := "srv_list_hook";
+   Server_List_Changed_Hook : constant String := "server_list_hook";
    --  No data hook
 
    ----------------------------
