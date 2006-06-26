@@ -350,7 +350,10 @@ package body GPS.Kernel.Project is
          --  LI information, otherwise this cache might contain dangling
          --  references to projects that have been freed.
 
-         if not Same_Project then
+         --  Note that gnatls_server is set when computing predefined paths
+         if Kernel.Gnatls_Server = null
+           or else Kernel.Gnatls_Server.all /= Get_Nickname (Build_Server)
+           or else not Same_Project then
             Entities.Reset (Get_Database (Kernel));
          end if;
 
