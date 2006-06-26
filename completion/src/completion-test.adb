@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Command_Line;              use Ada.Command_Line;
+with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Text_IO;                   use Ada.Text_IO;
 with Ada.Strings.Unbounded;         use Ada.Strings;
 with Ada.Strings.Unbounded.Text_IO;
@@ -593,5 +594,9 @@ begin
    end;
 
    Flush;
+
+exception
+   when E : others =>
+      Put_Line ("Unexpected exception: " & Exception_Information (E));
 
 end Completion.Test;
