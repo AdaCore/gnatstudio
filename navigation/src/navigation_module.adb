@@ -933,6 +933,10 @@ package body Navigation_Module is
       Button    : Gtk_Button;
       Navigate  : constant String := "/_" & (-"Navigate");
       Menu_Item : Gtk_Menu_Item;
+      Src_Action_Context : constant Action_Filter :=
+                             Lookup_Filter (Kernel, "Source editor");
+      --  Memory is never freed, but this is needed for the whole life of
+      --  the application
    begin
       Navigation_Module_ID := new Navigation_Module_Record;
 
@@ -960,15 +964,19 @@ package body Navigation_Module is
       Register_Menu (Kernel, Navigate, Menu_Item);
       Register_Menu (Kernel, Navigate, -"_Start Of Statement",
                      Stock_Go_Up, On_Start_Statement'Access,
-                     null, GDK_Up, Mod1_Mask);
+                     null, GDK_Up, Mod1_Mask,
+                     Filter => Src_Action_Context);
       Register_Menu (Kernel, Navigate, -"_End Of Statement",
                      Stock_Go_Down, On_End_Statement'Access,
-                     null, GDK_Down, Mod1_Mask);
+                     null, GDK_Down, Mod1_Mask,
+                     Filter => Src_Action_Context);
       Register_Menu (Kernel, Navigate, -"Pre_vious Subprogram", "",
                      On_Previous_Subprogram'Access, null,
-                     GDK_Up, Control_Mask);
+                     GDK_Up, Control_Mask,
+                     Filter => Src_Action_Context);
       Register_Menu (Kernel, Navigate, -"Ne_xt Subprogram", "",
-                     On_Next_Subprogram'Access, null, GDK_Down, Control_Mask);
+                     On_Next_Subprogram'Access, null, GDK_Down, Control_Mask,
+                     Filter => Src_Action_Context);
 
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
