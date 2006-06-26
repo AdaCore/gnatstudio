@@ -63,9 +63,9 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
-with XML_Parsers;               use XML_Parsers;
 with Traces;                    use Traces;
 with Tooltips;
+with XML_Parsers;               use XML_Parsers;
 
 package body Bookmark_Views is
 
@@ -981,8 +981,12 @@ package body Bookmark_Views is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command        : Interactive_Command_Access;
-      Bookmark_Class : constant Class_Type := New_Class (Kernel, "Bookmark");
+      Command            : Interactive_Command_Access;
+      Bookmark_Class     : constant Class_Type :=
+                             New_Class (Kernel, "Bookmark");
+      Src_Action_Context : constant Action_Filter :=
+                             Lookup_Filter (Kernel, "Source editor");
+
    begin
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
       Generic_View.Register_Module
@@ -1013,7 +1017,10 @@ package body Bookmark_Views is
       Register_Menu
         (Kernel,
          "/" & (-"Edit"), -"Create Bookmark", "",
-         Ref_Item => -"Comment Lines", Callback => null, Command => Command);
+         Ref_Item => -"Comment Lines",
+         Callback => null,
+         Command  => Command,
+         Filter   => Src_Action_Context);
       Register_Action
         (Kernel, "Bookmark Create", Command,
          -("Create a bookmark at the current location"));
