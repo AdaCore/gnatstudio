@@ -520,8 +520,8 @@ package body VCS.Generic_VCS is
                   else
                      --  The VCS works on relative names
                      declare
-                        Suffix : constant String :=
-                                   Filename (1 + Pref_Len .. Filename'Last);
+                        Suffix : constant String := Filename
+                          (Filename'First + Pref_Len .. Filename'Last);
                      begin
                         if Suffix = "" then
                            --  Empty, we have a directory that is the base dir
