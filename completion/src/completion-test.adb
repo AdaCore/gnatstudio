@@ -202,6 +202,7 @@ procedure Completion.Test is
 
          New_Line;
       end Display;
+
    begin
       Result := Parse_Current_List (Buffer, Buffer'Last);
       Display (Result);
@@ -211,10 +212,10 @@ procedure Completion.Test is
    -- Get_Construct_Completion_Resolver --
    ---------------------------------------
 
-   function Get_Construct_Completion_Resolver (Buffer : String)
-     return Completion_Resolver_Access
+   function Get_Construct_Completion_Resolver
+     (Buffer : String) return Completion_Resolver_Access
    is
-      Constructs  : constant Construct_List_Access := new Construct_List;
+      Constructs : constant Construct_List_Access := new Construct_List;
    begin
       Analyze_Ada_Source
         (Buffer          => Buffer,
@@ -288,6 +289,7 @@ procedure Completion.Test is
       Success : Boolean;
 
       Handler : Language_Handler;
+
    begin
       Analyze_Ada_Source
         (Buffer          => Buffer,
@@ -354,6 +356,7 @@ procedure Completion.Test is
 
       Start_Date  : Time;
       Time_Passed : Duration;
+
    begin
       Tag_Index := 1;
 
@@ -409,6 +412,7 @@ procedure Completion.Test is
 
       Start_Date  : Time;
       Time_Passed : Duration;
+
    begin
       Tag_Index := 1;
 
@@ -445,10 +449,8 @@ procedure Completion.Test is
    ----------------------
 
    procedure Extract_Entities (Buffer : String; Project : String) is
-      Result : Completion_List;
-
+      Result      : Completion_List;
       Tag_Index   : Natural;
-
       Start_Word  : Natural;
       End_Word    : Natural;
 
@@ -459,6 +461,7 @@ procedure Completion.Test is
 
       Start_Date  : Time;
       Time_Passed : Duration;
+
    begin
       Tag_Index := 1;
 
@@ -494,7 +497,6 @@ procedure Completion.Test is
 
          Free (Result);
       end loop;
-
    end Extract_Entities;
 
    ---------------
@@ -503,9 +505,7 @@ procedure Completion.Test is
 
    procedure Full_Test (Buffer : String; Project : String) is
       Result      : Completion_List;
-
       Tag_Index   : Natural;
-
       Start_Word  : Natural;
       End_Word    : Natural;
 
@@ -514,6 +514,7 @@ procedure Completion.Test is
 
       Start_Date  : Time;
       Time_Passed : Duration;
+
    begin
       Tag_Index := 1;
 
@@ -550,7 +551,6 @@ procedure Completion.Test is
    end Full_Test;
 
 begin
-
    if Argument_Count < 2 then
       Put_Line ("Usage : <command> <file_name> <mode>");
       return;
@@ -598,5 +598,4 @@ begin
 exception
    when E : others =>
       Put_Line ("Unexpected exception: " & Exception_Information (E));
-
 end Completion.Test;
