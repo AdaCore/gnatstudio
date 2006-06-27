@@ -538,19 +538,15 @@ package body GVD.Dialogs is
          --  Before clearing the tree, save the position of the selection
          if Thread.Tree /= null then
             Sel := Get_Selection (Thread.Tree);
-         else
-            Sel := null;
-         end if;
 
-         if Sel /= null then
-            Get_Selected (Sel, Model, Iter);
+            if Sel /= null then
+               Get_Selected (Sel, Model, Iter);
 
-            if Iter /= Null_Iter then
-               Path := Get_Path (Model, Iter);
+               if Iter /= Null_Iter then
+                  Path := Get_Path (Model, Iter);
+               end if;
             end if;
-         end if;
 
-         if Thread.Tree /= null then
             Clear (Gtk_Tree_Store (Get_Model (Thread.Tree)));
          end if;
 
