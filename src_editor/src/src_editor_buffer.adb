@@ -611,9 +611,9 @@ package body Src_Editor_Buffer is
          Len := Len + A (J).Length;
       end loop;
 
-      Output := new String (1 .. Len + A'Length - 1);
+      Output := new String (1 .. Len + A'Length);
 
-      for J in A'First .. A'Last - 1 loop
+      for J in A'First .. A'Last loop
          Len := A (J).Length;
 
          if Len /= 0 then
@@ -624,17 +624,6 @@ package body Src_Editor_Buffer is
          Index := Index + Len + 1;
          Free (A (J));
       end loop;
-
-      if A'Length > 0 then
-         Len := A (A'Last).Length;
-
-         if Len /= 0 then
-            Output (Index .. Index + Len - 1) :=
-              A (A'Last).Contents (1 .. Len);
-         end if;
-
-         Free (A (A'Last));
-      end if;
 
       return Output;
    end Get_Buffer_Lines;
@@ -3561,7 +3550,8 @@ package body Src_Editor_Buffer is
       End_Column   : Gint := -1) return String
    is
       Str : constant Gtkada.Types.Chars_Ptr :=
-        Get_Slice (Buffer, Start_Line, Start_Column, End_Line, End_Column);
+              Get_Slice
+                (Buffer, Start_Line, Start_Column, End_Line, End_Column);
       S   : constant String := Value (Str);
 
    begin
@@ -4898,7 +4888,7 @@ package body Src_Editor_Buffer is
          end;
 
          if From_Line /= 0 and then To_Line /= 0 then
-            --  the is at least one editable line in the selection of lines
+            --  There is at least one editable line in the selection of lines
             --  to be reformatted.
 
             if Offset_Line /= 0 then
@@ -5492,7 +5482,7 @@ package body Src_Editor_Buffer is
          Get_End_Iter (Buffer, End_Iter);
       end if;
 
-      if (not Lines_Are_Real (Buffer))
+      if not Lines_Are_Real (Buffer)
         and then Real_End_Line - Start_Line > 1
       then
          --  If we are getting multiple lines of text, we need to get the
@@ -5516,8 +5506,7 @@ package body Src_Editor_Buffer is
               Get_Buffer_Lines (Buffer, Start_Line + 1, Real_End_Line - 1);
             S : constant String :=
               Get_Text (Buffer, Start_Iter, Start_End) & ASCII.LF
-                & A.all & ASCII.LF
-                & Get_Text (Buffer, End_Begin, End_Iter);
+                & A.all & Get_Text (Buffer, End_Begin, End_Iter);
          begin
             Free (A);
             return S;
