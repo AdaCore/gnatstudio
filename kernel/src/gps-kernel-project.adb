@@ -59,6 +59,7 @@ package body GPS.Kernel.Project is
 
    type Registry_Error_Handler_Record is new Error_Handler_Record with record
       Handle : Kernel_Handle;
+      Mode   : Message_Type := Error;
    end record;
 
    procedure Report
@@ -72,7 +73,7 @@ package body GPS.Kernel.Project is
    procedure Report
      (Handler : access Registry_Error_Handler_Record; Msg : String) is
    begin
-      Insert (Handler.Handle, Msg, Mode => Error);
+      Insert (Handler.Handle, Msg, Mode => Handler.Mode);
    end Report;
 
    ------------------------------
@@ -99,15 +100,17 @@ package body GPS.Kernel.Project is
            and then Handle.Gnatls_Server.all = Get_Nickname (Build_Server)
          then
             Basic_Types.Free (Langs);
+            Free (Gnatls_Args);
             return;
          end if;
 
          Free (Handle.Gnatls_Cache);
-         Handle.Gnatls_Cache := new String'(Gnatls);
          Free (Handle.Gnatls_Server);
+         Handle.Gnatls_Cache := new String'(Gnatls);
          Handle.Gnatls_Server := new String'(Get_Nickname (Build_Server));
 
          Error_Handler.Handle := Kernel_Handle (Handle);
+         Error_Handler.Mode   := Info;
          --  ??? cache this information if Build_Server is not the local
          --  machine, unless a recompute project is performed
          Projects.Registry.Compute_Predefined_Paths
@@ -115,9 +118,9 @@ package body GPS.Kernel.Project is
             Handle.GNAT_Version,
             Gnatls_Args,
             Error_Handler'Unchecked_Access);
-         Free (Gnatls_Args);
       end if;
 
+      Free (Gnatls_Args);
       Basic_Types.Free (Langs);
    end Compute_Predefined_Paths;
 
