@@ -1958,7 +1958,16 @@ package body Entities.Queries is
               and then Refs.Table (R).Kind /= Label
               and then Refs.Table (R).Location.Line <= Info'Last
             then
-               Caller := Info (Refs.Table (R).Location.Line);
+               declare
+                  Line : constant Integer := Refs.Table (R).Location.Line;
+               begin
+                  if Line >= Info'First then
+                     Caller := Info (Line);
+                  else
+                     Caller := null;
+                     Trace (Me, "Line out of range: " & Integer'Image (Line));
+                  end if;
+               end;
 
                if Caller = Entity then
                   Caller := Info_For_Decl (Refs.Table (R).Location.Line);
@@ -2143,7 +2152,8 @@ package body Entities.Queries is
 
    function Get_Parent_Package
      (Pkg : Entity_Information; Force_Load_Xrefs : Boolean := True)
-      return Entity_Information is
+      return Entity_Information
+   is
    begin
       if Force_Load_Xrefs then
          Update_Xref (Pkg.Declaration.File);
