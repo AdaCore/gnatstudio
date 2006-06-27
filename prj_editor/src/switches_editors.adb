@@ -1570,6 +1570,11 @@ package body Switches_Editors is
                      (Dep.Master_Status,
                       Switch_Check_Widget_Access (S2),
                       Dep.Slave_Status));
+                  Check_Dependency
+                    (Switch_Check_Widget_Access (S1).Check,
+                     (Dep.Master_Status,
+                      Switch_Check_Widget_Access (S2),
+                      Dep.Slave_Status));
                else
                   Dependency_Callback.Connect
                     (Switch_Field_Widget_Access (S1).Field, "changed",
