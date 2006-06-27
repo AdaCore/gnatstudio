@@ -1959,7 +1959,8 @@ package body Projects.Registry is
          Report (E_Handler,
                  -"Could not compute predefined paths for this project.");
          Report (E_Handler,
-                 -"Subprojects might be incorrectly loaded");
+                 -("Subprojects might be incorrectly loaded, please make " &
+                   "sure they are in your ADA_PROJECT_PATH"));
          return;
       end if;
 
