@@ -298,6 +298,9 @@ package body Commands.Custom is
                begin
                   Send (Data.Descriptor.all, Password);
                end;
+
+               --  Do not output password prompt
+               return;
             end if;
 
             --  Retrieve passphrase prompt if any
@@ -319,6 +322,9 @@ package body Commands.Custom is
                begin
                   Send (Data.Descriptor.all, Password);
                end;
+
+               --  Do not output password prompt
+               return;
             end if;
          end;
       end if;
