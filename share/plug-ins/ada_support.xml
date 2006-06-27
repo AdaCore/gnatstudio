@@ -13,7 +13,7 @@
                 tip="Recompile if compiler switches have changed since last compilation" />
          <check label="Minimal recompilation" switch="-m"
                 tip="Specifies that the minimum necessary amount of recompilation be performed. In this mode, gnatmake ignores time stamp differences when the only modification to a source file consist in adding or removing comments, empty lines, spaces or tabs" />
-        
+
          <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
                column="2"
                tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
@@ -57,7 +57,7 @@
          <dependency master-page="Ada" slave-page="Ada"
                      master-switch="-ftest-coverage"
                      slave-switch="-fprofile-arcs"
-                     master-status="off" slave-status="off" />
+                     master-status="on" slave-status="on" />
 
          <check label="Always generate ALI file" switch="-gnatQ"
                 tip="Don't quit, write ali/tree file even if compile errors" />
@@ -68,7 +68,7 @@
          <check label="Separate data sections" switch="-fdata-sections"
                 tip="Generate each global data in a separate section. See also -ffunction-sections and --gc-sections linker flag" />
 
-         <check label="Full errors" switch="-gnatf" line="2" column="1" 
+         <check label="Full errors" switch="-gnatf" line="2" column="1"
                 tip="Full Errors. Multiple errors per line, all undefined references" />
          <popup label="Warnings" line="2" column="1">
             <check label="Constant conditional" switch="-gnatwc"
@@ -124,7 +124,7 @@
                    tip="The right hand side of assignments, and the initializing values of object declarations are validity checked" />
             <check label="Default Reference Manual Checking" switch="-gnatVd" />
             <check label="Checking for floating-point" switch="-gnatVf" />
-            <check label="Checking for 'in' parameters" switch="-gnatVi" 
+            <check label="Checking for 'in' parameters" switch="-gnatVi"
                    tip="Arguments for parameters of mode in are validity checked in function and procedure calls at the point of call" />
             <check label="Checking for 'in out' parameters" switch="-gnatVm"
                    tip="Arguments for parameters of mode in out are validity checked in procedure calls at the point of call" />
@@ -151,7 +151,7 @@
          </popup>
 
          <popup label="Style checks" line="2" column="1">
-            <spin label="indentation" switch="-gnaty" min="1" max="9" 
+            <spin label="indentation" switch="-gnaty" min="1" max="9"
                   default="3" />
             <check label="Check casing" switch="-gnatya" />
             <check label="Check end of line blanks" switch="-gnatyb" />
@@ -170,7 +170,7 @@
             <check label="Check RM column layout" switch="-gnatyr" />
             <check label="Check separate specs present" switch="-gnatys" />
             <check label="Check token separation rules" switch="-gnatyt" />
-            <spin label="Line length" switch="-gnatyM" 
+            <spin label="Line length" switch="-gnatyM"
                   min="0" max="255" default="79" />
             <expansion switch="-gnaty" alias="-gnatyabcefhiklmnprst" >
                <entry switch="-gnaty3" />
@@ -241,11 +241,11 @@
                      master-switch="-g" slave-switch="-g"
                      master-status="on" slave-status="on" />
 
-         <check label="Code coverage" switch="-ftest-coverage"
+         <check label="Code coverage" switch="-fprofile-generate"
                 tip="Create data files for the gcov code-coverage utility" />
          <dependency master-page="Ada" slave-page="Ada Linker"
                      master-switch="-ftest-coverage"
-                     slave-switch="-ftest-coverage"
+                     slave-switch="-fprofile-generate"
                      master-status="on" slave-status="on" />
          <check label="Remove unused sections (GNU ld only)"
                 switch="-Wl,--gc-sections"
@@ -407,4 +407,4 @@ end if;</text>
    %_
 end;</text>
   </alias>
-</GPS> 
+</GPS>
