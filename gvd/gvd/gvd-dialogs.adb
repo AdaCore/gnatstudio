@@ -535,18 +535,18 @@ package body GVD.Dialogs is
             end;
          end if;
 
-         --  Before clearing the tree, save the position of the selection.
-         Sel := Get_Selection (Thread.Tree);
-
-         if Sel /= null then
-            Get_Selected (Sel, Model, Iter);
-
-            if Iter /= Null_Iter then
-               Path := Get_Path (Model, Iter);
-            end if;
-         end if;
-
+         --  Before clearing the tree, save the position of the selection
          if Thread.Tree /= null then
+            Sel := Get_Selection (Thread.Tree);
+
+            if Sel /= null then
+               Get_Selected (Sel, Model, Iter);
+
+               if Iter /= Null_Iter then
+                  Path := Get_Path (Model, Iter);
+               end if;
+            end if;
+
             Clear (Gtk_Tree_Store (Get_Model (Thread.Tree)));
          end if;
 
@@ -560,7 +560,7 @@ package body GVD.Dialogs is
             end loop;
          end loop;
 
-         --  If a selection was found before clearing the tree, restore it.
+         --  If a selection was found before clearing the tree, restore it
 
          if Path /= null then
             Set_Cursor (Thread.Tree, Path, null, False);
@@ -585,7 +585,7 @@ package body GVD.Dialogs is
       Set_Policy (Thread, Policy_Automatic, Policy_Automatic);
 
       --  The tree will be created on the first call to Update, since we do not
-      --  know yet how many columns are needed
+      --  know yet how many columns are needed.
    end Initialize;
 
    ----------------
