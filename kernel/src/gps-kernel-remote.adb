@@ -2862,16 +2862,17 @@ package body GPS.Kernel.Remote is
                   Nickname => new String'(Get_Host (D.File)));
             end loop;
 
+            --  Set the property for loaded project
+            Prop := new Servers_Property'(Property);
+            Set_Property (Local_File, "servers_config", Prop,
+                          Persistent => True);
+
          else
             for J in Property.Servers'Range loop
                Property.Servers (J) := (Is_Local => True,
                                         Nickname => new String'(""));
             end loop;
          end if;
-
-         --  Set the property for loaded project
-         Prop := new Servers_Property'(Property);
-         Set_Property (Local_File, "servers_config", Prop, Persistent => True);
       end if;
 
       --  Assign servers following property values
@@ -3559,18 +3560,19 @@ package body GPS.Kernel.Remote is
       Prj_File   : VFS.Virtual_File := VFS.No_File;
       Reload_Prj : Boolean := False)
    is
-      Data        : aliased Server_Config_Changed_Hooks_Args :=
-                     (Hooks_Data with
-                       Nickname_Length => Nickname'Length,
-                       Server          => Server,
-                       Nickname        => Nickname);
-      Timeout     : constant Guint32 := 50;
-      Id          : Timeout_Handler_Id;
-      Load_Data   : Reload_Callback_Data;
-      Property    : Servers_Property;
-      Prop        : Property_Access;
-      Found       : Boolean;
-      The_File    : VFS.Virtual_File;
+      Data      : aliased Server_Config_Changed_Hooks_Args :=
+                    (Hooks_Data with
+                     Nickname_Length => Nickname'Length,
+                     Server          => Server,
+                     Nickname        => Nickname);
+      Timeout   : constant Guint32 := 50;
+      Id        : Timeout_Handler_Id;
+      Load_Data : Reload_Callback_Data;
+      Property  : Servers_Property;
+      Prop      : Property_Access;
+      Found     : Boolean;
+      The_File  : VFS.Virtual_File;
+      Set_Prop  : Boolean;
       pragma Unreferenced (Id);
 
    begin
@@ -3610,9 +3612,18 @@ package body GPS.Kernel.Remote is
         (Is_Local => Is_Local (Server),
          Nickname => new String'(Get_Nickname (Server)));
 
-      Prop := new Servers_Property'(Property);
+      --  Set property only if one of the servers is not local
+      Set_Prop := False;
 
-      if The_File /= VFS.No_File then
+      for J in Property.Servers'Range loop
+         if not Property.Servers (J).Is_Local then
+            Set_Prop := True;
+            exit;
+         end if;
+      end loop;
+
+      if Set_Prop and then The_File /= VFS.No_File then
+         Prop := new Servers_Property'(Property);
          Set_Property (The_File,
                        "servers_config",
                        Prop,
@@ -3631,6 +3642,7 @@ package body GPS.Kernel.Remote is
                     (-" has no path equivalence on remote machine ") &
                     Get_Nickname (Build_Server));
          else
+            Trace (Me, "Asking project reload");
             Id := Reload_Timeout.Add (Timeout, Reload_Prj_Cb'Access,
                                       Load_Data);
          end if;
