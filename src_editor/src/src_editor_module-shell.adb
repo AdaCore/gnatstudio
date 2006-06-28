@@ -1862,10 +1862,24 @@ package body Src_Editor_Module.Shell is
       elsif Command = "current_view" then
          Get_Buffer (Buffer, Data, 1);
          if Buffer /= null then
-            Child := Find_Editor (Get_Kernel (Data), Get_Filename (Buffer));
-            Set_Return_Value
-              (Data, Create_Editor_View
-                 (Get_Script (Data), Source_Editor_Box (Get_Widget (Child))));
+            declare
+               File : VFS.Virtual_File := Get_Filename (Buffer);
+            begin
+               if File = VFS.No_File then
+                  File := Get_File_Identifier (Buffer);
+               end if;
+
+               Child := Find_Editor (Get_Kernel (Data), File);
+            end;
+
+            if Child = null then
+               Set_Error_Msg (Data, -"Editor not found");
+            else
+               Set_Return_Value
+                 (Data, Create_Editor_View
+                    (Get_Script (Data),
+                     Source_Editor_Box (Get_Widget (Child))));
+            end if;
          end if;
 
       elsif Command = "views" then
