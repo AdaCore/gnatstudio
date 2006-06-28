@@ -542,9 +542,6 @@ package body Projects.Registry is
       New_Project_Loaded : out Boolean;
       Status             : out Boolean)
    is
-      Previous_Project : Virtual_File;
-      Previous_Default : Boolean;
-
       procedure Fail (S1, S2, S3 : String);
       --  Replaces Osint.Fail
 
@@ -579,20 +576,26 @@ package body Projects.Registry is
          New_Project_Loaded : out Boolean;
          Reload_If_Errors   : Boolean := True)
       is
-         Project    : Project_Node_Id;
-         Iter       : Imported_Project_Iterator;
-         Timestamp  : Time;
-         Success    : Boolean;
+         Project          : Project_Node_Id;
+         Iter             : Imported_Project_Iterator;
+         Timestamp        : Time;
+         Success          : Boolean;
+         Previous_Project : Virtual_File;
+         Previous_Default : Boolean;
 
       begin
-         if Registry.Data /= null then
+         if Registry.Data /= null
+           and then Registry.Data.Root /= No_Project
+         then
             case Projects.Status (Registry.Data.Root) is
                when From_File | Default =>
                   Previous_Project := Project_Path (Registry.Data.Root);
                when Empty | From_Executable =>
                   Previous_Project := VFS.No_File;
             end case;
+
             Previous_Default := Projects.Status (Registry.Data.Root) = Default;
+
          else
             Previous_Project := VFS.No_File;
             Previous_Default := False;
@@ -608,6 +611,7 @@ package body Projects.Registry is
             end if;
 
             New_Project_Loaded := False;
+            Status := False;
             return;
          end if;
 
@@ -636,14 +640,21 @@ package body Projects.Registry is
 
          if Project = Empty_Node then
             if Reload_If_Errors and then Previous_Project /= VFS.No_File then
+               --  Remote Config applied ?
+               if Previous_Project = Root_Project_Path then
+                  --  Do not try to reload a failing project
+                  Load_Empty_Project (Registry);
+                  Status := False;
+                  return;
+               end if;
+
                if Errors /= null then
                   Errors (-"Couldn't parse the project "
                           & Full_Name (Root_Project_Path).all
-                          & ASCII.LF & (-"Reverting to previous project"));
+                          & ASCII.LF & (-"Reverting to previous project ")
+                          & Full_Name (Previous_Project).all);
                end if;
 
-               --  We know that we failed to load the desired project
-               --  Do not try to retrieve this status (use Dummy as status).
                Internal_Load
                  (Registry,
                   Previous_Project,
@@ -654,6 +665,7 @@ package body Projects.Registry is
                Load_Empty_Project (Registry);
             end if;
 
+            --  Force status to False here...
             Status := False;
             return;
          end if;
