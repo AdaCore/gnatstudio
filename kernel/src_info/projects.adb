@@ -544,7 +544,9 @@ package body Projects is
    -----------------
 
    function Object_Path
-     (Project : Project_Type; Recursive : Boolean) return String
+     (Project             : Project_Type;
+      Recursive           : Boolean;
+      Including_Libraries : Boolean := True) return String
    is
       View : constant Project_Id := Get_View (Project);
    begin
@@ -552,10 +554,20 @@ package body Projects is
          return "";
 
       elsif Recursive then
-         return Prj.Env.Ada_Objects_Path (View, Project.View_Tree).all;
+         return Prj.Env.Ada_Objects_Path
+           (View, Project.View_Tree, Including_Libraries).all;
+
+      elsif Including_Libraries
+        and then Projects_Table (Project)(View).Library
+        and then Projects_Table (Project)(View).Library_ALI_Dir /= No_Name
+      then
+         return Get_String
+           (Projects_Table (Project)(View).Library_ALI_Dir);
+
       elsif Projects_Table (Project)(View).Display_Object_Dir /= No_Name then
          return Get_String
            (Projects_Table (Project)(View).Display_Object_Dir);
+
       else
          return "";
       end if;
