@@ -165,7 +165,9 @@ package Projects is
    --  The directories are not normalized.
 
    function Object_Path
-     (Project : Project_Type; Recursive : Boolean) return String;
+     (Project             : Project_Type;
+      Recursive           : Boolean;
+      Including_Libraries : Boolean := True) return String;
    --  Return the object path for this project. If Recursive is True, it also
    --  includes the object path for all imported projects.
    --  The empty string is returned if the project doesn't have any object
