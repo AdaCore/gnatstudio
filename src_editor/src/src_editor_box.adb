@@ -216,13 +216,18 @@ package body Src_Editor_Box is
    is
       Line   : Editable_Line_Type;
       Dummy  : Character_Offset_Type;
+      File   : VFS.Virtual_File := Get_Filename (Source.Source_Buffer);
    begin
+      if File = VFS.No_File then
+         File := Get_File_Identifier (Source.Source_Buffer);
+      end if;
+
       Get_Cursor_Position (Source.Source_Buffer, Line, Dummy);
       Push_Marker_In_History
         (Kernel => Source.Kernel,
          Marker => Create_File_Marker
            (Kernel => Source.Kernel,
-            File   => Get_Filename (Source.Source_Buffer),
+            File   => File,
             Line   => Line,
             Column => 1));
       --  ??? Any reason to throw away the column and putting 1 here?
@@ -642,8 +647,12 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Buffer);
       Child : MDI_Child;
-
+      File  : VFS.Virtual_File := Get_Filename (Box.Source_Buffer);
    begin
+      if File = VFS.No_File then
+         File := Get_File_Identifier (Box.Source_Buffer);
+      end if;
+
       Box.Current_Line :=
         Editable_Line_Type (Values.Get_Int (Values.Nth (Params, 1)));
 
@@ -654,7 +663,8 @@ package body Src_Editor_Box is
       --  changing the current line from the "Go to line" dialog, the latter
       --  still has the focus at this point.
 
-      Child := Find_Editor (Box.Kernel, Get_Filename (Box.Source_Buffer));
+      Child := Find_Editor (Box.Kernel, File);
+
       if Child /= null and then Get_Widget (Child) = Gtk_Widget (Box) then
          Show_Cursor_Position
            (Box,
