@@ -2148,7 +2148,7 @@ package body Docgen.Work_On_Source is
       Result : in out Unbounded_String;
       Level  : in out Natural) is
    begin
-      Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Subprogams");
+      Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Subprograms");
    end Process_Header_Subprograms;
 
    -------------------------------
