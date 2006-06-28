@@ -230,6 +230,7 @@ package body Completion.Expression_Parser is
       end Check_Prev_Word;
 
       Blank_Here, Blank_Before : Boolean := False;
+      Next_Ind                 : Natural;
 
    begin
       while Offset > 0 loop
@@ -286,10 +287,13 @@ package body Completion.Expression_Parser is
                Skip_Comment_Line (Offset);
 
             when others =>
-               if Is_Alnum
-                 (UTF8_Get_Char
-                    (Buffer (Offset .. UTF8_Next_Char (Buffer, Offset))))
-                 or else Buffer (Offset) = '_'
+               Next_Ind := UTF8_Next_Char (Buffer, Offset);
+
+               if Next_Ind in Buffer'Range
+                 and then
+                   (Is_Alnum
+                        (UTF8_Get_Char (Buffer (Offset .. Next_Ind)))
+                    or else Buffer (Offset) = '_')
                then
 
                   Token.Tok_Type := Tok_Identifier;
