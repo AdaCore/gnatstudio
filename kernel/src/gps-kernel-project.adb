@@ -372,6 +372,28 @@ package body GPS.Kernel.Project is
                New_Project_Loaded => New_Project_Loaded,
                Status             => Load_Status);
 
+         --  Check if a remote configuration was applied and failure occured
+         if not Load_Status
+           and then not Is_Default
+           and then not Is_Local (Build_Server)
+         then
+            Report_Error
+              (-"Error while loading project '" &
+               Full_Name (Local_Project, True).all &
+               (-"'. Trying with the build server set to (local)..."));
+            Assign (Kernel_Handle (Kernel),
+                    Build_Server,
+                    "",
+                    Local_Project,
+                    Reload_Prj => False);
+            Compute_Predefined_Paths (Kernel);
+            Load (Registry           => Kernel.Registry.all,
+                  Root_Project_Path  => Local_Project,
+                  Errors             => Report_Error'Unrestricted_Access,
+                  New_Project_Loaded => New_Project_Loaded,
+                  Status             => Load_Status);
+         end if;
+
          if Load_Status and then Is_Default then
             --  Successful load of default project
             Set_Status (Get_Project (Kernel), Projects.Default);
