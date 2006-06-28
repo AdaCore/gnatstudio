@@ -440,7 +440,10 @@ package Src_Editor_Buffer is
 
    function Get_Filename
      (Buffer : access Source_Buffer_Record) return VFS.Virtual_File;
-   --  Return the name of the file associated with Buffer
+   --  Return the name of the file associated with Buffer.
+   --  WARNING: For buffer corresponding to unnamed files VFS.No_File is
+   --  returned. Use Get_File_Identifier in that case if you need to retrieve
+   --  the virtual file associated with the buffer.
 
    procedure Set_Filename
      (Buffer : access Source_Buffer_Record;
