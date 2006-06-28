@@ -521,6 +521,8 @@ package body Completion_Module is
          M.Buffer := Get_Buffer (Get_Source_Box_From_MDI (Get (M.Child)));
          Trace (Me, "Testing new editor : "
                 & Full_Name (Get_Filename (M.Buffer)).all);
+         --  We do not care about untitled editor. Get_File_Identifier should
+         --  be called instead if we did.
 
          if Get_Language (M.Buffer) = null then
             M.Case_Sensitive := True;
