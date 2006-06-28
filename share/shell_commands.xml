@@ -283,6 +283,14 @@ The file should be opened directly at line and column. If column_end is not 0, t
      <description>Hook called to request the display of the comparison window</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ file_status_changed_action_hook">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <param name="status">A string, the new status for the file. This is the status has displyed into the GPS status line. The value is either Unmodified, Modified or Saved.</param>
+     <return>A boolean</return>
+     <description>Hook called when a file status has changed</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ location_changed">
      <param name="hook">A string, the name of the hook</param>
      <param name="file">An instance of GPS.File</param>
