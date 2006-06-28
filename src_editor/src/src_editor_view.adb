@@ -1591,9 +1591,15 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Kernel);
       D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-
+      Buffer : constant Source_Buffer :=
+                 Source_Buffer (Get_Buffer (Hook.View));
+      File   : VFS.Virtual_File := Get_Filename (Buffer);
    begin
-      if Get_Filename (Source_Buffer (Get_Buffer (Hook.View))) = D.File then
+      if File = VFS.No_File then
+         File := Get_File_Identifier (Buffer);
+      end if;
+
+      if File = D.File then
          Redraw_Columns (Hook.View);
       end if;
    exception
