@@ -276,13 +276,29 @@ package body GPS.Kernel.Project is
       pragma Unreferenced (Had_Project_Desktop);
       Data                : aliased File_Hooks_Args;
 
-      Root_Project  : constant Virtual_File :=
-                       Project_Path (Get_Root_Project (Kernel.Registry.all));
-      Same_Project  : constant Boolean := Project = Root_Project;
-      Local_Project : VFS.Virtual_File;
-      Load_Status   : Boolean;
+      Same_Project     : Boolean;
+      Local_Project    : VFS.Virtual_File;
+      Load_Status      : Boolean;
+      Previous_Project : Virtual_File;
 
    begin
+      --  Are we reloading the same project ?
+      if Status (Get_Project (Kernel)) = From_File
+        and then Project_Path (Get_Project (Kernel)) = Project
+      then
+         Same_Project := True;
+      else
+         Same_Project := False;
+      end if;
+
+      if Get_Project (Kernel) /= No_Project
+        and then Projects.Status (Get_Project (Kernel)) = From_File
+      then
+         Previous_Project := Project_Path (Get_Project (Kernel));
+      else
+         Previous_Project := VFS.No_File;
+      end if;
+
       --  Unless we are reloading the same project
 
       if not Same_Project then
@@ -335,7 +351,7 @@ package body GPS.Kernel.Project is
                   Mode => Console.Error, Add_Lf => False);
 
                --  Need to run Project_Changing hook to reset build_server
-               Data.File := Root_Project;
+               Data.File := Previous_Project;
                Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
 
                Had_Project_Desktop := Load_Desktop (Kernel);
@@ -372,15 +388,57 @@ package body GPS.Kernel.Project is
                New_Project_Loaded => New_Project_Loaded,
                Status             => Load_Status);
 
-         if Load_Status and then Is_Default then
+         if not Load_Status
+           and then not Is_Default
+         then
+            --  Check if a remote configuration was applied and failure occured
+            if not Is_Local (Build_Server) then
+               Report_Error
+                 (-"Error while loading project '" &
+                  Full_Name (Local_Project, True).all &
+                  (-"'. Trying with the build server set to (local)...") &
+                  ASCII.LF);
+               Assign (Kernel_Handle (Kernel),
+                       Build_Server,
+                       "",
+                       Local_Project,
+                       Reload_Prj => False);
+               Compute_Predefined_Paths (Kernel);
+               Load (Registry           => Kernel.Registry.all,
+                     Root_Project_Path  => Local_Project,
+                     Errors             => Report_Error'Unrestricted_Access,
+                     New_Project_Loaded => New_Project_Loaded,
+                     Status             => Load_Status);
+
+            elsif Previous_Project /= VFS.No_File then
+               Report_Error (-"Couldn't parse the project "
+                             & Full_Name (Local_Project).all
+                             & ASCII.LF & (-"Reverting to previous project ")
+                             & Full_Name (Previous_Project).all & ASCII.LF);
+               Data.File := Previous_Project;
+               Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
+               Compute_Predefined_Paths (Kernel);
+               Load (Registry           => Kernel.Registry.all,
+                     Root_Project_Path  => Previous_Project,
+                     Errors             => Report_Error'Unrestricted_Access,
+                     New_Project_Loaded => New_Project_Loaded,
+                     Status             => Load_Status);
+
+            else
+               Report_Error
+                 (-"Error while loading project '" &
+                  Full_Name (Local_Project, True).all &
+                  (-"'. Loading the default project.") & ASCII.LF);
+               --  Load default project
+               Load_Default_Project
+                 (Kernel, Dir (Local_Project), Clear => False);
+               Pop_State (Kernel_Handle (Kernel));
+               return;
+            end if;
+
+         elsif Is_Default then
             --  Successful load of default project
             Set_Status (Get_Project (Kernel), Projects.Default);
-
-         elsif not Load_Status and then not Is_Default then
-            --  Tried to load a regular project, but failure occured
-            Load_Default_Project (Kernel, Dir (Local_Project), Clear => False);
-            Pop_State (Kernel_Handle (Kernel));
-            return;
          end if;
 
          if not New_Project_Loaded then
