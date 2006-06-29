@@ -1318,7 +1318,7 @@ package body GPS.Location_View is
                     (Create_Mark
                        (View.Kernel,
                         Loc.File, Loc.Line, Loc.Column, 0), -1),
-                  Loc.Line, Loc.Column, Length,
+                  Line, Column, Length,
                   Highlight, Highlight_Category);
                Path := Get_Path (Model, Potential_Parent);
                Dummy := Expand_Row (View.Tree, Path, False);
@@ -1959,10 +1959,13 @@ package body GPS.Location_View is
 
                      Unset (Value);
                   end;
-               end if;
 
-               Select_Path (Get_Selection (Explorer.Tree), Path);
-               Goto_Location (View);
+                  Select_Path (Get_Selection (Explorer.Tree), Path);
+
+               else
+                  Select_Path (Get_Selection (Explorer.Tree), Path);
+                  Goto_Location (View);
+               end if;
             end if;
 
             Path_Free (Path);
@@ -2022,10 +2025,69 @@ package body GPS.Location_View is
       File_Iter     : Gtk_Tree_Iter;
       Created       : Boolean;
       Line_Iter     : Gtk_Tree_Iter;
+      Children_Iter : Gtk_Tree_Iter;
+      Next_Iter     : Gtk_Tree_Iter;
 
       Value         : GValue;
       Old_Action    : Action_Item;
       Escaped_Message : constant String := Glib.Convert.Escape_Text (Message);
+
+      function Escaped_Compare (S1, S2 : String) return Boolean;
+      --  Compare S1 and S2, abstracting any pango markup or escape sequence.
+
+      ---------------------
+      -- Escaped_Compare --
+      ---------------------
+
+      function Escaped_Compare (S1, S2 : String) return Boolean is
+         I1, I2 : Natural;
+
+         procedure Advance (I : in out Natural; S : String);
+         --  Auxiliary function;
+
+         procedure Advance (I : in out Natural; S : String) is
+         begin
+            I := I + 1;
+
+            if I > S'Last then
+               return;
+            end if;
+
+            if S (I) = '<' then
+               loop
+                  I := I + 1;
+                  exit when I > S'Last;
+                  exit when S (I - 1) = '>' and then S (I) /= '<';
+               end loop;
+
+            elsif S (I) = '&' then
+               loop
+                  I := I + 1;
+                  exit when I > S'Last;
+                  exit when S (I - 1) = ';';
+               end loop;
+            end if;
+         end Advance;
+
+      begin
+         I1 := S1'First - 1;
+         I2 := S2'First - 1;
+
+         loop
+            Advance (I1, S1);
+            Advance (I2, S2);
+
+            if I1 > S1'Last and then I2 > S2'Last then
+               return True;
+            end if;
+
+            if I1 > S1'Last or else I2 > S2'Last
+              or else S1 (I1) /= S2 (I2)
+            then
+               return False;
+            end if;
+         end loop;
+      end Escaped_Compare;
 
       pragma Unreferenced (Identifier);
    begin
@@ -2054,13 +2116,15 @@ package body GPS.Location_View is
         and then File_Iter /= Null_Iter
       then
          Line_Iter := Children (View.Tree.Model, File_Iter);
-
+         Next_Iter := File_Iter;
+         Next (View.Tree.Model, Next_Iter);
          while Line_Iter /= Null_Iter loop
             if Get_Int
               (View.Tree.Model, Line_Iter, Line_Column) = Gint (Line)
               and then Get_Int
                 (View.Tree.Model, Line_Iter, Column_Column) = Gint (Column)
-              and then Get_Message (View, Line_Iter) =  Escaped_Message
+              and then Escaped_Compare
+                (Get_Message (View, Line_Iter), Escaped_Message)
             then
                if Action = null then
                   Set (View.Tree.Model, Line_Iter,
@@ -2093,7 +2157,21 @@ package body GPS.Location_View is
                return;
             end if;
 
-            Next (View.Tree.Model, Line_Iter);
+            Children_Iter := Children (View.Tree.Model, Line_Iter);
+
+            if Children_Iter /= Null_Iter then
+               Line_Iter := Children_Iter;
+            else
+               Children_Iter := Line_Iter;
+               Next (View.Tree.Model, Line_Iter);
+
+               if Line_Iter = Null_Iter then
+                  Line_Iter := Parent (View.Tree.Model, Children_Iter);
+                  Next (View.Tree.Model, Line_Iter);
+               end if;
+            end if;
+
+            exit when Line_Iter = Next_Iter;
          end loop;
       end if;
 
