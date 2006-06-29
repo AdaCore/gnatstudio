@@ -73,7 +73,7 @@
 HANDLE hShutdown;   /* Event is set when the slave driver is shutting down. */
 
 int    ExpDebug;
-BOOL   ExpReading;
+char   *ExpReading;
 
 typedef struct ExpFunctionKey {
     char *sequence;
@@ -215,6 +215,7 @@ main(argc, argv)
   EXP_BEGIN ("./slavedrv.log");
 
   ExpDebug = FALSE;
+  ExpReading = NULL;
 
   /*
    * After the subprocess is created, send back the status (success or not)
@@ -426,7 +427,10 @@ ExpProcessInput(HANDLE hMaster, HANDLE hConsoleInW, HANDLE hConsoleOut,
           {
             EXP_LOG("Unable to write to slave: 0x%x", GetLastError());
           }
-	ExpReading = TRUE;
+        ExpReading = (char*) malloc (dwNeeded + 1);
+        memcpy (ExpReading, buffer, dwNeeded);
+        ExpReading [dwNeeded] = '\0';
+        EXP_LOG_FLUSH;
         dwTotalNeeded -= dwNeeded;
         if (dwTotalNeeded) {
           dwNeeded = (dwTotalNeeded > BUFSIZE) ?
@@ -519,20 +523,52 @@ ExpAddToWaitQueue(HANDLE handle)
 BOOL
 ExpWriteMaster(HANDLE hFile, LPCVOID buf, DWORD n)
 {
-    DWORD count, dwResult;
-    BOOL bRet;
-    WSABUF wsabuf[1];
-    CHAR buf2[n+1];
-    int i;
+  DWORD count, dwResult;
+  BOOL bRet;
+  WSABUF wsabuf[1];
+  CHAR buf2[n+1];
+  int start;
+  int ExpReadingStart;
+  int i;
 
-    // Debug
-    memcpy (buf2, buf, n);
-    buf2[n]='\0';
+  EXP_LOG_FLUSH;
+  start = 0;
+  EXP_LOG ("ExpWriteMaster Received: '%s'", buf);
+  if (ExpReading != NULL) {
+    EXP_LOG ("Need to skip: '%s'", ExpReading);
+    while ((start < n) && (ExpReading[start] == ((char*)buf)[start]) && (ExpReading[start]!='\0')) {
+      start++;
+    }
+  }
+  EXP_LOG ("start is %d", start);
+  if (ExpReading != NULL) {
+    if (start == n) {
+      // Skip all incoming buffer
+      char *tmp;
+      tmp = malloc (strlen (ExpReading) - start + 1);
+      memcpy (tmp, &ExpReading[start], strlen (ExpReading) - start + 1);
+      free (ExpReading);
+      ExpReading = tmp;
+    } else {
+      // We received something that has nothing to do with what we sent.
+      // or all ExpReading mathed.
+      free (ExpReading);
+      ExpReading = NULL;
+    }
+  }
+
+  if (start < n) {
+    memcpy (buf2, &((char*)buf)[start], n-start);
+    buf2[n-start]='\0';
+
     EXP_LOG ("ExpWriteMaster :'%s'", buf2);
     // End Debug
-    bRet = WriteFile(hFile, buf, n, &count, NULL);
+    bRet = WriteFile(hFile, buf2, n-start, &count, NULL);
     if (!bRet) EXP_LOG ("Error writing to master %8x\n", GetLastError());
+    EXP_LOG_FLUSH;
     return bRet;
+  }
+   return 0;
 }
 
 /*
