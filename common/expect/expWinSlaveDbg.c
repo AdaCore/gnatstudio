@@ -99,8 +99,6 @@ typedef struct _ExpCreateProcessInfo {
     DWORD flags;
 } ExpCreateProcessInfo;
 
-extern BOOL ExpReading;
-
 typedef struct _CreateProcessThreadArgs {
     ExpCreateProcessInfo *cp;
     ExpProcess *proc;
@@ -502,8 +500,6 @@ ExpSlaveDebugThread(LPVOID *lparg)
     ExpProcess *proc;
     BOOLEAN bRet;
     PROCESS_INFORMATION procinfo;
-
-    ExpReading = FALSE;
 
     arg->result = 0;
 
@@ -1806,59 +1802,48 @@ static void
 OnWriteConsoleA(ExpProcess *proc, ExpThreadInfo *threadInfo,
     ExpBreakpoint *brkpt, PDWORD returnValue, DWORD direction)
 {
-    CHAR buf[1024];
-    PVOID ptr;
-    DWORD i, n;
-    PCHAR p;
-    BOOL bRet;
+  CHAR buf[1024];
+  PVOID ptr;
+  DWORD i, n;
+  PCHAR p, p2;
+  BOOL bRet;
 
-    LOG_ENTRY("WriteConsoleA");
+  LOG_ENTRY("WriteConsoleA");
 
-    if (*returnValue == 0) {
-	return;
-    }
-    /*
-     * Get number of bytes written
-     */
-    ptr = (PVOID) threadInfo->args[3];
-    if (ptr == NULL) {
-	n = threadInfo->args[2];
-    } else {
-	ReadSubprocessMemory(proc, ptr, &n, sizeof(DWORD));
-    }
-    if (n > 1024) {
-	p = malloc(n * sizeof(CHAR));
-    } else {
-	p = buf;
-    }
+  if (*returnValue == 0) {
+    return;
+  }
+  /*
+   * Get number of bytes written
+   */
+  ptr = (PVOID) threadInfo->args[3];
+  if (ptr == NULL) {
+    n = threadInfo->args[2];
+  } else {
+    ReadSubprocessMemory(proc, ptr, &n, sizeof(DWORD));
+  }
+  if (n > 1024) {
+    p = malloc(n * sizeof(CHAR));
+  } else {
+    p = buf;
+  }
 
-    ptr = (PVOID) threadInfo->args[1];
-    ReadSubprocessMemory(proc, ptr, p, n * sizeof(CHAR));
+  ptr = (PVOID) threadInfo->args[1];
+  ReadSubprocessMemory(proc, ptr, p, n * sizeof(CHAR));
 
-    for (i = 0; i < n; i++)
-      if (p[i] == '\n') {
-        if (ExpReading == TRUE) {
-          PCHAR p2;
-          EXP_LOG ("Removed some chars: '%s'", p);
-          p2 = malloc ((n - i) * sizeof(CHAR));
-          memcpy (p2, &p[i + 1], n - i);
-          if (p != buf)
-            free (p);
-          p = p2;
-          n -= i + 1;
-          i = -1;
-          ExpReading = FALSE;
-        } else {
-          EXP_LOG ("(debug): OnWriteConsoleA >> \\n detected", NULL);
-        }
-      }
-    if (ExpReading == FALSE) {
-      bRet = ExpWriteMaster(HMaster, p, n);
-    }
+  { // DEBUG
+    p2 = malloc ((n + 1) * sizeof(CHAR));
+    memcpy (p2, p, n);
+    p2[n] = '\0';
+    EXP_LOG ("Read from WriteConsoleA: '%s'", p2);
+    free (p2);
+  }
 
-    if (p != buf) {
-	free(p);
-    }
+  bRet = ExpWriteMaster(HMaster, p, n);
+
+  if (p != buf) {
+    free(p);
+  }
 }
 
 /*
@@ -1916,23 +1901,8 @@ OnWriteConsoleW(ExpProcess *proc, ExpThreadInfo *threadInfo,
      * Convert to ASCI and write the intercepted data to the pipe.
      */
 
-    w = WideCharToMultiByte(CP_ACP, 0, p, n, a, asize, NULL, NULL);
-    for (i = 0; i < w; i++)
-      if (a[i] == '\n') {
-        if (ExpReading == TRUE) {
-          PCHAR a2;
-          a2 = malloc ((w - i - 1) * sizeof(CHAR));
-          memcpy (a2, &a[i + 1], w - i - 1);
-          if (p != buf)
-            free (a);
-          a = a2;
-          i = 0;
-          ExpReading = FALSE;
-        } else {
-          EXP_LOG ("(debug): OnWriteConsoleW >> \\n detected", NULL);
-        }
-      }
-
+  w = WideCharToMultiByte(CP_ACP, 0, p, n, a, asize, NULL, NULL);
+  bRet = ExpWriteMaster(HMaster, a, w);
     if (p != buf) {
 	free(p);
 	free(a);
@@ -2128,13 +2098,8 @@ CreateVtSequence(ExpProcess *proc, COORD newPos, DWORD n)
 /*   EXP_LOG ("CursorKnown: %d", CursorKnown); */
 
 /*   if (CursorKnown && (newPos.X == 0) && (oldPos.X != 0)) { */
-/*     if (ExpReading == TRUE) { */
-/*       ExpReading = FALSE; */
-/*       count = 0; */
-/*     } else { */
-/*       buf[0]='\n'; */
-/*       count = 1; */
-/*     } */
+/*     buf[0]='\n'; */
+/*     count = 1; */
 /*   } else { */
 /*     count = 0; */
 /*   } */
@@ -2147,7 +2112,7 @@ CreateVtSequence(ExpProcess *proc, COORD newPos, DWORD n)
 /*   EXP_LOG ("New X: %d", newPos.X); */
 /*   EXP_LOG ("New Y: %d", newPos.Y); */
 
-/*   if ((count > 0) && (ExpReading == FALSE)) { */
+/*   if (count > 0) { */
 /*     b = ExpWriteMaster(HMaster, buf, count); */
 /*   } */
 /*   LOG_EXIT ("CreateVtSequence"); */
