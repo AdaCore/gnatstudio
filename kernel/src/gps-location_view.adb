@@ -2468,8 +2468,10 @@ package body GPS.Location_View is
         (Iter     : Gtk_Tree_Iter;
          Parent   : Node_Ptr)
       is
-         Child : Gtk_Tree_Iter;
-         Loc   : Node_Ptr;
+         Child  : Gtk_Tree_Iter;
+         Loc    : Node_Ptr;
+         Value  : GValue;
+         Action : Action_Item;
       begin
          Loc := new Node;
          Loc.Tag := new String'("Location");
@@ -2492,6 +2494,16 @@ package body GPS.Location_View is
            (Loc, "highlight",
             Boolean'Image
               (Get_Boolean (View.Tree.Model, Iter, Highlight_Column)));
+
+         Get_Value
+           (View.Tree.Model, Iter, Action_Column, Value);
+         Action := To_Action_Item (Get_Address (Value));
+
+         if Action /= null then
+            Set_Attribute (Loc, "has_action", "true");
+         end if;
+
+         Unset (Value);
 
          Child := Children (View.Tree.Model, Iter);
 
