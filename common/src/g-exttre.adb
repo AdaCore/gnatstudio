@@ -783,6 +783,7 @@ package body GNAT.Expect.TTY.Remote is
          Send (Descriptor.Machine.Sessions (Session_Nb).Pd, "");
          --  Send just a LF to force Windows console to scroll, and thus
          --  correctly init the expect interface... strange...
+         Wait_For_Prompt (True);
 
          --  Determine if the machine echoes commands
 
