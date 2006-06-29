@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -45,12 +45,13 @@ package body Line_Buffers is
 
          First := Index;
          Skip_To_Char (Buffer, Index, ASCII.LF);
+         Index := Integer'Min (Index, Buffer'Last);
+
          Tmp := new Line_Buffer_Record;
 
          if First = Buffer'First then
             B.First   := Tmp;
             B.Current := B.First;
-
          else
             Prev.Next := Tmp;
          end if;
