@@ -125,12 +125,10 @@ package body Remote_Sync_Module is
       --  Register the module
       Rsync_Module := new Rsync_Module_Record;
       Rsync_Module.Kernel := Kernel;
-      Register_Module
-        (Rsync_Module, Kernel, "rsync");
+      Register_Module (Rsync_Module, Kernel, "rsync");
 
-      Add_Hook (Kernel, Rsync_Action_Hook,
-                Wrapper (On_Rsync_Hook'Access),
-                "rsync");
+      Add_Hook
+        (Kernel, Rsync_Action_Hook, Wrapper (On_Rsync_Hook'Access), "rsync");
    end Register_Module;
 
    ---------------
@@ -144,11 +142,12 @@ package body Remote_Sync_Module is
       Level  : Customization_Level)
    is
       pragma Unreferenced (File, Level);
-      Child   : Node_Ptr;
+      Child : Node_Ptr;
    begin
       if Node.Tag.all = "rsync_configuration" then
          Trace (Me, "Customize: 'rsync_configuration'");
          Child := Find_Tag (Node.Child, "arguments");
+
          if Child /= null then
             Module.Rsync_Args := Argument_String_To_List (Child.Value.all);
          end if;
@@ -159,9 +158,11 @@ package body Remote_Sync_Module is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Dialog : out Rsync_Dialog;
-                      Kernel : access Kernel_Handle_Record'Class;
-                      Src_Path, Dest_Path : String) is
+   procedure Gtk_New
+     (Dialog              : out Rsync_Dialog;
+      Kernel              : access Kernel_Handle_Record'Class;
+      Src_Path, Dest_Path : String)
+   is
       Label : Gtk_Label;
    begin
       Dialog := new Rsync_Dialog_Record;
@@ -214,10 +215,10 @@ package body Remote_Sync_Module is
       -- Build_Arg --
       ---------------
 
-      function Build_Arg return String_List
-      is
-         Rsync_Args    : constant String_List
-           := Clone (Rsync_Module.Rsync_Args.all);
+      function Build_Arg return String_List is
+
+         Rsync_Args : constant String_List :=
+                        Clone (Rsync_Module.Rsync_Args.all);
 
          function Transport_Arg return String_List;
          --  Argument for transport
@@ -244,9 +245,11 @@ package body Remote_Sync_Module is
                if S (J) = '\' then
                   Ignore := True;
                   Out_Str := Out_Str & S (J);
+
                elsif not Ignore and then (S (J) = ' ' or else S (J) = '"') then
                   Ignore := False;
                   Out_Str := Out_Str & '\' & S (J);
+
                else
                   Ignore := False;
                   Out_Str := Out_Str & S (J);
@@ -256,6 +259,7 @@ package body Remote_Sync_Module is
             Ret := S;
             Free (Ret);
             Ret := new String'(To_String (Out_Str));
+
             return Ret;
          end Protect;
 
@@ -306,37 +310,43 @@ package body Remote_Sync_Module is
 
       if Rsync_Data.Src_Name = "" then
          --  Local src machine, remote dest machine
-         Machine := Get_Machine_Descriptor (Rsync_Data.Dest_Name);
+         Machine   := Get_Machine_Descriptor (Rsync_Data.Dest_Name);
          Src_FS    := new Filesystem_Record'Class'(Get_Local_Filesystem);
          Src_Path  := new String'
            (To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
          Dest_FS   := new Filesystem_Record'Class'
            (Get_Filesystem (Rsync_Data.Dest_Name));
+
          if Machine.User_Name.all /= "" then
             Dest_Path := new String'
               (Machine.User_Name.all & "@" &
                Machine.Network_Name.all & ":" &
                To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
+
          else
             Dest_Path := new String'
               (Machine.Network_Name.all & ":" &
                To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
          end if;
+
       else
          --  Remote src machine, local dest machine
          Machine := Get_Machine_Descriptor (Rsync_Data.Src_Name);
-         Src_FS    := new Filesystem_Record'Class'
+         Src_FS  := new Filesystem_Record'Class'
            (Get_Filesystem (Rsync_Data.Src_Name));
+
          if Machine.User_Name.all /= "" then
             Src_Path  := new String'
               (Machine.User_Name.all & "@" &
                Machine.Network_Name.all & ":" &
                To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
+
          else
             Src_Path  := new String'
               (Machine.Network_Name.all & ":" &
                To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
          end if;
+
          Dest_FS   := new Filesystem_Record'Class'(Get_Local_Filesystem);
          Dest_Path := new String'
            (To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
@@ -357,8 +367,9 @@ package body Remote_Sync_Module is
                   Buffer            => null);
 
       if Rsync_Data.Synchronous then
-         Gtk_New (Cb_Data.Dialog, Kernel,
-                  Rsync_Data.Src_Path, Rsync_Data.Dest_Path);
+         Gtk_New
+           (Cb_Data.Dialog, Kernel,
+            Rsync_Data.Src_Path, Rsync_Data.Dest_Path);
          Gtkada.Handlers.Widget_Callback.Object_Connect
            (Cb_Data.Dialog.Abort_Button, "clicked", On_Abort_Clicked'Access,
             Cb_Data.Dialog);
@@ -419,14 +430,15 @@ package body Remote_Sync_Module is
    procedure Parse_Rsync_Output
      (Data : Process_Data; Output : String)
    is
-      Progress_Regexp      : constant Pattern_Matcher := Compile
+      Progress_Regexp         : constant Pattern_Matcher := Compile
         ("^.*\(([0-9]*), [0-9.%]* of ([0-9]*)", Multiple_Lines);
-      File_Regexp          : constant Pattern_Matcher := Compile
+      File_Regexp             : constant Pattern_Matcher := Compile
         ("^([^ ][^\n\r]*[^\n\r/])$", Multiple_Lines or Single_Line);
-      File_Progress_Regexp : constant Pattern_Matcher := Compile
+      File_Progress_Regexp    : constant Pattern_Matcher := Compile
         ("^ *[0-9]* *([0-9]*)%", Multiple_Lines);
       Files_Considered_Regexp : constant Pattern_Matcher := Compile
         ("^ *[0-9]+ *files[.]*", Multiple_Lines or Single_Line);
+
       Matched              : Match_Array (0 .. 2);
       Last_Matched         : Match_Array (0 .. 2);
       File_Nb              : Natural;
@@ -569,7 +581,7 @@ package body Remote_Sync_Module is
                return;
             end if;
 
-            --  Retrieve progression.
+            --  Retrieve progression
             Last_Matched (0) := No_Match;
             Last := Stripped_Buffer'First;
 
@@ -676,8 +688,9 @@ package body Remote_Sync_Module is
                        (Stripped_Buffer
                           (Matched (1).First .. Matched (1).Last));
                   begin
-                     Set_Fraction (Cb_Data.Dialog.File_Progress,
-                                   Gdouble (Percent) / 100.0);
+                     Set_Fraction
+                       (Cb_Data.Dialog.File_Progress,
+                        Gdouble (Percent) / 100.0);
                   end;
                end if;
             end if;

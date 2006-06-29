@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006                            --
+--                        Copyright (C) 2006                            --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -26,12 +26,12 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
-with Glib;               use Glib;
-with Glib.Convert;       use Glib.Convert;
-with Glib.Object;        use Glib.Object;
-with Glib.Xml_Int;       use Glib.Xml_Int;
+with Glib;                use Glib;
+with Glib.Convert;        use Glib.Convert;
+with Glib.Object;         use Glib.Object;
+with Glib.Xml_Int;        use Glib.Xml_Int;
 
-with Gdk.Color;          use Gdk.Color;
+with Gdk.Color;           use Gdk.Color;
 
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
@@ -79,18 +79,18 @@ package body Remote_Views is
    type Server_Combo_Array is array (Server_Type) of Gtkada_Combo;
 
    type Remote_View_Record is new Gtk_Scrolled_Window_Record with record
-      Main_Table            : Gtk.Table.Gtk_Table;
-      Kernel                : GPS.Kernel.Kernel_Handle;
-      Pane                  : Collapsing_Pane.Collapsing_Pane;
-      Servers_Combo         : Server_Combo_Array;
-      To_Local_Buttons      : Sync_Buttons_Array;
-      To_Remote_Buttons     : Sync_Buttons_Array;
-      Check_Button          : Gtk_Button;
-      Connect_Button        : Gtk_Button;
-      Config_List_Button    : Gtk_Button;
-      Normal_Style          : Gtk_Style;
-      Modified_Style        : Gtk_Style;
-      Connecting            : Boolean := False;
+      Main_Table         : Gtk.Table.Gtk_Table;
+      Kernel             : GPS.Kernel.Kernel_Handle;
+      Pane               : Collapsing_Pane.Collapsing_Pane;
+      Servers_Combo      : Server_Combo_Array;
+      To_Local_Buttons   : Sync_Buttons_Array;
+      To_Remote_Buttons  : Sync_Buttons_Array;
+      Check_Button       : Gtk_Button;
+      Connect_Button     : Gtk_Button;
+      Config_List_Button : Gtk_Button;
+      Normal_Style       : Gtk_Style;
+      Modified_Style     : Gtk_Style;
+      Connecting         : Boolean := False;
    end record;
    type Remote_View is access all Remote_View_Record'Class;
 
@@ -116,7 +116,7 @@ package body Remote_Views is
    --  Load and save desktop
 
    procedure Set_Servers
-     (View  : access Remote_View_Record'Class);
+     (View : access Remote_View_Record'Class);
    --  Set the list of available servers
 
    function Check_Host (Nickname : String) return String;
@@ -402,8 +402,7 @@ package body Remote_Views is
       --  Buttons
 
       Gtk_New_Hbox (Buttons_Box, Homogeneous => True, Spacing => 5);
-      Attach (View.Main_Table, Buttons_Box, 0, 1, 1, 2,
-              0, 0, 5, 0);
+      Attach (View.Main_Table, Buttons_Box, 0, 1, 1, 2, 0, 0, 5, 0);
 
       Gtk_New (View.Check_Button, Label => -"Check");
       Set_Tip
@@ -441,8 +440,8 @@ package body Remote_Views is
 
       declare
          Hook_Func : constant Function_With_Args_Access :=
-           new On_Server_Config_Hook'(Function_With_Args with
-                                      View => Remote_View (View));
+                       new On_Server_Config_Hook'
+                         (Function_With_Args with View => Remote_View (View));
       begin
          Add_Hook (Kernel, GPS.Kernel.Remote.Server_Config_Changed_Hook,
                    Hook_Func, "remote_views module", Watch => GObject (View));
@@ -450,8 +449,8 @@ package body Remote_Views is
 
       declare
          Hook_Func : constant Function_No_Args_Access :=
-           new On_Server_List_Hook'(Function_No_Args with
-                                    View => Remote_View (View));
+                       new On_Server_List_Hook'
+                         (Function_No_Args with View => Remote_View (View));
       begin
          Add_Hook (Kernel, GPS.Kernel.Remote.Server_List_Changed_Hook,
                    Hook_Func, "remote_views module", Watch => GObject (View));
@@ -493,6 +492,7 @@ package body Remote_Views is
          Put (Get_MDI (User), Child, Initial_Position => Position_Left);
          return MDI_Child (Child);
       end if;
+
       return null;
    end Load_Desktop;
 
@@ -518,6 +518,7 @@ package body Remote_Views is
          end if;
          return N;
       end if;
+
       return null;
    end Save_Desktop;
 
@@ -729,13 +730,16 @@ package body Remote_Views is
             Remote := True;
             Set_Sensitive (User.View.To_Local_Buttons (S), True);
             Set_Sensitive (User.View.To_Remote_Buttons (S), True);
+
             if S = Build_Server then
                Set_Sensitive (User.View.To_Local_Buttons (GPS_Server), True);
                Set_Sensitive (User.View.To_Remote_Buttons (GPS_Server), True);
             end if;
+
          else
             Set_Sensitive (User.View.To_Local_Buttons (S), False);
             Set_Sensitive (User.View.To_Remote_Buttons (S), False);
+
             if S = Build_Server then
                Set_Sensitive (User.View.To_Local_Buttons (GPS_Server), False);
                Set_Sensitive (User.View.To_Remote_Buttons (GPS_Server), False);
@@ -788,8 +792,8 @@ package body Remote_Views is
      (W    : access Gtk_Widget_Record'Class;
       User : Remote_Data)
    is
-      New_Build_Server : constant String :=
-        Get_Text (Get_Entry (User.View.Servers_Combo (Build_Server)));
+      New_Build_Server : constant String := Get_Text
+        (Get_Entry (User.View.Servers_Combo (Build_Server)));
       Project          : constant String :=
                            Full_Name (Project_Path (Get_Project
                              (User.View.Kernel))).all;
@@ -877,7 +881,7 @@ package body Remote_Views is
    ------------------------
 
    procedure On_Connect_Clicked
-     (W : access Gtk_Widget_Record'Class;
+     (W    : access Gtk_Widget_Record'Class;
       User : Remote_Data)
    is
       pragma Unreferenced (W);
@@ -896,8 +900,9 @@ package body Remote_Views is
                          " to " & Server_Name);
                end if;
 
-               GPS.Kernel.Remote.Assign (User.View.Kernel, S, Server_Name,
-                                         Reload_Prj => S = Build_Server);
+               GPS.Kernel.Remote.Assign
+                 (User.View.Kernel, S, Server_Name,
+                  Reload_Prj => S = Build_Server);
             end if;
          end;
       end loop;
@@ -969,8 +974,8 @@ package body Remote_Views is
       User : Remote_Data)
    is
       pragma Unreferenced (View);
-      Build_Txt : constant String :=
-                 Get_Text (Get_Entry (User.View.Servers_Combo (Build_Server)));
+      Build_Txt : constant String := Get_Text
+        (Get_Entry (User.View.Servers_Combo (Build_Server)));
    begin
       if Build_Txt /= Local_Nickname then
          GPS.Kernel.Remote.Configure_Server_List (User.View.Kernel, Build_Txt);
