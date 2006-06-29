@@ -2042,29 +2042,29 @@ package body GPS.Location_View is
       function Escaped_Compare (S1, S2 : String) return Boolean is
          I1, I2 : Natural;
 
-         procedure Advance (I : in out Natural; S : String);
+         procedure Advance (J : in out Natural; S : String);
          --  Auxiliary function;
 
-         procedure Advance (I : in out Natural; S : String) is
+         procedure Advance (J : in out Natural; S : String) is
          begin
-            I := I + 1;
+            J := J + 1;
 
-            if I > S'Last then
+            if J > S'Last then
                return;
             end if;
 
-            if S (I) = '<' then
+            if S (J) = '<' then
                loop
-                  I := I + 1;
-                  exit when I > S'Last;
-                  exit when S (I - 1) = '>' and then S (I) /= '<';
+                  J := J + 1;
+                  exit when J > S'Last;
+                  exit when S (J - 1) = '>' and then S (J) /= '<';
                end loop;
 
-            elsif S (I) = '&' then
+            elsif S (J) = '&' then
                loop
-                  I := I + 1;
-                  exit when I > S'Last;
-                  exit when S (I - 1) = ';';
+                  J := J + 1;
+                  exit when J > S'Last;
+                  exit when S (J - 1) = ';';
                end loop;
             end if;
          end Advance;
