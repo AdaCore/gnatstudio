@@ -741,6 +741,7 @@ package body Ada_Analyzer is
       Top_Token           : Token_Stack.Generic_Type_Access;
       Casing              : Casing_Type;
       Terminated          : Boolean := False;
+      End_Reached         : Boolean := False;
       Last_Replace_Line   : Natural := 0;
       Padding             : Integer := 0;
       Paren_In_Middle     : Boolean := False;
@@ -754,8 +755,9 @@ package body Ada_Analyzer is
       --  Return whether parsing should be terminated.
 
       procedure Next_Word
-        (P          : in out Natural;
-         Terminated : out Boolean);
+        (P           : in out Natural;
+         Terminated  : out Boolean;
+         End_Reached : out Boolean);
       --  Starting at Buffer (P), find the location of the next word
       --  and set P accordingly.
       --  Formatting of operators is performed by this procedure.
@@ -764,6 +766,7 @@ package body Ada_Analyzer is
       --  The following variables are read and modified:
       --    New_Buffer, Num_Parens, Line_Count, Indents, Indent_Done,
       --    Prev_Token.
+      --  If the end of the buffer has been reached, set End_Reached to True.
       --  If parsing should be terminated, set Terminated to True.
 
       function End_Of_Word (P : Natural) return Natural;
@@ -2312,8 +2315,9 @@ package body Ada_Analyzer is
       ---------------
 
       procedure Next_Word
-        (P          : in out Natural;
-         Terminated : out Boolean)
+        (P           : in out Natural;
+         Terminated  : out Boolean;
+         End_Reached : out Boolean)
       is
          Comma           : String := ", ";
          Spaces          : String := "    ";
@@ -2661,7 +2665,6 @@ package body Ada_Analyzer is
             Last            : Natural;
             Ref_Indent      : Natural;
             Success         : Boolean;
-
          begin
             Ref_Indent := Num_Spaces;
 
@@ -2764,6 +2767,10 @@ package body Ada_Analyzer is
                   end if;
                end if;
             end loop;
+
+            if P >= Buffer_Last then
+               End_Reached := True;
+            end if;
          end Skip_Comments;
 
          ----------------------------
@@ -2790,12 +2797,13 @@ package body Ada_Analyzer is
          Start_Of_Line := Line_Start (Buffer, P);
          End_Of_Line   := Line_End (Buffer, Start_Of_Line);
          Terminated    := False;
+         End_Reached   := False;
 
          loop
             Skip_Blank_Lines;
             Skip_Comments;
 
-            if Terminated then
+            if End_Reached or else Terminated then
                return;
             end if;
 
@@ -3445,9 +3453,9 @@ package body Ada_Analyzer is
 
       Push (Indents, (None, 0, 0));
 
-      Next_Word (Prec, Terminated);
+      Next_Word (Prec, Terminated, End_Reached);
 
-      if Terminated then
+      if End_Reached or else Terminated then
          return;
       end if;
 
@@ -3590,9 +3598,9 @@ package body Ada_Analyzer is
 
          exit Main_Loop when Prec > Buffer_Last;
 
-         Next_Word (Prec, Terminated);
+         Next_Word (Prec, Terminated, End_Reached);
 
-         exit Main_Loop when Terminated;
+         exit Main_Loop when End_Reached or else Terminated;
 
          Current := End_Of_Word (Prec);
       end loop Main_Loop;
