@@ -40,6 +40,7 @@ extern FILE *log_file;
     if (log_file!=NULL) \
       fprintf(log_file, "Expect SlaveDriver %s: %d " format "\n", \
               __FILE__, __LINE__, args)
+#define EXP_LOG_FLUSH fflush (log_file)
 #define panic(log) \
     if (log_file!=NULL) \
       fprintf(log_file, "Expect SlaveDriver panic at %s: %d %s\n", \
@@ -58,6 +59,7 @@ extern FILE *log_file;
 
 #define EXP_BEGIN(filename)
 #define EXP_LOG(format, args)
+#define EXP_LOG_FLUSH
 #define panic(log)
 #define LOG_ENTRY(log)
 #define LOG_EXIT(log)
