@@ -448,7 +448,7 @@ package body VCS_View is
       Column   : Gint;
       Value    : String) return Gtk_Tree_Iter
    is
-      Result    : Gtk_Tree_Iter := Null_Iter;
+      Result : Gtk_Tree_Iter := Null_Iter;
 
       procedure Check_Iter
         (Iter : in out Gtk_Tree_Iter;
@@ -601,8 +601,8 @@ package body VCS_View is
    begin
       if Explorer.Context = No_Context then
          declare
-            Files   : String_List.List;
-            First   : VFS.Virtual_File;
+            Files : String_List.List;
+            First : VFS.Virtual_File;
          begin
             Files := Get_Selected_Files (VCS_View_Access (Explorer));
 
