@@ -291,9 +291,13 @@ package body VCS_Module is
       pragma Unreferenced (MDI);
       M          : constant VCS_Module_ID_Access := VCS_Module_ID;
       A_Explorer : VCS_Activities_View_Access;
+      Explorer   : VCS_Explorer_View_Access;
       pragma Unreferenced (A_Explorer);
    begin
       if Node.Tag.all = "VCS_View_Record" then
+         --  First we want to clear the current content of the VCS Explorer
+         Explorer := Get_Explorer (User, True, True);
+         Clear (Explorer);
          Open_Explorer (User, No_Context);
          return M.Explorer_Child;
 
