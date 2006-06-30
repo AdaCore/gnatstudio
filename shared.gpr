@@ -19,9 +19,10 @@ project Shared is
          when "Debug" =>
             for Default_Switches ("Ada") use
               ("-g", "-O", "-gnata", "-gnatVa", "-gnatQ", "-gnaty",
-               "-gnatwaCJe", "-Wall");
+               "-gnatwaCJe", "-Wall", "-gnat05");
          when "Production" =>
-            for Default_Switches ("Ada") use ("-O2", "-gnatn", "-gnatws");
+            for Default_Switches ("Ada") use
+              ("-O2", "-gnatn", "-gnatws", "-gnat05");
       end case;
    end Compiler;
 
