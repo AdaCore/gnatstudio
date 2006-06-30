@@ -1285,7 +1285,7 @@ package body Src_Editor_Buffer is
       Params : Glib.Values.GValues)
    is
       Mark : constant Gtk_Text_Mark :=
-        Get_Text_Mark (Glib.Values.Nth (Params, 2));
+               Get_Text_Mark (Glib.Values.Nth (Params, 2));
 
    begin
       --  Emit the new cursor position if it is the Insert_Mark that was
@@ -1367,6 +1367,18 @@ package body Src_Editor_Buffer is
 
       if Number > 0 then
          Lines_Add_Hook (Buffer, Start - Number, Number);
+
+         Emit_New_Cursor_Position (Buffer);
+         --  This is already done when the cursor is moved but it is too early
+         --  when new lines are inserted at the end of the buffer: the fact
+         --  that lines have been added as to be reflected in the buffer data
+         --  before the status bar is refereshed.
+         --  When indentation is enabled "cursor_position_changed" is emitted
+         --  twice (once after line information has been recomputed) and the
+         --  status bar is properly refreshed. This is not the case when
+         --  auto indentation is not performed (preference disabled or
+         --  buffer language unknown). As a result, the status bar report a
+         --  cursor on line 0.
       end if;
 
    exception
