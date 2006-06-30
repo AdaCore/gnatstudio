@@ -1318,7 +1318,7 @@ package body GPS.Location_View is
                     (Create_Mark
                        (View.Kernel,
                         Loc.File, Loc.Line, Loc.Column, 0), -1),
-                  Line, Column, Length,
+                  Loc.Line, Loc.Column, Length,
                   Highlight, Highlight_Category);
                Path := Get_Path (Model, Potential_Parent);
                Dummy := Expand_Row (View.Tree, Path, False);
@@ -2027,6 +2027,7 @@ package body GPS.Location_View is
       Line_Iter     : Gtk_Tree_Iter;
       Children_Iter : Gtk_Tree_Iter;
       Next_Iter     : Gtk_Tree_Iter;
+      Main_Line_Iter : Gtk_Tree_Iter;
 
       Value         : GValue;
       Old_Action    : Action_Item;
@@ -2116,13 +2117,15 @@ package body GPS.Location_View is
         and then File_Iter /= Null_Iter
       then
          Line_Iter := Children (View.Tree.Model, File_Iter);
+         Main_Line_Iter := Line_Iter;
          Next_Iter := File_Iter;
          Next (View.Tree.Model, Next_Iter);
          while Line_Iter /= Null_Iter loop
             if Get_Int
-              (View.Tree.Model, Line_Iter, Line_Column) = Gint (Line)
+              (View.Tree.Model, Main_Line_Iter, Line_Column) = Gint (Line)
               and then Get_Int
-                (View.Tree.Model, Line_Iter, Column_Column) = Gint (Column)
+                (View.Tree.Model, Main_Line_Iter, Column_Column)
+                = Gint (Column)
               and then Escaped_Compare
                 (Get_Message (View, Line_Iter), Escaped_Message)
             then
@@ -2162,12 +2165,17 @@ package body GPS.Location_View is
             if Children_Iter /= Null_Iter then
                Line_Iter := Children_Iter;
             else
+               if Main_Line_Iter = Line_Iter then
+                  Next (View.Tree.Model, Main_Line_Iter);
+               end if;
+
                Children_Iter := Line_Iter;
                Next (View.Tree.Model, Line_Iter);
 
                if Line_Iter = Null_Iter then
                   Line_Iter := Parent (View.Tree.Model, Children_Iter);
                   Next (View.Tree.Model, Line_Iter);
+                  Main_Line_Iter := Line_Iter;
                end if;
             end if;
 
