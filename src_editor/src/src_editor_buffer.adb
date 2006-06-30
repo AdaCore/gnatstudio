@@ -1285,7 +1285,7 @@ package body Src_Editor_Buffer is
       Params : Glib.Values.GValues)
    is
       Mark : constant Gtk_Text_Mark :=
-        Get_Text_Mark (Glib.Values.Nth (Params, 2));
+               Get_Text_Mark (Glib.Values.Nth (Params, 2));
 
    begin
       --  Emit the new cursor position if it is the Insert_Mark that was
