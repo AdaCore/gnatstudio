@@ -1285,7 +1285,7 @@ package body Src_Editor_Buffer is
       Params : Glib.Values.GValues)
    is
       Mark : constant Gtk_Text_Mark :=
-               Get_Text_Mark (Glib.Values.Nth (Params, 2));
+        Get_Text_Mark (Glib.Values.Nth (Params, 2));
 
    begin
       --  Emit the new cursor position if it is the Insert_Mark that was
@@ -1295,15 +1295,11 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      --  ??? Should optimize this function by saving the values of the
-      --  "insert" mark
-
       Buffer.Setting_Mark := True;
 
-      if Get_Name (Mark) = "insert" then
-         Buffer.Insert_Mark := Mark;
-         Emit_New_Cursor_Position (Buffer);
-         Cursor_Move_Hook (Buffer);
+      if Mark = Buffer.Insert_Mark then
+         Buffer.Emit_New_Cursor_Position;
+         Buffer.Cursor_Move_Hook;
       end if;
 
       Buffer.Setting_Mark := False;
