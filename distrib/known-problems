@@ -1,5 +1,16 @@
 Known Problems fixed in GPS 4.1.0
 
+- F629-007 Status bar says line 0 when indentation disabled
+  Problem:    Let's consider a source editor for which no automatic indentation
+              is performed either because it as been explicitely disable in the
+              preference dialog or because the corresponding language is
+              unknown. Set the cursor at the end of the editor and press
+              ENTER. At this point the status bar says the cursor is located
+              on line 0 which is obvisously not the case.
+  Workaround: Move the cursor a line up and then down again to force the
+              refresh of the line information in the status bar. You can also
+              type some text.
+
 Known Problems fixed in GPS 4.0.0
 
 - F612-025 VCS not passing full pathnames
