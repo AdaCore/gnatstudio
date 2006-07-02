@@ -121,7 +121,7 @@ package body Debugger.Gdb is
 
    Breakpoint_Pattern        : constant Pattern_Matcher := Compile
      ("^(\d+)\s+(breakpoint|\w+? watchpoint)\s+(keep|dis|del)\s+([yn])"
-      & "\s+((0x0*)?(\S+))\s+(.*)$",
+      & "\s+((0x0*)?(\S+))?\s+(.*)$",
       Multiple_Lines);
    --  Pattern to match a single line in "info breakpoint"
 
@@ -3148,7 +3148,7 @@ package body Debugger.Gdb is
                     ("0x" & S (Matched (7).First .. Matched (7).Last));
                else
                   Br (Num).Expression :=
-                    new String'(S (Matched (7).First .. Matched (7).Last));
+                    new String'(S (Matched (8).First .. Matched (8).Last));
                end if;
 
                --  Go to beginning of next line.
