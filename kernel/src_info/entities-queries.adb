@@ -1930,6 +1930,13 @@ package body Entities.Queries is
                     (For_Entities.Table (E).Declaration.Line);
                end if;
 
+               --  An entity should not be considered its own caller. Here we
+               --  reset the caller to make sure this never happens.
+
+               if Caller = For_Entities.Table (E) then
+                  Caller := null;
+               end if;
+
                Set_Caller_At_Declaration (For_Entities.Table (E), Caller);
                if Caller /= null then
                   Add_Called (Caller, For_Entities.Table (E));
