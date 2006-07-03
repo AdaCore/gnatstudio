@@ -1815,6 +1815,7 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
   DWORD flags;
   char dir[ MAXPATHLEN ];
   int pid;
+  int is_gui, use_cmd;
   char *cmdline, *parg, **targ;
   int do_quoting = 0;
   char escape_char;
@@ -1900,9 +1901,26 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
 	}
       arglen += strlen (*targ++) + 1;
     }
+
+  is_gui = is_gui_app (argv[0]);
+  use_cmd = FALSE;
+
+  if (is_gui == -1) {
+    /* could not determine application type. Try launching with "cmd /c" */
+    is_gui = FALSE;
+    arglen += 7;
+    use_cmd = TRUE;
+  }
+
   cmdline = (char*)malloc (arglen + 1);
   targ = argv;
   parg = cmdline;
+
+  if (use_cmd == TRUE) {
+    strcpy (parg, "cmd /c ");
+    parg += 7;
+  }
+
   while (*targ)
     {
       char * p = *targ;
@@ -1994,7 +2012,7 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
     flags |= CREATE_DEFAULT_ERROR_MODE;
 
   /* if app is not a gui application, hide the console */
-  if (is_gui_app (argv[0]) == FALSE) {
+  if (is_gui == FALSE) {
     start.dwFlags |= STARTF_USESHOWWINDOW;
     start.wShowWindow = SW_HIDE;
   }
