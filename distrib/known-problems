@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.0.0
 
+- F630-024 GPS hangs with C++ files
+  Problem:    Let's consider a C++ class named 'foo' containing an entity
+              named 'foo' as well (a constructor for example). GPS hangs when
+              getting the full name of the entity 'foo'. At least 'calls (in
+              tree)', 'calls (in browser)', 'is called by (in browser)' and
+              the tooltip over the entity 'foo' are affected. 
+  Workaound:  No known workaround.
+
 - F628-001 Instabilities with the clipboard view
   Problem:    Trying to paste an entry from the clipboard view by double
               clicking on it when no source editor is open may cause some 
@@ -36,7 +44,7 @@ Known Problems fixed in GPS 4.0.0
                          /prj.gpr
               In fact all VCS operations done on project/prj2/README are
               actually executed on /project/prj1/README.
-  Workaround: Rename either one of the file before comparing the other
+  Workaround: Rename either one of the files before comparing the other
 
 - F516-004 Cross references into multi-unit source files in Ada
   Problem:    If you have used gnatname so that you can use source files
