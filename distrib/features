@@ -28,6 +28,13 @@ F613-014 Key shortcuts editor improvements (2006-06-16)
   and when several key bindings are associated with the same action, they are
   all listed
 
+F523-012 Support for debugger watchpoints (2006-06-15)
+
+  Support for watchpoints (also known as breakpoint on variables) is
+  added in the breakpoint editor.
+
+  Keywords: Debugger
+
 F503-004 Block information on record/union/class (2006-05-05)
 
   GPS computes block information for record/union/class and has associated
