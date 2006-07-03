@@ -4027,25 +4027,30 @@ package body GPS.Kernel.Remote is
 
          --  Set buffer_size to 0 for dynamically allocated buffer (prevents
          --  possible overflow)
+         begin
+            if L_Args /= null then
+               Non_Blocking_Spawn
+                 (Pd.all,
+                  L_Args (L_Args'First).all,
+                  L_Args (L_Args'First + 1 .. L_Args'Last) &
+                  Args.all,
+                  Buffer_Size => 0,
+                  Err_To_Out  => True);
+               Free (L_Args);
 
-         if L_Args /= null then
-            Non_Blocking_Spawn
-              (Pd.all,
-               L_Args (L_Args'First).all,
-               L_Args (L_Args'First + 1 .. L_Args'Last) &
-               Args.all,
-               Buffer_Size => 0,
-               Err_To_Out  => True);
-            Free (L_Args);
+            else
+               Non_Blocking_Spawn
+                 (Pd.all,
+                  Args (Args'First).all,
+                  Args (Args'First + 1 .. Args'Last),
+                  Buffer_Size => 0,
+                  Err_To_Out  => True);
+            end if;
 
-         else
-            Non_Blocking_Spawn
-              (Pd.all,
-               Args (Args'First).all,
-               Args (Args'First + 1 .. Args'Last),
-               Buffer_Size => 0,
-               Err_To_Out  => True);
-         end if;
+         exception
+            when Invalid_Process =>
+               raise Invalid_Process with "not an executable";
+         end;
 
          if Directory /= "" then
             Change_Dir (Old_Dir.all);
