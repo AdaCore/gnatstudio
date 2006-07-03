@@ -34,7 +34,7 @@ with Language.Documentation; use Language.Documentation;
 package body Doc_Utils is
 
    Me         : constant Debug_Handle := Create ("Doc_Utils");
-   Extract_Me : constant Debug_Handle := Create ("COMMENT_EXTRACTION");
+   Extract_Me : constant Debug_Handle := Create ("COMMENT_EXTRACTION", On);
 
    -----------------------
    -- Get_Documentation --
