@@ -6,7 +6,7 @@ Known Problems fixed in GPS 4.0.0
               getting the full name of the entity 'foo'. At least 'calls (in
               tree)', 'calls (in browser)', 'is called by (in browser)' and
               the tooltip over the entity 'foo' are affected. 
-  Workaound:  No known workaround.
+  Workaound:  No known workaround
 
 - F628-001 Instabilities with the clipboard view
   Problem:    Trying to paste an entry from the clipboard view by double
