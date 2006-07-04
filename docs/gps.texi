@@ -15933,7 +15933,7 @@ copy of the code on your local machine).
 @item GPS does not start when using an X Server with 256 colors
 
 GPS requires at least 65535 colors to run properly, so you need to configure
-your X server to allow 65K or more colors.
+your X server to allow 65K colors or more.
 
 @end table
 
