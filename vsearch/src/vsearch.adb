@@ -687,6 +687,10 @@ package body Vsearch is
       All_Occurences : Boolean := False;
       Replace        : Boolean := False)
    is
+      Data            : constant Search_Module_Data :=
+        Find_Module
+          (Vsearch.Kernel,
+           Get_Text (Get_Entry (Vsearch.Context_Combo)));
       Toplevel       : Gtk_Widget := Get_Toplevel (Vsearch);
       Found          : Boolean;
       Has_Next       : Boolean;
@@ -746,9 +750,11 @@ package body Vsearch is
                  (Vsearch.Replace_Search_Button, False);
                Set_Sensitive (Vsearch.Replace_Button, False);
             else
-               Set_Sensitive
-                 (Vsearch.Replace_Search_Button, True);
-               Set_Sensitive (Vsearch.Replace_Button, True);
+               if (Data.Mask and Supports_Replace) /= 0 then
+                  Set_Sensitive
+                    (Vsearch.Replace_Search_Button, True);
+                  Set_Sensitive (Vsearch.Replace_Button, True);
+               end if;
             end if;
 
             --  Give a visual feedback that the search is terminated.
