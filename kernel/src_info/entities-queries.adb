@@ -1980,6 +1980,10 @@ package body Entities.Queries is
                   Caller := Info_For_Decl (Refs.Table (R).Location.Line);
                end if;
 
+               if Caller = Entity then
+                  Caller := null;
+               end if;
+
                Refs.Table (R).Caller := Caller;
 
                if Caller /= null then
@@ -2256,9 +2260,11 @@ package body Entities.Queries is
    function Get_All_Called_Entities
      (Entity : Entity_Information) return Calls_Iterator
    is
-      Loc  : File_Location := No_File_Location;
+      Loc : File_Location := No_File_Location;
+      Old_Loc : File_Location;
    begin
       loop
+         Old_Loc := Loc;
          Find_Next_Body
            (Entity, Loc, Location => Loc, No_Location_If_First => True);
          if Loc = No_File_Location then
@@ -2267,6 +2273,11 @@ package body Entities.Queries is
          else
             Compute_Callers_And_Called (Loc.File);
          end if;
+
+         exit when Old_Loc = Loc;
+         --  Old_Loc should not be equal to Loc but it appears to be the case
+         --  with some C++ entities (constructor that has the same name as
+         --  the class in which it is defined.
       end loop;
 
       return (Entity => Entity,
