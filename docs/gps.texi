@@ -254,7 +254,6 @@ Environment
 * Command Line Options::
 * Environment Variables::
 * Running GPS on Mac OS X::
-* Running GPS on Linux x86_64::
 * Files::
 * Reporting Suggestions and Bugs::
 * Solving Problems::
@@ -15491,7 +15490,6 @@ Connection closed by foreign host.
 * Command Line Options::
 * Environment Variables::
 * Running GPS on Mac OS X::
-* Running GPS on Linux x86_64::
 * Files::
 * Reporting Suggestions and Bugs::
 * Solving Problems::
@@ -15619,27 +15617,6 @@ specify the display on which to launch GPS, by typing:
 before launching GPS.
 
 Note: GPS does not support files with line endings in CR.
-
-@c --------------------------------------------------------------------
-@node Running GPS on Linux x86_64
-@section Running GPS on Linux x86_64
-@cindex Linux x86_64
-@c --------------------------------------------------------------------
-
-@noindent
-The GPS binary is a 32 bit application and needs two 32 bit libraries
-installed if not already present on the 64 bit system. These two libraries
-are libjpeg and libpng.
-
-On Red Hat Enterprise Linux (release 4 for 64-bit AMD64/Intel EM64T),
-the packages can be found as:
-  @code{libjpeg-6b-*.i386.rpm}
-  @code{libpng-1.2.*.i386.rpm}
-
-For SuSE Linux Enterprise Server (version 9 service pack 1), the packages
-can be found as:
-  @code{libjpeg-32bit-9-200407011229.x86_64.rpm (on Release CD #1)}
-  @code{libpng-32bit-9-200408140621.x86_64.rpm (on SP 1 CD #1)}
 
 @c --------------------------------------------------------------------
 @node Files
