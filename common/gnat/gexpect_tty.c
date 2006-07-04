@@ -1693,6 +1693,7 @@ is_gui_app (char *exe)
       report_file_error ("Could not open exe: ", Qnil);
       report_file_error (exe, Qnil);
       report_file_error ("\n", Qnil);
+      CloseHandle (hImage);
       return -1;
     }
 
@@ -1704,6 +1705,7 @@ is_gui_app (char *exe)
   if (IMAGE_DOS_SIGNATURE != image_dos_header.e_magic)
     {
       report_file_error("Sorry, I do not understand this file.\n", Qnil);
+      CloseHandle (hImage);
       return -1;
     }
 
@@ -1715,14 +1717,17 @@ is_gui_app (char *exe)
    */
   CoffHeaderOffset = AbsoluteSeek(hImage, image_dos_header.e_lfanew) +
                      sizeof(ULONG);
-  if (CoffHeaderOffset < 0)
+  if (CoffHeaderOffset < 0) {
+    CloseHandle (hImage);
     return -1;
+  }
 
   ReadBytes (hImage, &ntSignature, sizeof(ULONG));
 
   if (IMAGE_NT_SIGNATURE != ntSignature)
     {
       report_file_error ("Missing NT signature. Unknown file type.\n", Qnil);
+      CloseHandle (hImage);
       return -1;
     }
 
