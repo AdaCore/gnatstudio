@@ -354,7 +354,7 @@ package body Welcome is
          return False;
       end if;
 
-      Load_Project (S.Kernel, Project_Name);
+      Load_Project (S.Kernel, Project_Name, Clear => False);
 
       return True;
 
