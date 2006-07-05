@@ -81,6 +81,7 @@ with Gtkada.Macro;            use Gtkada.Macro;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
@@ -162,6 +163,10 @@ package body KeyManager_Module is
       Equal        => "=");
    use Key_Htable;
 
+   type HTable_Access is access Key_Htable.HTable;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Key_Htable.HTable, HTable_Access);
+
    procedure Clone
      (From : Key_Htable.HTable; To : out Key_Htable.HTable);
    procedure Clone
@@ -205,7 +210,7 @@ package body KeyManager_Module is
 
    type Key_Manager_Record is record
       Kernel           : Kernel_Handle;
-      Table            : Key_Htable.HTable;
+      Table            : HTable_Access;
 
       Custom_Keys_Loaded : Boolean := False;
       --  Whether the user's custom keys have been loaded
@@ -226,7 +231,9 @@ package body KeyManager_Module is
    type Key_Manager_Access is access all Key_Manager_Record;
 
    type Keymanager_Module_Record is new Module_ID_Record with record
-      Key_Manager : Key_Manager_Access;
+      Key_Manager   : Key_Manager_Access;
+      Menus_Created : Boolean := False;
+      --  Indicates whether the initial set of menus has been created.
    end record;
    type Keymanager_Module_ID is access all Keymanager_Module_Record'Class;
 
@@ -347,7 +354,7 @@ package body KeyManager_Module is
 
    type Keys_Editor_Record is new Gtk_Dialog_Record with record
       Kernel             : Kernel_Handle;
-      Bindings           : Key_Htable.HTable;
+      Bindings           : HTable_Access;
       View               : Gtk_Tree_View;
       Model              : Gtk_Tree_Store;
       Filter             : Gtk_Tree_Model_Filter;
@@ -425,13 +432,17 @@ package body KeyManager_Module is
      (System.Address, Kernel_Handle);
    pragma Warnings (On);
 
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed.
+
    procedure General_Event_Handler
      (Event : Gdk_Event; Kernel : System.Address);
    --  Event handler called before even gtk can do its dispatching. This
    --  intercepts all events going through the application
 
    function Lookup_Key_From_Action
-     (Table             : Key_Htable.HTable;
+     (Table             : HTable_Access;
       Action            : String;
       Default           : String := "none";
       Use_Markup        : Boolean := True) return String;
@@ -442,9 +453,32 @@ package body KeyManager_Module is
    --  needs to be defined)
    --  If Use_Markup is true, then the "or" that separates several shortcuts
    --  is displayed with a different font.
+   --  If the action is not found in the table but corresponds to a menu, look
+   --  it up using standard gtk+ mechanisms and insert the corresponding entry
+   --  in Table to speed up further lookups.
+
+   function Invalid_Key return Gdk_Key_Type;
+   --  Return an unique invalid key.
 
    Action_Column     : constant := 0;
    Key_Column        : constant := 1;
+
+   -----------------
+   -- Invalid_Key --
+   -----------------
+
+   Current_Invalid_Key : Gdk_Key_Type := 16#10000#;
+
+   function Invalid_Key return Gdk_Key_Type is
+   begin
+      if Current_Invalid_Key > 16#FFFFFE# then
+         Current_Invalid_Key := 16#10000#;
+      else
+         Current_Invalid_Key := Current_Invalid_Key + 1;
+      end if;
+
+      return Current_Invalid_Key;
+   end Invalid_Key;
 
    -------------
    -- Destroy --
@@ -737,11 +771,20 @@ package body KeyManager_Module is
          --  Put in front of the list if possible, so that when the user
          --  just added a new binding, it is visible first (in particular
          --  useful for menus).
+
+         --  We need to clone memory associated to Binding3, since it is
+         --  freed in the call to Set below.
+         if Binding3 /= null then
+            Clone (From => Binding3, To => Tmp);
+         else
+            Tmp := null;
+         end if;
+
          Binding2 := new Key_Description'
            (Action         => new String'(Action),
             Changed        => Save_In_Keys_XML,
             Keymap         => null,
-            Next           => Binding3);
+            Next           => Tmp);
          Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
       end Bind_Internal;
 
@@ -826,7 +869,7 @@ package body KeyManager_Module is
       if Key = "" or else Key = -Disabled_String then
          --  Bind to an invalid key, so that when saving we know this should be
          --  removed
-         Bind_Internal (Table, 0, 0);
+         Bind_Internal (Table, Invalid_Key, 0);
          return;
       end if;
 
@@ -944,7 +987,7 @@ package body KeyManager_Module is
          Modif := Modif and not (Lock_Mask or Mod2_Mask);
 
          if Handler.Secondary_Keymap = null then
-            Binding := Get (Handler.Table, (Key, Modif));
+            Binding := Get (Handler.Table.all, (Key, Modif));
          else
             Binding := Get (Handler.Secondary_Keymap.Table, (Key, Modif));
          end if;
@@ -1090,13 +1133,14 @@ package body KeyManager_Module is
       File     := new Node;
       File.Tag := new String'("Keys");
 
-      Save_Table (Handler.Table, "");
+      Save_Table (Handler.Table.all, "");
 
       Trace (Me, "Saving " & Filename);
       Print (File, Filename);
       Free (File);
 
-      Reset (Handler.Table);
+      Reset (Handler.Table.all);
+      Unchecked_Free (Handler.Table);
    end Free;
 
    ----------------------
@@ -1109,23 +1153,27 @@ package body KeyManager_Module is
       Filename : constant String := Get_Home_Dir (Kernel) & "keys.xml";
       File, Child : Node_Ptr;
       Err : String_Access;
+      Prev : Boolean;
    begin
+      Keymanager_Module.Key_Manager.Custom_Keys_Loaded := True;
+
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename);
          XML_Parsers.Parse (Filename, File, Err);
-
-         Keymanager_Module.Key_Manager.Custom_Keys_Loaded := True;
 
          if File = null then
             Insert (Kernel, Err.all, Mode => Error);
          else
             Child := File.Child;
 
+            Prev := Keymanager_Module.Menus_Created;
+            Keymanager_Module.Menus_Created := True;
+
             while Child /= null loop
                --  Remove all other bindings previously defined, so that only
                --  the last definition is taken into account
                Bind_Default_Key_Internal
-                 (Keymanager_Module.Key_Manager.Table,
+                 (Keymanager_Module.Key_Manager.Table.all,
                   Action           => Get_Attribute (Child, "action"),
                   Key              => Child.Value.all,
                   Save_In_Keys_XML => True,
@@ -1134,6 +1182,8 @@ package body KeyManager_Module is
                   Update_Menus     => True);
                Child := Child.Next;
             end loop;
+
+            Keymanager_Module.Menus_Created := Prev;
 
             Free (File);
          end if;
@@ -1252,7 +1302,7 @@ package body KeyManager_Module is
    ----------------------------
 
    function Lookup_Key_From_Action
-     (Table             : Key_Htable.HTable;
+     (Table             : HTable_Access;
       Action            : String;
       Default           : String := "none";
       Use_Markup        : Boolean := True) return String
@@ -1309,10 +1359,38 @@ package body KeyManager_Module is
          end loop;
       end Process_Table;
 
+      Key   : Gtk_Accel_Key;
+      Found : Boolean;
    begin
       --  The table also includes the menu accelerators set by gtk+, so by
       --  traversing the table we get access to everything.
-      Process_Table (Table, "");
+      --  ??? This is not true for stock accelerators.
+      Process_Table (Table.all, "");
+
+      --  If we haven't found an action, fallback on the default gtk+
+      --  mechanism.
+
+      if To_String (Result) = "" then
+         Lookup_Entry ("<gps>" & Action, Key, Found);
+
+         if Found then
+            declare
+               Bind : Key_Description_List;
+            begin
+               Bind := new Key_Description'
+                 (Action         => new String'(Action),
+                  Changed        => False,
+                  Keymap         => null,
+                  Next           => null);
+
+               Set
+                 (Table.all,
+                  Key_Binding'(Key.Accel_Key, Key.Accel_Mods), Bind);
+            end;
+
+            return Image (Key.Accel_Key, Key.Accel_Mods);
+         end if;
+      end if;
 
       if Result = Null_Unbounded_String then
          return Default;
@@ -1514,7 +1592,7 @@ package body KeyManager_Module is
          --  If the menu is associated with at least one short key binding (ie
          --  from the toplevel keymap), we change it so that it shows up in the
          --  menu as well).
-         Get_First (Handler.Table, Iter);
+         Get_First (Handler.Table.all, Iter);
          Foreach_Binding :
          loop
             Binding := Get_Element (Iter);
@@ -1537,7 +1615,7 @@ package body KeyManager_Module is
                Binding := Binding.Next;
             end loop;
 
-            Get_Next (Handler.Table, Iter);
+            Get_Next (Handler.Table.all, Iter);
          end loop Foreach_Binding;
 
          if not Found then
@@ -1550,8 +1628,8 @@ package body KeyManager_Module is
       end Process_Menu_Binding;
 
    begin
-      Reset (Handler.Table);
-      Clone (From => Editor.Bindings, To => Handler.Table);
+      Reset (Handler.Table.all);
+      Clone (From => Editor.Bindings.all, To => Handler.Table.all);
 
       --  Update the gtk+ accelerators for the menus to reflect the keybindings
       Gtk.Accel_Map.Foreach_Unfiltered
@@ -1660,7 +1738,7 @@ package body KeyManager_Module is
          begin
             if Key /= "" then
                Bind_Default_Key_Internal
-                 (Ed.Bindings,
+                 (Ed.Bindings.all,
                   Action         => Get_String (Ed.Model, Iter, Action_Column),
                   Key              => Key,
                   Save_In_Keys_XML => True,
@@ -1722,7 +1800,7 @@ package body KeyManager_Module is
         and then Children (Ed.Model, Iter) = Null_Iter
       then
          Bind_Default_Key_Internal
-           (Ed.Bindings,
+           (Ed.Bindings.all,
             Action            => Get_String (Ed.Model, Iter, Action_Column),
             Key               => "",
             Save_In_Keys_XML  => True,
@@ -1934,6 +2012,8 @@ package body KeyManager_Module is
 
    begin
       Editor := new Keys_Editor_Record;
+      Editor.Bindings := new Key_Htable.HTable;
+
       Initialize
         (Editor,
          Title  => -"Key shortcuts",
@@ -1943,8 +2023,8 @@ package body KeyManager_Module is
       Editor.Kernel  := Kernel;
 
       Clone
-        (From => Keymanager_Module.Key_Manager.Table,
-         To   => Editor.Bindings);
+        (From => Keymanager_Module.Key_Manager.Table.all,
+         To   => Editor.Bindings.all);
 
       Gtk_New_Vbox (Vbox, Homogeneous => False);
       Pack_Start (Get_Vbox (Editor), Vbox, Expand => True, Fill => True);
@@ -2086,7 +2166,8 @@ package body KeyManager_Module is
          Save_Editor (Editor);
       end if;
 
-      Reset (Editor.Bindings);
+      Reset (Editor.Bindings.all);
+      Unchecked_Free (Editor.Bindings);
       Destroy (Editor);
 
    exception
@@ -2403,11 +2484,11 @@ package body KeyManager_Module is
             end if;
 
             Bind_Default_Key_Internal
-              (Keymanager_Module.Key_Manager.Table,
+              (Keymanager_Module.Key_Manager.Table.all,
                Action            => Action,
                Remove_Existing_Shortcuts_For_Action => False,
                Remove_Existing_Actions_For_Shortcut => True,
-               Save_In_Keys_XML  => False,
+               Save_In_Keys_XML  => True,
                Key               => Node.Value.all,
                Update_Menus      => True);
          end;
@@ -2439,10 +2520,12 @@ package body KeyManager_Module is
       --  Remove any other keybinding associated with that action, as well as
       --  any action associated with that key.
       Bind_Default_Key_Internal
-        (Table  => Keymanager_Module.Key_Manager.Table,
+        (Table  => Keymanager_Module.Key_Manager.Table.all,
          Action => Accel_Path (First .. Accel_Path'Last),
          Key                                  => Image (Accel_Key, Accel_Mods),
-         Save_In_Keys_XML  => Keymanager_Module.Key_Manager.Custom_Keys_Loaded,
+         Save_In_Keys_XML  =>
+           (Keymanager_Module.Key_Manager.Custom_Keys_Loaded
+            and then Keymanager_Module.Menus_Created),
          Remove_Existing_Shortcuts_For_Action => True,
          Remove_Existing_Actions_For_Shortcut => True,
          Update_Menus                         => False);
@@ -2464,6 +2547,8 @@ package body KeyManager_Module is
 
       Keymanager_Module := new Keymanager_Module_Record;
       Keymanager_Module.Key_Manager := Manager;
+      Keymanager_Module.Key_Manager.Table := new Key_Htable.HTable;
+
       Register_Module
         (Keymanager_Module, Kernel, "keymanager");
 
@@ -2519,7 +2604,27 @@ package body KeyManager_Module is
             Maximum_Args => 1,
             Handler      => Macro_Command_Handler'Access);
       end if;
+
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "key_manager.preferences_changed");
    end Register_Module;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Keymanager_Module.Menus_Created := True;
+   end Preferences_Changed;
+
+   -----------------------
+   -- Register_Key_Menu --
+   -----------------------
 
    procedure Register_Key_Menu
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
