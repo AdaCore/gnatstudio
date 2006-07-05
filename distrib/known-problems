@@ -11,24 +11,3 @@ Known Problems fixed in GPS 4.1.0
               refresh of the line information in the status bar. You can also
               type some text.
 
-Known Problems fixed in GPS 4.0.0
-
-- F705-018 Xref cache not loaded properly
-  Problem:    If an object directory is not found (for example when using
-              multiple scenario and having one scenario not configured)
-              the Xref cache will not be complete.
-  Workaround: Do not activate the automatic Xref loader.
-
-- F612-025 VCS not passing full pathnames
-  Problem:    When Absolute_Names is set to True the VCS actions are not
-              receiving the full pathname for the file to handle.
-  Workaround: No known workaround
-
-- F612-010 Line number not refreshed after "Go to line"
-  Problem:    If you change the current line in editor with the "Go to line"
-              dialog, the line number is not refreshed in the editor's status
-              bar until you move the cursor
-  Workaround: Move the cursor one character to the left or right to force a
-              refresh
-
-[...]
