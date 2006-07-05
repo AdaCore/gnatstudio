@@ -144,10 +144,6 @@ F209-010 New port: x86-64 GNU/Linux (2006-03-03)
   GPS has been ported to the x86-64 GNU/Linux platform, taking full
   advantage of the 64 bit memory addressing and ABI.
 
-F209-003 New port: powerpc AIX (2006-03-08)
-
-  GPS has been ported to the powerpc AIX platform version >= 5.1.
-
 F128-002 VCS supports directories (2006-02-07)
 
   It is now possible to add, remove directories via the VCS contextual
