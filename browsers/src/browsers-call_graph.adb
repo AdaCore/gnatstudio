@@ -1499,7 +1499,7 @@ package body Browsers.Call_Graph is
 
       elsif Command = "calls" then
          --  The following unchecked_access is safe since
-         --  Examine_Ancestors_Call_Graph is called synchronously
+         --  Examine_Entity_Call_Graph is called synchronously
          User_Data := new Add_To_List_User_Data;
          User_Data.Data := Data'Unchecked_Access;
          User_Data.Use_Parent_For_Key := False;
