@@ -1506,7 +1506,7 @@ package body ALI_Parser is
    is
       --  The separator character depends on the file system ('$' in most
       --  cases, '~' on VMS).
-      Char      : constant Character := Multi_Unit_Index_Char
+      Char     : constant Character := Multi_Unit_Index_Char
         (Get_Filesystem (Get_Nickname (Build_Server)));
 
       P        : Project_Type := Project;
@@ -1534,55 +1534,57 @@ package body ALI_Parser is
          declare
             Path : constant String := Object_Path (P, False);
          begin
-            Open (Dir, Path);
-            loop
-               Read (Dir, Filename, Last);
-               exit when Last < Filename'First;
+            if Is_Directory (Path) then
+               Open (Dir, Path);
+               loop
+                  Read (Dir, Filename, Last);
+                  exit when Last < Filename'First;
 
-               if Last > ALI_Ext'Length
-                 and then Filename (Last - ALI_Ext'Length + 1 .. Last) =
-                 ALI_Ext
-               then
-                  --  If we have a '~' followed by a digit, we likely are
-                  --  seeing a multi-unit source file ALI, so parse it anyway.
-                  --  We need to test for the digit afterward, otherwise we
-                  --  would end up reloading all a~*.ali files from the runtime
-                  --  which is too expensive.
-
-                  Index := Last - ALI_Ext'Length;
-                  while Index > Filename'First
-                    and then Filename (Index) /= Char
-                  loop
-                     Index := Index - 1;
-                  end loop;
-
-                  if Index > Filename'First
-                    and then Is_Digit (Filename (Index + 1))
+                  if Last > ALI_Ext'Length
+                    and then Filename (Last - ALI_Ext'Length + 1 .. Last) =
+                    ALI_Ext
                   then
-                     F := Create
-                       (Name_As_Directory (Path)
-                        & Filename (Filename'First .. Last));
-                     LI := Get_Or_Create
-                       (Db        => Handler.Db,
-                        File      => F,
-                        Project   => P);
+                     --  If we have a '~' followed by a digit, we likely are
+                     --  seeing a multi-unit source file ALI, so parse it
+                     --  anyway. We need to test for the digit afterward,
+                     --  otherwise we would end up reloading all a~*.ali files
+                     --  from the runtime which is too expensive.
 
-                     --  Do not reset ALI below, since we are in the process of
-                     --  parsing an ALI file, and need to parse a second one.
-                     --  We still need to keep the data for the first in
-                     --  memory, though
-                     if LI /= null
-                       and then Update_ALI (Handler, LI, Reset_ALI => False)
-                       and then Check_LI_And_Source (LI, Source_Filename)
+                     Index := Last - ALI_Ext'Length;
+                     while Index > Filename'First
+                       and then Filename (Index) /= Char
+                     loop
+                        Index := Index - 1;
+                     end loop;
+
+                     if Index > Filename'First
+                       and then Is_Digit (Filename (Index + 1))
                      then
-                        return F;
+                        F := Create
+                          (Name_As_Directory (Path)
+                           & Filename (Filename'First .. Last));
+                        LI := Get_Or_Create
+                          (Db        => Handler.Db,
+                           File      => F,
+                           Project   => P);
+
+                        --  Do not reset ALI below, since we are in the process
+                        --  of parsing an ALI file, and need to parse a second
+                        --  one. We still need to keep the data for the first
+                        --  in memory, though.
+                        if LI /= null
+                          and then Update_ALI (Handler, LI, Reset_ALI => False)
+                          and then Check_LI_And_Source (LI, Source_Filename)
+                        then
+                           return F;
+                        end if;
                      end if;
                   end if;
-               end if;
 
-            end loop;
+               end loop;
 
-            Close (Dir);
+               Close (Dir);
+            end if;
          end;
 
          --  Check other projects earlier in the extending tree
