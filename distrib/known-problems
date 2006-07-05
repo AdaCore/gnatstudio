@@ -13,6 +13,12 @@ Known Problems fixed in GPS 4.1.0
 
 Known Problems fixed in GPS 4.0.0
 
+- F705-018 Xref cache not loaded properly
+  Problem:    If an object directory is not found (for example when using
+              multiple scenario and having one scenario not configured)
+              the Xref cache will not be complete.
+  Workaround: Do not activate the automatic Xref loader.
+
 - F612-025 VCS not passing full pathnames
   Problem:    When Absolute_Names is set to True the VCS actions are not
               receiving the full pathname for the file to handle.
