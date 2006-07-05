@@ -8556,13 +8556,6 @@ Unix systems), you can use an external terminal command, e.g:
 xterm -geo 80x50 -exe vi +%l %f
 @end smallexample
 
-On Windows, it may be necessary to use cmd.exe to invoke the external
-editor.  For example, to invoke Windows Notepad as a custom editor, use:
-
-@smallexample
-cmd /c notepad.exe %f
-@end smallexample
-
 The following substitutions are provided:
 @table @code
 @item %l
@@ -9735,15 +9728,15 @@ This defines a command to execute through the system (i.e. a standard Unix or
 Windows command)
 
 Note for Windows users: like under UNIX, scripts can be called
-from custom menu. In order to do that, you must write your script in a
-@file{.bat} or @file{.cmd} file, and call this file using @code{cmd /c}.
-Thus, the @code{external} tag would look like:
+from custom menu. In order to do that, you need to write your script in a
+@file{.bat} or @file{.cmd} file, and call this file as usual.
+The @code{external} tag would e.g. look like:
 
 @smallexample
 <?xml version="1.0" ?>
 <external_example>
   <action name="my_command">
-    <external>cmd /c c:\.gps\my_scripts\my_cmd.cmd</external>
+    <external>c:\.gps\my_scripts\my_cmd.cmd</external>
   </action>
 </external_example>
 @end smallexample
