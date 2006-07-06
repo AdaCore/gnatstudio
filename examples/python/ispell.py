@@ -43,6 +43,7 @@ class Ispell:
          ## Do not display the process in the task manager, since it will run
          ## forever in any case.
          self.proc = GPS.Process ("ispell -S -a", on_exit=self.on_exit, task_manager=False)
+         result = self.proc.expect ("^.*", timeout=2000)
 
       self.proc.send (word + "\n")
       result = self.proc.expect ("^[&#\*\+\?\-].*", timeout=2000)
