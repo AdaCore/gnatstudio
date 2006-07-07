@@ -604,16 +604,30 @@ package body Src_Editor_Buffer is
       Len    : Integer := 0;
       Index  : Integer := 1;
       Output : Basic_Types.String_Access;
-
+      Last   : Editable_Line_Type;
    begin
       for J in A'Range loop
          A (J) := Get_String (Source_Buffer (Buffer), Editable_Line_Type (J));
          Len := Len + A (J).Length;
       end loop;
 
+      --  If we are looking at the last line, and the last line happens to
+      --  be an empty line, ignore it, since we are already adding the last
+      --  ASCII.LF of the file as part of the loop below.
+
+      if End_Line = Buffer.Last_Editable_Line
+        and then A (End_Line).Length = 0
+      then
+         Len := Len - 1;
+         Last := A'Last - 1;
+         Free (A (A'Last));
+      else
+         Last := A'Last;
+      end if;
+
       Output := new String (1 .. Len + A'Length);
 
-      for J in A'First .. A'Last loop
+      for J in A'First .. Last loop
          Len := A (J).Length;
 
          if Len /= 0 then
