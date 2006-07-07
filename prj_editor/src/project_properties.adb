@@ -1290,7 +1290,6 @@ package body Project_Properties is
             Next (Editor.Model, Iter);
          end;
       end loop;
-      Project_Changed := True;
    end Generate_Project;
 
    ------------------------------------
