@@ -2448,7 +2448,7 @@ package body KeyManager_Module is
                Action            => Action,
                Remove_Existing_Shortcuts_For_Action => False,
                Remove_Existing_Actions_For_Shortcut => True,
-               Save_In_Keys_XML  => True,
+               Save_In_Keys_XML  => False,
                Key               => Node.Value.all,
                Update_Menus      => True);
          end;
