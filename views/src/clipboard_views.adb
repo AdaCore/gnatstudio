@@ -376,29 +376,19 @@ package body Clipboard_Views is
                Set (Model, Iter, 0, C_Proxy'(null));
             end if;
 
+            Start_Truncated := False;
+            End_Truncated := False;
+
             --  Show only the first line of the selection
             First := Selection (S)'First;
             while First <= Selection (S)'Last
               and then Is_Blank (Selection (S)(First))
             loop
+               Start_Truncated := True;
                First := First + 1;
             end loop;
 
-            if First > Selection (S)'Last then
-               First := Selection (S)'Last;
-            end if;
-
-            Start_Truncated := False;
-            End_Truncated := False;
-
-            Index := Selection (S)'First;
-            --  Search the first non-whitespace character
-            while Index <= Selection (S)'Last
-              and then Is_Blank (Selection (S)(Index))
-            loop
-               Start_Truncated := True;
-               Index := Index + 1;
-            end loop;
+            Index := First;
 
             --  and only display the first line starting from there
             while Index <= Selection (S)'Last loop
@@ -410,7 +400,12 @@ package body Clipboard_Views is
                Index := Index + 1;
             end loop;
 
-            Result := To_Unbounded_String (Selection (S) (First .. Index - 1));
+            if First > Selection (S)'Last then
+               Result := Null_Unbounded_String;
+            else
+               Result :=
+                 To_Unbounded_String (Selection (S) (First .. Index - 1));
+            end if;
 
             if Start_Truncated or End_Truncated then
                Unichar_To_UTF8 (8230, Ellipsis, Ellipsis_Last);
