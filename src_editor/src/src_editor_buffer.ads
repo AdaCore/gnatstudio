@@ -367,9 +367,6 @@ package Src_Editor_Buffer is
       End_Line     : Gint;
       End_Column   : Gint);
    --  Select the given region.
-   --  Both start and end positions must be verified before calling this
-   --  procedure. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
    --  Takes Tabs into account when Expand_Tabs = True.
 
    procedure Select_Region
