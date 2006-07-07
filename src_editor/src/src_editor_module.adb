@@ -2335,11 +2335,23 @@ package body Src_Editor_Module is
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
-         Set_Language
-           (Buffer, Get_Language_By_Name
-              (Get_Language_Handler (Kernel),
-               Get_Text (Get_Entry (Lang))));
-         Set_Charset (Buffer, Get_Text (Get_Entry (Charset)));
+         declare
+            Text   : constant String := Get_Text (Get_Entry (Lang));
+            Header : constant String := -"(From project) ";
+            Index  : Natural := Text'First;
+         begin
+            if Text'Length >= Header'Length
+              and then Text (Index .. Index + Header'Length - 1) = Header
+            then
+               Index := Index + Header'Length;
+            end if;
+
+            Set_Language
+              (Buffer, Get_Language_By_Name
+                 (Get_Language_Handler (Kernel),
+                  Text (Index .. Text'Last)));
+            Set_Charset (Buffer, Get_Text (Get_Entry (Charset)));
+         end;
       end if;
 
       Destroy (Dialog);
