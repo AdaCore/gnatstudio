@@ -2506,15 +2506,15 @@ package body GVD_Module is
    begin
       GPS.Main_Window.Debug.Preferences_Changed (Top);
 
-      if GVD_Module_ID.Initialized then
-         Prev   := GVD_Module_ID.Show_Lines_With_Code;
-         GVD_Module_ID.Show_Lines_With_Code :=
-           Get_Pref (Editor_Show_Line_With_Code);
+      Prev   := GVD_Module_ID.Show_Lines_With_Code;
+      GVD_Module_ID.Show_Lines_With_Code :=
+        Get_Pref (Editor_Show_Line_With_Code);
 
-         if Prev /= GVD_Module_ID.Show_Lines_With_Code then
-            Remove_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
-            Create_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
-         end if;
+      if GVD_Module_ID.Initialized
+        and then Prev /= GVD_Module_ID.Show_Lines_With_Code
+      then
+         Remove_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
+         Create_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
       end if;
 
       Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));
