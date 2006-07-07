@@ -356,7 +356,7 @@ Special colors are used in the data display: blue for pointers that can be
 dereferenced by a double-click (double click on @code{T.val}); red for fields
 that have been modified since last step.
 
-In the contextual menu that pops up when you hold the mouse over @code{T}.
+In the contextual menu that pops up when you right-click on @code{T},
 select @code{Debug->View memory at address of T}: a memory view is opened.
 Use the @code{up} and @code{down} arrows on the right to visit memory.
 
