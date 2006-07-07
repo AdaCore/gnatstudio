@@ -282,7 +282,7 @@ GPS gives access to built-in file editing; HTML based help system;
 complete compile/build/run cycle; intelligent source navigation;
 project management; general graph technology giving access to many different
 browsers such as source dependency, project dependency, call graphs,
-entitiy view, etc@dots{}; fully integrated visual debugger; generic
+entity view, etc@dots{}; fully integrated visual debugger; generic
 version control system, providing access to CVS, Subversion, ClearCase,
 and any other via xml plug-ins; many other tools such as a visual comparison,
 automatic generation of files, source reformatting.
