@@ -367,7 +367,7 @@ package body Src_Editor_Box.Tooltips is
             Has_Info      : Boolean := False;
 
          begin
-            --  Catenate the tooltip information for all columns
+            --  Concatenate the tooltip information for all columns
 
             if Line_Info /= null then
                for K in Line_Info'Range loop
