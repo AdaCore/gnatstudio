@@ -395,12 +395,6 @@ package body KeyManager_Module is
    --  Selects whether a given row should be visible in the key shortcuts
    --  editor.
 
-   function Return_True
-     (Model : access Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk_Tree_Iter;
-      Data  : Keys_Editor) return Boolean;
-   --  Always return True. Function used to disable the tree filter.
-
    function Set
      (Model      : Gtk_Tree_Store;
       Parent     : Gtk_Tree_Iter;
@@ -886,7 +880,7 @@ package body KeyManager_Module is
             if Keymap = null then
                Bind_Internal (Table, Partial_Key, Modif);
 
-               if Update_Menus then
+               if Update_Menus and then Action (Action'First) = '/' then
                   --  Guess the accel path from the menu
                   Change_Entry
                     ("<gps>" & Action,
@@ -1370,7 +1364,7 @@ package body KeyManager_Module is
       --  If we haven't found an action, fallback on the default gtk+
       --  mechanism.
 
-      if To_String (Result) = "" then
+      if To_String (Result) = "" and then Action (Action'First) = '/' then
          Lookup_Entry ("<gps>" & Action, Key, Found);
 
          if Found then
@@ -1485,21 +1479,11 @@ package body KeyManager_Module is
          end if;
       end Process_Menu_Binding;
 
-      Sort_Id     : constant Gint := Freeze_Sort (Editor.Model);
       Parent      : Gtk_Tree_Iter;
       Action      : Action_Record_Access;
       Action_Iter : Action_Iterator := Start (Editor.Kernel);
    begin
       Clear (Editor.Model);
-
-      Keys_Editor_Visible_Funcs.Set_Visible_Func
-        (Editor.Filter, Return_True'Access, Keys_Editor (Editor));
-      --  Disable the tree filter when filling the tree view.
-      --  The tree filtering using Set_Visible_Func is incompatible with
-      --  the GtkAda-specific Freeze_Sort/Thaw_Sort mechanisms.
-      --  ??? This should be documented in GtkAda. We also need to investigate
-      --  whether there is a better API for freezing/thawing the sort in the
-      --  most recent versions of Gtk+.
 
       if not Flat_List then
          Menu_Iter := Set (Editor.Model, Null_Iter, -Menu_Context_Name);
@@ -1543,12 +1527,7 @@ package body KeyManager_Module is
          Next (Editor.Kernel, Action_Iter);
       end loop;
 
-      Keys_Editor_Visible_Funcs.Set_Visible_Func
-        (Editor.Filter, Action_Is_Visible'Access, Keys_Editor (Editor));
-
       Refilter (Editor.Filter);
-
-      Thaw_Sort (Editor.Model, Sort_Id);
    end Fill_Editor;
 
    -----------------
@@ -1947,25 +1926,6 @@ package body KeyManager_Module is
    begin
       Refilter (Keys_Editor (Editor).Filter);
    end On_Toggle_Shortcuts_Only;
-
-   -----------------
-   -- Return_True --
-   -----------------
-
-   function Return_True
-     (Model : access Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk_Tree_Iter;
-      Data  : Keys_Editor) return Boolean
-   is
-      pragma Unreferenced (Model, Iter, Data);
-   begin
-      return True;
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-         return True;
-   end Return_True;
 
    -----------------------
    -- Action_Is_Visible --
