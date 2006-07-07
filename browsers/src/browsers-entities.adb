@@ -1350,6 +1350,9 @@ package body Browsers.Entities is
       Set_Parents_Shown (It, True);
       Redraw_Title_Bar (Item);
 
+      Layout (Type_Browser (Get_Browser (Item)), Force => False);
+      Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
+
    exception
       when E : others =>
          Trace (Exception_Handle,
