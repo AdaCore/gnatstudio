@@ -969,7 +969,27 @@ package body Switches_Editors is
       Output : Argument_List_Access;
       Found  : Boolean;
       S      : GNAT.OS_Lib.String_Access;
-      Exp    : Argument_List_Access;
+
+      procedure Expand_Or_Append (Switch : String);
+      --  Add either switch or its expansion to Output
+
+      procedure Expand_Or_Append (Switch : String) is
+         Exp   : Argument_List_Access;
+         Found : Boolean := False;
+      begin
+         for C in Page.Expansion_Switches'Range loop
+            Exp := Page.Expansion_Switches (C);
+            if Switch = Exp (Exp'First).all then
+               Append (Output, Clone (Exp (Exp'First + 1 .. Exp'Last)));
+               Found := True;
+               exit;
+            end if;
+         end loop;
+
+         if not Found then
+            Append (Output, (1 => new String'(Switch)));
+         end if;
+      end Expand_Or_Append;
 
    begin
       for Index in Switches'Range loop
@@ -988,9 +1008,9 @@ package body Switches_Editors is
                --  If the switch wasn't already as simple as possible, or
                --  wasn't recognized at all.
                if Arr'Length > 1 then
-                  Append (Output, Clone (Arr));
-                  S := Switches (Index);
-                  Free (S);
+                  for A in Arr'Range loop
+                     Expand_Or_Append (Arr (A).all);
+                  end loop;
                   Found := True;
                end if;
             end;
@@ -998,21 +1018,11 @@ package body Switches_Editors is
 
          --  Check expansion switches with no parameter, if any
          if not Found then
-            for C in Page.Expansion_Switches'Range loop
-               Exp := Page.Expansion_Switches (C);
-               if Switches (Index).all = Exp (Exp'First).all then
-                  Append (Output, Clone (Exp (Exp'First + 1 .. Exp'Last)));
-                  Found := True;
-                  S := Switches (Index);
-                  Free (S);
-                  exit;
-               end if;
-            end loop;
+            Expand_Or_Append (Switches (Index).all);
          end if;
 
-         if not Found then
-            Append (Output, (1 => Switches (Index)));
-         end if;
+         S := Switches (Index);
+         Free (S);
       end loop;
 
       if Output = null then
@@ -1963,6 +1973,11 @@ package body Switches_Editors is
                       (Page, To_Argument_List (Get_Tree (Project), Value));
                begin
                   Is_Default_Value := Is_Equal (Default_Args, Args);
+
+                  if not Is_Default_Value and then Active (Me) then
+                     Trace (Me, "Switches are not the default value");
+                  end if;
+
                   Free (Default_Args);
                end;
 
@@ -1986,6 +2001,11 @@ package body Switches_Editors is
                          (Page, To_Argument_List (Get_Tree (Project), Value));
                   begin
                      Is_Default_Value := Is_Equal (Default_Args, Args);
+
+                     if not Is_Default_Value and then Active (Me) then
+                        Trace (Me, "Switches changed by user");
+                     end if;
+
                      Free (Default_Args);
                   end;
                end if;
@@ -2017,6 +2037,7 @@ package body Switches_Editors is
                         Values             => Args,
                         Attribute_Index    => Base_Name (File_Name),
                         Prepend            => False);
+                     Changed := True;
                   else
                      Trace (Me, "Removing switches for "
                             & Base_Name (File_Name));
@@ -2026,6 +2047,7 @@ package body Switches_Editors is
                         Attribute          =>
                           Build (Page.Pkg.all, Get_String (Name_Switches)),
                         Attribute_Index    => Base_Name (File_Name));
+                     Changed := True;
                   end if;
 
                elsif Args'Length /= 0 then
@@ -2039,6 +2061,7 @@ package body Switches_Editors is
                      Values             => Args,
                      Attribute_Index    => Page.Attribute_Index.all,
                      Prepend            => False);
+                  Changed := True;
 
                else
                   Trace (Me, "Removing default switches for "
@@ -2049,9 +2072,8 @@ package body Switches_Editors is
                      Attribute          =>
                       Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
                      Attribute_Index    => Page.Attribute_Index.all);
+                  Changed := True;
                end if;
-
-               Changed := True;
             end if;
 
             Free (Args);
