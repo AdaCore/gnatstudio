@@ -3404,7 +3404,7 @@ package body Projects.Editor is
       end Change_Directory;
 
       D           : constant String :=
-        Full_Name (New_Path).all
+        Name_As_Directory (Full_Name (New_Path).all)
         & To_File_Name (New_Name) & Project_File_Extension;
       Full_Path   : Name_Id := No_Name;
       Name        : constant Name_Id := Get_String (New_Name);
