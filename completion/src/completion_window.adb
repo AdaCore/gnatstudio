@@ -1030,6 +1030,12 @@ package body Completion_Window is
       if Root_Width - (X + Width + 4) > Notes_Window_Width then
          Set_UPosition (Window.Notes_Window, X + Width, Y);
       else
+         --  Make sure the Notes window doesn't overlap the tree view.
+         if X <= Notes_Window_Width then
+            Notes_Window_Width := X - 2;
+            Set_Default_Size (Window.Notes_Window, Notes_Window_Width, Height);
+         end if;
+
          Set_UPosition (Window.Notes_Window, X - Notes_Window_Width, Y);
       end if;
 
