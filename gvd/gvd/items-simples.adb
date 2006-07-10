@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -37,6 +37,9 @@ package body Items.Simples is
    --  Special characters inserted at the beginning of each line for the
    --  value of Debugger_Output_Type, that indicate whether the following line
    --  should be displayed in red or not.
+
+   Null_Value_Str : constant String := "<null>";
+   --  The string representation of a null value for the user.
 
    function Quote_Non_Printable_Characters (Str : String) return String;
    --  Protect non-printable characters in the string
@@ -122,7 +125,7 @@ package body Items.Simples is
       pragma Unreferenced (Indent);
    begin
       if Value.Value = null then
-         Put ("{Simple: <null>}");
+         Put ("{Simple: " & Null_Value_Str & "}");
       else
          Put ("{Simple: " & Value.Value.all & "}");
       end if;
@@ -270,7 +273,12 @@ package body Items.Simples is
       end if;
 
       if Show_Value (Mode) then
-         Set_Text (Context.Text_Layout, Item.Value.all);
+         if Item.Value = null then
+            Set_Text (Context.Text_Layout, Null_Value_Str);
+         else
+            Set_Text (Context.Text_Layout, Item.Value.all);
+         end if;
+
          Get_Pixel_Size (Context.Text_Layout, W, H);
          Item.Width := Gint'Max (W, Item.Width);
          Item.Height := Item.Height + H;
@@ -427,7 +435,7 @@ package body Items.Simples is
       Put ("{Access ");
 
       if Value.Value = null then
-         Put ("<null>)");
+         Put (Null_Value_Str & ")");
       else
          Put (Value.Value.all & "}");
       end if;
@@ -477,7 +485,7 @@ package body Items.Simples is
       pragma Unreferenced (Indent);
    begin
       if Value.Value = null then
-         Put ("{Debugger_Type: <null>}");
+         Put ("{Debugger_Type: " & Null_Value_Str & "}");
       else
          Put ("{Debugger_Type: " & Value.Value.all & "}");
       end if;
