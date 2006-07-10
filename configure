@@ -1372,14 +1372,14 @@ test -n "$target_alias" &&
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
 
-GPS_VERSION=4.0.0
+GPS_VERSION=4.1.0w
 STRIP_CR=False
 CAN_OUTPUT=True
 TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 EXEC_COMMAND="sh -c"
 DEFAULT_FONT="sans 9"
-DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
+DEFAULT_PS='sh -c """"""ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
 PRINT_CMD="lp"
 OPAQUE_MDI=False
 HOST_TYPE=Unix
