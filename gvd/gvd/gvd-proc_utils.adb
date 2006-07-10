@@ -117,7 +117,8 @@ package body GVD.Proc_Utils is
       Handle := new Process_Record;
 
       --  ??? Get_Pref is not fine here, as this can be a remote call
-      Args := Argument_String_To_List (Get_Pref (List_Processes));
+      Args := Argument_String_To_List_With_Triple_Quotes
+        (Get_Pref (List_Processes));
       Spawn (Kernel,
              Args.all,
              Debug_Server,
