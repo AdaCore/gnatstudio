@@ -500,10 +500,7 @@ GPS will wait until the command completes to return the control to the caller,
 whether you execute a shell command, or an external process.
 
 The action's name can start with a '/', and be a full menu path. As a result,
-the menu itself will be executed, just as if the user had pressed it. Note that
-most GPS menus execute asynchronously, and therefore execute_action will return
-control immediately even though the command has not completed (this is the
-case for instance when starting a compilation).
+the menu itself will be executed, just as if the user had pressed it.
 
 The extra arguments must be strings, and are passed to the action, which can
 use them through $1, $2,...
@@ -517,6 +514,14 @@ this action.
         GPS.execute_action (action="Split vertically")
         will split the current window vertically
      </example>
+     <see_also name="GPS.execute_asynchronous_action" />
+  </shell_doc>
+
+  <shell_doc name="GPS.execute_asynchronous_action">
+     <param name="action">Name of the action to execute</param>
+     <param name="...">Any number of string parameters</param>
+     <description>This command is similar to GPS.execute_action. However, commands that execute external applications or menus are executed asynchronously: GPS.execute_asynchronous_action will immediately return, although the external application might not have completed its execution</description>
+     <see_also name="GPS.execute_action" />
   </shell_doc>
 
   <shell_doc name="GPS.parse_xml">
