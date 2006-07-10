@@ -54,7 +54,6 @@ with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 
 package body GVD.Assembly_View is
-
    package Assembly_View_Cb is new Callback (GVD_Assembly_View_Record);
    package Assembly_View_Event_Cb is
      new Return_Callback (GVD_Assembly_View_Record, Boolean);
@@ -79,9 +78,9 @@ package body GVD.Assembly_View is
       Iter          : out Gtk_Text_Iter;
       Found         : out Boolean);
    --  Return an iterator pointing at the beginning of the Address in the
-   --  text buffer. Addresses are search at the begginning of lines in the
+   --  text buffer. Addresses are searched at the begginning of lines in the
    --  buffer.
-   --  Found tells whether the address was found.
+   --  Found indicates whether the address was found.
 
    function Address_From_Line
      (Assembly_View : GVD_Assembly_View;
@@ -450,20 +449,23 @@ package body GVD.Assembly_View is
       if Assembly_View.Source_Line_Start /= Invalid_Address
         and then Assembly_View.Source_Line_End /= Invalid_Address
       then
-         while not Found loop
-            Iter_From_Address
-              (Assembly_View, Assembly_View.Source_Line_Start, Start_Iter,
-               Found);
+         Iter_From_Address
+           (Assembly_View, Assembly_View.Source_Line_Start, Start_Iter,
+            Found);
 
+         if Found then
             Iter_From_Address
               (Assembly_View, Assembly_View.Source_Line_End, End_Iter, Found);
-         end loop;
+         end if;
 
          --  Highlight the new range
 
-         Begin_User_Action (Buffer);
-         Apply_Tag (Buffer, Assembly_View.Highlight_Tag, Start_Iter, End_Iter);
-         End_User_Action (Buffer);
+         if Found then
+            Begin_User_Action (Buffer);
+            Apply_Tag
+              (Buffer, Assembly_View.Highlight_Tag, Start_Iter, End_Iter);
+            End_User_Action (Buffer);
+         end if;
       end if;
    end Highlight_Address_Range;
 
