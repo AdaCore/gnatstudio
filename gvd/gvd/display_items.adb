@@ -23,7 +23,6 @@ with Gdk.Drawable;      use Gdk.Drawable;
 with Gdk.GC;            use Gdk.GC;
 with Gdk.Pixmap;        use Gdk.Pixmap;
 with Gdk.Rectangle;     use Gdk.Rectangle;
-with Gdk.Window;        use Gdk.Window;
 with Gdk.Event;         use Gdk.Event;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Menu;          use Gtk.Menu;
