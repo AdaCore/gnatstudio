@@ -879,7 +879,9 @@ package body GPS.Kernel.Scripts is
             end if;
          end;
 
-      elsif Command = "execute_action" then
+      elsif Command = "execute_action"
+        or else Command = "execute_asynchronous_action"
+      then
          Name_Parameters (Data, Exec_Action_Parameters);
 
          declare
@@ -889,7 +891,7 @@ package body GPS.Kernel.Scripts is
               Get_Current_Context (Kernel);
             Custom      : Command_Access;
             Args        : String_List_Access;
-            Synchronous : constant Boolean := True;
+            Synchronous : constant Boolean := Command = "execute_action";
          begin
             if Action = null then
                Set_Error_Msg (Data, -"No such registered action");
@@ -1853,6 +1855,11 @@ package body GPS.Kernel.Scripts is
          Handler => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "execute_action",
+         Minimum_Args => 1,
+         Maximum_Args => Integer'Last,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "execute_asynchronous_action",
          Minimum_Args => 1,
          Maximum_Args => Integer'Last,
          Handler      => Default_Command_Handler'Access);
