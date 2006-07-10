@@ -4640,6 +4640,7 @@ package body Src_Editor_Buffer is
       Offset_Line   : Editable_Line_Type := 0;
       Block         : Block_Record;
       Char          : Gunichar;
+      Len           : Integer;
 
       procedure Local_Format_Buffer
         (Lang          : Language_Access;
@@ -4876,9 +4877,21 @@ package body Src_Editor_Buffer is
          else
             C_Str := Get_Slice (Buffer, 0, 0, Line, Get_Line_Offset (End_Pos));
             Slice := To_Unchecked_String (C_Str);
+            Len   := Integer (Strlen (C_Str));
+
+            if Is_End (End_Pos) then
+               --  Special case for end of buffer: we won't get an extra
+               --  LF in this case, so need to add it manually.
+               --  Note that it is fine to access Slice (Len + 1), since
+               --  this is the location of the terminating ASCII.NUL character.
+
+               Len := Len + 1;
+               Slice (Len) := ASCII.LF;
+            end if;
+
             Local_Format_Buffer
               (Lang,
-               Slice (1 .. Integer (Strlen (C_Str))),
+               Slice (1 .. Len),
                Replace_Text'Unrestricted_Access,
                Integer (Current_Line + 1),
                Integer (Line + 1),
