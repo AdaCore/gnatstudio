@@ -70,7 +70,7 @@ package Boyer_Moore is
 
    type Pattern is private;
 
-   Max_Pattern_Length : constant := 127;
+   Max_Pattern_Length : constant := Integer'Last;
    --  Maximal length for patterns that can be searched.
    --  Changing this means that patterns will simply use more space.
 
