@@ -1133,7 +1133,12 @@ package body GPS.Kernel.Preferences is
       List_Processes := Param_Spec_String (Gnew_String
         (Name     => "Helpers-List-Processes",
          Nick     => -"List processes",
-         Blurb    => -"Command used to list processes running on the machine",
+         Blurb    =>
+         -("Command used to list processes running on the machine." & ASCII.LF
+           & "On Unix machines, you should surround the command with"
+           & " triple-quotes similar to what python uses, and execute the"
+           & " command through sh -c so that environment variables and"
+           & " output redirection are properly executed"),
          Default  => Config.Default_Ps));
       Register_Property
         (Kernel.Preferences, Param_Spec (List_Processes), -"External Command");
