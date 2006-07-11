@@ -139,9 +139,6 @@ package body KeyManager_Module is
    --  itself, and should therefore be saved on exit. It is false for values
    --  read from the custom files.
 
-   function Next (Key : Key_Description_List) return Key_Description_List;
-   --  Return the next element in the list
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Key_Description, Key_Description_List);
 
@@ -613,15 +610,6 @@ package body KeyManager_Module is
    end General_Event_Handler;
 
    ----------
-   -- Next --
-   ----------
-
-   function Next (Key : Key_Description_List) return Key_Description_List is
-   begin
-      return Key.Next;
-   end Next;
-
-   ----------
    -- Hash --
    ----------
 
@@ -661,7 +649,7 @@ package body KeyManager_Module is
       N       : Key_Description_List;
    begin
       while Current /= null loop
-         N := Next (Current);
+         N := Current.Next;
          Free_Non_Recursive (Current);
          Current := N;
       end loop;
@@ -697,7 +685,7 @@ package body KeyManager_Module is
          end if;
 
          Tmp_To.Changed := Tmp.Changed;
-         Tmp := Next (Tmp);
+         Tmp := Tmp.Next;
       end loop;
    end Clone;
 
@@ -763,7 +751,7 @@ package body KeyManager_Module is
                if Tmp.Action /= null and then Tmp.Action.all = Action then
                   return;
                end if;
-               Tmp := Next (Tmp);
+               Tmp := Tmp.Next;
             end loop;
          end if;
 
@@ -806,11 +794,11 @@ package body KeyManager_Module is
                if List.Keymap /= null then
                   Remove_In_Keymap (List.Keymap.Table);
                   Previous := List;
-                  List := Next (List);
+                  List := List.Next;
 
                elsif List.Action /= null and then List.Action.all = Action then
                   if Previous = null then
-                     if Next (List) /= null then
+                     if List.Next /= null then
                         --  Remove list from the list of keybindings, without
                         --  modifying the htable itself to avoid invalidating
                         --  the iterator
@@ -821,18 +809,18 @@ package body KeyManager_Module is
                      else
                         --  There was a single element with this key binding:
                         Free (List.Action);
-                        List.Next := null;
+                        List := List.Next;
                      end if;
 
                   else
-                     Previous.Next := Next (List);
+                     Previous.Next := List.Next;
                      Free_Non_Recursive (List);
-                     List := Next (Previous);
+                     List := Previous.Next;
                   end if;
 
                else
                   Previous := List;
-                  List := Next (List);
+                  List := List.Next;
                end if;
             end loop;
 
@@ -932,21 +920,20 @@ package body KeyManager_Module is
       else
          Binding2 := Binding;
          while Binding2 /= null
-           and then Binding2.Action /= null
+           and then Binding2.Keymap = null
          loop
             Binding  := Binding2;  --  Last value where Next /= null
-            Binding2 := Next (Binding2);
+            Binding2 := Binding2.Next;
          end loop;
 
          --  If there is no secondary keymap yet, create one
          if Binding2 = null then
             Keymap   := new Keymap_Record;
-            Binding2 := new Key_Description'
+            Binding.Next := new Key_Description'
               (Action  => null,
                Changed => False,
                Keymap  => Keymap,
                Next    => null);
-            Binding.Next := Binding2;
          else
             Keymap := Binding2.Keymap;
          end if;
@@ -1051,7 +1038,7 @@ package body KeyManager_Module is
                end if;
             end if;
 
-            Binding := Next (Binding);
+            Binding := Binding.Next;
          end loop;
       end if;
 
@@ -1118,7 +1105,7 @@ package body KeyManager_Module is
                   end if;
                end if;
 
-               Binding := Next (Binding);
+               Binding := Binding.Next;
             end loop;
 
             Get_Next (Table, Iter);
@@ -1349,7 +1336,7 @@ package body KeyManager_Module is
                     & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier);
                end if;
 
-               Binding := Next (Binding);
+               Binding := Binding.Next;
             end loop;
 
             Get_Next (Table, Iter);
@@ -2461,6 +2448,10 @@ package body KeyManager_Module is
                raise Assert_Failure;
             end if;
 
+            --  We want to allow several XML file to set different key bindings
+            --  for the same action, so we do not remove existing shortcuts
+            --  here.
+            Handler_Block (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
             Bind_Default_Key_Internal
               (Keymanager_Module.Key_Manager.Table.all,
                Action            => Action,
@@ -2469,6 +2460,8 @@ package body KeyManager_Module is
                Save_In_Keys_XML  => False,
                Key               => Node.Value.all,
                Update_Menus      => True);
+            Handler_Unblock
+              (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
          end;
       end if;
    end Customize;
