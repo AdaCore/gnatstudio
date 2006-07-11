@@ -51,6 +51,7 @@ with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Event_Box;           use Gtk.Event_Box;
 with Gtk.Frame;               use Gtk.Frame;
+with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Hbutton_Box;         use Gtk.Hbutton_Box;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Main;                use Gtk.Main;
@@ -232,6 +233,7 @@ package body KeyManager_Module is
 
    type Keymanager_Module_Record is new Module_ID_Record with record
       Key_Manager   : Key_Manager_Access;
+      Accel_Map_Id  : Handler_Id;
       Menus_Created : Boolean := False;
       --  Indicates whether the initial set of menus has been created.
    end record;
@@ -1561,6 +1563,7 @@ package body KeyManager_Module is
          Iter    : Key_Htable.Iterator;
          Binding : Key_Description_List;
          Found   : Boolean := False;
+
       begin
          while First <= Accel_Path'Last
            and then Accel_Path (First - 1) /= '>'
@@ -1579,6 +1582,7 @@ package body KeyManager_Module is
 
             while Binding /= null loop
                if Binding.Action /= null
+                 and then Binding.Changed
                  and then Binding.Action.all =
                    Accel_Path (First .. Accel_Path'Last)
                then
@@ -1611,8 +1615,10 @@ package body KeyManager_Module is
       Clone (From => Editor.Bindings.all, To => Handler.Table.all);
 
       --  Update the gtk+ accelerators for the menus to reflect the keybindings
+      Handler_Block (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
       Gtk.Accel_Map.Foreach_Unfiltered
         (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
+      Handler_Unblock (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
    end Save_Editor;
 
    -----------------
@@ -2516,7 +2522,7 @@ package body KeyManager_Module is
         (General_Event_Handler'Access,
          Convert (Kernel_Handle (Kernel)));
 
-      Kernel_Callback.Connect
+      Keymanager_Module.Accel_Map_Id := Kernel_Callback.Connect
         (Gtk.Accel_Map.Get, Gtk.Accel_Map.Signal_Changed,
          On_Accel_Map_Changed'Access, Kernel_Handle (Kernel));
 
