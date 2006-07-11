@@ -367,6 +367,8 @@ package body KeyManager_Module is
       Flat_List          : Gtk_Check_Button;
       Remove_Button      : Gtk_Button;
       Grab_Button        : Gtk_Button;
+
+      Disable_Filtering  : Boolean := False;
    end record;
    type Keys_Editor is access all Keys_Editor_Record'Class;
 
@@ -1488,6 +1490,10 @@ package body KeyManager_Module is
       Action      : Action_Record_Access;
       Action_Iter : Action_Iterator := Start (Editor.Kernel);
    begin
+      --  Disable tree filtering while refreshing the contents of the tree.
+      --  This works around a bug in gtk+.
+      Editor.Disable_Filtering := True;
+
       Clear (Editor.Model);
 
       if not Flat_List then
@@ -1529,8 +1535,11 @@ package body KeyManager_Module is
                   Get (Action_Iter),
                   Default => -Disabled_String));
          end if;
+
          Next (Editor.Kernel, Action_Iter);
       end loop;
+
+      Editor.Disable_Filtering := False;
 
       Refilter (Editor.Filter);
    end Fill_Editor;
@@ -1945,7 +1954,8 @@ package body KeyManager_Module is
       Data  : Keys_Editor) return Boolean
    is
    begin
-      return not Get_Active (Data.With_Shortcut_Only)
+      return Data.Disable_Filtering
+        or else not Get_Active (Data.With_Shortcut_Only)
         or else Get_String (Model, Iter, 1) /= ""
         or else N_Children (Model, Iter) > 0;
    exception
