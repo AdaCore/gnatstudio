@@ -866,6 +866,10 @@ package body KeyManager_Module is
 
          Value (Key (First .. Last - 1), Partial_Key, Modif);
 
+         --  Shift mask should be ignored to mask gtk+, and to adapt to
+         --  various keyboard layouts
+         Modif := Modif and not Shift_Mask;
+
          if Last > Key'Last then
             if Keymap = null then
                Bind_Internal (Table, Partial_Key, Modif);
@@ -973,6 +977,19 @@ package body KeyManager_Module is
             Binding := Get (Handler.Table.all, (Key, Modif));
          else
             Binding := Get (Handler.Secondary_Keymap.Table, (Key, Modif));
+         end if;
+
+         --  Ignore shift modifiers as well. Don't do it systematically to
+         --  preserve backward compatibility. This way, using
+         --  alt-shift-greater or alt-greater results in the same.
+
+         if Binding = No_Key then
+            Modif := Modif and not Shift_Mask;
+            if Handler.Secondary_Keymap = null then
+               Binding := Get (Handler.Table.all, (Key, Modif));
+            else
+               Binding := Get (Handler.Secondary_Keymap.Table, (Key, Modif));
+            end if;
          end if;
 
          Handler.Secondary_Keymap := null;
@@ -1469,7 +1486,8 @@ package body KeyManager_Module is
                Key        => Lookup_Key_From_Action
                  (Editor.Bindings,
                   Action            => Accel_Path (First .. Accel_Path'Last),
-                  Default           => ""));
+                  Default           => "",
+                  Default_On_Gtk    => True));
          end if;
       end Process_Menu_Binding;
 
@@ -1856,49 +1874,53 @@ package body KeyManager_Module is
 
          Action := Lookup_Action (Ed.Kernel, Get_String (Model, Iter, 0));
 
-         if Action.Description /= null then
+         if Action /= null and then Action.Description /= null then
             Set_Text (Ed.Help, Action.Description.all);
          else
             Set_Text (Ed.Help, "");
          end if;
 
-         Get_End_Iter (Ed.Help, Text_Iter);
+         --  Action could be null if we chose to display only lines with
+         --  shortcuts and the user clicks on a line for a category
+         if Action /= null then
+            Get_End_Iter (Ed.Help, Text_Iter);
 
-         Bold := Create_Tag (Ed.Help);
-         Set_Property (Bold, Gtk.Text_Tag.Weight_Property,
-                       Pango_Weight_Bold);
+            Bold := Create_Tag (Ed.Help);
+            Set_Property (Bold, Gtk.Text_Tag.Weight_Property,
+                          Pango_Weight_Bold);
 
-         Insert_With_Tags
-           (Ed.Help, Text_Iter, ASCII.LF & ASCII.LF & (-"Key shortcuts: "),
-            Bold);
-         Insert
-           (Ed.Help, Text_Iter,
-            Lookup_Key_From_Action
-              (Ed.Bindings,
-               Action            => Get_String (Model, Iter, Action_Column),
-               Default           => -"none",
-               Use_Markup        => False));
+            Insert_With_Tags
+              (Ed.Help, Text_Iter, ASCII.LF & ASCII.LF & (-"Key shortcuts: "),
+               Bold);
+            Insert
+              (Ed.Help, Text_Iter,
+               Lookup_Key_From_Action
+                 (Ed.Bindings,
+                  Action            => Get_String (Model, Iter, Action_Column),
+                  Default           => -"none",
+                  Use_Markup        => False));
 
-         Insert_With_Tags
-           (Ed.Help, Text_Iter, ASCII.LF & (-"Declared in: "),
-            Bold);
-         if Action.Defined_In /= VFS.No_File then
-            Insert (Ed.Help, Text_Iter, Full_Name (Action.Defined_In).all);
+            Insert_With_Tags
+              (Ed.Help, Text_Iter, ASCII.LF & (-"Declared in: "),
+               Bold);
+            if Action.Defined_In /= VFS.No_File then
+               Insert (Ed.Help, Text_Iter, Full_Name (Action.Defined_In).all);
 
-            Comp_Iter := Start (Action.Command);
-            if Get (Comp_Iter) /= null then
-               Insert_With_Tags
-                 (Ed.Help, Text_Iter,
-                  ASCII.LF & (-"Implementation details:") & ASCII.LF,
-                  Bold);
-               Insert_Details (Comp_Iter, "  ");
+               Comp_Iter := Start (Action.Command);
+               if Get (Comp_Iter) /= null then
+                  Insert_With_Tags
+                    (Ed.Help, Text_Iter,
+                     ASCII.LF & (-"Implementation details:") & ASCII.LF,
+                     Bold);
+                  Insert_Details (Comp_Iter, "  ");
+               end if;
+
+            else
+               Insert (Ed.Help, Text_Iter, -"built-in");
             end if;
 
-         else
-            Insert (Ed.Help, Text_Iter, -"built-in");
+            Set_Text (Ed.Action_Name, Get_String (Model, Iter, 0));
          end if;
-
-         Set_Text (Ed.Action_Name, Get_String (Model, Iter, 0));
       else
          Set_Sensitive (Ed.Remove_Button, False);
          Set_Sensitive (Ed.Grab_Button, False);
