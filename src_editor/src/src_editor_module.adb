@@ -2765,7 +2765,7 @@ package body Src_Editor_Module is
       Register_Menu
         (Kernel, File, -"_Save", Stock_Save,
          On_Save'Access, null,
-         GDK_S, Control_Mask,
+         GDK_LC_s, Control_Mask,
          Ref_Item => -"Save More");
       Register_Menu
         (Kernel, File, -"Save _As...", Stock_Save_As,
