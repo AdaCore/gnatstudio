@@ -139,9 +139,6 @@ package body KeyManager_Module is
    --  itself, and should therefore be saved on exit. It is false for values
    --  read from the custom files.
 
-   function Next (Key : Key_Description_List) return Key_Description_List;
-   --  Return the next element in the list
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Key_Description, Key_Description_List);
 
@@ -443,7 +440,8 @@ package body KeyManager_Module is
      (Table             : HTable_Access;
       Action            : String;
       Default           : String := "none";
-      Use_Markup        : Boolean := True) return String;
+      Use_Markup        : Boolean := True;
+      Default_On_Gtk    : Boolean := True) return String;
    --  Return the list of key bindings set for a specific action. The returned
    --  string can be displayed as is to the user, but is not suitable for
    --  parsing as a keybinding. The list of keybindings includes the
@@ -451,9 +449,9 @@ package body KeyManager_Module is
    --  needs to be defined)
    --  If Use_Markup is true, then the "or" that separates several shortcuts
    --  is displayed with a different font.
-   --  If the action is not found in the table but corresponds to a menu, look
-   --  it up using standard gtk+ mechanisms and insert the corresponding entry
-   --  in Table to speed up further lookups.
+   --  If Default_On_Gtk is true and the action is not found in the table but
+   --  corresponds to a menu, look it up using standard gtk+ mechanisms and
+   --  insert the corresponding entry in Table to speed up further lookups.
 
    function Invalid_Key return Gdk_Key_Type;
    --  Return an unique invalid key.
@@ -612,15 +610,6 @@ package body KeyManager_Module is
    end General_Event_Handler;
 
    ----------
-   -- Next --
-   ----------
-
-   function Next (Key : Key_Description_List) return Key_Description_List is
-   begin
-      return Key.Next;
-   end Next;
-
-   ----------
    -- Hash --
    ----------
 
@@ -660,7 +649,7 @@ package body KeyManager_Module is
       N       : Key_Description_List;
    begin
       while Current /= null loop
-         N := Next (Current);
+         N := Current.Next;
          Free_Non_Recursive (Current);
          Current := N;
       end loop;
@@ -696,7 +685,7 @@ package body KeyManager_Module is
          end if;
 
          Tmp_To.Changed := Tmp.Changed;
-         Tmp := Next (Tmp);
+         Tmp := Tmp.Next;
       end loop;
    end Clone;
 
@@ -762,7 +751,7 @@ package body KeyManager_Module is
                if Tmp.Action /= null and then Tmp.Action.all = Action then
                   return;
                end if;
-               Tmp := Next (Tmp);
+               Tmp := Tmp.Next;
             end loop;
          end if;
 
@@ -802,17 +791,14 @@ package body KeyManager_Module is
 
             Previous := null;
             while List /= null loop
-               if List.Action = null then
-                  if List.Keymap /= null then
-                     Remove_In_Keymap (List.Keymap.Table);
-                  end if;
-
+               if List.Keymap /= null then
+                  Remove_In_Keymap (List.Keymap.Table);
                   Previous := List;
-                  List := Next (List);
+                  List := List.Next;
 
-               elsif List.Action.all = Action then
+               elsif List.Action /= null and then List.Action.all = Action then
                   if Previous = null then
-                     if Next (List) /= null then
+                     if List.Next /= null then
                         --  Remove list from the list of keybindings, without
                         --  modifying the htable itself to avoid invalidating
                         --  the iterator
@@ -823,18 +809,18 @@ package body KeyManager_Module is
                      else
                         --  There was a single element with this key binding:
                         Free (List.Action);
-                        List.Next := null;
+                        List := List.Next;
                      end if;
 
                   else
-                     Previous.Next := Next (List);
+                     Previous.Next := List.Next;
                      Free_Non_Recursive (List);
-                     List := Next (Previous);
+                     List := Previous.Next;
                   end if;
 
                else
                   Previous := List;
-                  List := Next (List);
+                  List := List.Next;
                end if;
             end loop;
 
@@ -934,21 +920,20 @@ package body KeyManager_Module is
       else
          Binding2 := Binding;
          while Binding2 /= null
-           and then Binding2.Action /= null
+           and then Binding2.Keymap = null
          loop
             Binding  := Binding2;  --  Last value where Next /= null
-            Binding2 := Next (Binding2);
+            Binding2 := Binding2.Next;
          end loop;
 
          --  If there is no secondary keymap yet, create one
          if Binding2 = null then
             Keymap   := new Keymap_Record;
-            Binding2 := new Key_Description'
+            Binding.Next := new Key_Description'
               (Action  => null,
                Changed => False,
                Keymap  => Keymap,
                Next    => null);
-            Binding.Next := Binding2;
          else
             Keymap := Binding2.Keymap;
          end if;
@@ -1053,7 +1038,7 @@ package body KeyManager_Module is
                end if;
             end if;
 
-            Binding := Next (Binding);
+            Binding := Binding.Next;
          end loop;
       end if;
 
@@ -1120,7 +1105,7 @@ package body KeyManager_Module is
                   end if;
                end if;
 
-               Binding := Next (Binding);
+               Binding := Binding.Next;
             end loop;
 
             Get_Next (Table, Iter);
@@ -1303,7 +1288,8 @@ package body KeyManager_Module is
      (Table             : HTable_Access;
       Action            : String;
       Default           : String := "none";
-      Use_Markup        : Boolean := True) return String
+      Use_Markup        : Boolean := True;
+      Default_On_Gtk    : Boolean := True) return String
    is
       use Ada.Strings.Unbounded;
       Result : Ada.Strings.Unbounded.Unbounded_String;
@@ -1350,7 +1336,7 @@ package body KeyManager_Module is
                     & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier);
                end if;
 
-               Binding := Next (Binding);
+               Binding := Binding.Next;
             end loop;
 
             Get_Next (Table, Iter);
@@ -1368,7 +1354,10 @@ package body KeyManager_Module is
       --  If we haven't found an action, fallback on the default gtk+
       --  mechanism.
 
-      if To_String (Result) = "" and then Action (Action'First) = '/' then
+      if Default_On_Gtk
+        and then To_String (Result) = ""
+        and then Action (Action'First) = '/'
+      then
          Lookup_Entry ("<gps>" & Action, Key, Found);
 
          if Found then
@@ -1418,7 +1407,8 @@ package body KeyManager_Module is
                   Lookup_Key_From_Action
                     (Editor.Bindings,
                      Action => Get_String (Editor.Model, It, Action_Column),
-                     Default => ""));
+                     Default => "",
+                     Default_On_Gtk => False));
             end if;
 
             Next (Editor.Model, It);
@@ -1591,7 +1581,6 @@ package body KeyManager_Module is
 
             while Binding /= null loop
                if Binding.Action /= null
-                 and then Binding.Changed
                  and then Binding.Action.all =
                    Accel_Path (First .. Accel_Path'Last)
                then
@@ -2459,6 +2448,10 @@ package body KeyManager_Module is
                raise Assert_Failure;
             end if;
 
+            --  We want to allow several XML file to set different key bindings
+            --  for the same action, so we do not remove existing shortcuts
+            --  here.
+            Handler_Block (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
             Bind_Default_Key_Internal
               (Keymanager_Module.Key_Manager.Table.all,
                Action            => Action,
@@ -2467,6 +2460,8 @@ package body KeyManager_Module is
                Save_In_Keys_XML  => False,
                Key               => Node.Value.all,
                Update_Menus      => True);
+            Handler_Unblock
+              (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
          end;
       end if;
    end Customize;
