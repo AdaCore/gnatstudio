@@ -441,7 +441,8 @@ package body KeyManager_Module is
      (Table             : HTable_Access;
       Action            : String;
       Default           : String := "none";
-      Use_Markup        : Boolean := True) return String;
+      Use_Markup        : Boolean := True;
+      Default_On_Gtk    : Boolean := True) return String;
    --  Return the list of key bindings set for a specific action. The returned
    --  string can be displayed as is to the user, but is not suitable for
    --  parsing as a keybinding. The list of keybindings includes the
@@ -449,9 +450,9 @@ package body KeyManager_Module is
    --  needs to be defined)
    --  If Use_Markup is true, then the "or" that separates several shortcuts
    --  is displayed with a different font.
-   --  If the action is not found in the table but corresponds to a menu, look
-   --  it up using standard gtk+ mechanisms and insert the corresponding entry
-   --  in Table to speed up further lookups.
+   --  If Default_On_Gtk is true and the action is not found in the table but
+   --  corresponds to a menu, look it up using standard gtk+ mechanisms and
+   --  insert the corresponding entry in Table to speed up further lookups.
 
    function Invalid_Key return Gdk_Key_Type;
    --  Return an unique invalid key.
@@ -800,15 +801,12 @@ package body KeyManager_Module is
 
             Previous := null;
             while List /= null loop
-               if List.Action = null then
-                  if List.Keymap /= null then
-                     Remove_In_Keymap (List.Keymap.Table);
-                  end if;
-
+               if List.Keymap /= null then
+                  Remove_In_Keymap (List.Keymap.Table);
                   Previous := List;
                   List := Next (List);
 
-               elsif List.Action.all = Action then
+               elsif List.Action /= null and then List.Action.all = Action then
                   if Previous = null then
                      if Next (List) /= null then
                         --  Remove list from the list of keybindings, without
@@ -1301,7 +1299,8 @@ package body KeyManager_Module is
      (Table             : HTable_Access;
       Action            : String;
       Default           : String := "none";
-      Use_Markup        : Boolean := True) return String
+      Use_Markup        : Boolean := True;
+      Default_On_Gtk    : Boolean := True) return String
    is
       use Ada.Strings.Unbounded;
       Result : Ada.Strings.Unbounded.Unbounded_String;
@@ -1366,7 +1365,10 @@ package body KeyManager_Module is
       --  If we haven't found an action, fallback on the default gtk+
       --  mechanism.
 
-      if To_String (Result) = "" and then Action (Action'First) = '/' then
+      if Default_On_Gtk
+        and then To_String (Result) = ""
+        and then Action (Action'First) = '/'
+      then
          Lookup_Entry ("<gps>" & Action, Key, Found);
 
          if Found then
@@ -1416,7 +1418,8 @@ package body KeyManager_Module is
                   Lookup_Key_From_Action
                     (Editor.Bindings,
                      Action => Get_String (Editor.Model, It, Action_Column),
-                     Default => ""));
+                     Default => "",
+                     Default_On_Gtk => False));
             end if;
 
             Next (Editor.Model, It);
@@ -1582,7 +1585,6 @@ package body KeyManager_Module is
 
             while Binding /= null loop
                if Binding.Action /= null
-                 and then Binding.Changed
                  and then Binding.Action.all =
                    Accel_Path (First .. Accel_Path'Last)
                then
