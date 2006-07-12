@@ -453,28 +453,8 @@ package body KeyManager_Module is
    --  corresponds to a menu, look it up using standard gtk+ mechanisms and
    --  insert the corresponding entry in Table to speed up further lookups.
 
-   function Invalid_Key return Gdk_Key_Type;
-   --  Return an unique invalid key.
-
    Action_Column     : constant := 0;
    Key_Column        : constant := 1;
-
-   -----------------
-   -- Invalid_Key --
-   -----------------
-
-   Current_Invalid_Key : Gdk_Key_Type := 16#10000#;
-
-   function Invalid_Key return Gdk_Key_Type is
-   begin
-      if Current_Invalid_Key > 16#FFFFFE# then
-         Current_Invalid_Key := 16#10000#;
-      else
-         Current_Invalid_Key := Current_Invalid_Key + 1;
-      end if;
-
-      return Current_Invalid_Key;
-   end Invalid_Key;
 
    -------------
    -- Destroy --
@@ -853,7 +833,6 @@ package body KeyManager_Module is
       if Key = "" or else Key = -Disabled_String then
          --  Bind to an invalid key, so that when saving we know this should be
          --  removed
-         Bind_Internal (Table, Invalid_Key, 0);
          return;
       end if;
 
