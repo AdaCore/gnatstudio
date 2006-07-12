@@ -223,8 +223,11 @@ package body Outline_View is
                  (Get_Database (Kernel),
                   Source_Filename =>
                     File_Location_Hooks_Args_Access (Data).File);
+
+               --  If no LI handler is found, assume case sensitivity.
                Case_Insensitive : constant Boolean :=
-                 Case_Insensitive_Identifiers (Handler);
+                 (Handler /= null
+                  and then Case_Insensitive_Identifiers (Handler));
                Line : Gint := Gint'First;
                Loc  : File_Location;
             begin
