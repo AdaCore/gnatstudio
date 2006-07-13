@@ -2803,7 +2803,9 @@ package body Ada_Analyzer is
             Skip_Blank_Lines;
             Skip_Comments;
 
-            if End_Reached or else Terminated then
+            if (End_Reached and then Buffer (Buffer_Last) /= ASCII.LF)
+              or else Terminated
+            then
                return;
             end if;
 
@@ -3600,7 +3602,9 @@ package body Ada_Analyzer is
 
          Next_Word (Prec, Terminated, End_Reached);
 
-         exit Main_Loop when End_Reached or else Terminated;
+         exit Main_Loop when
+           (End_Reached and then Buffer (Buffer_Last) /= ASCII.LF)
+           or else Terminated;
 
          Current := End_Of_Word (Prec);
       end loop Main_Loop;
