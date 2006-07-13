@@ -845,10 +845,6 @@ package body KeyManager_Module is
 
          Value (Key (First .. Last - 1), Partial_Key, Modif);
 
-         --  Shift mask should be ignored to mask gtk+, and to adapt to
-         --  various keyboard layouts
-         Modif := Modif and not Shift_Mask;
-
          if Last > Key'Last then
             if Keymap = null then
                Bind_Internal (Table, Partial_Key, Modif);
