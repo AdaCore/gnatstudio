@@ -41,7 +41,8 @@ package body Line_Buffers is
 
    begin
       loop
-         exit when Index >= Buffer'Length;
+         exit when (Index = Buffer'Last and then Buffer (Index) /= ASCII.LF)
+           or else Index > Buffer'Last;
 
          First := Index;
          Skip_To_Char (Buffer, Index, ASCII.LF);
