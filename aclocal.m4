@@ -75,39 +75,44 @@ EOF
 
 AC_DEFUN(AM_PATH_PYTHON,
 [
-   AC_MSG_CHECKING(for python)
-   if test "$PYTHON_PATH_WITH" = "yes" ; then
-      AC_PATH_PROG(PYTHON_BASE, python, no)
+   AC_ARG_WITH(python,
+               [ --with-python=<path>     Specify the full path to the Python installation],
+               PYTHON_PATH_WITH=$withval,
+               PYTHON_PATH_WITH=yes)
 
-      PBASE=${PYTHON_BASE}
-      PYTHON_BASE=`dirname ${PYTHON_BASE}`
-      PYTHON_BASE=`dirname ${PYTHON_BASE}`
-   else
-      PYTHON_BASE=${PYTHON_PATH_WITH}
-   fi
-
-   if test -d ${PYTHON_BASE}/lib/python2.4 ; then
-      PYTHON_VERSION=2.4
-   elif test -d ${PYTHON_BASE}/lib/python2.3 ; then
-      PYTHON_VERSION=2.3
-   elif test -d ${PYTHON_BASE}/lib/python2.2 ; then
-      PYTHON_VERSION=2.2
-   elif test -d ${PYTHON_BASE}/lib/python1.5 ; then
-      AC_MSG_ERROR(Incorrect version of python. You need 2.0 at least. Run with -without-python)
-   fi
-
-   PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
-
-   if test ${PYTHON_BASE} = "no" ; then
-      AC_MSG_RESULT(no, since --without-python was specified)
-      PYTHON_ADA_SOURCE="src2"
-   elif test -d ${PYTHON_BASE}; then
-      AC_MSG_RESULT(yes)
-      PYTHON_ADA_SOURCE="src"
-   else
-      AC_MSG_RESULT(no)
-      PYTHON_ADA_SOURCE="src2"
+   if test x"$PYTHON_PATH_WITH" = xno ; then
+      AC_MSG_CHECKING(for python)
+      AC_MSG_RESULT(no, use --with-python if needed)
       PYTHON_BASE=no
+
+   else
+      AC_PATH_PROG(PYTHON, python, no)
+      if test x"$PYTHON" = xno ; then
+         PYTHON_BASE=no
+      else
+        AC_MSG_CHECKING(for python >= 2.0)
+        if test x"$PYTHON_PATH_WITH" != xyes ; then
+           PYTHON_BASE=$PYTHON_PATH_WITH
+        else
+           PYTHON_BASE=`$PYTHON -c 'import sys; print sys.prefix' `
+        fi
+
+        PYTHON_MAJOR_VERSION=`$PYTHON -c 'import sys; print sys.version_info[[0]]' 2>/dev/null` 
+        if test x$PYTHON_MAJOR_VERSION != x2 ; then
+           AC_MSG_RESULT(no, need at least version 2.0)
+           PYTHON_BASE=no
+        else
+           PYTHON_VERSION=`$PYTHON -c 'import sys; print \`sys.version_info[[0]]\`+"."+\`sys.version_info[[1]]\`'`
+           PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
+           AC_MSG_RESULT(yes (version $PYTHON_VERSION))
+        fi
+      fi
+   fi
+
+   if test x"$PYTHON_BASE" = xno ; then
+      PYTHON_ADA_SOURCE="src2"
+   else
+      PYTHON_ADA_SOURCE="src"
    fi
 ])
 

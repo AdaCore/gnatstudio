@@ -26,13 +26,7 @@ ROOT=`pwd`
 TARGET=$host
 EXEC_PREFIX="$prefix"
 
-######## Command line options ###
-
-PYTHON_PATH_WITH=no    # For now, compile without python by default
-AC_ARG_WITH(python,
-[ --with-python=<path>     Specify the full path to the Python installation],
-[PYTHON_PATH_WITH=$withval],
-PYTHON_PATH_WITH="no")
+######## Check XML/Ada
 
 PROJECT_PATH=`gnatls -v | tr -d '\015' | awk 'BEGIN {display=0} /<Current/ {next} {if (display) {printf "%s:", $1}} /Project Search Path/ {display=1}'`
 AC_CHECK_PROG(XMLADA_GPR, xmlada.gpr, "with_xmlada", "no_xmlada", $PROJECT_PATH)

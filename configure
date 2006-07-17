@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON_BASE GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS PYGTK_INCLUDE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_BASE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS PYGTK_INCLUDE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1400,17 +1400,7 @@ ROOT=`pwd`
 TARGET=$host
 EXEC_PREFIX="$prefix"
 
-######## Command line options ###
-
-PYTHON_PATH_WITH=no    # For now, compile without python by default
-
-# Check whether --with-python or --without-python was given.
-if test "${with_python+set}" = set; then
-  withval="$with_python"
-  PYTHON_PATH_WITH=$withval
-else
-  PYTHON_PATH_WITH="no"
-fi;
+######## Check XML/Ada
 
 PROJECT_PATH=`gnatls -v | tr -d '\015' | awk 'BEGIN {display=0} /<Current/ {next} {if (display) {printf "%s:", $1}} /Project Search Path/ {display=1}'`
 # Extract the first word of "xmlada.gpr", so it can be a program name with args.
@@ -3469,19 +3459,33 @@ echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >
 
 ######### checking for python (needs to be done after gtk)
 
-   echo "$as_me:$LINENO: checking for python" >&5
+
+# Check whether --with-python or --without-python was given.
+if test "${with_python+set}" = set; then
+  withval="$with_python"
+  PYTHON_PATH_WITH=$withval
+else
+  PYTHON_PATH_WITH=yes
+fi;
+
+   if test x"$PYTHON_PATH_WITH" = xno ; then
+      echo "$as_me:$LINENO: checking for python" >&5
 echo $ECHO_N "checking for python... $ECHO_C" >&6
-   if test "$PYTHON_PATH_WITH" = "yes" ; then
+      echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+      PYTHON_BASE=no
+
+   else
       # Extract the first word of "python", so it can be a program name with args.
 set dummy python; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_PYTHON_BASE+set}" = set; then
+if test "${ac_cv_path_PYTHON+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  case $PYTHON_BASE in
+  case $PYTHON in
   [\\/]* | ?:[\\/]*)
-  ac_cv_path_PYTHON_BASE="$PYTHON_BASE" # Let the user override the test with a path.
+  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
@@ -3491,62 +3495,56 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PYTHON_BASE="$as_dir/$ac_word$ac_exec_ext"
+    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
 done
 done
 
-  test -z "$ac_cv_path_PYTHON_BASE" && ac_cv_path_PYTHON_BASE="no"
+  test -z "$ac_cv_path_PYTHON" && ac_cv_path_PYTHON="no"
   ;;
 esac
 fi
-PYTHON_BASE=$ac_cv_path_PYTHON_BASE
+PYTHON=$ac_cv_path_PYTHON
 
-if test -n "$PYTHON_BASE"; then
-  echo "$as_me:$LINENO: result: $PYTHON_BASE" >&5
-echo "${ECHO_T}$PYTHON_BASE" >&6
+if test -n "$PYTHON"; then
+  echo "$as_me:$LINENO: result: $PYTHON" >&5
+echo "${ECHO_T}$PYTHON" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
 
+      if test x"$PYTHON" = xno ; then
+         PYTHON_BASE=no
+      else
+        echo "$as_me:$LINENO: checking for python >= 2.0" >&5
+echo $ECHO_N "checking for python >= 2.0... $ECHO_C" >&6
+        if test x"$PYTHON_PATH_WITH" != xyes ; then
+           PYTHON_BASE=$PYTHON_PATH_WITH
+        else
+           PYTHON_BASE=`$PYTHON -c 'import sys; print sys.prefix' `
+        fi
 
-      PBASE=${PYTHON_BASE}
-      PYTHON_BASE=`dirname ${PYTHON_BASE}`
-      PYTHON_BASE=`dirname ${PYTHON_BASE}`
-   else
-      PYTHON_BASE=${PYTHON_PATH_WITH}
-   fi
-
-   if test -d ${PYTHON_BASE}/lib/python2.4 ; then
-      PYTHON_VERSION=2.4
-   elif test -d ${PYTHON_BASE}/lib/python2.3 ; then
-      PYTHON_VERSION=2.3
-   elif test -d ${PYTHON_BASE}/lib/python2.2 ; then
-      PYTHON_VERSION=2.2
-   elif test -d ${PYTHON_BASE}/lib/python1.5 ; then
-      { { echo "$as_me:$LINENO: error: Incorrect version of python. You need 2.0 at least. Run with -without-python" >&5
-echo "$as_me: error: Incorrect version of python. You need 2.0 at least. Run with -without-python" >&2;}
-   { (exit 1); exit 1; }; }
-   fi
-
-   PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
-
-   if test ${PYTHON_BASE} = "no" ; then
-      echo "$as_me:$LINENO: result: no" >&5
+        PYTHON_MAJOR_VERSION=`$PYTHON -c 'import sys; print sys.version_info[0]' 2>/dev/null`
+        if test x$PYTHON_MAJOR_VERSION != x2 ; then
+           echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+           PYTHON_BASE=no
+        else
+           PYTHON_VERSION=`$PYTHON -c 'import sys; print \`sys.version_info[0]\`+"."+\`sys.version_info[1]\`'`
+           PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
+           echo "$as_me:$LINENO: result: yes (version $PYTHON_VERSION)" >&5
+echo "${ECHO_T}yes (version $PYTHON_VERSION)" >&6
+        fi
+      fi
+   fi
+
+   if test x"$PYTHON_BASE" = xno ; then
       PYTHON_ADA_SOURCE="src2"
-   elif test -d ${PYTHON_BASE}; then
-      echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
+   else
       PYTHON_ADA_SOURCE="src"
-   else
-      echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-      PYTHON_ADA_SOURCE="src2"
-      PYTHON_BASE=no
    fi
 
 
@@ -5682,7 +5680,7 @@ s,@GTKADA_OBJ@,$GTKADA_OBJ,;t t
 s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_LIBS@,$GTK_LIBS,;t t
 s,@GTK_STATIC_LIBS@,$GTK_STATIC_LIBS,;t t
-s,@PYTHON_BASE@,$PYTHON_BASE,;t t
+s,@PYTHON@,$PYTHON,;t t
 s,@GPS_VERSION@,$GPS_VERSION,;t t
 s,@opsysfile@,$opsysfile,;t t
 s,@ROOT@,$ROOT,;t t
@@ -5701,6 +5699,7 @@ s,@PATCH_CMD@,$PATCH_CMD,;t t
 s,@OPAQUE_MDI@,$OPAQUE_MDI,;t t
 s,@HOST_TYPE@,$HOST_TYPE,;t t
 s,@EXECUTION_WINDOW@,$EXECUTION_WINDOW,;t t
+s,@PYTHON_BASE@,$PYTHON_BASE,;t t
 s,@PYTHON_VERSION@,$PYTHON_VERSION,;t t
 s,@PYTHON_ADA_SOURCE@,$PYTHON_ADA_SOURCE,;t t
 s,@PYTHON_DIR@,$PYTHON_DIR,;t t
