@@ -396,6 +396,8 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String);
    procedure Python_Location_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
+   procedure Python_Global_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the commands related to the various classes
 
    function Refcount_Msg
@@ -672,6 +674,12 @@ package body Python_Module is
       pragma Unreferenced (Ignored, Result, Tmp);
       Errors  : aliased Boolean;
 
+      procedure Init_PyGtk;
+      pragma Import (C, Init_PyGtk, "ada_init_pygtk");
+
+      function Build_With_PyGtk return Integer;
+      pragma Import (C, Build_With_PyGtk, "ada_build_with_pygtk");
+
    begin
       Python_Module_Id := new Python_Module_Record;
       Register_Module
@@ -747,10 +755,16 @@ package body Python_Module is
       --  If PyGtk is available, register some special functions, so that
       --  users can interact directly with widgets
 
-      Result := Run_Command
-        (Python_Module_Id.Script.Interpreter,
-         "import pygtk", Hide_Output => True,
-         Errors => Errors'Unchecked_Access);
+      if Build_With_PyGtk = 1 then
+         Result := Run_Command
+           (Python_Module_Id.Script.Interpreter,
+            "import pygtk", Hide_Output => True,
+            Errors => Errors'Unchecked_Access);
+      else
+         --  Since we were not build with pygtk, don't even try to activate the
+         --  special support for it
+         Errors := True;
+      end if;
 
       if not Errors then
          Trace (Me, "Loading support for pygtk");
@@ -759,11 +773,13 @@ package body Python_Module is
             "pygtk.require('2.0'); import gtk", Hide_Output => True,
             Errors => Errors'Unchecked_Access);
 
---           Register_Command
---             (Python_Module_Id.Script,
---              Command      => "pywidget",
---              Handler      => Python_GUI_Command_Handler'Access,
---              Class        => Get_GUI_Class (Kernel));
+         Init_PyGtk;
+
+         Register_Command
+           (Python_Module_Id.Script,
+            Command      => "pywidget",
+            Handler      => Python_GUI_Command_Handler'Access,
+            Class        => Get_GUI_Class (Kernel));
          Register_Command
            (Python_Module_Id.Script,
             Command       => "add",
@@ -772,16 +788,21 @@ package body Python_Module is
             Minimum_Args  => 1,
             Maximum_Args  => 3,
             Static_Method => True);
-         Register_Command
-           (Python_Module_Id.Script,
-            Command       => "exec_in_console",
-            Handler       => Python_GUI_Command_Handler'Access,
-            Minimum_Args  => 1,
-            Maximum_Args  => 1);
-
       else
          Trace (Me, "Not loading support for pygtk");
       end if;
+
+      --  This function is required for support of the Python menu (F120-025),
+      --  so that we can execute python commands in the context of the global
+      --  interpreter instead of the current context (for the menu, that would
+      --  be python_support.py, and thus would have no impact on the
+      --  interpreter itself)
+      Register_Command
+        (Python_Module_Id.Script,
+         Command       => "exec_in_console",
+         Handler       => Python_Global_Command_Handler'Access,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1);
 
       --  Change the screen representation of the various classes. This way,
       --  commands can return classes, but still displayed user-readable
@@ -1051,29 +1072,23 @@ package body Python_Module is
    is
       function PyObject_From_Widget (W : System.Address) return PyObject;
       pragma Import (C, PyObject_From_Widget, "ada_pyobject_from_widget");
-      pragma Unreferenced (PyObject_From_Widget);
 
       function Widget_From_PyObject (Object : PyObject) return System.Address;
       pragma Import (C, Widget_From_PyObject, "ada_widget_from_pyobject");
 
       Stub     : Gtk.Widget.Gtk_Widget_Record;
       Widget   : Glib.Object.GObject;
---      Instance : Class_Instance;
+      Instance : Class_Instance;
       Child    : MDI_Child;
-      Result   : PyObject;
-      pragma Unreferenced (Result);
-      Errors   : aliased Boolean;
    begin
-      --  This is only called when pygtk has been loaded properly
+      --  This is only called when pygtk has been loaded properly. If pygtk
+      --  is not available, they are not even visible to the user, so we do
+      --  not need any special test here.
 
       if Command = "pywidget" then
-         null;
-         --  ??? Don't know how to implement that without depending on the
-         --  sources of pygtk when compiling GPS
---           Instance := Nth_Arg (Data, 1, Get_GUI_Class (Get_Kernel (Data)));
---           Python_Callback_Data (Data).Return_Value :=
---             PyObject_From_Widget (Get_Object (Get_Data (Instance)));
---           Free (Instance);
+         Instance := Nth_Arg (Data, 1, Get_GUI_Class (Get_Kernel (Data)));
+         Python_Callback_Data (Data).Return_Value := PyObject_From_Widget
+           (Get_Object (Get_Data (Instance, GUI_Class_Name)));
 
       elsif Command = "add" then
          Widget := Get_User_Data
@@ -1084,13 +1099,26 @@ package body Python_Module is
          Put (Get_MDI (Get_Kernel (Data)), Child,
               Initial_Position => Position_Automatic);
          Set_Focus_Child (Child);
+      end if;
+   end Python_GUI_Command_Handler;
 
-      elsif Command = "exec_in_console" then
+   -----------------------------------
+   -- Python_Global_Command_Handler --
+   -----------------------------------
+
+   procedure Python_Global_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Result   : PyObject;
+      pragma Unreferenced (Result);
+      Errors   : aliased Boolean;
+   begin
+      if Command = "exec_in_console" then
          Result := Run_Command
            (Python_Module_Id.Script.Interpreter, Nth_Arg (Data, 1),
             Show_Command => True, Errors => Errors'Unchecked_Access);
       end if;
-   end Python_GUI_Command_Handler;
+   end Python_Global_Command_Handler;
 
    ------------------------------------
    -- Python_Project_Command_Handler --
