@@ -21,6 +21,11 @@
 #include <Python.h>
 #include <gtk/gtk.h>
 
+#ifdef PYGTK
+#include <pygobject.h>
+#include <pygtk/pygtk.h>
+#endif
+
 #undef DEBUG
 /* #define DEBUG */
 
@@ -364,23 +369,40 @@ ada_py_arg_parsetuple_ptr5
  tested with pygtk 2.4 and 2.6
 *******************************************************/
 
-typedef struct {
-    PyObject_HEAD
-    GObject *obj;
-} LocalPyGObject;
+int
+ada_build_with_pygtk() {
+#ifdef PYGTK
+   return 1;
+#else
+   return 0;
+#endif
+}
 
 GObject*
 ada_widget_from_pyobject (PyObject* object)
 {
-   return ((LocalPyGObject*)object)->obj;
+#ifdef PYGTK
+   return g_object_ref (pygobject_get (object));
+   // return ((PyGObject*)object)->obj;
+#else
+   return NULL;
+#endif
 }
 
 PyObject*
 ada_pyobject_from_widget (GObject* object)
 {
+#ifdef PYGTK
+   return pygobject_new (object);
+#else
    return NULL;
-   //  ??? Not integrated yet, since this would mean we need the pygtk
-   //  sources around to compile GPS itself, which we do not want
-//   return pygobject_new (object);
+#endif
 }
 
+void
+ada_init_pygtk (void) {
+#ifdef PYGTK
+  init_pygtk();
+  init_pygobject();
+#endif
+}
