@@ -788,6 +788,14 @@ package body Python_Module is
             Minimum_Args  => 1,
             Maximum_Args  => 3,
             Static_Method => True);
+
+         --  PyGTK prints its error messages using sys.argv, which doesn't
+         --  exist in non-interactive mode. We therefore define it here
+         Result := Run_Command
+           (Python_Module_Id.Script.Interpreter,
+            "sys.argv=['GPS']", Hide_Output => True,
+            Errors => Errors'Unchecked_Access);
+
       else
          Trace (Me, "Not loading support for pygtk");
       end if;
