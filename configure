@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON_BASE GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS PYGTK_INCLUDE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -842,6 +842,11 @@ fi
 if test -n "$ac_init_help"; then
 
   cat <<\_ACEOF
+
+Optional Features:
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-pygtk	do not try to build the special support for PyGTK
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1379,7 +1384,10 @@ TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 EXEC_COMMAND="sh -c"
 DEFAULT_FONT="sans 9"
+
+## We need to double the quotes here, since this is inserted in an Ada file
 DEFAULT_PS='sh -c """"""ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
+
 PRINT_CMD="lp"
 OPAQUE_MDI=False
 HOST_TYPE=Unix
@@ -2916,82 +2924,6 @@ echo "$as_me: error: $GNATMAKE test failed at run time! Check your configuration
    echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 
-
-   if test "$PYTHON_PATH_WITH" = "yes" ; then
-      # Extract the first word of "python", so it can be a program name with args.
-set dummy python; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_PYTHON_BASE+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $PYTHON_BASE in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PYTHON_BASE="$PYTHON_BASE" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PYTHON_BASE="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_PYTHON_BASE" && ac_cv_path_PYTHON_BASE="no"
-  ;;
-esac
-fi
-PYTHON_BASE=$ac_cv_path_PYTHON_BASE
-
-if test -n "$PYTHON_BASE"; then
-  echo "$as_me:$LINENO: result: $PYTHON_BASE" >&5
-echo "${ECHO_T}$PYTHON_BASE" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
-      PBASE=${PYTHON_BASE}
-      PYTHON_BASE=`dirname ${PYTHON_BASE}`
-      PYTHON_BASE=`dirname ${PYTHON_BASE}`
-   else
-      PYTHON_BASE=${PYTHON_PATH_WITH}
-   fi
-
-   if test -d ${PYTHON_BASE}/lib/python2.4 ; then
-      PYTHON_VERSION=2.4
-   elif test -d ${PYTHON_BASE}/lib/python2.3 ; then
-      PYTHON_VERSION=2.3
-   elif test -d ${PYTHON_BASE}/lib/python2.2 ; then
-      PYTHON_VERSION=2.2
-   elif test -d ${PYTHON_BASE}/lib/python1.5 ; then
-      { { echo "$as_me:$LINENO: error: Incorrect version of python. You need 2.0 at least. Run with -without-python" >&5
-echo "$as_me: error: Incorrect version of python. You need 2.0 at least. Run with -without-python" >&2;}
-   { (exit 1); exit 1; }; }
-   fi
-
-   PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
-
-   if test ${PYTHON_BASE} = "no" ; then
-      echo "checking for python ... run with --without-python"
-      PYTHON_ADA_SOURCE="src2"
-   elif test -d ${PYTHON_BASE}; then
-      echo "checking for python ... ok"
-      PYTHON_ADA_SOURCE="src"
-   else
-      echo "checking for python ... not found"
-      PYTHON_ADA_SOURCE="src2"
-      PYTHON_BASE=no
-   fi
-
 echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6
 set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y,./+-,__p_,'`
@@ -3297,6 +3229,367 @@ fi
 
   test -n "$TEXI2DVI" && break
 done
+
+
+######### checking for gtk
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PKG_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+
+if test -n "$PKG_CONFIG"; then
+  echo "$as_me:$LINENO: result: $PKG_CONFIG" >&5
+echo "${ECHO_T}$PKG_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  echo "$as_me:$LINENO: checking GTK GLIB ATK PANGO prefix" >&5
+echo $ECHO_N "checking GTK GLIB ATK PANGO prefix... $ECHO_C" >&6
+  GTK="gtk+-2.0"
+  GLIB="glib-2.0"
+  PANGO="pango"
+  ATK="atk"
+  if test "$PKG_CONFIG" = "no" ; then
+    GTK_PREFIX=unknown
+    echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6
+  else
+    GTK_PREFIX=`$PKG_CONFIG $GTK --variable=prefix`
+    GLIB_PREFIX=`$PKG_CONFIG $GLIB --variable=prefix`
+    ATK_PREFIX=`$PKG_CONFIG $ATK --variable=prefix`
+    PANGO_PREFIX=`$PKG_CONFIG $PANGO --variable=prefix`
+    echo "$as_me:$LINENO: result: $GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX" >&5
+echo "${ECHO_T}$GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX" >&6
+  fi
+
+  # Extract the first word of "gtkada-config", so it can be a program name with args.
+set dummy gtkada-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_GTK_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $GTK_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_GTK_CONFIG="$GTK_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_GTK_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_GTK_CONFIG" && ac_cv_path_GTK_CONFIG="no"
+  ;;
+esac
+fi
+GTK_CONFIG=$ac_cv_path_GTK_CONFIG
+
+if test -n "$GTK_CONFIG"; then
+  echo "$as_me:$LINENO: result: $GTK_CONFIG" >&5
+echo "${ECHO_T}$GTK_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  min_gtk_version=2.4.0
+  echo "$as_me:$LINENO: checking for GtkAda - version >= $min_gtk_version" >&5
+echo $ECHO_N "checking for GtkAda - version >= $min_gtk_version... $ECHO_C" >&6
+  no_gtk=""
+  if test "$GTK_CONFIG" = "no" ; then
+    no_gtk=yes
+  else
+    GTK_CFLAGS=`$GTK_CONFIG --cflags`
+    GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/ *-aO.*//' -e 's/-aI//'`
+    GTKADA_OBJ=`echo $GTK_CFLAGS | sed -e 's/.*-aO//'`
+    GTK_LIBS=`$GTK_CONFIG --libs`
+    GTK_STATIC_LIBS=`$GTK_CONFIG --libs --static`
+    gtk_major_version=`$GTK_CONFIG --version | \
+           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\1/'`
+    gtk_minor_version=`$GTK_CONFIG --version | \
+           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\2/'`
+    gtk_micro_version=`$GTK_CONFIG --version | \
+           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\3/'`
+    rm -f conf.gtktest
+    if test "$cross_compiling" = yes; then
+  echo $ac_n "cross compiling; assumed OK... $ac_c"
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <stdio.h>
+
+int
+main ()
+{
+  int major, minor, micro;
+  char *version = "$min_gtk_version";
+
+  system ("touch conf.gtktest");
+
+  if (sscanf(version, "%d.%d.%d", &major, &minor, &micro) != 3) {
+     printf("%s, bad version string\n", "$min_gtk_version");
+     exit(1);
+  }
+
+  if (($gtk_major_version > major) ||
+     (($gtk_major_version == major) && ($gtk_minor_version > minor)) ||
+     (($gtk_major_version == major) && ($gtk_minor_version == minor) && ($gtk_micro_version >= micro)))
+    {
+      return 0;
+     }
+   else
+    {
+      printf("\n*** An old version of GtkAda (%d.%d.%d) was found.\n",
+             $gtk_major_version, $gtk_minor_version, $gtk_micro_version);
+        printf("*** You need a version of GtkAda newer or equal to %d.%d.%d. The latest version of\n",
+               major, minor, micro);
+      printf("*** GtkAda is always available from http://libre.adacore.com\n");
+      printf("***\n");
+      printf("*** If you have already installed a sufficiently new version, this error\n");
+      printf("*** probably means that the wrong copy of the gtkada-config shell script is\n");
+      printf("*** being found. The easiest way to fix this is to remove the old version\n");
+      printf("*** of GtkAda but you can also set the GTK_CONFIG environment to point to the\n");
+      printf("*** correct copy of gtkada-config. (In this case, you will have to\n");
+      printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
+      printf("*** so that the correct libraries are found at run-time))\n");
+    }
+  return 1;
+}
+
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  :
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+no_gtk=yes
+fi
+rm -f core core.* *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+       CFLAGS="$ac_save_CFLAGS"
+       LIBS="$ac_save_LIBS"
+  fi
+  if test "x$no_gtk" = x ; then
+     echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+     :
+  else
+     echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+     if test "$GTK_CONFIG" = "no" ; then
+       echo "*** The gtkada-config script could not be found."
+       echo "*** If GtkAda was installed in PREFIX, make sure PREFIX/bin is in"
+       echo "*** your path, or set the GTK_CONFIG environment variable to the"
+       echo "*** full path to gtkada-config."
+     else
+       if test -f conf.gtktest ; then
+        :
+       else
+	  echo "*** Could not run GtkAda test program"
+       fi
+     fi
+     GTK_CFLAGS=""
+     GTKADA_SRC=""
+     GTKADA_OBJ=""
+     GTK_LIBS=""
+     GTK_STATIC_LIBS=""
+     { { echo "$as_me:$LINENO: error: Test for GtkAda failed. See the file 'INSTALL' for help." >&5
+echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+
+
+
+
+
+
+
+
+  rm -f conf.gtktest
+
+
+######### checking for python (needs to be done after gtk)
+
+   echo "$as_me:$LINENO: checking for python" >&5
+echo $ECHO_N "checking for python... $ECHO_C" >&6
+   if test "$PYTHON_PATH_WITH" = "yes" ; then
+      # Extract the first word of "python", so it can be a program name with args.
+set dummy python; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PYTHON_BASE+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PYTHON_BASE in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PYTHON_BASE="$PYTHON_BASE" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PYTHON_BASE="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PYTHON_BASE" && ac_cv_path_PYTHON_BASE="no"
+  ;;
+esac
+fi
+PYTHON_BASE=$ac_cv_path_PYTHON_BASE
+
+if test -n "$PYTHON_BASE"; then
+  echo "$as_me:$LINENO: result: $PYTHON_BASE" >&5
+echo "${ECHO_T}$PYTHON_BASE" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+      PBASE=${PYTHON_BASE}
+      PYTHON_BASE=`dirname ${PYTHON_BASE}`
+      PYTHON_BASE=`dirname ${PYTHON_BASE}`
+   else
+      PYTHON_BASE=${PYTHON_PATH_WITH}
+   fi
+
+   if test -d ${PYTHON_BASE}/lib/python2.4 ; then
+      PYTHON_VERSION=2.4
+   elif test -d ${PYTHON_BASE}/lib/python2.3 ; then
+      PYTHON_VERSION=2.3
+   elif test -d ${PYTHON_BASE}/lib/python2.2 ; then
+      PYTHON_VERSION=2.2
+   elif test -d ${PYTHON_BASE}/lib/python1.5 ; then
+      { { echo "$as_me:$LINENO: error: Incorrect version of python. You need 2.0 at least. Run with -without-python" >&5
+echo "$as_me: error: Incorrect version of python. You need 2.0 at least. Run with -without-python" >&2;}
+   { (exit 1); exit 1; }; }
+   fi
+
+   PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
+
+   if test ${PYTHON_BASE} = "no" ; then
+      echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+      PYTHON_ADA_SOURCE="src2"
+   elif test -d ${PYTHON_BASE}; then
+      echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+      PYTHON_ADA_SOURCE="src"
+   else
+      echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+      PYTHON_ADA_SOURCE="src2"
+      PYTHON_BASE=no
+   fi
+
+
+    # Check whether --enable-pygtk or --disable-pygtk was given.
+if test "${enable_pygtk+set}" = set; then
+  enableval="$enable_pygtk"
+
+else
+  enable_pygtk=yes
+fi;
+
+    min_pygtk_version=2.8
+    module=pygtk-2.0
+    echo "$as_me:$LINENO: checking for pygtk - version >= $min_pygtk_version" >&5
+echo $ECHO_N "checking for pygtk - version >= $min_pygtk_version... $ECHO_C" >&6
+
+    if test x"$enable_pygtk" = x -o x"$enable_pygtk" = xno ; then
+       echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+       PYGTK_PREFIX=""
+       PYGTK_INCLUDE=""
+
+    elif test "$PYTHON_BASE" != "no" ; then
+       pygtk_version=`$PKG_CONFIG $module --modversion`
+       $PKG_CONFIG $module --atleast-version=$min_pygtk_version
+       if test $? = 0 ; then
+          PYGTK_INCLUDE=`$PKG_CONFIG $module --cflags`
+          PYGTK_PREFIX=`$PKG_CONFIG $module --variable=prefix`
+          echo "$as_me:$LINENO: result: yes (version $pygtk_version)" >&5
+echo "${ECHO_T}yes (version $pygtk_version)" >&6
+       else
+          echo "$as_me:$LINENO: result: no (found $pygtk_version)" >&5
+echo "${ECHO_T}no (found $pygtk_version)" >&6
+          PYGTK_PREFIX=""
+          PYGTK_INCLUDE=""
+       fi
+
+    else
+       echo "$as_me:$LINENO: result: no since python not found" >&5
+echo "${ECHO_T}no since python not found" >&6
+       PYGTK_PREFIX=""
+       PYGTK_INCLUDE=""
+    fi
 
 
 ######## GNU regex checking
@@ -3839,88 +4132,7 @@ fi
 done
 
 
-for ac_func in openpty
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-return f != $ac_func;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  echo "$as_me:$LINENO: checking for openpty in -lutil" >&5
+echo "$as_me:$LINENO: checking for openpty in -lutil" >&5
 echo $ECHO_N "checking for openpty in -lutil... $ECHO_C" >&6
 if test "${ac_cv_lib_util_openpty+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4039,14 +4251,97 @@ if test $ac_cv_lib_bsd_openpty = yes; then
 #define HAVE_OPENPTY 1
 _ACEOF
  TARGET_LFLAGS="$TARGET_LFLAGS -lbsd"
+else
+
+for ac_func in openpty
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
+if eval "test \"\${$as_ac_var+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $ac_func (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char $ac_func ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+choke me
+#else
+char (*f) () = $ac_func;
+#endif
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+return f != $ac_func;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_var=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_var=no"
 fi
-
-
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
-
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
 
 fi
 done
+
+
+fi
+
+
+fi
+
 
 
 for ac_func in _getpty
@@ -4645,243 +4940,8 @@ esac
 machfile="'\"machine/${machine}.h\"'"
 opsysfile="\\\"system/${opsys}.h\\\""
 
-# checking for gtk
-  # Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_PKG_CONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
-  ;;
-esac
-fi
-PKG_CONFIG=$ac_cv_path_PKG_CONFIG
-
-if test -n "$PKG_CONFIG"; then
-  echo "$as_me:$LINENO: result: $PKG_CONFIG" >&5
-echo "${ECHO_T}$PKG_CONFIG" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  echo "$as_me:$LINENO: checking GTK GLIB ATK PANGO prefix" >&5
-echo $ECHO_N "checking GTK GLIB ATK PANGO prefix... $ECHO_C" >&6
-  GTK="gtk+-2.0"
-  GLIB="glib-2.0"
-  PANGO="pango"
-  ATK="atk"
-  if test "$PKG_CONFIG" = "no" ; then
-    GTK_PREFIX=unknown
-    echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6
-  else
-    GTK_PREFIX=`$PKG_CONFIG $GTK --variable=prefix`
-    GLIB_PREFIX=`$PKG_CONFIG $GLIB --variable=prefix`
-    ATK_PREFIX=`$PKG_CONFIG $ATK --variable=prefix`
-    PANGO_PREFIX=`$PKG_CONFIG $PANGO --variable=prefix`
-    echo "$as_me:$LINENO: result: $GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX" >&5
-echo "${ECHO_T}$GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX" >&6
-  fi
-
-  # Extract the first word of "gtkada-config", so it can be a program name with args.
-set dummy gtkada-config; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_GTK_CONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $GTK_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_GTK_CONFIG="$GTK_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_GTK_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_GTK_CONFIG" && ac_cv_path_GTK_CONFIG="no"
-  ;;
-esac
-fi
-GTK_CONFIG=$ac_cv_path_GTK_CONFIG
-
-if test -n "$GTK_CONFIG"; then
-  echo "$as_me:$LINENO: result: $GTK_CONFIG" >&5
-echo "${ECHO_T}$GTK_CONFIG" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  min_gtk_version=2.4.0
-  echo "$as_me:$LINENO: checking for GtkAda - version >= $min_gtk_version" >&5
-echo $ECHO_N "checking for GtkAda - version >= $min_gtk_version... $ECHO_C" >&6
-  no_gtk=""
-  if test "$GTK_CONFIG" = "no" ; then
-    no_gtk=yes
-  else
-    GTK_CFLAGS=`$GTK_CONFIG --cflags`
-    GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/ *-aO.*//' -e 's/-aI//'`
-    GTKADA_OBJ=`echo $GTK_CFLAGS | sed -e 's/.*-aO//'`
-    GTK_LIBS=`$GTK_CONFIG --libs`
-    GTK_STATIC_LIBS=`$GTK_CONFIG --libs --static`
-    gtk_major_version=`$GTK_CONFIG --version | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\1/'`
-    gtk_minor_version=`$GTK_CONFIG --version | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\2/'`
-    gtk_micro_version=`$GTK_CONFIG --version | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\3/'`
-    rm -f conf.gtktest
-    if test "$cross_compiling" = yes; then
-  echo $ac_n "cross compiling; assumed OK... $ac_c"
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-#include <stdio.h>
-
-int
-main ()
-{
-  int major, minor, micro;
-  char *version = "$min_gtk_version";
-
-  system ("touch conf.gtktest");
-
-  if (sscanf(version, "%d.%d.%d", &major, &minor, &micro) != 3) {
-     printf("%s, bad version string\n", "$min_gtk_version");
-     exit(1);
-  }
-
-  if (($gtk_major_version > major) ||
-     (($gtk_major_version == major) && ($gtk_minor_version > minor)) ||
-     (($gtk_major_version == major) && ($gtk_minor_version == minor) && ($gtk_micro_version >= micro)))
-    {
-      return 0;
-     }
-   else
-    {
-      printf("\n*** An old version of GtkAda (%d.%d.%d) was found.\n",
-             $gtk_major_version, $gtk_minor_version, $gtk_micro_version);
-        printf("*** You need a version of GtkAda newer or equal to %d.%d.%d. The latest version of\n",
-               major, minor, micro);
-      printf("*** GtkAda is always available from http://gtkada.eu.org.\n");
-      printf("***\n");
-      printf("*** If you have already installed a sufficiently new version, this error\n");
-      printf("*** probably means that the wrong copy of the gtkada-config shell script is\n");
-      printf("*** being found. The easiest way to fix this is to remove the old version\n");
-      printf("*** of GtkAda but you can also set the GTK_CONFIG environment to point to the\n");
-      printf("*** correct copy of gtkada-config. (In this case, you will have to\n");
-      printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
-      printf("*** so that the correct libraries are found at run-time))\n");
-    }
-  return 1;
-}
-
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  :
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-no_gtk=yes
-fi
-rm -f core core.* *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-       CFLAGS="$ac_save_CFLAGS"
-       LIBS="$ac_save_LIBS"
-  fi
-  if test "x$no_gtk" = x ; then
-     echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-     :
-  else
-     echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-     if test "$GTK_CONFIG" = "no" ; then
-       echo "*** The gtkada-config script could not be found."
-       echo "*** If GtkAda was installed in PREFIX, make sure PREFIX/bin is in"
-       echo "*** your path, or set the GTK_CONFIG environment variable to the"
-       echo "*** full path to gtkada-config."
-     else
-       if test -f conf.gtktest ; then
-        :
-       else
-	  echo "*** Could not run GtkAda test program"
-       fi
-     fi
-     GTK_CFLAGS=""
-     GTKADA_SRC=""
-     GTKADA_OBJ=""
-     GTK_LIBS=""
-     GTK_STATIC_LIBS=""
-     { { echo "$as_me:$LINENO: error: Test for GtkAda failed. See the file 'INSTALL' for help." >&5
-echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-
-
-
-
-
-
-
-
-
-  rm -f conf.gtktest
-
-
 # Set the version number of GPS/GVD
+
 
 
 
@@ -4923,11 +4983,16 @@ echo ""
 echo "--------- Summary --------------"
 echo "       python: $PYTHON_BASE"
 echo "           uses --with-python=<dir> to find libpython.so"
+if test "$PYGTK_INCLUDE" = "" ; then
+   echo "       pygtk: no"
+else
+   echo "       pygtk: $PYGTK_PREFIX"
+fi
 echo "       xmlada: $XMLADA_GPR"
 echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
-                                                                                                                        ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/common.gpr:common/common_${XMLADA_GPR}.gpr.in gps/src/gpslink.adb"
+                                                                                                                                  ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in gps/src/gpslink.adb"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5488,6 +5553,7 @@ do
   "python/Makefile.python" ) CONFIG_FILES="$CONFIG_FILES python/Makefile.python" ;;
   "python/python.gpr" ) CONFIG_FILES="$CONFIG_FILES python/python.gpr" ;;
   "gtkada/gtkada.gpr" ) CONFIG_FILES="$CONFIG_FILES gtkada/gtkada.gpr" ;;
+  "common/expect/Makefile" ) CONFIG_FILES="$CONFIG_FILES common/expect/Makefile" ;;
   "common/common.gpr" ) CONFIG_FILES="$CONFIG_FILES common/common.gpr:common/common_${XMLADA_GPR}.gpr.in" ;;
   "gps/src/gpslink.adb" ) CONFIG_FILES="$CONFIG_FILES gps/src/gpslink.adb" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -5596,7 +5662,6 @@ s,@OBJEXT@,$OBJEXT,;t t
 s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
 s,@GNATMAKE@,$GNATMAKE,;t t
-s,@PYTHON_BASE@,$PYTHON_BASE,;t t
 s,@SET_MAKE@,$SET_MAKE,;t t
 s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
 s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
@@ -5617,6 +5682,7 @@ s,@GTKADA_OBJ@,$GTKADA_OBJ,;t t
 s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_LIBS@,$GTK_LIBS,;t t
 s,@GTK_STATIC_LIBS@,$GTK_STATIC_LIBS,;t t
+s,@PYTHON_BASE@,$PYTHON_BASE,;t t
 s,@GPS_VERSION@,$GPS_VERSION,;t t
 s,@opsysfile@,$opsysfile,;t t
 s,@ROOT@,$ROOT,;t t
@@ -5639,6 +5705,7 @@ s,@PYTHON_VERSION@,$PYTHON_VERSION,;t t
 s,@PYTHON_ADA_SOURCE@,$PYTHON_ADA_SOURCE,;t t
 s,@PYTHON_DIR@,$PYTHON_DIR,;t t
 s,@PYTHON_LIBS@,$PYTHON_LIBS,;t t
+s,@PYGTK_INCLUDE@,$PYGTK_INCLUDE,;t t
 s,@subdirs@,$subdirs,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t

@@ -75,6 +75,7 @@ EOF
 
 AC_DEFUN(AM_PATH_PYTHON,
 [
+   AC_MSG_CHECKING(for python)
    if test "$PYTHON_PATH_WITH" = "yes" ; then
       AC_PATH_PROG(PYTHON_BASE, python, no)
 
@@ -98,16 +99,59 @@ AC_DEFUN(AM_PATH_PYTHON,
    PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
 
    if test ${PYTHON_BASE} = "no" ; then
-      echo "checking for python ... run with --without-python"
+      AC_MSG_RESULT(no, since --without-python was specified)
       PYTHON_ADA_SOURCE="src2"
    elif test -d ${PYTHON_BASE}; then
-      echo "checking for python ... ok"
+      AC_MSG_RESULT(yes)
       PYTHON_ADA_SOURCE="src"
    else
-      echo "checking for python ... not found"
+      AC_MSG_RESULT(no)
       PYTHON_ADA_SOURCE="src2"
       PYTHON_BASE=no
    fi
+])
+
+##############################################################
+#
+#  Checking for pygtk
+#    $1 = minimum pygtk version required
+#
+##############################################################
+
+AC_DEFUN(AM_PATH_PYGTK,
+[
+    AC_ARG_ENABLE(pygtk,
+                  [  --disable-pygtk	do not try to build the special support for PyGTK],
+                  ,
+                  enable_pygtk=yes)
+
+    min_pygtk_version=ifelse([$1], ,2.8,$1)
+    module=pygtk-2.0
+    AC_MSG_CHECKING(for pygtk - version >= $min_pygtk_version)
+
+    if test x"$enable_pygtk" = x -o x"$enable_pygtk" = xno ; then
+       AC_MSG_RESULT(no)
+       PYGTK_PREFIX=""
+       PYGTK_INCLUDE=""
+
+    elif test "$PYTHON_BASE" != "no" ; then
+       pygtk_version=`$PKG_CONFIG $module --modversion`
+       $PKG_CONFIG $module --atleast-version=$min_pygtk_version
+       if test $? = 0 ; then
+          PYGTK_INCLUDE=`$PKG_CONFIG $module --cflags`
+          PYGTK_PREFIX=`$PKG_CONFIG $module --variable=prefix`
+          AC_MSG_RESULT(yes (version $pygtk_version))
+       else
+          AC_MSG_RESULT(no (found $pygtk_version))
+          PYGTK_PREFIX=""
+          PYGTK_INCLUDE=""
+       fi 
+
+    else
+       AC_MSG_RESULT(no since python not found)
+       PYGTK_PREFIX=""
+       PYGTK_INCLUDE=""
+    fi
 ])
 
 #############################################################
@@ -191,7 +235,7 @@ main ()
              $gtk_major_version, $gtk_minor_version, $gtk_micro_version);
         printf("*** You need a version of GtkAda newer or equal to %d.%d.%d. The latest version of\n",
                major, minor, micro);
-      printf("*** GtkAda is always available from http://gtkada.eu.org.\n");
+      printf("*** GtkAda is always available from http://libre.adacore.com\n");
       printf("***\n");
       printf("*** If you have already installed a sufficiently new version, this error\n");
       printf("*** probably means that the wrong copy of the gtkada-config shell script is\n");
