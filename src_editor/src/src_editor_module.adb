@@ -2829,13 +2829,13 @@ package body Src_Editor_Module is
       UR.Undo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"_Undo", Stock_Undo,
                        null, null,
-                       GDK_Z, Control_Mask,
+                       GDK_LC_z, Control_Mask,
                        Ref_Item  => -"Preferences",
                        Sensitive => False);
       UR.Redo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"_Redo", Stock_Redo,
                        null, null,
-                       GDK_R, Control_Mask,
+                       GDK_LC_r, Control_Mask,
                        Ref_Item  => -"Preferences",
                        Sensitive => False);
 
