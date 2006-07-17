@@ -8,7 +8,9 @@ You need to use a recent version of the GNAT compiler (e.g. GNAT 5.04a
 or GNAT GPL 2005).
 
 You then need to install the Gtk+ 2.8 suite (e.g 2.8.17).
-To download and build Gtk+, follow the instructions given at www.gtk.org
+To download and build Gtk+, follow the instructions given at www.gtk.org.
+On most linux systems, gtk+ is installed by default and you do not need to
+reinstall it yourself.
 
 Once Gtk+ has been installed, you need to install the latest GtkAda 2.8.x
 See GtkAda-2.8.x/INSTALL for instructions.
@@ -18,6 +20,9 @@ to the GtkAda installation
 
 Then you need to install the latest version of XML/Ada, and set the
 ADA_PROJECT_PATH environment variable to point to <xml-install>/lib/gnat
+
+Optionally, you might want to install python on your system if it isn't
+already installed. 
 
 Once XML/Ada has been installed, extract the GPS sources:
 
