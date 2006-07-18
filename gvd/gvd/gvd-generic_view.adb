@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
---                             AdaCore                               --
+--                      Copyright (C) 2000-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -364,8 +364,7 @@ package body GVD.Generic_View is
          pragma Unreferenced (Kernel);
          Process : constant Visual_Debugger := Get_Process (Data);
          View    : constant Formal_View_Access :=
-           Formal_View_Access (Get_View (Process));
-
+                     Formal_View_Access (Get_View (Process));
       begin
          if View /= null then
             Update (View);
