@@ -18,6 +18,12 @@
 
 import GPS, sys, os.path
 
+try:
+  import gtk
+  has_pygtk=1
+except:
+  has_pygtk=0
+
 
 pydoc_proc = None
 pydoc_port = 9432
@@ -39,6 +45,21 @@ def create_python_menu():
      <shell lang="python">python_support.show_python_library()</shell>
      <descr>Python Library</descr>
      <menu>/Python/Python Library</menu>
+     <category>Scripts</category>
+  </documentation_file>""")
+
+     if has_pygtk:
+        GPS.parse_xml ("""
+  <documentation_file>
+     <name>http://www.pygtk.org/pygtk2tutorial/index.html</name>
+     <descr>PyGTK tutorial</descr>
+     <menu>/Python/PyGTK Tutorial</menu>
+     <category>Scripts</category>
+  </documentation_file>
+  <documentation_file>
+     <name>http://www.pygtk.org/pygtk2reference/index.html</name>
+     <descr>PyGTK Reference Manual</descr>
+     <menu>/Python/PyGTK Reference Manual</menu>
      <category>Scripts</category>
   </documentation_file>""")
 
