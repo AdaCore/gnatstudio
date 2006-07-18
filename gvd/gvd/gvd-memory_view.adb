@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -691,6 +691,9 @@ package body GVD.Memory_View is
             end if;
          end;
       end if;
+   exception
+      when Constraint_Error =>
+         Display_Memory (View, 0);
    end Display_Memory;
 
    -------------------
