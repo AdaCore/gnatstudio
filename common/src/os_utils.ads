@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -84,7 +84,15 @@ package OS_Utils is
    --  couldn't be created.
 
    function Get_Process_Id return Integer;
-   --  Return the process ID of the current process.
+   --  Return the process ID of the current process
+
+   type Path_Style is (UNIX, DOS, System_Default, Cygwin);
+   function Format_Pathname
+     (Path  : String;
+      Style : Path_Style := System_Default) return String;
+   --  This routines call GNAT.Directory_Operations.Format_Pathname. The only
+   --  difference is for the Cygwin mode. In this case the drive prefix is
+   --  converted to the cygwin equivalent (/cygdrive/<drive>).
 
 private
    pragma Import (C, Install_Ctrl_C_Handler, "__gnat_install_int_handler");

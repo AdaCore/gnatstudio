@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                      Copyright (C) 2001-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,7 @@ with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
 
 with Glib.Convert;              use Glib.Convert;
 with Traces;                    use Traces;
@@ -46,7 +46,8 @@ package body OS_Utils is
       pragma Import (C, Internal, "__gps_get_tmp_dir");
 
       C_Str : chars_ptr := Internal;
-      Str   : constant String := Format_Pathname (To_Ada (Value (C_Str)));
+      Str   : constant String :=
+                Directory_Operations.Format_Pathname (To_Ada (Value (C_Str)));
    begin
       Free (C_Str);
 
@@ -300,5 +301,69 @@ package body OS_Utils is
 
       N := Write (File, EOL'Address, EOL'Length);
    end Put_Line;
+
+   ---------------------
+   -- Format_Pathname --
+   ---------------------
+
+   function Format_Pathname
+     (Path  : String;
+      Style : Path_Style := System_Default) return String
+   is
+      function Cygwin_To_Dos (Path : String) return String;
+      --  Convert the /cygdrive/<drive>/ prefix to the DOS <drive>:\ equivalent
+      --  and convert a forward slashes to backward slashes.
+
+      -------------------
+      -- Cygwin_To_Dos --
+      -------------------
+
+      function Cygwin_To_Dos (Path : String) return String is
+         Cygdrive : constant String := "/cygdrive/";
+      begin
+         if Path'Length > Cygdrive'Length + 1
+           and then
+             Path (Path'First .. Path'First + Cygdrive'Length - 1) = Cygdrive
+         then
+            return Path (Path'First + Cygdrive'Length) & ":" &
+              Path (Path'First + Cygdrive'Length + 1 .. Path'Last);
+         else
+            return Path;
+         end if;
+      end Cygwin_To_Dos;
+
+   begin
+      case Style is
+         when UNIX | System_Default =>
+            return Format_Pathname
+              (Path,
+               Directory_Operations.Path_Style'Val (Path_Style'Pos (Style)));
+
+         when DOS =>
+            declare
+               Result : constant String := Cygwin_To_Dos (Path);
+            begin
+               return Format_Pathname (Result, Directory_Operations.DOS);
+            end;
+
+         when Cygwin =>
+            declare
+               Result : constant String :=
+                          Format_Pathname (Path, Directory_Operations.UNIX);
+            begin
+               if Result'Length > 2
+                 and then (Result (Result'First) in 'A' .. 'Z'
+                           or else Result (Result'First) in 'a' .. 'z')
+                 and then Result (Result'First + 1) = ':'
+                 and then Result (Result'First + 2) = '/'
+               then
+                  return "/cygdrive/" & Result (Result'First) &
+                    Result (Result'First + 2 .. Result'Last);
+               else
+                  return Result;
+               end if;
+            end;
+      end case;
+   end Format_Pathname;
 
 end OS_Utils;
