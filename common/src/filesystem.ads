@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006                            --
---                             AdaCore                               --
+--                         Copyright (C) 2006                        --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -105,7 +105,7 @@ package Filesystem is
    --  Replace every ./ or ../ items of the path.
 
    function Path
-     (FS : Filesystem_Record;
+     (FS     : Filesystem_Record;
       Device : String;
       Dir    : String;
       File   : String) return String is abstract;
@@ -210,7 +210,7 @@ package Filesystem is
      (FS     : Filesystem_Record;
       Host   : String;
       Buffer : in out String;
-      Len    :    out Integer) is abstract;
+      Len    : out Integer) is abstract;
    --  Buffer return the logical drives separated by a NULL character.
 
    function Make_Dir

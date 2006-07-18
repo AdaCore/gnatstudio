@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006                            --
---                             AdaCore                               --
+--                        Copyright (C) 2006                         --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with String_Utils; use String_Utils;
+with String_Utils;           use String_Utils;
 
 package body Filesystem is
 
@@ -34,9 +34,7 @@ package body Filesystem is
    function Is_Subtree
      (FS        : Filesystem_Record;
       Directory : String;
-      Full_Path : String)
-      return Boolean
-   is
+      Full_Path : String) return Boolean is
    begin
       --  Path length shall be greater or equal to directory length
       if Directory'Length > Full_Path'Length then
@@ -55,8 +53,10 @@ package body Filesystem is
    -- File_Extension --
    --------------------
 
-   function File_Extension (FS   : Filesystem_Record;
-                            Path : String) return String is
+   function File_Extension
+     (FS   : Filesystem_Record;
+      Path : String) return String
+   is
       pragma Unreferenced (FS);
    begin
       for J in reverse Path'Range loop
@@ -71,9 +71,10 @@ package body Filesystem is
    -- Concat --
    ------------
 
-   function Concat (FS   : Filesystem_Record;
-                    Root : String;
-                    Sub  : String) return String
+   function Concat
+     (FS   : Filesystem_Record;
+      Root : String;
+      Sub  : String) return String
    is
       pragma Unreferenced (FS);
    begin
@@ -91,4 +92,5 @@ package body Filesystem is
    begin
       return '~';
    end Multi_Unit_Index_Char;
+
 end Filesystem;
