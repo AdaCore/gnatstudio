@@ -22,7 +22,9 @@ Then you need to install the latest version of XML/Ada, and set the
 ADA_PROJECT_PATH environment variable to point to <xml-install>/lib/gnat
 
 Optionally, you might want to install python on your system if it isn't
-already installed. 
+already installed. Another optional package is PyGTK, the python bindings for
+the gtk+ library. If found, GPS will provide a few extra functions so that
+you can incorporate your own GUI within the GPS MDI.
 
 Once XML/Ada has been installed, extract the GPS sources:
 
