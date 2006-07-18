@@ -21,11 +21,13 @@ F130-004 Better integration with PyGTK (2006-07-17)
   with PyGTK and include them in the GPS MDI. It is also possible to get
   the MDI contents and export it to PyGTK
 
+  Keywords: Python
+
 New features in GPS 4.0.0
 -------------------------
 
 F615-006 Alias expansion is case insensitive (2006-06-16)
-
+ 
   The process of matching alias names is now case insensitive. This is
   friendlier as it allows to expand an alias no matter the alias name casing.
   This is particularly useful when the on the fly auto-casing is being used.
