@@ -47,10 +47,9 @@ begin
    Put_Line (" * Created Subprogram :" & Get_Id (S1));
    Put_Line (" * Created Subprogram :" & Get_Id (S2));
 
-   A2 := new Analysis;
+   A2 := Get_Analysis (S2);
    A2.Coverage_Data := new Coverage;
    A2.Coverage_Data.Total_Child_Count := 42;
-   Set_Analysis (S2, A2);
    Put_Line (" · Subprogram " & Get_Id (S2) & " coverage data" & Integer'Image
              (A2.Coverage_Data.Total_Child_Count));
 
