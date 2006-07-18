@@ -133,7 +133,7 @@ package body Code_Analysis is
       end if;
       L_A := new Line;
       L_A.Number := L_I;
-      L_A.Analysis_Data := null;
+      L_A.Analysis_Data := new Analysis;
       S_A.all.Lines.Insert (L_I, L_A);
       return L_A;
    end Get_Or_Create_Line;
@@ -152,7 +152,7 @@ package body Code_Analysis is
       end if;
       S_A := new Subprogram;
       S_A.Name := S_I;
-      S_A.Analysis_Data := null;
+      S_A.Analysis_Data := new Analysis;
       F_A.all.Subprograms.Insert (String (S_I), S_A);
       return S_A;
    end Get_Or_Create_Subprogram;
@@ -171,7 +171,7 @@ package body Code_Analysis is
       end if;
       F_A := new File;
       F_A.Name := S_I;
-      F_A.Analysis_Data := null;
+      F_A.Analysis_Data := new Analysis;
       P_A.all.Files.Insert (String (S_I), F_A);
       return F_A;
    end Get_Or_Create_File;
@@ -189,46 +189,10 @@ package body Code_Analysis is
       end if;
       P_A := new Project;
       P_A.Name := S_I;
-      P_A.Analysis_Data := null;
+      P_A.Analysis_Data := new Analysis;
       Projects.Insert (String (S_I), P_A);
       return P_A;
    end Get_Or_Create_Project;
-
-   ------------------
-   -- Set_Analysis --
-   ------------------
-
-   procedure Set_Analysis (L : Line_Access; A : Analysis_Access) is
-   begin
-      L.Analysis_Data := A;
-   end Set_Analysis;
-
-   ------------------
-   -- Set_Analysis --
-   ------------------
-
-   procedure Set_Analysis (S : Subprogram_Access; A : Analysis_Access) is
-   begin
-      S.Analysis_Data := A;
-   end Set_Analysis;
-
-   ------------------
-   -- Set_Analysis --
-   ------------------
-
-   procedure Set_Analysis (F : File_Access; A : Analysis_Access) is
-   begin
-      F.Analysis_Data := A;
-   end Set_Analysis;
-
-   ------------------
-   -- Set_Analysis --
-   ------------------
-
-   procedure Set_Analysis (P : Project_Access; A : Analysis_Access) is
-   begin
-      P.Analysis_Data := A;
-   end Set_Analysis;
 
    -------------------
    -- Free_Analysis --
