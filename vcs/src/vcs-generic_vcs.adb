@@ -24,6 +24,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
 with GNAT.Strings;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -412,7 +413,6 @@ package body VCS.Generic_VCS is
       Index             : Natural := 1;
       First_Args_Length : Natural := 0;
       Dir               : GNAT.Strings.String_Access;
-      Pref_Len          : Natural; -- length of the file's common prefix
 
       use type GNAT.OS_Lib.String_List_Access;
    begin
@@ -422,49 +422,6 @@ package body VCS.Generic_VCS is
 
       if First_Args /= null then
          First_Args_Length := First_Args'Length;
-      end if;
-
-      --  Compute the largest common prefix for all files
-
-      if Ref.Absolute_Names then
-         Node := First (Files);
-
-         declare
-            Prefix : constant String :=
-                       GNAT.Directory_Operations.Dir_Name (Data (Node));
-            Last   : Natural := Prefix'Last;
-         begin
-            while Node /= Null_Node loop
-               declare
-                  Filename : constant String := Data (Node);
-               begin
-                  if Last > Filename'Length then
-                     Last := Filename'Length;
-                  end if;
-
-                  while Prefix (1 .. Last) /=
-                    Filename (Filename'First .. Filename'First + Last - 1)
-                    or else (Last /= 0
-                             and then Prefix (Last) /= '/'
-                             and then Prefix (Last) /= '\')
-                  loop
-                     Last := Last - 1;
-                  end loop;
-               end;
-               exit when Last = 0;
-               Node := Next (Node);
-            end loop;
-
-            if Last = 0 then
-               --  No common prefix, run the command from the current directory
-               Dir := new String'(".");
-               Pref_Len := 0;
-            else
-               --  We have found a common prefix, set Dir
-               Dir := new String'(Locale_From_UTF8 (Prefix (1 .. Last)));
-               Pref_Len := Dir.all'Length;
-            end if;
-         end;
       end if;
 
       --  Handles files
@@ -493,10 +450,9 @@ package body VCS.Generic_VCS is
             end if;
 
             if Ref.Absolute_Names then
-               Dir := new String'(Dir.all);
+               Dir := null;
             else
                Dir := new String'(Dir_Name (Locale_From_UTF8 (Data (Node))));
-               Pref_Len := Dir.all'Length;
             end if;
 
             while Node /= Null_Node loop
@@ -510,28 +466,28 @@ package body VCS.Generic_VCS is
                begin
                   if Ref.Absolute_Names then
                      --  The VCS works on absolute names
-                     if Ref.Dir_Sep = System_Default then
+                     if Ref.Path_Style = System_Default then
                         Args (Index) := new String'(Filename);
                      else
                         Args (Index) := new String'
-                          (Format_Pathname (Filename, Ref.Dir_Sep));
+                          (Format_Pathname (Filename, Ref.Path_Style));
                      end if;
 
                   else
                      --  The VCS works on relative names
                      declare
                         Suffix : constant String := Filename
-                          (Filename'First + Pref_Len .. Filename'Last);
+                          (Filename'First + Dir.all'Length .. Filename'Last);
                      begin
                         if Suffix = "" then
                            --  Empty, we have a directory that is the base dir
                            Args (Index) := new String'(".");
 
-                        elsif Ref.Dir_Sep = System_Default then
+                        elsif Ref.Path_Style = System_Default then
                            Args (Index) := new String'(Suffix);
                         else
                            Args (Index) := new String'
-                             (Format_Pathname (Suffix, Ref.Dir_Sep));
+                             (Format_Pathname (Suffix, Ref.Path_Style));
                         end if;
                      end;
                   end if;
@@ -1332,8 +1288,18 @@ package body VCS.Generic_VCS is
            (Get_Attribute (M, "atomic_commands", "FALSE"));
          Ref.Commit_Directory := Boolean'Value
            (Get_Attribute (M, "commit_directory", "FALSE"));
-         Ref.Dir_Sep := Path_Style'Value
-           (Get_Attribute (M, "dir_sep", "System_Default"));
+
+         --  dir_sep is an alias for path_style and is obsolescent, if both
+         --  path_style and dir_sep are set, parth_style value is used.
+
+         if Get_Attribute (M, "path_style", "@") = "@" then
+            Ref.Path_Style := OS_Utils.Path_Style'Value
+              (Get_Attribute (M, "dir_sep", "System_Default"));
+         else
+            Ref.Path_Style := OS_Utils.Path_Style'Value
+              (Get_Attribute (M, "path_style", "System_Default"));
+         end if;
+
          Ref.Ignore_Filename := new String'
            (Get_Attribute (M, "ignore_file", ""));
 
@@ -1439,6 +1405,27 @@ package body VCS.Generic_VCS is
       S           : String renames Command.Text.all;
       Matches     : Match_Array (0 .. Command.Parser.Matches_Num);
       Num_Matches : Natural := 0;
+
+      function Get_Filename return String;
+      pragma Inline (Get_Filename);
+      --  Return the matched filename
+
+      ------------------
+      -- Get_Filename --
+      ------------------
+
+      function Get_Filename return String is
+         Filename : constant String :=
+                      S (Matches (Command.Parser.File_Index).First
+                         .. Matches (Command.Parser.File_Index).Last);
+      begin
+         if Command.Rep.Path_Style = Cygwin then
+            return Format_Pathname (Filename, OS_Utils.DOS);
+         else
+            return Filename;
+         end if;
+      end Get_Filename;
+
    begin
       Command.Prev_Start := Command.Start;
 
@@ -1473,20 +1460,22 @@ package body VCS.Generic_VCS is
          end if;
 
          declare
-            St : File_Status_Record;
+            Filename : constant String := Get_Filename;
+            St       : File_Status_Record;
          begin
             if Command.Parser.File_Index /= 0 then
                if Command.Dir = null or else Command.Dir.all = "" then
                   St.File := GPS.Kernel.Create
-                    (S (Matches (Command.Parser.File_Index).First
-                        .. Matches (Command.Parser.File_Index).Last),
-                     Command.Rep.Kernel,
-                     True, False);
+                    (Filename, Command.Rep.Kernel, True, False);
+
                else
-                  St.File := Create
-                    (Command.Dir.all &
-                     S (Matches (Command.Parser.File_Index).First
-                        .. Matches (Command.Parser.File_Index).Last));
+                  if Command.Rep.Absolute_Names
+                    and then GNAT.OS_Lib.Is_Absolute_Path (Filename)
+                  then
+                     St.File := Create (Filename);
+                  else
+                     St.File := Create (Command.Dir.all & Filename);
+                  end if;
                end if;
 
             elsif not Is_Empty (Command.Rep.Current_Query_Files) then
