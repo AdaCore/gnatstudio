@@ -355,8 +355,8 @@
    <!-- SVN -->
 
    <vcs name="Subversion" 
-        dir_sep="UNIX"
-        absolute_names="FALSE" atomic_commands="TRUE"
+        path_style="UNIX"
+        absolute_names="TRUE" atomic_commands="TRUE"
         commit_directory="TRUE">
       <status_files       action="generic_svn_status"           label="Query status"/>
       <status_dir         action="generic_svn_status_dir"       label="Query status for directory"/>
