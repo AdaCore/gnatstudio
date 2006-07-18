@@ -3149,8 +3149,9 @@ Windows acts as containers for other widgets</description>
 
   <shell_doc name="GPS.MDIWindow.name">
      <param name="self">An instance of GPS.MDIWindow</param>
+     <param name="short" default="False">A boolean<param>
      <return>A string</return>
-     <description>Return the name of the window</description>
+     <description>Return the name of the window. If short is False, the long name is returned, ie the one that appears in the title bar. If short is True, the short name is returned, ie the one that appears in the notebook tabs.</description>
   </shell_doc>
 
   <shell_doc name="GPS.MDIWindow.next">
