@@ -3100,6 +3100,7 @@ If the force parameter is false, then a confirmation dialog is displayed so that
       <description>This function is only available if pygtk could be loaded in the python shell. You must install this library first, see the documentation for GPS.MDI itself.
 This function adds a widget inside the MDI of GPS. The resulting window can then be manipulated by the user like any other standard GPS window. It can be split, floated, resized,... Title is the string used in the title bar of the window, short is the string used in the notebook tabs. You can immediately retrieve a handle to the created window by calling GPS.MDI.get (short).</description>
       <see_also name="GPS.MDI.get"/>
+      <see_also name="GPS.GUI.pywidget" />
       <see_also name="GPS.MDI"/>
   </shell_doc>
 
@@ -3380,6 +3381,19 @@ GPS.Hook ("debugger_process_stopped").add (debugger_stopped)
      <param name="sensitive" default="True">A boolean</param>
      <description>Indicate whether the associated graphical element should respond to user interaction or not. If the element is not sensitive, then the user will not be able to click on it</description>
      <see_also name="GPS.GUI.is_sensitive()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.GUI.pywidget">
+     <param name="self">The instance of GPS.GUI</param>
+     <return>An instance of PyWidget</return>
+     <description>This function is only available if GPS was compiled with support for pygtk, and the latter was found at run time. It returns a widget that can be manipulated through the usual PyGtk functions. PyGtk is a binding to the gtk+ toolkit, and allows you to create your own windows easily, or manipulate the entire GPS GUI from python</description>
+     <see_also name="GPS.MDI.add()" />
+     <example lang="python">
+          # The following example makes the project view inactive. One could easily
+          # change the contents of the project view as well
+          widget = GPS.MDI.get ("Project View")
+          widget.pywidget().set_sensitive (False)
+     </example>
   </shell_doc>
 
   <shell_doc name="GPS.GUI.is_sensitive">
