@@ -1981,6 +1981,7 @@ package body KeyManager_Module is
          Title  => -"Key shortcuts",
          Parent => Get_Current_Window (Kernel),
          Flags  => Destroy_With_Parent or Modal);
+      Set_Name (Editor, "Key shortcuts");  --  for testsuite
       Set_Default_Size (Editor, 900, 700);
       Editor.Kernel  := Kernel;
 
