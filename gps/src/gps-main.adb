@@ -22,7 +22,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Command_Line;         use GNAT.Command_Line;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
@@ -316,7 +316,7 @@ procedure GPS.Main is
    ---------------------------
 
    procedure Display_Splash_Screen is
-      File   : constant String := Format_Pathname
+      File   : constant String := Directory_Operations.Format_Pathname
                  (Prefix.all & "/share/gps/gps-splash.png");
       Image  : Gtk_Image;
       Pixbuf : Gdk_Pixbuf;
@@ -476,7 +476,7 @@ procedure GPS.Main is
 
       --  Parse the config files
       Gtk.Rc.Add_Default_File
-        (Format_Pathname (Prefix.all & "/etc/gps/gtkrc"));
+        (Directory_Operations.Format_Pathname (Prefix.all & "/etc/gps/gtkrc"));
       Gtk.Rc.Add_Default_File
         (File_Utils.Name_As_Directory (Dir.all) & "gtkrc");
 
@@ -504,17 +504,20 @@ procedure GPS.Main is
       Tmp := Getenv ("PYTHONPATH");
       if Tmp.all = "" then
          Setenv ("PYTHONPATH",
-                 Format_Pathname (Prefix.all & "/share/gps/python"));
+                 Directory_Operations.Format_Pathname
+                   (Prefix.all & "/share/gps/python"));
       else
          Setenv ("PYTHONPATH", Tmp.all & Path_Separator &
-                 Format_Pathname (Prefix.all & "/share/gps/python"));
+                 Directory_Operations.Format_Pathname
+                   (Prefix.all & "/share/gps/python"));
       end if;
 
       Free (Tmp);
 
       Gtkada.Intl.Setlocale;
       Gtkada.Intl.Bind_Text_Domain
-        ("gps", Format_Pathname (Prefix.all & "/share/locale"));
+        ("gps",
+         Directory_Operations.Format_Pathname (Prefix.all & "/share/locale"));
       Gtkada.Intl.Text_Domain ("gps");
 
       --  Redirect all default Gtk+ logs to our own trace mechanism
@@ -613,14 +616,16 @@ procedure GPS.Main is
       Gtk_New (GPS_Main, Dir.all, Prefix.all);
 
       About_Contents := Read_File
-        (Format_Pathname (Prefix.all & "/share/gps/about.txt"));
+        (Directory_Operations.Format_Pathname
+           (Prefix.all & "/share/gps/about.txt"));
 
       if About_Contents = null then
          About_Contents := new String'("");
       end if;
 
       if Is_Regular_File
-        (Format_Pathname (Prefix.all & "/share/gps/gps-pro.txt"))
+        (Directory_Operations.Format_Pathname
+           (Prefix.all & "/share/gps/gps-pro.txt"))
       then
          GPS_Main.Public_Version := False;
       end if;

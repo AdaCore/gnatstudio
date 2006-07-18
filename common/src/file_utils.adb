@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -299,7 +299,8 @@ package body File_Utils is
 
    function Name_As_Directory
      (Name  : String;
-      Style : Path_Style := System_Default) return String
+      Style : GNAT.Directory_Operations.Path_Style :=
+        GNAT.Directory_Operations.System_Default) return String
    is
       Dir : constant String := Format_Pathname (Name, Style);
 
