@@ -503,17 +503,11 @@ package body Bookmark_Views is
       Event : Gdk_Event) return Boolean
    is
       View   : constant Bookmark_View_Access := Bookmark_View_Access (Clip);
-      Model  : constant Gtk_Tree_Store :=
-                 Gtk_Tree_Store (Get_Model (View.Tree));
       Marker : Bookmark_Data_Access;
-      Iter   : Gtk_Tree_Iter;
-      Col    : Gtk_Tree_View_Column;
       Result : Boolean;
       pragma Unreferenced (Result);
    begin
       if Get_Button (Event) = 1 then
-         --  ??? why the above call is needed
-         Coordinates_For_Event (View.Tree, Model, Event, Iter, Col);
          Marker := Get_Selected_From_Event (View, Event);
 
          --  Always return True to prevent the selection
@@ -679,6 +673,7 @@ package body Bookmark_Views is
          Initial_Sort_On    => 2,
          Merge_Icon_Columns => False,
          Hide_Expander      => True);
+      Set_Name (View.Tree, "Bookmark TreeView"); --  For the testsuite
       Add (View, View.Tree);
 
       View.Goto_Icon := Render_Icon (View, Stock_Jump_To, Icon_Size_Menu);
