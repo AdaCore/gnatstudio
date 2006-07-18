@@ -810,14 +810,18 @@ package body Help_Module is
    is
       Result : Boolean;
       pragma Unreferenced (Result);
+      Name : constant String := Full_Name (File).all;
    begin
-      Trace (Me, "Open_HTML_File " & Full_Name (File).all & " #" & Anchor);
+      Trace (Me, "Open_HTML_File " & Name & " #" & Anchor);
 
-      if Get_Host (File) = "" then
-         Display_Help (Kernel, URL => "file://" & Full_Name (File, True).all);
-      else
+      if Name'Length > 7
+        and then Name (Name'First .. Name'First + 6) = "http://"
+      then
          --  Assume we have a URL already, let the browser deal with it
          Display_Help (Kernel, URL => Full_Name (File, True).all);
+
+      else
+         Display_Help (Kernel, URL => "file://" & Full_Name (File, True).all);
       end if;
    end Open_HTML_File;
 
