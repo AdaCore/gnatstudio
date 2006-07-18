@@ -95,6 +95,7 @@ package body GPS.Main_Window is
    Float_Cst      : aliased constant String := "float";
    Reuse_Cst      : aliased constant String := "reuse";
    Visible_Only_Cst : aliased constant String := "visible_only";
+   Short_Cst      : aliased constant String := "short";
    Get_Cmd_Parameters : constant Cst_Argument_List := (1 => Name_Cst'Access);
    Get_By_Child_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Child_Cst'Access);
@@ -104,6 +105,8 @@ package body GPS.Main_Window is
      (1 => Vertically_Cst'Access, 2 => Reuse_Cst'Access);
    Next_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Visible_Only_Cst'Access);
+   Name_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Short_Cst'Access);
 
    type Tabs_Position_Preference is (Bottom, Top, Left, Right);
    for Tabs_Position_Preference'Size use Glib.Gint'Size;
@@ -757,6 +760,7 @@ package body GPS.Main_Window is
          Handler        => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "name",
+         Maximum_Args   => 1,
          Class          => MDI_Window_Class,
          Handler        => Default_Window_Command_Handler'Access);
 
@@ -839,7 +843,12 @@ package body GPS.Main_Window is
          Raise_Child (Child, Give_Focus => True);
 
       elsif Command = "name" then
-         Set_Return_Value (Data, Get_Title (Child));
+         Name_Parameters (Data, Name_Cmd_Parameters);
+         if Nth_Arg (Data, 2, False) then
+            Set_Return_Value (Data, Get_Short_Title (Child));
+         else
+            Set_Return_Value (Data, Get_Title (Child));
+         end if;
 
       elsif Command = "next" then
          Name_Parameters (Data, Next_Cmd_Parameters);
