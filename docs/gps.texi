@@ -14947,12 +14947,16 @@ is set to @code{TRUE} it means that the VCS supports atomic
 commands. It is @code{FALSE} by default. This attribute is important
 to trigger the activities group commit feature. See @xref{The VCS Activities}.
 
-@item dir_sep
-The attribute @code{dir_sep} specifies which kind of directory separator
+@item path_style
+The attribute @code{path_style} specifies which kind of directory separator
 is supported by the VCS and can take the values @code{UNIX},
-@code{DOS} or @code{System_Default}. The later value is the default
-value. With this attribute it is possible to control the directory
-separator to use when specifying files to the VCS.
+@code{DOS}, @code{Cygwin} or @code{System_Default}. The later value is
+the default value. With this attribute it is possible to control the
+directory separator to use when specifying files to the VCS. For the
+@code{Cygwin} case the drive is specified as @code{/cygdrive/<drive>}.
+
+@item dir_sep
+Alias for @code{path_style}, obsolescent.
 
 @item commit_directory
 The attribute @code{commit_directory} specifies if the VCS supports
