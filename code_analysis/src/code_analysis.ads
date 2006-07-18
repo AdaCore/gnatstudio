@@ -145,15 +145,6 @@ package Code_Analysis is
    --  Functions that allow to get an access over an identified tree node
    --  if the node doesn't exists, it is created by this function
 
-   ------------
-   -- Setter --
-   ------------
-
-   procedure Set_Analysis (L : Line_Access; A : Analysis_Access);
-   procedure Set_Analysis (S : Subprogram_Access; A : Analysis_Access);
-   procedure Set_Analysis (F : File_Access; A : Analysis_Access);
-   procedure Set_Analysis (P : Project_Access; A : Analysis_Access);
-
    ----------------------
    -- Root of the tree --
    ----------------------
