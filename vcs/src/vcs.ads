@@ -19,12 +19,12 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with GPS.Kernel;                use GPS.Kernel;
 with Basic_Types;               use Basic_Types;
 with String_List_Utils;         use String_List_Utils;
 with Generic_List;
+with OS_Utils;                  use OS_Utils;
 with VFS;
 
 package VCS is
@@ -498,7 +498,7 @@ private
       Absolute_Names   : Boolean    := False;
       Atomic_Commands  : Boolean    := False;
       Commit_Directory : Boolean    := False;
-      Dir_Sep          : Path_Style := System_Default;
+      Path_Style       : OS_Utils.Path_Style := System_Default;
       Ignore_Filename  : String_Access;
    end record;
 
