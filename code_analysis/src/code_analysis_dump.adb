@@ -40,7 +40,7 @@ package body Code_Analysis_Dump is
       P_A : constant Project_Access := Project_Maps.Element (C);
    begin
       Put (" O¦ Project " & Get_Id (P_A));
-      if Get_Analysis (P_A) /= null then
+      if Get_Analysis (P_A).Coverage_Data /= null then
          Dump_Coverage (Get_Analysis (P_A).Coverage_Data);
       end if;
       Put (" : ");
@@ -57,7 +57,7 @@ package body Code_Analysis_Dump is
       F_A : constant Code_Analysis.File_Access := File_Maps.Element (C);
    begin
       Put ("   o¦ File " & Get_Id (F_A));
-      if Get_Analysis (F_A) /= null then
+      if Get_Analysis (F_A).Coverage_Data /= null then
          Dump_Coverage (Get_Analysis (F_A).Coverage_Data);
       end if;
       Put (" : ");
@@ -74,7 +74,7 @@ package body Code_Analysis_Dump is
       S_A : constant Subprogram_Access := Subprogram_Maps.Element (C);
    begin
       Put ("     °¦ Subprogram " & Get_Id (S_A));
-      if Get_Analysis (S_A) /= null then
+      if Get_Analysis (S_A).Coverage_Data /= null then
          Dump_Coverage (Get_Analysis (S_A).Coverage_Data);
       end if;
       Put (" : ");
@@ -91,7 +91,7 @@ package body Code_Analysis_Dump is
       L_A : constant Line_Access := Line_Maps.Element (C);
    begin
       Put ("       ·¦ Line " & Integer'Image (Get_Id (L_A)));
-      if Get_Analysis (L_A) /= null then
+      if Get_Analysis (L_A).Coverage_Data /= null then
          Dump_Coverage (Get_Analysis (L_A).Coverage_Data);
       end if;
       Put (" : ");
