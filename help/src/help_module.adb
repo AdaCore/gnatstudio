@@ -18,41 +18,46 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
+
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
 with Glib.Object;                use Glib.Object;
 with Glib.Xml_Int;               use Glib.Xml_Int;
-with XML_Parsers;
-with Config;
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
+
+with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Widget;                 use Gtk.Widget;
+
+with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Handlers;            use Gtkada.Handlers;
+
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Main_Window;            use GPS.Main_Window;
-with Gtkada.Dialogs;             use Gtkada.Dialogs;
-with Gtkada.MDI;                 use Gtkada.MDI;
-with Gtk.Menu_Item;              use Gtk.Menu_Item;
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtkada.Handlers;            use Gtkada.Handlers;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Traces;                     use Traces;
 with OS_Utils;                   use OS_Utils;
-with Ada.Exceptions;             use Ada.Exceptions;
 with File_Utils;                 use File_Utils;
 with String_Utils;               use String_Utils;
 with Generic_List;
-with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Histories;                  use Histories;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with VFS;                        use VFS;
 with Welcome_Page;               use Welcome_Page;
+with XML_Parsers;
+with Config;
 
 package body Help_Module is
 
@@ -858,10 +863,11 @@ package body Help_Module is
       Button     : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
-      Top        : constant GPS_Window := GPS_Window
-        (Get_Main_Window (Kernel));
+      Top        : constant GPS_Window :=
+                     GPS_Window (Get_Main_Window (Kernel));
       About_File : constant String :=
-        Format_Pathname (Get_System_Dir (Kernel) & "/share/gps/about.txt");
+                     GNAT.Directory_Operations.Format_Pathname
+                       (Get_System_Dir (Kernel) & "/share/gps/about.txt");
       Contents   : GNAT.OS_Lib.String_Access;
 
    begin
