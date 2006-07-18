@@ -20,6 +20,7 @@
 
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
@@ -37,7 +38,6 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with OS_Utils;                  use OS_Utils;
 with String_Utils;              use String_Utils;
 with VCS_Module;                use VCS_Module;
 with VCS_View.Explorer;         use VCS_View.Explorer;
@@ -210,8 +210,8 @@ package body VCS.ClearCase is
       L_Temp  : List_Node := First (List);
 
       Current_File : constant String := String_List.Head (Head);
-      Text_File    : constant Virtual_File :=
-        Create (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File));
+      Text_File    : constant Virtual_File := Create
+        (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File));
       File         : File_Type;
       Success      : Boolean;
 
