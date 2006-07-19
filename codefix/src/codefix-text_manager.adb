@@ -1249,17 +1249,7 @@ package body Codefix.Text_Manager is
          Current_Info := Current_Info.Next;
       end loop;
 
-      return
-        (Category        => Cat_Unknown,
-         Name            => null,
-         Profile         => null,
-         Visibility      => Visibility_Public,
-         Sloc_Start      => (0, 0, 0),
-         Sloc_Entity     => (0, 0, 0),
-         Sloc_End        => (0, 0, 0),
-         Is_Declaration  => False,
-         Prev            => null,
-         Next            => null);
+      return Null_Construct_Info;
    end Search_Unit;
 
    ----------------------------
@@ -3823,7 +3813,7 @@ package body Codefix.Text_Manager is
    exception
       when E : Codefix_Panic =>
          if Error_Cb /= null then
-            Error_Cb (Current_Text.Kernel, Exception_Information (E));
+            Error_Cb (Exception_Information (E));
          end if;
    end Secured_Execute;
 
@@ -4290,22 +4280,23 @@ package body Codefix.Text_Manager is
    -- Set_Kernel --
    ----------------
 
-   procedure Set_Kernel
-     (Text : in out Text_Navigator_Abstr;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   procedure Set_Registry
+     (Text   : in out Text_Navigator_Abstr;
+      Registry : Projects.Registry.Project_Registry_Access) is
    begin
-      Text.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
-   end Set_Kernel;
+      Text.Registry := Registry;
+   end Set_Registry;
 
    ----------------
    -- Get_Kernel --
    ----------------
 
-   function Get_Kernel
-     (Text : Text_Navigator_Abstr) return GPS.Kernel.Kernel_Handle is
+   function Get_Registry
+     (Text : Text_Navigator_Abstr)
+      return Projects.Registry.Project_Registry_Access is
    begin
-      return Text.Kernel;
-   end Get_Kernel;
+      return Text.Registry;
+   end Get_Registry;
 
    --------------
    -- Get_Line --
