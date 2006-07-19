@@ -1315,8 +1315,8 @@ package body Src_Editor_Buffer is
       --  corresponding signal.
 
       if Mark = Buffer.Insert_Mark then
-         Buffer.Emit_New_Cursor_Position;
-         Buffer.Cursor_Move_Hook;
+         Emit_New_Cursor_Position (Buffer);
+         Cursor_Move_Hook (Buffer);
       end if;
 
       Buffer.Setting_Mark := False;
