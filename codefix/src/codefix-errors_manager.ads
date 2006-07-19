@@ -30,6 +30,11 @@ with Ada.Unchecked_Deallocation;
 
 package Codefix.Errors_Manager is
 
+   type Fix_Options is record
+      Remove_Policy : Useless_Entity_Operations := Remove_Entity;
+   end record;
+   --  This record hold various options used to configure the fix.
+
    ----------------------------------------------------------------------------
    --  type Errors_Interface
    ----------------------------------------------------------------------------
@@ -121,6 +126,7 @@ package Codefix.Errors_Manager is
      (This        : in out Correction_Manager;
       Source_Text : Text_Navigator_Abstr'Class;
       Errors_List : in out Errors_Interface'Class;
+      Options     : Fix_Options;
       Callback    : Error_Callback := null);
    --  Cover the whole list of errors, and add them into This. If Callback
    --  is not null, it is called each time a correctible error is found.
