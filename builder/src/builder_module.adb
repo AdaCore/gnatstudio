@@ -98,6 +98,9 @@ package body Builder_Module is
    Run_Menu_Prefix : constant String := "<gps>/Build/Run/";
    --  Prefixes used in the accel path for the various menus
 
+   Item_Accel_Path : constant String := "item";
+   --  Prefix used in accel path for items defined in this module
+
    Custom_Make_Suffix  : constant String := "Custom...";
    Current_Make_Suffix : constant String := "<current file>";
    Project_Make_Suffix : constant String := "Compile all sources";
@@ -1715,7 +1718,7 @@ package body Builder_Module is
 
          declare
             Accel_Path : constant String := Make_Menu_Prefix &
-              "item" & Image (M);
+              Item_Accel_Path & Image (M);
             Key : Gtk_Accel_Key;
             Found : Boolean;
 
@@ -1829,7 +1832,7 @@ package body Builder_Module is
 
             declare
                Accel_Path : constant String := Run_Menu_Prefix &
-                 "item" & Image (M);
+                 Item_Accel_Path & Image (M);
                Key        : Gtk_Accel_Key;
                Found      : Boolean;
 
@@ -1889,11 +1892,13 @@ package body Builder_Module is
       begin
          --  We reset the entries to "" so that two keybindings with the same
          --  name don't appear in the list.
-         if Accel_Path'Length > Make_Menu_Prefix'Length
+         if Accel_Path'Length >
+             Make_Menu_Prefix'Length + Item_Accel_Path'Length
            and then Accel_Path
              (Accel_Path'First ..
-                  Accel_Path'First + Make_Menu_Prefix'Length - 1) =
-               Make_Menu_Prefix
+                  Accel_Path'First + Make_Menu_Prefix'Length
+                  + Item_Accel_Path'Length - 1) =
+               Make_Menu_Prefix & Item_Accel_Path
            and then Accel_Path /= Make_Menu_Prefix & Custom_Make_Suffix
            and then Accel_Path /= Make_Menu_Prefix & Current_Make_Suffix
            and then Accel_Path /= Make_Menu_Prefix & Project_Make_Suffix
