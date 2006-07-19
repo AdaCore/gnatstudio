@@ -197,6 +197,7 @@ package body Codefix.Errors_Manager is
      (This        : in out Correction_Manager;
       Source_Text : Text_Navigator_Abstr'Class;
       Errors_List : in out Errors_Interface'Class;
+      Options     : Fix_Options;
       Callback    : Error_Callback := null)
    is
       Current_Message : Error_Message;
@@ -252,6 +253,7 @@ package body Codefix.Errors_Manager is
                  (Source_Text,
                   Errors_List,
                   Current_Message,
+                  Options,
                   Category,
                   Solutions);
 
