@@ -18,17 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;             use GPS.Kernel;
 with Language;               use Language;
 with Traces;                 use Traces;
-with Codefix_Module;         use Codefix_Module;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+
+with Projects.Registry;      use Projects.Registry;
 
 package body Codefix.Errors_Parser is
 
    Me : constant Debug_Handle := Create ("Codefix");
 
-   use Codefix_Module.Codefix_Remove_Policy_Properties;
+--   use Codefix_Module.Codefix_Remove_Policy_Properties;
 
    -------------------
    -- Get_Solutions --
@@ -38,6 +37,7 @@ package body Codefix.Errors_Parser is
      (Current_Text : Text_Navigator_Abstr'Class;
       Errors_List  : in out Errors_Interface'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Category     : out String_Access;
       Solutions    : out Solution_List)
    is
@@ -60,6 +60,7 @@ package body Codefix.Errors_Parser is
                Errors_List,
                Current_Text,
                Message,
+               Options,
                Solutions,
                Success);
          end if;
@@ -132,6 +133,7 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Success      : out Boolean) is
    begin
@@ -147,6 +149,7 @@ package body Codefix.Errors_Parser is
                   Errors_List,
                   Current_Text,
                   Message,
+                  Options,
                   Solutions,
                   Matches);
 
@@ -194,10 +197,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Matches, Errors_List);
+      pragma Unreferenced (This, Matches, Errors_List, Options);
    begin
       Solutions := Should_Be (Current_Text, Message, "=>", "=");
    end Fix;
@@ -220,10 +224,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Should_Be
         (Current_Text,
@@ -246,10 +251,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Should_Be
         (Current_Text,
@@ -279,11 +285,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Options, Matches);
    begin
       Solutions := Should_Be
         (Current_Text, Message, "goto", "(go[\s]+to)", Regular_Expression);
@@ -310,9 +316,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
+   pragma Unreferenced (Options);
       Preview     : Error_Message;
       Fix_Matches : Match_Array (0 .. 1);
    begin
@@ -355,10 +363,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Should_Be
         (Current_Text,
@@ -383,10 +392,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Should_Be (Current_Text, Message, ";", ".", Text_Ascii);
    end Fix;
@@ -406,10 +416,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Should_Be (Current_Text, Message, "and", "&");
    end Fix;
@@ -429,10 +440,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Should_Be (Current_Text, Message, "or", "\|");
    end Fix;
@@ -452,10 +464,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Should_Be
         (Current_Text,
@@ -480,10 +493,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Should_Be
         (Current_Text,
@@ -516,10 +530,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Wrong_Order
         (Current_Text,
@@ -543,10 +558,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
       pragma Unreferenced (Matches);
    begin
       Solutions := Expected (Current_Text, Message, "function");
@@ -569,10 +585,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
       pragma Unreferenced (Matches);
    begin
       Solutions := Expected (Current_Text, Message, "function");
@@ -594,10 +611,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Expected
         (Current_Text,
@@ -620,10 +638,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
 
       Str_Red : String_Access;
    begin
@@ -664,10 +683,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (Errors_List);
+      pragma Unreferenced (Errors_List, Options);
       Wrong_Matches : Match_Array (0 .. 1);
    begin
       Match
@@ -709,10 +729,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (Errors_List);
+      pragma Unreferenced (Errors_List, Options);
 
       Col_Matches        : Match_Array (0 .. 1);
       Line_Red           : String_Access;
@@ -727,7 +748,7 @@ package body Codefix.Errors_Parser is
            (Declaration_Cursor,
             Create
               (Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-               Get_Kernel (Current_Text)));
+               Get_Registry (Current_Text).all));
       else
          Set_File (Declaration_Cursor, Get_File (Message));
       end if;
@@ -771,10 +792,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Expected
         (Current_Text, Message, "null;", Position => Before);
@@ -794,10 +816,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Expected (Current_Text, Message, " ", False);
    end Fix;
@@ -817,10 +840,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Expected (Current_Text, Message, "  ", False);
    end Fix;
@@ -853,10 +877,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (Errors_List);
+      pragma Unreferenced (Errors_List, Options);
       Col_Matches : Match_Array (0 .. 1);
       New_Message : Error_Message := Message;
       Line_Cursor : File_Cursor := File_Cursor (Message);
@@ -892,10 +917,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Unexpected
         (Current_Text,
@@ -918,10 +944,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Unexpected (Current_Text, Message, ")");
    end Fix;
@@ -941,10 +968,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
 
       Str_Red : String_Access;
    begin
@@ -979,10 +1007,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Unexpected
         (Current_Text,
@@ -1005,10 +1034,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
 
       Str_Red_1, Str_Red_2 : String_Access;
    begin
@@ -1051,10 +1081,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Unexpected
         (Current_Text,
@@ -1084,10 +1115,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
 
       Word_Read            : String_Access;
       Unallowed_Characters : String_Access;
@@ -1137,10 +1169,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Remove_Dependency_Clause (Current_Text, Message, Cat_Use);
    end Fix;
@@ -1161,10 +1194,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Remove_Dependency_Clause (Current_Text, Message, Cat_With);
    end Fix;
@@ -1185,10 +1219,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
 
       Begin_Cursor : File_Cursor := File_Cursor (Message);
    begin
@@ -1242,10 +1277,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Wrong_Column
         (Current_Text,
@@ -1271,10 +1307,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Wrong_Column (Current_Text, Message);
    end Fix;
@@ -1299,10 +1336,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := With_Clause_Missing
         (Current_Text,
@@ -1326,10 +1364,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Bad_Casing (Current_Text, Message);
    end Fix;
@@ -1349,10 +1388,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Bad_Casing
         (Current_Text,
@@ -1375,10 +1415,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Bad_Casing (Current_Text, Message, "", Lower);
    end Fix;
@@ -1402,6 +1443,7 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
@@ -1415,24 +1457,18 @@ package body Codefix.Errors_Parser is
    begin
       if First_Word = "procedure" then
          Category := Cat_Procedure;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
-           or Add_Pragma_Unreferenced;
+         Operation_Mask := Options.Remove_Policy or Add_Pragma_Unreferenced;
       elsif First_Word = "function" then
          Category := Cat_Function;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
-           or Add_Pragma_Unreferenced;
+         Operation_Mask := Options.Remove_Policy or Add_Pragma_Unreferenced;
       elsif First_Word = "variable" then
          Category := Cat_Variable;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)));
+         Operation_Mask := Options.Remove_Policy;
       elsif First_Word = "constant"
         or else First_Word = "named number"
       then
          Category := Cat_Variable;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)));
+         Operation_Mask := Options.Remove_Policy;
       elsif First_Word = "parameter" then
          Category := Cat_Parameter;
          Operation_Mask := Add_Pragma_Unreferenced;
@@ -1441,14 +1477,10 @@ package body Codefix.Errors_Parser is
          Operation_Mask := Add_Pragma_Unreferenced;
       elsif First_Word = "type" then
          Category := Cat_Type;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
-           or Add_Pragma_Unreferenced;
+         Operation_Mask := Options.Remove_Policy or Add_Pragma_Unreferenced;
       elsif First_Word = "" then
          Category := Cat_Unknown;
-         Operation_Mask := Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)))
-           or Add_Pragma_Unreferenced;
+         Operation_Mask := Options.Remove_Policy or Add_Pragma_Unreferenced;
       end if;
 
       begin
@@ -1488,6 +1520,7 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
@@ -1498,8 +1531,7 @@ package body Codefix.Errors_Parser is
          Message,
          Cat_With,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-         Policy_To_Operations
-           (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy))));
+         Options.Remove_Policy);
    end Fix;
 
    ----------------
@@ -1518,10 +1550,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Not_Referenced
         (Current_Text,
@@ -1547,6 +1580,7 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
@@ -1564,8 +1598,7 @@ package body Codefix.Errors_Parser is
             Message,
             Cat_Variable,
             Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            Policy_To_Operations
-              (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy))));
+            Options.Remove_Policy);
       else
          raise Uncorrectable_Message;
       end if;
@@ -1586,10 +1619,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := First_Line_Pragma (Current_Text, Message);
    end Fix;
@@ -1609,10 +1643,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Not_Modified
         (Current_Text,
@@ -1645,9 +1680,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
+   pragma Unreferenced (Options);
       Matches_Prev    : Match_Array (0 .. 2);
       Preview         : Error_Message;
       Cursor_List     : Cursor_Lists.List;
@@ -1682,7 +1719,7 @@ package body Codefix.Errors_Parser is
                  (Solution_Cursor, Create
                     (Get_Message (Preview)
                        (Matches_Prev (1).First .. Matches_Prev (1).Last),
-                     Get_Kernel (Current_Text)));
+                     Get_Registry (Current_Text).all));
                Set_Location
                  (Solution_Cursor,
                   Line => Integer'Value
@@ -1734,9 +1771,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
+   pragma Unreferenced (Options);
       Matches_Check   : Match_Array (0 .. 0);
       Matches_Loc     : Match_Array (0 .. 2);
       Preview         : Error_Message;
@@ -1790,7 +1829,7 @@ package body Codefix.Errors_Parser is
                  (Solution_Cursor, Create
                     (Get_Message (Preview)
                        (Matches_Loc (1).First .. Matches_Loc (1).Last),
-                     Get_Kernel (Current_Text)));
+                     Get_Registry (Current_Text).all));
                Set_Location
                  (Solution_Cursor,
                   Line => Integer'Value
@@ -1833,10 +1872,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
    begin
       Solutions := Remove_Conversion
         (Current_Text,
@@ -1863,10 +1903,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Move_With_To_Body (Current_Text, Message);
    end Fix;
@@ -1897,10 +1938,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
 
       Spec_Cursor : File_Cursor;
    begin
@@ -1920,7 +1962,7 @@ package body Codefix.Errors_Parser is
            (Spec_Cursor,
             Create
               (Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-               Get_Kernel (Current_Text)));
+               Get_Registry (Current_Text).all));
       end if;
 
       Solutions := Make_Conformant (Current_Text, Message, Spec_Cursor);
@@ -1943,10 +1985,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List, Matches);
+      pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
       Solutions := Remove_Dependency_Clause (Current_Text, Message, Cat_Use);
    end Fix;
@@ -1969,10 +2012,11 @@ package body Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
+      pragma Unreferenced (This, Errors_List, Options);
 
       Source_Cursor : File_Cursor;
       Seek_With     : Boolean;
@@ -1994,7 +2038,7 @@ package body Codefix.Errors_Parser is
            (Source_Cursor, Create
               (Get_Message (Message)
                  (Matches (1).First .. Matches (1).Last),
-               Get_Kernel (Current_Text)));
+               Get_Registry (Current_Text).all));
          Seek_With := True;
       end if;
 
