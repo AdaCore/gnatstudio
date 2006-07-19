@@ -2044,6 +2044,7 @@ package body KeyManager_Module is
       Gtk_New_With_Model (Editor.Sort, Editor.Filter);
 
       Gtk_New (Editor.View, Editor.Sort);
+      Set_Name (Editor.View, "Key shortcuts tree"); --  for testsuite
       Add (Scrolled, Editor.View);
 
       --  Bottom area
