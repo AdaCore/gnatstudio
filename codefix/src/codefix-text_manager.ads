@@ -24,7 +24,7 @@ with GNAT.OS_Lib;
 with Language;     use Language;
 with Basic_Types;  use Basic_Types;
 with VFS;
-with GPS.Kernel;
+with Projects.Registry;
 
 with Generic_List;
 
@@ -325,12 +325,13 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out Ptr_Text_Navigator);
 
-   procedure Set_Kernel
-     (Text : in out Text_Navigator_Abstr;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   function Get_Kernel
-     (Text : Text_Navigator_Abstr) return GPS.Kernel.Kernel_Handle;
-   --  Set or retrieve the kernel
+   procedure Set_Registry
+     (Text     : in out Text_Navigator_Abstr;
+      Registry : Projects.Registry.Project_Registry_Access);
+
+   function Get_Registry
+     (Text : Text_Navigator_Abstr)
+      return Projects.Registry.Project_Registry_Access;
 
    function Get_Body_Or_Spec
      (Text : Text_Navigator_Abstr; File_Name : VFS.Virtual_File)
@@ -1007,9 +1008,7 @@ package Codefix.Text_Manager is
    --  Execute a command, and create an extract to preview the changes. This
    --  procedure raises a Codefix_Panic is the correction is no longer avaible.
 
-   type Execute_Corrupted is access procedure
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Error_Message : String);
+   type Execute_Corrupted is access procedure (Error_Message : String);
 
    procedure Secured_Execute
      (This         : Text_Command'Class;
@@ -1195,8 +1194,8 @@ private
      is new Ada.Unchecked_Deallocation (Text_List.List, Ptr_List_Text);
 
    type Text_Navigator_Abstr is abstract tagged record
-      Files : Ptr_List_Text := new Text_List.List;
-      Kernel               : GPS.Kernel.Kernel_Handle;
+      Files    : Ptr_List_Text := new Text_List.List;
+      Registry : Projects.Registry.Project_Registry_Access;
    end record;
 
    function Get_File
