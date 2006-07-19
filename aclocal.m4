@@ -86,7 +86,7 @@ AC_DEFUN(AM_PATH_PYTHON,
       PYTHON_BASE=no
 
    else
-      AC_PATH_PROG(PYTHON, python, no)
+      AC_PATH_PROG(PYTHON, python, no, $PYTHON_PATH_WITH/bin:$PATH)
       if test x"$PYTHON" = xno ; then
          PYTHON_BASE=no
       else
