@@ -22,9 +22,9 @@ with GNAT.OS_Lib;
 with GNAT.Regpat;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
-with GPS.Kernel;
 with Generic_List;
 with Language;             use Language;
+with Projects.Registry;
 with VFS;
 
 package Codefix.Formal_Errors is
@@ -42,7 +42,7 @@ package Codefix.Formal_Errors is
 
    procedure Initialize
      (This       : in out Error_Message;
-      Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Registry   : Projects.Registry.Project_Registry_Access;
       Error_Line : String;
       Regexp     : GNAT.Regpat.Pattern_Matcher;
       File_Index, Line_Index, Col_Index, Msg_Index : Integer;
