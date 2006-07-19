@@ -14,15 +14,6 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
-F130-004 Better integration with PyGTK (2006-07-17)
-
-  If PyGTK is found at compile time, a few extra shell functions will be
-  exported by GPS. In particular, this makes it possible to create widgets
-  with PyGTK and include them in the GPS MDI. It is also possible to get
-  the MDI contents and export it to PyGTK
-
-  Keywords: Python
-
 New features in GPS 4.0.0
 -------------------------
 
