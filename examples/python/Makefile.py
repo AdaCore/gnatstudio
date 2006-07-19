@@ -63,6 +63,7 @@ class Console_Process (Console, Process):
                         on_destroy=Console_Process.on_destroy,
                         force=True)
       self.write (process + " " + args + "\n")
+      MDI.get ("Messages").raise_window()
       Process.__init__ (self, process + ' ' + args, "^.+$",
                         on_match=Console_Process.on_output)
 
