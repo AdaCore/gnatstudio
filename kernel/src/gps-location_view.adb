@@ -2667,9 +2667,12 @@ package body GPS.Location_View is
          Name_Parameters (Data, Parse_Location_Parameters);
          declare
             Kernel             : constant Kernel_Handle := Get_Kernel (Data);
-            Highlight_Category : constant String := Nth_Arg (Data, 10, "");
-            Style_Category     : constant String := Nth_Arg (Data, 11, "");
-            Warning_Category   : constant String := Nth_Arg (Data, 12, "");
+            Highlight_Category : constant String :=
+              Nth_Arg (Data, 10, "Builder results");
+            Style_Category     : constant String :=
+              Nth_Arg (Data, 11, "Style errors");
+            Warning_Category   : constant String :=
+              Nth_Arg (Data, 12, "Builder warnings");
          begin
             Parse_File_Locations
               (Get_Kernel (Data),
