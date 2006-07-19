@@ -117,7 +117,7 @@ class Makefile:
          if self.makefile:
             self.menus.append \
                (Menu.create \
-                  ("/Build/Make/Edit Makefile",
+                  ("/Build/Make/Makefile/Edit Makefile",
                    on_activate=self.edit_makefile))
              
             matcher=re.compile ("^(.+?):[^#]*(#(.+))?")
@@ -127,7 +127,7 @@ class Makefile:
                if matches:
                    if matches.group (3):
                       m = Menu.create \
-                        ("/Build/Make/" + matches.group (3).strip(),
+                        ("/Build/Make/Makefile/" + matches.group (3).strip(),
                          on_activate = self.on_build_target)
                       m.target = matches.group (1)
                       self.menus.append (m)
@@ -135,7 +135,7 @@ class Makefile:
                       ## Handle multiple targets on same line
                       for target in matches.group (1).split():
                         m = Menu.create \
-                         ("/Build/Make/make: " + target.strip(),
+                         ("/Build/Make/Makefile/" + target.strip(),
                          on_activate = self.on_build_target)
                         m.target = target
                         self.menus.append (m)
