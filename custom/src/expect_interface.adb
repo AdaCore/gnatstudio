@@ -44,19 +44,25 @@ package body Expect_Interface is
 
    Process_Class_Name : constant String := "Process";
 
-   Command_Cst         : aliased constant String := "command";
-   Regexp_Cst          : aliased constant String := "regexp";
-   Timeout_Cst         : aliased constant String := "timeout";
-   On_Match_Action_Cst : aliased constant String := "on_match";
-   On_Exit_Action_Cst  : aliased constant String := "on_exit";
-   Add_Lf_Cst          : aliased constant String := "add_lf";
-   Task_Manager_Cst    : aliased constant String := "task_manager";
+   Command_Cst          : aliased constant String := "command";
+   Regexp_Cst           : aliased constant String := "regexp";
+   Timeout_Cst          : aliased constant String := "timeout";
+   On_Match_Action_Cst  : aliased constant String := "on_match";
+   On_Exit_Action_Cst   : aliased constant String := "on_exit";
+   Add_Lf_Cst           : aliased constant String := "add_lf";
+   Task_Manager_Cst     : aliased constant String := "task_manager";
+   Progress_Regexp_Cst  : aliased constant String := "progress_regexp";
+   Progress_Current_Cst : aliased constant String := "progress_current";
+   Progress_Total_Cst   : aliased constant String := "progress_total";
    Constructor_Args : constant Cst_Argument_List :=
      (2 => Command_Cst'Access,
       3 => Regexp_Cst'Access,
       4 => On_Match_Action_Cst'Access,
       5 => On_Exit_Action_Cst'Access,
-      6 => Task_Manager_Cst'Access);
+      6 => Task_Manager_Cst'Access,
+      7 => Progress_Regexp_Cst'Access,
+      8 => Progress_Current_Cst'Access,
+      9 => Progress_Total_Cst'Access);
    Send_Args : constant Cst_Argument_List :=
      (Command_Cst'Access, Add_Lf_Cst'Access);
    Expect_Args : constant Cst_Argument_List :=
@@ -75,6 +81,9 @@ package body Expect_Interface is
       Status     : Integer;
       Terminated : Boolean;
       Inst       : Class_Instance;
+      Progress_Regexp : Pattern_Matcher_Access;
+      Progress_Current : Natural := 1;  --  Parenthesis within the regexp
+      Progress_Final   : Natural := 2;  --  Parenthesis within the regexp
 
       Processed_Output : String_Access;
       Unmatched_Output : String_Access;
@@ -165,6 +174,7 @@ package body Expect_Interface is
       Free (X.Processed_Output);
       Free (X.On_Exit);
       Free (X.On_Match);
+      Unchecked_Free (X.Progress_Regexp);
    end Free;
 
    ----------
@@ -316,14 +326,52 @@ package body Expect_Interface is
       End_Index : Natural;
       Prev_Beg  : Natural;
       Action_To_Execute : Subprogram_Type;
+      Index     : Natural := Output'First;
+      Index_Start    : Natural;
+      Current, Final : Natural;
 
    begin
       Trace (Me, "Output: " & Output);
 
+      --  First check the progress regexp
+
+      if D.Progress_Regexp /= null then
+         while Index <= Output'Last loop
+            Index_Start := Index;
+            Match
+              (D.Progress_Regexp.all, Output (Index .. Output'Last), Matches);
+            exit when Matches (D.Progress_Current) = No_Match
+              or else Matches (D.Progress_Final) = No_Match;
+
+            Concat
+              (D.Unmatched_Output, Output (Index .. Matches (0).First - 1));
+
+            Current := Safe_Value
+              (Output (Matches (D.Progress_Current).First ..
+                 Matches (D.Progress_Current).Last));
+            Final := Safe_Value
+              (Output (Matches (D.Progress_Final).First ..
+                 Matches (D.Progress_Final).Last));
+            Set_Progress
+              (D,
+               Progress_Record'
+                 (Activity => Running,
+                  Current  => Current,
+                  Total    => Final));
+
+            Index := Matches (0).Last + 1;
+
+            --  avoid infinite loops
+            exit when Index <= Index_Start;
+         end loop;
+      end if;
+
       --  Always put Output in Unmatched_Output in case interactive_expect
       --  want them.
 
-      Concat (D.Unmatched_Output, Output);
+      if Index <= Output'Last then
+         Concat (D.Unmatched_Output, Output (Index .. Output'Last));
+      end if;
 
       if D.Pattern = null
         and then D.On_Exit = null
@@ -337,7 +385,6 @@ package body Expect_Interface is
       --  Deal with the simple case when no expects have been registered.
 
       if D.On_Match = null then
-
          return;
       end if;
 
@@ -538,6 +585,7 @@ package body Expect_Interface is
             Command_Line : constant String := Nth_Arg (Data, 2);
             Regexp       : constant String := Nth_Arg (Data, 3, "");
             Show_Bar     : constant Boolean := Nth_Arg (Data, 6, True);
+            Progress_Regexp : constant String := Nth_Arg (Data, 7, "");
             Success      : Boolean;
          begin
             if Command_Line = "" then
@@ -553,6 +601,13 @@ package body Expect_Interface is
             D.On_Match := Nth_Arg (Data, 4, null);
             D.On_Exit  := Nth_Arg (Data, 5, null);
             D.Inst     := Inst;
+
+            if Progress_Regexp /= "" then
+               D.Progress_Regexp := new Pattern_Matcher'
+                 (Compile (Progress_Regexp, Multiple_Lines));
+               D.Progress_Current := Nth_Arg (Data, 8, 1);
+               D.Progress_Final   := Nth_Arg (Data, 9, 2);
+            end if;
 
             if Regexp /= "" then
                D.Pattern :=
@@ -663,7 +718,7 @@ package body Expect_Interface is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
-         Maximum_Args => 6,
+         Maximum_Args => 9,
          Class         => Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
       Register_Command
