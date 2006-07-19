@@ -24,7 +24,8 @@ with GNAT.Regpat;                       use GNAT.Regpat;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
-with GPS.Kernel;                        use GPS.Kernel;
+
+with Projects.Registry;                 use Projects.Registry;
 with Traces;                            use Traces;
 with VFS;                               use VFS;
 
@@ -36,7 +37,7 @@ package body Codefix.Formal_Errors is
 
    procedure Initialize
      (This       : in out Error_Message;
-      Kernel     : access Kernel_Handle_Record'Class;
+      Registry   : Project_Registry_Access;
       Error_Line : String;
       Regexp     : GNAT.Regpat.Pattern_Matcher;
       File_Index, Line_Index, Col_Index, Msg_Index : Integer;
@@ -67,7 +68,7 @@ package body Codefix.Formal_Errors is
            (This, Create
               (Error_Line
                  (Matches (File_Index).First .. Matches (File_Index).Last),
-               Kernel));
+               Registry.all));
 
          if Matches (Line_Index) /= No_Match then
             Line := Integer'Value
@@ -776,11 +777,20 @@ package body Codefix.Formal_Errors is
                  (With_Cursor, Get_Line (Cursor), Get_Column (Cursor));
                Set_Word (With_Cursor, Name, Text_Ascii);
 
-               Initialize (New_Command, Current_Text, With_Cursor);
-               Set_Caption
-                 (New_Command,
-                  "Remove all clauses for package " & Name);
-               Append (Result, New_Command);
+               if Is_Set (Operations, Remove_Entity) then
+                  Initialize (New_Command, Current_Text, With_Cursor);
+                  Set_Caption
+                    (New_Command,
+                     "Remove all clauses for package " & Name);
+                  Append (Result, New_Command);
+               end if;
+
+               if Is_Set (Operations, Comment_Entity) then
+                  null;
+
+                  --  ??? Take this into account
+               end if;
+
                Free (With_Cursor);
             end;
 
