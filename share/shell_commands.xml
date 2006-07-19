@@ -3189,12 +3189,12 @@ Windows acts as containers for other widgets</description>
      <param name="msg_index" default="-1">An integer</param>
      <param name="style_index" default="-1">An integer</param>
      <param name="warning_index" default="-1">An integer</param>
-     <param name="highlight_category" default="">A string</param>
-     <param name="style_category" default="">A string</param>
-     <param name="warning_category" default="">A string</param>
+     <param name="highlight_category" default="Builder results">A string</param>
+     <param name="style_category" default="Style errors">A string</param>
+     <param name="warning_category" default="Builder warnings">A string</param>
      <description>Parse the contents of the string, which is supposedly the output of some tool, and add the errors and warnings to the locations window. A new category is created in the locations window if it doesn't exist. Preexisting contents for that category is not removed, see locations_remove_category.
 The regular expression specifies how locations are recognized. By default, it matches file:line:column. The various indexes indicate the index of the opening parenthesis that contains the relevant information in the regular expression. Set it to 0 if that information is not available. Style_Index and Warning_Index, if they match, force the error message in a specific category.
-highlight_category, style_category and warning_category reference the colors to use in the editor to highlight the messages when the regexp has matched. If none of them is specified, no highlighting is done in the editor. Create these categories with GPS.Editor.register_highlighting(). </description>
+highlight_category, style_category and warning_category reference the colors to use in the editor to highlight the messages when the regexp has matched. If they are set to the empty string, no highlighting is done in the editor. The default values match those by GPS itself to highlight the error messages. Create these categories with GPS.Editor.register_highlighting(). </description>
       <see_also name="GPS.Editor.register_highlighting()" />
   </shell_doc>
 
