@@ -1008,7 +1008,15 @@ package Codefix.Text_Manager is
    --  Execute a command, and create an extract to preview the changes. This
    --  procedure raises a Codefix_Panic is the correction is no longer avaible.
 
-   type Execute_Corrupted is access procedure (Error_Message : String);
+   type Execute_Corrupted_Record is abstract tagged null record;
+
+   type Execute_Corrupted is access all Execute_Corrupted_Record'Class;
+
+   procedure Error
+     (Corruption : access Execute_Corrupted_Record; Error_Message : String)
+   is abstract;
+
+   procedure Free (Corruption : in out Execute_Corrupted);
 
    procedure Secured_Execute
      (This         : Text_Command'Class;
