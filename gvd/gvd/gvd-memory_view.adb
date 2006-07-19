@@ -669,11 +669,16 @@ package body GVD.Memory_View is
             Index := Index + 1;
          end loop;
 
-         Real_Address := Long_Long_Integer'Value
-           (Hex_Header &
-            Address (Address'First + 2 .. Index - 1) &
-            Hex_Footer);
-         Display_Memory (View, Real_Address);
+         begin
+            Real_Address := Long_Long_Integer'Value
+              (Hex_Header &
+               Address (Address'First + 2 .. Index - 1) &
+               Hex_Footer);
+            Display_Memory (View, Real_Address);
+         exception
+            when Constraint_Error =>
+               Display_Memory (View, 0);
+         end;
 
       else
          declare
@@ -691,9 +696,6 @@ package body GVD.Memory_View is
             end if;
          end;
       end if;
-   exception
-      when Constraint_Error =>
-         Display_Memory (View, 0);
    end Display_Memory;
 
    -------------------
