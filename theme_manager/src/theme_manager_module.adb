@@ -515,6 +515,7 @@ package body Theme_Manager_Module is
                 Active_Column  => GType_Boolean,
                 Visible_Column => GType_Boolean));
       Gtk_New (Pane.View, Pane.Model);
+      Set_Name (Pane.View, "Theme List"); --  for the testsuite
       Add (Scrolled, Pane.View);
 
       Gtk_New (Render);
