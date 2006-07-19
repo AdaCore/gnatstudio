@@ -41,6 +41,10 @@ import os
 class Console_Process (Console, Process):
    locations_category = "make results"
 
+   # This regexp matches the output of the GNAT compiler to report its progress. Change
+   # this if your compiler outputs this information differently.
+   progress_regexp = "^completed ([0-9]+) out of ([0-9]+) \\(([^\n]*)%\\)\\.\\.\\.\\n"
+
    def on_output (self, unmatched, matched):
       """Called when new output is available from make"""
       self.write (unmatched + matched)
@@ -64,7 +68,9 @@ class Console_Process (Console, Process):
                         force=True)
       self.write (process + " " + args + "\n")
       MDI.get ("Messages").raise_window()
-      Process.__init__ (self, process + ' ' + args, "^.+$",
+      Process.__init__ (self, process + ' ' + args,
+                        regexp="^.+$",
+                        progress_regexp=Console_Process.progress_regexp,
                         on_match=Console_Process.on_output)
 
 class Makefile:
@@ -85,6 +91,9 @@ class Makefile:
       Logger ("Makefile").log ("Makefile used is " + `self.makefile`)
 
    def spawn (self, target):
+      # Make sure everything if saved if needed
+      MDI.save_all (force=False)
+
       project  = Project.root()
       switches = project.get_attribute_as_string ("switches", "make")
       make     = project.get_attribute_as_string ("make",     "make")
