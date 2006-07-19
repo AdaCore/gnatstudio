@@ -3801,6 +3801,13 @@ package body Codefix.Text_Manager is
       return This.Caption.all;
    end Get_Caption;
 
+   procedure Free (Corruption : in out Execute_Corrupted) is
+      procedure Internal_Free is new Ada.Unchecked_Deallocation
+        (Execute_Corrupted_Record'Class, Execute_Corrupted);
+   begin
+      Internal_Free (Corruption);
+   end Free;
+
    procedure Secured_Execute
      (This         : Text_Command'Class;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -3813,7 +3820,7 @@ package body Codefix.Text_Manager is
    exception
       when E : Codefix_Panic =>
          if Error_Cb /= null then
-            Error_Cb (Exception_Information (E));
+            Error (Error_Cb, Exception_Information (E));
          end if;
    end Secured_Execute;
 
