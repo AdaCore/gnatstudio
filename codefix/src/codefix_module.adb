@@ -117,7 +117,6 @@ package body Codefix_Module is
       Sessions      : Codefix_Sessions;
       Codefix_Class : Class_Type;
       Codefix_Error_Class : Class_Type;
-      Kernel              : Kernel_Handle;
    end record;
    type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
 
@@ -150,7 +149,14 @@ package body Codefix_Module is
       Label     : String);
    --  Create a new codefix menu item
 
-   procedure Execute_Corrupted_Cb (Error_Message : String);
+   type GPS_Execute_Corrupted_Record is new Execute_Corrupted_Record
+   with record
+      Kernel : Kernel_Handle;
+   end record;
+
+   procedure Error
+     (Corruption    : access GPS_Execute_Corrupted_Record;
+      Error_Message : String);
    --  Handles error messages when an error can no longer be corrected.
 
    type Codefix_Contextual_Menu is new Submenu_Factory_Record with null record;
@@ -178,7 +184,9 @@ package body Codefix_Module is
       Data   : access Hooks_Data'Class);
    --  Initializes the fix list of Codefix.
 
-   type GPS_Navigator is new Text_Navigator_Abstr with null record;
+   type GPS_Navigator is new Text_Navigator_Abstr with record
+      Kernel : Kernel_Handle;
+   end record;
 
    function Get_Body_Or_Spec
      (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File;
@@ -256,18 +264,14 @@ package body Codefix_Module is
    ----------------------
 
    function Get_Body_Or_Spec
-     (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File
-   is
-      pragma Unreferenced (Text);
-
-      Kernel : constant Kernel_Handle := Codefix_Module_ID.Kernel;
+     (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File is
    begin
       return Create
         (Name           => Other_File_Base_Name
            (Get_Project_From_File
-              (Project_Registry (Get_Registry (Kernel).all), File_Name),
+              (Project_Registry (Get_Registry (Text).all), File_Name),
             File_Name),
-         Kernel          => Kernel,
+         Registry        => Get_Registry (Text).all,
          Use_Object_Path => False);
    end Get_Body_Or_Spec;
 
@@ -367,6 +371,7 @@ package body Codefix_Module is
 
       Session.Corrector    := new Correction_Manager;
       Session.Current_Text := new GPS_Navigator;
+      GPS_Navigator (Session.Current_Text.all).Kernel := Kernel;
 
       if File_Index = -1 then
          Fi := Integer (Get_Pref (File_Pattern_Index));
@@ -427,7 +432,8 @@ package body Codefix_Module is
       end if;
 
       Set_Registry    (Session.Current_Text.all, Get_Registry (Kernel));
-      Set_Error_Cb    (Session.Corrector.all, Execute_Corrupted_Cb'Access);
+      Set_Error_Cb
+        (Session.Corrector.all, new GPS_Execute_Corrupted_Record);
       Set_Last_Output (Errors_Found, Kernel, Output);
 
       Options.Remove_Policy := Policy_To_Operations
@@ -671,7 +677,6 @@ package body Codefix_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Codefix_Module_ID := new Codefix_Module_ID_Record;
-      Codefix_Module_ID.Kernel := Kernel_Handle (Kernel);
 
       Register_Module
         (Module                  => Module_ID (Codefix_Module_ID),
@@ -1007,11 +1012,9 @@ package body Codefix_Module is
 
    procedure Initialize
      (This : GPS_Navigator;
-      File : in out Text_Interface'Class)
-   is
-      pragma Unreferenced (This);
+      File : in out Text_Interface'Class) is
    begin
-      Set_Kernel (Console_Interface (File), Codefix_Module_ID.Kernel);
+      Set_Kernel (Console_Interface (File), This.Kernel);
    end Initialize;
 
    -------------
@@ -1086,15 +1089,17 @@ package body Codefix_Module is
    -- Execute_Corrupted_Cb --
    --------------------------
 
-   procedure Execute_Corrupted_Cb (Error_Message : String) is
+   procedure Error
+     (Corruption    : access GPS_Execute_Corrupted_Record;
+      Error_Message : String) is
    begin
       Trace (Me, "Fix of current error is no longer pertinent");
       Trace (Me, "Exception got: " & Error_Message);
 
       Insert
-        (Codefix_Module_ID.Kernel,
-            -"Fix of current error is no longer relevant");
-   end Execute_Corrupted_Cb;
+        (Corruption.Kernel,
+         -"Fix of current error is no longer relevant");
+   end Error;
 
    --------------------------
    -- Register_Preferences --
