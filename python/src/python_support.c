@@ -369,40 +369,57 @@ ada_py_arg_parsetuple_ptr5
  tested with pygtk 2.4 and 2.6
 *******************************************************/
 
-int
-ada_build_with_pygtk() {
 #ifdef PYGTK
+int
+ada_build_with_pygtk()
+{
    return 1;
-#else
-   return 0;
-#endif
 }
 
 GObject*
 ada_widget_from_pyobject (PyObject* object)
 {
-#ifdef PYGTK
    return g_object_ref (pygobject_get (object));
-   // return ((PyGObject*)object)->obj;
-#else
-   return NULL;
-#endif
+   /* return ((PyGObject*)object)->obj; */
 }
 
 PyObject*
 ada_pyobject_from_widget (GObject* object)
 {
-#ifdef PYGTK
    return pygobject_new (object);
-#else
-   return NULL;
-#endif
 }
 
 void
-ada_init_pygtk (void) {
-#ifdef PYGTK
+ada_init_pygtk (void)
+{
   init_pygtk();
   init_pygobject();
-#endif
 }
+
+#else  /* PYGTK */
+
+int
+ada_build_with_pygtk()
+{
+   return 0;
+}
+
+GObject*
+ada_widget_from_pyobject (PyObject* object)
+{
+   return NULL;
+}
+
+PyObject*
+ada_pyobject_from_widget (GObject* object)
+{
+   return NULL;
+}
+
+void
+ada_init_pygtk (void)
+{
+}
+
+#endif
+
