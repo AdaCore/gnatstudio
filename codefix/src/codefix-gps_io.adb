@@ -24,6 +24,7 @@ with Basic_Types;        use Basic_Types;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with String_Utils;       use String_Utils;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Traces;             use Traces;
 with VFS;                use VFS;
 
@@ -481,7 +482,7 @@ package body Codefix.GPS_Io is
       Skip_To_Char (This.Errors_Buffer.all, This.Current_Index, ASCII.LF);
       Initialize
         (Current,
-         Kernel        => This.Kernel,
+         Registry      => Get_Registry (This.Kernel),
          Error_Line    =>
            This.Errors_Buffer (Last_Index .. This.Current_Index - 1),
          Regexp        => This.File_Regexp.all,
