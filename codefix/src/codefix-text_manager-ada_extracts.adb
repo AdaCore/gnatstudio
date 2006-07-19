@@ -381,6 +381,11 @@ package body Codefix.Text_Manager.Ada_Extracts is
          while Current_Index = 1 loop
             Free (Current_Token);
             Current_Line := Next (Current_Line.all);
+
+            if Current_Line = null then
+               return;
+            end if;
+
             Get_Token
               (Current_Line, Current_Index, Current_Token);
          end loop;
