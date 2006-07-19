@@ -1917,6 +1917,7 @@ package body Default_Preferences is
          Title  => -"Preferences",
          Parent => Gtk_Window (Parent),
          Flags  => Modal or Destroy_With_Parent);
+      Set_Name (Dialog, "Preferences");  --  for the testsuite
       Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, 620, 400);
       Gtk_New (Tips);
