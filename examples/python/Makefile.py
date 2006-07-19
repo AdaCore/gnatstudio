@@ -121,7 +121,7 @@ class Makefile:
                   ("/Build/Make/Makefile/Edit Makefile",
                    on_activate=self.edit_makefile))
              
-            matcher=re.compile ("^(.+?):[^#]*(#(.+))?")
+            matcher=re.compile ("^([^#.=%][^#=\(\)%]*?):[^#]*(#(.+))?")
             f = file (self.makefile)
             for line in f:
                matches=matcher.match (line)
