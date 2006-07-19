@@ -132,6 +132,7 @@ package Codefix.Errors_Parser is
      (Current_Text : Text_Navigator_Abstr'Class;
       Errors_List  : in out Errors_Interface'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Category     : out GNAT.OS_Lib.String_Access;
       Solutions    : out Solution_List);
    --  Here is the big function that analyses a message and return the
@@ -165,6 +166,7 @@ package Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Success      : out Boolean);
    --  Analyse the error message and, if it matches, transmit it to the
@@ -180,6 +182,7 @@ package Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is abstract;
    --  Get informations parsed from the message and call functions in
@@ -211,13 +214,16 @@ package Codefix.Errors_Parser is
      (new String'("Misspelling"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Agregate_Misspelling);
 
+   overriding
    procedure Fix
      (This         : Agregate_Misspelling;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'possible mispelling of "=>"'
@@ -226,13 +232,16 @@ package Codefix.Errors_Parser is
      (new String'("Misspelling"), 2)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Light_Misspelling);
 
+   overriding
    procedure Fix
      (This         : Light_Misspelling;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix the most 'possible mispelling of sth'
@@ -241,13 +250,16 @@ package Codefix.Errors_Parser is
      (new String'("Misspelling"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Double_Misspelling);
 
+   overriding
    procedure Fix
      (This         : Double_Misspelling;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix the case where there is an alternative for the correction
@@ -256,13 +268,16 @@ package Codefix.Errors_Parser is
      (new String'("Misspelling"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Goto_Misspelling);
 
+   overriding
    procedure Fix
      (This         : Goto_Misspelling;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix expressions like 'go  to Label;'
@@ -274,15 +289,19 @@ package Codefix.Errors_Parser is
         (Compile ("possible misspelling of ""([^""]+)"""));
    end record;
 
+   overriding
    procedure Initialize (This : in out Library_Misspelling);
 
+   overriding
    procedure Free (This : in out Library_Misspelling);
 
+   overriding
    procedure Fix
      (This         : Library_Misspelling;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Problems of misspelling of packages
@@ -291,13 +310,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Keyword"), 3)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Sth_Should_Be_Sth);
 
+   overriding
    procedure Fix
      (This         : Sth_Should_Be_Sth;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix messages like 'sth should be sth'
@@ -306,13 +328,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Keyword"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Should_Be_Semicolon);
 
+   overriding
    procedure Fix
      (This         : Should_Be_Semicolon;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'perdiod should probably be semicolon'
@@ -321,13 +346,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Keyword"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out And_Meant);
 
+   overriding
    procedure Fix
      (This         : And_Meant;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix instruction where '&' stands for 'and'
@@ -336,13 +364,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Keyword"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Or_Meant);
 
+   overriding
    procedure Fix
      (This         : Or_Meant;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix instruction where '|' stands for 'or'
@@ -351,13 +382,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Keyword"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Bad_End_Block);
 
+   overriding
    procedure Fix
      (This         : Bad_End_Block;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix "end sth" expected in column 7 for "sth"
@@ -366,13 +400,16 @@ package Codefix.Errors_Parser is
      (new String'("Qualified_Expression"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Unqualified_Expression);
 
+   overriding
    procedure Fix
      (This         : Unqualified_Expression;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix instruction where ' is missing
@@ -381,13 +418,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Declaration_Order"), 4)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Goes_Before);
 
+   overriding
    procedure Fix
      (This         : Goes_Before;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'so must be before sth'
@@ -396,13 +436,16 @@ package Codefix.Errors_Parser is
      (new String'("Keyword_Missing"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Sth_Expected_3);
 
+   overriding
    procedure Fix
      (This         : Sth_Expected_3;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'function, procedure or package expected'
@@ -411,13 +454,16 @@ package Codefix.Errors_Parser is
      (new String'("Keyword_Missing"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Sth_Expected_2);
 
+   overriding
    procedure Fix
      (This         : Sth_Expected_2;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix error messages where function or procedure is expected.
@@ -426,13 +472,16 @@ package Codefix.Errors_Parser is
      (new String'("Keyword_Missing"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Sth_Expected);
 
+   overriding
    procedure Fix
      (This         : Sth_Expected;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix error messages where a keyword is expected at a position.
@@ -441,13 +490,16 @@ package Codefix.Errors_Parser is
      (new String'("Keyword_Missing"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Missing_Kw);
 
+   overriding
    procedure Fix
      (This         : Missing_Kw;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'kw missing'.
@@ -459,15 +511,19 @@ package Codefix.Errors_Parser is
         (Compile ("([\w|\s]+;)"));
    end record;
 
+   overriding
    procedure Free (This : in out Missing_Sep);
 
+   overriding
    procedure Initialize (This : in out Missing_Sep);
 
+   overriding
    procedure Fix
      (This         : Missing_Sep;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'sth missing'.
@@ -479,15 +535,19 @@ package Codefix.Errors_Parser is
         (Compile ("type[\s]+[\w]+[\s]+is[\s]+(access)"));
    end record;
 
+   overriding
    procedure Free (This : in out Missing_All);
 
+   overriding
    procedure Initialize (This : in out Missing_All);
 
+   overriding
    procedure Fix
      (This         : Missing_All;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'add All to'.
@@ -496,13 +556,16 @@ package Codefix.Errors_Parser is
      (new String'("Statement_Expected"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Statement_Missing);
 
+   overriding
    procedure Fix
      (This         : Statement_Missing;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'statement missing'.
@@ -511,13 +574,16 @@ package Codefix.Errors_Parser is
      (new String'("Space_Required"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Space_Missing);
 
+   overriding
    procedure Fix
      (This         : Space_Missing;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'space required'.
@@ -526,13 +592,16 @@ package Codefix.Errors_Parser is
      (new String'("Space_Required"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Two_Spaces_Missing);
 
+   overriding
    procedure Fix
      (This         : Two_Spaces_Missing;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'space required'.
@@ -549,15 +618,19 @@ package Codefix.Errors_Parser is
          (Compile ("(end[\s]+record);", Case_Insensitive)));
    end record;
 
+   overriding
    procedure Free (This : in out Name_Missing);
 
+   overriding
    procedure Initialize (This : in out Name_Missing);
 
+   overriding
    procedure Fix
      (This         : Name_Missing;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'end sth expected'.
@@ -566,13 +639,16 @@ package Codefix.Errors_Parser is
      (new String'("Extra_Keyword"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Double_Keyword);
 
+   overriding
    procedure Fix
      (This         : Double_Keyword;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'extra sth ignored'.
@@ -581,13 +657,16 @@ package Codefix.Errors_Parser is
      (new String'("Extra_Keyword"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Extra_Paren);
 
+   overriding
    procedure Fix
      (This         : Extra_Paren;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'extra sth ignored'.
@@ -596,13 +675,16 @@ package Codefix.Errors_Parser is
      (new String'("Extra_Keyword"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Redundant_Keyword);
 
+   overriding
    procedure Fix
      (This         : Redundant_Keyword;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'redundant sth'.
@@ -611,13 +693,16 @@ package Codefix.Errors_Parser is
      (new String'("Unexpected_Keyword"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Unexpected_Sep);
 
+   overriding
    procedure Fix
      (This         : Unexpected_Sep;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'extra sth ignored'.
@@ -626,13 +711,16 @@ package Codefix.Errors_Parser is
      (new String'("Unexpected_Keyword"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Unexpected_Word);
 
+   overriding
    procedure Fix
      (This         : Unexpected_Word;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'unexpected sth ignored'.
@@ -641,13 +729,16 @@ package Codefix.Errors_Parser is
      (new String'("Unallowed_Keyword"), 3)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Kw_Not_Allowed);
 
+   overriding
    procedure Fix
      (This         : Kw_Not_Allowed;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'kw not allowed' etc.
@@ -656,13 +747,16 @@ package Codefix.Errors_Parser is
      (new String'("Unallowed_Style_Character"), 4)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Sep_Not_Allowed);
 
+   overriding
    procedure Fix
      (This         : Sep_Not_Allowed;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'kw not allowed' etc.
@@ -671,13 +765,16 @@ package Codefix.Errors_Parser is
      (new String'("Useless_Statement"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Already_Use_Visible);
 
+   overriding
    procedure Fix
      (This         : Already_Use_Visible;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'pckg is already use_visible'
@@ -686,13 +783,16 @@ package Codefix.Errors_Parser is
      (new String'("Useless_Statement"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Redundant_With_In_Body);
 
+   overriding
    procedure Fix
      (This         : Redundant_With_In_Body;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix for 'redundant with clause in body'
@@ -701,13 +801,16 @@ package Codefix.Errors_Parser is
      (new String'("Useless_Statement"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Use_Valid_Instead);
 
+   overriding
    procedure Fix
      (This         : Use_Valid_Instead;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'use 'Valid attribute instead"
@@ -716,13 +819,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Indentation"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Should_Be_In);
 
+   overriding
    procedure Fix
      (This         : Should_Be_In;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'sth should be in column'.
@@ -731,13 +837,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Indentation"), 3)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Bad_Column);
 
+   overriding
    procedure Fix
      (This         : Bad_Column;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix messages about bad indentation.
@@ -746,13 +855,16 @@ package Codefix.Errors_Parser is
      (new String'("Missing_With"), 3)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Main_With_Missing);
 
+   overriding
    procedure Fix
      (This         : Main_With_Missing;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix messages that guess a missing with.
@@ -761,13 +873,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Case"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Bad_Casing_Standard);
 
+   overriding
    procedure Fix
      (This         : Bad_Casing_Standard;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix standard case errors.
@@ -776,13 +891,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Case"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Bad_Casing_Declared);
 
+   overriding
    procedure Fix
      (This         : Bad_Casing_Declared;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix case problems with declared words etc.
@@ -791,13 +909,16 @@ package Codefix.Errors_Parser is
      (new String'("Wrong_Case"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Bad_Casing_Keyword);
 
+   overriding
    procedure Fix
      (This         : Bad_Casing_Keyword;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix case problems with keywords.
@@ -806,13 +927,16 @@ package Codefix.Errors_Parser is
      (new String'("Unit_Not_Referenced"), 2)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Object_Not_Referenced);
 
+   overriding
    procedure Fix
      (This         : Object_Not_Referenced;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problems like 'sth is not referenced'.
@@ -821,13 +945,16 @@ package Codefix.Errors_Parser is
      (new String'("Unit_Not_Referenced"), 3)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Pkg_Not_Referenced);
 
+   overriding
    procedure Fix
      (This         : Pkg_Not_Referenced;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problems like 'no entities of sth are referenced'.
@@ -836,13 +963,16 @@ package Codefix.Errors_Parser is
      (new String'("Unit_Not_Referenced"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Never_Read);
 
+   overriding
    procedure Fix
      (This         : Never_Read;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problems like '"bla" is assigned but never read'.
@@ -851,13 +981,16 @@ package Codefix.Errors_Parser is
      (new String'("Unit_Not_Referenced"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Never_Assigned);
 
+   overriding
    procedure Fix
      (This         : Never_Assigned;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problems like '"bla" is assigned but never read'.
@@ -866,13 +999,16 @@ package Codefix.Errors_Parser is
      (new String'("Pragma_Should_Begin"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Pragma_Missplaced);
 
+   overriding
    procedure Fix
      (This         : Pragma_Missplaced;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'pragma must be first line of'.
@@ -881,13 +1017,16 @@ package Codefix.Errors_Parser is
      (new String'("Var_Not_Modified"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Constant_Expected);
 
+   overriding
    procedure Fix
      (This         : Constant_Expected;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'could be declared constant'.
@@ -901,15 +1040,19 @@ package Codefix.Errors_Parser is
         (Compile ("possible interpretation at ([^:]+):([\d]+)"));
    end record;
 
+   overriding
    procedure Initialize (This : in out Possible_Interpretation);
 
+   overriding
    procedure Free (This : in out Possible_Interpretation);
 
+   overriding
    procedure Fix
      (This         : Possible_Interpretation;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'ambiguous expression (cannot resolve "Sth")'
@@ -925,15 +1068,19 @@ package Codefix.Errors_Parser is
         (Compile ("hidden declaration at ([^:]+):([\d]+)"));
    end record;
 
+   overriding
    procedure Initialize (This : in out Hidden_Declaration);
 
+   overriding
    procedure Free (This : in out Hidden_Declaration);
 
+   overriding
    procedure Fix
      (This         : Hidden_Declaration;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'multiple use clause hiding'
@@ -942,13 +1089,16 @@ package Codefix.Errors_Parser is
      (new String'("Useless_Conversion"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Redundant_Conversion);
 
+   overriding
    procedure Fix
      (This         : Redundant_Conversion;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'useless conversion'
@@ -957,13 +1107,16 @@ package Codefix.Errors_Parser is
      (new String'("Movable_With_Clause"), 2)
      with null record;
 
+   overriding
    procedure Initialize (This : in out Missplaced_With);
 
+   overriding
    procedure Fix
      (This         : Missplaced_With;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'with clause can be moved to body'
@@ -972,13 +1125,16 @@ package Codefix.Errors_Parser is
     (new String'("Not_Fully_Conformant"), 4)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Not_Fully_Conformant);
 
+   overriding
    procedure Fix
      (This         : Not_Fully_Conformant;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'not fully conformant with declaration'
@@ -987,13 +1143,16 @@ package Codefix.Errors_Parser is
      (new String'("Unallowed_Expression"), 1)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Generic_Use_Unallowed);
 
+   overriding
    procedure Fix
      (This         : Generic_Use_Unallowed;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problems like 'a generic package is not allowed in a use clause'.
@@ -1002,13 +1161,16 @@ package Codefix.Errors_Parser is
      (new String'("Non_Visible_Declaration"), 2)
    with null record;
 
+   overriding
    procedure Initialize (This : in out Non_Visible_Declaration);
 
+   overriding
    procedure Fix
      (This         : Non_Visible_Declaration;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
+      Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problems like 'non visible declaration at'.
