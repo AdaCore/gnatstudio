@@ -38,6 +38,7 @@ with Basic_Types;               use Basic_Types;
 with Codefix.Errors_Parser;     use Codefix.Errors_Parser;
 with Codefix.GPS_Io;            use Codefix.GPS_Io;
 with Codefix.Graphics;          use Codefix.Graphics;
+with Codefix.Helpers;           use Codefix.Helpers;
 with Codefix.Text_Manager;      use Codefix.Text_Manager;
 with Commands.Codefix;          use Commands.Codefix;
 with Commands;                  use Commands;
@@ -116,6 +117,7 @@ package body Codefix_Module is
       Sessions      : Codefix_Sessions;
       Codefix_Class : Class_Type;
       Codefix_Error_Class : Class_Type;
+      Kernel              : Kernel_Handle;
    end record;
    type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
 
@@ -148,9 +150,7 @@ package body Codefix_Module is
       Label     : String);
    --  Create a new codefix menu item
 
-   procedure Execute_Corrupted_Cb
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Error_Message : String);
+   procedure Execute_Corrupted_Cb (Error_Message : String);
    --  Handles error messages when an error can no longer be corrected.
 
    type Codefix_Contextual_Menu is new Submenu_Factory_Record with null record;
@@ -258,14 +258,16 @@ package body Codefix_Module is
    function Get_Body_Or_Spec
      (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Text);
+      pragma Unreferenced (Text);
+
+      Kernel : constant Kernel_Handle := Codefix_Module_ID.Kernel;
    begin
       return Create
         (Name           => Other_File_Base_Name
            (Get_Project_From_File
               (Project_Registry (Get_Registry (Kernel).all), File_Name),
             File_Name),
-         Kernel         => Kernel,
+         Kernel          => Kernel,
          Use_Object_Path => False);
    end Get_Body_Or_Spec;
 
@@ -330,6 +332,7 @@ package body Codefix_Module is
       Fi, Li, Ci, Mi, Si, Wi : Integer;
 
       Command : Command_Access;
+      Options : Fix_Options;
    begin
       if Codefix_Module_ID.Sessions /= null then
          for S in Codefix_Module_ID.Sessions'Range loop
@@ -423,12 +426,16 @@ package body Codefix_Module is
             Warning_Index_In_Regexp => Wi);
       end if;
 
-      Set_Kernel      (Session.Current_Text.all, Kernel);
+      Set_Registry    (Session.Current_Text.all, Get_Registry (Kernel));
       Set_Error_Cb    (Session.Corrector.all, Execute_Corrupted_Cb'Access);
       Set_Last_Output (Errors_Found, Kernel, Output);
+
+      Options.Remove_Policy := Policy_To_Operations
+        (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)));
+
       Analyze
         (Session.Corrector.all, Session.Current_Text.all,
-         Errors_Found, null);
+         Errors_Found, Options, null);
 
       --  Update the location window to show which errors can be fixed
 
@@ -664,6 +671,8 @@ package body Codefix_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Codefix_Module_ID := new Codefix_Module_ID_Record;
+      Codefix_Module_ID.Kernel := Kernel_Handle (Kernel);
+
       Register_Module
         (Module                  => Module_ID (Codefix_Module_ID),
          Kernel                  => Kernel,
@@ -742,59 +751,7 @@ package body Codefix_Module is
 
       Register_Preferences (Kernel);
 
-      Add_Parser (new Agregate_Misspelling);
-      Add_Parser (new Double_Misspelling);
-      Add_Parser (new Light_Misspelling);
-      Add_Parser (new Goto_Misspelling);
-      Add_Parser (new Library_Misspelling);
-      Add_Parser (new Sth_Should_Be_Sth);
-      Add_Parser (new Should_Be_Semicolon);
-      Add_Parser (new And_Meant);
-      Add_Parser (new Or_Meant);
-      Add_Parser (new Bad_End_Block);
-      Add_Parser (new Unqualified_Expression);
-      Add_Parser (new Goes_Before);
-      Add_Parser (new Sth_Expected_3);
-      Add_Parser (new Sth_Expected_2);
-      Add_Parser (new Sth_Expected);
-      Add_Parser (new Missing_Kw);
-      Add_Parser (new Missing_Sep);
-      Add_Parser (new Missing_All);
-      Add_Parser (new Statement_Missing);
-      Add_Parser (new Space_Missing);
-      Add_Parser (new Two_Spaces_Missing);
-      Add_Parser (new Name_Missing);
-      Add_Parser (new Double_Keyword);
-      Add_Parser (new Extra_Paren);
-      Add_Parser (new Redundant_Keyword);
-      Add_Parser (new Unexpected_Sep);
-      Add_Parser (new Unexpected_Word);
-      Add_Parser (new Kw_Not_Allowed);
-      Add_Parser (new Sep_Not_Allowed);
-      Add_Parser (new Already_Use_Visible);
-      Add_Parser (new Use_Valid_Instead);
-      Add_Parser (new Should_Be_In);
-      Add_Parser (new Bad_Column);
-      Add_Parser (new Main_With_Missing);
-      Add_Parser (new Bad_Casing_Standard);
-      Add_Parser (new Bad_Casing_Declared);
-      Add_Parser (new Bad_Casing_Keyword);
-      Add_Parser (new Object_Not_Referenced);
-      Add_Parser (new Pkg_Not_Referenced);
-      Add_Parser (new Never_Read);
-      Add_Parser (new Never_Assigned);
-      Add_Parser (new Pragma_Missplaced);
-      Add_Parser (new Constant_Expected);
-      Add_Parser (new Possible_Interpretation);
-      Add_Parser (new Hidden_Declaration);
-      Add_Parser (new Redundant_Conversion);
-      Add_Parser (new Missplaced_With);
-      Add_Parser (new Not_Fully_Conformant);
-      Add_Parser (new Generic_Use_Unallowed);
-      Add_Parser (new Non_Visible_Declaration);
-      Add_Parser (new Redundant_With_In_Body);
-      Initialize_Parsers;
-
+      Create_Parsers;
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1050,9 +1007,11 @@ package body Codefix_Module is
 
    procedure Initialize
      (This : GPS_Navigator;
-      File : in out Text_Interface'Class) is
+      File : in out Text_Interface'Class)
+   is
+      pragma Unreferenced (This);
    begin
-      Set_Kernel (Console_Interface (File), Get_Kernel (This));
+      Set_Kernel (Console_Interface (File), Codefix_Module_ID.Kernel);
    end Initialize;
 
    -------------
@@ -1127,14 +1086,14 @@ package body Codefix_Module is
    -- Execute_Corrupted_Cb --
    --------------------------
 
-   procedure Execute_Corrupted_Cb
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Error_Message : String) is
+   procedure Execute_Corrupted_Cb (Error_Message : String) is
    begin
       Trace (Me, "Fix of current error is no longer pertinent");
       Trace (Me, "Exception got: " & Error_Message);
+
       Insert
-        (Kernel, -"Fix of current error is no longer relevant");
+        (Codefix_Module_ID.Kernel,
+            -"Fix of current error is no longer relevant");
    end Execute_Corrupted_Cb;
 
    --------------------------
