@@ -331,6 +331,7 @@ package body Codefix.Errors_Manager is
    procedure Free (This : in out Correction_Manager) is
    begin
       Free (This.Potential_Corrections);
+      Free (This.Error_Cb);
    end Free;
 
    ---------------
