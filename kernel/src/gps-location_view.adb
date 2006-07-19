@@ -2764,8 +2764,7 @@ package body GPS.Location_View is
       Warning_Index_In_Regexp : Integer := -1;
       Quiet                   : Boolean := False)
    is
-      View   : constant Location_View :=
-                 Get_Or_Create_Location_View (Kernel);
+      View   : Location_View := null;
       Model  : Gtk_Tree_Store;
       Expand : Boolean := Quiet;
 
@@ -2861,8 +2860,6 @@ package body GPS.Location_View is
          Length := 1;
       end if;
 
-      Model := View.Tree.Model;
-
       while Start <= Text'Last loop
          --  Parse Text line by line and look for file locations
 
@@ -2916,6 +2913,11 @@ package body GPS.Location_View is
                C := Highlight_Category;
             end if;
 
+            if View = null then
+               View := Get_Or_Create_Location_View (Kernel);
+               Model := View.Tree.Model;
+            end if;
+
             Add_Location
               (View               => View,
                Model              => Model,
@@ -2944,15 +2946,17 @@ package body GPS.Location_View is
 
       Recount_Category (Kernel, Category);
 
-      if View.Sort_By_Category then
-         if Get_Sort_Column_Id (View.Sorting_Column)
-           /= Category_Line_Column
-         then
-            Set_Sort_Column_Id (View.Sorting_Column, Category_Line_Column);
-         end if;
-      else
-         if Get_Sort_Column_Id (View.Sorting_Column) /= Line_Column then
-            Set_Sort_Column_Id (View.Sorting_Column, Line_Column);
+      if View /= null then
+         if View.Sort_By_Category then
+            if Get_Sort_Column_Id (View.Sorting_Column)
+              /= Category_Line_Column
+            then
+               Set_Sort_Column_Id (View.Sorting_Column, Category_Line_Column);
+            end if;
+         else
+            if Get_Sort_Column_Id (View.Sorting_Column) /= Line_Column then
+               Set_Sort_Column_Id (View.Sorting_Column, Line_Column);
+            end if;
          end if;
       end if;
    end Parse_File_Locations;
