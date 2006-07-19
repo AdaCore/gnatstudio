@@ -1296,6 +1296,10 @@ package body Custom_Module is
                Item        => Gtk_Menu_Item (Menu),
                Ref_Item    => Nth_Arg (Data, 3, ""),
                Add_Before  => Nth_Arg (Data, 4, True));
+
+            Set_Accel_Path
+              (Menu, "<gps>" & Path, Get_Default_Accelerators (Kernel));
+
             Inst := New_Instance (Get_Script (Data), Menu_Class);
             Set_Data (Inst, Widget => GObject (Menu));
             Set_Return_Value (Data, Inst);
