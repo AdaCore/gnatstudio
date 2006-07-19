@@ -27,8 +27,6 @@ package body Codefix.Errors_Parser is
 
    Me : constant Debug_Handle := Create ("Codefix");
 
---   use Codefix_Module.Codefix_Remove_Policy_Properties;
-
    -------------------
    -- Get_Solutions --
    -------------------
@@ -44,6 +42,7 @@ package body Codefix.Errors_Parser is
       Current_Node : Parser_List.List_Node;
       Success      : Boolean := False;
       Line_Cursor  : File_Cursor;
+
    begin
       Current_Node := First (General_Parse_List);
 
@@ -320,9 +319,10 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-   pragma Unreferenced (Options);
+      pragma Unreferenced (Options);
       Preview     : Error_Message;
       Fix_Matches : Match_Array (0 .. 1);
+
    begin
       Get_Preview (Errors_List, Current_Text, Preview);
       Match (This.Misspelling_Matcher.all, Get_Message (Preview), Fix_Matches);
@@ -340,7 +340,6 @@ package body Codefix.Errors_Parser is
          Text_Ascii);
 
       Get_Message (Errors_List, Current_Text, Preview);
-
    end Fix;
 
    -----------------------
@@ -1684,7 +1683,7 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-   pragma Unreferenced (Options);
+      pragma Unreferenced (Options);
       Matches_Prev    : Match_Array (0 .. 2);
       Preview         : Error_Message;
       Cursor_List     : Cursor_Lists.List;
@@ -1775,11 +1774,12 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-   pragma Unreferenced (Options);
+      pragma Unreferenced (Options);
       Matches_Check   : Match_Array (0 .. 0);
       Matches_Loc     : Match_Array (0 .. 2);
       Preview         : Error_Message;
       Cursor_List     : Cursor_Lists.List;
+
    begin
       Get_Preview (Errors_List, Current_Text, Preview);
 
