@@ -22,6 +22,8 @@ with Language; use Language;
 
 package Language.Tree is
 
+   type Relative_Position is (Before, After, Specified);
+
    function Contains (Scope, Item : Construct_Access) return Boolean;
    --  Returns true if Item is contained by Scope, false otherwise.
 
@@ -74,10 +76,24 @@ package Language.Tree is
       return Construct_Access;
    --  Return the construct pointed by the iterator given in parameter.
 
+   type Category_Array is array (Natural range <>) of Language_Category;
+   Null_Category_Array : Category_Array (1 .. 0) := (others => Cat_Unknown);
+
+   type Position_Type is (Start_Construct, Start_Name);
+
    function Get_Iterator_At
-     (Tree : Construct_Tree; Line, Line_Offset : Natural)
+     (Tree              : Construct_Tree;
+      Line, Line_Offset : Natural;
+      From_Type         : Position_Type := Start_Construct;
+      Position          : Relative_Position := Specified;
+      Categories_Seeked : Category_Array := Null_Category_Array)
       return Construct_Tree_Iterator;
-   --  Return the closest iterator before the given position
+   --  Return the closest iterator before the given position. It's possible to
+   --  look for the closest match just before or after the given position, and
+   --  to reduce the scope of search to certain categories. If
+   --  Categories_Seeked is null, then any category will be retreived.
+   --  From_Type determines if the search has to be done on the start of the
+   --  construct or on the start of its name.
 
    function Get_Child_Number (Iter : Construct_Tree_Iterator) return Natural;
    --  Return the number of childs in the construct pointed by this iterator
@@ -292,7 +308,7 @@ private
       end record;
 
    function Get_Last_Relevant_Construct
-     (Tree : Construct_Tree; Offset : Positive)
+     (Tree : Construct_Tree; Offset : Natural)
       return Construct_Tree_Iterator;
    --  Return the last construct represtenting the scope where the offset is.
    --  It can be either the last entity declared in the scope, or the scope
