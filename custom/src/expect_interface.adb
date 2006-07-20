@@ -274,7 +274,7 @@ package body Expect_Interface is
    begin
       if S = null then
          S := new String'(S2);
-      else
+      elsif S2 /= "" then
          declare
             N : constant String := S.all & S2;
          begin
@@ -326,7 +326,7 @@ package body Expect_Interface is
       End_Index : Natural;
       Prev_Beg  : Natural;
       Action_To_Execute : Subprogram_Type;
-      Index     : Natural := Output'First;
+      Index     : Natural;
       Index_Start    : Natural;
       Current, Final : Natural;
 
@@ -336,41 +336,55 @@ package body Expect_Interface is
       --  First check the progress regexp
 
       if D.Progress_Regexp /= null then
-         while Index <= Output'Last loop
-            Index_Start := Index;
-            Match
-              (D.Progress_Regexp.all, Output (Index .. Output'Last), Matches);
-            exit when Matches (D.Progress_Current) = No_Match
-              or else Matches (D.Progress_Final) = No_Match;
+         Concat (D.Unmatched_Output, Output);
 
-            Concat
-              (D.Unmatched_Output, Output (Index .. Matches (0).First - 1));
+         declare
+            Outp : String_Access := D.Unmatched_Output;
+         begin
+            Index := Outp'First;
+            D.Unmatched_Output := new String'("");
+            while Index <= Outp'Last loop
+               Index_Start := Index;
+               Match
+                 (D.Progress_Regexp.all, Outp (Index .. Outp'Last), Matches,
+                  Data_First => Index);
+               exit when Matches (0) = No_Match
+                 or else Matches (D.Progress_Current) = No_Match
+                 or else Matches (D.Progress_Final) = No_Match;
 
-            Current := Safe_Value
-              (Output (Matches (D.Progress_Current).First ..
-                 Matches (D.Progress_Current).Last));
-            Final := Safe_Value
-              (Output (Matches (D.Progress_Final).First ..
-                 Matches (D.Progress_Final).Last));
-            Set_Progress
-              (D,
-               Progress_Record'
-                 (Activity => Running,
-                  Current  => Current,
-                  Total    => Final));
+               Concat
+                 (D.Unmatched_Output, Outp (Index .. Matches (0).First - 1));
 
-            Index := Matches (0).Last + 1;
+               Current := Safe_Value
+                 (Outp (Matches (D.Progress_Current).First ..
+                    Matches (D.Progress_Current).Last));
+               Final := Safe_Value
+                 (Outp (Matches (D.Progress_Final).First ..
+                    Matches (D.Progress_Final).Last));
+               Set_Progress
+                 (D,
+                  Progress_Record'
+                    (Activity => Running,
+                     Current  => Current,
+                     Total    => Final));
 
-            --  avoid infinite loops
-            exit when Index <= Index_Start;
-         end loop;
-      end if;
+               Index := Matches (0).Last + 1;
 
-      --  Always put Output in Unmatched_Output in case interactive_expect
-      --  want them.
+               --  avoid infinite loops
+               exit when Index <= Index_Start;
+            end loop;
 
-      if Index <= Output'Last then
-         Concat (D.Unmatched_Output, Output (Index .. Output'Last));
+            if Index <= Outp'Last then
+               Concat (D.Unmatched_Output, Outp (Index .. Outp'Last));
+            end if;
+
+            Free (Outp);
+         end;
+
+      else
+         --  Always put Output in Unmatched_Output in case interactive_expect
+         --  want them.
+         Concat (D.Unmatched_Output, Output);
       end if;
 
       if D.Pattern = null
