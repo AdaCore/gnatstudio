@@ -991,6 +991,7 @@ package body KeyManager_Module is
              (Get_Main_Window (Kernel), Key, Modif)
          then
             Found_Action := True;
+            return True;
          end if;
 
          --  Execute all commands bound to this key. The order is somewhat
