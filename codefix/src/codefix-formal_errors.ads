@@ -24,6 +24,7 @@ with GNAT.Regpat;
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 with Generic_List;
 with Language;             use Language;
+with Language.Tree;        use Language.Tree;
 with Projects.Registry;
 with VFS;
 
@@ -208,8 +209,11 @@ package Codefix.Formal_Errors is
    function Remove_Dependency_Clause
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Category     : Dependency_Category) return Solution_List;
-   --  Remove a with/use clause at the position defined by the cursor.
+      Category     : Dependency_Category;
+      Position     : Relative_Position) return Solution_List;
+   --  Remove a with/use clause at the position defined by the cursor. The
+   --  position parameter specify where the actual begin of the unit is
+   --  relatively to the cursor position.
 
    function Resolve_Unvisible_Declaration
      (Current_Text  : Text_Navigator_Abstr'Class;
