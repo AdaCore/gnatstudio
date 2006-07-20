@@ -1283,25 +1283,32 @@ package body Custom_Module is
          declare
             Inst : Class_Instance;
             Path : constant String := Nth_Arg (Data, 1);
-            Menu : constant Subprogram_Type_Menu :=
-              new Subprogram_Type_Menu_Record;
+            Item : Gtk_Menu_Item;
+            Menu : Subprogram_Type_Menu;
+            Base : constant String := Base_Name (Path);
          begin
-            Gtk.Menu_Item.Initialize (Menu, Label => Base_Name (Path));
-            Menu.On_Activate := Nth_Arg (Data, 2, null);
-            Widget_Callback.Connect (Menu, "activate", On_Activate'Access);
+            if Base'Length > 0 and then Base (Base'First) = '-' then
+               Gtk_New (Item);
+            else
+               Menu := new Subprogram_Type_Menu_Record;
+               Gtk.Menu_Item.Initialize (Menu, Label => Base);
+               Menu.On_Activate := Nth_Arg (Data, 2, null);
+               Widget_Callback.Connect (Menu, "activate", On_Activate'Access);
+               Set_Accel_Path
+                 (Menu, "<gps>" & Path, Get_Default_Accelerators (Kernel));
+
+               Item := Gtk_Menu_Item (Menu);
+            end if;
 
             Register_Menu
               (Kernel      => Kernel,
                Parent_Path => Dir_Name (Path),
-               Item        => Gtk_Menu_Item (Menu),
+               Item        => Item,
                Ref_Item    => Nth_Arg (Data, 3, ""),
                Add_Before  => Nth_Arg (Data, 4, True));
 
-            Set_Accel_Path
-              (Menu, "<gps>" & Path, Get_Default_Accelerators (Kernel));
-
             Inst := New_Instance (Get_Script (Data), Menu_Class);
-            Set_Data (Inst, Widget => GObject (Menu));
+            Set_Data (Inst, Widget => GObject (Item));
             Set_Return_Value (Data, Inst);
          end;
 
