@@ -2040,6 +2040,7 @@ package body Src_Editor_Module.Shell is
             Get_Location (Iter, Data, 2, Default => Iter);
             if Get_Buffer (Iter) = Gtk_Text_Buffer (Buffer) then
                Insert (Buffer, Iter, Nth_Arg (Data, 3));
+               End_Action (Buffer);
             else
                Set_Error_Msg (Data, -"Location is not in the same buffer");
             end if;
@@ -2051,6 +2052,7 @@ package body Src_Editor_Module.Shell is
          Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
          if Buffer /= null then
             Delete (Buffer, Iter, Iter2);
+            End_Action (Buffer);
          end if;
 
       elsif Command = "copy"
@@ -2075,6 +2077,7 @@ package body Src_Editor_Module.Shell is
                   Copy_Clipboard (Get_Clipboard (Kernel), Buffer);
                else
                   Cut_Clipboard (Get_Clipboard (Kernel), Buffer);
+                  End_Action (Buffer);
                end if;
                if Append then
                   Merge_Clipboard (Get_Clipboard (Kernel), 1, 2);
@@ -2091,6 +2094,7 @@ package body Src_Editor_Module.Shell is
          elsif Buffer /= null then
             Place_Cursor (Buffer, Iter);
             Paste_Clipboard (Get_Clipboard (Kernel), Buffer);
+            End_Action (Buffer);
          end if;
 
       elsif Command = "blocks_fold" then
@@ -2116,6 +2120,7 @@ package body Src_Editor_Module.Shell is
                Set_Error_Msg (Data, -"Error while indenting");
             end if;
          end if;
+         End_Action (Buffer);
 
       elsif Command = "refill" then
          Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
@@ -2132,6 +2137,7 @@ package body Src_Editor_Module.Shell is
                Set_Error_Msg (Data, -"Error while refilling buffer");
             end if;
          end if;
+         End_Action (Buffer);
 
       elsif Command = "get_mark" then
          Name_Parameters (Data, (2 => Name_Cst'Access));
