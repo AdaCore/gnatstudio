@@ -23,6 +23,7 @@ with GNAT.Case_Util; use GNAT.Case_Util;
 with GNAT.Regpat;    use GNAT.Regpat;
 
 with Ada_Analyzer;   use Ada_Analyzer;
+with Language.Ada;   use Language.Ada;
 with String_Utils;   use String_Utils;
 with VFS;            use VFS;
 
@@ -314,36 +315,23 @@ package body Codefix.Text_Manager is
       return Cursor;
    end Get_Current_Cursor;
 
-   --------------
-   -- Get_Unit --
-   --------------
+   ---------------------
+   -- Get_Iterator_At --
+   ---------------------
 
-   function Get_Unit
-     (Current_Text           : Text_Navigator_Abstr;
-      Cursor                 : File_Cursor'Class;
-      Position               : Relative_Position := Specified;
-      Category_1, Category_2 : Language_Category := Cat_Unknown)
-     return Construct_Information is
+   function Get_Iterator_At
+     (Current_Text      : Text_Navigator_Abstr;
+      Cursor            : File_Cursor'Class;
+      Position          : Relative_Position := Specified;
+      Categories_Seeked : Category_Array := Null_Category_Array)
+      return Construct_Tree_Iterator is
    begin
-      return Get_Unit
-        (Get_File (Current_Text, Get_File (Cursor)).all,
+      return Get_Iterator_At
+        (Get_File (Current_Text, Get_File (Cursor)),
          Text_Cursor (Cursor),
          Position,
-         Category_1,
-         Category_2);
-   end Get_Unit;
-
-   -----------------
-   -- Search_Body --
-   -----------------
-
-   function Search_Body
-     (Current_Text : Text_Navigator_Abstr;
-      File_Name    : VFS.Virtual_File;
-      Spec         : Construct_Information) return Construct_Information is
-   begin
-      return Search_Body (Get_File (Current_Text, File_Name).all, Spec);
-   end Search_Body;
+         Categories_Seeked);
+   end Get_Iterator_At;
 
    ---------
    -- Get --
@@ -376,12 +364,14 @@ package body Codefix.Text_Manager is
    --------------
 
    function Get_Line
-     (This   : Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class) return String is
+     (This      : Text_Navigator_Abstr;
+      Cursor    : File_Cursor'Class;
+      Start_Col : Column_Index := 0) return String is
    begin
       return Get_Line
         (Get_File (This, Get_File (Cursor)).all,
-         Text_Cursor (Cursor));
+         Text_Cursor (Cursor),
+         Start_Col);
    end Get_Line;
 
    ---------------
@@ -475,30 +465,33 @@ package body Codefix.Text_Manager is
    ----------------
 
    procedure Get_Entity
-     (This : in out Extract;
+     (This         : in out Extract;
       Current_Text : Text_Navigator_Abstr'Class;
-      Cursor : File_Cursor'Class)
+      Cursor       : File_Cursor'Class)
    is
-      Unit_Info, Body_Info : Construct_Information;
+      Unit_Info, Body_Info : Construct_Tree_Iterator;
       Line_Cursor          : File_Cursor := File_Cursor (Cursor);
    begin
       Line_Cursor.Col := 1;
 
-      Unit_Info := Get_Unit (Current_Text, Cursor);
+      Unit_Info := Get_Iterator_At (Current_Text, Cursor);
 
-      if Unit_Info.Is_Declaration then
-         Body_Info := Search_Body
-           (Current_Text,
-            Get_File (Cursor),
-            Unit_Info);
+      if Get_Construct (Unit_Info).Is_Declaration then
 
-         for J in Body_Info.Sloc_Start.Line .. Body_Info.Sloc_End.Line loop
+         Body_Info := Get_First_Body
+           (Get_Tree (Current_Text, Cursor).all, Unit_Info);
+
+         for J in Get_Construct (Body_Info).Sloc_Start.Line
+           .. Get_Construct (Body_Info).Sloc_End.Line
+         loop
             Line_Cursor.Line := J;
             Get_Line (Current_Text, Line_Cursor, This);
          end loop;
       end if;
 
-      for J in Unit_Info.Sloc_Start.Line .. Unit_Info.Sloc_End.Line loop
+      for J in Get_Construct (Unit_Info).Sloc_Start.Line
+        .. Get_Construct (Unit_Info).Sloc_End.Line
+      loop
          Line_Cursor.Line := J;
          Get_Line (Current_Text, Line_Cursor, This);
       end loop;
@@ -580,7 +573,7 @@ package body Codefix.Text_Manager is
       Category  : Language_Category;
       Name      : String := "") return Construct_Information is
    begin
-      return Search_Unit (Get_File (This, File_Name).all, Category, Name);
+      return Search_Unit (Get_File (This, File_Name), Category, Name);
    end Search_Unit;
 
    --------------
@@ -594,21 +587,19 @@ package body Codefix.Text_Manager is
       return Line_Max (Get_File (This, File_Name).all);
    end Line_Max;
 
-   ----------------------------
-   -- Get_Extended_Unit_Name --
-   ----------------------------
+   -------------------
+   -- Get_Full_Name --
+   -------------------
 
-   function Get_Extended_Unit_Name
+   function Get_Full_Prefix
      (This     : Text_Navigator_Abstr'Class;
       Cursor   : File_Cursor'Class;
       Category : Language_Category := Cat_Unknown)
-     return String is
+      return String is
    begin
-      return Get_Extended_Unit_Name
-        (Get_File (This, Get_File (Cursor)).all,
-         Cursor,
-         Category);
-   end Get_Extended_Unit_Name;
+      return Get_Full_Prefix
+        (Get_File (This, Get_File (Cursor)), Cursor, Category);
+   end Get_Full_Prefix;
 
    ---------------------
    -- Get_Right_Paren --
@@ -645,20 +636,18 @@ package body Codefix.Text_Manager is
       Spec_Begin, Spec_End : out File_Cursor'Class;
       Body_Begin, Body_End : out File_Cursor'Class)
    is
-      Unit_Info, Body_Info : Construct_Information;
+      Unit_Info, Body_Info : Construct_Tree_Iterator;
    begin
-      Unit_Info := Get_Unit (Current_Text, Cursor);
+      Unit_Info := Get_Iterator_At (Current_Text, Cursor);
 
-      if Unit_Info.Is_Declaration then
-         Body_Info := Search_Body
-           (Current_Text,
-            Get_File (Cursor),
-            Unit_Info);
+      if Get_Construct (Unit_Info).Is_Declaration then
+         Body_Info := Get_First_Body
+           (Get_Tree (Current_Text, Cursor).all, Unit_Info);
       else
-         Body_Info := Null_Construct_Info;
+         Body_Info := Null_Construct_Tree_Iterator;
       end if;
 
-      if Body_Info /= Null_Construct_Info then
+      if Body_Info /= Null_Construct_Tree_Iterator then
          Set_File (Body_Begin, Get_File (Cursor));
          Set_File (Body_End,   Get_File (Cursor));
          Set_File (Spec_Begin, Get_File (Cursor));
@@ -666,26 +655,26 @@ package body Codefix.Text_Manager is
 
          Body_Begin.Col := 1;
          Body_End.Col := 1;
-         Body_Begin.Line := Body_Info.Sloc_Start.Line;
-         Body_End.Line := Body_Info.Sloc_End.Line;
+         Body_Begin.Line := Get_Construct (Body_Info).Sloc_Start.Line;
+         Body_End.Line := Get_Construct (Body_Info).Sloc_End.Line;
 
          Body_Begin.Col := To_Column_Index
-           (Char_Index (Body_Info.Sloc_Start.Column),
+           (Char_Index (Get_Construct (Body_Info).Sloc_Start.Column),
             Get_Line (Current_Text, Body_Begin));
          Body_End.Col := To_Column_Index
-           (Char_Index (Body_Info.Sloc_End.Column),
+           (Char_Index (Get_Construct (Body_Info).Sloc_End.Column),
             Get_Line (Current_Text, Body_End));
 
          Spec_Begin.Col := 1;
          Spec_End.Col := 1;
-         Spec_Begin.Line := Unit_Info.Sloc_Start.Line;
-         Spec_End.Line := Unit_Info.Sloc_End.Line;
+         Spec_Begin.Line := Get_Construct (Unit_Info).Sloc_Start.Line;
+         Spec_End.Line := Get_Construct (Unit_Info).Sloc_End.Line;
 
          Spec_Begin.Col := To_Column_Index
-           (Char_Index (Unit_Info.Sloc_Start.Column),
+           (Char_Index (Get_Construct (Unit_Info).Sloc_Start.Column),
             Get_Line (Current_Text, Spec_Begin));
          Spec_End.Col := To_Column_Index
-           (Char_Index (Unit_Info.Sloc_End.Column),
+           (Char_Index (Get_Construct (Unit_Info).Sloc_End.Column),
             Get_Line (Current_Text, Spec_End));
       else
          Set_File (Body_Begin, Get_File (Cursor));
@@ -693,14 +682,14 @@ package body Codefix.Text_Manager is
 
          Body_Begin.Col := 1;
          Body_End.Col := 1;
-         Body_Begin.Line := Unit_Info.Sloc_Start.Line;
-         Body_End.Line := Unit_Info.Sloc_End.Line;
+         Body_Begin.Line := Get_Construct (Unit_Info).Sloc_Start.Line;
+         Body_End.Line := Get_Construct (Unit_Info).Sloc_End.Line;
 
          Body_Begin.Col := To_Column_Index
-           (Char_Index (Unit_Info.Sloc_Start.Column),
+           (Char_Index (Get_Construct (Unit_Info).Sloc_Start.Column),
             Get_Line (Current_Text, Body_Begin));
          Body_End.Col := To_Column_Index
-           (Char_Index (Unit_Info.Sloc_End.Column),
+           (Char_Index (Get_Construct (Unit_Info).Sloc_End.Column),
             Get_Line (Current_Text, Body_End));
 
          Assign (Spec_Begin, Null_File_Cursor);
@@ -732,7 +721,7 @@ package body Codefix.Text_Manager is
      (This      : Text_Navigator_Abstr'Class;
       File_Name : VFS.Virtual_File) return Construct_List_Access is
    begin
-      return Get_Structure (Get_File (This, File_Name).all);
+      return Get_Structure (Get_File (This, File_Name));
    end Get_Structure;
 
    ----------------
@@ -777,6 +766,17 @@ package body Codefix.Text_Manager is
       Undo (Get_File (This, File_Name).all);
    end Undo;
 
+   --------------
+   -- Get_Tree --
+   --------------
+
+   function Get_Tree
+     (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Construct_Tree_Access is
+   begin
+      return Get_Tree (Get_File (This, Get_File (Cursor)));
+   end Get_Tree;
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -790,6 +790,7 @@ package body Codefix.Text_Manager is
       Free (This.Structure.all);
       Free (This.Structure);
       Free (This.Structure_Up_To_Date);
+      Free (This.Tree);
    end Free;
 
    ----------
@@ -804,307 +805,37 @@ package body Codefix.Text_Manager is
       Delete (This);
    end Free;
 
-   --------------
-   -- Get_Unit --
-   --------------
+   ---------------------
+   -- Get_Iterator_At --
+   ---------------------
 
-   function Get_Unit
-     (Current_Text           : Text_Interface;
-      Cursor                 : Text_Cursor'Class;
-      Position               : Relative_Position := Specified;
-      Category_1, Category_2 : Language_Category := Cat_Unknown)
-      return Construct_Information
+   function Get_Iterator_At
+     (Current_Text      : access Text_Interface;
+      Cursor            : Text_Cursor'Class;
+      Position          : Relative_Position := Specified;
+      Categories_Seeked : Category_Array := Null_Category_Array)
+      return Construct_Tree_Iterator
    is
-
-      function Nearer return Boolean;
-      --  Return True when Current_Info is nearer Cursor than Info_Saved.
-
-      Current_Info      : Construct_Access;
-      Info_Saved        : Construct_Access;
-      Line              : constant String :=
-        Get_Line (Text_Interface'Class (Current_Text), Cursor, 1);
-      Cursor_Char_Index : constant Char_Index :=
-        To_Char_Index (Cursor.Col, Line);
-
-      function Nearer return Boolean is
-         D_Current_Line, D_Current_Col : Integer;
-         D_Old_Line, D_Old_Col : Integer;
-      begin
-         D_Current_Line := Current_Info.Sloc_Start.Line - Cursor.Line;
-         D_Current_Col := Current_Info.Sloc_Start.Column
-           - Natural (Cursor_Char_Index);
-
-         case Position is
-            when Before =>
-               if D_Current_Line > 0
-                 or else (D_Current_Line = 0 and then D_Current_Col > 0)
-               then
-                  return False;
-               end if;
-
-            when After =>
-               if D_Current_Line < 0
-                 or else (D_Current_Line = 0 and then D_Current_Col < 0)
-               then
-                  return False;
-               end if;
-
-            when others =>
-               return False;
-         end case;
-
-         if Info_Saved = null then
-            return True;
-         end if;
-
-         D_Old_Line := Info_Saved.Sloc_Start.Line - Cursor.Line;
-         D_Old_Col := Info_Saved.Sloc_Start.Column
-           - Natural (Cursor_Char_Index);
-
-         return abs (D_Old_Line) > abs (D_Current_Line) or else
-           (D_Old_Line = D_Current_Line and then
-              abs (D_Old_Col) > abs (D_Current_Col));
-
-      end Nearer;
-
-      --  begin of Get_Unit
-
+      Line_Cursor : constant String := Get_Line
+        (Text_Interface'Class (Current_Text.all), Cursor, 1);
+      It          : Construct_Tree_Iterator;
    begin
-      Current_Info := Get_Structure (Current_Text).First;
+      It := Get_Iterator_At
+        (Get_Tree (Current_Text).all,
+         Get_Line (Cursor),
+         Integer (To_Char_Index (Get_Column (Cursor), Line_Cursor)),
+         Start_Name,
+         Position,
+         Categories_Seeked);
 
-      while Current_Info /= null loop
-         if Category_1 = Cat_Unknown
-           or else Current_Info.Category = Category_1
-           or else Current_Info.Category = Category_2
-         then
-            if (Current_Info.Sloc_Start.Line = Cursor.Line
-              and then Current_Info.Sloc_Start.Column
-              = Natural (Cursor_Char_Index))
-              or else (Current_Info.Sloc_Entity.Line = Cursor.Line
-                       and then Current_Info.Sloc_Entity.Column
-                       = Natural (Cursor_Char_Index))
-            then
-               return Current_Info.all;
-            elsif Position /= Specified and then Nearer then
-               Info_Saved := Current_Info;
-            end if;
-         end if;
-
-         Current_Info := Current_Info.Next;
-      end loop;
-
-      if Info_Saved /= null then
-         return Info_Saved.all;
-      end if;
-
-      Raise_Exception
-        (Codefix_Panic'Identity,
-         "Cursor given is not at the beginning of an entity.");
-   end Get_Unit;
-
-   -----------------
-   -- Search_Body --
-   -----------------
-
-   --  Assertion : The last unit can never be the unit looked for
-   function Search_Body
-     (Current_Text : Text_Interface;
-      Spec         : Construct_Information) return Construct_Information
-   is
-      procedure Seeker (Stop : Source_Location; Is_First : Boolean := False);
-      --  Recursivly scan a token list in order to found the declaration what
-      --  correpond with a body. Stop is the beginning of the current block.
-
-      type Scope_Node;
-
-      type Ptr_Scope_Node is access all Scope_Node;
-
-      procedure Free (This : in out Ptr_Scope_Node);
-
-      package Scope_Lists is new Generic_List (Ptr_Scope_Node);
-      use Scope_Lists;
-
-      type Scope_Node is record
-         Scope_List : Scope_Lists.List;
-         Result     : Construct_Access;
-         Name       : GNAT.OS_Lib.String_Access;
-         Root       : Ptr_Scope_Node;
-      end record;
-
-      function Get_Node (Container : Ptr_Scope_Node; Name : String)
-        return Ptr_Scope_Node;
-
-      procedure Add_Node (Container : Ptr_Scope_Node; Object : Ptr_Scope_Node);
-
-      function Get_Node (Container : Ptr_Scope_Node; Name : String)
-        return Ptr_Scope_Node is
-         Current_Node : Scope_Lists.List_Node := First (Container.Scope_List);
-      begin
-         while Current_Node /= Scope_Lists.Null_Node loop
-            if Data (Current_Node).Name.all = Name then
-               return Data (Current_Node);
-            end if;
-
-            Current_Node := Next (Current_Node);
-         end loop;
-
-         return null;
-      end Get_Node;
-
-      procedure Add_Node
-        (Container : Ptr_Scope_Node; Object : Ptr_Scope_Node) is
-      begin
-         Append (Container.Scope_List, Object);
-         Object.Root := Container;
-      end Add_Node;
-
-      procedure Free (This : in out Ptr_Scope_Node) is
-         procedure Free_Pool is
-           new Ada.Unchecked_Deallocation (Scope_Node, Ptr_Scope_Node);
-      begin
-         Free (This.Scope_List);
-         Free (This.Name);
-         Free_Pool (This);
-      end Free;
-
-      Current_Info  : Construct_Access;
-      Found         : Boolean := False;
-      Result        : Construct_Access;
-      Current_Scope : Ptr_Scope_Node;
-      First_Scope   : Ptr_Scope_Node;
-
-      ------------
-      -- Seeker --
-      ------------
-
-      --  ??? Solve eventuals memory leaks linked to intra-packages
-
-      procedure Seeker (Stop : Source_Location; Is_First : Boolean := False) is
-         Current_Result : Construct_Access;
-         New_Sloc       : Source_Location;
-         This_Scope     : Ptr_Scope_Node := null;
-
-      begin
-         if not Is_First then
-            if Current_Info.Is_Declaration
-              and then (Current_Info.Category = Cat_Package
-                     or else Current_Info.Category = Cat_Protected)
-            then
-               This_Scope := Get_Node
-                 (Current_Scope, Current_Info.Name.all);
-
-               if This_Scope = null then
-                  Current_Info := Current_Info.Prev;
-                  return;
-               end if;
-
-               Current_Scope := This_Scope;
-               Current_Result := Current_Scope.Result;
-               Result := Current_Result;
-            end if;
-
-            if not Current_Info.Is_Declaration
-              and then (Current_Info.Category = Cat_Package
-                     or else Current_Info.Category = Cat_Protected)
-            then
-               This_Scope := new Scope_Node;
-               Assign (This_Scope.Name, Current_Info.Name.all);
-               Add_Node (Current_Scope, This_Scope);
-               Current_Scope := This_Scope;
-            end if;
-
-            Current_Info := Current_Info.Prev;
-         end if;
-
-         while Current_Info /= null loop
-            if Current_Info.Category not in Construct_Category then
-               --  Is it the end of the scope ?
-
-               if Current_Info.Sloc_End.Line < Stop.Line
-                 or else (Current_Info.Sloc_End.Line = Stop.Line
-                          and then Current_Info.Sloc_End.Column < Stop.Column)
-               then
-                  if This_Scope /= null then
-                     Current_Scope := This_Scope.Root;
-                  end if;
-
-                  return;
-               end if;
-
-               --  Does this body have the right profile ?
-
-               if not Current_Info.Is_Declaration
-                 and then Current_Info.Name /= null
-                 and then Current_Info.Name.all = Spec.Name.all
-                 and then Normalize (Current_Info.Profile) =
-                   Normalize (Spec.Profile)
-               then
-                  Result := Current_Info;
-                  if This_Scope /= null then
-                     This_Scope.Result := Result; --  ???  or current_result ?
-                  end if;
-               end if;
-
-               --  Is it the beginning of a scope ?
-
-               if (not Current_Info.Is_Declaration and then
-                     Current_Info.Category in Enclosing_Entity_Category)
-                 or else Current_Info.Category = Cat_Protected
-                 or else Current_Info.Category = Cat_Package
-               then
-                  Current_Result := Result;
-                  New_Sloc := Current_Info.Sloc_Start;
-
-                  Seeker (New_Sloc);
-
-                  if This_Scope /= null then
-                     Current_Scope := This_Scope;
-                  end if;
-
-                  if Found then
-                     return;
-                  else
-                     Result := Current_Result;
-                  end if;
-
-                  --  Is this spec the right one ?
-
-               elsif Current_Info.Is_Declaration and then
-                 Current_Info.Name.all = Spec.Name.all and then
-                 Current_Info.Sloc_Start = Spec.Sloc_Start and then
-                 Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
-               then
-                  Found := True;
-                  return;
-               else
-                  Current_Info := Current_Info.Prev;
-               end if;
-
-            else
-               Current_Info := Current_Info.Prev;
-            end if;
-         end loop;
-      end Seeker;
-
-   begin
-      Current_Info := Get_Structure (Current_Text).Last;
-      First_Scope := new Scope_Node;
-      Current_Scope := First_Scope;
-      Seeker (Current_Info.Sloc_Start, True);
-      Free (First_Scope);
-
-      if Result /= null then
-         return Result.all;
+      if It = Null_Construct_Tree_Iterator then
+         Raise_Exception
+           (Codefix_Panic'Identity,
+            "Cursor given is not at the beginning of an entity.");
       else
-         --  This is supposed to happen when there is no associated body to
-         --  the given spec. Most likely, whe are trying to get the body of a
-         --  statement like:
-         --  package Bla renames Other_Bla;
-
-         return Null_Construct_Info;
+         return It;
       end if;
-
-   end Search_Body;
+   end Get_Iterator_At;
 
    -------------------
    -- Get_File_Name --
@@ -1230,7 +961,7 @@ package body Codefix.Text_Manager is
    -----------------
 
    function Search_Unit
-     (This     : Text_Interface'Class;
+     (This     : access Text_Interface'Class;
       Category : Language_Category;
       Name     : String := "") return Construct_Information
    is
@@ -1252,118 +983,33 @@ package body Codefix.Text_Manager is
       return Null_Construct_Info;
    end Search_Unit;
 
-   ----------------------------
-   -- Get_Extended_Unit_Name --
-   ----------------------------
+   -------------------
+   -- Get_Full_Name --
+   -------------------
 
-   function Get_Extended_Unit_Name
-     (This     : Text_Interface'Class;
+   function Get_Full_Prefix
+     (This     : access Text_Interface'Class;
       Cursor   : Text_Cursor'Class;
-      Category : Language_Category := Cat_Unknown) return String
+      Category : Language_Category := Cat_Unknown)
+      return String
    is
-      Unit_Info    : constant Construct_Information := Get_Unit
-        (This, Cursor, After, Category_1 => Category);
-      --  ??? Is 'after' a good idea ?
-
-      Result_Name  : GNAT.OS_Lib.String_Access;
-      Current_Info : Construct_Access;
-      Found        : Boolean := False;
-
-      procedure Seeker (Stop : Source_Location);
-      --  Initialize Result_Name wirth the extended prefix of unit.
-
-      ------------
-      -- Seeker --
-      ------------
-
-      procedure Seeker (Stop : Source_Location) is
-         New_Sloc     : Source_Location;
-         Current_Name : GNAT.OS_Lib.String_Access;
-      begin
-         if Current_Info.Name /= null then
-            Assign (Current_Name, Current_Info.Name.all);
-         end if;
-
-         Current_Info := Current_Info.Prev;
-
-         while Current_Info /= null loop
-            if Current_Info.Category not in Construct_Category then
-               --  Is it the end of the scope ?
-
-               if Current_Info.Sloc_End.Line < Stop.Line
-                 or else (Current_Info.Sloc_End.Line = Stop.Line
-                          and then Current_Info.Sloc_End.Column < Stop.Column)
-               then
-                  Free (Current_Name);
-                  return;
-               end if;
-
-               --  Is this unit the right one ?
-
-               if Current_Info.Is_Declaration = Unit_Info.Is_Declaration
-                 and then
-                   ((Current_Info.Name = null and then Unit_Info.Name = null)
-                    or else (Current_Info.Name /= null
-                             and then Unit_Info.Name /= null
-                             and then Current_Info.Name.all =
-                               Unit_Info.Name.all))
-                 and then Current_Info.Sloc_Start = Unit_Info.Sloc_Start
-                 and then Normalize (Current_Info.Profile) =
-                   Normalize (Unit_Info.Profile)
-               then
-                  Result_Name := Current_Name;
-                  Found := True;
-                  return;
-
-               --  Is it the beginning of a scope ?
-
-               elsif (not Current_Info.Is_Declaration and then
-                      Current_Info.Category in Enclosing_Entity_Category)
-                 or else Current_Info.Category = Cat_Protected
-                 or else Current_Info.Category = Cat_Package
-               then
-                  New_Sloc := Current_Info.Sloc_Start;
-
-                  Seeker (New_Sloc);
-
-                  if Found then
-                     Assign
-                       (Result_Name,
-                        Current_Name.all & '.' & Result_Name.all);
-                     Free (Current_Name);
-
-                     return;
-                  end if;
-               else
-                  Current_Info := Current_Info.Prev;
-               end if;
-            else
-               Current_Info := Current_Info.Prev;
-            end if;
-         end loop;
-      end Seeker;
-
+      It           : Construct_Tree_Iterator;
+      Parent_It    : Construct_Tree_Iterator;
    begin
-      Current_Info := Get_Structure (This).Last;
-      Result_Name := new String'("");
+      if Category = Cat_Unknown then
+         It := Get_Iterator_At (This, Cursor, After);
+      else
+         It := Get_Iterator_At (This, Cursor, After, (1 => Category));
+      end if;
 
-      declare
-         Start : constant String := Current_Info.Name.all;
-      begin
-         Seeker (Current_Info.Sloc_Start);
+      Parent_It := Get_Parent_Scope (Get_Tree (This).all, It);
 
-         if Result_Name /= null then
-            declare
-               Result_Stack : constant String := Result_Name.all;
-            begin
-               Free (Result_Name);
-               return Result_Stack;
-            end;
-         else
-            return Start & "";
-         end if;
-      end;
-   end Get_Extended_Unit_Name;
+      if Parent_It = Null_Construct_Tree_Iterator then
+         return "";
+      else
+         return Get_Full_Name (Get_Tree (This).all, Parent_It);
+      end if;
+   end Get_Full_Prefix;
 
    ---------------------
    -- Get_Right_Paren --
@@ -1503,7 +1149,7 @@ package body Codefix.Text_Manager is
    -------------------
 
    function Get_Structure
-     (This : Text_Interface'Class) return Construct_List_Access
+     (This : access Text_Interface'Class) return Construct_List_Access
    is
       procedure Display_Constructs;
       pragma Unreferenced (Display_Constructs);
@@ -1541,24 +1187,53 @@ package body Codefix.Text_Manager is
          end loop;
       end Display_Constructs;
 
-      Buffer : GNAT.OS_Lib.String_Access;
-
    begin
-      if not This.Structure_Up_To_Date.all then
-         Buffer := Read_File (This);
-
-         --  ??? Should be language independent
-         Analyze_Ada_Source
-           (Buffer           => Buffer.all,
-            Indent_Params    => Default_Indent_Parameters,
-            Format           => False,
-            Constructs       => This.Structure);
-         Free (Buffer);
-         This.Structure_Up_To_Date.all := True;
-      end if;
+      Update_Structure_If_Needed (This);
 
       return This.Structure;
    end Get_Structure;
+
+   --------------
+   -- Get_Tree --
+   --------------
+
+   function Get_Tree
+     (This : access Text_Interface'Class) return Construct_Tree_Access is
+   begin
+      Update_Structure_If_Needed (This);
+
+      return This.Tree;
+   end Get_Tree;
+
+   --------------------------------
+   -- Update_Structure_If_Needed --
+   --------------------------------
+
+   procedure Update_Structure_If_Needed (This : access Text_Interface'Class) is
+   begin
+      if not This.Structure_Up_To_Date.all then
+         Free (This.Tree);
+         Free (This.Structure);
+         Free (This.Buffer);
+
+         This.Structure := new Construct_List;
+         This.Buffer := Read_File (This.all);
+
+         --  ??? Should be language independent
+         Analyze_Ada_Source
+           (Buffer           => This.Buffer.all,
+            Indent_Params    => Default_Indent_Parameters,
+            Format           => False,
+            Constructs       => This.Structure);
+
+         This.Tree := new Construct_Tree'
+           (To_Construct_Tree
+              (Ada_Lang, This.Buffer.all, This.Structure.all));
+
+         This.Structure_Up_To_Date.all := True;
+
+      end if;
+   end Update_Structure_If_Needed;
 
    -----------------------
    --  Text_Has_Changed --
