@@ -21,7 +21,8 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 
-with Language;     use Language;
+with Language;      use Language;
+with Language.Tree; use Language.Tree;
 with Basic_Types;  use Basic_Types;
 with VFS;
 with Projects.Registry;
@@ -33,7 +34,6 @@ with Codefix.Merge_Utils; use Codefix.Merge_Utils;
 package Codefix.Text_Manager is
 
    type Step_Way is (Normal_Step, Reverse_Step);
-   type Relative_Position is (Before, After, Specified);
    type Case_Type is (Lower, Upper, Mixed);
 
    function Is_Blank (Str : String) return Boolean;
@@ -272,7 +272,7 @@ package Codefix.Text_Manager is
    --  an analyse of the structure is asked, then the text will be re-parsed.
 
    function Search_Unit
-     (This     : Text_Interface'Class;
+     (This     : access Text_Interface'Class;
       Category : Language_Category;
       Name     : String := "") return Construct_Information;
    --  Return the first Contruct_Information that matche Category and name.
@@ -280,8 +280,8 @@ package Codefix.Text_Manager is
    --  If Name is "", then the first unit with the rigth Category will be
    --  returned.
 
-   function Get_Extended_Unit_Name
-     (This     : Text_Interface'Class;
+   function Get_Full_Prefix
+     (This     : access Text_Interface'Class;
       Cursor   : Text_Cursor'Class;
       Category : Language_Category := Cat_Unknown)
       return String;
@@ -302,8 +302,11 @@ package Codefix.Text_Manager is
    --  that a word is a succession of non-blanks characters.
 
    function Get_Structure
-     (This : Text_Interface'Class) return Construct_List_Access;
+     (This : access Text_Interface'Class) return Construct_List_Access;
    --  Return the parsed strucutre of the text_interface.
+
+   function Get_Tree
+     (This : access Text_Interface'Class) return Construct_Tree_Access;
 
    procedure Constrain_Update (This : in out Text_Interface) is abstract;
    --  This function should constrain the update of the information contained
@@ -365,24 +368,16 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Text_Navigator_Abstr);
    --  Free the memory associated to a Text_Navigator.
 
-   function Get_Unit
-     (Current_Text           : Text_Navigator_Abstr;
-      Cursor                 : File_Cursor'Class;
-      Position               : Relative_Position := Specified;
-      Category_1, Category_2 : Language_Category := Cat_Unknown)
-      return Construct_Information;
-   --  Get the Construct_Information found at the specified position, or the
-   --  nearest before or after the position (depends on the value of
-   --  Position_Expected. If Category_1 is Cat_Unknown, then will return any
-   --  construct found, otherwise it will return the first construct of
-   --  Category_1 or Category_2. Returns null if no matching unit is found.
-
-   function Search_Body
-     (Current_Text : Text_Navigator_Abstr;
-      File_Name    : VFS.Virtual_File;
-      Spec         : Construct_Information) return Construct_Information;
-   --  Returns the body of a subprogramm, only if this body is in the same
-   --  file.
+   function Get_Iterator_At
+     (Current_Text      : Text_Navigator_Abstr;
+      Cursor            : File_Cursor'Class;
+      Position          : Relative_Position := Specified;
+      Categories_Seeked : Category_Array := Null_Category_Array)
+      return Construct_Tree_Iterator;
+   --  Get an iterator pointing to a construct found at the specified position,
+   --  or the nearest before or after the position (depends on the value of
+   --  Position. Raises an exception if no construct if found. The scope of
+   --  search can be reduce to a certain set of categories.
 
    function Get
      (This   : Text_Navigator_Abstr;
@@ -397,10 +392,12 @@ package Codefix.Text_Manager is
    --  Get a caracter at the position specified by the cursor
 
    function Get_Line
-     (This   : Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class) return String;
+     (This      : Text_Navigator_Abstr;
+      Cursor    : File_Cursor'Class;
+      Start_Col : Column_Index := 0) return String;
    --  Get all character from the file and the column specified by the cursor
-   --  to the end of the line.
+   --  to the end of the line, or beginning by Start_Col if not 0.
+   --  The String resulting must have parameter 'First equal to Cursor.Col.
 
    function Read_File
      (This      : Text_Navigator_Abstr;
@@ -469,11 +466,11 @@ package Codefix.Text_Manager is
       File_Name : VFS.Virtual_File) return Natural;
    --  Return the number of the last line in the text loaded.
 
-   function Get_Extended_Unit_Name
+   function Get_Full_Prefix
      (This     : Text_Navigator_Abstr'Class;
       Cursor   : File_Cursor'Class;
       Category : Language_Category := Cat_Unknown)
-     return String;
+      return String;
    --  Return the entire prefix of the first unit of category after the cursor.
 
    function Get_Right_Paren
@@ -516,6 +513,12 @@ package Codefix.Text_Manager is
    procedure Undo
      (This : Text_Navigator_Abstr'Class; File_Name : VFS.Virtual_File);
    --  Undo the last action from the File_Name.
+
+   function Get_Tree
+     (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Construct_Tree_Access;
+   --  Return the construct tree corresponding to the file pointed by the given
+   --  cursor.
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
@@ -1229,21 +1232,26 @@ private
 
    type Text_Interface is abstract tagged record
       Structure            : Construct_List_Access := new Construct_List;
+      Tree                 : Construct_Tree_Access := null;
+      Buffer               : GNAT.OS_Lib.String_Access := null;
       File_Name            : VFS.Virtual_File;
       Structure_Up_To_Date : Ptr_Boolean := new Boolean'(False);
    end record;
 
-   function Get_Unit
-     (Current_Text           : Text_Interface;
-      Cursor                 : Text_Cursor'Class;
-      Position               : Relative_Position := Specified;
-      Category_1, Category_2 : Language_Category := Cat_Unknown)
-      return Construct_Information;
+   function Get_Iterator_At
+     (Current_Text      : access Text_Interface;
+      Cursor            : Text_Cursor'Class;
+      Position          : Relative_Position := Specified;
+      Categories_Seeked : Category_Array := Null_Category_Array)
+      return Construct_Tree_Iterator;
+   --  Get an iterator pointing to a construct found at the specified position,
+   --  or the nearest before or after the position (depends on the value of
+   --  Position. Raises an exception if no construct if found. The scope of
+   --  search can be reduce to a certain set of categories.
 
-   function Search_Body
-     (Current_Text : Text_Interface;
-      Spec         : Construct_Information)
-     return Construct_Information;
+   procedure Update_Structure_If_Needed (This : access Text_Interface'Class);
+   --  Update the constructs and the tree store if there have been changes
+   --  since the last computation
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
