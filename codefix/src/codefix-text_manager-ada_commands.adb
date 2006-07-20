@@ -289,6 +289,7 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
+      Position     : Relative_Position := Specified;
       Destination  : VFS.Virtual_File := VFS.No_File;
       Category     : Dependency_Category := Cat_With)
    is
@@ -304,8 +305,12 @@ package body Codefix.Text_Manager.Ada_Commands is
          Pkg_Info := Search_Unit
            (Current_Text, Get_File (Word), Cat_With, Word.String_Match.all);
       else
-         Pkg_Info := Get_Unit
-           (Current_Text, Word, Before, Category);
+         declare
+            It : constant Construct_Tree_Iterator := Get_Iterator_At
+              (Current_Text, Word, Position, (1 => Category));
+         begin
+            Pkg_Info := Get_Construct (It).all;
+         end;
       end if;
 
       if Pkg_Info.Category /= Cat_Unknown then
@@ -976,11 +981,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       With_Cursor : File_Cursor;
       Pkg_Name    : GNAT.OS_Lib.String_Access;
       Clauses_Str : GNAT.OS_Lib.String_Access := new String'("");
-
    begin
       Assign
         (Pkg_Name,
-         Get_Extended_Unit_Name (Current_Text, Source_Position));
+         Get_Full_Prefix (Current_Text, Source_Position));
 
       if With_Could_Miss then
          With_Cursor := File_Cursor
@@ -1017,11 +1021,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Word        : Word_Cursor;
       With_Cursor : File_Cursor;
       Pkg_Name    : GNAT.OS_Lib.String_Access;
-
    begin
       Assign
         (Pkg_Name,
-         Get_Extended_Unit_Name (Current_Text, Source_Position));
+         Get_Full_Prefix (Current_Text, Source_Position));
 
       if With_Could_Miss then
          With_Cursor := File_Cursor
@@ -1041,10 +1044,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
 
       Word := (Clone (File_Cursor (Object_Position)) with
-               String_Match => new String'
-                 (Get_Extended_Unit_Name (Current_Text, Source_Position)
-                  & "."),
-               Mode         => Text_Ascii);
+        String_Match => new String'
+          (Get_Full_Prefix
+             (Current_Text, Source_Position)
+           & "."),
+        Mode         => Text_Ascii);
 
       Initialize
         (Result.Prefix_Obj,
