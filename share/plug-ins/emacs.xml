@@ -47,6 +47,13 @@
      <key action="Move to next word">alt-Right</key>
      <key action="Move to previous page">alt-v</key>
      <key action="Move to next page">control-v</key>
+
+     <key action="/Edit/Rectangle/Cut">control-x r k</key>
+     <key action="/Edit/Rectangle/Paste">control-x r y</key>
+     <key action="/Edit/Rectangle/Delete">control-x r d</key>
+     <key action="/Edit/Rectangle/Clear">control-x r c</key>
+     <key action="/Edit/Rectangle/Open">control-x r o</key>
+     <key action="/Edit/Rectangle/Replace with Text">control-x r t</key>
   </theme>
 
 </GPS>
