@@ -55,6 +55,7 @@ with Config;                    use Config;
 with DDE;
 with File_Utils;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
@@ -1244,6 +1245,7 @@ procedure GPS.Main is
       Register_Default_Script_Commands (GPS_Main.Kernel);
 
       GPS.Location_View.Register_Commands (GPS_Main.Kernel);
+      GPS.Kernel.Clipboard.Register_Commands (GPS_Main.Kernel);
 
       --  We then must register the keymanager, so that other modules can
       --  register their keys
