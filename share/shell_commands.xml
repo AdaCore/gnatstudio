@@ -3153,7 +3153,7 @@ Windows acts as containers for other widgets</description>
 
   <shell_doc name="GPS.MDIWindow.name">
      <param name="self">An instance of GPS.MDIWindow</param>
-     <param name="short" default="False">A boolean<param>
+     <param name="short" default="False">A boolean</param>
      <return>A string</return>
      <description>Return the name of the window. If short is False, the long name is returned, ie the one that appears in the title bar. If short is True, the short name is returned, ie the one that appears in the notebook tabs.</description>
   </shell_doc>
@@ -4028,6 +4028,7 @@ It is possible to close all editors at once using a command like
        <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
        <param name="append" default="False">A boolean</param>
        <description>Copy the given range of text into the clipboard, so that it can be further pasted into other applications or other parts of GPS. If append is True, the text is appended to the last clipboard entry instead of generating a new one</description>
+       <see_also name="GPS.Clipboard.copy"/>
   </shell_doc>
 
   <shell_doc name="GPS.EditorBuffer.cut">
@@ -4272,7 +4273,8 @@ submenu 'Update Directory' of the submenu 'Directory' of the menu 'VCS'. Path is
      <return>The instance of GPS.Menu</return>
      <description>Create a new menu in the GPS system. The menu is added at the given location (see GPS.Menu.get for more information on the path parameter). Submenus are created as necessary so that path is valid.
 If on_activate is specified, it will be executed every time the user selects that menu. It is called with only one parameter, the instance of GPS.Menu that was just created.
-If ref and add_before are specified, they specify the name of another item in the parent menu (and not a full path) before or after which the new menu should be added</description>
+If ref and add_before are specified, they specify the name of another item in the parent menu (and not a full path) before or after which the new menu should be added.
+If the name of the menu starts with a '-' sign, as in "/Edit/-", then a menu separator is inserted instead. In this case, on_activate is ignored.</description>
      <example lang="python">
          def on_activate (self):
              print "A menu was selected: " + self.data
@@ -4416,6 +4418,38 @@ GPS comes with some predefined logging streams, which can be used to configure t
   <shell_doc name="GPS.Bookmark.goto">
       <param name="self">An instance of GPS.Bookmark</param>
       <description>Change the current context in GPS so that it matches the one saved in the bookmark. In particular, if the bookmark is inside an editor, this editor is raised, and the cursor moved to the correct line and column. You cannot query directly the line and column from the bookmark, since these might not exist, for instance when the editor points inside a browser.</description>
+  </shell_doc>
+
+  <!--#################################################################
+      ## Clipboard class
+      #################################################################-->
+
+  <shell_doc name="GPS.Clipboard">
+     <description>This class provides an interface to the GPS clipboard. This clipboard contains the previous selections that were copied or cut from a text editor. Several older selections are
+also saved so that they can be pasted later on</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Clipboard.copy">
+       <param name="text">A string</param>
+       <param name="append" default="False">A boolean</param>
+       <description>Copies a given static text into the clipboard. It is better in general to use GPS.EditorBuffer.copy, but it might happen that you need to append text that doesn't exist in the buffer.</description>
+       <see_also name="GPS.EditorBuffer.copy" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Clipboard.merge">
+       <param name="index1">A null or positive integer</param>
+       <param name="index2">A null or positive integer</param>
+       <description>This function merges two levels of the clipboard, so that the one at index index1 now contains the concatenation of both. The one at index2 is removed.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Clipboard.contents">
+       <return>A list of strings</return>
+       <description>This function returns the contents of the clipboard. Each item in the list corresponds to a past selection, the one at position 0 being the most recent. If you want to paste text in a buffer, you should paste the text at position GPS.Clipboard.current rather than the first in the list</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Clipboard.current">
+       <return>An integer</return>
+       <description>This function returns the index, in GPS.Clipboard.contents(), of the text that was last pasted by the user. If you were to select the menu /Edit/Paste, that would be the text pasted by GPS. If you select /Edit/Paste Previous, current will be incremented by 1, and the next selection in the clipboard will be pasted</description>
   </shell_doc>
 
   <!--#################################################################
