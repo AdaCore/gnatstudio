@@ -105,6 +105,12 @@ The text that is deleted is copied to the clipboard. If you call this action mul
       <shell lang="python">text_utils.delete_horizontal_space()</shell>
    </action>
 
+   <action name="join line" output="none" category="Editor">
+      <description>Join the current line and the following one. They are separated by a single space, and the cursor is left on that space</description>
+      <filter id="Source editor" />
+      <shell lang="python">text_utils.join_line()</shell>
+   </action>
+
 """)
 
 ## The blocks for which we want to display boxes
@@ -282,12 +288,25 @@ def transpose_chars():
       buffer.finish_undo_group()
 
 def open_line():
-   """ Insert a newline and leave cursor before it."""
-   file = GPS.current_context().file().name()
-   line = GPS.current_context().location().line()
-   col  = GPS.current_context().location().column()
-   GPS.Editor.insert_text ("\n")
-   GPS.Editor.cursor_set_position (file, line, col)
+   """Insert a newline and leave cursor before it."""
+   buffer = GPS.EditorBuffer.get()
+   cursor = buffer.current_view().cursor()
+   buffer.insert (cursor, "\n")
+   buffer.current_view().goto (cursor)
+
+def join_line ():
+   """Join the current line and the following one, separated by a single
+      space, and leaves the cursor on the space"""
+   buffer = GPS.EditorBuffer.get()
+   cursor = buffer.current_view().cursor().end_of_line()
+   buffer.start_undo_group ()
+   buffer.delete (cursor, cursor)  ## Newline character
+   buffer.current_view().goto (cursor)
+   delete_horizontal_space (backward=1, forward=1)
+   buffer.insert (cursor, " ")
+   buffer.current_view().goto (cursor)
+   buffer.finish_undo_group ()
+   
 
 ## Try to reproduce the way emacs use the cut & paste
 ## using a global mark

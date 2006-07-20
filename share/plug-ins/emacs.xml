@@ -18,6 +18,8 @@
      <key action="goto other file">control-c o</key>
 
      <key action="/Navigate/Back">control-c control-s</key>
+     <key action="open line">control-o</key>
+     <key action="join line">alt-j</key>
 
      <key action="/Edit/Paste">control-y</key>
      <key action="/Edit/Paste Previous">alt-y</key>
