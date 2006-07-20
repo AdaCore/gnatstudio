@@ -20,8 +20,9 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Language;     use Language;
-with String_Utils; use String_Utils;
+with Language;      use Language;
+with Language.Tree; use Language.Tree;
+with String_Utils;  use String_Utils;
 
 package body Codefix.Ada_Tools is
 
@@ -358,24 +359,23 @@ package body Codefix.Ada_Tools is
       File_Name    : VFS.Virtual_File) return File_Cursor'Class
    is
       Current_Cursor : File_Cursor;
-      Current_Info   : Construct_Information;
+      Current_Info   : Construct_Tree_Iterator;
       Found_With     : Boolean := False;
    begin
       Set_File (Current_Cursor, File_Name);
       Set_Location (Current_Cursor, 1, 1);
 
       loop
-         Current_Info := Get_Unit
-           (Current_Text, Current_Cursor, After);
+         Current_Info := Get_Iterator_At (Current_Text, Current_Cursor, After);
 
-         exit when Current_Info.Category /= Cat_With
-           and then Current_Info.Category /= Cat_Use;
+         exit when Get_Construct (Current_Info).Category /= Cat_With
+           and then Get_Construct (Current_Info).Category /= Cat_Use;
 
          Found_With := True;
 
          Set_Location
            (Current_Cursor,
-            Current_Info.Sloc_End.Line,
+            Get_Construct (Current_Info).Sloc_End.Line,
             1);
 
          declare
@@ -383,14 +383,18 @@ package body Codefix.Ada_Tools is
          begin
             Set_Location
               (Current_Cursor,
-               Current_Info.Sloc_End.Line,
+               Get_Construct (Current_Info).Sloc_End.Line,
                To_Column_Index
-                 (Char_Index (Current_Info.Sloc_End.Column) + 1, Line));
+                 (Char_Index
+                    (Get_Construct (Current_Info).Sloc_End.Column) + 1, Line));
          end;
       end loop;
 
       if not Found_With then
-         Set_Location (Current_Cursor, Current_Info.Sloc_Start.Line - 1, 1);
+         Set_Location
+           (Current_Cursor,
+            Get_Construct (Current_Info).Sloc_Start.Line - 1,
+            1);
       end if;
 
       return Current_Cursor;
