@@ -846,6 +846,19 @@ package body KeyManager_Module is
          Value (Key (First .. Last - 1), Partial_Key, Modif);
 
          if Last > Key'Last then
+            if Action (Action'First) = '/' then
+               --  For a menu, ensure the accel map entry exists. If we don't
+               --  do that, the following scenario will fail:
+               --     - The emacs mode registers a binding for a menu that
+               --       is defined in a not yet loaded python package
+               --     - The other python package is loaded. It creates the menu
+               --       which create the accel_path for it. As a result, a
+               --       "changed" signal is propagated for the accel_map, and
+               --       the callback On_Accel_Map_Changed will delete any
+               --       binding associated with it (F720-010)
+               Add_Entry ("<gps>" & Action, 0, 0);
+            end if;
+
             if Keymap = null then
                Bind_Internal (Table, Partial_Key, Modif);
 
@@ -946,7 +959,7 @@ package body KeyManager_Module is
       then
          --  Remove any num-lock and caps-lock modifiers.
 
-         Modif := Modif and not (Lock_Mask or Mod2_Mask);
+         Modif := Modif and Get_Default_Mod_Mask;
 
          if Handler.Secondary_Keymap = null then
             Binding := Get (Handler.Table.all, (Key, Modif));
@@ -969,6 +982,17 @@ package body KeyManager_Module is
 
          Handler.Secondary_Keymap := null;
 
+         --  First try to activate the key shortcut using the standard
+         --  Gtk+ mechanism.
+         --  Do this lookup only if we are not currently processing a
+         --  secondary key.
+         if not Has_Secondary
+           and then Accel_Groups_Activate
+             (Get_Main_Window (Kernel), Key, Modif)
+         then
+            Found_Action := True;
+         end if;
+
          --  Execute all commands bound to this key. The order is somewhat
          --  random, since it depends in what order the key shortcuts were
          --  defined.
@@ -978,18 +1002,6 @@ package body KeyManager_Module is
                Found_Action := True;
 
             else
-               --  First try to activate the key shortcut using the standard
-               --  Gtk+ mechanism.
-               --  Do this lookup only if we are not currently processing a
-               --  secondary key.
-               if not Has_Secondary
-                 and then Accel_Groups_Activate
-                   (Get_Main_Window (Kernel), Key, Modif)
-               then
-                  Found_Action := True;
-                  exit;
-               end if;
-
                --  If we have not found the accelerator using the Gtk+
                --  mechanism, fallback on the standard mechanism to lookup the
                --  action.
