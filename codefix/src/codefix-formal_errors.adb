@@ -527,11 +527,12 @@ package body Codefix.Formal_Errors is
       function Add_Pragma return Add_Pragma_Cmd is
          New_Command  : Add_Pragma_Cmd;
          New_Position : File_Cursor;
-         Declaration  : Construct_Information;
+         Declaration  : Construct_Tree_Iterator;
          Char_Ind     : Char_Index;
       begin
-         Declaration := Get_Unit (Current_Text, Cursor);
-         Char_Ind := Char_Index (Declaration.Sloc_End.Column);
+         Declaration := Get_Iterator_At (Current_Text, Cursor);
+
+         Char_Ind := Char_Index (Get_Construct (Declaration).Sloc_End.Column);
 
          --  ??? This test is only here because the parser returns sometimes
          --  a Sloc_End.Col equal to 0.
@@ -541,14 +542,15 @@ package body Codefix.Formal_Errors is
          end if;
 
          Set_File (New_Position, Get_File (Cursor));
-         Set_Location (New_Position, Declaration.Sloc_End.Line, 1);
+         Set_Location
+           (New_Position, Get_Construct (Declaration).Sloc_End.Line, 1);
 
          declare
             Line : constant String := Get_Line (Current_Text, New_Position);
          begin
             Set_Location
               (New_Position,
-               Declaration.Sloc_End.Line,
+               Get_Construct (Declaration).Sloc_End.Line,
                To_Column_Index (Char_Ind, Line));
          end;
 
@@ -565,25 +567,27 @@ package body Codefix.Formal_Errors is
       function Add_Literal_Pragma return Add_Pragma_Cmd is
          New_Command  : Add_Pragma_Cmd;
          New_Position : File_Cursor;
-         Declaration  : Construct_Information;
-         Char_Ind     : Char_Index;
+         Declaration : Construct_Tree_Iterator;
+         Char_Ind    : Char_Index;
       begin
-         Declaration := Get_Unit (Current_Text, Cursor, Before, Cat_Type);
-         Char_Ind := Char_Index (Declaration.Sloc_End.Column);
+         Declaration := Get_Iterator_At
+           (Current_Text, Cursor, Before, (1 => Cat_Type));
+         Char_Ind := Char_Index (Get_Construct (Declaration).Sloc_End.Column);
 
          if Char_Ind = 0 then
             Char_Ind := 1;
          end if;
 
          Set_File (New_Position, Get_File (Cursor));
-         Set_Location (New_Position, Declaration.Sloc_End.Line, 1);
+         Set_Location
+           (New_Position, Get_Construct (Declaration).Sloc_End.Line, 1);
 
          declare
             Line : constant String := Get_Line (Current_Text, New_Position);
          begin
             Set_Location
               (New_Position,
-               Declaration.Sloc_End.Line,
+               Get_Construct (Declaration).Sloc_End.Line,
                To_Column_Index (Char_Ind, Line));
          end;
 
@@ -600,22 +604,22 @@ package body Codefix.Formal_Errors is
       function Add_Parameter_Pragma return Add_Pragma_Cmd is
          New_Command           : Add_Pragma_Cmd;
          New_Position, Garbage : File_Cursor;
-         Declaration           : Construct_Information;
+         Declaration : Construct_Tree_Iterator;
       begin
-         Declaration := Get_Unit
-           (Current_Text, Cursor, Before, Cat_Procedure, Cat_Function);
-
+         Declaration := Get_Iterator_At
+           (Current_Text, Cursor, Before, (Cat_Procedure, Cat_Function));
          Set_File (New_Position, Get_File (Cursor));
-         Set_Location (New_Position, Declaration.Sloc_Entity.Line,
-                       1);
+         Set_Location
+           (New_Position, Get_Construct (Declaration).Sloc_Entity.Line, 1);
 
          declare
             Line : constant String := Get_Line (Current_Text, New_Position);
          begin
             Set_Location
-              (New_Position, Declaration.Sloc_Entity.Line,
-               To_Column_Index (Char_Index (Declaration.Sloc_Entity.Column),
-                 Line));
+              (New_Position, Get_Construct (Declaration).Sloc_Entity.Line,
+               To_Column_Index
+                 (Char_Index
+                    (Get_Construct (Declaration).Sloc_Entity.Column), Line));
          end;
 
          Garbage := New_Position;
@@ -645,13 +649,18 @@ package body Codefix.Formal_Errors is
 
    begin
       if Category = Cat_Unknown then
-         Actual_Category := Get_Unit (Current_Text, Cursor).Category;
+         declare
+            It : constant Construct_Tree_Iterator :=
+              Get_Iterator_At (Current_Text, Cursor);
+         begin
+            Actual_Category := Get_Construct (It).Category;
+         end;
       else
          Actual_Category := Category;
       end if;
 
       case Actual_Category is
-         when Cat_Variable =>
+         when Cat_Variable | Cat_Local_Variable =>
             declare
                Delete_Command  : Remove_Elements_Cmd;
                Pragma_Command  : Add_Pragma_Cmd;
@@ -778,7 +787,7 @@ package body Codefix.Formal_Errors is
                Set_Word (With_Cursor, Name, Text_Ascii);
 
                if Is_Set (Operations, Remove_Entity) then
-                  Initialize (New_Command, Current_Text, With_Cursor);
+                  Initialize (New_Command, Current_Text, With_Cursor, Before);
                   Set_Caption
                     (New_Command,
                      "Remove all clauses for package " & Name);
@@ -910,7 +919,8 @@ package body Codefix.Formal_Errors is
          begin
             Assign
               (Str_Array (Index_Str),
-               Get_Extended_Unit_Name (Current_Text, Data (Cursor_Node)));
+               Get_Full_Prefix
+                 (Current_Text, Data (Cursor_Node)));
 
             for J in 1 ..  Index_Str - 1 loop
                if Str_Array (J).all = Str_Array (Index_Str).all then
@@ -994,6 +1004,7 @@ package body Codefix.Formal_Errors is
         (New_Command,
          Current_Text,
          With_Cursor,
+         Before,
          Body_Name);
       Set_Caption
         (New_Command,
@@ -1017,13 +1028,13 @@ package body Codefix.Formal_Errors is
       Result               : Solution_List;
       Command1, Command2   : Paste_Profile_Cmd;
       Internal_Body_Cursor : File_Cursor := File_Cursor (Body_Cursor);
-      Body_Info            : Construct_Information;
+      Body_Info : Construct_Tree_Iterator;
    begin
-      Body_Info := Get_Unit (Current_Text, Body_Cursor, Before);
+      Body_Info := Get_Iterator_At (Current_Text, Body_Cursor, Before);
 
       Set_Location
         (Internal_Body_Cursor,
-         Body_Info.Sloc_Start.Line,
+         Get_Construct (Body_Info).Sloc_Start.Line,
          1);
 
       declare
@@ -1032,8 +1043,10 @@ package body Codefix.Formal_Errors is
       begin
          Set_Location
            (Internal_Body_Cursor,
-            Body_Info.Sloc_Start.Line,
-            To_Column_Index (Char_Index (Body_Info.Sloc_Start.Column), Line));
+            Get_Construct (Body_Info).Sloc_Start.Line,
+            To_Column_Index
+              (Char_Index
+                 (Get_Construct (Body_Info).Sloc_Start.Column), Line));
       end;
 
       Initialize (Command1, Current_Text, Internal_Body_Cursor, Spec_Cursor);
@@ -1055,7 +1068,8 @@ package body Codefix.Formal_Errors is
    function Remove_Dependency_Clause
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Category     : Dependency_Category) return Solution_List
+      Category     : Dependency_Category;
+      Position     : Relative_Position) return Solution_List
    is
       Result      : Solution_List;
       New_Command : Remove_Pkg_Clauses_Cmd;
@@ -1069,6 +1083,7 @@ package body Codefix.Formal_Errors is
         (New_Command,
          Current_Text,
          Word,
+         Position,
          Category => Category);
 
       if Category = Cat_With then
