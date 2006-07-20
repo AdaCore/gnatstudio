@@ -56,6 +56,11 @@ class Console_Process (Console, Process):
       """Called when the user has sent input in the console"""
       self.send (input)
 
+   def on_exit (self, status, remaining_output):
+      self.write (remaining_output)
+      self.write ("exit status: " + `status`)
+      self.destroy ()
+
    def on_destroy (self):
       """If the console is destroyed, we kill the make process as well"""
       self.kill ()
@@ -66,11 +71,13 @@ class Console_Process (Console, Process):
                         on_input=Console_Process.on_input,
                         on_destroy=Console_Process.on_destroy,
                         force=True)
+      self.clear()
       self.write (process + " " + args + "\n")
       MDI.get ("Messages").raise_window()
-      Process.__init__ (self, process + ' ' + args,
-                        regexp="^.+$",
+      Process.__init__ (self, process + ' ' + args + "",
+                        regexp="^.+\\n",
                         progress_regexp=Console_Process.progress_regexp,
+                        on_exit=Console_Process.on_exit,
                         on_match=Console_Process.on_output)
 
 class Makefile:
