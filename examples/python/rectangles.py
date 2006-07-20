@@ -53,8 +53,11 @@ def rectangle_copy (menu):
     """Copy the selected rectangle into the clipboard"""
 
     buffer = EditorBuffer.get ()
+    start  = buffer.selection_start().create_mark()
+    end    = buffer.selection_end().create_mark()
     apply_on_rectangle (rectangle_cut_func, buffer.selection_start(), 
                         buffer.selection_end() - 1, True, True)
+    buffer.select (start.location(), end.location())
 
 def rectangle_paste (menu):
     """Paste the last entry in the clipboard as a rectangle in the current editor"""
@@ -183,7 +186,10 @@ def apply_on_rectangle (func, start, end, *args):
         while current < end:
            endcolumn = EditorLocation (current.buffer(), current.line(), end.column())
            func (start, end, current, endcolumn, *args)
-           current = EditorLocation (start.buffer(), current.line() + 1, start.column())
+           if current.line() == start.buffer().lines_count():
+              current = end
+           else:
+              current = EditorLocation (start.buffer(), current.line() + 1, start.column())
         start.buffer().finish_undo_group()
    except:
       Logger ("RECTANGLE").log ("Unexpected exception: " + traceback.format_exc())
