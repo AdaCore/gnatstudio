@@ -58,6 +58,12 @@ The text that is deleted is copied to the clipboard. If you call this action mul
       <shell lang="python">text_utils.transpose_chars()</shell>
    </action>
 
+   <action name="Transpose lines" output="none" category="Editor">
+      <description>Swap the current line and the following one</description>
+      <filter id="Source editor" />
+      <shell lang="python">text_utils.transpose_lines()</shell>
+   </action>
+
    <action name="goto beginning of line" output="none" category="Editor">
       <description>Move the cursor to the beginning of the current line</description>
       <filter id="Source editor" />
@@ -105,10 +111,28 @@ The text that is deleted is copied to the clipboard. If you call this action mul
       <shell lang="python">text_utils.delete_horizontal_space()</shell>
    </action>
 
-   <action name="join line" output="none" category="Editor">
+   <action name="Join line" output="none" category="Editor">
       <description>Join the current line and the following one. They are separated by a single space, and the cursor is left on that space</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.join_line()</shell>
+   </action>
+
+   <action name="Upper case word" output="none" category="Editor">
+      <description>Upper case the current word (starting at the current character)</description>
+      <filter id="Source editor" />
+      <shell lang="python">text_utils.upper_case_word ()</shell>
+   </action>
+
+   <action name="Lower case word" output="none" category="Editor">
+      <description>Lower case the current word (starting at the current character)</description>
+      <filter id="Source editor" />
+      <shell lang="python">text_utils.lower_case_word ()</shell>
+   </action>
+
+   <action name="Capitalize word" output="none" category="Editor">
+      <description>Capitalize the current word (starting at the current character)</description>
+      <filter id="Source editor" />
+      <shell lang="python">text_utils.capitalize_case_word ()</shell>
    </action>
 
 """)
@@ -276,16 +300,30 @@ searched for"""
       buffer.delete (start, end)
 
 def transpose_chars():
-   """Transpose characters around cursor, moving forward one character. """
+   """Transpose characters around cursor, moving forward one character."""
    buffer = GPS.EditorBuffer.get()
    cursor = buffer.current_view().cursor()
    if cursor > buffer.beginning_of_buffer():
-      c = cursor.get_char()
-      buffer.start_undo_group()
+      c = cursor.get_char ()
+      buffer.start_undo_group ()
       buffer.delete (cursor, cursor)
       buffer.insert (cursor - 1, c)
       buffer.current_view().goto (cursor + 1)
-      buffer.finish_undo_group()
+      buffer.finish_undo_group ()
+
+def transpose_lines (location = None):
+   """Transpose the line at LOCATION (or current line) and the following one"""
+   if not location:
+      location = GPS.EditorBuffer.get().current_view ().cursor ()
+   buffer = location.buffer ()
+   if location.line () < buffer.lines_count ():
+      buffer.start_undo_group ()
+      start = location.beginning_of_line ()
+      end   = location.end_of_line ()
+      text  = buffer.get_chars (start, end)
+      buffer.delete (start, end)
+      buffer.insert (start.end_of_line () + 1, text)
+      buffer.finish_undo_group ()
 
 def open_line():
    """Insert a newline and leave cursor before it."""
@@ -306,7 +344,32 @@ def join_line ():
    buffer.insert (cursor, " ")
    buffer.current_view().goto (cursor)
    buffer.finish_undo_group ()
-   
+
+def apply_func_to_word (func, location=None):
+   """Apply a function to the current word (starting at the current character).
+      FUNC takes one argument, the text it replaces, and should return the
+      replacement text"""
+   if not location:
+      location = GPS.EditorBuffer.get ().current_view().cursor()
+   buffer = location.buffer()
+   buffer.start_undo_group ()
+   end = location.forward_word()
+   text = func (buffer.get_chars (location, end))
+   buffer.delete (location, end)
+   buffer.insert (location, text)
+   buffer.finish_undo_group ()
+
+def upper_case_word (location=None):
+   """Upper case the current word (starting at the current character)"""
+   apply_func_to_word (str.upper, location)
+
+def lower_case_word (location=None):
+   """Lower case the current word (starting at the current character)"""
+   apply_func_to_word (str.lower, location)
+
+def capitalize_case_word (location=None):
+   """Capitalize the current word (starting at the current character)"""
+   apply_func_to_word (str.capitalize, location)
 
 ## Try to reproduce the way emacs use the cut & paste
 ## using a global mark

@@ -8,6 +8,7 @@
      <key action="kill line">control-k</key>
      <key action="kill forward">control-d</key>
      <key action="transpose chars">control-t</key>
+     <key action="Transpose lines">control-x control-t</key>
      <key action="/File/Save">control-x control-s</key>
      <key action="goto beginning of line">control-a</key>
      <key action="goto end of line">control-e</key>
@@ -19,7 +20,10 @@
 
      <key action="/Navigate/Back">control-c control-s</key>
      <key action="open line">control-o</key>
-     <key action="join line">alt-j</key>
+     <key action="Join line">alt-j</key>
+     <key action="Upper case word">alt-u</key>
+     <key action="Lower case word">alt-l</key>
+     <key action="Capitalize word">alt-c</key>
 
      <key action="/Edit/Paste">control-y</key>
      <key action="/Edit/Paste Previous">alt-y</key>
