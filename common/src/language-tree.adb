@@ -413,19 +413,145 @@ package body Language.Tree is
    ---------------------
 
    function Get_Iterator_At
-     (Tree : Construct_Tree; Line, Line_Offset : Natural)
+     (Tree              : Construct_Tree;
+      Line, Line_Offset : Natural;
+      From_Type         : Position_Type := Start_Construct;
+      Position          : Relative_Position := Specified;
+      Categories_Seeked : Category_Array := Null_Category_Array)
       return Construct_Tree_Iterator
    is
-   begin
-      for J in 2 .. Tree'Last loop
-         if Tree (J).Construct.Sloc_Start.Line > Line
-           and then Tree (J).Construct.Sloc_Start.Line > Line_Offset
-         then
-            return (Tree (J - 1), J - 1);
-         end if;
-      end loop;
+      function Match_Category (Cat : Language_Category) return Boolean;
+      --  Return true if the category given in parameter is the one we expect
 
-      return (Tree (Tree'Last), Tree'Last);
+      function Is_After (Construct : Construct_Information) return Boolean;
+      --  Return true if the position is strictly after the expected position
+
+      function Is_On_Or_After
+        (Construct : Construct_Information) return Boolean;
+      --  Return true is the construct given in parameter is on or after the
+      --  expected position.
+
+      function Is_On (Construct : Construct_Information) return Boolean;
+      --  Return true is the construct is on the specified position
+
+      --------------------
+      -- Match_Category --
+      --------------------
+
+      function Match_Category (Cat : Language_Category) return Boolean is
+      begin
+         if Categories_Seeked'Length = 0 then
+            return True;
+         else
+            for J in Categories_Seeked'Range loop
+               if Categories_Seeked (J) = Cat then
+                  return True;
+               end if;
+            end loop;
+
+            return False;
+         end if;
+      end Match_Category;
+
+      --------------
+      -- Is_After --
+      --------------
+
+      function Is_After (Construct : Construct_Information) return Boolean is
+      begin
+         if From_Type = Start_Construct then
+            return Construct.Sloc_Start.Line > Line
+              or else (Construct.Sloc_Start.Line = Line
+                       and then Construct.Sloc_Start.Column > Line_Offset);
+         elsif From_Type = Start_Name then
+            return Construct.Sloc_Entity.Line > Line
+              or else (Construct.Sloc_Entity.Line = Line
+                       and then Construct.Sloc_Entity.Column > Line_Offset);
+         else
+            raise Constraint_Error;
+         end if;
+      end Is_After;
+
+      --------------------
+      -- Is_On_Or_After --
+      --------------------
+
+      function Is_On_Or_After
+        (Construct : Construct_Information) return Boolean
+      is
+      begin
+         if From_Type = Start_Construct then
+            return Construct.Sloc_Start.Line > Line
+              or else (Construct.Sloc_Start.Line = Line
+                       and then Construct.Sloc_Start.Column >= Line_Offset);
+         elsif From_Type = Start_Name then
+            return Construct.Sloc_Entity.Line > Line
+              or else (Construct.Sloc_Entity.Line = Line
+                       and then Construct.Sloc_Entity.Column >= Line_Offset);
+         else
+            raise Constraint_Error;
+         end if;
+      end Is_On_Or_After;
+
+      -----------
+      -- Is_On --
+      -----------
+
+      function Is_On (Construct : Construct_Information) return Boolean is
+      begin
+         if From_Type = Start_Construct then
+            return Construct.Sloc_Start.Line = Line
+              and then Construct.Sloc_Start.Column = Line_Offset;
+         elsif From_Type = Start_Name then
+            return Construct.Sloc_Entity.Line = Line
+              and then Construct.Sloc_Entity.Column = Line_Offset;
+         else
+            raise Constraint_Error;
+         end if;
+      end Is_On;
+
+      Last_Matched : Construct_Tree_Iterator :=
+        Null_Construct_Tree_Iterator;
+
+   begin
+
+      if Position = Before then
+         if Match_Category (Tree (1).Construct.Category) then
+            Last_Matched := (Tree (1), 1);
+         end if;
+
+         for J in 2 .. Tree'Last loop
+            if Is_After (Tree (J).Construct.all) then
+               return Last_Matched;
+            end if;
+
+            if Match_Category (Tree (J).Construct.Category) then
+               Last_Matched := (Tree (J), J);
+            end if;
+         end loop;
+
+         return Last_Matched;
+      elsif Position = After then
+         for J in 1 .. Tree'Last loop
+            if Is_On_Or_After (Tree (J).Construct.all)
+              and then Match_Category (Tree (J).Construct.Category)
+            then
+               return (Tree (J), J);
+            end if;
+         end loop;
+      elsif Position = Specified then
+         for J in 1 .. Tree'Last loop
+            if Is_On (Tree (J).Construct.all)
+              and then Match_Category (Tree (J).Construct.Category)
+            then
+               return (Tree (J), J);
+            elsif Is_After (Tree (J).Construct.all) then
+               return Null_Construct_Tree_Iterator;
+            end if;
+         end loop;
+      end if;
+
+      return Null_Construct_Tree_Iterator;
    end Get_Iterator_At;
 
    ----------
@@ -547,7 +673,7 @@ package body Language.Tree is
    ------------------------------
 
    function Get_Last_Relevant_Construct
-     (Tree : Construct_Tree; Offset : Positive)
+     (Tree : Construct_Tree; Offset : Natural)
      return Construct_Tree_Iterator
    is
       Last_Relevant_Construct : Construct_Tree_Iterator :=
@@ -707,11 +833,12 @@ package body Language.Tree is
 
       declare
          Name  : String (1 .. Length);
-         Index : Positive := Name'Last;
+         Index : Natural := Length;
       begin
          Name (Index - Get_Construct (It).Name.all'Length + 1 .. Index) :=
            Get_Construct (It).Name.all;
 
+         Index := Index - Get_Construct (It).Name.all'Length;
          Current := Get_Parent_Scope (Tree, It);
 
          while Current /= Null_Construct_Tree_Iterator
