@@ -105,6 +105,7 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
+      Position     : Relative_Position := Specified;
       Destination  : VFS.Virtual_File := VFS.No_File;
       Category     : Dependency_Category := Cat_With);
    --  Set all the marks that will be needed to remove package clauses.
