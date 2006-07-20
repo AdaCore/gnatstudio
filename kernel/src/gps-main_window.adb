@@ -1011,10 +1011,12 @@ package body GPS.Main_Window is
                   Index := Index + 1;
                end loop;
 
-               Gtk_New (Label, Arg (Arg'First .. Index - 1) & ':');
-               Set_Alignment (Label, 0.0, 0.5);
-               Add_Widget (Group, Label);
-               Pack_Start (Hbox, Label, Expand => False, Padding => 3);
+               if Arg'First <= Index - 1 then
+                  Gtk_New (Label, Arg (Arg'First .. Index - 1) & ':');
+                  Set_Alignment (Label, 0.0, 0.5);
+                  Add_Widget (Group, Label);
+                  Pack_Start (Hbox, Label, Expand => False, Padding => 3);
+               end if;
 
                Gtk_New (Ent (N));
                Set_Text (Ent (N), Arg (Index + 1 .. Arg'Last));
