@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language;               use Language;
-with Traces;                 use Traces;
-
-with Projects.Registry;      use Projects.Registry;
+with Language;          use Language;
+with Language.Tree;     use Language.Tree;
+with Projects.Registry; use Projects.Registry;
+with Traces;            use Traces;
 
 package body Codefix.Errors_Parser is
 
@@ -1174,7 +1174,8 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
-      Solutions := Remove_Dependency_Clause (Current_Text, Message, Cat_Use);
+      Solutions := Remove_Dependency_Clause
+        (Current_Text, Message, Cat_Use, After);
    end Fix;
 
    ----------------------------
@@ -1199,7 +1200,8 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
-      Solutions := Remove_Dependency_Clause (Current_Text, Message, Cat_With);
+      Solutions := Remove_Dependency_Clause
+        (Current_Text, Message, Cat_With, Before);
    end Fix;
 
    -----------------------
@@ -1585,22 +1587,16 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
 
-      Construct_Info : Construct_Information;
+      Construct_Info : Construct_Tree_Iterator;
    begin
-      Construct_Info := Get_Unit (Current_Text, Message);
+      Construct_Info := Get_Iterator_At (Current_Text, Message);
 
-      if Construct_Info.Category = Cat_Variable
-        or else Construct_Info.Category = Cat_Local_Variable
-      then
-         Solutions := Not_Referenced
-           (Current_Text,
-            Message,
-            Cat_Variable,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            Options.Remove_Policy);
-      else
-         raise Uncorrectable_Message;
-      end if;
+      Solutions := Not_Referenced
+        (Current_Text,
+         Message,
+         Get_Construct (Construct_Info).Category,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         Options.Remove_Policy);
    end Fix;
 
    -----------------------
@@ -1991,7 +1987,8 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches, Options);
    begin
-      Solutions := Remove_Dependency_Clause (Current_Text, Message, Cat_Use);
+      Solutions := Remove_Dependency_Clause
+        (Current_Text, Message, Cat_Use, Before);
    end Fix;
 
    -----------------------------
