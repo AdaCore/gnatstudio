@@ -50,6 +50,12 @@ package GPS.Kernel.Clipboard is
    --  by default.
    --  The selection is deleted from the widget.
 
+   procedure Copy_Text_In_Clipboard
+     (Clipboard : access Clipboard_Record;
+      Text      : String);
+   --  Copy a static text into the clipboard. This saves the previous contents
+   --  of the clipboard
+
    procedure Copy_Clipboard
      (Clipboard : access Clipboard_Record;
       Widget    : access Glib.Object.GObject_Record'Class);
@@ -90,6 +96,9 @@ package GPS.Kernel.Clipboard is
    function Get_Last_Paste
      (Clipboard : access Clipboard_Record) return Integer;
    --  Return the index of the last paste text in the result of Get_Context.
+
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
+   --  Register shell commands associated with the clipboard
 
    Clipboard_Changed_Hook : constant String := "clipboard_changed";
    --  Hook called when the contents of the clipboard has changed (either

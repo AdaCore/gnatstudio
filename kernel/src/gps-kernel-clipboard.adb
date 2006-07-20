@@ -39,6 +39,7 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Traces;                     use Traces;
 with GUI_Utils;                  use GUI_Utils;
 with XML_Parsers;
@@ -48,6 +49,11 @@ package body GPS.Kernel.Clipboard is
    Me : constant Debug_Handle := Create ("Clipboard");
 
    Clipboard_Size_Pref : Param_Spec_Int;
+
+   Text_Cst            : aliased constant String := "text";
+   Append_Cst          : aliased constant String := "append";
+   Index1_Cst          : aliased constant String := "index1";
+   Index2_Cst          : aliased constant String := "index2";
 
    function Convert is new Ada.Unchecked_Conversion
      (Clipboard_Access, System.Address);
@@ -63,6 +69,10 @@ package body GPS.Kernel.Clipboard is
 
    procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
+
+   procedure Clipboard_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles shell commands associated with the clipboard.
 
    -------------------------
    -- Preferences_Changed --
@@ -316,6 +326,19 @@ package body GPS.Kernel.Clipboard is
       end if;
    end Copy_Clipboard;
 
+   ----------------------------
+   -- Copy_Text_In_Clipboard --
+   ----------------------------
+
+   procedure Copy_Text_In_Clipboard
+     (Clipboard : access Clipboard_Record;
+      Text      : String) is
+   begin
+      Set_Text (Gtk.Clipboard.Get, Text);
+      Append_To_Clipboard (Clipboard);
+      Clear (Gtk.Clipboard.Get);
+   end Copy_Text_In_Clipboard;
+
    ---------------------
    -- Paste_Clipboard --
    ---------------------
@@ -560,5 +583,72 @@ package body GPS.Kernel.Clipboard is
          Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
       end if;
    end Merge_Clipboard;
+
+   -----------------------
+   -- Register_Commands --
+   -----------------------
+
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
+      Class : constant Class_Type := New_Class (Kernel, "Clipboard");
+   begin
+      Register_Command
+        (Kernel, "copy", 1, 2, Class => Class, Static_Method => True,
+         Handler => Clipboard_Handler'Access);
+      Register_Command
+        (Kernel, "merge", 2, 2, Class => Class, Static_Method => True,
+         Handler => Clipboard_Handler'Access);
+      Register_Command
+        (Kernel, "current", 0, 0, Class => Class, Static_Method => True,
+         Handler => Clipboard_Handler'Access);
+      Register_Command
+        (Kernel, "contents", 0, 0, Class => Class, Static_Method => True,
+         Handler => Clipboard_Handler'Access);
+   end Register_Commands;
+
+   -----------------------
+   -- Clipboard_Handler --
+   -----------------------
+
+   procedure Clipboard_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      List   : Selection_List_Access;
+   begin
+      if Command = "copy" then
+         Name_Parameters (Data, (1 => Text_Cst'Access,
+                                 2 => Append_Cst'Access));
+         declare
+            Append : constant Boolean := Nth_Arg (Data, 2, False);
+         begin
+            Copy_Text_In_Clipboard (Get_Clipboard (Kernel), Nth_Arg (Data, 1));
+            if Append then
+               Merge_Clipboard (Get_Clipboard (Kernel), 1, 2);
+            end if;
+         end;
+
+      elsif Command = "merge" then
+         Name_Parameters (Data, (1 => Index1_Cst'Access,
+                                 2 => Index2_Cst'Access));
+         Merge_Clipboard (Get_Clipboard (Kernel), Nth_Arg (Data, 1) + 1,
+                          Nth_Arg (Data, 2) + 1);
+
+      elsif Command = "current" then
+         Set_Return_Value
+           (Data, Get_Last_Paste (Get_Clipboard (Kernel)) - 1);
+
+      elsif Command = "contents" then
+         Set_Return_Value_As_List (Data);
+         List := Get_Clipboard (Kernel).List;
+         if List /= null then
+            for L in List'Range loop
+               if List (L) /= null then
+                  Set_Return_Value (Data, List (L).all);
+               end if;
+            end loop;
+         end if;
+      end if;
+   end Clipboard_Handler;
+
 
 end GPS.Kernel.Clipboard;
