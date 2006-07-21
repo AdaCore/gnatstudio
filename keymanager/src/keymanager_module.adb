@@ -838,6 +838,8 @@ package body KeyManager_Module is
       Modif : Gdk_Modifier_Type;
       First, Last : Integer;
       Keymap  : Keymap_Access;
+      Success : Boolean;
+      pragma Unreferenced (Success);
    begin
       --  Are we trying to cancel all bindings to Action ?
       if Remove_Existing_Shortcuts_For_Action
@@ -847,7 +849,7 @@ package body KeyManager_Module is
 
          if Update_Menus and then Action (Action'First) = '/' then
             --  Guess the accel path from the menu
-            Change_Entry
+            Success := Change_Entry
               ("<gps>" & Action,
                Accel_Key  => 0,
                Accel_Mods => 0,
@@ -889,12 +891,21 @@ package body KeyManager_Module is
                Bind_Internal (Table, Partial_Key, Modif);
 
                if Update_Menus and then Action (Action'First) = '/' then
-                  --  Guess the accel path from the menu
-                  Change_Entry
+                  --  Guess the accel path from the menu. This operation might
+                  --  fail if the shortcut is already used as a mnemonic for a
+                  --  menu...
+                  if not Change_Entry
                     ("<gps>" & Action,
                      Accel_Key  => Partial_Key,
                      Accel_Mods => Modif,
-                     Replace    => True);
+                     Replace    => True)
+                  then
+                     Success := Change_Entry
+                       ("<gps>" & Action,
+                        Accel_Key  => 0,
+                        Accel_Mods => 0,
+                        Replace    => True);
+                  end if;
                end if;
 
             else
@@ -1621,11 +1632,12 @@ package body KeyManager_Module is
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean)
       is
-         pragma Unreferenced (Data, Changed, Accel_Key, Accel_Mods);
          First   : Natural := Accel_Path'First + 1;
          Iter    : Key_Htable.Iterator;
          Binding : Key_Description_List;
          Found   : Boolean := False;
+         Success : Boolean;
+         pragma Unreferenced (Data, Changed, Accel_Key, Accel_Mods, Success);
 
       begin
          while First <= Accel_Path'Last
@@ -1649,11 +1661,20 @@ package body KeyManager_Module is
                    Accel_Path (First .. Accel_Path'Last)
                then
                   Found := True;
-                  Change_Entry
+                  if not Change_Entry
                     (Accel_Path => Accel_Path,
                      Accel_Key  => Get_Key (Iter).Key,
                      Accel_Mods => Get_Key (Iter).Modifier,
-                     Replace    => True);
+                     Replace    => True)
+                  then
+                     --  Might have failed if the binding is also a mnemonic
+                     --  for a menu
+                     Success := Change_Entry
+                       (Accel_Path => Accel_Path,
+                        Accel_Key  => 0,
+                        Accel_Mods => 0,
+                        Replace    => True);
+                  end if;
                   exit Foreach_Binding;
                end if;
 
@@ -1664,7 +1685,7 @@ package body KeyManager_Module is
          end loop Foreach_Binding;
 
          if not Found then
-            Change_Entry
+            Success := Change_Entry
               (Accel_Path => Accel_Path,
                Accel_Key  => 0,
                Accel_Mods => 0,
