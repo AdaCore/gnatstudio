@@ -105,6 +105,7 @@ package body KeyManager_Module is
 
    File_Cst                  : aliased constant String := "file";
    Speed_Cst                 : aliased constant String := "speed";
+   Command_Cst               : aliased constant String := "command";
    Load_Macro_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => File_Cst'Access);
    Play_Macro_Cmd_Parameters : constant Cst_Argument_List :=
@@ -233,6 +234,20 @@ package body KeyManager_Module is
       Accel_Map_Id  : Handler_Id;
       Menus_Created : Boolean := False;
       --  Indicates whether the initial set of menus has been created.
+
+      Last_Command  : Cst_String_Access;
+      --  The last action that was executed by the user. It can either be a
+      --  precise action name when executed through a key binding, or null if
+      --  the command is not known precisely.
+      --  This string must never be freed and points to global data elsewhere
+      --  in GPS.
+
+      Last_User_Command : String_Access;
+      --  This is the name of the last command set by the user. The idea is
+      --  that in a callback the user can set this, which will be return by the
+      --  shell command "last_command" if set (otherwise the field
+      --  Last_Command) is returned. Last_User_Command is freed whenever a
+      --  command different from Last_Command is executed by the user.
    end record;
    type Keymanager_Module_ID is access all Keymanager_Module_Record'Class;
 
@@ -436,6 +451,10 @@ package body KeyManager_Module is
    --  Event handler called before even gtk can do its dispatching. This
    --  intercepts all events going through the application
 
+   procedure Keymanager_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Process shell commands associated with this module
+
    function Lookup_Key_From_Action
      (Table             : HTable_Access;
       Action            : String;
@@ -583,6 +602,13 @@ package body KeyManager_Module is
          then
             return;
          end if;
+
+      elsif Event_Type = Button_Release then
+         --  The command will be executed by gtk, we don't know exactly how
+         if Keymanager_Module.Last_Command /= null then
+            Free (Keymanager_Module.Last_User_Command);
+         end if;
+         Keymanager_Module.Last_Command := null;
       end if;
 
       --  Dispatch the event in the standard gtk+ main loop
@@ -941,8 +967,8 @@ package body KeyManager_Module is
       Kernel   : access Kernel_Handle_Record'Class;
       Event    : Gdk.Event.Gdk_Event) return Boolean
    is
-      Key     : constant Gdk_Key_Type := Get_Key_Val (Event);
-      Modif   : Gdk_Modifier_Type := Get_State (Event);
+      Key     : Gdk_Key_Type;
+      Modif   : Gdk_Modifier_Type;
       Binding : Key_Description_List;
       Command : Action_Record_Access;
       Has_Secondary : constant Boolean := Handler.Secondary_Keymap /= null;
@@ -958,8 +984,17 @@ package body KeyManager_Module is
         and then Get_Event_Type (Event) = Key_Press
       then
          --  Remove any num-lock and caps-lock modifiers.
+         Modif := Get_State (Event) and Get_Default_Mod_Mask;
+         Key   := Get_Key_Val (Event);
 
-         Modif := Modif and Get_Default_Mod_Mask;
+         --  Ignore when the key is just one of the modifier. No binding can
+         --  be associated to them anyway, so this is slightly more efficient,
+         --  and this also avoids resetting the last command.
+         if Key >= GDK_Control_L
+           and then Key <= GDK_Hyper_R
+         then
+            return False;
+         end if;
 
          if Handler.Secondary_Keymap = null then
             Binding := Get (Handler.Table.all, (Key, Modif));
@@ -991,60 +1026,83 @@ package body KeyManager_Module is
              (Get_Main_Window (Kernel), Key, Modif)
          then
             Found_Action := True;
-            return True;
-         end if;
 
-         --  Execute all commands bound to this key. The order is somewhat
-         --  random, since it depends in what order the key shortcuts were
-         --  defined.
-         while Binding /= No_Key loop
-            if Binding.Action = null then
-               Handler.Secondary_Keymap := Binding.Keymap;
-               Found_Action := True;
+            --  The command will be executed by gtk, we don't know exactly how
+            if Keymanager_Module.Last_Command /= null then
+               Free (Keymanager_Module.Last_User_Command);
+            end if;
+            Keymanager_Module.Last_Command := null;
 
-            else
-               --  If we have not found the accelerator using the Gtk+
-               --  mechanism, fallback on the standard mechanism to lookup the
-               --  action.
-               Command := Lookup_Action (Kernel, Binding.Action.all);
+         else
+            --  Execute all commands bound to this key. The order is somewhat
+            --  random, since it depends in what order the key shortcuts were
+            --  defined.
+            while Binding /= No_Key loop
+               if Binding.Action = null then
+                  Handler.Secondary_Keymap := Binding.Keymap;
+                  Found_Action := True;
 
-               if Command = null then
-                  Insert
-                    (Kernel, -"Action not defined: " & Binding.Action.all);
+               else
+                  --  If we have not found the accelerator using the Gtk+
+                  --  mechanism, fallback on the standard mechanism to lookup
+                  --  the action.
+                  Command := Lookup_Action (Kernel, Binding.Action.all);
 
-               elsif Command.Command /= null then
-                  if not Context_Computed then
-                     Context := Get_Current_Context (Kernel);
-                     Context_Computed := True;
-                  end if;
+                  if Command = null then
+                     Insert
+                       (Kernel, -"Action not defined: " & Binding.Action.all);
 
-                  if Command.Filter = null
-                    or else (Context /= No_Context
-                             and then Filter_Matches (Command.Filter, Context))
-                  then
-                     Trace (Me, "Executing action " & Binding.Action.all);
+                  elsif Command.Command /= null then
+                     if not Context_Computed then
+                        Context := Get_Current_Context (Kernel);
+                        Context_Computed := True;
+                     end if;
 
-                     Found_Action := True;
-                     Launch_Background_Command
-                       (Kernel,
-                        Create_Proxy
-                          (Command.Command,
-                           (Event,
-                            Context,
-                            False,
-                            null,
-                            null,
-                            new String'(Binding.Action.all))),
-                        Destroy_On_Exit => False,
-                        Active          => True,
-                        Show_Bar        => False,
-                        Queue_Id        => "");
+                     if Command.Filter = null
+                       or else
+                         (Context /= No_Context
+                          and then Filter_Matches (Command.Filter, Context))
+                     then
+                        Trace (Me, "Executing action " & Binding.Action.all);
+
+                        if Keymanager_Module.Last_Command /=
+                          Cst_String_Access (Binding.Action)
+                        then
+                           Free (Keymanager_Module.Last_User_Command);
+                        end if;
+                        Keymanager_Module.Last_Command :=
+                          Cst_String_Access (Binding.Action);
+
+                        Found_Action := True;
+                        Launch_Background_Command
+                          (Kernel,
+                           Create_Proxy
+                             (Command.Command,
+                              (Event,
+                               Context,
+                               False,
+                               null,
+                               null,
+                               new String'(Binding.Action.all))),
+                           Destroy_On_Exit => False,
+                           Active          => True,
+                           Show_Bar        => False,
+                           Queue_Id        => "");
+                     end if;
                   end if;
                end if;
-            end if;
 
-            Binding := Binding.Next;
-         end loop;
+               Binding := Binding.Next;
+            end loop;
+         end if;
+
+         if not Found_Action then
+            --  The command will be executed by gtk, we don't know exactly how
+            if Keymanager_Module.Last_Command /= null then
+               Free (Keymanager_Module.Last_User_Command);
+            end if;
+            Keymanager_Module.Last_Command := null;
+         end if;
       end if;
 
       --  Let gtk+ handle all events even if we have already processed one or
@@ -2478,6 +2536,30 @@ package body KeyManager_Module is
       end if;
    end Customize;
 
+   --------------------------------
+   -- Keymanager_Command_Handler --
+   --------------------------------
+
+   procedure Keymanager_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String) is
+   begin
+      if Command = "last_command" then
+         if Keymanager_Module.Last_User_Command /= null then
+            Set_Return_Value (Data, Keymanager_Module.Last_User_Command.all);
+         elsif Keymanager_Module.Last_Command /= null then
+            Set_Return_Value (Data, Keymanager_Module.Last_Command.all);
+         else
+            Set_Return_Value (Data, "");
+         end if;
+
+      elsif Command = "set_last_command" then
+         Name_Parameters (Data, (1 => Command_Cst'Access));
+         Free (Keymanager_Module.Last_User_Command);
+         Keymanager_Module.Last_User_Command :=
+           new String'(Nth_Arg (Data, 1));
+      end if;
+   end Keymanager_Command_Handler;
+
    --------------------------
    -- On_Accel_Map_Changed --
    --------------------------
@@ -2587,6 +2669,11 @@ package body KeyManager_Module is
             Maximum_Args => 1,
             Handler      => Macro_Command_Handler'Access);
       end if;
+
+      Register_Command
+        (Kernel, "last_command", 0, 0, Keymanager_Command_Handler'Access);
+      Register_Command
+        (Kernel, "set_last_command", 1, 1, Keymanager_Command_Handler'Access);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
