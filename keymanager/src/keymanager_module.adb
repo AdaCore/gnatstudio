@@ -281,7 +281,8 @@ package body KeyManager_Module is
    --  disable all actions currently associated with the same shortcut)
 
    procedure Bind_Default_Key_Internal
-     (Table                                : in out Key_Htable.HTable;
+     (Kernel                               : access Kernel_Handle_Record'Class;
+      Table                                : in out Key_Htable.HTable;
       Action                               : String;
       Key                                  : String;
       Save_In_Keys_XML                     : Boolean;
@@ -718,7 +719,8 @@ package body KeyManager_Module is
    -------------------------------
 
    procedure Bind_Default_Key_Internal
-     (Table                                : in out Key_Htable.HTable;
+     (Kernel                               : access Kernel_Handle_Record'Class;
+      Table                                : in out Key_Htable.HTable;
       Action                               : String;
       Key                                  : String;
       Save_In_Keys_XML                     : Boolean;
@@ -835,7 +837,7 @@ package body KeyManager_Module is
       end Remove_In_Keymap;
 
       Partial_Key : Gdk_Key_Type;
-      Modif : Gdk_Modifier_Type;
+      Modif, Mnemonic_Modif : Gdk_Modifier_Type;
       First, Last : Integer;
       Keymap  : Keymap_Access;
       Success : Boolean;
@@ -893,18 +895,37 @@ package body KeyManager_Module is
                if Update_Menus and then Action (Action'First) = '/' then
                   --  Guess the accel path from the menu. This operation might
                   --  fail if the shortcut is already used as a mnemonic for a
-                  --  menu...
+                  --  menu, so we temporarily change the modifier for mnemonics
+                  --  All menus are assumed to be in the main GPS window at
+                  --  this stage.
+
+                  Mnemonic_Modif := Get_Mnemonic_Modifier
+                    (Get_Main_Window (Kernel));
+
+                  if Modif = Mnemonic_Modif then
+                     Set_Mnemonic_Modifier
+                       (Get_Main_Window (Kernel),
+                        Modif or Control_Mask or Mod1_Mask or Shift_Mask);
+                  end if;
+
                   if not Change_Entry
                     ("<gps>" & Action,
                      Accel_Key  => Partial_Key,
                      Accel_Mods => Modif,
                      Replace    => True)
                   then
+                     --  If we still couldn't change it, at very least disable
+                     --  it from the menu so as not to confuse users
                      Success := Change_Entry
                        ("<gps>" & Action,
                         Accel_Key  => 0,
                         Accel_Mods => 0,
                         Replace    => True);
+                  end if;
+
+                  if Modif = Mnemonic_Modif then
+                     Set_Mnemonic_Modifier
+                       (Get_Main_Window (Kernel), Mnemonic_Modif);
                   end if;
                end if;
 
@@ -1230,7 +1251,8 @@ package body KeyManager_Module is
                --  Remove all other bindings previously defined, so that only
                --  the last definition is taken into account
                Bind_Default_Key_Internal
-                 (Keymanager_Module.Key_Manager.Table.all,
+                 (Kernel           => Kernel,
+                  Table            => Keymanager_Module.Key_Manager.Table.all,
                   Action           => Get_Attribute (Child, "action"),
                   Key              => Child.Value.all,
                   Save_In_Keys_XML => True,
@@ -1806,7 +1828,8 @@ package body KeyManager_Module is
          begin
             if Key /= "" then
                Bind_Default_Key_Internal
-                 (Ed.Bindings.all,
+                 (Kernel         => Ed.Kernel,
+                  Table          => Ed.Bindings.all,
                   Action         => Get_String (Ed.Model, Iter, Action_Column),
                   Key              => Key,
                   Save_In_Keys_XML => True,
@@ -1868,7 +1891,8 @@ package body KeyManager_Module is
         and then Children (Ed.Model, Iter) = Null_Iter
       then
          Bind_Default_Key_Internal
-           (Ed.Bindings.all,
+           (Table             => Ed.Bindings.all,
+            Kernel            => Ed.Kernel,
             Action            => Get_String (Ed.Model, Iter, Action_Column),
             Key               => "",
             Save_In_Keys_XML  => True,
@@ -2544,7 +2568,8 @@ package body KeyManager_Module is
             --  here.
             Handler_Block (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
             Bind_Default_Key_Internal
-              (Keymanager_Module.Key_Manager.Table.all,
+              (Table             => Keymanager_Module.Key_Manager.Table.all,
+               Kernel            => Get_Kernel (Module.all),
                Action            => Action,
                Remove_Existing_Shortcuts_For_Action => False,
                Remove_Existing_Actions_For_Shortcut => True,
@@ -2594,7 +2619,7 @@ package body KeyManager_Module is
       Accel_Key  : constant Gdk_Key_Type := Gdk_Key_Type (To_Guint (Args, 2));
       Accel_Mods : constant Gdk_Modifier_Type :=
         Gdk_Modifier_Type (Get_Flags (Nth (Args, 3)));
-      pragma Unreferenced (Map, Kernel);
+      pragma Unreferenced (Map);
       First : Natural := Accel_Path'First + 1;
    begin
       while First <= Accel_Path'Last
@@ -2607,6 +2632,7 @@ package body KeyManager_Module is
       --  any action associated with that key.
       Bind_Default_Key_Internal
         (Table  => Keymanager_Module.Key_Manager.Table.all,
+         Kernel => Kernel,
          Action => Accel_Path (First .. Accel_Path'Last),
          Key                                  => Image (Accel_Key, Accel_Mods),
          Save_In_Keys_XML  =>
