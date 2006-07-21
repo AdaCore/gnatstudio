@@ -1486,8 +1486,17 @@ package body GUI_Utils is
          Last := First + 1;
          Skip_To_Char (Path, Last, '/');
 
+         if Last > First and then Last < Path'Last
+           and then Path (Last - 1) = '\'
+         then
+            Last := Last + 1;
+            Skip_To_Char (Path, Last, '/');
+         end if;
+
          Find_Menu_Item_By_Name
-           (Menu_Bar, Parent, Path (First .. Last - 1), Menu_Item, Index);
+           (Menu_Bar, Parent,
+            Strip_Character (Path (First .. Last - 1), '\'),
+            Menu_Item, Index);
          exit when Menu_Item = null;
 
          --  Have we found the item ?
