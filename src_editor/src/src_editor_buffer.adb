@@ -3827,8 +3827,6 @@ package body Src_Editor_Buffer is
    ----------------
 
    procedure Select_All (Buffer : access Source_Buffer_Record) is
-      Insert_Mark    : constant Gtk_Text_Mark := Get_Insert (Buffer);
-      Selection_Mark : constant Gtk_Text_Mark := Get_Selection_Bound (Buffer);
       Start_Iter     : Gtk_Text_Iter;
       End_Iter       : Gtk_Text_Iter;
    begin
