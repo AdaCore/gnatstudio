@@ -4026,8 +4026,14 @@ It is possible to close all editors at once using a command like
        <param name="self">An instance of GPS.EditorBuffer</param>
        <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
        <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
-       <description>Selects an area in the buffer. The boundaries are included in the selection. The order of the boundaries is irrelevant</description>
+       <description>Selects an area in the buffer. The boundaries are included in the selection. The order of the boundaries is irrelevant, but the cursor will be left on to</description>
   </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.unselect">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <description>Cancel the current selection in the buffer</description>
+  </shell_doc>
+       
 
   <shell_doc name="GPS.EditorBuffer.selection_start">
        <param name="self">An instance of GPS.EditorBuffer</param>
