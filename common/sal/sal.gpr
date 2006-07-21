@@ -30,24 +30,12 @@ project Sal is
       "jni.ads",
       "jni_wrappers.c");
    for Object_Dir use "obj";
-   for Library_Dir use "lib";
-   for Library_Name use "gps_utils";
-   for Library_Kind use "dynamic";
-   for Library_Interface use ("JNI", "GNATbench", "GNATbench.Jni_Functions");
    for Languages use ("Ada");
-   for Library_Auto_Init use "false";
 
-   package Compiler renames Shared.Compiler;
+   package Compiler is
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada") & "-fPIC";
+   end Compiler;
+
    package IDE renames Shared.IDE;
-
-   case Shared.OS is
-      when "unix" =>
-         for Library_Options use ("-lgcc_s", "-lgcc_eh");
-      when "Windows_NT" =>
-   end case;
-
-   package Binder is
-      for Default_Switches ("ada") use ("-shared");
-   end Binder;
 end Sal;
 
