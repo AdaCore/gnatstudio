@@ -1683,20 +1683,18 @@ package body KeyManager_Module is
                    Accel_Path (First .. Accel_Path'Last)
                then
                   Found := True;
-                  if not Change_Entry
+
+                  --  The following call will fail in general, since the
+                  --  shortcut is already associated with the same Accel_Path.
+                  --  Unfortunately, gtk+ doesn't detect that we are just
+                  --  trying to set the same binding again, and will always
+                  --  report a failure. We should not therefore fallback on
+                  --  clearing the binding in case of failure. F721-013
+                  Success := Change_Entry
                     (Accel_Path => Accel_Path,
                      Accel_Key  => Get_Key (Iter).Key,
                      Accel_Mods => Get_Key (Iter).Modifier,
-                     Replace    => True)
-                  then
-                     --  Might have failed if the binding is also a mnemonic
-                     --  for a menu
-                     Success := Change_Entry
-                       (Accel_Path => Accel_Path,
-                        Accel_Key  => 0,
-                        Accel_Mods => 0,
-                        Replace    => True);
-                  end if;
+                     Replace    => True);
                   exit Foreach_Binding;
                end if;
 
