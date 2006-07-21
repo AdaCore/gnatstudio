@@ -3834,12 +3834,22 @@ package body Src_Editor_Buffer is
    begin
       Get_Start_Iter (Buffer, Start_Iter);
       Get_End_Iter (Buffer, End_Iter);
-      --  Move the selection_bound mark to the begining of the buffer, and
-      --  the insert mark at the end, thus creating the selection on the
-      --  entire buffer
-      Move_Mark (Buffer, Selection_Mark, Start_Iter);
-      Move_Mark (Buffer, Insert_Mark, End_Iter);
+      Select_Range (Buffer, Ins => End_Iter, Bound => Start_Iter);
    end Select_All;
+
+   ----------------------
+   -- Selection_Region --
+   ----------------------
+
+   procedure Select_Region
+     (Buffer       : access Source_Buffer_Record;
+      Cursor_Iter  : Gtk.Text_Iter.Gtk_Text_Iter;
+      Bound_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+   is
+   begin
+      Buffer.Cursor_Set_Explicitely := 2;
+      Select_Range (Buffer, Ins => Cursor_Iter, Bound => Bound_Iter);
+   end Select_Region;
 
    -------------------
    -- Select_Region --
@@ -3855,23 +3865,28 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
-      if not Is_Valid_Position (Buffer, Start_Line, Start_Column) then
-         Trace (Me, "invalid start position in Select_Region, aborting:"
-                & Start_Line'Img & Start_Column'Img);
-         return;
+      if Start_Line = End_Line and then Start_Column = End_Column then
+         Get_Iter_At_Mark (Buffer, Start_Iter, Get_Insert (Buffer));
+         Place_Cursor (Buffer, Start_Iter);
 
-      elsif not Is_Valid_Position (Buffer, End_Line, End_Column) then
-         Trace (Me, "invalid end position in Select_Region, aborting:"
-                & End_Line'Img & End_Column'Img);
-         return;
+      else
+         if not Is_Valid_Position (Buffer, Start_Line, Start_Column) then
+            Trace (Me, "invalid start position in Select_Region, aborting:"
+                   & Start_Line'Img & Start_Column'Img);
+            return;
+
+         elsif not Is_Valid_Position (Buffer, End_Line, End_Column) then
+            Trace (Me, "invalid end position in Select_Region, aborting:"
+                   & End_Line'Img & End_Column'Img);
+            return;
+         end if;
+
+         Get_Iter_At_Line_Offset
+           (Buffer, Start_Iter, Start_Line, Start_Column);
+         Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+         Select_Range (Buffer, Ins => End_Iter, Bound => Start_Iter);
+         Buffer.Cursor_Set_Explicitely := 2;
       end if;
-
-      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
-      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
-
-      Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);
-      Buffer.Cursor_Set_Explicitely := 2;
-      Move_Mark_By_Name (Buffer, "insert", End_Iter);
    end Select_Region;
 
    -------------------

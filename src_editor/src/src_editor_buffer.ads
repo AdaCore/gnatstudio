@@ -362,12 +362,21 @@ package Src_Editor_Buffer is
 
    procedure Select_Region
      (Buffer       : access Source_Buffer_Record;
+      Cursor_Iter  : Gtk.Text_Iter.Gtk_Text_Iter;
+      Bound_Iter   : Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Select the region between the two iterators, and leave the cursor on
+   --  Cursor_Iter
+
+   procedure Select_Region
+     (Buffer       : access Source_Buffer_Record;
       Start_Line   : Gint;
       Start_Column : Gint;
       End_Line     : Gint;
       End_Column   : Gint);
    --  Select the given region.
    --  Takes Tabs into account when Expand_Tabs = True.
+   --  This unselects the current selection if Start_Line == End_Line and
+   --  Start_Column == End_Column
 
    procedure Select_Region
      (Buffer       : access Source_Buffer_Record;
