@@ -1,14 +1,8 @@
 ## This module implements high level actions related to text editing
 
 import GPS
-import string
+import string, traceback
 import navigation_utils
-
-##  Variable scope
-
-mark_line = 0
-mark_col  = 0
-mark_set  = False
 
 ## Register the actions
 GPS.parse_xml ("""
@@ -77,9 +71,15 @@ The text that is deleted is copied to the clipboard. If you call this action mul
    </action>
 
    <action name="set mark command" output="none" category="Editor">
-      <description>This is similar to Emacs's behavior: a mark is put at the current cursor position. You can then move the cursor elsewhere, and delete the text between this mark and the new cursor position</description>
+      <description>This is similar to Emacs's behavior: a mark is put at the current cursor position. You can then move the cursor elsewhere, and delete the text between this mark and the new cursor position. See also the action "Cancel mark command"</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.set_mark_command()</shell>
+   </action>
+
+   <action name="Cancel mark command" output="none" category="Editor">
+      <description>Remove the emacs-emulation mark in the current editor. See also the action "Set mark command"</description>
+      <filter id="Source editor" />
+      <shell lang="python">text_utils.cancel_mark_command ()</shell>
    </action>
 
    <action name="kill region" output="none" category="Editor">
@@ -163,23 +163,22 @@ def delete_forward():
    cursor = buffer.current_view().cursor()
    buffer.delete (cursor, cursor)
 
-########################################
-## Implementation of kill_line
-## The goal is to have an implementation as close to Emacs as possible.
-## This means that the killed line must be added to the clipboard, and
-## that multiple successive calls at the same location should merge
-## their clipboard entries
-########################################
-
-def kill_line():
-   """ Kills the end-of-line, or the whole line if it is empty or contains
-       only white spaces. This is a better emulation of Emacs's behavior
-       than the one provided by default by gtk+, which doesn't handle
-       whitespaces correctly.
+def kill_line (location = None):
+   """ Kills the end of the line on which LOCATION is.
+       If LOCATION is unspecified, the current cursor location in the current
+       editor is used.
+       If the line is empty or contains only white spaces, the whole line is
+       deleted.
+       This is a better emulation of Emacs's behavior than the one provided by
+       default by gtk+, which doesn't handle whitespaces correctly.
        When called several times from the same line, entries are appended in
        the clipboard"""
-   buffer   = GPS.EditorBuffer.get()
-   start    = buffer.current_view().cursor()
+   
+   if not location:
+      location = GPS.EditorBuffer.get ().current_view ().cursor ()
+   buffer = location.buffer ()
+   start  = location
+
    append   = GPS.last_command() == "kill-line"
    GPS.set_last_command ("kill-line")
 
@@ -320,46 +319,126 @@ def capitalize_case_word (location=None):
    """Capitalize the current word (starting at the current character)"""
    apply_func_to_word (str.capitalize, location)
 
-## Try to reproduce the way emacs use the cut & paste
-## using a global mark
+### Emulating Emacs selection:
+### In Emacs, one sets the mark first, then when the cursor is moved the
+### selection is extended appropriately. This is rather tricky to emulate
+### in gtk+.
+### There are two implementations: when pygtk is available, we simply
+### temporarily override the key bindings so that the selection is always
+### extended. This avoids all flickering, has no run-time cost, and is
+### certainly the nicest. Not quite perfect though, since other functions
+### that move the cursor will not extend the selection, only the basic
+### key bindings defined for a gkt.TextView do.
+### However, if pygtk is not available, we emulate it by monitoring all
+### location changes. The slow down is almost invisible, but since the
+### selection is first cancelled by gtk+ when the cursor is moved, and we
+### then reselect it, there is some flickering
 
-def set_mark_command():
-    """  Set mark where cursor is. """
-    global mark_line
-    global mark_col
-    global mark_set
-    file = GPS.current_context().file().name()
-    mark_line = GPS.current_context().location().line()
-    mark_col  = GPS.current_context().location().column()
-    mark_set  = True
+try:
+   import gtk, gobject
+   has_pygtk = 1
 
-def kill_region():
-    """ Kill betwenn cursor and mark. """
+   HOME      = 65360
+   LEFT      = 65361
+   UP        = 65362
+   RIGHT     = 65363
+   DOWN      = 65364
+   PAGE_UP   = 65365
+   PAGE_DOWN = 65366
+   END       = 65367
 
-    global mark_line
-    global mark_col
-    global mark_set
+   KP_HOME      = 65429
+   KP_LEFT      = 65430
+   KP_UP        = 65431
+   KP_RIGHT     = 65432
+   KP_DOWN      = 65433
+   KP_PAGE_UP   = 65434
+   KP_PAGE_DOWN = 65435
+   KP_END       = 65436
 
-    if mark_set:
-        file = GPS.current_context().file().name()
-        line = GPS.current_context().location().line()
-        col  = GPS.current_context().location().column()
+   def override (key, modifier, movement, step, select):
+       gtk.binding_entry_remove (gtk.TextView, key, modifier)
+       gtk.binding_entry_add_signal (gtk.TextView, key, modifier,
+                                     "move_cursor",
+                                     gobject.TYPE_ENUM, movement,
+                                     gobject.TYPE_INT,  step,
+                                     gobject.TYPE_BOOLEAN, select)
 
-        GPS.Editor.select_text (line, mark_line, col, mark_col)
-        GPS.Editor.cut()
+   def override_key_bindings (select):
+       """Override the default TextView keybinding to either always force
+          the extension the selection, or not"""
+       override (RIGHT,    0, gtk.MOVEMENT_VISUAL_POSITIONS, 1, select)
+       override (KP_RIGHT, 0, gtk.MOVEMENT_VISUAL_POSITIONS, 1, select)
+       override (LEFT,     0, gtk.MOVEMENT_VISUAL_POSITIONS, -1, select)
+       override (KP_LEFT,  0, gtk.MOVEMENT_VISUAL_POSITIONS, -1, select)
 
-def kill_ring_save():
-    """ Save the region as if killed, but don't kill it. """
+       override (RIGHT,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_WORDS, 1, select)
+       override (KP_RIGHT, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_WORDS, 1, select)
+       override (LEFT,     gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_WORDS, -1, select)
+       override (KP_LEFT,  gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_WORDS, -1, select)
 
-    global mark_line
-    global mark_col
-    global mark_set
+       override (UP,       0, gtk.MOVEMENT_DISPLAY_LINES, -1, select)  
+       override (KP_UP,    0, gtk.MOVEMENT_DISPLAY_LINES, -1, select)  
+       override (DOWN,     0, gtk.MOVEMENT_DISPLAY_LINES, 1, select)  
+       override (KP_DOWN,  0, gtk.MOVEMENT_DISPLAY_LINES, 1, select)  
 
-    if mark_set:
-        file = GPS.current_context().file().name()
-        line = GPS.current_context().location().line()
-        col  = GPS.current_context().location().column()
+       override (UP,      gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, -1, select)  
+       override (KP_UP,   gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, -1, select)  
+       override (DOWN,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, 1, select)  
+       override (KP_DOWN, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, 1, select)  
 
-        GPS.Editor.select_text (line, mark_line, col, mark_col)
-        GPS.Editor.copy()
-        GPS.Editor.cursor_set_position (file, line, col)
+       override (HOME,    0, gtk.MOVEMENT_DISPLAY_LINE_ENDS, -1, select)
+       override (KP_HOME, 0, gtk.MOVEMENT_DISPLAY_LINE_ENDS, -1, select)
+       override (END,     0, gtk.MOVEMENT_DISPLAY_LINE_ENDS, 1, select)
+       override (KP_END,  0, gtk.MOVEMENT_DISPLAY_LINE_ENDS, 1, select)
+
+       override (HOME,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_BUFFER_ENDS, -1, select)
+       override (KP_HOME, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_BUFFER_ENDS, -1, select)
+       override (END,     gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_BUFFER_ENDS, 1, select)
+       override (KP_END,  gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_BUFFER_ENDS, 1, select)
+
+       override (PAGE_UP,      0, gtk.MOVEMENT_PAGES, -1, select)
+       override (KP_PAGE_UP,   0, gtk.MOVEMENT_PAGES, -1, select)
+       override (PAGE_DOWN,    0, gtk.MOVEMENT_PAGES, 1, select)
+       override (KP_PAGE_DOWN, 0, gtk.MOVEMENT_PAGES, 1, select)
+ 
+       override (PAGE_UP,      gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, -1, select)
+       override (KP_PAGE_UP,   gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, -1, select)
+       override (PAGE_DOWN,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, 1, select)
+       override (KP_PAGE_DOWN, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, 1, select)
+
+except ImportError:
+   def on_location_changed (hook, file, line, column):
+      try:
+         buffer = GPS.EditorBuffer.get (file)
+         mark   = buffer.get_mark ("emacs_selection_bound")
+         buffer.select (mark.location(), buffer.current_view().cursor())
+      except:
+         pass  ## no such mark
+   GPS.Hook ("location_changed").add (on_location_changed)
+   has_pygtk = 0
+
+def set_mark_command (location = None):
+    """Set mark at LOCATION (or current cursor if LOCATION is unspecified)"""
+    if not location:
+       location = GPS.EditorBuffer.get ().current_view ().cursor ()
+    if has_pygtk:
+        location.create_mark ("selection_bound")
+        override_key_bindings (select = True)
+    else:
+        location.create_mark ("emacs_selection_bound")
+
+def cancel_mark_command (buffer = None):
+    """Cancel the mark in BUFFER"""
+    if not buffer:
+       buffer = GPS.EditorBuffer.get ()
+    try:
+       buffer.unselect ()
+       if has_pygtk:
+          override_key_bindings (select = False)
+       else:
+          buffer.get_mark ("emacs_selection_bound").delete ()
+    except:
+       pass  ## No such mark
+
+
