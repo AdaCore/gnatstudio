@@ -204,9 +204,6 @@ def delete_forward():
 ## their clipboard entries
 ########################################
 
-last_kill_line = None
-moved_by_kill_line = False
-
 def kill_line():
    """ Kills the end-of-line, or the whole line if it is empty or contains
        only white spaces. This is a better emulation of Emacs's behavior
@@ -214,13 +211,10 @@ def kill_line():
        whitespaces correctly.
        When called several times from the same line, entries are appended in
        the clipboard"""
-   global last_kill_line
-   global moved_by_kill_line
    buffer   = GPS.EditorBuffer.get()
    start    = buffer.current_view().cursor()
-   append   = last_kill_line and last_kill_line == start
-   last_kill_line     = start
-   moved_by_kill_line = True
+   append   = GPS.last_command() == "kill-line"
+   GPS.set_last_command ("kill-line")
 
    # In case the current location points to a line terminator we just cut it
    if start.get_char() == "\n":
@@ -232,18 +226,6 @@ def kill_line():
       if len (str) > 0 and str [len (str) - 1] == '\n' and strip_str != "":
          end = end.forward_char (-1)
       buffer.cut (start, end, append)
-
-def on_location_changed (hook, file, line, column):
-   ## This hook is called asynchronously: it will be called after kill_line
-   ## has finished executing, in which case we do not want to reset the
-   ## variable, so that multiple calls at the same location append to the
-   ## clipboard
-   global last_kill_line
-   global moved_by_kill_line
-   if not moved_by_kill_line:
-      last_kill_line = None
-   moved_by_kill_line = False
-GPS.Hook ("location_changed").add (on_location_changed)
 
 ################################################
 ## Moving the cursor
