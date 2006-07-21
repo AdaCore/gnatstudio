@@ -14,7 +14,7 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
-Improved Emacs emulation (2006-07-21)
+F720-008 Improved Emacs emulation (2006-07-21)
 
   Several new key bindings were defined to emulate Emacs. The handling of
   selections (mark+cursor) was also enhanced
