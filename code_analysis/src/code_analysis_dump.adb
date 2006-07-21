@@ -39,14 +39,14 @@ package body Code_Analysis_Dump is
    procedure Dump_Project (C : Project_Maps.Cursor) is
       P_A : constant Project_Access := Project_Maps.Element (C);
    begin
-      Put (" O¦ Project " & Get_Id (P_A));
-      if Get_Analysis (P_A).Coverage_Data /= null then
-         Dump_Coverage (Get_Analysis (P_A).Coverage_Data);
+      Put (" O¦ Project " & P_A.Name.all);
+      if P_A.Analysis_Data.Coverage_Data /= null then
+         Dump_Coverage (P_A.Analysis_Data.Coverage_Data);
       end if;
-      Put (" : ");
-      Get_Map (P_A).Iterate (Dump_Children_Names'Access);
-      Put (ASCII.lf);
-      Get_Map (P_A).Iterate (Dump_File'Access);
+      Put (" :");
+      File_Maps.Iterate (P_A.Files, Dump_Children_Names'Access);
+      New_Line;
+      P_A.Files.Iterate (Dump_File'Access);
    end Dump_Project;
 
    ---------------
@@ -56,14 +56,14 @@ package body Code_Analysis_Dump is
    procedure Dump_File (C : File_Maps.Cursor) is
       F_A : constant Code_Analysis.File_Access := File_Maps.Element (C);
    begin
-      Put ("   o¦ File " & Get_Id (F_A));
-      if Get_Analysis (F_A).Coverage_Data /= null then
-         Dump_Coverage (Get_Analysis (F_A).Coverage_Data);
+      Put ("   o¦ File " & F_A.Name.all);
+      if F_A.Analysis_Data.Coverage_Data /= null then
+         Dump_Coverage (F_A.Analysis_Data.Coverage_Data);
       end if;
-      Put (" : ");
-      Get_Map (F_A).Iterate (Dump_Children_Names'Access);
-      Put (ASCII.lf);
-      Get_Map (F_A).Iterate (Dump_Subprogram'Access);
+      Put (" :");
+      Subprogram_Maps.Iterate (F_A.Subprograms, Dump_Children_Names'Access);
+      New_Line;
+      F_A.Subprograms.Iterate (Dump_Subprogram'Access);
    end Dump_File;
 
    ---------------------
@@ -73,14 +73,14 @@ package body Code_Analysis_Dump is
    procedure Dump_Subprogram (C : Subprogram_Maps.Cursor) is
       S_A : constant Subprogram_Access := Subprogram_Maps.Element (C);
    begin
-      Put ("     °¦ Subprogram " & Get_Id (S_A));
-      if Get_Analysis (S_A).Coverage_Data /= null then
-         Dump_Coverage (Get_Analysis (S_A).Coverage_Data);
+      Put ("     °¦ Subprogram " & S_A.Name.all);
+      if S_A.Analysis_Data.Coverage_Data /= null then
+         Dump_Coverage (S_A.Analysis_Data.Coverage_Data);
       end if;
-      Put (" : ");
-      Get_Map (S_A).Iterate (Dump_Children_Names'Access);
-      Put (ASCII.lf);
-      Get_Map (S_A).Iterate (Dump_Line'Access);
+      Put (" :");
+      S_A.Lines.Iterate (Dump_Children_Names'Access);
+      New_Line;
+      S_A.Lines.Iterate (Dump_Line'Access);
    end Dump_Subprogram;
 
    ---------------
@@ -90,12 +90,11 @@ package body Code_Analysis_Dump is
    procedure Dump_Line (C : Line_Maps.Cursor) is
       L_A : constant Line_Access := Line_Maps.Element (C);
    begin
-      Put ("       ·¦ Line " & Integer'Image (Get_Id (L_A)));
-      if Get_Analysis (L_A).Coverage_Data /= null then
-         Dump_Coverage (Get_Analysis (L_A).Coverage_Data);
+      Put ("       ·¦ Line" & Integer'Image (L_A.Number));
+      if L_A.Analysis_Data.Coverage_Data /= null then
+         Dump_Line_Coverage (L_A.Analysis_Data.Coverage_Data);
       end if;
-      Put (" : ");
-      Put (ASCII.lf);
+      New_Line;
    end Dump_Line;
 
    ------------------------
@@ -105,7 +104,7 @@ package body Code_Analysis_Dump is
    procedure Dump_Children_Names (C : File_Maps.Cursor) is
       F_A : constant Code_Analysis.File_Access := File_Maps.Element (C);
    begin
-      Put (Get_Id (F_A) & "; ");
+      Put (" " & F_A.Name.all);
    end Dump_Children_Names;
 
    ------------------------
@@ -113,10 +112,9 @@ package body Code_Analysis_Dump is
    ------------------------
 
    procedure Dump_Children_Names (C : Subprogram_Maps.Cursor) is
-      S_A : constant Code_Analysis.Subprogram_Access
-        := Subprogram_Maps.Element (C);
+      S_A : constant Subprogram_Access := Subprogram_Maps.Element (C);
    begin
-      Put (Get_Id (S_A) & "; ");
+      Put (" " & S_A.Name.all);
    end Dump_Children_Names;
 
    ------------------------
@@ -124,10 +122,9 @@ package body Code_Analysis_Dump is
    ------------------------
 
    procedure Dump_Children_Names (C : Line_Maps.Cursor) is
-      L_A : constant Code_Analysis.Line_Access
-        := Line_Maps.Element (C);
+      L_A : constant Line_Access := Line_Maps.Element (C);
    begin
-      Put (Integer'Image (Get_Id (L_A)) & "; ");
+      Put (Integer'Image (L_A.Number));
    end Dump_Children_Names;
 
 end Code_Analysis_Dump;
