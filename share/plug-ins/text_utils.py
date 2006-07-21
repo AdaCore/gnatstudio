@@ -21,18 +21,6 @@ GPS.parse_xml ("""
       <shell lang="python">text_utils.add_subprogram_box()</shell>
    </action>
 
-   <action name="next line" output="none" category="Editor">
-      <description>Move the cursor to the next line</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.next_line(1)</shell>
-   </action>
-
-   <action name="previous line" output="none" category="Editor">
-      <description>Move the cursor to the previous line</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.next_line(-1)</shell>
-   </action>
-
    <action name="kill line" output="none" category="Editor">
       <description>This is similar to Emacs' kill-line function. It deletes the end of the line after the cursor's current column. If the cursor is at the end of the line, it deletes the newline character and therefore joins the current line and the next.
 The text that is deleted is copied to the clipboard. If you call this action multiple times from the same location, all deleted text is merged into a single clipboard, so that a single Paste will put it all back</description>
@@ -169,27 +157,6 @@ def add_subprogram_box():
       buffer.current_view().goto (initial.location())
       buffer.finish_undo_group()
    
-def next_line(nb_line):
-   """  Move cursor vertically nb_line down . """
-   ## Use this function since binding a key to ""Move to next line""
-   ## does not work after a search.
-   ## ??? Is this still true
-   file = GPS.current_context().file().name()
-   line_to_go = GPS.current_context().location().line() + nb_line
-   last_line = GPS.Editor.get_last_line(file)
-   col  = GPS.current_context().location().column()
-   result_line = GPS.current_context().location().line()
-   if line_to_go > last_line:
-      end_of_line (file, last_line)
-   elif line_to_go < 1:
-      GPS.Editor.cursor_set_position (file, 1, 1)
-   else:
-      str = GPS.Editor.get_chars (file, line_to_go, 1, 0)
-      if col > len (str):
-         end_of_line (file, line_to_go)
-      else:
-         GPS.Editor.cursor_set_position (file, line_to_go, col)
-
 def delete_forward():
    """Delete the character just after the cursor in the current editor"""
    buffer = GPS.EditorBuffer.get()
