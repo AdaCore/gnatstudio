@@ -6,6 +6,7 @@
      <key action="subprogram box">control-c n</key>
      <key action="kill line">control-k</key>
      <key action="kill forward">control-d</key>
+     <key action="Delete word forward">alt-d</key>
      <key action="transpose chars">control-t</key>
      <key action="Transpose lines">control-x control-t</key>
      <key action="/File/Save">control-x control-s</key>
