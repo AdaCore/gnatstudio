@@ -11,6 +11,13 @@ Known Problems fixed in GPS 4.1.0
               refresh of the line information in the status bar. You can also
               type some text.
 
+- F622-014 Key shortcuts and menu mnemonics
+  Problem:    When you create a new key shortcut for an action, and when this
+              shortcut matches one of the mnemonics used by gtk+ for menus, for
+              instance alt-w for the Window menu, then the key shortcut is
+              incorrectly displayed in the menus.
+  Workaround: Although not visible, the shortcut works as expected
+
 - Cannot create key shortcuts for menus created from python
   Problem:    When a menu is created in python with GPS.Menu.create(), no
               key bindings can be defined for them through the /Edit/Key Shortcuts
