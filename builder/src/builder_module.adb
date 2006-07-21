@@ -1685,6 +1685,8 @@ package body Builder_Module is
       Mitem          : Dynamic_Menu_Item;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
       Main  : Virtual_File;
+      Tmp   : Boolean;
+      pragma Unreferenced (Tmp);
 
    begin
       if Menu = null then
@@ -1734,7 +1736,7 @@ package body Builder_Module is
                   Found      => Found);
 
                if not Found or else Key.Accel_Key = 0 then
-                  Change_Entry
+                  Tmp := Change_Entry
                     (Accel_Path => Accel_Path,
                      Accel_Key  => GDK_F4,
                      Accel_Mods => 0,
@@ -1805,6 +1807,8 @@ package body Builder_Module is
    is
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
       Mitem : Dynamic_Menu_Item;
+      Tmp   : Boolean;
+      pragma Unreferenced (Tmp);
    begin
       if Menu = null then
          if Mains'Length = 0 then
@@ -1848,7 +1852,7 @@ package body Builder_Module is
                      Found      => Found);
 
                   if not Found or else Key.Accel_Key = 0 then
-                     Change_Entry
+                     Tmp := Change_Entry
                        (Accel_Path => Accel_Path,
                         Accel_Key  => GDK_F2,
                         Accel_Mods => Shift_Mask,
@@ -1889,6 +1893,9 @@ package body Builder_Module is
          Changed    : Boolean)
       is
          pragma Unreferenced (Data, Accel_Key, Accel_Mods, Changed);
+         Tmp   : Boolean;
+         pragma Unreferenced (Tmp);
+
       begin
          --  We reset the entries to "" so that two keybindings with the same
          --  name don't appear in the list.
@@ -1903,7 +1910,7 @@ package body Builder_Module is
            and then Accel_Path /= Make_Menu_Prefix & Current_Make_Suffix
            and then Accel_Path /= Make_Menu_Prefix & Project_Make_Suffix
          then
-            Change_Entry (Accel_Path, 0, 0, True);
+            Tmp := Change_Entry (Accel_Path, 0, 0, True);
 
          elsif Accel_Path'Length > Run_Menu_Prefix'Length
            and then Accel_Path
@@ -1912,7 +1919,7 @@ package body Builder_Module is
                Run_Menu_Prefix
            and then Accel_Path /= Run_Menu_Prefix & Custom_Make_Suffix
          then
-            Change_Entry (Accel_Path, 0, 0, True);
+            Tmp := Change_Entry (Accel_Path, 0, 0, True);
          end if;
       end Cleanup_Binding;
 
