@@ -32,7 +32,7 @@ with Ada.Strings.Hash;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 
-with Integer_Hash;                           use Integer_Hash;
+with Integer_Hash;                          use Integer_Hash;
 
 package Code_Analysis is
 
@@ -55,27 +55,24 @@ package Code_Analysis is
    end record;
    --  Record to store the various code analysis information
 
-   type Analysis_Access is access all Analysis;
-
    ----------------
    -- Tree types --
    ----------------
 
-   type Line is private;
-   type Subprogram is private;
-   type File is private;
-   type Project is private;
+   subtype Line_Id is Integer;
+   type Subprogram_Id is access all String;
+   type File_Id is access all String;
+   type Project_Id is access all String;
+
+   type Line;
+   type Subprogram;
+   type File;
+   type Project;
 
    type Line_Access is access all Line;
    type Subprogram_Access is access all Subprogram;
    type File_Access is access all File;
    type Project_Access is access all Project;
-
-   subtype Subprogram_Id is String (1 .. 12); --  8.3 format...
-
-   -------------------
-   -- Maps packages --
-   -------------------
 
    package Line_Maps is
      new  Hashed_Maps
@@ -104,44 +101,59 @@ package Code_Analysis is
         Element_Type    => Project_Access,
         Hash            => Ada.Strings.Hash,
         Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive);
-   --  Instanciation of Indefinite_Hashed_Maps, for every tree levels
-   --  Used to stored the children of every nodes
+   --  Instanciation of Indefinite_Hashed_Maps
+   --  Used to stored the children of Project nodes
 
-   ------------
-   -- Getter --
-   ------------
+   type Line is record
+      Number        : Line_Id;
+      Analysis_Data : Analysis;
+   end record;
+   --  A Line is identified in the Lines' maps of every Subprogram record by an
+   --  Integer
 
-   function Get_Analysis (L : Line_Access) return Analysis_Access;
-   function Get_Analysis (S : Subprogram_Access) return Analysis_Access;
-   function Get_Analysis (F : File_Access) return Analysis_Access;
-   function Get_Analysis (P : Project_Access) return Analysis_Access;
+   type Subprogram is record
+      Name : Subprogram_Id;
+      Lines : Line_Maps.Map;
 
-   function Get_Id (L : Line_Access) return Integer;
-   function Get_Id (S : Subprogram_Access) return Subprogram_Id;
-   function Get_Id (F : File_Access) return Subprogram_Id;
-   function Get_Id (P : Project_Access) return Subprogram_Id;
-   --  Getter of the identifing field of every tree node types
-   --  Could be an Integer for Lines, or
-   --  to be fixed
+      Analysis_Data : Analysis;
+   end record;
+   --  A Subprogram is identified in the Subprograms' maps of every File record
+   --  by a string's subtype
 
-   function Get_Map (S : Subprogram_Access) return Line_Maps.Map;
-   function Get_Map (F : File_Access) return Subprogram_Maps.Map;
-   function Get_Map (P : Project_Access) return File_Maps.Map;
+   type File is record
+      Name        : File_Id;
+      Subprograms : Subprogram_Maps.Map;
 
-   function Get_Or_Create_Line
-     (S_A : Subprogram_Access;
-      L_I : Integer) return Line_Access;
+      Analysis_Data : Analysis;
+   end record;
+   --  A File is identified in the Files' maps of every File record
+   --  by a string's subtype
+   --  Will be replaced by the apropriate field of VFS objects
 
-   function Get_Or_Create_Subprogram
-     (F_A : File_Access;
-      S_I : Subprogram_Id) return Subprogram_Access;
+   type Project is record
+      Name        : Project_Id;
+      Files       : File_Maps.Map;
 
-   function Get_Or_Create_File
-     (P_A : Project_Access;
-      S_I : Subprogram_Id) return File_Access;
+      Analysis_Data : Analysis;
+   end record;
+   --  A Project is identified in the Projects' maps of every Project record
+   --  by a string's subtype
+   --  Will be replaced by the apropriate field of VFS objects
 
-   function Get_Or_Create_Project
-     (S_I : Subprogram_Id) return Project_Access;
+   -------------------
+   -- Get_Or_Create --
+   -------------------
+
+   function Get_Or_Create (S_A : Subprogram_Access; L_I : Line_Id)
+                           return Line_Access;
+
+   function Get_Or_Create (F_A : File_Access; S_I : Subprogram_Id)
+                           return Subprogram_Access;
+
+   function Get_Or_Create (P_A : Project_Access; F_I : File_Id)
+                           return File_Access;
+
+   function Get_Or_Create (P_I : Project_Id) return Project_Access;
    --  Functions that allow to get an access over an identified tree node
    --  if the node doesn't exists, it is created by this function
 
@@ -155,91 +167,61 @@ package Code_Analysis is
    -- Free-er --
    -------------
 
-   procedure Free_Project (P_A : Project_Access);
+   procedure Free_Project (P_A : in out Project_Access);
    --  Free every children and himself
 
 private
 
-   procedure Free_Line (L_A : Line_Access);
+   procedure Free_Line (L_A : in out Line_Access);
    --  Free every children
-   procedure Free_Subprogram (S_A : Subprogram_Access);
+   procedure Free_Subprogram (S_A : in out Subprogram_Access);
    --  Free every children
-   procedure Free_File (F_A : File_Access);
+   procedure Free_File (F_A : in out File_Access);
    --  Free every children
 
-   procedure Free_Analysis (A : Analysis_Access);
+   procedure Free_Analysis (A : in out Analysis);
    --  Free an Analysis record, so also a
    --  Coverage record
    --  to be continued
 
-   procedure Unchecked_Free_Coverage is new
-     Ada.Unchecked_Deallocation (Coverage, Coverage_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (String, Subprogram_Id);
 
-   procedure Unchecked_Free_Analysis is new
-     Ada.Unchecked_Deallocation (Analysis, Analysis_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (String, File_Id);
+
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (String, Project_Id);
+
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Coverage, Coverage_Access);
 
    ----------------
    -- Line level --
    ----------------
 
-   type Line is record
-      Number : Integer;
-      Analysis_Data : Analysis_Access;
-   end record;
-   --  A Line is identified in the Lines' maps of every Subprogram record by an
-   --  Integer
-
-   procedure Unchecked_Free_Line is new
+   procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Line, Line_Access);
 
    ----------------------
    -- Subprogram level --
    ----------------------
 
-   type Subprogram is record
-      Name : Subprogram_Id;
-      Lines : Line_Maps.Map;
-
-      Analysis_Data : Analysis_Access;
-   end record;
-   --  A Subprogram is identified in the Subprograms' maps of every File record
-   --  by a string's subtype
-
-   procedure Unchecked_Free_Subprogram is new
+   procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Subprogram, Subprogram_Access);
 
    ----------------
    -- File level --
    ----------------
 
-   type File is record
-      Name        : Subprogram_Id;
-      Subprograms : Subprogram_Maps.Map;
-
-      Analysis_Data : Analysis_Access;
-   end record;
-   --  A File is identified in the Files' maps of every File record
-   --  by a string's subtype
-   --  Will be replaced by the apropriate field of VFS objects
-
-   procedure Unchecked_Free_File is new
+   procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (File, File_Access);
 
    -------------------
    -- Project level --
    -------------------
 
-   type Project is record
-      Name        : Subprogram_Id;
-      Files       : File_Maps.Map;
-
-      Analysis_Data : Analysis_Access;
-   end record;
-   --  A Project is identified in the Projects' maps of every Project record
-   --  by a string's subtype
-   --  Will be replaced by the apropriate field of VFS objects
-
-   procedure Unchecked_Free_Project is new
+   procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Project, Project_Access);
 
 end Code_Analysis;
