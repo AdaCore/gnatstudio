@@ -445,11 +445,15 @@ package body Src_Editor_Module.Shell is
             --  second one. This is harder to use in scripts, though, so we
             --  compensate for that here.
             if Compare (Iter1, Iter2) <= 0 then
-               if not (Is_End (Iter2) or else Ends_Line (Iter2)) then
+               --  ??? temporarily commented out, since it breaks ctrl-k in
+               --  Emacs mode (F707-004)
+               --  if not (Is_End (Iter2) or else Ends_Line (Iter2)) then
+               if not Is_End (Iter2) then
                   Forward_Char (Iter2, Success);
                end if;
             else
-               if not (Is_End (Iter1) or else Ends_Line (Iter1)) then
+               --  if not (Is_End (Iter1) or else Ends_Line (Iter1)) then
+               if not Is_End (Iter1) then
                   Forward_Char (Iter1, Success);
                end if;
             end if;
@@ -1953,10 +1957,19 @@ package body Src_Editor_Module.Shell is
          if Buffer /= null then
             Select_Region
               (Buffer,
-               Start_Line   => Get_Line (Iter),
-               Start_Column => Get_Line_Offset (Iter),
-               End_Line     => Get_Line (Iter2),
-               End_Column   => Get_Line_Offset (Iter2));
+               Cursor_Iter  => Iter2,
+               Bound_Iter   => Iter);
+         end if;
+
+      elsif Command = "unselect" then
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Select_Region
+              (Buffer,
+               Start_Line   => Gint'(0),
+               Start_Column => 0,
+               End_Line     => 0,
+               End_Column   => 0);
          end if;
 
       elsif Command = "selection_start"
@@ -2020,15 +2033,15 @@ package body Src_Editor_Module.Shell is
          Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
          if Buffer /= null then
             Set_Return_Value
-              (Data, Get_Text
+              (Data, Get_Chars
                  (Buffer       => Buffer,
-                  Start_Line   =>
+                  Line_Begin   =>
                     Editable_Line_Type (Get_Line (Iter) + 1),
-                  Start_Column =>
+                  Column_Begin =>
                     Character_Offset_Type (Get_Line_Offset (Iter) + 1),
-                  End_Line     =>
+                  Line_End     =>
                     Editable_Line_Type (Get_Line (Iter2) + 1),
-                  End_Column   =>
+                  Column_End   =>
                     Character_Offset_Type (Get_Line_Offset (Iter2) + 1)));
          end if;
 
@@ -2067,12 +2080,7 @@ package body Src_Editor_Module.Shell is
             Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
             if Buffer /= null then
                External_End_Action (Buffer);
-               Select_Region
-                 (Buffer,
-                  Start_Line   => Get_Line (Iter),
-                  Start_Column => Get_Line_Offset (Iter),
-                  End_Line     => Get_Line (Iter2),
-                  End_Column   => Get_Line_Offset (Iter2));
+               Select_Range (Buffer, Iter, Iter2);
                if Command = "copy" then
                   Copy_Clipboard (Get_Clipboard (Kernel), Buffer);
                else
@@ -2929,6 +2937,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, "lines_count", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "select", 0, 2, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "unselect", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "selection_start", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
