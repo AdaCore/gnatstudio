@@ -437,6 +437,30 @@ This directory always ends with a directory separator</description>
      <see_also name="GPS.get_system_dir()" />
   </shell_doc>
 
+  <shell_doc name="GPS.last_command">
+     <return>A string</return>
+     <description>This function returns the name of the last action executed by GPS. This name is not ultra-precise: it will be accurate only when the action is executed through a key binding. Otherwise, an empty string is returned. However, the intent here is for a command to be able to check whether it is called multiple times in a row. For this, this command will return the command set by GPS.set_last_command() if it was set.</description>
+     <example lang="python">
+         def kill_line ():
+            """Emulates Emacs behavior: when called multiple times, the cut line must be
+               appended to the previously cut one."""
+            ## The name of the command below is unknown to GPS. This is just a
+            ## string we use in this implementation to detect multiple consecutive
+            ## calls to this function. Note that this works whether the function is
+            ## called from the same key binding or not, and from the same GPS action
+            ## or not 
+            append = GPS.last_command() == "my-kill-line":
+            GPS.set_last_command ("my-kill-line")
+     </example>
+     <see_also name="GPS.set_last_command" />
+  </shell_doc>
+
+  <shell_doc name="GPS.set_last_command">
+      <param name="command">A string</param>
+      <description>This function overrides the name of the last command executed by GPS. This new name will be the one returned by GPS.last_command() until the user performs a different action. Thus, multiple calls of the same action in a row will always return the value of the command parameter. See the example in GPS.last_command()</description>
+       <see_also name="GPS.last_command" />
+   </shell_doc>
+
   <shell_doc name="GPS.insmod">
      <param name="shared_lib">Library containing the code of the module</param>
      <param name="module">Name of the module</param>
