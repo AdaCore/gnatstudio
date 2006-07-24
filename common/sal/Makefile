@@ -1,13 +1,22 @@
 #USAGE: make [CC=<compiler>] JAVA_SDK=<path>
 CC=gcc
-GNAT_RTS:=${shell gnatls -v | grep adalib | head -1}
+GNAT_RTS:=${shell gnatls -v | grep adalib | sed -e "s/^[ ]*//" | head -1}
+GNAT_BASE_PATH=${shell which gnat | sed -e "s/bin\/gnat//"}
 
 ifeq ($(OS),Windows_NT)
 	JAVA_OS_DIR=win32
         OUTPUT=gps_utils.dll
+	LIBRARIES=-lgcc
+	FPIC=
+	NOSTDLIB=
+	ADALIB="${GNAT_RTS}/libgnat.a"
 else
 	MANAGE_SEGV_HANDLER=-D__MANAGE_SEGV_HANDLER__
         OUTPUT=libgps_utils.so
+	LIBRARIES=-lgcc -lgcc_eh
+	FPIC=-fPIC
+	NOSTDLIB=-nostdlib
+	ADALIB=adalib/libgnat.a
 
 	ifeq (${shell uname}, SunOS)
 		JAVA_OS_DIR=solaris
@@ -15,13 +24,22 @@ else
 		JAVA_OS_DIR=linux
 	endif
 endif
-
 main:
-	cd obj; $(CC) -fPIC -I$(JAVA_SDK)/include -I$(JAVA_SDK)/include/$(JAVA_OS_DIR) $(MANAGE_SEGV_HANDLER) -c ../jni_wrappers.c
 	$(RM) obj/*gps_utils*
-	gnatmake -Psal
-	cd obj; \
-	gnatbind -Lgps_utils jni.ali gnatbench-jni_functions.ali gnatbench.ali -o b~gps_utils.adb; \
-	gcc -c b~gps_utils.adb -fPIC -O1 -Wall -g; \
-	gcc -o my_lib.o *.o -Wl,-r -v -nostdlib; \
-	gcc -shared my_lib.o -o $(OUTPUT) ${GNAT_RTS}/libgnat.a -lgcc -lgcc_eh
+	
+	# On linux / solaris, we have to recompile libgnat in order to ensure
+	# that it is compiled with -fPIC. We don't do that on windows, since
+	# -fPIC is irrelevant there.
+	if [ "$(OS)" != Windows_NT ]; then \
+	   mkdir adalib; \
+	   cp ${GNAT_RTS}/Makefile.adalib adalib/; \
+	   cd adalib/; make -f Makefile.adalib ROOT="${GNAT_BASE_PATH}" CFLAGS="-fPIC"; \
+	fi
+	
+	$(CC) $(FPIC) -I$(JAVA_SDK)/include -I$(JAVA_SDK)/include/$(JAVA_OS_DIR) $(MANAGE_SEGV_HANDLER) -c jni_wrappers.c -o obj/jni_wrappers.o
+	
+	gnatmake -c $(FPIC) -O -f -x -Psal
+	cd obj; gnatbind -o b~gps_utils.adb -Lgps_utils jni.ali gnatbench-jni_functions.ali gnatbench.ali
+	gcc -c $(FPIC) -O -g obj/b~gps_utils.adb -o obj/b~gps_utils.o
+	gcc -o obj/my_lib.a obj/*.o -Wl,-r -v -nostdlib $(LIBRARIES) $(ADALIB)
+	gcc -v -shared $(NOSTDLIB) -o lib/$(OUTPUT) obj/my_lib.a
