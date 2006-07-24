@@ -104,6 +104,8 @@ package body Src_Editor_Module.Shell is
    Read_Only_Cst         : aliased constant String := "read_only";
    Value_Cst             : aliased constant String := "value";
    Overlay_Cst           : aliased constant String := "overlay";
+   Backward_Cst          : aliased constant String := "backward";
+   Whole_Word_Cst        : aliased constant String := "whole_word";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -2301,6 +2303,56 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value
            (Data, Create_Editor_Location (Get_Script (Data), Iter));
 
+      elsif Command = "search" then
+         Name_Parameters
+           (Data,
+            ( --  1 =>  Self
+             2 => Pattern_Cst'Access,
+             3 => Backward_Cst'Access,
+             4 => Case_Cst'Access,
+             5 => Regexp_Cst'Access,
+             6 => Whole_Word_Cst'Access,
+             7 => Scope_Cst'Access));
+         declare
+            Context : Current_File_Context_Access :=
+              Current_File_Context_Access
+                (Current_File_Factory
+                     (Kernel          => Get_Kernel (Data),
+                      All_Occurrences => False,
+                      Scope           => Search_Scope'Value
+                        (Nth_Arg (Data, 7, "Whole"))));
+            Found       : Boolean;
+            Match_From  : Gtk_Text_Iter;
+            Match_Up_To : Gtk_Text_Iter;
+         begin
+            Set_Context
+              (Context,
+               Look_For => Nth_Arg (Data, 2),
+               Options  => (Case_Sensitive => Nth_Arg (Data, 4, False),
+                            Whole_Word     => Nth_Arg (Data, 6, False),
+                            Regexp         => Nth_Arg (Data, 5, False)));
+            Get_Location (Iter, Data, 1, Default => Iter);
+            Search_In_Editor
+              (Context         => Context,
+               Start_At        => Iter,
+               Kernel          => Get_Kernel (Data),
+               Search_Backward => Nth_Arg (Data, 3, False),
+               Match_From      => Match_From,
+               Match_Up_To     => Match_Up_To,
+               Found           => Found);
+            if Found then
+               Set_Return_Value_As_List (Data);
+               Set_Return_Value
+                 (Data,
+                  Create_Editor_Location (Get_Script (Data), Match_From));
+               Set_Return_Value
+                 (Data,
+                  Create_Editor_Location (Get_Script (Data), Match_Up_To));
+            end if;
+
+            Free (Search_Context_Access (Context));
+         end;
+
       elsif Command = "forward_char" then
          Name_Parameters (Data, (1 => Count_Cst'Access));
          Get_Location (Iter, Data, 1, Default => Iter);
@@ -2889,6 +2941,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, "forward_overlay", 0, 1, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "backward_overlay", 0, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "search", 1, 6, Location_Cmds'Access, EditorLoc);
 
       --  EditorMark
 
