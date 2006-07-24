@@ -39,7 +39,7 @@ import re
 import os
 
 class Console_Process (Console, Process):
-   locations_category = "make results"
+   locations_category = "Builder results"
 
    # This regexp matches the output of the GNAT compiler to report its progress. Change
    # this if your compiler outputs this information differently.
