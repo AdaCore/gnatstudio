@@ -23,7 +23,10 @@
 ##      search, GPS will jump to the next occurrence. If you press the key
 ##      to activate the backward incremental search, GPS will jump to the
 ##      previous occurrence 
-
+##
+## If you press <enter> while there is no search string, this module will
+## automatically open the advanced, non-incremental search dialog of GPS, to
+## match Emacs' behavior
 
 from GPS import *
 
@@ -145,7 +148,8 @@ class Isearch (CommandWindow):
 
    def on_activate (self, input):
      """The user has pressed enter"""
-     pass  ## Nothing to be done for us
+     if input == "":
+        execute_action ("/Navigate/Find or Replace...")
 
    def on_cancel (self, input):
      """The user has cancelled the search"""
