@@ -1027,30 +1027,26 @@ package body Codefix.Formal_Errors is
    is
       Result               : Solution_List;
       Command1, Command2   : Paste_Profile_Cmd;
-      Internal_Body_Cursor : File_Cursor := File_Cursor (Body_Cursor);
-      Body_Info : Construct_Tree_Iterator;
+      Body_Info, Spec_Info : Construct_Tree_Iterator;
    begin
       Body_Info := Get_Iterator_At (Current_Text, Body_Cursor, Before);
+      Spec_Info := Get_Iterator_At (Current_Text, Spec_Cursor, After);
 
-      Set_Location
-        (Internal_Body_Cursor,
-         Get_Construct (Body_Info).Sloc_Start.Line,
-         1);
+      Initialize
+        (Command1,
+         Current_Text,
+         Body_Info,
+         Spec_Info,
+         Get_File (Body_Cursor),
+         Get_File (Spec_Cursor));
 
-      declare
-         Line : constant String :=
-           Get_Line (Current_Text, Internal_Body_Cursor);
-      begin
-         Set_Location
-           (Internal_Body_Cursor,
-            Get_Construct (Body_Info).Sloc_Start.Line,
-            To_Column_Index
-              (Char_Index
-                 (Get_Construct (Body_Info).Sloc_Start.Column), Line));
-      end;
-
-      Initialize (Command1, Current_Text, Internal_Body_Cursor, Spec_Cursor);
-      Initialize (Command2, Current_Text, Spec_Cursor, Internal_Body_Cursor);
+      Initialize
+        (Command2,
+         Current_Text,
+         Spec_Info,
+         Body_Info,
+         Get_File (Spec_Cursor),
+         Get_File (Body_Cursor));
 
       Set_Caption (Command1, "Modify the implementation profile");
       Set_Caption (Command2, "Modify the spec profile");
