@@ -459,7 +459,13 @@ This directory always ends with a directory separator</description>
       <param name="command">A string</param>
       <description>This function overrides the name of the last command executed by GPS. This new name will be the one returned by GPS.last_command() until the user performs a different action. Thus, multiple calls of the same action in a row will always return the value of the command parameter. See the example in GPS.last_command()</description>
        <see_also name="GPS.last_command" />
-   </shell_doc>
+  </shell_doc>
+
+  <shell_doc name="GPS.lookup_actions_from_key">
+       <param name="key">A string</param>
+       <return>A list of strings</return>
+       <description>Given a key binding, for instance "control-x control-b", this function returns the list of actions that could be executed. Not all actions would be executed, though, since only the ones for which the filter matches are executed</description>
+  </shell_doc>
 
   <shell_doc name="GPS.insmod">
      <param name="shared_lib">Library containing the code of the module</param>
@@ -949,6 +955,8 @@ local to the current directory.</description>
       <param name="scope" default="whole">One of ("whole", "comments", "strings", "code")</param>
       <return>List of GPS.FileLocation instances</return>
       <description>Return the list of matches for pattern in the file. Default values are False for case_sensitive and regexp. Scope is a string, and should be any of 'whole', 'comments', 'strings', 'code'. The latter will match only for text outside of comments</description>
+      <see_also name="GPS.EditorLocation.search" />
+      <see_also name="GPS.File.search_next" />
   </shell_doc>
 
   <shell_doc name="GPS.File.search_next">
@@ -958,6 +966,7 @@ local to the current directory.</description>
       <param name="regexp" default="False">A boolean</param>
       <return>An instance of GPS.FileLocation</return>
       <description>Return the next match for pattern in the file. Default values are False for case_sensitive and regexp. Scope is a string, and should be any of 'whole', 'comments', 'strings', 'code'. The latter will match only for text outside of comments</description>
+      <see_also name="GPS.File.search_next" />
   </shell_doc>
 
   <shell_doc name="GPS.File.set_property">
@@ -3866,6 +3875,19 @@ the same line/column even if new lines are added in the buffer. This location is
       <description>Return a new location located count lines after self. The location is moved back to the beginning of the line</description>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorLocation.search">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <param name="pattern">A string</param>
+      <param name="backward" default="False">A boolean</param>
+      <param name="case_sensitive" default="False">A boolean</param>
+      <param name="regexp" default="False">A boolean</param>
+      <param name="whole_word" default="False">A boolean</param>
+      <param name="scope" default="Whole">A string</param>
+      <return>A list of two GPS.EditorLocation</return>
+      <description>This function searches for the next occurrence of Pattern in the editor, starting at the given location. If there is such a match, this function returns the two locations for the beginning of the match and the end of the match. Typically, these would be used to highlight the match in the editor</description>
+      <see_also name="GPS.File.search" />
+  </shell_doc>
+
   <shell_doc name="GPS.EditorLocation.offset">
       <param name="self">The instance of GPS.EditorLocation</param>
       <return>An integer</return>
@@ -4448,6 +4470,63 @@ GPS comes with some predefined logging streams, which can be used to configure t
   <shell_doc name="GPS.Bookmark.goto">
       <param name="self">An instance of GPS.Bookmark</param>
       <description>Change the current context in GPS so that it matches the one saved in the bookmark. In particular, if the bookmark is inside an editor, this editor is raised, and the cursor moved to the correct line and column. You cannot query directly the line and column from the bookmark, since these might not exist, for instance when the editor points inside a browser.</description>
+  </shell_doc>
+
+  <!--################################################################
+      ## CommandWindow class
+      ################################################################-->
+
+  <shell_doc name="GPS.CommandWindow">
+     <description>This class gives access to a command-line window that pops up on the screen. This window is short-lived (in fact there can be only one such window at any given time), and any key press is redirected to that window. As a result, it should be used to interactively query a parameter for an action, for instance.
+Among other things, it is used in the implementation of the interactive search facility, where each key pressed should be added to the search pattern instead of to the editor.</description>
+      <example lang="python">
+   class Isearch (CommandWindow):
+      def __init__ (self):
+         CommandWindow.__init__ \
+           (self, prompt="Pattern",
+            on_key = self.on_key,
+            on_changed = self.on_changed)
+
+      def on_key (self, input, key, cursor_pos):
+         if key == "control-w":
+            .... # Copy current word from editor into the window
+            self.write (input [:cursor_pos + 1] + "FOO" + input [cursor_pos + 1:])
+            return True  ## No further processing needed
+         return False
+
+      def on_changed (self, input, cursor_pos):
+         ## Search for next occurrence of input in buffer
+         ....
+      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.CommandWindow.__init__">
+     <param name="self">The instance of GPS.CommandWindow we are creating</param>
+     <param name="prompt" default="">A string</param>
+     <param name="global_window" default="False">A boolean</param>
+     <param name="on_changed" default="null">A subprogram</param>
+     <param name="on_activate" default="null">A subprogram</param>
+     <param name="on_cancel" default="null">A subprogram</param>
+     <param name="on_key" default="null">A subprogram</param>
+     <description>This function initializes an instance of a command window. An exception is raised if such a window is already active in GPS. Otherwise, the new window is popped up on the screen. Its location depends on the global_window parameter: if true, the command window is displayed at the bottom of the GPS window and occupies its whole width. If false, it is displayed at the bottom of the currently selected window.
+The prompt is the short string displayed just before the command line itself. Its goal is to indicate to the user what he is entering.
+The last four parameters are callbacks:
+   - on_changed is called when the user has entered one or more new characters in the command line. This function is given two parameters: the current input string, and the last cursor position in this string. See the example above on how to get the part of the input before and after the cursor.
+   - on_activate is called when the user has pressed enter. The command window has already been closed at that point, and the focus given back to the initial MDI window that had it. This callback is given a single parameter, the final input string
+   - on_cancel is called when the user has pressed a key that closed the dialog, for instance Esc. It is given a single parameter, the final input string
+   - on_key is called when the user has pressed a new key on his keyboard, but before the corresponding character has been added to the command line. This can be used to filter out some characters, or provide special behavior for some key combination (see the example above). It is given three parameters, the current input string, the key that was pressed, and the current cursor position.</description>
+   </shell_doc>
+
+  <shell_doc name="GPS.CommandWindow.write">
+      <param name="self">An instance of GPS.CommandWindow</param>
+      <param name="text">A string</param>
+      <description>This function replaces the current content of the command line. As a result, you should make sure to preserve the character you want, as in the on_key callback in the example above. Calling this function will also result in several calls to the on_changed callback, one of them with an empty string (since gtk first deletes the contents and then writes the new contents</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.CommandWindow.read">
+      <param name="self">An instance of GPS.CommandWindow</param>
+      <return>A string</return>
+      <description>This function returns the current contents of the command window</description>
   </shell_doc>
 
   <!--#################################################################
