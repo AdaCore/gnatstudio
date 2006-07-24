@@ -1,8 +1,19 @@
 ## This module implements high level actions related to text editing
+## Most of the functions provided here are trying to emulate the behavior
+## of the Emacs editor. However, this file provides no keybinding, this is
+## left to a separate file (emacs.xml), which defines a theme that users
+## can activate optionally.
+## This makes it possible for you to use any of the functions here without
+## activating the Emacs mode
 
 import GPS
 import string, traceback
 import navigation_utils
+
+transient_mark_mode = True
+## If set to False, then the region is never unselected when the clipboard is
+## modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs
+## mode with the same name, although will behave differently in some cases
 
 ## Register the actions
 GPS.parse_xml ("""
@@ -440,5 +451,12 @@ def cancel_mark_command (buffer = None):
           buffer.get_mark ("emacs_selection_bound").delete ()
     except:
        pass  ## No such mark
+
+def on_clipboard_changed (hook):
+    """Called when the contents of the clipboard has changed"""
+    global transient_mark_mode
+    if transient_mark_mode:
+       cancel_mark_command ()
+GPS.Hook ("clipboard_changed").add (on_clipboard_changed)
 
 
