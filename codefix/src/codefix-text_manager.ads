@@ -239,6 +239,10 @@ package Codefix.Text_Manager is
      (This : Text_Interface) return GNAT.OS_Lib.String_Access is abstract;
    --  Get the entire file in a String_Access.
 
+   function Get_Buffer
+     (This : access Text_Interface'Class) return GNAT.OS_Lib.String_Access;
+   --  Return the buffer stored in this text
+
    function Get_File_Name (This : Text_Interface) return VFS.Virtual_File;
    --  Return the name of the file.
 
