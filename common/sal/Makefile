@@ -38,5 +38,5 @@ endif
 	gnatmake -c $(FPIC) -Psal
 	cd obj; gnatbind -o b~gps_utils.adb -Lgps_utils jni.ali gnatbench-jni_functions.ali gnatbench.ali
 	gcc -c $(FPIC) -O -g obj/b~gps_utils.adb -o obj/b~gps_utils.o
-	gcc -o obj/my_lib.a obj/*.o -Wl,-r -v -nostdlib $(GCCLIBS) $(LIBGNAT)
+	gcc -o obj/my_lib.a obj/*.o -Wl,-r -v -nostdlib $(LIBGNAT) $(GCCLIBS)
 	gcc -v -shared $(NOSTDLIB) -o lib/$(OUTPUT) obj/my_lib.a
