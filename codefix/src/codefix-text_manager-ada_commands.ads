@@ -217,10 +217,12 @@ package Codefix.Text_Manager.Ada_Commands is
    type Paste_Profile_Cmd is new Text_Command with private;
 
    procedure Initialize
-     (This         : in out Paste_Profile_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Destination  : File_Cursor'Class;
-      Source       : File_Cursor'Class);
+     (This             : in out Paste_Profile_Cmd;
+      Current_Text     : Text_Navigator_Abstr'Class;
+      Destination_It   : Construct_Tree_Iterator;
+      Source_It        : Construct_Tree_Iterator;
+      Destination_File : VFS.Virtual_File;
+      Source_File      : VFS.Virtual_File);
    --  Set all the marks that will be needed to paste the profile later.
 
    procedure Execute
