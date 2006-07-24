@@ -6,17 +6,17 @@ GNAT_BASE_PATH=$(shell which gnat | sed -e "s/bin\/gnat//")
 ifeq ($(OS),Windows_NT)
 	JAVA_OS_DIR=win32
         OUTPUT=gps_utils.dll
-	LIBRARIES=-lgcc
+	GCCLIBS=-lgcc
 	FPIC=
 	NOSTDLIB=
-	ADALIB="${GNAT_RTS}/libgnat.a"
+	LIBGNAT="$(GNAT_RTS)/libgnat.a"
 else
 	MANAGE_SEGV_HANDLER=-D__MANAGE_SEGV_HANDLER__
         OUTPUT=libgps_utils.so
-	LIBRARIES=-lgcc -lgcc_eh
+	GCCLIBS=-lgcc -lgcc_eh
 	FPIC=-fPIC
 	NOSTDLIB=-nostdlib
-	ADALIB=adalib/libgnat.a
+	LIBGNAT=adalib/libgnat.a
 
 	ifeq (${shell uname}, SunOS)
 		JAVA_OS_DIR=solaris
@@ -38,5 +38,5 @@ endif
 	gnatmake -c $(FPIC) -Psal
 	cd obj; gnatbind -o b~gps_utils.adb -Lgps_utils jni.ali gnatbench-jni_functions.ali gnatbench.ali
 	gcc -c $(FPIC) -O -g obj/b~gps_utils.adb -o obj/b~gps_utils.o
-	gcc -o obj/my_lib.a obj/*.o -Wl,-r -v -nostdlib $(LIBRARIES) $(ADALIB)
+	gcc -o obj/my_lib.a obj/*.o -Wl,-r -v -nostdlib $(GCCLIBS) $(LIBGNAT)
 	gcc -v -shared $(NOSTDLIB) -o lib/$(OUTPUT) obj/my_lib.a
