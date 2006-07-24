@@ -1,3 +1,30 @@
+## This script adds an incremental-search capability to GPS, similar to
+## what Emacs does.
+## When you select the menu /Navigate/Find Incremental (or bind a key
+## shortcut to it through the editor at /Edit/Key shortcuts), a temporary
+## window is open. From then on, any character you type is displayed in
+## this new window, and makes a search pattern. Whenever this pattern
+## is modified, GPS will search, starting at the current location, for its
+## next occurrence in the current file.
+## While you are editing the pattern, there are a number of special key
+## shortcuts that can be used:
+##    - control-w
+##      will copy the current word into the pattern, and moves the cursor
+##      to the next word, so that pressing control-w multiple times in
+##      a row allows you to easily copy part of a line into the pattern
+##
+##    - control-y
+##      is similar to control-w but copies the end of the current line into
+##      the pattern. If the cursor is at the end of the current line, the
+##      whole next line is copied
+##
+##    - Key that activates the isearch
+##      If you press the same key that was used to activate the incremental
+##      search, GPS will jump to the next occurrence. If you press the key
+##      to activate the backward incremental search, GPS will jump to the
+##      previous occurrence 
+
+
 from GPS import *
 
 ## Changing the name of menus should be reflected in emacs.xml
