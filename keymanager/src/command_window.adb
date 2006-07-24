@@ -132,20 +132,25 @@ package body Command_Window is
       if Modif = 0
         and then (Key = GDK_Return or Key = GDK_ISO_Enter)
       then
-         if Win.On_Activate /= null then
-            declare
-               C : Callback_Data'Class :=
-                 Create (Get_Script (Win.On_Activate.all), 1);
-               Tmp : Boolean;
-               pragma Unreferenced (Tmp);
-            begin
-               Set_Nth_Arg (C, 1, Get_Text (Win.Line));
-               Tmp := Execute (Win.On_Activate, C);
-               Free (C);
-            end;
-         end if;
+         declare
+            Str : constant String := Get_Text (Win.Line);
+            On_Activate : constant Subprogram_Type := Win.On_Activate;
+         begin
+            Destroy (Win);
+            if On_Activate /= null then
+               declare
+                  C : Callback_Data'Class :=
+                    Create (Get_Script (On_Activate.all), 1);
+                  Tmp : Boolean;
+                  pragma Unreferenced (Tmp);
+               begin
+                  Set_Nth_Arg (C, 1, Str);
+                  Tmp := Execute (On_Activate, C);
+                  Free (C);
+               end;
+            end if;
+         end;
 
-         Destroy (Win);
          return True;
       end if;
 
