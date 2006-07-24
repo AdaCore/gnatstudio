@@ -25,6 +25,7 @@ with GNAT.Regpat;                       use GNAT.Regpat;
 with Case_Handling;                     use Case_Handling;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with String_Utils;                      use String_Utils;
+with Language.Ada;                      use Language.Ada;
 with VFS;                               use VFS;
 
 package body Codefix.Text_Manager.Ada_Commands is
@@ -797,88 +798,153 @@ package body Codefix.Text_Manager.Ada_Commands is
    -----------------------
 
    procedure Initialize
-     (This         : in out Paste_Profile_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Destination  : File_Cursor'Class;
-      Source       : File_Cursor'Class)
+     (This             : in out Paste_Profile_Cmd;
+      Current_Text     : Text_Navigator_Abstr'Class;
+      Destination_It   : Construct_Tree_Iterator;
+      Source_It        : Construct_Tree_Iterator;
+      Destination_File : VFS.Virtual_File;
+      Source_File      : VFS.Virtual_File)
    is
       procedure Initialize_Profile
-        (Position                 : File_Cursor;
+        (Position_It              : Construct_Tree_Iterator;
+         Position_File            : VFS.Virtual_File;
          Begin_Cursor, End_Cursor : out File_Cursor);
       --  Set Begin_Cursor and End_Cursor at the begining and at the end of the
       --  profile's function starting at position.
 
       procedure Initialize_Profile
-        (Position                 : File_Cursor;
+        (Position_It              : Construct_Tree_Iterator;
+         Position_File            : VFS.Virtual_File;
          Begin_Cursor, End_Cursor : out File_Cursor)
       is
-         Local_Cursor   : Word_Cursor;
+         Buffer : constant GNAT.OS_Lib.String_Access := Get_Buffer
+           (Get_File (Current_Text, Position_File));
 
-         Delimiters_Array : String_Array (1 .. 4) :=
-           (new String'("("),
-            new String'("is"),
-            new String'(";"),
-            new String'("return"));
+         Paren_Depth : Integer := 0;
+
+         function Entity_Callback
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean;
+
+         ---------------------
+         -- Entity_Callback --
+         ---------------------
+
+         function Entity_Callback
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean
+         is
+            pragma Unreferenced (Partial_Entity);
+
+            Line_Offset : constant Integer :=
+              Get_Construct (Position_It).Sloc_Start.Line - 1;
+            --  In order to get the line in the real buffer, lines from the
+            --  analysis have to be incremented by this value.
+
+            Column_Offset : constant Integer :=
+              Get_Construct (Position_It).Sloc_Start.Column - 1;
+            --  Column offset for the first line.
+
+            procedure Begin_Of_Profile;
+
+            procedure End_Of_Profile;
+
+            ----------------------
+            -- Begin_Of_Profile --
+            ----------------------
+
+            procedure Begin_Of_Profile is
+            begin
+               Begin_Cursor.File := Position_File;
+               Begin_Cursor.Line := Sloc_Start.Line + Line_Offset;
+
+               if Sloc_Start.Line = 1 then
+                  Begin_Cursor.Col := To_Column_Index
+                    (Char_Index (Sloc_Start.Column + Column_Offset),
+                     Get_Line (Current_Text, Begin_Cursor, 1));
+               else
+                  Begin_Cursor.Col := To_Column_Index
+                    (Char_Index (Sloc_Start.Column),
+                     Get_Line (Current_Text, Begin_Cursor, 1));
+               end if;
+            end Begin_Of_Profile;
+
+            --------------------
+            -- End_Of_Profile --
+            --------------------
+
+            procedure End_Of_Profile is
+            begin
+               End_Cursor.File := Position_File;
+               End_Cursor.Line := Sloc_Start.Line + Line_Offset;
+
+               if Sloc_Start.Line = 1 then
+                  End_Cursor.Col := To_Column_Index
+                    (Char_Index (Sloc_Start.Column + Column_Offset),
+                     Get_Line (Current_Text, End_Cursor, 1));
+               else
+                  End_Cursor.Col := To_Column_Index
+                    (Char_Index (Sloc_Start.Column),
+                     Get_Line (Current_Text, End_Cursor, 1));
+               end if;
+
+               End_Cursor := File_Cursor
+                 (Previous_Char (Current_Text, End_Cursor));
+
+               if Begin_Cursor = Null_File_Cursor then
+                  End_Cursor.Col := End_Cursor.Col + 1;
+                  Begin_Cursor := Clone (End_Cursor);
+               end if;
+            end End_Of_Profile;
+
+            Name : constant String := To_Lower
+              (Buffer (Sloc_Start.Index .. Sloc_End.Index));
+
+         begin
+            if Paren_Depth = 0 then
+               if Entity = Keyword_Text then
+                  if Name = "is" then
+                     End_Of_Profile;
+                     return True;
+                  elsif Name = "return" then
+                     Begin_Of_Profile;
+                  end if;
+               elsif Entity = Operator_Text then
+                  if Name = "(" then
+                     Begin_Of_Profile;
+                     Paren_Depth := Paren_Depth + 1;
+                  elsif Name = ";" then
+                     End_Of_Profile;
+                     return True;
+                  end if;
+               end if;
+            else
+               if Entity = Operator_Text then
+                  if Name = "(" then
+                     Paren_Depth := Paren_Depth + 1;
+                  elsif Name = ")" then
+                     Paren_Depth := Paren_Depth - 1;
+                  end if;
+               end if;
+            end if;
+
+            return False;
+         end Entity_Callback;
+
       begin
-         Local_Cursor := Word_Cursor
-           (Search_Strings
-              (Current_Text,
-               Position,
-               Delimiters_Array,
-               Std_Ada_Escape));
 
-         if Get_Word (Local_Cursor) = "(" then
-            Begin_Cursor := Clone (File_Cursor (Local_Cursor));
-            Free (Local_Cursor);
+         Begin_Cursor := Null_File_Cursor;
+         End_Cursor := Null_File_Cursor;
 
-            End_Cursor := File_Cursor
-              (Get_Right_Paren (Current_Text, Begin_Cursor));
-
-            Local_Cursor := Word_Cursor
-              (Search_Strings
-                 (Current_Text,
-                  End_Cursor,
-                  Delimiters_Array (2 .. 3),
-                  --  Search a "is" or a ";"
-                  Std_Ada_Escape));
-
-            Free (End_Cursor);
-            End_Cursor := File_Cursor (Previous_Char
-              (Current_Text, Clone (File_Cursor (Local_Cursor))));
-
-            Free (Local_Cursor);
-         elsif Get_Word (Local_Cursor) = "return" then
-            Begin_Cursor := Clone (File_Cursor (Local_Cursor));
-
-            Local_Cursor := Word_Cursor
-              (Search_Strings
-                 (Current_Text,
-                  Begin_Cursor,
-                  Delimiters_Array (2 .. 3),
-                  --  Search a "is" or a ";"
-                  Std_Ada_Escape));
-
-            Free (End_Cursor);
-            End_Cursor := File_Cursor
-              (Previous_Char
-                 (Current_Text, Clone (File_Cursor (Local_Cursor))));
-
-            Free (Local_Cursor);
-         else
-            --  In this case, the profile is empty, so we will artificlally
-            --  move the begin cursor and create a space after the name of the
-            --  function
-            Begin_Cursor := File_Cursor (Clone
-              (Previous_Char (Current_Text, File_Cursor (Local_Cursor))));
-            End_Cursor := File_Cursor (Clone
-              (Previous_Char (Current_Text, File_Cursor (Local_Cursor))));
-
-            Begin_Cursor.Col := Begin_Cursor.Col + 1;
-            End_Cursor.Col := End_Cursor.Col + 1;
-            Free (Local_Cursor);
-         end if;
-
-         Free (Delimiters_Array);
+         Parse_Entities
+           (Ada_Lang,
+            Buffer.all
+              (Get_Construct (Position_It).Sloc_Start.Index .. Buffer'Last),
+            Entity_Callback'Unrestricted_Access);
       end Initialize_Profile;
 
       Destination_Begin, Destination_End : File_Cursor;
@@ -886,8 +952,16 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    begin
       Initialize_Profile
-        (File_Cursor (Destination), Destination_Begin, Destination_End);
-      Initialize_Profile (File_Cursor (Source), Source_Begin, Source_End);
+        (Destination_It,
+         Destination_File,
+         Destination_Begin,
+         Destination_End);
+
+      Initialize_Profile
+        (Source_It,
+         Source_File,
+         Source_Begin,
+         Source_End);
 
       if Destination_Begin = Destination_End then
          This.Add_Spaces := True;
