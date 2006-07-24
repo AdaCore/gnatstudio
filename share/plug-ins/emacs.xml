@@ -67,6 +67,7 @@
      <key action="/Edit/Rectangle/Open">control-x r o</key>
      <key action="/Edit/Rectangle/Replace with Text">control-x r t</key>
 
+     <key action="/Navigate/Find or Replace..." />
      <key action="/Navigate/Find Incremental">control-s</key>
      <key action="/Navigate/Find Previous Incremental">control-r</key>
   </theme>
