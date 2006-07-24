@@ -5,14 +5,14 @@ GNAT_BASE_PATH=$(shell which gnat | sed -e "s/bin\/gnat//")
 
 ifeq ($(OS),Windows_NT)
 	JAVA_OS_DIR=win32
-        OUTPUT=gps_utils.dll
+	OUTPUT=gps_utils.dll
 	GCCLIBS=-lgcc
 	FPIC=
 	NOSTDLIB=
 	LIBGNAT="$(GNAT_RTS)/libgnat.a"
 else
 	MANAGE_SEGV_HANDLER=-D__MANAGE_SEGV_HANDLER__
-        OUTPUT=libgps_utils.so
+	OUTPUT=libgps_utils.so
 	GCCLIBS=-lgcc -lgcc_eh
 	FPIC=-fPIC
 	NOSTDLIB=-nostdlib
