@@ -24,6 +24,9 @@
 ##      to activate the backward incremental search, GPS will jump to the
 ##      previous occurrence 
 ##
+##    - Esc
+##      cancels the current search, and unselect the last occurrence found
+##
 ## If you press <enter> while there is no search string, this module will
 ## automatically open the advanced, non-incremental search dialog of GPS, to
 ## match Emacs' behavior
@@ -38,11 +41,13 @@ isearch_backward_menu = '/Navigate/Find Previous Incremental'
 
 parse_xml ("""
   <action name='""" + isearch_action_name + """' category="Editor" output="none">
+     <description>This action provides an incremental search facility: once activated, each character you type is added to the search pattern, and GPS jumps to the next occurrence of the pattern</description> 
      <filter id="Source editor" />
      <shell lang="python">isearch.Isearch()</shell>
   </action>
   <action name='""" + isearch_backward_action_name + """' category="Editor"
           output="none">
+     <description>This action provides a backward incremental search facility: once activated, each character you type is added to the search pattern, and GPS jumps to the previous occurrence of the pattern</description>
      <filter id="Source editor" />
      <shell lang="python">isearch.Isearch (backward=1)</shell>
   </action>
