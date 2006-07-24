@@ -32,9 +32,7 @@ project Sal is
    for Object_Dir use "obj";
    for Languages use ("Ada");
 
-   package Compiler is
-      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada") & "-fPIC";
-   end Compiler;
+   package Compiler renames Shared.Compiler;
 
    package IDE renames Shared.IDE;
 end Sal;
