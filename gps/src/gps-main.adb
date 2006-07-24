@@ -102,6 +102,7 @@ with Call_Graph_Views;
 with Casing_Exceptions;
 with Clipboard_Views;
 with Codefix_Module;
+with Command_Window;
 with Cpp_Module;
 with Custom_Module;
 with Docgen_Module;
@@ -1251,6 +1252,7 @@ procedure GPS.Main is
       --  register their keys
 
       KeyManager_Module.Register_Module (GPS_Main.Kernel);
+      Command_Window.Register_Module (GPS_Main.Kernel);
       Register_Keys (GPS_Main);
 
       --  Register the standard hooks. Other modules were able to connect to
