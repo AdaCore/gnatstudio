@@ -1,7 +1,7 @@
 #USAGE: make [CC=<compiler>] JAVA_SDK=<path>
 CC=gcc
-GNAT_RTS:=${shell gnatls -v | grep adalib | sed -e "s/^[ ]*//" | head -1}
-GNAT_BASE_PATH=${shell which gnat | sed -e "s/bin\/gnat//"}
+GNAT_RTS:=$(shell gnatls -v | grep adalib | sed -e "s/^[ ]*//" | head -1)
+GNAT_BASE_PATH=$(shell which gnat | sed -e "s/bin\/gnat//")
 
 ifeq ($(OS),Windows_NT)
 	JAVA_OS_DIR=win32
@@ -31,8 +31,8 @@ ifneq ($(OS),Windows_NT)
 	# that it is compiled with -fPIC. We don't do that on windows, since
 	# -fPIC is irrelevant there.
 	mkdir adalib
-	cp ${GNAT_RTS}/Makefile.adalib adalib
-	$(MAKE) -C adalib -f Makefile.adalib ROOT="${GNAT_BASE_PATH}" CFLAGS="-O2 -fPIC"
+	cp $(GNAT_RTS)/Makefile.adalib adalib
+	$(MAKE) -C adalib -f Makefile.adalib ROOT="$(GNAT_BASE_PATH)" CFLAGS="-O2 -fPIC"
 endif
 	$(CC) $(FPIC) -I$(JAVA_SDK)/include -I$(JAVA_SDK)/include/$(JAVA_OS_DIR) $(MANAGE_SEGV_HANDLER) -c jni_wrappers.c -o obj/jni_wrappers.o
 	gnatmake -c $(FPIC) -Psal
