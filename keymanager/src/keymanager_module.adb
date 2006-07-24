@@ -106,6 +106,7 @@ package body KeyManager_Module is
    File_Cst                  : aliased constant String := "file";
    Speed_Cst                 : aliased constant String := "speed";
    Command_Cst               : aliased constant String := "command";
+   Key_Cst                   : aliased constant String := "key";
    Load_Macro_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => File_Cst'Access);
    Play_Macro_Cmd_Parameters : constant Cst_Argument_List :=
@@ -1022,7 +1023,7 @@ package body KeyManager_Module is
          --  Ignore when the key is just one of the modifier. No binding can
          --  be associated to them anyway, so this is slightly more efficient,
          --  and this also avoids resetting the last command.
-         if Key >= GDK_Control_L
+         if Key >= GDK_Shift_L
            and then Key <= GDK_Hyper_R
          then
             return False;
@@ -2580,12 +2581,37 @@ package body KeyManager_Module is
       end if;
    end Customize;
 
+   -------------------------
+   -- Block_Key_Shortcuts --
+   -------------------------
+
+   procedure Block_Key_Shortcuts
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Keymanager_Module.Key_Manager.Active := False;
+   end Block_Key_Shortcuts;
+
+   ---------------------------
+   -- Unblock_Key_Shortcuts --
+   ---------------------------
+
+   procedure Unblock_Key_Shortcuts
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Keymanager_Module.Key_Manager.Active := True;
+   end Unblock_Key_Shortcuts;
+
    --------------------------------
    -- Keymanager_Command_Handler --
    --------------------------------
 
    procedure Keymanager_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String) is
+     (Data : in out Callback_Data'Class; Command : String)
+   is
    begin
       if Command = "last_command" then
          if Keymanager_Module.Last_User_Command /= null then
@@ -2601,6 +2627,60 @@ package body KeyManager_Module is
          Free (Keymanager_Module.Last_User_Command);
          Keymanager_Module.Last_User_Command :=
            new String'(Nth_Arg (Data, 1));
+
+      elsif Command = "lookup_actions_from_key" then
+         Name_Parameters (Data, (1 => Key_Cst'Access));
+         declare
+            Key         : constant String := Nth_Arg (Data, 1);
+            Binding     : Key_Description_List;
+            Keymap      : Keymap_Access := null;
+            First, Last : Integer;
+            Partial_Key : Gdk_Key_Type;
+            Modif       : Gdk_Modifier_Type;
+         begin
+            Set_Return_Value_As_List (Data);
+
+            First := Key'First;
+            while First <= Key'Last loop
+               Last := First + 1;
+               while Last <= Key'Last and then Key (Last) /= ' ' loop
+                  Last := Last + 1;
+               end loop;
+
+               Value (Key (First .. Last - 1), Partial_Key, Modif);
+
+               if Last > Key'Last then
+                  if Keymap = null then
+                     Binding := Get (Keymanager_Module.Key_Manager.Table.all,
+                                     (Partial_Key, Modif));
+                  else
+                     Binding := Get (Keymap.Table, (Partial_Key, Modif));
+                  end if;
+
+                  while Binding /= No_Key loop
+                     if Binding.Action /= null then
+                        Set_Return_Value (Data, Binding.Action.all);
+                     elsif Binding.Keymap /= null then
+                        Set_Return_Value (Data, "");
+                     end if;
+                     Binding := Binding.Next;
+                  end loop;
+
+               else
+                  if Keymap = null then
+                     Get_Secondary_Keymap
+                       (Keymanager_Module.Key_Manager.Table.all,
+                        Partial_Key, Modif, Keymap);
+                  else
+                     Get_Secondary_Keymap
+                       (Keymap.Table, Partial_Key, Modif, Keymap);
+                     exit when Keymap = null;
+                  end if;
+               end if;
+
+               First := Last + 1;
+            end loop;
+         end;
       end if;
    end Keymanager_Command_Handler;
 
@@ -2719,6 +2799,9 @@ package body KeyManager_Module is
         (Kernel, "last_command", 0, 0, Keymanager_Command_Handler'Access);
       Register_Command
         (Kernel, "set_last_command", 1, 1, Keymanager_Command_Handler'Access);
+      Register_Command
+        (Kernel, "lookup_actions_from_key", 1, 1,
+           Keymanager_Command_Handler'Access);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),

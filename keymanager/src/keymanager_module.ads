@@ -36,4 +36,13 @@ package KeyManager_Module is
    --  XML files and themes have been loaded, so that the user's choice
    --  overrides everything
 
+   procedure Block_Key_Shortcuts
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Block all handling of key shortcuts defined in GPS. gtk+'s own key
+   --  handling, though, will be performed as usual
+
+   procedure Unblock_Key_Shortcuts
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Reactivate the handling of key shortcuts
+
 end KeyManager_Module;
