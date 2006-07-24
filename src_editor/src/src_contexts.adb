@@ -34,6 +34,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Table;                 use Gtk.Table;
+with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
@@ -140,7 +141,7 @@ package body Src_Contexts is
    procedure Scan_Next
      (Context        : access Search_Context'Class;
       Kernel         : access Kernel_Handle_Record'Class;
-      Editor         : access Source_Editor_Box_Record'Class;
+      Editor         : access Source_Buffer_Record'Class;
       Scope          : Search_Scope;
       Lexical_State  : in out Recognized_Lexical_States;
       Lang           : Language_Access;
@@ -197,7 +198,6 @@ package body Src_Contexts is
    function Auxiliary_Search
      (Context         : access Current_File_Context;
       Editor          : Source_Editor_Box;
-      Handler         : access Language_Handler_Record'Class;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean;
    --  Auxiliary function, factorizes code between Search and Replace.
@@ -612,7 +612,7 @@ package body Src_Contexts is
    procedure Scan_Next
      (Context        : access Search_Context'Class;
       Kernel         : access Kernel_Handle_Record'Class;
-      Editor         : access Source_Editor_Box_Record'Class;
+      Editor         : access Source_Buffer_Record'Class;
       Scope          : Search_Scope;
       Lexical_State  : in out Recognized_Lexical_States;
       Lang           : Language_Access;
@@ -698,7 +698,7 @@ package body Src_Contexts is
       Result := null;
 
       if Backward then
-         Buffer_Text := Get_String (Get_Buffer (Editor));
+         Buffer_Text := Get_String (Source_Buffer (Editor));
          Scan_Buffer
            (Buffer_Text.all, 1, Context,
             Backward_Callback'Unrestricted_Access, Scope,
@@ -718,7 +718,7 @@ package body Src_Contexts is
 
       else
          Scan_Buffer
-           (Get_Text (Get_Buffer (Editor), Current_Line, 1),
+           (Get_Text (Editor, Current_Line, 1),
             Natural (Current_Column), Context,
             Stop_At_First_Callback'Unrestricted_Access, Scope,
             Lexical_State, Lang, Current_Line, Current_Column,
@@ -739,7 +739,7 @@ package body Src_Contexts is
             end if;
 
             Lexical_State := Statements;
-            Buffer_Text := Get_String (Get_Buffer (Editor));
+            Buffer_Text := Get_String (Source_Buffer (Editor));
             Scan_Buffer
               (Buffer_Text.all, 1, Context,
                Stop_At_First_Callback'Unrestricted_Access, Scope,
@@ -1008,6 +1008,21 @@ package body Src_Contexts is
       Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       Scope    : constant Scope_Selector := Scope_Selector (Extra_Information);
+   begin
+      return Current_File_Factory
+        (Kernel, All_Occurrences,
+         Scope => Search_Scope'Val (Get_Index_In_List (Scope.Combo)));
+   end Current_File_Factory;
+
+   --------------------------
+   -- Current_File_Factory --
+   --------------------------
+
+   function Current_File_Factory
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Scope             : Search_Scope := Whole) return Search_Context_Access
+   is
       Child    : MDI_Child;
       Editor   : Source_Editor_Box;
       Context  : Current_File_Context_Access;
@@ -1027,7 +1042,7 @@ package body Src_Contexts is
          Editor := Get_Source_Box_From_MDI (Child);
 
          Context2 := new Files_Project_Context;
-         Context2.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+         Context2.Scope := Scope;
          Context2.All_Occurrences := True;
          Set_File_List
            (Context2, new File_Array'(1 => Get_Filename (Editor)));
@@ -1036,7 +1051,7 @@ package body Src_Contexts is
       else
          Context := new Current_File_Context;
          Context.All_Occurrences := False;
-         Context.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+         Context.Scope := Scope;
          return Search_Context_Access (Context);
       end if;
    end Current_File_Factory;
@@ -1164,47 +1179,30 @@ package body Src_Contexts is
    end Files_Factory;
 
    ----------------------
-   -- Auxiliary_Search --
+   -- Search_In_Editor --
    ----------------------
 
-   function Auxiliary_Search
+   procedure Search_In_Editor
      (Context         : access Current_File_Context;
-      Editor          : Source_Editor_Box;
-      Handler         : access Language_Handler_Record'Class;
+      Start_At        : Gtk.Text_Iter.Gtk_Text_Iter;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Match_From      : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Match_Up_To     : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Found           : out Boolean)
    is
+      Editor : constant Source_Buffer := Source_Buffer (Get_Buffer (Start_At));
       Lang   : Language_Access;
       Match  : Match_Result_Access;
       Column : Character_Offset_Type;
       Line   : Editable_Line_Type;
-
-      Selection_Start : Gtk_Text_Iter;
-      Selection_End   : Gtk_Text_Iter;
-      Dummy           : Boolean;
-
    begin
       Assert (Me, not Context.All_Occurrences,
-              "All occurences not supported for current_file_context");
+              "All occurrences not supported for current_file_context");
 
-      Lang := Get_Language_From_File (Handler, Get_Filename (Editor));
-
-      Get_Selection_Bounds
-        (Get_Buffer (Editor), Selection_Start, Selection_End, Dummy);
-
-      if Search_Backward then
-         Get_Iter_Position (Get_Buffer (Editor), Selection_End, Line, Column);
-      else
-         Get_Iter_Position
-           (Get_Buffer (Editor), Selection_Start, Line, Column);
-
-         if not Equal (Selection_Start, Selection_End) then
-            Forward_Char (Selection_Start, Dummy);
-
-            Get_Iter_Position
-              (Get_Buffer (Editor), Selection_Start, Line, Column);
-         end if;
-      end if;
+      Lang := Get_Language_From_File
+        (Get_Language_Handler (Kernel), Get_Filename (Editor));
+      Get_Iter_Position (Editor, Start_At, Line, Column);
 
       --  If we had a previous selection, and it had a null length, move the
       --  cursor forward, otherwise we would keep hitting the same match. Of
@@ -1216,7 +1214,7 @@ package body Src_Contexts is
         and then Context.Begin_Column = Context.End_Column
       then
          if Is_Valid_Position
-           (Get_Buffer (Editor), Gint (Context.End_Line - 1), Gint (Column))
+           (Editor, Gint (Context.End_Line - 1), Gint (Column))
          then
             Column := Column + 1;
          else
@@ -1237,6 +1235,14 @@ package body Src_Contexts is
          Result         => Match);
 
       if Match /= null then
+         Found := True;
+         Get_Iter_At_Line_Offset
+           (Editor, Match_From,
+            Gint (Match.Begin_Line - 1), Gint (Match.Begin_Column - 1));
+         Get_Iter_At_Line_Offset
+           (Editor, Match_Up_To,
+            Gint (Match.End_Line - 1), Gint (Match.End_Column - 1));
+
          Context.Begin_Line   := Editable_Line_Type (Match.Begin_Line);
          Context.Begin_Column := Match.Begin_Column;
 
@@ -1245,23 +1251,68 @@ package body Src_Contexts is
 
          Unchecked_Free (Match);
 
-         Push_Current_Editor_Location_In_History (Kernel);
-         Select_Region
-           (Get_Buffer (Editor),
-            Context.Begin_Line,
-            Context.Begin_Column,
-            Context.End_Line,
-            Context.End_Column);
-         Center_Cursor (Get_View (Editor));
-
-         return True;
-
       else
+         Found := False;
+
          --  The search could not be made, invalidate the context
          --  in case it was the last search in the file.
-
          Context.End_Line   := Context.Begin_Line;
          Context.End_Column := Context.Begin_Column;
+      end if;
+   end Search_In_Editor;
+
+   ----------------------
+   -- Auxiliary_Search --
+   ----------------------
+
+   function Auxiliary_Search
+     (Context         : access Current_File_Context;
+      Editor          : Source_Editor_Box;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean
+   is
+      Selection_Start : Gtk_Text_Iter;
+      Selection_End   : Gtk_Text_Iter;
+      Dummy           : Boolean;
+      Match_From      : Gtk_Text_Iter;
+      Match_Up_To     : Gtk_Text_Iter;
+      Found           : Boolean;
+
+   begin
+      Get_Selection_Bounds
+        (Get_Buffer (Editor), Selection_Start, Selection_End, Dummy);
+
+      if Search_Backward then
+         Search_In_Editor
+           (Context         => Context,
+            Start_At        => Selection_End,
+            Kernel          => Kernel,
+            Search_Backward => Search_Backward,
+            Match_From      => Match_From,
+            Match_Up_To     => Match_Up_To,
+            Found           => Found);
+      else
+         if not Equal (Selection_Start, Selection_End) then
+            --  Selection is empty ?
+            Forward_Char (Selection_Start, Dummy);
+         end if;
+
+         Search_In_Editor
+           (Context         => Context,
+            Start_At        => Selection_Start,
+            Kernel          => Kernel,
+            Search_Backward => Search_Backward,
+            Match_From      => Match_From,
+            Match_Up_To     => Match_Up_To,
+            Found           => Found);
+      end if;
+
+      if Found then
+         Push_Current_Editor_Location_In_History (Kernel);
+         Select_Region (Get_Buffer (Editor), Match_From, Match_Up_To);
+         Center_Cursor (Get_View (Editor));
+         return True;
+      else
          return False;
       end if;
    end Auxiliary_Search;
@@ -1293,8 +1344,7 @@ package body Src_Contexts is
       Raise_Child (Child, Give_Focus);
 
       Found := Auxiliary_Search
-        (Context, Editor,
-         Get_Language_Handler (Kernel), Kernel, Search_Backward);
+        (Context, Editor, Kernel, Search_Backward);
       Continue := False; --  ??? Dummy boolean.
 
    exception

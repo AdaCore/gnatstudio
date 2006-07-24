@@ -26,6 +26,7 @@ with GNAT.Regpat;
 with Gtk.Widget;
 with Gtk.Combo;
 with Gtk.Box;
+with Gtk.Text_Iter;
 
 with Basic_Types;
 with Find_Utils;                    use Find_Utils;
@@ -34,8 +35,7 @@ with Generic_List;
 with GPS.Kernel;
 with Language_Handlers;
 with VFS;
-
-with Src_Editor_Buffer; use Src_Editor_Buffer;
+with Src_Editor_Buffer;             use Src_Editor_Buffer;
 
 package Src_Contexts is
 
@@ -91,6 +91,25 @@ package Src_Contexts is
    --  Factory for "Current File". A Files_Project_Context is returned if
    --  searching for All_Occurrences
    --  This only works from the GUI, and shouldn't be used for text mode
+
+   function Current_File_Factory
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Scope             : Search_Scope := Whole) return Search_Context_Access;
+   --  Same as above, but takes the scope directly in parameter
+
+   procedure Search_In_Editor
+     (Context         : access Current_File_Context;
+      Start_At        : Gtk.Text_Iter.Gtk_Text_Iter;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean;
+      Match_From      : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Match_Up_To     : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Found           : out Boolean);
+   --  Search for Context in an editor. The search starts at the given
+   --  location and only applies to that buffer.
+   --  If Found is set to False on exit, then no match was found and the
+   --  value of Match_From .. Match_Up_To is irrelevant
 
    ----------------------------
    -- Abstract files context --
