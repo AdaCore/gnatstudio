@@ -857,6 +857,20 @@ package body Codefix.Text_Manager is
       return Get_Line (This, Cursor)'Length;
    end Line_Length;
 
+   ----------------
+   -- Get_Buffer --
+   ----------------
+
+   function Get_Buffer
+     (This : access Text_Interface'Class) return GNAT.OS_Lib.String_Access is
+   begin
+      if This.Buffer = null then
+         This.Buffer := Read_File (This.all);
+      end if;
+
+      return This.Buffer;
+   end Get_Buffer;
+
    -------------------
    -- Search_String --
    -------------------
