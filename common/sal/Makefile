@@ -26,19 +26,16 @@ else
 endif
 main:
 	$(RM) obj/*gps_utils*
-	
+ifneq ($(OS),Windows_NT)
 	# On linux / solaris, we have to recompile libgnat in order to ensure
 	# that it is compiled with -fPIC. We don't do that on windows, since
 	# -fPIC is irrelevant there.
-	if [ "$(OS)" != Windows_NT ]; then \
-	   mkdir adalib; \
-	   cp ${GNAT_RTS}/Makefile.adalib adalib/; \
-	   cd adalib/; make -f Makefile.adalib ROOT="${GNAT_BASE_PATH}" CFLAGS="-fPIC"; \
-	fi
-	
+	mkdir adalib
+	cp ${GNAT_RTS}/Makefile.adalib adalib
+	$(MAKE) -C adalib -f Makefile.adalib ROOT="${GNAT_BASE_PATH}" CFLAGS="-O2 -fPIC"
+endif
 	$(CC) $(FPIC) -I$(JAVA_SDK)/include -I$(JAVA_SDK)/include/$(JAVA_OS_DIR) $(MANAGE_SEGV_HANDLER) -c jni_wrappers.c -o obj/jni_wrappers.o
-	
-	gnatmake -c $(FPIC) -O -f -x -Psal
+	gnatmake -c $(FPIC) -Psal
 	cd obj; gnatbind -o b~gps_utils.adb -Lgps_utils jni.ali gnatbench-jni_functions.ali gnatbench.ali
 	gcc -c $(FPIC) -O -g obj/b~gps_utils.adb -o obj/b~gps_utils.o
 	gcc -o obj/my_lib.a obj/*.o -Wl,-r -v -nostdlib $(LIBRARIES) $(ADALIB)
