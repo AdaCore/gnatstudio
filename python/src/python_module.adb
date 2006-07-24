@@ -1088,6 +1088,7 @@ package body Python_Module is
       Widget   : Glib.Object.GObject;
       Instance : Class_Instance;
       Child    : MDI_Child;
+      Object   : GObject;
    begin
       --  This is only called when pygtk has been loaded properly. If pygtk
       --  is not available, they are not even visible to the user, so we do
@@ -1095,8 +1096,14 @@ package body Python_Module is
 
       if Command = "pywidget" then
          Instance := Nth_Arg (Data, 1, Get_GUI_Class (Get_Kernel (Data)));
-         Python_Callback_Data (Data).Return_Value := PyObject_From_Widget
-           (Get_Object (Get_Data (Instance, GUI_Class_Name)));
+         Object := Get_Data (Instance, GUI_Class_Name);
+         if Object = null then
+            Python_Callback_Data (Data).Return_Value := Py_None;
+            Py_INCREF (Python_Callback_Data (Data).Return_Value);
+         else
+            Python_Callback_Data (Data).Return_Value := PyObject_From_Widget
+              (Get_Object (Object));
+         end if;
 
       elsif Command = "add" then
          Widget := Get_User_Data
