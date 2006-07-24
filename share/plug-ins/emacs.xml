@@ -49,6 +49,9 @@
      <key action="/Window/Split Horizontally">control-x 3</key>
      <key action="/Window/Split Vertically">control-x 2</key>
 
+     <key action="Move to next window">control-x control-b</key>
+     <key action="Move to previous window" />
+
      <key action="Select other window">control-x o</key>
 
      <key action="Center cursor on screen">control-l</key>
