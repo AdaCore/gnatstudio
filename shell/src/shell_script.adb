@@ -25,31 +25,34 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Generic_List;
+with System.Address_Image;
+with System;                    use System;
+
 with GNAT.Debug_Utilities;      use GNAT.Debug_Utilities;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Kernel;              use GPS.Kernel;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
+
+with Generic_List;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel;                use GPS.Kernel;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 with Histories;                 use Histories;
 with Interactive_Consoles;      use Interactive_Consoles;
 with String_List_Utils;         use String_List_Utils;
 with String_Hash;
-with System.Address_Image;
-with System;                    use System;
 with Traces;                    use Traces;
 with Basic_Types;               use Basic_Types;
 with String_Utils;              use String_Utils;
@@ -77,7 +80,7 @@ package body Shell_Script is
    --------------------------
 
    type Shell_Class_Instance_Record is new Class_Instance_Record with record
-      Class  : Class_Type;
+      Class : Class_Type;
    end record;
    type Shell_Class_Instance is access all Shell_Class_Instance_Record'Class;
 
@@ -461,7 +464,7 @@ package body Shell_Script is
       pragma Unreferenced (Kernel);
       use String_List_Utils.String_List;
       L       : String_List_Utils.String_List.List :=
-        String_List_Utils.String_List.Null_List;
+                  String_List_Utils.String_List.Null_List;
       Current : Command_Hash.String_Hash_Table.Iterator;
       Info    : Command_Information_Access;
    begin
@@ -894,8 +897,10 @@ package body Shell_Script is
       if Class /= No_Class then
          if Command = Constructor_Method then
             Cmd := new String'(Get_Name (Class));
+
          elsif Command = Destructor_Method then
             Cmd := new String'(Get_Name (Class) & ".__delete");
+
          else
             Cmd := new String'(Get_Name (Class) & "." & Command);
             --  First parameter is always the instance

@@ -18,18 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with File_Utils;                use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
+
+with File_Utils;                use File_Utils;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with Remote_Servers;            use Remote_Servers;
-with Traces;                    use Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with Remote_Servers;            use Remote_Servers;
+with Traces;                    use Traces;
 with VFS;                       use VFS;
 with OS_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -45,9 +46,9 @@ package body VFS_Module is
    Pattern_Cst           : aliased constant String := "pattern";
    Cd_Cmd_Parameters     : constant Cst_Argument_List := (1 => Dir_Cst'Access);
    Delete_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access);
+                             (1 => Name_Cst'Access);
    Dir_Cmd_Parameters    : constant Cst_Argument_List :=
-     (1 => Pattern_Cst'Access);
+                             (1 => Pattern_Cst'Access);
 
    -----------------
    -- Subprograms --
