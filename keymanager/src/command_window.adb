@@ -24,6 +24,7 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with GPS.Kernel;             use GPS.Kernel;
 with Gdk.Event;              use Gdk.Event;
+with Gdk.Main;               use Gdk.Main;
 with Gdk.Types;              use Gdk.Types;
 with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 with Gdk.Window;             use Gdk.Window;
@@ -42,10 +43,10 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 with GUI_Utils;              use GUI_Utils;
 with KeyManager_Module;      use KeyManager_Module;
-with Traces;                 use Traces;
+--  with Traces;                 use Traces;
 
 package body Command_Window is
-   Me : constant Debug_Handle := Create ("CW");
+--     Me : constant Debug_Handle := Create ("CW");
 
    type Command_Window_Record is new Gtk_Window_Record with record
       Kernel      : Kernel_Handle;
@@ -94,6 +95,13 @@ package body Command_Window is
 
    procedure On_Changed (Window : access Gtk_Widget_Record'Class);
    --  Called when the contents of the command line has changed
+
+   function On_Focus_In
+     (Window : access Gtk_Widget_Record'Class) return Boolean;
+   function On_Focus_Out
+     (Window : access Gtk_Widget_Record'Class) return Boolean;
+   --  Handles focus events on Window. This is used to grab key events in the
+   --  command window, while allowing users to scroll editors.
 
    Prompt_Cst      : aliased constant String := "prompt";
    Global_Cst      : aliased constant String := "global_window";
@@ -251,8 +259,39 @@ package body Command_Window is
          CW_Module.Window := null;
       end if;
 
+      Keyboard_Ungrab;
+
       KeyManager_Module.Unblock_Key_Shortcuts (Win.Kernel);
    end On_Destroy;
+
+   -----------------
+   -- On_Focus_In --
+   -----------------
+
+   function On_Focus_In
+     (Window : access Gtk_Widget_Record'Class) return Boolean
+   is
+      Status : Gdk_Grab_Status;
+      pragma Unreferenced (Status);
+   begin
+      Status := Keyboard_Grab (Get_Window (Window), False);
+      return False;
+   end On_Focus_In;
+
+   ------------------
+   -- On_Focus_Out --
+   ------------------
+
+   function On_Focus_Out
+     (Window : access Gtk_Widget_Record'Class) return Boolean
+   is
+   begin
+      --  Cancel the search. This will happen mostly when the window manager
+      --  has switched the current desktop, and has thus cancelled the key
+      --  grab.
+      Destroy (Window);
+      return True;
+   end On_Focus_Out;
 
    -------------
    -- Gtk_New --
@@ -271,13 +310,18 @@ package body Command_Window is
       Applies_To     : Gtk_Widget;
       Success        : Boolean;
    begin
+      --  Do not make the window modal, although that is much more precise to
+      --  be sure we always get all key events on the application. This has the
+      --  big drawback that mouse events (in particular scrolling in editors)
+      --  is no longer handled properly. Instead, we try to manage with the
+      --  focus_in_event on the window itself, which does a server-wide grab.
+      --  This one also has the drawback that other applications can no longer
+      --  be driven by the keyboard.
       Window := new Command_Window_Record;
       Gtk.Window.Initialize   (Window, Window_Toplevel);
       Set_Decorated           (Window, False);
-      Set_Keep_Above          (Window, True);
       Set_Transient_For       (Window, Get_Main_Window (Kernel));
       Set_Destroy_With_Parent (Window, True);
-      Set_Modal               (Window, True);
 
       Window.Kernel := Kernel_Handle (Kernel);
 
@@ -310,6 +354,12 @@ package body Command_Window is
       Widget_Callback.Object_Connect
         (Window.Line, "changed",
          On_Changed'Access, Window, After => True);
+      Return_Callback.Object_Connect
+        (Window.Line, "focus_in_event",
+         On_Focus_In'Access, Window);
+      Return_Callback.Object_Connect
+        (Window.Line, "focus_out_event",
+         On_Focus_Out'Access, Window);
 
       --  Compute size and placement of the window
       if Applies_To_Global
@@ -327,7 +377,7 @@ package body Command_Window is
       Y := Y + Get_Allocation_Height (Applies_To) - Requisition.Height;
       Set_UPosition (Window, X, Y);
 
-      Show_All         (Window);
+      Show_All (Window);
 
       Grab_Focus (Window.Line);
 
