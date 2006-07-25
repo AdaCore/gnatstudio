@@ -51,6 +51,7 @@
 
 with Glib;
 with Glib.Xml_Int;
+with Commands.Custom;
 
 package GPS.Kernel.Custom is
 
@@ -90,7 +91,50 @@ package GPS.Kernel.Custom is
    --  Send a signal to all registered modules to indicate a new customization
    --  string.
 
+   -----------------------------------------------
+   -- Customization files and automatic loading --
+   -----------------------------------------------
+
+   function Autoload_System_Dir
+     (Kernel : access Kernel_Handle_Record'Class) return String;
+   --  Return the system directory for automatically loaded scripts.
+   --  This is $prefix/share/gps/plug-ins
+
+   function No_Autoload_System_Dir
+     (Kernel : access Kernel_Handle_Record'Class) return String;
+   --  Return the system directory for scripts that are not automatically
+   --  loaded by default.
+   --  This is $prefix/share/gps/libraries
+
+   function Autoload_User_Dir
+     (Kernel : access Kernel_Handle_Record'Class) return String;
+   --  Return the user directory for automatically loaded scripts
+   --  This is ~/.gps/plug-ins.
+   --  The directory is created if it doesn't exist yet.
+
    function Get_Custom_Path return String;
-   --  Return the custom path as set by GPS_CUSTOM_PATH
+   --  Return a colon-separated list of directories in which the user might
+   --  have put custom scripts to autoload.
+
+   procedure Parse_List_Of_Startup_Scripts
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Parse the list of scripts that should be automatically loaded at
+   --  startup, and their initialization commands.
+
+   function Load_File_At_Startup
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : VFS.Virtual_File;
+      Default : Boolean) return Boolean;
+   --  Whether File should be loaded at startup, based on the contents of
+   --  the file ~/.gps/startup.xml
+
+   function Initialization_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : VFS.Virtual_File)
+         return Commands.Custom.Custom_Command_Access;
+   --  Return the command to execute to initialize this module. This is
+   --  null if no initialization command was provided. These are read from
+   --  the file ~/.gps/startup.xml.
+   --  The user must free the returned value.
 
 end GPS.Kernel.Custom;
