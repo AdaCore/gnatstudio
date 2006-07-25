@@ -106,6 +106,7 @@ package body Src_Editor_Module.Shell is
    Overlay_Cst           : aliased constant String := "overlay";
    Backward_Cst          : aliased constant String := "backward";
    Whole_Word_Cst        : aliased constant String := "whole_word";
+   Dialog_On_Failure_Cst : aliased constant String := "dialog_on_failure";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -2312,7 +2313,8 @@ package body Src_Editor_Module.Shell is
              4 => Case_Cst'Access,
              5 => Regexp_Cst'Access,
              6 => Whole_Word_Cst'Access,
-             7 => Scope_Cst'Access));
+             7 => Scope_Cst'Access,
+             8 => Dialog_On_Failure_Cst'Access));
          declare
             Context : Current_File_Context_Access :=
               Current_File_Context_Access
@@ -2337,6 +2339,7 @@ package body Src_Editor_Module.Shell is
                Start_At        => Iter,
                Kernel          => Get_Kernel (Data),
                Search_Backward => Nth_Arg (Data, 3, False),
+               Dialog_On_Failure => Nth_Arg (Data, 8, True),
                Match_From      => Match_From,
                Match_Up_To     => Match_Up_To,
                Found           => Found);
@@ -2942,7 +2945,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "backward_overlay", 0, 1, Location_Cmds'Access, EditorLoc);
       Register_Command
-        (Kernel, "search", 1, 6, Location_Cmds'Access, EditorLoc);
+        (Kernel, "search", 1, 7, Location_Cmds'Access, EditorLoc);
 
       --  EditorMark
 
