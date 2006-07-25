@@ -60,7 +60,14 @@ package body GPS.Kernel.Custom is
       Case_Sensitive => Is_Case_Sensitive (Server => GPS_Server));
    use Startup_Files_Hash.String_Hash_Table;
 
-   Startup_Files : Startup_Files_Hash.String_Hash_Table.HTable;
+   type Startup_Files_Htable_Record is new Root_Table with record
+      Table : Startup_Files_Hash.String_Hash_Table.HTable;
+   end record;
+   type Startup_Files_Htable_Access
+     is access all Startup_Files_Htable_Record'Class;
+
+   procedure Reset (Table : access Startup_Files_Htable_Record);
+   --  Reset the table
 
    procedure Parse_Custom_Dir
      (Kernel    : access Kernel_Handle_Record'Class;
@@ -403,11 +410,11 @@ package body GPS.Kernel.Custom is
          return "Internal error";
    end Add_Customization_String;
 
-   -----------------------------------
-   -- Parse_List_Of_Startup_Scripts --
-   -----------------------------------
+   --------------------------------
+   -- Parse_Startup_Scripts_List --
+   --------------------------------
 
-   procedure Parse_List_Of_Startup_Scripts
+   procedure Parse_Startup_Scripts_List
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Err  : String_Access;
@@ -423,19 +430,20 @@ package body GPS.Kernel.Custom is
          Free (Err);
 
       else
+         Kernel.Startup_Scripts := new Startup_Files_Htable_Record;
+
          N := Node.Child;
          while N /= null loop
             if N.Tag.all = "startup" then
                begin
                   Set
-                    (Startup_Files,
+                    (Startup_Files_Htable_Access
+                       (Kernel.Startup_Scripts).Table,
                      K => Get_Attribute (N, "file"),
                      E =>
-                       (Initialization => N.Child,
+                       (Initialization => Deep_Copy (N.Child),
                         Explicit => True,
                         Load    => Boolean'Value (Get_Attribute (N, "load"))));
-                  --  So that when we free the tree this is kept
-                  N.Child := null;
                exception
                   when Constraint_Error =>
                      null;
@@ -445,7 +453,7 @@ package body GPS.Kernel.Custom is
          end loop;
          Free (Node);
       end if;
-   end Parse_List_Of_Startup_Scripts;
+   end Parse_Startup_Scripts_List;
 
    --------------------------
    -- Load_File_At_Startup --
@@ -456,9 +464,9 @@ package body GPS.Kernel.Custom is
       File    : VFS.Virtual_File;
       Default : Boolean) return Boolean
    is
-      pragma Unreferenced (Kernel);
       Startup : constant Startup_File_Description :=
-        Get (Startup_Files, K => Base_Name (File));
+        Get (Startup_Files_Htable_Access (Kernel.Startup_Scripts).Table,
+             K => Base_Name (File));
    begin
       if Startup.Explicit then
          return Startup.Load;
@@ -478,7 +486,8 @@ package body GPS.Kernel.Custom is
    is
       Custom : Custom_Command_Access;
       Startup : constant Startup_File_Description :=
-        Get (Startup_Files, K => Base_Name (File));
+        Get (Startup_Files_Htable_Access (Kernel.Startup_Scripts).Table,
+             K => Base_Name (File));
    begin
       if Startup.Initialization /= null then
          Custom := new Custom_Command;
@@ -503,5 +512,14 @@ package body GPS.Kernel.Custom is
    begin
       Free (File.Initialization);
    end Free;
+
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Table : access Startup_Files_Htable_Record) is
+   begin
+      Reset (Table.Table);
+   end Reset;
 
 end GPS.Kernel.Custom;

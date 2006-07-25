@@ -116,7 +116,7 @@ package GPS.Kernel.Custom is
    --  Return a colon-separated list of directories in which the user might
    --  have put custom scripts to autoload.
 
-   procedure Parse_List_Of_Startup_Scripts
+   procedure Parse_Startup_Scripts_List
      (Kernel : access Kernel_Handle_Record'Class);
    --  Parse the list of scripts that should be automatically loaded at
    --  startup, and their initialization commands.
