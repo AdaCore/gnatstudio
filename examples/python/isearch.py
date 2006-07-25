@@ -22,7 +22,9 @@
 ##      If you press the same key that was used to activate the incremental
 ##      search, GPS will jump to the next occurrence. If you press the key
 ##      to activate the backward incremental search, GPS will jump to the
-##      stack occurrence 
+##      stack occurrence.
+##      If you press that key twice in a row when the pattern is empty, it
+##      will restart a search for the previous pattern
 ##
 ##    - Backspace
 ##      Goes back to the stack location or search pattern. If you have just
@@ -228,18 +230,22 @@ class Isearch (CommandWindow):
      actions = lookup_actions_from_key (key)
      if actions.__contains__ (isearch_action_name) \
         or actions.__contains__ (isearch_menu):
-        if input == "": input = Isearch.last_search
-        self.backward = False
-        self.loc = self.loc + 1
-        self.on_changed (input, len (input), redo_overlays=0)
+        if input == "":
+           self.write (Isearch.last_search)
+        else:
+           self.backward = False
+           self.loc = self.loc + 1
+           self.on_changed (input, len (input), redo_overlays=0)
         return True
 
      if actions.__contains__ (isearch_backward_action_name) \
         or actions.__contains__ (isearch_backward_menu):
-        if input == "": input = Isearch.last_search
-        self.backward = True
-        self.loc = self.end_loc
-        self.on_changed (input, len (input), redo_overlays=0)
+        if input == "":
+           self.write (Isearch.last_search)
+        else:
+           self.backward = True
+           self.loc = self.end_loc
+           self.on_changed (input, len (input), redo_overlays=0)
         return True
 
      # Cancel the search on any special key. Currently, the key is lost, not
