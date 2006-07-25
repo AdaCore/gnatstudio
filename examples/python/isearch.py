@@ -100,6 +100,8 @@ class Isearch (CommandWindow):
    """This class provides an incremental search facility in GPS.
       When instanciated, it immediately starts executing"""
 
+   last_search = ""
+
    def __init__ (self, case_sensitive=0, backward=0, regexp=0):
      try:
        CommandWindow.__init__ (self,
@@ -226,6 +228,7 @@ class Isearch (CommandWindow):
      actions = lookup_actions_from_key (key)
      if actions.__contains__ (isearch_action_name) \
         or actions.__contains__ (isearch_menu):
+        if input == "": input = Isearch.last_search
         self.backward = False
         self.loc = self.loc + 1
         self.on_changed (input, len (input), redo_overlays=0)
@@ -233,6 +236,7 @@ class Isearch (CommandWindow):
 
      if actions.__contains__ (isearch_backward_action_name) \
         or actions.__contains__ (isearch_backward_menu):
+        if input == "": input = Isearch.last_search
         self.backward = True
         self.loc = self.end_loc
         self.on_changed (input, len (input), redo_overlays=0)
@@ -267,6 +271,8 @@ class Isearch (CommandWindow):
 
      if not self.locked and input != "":
         if redo_overlays: self.remove_overlays ()
+
+        Isearch.last_search = input
 
         # Special case for backward search: if the current location matches,
         # no need to do anything else
