@@ -3883,8 +3883,10 @@ the same line/column even if new lines are added in the buffer. This location is
       <param name="regexp" default="False">A boolean</param>
       <param name="whole_word" default="False">A boolean</param>
       <param name="scope" default="Whole">A string</param>
+      <param name="dialog_on_failure" default="True">A boolean</param>
       <return>A list of two GPS.EditorLocation</return>
-      <description>This function searches for the next occurrence of Pattern in the editor, starting at the given location. If there is such a match, this function returns the two locations for the beginning of the match and the end of the match. Typically, these would be used to highlight the match in the editor</description>
+      <description>This function searches for the next occurrence of Pattern in the editor, starting at the given location. If there is such a match, this function returns the two locations for the beginning of the match and the end of the match. Typically, these would be used to highlight the match in the editor.
+When no match is found, this function returns null. Additionally, if dialog_on_failure is true then a dialog is displayed to the user asking whether the search should restart at the beginning of the buffer.</description>
       <see_also name="GPS.File.search" />
   </shell_doc>
 
