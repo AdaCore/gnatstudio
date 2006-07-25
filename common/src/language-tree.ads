@@ -22,7 +22,7 @@ with Language; use Language;
 
 package Language.Tree is
 
-   type Relative_Position is (Before, After, Specified);
+   type Relative_Position is (Before, After, Specified, Enclosing);
 
    function Contains (Scope, Item : Construct_Access) return Boolean;
    --  Returns true if Item is contained by Scope, false otherwise.
@@ -93,7 +93,8 @@ package Language.Tree is
    --  to reduce the scope of search to certain categories. If
    --  Categories_Seeked is null, then any category will be retreived.
    --  From_Type determines if the search has to be done on the start of the
-   --  construct or on the start of its name.
+   --  construct or on the start of its name. This value is not used if
+   --  position is 'Enclosing'.
 
    function Get_Child_Number (Iter : Construct_Tree_Iterator) return Natural;
    --  Return the number of childs in the construct pointed by this iterator
