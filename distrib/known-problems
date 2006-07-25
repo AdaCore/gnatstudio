@@ -20,8 +20,8 @@ Known Problems fixed in GPS 4.1.0
 
 - Cannot create key shortcuts for menus created from python
   Problem:    When a menu is created in python with GPS.Menu.create(), no
-              key bindings can be defined for them through the /Edit/Key Shortcuts
-              menu or gtk+'s dynamic key binding
-  Workaround: Create an action (through "<action>" in XML), then associate a menu
-              to it, and possibly a key shortcut as well
+              key bindings can be defined for them through the
+              /Edit/Key Shortcuts menu or gtk+'s dynamic key binding
+  Workaround: Create an action (through "<action>" in XML), then associate a
+              menu to it, and possibly a key shortcut as well
 
