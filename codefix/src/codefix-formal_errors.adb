@@ -1029,8 +1029,16 @@ package body Codefix.Formal_Errors is
       Command1, Command2   : Paste_Profile_Cmd;
       Body_Info, Spec_Info : Construct_Tree_Iterator;
    begin
-      Body_Info := Get_Iterator_At (Current_Text, Body_Cursor, Before);
-      Spec_Info := Get_Iterator_At (Current_Text, Spec_Cursor, After);
+      Body_Info := Get_Iterator_At
+        (Current_Text,
+         Body_Cursor,
+         Enclosing,
+         (Cat_Procedure, Cat_Function, Cat_Entry));
+      Spec_Info := Get_Iterator_At
+        (Current_Text,
+         Spec_Cursor,
+         After,
+         (Cat_Procedure, Cat_Function, Cat_Entry));
 
       Initialize
         (Command1,
