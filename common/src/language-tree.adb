@@ -434,6 +434,9 @@ package body Language.Tree is
       function Is_On (Construct : Construct_Information) return Boolean;
       --  Return true is the construct is on the specified position
 
+      function Is_Enclosing (Construct : Construct_Information) return Boolean;
+      --  Return true if the construct encloses the specified position
+
       --------------------
       -- Match_Category --
       --------------------
@@ -510,6 +513,24 @@ package body Language.Tree is
          end if;
       end Is_On;
 
+      ------------------
+      -- Is_Enclosing --
+      ------------------
+
+      function Is_Enclosing (Construct : Construct_Information) return Boolean
+      is
+      begin
+         return
+           (Construct.Sloc_Start.Line < Line
+            or else
+              (Construct.Sloc_Start.Line = Line
+               and then Construct.Sloc_Start.Column <= Line_Offset))
+           and then (Construct.Sloc_End.Line > Line
+                     or else
+                       (Construct.Sloc_End.Line = Line
+                        and then Construct.Sloc_End.Column >= Line_Offset));
+      end Is_Enclosing;
+
       Last_Matched : Construct_Tree_Iterator :=
         Null_Construct_Tree_Iterator;
 
@@ -549,6 +570,18 @@ package body Language.Tree is
                return Null_Construct_Tree_Iterator;
             end if;
          end loop;
+      elsif Position = Enclosing then
+         for J in 1 .. Tree'Last loop
+            if Is_Enclosing (Tree (J).Construct.all)
+              and then Match_Category (Tree (J).Construct.Category)
+            then
+               Last_Matched := (Tree (J), J);
+            end if;
+
+            exit when Is_After (Tree (J).Construct.all);
+         end loop;
+
+         return Last_Matched;
       end if;
 
       return Null_Construct_Tree_Iterator;
