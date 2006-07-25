@@ -36,8 +36,37 @@
 ## If you press <enter> while there is no search string, this module will
 ## automatically open the advanced, non-incremental search dialog of GPS, to
 ## match Emacs' behavior
+##
+## If the variable highlight_next_matches is set to True, then whenever you
+## modify the current pattern, GPS will also highlight the next matches of
+## this pattern in the buffer. Such higlights will stay even when you cancel
+## the current search. To hide them, start a new search, and cancel it
+## immediately. The highlighting of the next matches is done in the background
+## if pygtk was installed along with GPS. Otherwise, it is done every time the
+## pattern is modified, and will slow things down a little
+
+highlight_next_matches = True
+## Whether GPS should highlight the next matches. This highlighting will be
+## visible until the next isearch command. To cancel, start an isearch and
+## press Esc immediately
+
+next_matches_color = "cyan"
+## Color to use to highlight the next matches
+
+
+#############################################################################
+## No user-customization beyond this line
+#############################################################################
 
 from GPS import *
+
+try:
+   ## If we have PyGTK installed, we'll do the highlighting of the next
+   ## matches in the background, which makes the interface more responsive
+   import gobject
+   has_pygtk = 1
+except:
+   has_pygtk = 0
 
 ## Changing the name of menus should be reflected in emacs.xml
 isearch_action_name = 'isearch'
@@ -87,8 +116,63 @@ class Isearch (CommandWindow):
        self.backward = backward
        self.stack = [(self.loc, self.end_loc, "")]
        self.locked = False
+       self.overlay = self.editor.create_overlay ("isearch")
+       self.overlay.set_property ("background", next_matches_color)
+       self.insert_overlays_id = 0
+       self.remove_overlays ()
+
      except:
        pass
+
+   def cancel_idle_overlays (self):
+     """Cancel the background loop that computes the next matches"""
+     if self.insert_overlays_id != 0:
+        gobject.source_remove (self.insert_overlays_id)
+        self.insert_overlays_id = 0
+
+   def remove_overlays (self):
+     """Remove all isearch overlays in the current editor"""
+     global highlight_next_matches
+
+     self.cancel_idle_overlays ()
+
+     if highlight_next_matches:
+        loc   = self.editor.beginning_of_buffer ()
+        is_on = loc.has_overlay (self.overlay)
+        end   = self.editor.end_of_buffer ()
+        while loc < end:
+           loc2 = loc.forward_overlay (self.overlay)
+           if is_on:
+              self.editor.remove_overlay (self.overlay, loc, loc2)
+           is_on = not is_on
+           loc = loc2
+
+   def insert_next_overlay (self, input):
+        result = self.overlay_loc.search \
+           (input, regexp = self.regexp,
+                   case_sensitive = self.case_sensitive,
+                   dialog_on_failure = False,
+                   backward = self.backward)
+        if result:
+           (self.overlay_loc, end_loc) = result
+           self.editor.apply_overlay (self.overlay, self.overlay_loc, end_loc - 1)
+           self.overlay_loc = self.overlay_loc + 1
+           return True
+        else:
+           self.insert_overlays_id = 0
+           return False
+
+   def insert_overlays (self):
+     global highlight_next_matches
+     if highlight_next_matches:
+        input = self.read ()
+        self.overlay_loc = self.loc
+        if input != "":
+           if has_pygtk:
+              self.insert_overlays_id = \
+                gobject.idle_add (self.insert_next_overlay, input)
+           else:
+              while self.insert_next_overlay (input): pass
 
    def highlight_match (self, save_in_stack=1):
      """Highlight the match at self.loc"""
@@ -127,8 +211,11 @@ class Isearch (CommandWindow):
         if self.stack != []:
            self.locked = True
            (self.loc, self.end_loc, pattern) = self.stack [-1]
+           changed = pattern != input
+           if changed: self.remove_overlays ()
            self.write (pattern)
            self.highlight_match (save_in_stack = 0)
+           if changed: self.insert_overlays ()
            self.locked = False
            return True
 
@@ -179,6 +266,8 @@ class Isearch (CommandWindow):
         input [cursor_pos + 1:]  is after the cursor"""
 
      if not self.locked and input != "":
+        self.remove_overlays ()
+
         # Special case for backward search: if the current location matches,
         # no need to do anything else
         if self.backward:
@@ -189,6 +278,7 @@ class Isearch (CommandWindow):
            if match_from == self.loc:
               self.end_log = match_to
               self.highlight_match ()
+              self.insert_overlays ()
               return 
            
         result = self.loc.search \
@@ -198,6 +288,7 @@ class Isearch (CommandWindow):
         if result:
            (self.loc, self.end_loc) = result
            self.highlight_match ()
+           self.insert_overlays ()
 
    def on_activate (self, input):
      """The user has pressed enter"""
@@ -206,4 +297,5 @@ class Isearch (CommandWindow):
 
    def on_cancel (self, input):
      """The user has cancelled the search"""
+     self.cancel_idle_overlays ()
      self.editor.unselect ()
