@@ -34,12 +34,15 @@ package Code_Analysis_Dump is
 private
 
    procedure Dump_Project (C : Project_Maps.Cursor);
-   procedure Dump_File (C : File_Maps.Cursor);
-   procedure Dump_Subprogram (C : Subprogram_Maps.Cursor);
-   procedure Dump_Line (C : Line_Maps.Cursor);
+   --  Dump in text format a Project node by standard output
 
-   procedure Dump_Children_Names (C : File_Maps.Cursor);
-   procedure Dump_Children_Names (C : Subprogram_Maps.Cursor);
-   procedure Dump_Children_Names (C : Line_Maps.Cursor);
+   procedure Dump_File (C : File_Maps.Cursor);
+   --  Dump in text format a File node by standard output
+
+   procedure Dump_Subprogram (C : Subprogram_Maps.Cursor);
+   --  Dump in text format a Subprogram node by standard output
+
+   procedure Dump_Line (L_A : Line_Access);
+   --  Dump in text format a Line ending-node by standard output
 
 end Code_Analysis_Dump;
