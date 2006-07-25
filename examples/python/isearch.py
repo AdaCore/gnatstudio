@@ -228,14 +228,14 @@ class Isearch (CommandWindow):
         or actions.__contains__ (isearch_menu):
         self.backward = False
         self.loc = self.loc + 1
-        self.on_changed (input, len (input))
+        self.on_changed (input, len (input), redo_overlays=0)
         return True
 
      if actions.__contains__ (isearch_backward_action_name) \
         or actions.__contains__ (isearch_backward_menu):
         self.backward = True
         self.loc = self.end_loc
-        self.on_changed (input, len (input))
+        self.on_changed (input, len (input), redo_overlays=0)
         return True
 
      # Cancel the search on any special key. Currently, the key is lost, not
@@ -258,7 +258,7 @@ class Isearch (CommandWindow):
 
      return False
 
-   def on_changed (self, input, cursor_pos):
+   def on_changed (self, input, cursor_pos, redo_overlays=1):
      """The user has modified the command line.
         cursor_pos can be used to find where on the line the cursor is located,
         in case we need to change the command line.
@@ -266,7 +266,7 @@ class Isearch (CommandWindow):
         input [cursor_pos + 1:]  is after the cursor"""
 
      if not self.locked and input != "":
-        self.remove_overlays ()
+        if redo_overlays: self.remove_overlays ()
 
         # Special case for backward search: if the current location matches,
         # no need to do anything else
@@ -288,7 +288,7 @@ class Isearch (CommandWindow):
         if result:
            (self.loc, self.end_loc) = result
            self.highlight_match ()
-           self.insert_overlays ()
+           if redo_overlays: self.insert_overlays ()
 
    def on_activate (self, input):
      """The user has pressed enter"""
