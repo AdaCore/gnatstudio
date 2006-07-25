@@ -26,13 +26,13 @@
 --  levels : Project, File, Subprogram, Line.
 --  </description>
 
-with Ada.Containers.Hashed_Maps;            use Ada.Containers;
 with Ada.Containers.Indefinite_Hashed_Maps;
+use Ada.Containers;
 with Ada.Strings.Hash;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 
-with Integer_Hash;                          use Integer_Hash;
+--  with Integer_Hash;                          use Integer_Hash;
 
 package Code_Analysis is
 
@@ -40,13 +40,26 @@ package Code_Analysis is
    -- Tree decoration records --
    -----------------------------
 
-   type Coverage is record
-      Covered_Child_Count : Integer;
-      Total_Child_Count   : Integer;
+   type Coverage is tagged record
+      Covered : Natural;
    end record;
-   --  Code Coverage specific information
+   --  Basic code coverage information
+   --  Intended for line usage. Will record the number of line execution
 
-   type Coverage_Access is access Coverage;
+   type Node_Coverage is new Coverage with record
+      Children : Natural;
+   end record;
+   --  Node coverage information, including an extra Natural compared to
+   --  basic coverage info.
+   --  The 1st value will be covered child count, and the added will be the
+   --  total child count.
+
+   type Subprogram_Coverage is new Node_Coverage with record
+      Called : Natural;
+   end record;
+   --  Specific subprogram coverage extra info
+
+   type Coverage_Access is access all Coverage'Class;
 
    type Analysis is record
       Coverage_Data : Coverage_Access;
@@ -59,11 +72,12 @@ package Code_Analysis is
    -- Tree types --
    ----------------
 
-   subtype Line_Id is Integer;
+   subtype Line_Id is Natural;
    type Subprogram_Id is access all String;
    type File_Id is access all String;
    type Project_Id is access all String;
 
+   type Node;
    type Line;
    type Subprogram;
    type File;
@@ -73,13 +87,6 @@ package Code_Analysis is
    type Subprogram_Access is access all Subprogram;
    type File_Access is access all File;
    type Project_Access is access all Project;
-
-   package Line_Maps is
-     new  Hashed_Maps
-       (Key_Type        => Integer,
-        Element_Type    => Line_Access,
-        Hash            => Mersenne_Prime,
-        Equivalent_Keys => "=");
 
    package Subprogram_Maps is
      new Indefinite_Hashed_Maps
@@ -104,37 +111,42 @@ package Code_Analysis is
    --  Instanciation of Indefinite_Hashed_Maps
    --  Used to stored the children of Project nodes
 
-   type Line is record
-      Number        : Line_Id;
+   type Node is abstract tagged record
       Analysis_Data : Analysis;
+   end record;
+   --  Abstract father type of all the following specific node types
+
+   type Line is new Node with record
+      Number        : Line_Id;
    end record;
    --  A Line is identified in the Lines' maps of every Subprogram record by an
    --  Integer
 
-   type Subprogram is record
-      Name : Subprogram_Id;
-      Lines : Line_Maps.Map;
+   type Line_Array is array (Positive range <>) of Line_Access;
+   --  Choosen "container" type for Lines
 
-      Analysis_Data : Analysis;
+   type Line_Array_Access is access Line_Array;
+
+   type Subprogram is new Node with record
+      Name : Subprogram_Id;
    end record;
    --  A Subprogram is identified in the Subprograms' maps of every File record
    --  by a string's subtype
 
-   type File is record
-      Name        : File_Id;
+   type File is new Node with record
+         Name        : File_Id;
+      --      Name : VFS.Virtual_File;
+      --  Will be the next modification
       Subprograms : Subprogram_Maps.Map;
-
-      Analysis_Data : Analysis;
+      Lines       : Line_Array_Access;
    end record;
-   --  A File is identified in the Files' maps of every File record
+   --  A File is identified in the Files' maps of every Project records
    --  by a string's subtype
-   --  Will be replaced by the apropriate field of VFS objects
+   --  Will be replaced by the apropriate VFS objects
 
-   type Project is record
+   type Project is new Node with record
       Name        : Project_Id;
       Files       : File_Maps.Map;
-
-      Analysis_Data : Analysis;
    end record;
    --  A Project is identified in the Projects' maps of every Project record
    --  by a string's subtype
@@ -144,7 +156,7 @@ package Code_Analysis is
    -- Get_Or_Create --
    -------------------
 
-   function Get_Or_Create (S_A : Subprogram_Access; L_I : Line_Id)
+   function Get_Or_Create (F_A : Code_Analysis.File_Access; L_I : Line_Id)
                            return Line_Access;
 
    function Get_Or_Create (F_A : File_Access; S_I : Subprogram_Id)
@@ -194,7 +206,7 @@ private
      Ada.Unchecked_Deallocation (String, Project_Id);
 
    procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (Coverage, Coverage_Access);
+     Ada.Unchecked_Deallocation (Coverage'Class, Coverage_Access);
 
    ----------------
    -- Line level --
