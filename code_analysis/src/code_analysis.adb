@@ -25,17 +25,23 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (S_A : Subprogram_Access;
+     (F_A : Code_Analysis.File_Access;
       L_I : Line_Id) return Line_Access is
       L_A : Line_Access;
    begin
-      if S_A.Lines.Contains (L_I) then
-         return S_A.Lines.Element (L_I);
-      end if;
-      L_A := new Line;
-      L_A.Number := L_I;
-      S_A.Lines.Insert (L_I, L_A);
-      return L_A;
+
+--      if L_I <= F_A.Lines'Length then
+         if F_A.Lines (Integer (L_I)) /= null then
+            return F_A.Lines (Natural (L_I));
+         end if;
+         L_A := new Line;
+         L_A.Number := Integer (L_I);
+         F_A.Lines (Integer (L_I)) := L_A;
+         return L_A;
+--      end if;
+
+--      return null;
+      --  ??? raise CONSTRAINT_ERROR : Line asked out of bound
    end Get_Or_Create;
 
    -------------------
@@ -47,9 +53,11 @@ package body Code_Analysis is
       S_I : Subprogram_Id) return Subprogram_Access is
       S_A : Subprogram_Access;
    begin
+
       if F_A.Subprograms.Contains (String (S_I.all)) then
          return F_A.Subprograms.Element (S_I.all);
       end if;
+
       S_A := new Subprogram;
       S_A.Name := S_I;
       F_A.Subprograms.Insert (String (S_I.all), S_A);
@@ -65,9 +73,11 @@ package body Code_Analysis is
       F_I : File_Id) return File_Access is
       F_A : File_Access;
    begin
+
       if P_A.Files.Contains (F_I.all) then
          return P_A.all.Files.Element (F_I.all);
       end if;
+
       F_A := new File;
       F_A.Name := F_I;
       P_A.Files.Insert (String (F_I.all), F_A);
@@ -82,9 +92,11 @@ package body Code_Analysis is
      (P_I : Project_Id) return Project_Access is
       P_A : Project_Access;
    begin
+
       if Projects.Contains (P_I.all) then
          return Projects.Element (P_I.all);
       end if;
+
       P_A := new Project;
       P_A.Name := P_I;
       Projects.Insert (String (P_I.all), P_A);
@@ -97,9 +109,11 @@ package body Code_Analysis is
 
    procedure Free_Analysis (A : in out Analysis) is
    begin
+
       if A.Coverage_Data /= null then
          Unchecked_Free (A.Coverage_Data);
       end if;
+
    end Free_Analysis;
 
    ---------------
@@ -117,23 +131,7 @@ package body Code_Analysis is
    ---------------------
 
    procedure Free_Subprogram (S_A : in out Subprogram_Access) is
-
-      procedure Free_From_Cursor (C : Line_Maps.Cursor);
-      --  Subprogram that Free the element pointed by the access
-      --  itself pointed by the cursor
-
-      ----------------------
-      -- Free_From_Cursor --
-      ----------------------
-
-      procedure Free_From_Cursor (C : Line_Maps.Cursor) is
-         L_A : Line_Access := Line_Maps.Element (C);
-      begin
-         Free_Line (L_A);
-      end Free_From_Cursor;
-
    begin
-      S_A.Lines.Iterate (Free_From_Cursor'Access);
       Free_Analysis (S_A.Analysis_Data);
       Unchecked_Free (S_A.Name);
       Unchecked_Free (S_A);
@@ -160,6 +158,12 @@ package body Code_Analysis is
       end Free_From_Cursor;
 
    begin
+
+      for I in 1 .. F_A.Lines'Length
+      loop
+         Free_Line (F_A.Lines (I));
+      end loop;
+
       F_A.Subprograms.Iterate (Free_From_Cursor'Access);
       Free_Analysis (F_A.Analysis_Data);
       Unchecked_Free (F_A.Name);
