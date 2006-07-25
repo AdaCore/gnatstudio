@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<!--  New GPS action: insert newline, but don't auto-indent
+
+  This file binds the Shift-Return key so that it just
+  inserts a newline character, but not do auto-reindent the
+  current line first, as opposed to what Return does.
+
+  One usage is if you want some parts of your code to have some
+  special indentation that doesn't match what the automatic
+  indentation engine tries to do.
+-->
+
+<enter>
+   <action name="newline no auto-indent" category="Editor">
+      <shell>current_context</shell>
+      <shell>FileContext.file %1</shell>
+      <shell>File.name %1</shell>
+      <shell>Editor.cursor_get_line %1</shell>
+      <shell>Editor.cursor_get_column %2</shell>
+      <shell>Editor.replace_text %3 %2 %1 "
+" 0 0</shell>
+      <filter id="Source editor" />
+   </action>
+
+   <key action="newline no auto-indent">shift-Return</key>
+</enter>
