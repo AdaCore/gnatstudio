@@ -36,17 +36,22 @@ package Code_Coverage is
    --  Find subprograms in a gcov formated output file, and add them to the
    --  given File node.
 
-   procedure Add_Lines
-     (S_A : Subprogram_Access; File_Contents : String_Access);
-   --  Find lines in a gcov formated output file, and add them to the
-   --  given Subprogram node, with the corresponding coverage info.
+   procedure Add_Lines (F_A           : File_Access;
+                        File_Contents : String_Access;
+                        Sub_Count     : Natural);
+   --  Find coverage info of the given lines of a gcov formated output file
+   --  and fill it into the correct Code_Analysis lines
 
-   procedure Dump_Coverage (C_A : Coverage_Access);
+   procedure Dump_Node_Coverage (C_A : Coverage_Access);
    --  Currently dump to the standard output coverage informations stored
-   --  in a Code_Analysis.Coverage record
+   --  in a Code_Analysis.Coverage for the types before Line, ie the tree nodes
 
    procedure Dump_Line_Coverage (C_A : Coverage_Access);
    --  Currently dump to the standard output coverage informations stored
    --  in a Code_Analysis.Coverage record for the Line type
+
+   procedure Dump_Subp_Coverage (C_A : Coverage_Access);
+   --  Currently dump to the standard output coverage informations stored in a
+   --  Code_Analysis.Coverage for the Subprogram nodes, ie with extra Called
 
 end Code_Coverage;
