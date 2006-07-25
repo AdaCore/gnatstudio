@@ -20,7 +20,7 @@ F719-012 Removed support for old customization directories
   files: ~/.gps/customize, ~/.gps/python_startup, $prefix/share/gps/customize
   and the file $prefix/share/gps/python/autoexec.py.
   GPS 3.x was no longer creating these directories, although still reading
-  them if it found scripts in there. GPS now no ignores these directories.
+  them if it found scripts in there. GPS now ignores these directories.
   Use $prefix/share/gps/plug-ins and ~/.gps/plug-ins instead
 
 F721-007 New incremental search module (2006-07-25)
@@ -33,23 +33,3 @@ F720-008 Improved Emacs emulation (2006-07-21)
   Several new key bindings were defined to emulate Emacs. The handling of
   selections (mark+cursor) was also enhanced
 
-New features in GPS 4.0.0
--------------------------
-
-F615-006 Alias expansion is case insensitive (2006-06-16)
- 
-  The process of matching alias names is now case insensitive. This is
-  friendlier as it allows to expand an alias no matter the alias name casing.
-  This is particularly useful when the on the fly auto-casing is being used.
-
-  Keywords: Aliases
-
-F503-004 Block information on record/union/class (2006-05-05)
-
-  GPS computes block information for record/union/class and has associated
-  navigation actions to move to the start or the end of such block. Block
-  folding is also possible which is very convenient for large records.
-
-  Keywords: Editor, Block
-
-[...]
