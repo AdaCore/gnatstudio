@@ -4513,7 +4513,7 @@ The prompt is the short string displayed just before the command line itself. It
 The last four parameters are callbacks:
    - on_changed is called when the user has entered one or more new characters in the command line. This function is given two parameters: the current input string, and the last cursor position in this string. See the example above on how to get the part of the input before and after the cursor.
    - on_activate is called when the user has pressed enter. The command window has already been closed at that point, and the focus given back to the initial MDI window that had it. This callback is given a single parameter, the final input string
-   - on_cancel is called when the user has pressed a key that closed the dialog, for instance Esc. It is given a single parameter, the final input string
+   - on_cancel is called when the user has pressed a key that closed the dialog, for instance Esc. It is given a single parameter, the final input string. This callback is also called when you explicitly destroy the window yourself by calling self.destroy().
    - on_key is called when the user has pressed a new key on his keyboard, but before the corresponding character has been added to the command line. This can be used to filter out some characters, or provide special behavior for some key combination (see the example above). It is given three parameters, the current input string, the key that was pressed, and the current cursor position.</description>
    </shell_doc>
 
