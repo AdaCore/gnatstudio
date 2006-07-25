@@ -59,7 +59,6 @@ class Console_Process (Console, Process):
    def on_exit (self, status, remaining_output):
       self.write (remaining_output)
       self.write ("exit status: " + `status`)
-      self.destroy ()
 
    def on_destroy (self):
       """If the console is destroyed, we kill the make process as well"""
