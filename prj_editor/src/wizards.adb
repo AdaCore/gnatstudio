@@ -277,6 +277,10 @@ package body Wizards is
          end loop;
          Unchecked_Free (W.Pages);
       end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end On_Destroy;
 
    ---------
@@ -293,6 +297,10 @@ package body Wizards is
       end loop;
 
       Set_Current_Page (W, W.Current_Page);
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end Map;
 
    ------------------
@@ -440,8 +448,10 @@ package body Wizards is
 
    procedure Next_Page (Wiz : access Gtk_Widget_Record'Class) is
       W    : constant Wizard := Wizard (Wiz);
-      Next : constant Wizard_Page := Next_Page (W.Pages (W.Current_Page), W);
+      Next : Wizard_Page;
    begin
+      Next := Next_Page (W.Pages (W.Current_Page), W);
+
       if Next /= null then
          for P in W.Pages'Range loop
             if W.Pages (P) = Next then
@@ -452,6 +462,10 @@ package body Wizards is
       end if;
 
       Set_Current_Page (W, W.Current_Page + 1);
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end Next_Page;
 
    -------------------
@@ -462,6 +476,10 @@ package body Wizards is
       W : constant Wizard := Wizard (Wiz);
    begin
       Set_Current_Page (W, W.Current_Page - 1);
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end Previous_Page;
 
    ---------------
@@ -472,6 +490,10 @@ package body Wizards is
       W : constant Wizard := Wizard (Wiz);
    begin
       Perform_Finish (W);
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end On_Finish;
 
    ---------------
