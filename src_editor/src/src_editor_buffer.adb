@@ -65,6 +65,7 @@ with GPS.Kernel.Console;                  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                 use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                  use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
@@ -77,7 +78,6 @@ with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
 with Src_Editor_Buffer.Text_Handling;     use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Module;                   use Src_Editor_Module;
 with Src_Editor_Module.Line_Highlighting;
-with Src_Editor_View;                     use Src_Editor_View;
 with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
 with Traces;                              use Traces;
@@ -5426,11 +5426,12 @@ package body Src_Editor_Buffer is
       Ctxt    : Selection_Context) return Boolean
    is
       pragma Unreferenced (Context);
-      Widget : constant Gtk_Widget :=
-        Get_Current_Focus_Widget (Get_Kernel (Ctxt));
    begin
-      return Widget /= null
-        and then Widget.all in Source_View_Record'Class;
+      --  Do not check the current focus widget ourselves. Instead, we know
+      --  it has been properly checked when the context was created, and we
+      --  just check the current module from there.
+      return GPS.Kernel.Modules.Module_ID (Get_Creator (Ctxt)) =
+        Src_Editor_Module_Id;
    end Filter_Matches_Primitive;
 
    ----------
