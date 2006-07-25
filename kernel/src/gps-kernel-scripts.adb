@@ -58,6 +58,7 @@ with System;                  use System;
 with System.Assertions;
 with Traces;                  use Traces;
 with VFS;                     use VFS;
+with OS_Utils;                use OS_Utils;
 
 package body GPS.Kernel.Scripts is
 
@@ -322,7 +323,8 @@ package body GPS.Kernel.Scripts is
       Script : access Scripting_Language_Record'Class) return Class_Instance
    is
       Tmp : constant Scripting_Language_Array :=
-        Scripting_Data (Get_Kernel (Script).Scripts).Scripting_Languages.all;
+              Scripting_Data
+                (Get_Kernel (Script).Scripts).Scripting_Languages.all;
    begin
       if List.List /= null then
          for T in Tmp'Range loop
@@ -344,7 +346,8 @@ package body GPS.Kernel.Scripts is
       Inst   : Class_Instance)
    is
       Tmp : constant Scripting_Language_Array :=
-        Scripting_Data (Get_Kernel (Script).Scripts).Scripting_Languages.all;
+              Scripting_Data
+                (Get_Kernel (Script).Scripts).Scripting_Languages.all;
    begin
       if List.List = null then
          List.List := new Instance_Array (Tmp'Range);
@@ -416,7 +419,7 @@ package body GPS.Kernel.Scripts is
       return Callback_Data_Access
    is
       Tmp : constant Scripting_Language_Array :=
-        Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
+              Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
    begin
       if List /= null then
          for T in Tmp'Range loop
@@ -439,7 +442,7 @@ package body GPS.Kernel.Scripts is
       Data   : Callback_Data_Access)
    is
       Tmp : constant Scripting_Language_Array :=
-        Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
+              Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
    begin
       if List = null then
          List := new Callback_Data_Array (Tmp'Range);
@@ -491,7 +494,7 @@ package body GPS.Kernel.Scripts is
       Script : access Scripting_Language_Record'Class)
    is
       Tmp : constant Scripting_Language_Array :=
-        Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
+              Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
    begin
       Unchecked_Free (Scripting_Data (Kernel.Scripts).Scripting_Languages);
       Scripting_Data (Kernel.Scripts).Scripting_Languages :=
@@ -508,7 +511,7 @@ package body GPS.Kernel.Scripts is
       Name   : String) return Scripting_Language
    is
       Tmp : constant Scripting_Language_List :=
-        Scripting_Data (Kernel.Scripts).Scripting_Languages;
+              Scripting_Data (Kernel.Scripts).Scripting_Languages;
    begin
       for T in Tmp'Range loop
          if Equal (Get_Name (Tmp (T)), Name, False) then
@@ -539,7 +542,7 @@ package body GPS.Kernel.Scripts is
       Block  : Boolean)
    is
       Tmp : constant Scripting_Language_List :=
-        Scripting_Data (Kernel.Scripts).Scripting_Languages;
+              Scripting_Data (Kernel.Scripts).Scripting_Languages;
    begin
       for T in Tmp'Range loop
          Block_Commands (Tmp (T), Block);
@@ -560,7 +563,7 @@ package body GPS.Kernel.Scripts is
       Static_Method : Boolean := False)
    is
       Tmp : constant Scripting_Language_List :=
-        Scripting_Data (Kernel.Scripts).Scripting_Languages;
+              Scripting_Data (Kernel.Scripts).Scripting_Languages;
    begin
       Assert (Me,
               Command /= Constructor_Method or else Class /= No_Class,
@@ -580,12 +583,12 @@ package body GPS.Kernel.Scripts is
    ---------------
 
    function New_Class
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name        : String;
-      Base        : Class_Type := No_Class) return Class_Type
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name   : String;
+      Base   : Class_Type := No_Class) return Class_Type
    is
       Tmp   : constant Scripting_Language_List :=
-        Scripting_Data (Kernel.Scripts).Scripting_Languages;
+                Scripting_Data (Kernel.Scripts).Scripting_Languages;
       Class : Class_Type;
 
    begin
@@ -646,7 +649,7 @@ package body GPS.Kernel.Scripts is
    is
       Script : constant Scripting_Language := Get_Script (Instance);
       Class  : constant Class_Type :=
-        Get_File_Location_Class (Get_Kernel (Script));
+                 Get_File_Location_Class (Get_Kernel (Script));
    begin
       if not Is_Subclass (Instance, Class) then
          raise Invalid_Data;
@@ -690,9 +693,9 @@ package body GPS.Kernel.Scripts is
       return File_Location_Info
    is
       Class : constant Class_Type :=
-        Get_File_Location_Class (Get_Kernel (Data));
+                Get_File_Location_Class (Get_Kernel (Data));
       Inst  : constant Class_Instance :=
-        Nth_Arg (Callback_Data'Class (Data), N, Class);
+                Nth_Arg (Callback_Data'Class (Data), N, Class);
       D     : User_Data_List;
    begin
       if Inst /= No_Class_Instance then
@@ -734,7 +737,7 @@ package body GPS.Kernel.Scripts is
    is
       Class : constant Class_Type := Get_File_Class (Get_Kernel (Data));
       Inst  : constant Class_Instance :=
-        Nth_Arg (Callback_Data'Class (Data), N, Class);
+                Nth_Arg (Callback_Data'Class (Data), N, Class);
    begin
       return Get_Data (Inst);
    end Get_Data;
@@ -744,7 +747,7 @@ package body GPS.Kernel.Scripts is
    --------------
 
    function Get_Data (Instance : Class_Instance) return Virtual_File is
-      Data   : User_Data_List;
+      Data : User_Data_List;
    begin
       if Instance /= No_Class_Instance then
          Data := Get_Data (Instance, File_Class_Name);
@@ -925,7 +928,7 @@ package body GPS.Kernel.Scripts is
       elsif Command = "scenario_variables" then
          declare
             Vars : constant Scenario_Variable_Array :=
-              Scenario_Variables (Kernel);
+                     Scenario_Variables (Kernel);
          begin
             for V in Vars'Range loop
                Set_Return_Value (Data, Value_Of (Vars (V)));
@@ -962,11 +965,12 @@ package body GPS.Kernel.Scripts is
                declare
                   use String_List_Utils.String_List;
 
-                  Name : constant String := External_Reference_Of (Vars (V));
+                  Name   : constant String := External_Reference_Of (Vars (V));
                   Values : String_List_Utils.String_List.List :=
-                    Enum_Values_Of (Vars (V), Get_Registry (Kernel).all);
+                             Enum_Values_Of
+                               (Vars (V), Get_Registry (Kernel).all);
                   Iter   : String_List_Utils.String_List.List_Node :=
-                    First (Values);
+                             First (Values);
                begin
                   while Iter /= String_List_Utils.String_List.Null_Node loop
                      Set_Return_Value
@@ -997,13 +1001,13 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Location_Cmd_Parameters);
 
          declare
-            File : constant Class_Instance  :=
-              Nth_Arg (Data, 2, Get_File_Class (Kernel));
-            L    : constant Integer := Nth_Arg (Data, 3);
-            C    : constant Visible_Column_Type :=
-              Visible_Column_Type (Nth_Arg (Data, 4, Default => 1));
+            File     : constant Class_Instance  :=
+                         Nth_Arg (Data, 2, Get_File_Class (Kernel));
+            L        : constant Integer := Nth_Arg (Data, 3);
+            C        : constant Visible_Column_Type :=
+                         Visible_Column_Type (Nth_Arg (Data, 4, Default => 1));
             Instance : constant Class_Instance :=
-              Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
+                         Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
          begin
             Set_Data (Instance, File_Location_Info'(File, L, C));
          end;
@@ -1042,17 +1046,17 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Entity_Cmd_Parameters);
 
          declare
-            Name     : constant String  := Nth_Arg (Data, 2);
-            File     : constant Class_Instance  :=
-              Nth_Arg (Data, 3, Get_File_Class (Kernel),
-                       Default    => No_Class_Instance,
-                       Allow_Null => True);
-            L        : Integer := Nth_Arg (Data, 4, Default => 1);
-            C        : Visible_Column_Type :=
-              Visible_Column_Type (Nth_Arg (Data, 5, Default => 1));
-            Status   : Find_Decl_Or_Body_Query_Status;
-            F        : Virtual_File;
-            Source   : Source_File;
+            Name   : constant String  := Nth_Arg (Data, 2);
+            File   : constant Class_Instance  :=
+                       Nth_Arg (Data, 3, Get_File_Class (Kernel),
+                                Default    => No_Class_Instance,
+                                Allow_Null => True);
+            L      : Integer := Nth_Arg (Data, 4, Default => 1);
+            C      : Visible_Column_Type :=
+                       Visible_Column_Type (Nth_Arg (Data, 5, Default => 1));
+            Status : Find_Decl_Or_Body_Query_Status;
+            F      : Virtual_File;
+            Source : Source_File;
 
          begin
             if File = No_Class_Instance then
@@ -1150,8 +1154,8 @@ package body GPS.Kernel.Scripts is
    procedure Create_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Info     : Virtual_File;
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Info   : Virtual_File;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
@@ -1163,7 +1167,14 @@ package body GPS.Kernel.Scripts is
             File     : Virtual_File;
          begin
             if Is_Absolute_Path (Name) then
-               Set_Data (Instance, Create (Name));
+               if Is_Cygwin_Path (Name) then
+                  --  This is a cygwing PATH style, convert to standard DOS
+                  Set_Data
+                    (Instance,
+                     Create (Format_Pathname (Name, DOS)));
+               else
+                  Set_Data (Instance, Create (Name));
+               end if;
                return;
             end if;
 
@@ -1356,12 +1367,12 @@ package body GPS.Kernel.Scripts is
    procedure Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Context  : Selection_Context;
-      Object   : Glib.Object.GObject;
-      Menu     : Gtk.Menu.Gtk_Menu;
-      L, C     : Integer := -1;
-      Inst     : Class_Instance;
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
+      Context : Selection_Context;
+      Object  : Glib.Object.GObject;
+      Menu    : Gtk.Menu.Gtk_Menu;
+      L, C    : Integer := -1;
+      Inst    : Class_Instance;
 
       procedure Recursive_Analyze_Menu
         (Depth : Natural;
@@ -1388,23 +1399,24 @@ package body GPS.Kernel.Scripts is
 
          while List /= Widget_List.Null_List loop
             Menu_Item := Gtk_Menu_Item (Widget_List.Get_Data (List));
+
             if Menu_Item /= null then
-               Label := Gtk_Label
-                 (Gtk.Menu_Item.Get_Child (Menu_Item));
+               Label := Gtk_Label (Gtk.Menu_Item.Get_Child (Menu_Item));
+
                if Label /= null then
-                  Set_Return_Value (Data,
-                                    Natural'Image (Depth) & " - " &
-                                    Get_Text (Label));
+                  Set_Return_Value
+                    (Data, Natural'Image (Depth) & " - " & Get_Text (Label));
                else
-                  Set_Return_Value (Data,
-                                    Natural'Image (Depth) & " - " &
-                                    "<separator>");
+                  Set_Return_Value
+                    (Data, Natural'Image (Depth) & " - " & "<separator>");
                end if;
+
                Submenu := Gtk_Menu (Get_Submenu (Menu_Item));
                if Submenu /= null then
                   Recursive_Analyze_Menu (Depth + 1, Submenu);
                end if;
             end if;
+
             List := Widget_List.Next (List);
          end loop;
       end Recursive_Analyze_Menu;
@@ -1567,7 +1579,7 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       List : Scripting_Language_List :=
-        Scripting_Data (Kernel.Scripts).Scripting_Languages;
+               Scripting_Data (Kernel.Scripts).Scripting_Languages;
    begin
       for L in List'Range loop
          Destroy (List (L));
@@ -1602,9 +1614,9 @@ package body GPS.Kernel.Scripts is
         (System.Address, Subprogram_Type);
       On_Input : constant Subprogram_Type := Convert (User_Data);
       Instance : constant Class_Instance :=
-        Get_Instance (Get_Script (On_Input.all), Console);
-      C : Callback_Data'Class := Create (Get_Script (On_Input.all), 2);
-      Tmp : Boolean;
+                   Get_Instance (Get_Script (On_Input.all), Console);
+      C        : Callback_Data'Class := Create (Get_Script (On_Input.all), 2);
+      Tmp      : Boolean;
       pragma Unreferenced (Tmp);
    begin
       Set_Nth_Arg (C, 1, Instance);
@@ -1622,8 +1634,8 @@ package body GPS.Kernel.Scripts is
      (Console    : access Gtk_Widget_Record'Class;
       Subprogram : Subprogram_Type)
    is
-      Inst  : constant Class_Instance :=
-        Get_Instance (Get_Script (Subprogram.all), Console);
+      Inst   : constant Class_Instance :=
+                 Get_Instance (Get_Script (Subprogram.all), Console);
       Script : constant Scripting_Language := Get_Script (Subprogram.all);
    begin
       if Script /= null then
@@ -1734,17 +1746,18 @@ package body GPS.Kernel.Scripts is
    procedure Logger_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel        : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel              : constant Kernel_Handle := Get_Kernel (Data);
       Name_Cst            : aliased constant String := "name";
       Message_Cst         : aliased constant String := "message";
       Active_Cst          : aliased constant String := "active";
       Condition_Cst       : aliased constant String := "condition";
       Error_Message_Cst   : aliased constant String := "error_message";
       Success_Message_Cst : aliased constant String := "success_message";
-      Logger_Class       : constant Class_Type :=
-        New_Class (Kernel, Logger_Class_Name);
-      Inst        : constant Class_Instance := Nth_Arg (Data, 1, Logger_Class);
-      Handle      : Debug_Handle;
+      Logger_Class        : constant Class_Type :=
+                              New_Class (Kernel, Logger_Class_Name);
+      Inst                : constant Class_Instance :=
+                              Nth_Arg (Data, 1, Logger_Class);
+      Handle              : Debug_Handle;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, (1 => Name_Cst'Unchecked_Access));
@@ -1791,7 +1804,8 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Console_Class : constant Class_Type :=
-        New_Class (Kernel, "Console", Base => Get_GUI_Class (Kernel));
+                        New_Class
+                          (Kernel, "Console", Base => Get_GUI_Class (Kernel));
       Logger  : constant Class_Type := New_Class (Kernel, Logger_Class_Name);
    begin
       Register_Command
