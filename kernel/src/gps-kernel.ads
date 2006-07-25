@@ -823,6 +823,9 @@ private
       Styles : Root_Table_Access;
       --  The styles registered in the kernel
 
+      Startup_Scripts : Root_Table_Access;
+      --  The list of startup scripts and whether they should be loaded
+
       Hooks : Hooks_Hash.String_Hash_Table.HTable;
       --  The hooks registered in the kernel
 
