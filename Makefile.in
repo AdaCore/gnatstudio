@@ -31,7 +31,7 @@ install-common:
 	$(MKDIR) $(sharedir)/gps/docgen
 	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
-	# (cd share; tar cf - library/*.xml) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - library/*.xml) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gps; tar xf -)
 	$(RM) $(sharedir)/gps/python/GPS_old.py
 	-$(RMDIR) $(sharedir)/gps/python/
