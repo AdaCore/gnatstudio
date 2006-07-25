@@ -103,13 +103,16 @@ package Src_Contexts is
       Start_At        : Gtk.Text_Iter.Gtk_Text_Iter;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
+      Dialog_On_Failure : Boolean := True;
       Match_From      : out Gtk.Text_Iter.Gtk_Text_Iter;
       Match_Up_To     : out Gtk.Text_Iter.Gtk_Text_Iter;
       Found           : out Boolean);
    --  Search for Context in an editor. The search starts at the given
    --  location and only applies to that buffer.
    --  If Found is set to False on exit, then no match was found and the
-   --  value of Match_From .. Match_Up_To is irrelevant
+   --  value of Match_From .. Match_Up_To is irrelevant.
+   --  If Dialog_On_Failure is true, then a dialog is displayed on the screen
+   --  in case of failure.
 
    ----------------------------
    -- Abstract files context --

@@ -148,6 +148,7 @@ package body Src_Contexts is
       Current_Line   : Editable_Line_Type;
       Current_Column : Character_Offset_Type;
       Backward       : Boolean;
+      Dialog_On_Failure : Boolean := True;
       Result         : out Match_Result_Access);
    --  Return the next occurrence of Context in Editor, just before or just
    --  after Current_Line, Current_Column. If no match is found after the
@@ -610,16 +611,17 @@ package body Src_Contexts is
    ---------------
 
    procedure Scan_Next
-     (Context        : access Search_Context'Class;
-      Kernel         : access Kernel_Handle_Record'Class;
-      Editor         : access Source_Buffer_Record'Class;
-      Scope          : Search_Scope;
-      Lexical_State  : in out Recognized_Lexical_States;
-      Lang           : Language_Access;
-      Current_Line   : Editable_Line_Type;
-      Current_Column : Character_Offset_Type;
-      Backward       : Boolean;
-      Result         : out Match_Result_Access)
+     (Context           : access Search_Context'Class;
+      Kernel            : access Kernel_Handle_Record'Class;
+      Editor            : access Source_Buffer_Record'Class;
+      Scope             : Search_Scope;
+      Lexical_State     : in out Recognized_Lexical_States;
+      Lang              : Language_Access;
+      Current_Line      : Editable_Line_Type;
+      Current_Column    : Character_Offset_Type;
+      Backward          : Boolean;
+      Dialog_On_Failure : Boolean := True;
+      Result            : out Match_Result_Access)
    is
       Continue_Till_End : Boolean := False;
 
@@ -678,17 +680,21 @@ package body Src_Contexts is
       function Continue_Dialog (Message : String) return Boolean is
          Buttons : Message_Dialog_Buttons;
       begin
-         Buttons := Message_Dialog
-           (Message,
-            Confirmation,
-            Button_Yes or Button_No,
-            Button_Yes,
-            "",
-            -"Continue search ?",
-            Justify_Center,
-            Get_Current_Window (Kernel));
+         if Dialog_On_Failure then
+            Buttons := Message_Dialog
+              (Message,
+               Confirmation,
+               Button_Yes or Button_No,
+               Button_Yes,
+               "",
+               -"Continue search ?",
+               Justify_Center,
+               Get_Current_Window (Kernel));
 
-         return Buttons = Button_Yes;
+            return Buttons = Button_Yes;
+         else
+            return False;
+         end if;
       end Continue_Dialog;
 
       Was_Partial       : Boolean;
@@ -1187,6 +1193,7 @@ package body Src_Contexts is
       Start_At        : Gtk.Text_Iter.Gtk_Text_Iter;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
+      Dialog_On_Failure : Boolean := True;
       Match_From      : out Gtk.Text_Iter.Gtk_Text_Iter;
       Match_Up_To     : out Gtk.Text_Iter.Gtk_Text_Iter;
       Found           : out Boolean)
@@ -1231,6 +1238,7 @@ package body Src_Contexts is
          Lang           => Lang,
          Current_Line   => Line,
          Current_Column => Column,
+         Dialog_On_Failure => Dialog_On_Failure,
          Backward       => Search_Backward,
          Result         => Match);
 
