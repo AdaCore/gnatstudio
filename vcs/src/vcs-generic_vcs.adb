@@ -553,8 +553,15 @@ package body VCS.Generic_VCS is
       end if;
 
       if Ref.Absolute_Names then
-         Args (Args'Last) :=
-           new String'(Locale_From_UTF8 (Full_Name (File).all));
+         if Ref.Path_Style = System_Default then
+            Args (Args'Last) :=
+              new String'(Locale_From_UTF8 (Full_Name (File).all));
+         else
+            Args (Args'Last) := new String'
+              (Format_Pathname
+                 (Locale_From_UTF8 (Full_Name (File).all), Ref.Path_Style));
+         end if;
+
       else
          Args (Args'Last) := new String'(Locale_From_UTF8 (Base_Name (File)));
       end if;
