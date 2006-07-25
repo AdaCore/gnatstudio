@@ -1,3 +1,4 @@
+## This module provides compatibility with older versions of GPS
 ##
 ## This script is not intended to be loaded automatically on startup,
 ## although it won't damage your environment.
@@ -5,7 +6,6 @@
 ## you should import it with
 ##     import GPS_old
 ##
-## This module provides compatibility with older versions of GPS
 ## Simply import it in your own script if some of the recent changes in GPS
 ## break your scripts.
 ## As much as possible, you should update your scripts, though

@@ -1,5 +1,6 @@
-## This script adds an incremental-search capability to GPS, similar to
-## what Emacs does.
+## This script adds an incremental-search capability to GPS
+##
+## This is similar to what Emacs does
 ## When you select the menu /Navigate/Find Incremental (or bind a key
 ## shortcut to it through the editor at /Edit/Key shortcuts), a temporary
 ## window is open. From then on, any character you type is displayed in
