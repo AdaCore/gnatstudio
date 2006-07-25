@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <GPS>
-  <action name="build-clean-root-project" category="Builder">
+  <action name="build clean root project" category="Builder">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
     <shell output="none">Project.root</shell>
     <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
@@ -9,10 +9,10 @@
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>
   </action>
-  <menu action="build-clean-root-project" after="Make">
+  <menu action="build clean root project" after="Make">
     <title>/Build/C_lean/_Root Project</title>
   </menu>
-  <action name="build-clean-all-root-project" category="Builder">
+  <action name="build clean all root project" category="Builder">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
     <shell output="none">Project.root</shell>
     <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
@@ -21,11 +21,11 @@
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>
   </action>
-  <menu action="build-clean-all-root-project" after="Clean">
+  <menu action="build clean all root project" after="Clean">
     <title>/Build/C_lean/_All</title>
   </menu>
 
-  <action name="build-clean-subproject" category="Builder">
+  <action name="build clean subproject" category="Builder">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
     <shell output="none">Project.root</shell>
     <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
@@ -36,7 +36,7 @@
     <filter id="Explorer_Project_Node"/>
   </action>
 
-  <contextual action="build-clean-subproject">
+  <contextual action="build clean subproject">
     <title>Build/Clean</title>
   </contextual>
 </GPS>
