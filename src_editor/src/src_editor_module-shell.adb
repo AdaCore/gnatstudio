@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005-2006                    --
+--                      Copyright (C) 2005-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -250,10 +250,10 @@ package body Src_Editor_Module.Shell is
    --  destroyed
 
    procedure Set_Location_Data
-     (Inst      : Class_Instance;
-      Buffer    : Source_Buffer;
-      Line      : Gint;
-      Offset    : Gint);
+     (Inst   : Class_Instance;
+      Buffer : Source_Buffer;
+      Line   : Gint;
+      Offset : Gint);
    --  Set the data stored in the instance of EditorLocation
 
    function Create_Editor_Location
@@ -276,12 +276,12 @@ package body Src_Editor_Module.Shell is
    --  contain a valid location.
 
    procedure Get_Locations
-     (Iter1   : out Gtk_Text_Iter;
-      Iter2   : out Gtk_Text_Iter;
-      Buffer  : in out Source_Buffer;
-      Data    : in out Callback_Data'Class;
-      Arg1    : Positive;
-      Arg2    : Positive;
+     (Iter1                : out Gtk_Text_Iter;
+      Iter2                : out Gtk_Text_Iter;
+      Buffer               : in out Source_Buffer;
+      Data                 : in out Callback_Data'Class;
+      Arg1                 : Positive;
+      Arg2                 : Positive;
       Compensate_Last_Iter : Boolean := True);
    --  Get the two location arguments from Data, defaulting to resp. the
    --  beginning and end of the buffer.
@@ -292,32 +292,32 @@ package body Src_Editor_Module.Shell is
    --  iterators, since they stop to operate just before the last iterator.
 
    procedure Get_Mark
-     (Mark   : out Gtk_Text_Mark;
-      Data   : in out Callback_Data'Class;
-      Arg    : Positive);
+     (Mark : out Gtk_Text_Mark;
+      Data : in out Callback_Data'Class;
+      Arg  : Positive);
    --  Return the mark stored in the Arg-th parameter.
    --  Set Mark to null if it wasn't a valid instance
 
    procedure Get_Buffer
      (Buffer : in out Source_Buffer;
       Data   : in out Callback_Data'Class;
-      Arg : Positive);
+      Arg    : Positive);
    --  Set the Buffer variable appropriately, or null if the buffer could
    --  not be found or is no longer valid.
    --  If the buffer is no longer valid, null is returned and an error msg is
    --  set in Data.
 
    procedure Get_Overlay
-     (Tag    : in out Gtk_Text_Tag;
-      Data   : in out Callback_Data'Class;
-      Arg : Positive;
+     (Tag        : in out Gtk_Text_Tag;
+      Data       : in out Callback_Data'Class;
+      Arg        : Positive;
       Allow_Null : Boolean := False);
    --  Get the EditorOverlay stored in Data
 
    procedure Get_Box
-     (Box    : in out Source_Editor_Box;
-      Data   : in out Callback_Data'Class;
-      Arg : Positive);
+     (Box  : in out Source_Editor_Box;
+      Data : in out Callback_Data'Class;
+      Arg  : Positive);
    --  Return the view stored in Data
 
    -------------
@@ -325,13 +325,13 @@ package body Src_Editor_Module.Shell is
    -------------
 
    procedure Get_Box
-     (Box    : in out Source_Editor_Box;
-      Data   : in out Callback_Data'Class;
-      Arg : Positive)
+     (Box  : in out Source_Editor_Box;
+      Data : in out Callback_Data'Class;
+      Arg  : Positive)
    is
       EditorView : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "EditorView");
-      Inst   : constant Class_Instance := Nth_Arg (Data, Arg, EditorView);
+                     New_Class (Get_Kernel (Data), "EditorView");
+      Inst       : constant Class_Instance := Nth_Arg (Data, Arg, EditorView);
    begin
       Box := Source_Editor_Box (GObject'(Get_Data (Inst)));
       if Box = null then
@@ -346,11 +346,11 @@ package body Src_Editor_Module.Shell is
    procedure Get_Buffer
      (Buffer : in out Source_Buffer;
       Data   : in out Callback_Data'Class;
-      Arg : Positive)
+      Arg    : Positive)
    is
       EditorBuffer : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "EditorBuffer");
-      Inst   : constant Class_Instance := Nth_Arg (Data, Arg, EditorBuffer);
+                       New_Class (Get_Kernel (Data), "EditorBuffer");
+      Inst      : constant Class_Instance := Nth_Arg (Data, Arg, EditorBuffer);
    begin
       Buffer := Source_Buffer (GObject'(Get_Data (Inst)));
       if Buffer = null then
@@ -363,14 +363,14 @@ package body Src_Editor_Module.Shell is
    -----------------
 
    procedure Get_Overlay
-     (Tag    : in out Gtk_Text_Tag;
-      Data   : in out Callback_Data'Class;
-      Arg : Positive;
+     (Tag        : in out Gtk_Text_Tag;
+      Data       : in out Callback_Data'Class;
+      Arg        : Positive;
       Allow_Null : Boolean := False)
    is
       EditorOverlay : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "EditorOverlay");
-      Inst   : Class_Instance;
+                        New_Class (Get_Kernel (Data), "EditorOverlay");
+      Inst          : Class_Instance;
    begin
       Inst := Nth_Arg (Data, Arg, EditorOverlay, Allow_Null => Allow_Null);
       if Inst = No_Class_Instance then
@@ -393,20 +393,24 @@ package body Src_Editor_Module.Shell is
       Arg     : Positive;
       Default : Gtk_Text_Iter)
    is
-      Class : constant Class_Type :=
-        New_Class (Get_Kernel (Data), Editor_Location_Class_Name);
+      Class    : constant Class_Type :=
+                   New_Class (Get_Kernel (Data), Editor_Location_Class_Name);
       Loc_Inst : Class_Instance;
       Info     : Location_Info_Access;
    begin
       Loc_Inst := Nth_Arg
         (Data, Arg, Class, Allow_Null => True, Default => No_Class_Instance);
+
       if Loc_Inst = No_Class_Instance then
          Copy (Source => Default, Dest => Iter);
+
       else
          Info := Location_Property
            (Get_Property (Loc_Inst, Editor_Location_Class_Name)).Location;
+
          if Info.Buffer = null then
             Copy (Source => Default, Dest => Iter);
+
          else
             Get_Iter_At_Line_Offset
               (Info.Buffer, Iter,
@@ -421,12 +425,12 @@ package body Src_Editor_Module.Shell is
    -------------------
 
    procedure Get_Locations
-     (Iter1   : out Gtk_Text_Iter;
-      Iter2   : out Gtk_Text_Iter;
-      Buffer  : in out Source_Buffer;
-      Data    : in out Callback_Data'Class;
-      Arg1    : Positive;
-      Arg2    : Positive;
+     (Iter1                : out Gtk_Text_Iter;
+      Iter2                : out Gtk_Text_Iter;
+      Buffer               : in out Source_Buffer;
+      Data                 : in out Callback_Data'Class;
+      Arg1                 : Positive;
+      Arg2                 : Positive;
       Compensate_Last_Iter : Boolean := True)
    is
       Success : Boolean;
@@ -443,6 +447,7 @@ package body Src_Editor_Module.Shell is
          then
             Set_Error_Msg (Data, -"Locations are not in the correct buffer");
             Buffer := null;
+
          elsif Compensate_Last_Iter then
             --  All operations that take two iterators stop just before the
             --  second one. This is harder to use in scripts, though, so we
@@ -454,6 +459,7 @@ package body Src_Editor_Module.Shell is
                if not Is_End (Iter2) then
                   Forward_Char (Iter2, Success);
                end if;
+
             else
                --  if not (Is_End (Iter1) or else Ends_Line (Iter1)) then
                if not Is_End (Iter1) then
@@ -472,7 +478,7 @@ package body Src_Editor_Module.Shell is
      (Script : access Scripting_Language_Record'Class;
       Tag    : Gtk_Text_Tag) return Class_Instance
    is
-      Inst  : Class_Instance;
+      Inst : Class_Instance;
    begin
       Inst := Get_Instance (Script, Tag);
       if Inst = No_Class_Instance then
@@ -491,7 +497,7 @@ package body Src_Editor_Module.Shell is
      (Script : access Scripting_Language_Record'Class;
       Mark   : Gtk_Text_Mark) return Class_Instance
    is
-      Inst  : Class_Instance;
+      Inst : Class_Instance;
    begin
       Inst := Get_Instance (Script, Mark);
       if Inst = No_Class_Instance then
@@ -508,13 +514,13 @@ package body Src_Editor_Module.Shell is
    --------------
 
    procedure Get_Mark
-     (Mark   : out Gtk_Text_Mark;
-      Data   : in out Callback_Data'Class;
-      Arg    : Positive)
+     (Mark : out Gtk_Text_Mark;
+      Data : in out Callback_Data'Class;
+      Arg  : Positive)
    is
       EditorMark : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "EditorMark");
-      Inst   : constant Class_Instance := Nth_Arg (Data, Arg, EditorMark);
+                     New_Class (Get_Kernel (Data), "EditorMark");
+      Inst       : constant Class_Instance := Nth_Arg (Data, Arg, EditorMark);
    begin
       Mark := Gtk_Text_Mark (GObject'(Get_Data (Inst)));
 
@@ -561,10 +567,10 @@ package body Src_Editor_Module.Shell is
    -----------------------
 
    procedure Set_Location_Data
-     (Inst      : Class_Instance;
-      Buffer    : Source_Buffer;
-      Line      : Gint;
-      Offset    : Gint)
+     (Inst   : Class_Instance;
+      Buffer : Source_Buffer;
+      Line   : Gint;
+      Offset : Gint)
    is
       Info : constant Location_Info_Access := new Location_Info'
         (Buffer => Buffer, Line => Line, Offset => Offset);
@@ -623,7 +629,7 @@ package body Src_Editor_Module.Shell is
      (Script : access Scripting_Language_Record'Class;
       Buffer : Source_Buffer) return Class_Instance
    is
-      Inst  : Class_Instance;
+      Inst : Class_Instance;
    begin
       if Buffer = null then
          return No_Class_Instance;
@@ -650,6 +656,7 @@ package body Src_Editor_Module.Shell is
    begin
       if View = null then
          return No_Class_Instance;
+
       else
          Inst := Get_Instance (Script, View);
          if Inst = No_Class_Instance then
@@ -1328,7 +1335,7 @@ package body Src_Editor_Module.Shell is
       then
          declare
             File  : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
+                      Create (Nth_Arg (Data, 1), Kernel);
             Child : constant MDI_Child := Find_Editor (Kernel, File);
          begin
             if Child = null then
@@ -1643,11 +1650,11 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "set_background_color" then
          declare
-            Filename    : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
-            Color       : constant String := Nth_Arg (Data, 2);
-            Box         : Source_Editor_Box;
-            Child       : MDI_Child;
+            Filename : constant Virtual_File :=
+                         Create (Nth_Arg (Data, 1), Kernel);
+            Color    : constant String := Nth_Arg (Data, 2);
+            Box      : Source_Editor_Box;
+            Child    : MDI_Child;
          begin
             Child := Find_Editor (Kernel, Filename);
 
@@ -1661,9 +1668,9 @@ package body Src_Editor_Module.Shell is
       elsif Command = "set_synchronized_scrolling" then
          declare
             Filename_1 : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
+                           Create (Nth_Arg (Data, 1), Kernel);
             Filename_2 : constant Virtual_File :=
-              Create (Nth_Arg (Data, 2), Kernel);
+                           Create (Nth_Arg (Data, 2), Kernel);
             Child_1    : MDI_Child;
             Child_2    : MDI_Child;
             use Child_Triplet_Callback;
@@ -1766,15 +1773,15 @@ package body Src_Editor_Module.Shell is
    procedure Buffer_Cmds
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel    : constant Kernel_Handle := Get_Kernel (Data);
-      Buffer    : Source_Buffer;
-      Child     : MDI_Child;
-      Box       : Source_Editor_Box;
-      File      : Virtual_File;
-      File_Inst : Class_Instance;
-      Mark      : Gtk_Text_Mark;
-      Success   : Boolean;
-      Tag       : Gtk_Text_Tag;
+      Kernel      : constant Kernel_Handle := Get_Kernel (Data);
+      Buffer      : Source_Buffer;
+      Child       : MDI_Child;
+      Box         : Source_Editor_Box;
+      File        : Virtual_File;
+      File_Inst   : Class_Instance;
+      Mark        : Gtk_Text_Mark;
+      Success     : Boolean;
+      Tag         : Gtk_Text_Tag;
       Iter, Iter2 : aliased Gtk_Text_Iter;
       Force       : Boolean;
 
@@ -2629,7 +2636,7 @@ package body Src_Editor_Module.Shell is
      (Data : in out Callback_Data'Class; Command : String)
    is
       EditorView : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "EditorView");
+                     New_Class (Get_Kernel (Data), "EditorView");
       Inst       : Class_Instance;
       Box        : Source_Editor_Box;
       Buffer     : Source_Buffer;
