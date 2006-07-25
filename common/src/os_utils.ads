@@ -94,6 +94,10 @@ package OS_Utils is
    --  difference is for the Cygwin mode. In this case the drive prefix is
    --  converted to the cygwin equivalent (/cygdrive/<drive>).
 
+   function Is_Cygwin_Path (Path : String) return Boolean;
+   pragma Inline (Is_Cygwin_Path);
+   --  Return true if Path start with /cygdrive/<drive>/
+
 private
    pragma Import (C, Install_Ctrl_C_Handler, "__gnat_install_int_handler");
    pragma Import (C, Uninstall_Ctrl_C_Handler, "__gnat_uninstall_int_handler");
