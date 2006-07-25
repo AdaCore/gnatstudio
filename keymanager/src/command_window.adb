@@ -42,10 +42,10 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 with GUI_Utils;              use GUI_Utils;
 with KeyManager_Module;      use KeyManager_Module;
---  with Traces;                 use Traces;
+with Traces;                 use Traces;
 
 package body Command_Window is
---     Me : constant Debug_Handle := Create ("CW");
+   Me : constant Debug_Handle := Create ("CW");
 
    type Command_Window_Record is new Gtk_Window_Record with record
       Kernel      : Kernel_Handle;
@@ -136,6 +136,8 @@ package body Command_Window is
             Str : constant String := Get_Text (Win.Line);
             On_Activate : constant Subprogram_Type := Win.On_Activate;
          begin
+            --  Prevent callback when window is destroyed
+            Win.On_Cancel := null;
             Destroy (Win);
             if On_Activate /= null then
                declare
@@ -164,6 +166,18 @@ package body Command_Window is
             Set_Nth_Arg (C, 3, Integer (Get_Position (Win.Line)));
             Tmp := Execute (Win.On_Key, C);
             Free (C);
+
+            --  If the window is destroyed, we should probably forward the
+            --  key event to the new focus widget (at least it would be the
+            --  expected behavior for isearch.py
+            --  ??? Not sure how to implement that, nor whether this is the
+            --  most appropriate choice in all cases
+            --              if not Is_Created (GObject (Win).all)
+            --                or else Destroyed_Is_Set (Win)
+            --              then
+            --                 null;
+            --              end if;
+
             return Tmp;
          end;
       else
@@ -180,26 +194,9 @@ package body Command_Window is
       return Boolean
    is
       pragma Unreferenced (Event);
-      Win   : constant Command_Window := Command_Window (Window);
    begin
       --  This function is called when the key has not been handled by gtk+.
       --  This is a special key, and we just cancel
-
-      --  A key that has not been handled by the Command_Window, nor by the
-      --  keymanager in fact => this is a special key, destroy the window
-
-      if Win.On_Cancel /= null then
-         declare
-            C : Callback_Data'Class :=
-              Create (Get_Script (Win.On_Cancel.all), 1);
-            Tmp : Boolean;
-            pragma Unreferenced (Tmp);
-         begin
-            Set_Nth_Arg (C, 1, Get_Text (Win.Line));
-            Tmp := Execute (Win.On_Cancel, C);
-            Free (C);
-         end;
-      end if;
 
       Destroy (Window);
       return False;
@@ -234,6 +231,22 @@ package body Command_Window is
    procedure On_Destroy (Window : access Gtk_Widget_Record'Class) is
       Win  : constant Command_Window := Command_Window (Window);
    begin
+      --  A key that has not been handled by the Command_Window, nor by the
+      --  keymanager in fact => this is a special key, destroy the window
+
+      if Win.On_Cancel /= null then
+         declare
+            C : Callback_Data'Class :=
+              Create (Get_Script (Win.On_Cancel.all), 1);
+            Tmp : Boolean;
+            pragma Unreferenced (Tmp);
+         begin
+            Set_Nth_Arg (C, 1, Get_Text (Win.Line));
+            Tmp := Execute (Win.On_Cancel, C);
+            Free (C);
+         end;
+      end if;
+
       if CW_Module.Window = Win then
          CW_Module.Window := null;
       end if;
