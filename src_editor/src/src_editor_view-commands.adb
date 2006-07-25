@@ -26,6 +26,8 @@ with Commands;            use Commands;
 with GPS.Kernel;          use GPS.Kernel;
 with Src_Editor_Buffer;   use Src_Editor_Buffer;
 with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Box;      use Src_Editor_Box;
+with Src_Editor_Module;   use Src_Editor_Module;
 with Src_Editor_View;     use Src_Editor_View;
 with Language;            use Language;
 
@@ -206,9 +208,16 @@ package body Src_Editor_View.Commands is
       return Command_Return_Type
    is
       pragma Unreferenced (Context);
-      View   : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+
+      --  Get the current MDI child. We know it is an editor, since the filter
+      --  has matched, and this is faster than looking for the current focus
+      --  widget, and from there the source editor. In addition, it is possible
+      --  that no widget has the focus, for instance because a dialog has
+      --  temporarily been opened
+      Box    : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Command.Kernel));
+      View   : constant Source_View   := Get_View (Box);
+      Buffer : constant Source_Buffer := Get_Buffer (Box);
       Result : Boolean;
 
    begin
