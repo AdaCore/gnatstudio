@@ -14,6 +14,20 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+F719-012 Removed support for old customization directories
+
+  in GPS 2.x, the following directories were searched for customization
+  files: ~/.gps/customize, ~/.gps/python_startup, $prefix/share/gps/customize
+  and the file $prefix/share/gps/python/autoexec.py.
+  GPS 3.x was no longer creating these directories, although still reading
+  them if it found scripts in there. GPS now no ignores these directories.
+  Use $prefix/share/gps/plug-ins and ~/.gps/plug-ins instead
+
+F721-007 New incremental search module (2006-07-25)
+
+  On platforms where python is available, a new module is provided to
+  emulate Emacs' incremental search feature in editors
+
 F720-008 Improved Emacs emulation (2006-07-21)
 
   Several new key bindings were defined to emulate Emacs. The handling of
