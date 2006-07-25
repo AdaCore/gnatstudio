@@ -109,7 +109,7 @@ private
    --  Free the memory occupied by the action
 
    package Actions_Htable is new String_Hash
-     (Action_Record_Access, Free, null);
+     (Action_Record_Access, Free, null, Case_Sensitive => False);
 
    type Actions_Htable_Record is new Root_Table with record
       Table : Actions_Htable.String_Hash_Table.HTable;

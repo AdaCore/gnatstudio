@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Commands;                  use Commands;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -183,7 +184,8 @@ package body GPS.Kernel.Actions is
          Defined_In => Defined_In,
          Overriden  => Overriden);
 
-      Set (Actions_Htable_Access (Kernel.Actions).Table, Name, Action);
+      Set (Actions_Htable_Access (Kernel.Actions).Table,
+           To_Lower (Name), Action);
       return Action;
    end Register_Action;
 
