@@ -440,8 +440,8 @@ package body GPS.Kernel.Console is
             else
                Gtk_New
                  (Child, Console,
-                  Group               => Group_Consoles,
-                  Focus_Widget        => Gtk_Widget (Get_View (Console)));
+                  Group        => Group_Consoles,
+                  Focus_Widget => Gtk_Widget (Get_View (Console)));
             end if;
 
             Set_Title (Child, Title, Title);

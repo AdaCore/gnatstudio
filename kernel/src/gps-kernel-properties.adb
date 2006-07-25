@@ -615,6 +615,7 @@ package body GPS.Kernel.Properties is
             Name       => Nth_Arg (Data, 2),
             Property   => Prop,
             Persistent => Nth_Arg (Data, 4, False));
+
       elsif Command = "get_property" then
          Name_Parameters (Data, (2 => Name'Unchecked_Access));
          Get_Property
@@ -633,8 +634,8 @@ package body GPS.Kernel.Properties is
       else
          Name_Parameters (Data, (2 => Name'Unchecked_Access));
          Remove_Property
-           (File     => File,
-            Name     => Nth_Arg (Data, 2));
+           (File => File,
+            Name => Nth_Arg (Data, 2));
       end if;
    end File_Command_Handler;
 
@@ -646,7 +647,6 @@ package body GPS.Kernel.Properties is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Project    : constant Project_Type  := Get_Data (Data, 1);
-
       Name       : aliased constant String := "name";
       Value      : aliased constant String := "value";
       Persistent : aliased constant String := "persistent";
@@ -665,6 +665,7 @@ package body GPS.Kernel.Properties is
             Name       => Nth_Arg (Data, 2),
             Property   => Prop,
             Persistent => Nth_Arg (Data, 4, False));
+
       elsif Command = "get_property" then
          Name_Parameters (Data, (2 => Name'Unchecked_Access));
          Get_Property
@@ -707,7 +708,7 @@ package body GPS.Kernel.Properties is
    procedure Register_Script_Commands
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      File_Class : constant Class_Type := New_Class (Kernel, "File");
+      File_Class    : constant Class_Type := New_Class (Kernel, "File");
       Project_Class : constant Class_Type := New_Class (Kernel, "Project");
    begin
       Register_Command

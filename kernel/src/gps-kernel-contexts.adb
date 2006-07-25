@@ -33,25 +33,25 @@ package body GPS.Kernel.Contexts is
 
    type Filter_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
-     (Filter  : access Filter_File; Ctxt : Selection_Context)
+     (Filter : access Filter_File; Ctxt : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Directory is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
-     (Filter  : access Filter_Directory; Ctxt : Selection_Context)
+     (Filter : access Filter_Directory; Ctxt : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Entity is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
-     (Filter  : access Filter_Entity; Ctxt : Selection_Context)
+     (Filter : access Filter_Entity; Ctxt : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Project_Only is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
-     (Filter  : access Filter_Project_Only; Ctxt : Selection_Context)
+     (Filter : access Filter_Project_Only; Ctxt : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
