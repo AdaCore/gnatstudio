@@ -29,7 +29,7 @@ package body Code_Coverage is
 
    function Get_Project_From_File (F_I : File_Id) return Project_Id is
       pragma Unreferenced (F_I);
-      P_I : constant Project_Id := new String'("Carotte");
+      P_I : constant Project_Id := new String'("Dummy_Project_Name");
    begin
       return P_I;
    end Get_Project_From_File;
@@ -40,23 +40,38 @@ package body Code_Coverage is
 
    procedure Add_Subprograms
      (F_A : Code_Analysis.File_Access; File_Contents : String_Access) is
-      Regexp  : constant Pattern_Matcher
-        := Compile ("^f.*_.*_(.+) called \d+", Multiple_Lines);
-      Matches : Match_Array (0 .. 1);
-      Current : Natural;
-      S_I     : Subprogram_Id;
-      Dummy   : Subprogram_Access;
-      pragma Unreferenced (Dummy);
+      Regexp_1  : constant Pattern_Matcher
+        := Compile ("^function (_ada_)?(\w+)([.]\d+)? called (\d+)"
+           , Multiple_Lines);
+      Matches_1 : Match_Array (0 .. 4);
+      Current   : Natural;
+      Sub_Count : Natural := 0;
+      S_I       : Subprogram_Id;
+      S_A       : Subprogram_Access;
    begin
       Current    := File_Contents'First;
+
       loop
-         Match (Regexp, File_Contents.all, Matches, Current);
-         exit when Matches (0) = No_Match;
-         S_I     := new String'(File_Contents
-                               (Matches (1).First .. Matches (1).Last));
-         Dummy   := Get_Or_Create (F_A, S_I);
-         Current := Matches (0).Last + 1;
+         Match (Regexp_1, File_Contents.all, Matches_1, Current);
+         exit when Matches_1 (0) = No_Match;
+         Sub_Count := Sub_Count + 1;
+         if Matches_1 (2).Last - Matches_1 (2).First + 1 > 8 and then
+           File_Contents (Matches_1 (2).Last - 7 .. Matches_1 (2).Last)
+           = "___clean" then
+            Current := Matches_1 (0).Last + 1;
+         else
+            S_I     := new String'(File_Contents (
+              Matches_1 (2).First .. Matches_1 (2).Last));
+            S_A     := Get_Or_Create (F_A, S_I);
+            S_A.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
+            Subprogram_Coverage (S_A.Analysis_Data.Coverage_Data.all).Called :=
+              Natural'Value (File_Contents
+                             (Matches_1 (4).First .. Matches_1 (4).Last));
+            Current := Matches_1 (0).Last + 1;
+         end if;
       end loop;
+
+      Add_Lines (F_A, File_Contents, Sub_Count);
    end Add_Subprograms;
 
    ---------------
@@ -64,43 +79,64 @@ package body Code_Coverage is
    ---------------
 
    procedure Add_Lines
-     (S_A : Subprogram_Access; File_Contents : String_Access) is
+     (F_A           : Code_Analysis.File_Access;
+      File_Contents : String_Access;
+      Sub_Count     : Natural) is
       Regexp  : constant Pattern_Matcher
-        := Compile ("^ *(\d+|#####): *(\d+):.*$", Multiple_Lines);
+        := Compile ("^ +(\d+|#####|-): *(\d+):.*$", Multiple_Lines);
       Matches : Match_Array (0 .. 2);
       Current : Natural;
+      N_L     : Natural := 0;
       L_I     : Line_Id;
       L_A     : Line_Access;
    begin
-      Current   := File_Contents'First;
+
+      for C in File_Contents'First .. File_Contents'Last
+      loop
+         if File_Contents (C) = ASCII.LF then
+            N_L := N_L + 1;
+            if N_L = 5 then
+               Current := C;
+            end if;
+         end if;
+      end loop;
+
+      F_A.Lines := new Line_Array
+        (1 .. N_L - Sub_Count - 5);
+      --  Create a Line_Array with exactly the number of elements corresponding
+      --  to the number of code lines in the original source code file.
+
       loop
          Match (Regexp, File_Contents.all, Matches, Current);
          exit when Matches (0) = No_Match;
-         L_I    := Integer'Value
+         L_I    := Natural'Value
            (File_Contents (Matches (2).First .. Matches (2).Last));
-         L_A    := Get_Or_Create (S_A, L_I);
-         L_A.Analysis_Data.Coverage_Data := new Coverage;
-         if File_Contents
-           (Matches (1).First .. Matches (1).Last) /= "#####" then
-            L_A.Analysis_Data.Coverage_Data.Total_Child_Count := Integer'Value
-              (File_Contents (Matches (1).First .. Matches (1).Last));
-         else
-            L_A.Analysis_Data.Coverage_Data.Total_Child_Count := 0;
-         end if;
+         L_A := Get_Or_Create (F_A, L_I);
+
+         case File_Contents (Matches (1).First) is
+            when '#' => L_A.Analysis_Data.Coverage_Data := new Coverage;
+               L_A.Analysis_Data.Coverage_Data.Covered := 0;
+            when '-' => null;
+            when others => L_A.Analysis_Data.Coverage_Data := new Coverage;
+               L_A.Analysis_Data.Coverage_Data.Covered := Natural'Value
+                 (File_Contents (Matches (1).First .. Matches (1).Last));
+         end case;
+
          Current := Matches (0).Last + 1;
       end loop;
+
    end Add_Lines;
 
-   -------------------
-   -- Dump_Corevage --
-   -------------------
+   ------------------------
+   -- Dump_Node_Coverage --
+   ------------------------
 
-   procedure Dump_Coverage (C_A : Coverage_Access) is
+   procedure Dump_Node_Coverage (C_A : Coverage_Access) is
    begin
-      Put (Integer'Image (C_A.Covered_Child_Count)
+      Put (Natural'Image (C_A.Covered)
            & " /"
-           & Integer'Image (C_A.Total_Child_Count));
-   end Dump_Coverage;
+           & Natural'Image (Node_Coverage (C_A.all).Children));
+   end Dump_Node_Coverage;
 
    ------------------------
    -- Dump_Line_Coverage --
@@ -108,13 +144,29 @@ package body Code_Coverage is
 
    procedure Dump_Line_Coverage (C_A : Coverage_Access) is
    begin
-      if C_A.Total_Child_Count = 0 then
-         Put (" /!\ Never executed");
+
+      if C_A.Covered = 0 then
+         Put (" /!\ Never executed /!\");
       else
-         Put (" executed"
-              & Integer'Image (C_A.Total_Child_Count)
-              & " times");
+         Put (Natural'Image (C_A.Covered) & " execution(s)");
       end if;
+
    end Dump_Line_Coverage;
+
+   ------------------------
+   -- Dump_Subp_Coverage --
+   ------------------------
+
+   procedure Dump_Subp_Coverage (C_A : Coverage_Access) is
+   begin
+      Dump_Node_Coverage (C_A);
+
+      if Subprogram_Coverage (C_A.all).Called = 0 then
+         Put (" /!\ Never called /!\");
+      else
+         Put (Natural'Image (Subprogram_Coverage (C_A.all).Called)
+              & " call(s)");
+      end if;
+   end Dump_Subp_Coverage;
 
 end Code_Coverage;
