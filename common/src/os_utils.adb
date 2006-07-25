@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Interfaces.C;              use Interfaces.C;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
@@ -302,6 +303,20 @@ package body OS_Utils is
       N := Write (File, EOL'Address, EOL'Length);
    end Put_Line;
 
+   --------------------
+   -- Is_Cygwin_Path --
+   --------------------
+
+   function Is_Cygwin_Path (Path : String) return Boolean is
+      Cygdrive : constant String := "/cygdrive/";
+   begin
+      return Path'Length > Cygdrive'Length + 1
+        and then
+      Path (Path'First .. Path'First + Cygdrive'Length - 1) = Cygdrive
+        and then Is_Letter (Path (Path'First + Cygdrive'Length))
+        and then Path (Path'First + Cygdrive'Length + 1) = '/';
+   end Is_Cygwin_Path;
+
    ---------------------
    -- Format_Pathname --
    ---------------------
@@ -321,10 +336,7 @@ package body OS_Utils is
       function Cygwin_To_Dos (Path : String) return String is
          Cygdrive : constant String := "/cygdrive/";
       begin
-         if Path'Length > Cygdrive'Length + 1
-           and then
-             Path (Path'First .. Path'First + Cygdrive'Length - 1) = Cygdrive
-         then
+         if Is_Cygwin_Path (Path) then
             return Path (Path'First + Cygdrive'Length) & ":" &
               Path (Path'First + Cygdrive'Length + 1 .. Path'Last);
          else
