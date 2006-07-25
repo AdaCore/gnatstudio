@@ -79,6 +79,7 @@ with Gtkada.File_Selector;    use Gtkada.File_Selector;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.Macro;            use Gtkada.Macro;
 
+with Case_Handling;           use Case_Handling;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
@@ -92,6 +93,7 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel;              use GPS.Kernel;
 with GUI_Utils;               use GUI_Utils;
 with HTables;                 use HTables;
+with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 with VFS;                     use VFS;
 with XML_Parsers;
@@ -757,7 +759,10 @@ package body KeyManager_Module is
             --  if there is any.
             Tmp := Binding3;
             while Tmp /= null loop
-               if Tmp.Action /= null and then Tmp.Action.all = Action then
+               if Tmp.Action /= null
+                 and then Equal
+                   (Tmp.Action.all, Action, Case_Sensitive => False)
+               then
                   return;
                end if;
                Tmp := Tmp.Next;
@@ -805,7 +810,10 @@ package body KeyManager_Module is
                   Previous := List;
                   List := List.Next;
 
-               elsif List.Action /= null and then List.Action.all = Action then
+               elsif List.Action /= null
+                 and then Equal (List.Action.all, Action,
+                                 Case_Sensitive => False)
+               then
                   if Previous = null then
                      if List.Next /= null then
                         --  Remove list from the list of keybindings, without
@@ -1417,7 +1425,8 @@ package body KeyManager_Module is
                         & ' ');
                   end if;
 
-               elsif Binding.Action.all = Action
+               elsif Equal (Binding.Action.all, Action,
+                            Case_Sensitive => False)
                  and then Get_Key (Iter).Key /= 0
                then
                   if Result /= Null_Unbounded_String then
@@ -1611,14 +1620,19 @@ package body KeyManager_Module is
          if Action.Category /= null
            and then (Flat_List or else Parent /= Null_Iter)
          then
-            Parent := Set
-              (Model   => Editor.Model,
-               Parent  => Parent,
-               Descr   => Get (Action_Iter),
-               Key     => Lookup_Key_From_Action
-                 (Editor.Bindings,
-                  Get (Action_Iter),
-                  Default => -Disabled_String));
+            declare
+               Name : String := Get (Action_Iter);
+            begin
+               Mixed_Case (Name);
+               Parent := Set
+                 (Model   => Editor.Model,
+                  Parent  => Parent,
+                  Descr   => Name,
+                  Key     => Lookup_Key_From_Action
+                    (Editor.Bindings,
+                     Name,
+                     Default => -Disabled_String));
+            end;
          end if;
 
          Next (Editor.Kernel, Action_Iter);
@@ -1680,8 +1694,10 @@ package body KeyManager_Module is
 
             while Binding /= null loop
                if Binding.Action /= null
-                 and then Binding.Action.all =
-                   Accel_Path (First .. Accel_Path'Last)
+                 and then Equal
+                   (Binding.Action.all,
+                    Accel_Path (First .. Accel_Path'Last),
+                    Case_Sensitive => False)
                then
                   Found := True;
 
@@ -2681,6 +2697,17 @@ package body KeyManager_Module is
                First := Last + 1;
             end loop;
          end;
+
+      elsif Command = "lookup_actions" then
+         declare
+            Iter : Action_Iterator := Start (Get_Kernel (Data));
+         begin
+            Set_Return_Value_As_List (Data);
+            while Get (Iter) /= null loop
+               Set_Return_Value (Data, Get (Iter));
+               Next (Get_Kernel (Data), Iter);
+            end loop;
+         end;
       end if;
    end Keymanager_Command_Handler;
 
@@ -2802,6 +2829,8 @@ package body KeyManager_Module is
       Register_Command
         (Kernel, "lookup_actions_from_key", 1, 1,
            Keymanager_Command_Handler'Access);
+      Register_Command
+        (Kernel, "lookup_actions", 0, 0, Keymanager_Command_Handler'Access);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
