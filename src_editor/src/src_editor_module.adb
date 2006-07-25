@@ -663,15 +663,15 @@ package body Src_Editor_Module is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child
    is
-      Src    : Source_Editor_Box;
-      File   : Glib.String_Ptr;
-      F      : Virtual_File;
-      Str    : Glib.String_Ptr;
-      Id     : Idle_Handler_Id;
-      Line   : Editable_Line_Type := 1;
-      Column : Visible_Column_Type := 1;
+      Src         : Source_Editor_Box;
+      File        : Glib.String_Ptr;
+      F           : Virtual_File;
+      Str         : Glib.String_Ptr;
+      Id          : Idle_Handler_Id;
+      Line        : Editable_Line_Type := 1;
+      Column      : Visible_Column_Type := 1;
       Real_Column : Character_Offset_Type;
-      Child  : MDI_Child;
+      Child       : MDI_Child;
       pragma Unreferenced (Id, MDI);
 
       Dummy  : Boolean;
