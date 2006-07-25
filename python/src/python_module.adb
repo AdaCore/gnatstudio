@@ -36,7 +36,10 @@ with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
+with Commands.Custom;            use Commands.Custom;
+with Commands.Interactive;       use Commands, Commands.Interactive;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
@@ -82,7 +85,7 @@ package body Python_Module is
       GPS_Invalid_Arg          : PyObject;
       GPS_Unexpected_Exception : PyObject;
 
-      Current_File             : GNAT.OS_Lib.String_Access;
+      Current_File             : VFS.Virtual_File;
       --  The script we are currently executing
    end record;
    type Python_Scripting is access all Python_Scripting_Record'Class;
@@ -917,35 +920,28 @@ package body Python_Module is
    procedure Load_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Sys       : constant String :=
-                 Format_Pathname (Get_System_Dir (Kernel), UNIX)
-                   & "share/gps/python/";
-      Local_Dir : constant String :=
-                    Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "plug-ins";
-      Old_Local_Dir : constant String :=
-                        Format_Pathname
-                          (Get_Home_Dir (Kernel), UNIX) & "python_startup";
-      System_Dir    : constant String :=
-                        Format_Pathname (Get_System_Dir (Kernel), UNIX)
-                          & "share/gps/plug-ins/";
-      Env_Path      : String_Access := Getenv ("GPS_CUSTOM_PATH");
-      Path          : Path_Iterator;
-      Errors : aliased Boolean;
+      Env_Path : constant String := Get_Custom_Path;
+      Path     : Path_Iterator;
+      Errors   : aliased Boolean;
 
-      procedure Load_Dir (Dir : String);
-      --  Load all .py files from Dir, if any
+      procedure Load_Dir (Dir : String; Default_Autoload : Boolean);
+      --  Load all .py files from Dir, if any.
+      --  Default_Autoload indicates whether scripts in this directory should
+      --  be autoloaded by default, unless otherwise mentioned in
+      --  ~/.gps/startup.xml
 
       --------------
       -- Load_Dir --
       --------------
 
-      procedure Load_Dir (Dir : String) is
+      procedure Load_Dir (Dir : String; Default_Autoload : Boolean) is
          D      : Dir_Type;
          File   : String (1 .. 1024);
          Last   : Natural;
          Result : PyObject;
          pragma Unreferenced (Result);
-
+         VF     : VFS.Virtual_File;
+         Command : Custom_Command_Access;
       begin
          if not Is_Directory (Dir) then
             return;
@@ -966,15 +962,29 @@ package body Python_Module is
             exit when Last = 0;
 
             if Last > 3 and then File (Last - 2 .. Last) = ".py" then
-               Free (Python_Module_Id.Script.Current_File);
-               Python_Module_Id.Script.Current_File :=
-                 new String'(Name_As_Directory (Dir) & File (1 .. Last));
-               Execute_Command
-                 (Python_Module_Id.Script,
-                  "import " & Base_Name (File (1 .. Last), ".py"),
-                  Hide_Output => True,
-                  Errors => Errors);
-               Free (Python_Module_Id.Script.Current_File);
+               VF := Create
+                 (Full_Filename => Name_As_Directory (Dir)
+                  & File (1 .. Last));
+               if Load_File_At_Startup
+                 (Kernel, VF, Default => Default_Autoload)
+               then
+                  Trace (Me, "Loading " & Full_Name (VF).all);
+                  Python_Module_Id.Script.Current_File := VF;
+                  Execute_Command
+                    (Python_Module_Id.Script,
+                     "import " & Base_Name (File (1 .. Last), ".py"),
+                     Hide_Output => True,
+                     Errors => Errors);
+                  Python_Module_Id.Script.Current_File := VFS.No_File;
+
+                  Command := Initialization_Command (Kernel, VF);
+                  if Command /= null then
+                     while Execute (Command, Null_Context) = Execute_Again loop
+                        null;
+                     end loop;
+                     Destroy (Command_Access (Command));
+                  end if;
+               end if;
             end if;
          end loop;
 
@@ -986,43 +996,17 @@ package body Python_Module is
          return;
       end if;
 
-      if Is_Regular_File (Sys & "autoexec.py") then
-         Trace (Me, "Load python files from " & Sys & "autoexec.py");
+      Load_Dir (Autoload_System_Dir (Kernel),    Default_Autoload => True);
+      Load_Dir (No_Autoload_System_Dir (Kernel), Default_Autoload => False);
+      Load_Dir (Autoload_User_Dir (Kernel),      Default_Autoload => True);
 
-         Free (Python_Module_Id.Script.Current_File);
-         Python_Module_Id.Script.Current_File :=
-           new String'(Sys & "autoexec.py");
-         Execute_Command
-           (Python_Module_Id.Script,
-            "execfile (""" & Sys & "autoexec.py"")",
-            Hide_Output => True,
-            Errors => Errors);
-         Free (Python_Module_Id.Script.Current_File);
-      else
-         Trace (Me,
-                "File " & Sys & "autoexec.py doesn't exist, nothing done");
-      end if;
-
-      if not Is_Directory (Local_Dir) then
-         Make_Dir (Local_Dir);
-      end if;
-
-      Load_Dir (System_Dir);
-
-      --  For compatiblity with GPS < 3.0.0, also load old python directory
-      Load_Dir (Old_Local_Dir);
-
-      Load_Dir (Local_Dir);
-
-      Path := Start (Env_Path.all);
-      while not At_End (Env_Path.all, Path) loop
-         if Current (Env_Path.all, Path) /= "" then
-            Load_Dir (Current (Env_Path.all, Path));
+      Path := Start (Env_Path);
+      while not At_End (Env_Path, Path) loop
+         if Current (Env_Path, Path) /= "" then
+            Load_Dir (Current (Env_Path, Path), Default_Autoload => True);
          end if;
-         Path := Next (Env_Path.all, Path);
+         Path := Next (Env_Path, Path);
       end loop;
-
-      Free (Env_Path);
    end Load_Python_Startup_Files;
 
    ---------------------------------
@@ -1964,12 +1948,11 @@ package body Python_Module is
       Hide_Output        : Boolean := False;
       Errors             : out Boolean) is
    begin
-      Free (Script.Current_File);
-      Script.Current_File := new String'(Filename);
+      Script.Current_File := Create (Full_Filename => Filename);
       Execute_Command
         (Script, "execfile (r'" & Filename & "')",
          Console, Hide_Output, True, Errors);
-      Free (Script.Current_File);
+      Script.Current_File := VFS.No_File;
    end Execute_File;
 
    --------------
@@ -2011,10 +1994,10 @@ package body Python_Module is
      (Script : access Python_Scripting_Record) return String
    is
    begin
-      if Script.Current_File = null then
+      if Script.Current_File = VFS.No_File then
          return "<python script>";
       else
-         return Script.Current_File.all;
+         return Full_Name (Script.Current_File).all;
       end if;
    end Current_Script;
 
