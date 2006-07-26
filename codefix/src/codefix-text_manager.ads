@@ -200,9 +200,7 @@ package Codefix.Text_Manager is
    function Get
      (This        : Text_Interface;
       Start, Stop : Text_Cursor'Class) return String;
-   --  Return the text extracted between the two cursors. WARNING ! ASCII.LF is
-   --  automatically added between two lines, wich is not necessary the case
-   --  in the original buffer !
+   --  Return the text extracted between the two cursors.
 
    function Get
      (This   : Text_Interface;
@@ -400,9 +398,7 @@ package Codefix.Text_Manager is
    function Get
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class) return Character;
-   --  Get a caracter at the position specified by the cursor. WARNING !
-   --  ASCII.LF is automatically added between two lines, wich is not necessary
-   --  the case in the original buffer !
+   --  Get a caracter at the position specified by the cursor.
 
    function Get
      (This        : Text_Navigator_Abstr;
