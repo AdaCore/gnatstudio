@@ -676,7 +676,8 @@ package body Codefix.Text_Manager.Ada_Commands is
             ": constant",
             ":");
       else
-         Cut_Off_Elements (Work_Extract, New_Instr, This.Name.all);
+         Cut_Off_Elements
+           (Work_Extract, New_Instr, Current_Text, This.Name.all);
 
          Col_Decl := New_Instr'First;
          Skip_To_Char (New_Instr.all, Col_Decl, ':');
@@ -686,7 +687,12 @@ package body Codefix.Text_Manager.Ada_Commands is
             New_Instr (New_Instr'First .. Col_Decl) & " constant" &
               New_Instr (Col_Decl + 1 .. New_Instr'Last));
 
-         Add_Line (Work_Extract, Get_Stop (Work_Extract), New_Instr.all);
+         Add_Indented_Line
+           (Work_Extract,
+            Get_Stop (Work_Extract),
+            New_Instr.all,
+            Current_Text);
+
          Free (New_Instr);
       end if;
 
