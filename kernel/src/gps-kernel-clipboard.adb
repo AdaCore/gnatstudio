@@ -346,6 +346,7 @@ package body GPS.Kernel.Clipboard is
       pragma Unreferenced (Result);
       Iter   : Gtk_Text_Iter;
       Default_Editable : Boolean;
+      Pasted : Boolean := False;
    begin
       Clipboard.Last_Is_From_System := False;
 
@@ -368,19 +369,36 @@ package body GPS.Kernel.Clipboard is
       --  unknown (that seems more of a workaround, but works fine since gtk+
       --  always sets the owner of the selection)
       if Index_In_List = 0
-        and then Get_Owner (Gtk.Clipboard.Get) = null
         and then Wait_Is_Text_Available (Gtk.Clipboard.Get)
       then
-         Trace (Me, "Pasting system clipboard");
-         Clipboard.Last_Widget := GObject (Widget);
-         Clipboard.Last_Is_From_System := True;
+         declare
+            Str : constant String := Wait_For_Text (Gtk.Clipboard.Get);
+         begin
+            --  Only paste it if different from our own first entry, otherwise
+            --  it is likely we copied it ourselves anyway, and in this case
+            --  we want to paste our own entry, so that if the user does
+            --  Paste Previous afterward we immediately paste the second entry.
 
-         --  The following call is not really efficient, since Wait_For_Text
-         --  really should be asynchronous. However, it works well almost
-         --  always, since the clipboard is local on the machine and not huge
-         --  in any case.
-         Clipboard.Last_Length :=
-           Wait_For_Text (Gtk.Clipboard.Get)'Length;
+            if Clipboard.List (Clipboard.Last_Paste) = null
+              or else Str /= Clipboard.List (Clipboard.Last_Paste).all
+            then
+               Trace (Me, "Pasting system clipboard");
+               Clipboard.Last_Widget := GObject (Widget);
+               Clipboard.Last_Is_From_System := True;
+
+               --  The following call is not really efficient, since
+               --  Wait_For_Text really should be asynchronous. However, it
+               --  works well almost always, since the clipboard is local on
+               --  the machine and not huge in any case.
+               Clipboard.Last_Length :=
+                 Wait_For_Text (Gtk.Clipboard.Get)'Length;
+               Pasted := True;
+            end if;
+         end;
+      end if;
+
+      if Pasted then
+         null;
 
       elsif Clipboard.List (Clipboard.Last_Paste) /= null then
          Trace (Me, "Pasting GPS clipboard");
