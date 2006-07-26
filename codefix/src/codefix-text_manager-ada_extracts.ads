@@ -98,19 +98,21 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  information referenced in pools.
 
    procedure Cut_Off_Elements
-     (This        : in out Ada_List;
-      New_Instr   : out GNAT.OS_Lib.String_Access;
-      First       : Natural;
-      Last        : Natural := 0);
+     (This         : in out Ada_List;
+      New_Instr    : out GNAT.OS_Lib.String_Access;
+      Current_Text : Text_Navigator_Abstr'Class;
+      First        : Natural;
+      Last         : Natural := 0);
    --  Remove elements from the list and write in the string a new list with
    --  these elements, and right declarative part (if needed). If last = 0 then
    --  only First element will be deleted.
 
    procedure Cut_Off_Elements
-     (This        : in out Ada_List;
-      New_Instr   : out GNAT.OS_Lib.String_Access;
-      First       : String;
-      Last        : String := "");
+     (This         : in out Ada_List;
+      New_Instr    : out GNAT.OS_Lib.String_Access;
+      Current_Text : Text_Navigator_Abstr'Class;
+      First        : String;
+      Last         : String := "");
    --  Remove elements from the list and write in the string a new list with
    --  these elements, and right declarative part (if needed). If last = 0 then
    --  only First element will be deleted.
@@ -136,16 +138,10 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  Remove elements form form First to Last. If Last = 0 then only First
    --  will be removed.
 
-   function Get_Element (This : Ada_List; Num : Natural) return Word_Cursor;
-   --  Return one element from the list. Elements can be a name or a ','.
-
    function Get_Nth_Element (This : Ada_List; Name : String) return Natural;
    --  Return the number of the element Name in the list.
 
 private
-
-   function Is_Closest (Obj, Test1, Test2, Test3 : File_Cursor)
-     return Boolean;
 
    function Is_Comment (Line : String) return Boolean;
 
@@ -154,11 +150,9 @@ private
    end record;
 
    type Token_Record is record
-      Line                : Ptr_Extract_Line;
+      Line                  : Ptr_Extract_Line;
       First_Char, Last_Char : Char_Index := 0;
-      First_Col, Last_Col : Column_Index := 0;
-      Content             : GNAT.OS_Lib.String_Access;
-      Is_Separator        : Boolean;
+      Content               : GNAT.OS_Lib.String_Access;
    end record;
 
    procedure Free (This : in out Token_Record);
@@ -168,18 +162,15 @@ private
    package Tokens_List is new Generic_List (Token_Record);
    use Tokens_List;
 
-   procedure Get_Token
-     (Line  : Ptr_Extract_Line;
-      Index : in out Char_Index;
-      Token : out Token_Record);
+   procedure Get_Text_Slice
+     (This                     : Ada_List;
+      Start_Index, End_Index   : Integer;
+      Start_Cursor, End_Cursor : out File_Cursor);
+   --  Return a slice of text according to two token indexes.
 
    type Ada_List is new Ada_Instruction with record
       Elements_List : Tokens_List.List;
-      Back          : GNAT.OS_Lib.String_Access;
    end record;
-
-   function Is_Alone (This : Token_Record)
-     return Boolean;
 
    function Get_Element (This : Ada_List; Num : Natural)
      return Tokens_List.List_Node;
