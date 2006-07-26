@@ -195,7 +195,14 @@ package Codefix.Text_Manager is
       Cursor : Text_Cursor'Class;
       Len    : Natural) return String is abstract;
    --  Get Len characters from the the position specified by the cursor. The
-   --  String resultinh must have parameter 'First equal to Cursor.Col.
+   --  String resulting must have parameter 'First equal to Cursor.Col.
+
+   function Get
+     (This        : Text_Interface;
+      Start, Stop : Text_Cursor'Class) return String;
+   --  Return the text extracted between the two cursors. WARNING ! ASCII.LF is
+   --  automatically added between two lines, wich is not necessary the case
+   --  in the original buffer !
 
    function Get
      (This   : Text_Interface;
@@ -393,7 +400,15 @@ package Codefix.Text_Manager is
    function Get
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class) return Character;
-   --  Get a caracter at the position specified by the cursor
+   --  Get a caracter at the position specified by the cursor. WARNING !
+   --  ASCII.LF is automatically added between two lines, wich is not necessary
+   --  the case in the original buffer !
+
+   function Get
+     (This        : Text_Navigator_Abstr;
+      Start, Stop : File_Cursor'Class) return String;
+   --  Return the text extracted between the two cursors. We assume here that
+   --  the two cursors are on the same file.
 
    function Get_Line
      (This      : Text_Navigator_Abstr;

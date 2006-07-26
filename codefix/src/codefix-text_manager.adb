@@ -359,6 +359,20 @@ package body Codefix.Text_Manager is
         (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor));
    end Get;
 
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (This        : Text_Navigator_Abstr;
+      Start, Stop : File_Cursor'Class) return String is
+   begin
+      return Get
+        (Get_File (This, Get_File (Start)).all,
+         Text_Cursor (Start),
+         Text_Cursor (Stop));
+   end Get;
+
    --------------
    -- Get_Line --
    --------------
@@ -831,7 +845,7 @@ package body Codefix.Text_Manager is
       if It = Null_Construct_Tree_Iterator then
          Raise_Exception
            (Codefix_Panic'Identity,
-            "Cursor given is not at the beginning of an entity.");
+            "Cannot retreive an entity with the given cursor");
       else
          return It;
       end if;
@@ -845,6 +859,44 @@ package body Codefix.Text_Manager is
    begin
       return This.File_Name;
    end Get_File_Name;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (This        : Text_Interface;
+      Start, Stop : Text_Cursor'Class) return String
+   is
+
+      function Recursive_Get (C : Text_Cursor; Before : String) return String;
+
+      function Recursive_Get (C : Text_Cursor; Before : String) return String
+      is
+         Line        : constant String :=
+           Get_Line (Text_Interface'Class (This), C);
+         Next_Cursor : Text_Cursor;
+      begin
+         if C.Line = Stop.Line then
+            return Before & Line
+              (Line'First
+               .. Integer
+                 (To_Char_Index
+                    (Stop.Col,
+                     Get_Line (Text_Interface'Class (This), C, 1))));
+         else
+            Next_Cursor := C;
+            Next_Cursor.Line := Next_Cursor.Line + 1;
+            Next_Cursor.Col := 1;
+
+            return Before
+              & Line & Recursive_Get (Next_Cursor, (1 => ASCII.LF));
+         end if;
+      end Recursive_Get;
+
+   begin
+      return Recursive_Get (Text_Cursor (Start), "");
+   end Get;
 
    -----------------
    -- Line_Length --
