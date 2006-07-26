@@ -29,7 +29,7 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with Remote_Servers;            use Remote_Servers;
+with Remote;                    use Remote;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 with OS_Utils;

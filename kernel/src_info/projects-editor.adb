@@ -34,7 +34,7 @@ with Prj.Util;                  use Prj.Util;
 with Projects.Editor.Normalize; use Projects.Editor.Normalize;
 with Projects.Graphs;           use Projects.Graphs;
 with Projects.Registry;         use Projects.Registry;
-with Remote_Servers;            use Remote_Servers;
+with Remote;                    use Remote;
 with Snames;                    use Snames;
 with Traces;                    use Traces;
 with Types;                     use Types;

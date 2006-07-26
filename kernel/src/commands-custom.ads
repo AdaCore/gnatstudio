@@ -64,13 +64,13 @@ with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glib.Xml_Int;
 with Gtk.Widget;
 
-with Commands;             use Commands;
-with Commands.Interactive; use Commands.Interactive;
-with GPS.Kernel;           use GPS.Kernel;
-with GPS.Kernel.Remote;    use GPS.Kernel.Remote;
-with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
+with Commands;                use Commands;
+with Commands.Interactive;    use Commands.Interactive;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Interactive_Consoles;
+with Remote;                  use Remote;
 
 package Commands.Custom is
 

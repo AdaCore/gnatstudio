@@ -37,7 +37,7 @@ with Projects.Registry;         use Projects.Registry;
 with Glib.Convert;              use Glib.Convert;
 with Filesystem;                use Filesystem;
 with File_Utils;                use File_Utils;
-with Remote_Servers;            use Remote_Servers;
+with Remote;                    use Remote;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;

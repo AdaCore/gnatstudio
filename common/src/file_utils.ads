@@ -23,7 +23,7 @@
 with VFS;
 with Ada.Calendar;
 with GNAT.Directory_Operations;
-with Remote_Servers;            use Remote_Servers;
+with Remote;                    use Remote;
 
 package File_Utils is
 

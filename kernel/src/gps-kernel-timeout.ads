@@ -26,7 +26,7 @@ with Gtk.Main;
 with Interactive_Consoles;
 with Commands;                use Commands;
 
-with Remote_Servers;          use Remote_Servers;
+with Remote;                  use Remote;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 
 package GPS.Kernel.Timeout is
@@ -76,7 +76,7 @@ package GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
-      Server               : Remote_Servers.Server_Type := GPS_Server;
+      Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;
@@ -148,7 +148,7 @@ package GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
-      Server               : Remote_Servers.Server_Type := GPS_Server;
+      Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;

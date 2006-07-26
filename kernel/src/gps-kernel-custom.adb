@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -32,7 +32,7 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Intl;                  use GPS.Intl;
 with File_Utils;                use File_Utils;
-with Remote_Servers;            use Remote_Servers;
+with Remote;                    use Remote;
 with String_Hash;
 with VFS;                       use VFS;
 with XML_Parsers;

@@ -39,7 +39,6 @@ with Default_Preferences; use Default_Preferences;
 with File_Utils;          use File_Utils;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with GPS.Intl;            use GPS.Intl;
-with GPS.Kernel.Remote;   use GPS.Kernel.Remote;
 with GPS.Main_Window;     use GPS.Main_Window;
 with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Preferences;     use GVD.Preferences;
@@ -55,7 +54,7 @@ with Items;               use Items;
 with Language.Debugger;   use Language.Debugger;
 with Language;            use Language;
 with Process_Proxies;     use Process_Proxies;
-with Remote_Servers;      use Remote_Servers;
+with Remote.Path.Translator; use Remote, Remote.Path.Translator;
 with String_Utils;        use String_Utils;
 with VFS;                 use VFS;
 

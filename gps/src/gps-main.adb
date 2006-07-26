@@ -74,7 +74,7 @@ with GPS.Menu;
 with OS_Utils;                  use OS_Utils;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
-with Remote_Servers;            use Remote_Servers;
+with Remote;                    use Remote;
 with Remote_Views;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_Utils;

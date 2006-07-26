@@ -28,7 +28,7 @@ with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Remote;      use GPS.Kernel.Remote;
-with Remote_Servers;         use Remote_Servers;
+with Remote;                 use Remote;
 with String_Utils;           use String_Utils;
 
 package body GVD.Proc_Utils is

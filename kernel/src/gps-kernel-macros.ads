@@ -22,7 +22,7 @@
 --  customization file. These are the %f, %e,... special strings that are
 --  substituted dynamically based on the current context.
 
-with Remote_Servers;
+with Remote; use Remote;
 
 package GPS.Kernel.Macros is
 
@@ -46,7 +46,7 @@ package GPS.Kernel.Macros is
       Context : GPS.Kernel.Selection_Context;
       Quoted  : Boolean;
       Done    : access Boolean;
-      Server  : Remote_Servers.Server_Type := Remote_Servers.GPS_Server)
+      Server  : Server_Type := GPS_Server)
       return String;
    --  Return the replacement suitable for %Param.
    --  This should mostly be used from String_Utils.Substitute.

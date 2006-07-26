@@ -63,9 +63,10 @@ with Namet;                     use Namet;
 with Types;                     use Types;
 
 with Basic_Types;
-with Projects;                  use Projects;
-with Language;                  use Language;
-with String_Utils;              use String_Utils;
+with Commands.Interactive;      use Commands, Commands.Interactive;
+with Find_Utils;                use Find_Utils;
+with File_Utils;                use File_Utils;
+with Histories;                 use Histories;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -75,20 +76,19 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
-with Language_Handlers;         use Language_Handlers;
-with Traces;                    use Traces;
-with Find_Utils;                use Find_Utils;
-with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
+with Language;                  use Language;
+with Language_Handlers;         use Language_Handlers;
+with Projects;                  use Projects;
+with Remote;                    use Remote;
+with String_Hash;
 with String_List_Utils;
-with Histories;                 use Histories;
-with Remote_Servers;            use Remote_Servers;
-with VFS;                       use VFS;
+with String_Utils;              use String_Utils;
 with Tooltips;
-with Commands.Interactive;      use Commands, Commands.Interactive;
+with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 with Entities;
-with String_Hash;
 
 with Project_Explorers_Common;  use Project_Explorers_Common;
 

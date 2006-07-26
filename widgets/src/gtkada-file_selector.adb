@@ -69,7 +69,7 @@ with Gtkada.Types;              use Gtkada.Types;
 with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
-with Remote_Servers;            use Remote_Servers;
+with Remote;                    use Remote;
 with Traces;                    use Traces;
 with Unchecked_Deallocation;
 with VFS;                       use VFS;

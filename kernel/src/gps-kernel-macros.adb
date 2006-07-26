@@ -18,18 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
-with GPS.Kernel.Project;    use GPS.Kernel.Project;
-with GPS.Kernel.Remote;     use GPS.Kernel.Remote;
-with Remote_Servers;        use Remote_Servers;
-with String_Utils;          use String_Utils;
-with Entities;              use Entities;
-with Projects;              use Projects;
-with Projects.Registry;     use Projects.Registry;
-with VFS;                   use VFS;
-with Basic_Types;           use Basic_Types;
-with Ada.Text_IO;           use Ada.Text_IO;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Text_IO;             use Ada.Text_IO;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+
+with Basic_Types;             use Basic_Types;
+with Entities;                use Entities;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with Projects;                use Projects;
+with Projects.Registry;       use Projects.Registry;
+with Remote.Path.Translator;  use Remote.Path.Translator;
+with String_Utils;            use String_Utils;
+with VFS;                     use VFS;
 
 package body GPS.Kernel.Macros is
 
@@ -133,7 +133,7 @@ package body GPS.Kernel.Macros is
       Context : GPS.Kernel.Selection_Context;
       Quoted  : Boolean;
       Done    : access Boolean;
-      Server  : Remote_Servers.Server_Type := Remote_Servers.GPS_Server)
+      Server  : Server_Type := GPS_Server)
       return String
    is
       Project : Project_Type := No_Project;

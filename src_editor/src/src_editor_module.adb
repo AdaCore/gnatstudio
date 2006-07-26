@@ -82,7 +82,7 @@ with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
 with Projects.Registry;                 use Projects, Projects.Registry;
-with Remote_Servers;                    use Remote_Servers;
+with Remote;                            use Remote;
 with Src_Contexts;                      use Src_Contexts;
 with Src_Editor_Box;                    use Src_Editor_Box;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;

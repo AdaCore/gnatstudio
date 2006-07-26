@@ -86,7 +86,7 @@ with Prj.Attr;                  use Prj, Prj.Attr;
 with Project_Viewers;           use Project_Viewers;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
-with Remote_Servers;            use Remote_Servers;
+with Remote;                    use Remote;
 with Scenario_Selectors;        use Scenario_Selectors;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;

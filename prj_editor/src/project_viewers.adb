@@ -75,7 +75,7 @@ with Prj;
 with Project_Properties;           use Project_Properties;
 with Projects.Editor;              use Projects, Projects.Editor;
 with Projects.Registry;            use Projects.Registry;
-with Remote_Servers;               use Remote_Servers;
+with Remote;                       use Remote;
 with String_Utils;                 use String_Utils;
 with Switches_Editors;             use Switches_Editors;
 with System;

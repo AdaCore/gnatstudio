@@ -37,7 +37,7 @@ with Language_Utils;             use Language_Utils;
 with Namet;                      use Namet;
 with Projects.Registry;          use Projects.Registry;
 with Projects;                   use Projects;
-with Remote_Servers;             use Remote_Servers;
+with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
 with System;                     use System;
 with Traces;                     use Traces;

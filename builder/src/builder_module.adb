@@ -55,7 +55,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -68,7 +67,7 @@ with Language_Handlers;         use Language_Handlers;
 with Projects.Registry;         use Projects.Registry;
 with Entities;                  use Entities;
 with Histories;                 use Histories;
-with Remote_Servers;            use Remote_Servers;
+with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 
 with Basic_Types;
 with Std_Dialogs;               use Std_Dialogs;

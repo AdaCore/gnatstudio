@@ -26,45 +26,45 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
-with Glib;                use Glib;
-with Glib.Convert;        use Glib.Convert;
-with Glib.Object;         use Glib.Object;
-with Glib.Xml_Int;        use Glib.Xml_Int;
+with Glib;                   use Glib;
+with Glib.Convert;           use Glib.Convert;
+with Glib.Object;            use Glib.Object;
+with Glib.Xml_Int;           use Glib.Xml_Int;
 
-with Gdk.Color;           use Gdk.Color;
+with Gdk.Color;              use Gdk.Color;
 
-with Gtk.Box;             use Gtk.Box;
-with Gtk.Button;          use Gtk.Button;
-with Gtk.Enums;           use Gtk.Enums;
-with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.Image;           use Gtk.Image;
-with Gtk.Label;           use Gtk.Label;
-with Gtk.List;            use Gtk.List;
-with Gtk.List_Item;       use Gtk.List_Item;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Stock;           use Gtk.Stock;
-with Gtk.Style;           use Gtk.Style;
-with Gtk.Table;           use Gtk.Table;
-with Gtk.Tooltips;        use Gtk.Tooltips;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Combo;        use Gtkada.Combo;
-with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with Gtkada.MDI;          use Gtkada.MDI;
-with Collapsing_Pane;     use Collapsing_Pane;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Button;             use Gtk.Button;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.GEntry;             use Gtk.GEntry;
+with Gtk.Handlers;           use Gtk.Handlers;
+with Gtk.Image;              use Gtk.Image;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.List;               use Gtk.List;
+with Gtk.List_Item;          use Gtk.List_Item;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Stock;              use Gtk.Stock;
+with Gtk.Style;              use Gtk.Style;
+with Gtk.Table;              use Gtk.Table;
+with Gtk.Tooltips;           use Gtk.Tooltips;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtkada.Combo;           use Gtkada.Combo;
+with Gtkada.Dialogs;         use Gtkada.Dialogs;
+with Gtkada.MDI;             use Gtkada.MDI;
+with Collapsing_Pane;        use Collapsing_Pane;
 
-with GPS.Intl;            use GPS.Intl;
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
-with GPS.Kernel.Project;  use GPS.Kernel.Project;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
 
-with Projects;            use Projects;
-with Remote_Servers;      use Remote_Servers;
-with Traces;              use Traces;
-with VFS;                 use VFS;
+with Projects;               use Projects;
+with Remote.Path.Translator; use Remote, Remote.Path.Translator;
+with Traces;                 use Traces;
+with VFS;                    use VFS;
 
 package body Remote_Views is
 
@@ -844,8 +844,7 @@ package body Remote_Views is
 
       begin
          if New_Build_Server /= Local_Nickname
-           and then not GPS.Kernel.Remote.To_Remote_Possible
-             (Project, New_Build_Server)
+           and then not To_Remote_Possible (Project, New_Build_Server)
            and then not Is_Regular_File (Create (New_Build_Server, Project))
          then
             Failure := True;
