@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                     Copyright (C) 2005-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -77,6 +77,38 @@ package GPS.Kernel.Properties is
    procedure Destroy (Property : in out Property_Record);
    --  Free the memory occupied by the property. You should always call the
    --  parent's Destroy handler.
+
+   -------------------------------------------
+   -- Associating properties with any index --
+   -------------------------------------------
+
+   procedure Set_Property
+     (Index_Name  : String;
+      Index_Value : String;
+      Name        : String;
+      Property    : access Property_Record'Class;
+      Persistent  : Boolean := False);
+   --  Associate a given property with Index, so that it can be queried
+   --  later through Get_File_Property.
+   --  If Persistent is True, the property will be preserved from one
+   --  session of GPS to the next.
+   --  Property names are case sensitive.
+
+   procedure Get_Property
+     (Property    : out Property_Record'Class;
+      Index_Name  : String;
+      Index_Value : String;
+      Name        : String;
+      Found       : out Boolean);
+   --  Return the given named property associated with Index.
+   --  Found is set to False if there is no such property.
+   --  Property names are case sensitive.
+
+   procedure Remove_Property
+     (Index_Name  : String;
+      Index_Value : String;
+      Name        : String);
+   --  Remove the named property (persistent or not) associated with Index.
 
    ---------------------------------------
    -- Associating properties with files --
