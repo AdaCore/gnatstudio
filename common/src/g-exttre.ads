@@ -296,7 +296,8 @@ package GNAT.Expect.TTY.Remote is
       Args                : GNAT.OS_Lib.Argument_List;
       Execution_Directory : String := "";
       Err_To_Out          : Boolean := False;
-      Main_Window         : Gtk.Window.Gtk_Window := null);
+      Main_Window         : Gtk.Window.Gtk_Window := null;
+      On_New_Connection   : access procedure (Target_Name : String) := null);
    --  Spawns a process on a remote machine
    --  Target_Name designs the machine on which the process is spawned
    --  Target_Identifier is used to retrieve the descriptors
