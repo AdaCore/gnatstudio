@@ -257,7 +257,6 @@ package body GPS.Kernel.Clipboard is
       if Widget.all in Gtk_Editable_Record'Class then
          Cut_Clipboard (Gtk_Editable (Widget));
          Append_To_Clipboard (Clipboard);
-         Clear (Gtk.Clipboard.Get);
 
       elsif Widget.all in Gtk_Text_View_Record'Class then
          Buffer := Get_Buffer (Gtk_Text_View (Widget));
@@ -266,7 +265,6 @@ package body GPS.Kernel.Clipboard is
             Gtk.Clipboard.Get,
             Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
          Append_To_Clipboard (Clipboard);
-         Clear (Gtk.Clipboard.Get);
 
       elsif Widget.all in Gtk_Text_Buffer_Record'Class then
          Cut_Clipboard
@@ -274,7 +272,6 @@ package body GPS.Kernel.Clipboard is
             Gtk.Clipboard.Get,
             Default_Editable => True);
          Append_To_Clipboard (Clipboard);
-         Clear (Gtk.Clipboard.Get);
       end if;
    end Cut_Clipboard;
 
@@ -295,24 +292,20 @@ package body GPS.Kernel.Clipboard is
       if Widget.all in Gtk_Editable_Record'Class then
          Copy_Clipboard (Gtk_Editable (Widget));
          Append_To_Clipboard (Clipboard);
-         Clear (Gtk.Clipboard.Get);
 
       elsif Widget.all in Gtk_Text_View_Record'Class then
          Buffer := Get_Buffer (Gtk_Text_View (Widget));
          Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
          Append_To_Clipboard (Clipboard);
-         Clear (Gtk.Clipboard.Get);
 
       elsif Widget.all in Gtk_Text_Buffer_Record'Class then
          Buffer := Gtk_Text_Buffer (Widget);
          Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
          Append_To_Clipboard (Clipboard);
-         Clear (Gtk.Clipboard.Get);
 
       elsif Widget.all in Gtk_Tree_View_Record'Class then
          Set_Text (Gtk.Clipboard.Get, Get_Selection (Gtk_Tree_View (Widget)));
          Append_To_Clipboard (Clipboard);
-         Clear (Gtk.Clipboard.Get);
       end if;
    end Copy_Clipboard;
 
@@ -348,7 +341,11 @@ package body GPS.Kernel.Clipboard is
       end if;
 
       --  Should we paste the system clipboard instead of ours ?
+      --  We only paste it if we are not the owner, ie if the owner is
+      --  unknown (that seems more of a workaround, but works fine since gtk+
+      --  always sets the owner of the selection)
       if Index_In_List = 0
+        and then Get_Owner (Gtk.Clipboard.Get) /= null
         and then Wait_Is_Text_Available (Gtk.Clipboard.Get)
       then
          Trace (Me, "Pasting system clipboard");
