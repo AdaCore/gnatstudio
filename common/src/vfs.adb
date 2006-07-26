@@ -45,7 +45,7 @@ with Glib.Values;               use Glib.Values;
 with Filesystem;                use Filesystem;
 with File_Utils;                use File_Utils;
 with OS_Utils;                  use OS_Utils;
-with Remote_Servers;            use Remote_Servers;
+with Remote;                    use Remote;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
@@ -121,8 +121,7 @@ package body VFS is
          if File1.Value.Server.all = "" then
             Case_Sensitive := Is_Case_Sensitive (GPS_Server);
          else
-            Case_Sensitive :=
-              Is_Case_Sensitive (Get_Filesystem (File1.Value.Server.all));
+            Case_Sensitive := File1.Get_Filesystem.Is_Case_Sensitive;
          end if;
 
          return Equal
@@ -188,11 +187,11 @@ package body VFS is
    begin
       Ensure_Directory (Dir);
       if Is_Local (Dir) then
-         return Create (Dir.Value.Full_Name.all & Base_Name);
+         return Create (Dir.Full_Name (True).all & Base_Name);
       else
          return Create (Get_Host (Dir),
-                        Concat (Get_Filesystem (Get_Host (Dir)),
-                                Dir.Value.Full_Name.all, Base_Name));
+                        Dir.Get_Filesystem.Concat
+                          (Dir.Full_Name (True).all, Base_Name));
       end if;
    end Create_From_Dir;
 
@@ -236,8 +235,8 @@ package body VFS is
 
             --  Simple normalization, no link is resolved
             File.Value.Normalized_Full := new UTF8_String'
-              (Normalize (Get_Filesystem (File.Value.Server.all),
-                          File.Value.Full_Name.all));
+              (File.Get_Filesystem.Normalize
+                 (File.Value.Full_Name.all));
 
          else
             --  To_Host_Pathname is only needed for the debugger: it is done
@@ -306,8 +305,8 @@ package body VFS is
 
          return Base_Name (File.Value.Full_Name.all, Suffix);
       else
-         return Base_Name (Get_Filesystem (File.Value.Server.all),
-                           File.Value.Full_Name.all, Suffix);
+         return File.Get_Filesystem.Base_Name
+           (File.Value.Full_Name.all, Suffix);
       end if;
    end Base_Name;
 
@@ -334,8 +333,7 @@ package body VFS is
             return Base_Name (File.Value.Full_Name.all);
          end if;
       else
-         return Base_Dir_Name (Get_Filesystem (File.Value.Server.all),
-                               File.Value.Full_Name.all);
+         return File.Get_Filesystem.Base_Dir_Name (File.Value.Full_Name.all);
       end if;
    end Base_Dir_Name;
 
@@ -389,8 +387,7 @@ package body VFS is
             else
                File.Value.Dir_Name :=
                  new UTF8_String'
-                   (Dir_Name (Get_Filesystem (File.Value.Server.all),
-                              File.Value.Full_Name.all));
+                   (File.Get_Filesystem.Dir_Name (File.Full_Name.all));
             end if;
          end if;
          return Cst_UTF8_String_Access (File.Value.Dir_Name);
@@ -403,7 +400,7 @@ package body VFS is
 
    function Dir (File : Virtual_File) return Virtual_File is
       The_Dir      : Virtual_File;
-      The_Dir_Name : constant String := Dir_Name (File).all;
+      The_Dir_Name : constant String := File.Dir_Name.all;
    begin
       if The_Dir_Name = "" then
          return VFS.No_File;
@@ -423,7 +420,7 @@ package body VFS is
          return "";
       else
          --  ??? This is not cached, should it ?
-         return Locale_From_UTF8 (File.Value.Full_Name.all);
+         return Locale_From_UTF8 (File.Full_Name.all);
       end if;
    end Locale_Full_Name;
 
@@ -432,9 +429,8 @@ package body VFS is
    ----------------------
 
    function Locale_Base_Name (File : Virtual_File) return String is
-      Base : constant String := Base_Name (File);
    begin
-      return Locale_From_UTF8 (Base);
+      return Locale_From_UTF8 (File.Base_Name);
    end Locale_Base_Name;
 
    ---------------------
@@ -442,9 +438,8 @@ package body VFS is
    ---------------------
 
    function Locale_Dir_Name (File : Virtual_File) return String is
-      Name : constant String := Dir_Name (File).all;
    begin
-      return Locale_From_UTF8 (Name);
+      return Locale_From_UTF8 (File.Dir_Name.all);
    end Locale_Dir_Name;
 
    --------------------
@@ -466,13 +461,12 @@ package body VFS is
    begin
       if File.Value = null then
          return False;
-      elsif Is_Local (File) then
-         return Is_Regular_File (Locale_Full_Name (File));
+      elsif File.Is_Local then
+         return Is_Regular_File (File.Locale_Full_Name);
       else
-         return Is_Regular_File
-           (Get_Filesystem (File.Value.Server.all),
-            File.Value.Server.all,
-            Locale_Full_Name (File));
+         return File.Get_Filesystem.Is_Regular_File
+           (File.Value.Server.all,
+            File.Locale_Full_Name);
       end if;
    end Is_Regular_File;
 
@@ -487,10 +481,9 @@ package body VFS is
       if Is_Local (File) then
          Delete_File (Locale_Full_Name (File), Success);
       else
-         Success := Delete
-           (Get_Filesystem (File.Value.Server.all),
-            File.Value.Server.all,
-            Locale_Full_Name (File));
+         Success := File.Get_Filesystem.Delete
+           (File.Value.Server.all,
+            File.Locale_Full_Name);
       end if;
 
       if Success then
@@ -508,13 +501,12 @@ package body VFS is
          return False;
 
       elsif Is_Local (File) then
-         return Is_Writable_File (Locale_Full_Name (File));
+         return Is_Writable_File (File.Locale_Full_Name);
 
       else
-         return Is_Writable
-           (Get_Filesystem (File.Value.Server.all),
-            File.Value.Server.all,
-            Locale_Full_Name (File));
+         return File.Get_Filesystem.Is_Writable
+           (File.Value.Server.all,
+            File.Locale_Full_Name);
       end if;
    end Is_Writable;
 
@@ -538,9 +530,9 @@ package body VFS is
          Ret := Is_Directory (Locale_Full_Name (VF));
 
       else
-         Ret := Is_Directory (Get_Filesystem (VF.Value.Server.all),
-                              VF.Value.Server.all,
-                              Locale_Full_Name (VF));
+         Ret := VF.Get_Filesystem.Is_Directory
+           (VF.Value.Server.all,
+            VF.Locale_Full_Name);
       end if;
 
       if Ret then
@@ -562,14 +554,14 @@ package body VFS is
       if File.Value = null then
          return False;
 
-      elsif Is_Local (File) then
+      elsif not Is_Local (File) then
          --  ??? for now, no specific remote test for this,
          --  assume the file is not a symbolic link
 
          return False;
 
       else
-         return Is_Symbolic_Link (Locale_Full_Name (File));
+         return Is_Symbolic_Link (File.Locale_Full_Name);
       end if;
    end Is_Symbolic_Link;
 
@@ -582,8 +574,7 @@ package body VFS is
       if Is_Local (File) then
          return Is_Absolute_Path (Locale_Full_Name (File));
       else
-         return Is_Absolute_Path (Get_Filesystem (File.Value.Server.all),
-                                  Locale_Full_Name (File));
+         return File.Get_Filesystem.Is_Absolute_Path (File.Locale_Full_Name);
       end if;
    end Is_Absolute_Path;
 
@@ -594,10 +585,9 @@ package body VFS is
    function File_Extension (File : Virtual_File) return UTF8_String is
    begin
       if Is_Local (File) then
-         return File_Extension (File.Value.Full_Name.all);
+         return File_Extension (File.Full_Name.all);
       else
-         return File_Extension (Get_Filesystem (File.Value.Server.all),
-                                File.Value.Full_Name.all);
+         return File.Get_Filesystem.File_Extension (File.Full_Name.all);
       end if;
    end File_Extension;
 
@@ -611,12 +601,12 @@ package body VFS is
          return null;
       elsif File.Value.Kind = Directory then
          return null;
-      elsif Is_Local (File) then
-         return Read_File (Full_Name (File).all);
+      elsif File.Is_Local then
+         return Read_File (File.Full_Name.all);
       else
-         return Read_File (Get_Filesystem (File.Value.Server.all),
-                           File.Value.Server.all,
-                           Locale_Full_Name (File));
+         return File.Get_Filesystem.Read_File
+           (File.Value.Server.all,
+            File.Locale_Full_Name);
       end if;
    end Read_File;
 
@@ -647,7 +637,7 @@ package body VFS is
          end;
 
       else
-         if Append and then Is_Regular_File (Locale_Full_Name (File)) then
+         if Append and then Is_Regular_File (File.Locale_Full_Name) then
             Fd := Open_Read_Write (Locale_Full_Name (File), Binary);
             Lseek (Fd, 0, Seek_End);
          else
@@ -710,17 +700,15 @@ package body VFS is
       Success : Boolean;
    begin
       if not Is_Local (File.File) then
-         Write (Get_Filesystem (File.File.Value.Server.all),
-                File.File.Value.Server.all,
-                File.File.Value.Full_Name.all,
-                File.Filename.all);
-         Close (File.FD);
+         File.File.Get_Filesystem.Write
+           (File.File.Value.Server.all,
+            File.File.Value.Full_Name.all,
+            File.Filename.all);
          Delete_File (File.Filename.all, Success);
          Free (File.Filename);
-
-      else
-         Close (File.FD);
       end if;
+
+      Close (File.FD);
    end Close;
 
    ------------------
@@ -734,12 +722,11 @@ package body VFS is
    begin
       if Is_Local (File) then
          Internal
-           (Locale_Full_Name (File) & ASCII.NUL, Boolean'Pos (Writable));
+           (File.Locale_Full_Name & ASCII.NUL, Boolean'Pos (Writable));
       else
-         Set_Writable
-           (Get_Filesystem (File.Value.Server.all),
-            File.Value.Server.all,
-            Locale_Full_Name (File),
+         File.Get_Filesystem.Set_Writable
+           (File.Value.Server.all,
+            File.Locale_Full_Name,
             Writable);
       end if;
    end Set_Writable;
@@ -755,12 +742,11 @@ package body VFS is
    begin
       if Is_Local (File) then
          Internal
-           (Locale_Full_Name (File) & ASCII.NUL, Boolean'Pos (Readable));
+           (File.Locale_Full_Name & ASCII.NUL, Boolean'Pos (Readable));
       else
-         Set_Readable
-           (Get_Filesystem (File.Value.Server.all),
-            File.Value.Server.all,
-            Locale_Full_Name (File),
+         File.Get_Filesystem.Set_Readable
+           (File.Value.Server.all,
+            File.Locale_Full_Name,
             Readable);
       end if;
    end Set_Readable;
@@ -776,10 +762,9 @@ package body VFS is
          --  This returns No_Time if the file doesn't exist
          return File_Utils.File_Time_Stamp (Locale_Full_Name (File));
       else
-         return File_Time_Stamp
-           (Get_Filesystem (File.Value.Server.all),
-            File.Value.Server.all,
-            Locale_Full_Name (File));
+         return File.Get_Filesystem.File_Time_Stamp
+           (File.Value.Server.all,
+            File.Locale_Full_Name);
       end if;
    end File_Time_Stamp;
 
@@ -840,9 +825,9 @@ package body VFS is
          end if;
       else
          declare
-            Dir_Path : constant String := Ensure_Directory
-              (Get_Filesystem (Dir.Value.Server.all),
-               Dir.Value.Full_Name.all);
+            Dir_Path : constant String :=
+                         Dir.Get_Filesystem.Ensure_Directory
+                           (Dir.Full_Name.all);
          begin
             if Dir_Path /= Dir.Value.Full_Name.all then
                Full := new String'(Dir_Path);
@@ -878,8 +863,8 @@ package body VFS is
       else
          Dir := Create
            (Host          => File.Value.Server.all,
-            Full_Filename => Get_Root (Get_Filesystem (File.Value.Server.all),
-                                       Full_Name (File).all));
+            Full_Filename => File.Get_Filesystem.Get_Root
+                               (File.Full_Name.all));
          return Dir;
       end if;
    end Get_Root;
@@ -896,11 +881,12 @@ package body VFS is
       Ensure_Directory (Dir);
       if Is_Local (Dir) then
          New_Dir := Create (Dir.Value.Full_Name.all & Name);
-         Ensure_Directory (New_Dir);
       else
-         New_Dir := Create (Concat (Get_Filesystem (Dir.Value.Server.all),
-                                    Dir.Value.Full_Name.all, Name));
+         New_Dir := Create
+           (Dir.Value.Server.all,
+            Dir.Get_Filesystem.Concat (Dir.Full_Name.all, Name));
       end if;
+      Ensure_Directory (New_Dir);
 
       if Is_Directory (New_Dir) then
          return New_Dir;
@@ -945,9 +931,8 @@ package body VFS is
          GNAT.Directory_Operations.Make_Dir
            (Locale_From_UTF8 (Full_Name (Dir).all));
       else
-         Result := Make_Dir
-           (Get_Filesystem (Dir.Value.Server.all),
-            Dir.Value.Server.all,
+         Result := Dir.Get_Filesystem.Make_Dir
+           (Dir.Value.Server.all,
             Dir.Value.Full_Name.all);
 
          if not Result then
@@ -1041,18 +1026,18 @@ package body VFS is
 
       else
          declare
-            List : GNAT.OS_Lib.String_List := Read_Dir
-              (Get_Filesystem (Dir.Value.Server.all),
-               Dir.Value.Server.all,
-               Dir.Value.Full_Name.all,
-               Dirs_Only  => Filter = Dirs_Only,
-               Files_Only => Filter = Files_Only);
+            List : GNAT.OS_Lib.String_List :=
+                     Dir.Get_Filesystem.Read_Dir
+                       (Dir.Value.Server.all,
+                        Dir.Value.Full_Name.all,
+                        Dirs_Only  => Filter = Dirs_Only,
+                        Files_Only => Filter = Files_Only);
          begin
             F_Array := new File_Array (1 .. List'Length);
             Nb_Files := List'Length;
 
             for J in List'Range loop
-               Tmp_File := Create_From_Dir (Dir, List (J).all);
+               Tmp_File := Dir.Create_From_Dir (List (J).all);
                Free (List (J));
 
                case Filter is
@@ -1195,12 +1180,8 @@ package body VFS is
       elsif File2.Value = null then
          return False;
       else
-         if File1.Value.Server.all = "" then
-            Case_Sensitive := Is_Case_Sensitive (GPS_Server);
-         else
-            Case_Sensitive :=
-              Is_Case_Sensitive (Get_Filesystem (File1.Value.Server.all));
-         end if;
+         Case_Sensitive := File1.Get_Filesystem.Is_Case_Sensitive and then
+           File2.Get_Filesystem.Is_Case_Sensitive;
 
          if Case_Sensitive then
             return File1.Value.Full_Name.all < File2.Value.Full_Name.all;
@@ -1224,6 +1205,20 @@ package body VFS is
          end if;
       end if;
    end "<";
+
+   --------------------
+   -- Get_Filesystem --
+   --------------------
+
+   function Get_Filesystem (File : Virtual_File)
+                            return Filesystem_Record'Class is
+   begin
+      if Is_Local (File) then
+         return Get_Local_Filesystem;
+      else
+         return Get_Filesystem (File.Value.Server.all);
+      end if;
+   end Get_Filesystem;
 
    ---------------
    -- Is_Parent --
@@ -1264,10 +1259,9 @@ package body VFS is
          return True;
 
       else
-         return Is_Subtree
-           (Get_Filesystem (Parent.Value.Server.all),
-            Parent.Value.Normalized_Full.all,
-            Child.Value.Normalized_Full.all);
+         return Parent.Get_Filesystem.Is_Subtree
+           (Parent.Full_Name (True).all,
+            Child.Full_Name (True).all);
       end if;
    end Is_Parent;
 
