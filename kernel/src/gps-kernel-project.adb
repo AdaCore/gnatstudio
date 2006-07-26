@@ -19,10 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Expect;               use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
+with Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Projects;                  use Projects;
@@ -30,8 +27,9 @@ with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Basic_Types;
 with Entities;
+with Glib.Xml_Int;              use Glib.Xml_Int;
 with Prj;
-with Remote_Servers;            use Remote_Servers;
+with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 
@@ -40,6 +38,7 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Location_View;         use GPS.Location_View;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -76,6 +75,90 @@ package body GPS.Kernel.Project is
       Insert (Handler.Handle, Msg, Mode => Handler.Mode);
    end Report;
 
+   -------------------------------
+   -- Predefined_Paths_Property --
+   -------------------------------
+
+   type Property_Index_Type is record
+      Nickname : GNAT.OS_Lib.String_Access;
+      Gnatls   : GNAT.OS_Lib.String_Access;
+   end record;
+
+   No_Index : constant Property_Index_Type :=
+                (Nickname => null,
+                 Gnatls   => null);
+
+   function To_String (Idx : Property_Index_Type) return String;
+   --  Translate the property_index_type into a unique string
+
+   function To_String (Idx : Property_Index_Type) return String is
+   begin
+      return Idx.Nickname.all & "||" & Idx.Gnatls.all;
+   end To_String;
+
+   type Predefined_Paths_Property is new GPS.Kernel.Properties.Property_Record
+   with record
+      Source_Path  : Glib.String_Ptr;
+      Object_Path  : Glib.String_Ptr;
+      Project_Path : Glib.String_Ptr;
+   end record;
+
+   procedure Save
+     (Property : access Predefined_Paths_Property;
+      Node     : in out Glib.Xml_Int.Node_Ptr);
+   --  See inherited procedure
+
+   procedure Load
+     (Property : in out Predefined_Paths_Property;
+      From     : Glib.Xml_Int.Node_Ptr);
+   --  See inherited procedure
+
+   ----------
+   -- Save --
+   ----------
+
+   procedure Save
+     (Property : access Predefined_Paths_Property;
+      Node     : in out Glib.Xml_Int.Node_Ptr)
+   is
+      Child : Glib.Xml_Int.Node_Ptr;
+   begin
+      Child := new Glib.Xml_Int.Node;
+      Child.Tag := new String'("source_path");
+      Child.Value := Property.Source_Path;
+      Add_Child (Node, Child);
+      Child := new Glib.Xml_Int.Node;
+      Child.Tag := new String'("object_path");
+      Child.Value := Property.Object_Path;
+      Add_Child (Node, Child);
+      Child := new Glib.Xml_Int.Node;
+      Child.Tag := new String'("project_path");
+      Child.Value := Property.Project_Path;
+      Add_Child (Node, Child);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, Ada.Exceptions.Exception_Information (E));
+   end Save;
+
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load
+     (Property : in out Predefined_Paths_Property;
+      From     : Glib.Xml_Int.Node_Ptr)
+   is
+      Child : Glib.Xml_Int.Node_Ptr;
+   begin
+      Child := Find_Tag (From.Child, "source_path");
+      Property.Source_Path := new String'(Child.Value.all);
+      Child := Find_Tag (From.Child, "object_path");
+      Property.Object_Path := new String'(Child.Value.all);
+      Child := Find_Tag (From.Child, "project_path");
+      Property.Project_Path := new String'(Child.Value.all);
+   end Load;
+
    ------------------------------
    -- Compute_Predefined_Paths --
    ------------------------------
@@ -83,12 +166,16 @@ package body GPS.Kernel.Project is
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class)
    is
-      Gnatls        : constant String := Get_Attribute_Value
+      Gnatls         : constant String := Get_Attribute_Value
         (Get_Project (Handle), Gnatlist_Attribute, Default => "gnatls");
-      Gnatls_Args   : Argument_List_Access :=
-                        Argument_String_To_List (Gnatls & " -v");
-      Langs         : Argument_List := Get_Languages (Get_Project (Handle));
-      Error_Handler : aliased Registry_Error_Handler_Record;
+      Gnatls_Args    : Argument_List_Access :=
+                         Argument_String_To_List (Gnatls & " -v");
+      Langs          : Argument_List := Get_Languages (Get_Project (Handle));
+      Error_Handler  : aliased Registry_Error_Handler_Record;
+      Property       : Predefined_Paths_Property;
+      Prop_Access    : Property_Access;
+      Property_Index : Property_Index_Type := No_Index;
+      Success        : Boolean;
 
    begin
       if Basic_Types.Contains (Langs, "ada", Case_Sensitive => False) then
@@ -104,6 +191,28 @@ package body GPS.Kernel.Project is
             return;
          end if;
 
+         if not Is_Local (Build_Server) then
+            Property_Index.Nickname :=
+              new String'(Get_Nickname (Build_Server));
+            Property_Index.Gnatls   := Gnatls_Args (Gnatls_Args'First);
+            Get_Property
+              (Property, "predefined_path", To_String (Property_Index),
+               Name => "gnatls", Found => Success);
+
+            if Success then
+               Free (Property_Index.Nickname);
+               Set_Predefined_Source_Path
+                 (Handle.Registry.all, Property.Source_Path.all);
+               Set_Predefined_Object_Path
+                 (Handle.Registry.all, Property.Object_Path.all);
+               Set_Predefined_Project_Path
+                 (Handle.Registry.all, Property.Project_Path.all);
+               --  ??? Add hook upon connection to build_server to recompute
+               --  the cache
+               return;
+            end if;
+         end if;
+
          Free (Handle.Gnatls_Cache);
          Free (Handle.Gnatls_Server);
          Handle.Gnatls_Cache := new String'(Gnatls);
@@ -111,13 +220,29 @@ package body GPS.Kernel.Project is
 
          Error_Handler.Handle := Kernel_Handle (Handle);
          Error_Handler.Mode   := Info;
-         --  ??? cache this information if Build_Server is not the local
-         --  machine, unless a recompute project is performed
+
          Projects.Registry.Compute_Predefined_Paths
            (Handle.Registry.all,
             Handle.GNAT_Version,
             Gnatls_Args,
             Error_Handler'Unchecked_Access);
+
+         if Property_Index /= No_Index then
+            Property.Source_Path :=
+              new String'(Get_Predefined_Source_Path (Handle.Registry.all));
+            Property.Object_Path :=
+              new String'(Get_Predefined_Object_Path (Handle.Registry.all));
+            Property.Project_Path :=
+              new String'(Get_Predefined_Project_Path (Handle.Registry.all));
+            Prop_Access := new Predefined_Paths_Property'(Property);
+            Set_Property
+              ("predefined_path", To_String (Property_Index),
+               Name       => "gnatls",
+               Property   => Prop_Access,
+               Persistent => True);
+            Free (Property_Index.Nickname);
+         end if;
+
       end if;
 
       Free (Gnatls_Args);
