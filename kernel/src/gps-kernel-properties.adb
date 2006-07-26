@@ -28,12 +28,13 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 with Osint;                      use Osint;
 with Projects;                   use Projects;
-with Remote_Servers;             use Remote_Servers;
+with Remote;                     use Remote;
 with String_Hash;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
 
 package body GPS.Kernel.Properties is
+
    Me : constant Debug_Handle := Create ("Properties");
 
    type Property_Description is record
@@ -333,19 +334,83 @@ package body GPS.Kernel.Properties is
    ------------------
 
    procedure Set_Property
-     (File       : VFS.Virtual_File;
-      Name       : String;
-      Property   : access Property_Record'Class;
-      Persistent : Boolean := False)
-   is
-      Filename : String := Full_Name (File, True).all;
+     (Index_Name  : String;
+      Index_Value : String;
+      Name        : String;
+      Property    : access Property_Record'Class;
+      Persistent  : Boolean := False) is
    begin
-      Canonical_Case_File_Name (Filename);
       Set_Resource_Property
-        (Filename, "file", Name,
+        (Index_Value, Index_Name, Name,
          Property_Description'(Value      => Property_Access (Property),
                                Unparsed   => null,
                                Persistent => Persistent));
+   end Set_Property;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   procedure Get_Property
+     (Property    : out Property_Record'Class;
+      Index_Name  : String;
+      Index_Value : String;
+      Name        : String;
+      Found       : out Boolean) is
+   begin
+      Get_Resource_Property (Property, Index_Value, Index_Name,
+                             Name, Found);
+   end Get_Property;
+
+   ---------------------
+   -- Remove_Property --
+   ---------------------
+
+   procedure Remove_Property
+     (Index_Name  : String;
+      Index_Value : String;
+      Name        : String) is
+   begin
+      Remove_Resource_Property (Index_Value, Index_Name, Name);
+   end Remove_Property;
+
+   function To_String (File : VFS.Virtual_File) return String;
+   --  Returns the file name
+
+   function To_String (Prj : Projects.Project_Type) return String;
+   --  Returns the project's path
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (File : VFS.Virtual_File) return String is
+      Filename : String := Full_Name (File, True).all;
+   begin
+      Canonical_Case_File_Name (Filename);
+      return Filename;
+   end To_String;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Prj : Projects.Project_Type) return String is
+   begin
+      return To_String (Project_Path (Prj));
+   end To_String;
+
+   ------------------
+   -- Set_Property --
+   ------------------
+
+   procedure Set_Property
+     (File       : VFS.Virtual_File;
+      Name       : String;
+      Property   : access Property_Record'Class;
+      Persistent : Boolean := False) is
+   begin
+      Set_Property ("file", To_String (File), Name, Property, Persistent);
    end Set_Property;
 
    ------------------
@@ -356,16 +421,10 @@ package body GPS.Kernel.Properties is
      (Project    : Projects.Project_Type;
       Name       : String;
       Property   : access Property_Record'Class;
-      Persistent : Boolean := False)
-   is
-      Filename : String := Full_Name (Project_Path (Project), True).all;
+      Persistent : Boolean := False) is
    begin
-      Canonical_Case_File_Name (Filename);
-      Set_Resource_Property
-        (Filename, "project", Name,
-         Property_Description'(Value      => Property_Access (Property),
-                               Unparsed   => null,
-                               Persistent => Persistent));
+      Set_Property ("project", To_String (Project), Name,
+                    Property, Persistent);
    end Set_Property;
 
    ------------------
@@ -376,12 +435,9 @@ package body GPS.Kernel.Properties is
      (Property : out Property_Record'Class;
       File     : VFS.Virtual_File;
       Name     : String;
-      Found    : out Boolean)
-   is
-      Filename : String := Full_Name (File, True).all;
+      Found    : out Boolean) is
    begin
-      Canonical_Case_File_Name (Filename);
-      Get_Resource_Property (Property, Filename, "file", Name, Found);
+      Get_Property (Property, "file", To_String (File), Name, Found);
    end Get_Property;
 
    ------------------
@@ -392,12 +448,9 @@ package body GPS.Kernel.Properties is
      (Property : out Property_Record'Class;
       Project  : Projects.Project_Type;
       Name     : String;
-      Found    : out Boolean)
-   is
-      Filename : String := Full_Name (Project_Path (Project), True).all;
+      Found    : out Boolean) is
    begin
-      Canonical_Case_File_Name (Filename);
-      Get_Resource_Property (Property, Filename, "project", Name, Found);
+      Get_Property (Property, "project", To_String (Project), Name, Found);
    end Get_Property;
 
    ---------------------
@@ -406,12 +459,9 @@ package body GPS.Kernel.Properties is
 
    procedure Remove_Property
      (File     : VFS.Virtual_File;
-      Name     : String)
-   is
-      Filename : String := Full_Name (File, True).all;
+      Name     : String) is
    begin
-      Canonical_Case_File_Name (Filename);
-      Remove_Resource_Property (Filename, "file", Name);
+      Remove_Property ("file", To_String (File), Name);
    end Remove_Property;
 
    ---------------------
@@ -420,12 +470,9 @@ package body GPS.Kernel.Properties is
 
    procedure Remove_Property
      (Project  : Projects.Project_Type;
-      Name     : String)
-   is
-      Filename : String := Full_Name (Project_Path (Project), True).all;
+      Name     : String) is
    begin
-      Canonical_Case_File_Name (Filename);
-      Remove_Resource_Property (Filename, "project", Name);
+      Remove_Property ("project", To_String (Project), Name);
    end Remove_Property;
 
    -----------------------------
