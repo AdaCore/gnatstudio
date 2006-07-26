@@ -24,6 +24,7 @@ else
 		JAVA_OS_DIR=linux
 	endif
 endif
+
 main:
 	$(RM) obj/*gps_utils*
 ifneq ($(OS),Windows_NT)
@@ -32,7 +33,7 @@ ifneq ($(OS),Windows_NT)
 	# -fPIC is irrelevant there.
 	mkdir adalib
 	cp $(GNAT_RTS)/Makefile.adalib adalib
-	$(MAKE) -C adalib -f Makefile.adalib ROOT="$(GNAT_BASE_PATH)" CFLAGS="-O2 -fPIC"
+	$(MAKE) -C adalib -f Makefile.adalib ROOT="$(GNAT_BASE_PATH)" CFLAGS="-O2 $(FPIC)"
 endif
 	$(CC) $(FPIC) -I$(JAVA_SDK)/include -I$(JAVA_SDK)/include/$(JAVA_OS_DIR) $(MANAGE_SEGV_HANDLER) -c jni_wrappers.c -o obj/jni_wrappers.o
 	gnatmake -c $(FPIC) -Psal
