@@ -156,7 +156,8 @@ package body GNAT.Expect.TTY.Remote is
    procedure Get_Or_Init_Session
      (Descriptor  : in out Remote_Process_Descriptor;
       Err_To_Out  : Boolean := True;
-      Main_Window : Gtk.Window.Gtk_Window);
+      Main_Window : Gtk.Window.Gtk_Window;
+      On_New_Connection   : access procedure (Target_Name : String) := null);
    --  Retrieve a READY session, or initialize a new one.
    --  Assign it to descriptor upon success
    --  Raises No_Session_Available is all sessions are BUSY
@@ -355,7 +356,8 @@ package body GNAT.Expect.TTY.Remote is
    procedure Get_Or_Init_Session
      (Descriptor  : in out Remote_Process_Descriptor;
       Err_To_Out  : Boolean := True;
-      Main_Window : Gtk.Window.Gtk_Window)
+      Main_Window : Gtk.Window.Gtk_Window;
+      On_New_Connection   : access procedure (Target_Name : String) := null)
    is
       Session_Nb   : Natural := 0;
       Remote_Desc  : Remote_Descriptor_Access;
@@ -484,10 +486,9 @@ package body GNAT.Expect.TTY.Remote is
 
                Close (Descriptor.Machine.Sessions (Session_Nb).Pd);
 
-               Raise_Exception
-                 (Invalid_Process'Identity,
-                  "Could not get prompt when connecting to host " &
-                  Descriptor.Machine.Desc.Nickname.all);
+               raise Invalid_Process with
+                 "Could not get prompt when connecting to host " &
+                 Descriptor.Machine.Desc.Nickname.all;
 
             when 1 =>
                --  Received shell prompt
@@ -508,9 +509,8 @@ package body GNAT.Expect.TTY.Remote is
                   if Descriptor.Machine.Desc.User_Name.all = "" then
                      Free (Descriptor.Machine.Desc.User_Name);
                      Close (Descriptor.Machine.Sessions (Session_Nb).Pd);
-                     Raise_Exception
-                       (Invalid_Process'Identity,
-                        "Connection canceled by user");
+
+                     raise Invalid_Process with "Connection canceled by user";
                   end if;
                end if;
 
@@ -538,9 +538,8 @@ package body GNAT.Expect.TTY.Remote is
                  Remote_Desc.Max_Password_Prompt
                then
                   Close (Descriptor.Machine.Sessions (Session_Nb).Pd);
-                  Raise_Exception
-                    (Invalid_Process'Identity,
-                     "Invalid password for connection");
+
+                  raise Invalid_Process with "Invalid password for connection";
                end if;
 
                declare
@@ -569,9 +568,8 @@ package body GNAT.Expect.TTY.Remote is
                      Free (Password);
                      Close (Descriptor.Machine.Sessions (Session_Nb).Pd);
                      Descriptor.Machine.Sessions (Session_Nb).State := OFF;
-                     Raise_Exception
-                       (Invalid_Process'Identity,
-                        "Connection canceled by user");
+
+                     raise Invalid_Process with "Connection canceled by user";
                   end if;
 
                   My_Send (Descriptor.Machine.Sessions (Session_Nb).Pd,
@@ -593,10 +591,9 @@ package body GNAT.Expect.TTY.Remote is
                   Descriptor.Session_Died := True;
                   Close (Descriptor.Machine.Sessions (Session_Nb).Pd);
 
-                  Raise_Exception
-                    (Invalid_Process'Identity,
-                     "Unexpected error when connecting to " &
-                     Descriptor.Machine.Desc.Nickname.all);
+                  raise Invalid_Process with
+                    "Unexpected error when connecting to " &
+                    Descriptor.Machine.Desc.Nickname.all;
                end if;
 
                if Remote_Desc.Extra_Prompt_Array (Res_Extra).Auto_Answer then
@@ -620,9 +617,8 @@ package body GNAT.Expect.TTY.Remote is
                      else
                         Close (Descriptor.Machine.Sessions (Session_Nb).Pd);
                         Descriptor.Machine.Sessions (Session_Nb).State := OFF;
-                        Raise_Exception
-                          (Invalid_Process'Identity,
-                           "Connection canceled by user");
+
+                        raise Invalid_Process with "Connection canceled.";
                      end if;
                   end;
                end if;
@@ -692,10 +688,10 @@ package body GNAT.Expect.TTY.Remote is
       end loop;
 
       if Remote_Desc = null then
-         Raise_Exception (Invalid_Nickname'Identity,
-                          "Invalid remote access tool name for " &
-                          Descriptor.Machine.Desc.Nickname.all &
-                          ": " & Descriptor.Machine.Desc.Access_Name.all);
+         raise Invalid_Nickname with
+           "Invalid remote access tool name for " &
+           Descriptor.Machine.Desc.Nickname.all &
+           ": " & Descriptor.Machine.Desc.Access_Name.all;
       end if;
 
       Descriptor.Use_Cr_Lf := Remote_Desc.Use_Cr_Lf;
@@ -854,6 +850,12 @@ package body GNAT.Expect.TTY.Remote is
                Wait_For_Prompt;
             end loop;
          end if;
+
+         Descriptor.Machine.Sessions (Session_Nb).State := READY;
+
+         if On_New_Connection /= null then
+            On_New_Connection (Descriptor.Machine.Desc.Nickname.all);
+         end if;
       end if;
 
       Descriptor.Input_Fd   :=
@@ -882,7 +884,8 @@ package body GNAT.Expect.TTY.Remote is
       Args                : GNAT.OS_Lib.Argument_List;
       Execution_Directory : String := "";
       Err_To_Out          : Boolean := False;
-      Main_Window         : Gtk.Window.Gtk_Window := null)
+      Main_Window         : Gtk.Window.Gtk_Window := null;
+      On_New_Connection   : access procedure (Target_Name : String) := null)
    is
       Res          : Expect_Match;
       The_Args     : GNAT.OS_Lib.Argument_List := Clone (Args);
@@ -910,16 +913,16 @@ package body GNAT.Expect.TTY.Remote is
          end;
 
          if Desc.Shell = null then
-            Raise_Exception (Invalid_Nickname'Identity,
-                             Desc.Machine.Desc.Nickname.all & "error: " &
-                             "shell " & Desc.Machine.Desc.Shell_Name.all &
-                             " is unknown.");
+            raise Invalid_Nickname with
+              Desc.Machine.Desc.Nickname.all & "error: " &
+              "shell " & Desc.Machine.Desc.Shell_Name.all &
+              " is unknown.";
          end if;
 
          Desc.Session_Died         := False;
 
          Get_Or_Init_Session
-           (Desc, True, Main_Window);
+           (Desc, True, Main_Window, On_New_Connection);
 
          Desc.Terminated :=  False;
          Desc.Busy := True;
@@ -986,11 +989,12 @@ package body GNAT.Expect.TTY.Remote is
             for J in The_Args'Range loop
                Free (The_Args (J));
             end loop;
+
             Internal_Handle_Exceptions (Desc);
-            Raise_Exception
-              (Process_Died'Identity,
+
+            raise Process_Died with
                "Disconnected from host " & Target_Nickname &
-               ". Please verify your network connections and retry.");
+               ". Please verify your network connections and retry.";
       end;
    end Remote_Spawn;
 
