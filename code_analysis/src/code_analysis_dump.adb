@@ -18,8 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Text_IO;   use Ada.Text_IO;
+
 with Code_Coverage; use Code_Coverage;
+with VFS;             use VFS;
 
 package body Code_Analysis_Dump is
 
@@ -39,7 +41,7 @@ package body Code_Analysis_Dump is
    procedure Dump_Project (C : Project_Maps.Cursor) is
       P_A : constant Project_Access := Project_Maps.Element (C);
    begin
-      Put (" O¦ Project " & P_A.Name.all);
+      Put (" O| Project " & VFS.Base_Name (P_A.Name));
 
       if P_A.Analysis_Data.Coverage_Data /= null then
          Dump_Node_Coverage (P_A.Analysis_Data.Coverage_Data);
@@ -56,7 +58,7 @@ package body Code_Analysis_Dump is
    procedure Dump_File (C : File_Maps.Cursor) is
       F_A : constant Code_Analysis.File_Access := File_Maps.Element (C);
    begin
-      Put ("   o¦ File " & F_A.Name.all);
+      Put ("   o| File " & VFS.Base_Name (F_A.Name));
 
       if F_A.Analysis_Data.Coverage_Data /= null then
          Dump_Node_Coverage (F_A.Analysis_Data.Coverage_Data);
@@ -65,11 +67,9 @@ package body Code_Analysis_Dump is
       New_Line;
       F_A.Subprograms.Iterate (Dump_Subprogram'Access);
 
-      for I in 1 .. F_A.Lines'Length
-      loop
-         Dump_Line (F_A.Lines (I));
+      for J in 1 .. F_A.Lines'Length loop
+         Dump_Line (F_A.Lines (J));
       end loop;
-
    end Dump_File;
 
    ---------------------
@@ -79,7 +79,7 @@ package body Code_Analysis_Dump is
    procedure Dump_Subprogram (C : Subprogram_Maps.Cursor) is
       S_A : constant Subprogram_Access := Subprogram_Maps.Element (C);
    begin
-      Put ("     °¦ Subprogram " & S_A.Name.all);
+      Put ("     °| Subprogram " & S_A.Name.all);
 
       if S_A.Analysis_Data.Coverage_Data /= null then
          Dump_Subp_Coverage (S_A.Analysis_Data.Coverage_Data);
@@ -94,7 +94,7 @@ package body Code_Analysis_Dump is
 
    procedure Dump_Line (L_A : Line_Access) is
    begin
-      Put ("       ·¦ Line" & Natural'Image (L_A.Number));
+      Put ("       ·| Line" & Natural'Image (L_A.Number));
 
       if L_A.Analysis_Data.Coverage_Data /= null then
          Dump_Line_Coverage (L_A.Analysis_Data.Coverage_Data);

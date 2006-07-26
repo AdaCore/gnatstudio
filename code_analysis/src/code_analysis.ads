@@ -26,13 +26,13 @@
 --  levels : Project, File, Subprogram, Line.
 --  </description>
 
-with Ada.Containers.Indefinite_Hashed_Maps;
-use Ada.Containers;
+with Ada.Containers.Indefinite_Hashed_Maps; use Ada.Containers;
 with Ada.Strings.Hash;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 
---  with Integer_Hash;                          use Integer_Hash;
+with VFS;                                   use VFS;
+with VFS_Hash;                              use VFS_Hash;
 
 package Code_Analysis is
 
@@ -44,20 +44,19 @@ package Code_Analysis is
       Covered : Natural;
    end record;
    --  Basic code coverage information
-   --  Intended for line usage. Will record the number of line execution
+   --  Record the Line's execution counts
 
    type Node_Coverage is new Coverage with record
       Children : Natural;
    end record;
-   --  Node coverage information, including an extra Natural compared to
-   --  basic coverage info.
-   --  The 1st value will be covered child count, and the added will be the
-   --  total child count.
+   --  Extra node coverage information
+   --  The Covered value will be covered child count, and the Children value
+   --  will be the total children count.
 
    type Subprogram_Coverage is new Node_Coverage with record
       Called : Natural;
    end record;
-   --  Specific subprogram coverage extra info
+   --  Specific Subprogram extra info
 
    type Coverage_Access is access all Coverage'Class;
 
@@ -66,7 +65,7 @@ package Code_Analysis is
       --  Metrics_Data : Metrics_Record_Access;
       --  SSAT_Data    : SSAT_Record_Access;
    end record;
-   --  Record to store the various code analysis information
+   --  Store the various code analysis information
 
    ----------------
    -- Tree types --
@@ -74,8 +73,8 @@ package Code_Analysis is
 
    subtype Line_Id is Natural;
    type Subprogram_Id is access all String;
-   type File_Id is access all String;
-   type Project_Id is access all String;
+--   type File_Id is new VFS.Virtual_File;
+--   type Project_Id is new VFS.Virtual_File;
 
    type Node;
    type Line;
@@ -94,36 +93,35 @@ package Code_Analysis is
         Element_Type    => Subprogram_Access,
         Hash            => Ada.Strings.Hash,
         Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive);
+   --  Used to stored the Subprogram nodes of every Files
 
    package File_Maps is
      new Indefinite_Hashed_Maps
-       (Key_Type        => String,
+       (Key_Type        => VFS.Virtual_File,
         Element_Type    => File_Access,
-        Hash            => Ada.Strings.Hash,
-        Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive);
+        Hash            => VFS_Hash.VFS_Hash,
+        Equivalent_Keys => VFS."=");
+   --  Used to stored the File nodes of every Projects
 
    package Project_Maps is
      new Indefinite_Hashed_Maps
-       (Key_Type        => String,
+       (Key_Type        => VFS.Virtual_File,
         Element_Type    => Project_Access,
-        Hash            => Ada.Strings.Hash,
-        Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive);
-   --  Instanciation of Indefinite_Hashed_Maps
-   --  Used to stored the children of Project nodes
+        Hash            => VFS_Hash.VFS_Hash,
+        Equivalent_Keys => VFS."=");
+   --  Used to stored the Project nodes
 
    type Node is abstract tagged record
       Analysis_Data : Analysis;
    end record;
    --  Abstract father type of all the following specific node types
+   --  Line, Subprogram, File, Project
 
    type Line is new Node with record
       Number        : Line_Id;
    end record;
-   --  A Line is identified in the Lines' maps of every Subprogram record by an
-   --  Integer
 
    type Line_Array is array (Positive range <>) of Line_Access;
-   --  Choosen "container" type for Lines
 
    type Line_Array_Access is access Line_Array;
 
@@ -131,26 +129,18 @@ package Code_Analysis is
       Name : Subprogram_Id;
    end record;
    --  A Subprogram is identified in the Subprograms' maps of every File record
-   --  by a string's subtype
+   --  by a string type
 
    type File is new Node with record
-         Name        : File_Id;
-      --      Name : VFS.Virtual_File;
-      --  Will be the next modification
+      Name        : VFS.Virtual_File;
       Subprograms : Subprogram_Maps.Map;
       Lines       : Line_Array_Access;
    end record;
-   --  A File is identified in the Files' maps of every Project records
-   --  by a string's subtype
-   --  Will be replaced by the apropriate VFS objects
 
    type Project is new Node with record
-      Name        : Project_Id;
+      Name        : VFS.Virtual_File;
       Files       : File_Maps.Map;
    end record;
-   --  A Project is identified in the Projects' maps of every Project record
-   --  by a string's subtype
-   --  Will be replaced by the apropriate field of VFS objects
 
    -------------------
    -- Get_Or_Create --
@@ -162,12 +152,13 @@ package Code_Analysis is
    function Get_Or_Create (F_A : File_Access; S_I : Subprogram_Id)
                            return Subprogram_Access;
 
-   function Get_Or_Create (P_A : Project_Access; F_I : File_Id)
+   function Get_Or_Create (P_A : Project_Access; F_I : VFS.Virtual_File)
                            return File_Access;
 
-   function Get_Or_Create (P_I : Project_Id) return Project_Access;
-   --  Functions that allow to get an access over an identified tree node
-   --  if the node doesn't exists, it is created by this function
+   function Get_Or_Create (P_I : VFS.Virtual_File)
+                           return Project_Access;
+   --  allow to get an access pointing on an identified tree node
+   --  if the node doesn't exists, it is created
 
    ----------------------
    -- Root of the tree --
@@ -193,45 +184,23 @@ private
 
    procedure Free_Analysis (A : in out Analysis);
    --  Free an Analysis record, so also a
-   --  Coverage record
-   --  to be continued
+   --  Coverage record if allocated
+   --  to be continued...
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (String, Subprogram_Id);
 
    procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (String, File_Id);
-
-   procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (String, Project_Id);
-
-   procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Coverage'Class, Coverage_Access);
-
-   ----------------
-   -- Line level --
-   ----------------
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Line, Line_Access);
 
-   ----------------------
-   -- Subprogram level --
-   ----------------------
-
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Subprogram, Subprogram_Access);
 
-   ----------------
-   -- File level --
-   ----------------
-
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (File, File_Access);
-
-   -------------------
-   -- Project level --
-   -------------------
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Project, Project_Access);
