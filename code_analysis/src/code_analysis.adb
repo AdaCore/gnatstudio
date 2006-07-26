@@ -29,19 +29,14 @@ package body Code_Analysis is
       L_I : Line_Id) return Line_Access is
       L_A : Line_Access;
    begin
+      if F_A.Lines (Integer (L_I)) /= null then
+         return F_A.Lines (Natural (L_I));
+      end if;
 
---      if L_I <= F_A.Lines'Length then
-         if F_A.Lines (Integer (L_I)) /= null then
-            return F_A.Lines (Natural (L_I));
-         end if;
-         L_A := new Line;
-         L_A.Number := Integer (L_I);
-         F_A.Lines (Integer (L_I)) := L_A;
-         return L_A;
---      end if;
-
---      return null;
-      --  ??? raise CONSTRAINT_ERROR : Line asked out of bound
+      L_A := new Line;
+      L_A.Number := Integer (L_I);
+      F_A.Lines (Integer (L_I)) := L_A;
+      return L_A;
    end Get_Or_Create;
 
    -------------------
@@ -53,7 +48,6 @@ package body Code_Analysis is
       S_I : Subprogram_Id) return Subprogram_Access is
       S_A : Subprogram_Access;
    begin
-
       if F_A.Subprograms.Contains (String (S_I.all)) then
          return F_A.Subprograms.Element (S_I.all);
       end if;
@@ -70,17 +64,16 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (P_A : Project_Access;
-      F_I : File_Id) return File_Access is
+      F_I : VFS.Virtual_File) return File_Access is
       F_A : File_Access;
    begin
-
-      if P_A.Files.Contains (F_I.all) then
-         return P_A.all.Files.Element (F_I.all);
+      if P_A.Files.Contains (F_I) then
+         return P_A.all.Files.Element (F_I);
       end if;
 
       F_A := new File;
       F_A.Name := F_I;
-      P_A.Files.Insert (String (F_I.all), F_A);
+      P_A.Files.Insert (F_I, F_A);
       return F_A;
    end Get_Or_Create;
 
@@ -89,17 +82,16 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (P_I : Project_Id) return Project_Access is
+     (P_I : VFS.Virtual_File) return Project_Access is
       P_A : Project_Access;
    begin
-
-      if Projects.Contains (P_I.all) then
-         return Projects.Element (P_I.all);
+      if Projects.Contains (P_I) then
+         return Projects.Element (P_I);
       end if;
 
       P_A := new Project;
       P_A.Name := P_I;
-      Projects.Insert (String (P_I.all), P_A);
+      Projects.Insert (P_I, P_A);
       return P_A;
    end Get_Or_Create;
 
@@ -109,11 +101,9 @@ package body Code_Analysis is
 
    procedure Free_Analysis (A : in out Analysis) is
    begin
-
       if A.Coverage_Data /= null then
          Unchecked_Free (A.Coverage_Data);
       end if;
-
    end Free_Analysis;
 
    ---------------
@@ -144,8 +134,7 @@ package body Code_Analysis is
    procedure Free_File (F_A : in out File_Access) is
 
       procedure Free_From_Cursor (C : Subprogram_Maps.Cursor);
-      --  Subprogram that Free the element pointed by the access
-      --  itself pointed by the cursor
+      --  To be used by Idefinite_Hashed_Maps.Iterate subprogram
 
       ----------------------
       -- Free_From_Cursor --
@@ -159,14 +148,12 @@ package body Code_Analysis is
 
    begin
 
-      for I in 1 .. F_A.Lines'Length
-      loop
-         Free_Line (F_A.Lines (I));
+      for J in 1 .. F_A.Lines'Length loop
+         Free_Line (F_A.Lines (J));
       end loop;
 
       F_A.Subprograms.Iterate (Free_From_Cursor'Access);
       Free_Analysis (F_A.Analysis_Data);
-      Unchecked_Free (F_A.Name);
       Unchecked_Free (F_A);
    end Free_File;
 
@@ -177,8 +164,7 @@ package body Code_Analysis is
    procedure Free_Project (P_A : in out Project_Access) is
 
       procedure Free_From_Cursor (C : File_Maps.Cursor);
-      --  Subprogram that Free the element pointed by the access
-      --  itself pointed by the cursor
+      --  To be used by Idefinite_Hashed_Maps.Iterate subprogram
 
       ----------------------
       -- Free_From_Cursor --
@@ -193,8 +179,7 @@ package body Code_Analysis is
    begin
       P_A.Files.Iterate (Free_From_Cursor'Access);
       Free_Analysis (P_A.Analysis_Data);
-      Project_Maps.Delete (Projects, String (P_A.Name.all));
-      Unchecked_Free (P_A.Name);
+      Project_Maps.Delete (Projects, P_A.Name);
       Unchecked_Free (P_A);
    end Free_Project;
 
