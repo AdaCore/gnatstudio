@@ -368,7 +368,7 @@ package body GPS.Kernel.Clipboard is
       --  unknown (that seems more of a workaround, but works fine since gtk+
       --  always sets the owner of the selection)
       if Index_In_List = 0
-        and then Get_Owner (Gtk.Clipboard.Get) /= null
+        and then Get_Owner (Gtk.Clipboard.Get) = null
         and then Wait_Is_Text_Available (Gtk.Clipboard.Get)
       then
          Trace (Me, "Pasting system clipboard");
