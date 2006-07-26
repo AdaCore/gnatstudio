@@ -86,6 +86,7 @@ with Filesystem.Windows;         use Filesystem.Windows;
 with GUI_Utils;                  use GUI_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
 with Projects;                   use Projects;
+with Remote.Path.Translator;     use Remote.Path, Remote.Path.Translator;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
@@ -123,15 +124,6 @@ package body GPS.Kernel.Remote is
    type Descriptor_Attribute is (System_Defined, User_Defined);
    --  Tell where the descriptor comes from: system wide setup of user defined
    --  setup
-
-   type Synchronisation_Type is (Never, Once_To_Local, Once_To_Remote, Always);
-   --  Synchronisation mechanism used for a given remote path.
-
-   Synchronisation_String : constant array (Synchronisation_Type) of String_Ptr
-                          := (Never          => new String'("Never"),
-                              Once_To_Local  => new String'("Once to local"),
-                              Once_To_Remote => new String'("Once to remote"),
-                              Always         => new String'("Always"));
 
    --------------------------
    -- Connection debugging --
@@ -177,48 +169,6 @@ package body GPS.Kernel.Remote is
       end case;
    end Print;
 
-   ------------------
-   -- Mirror_Paths --
-   ------------------
-
-   type Mirror_Path_Record;
-   type Mirror_Path_Access is access all Mirror_Path_Record;
-   type Mirror_Path_Record is record
-      Local_Path       : String_Access;
-      Remote_Path      : String_Access;
-      Sync             : Synchronisation_Type;
-      Attribute        : Descriptor_Attribute;
-      Next             : Mirror_Path_Access;
-   end record;
-
-   type Mirrors_List_Record;
-   type Mirrors_List_Access is access all Mirrors_List_Record;
-   type Mirrors_List_Record is record
-      Nickname   : String_Access;
-      Path_List  : Mirror_Path_Access;
-      Next       : Mirrors_List_Access;
-   end record;
-
-   Main_Paths_Table : Mirrors_List_Access := null;
-   --  ??? Global variable, should get rid of it
-
-   function Deep_Copy (List : Mirror_Path_Access) return Mirror_Path_Access;
-   function Deep_Copy (List : Mirrors_List_Access) return Mirrors_List_Access;
-   --  Perform a deep copy of the list
-
-   procedure Free (List : in out Mirror_Path_Access);
-   procedure Free (List : in out Mirrors_List_Access);
-   --  Free the mirror list.
-
-   procedure Parse_Remote_Path_Node
-     (Kernel    : Kernel_Handle;
-      Node      : Glib.Xml_Int.Node_Ptr;
-      Attribute : Descriptor_Attribute);
-   --  Parse a remote_path node
-
-   No_Path : constant String_Access := new String'("");
-   --  ??? Global variable, should get rid of it
-
    ------------------------
    -- Machine_Descriptor --
    ------------------------
@@ -227,7 +177,7 @@ package body GPS.Kernel.Remote is
      new GNAT.Expect.TTY.Remote.Machine_Descriptor_Record
    with record
       Attribute  : Descriptor_Attribute;
-      Rsync_Func : String_Access;
+      Rsync_Func : GNAT.OS_Lib.String_Access;
       Applied    : Boolean;
       --  tells if the machine configuration has been applied.
    end record;
@@ -263,6 +213,12 @@ package body GPS.Kernel.Remote is
    Enter_Local_Path_String  : constant String := -"<enter local path here>";
    Enter_Remote_Path_String : constant String := -"<enter remote path here>";
 
+   Synchronisation_String : constant array (Synchronisation_Type) of String_Ptr
+     := (Never          => new String'("Never"),
+         Once_To_Local  => new String'("Once to local"),
+         Once_To_Remote => new String'("Once to remote"),
+         Always         => new String'("Always"));
+
    type Path_Row_Record is record
       Local_Entry          : Gtk_Entry;
       Local_Browse_Button  : Gtk_Button;
@@ -274,6 +230,7 @@ package body GPS.Kernel.Remote is
       Remote_Hbox          : Gtk_Hbox;
       Sync_Combo           : Gtkada_Combo;
       Remove_Button        : Gtk_Button;
+      Cursor               : Mirror_List.Cursor;
    end record;
    type Path_Row is access all Path_Row_Record;
    --  This widget is the graphical representation of a mirror path.
@@ -287,6 +244,7 @@ package body GPS.Kernel.Remote is
       Table           : Gtk_Table;
       Add_Path_Button : Gtk_Button;
       List            : Path_Row_List.Glist;
+      M_List          : Mirror_List_Access;
       Nb_Rows         : Guint;
       Dialog          : Gtk_Dialog;
    end record;
@@ -297,19 +255,19 @@ package body GPS.Kernel.Remote is
       Dialog      : Gtk_Dialog);
 
    procedure Set_Path_List
-     (Widget    : Paths_Widget;
-      Path_List : Mirror_Path_Access);
+     (Widget : Paths_Widget;
+      List   : Mirror_List_Access);
    --  Reset the widget and fills it with the path list
 
-   function Get_Path_List
+   procedure Save_Tentative_Path_List
      (Widget : Paths_Widget;
-      FS     : Filesystem_Record'Class) return Mirror_Path_Access;
+      FS     : Filesystem_Record'Class);
    --  Retrieve the mirror path list represented by the widget.
 
    procedure Add_Path_Row
      (Widget      : Paths_Widget;
       Row_Number  : Guint;
-      Path        : Mirror_Path_Access);
+      Cursor      : Mirror_List.Cursor);
    --  Add a new Path row to the Mirror_Path_Widget
 
    procedure Remove_Path_Row
@@ -317,9 +275,10 @@ package body GPS.Kernel.Remote is
       Row    : in out Path_Row);
    --  Remove the row from widget
 
-   function Get_Path
-     (Row : Path_Row;
-      FS  : Filesystem_Record'Class) return Mirror_Path_Access;
+   procedure Update_Path
+     (Row  : Path_Row;
+      FS   : Filesystem_Record'Class;
+      Path : in out Mirror_Path);
    --  Retrieve the mirror path represented by the widget
 
    procedure On_Path_Grab_Focus (Widget : access Gtk_Widget_Record'Class);
@@ -369,7 +328,6 @@ package body GPS.Kernel.Remote is
       Init_Cmds_View        : Gtk_Text_View;
       Debug_Button          : Gtk_Check_Button;
       --  Mirror Paths config pannel
-      Paths_List            : Mirrors_List_Access;
       Paths_List_Widget     : Paths_Widget;
       --  Add/Remove/Restore buttons
       Add_Machine_Button    : Gtk_Button;
@@ -477,114 +435,6 @@ package body GPS.Kernel.Remote is
    function From_Callback_Data_Server_Config_Changed_Hook
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  retrieve hook data from callback data
-
-   ---------------
-   -- Deep_Copy --
-   ---------------
-
-   function Deep_Copy
-     (List : Mirror_Path_Access) return Mirror_Path_Access
-   is
-      Dest, Item_Src, Item_Dest : Mirror_Path_Access;
-   begin
-      Dest := null;
-      Item_Src := List;
-
-      while Item_Src /= null loop
-         if Item_Dest /= null then
-            Item_Dest.Next := new Mirror_Path_Record'
-              (Local_Path  => new String'(Item_Src.Local_Path.all),
-               Remote_Path => new String'(Item_Src.Remote_Path.all),
-               Sync        => Item_Src.Sync,
-               Attribute   => Item_Src.Attribute,
-               Next        => null);
-            Item_Dest := Item_Dest.Next;
-         else
-            Dest := new Mirror_Path_Record'
-              (Local_Path  => new String'(Item_Src.Local_Path.all),
-               Remote_Path => new String'(Item_Src.Remote_Path.all),
-               Sync        => Item_Src.Sync,
-               Attribute   => Item_Src.Attribute,
-               Next        => null);
-            Item_Dest := Dest;
-         end if;
-
-         Item_Src := Item_Src.Next;
-      end loop;
-
-      return Dest;
-   end Deep_Copy;
-
-   ---------------
-   -- Deep_Copy --
-   ---------------
-
-   function Deep_Copy
-     (List : Mirrors_List_Access) return Mirrors_List_Access
-   is
-      Dest, Item_Src, Item_Dest : Mirrors_List_Access;
-   begin
-      Dest := null;
-      Item_Src := List;
-
-      while Item_Src /= null loop
-         if Item_Dest /= null then
-            Item_Dest.Next := new Mirrors_List_Record'
-              (Nickname  => new String'(Item_Src.Nickname.all),
-               Path_List => Deep_Copy (Item_Src.Path_List),
-               Next      => null);
-            Item_Dest := Item_Dest.Next;
-         else
-            Dest := new Mirrors_List_Record'
-              (Nickname  => new String'(Item_Src.Nickname.all),
-               Path_List => Deep_Copy (Item_Src.Path_List),
-               Next      => null);
-            Item_Dest := Dest;
-         end if;
-
-         Item_Src := Item_Src.Next;
-      end loop;
-
-      return Dest;
-   end Deep_Copy;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Mirror_Path_Access) is
-      Next_Item : Mirror_Path_Access;
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Mirror_Path_Record, Mirror_Path_Access);
-
-   begin
-      while List /= null loop
-         Next_Item := List.Next;
-         Free (List.Local_Path);
-         Free (List.Remote_Path);
-         Unchecked_Free (List);
-         List := Next_Item;
-      end loop;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Mirrors_List_Access) is
-      Next_Item : Mirrors_List_Access;
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Mirrors_List_Record, Mirrors_List_Access);
-
-   begin
-      while List /= null loop
-         Next_Item := List.Next;
-         Free (List.Nickname);
-         Free (List.Path_List);
-         Unchecked_Free (List);
-         List := Next_Item;
-      end loop;
-   end Free;
 
    ----------
    -- Free --
@@ -773,70 +623,6 @@ package body GPS.Kernel.Remote is
       Run_Hook (Kernel, Server_List_Changed_Hook);
    end Parse_Remote_Machine_Descriptor_Node;
 
-   ----------------------------
-   -- Parse_Remote_Path_Node --
-   ----------------------------
-
-   procedure Parse_Remote_Path_Node
-     (Kernel    : Kernel_Handle;
-      Node      : Glib.Xml_Int.Node_Ptr;
-      Attribute : Descriptor_Attribute)
-   is
-      pragma Unreferenced (Kernel);
-      Nickname   : constant String := Get_Attribute (Node, "server_name");
-      Paths_Item : Mirrors_List_Access;
-
-   begin
-      Paths_Item := Main_Paths_Table;
-
-      while Paths_Item /= null loop
-         exit when Paths_Item.Nickname.all = Nickname;
-         Paths_Item := Paths_Item.Next;
-      end loop;
-
-      if Paths_Item = null then
-         Main_Paths_Table := new Mirrors_List_Record'
-           (Nickname  => new String'(Nickname),
-            Path_List => null,
-            Next      => Main_Paths_Table);
-         Paths_Item := Main_Paths_Table;
-      end if;
-
-      declare
-         Child : Node_Ptr := Node.Child;
-      begin
-         while Child /= null loop
-            declare
-               Local_Path  : constant String :=
-                               Get_Attribute (Child, "local_path");
-               Remote_Path : constant String :=
-                               Get_Attribute (Child, "remote_path");
-               Sync_Str    : constant String :=
-                               Get_Attribute (Child, "sync", "never");
-               Sync        : Synchronisation_Type;
-            begin
-
-               --  Retrieve Sync value from string.
-               begin
-                  Sync := Synchronisation_Type'Value (Sync_Str);
-               exception
-                  when Constraint_Error =>
-                     Sync := Never;
-               end;
-
-               Paths_Item.Path_List := new Mirror_Path_Record'
-                 (Local_Path  => new String'(Local_Path),
-                  Remote_Path => new String'(Remote_Path),
-                  Sync        => Sync,
-                  Attribute   => Attribute,
-                  Next        => Paths_Item.Path_List);
-            end;
-
-            Child := Child.Next;
-         end loop;
-      end;
-   end Parse_Remote_Path_Node;
-
    ------------------------------
    -- Load_Remote_Machine_List --
    ------------------------------
@@ -861,8 +647,7 @@ package body GPS.Kernel.Remote is
                   Parse_Remote_Machine_Descriptor_Node
                     (Kernel, Child, User_Defined);
                elsif Child.Tag.all = "remote_path_config" then
-                  Parse_Remote_Path_Node
-                    (Kernel, Child, User_Defined);
+                  Parse_Remote_Path_Node (Child);
                end if;
 
                Child := Child.Next;
@@ -880,8 +665,6 @@ package body GPS.Kernel.Remote is
       File, Item, Child, Cmd_Node : Node_Ptr;
       Desc       : Machine_Descriptor;
       Nb_Desc    : Natural;
-      M_Path     : Mirror_Path_Access;
-      Paths_Item : Mirrors_List_Access;
 
    begin
       Trace (Me, "Saving " & Filename);
@@ -943,41 +726,13 @@ package body GPS.Kernel.Remote is
          end if;
 
          --  Save remote paths list
-
-         Paths_Item := Main_Paths_Table;
-
-         while Paths_Item /= null loop
-            exit when Paths_Item.Nickname.all = Desc.Nickname.all;
-            Paths_Item := Paths_Item.Next;
-         end loop;
-
-         if Paths_Item /= null then
-            M_Path := Paths_Item.Path_List;
-         else
-            M_Path := null;
+         if not Get_List (Desc.Nickname.all).Is_Empty then
+            Item := new Glib.Xml_Int.Node;
+            Item.Tag := new String'("remote_path_config");
+            Set_Attribute (Item, "server_name", Desc.Nickname.all);
+            Save_Remote_Path_Node (Desc.Nickname.all, Item);
+            Add_Child (File, Item, True);
          end if;
-
-         Item := new Glib.Xml_Int.Node;
-         Item.Tag := new String'("remote_path_config");
-         Set_Attribute (Item, "server_name", Desc.Nickname.all);
-
-         while M_Path /= null loop
-            if M_Path.Attribute = User_Defined then
-               Child := new Glib.Xml_Int.Node;
-               Child.Tag := new String'("mirror_path");
-               Set_Attribute
-                 (Child, "sync", Synchronisation_Type'Image (M_Path.Sync));
-               Set_Attribute
-                 (Child, "remote_path", M_Path.Remote_Path.all);
-               Set_Attribute
-                 (Child, "local_path", M_Path.Local_Path.all);
-               Add_Child (Item, Child);
-            end if;
-
-            M_Path := M_Path.Next;
-         end loop;
-
-         Add_Child (File, Item, True);
       end loop;
 
       Print (File, Filename);
@@ -1027,10 +782,10 @@ package body GPS.Kernel.Remote is
    -------------------
 
    procedure Set_Path_List
-     (Widget    : Paths_Widget;
-      Path_List : Mirror_Path_Access)
+     (Widget : Paths_Widget;
+      List   : Mirror_List_Access)
    is
-      Path   : Mirror_Path_Access;
+      Cursor : Mirror_List.Cursor;
       Row    : Path_Row;
       use type Path_Row_List.Glist;
 
@@ -1047,12 +802,13 @@ package body GPS.Kernel.Remote is
       Resize (Widget.Table, 1, 4);
 
       Widget.Nb_Rows := 1;
-      Path := Path_List;
+      Widget.M_List := List;
+      Cursor := List.First;
 
-      while Path /= null loop
-         Add_Path_Row (Widget, Widget.Nb_Rows, Path);
+      while Mirror_List.Has_Element (Cursor) loop
+         Add_Path_Row (Widget, Widget.Nb_Rows, Cursor);
          Widget.Nb_Rows := Widget.Nb_Rows + 1;
-         Path := Path.Next;
+         Mirror_List.Next (Cursor);
       end loop;
 
       Attach (Widget.Table, Widget.Add_Path_Button,
@@ -1061,42 +817,35 @@ package body GPS.Kernel.Remote is
       Unref (Widget.Add_Path_Button);
    end Set_Path_List;
 
-   -------------------
-   -- Get_Path_List --
-   -------------------
+   ------------------------------
+   -- Save_Tentative_Path_List --
+   ------------------------------
 
-   function Get_Path_List
+   procedure Save_Tentative_Path_List
      (Widget : Paths_Widget;
-      FS     : Filesystem_Record'Class) return Mirror_Path_Access
+      FS     : Filesystem_Record'Class)
    is
-      List : Path_Row_List.Glist;
-      Row  : Path_Row;
-      Path : Mirror_Path_Access;
-      Item : Mirror_Path_Access;
+      List   : Path_Row_List.Glist;
+      Row    : Path_Row;
       use type Path_Row_List.Glist;
+
+      procedure Update (P : in out Mirror_Path);
+      --  Update the Mirror path with values in the widget
+
+      procedure Update (P : in out Mirror_Path) is
+      begin
+         Update_Path (Path_Row_List.Get_Data (List), FS, P);
+      end Update;
 
    begin
       List := Widget.List;
 
       while List /= Path_Row_List.Null_List loop
          Row := Path_Row_List.Get_Data (List);
-
-         if Path = null then
-            Path := Get_Path (Row, FS);
-            Item := Path;
-         else
-            Item.Next := Get_Path (Row, FS);
-
-            if Item.Next /= null then
-               Item := Item.Next;
-            end if;
-         end if;
-
+         Widget.M_List.Update_Element (Row.Cursor, Update'Access);
          List := Path_Row_List.Next (List);
       end loop;
-
-      return Path;
-   end Get_Path_List;
+   end Save_Tentative_Path_List;
 
    ------------------
    -- Add_Path_Row --
@@ -1105,8 +854,9 @@ package body GPS.Kernel.Remote is
    procedure Add_Path_Row
      (Widget      : Paths_Widget;
       Row_Number  : Guint;
-      Path        : Mirror_Path_Access)
+      Cursor      : Mirror_List.Cursor)
    is
+      Path : Mirror_Path := Mirror_List.Element (Cursor);
       Pix  : Gtk_Image;
       Row  : Path_Row;
       Data : Path_Cb_Data_Access;
@@ -1114,6 +864,7 @@ package body GPS.Kernel.Remote is
       Tips : Gtk_Tooltips;
    begin
       Row := new Path_Row_Record;
+      Row.Cursor := Cursor;
       Tips := Get_Tooltips (Server_List_Editor (Widget.Dialog).Kernel);
 
       Gtk_New (Row.Local_Frame);
@@ -1205,7 +956,7 @@ package body GPS.Kernel.Remote is
 
       Path_Row_List.Append (Widget.List, Row);
 
-      if Path = null then
+      if Path = Null_Path then
          Set_Text (Row.Local_Entry, Enter_Local_Path_String);
          Set_Text (Row.Remote_Entry, Enter_Remote_Path_String);
          Widget_Callback.Object_Connect
@@ -1216,10 +967,11 @@ package body GPS.Kernel.Remote is
             On_Path_Grab_Focus'Access, Row.Remote_Entry);
 
       else
-         Set_Text (Row.Local_Entry, Path.Local_Path.all);
-         Set_Text (Row.Remote_Entry, Path.Remote_Path.all);
-         Set_Text (Get_Entry (Row.Sync_Combo),
-                   Synchronisation_String (Path.Sync).all);
+         Set_Text (Row.Local_Entry, Path.Get_Local_Path (True));
+         Set_Text (Row.Remote_Entry, Path.Get_Remote_Path (True));
+         Set_Text
+           (Get_Entry (Row.Sync_Combo),
+            Synchronisation_String (Path.Get_Synchronisation (True)).all);
       end if;
 
       Data := new Path_Cb_Data;
@@ -1280,15 +1032,15 @@ package body GPS.Kernel.Remote is
       Free (Row);
    end Remove_Path_Row;
 
-   --------------
-   -- Get_Path --
-   --------------
+   -----------------
+   -- Update_Path --
+   -----------------
 
-   function Get_Path
-     (Row : Path_Row;
-      FS  : Filesystem_Record'Class) return Mirror_Path_Access
+   procedure Update_Path
+     (Row  : Path_Row;
+      FS   : Filesystem_Record'Class;
+      Path : in out Mirror_Path)
    is
-      Item   : Mirror_Path_Access;
       Local  : constant String := Get_Text (Row.Local_Entry);
       Remote : constant String := Get_Text (Row.Remote_Entry);
       Sync   : Synchronisation_Type := Never;
@@ -1312,32 +1064,29 @@ package body GPS.Kernel.Remote is
             end if;
          end loop;
 
-         Item := new Mirror_Path_Record'
-           (Local_Path  => new String'
-              (Ensure_Directory (Get_Local_Filesystem, Local)),
-            Remote_Path => new String'
-              (Ensure_Directory (FS, Remote)),
-            Sync        => Sync,
-            Attribute   => User_Defined,
-            Next        => null);
-
-         return Item;
+         Path.Set_Tentative_Local_Path
+           (Get_Local_Filesystem.Ensure_Directory  (Local));
+         Path.Set_Tentative_Remote_Path
+           (FS.Ensure_Directory (Remote));
+         Path.Set_Tentative_Synchronisation (Sync);
+         --  ??? What about attributes ?
       end if;
-
-      return null;
-   end Get_Path;
+   end Update_Path;
 
    -------------------------
    -- On_Add_Path_Clicked --
    -------------------------
 
-   procedure On_Add_Path_Clicked (W : access Gtk_Widget_Record'Class) is
+   procedure On_Add_Path_Clicked (W : access Gtk_Widget_Record'Class)
+   is
       Widget : Paths_Widget_Record renames Paths_Widget_Record (W.all);
+      Path   : Mirror_Path := Null_Path;
    begin
       Ref (Widget.Add_Path_Button);
       Remove (Widget.Table, Widget.Add_Path_Button);
 
-      Add_Path_Row (Paths_Widget (W), Widget.Nb_Rows, null);
+      Widget.M_List.Append (Path);
+      Add_Path_Row (Paths_Widget (W), Widget.Nb_Rows, Widget.M_List.Last);
       Widget.Nb_Rows := Widget.Nb_Rows + 1;
 
       Attach (Widget.Table, Widget.Add_Path_Button,
@@ -1828,10 +1577,6 @@ package body GPS.Kernel.Remote is
          On_Remove_Clicked'Access,
          Dialog);
 
-      --  Copy paths table
-
-      Dialog.Paths_List := Deep_Copy (Main_Paths_Table);
-
       --  Fill the tree with already configured machines
 
       Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
@@ -2028,7 +1773,6 @@ package body GPS.Kernel.Remote is
       Model      : Gtk.Tree_Store.Gtk_Tree_Store;
       Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
       Item       : Item_Access;
-      Path_Item  : Mirrors_List_Access;
       Attribute  : Descriptor_Attribute;
       Modified   : Boolean;
       Dbg        : Connection_Debugger;
@@ -2133,23 +1877,7 @@ package body GPS.Kernel.Remote is
 
          Trace (Me, "Internal save paths");
 
-         Path_Item := Dialog.Paths_List;
-         while Path_Item /= null loop
-            exit when Path_Item.Nickname.all = Nickname;
-            Path_Item := Path_Item.Next;
-         end loop;
-
-         if Path_Item = null then
-            Dialog.Paths_List := new Mirrors_List_Record'
-              (Nickname  => new String'(Nickname),
-               Path_List => null,
-               Next      => Dialog.Paths_List);
-            Path_Item := Dialog.Paths_List;
-         end if;
-
-         Free (Path_Item.Path_List);
-
-         Path_Item.Path_List := Get_Path_List
+         Save_Tentative_Path_List
            (Dialog.Paths_List_Widget,
             Get_Filesystem_From_Shell
               (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))));
@@ -2171,7 +1899,6 @@ package body GPS.Kernel.Remote is
       Sys_Item  : Item_Access;
       Overriden : Boolean;
       User_Only : Boolean;
-      Path_Item : Mirrors_List_Access;
 
    begin
       if Dialog.Select_Back then
@@ -2273,15 +2000,7 @@ package body GPS.Kernel.Remote is
 
             --  Now fill the path list
 
-            Path_Item := Dialog.Paths_List;
-
-            while Path_Item /= null loop
-               exit when Path_Item.Nickname.all = Nickname;
-
-               Path_Item := Path_Item.Next;
-            end loop;
-
-            Set_Path_List (Dialog.Paths_List_Widget, Path_Item.Path_List);
+            Set_Path_List (Dialog.Paths_List_Widget, Get_List (Nickname));
          end;
       end if;
 
@@ -2336,10 +2055,6 @@ package body GPS.Kernel.Remote is
                   Ref                 => 1,
                   Dbg                 => null),
                Next => Dialog.Machines);
-            Dialog.Paths_List := new Mirrors_List_Record'
-              (Nickname  => new String'(Nickname),
-               Path_List => null,
-               Next      => Dialog.Paths_List);
 
             Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
             Append (Model, Iter, Null_Iter);
@@ -2589,17 +2304,60 @@ package body GPS.Kernel.Remote is
                   Item := Item.Next;
                end loop;
 
-               --  Save mirror paths
-               Free (Main_Paths_Table);
+               --  Apply mirror paths
+               for N in 1 .. Get_Nb_Machine_Descriptor loop
 
-               --  Duplicate it instead of just copy it, for easier handling
-               --  of cancel/apply cases
-               Main_Paths_Table := Deep_Copy (Dialog.Paths_List);
+                  declare
+                     Nickname : constant String :=
+                                  Get_Machine_Descriptor (N).Nickname.all;
+                     List     : Mirror_List_Access;
+                     Cursor   : Mirror_List.Cursor;
+                  begin
+                     List := Get_List (Nickname);
+                     Cursor := List.First;
+
+                     while Mirror_List.Has_Element (Cursor) loop
+                        List.Update_Element (Cursor, Apply'Access);
+                        Mirror_List.Next (Cursor);
+                     end loop;
+                  end;
+               end loop;
 
                Save_Remote_Config (Kernel);
                Run_Hook (Kernel, Server_List_Changed_Hook);
 
             end if;
+
+         else
+            --  Cancel clicked
+
+            --  Revert mirror paths
+            for N in 1 .. Get_Nb_Machine_Descriptor loop
+
+               declare
+                  Nickname : constant String :=
+                               Get_Machine_Descriptor (N).Nickname.all;
+                  List     : Mirror_List_Access;
+                  Cursor   : Mirror_List.Cursor;
+                  Next     : Mirror_List.Cursor;
+               begin
+                  List := Get_List (Nickname);
+                  Cursor := List.First;
+
+                  while Mirror_List.Has_Element (Cursor) loop
+                     List.Update_Element (Cursor, Cancel'Access);
+
+                     if Mirror_List.Element (Cursor) = Null_Path then
+                        Next := Mirror_List.Next (Cursor);
+                        List.Delete (Cursor);
+                        Cursor := Next;
+                     else
+                        Mirror_List.Next (Cursor);
+                     end if;
+                  end loop;
+               end;
+            end loop;
+
          end if;
 
          exit when Resp /= Gtk_Response_Apply;
@@ -2612,9 +2370,6 @@ package body GPS.Kernel.Remote is
          Unchecked_Free (Dialog.Machines);
          Dialog.Machines := Item;
       end loop;
-
-      --  Destroy duplicated path table
-      Free (Dialog.Paths_List);
 
       --  Destroy the widget
       Destroy (Dialog);
@@ -2743,6 +2498,9 @@ package body GPS.Kernel.Remote is
          Args_Creator => From_Callback_Data_Server_Config_Changed_Hook'Access);
       Register_Hook_No_Return
         (Kernel, Server_Config_Changed_Hook, Server_Config_Changed_Hook_Type);
+
+      --  Register build server connected hook
+      Register_Hook_No_Args (Kernel, Build_Server_Connected_Hook);
 
       --  Register server list changed hook
       Register_Hook_No_Args
@@ -2944,8 +2702,8 @@ package body GPS.Kernel.Remote is
 
       elsif Node.Tag.all = "remote_path_config" then
          Trace (Me, "Customize: 'remote_path_config'");
-         Parse_Remote_Path_Node
-           (Module.Kernel, Node, System_Defined);
+         Parse_Remote_Path_Node (Node);
+         --  ??? Should set attrib to System_Defined
 
       elsif Node.Tag.all = "remote_shell_config" then
          Trace (Me, "Customize: 'remote_shell_config'");
@@ -3249,295 +3007,6 @@ package body GPS.Kernel.Remote is
       Remote_Module := null;
    end Destroy;
 
-   ------------------------
-   -- To_Remote_Possible --
-   ------------------------
-
-   function To_Remote_Possible
-     (Path : String;
-      To   : String) return Boolean
-   is
-      Mirror         : Mirror_Path_Access;
-      Path_List_Item : Mirrors_List_Access;
-
-   begin
-      if To = "" then
-         return True;
-      end if;
-
-      --  Search for mirror path in 'To' config
-
-      Path_List_Item := Main_Paths_Table;
-      Mirror := null;
-
-      while Path_List_Item /= null loop
-         if Path_List_Item.Nickname.all = To then
-            Mirror := Path_List_Item.Path_List;
-            exit;
-         end if;
-
-         Path_List_Item := Path_List_Item.Next;
-      end loop;
-
-      while Mirror /= null loop
-         if Is_Subtree (Get_Local_Filesystem, Mirror.Local_Path.all, Path) then
-            return True;
-         end if;
-
-         Mirror := Mirror.Next;
-      end loop;
-
-      return False;
-   end To_Remote_Possible;
-
-   -----------------------
-   -- To_Local_Possible --
-   -----------------------
-
-   function To_Local_Possible
-     (Path : String;
-      From : String) return Boolean
-   is
-      Mirror         : Mirror_Path_Access;
-      Path_List_Item : Mirrors_List_Access;
-
-   begin
-      if From = "" then
-         return True;
-      end if;
-
-      --  Search for mirror path in 'From' config
-
-      Path_List_Item := Main_Paths_Table;
-      Mirror := null;
-
-      while Path_List_Item /= null loop
-         if Path_List_Item.Nickname.all = From then
-            Mirror := Path_List_Item.Path_List;
-            exit;
-         end if;
-
-         Path_List_Item := Path_List_Item.Next;
-      end loop;
-
-      while Mirror /= null loop
-         if Is_Subtree
-              (Get_Filesystem (From), Mirror.Remote_Path.all, Path)
-         then
-            return True;
-         end if;
-
-         Mirror := Mirror.Next;
-      end loop;
-
-      return False;
-   end To_Local_Possible;
-
-   ---------------
-   -- To_Remote --
-   ---------------
-
-   function To_Remote
-     (Path       : String;
-      To         : Server_Type;
-      Unix_Style : Boolean := False) return String is
-   begin
-      return To_Remote (Path, Get_Nickname (To), Unix_Style);
-   end To_Remote;
-
-   ---------------
-   -- To_Remote --
-   ---------------
-
-   function To_Remote
-     (Path       : String;
-      To         : String;
-      Unix_Style : Boolean := False) return String
-   is
-      Path_From      : String_Access;
-      Path_To        : String_Access;
-      Mirror         : Mirror_Path_Access;
-      Path_List_Item : Mirrors_List_Access;
-
-   begin
-      --  If From and To are the same machine (and no unix path translation is
-      --  needed), just return Path
-
-      if To = "" then
-         if Unix_Style then
-            return To_Unix (Get_Local_Filesystem, Path);
-         else
-            return Path;
-         end if;
-      end if;
-
-      if Active (Me) then
-         Trace (Me, "To_Remote: " & Path & " to server " & To);
-      end if;
-
-      --  Search for mirror path in 'To' config
-
-      Path_List_Item := Main_Paths_Table;
-      Mirror := null;
-
-      while Path_List_Item /= null loop
-         if Path_List_Item.Nickname.all = To then
-            Mirror := Path_List_Item.Path_List;
-            exit;
-         end if;
-
-         Path_List_Item := Path_List_Item.Next;
-      end loop;
-
-      while Mirror /= null loop
-         if Is_Subtree (Get_Local_Filesystem, Mirror.Local_Path.all, Path) then
-            Path_From := Mirror.Local_Path;
-            Path_To   := Mirror.Remote_Path;
-            exit;
-         end if;
-
-         Mirror := Mirror.Next;
-      end loop;
-
-      if Path_From = null or Path_To = null then
-         --  Not configured mirror path
-
-         Path_From := No_Path;
-         Path_To := No_Path;
-      end if;
-
-      --  At this point, we have the from and to moint points. Let's translate
-      --  the path
-
-      declare
-         To_Filesystem : Filesystem_Record'Class := Get_Filesystem (To);
-         U_Path     : constant String := To_Unix (Get_Local_Filesystem, Path);
-         --  The input path in unix style
-         U_Frompath : constant String := To_Unix (Get_Local_Filesystem,
-                                                  Path_From.all);
-         --  The local root dir, in unix style
-         U_Subpath  : constant String :=
-           U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
-
-      begin
-         if Unix_Style then
-            if Active (Me) then
-               Trace (Me, "result: '" &
-                      To_Unix (To_Filesystem, Path_To.all) & U_Subpath &
-                      "'");
-            end if;
-
-            return To_Unix (To_Filesystem, Path_To.all) & U_Subpath;
-
-         else
-            if Active (Me) then
-               Trace (Me, "result: '" &
-                      Concat (To_Filesystem,
-                              Path_To.all,
-                              From_Unix (To_Filesystem, U_Subpath)) &
-                      "'");
-            end if;
-
-            return Concat (To_Filesystem,
-                           Path_To.all,
-                           From_Unix (To_Filesystem, U_Subpath));
-         end if;
-      end;
-   end To_Remote;
-
-   --------------
-   -- To_Local --
-   --------------
-
-   function To_Local (Path : String; From : Server_Type) return String is
-   begin
-      return To_Local (Path, Get_Nickname (From));
-   end To_Local;
-
-   --------------
-   -- To_Local --
-   --------------
-
-   function To_Local (Path : String; From : String) return String is
-      Path_From       : String_Access;
-      Path_To         : String_Access;
-      Mirror          : Mirror_Path_Access;
-      Path_List_Item  : Mirrors_List_Access;
-
-   begin
-      --  If From and To are the same machine, just return Path
-
-      if From = "" then
-         return Path;
-      end if;
-
-      if Active (Me) then
-         Trace (Me, "To_Local: " & Path & " on server " & From);
-      end if;
-
-      --  Search for mirror path in 'From' config
-
-      Path_List_Item := Main_Paths_Table;
-
-      while Path_List_Item /= null loop
-         if Path_List_Item.Nickname.all = From then
-            Mirror := Path_List_Item.Path_List;
-            exit;
-         end if;
-
-         Path_List_Item := Path_List_Item.Next;
-      end loop;
-
-      while Mirror /= null loop
-         if Is_Subtree
-           (Get_Filesystem (From), Mirror.Remote_Path.all, Path)
-         then
-            Path_To   := Mirror.Local_Path;
-            Path_From := Mirror.Remote_Path;
-            exit;
-         end if;
-
-         Mirror := Mirror.Next;
-      end loop;
-
-      if Path_From = null or Path_To = null then
-         --  Not configured mirror path. Try to convert all paths
-         Path_From := No_Path;
-         Path_To   := No_Path;
-      end if;
-
-      --  At this point, we have the from and to moint points. Let's translate
-      --  the path
-
-      declare
-         FS         : Filesystem_Record'Class := Get_Filesystem (From);
-         U_Path     : constant String := To_Unix (FS, Path);
-         --  The input path in unix style
-         U_Frompath : constant String := To_Unix (FS, Path_From.all);
-         --  The local root dir, in unix style
-         U_Subpath  : constant String :=
-           U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
-
-      begin
-         return Concat
-           (Get_Local_Filesystem,
-            Path_To.all,
-            From_Unix (Get_Local_Filesystem, U_Subpath));
-      end;
-   end To_Local;
-
-   ------------------
-   -- To_Unix_Path --
-   ------------------
-
-   function To_Unix_Path
-     (Path       : String;
-      Server     : Server_Type;
-      Use_Cygwin : Boolean := False) return String is
-   begin
-      return To_Unix (Get_Filesystem (Server), Path, Use_Cygwin);
-   end To_Unix_Path;
-
    -------------------
    -- Reload_Prj_Cb --
    -------------------
@@ -3634,8 +3103,13 @@ package body GPS.Kernel.Remote is
 
       if Server = Build_Server and then Reload_Prj then
          Load_Data.Kernel := Kernel;
-         Load_Data.File := Project_Path (Get_Project (Kernel),
-                                         Get_Nickname (Build_Server));
+         Load_Data.File :=
+           Create
+             (Get_Nickname (Build_Server),
+              To_Remote
+                (Project_Path (Get_Project (Kernel)).Full_Name (True).all,
+                 Build_Server));
+
          if Get_Host (Load_Data.File) /= Get_Nickname (Build_Server) then
             Insert (Kernel,
                     -"Error: the project " & Full_Name (Load_Data.File).all &
@@ -3655,19 +3129,6 @@ package body GPS.Kernel.Remote is
 
       Run_Hook (Kernel, Server_Config_Changed_Hook, Data'Unchecked_Access);
    end Assign;
-
-   ----------------------
-   -- Get_Network_Name --
-   ----------------------
-
-   function Get_Network_Name (Server : Server_Type) return String is
-   begin
-      if Is_Local (Server) then
-         return "localhost";
-      else
-         return Get_Network_Name (Get_Nickname (Server));
-      end if;
-   end Get_Network_Name;
 
    --------------------
    -- Get_Filesystem --
@@ -3711,10 +3172,11 @@ package body GPS.Kernel.Remote is
       Sync_Once_Dirs : Boolean;
       Queue_Id       : String  := "")
    is
-      Mirror         : Mirror_Path_Access;
-      From_Path      : String_Access;
-      To_Path        : String_Access;
-      Path_List_Item : Mirrors_List_Access;
+      List           : Mirror_List_Access;
+      Cursor         : Mirror_List.Cursor;
+      Path           : Mirror_Path;
+      From_Path      : Ada.Strings.Unbounded.Unbounded_String;
+      To_Path        : Ada.Strings.Unbounded.Unbounded_String;
       Machine        : Machine_Descriptor_Record;
       Need_Sync      : Boolean;
 
@@ -3747,32 +3209,21 @@ package body GPS.Kernel.Remote is
          return;
       end if;
 
-      if Active (Me) then
-         if To = "" then
-            Trace (Me, "Synchronizing paths from " & From);
-         else
-            Trace (Me, "Synchronizing paths to " & To);
-         end if;
+      if To = "" then
+         Trace (Me, "Synchronizing paths from " & From);
+         List := Get_List (From);
+      else
+         Trace (Me, "Synchronizing paths to " & To);
+         List := Get_List (To);
       end if;
 
-      Path_List_Item := Main_Paths_Table;
-      Mirror := null;
+      Cursor := List.First;
 
-      while Path_List_Item /= null loop
-         if Path_List_Item.Nickname.all = From
-           or else Path_List_Item.Nickname.all = To
-         then
-            Mirror := Path_List_Item.Path_List;
-            exit;
-         end if;
-
-         Path_List_Item := Path_List_Item.Next;
-      end loop;
-
-      while Mirror /= null loop
+      while Mirror_List.Has_Element (Cursor) loop
+         Path := Mirror_List.Element (Cursor);
 
          --  Determine if mirror path need to be synchronised
-         case Mirror.Sync is
+         case Path.Get_Synchronisation is
             when Never =>
                Need_Sync := False;
 
@@ -3796,14 +3247,18 @@ package body GPS.Kernel.Remote is
 
          if Need_Sync then
             if From = "" then
-               From_Path := Mirror.Local_Path;
-               To_Path   := Mirror.Remote_Path;
+               From_Path := Ada.Strings.Unbounded.To_Unbounded_String
+                   (Path.Get_Local_Path);
+               To_Path   := Ada.Strings.Unbounded.To_Unbounded_String
+                   (Path.Get_Remote_Path);
                Machine   := Machine_Descriptor_Record
                  (Get_Machine_Descriptor (To).all);
 
             else
-               From_Path := Mirror.Remote_Path;
-               To_Path   := Mirror.Local_Path;
+               From_Path := Ada.Strings.Unbounded.To_Unbounded_String
+                 (Path.Get_Remote_Path);
+               To_Path   := Ada.Strings.Unbounded.To_Unbounded_String
+                 (Path.Get_Local_Path);
                Machine   := Machine_Descriptor_Record
                  (Get_Machine_Descriptor (From).all);
             end if;
@@ -3815,14 +3270,16 @@ package body GPS.Kernel.Remote is
                   Src_Name_Length  => From'Length,
                   Dest_Name_Length => To'Length,
                   Queue_Id_Length  => The_Queue_Id'Length,
-                  Src_Path_Length  => From_Path'Length,
-                  Dest_Path_Length => To_Path'Length,
+                  Src_Path_Length  => Ada.Strings.Unbounded.Length (From_Path),
+                  Dest_Path_Length => Ada.Strings.Unbounded.Length (To_Path),
                   Tool_Name        => Machine.Rsync_Func.all,
                   Src_Name         => From,
                   Dest_Name        => To,
                   Queue_Id         => The_Queue_Id,
-                  Src_Path         => From_Path.all,
-                  Dest_Path        => To_Path.all,
+                  Src_Path         =>
+                    Ada.Strings.Unbounded.To_String (From_Path),
+                  Dest_Path        =>
+                    Ada.Strings.Unbounded.To_String (To_Path),
                   Synchronous      => Blocking,
                   Print_Output     => Print_Output);
 
@@ -3835,8 +3292,10 @@ package body GPS.Kernel.Remote is
                   GPS.Kernel.Console.Insert
                     (Kernel,
                      Machine.Rsync_Func.all & (-" failure: ") &
-                     (-"Directories ") & From_Path.all &
-                     (-" and ") & To_Path.all &
+                     (-"Directories ") &
+                     Ada.Strings.Unbounded.To_String (From_Path) &
+                     (-" and ") &
+                     Ada.Strings.Unbounded.To_String (To_Path) &
                      (-" are not synchronized properly. ") &
                      (-"Please verify your network configuration"),
                      Mode => Error);
@@ -3852,7 +3311,7 @@ package body GPS.Kernel.Remote is
             end;
          end if;
 
-         Mirror := Mirror.Next;
+         Mirror_List.Next (Cursor);
       end loop;
    end Synchronize;
 
@@ -3920,6 +3379,9 @@ package body GPS.Kernel.Remote is
       --  Check that executable is on the path, and return the full path if
       --  found, return null otherwise.
 
+      procedure On_New_Connection (Server_Name : String);
+      --  Executed when a new connection is performed.
+
       ----------------
       -- Check_Exec --
       ----------------
@@ -3946,6 +3408,17 @@ package body GPS.Kernel.Remote is
          Free (Full_Exec);
          return Norm_Exec;
       end Check_Exec;
+
+      -----------------------
+      -- On_New_Connection --
+      -----------------------
+
+      procedure On_New_Connection (Server_Name : String) is
+      begin
+         if Server_Name = Get_Nickname (Build_Server) then
+            Run_Hook (Kernel, Build_Server_Connected_Hook);
+         end if;
+      end On_New_Connection;
 
       Main_Window : Gtk.Window.Gtk_Window := null;
 
@@ -4078,7 +3551,8 @@ package body GPS.Kernel.Remote is
             Args                => Args.all,
             Execution_Directory => Old_Dir.all,
             Err_To_Out          => True,
-            Main_Window         => Main_Window);
+            Main_Window         => Main_Window,
+            On_New_Connection   => On_New_Connection'Access);
          Free (Old_Dir);
       end if;
 

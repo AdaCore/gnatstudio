@@ -28,57 +28,14 @@ with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;
 with Filesystem;           use Filesystem;
 with Interactive_Consoles;
-with Remote_Servers;       use Remote_Servers;
+with Remote;               use Remote;
 with VFS;
 
 package GPS.Kernel.Remote is
 
-   subtype Server_Type is Remote_Servers.Server_Type;
-
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
-
-   function To_Remote_Possible
-     (Path : String;
-      To   : String) return Boolean;
-   --  Tell if path equivalence on To server exists
-
-   function To_Local_Possible
-     (Path : String;
-      From : String) return Boolean;
-   --  Tell if From'path equivalence on local server exists
-
-   function To_Remote
-     (Path       : String;
-      To         : Server_Type;
-      Unix_Style : Boolean := False) return String;
-   --  Translate a local file/directory path to server 'To'
-   --  if Unix_Style is set, the translated path will have a unix style.
-
-   function To_Remote
-     (Path       : String;
-      To         : String;
-      Unix_Style : Boolean := False) return String;
-   --  Same as above, using To's nickname instead of Server_Type
-
-   function To_Local
-     (Path : String;
-      From : Server_Type) return String;
-   --  Translate a remote file/directory path from server 'From' to local path.
-
-   function To_Local
-     (Path : String;
-      From : String) return String;
-   --  Same as above, using From's nickname instead of Server_Type.
-
-   function To_Unix_Path
-     (Path       : String;
-      Server     : Server_Type;
-      Use_Cygwin : Boolean := False) return String;
-   --  Transform a remote path into unix path style.
-   --  Use_Cygwin forces cygwin style path if filesystem of server is
-   --  windows fs
 
    procedure Synchronize
      (Kernel         : Kernel_Handle;
@@ -150,6 +107,14 @@ package GPS.Kernel.Remote is
    --  the command. Returns to current dir after spawning.
    --  Use_Pipes tells wether we are using pipes when spawning the process, or
    --  consoles (on Windows).
+
+   ---------------------
+   -- Connection Hook --
+   ---------------------
+
+   Build_Server_Connected_Hook : constant String :=
+                                   "build_server_connected_hook";
+   --  No data hook
 
    --------------------------
    -- Synchronization Hook --
@@ -239,9 +204,6 @@ package GPS.Kernel.Remote is
    --  Prj_File allows to select to which project file this configuration is
    --   assigned to. If No_File, it is assigned to the current project.
    --  Reload_Prj, if set, recomputes the view if the build_server changed.
-
-   function Get_Network_Name (Server : Server_Type) return String;
-   --  Gets the network name of a server
 
    function Get_Filesystem
      (Server : Server_Type) return Filesystem_Record'Class;
