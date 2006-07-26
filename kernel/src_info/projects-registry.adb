@@ -34,9 +34,9 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
+with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with Glib.Convert;              use Glib.Convert;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
@@ -52,7 +52,7 @@ with Prj.Proc;                  use Prj.Proc;
 with Prj.Tree;                  use Prj.Tree;
 with Prj;                       use Prj;
 with Projects.Editor;           use Projects.Editor;
-with Remote_Servers;            use Remote_Servers;
+with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 with Scans;                     use Scans;
 with Snames;                    use Snames;
 with String_Utils;              use String_Utils;
@@ -255,15 +255,6 @@ package body Projects.Registry is
    pragma Inline (Array_Elements);
    --  Return access to the various tables that contain information about the
    --  project
-
-   type Remote_Error_Handler is new Error_Display_Record with record
-      Handler : Error_Handler;
-   end record;
-
-   procedure On_Error
-     (Manager : access Remote_Error_Handler;
-      Message : String);
-   --  Error reporting for GPS.Kernel.Remote interface
 
    --------------------
    -- Array_Elements --
@@ -1863,17 +1854,6 @@ package body Projects.Registry is
       null;
    end Report;
 
-   --------------
-   -- On_Error --
-   --------------
-
-   procedure On_Error
-     (Manager : access Remote_Error_Handler;
-      Message : String) is
-   begin
-      Report (Manager.Handler, Message);
-   end  On_Error;
-
    ------------------------------
    -- Compute_Predefined_Paths --
    ------------------------------
@@ -1919,19 +1899,48 @@ package body Projects.Registry is
          end if;
       end Add_Directory;
 
-      Fd      : Process_Descriptor_Access;
       Result  : Expect_Match;
       Success : Boolean;
-
-      Remote_E_Handler : aliased Remote_Error_Handler
-        := (Handler => E_Handler);
+      Fd      : Process_Descriptor_Access;
 
    begin
       Trace (Me, "Executing " & Argument_List_To_String (Gnatls_Args.all));
       --  ??? Place a error handler here
-      GPS.Kernel.Remote.Spawn
-        (null, Gnatls_Args.all, Build_Server, Fd, Success,
-         Error_Manager => Remote_E_Handler'Unchecked_Access);
+      begin
+         Success := True;
+
+         if Is_Local (Build_Server) then
+            declare
+               Gnatls_Path : GNAT.OS_Lib.String_Access :=
+                     Locate_Exec_On_Path (Gnatls_Args (Gnatls_Args'First).all);
+            begin
+               if Gnatls_Path = null then
+                  Success := False;
+                  Report (E_Handler,
+                          -"Could not locate exec " &
+                          Gnatls_Args (Gnatls_Args'First).all);
+               else
+                  Fd := new TTY_Process_Descriptor;
+                  Non_Blocking_Spawn
+                    (Fd.all,
+                     Gnatls_Path.all,
+                     Gnatls_Args (2 .. Gnatls_Args'Last),
+                     Buffer_Size => 0, Err_To_Out => True);
+                  Free (Gnatls_Path);
+               end if;
+            end;
+         else
+            Remote_Spawn
+              (Fd, Get_Nickname (Build_Server), Gnatls_Args.all,
+               Err_To_Out => True);
+         end if;
+
+      exception
+         when others =>
+            Report (E_Handler,
+                    -"Could not execute " & Gnatls_Args (1).all);
+            Success := False;
+      end;
 
       if not Success then
          Report (E_Handler,
@@ -1957,7 +1966,7 @@ package body Projects.Registry is
 
          declare
             S : constant String :=
-              Trim (Strip_CR (Expect_Out (Fd.all)), Ada.Strings.Left);
+                  Trim (Strip_CR (Expect_Out (Fd.all)), Ada.Strings.Left);
          begin
             if S = "Object Search Path:" & ASCII.LF then
                Trace (Me, "Set source path from gnatls to " & Current.all);
