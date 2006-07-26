@@ -419,39 +419,43 @@ package body GPS.Kernel.Custom is
    is
       Err  : String_Access;
       Node, N : Node_Ptr;
+      Startup : constant String :=
+        Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
    begin
-      XML_Parsers.Parse
-        (File => Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "startup.xml",
-         Tree => Node,
-         Error => Err);
+      Kernel.Startup_Scripts := new Startup_Files_Htable_Record;
 
-      if Node = null then
-         Trace (Me, "Error while loading startup.xml: " & Err.all);
-         Free (Err);
+      if Is_Regular_File (Startup) then
+         XML_Parsers.Parse
+           (File => Startup,
+            Tree => Node,
+            Error => Err);
 
-      else
-         Kernel.Startup_Scripts := new Startup_Files_Htable_Record;
+         if Node = null then
+            Trace (Me, "Error while loading startup.xml: " & Err.all);
+            Free (Err);
 
-         N := Node.Child;
-         while N /= null loop
-            if N.Tag.all = "startup" then
-               begin
-                  Set
-                    (Startup_Files_Htable_Access
-                       (Kernel.Startup_Scripts).Table,
-                     K => Get_Attribute (N, "file"),
-                     E =>
-                       (Initialization => Deep_Copy (N.Child),
-                        Explicit => True,
-                        Load    => Boolean'Value (Get_Attribute (N, "load"))));
-               exception
-                  when Constraint_Error =>
-                     null;
-               end;
-            end if;
-            N := N.Next;
-         end loop;
-         Free (Node);
+         else
+            N := Node.Child;
+            while N /= null loop
+               if N.Tag.all = "startup" then
+                  begin
+                     Set
+                       (Startup_Files_Htable_Access
+                          (Kernel.Startup_Scripts).Table,
+                        K => Get_Attribute (N, "file"),
+                        E =>
+                          (Initialization => Deep_Copy (N.Child),
+                           Explicit => True,
+                           Load => Boolean'Value (Get_Attribute (N, "load"))));
+                  exception
+                     when Constraint_Error =>
+                        null;
+                  end;
+               end if;
+               N := N.Next;
+            end loop;
+            Free (Node);
+         end if;
       end if;
    end Parse_Startup_Scripts_List;
 
