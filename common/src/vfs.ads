@@ -30,6 +30,8 @@ with GNAT.OS_Lib;
 with Glib;               use Glib;
 with Glib.Values;
 
+with Filesystem;
+
 package VFS is
 
    VFS_Directory_Error : exception;
@@ -45,7 +47,7 @@ package VFS is
    subtype UTF8_String_Access is GNAT.OS_Lib.String_Access;
    type Cst_UTF8_String_Access is access constant Glib.UTF8_String;
 
-   type Virtual_File is private;
+   type Virtual_File is tagged private;
    No_File : constant Virtual_File;
    Local_Root_Dir : constant Virtual_File;
 
@@ -94,6 +96,10 @@ package VFS is
    function "<" (File1, File2 : Virtual_File) return Boolean;
    --  Compare two files, possibly case insensitively on file systems that
    --  require this.
+
+   function Get_Filesystem (File : Virtual_File)
+                            return Filesystem.Filesystem_Record'Class;
+   --  Return the filesystem of the file
 
    function Is_Parent (Parent, Child : Virtual_File) return Boolean;
    --  Compare Parent and Child directory and determines if Parent contains
