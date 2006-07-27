@@ -1187,12 +1187,14 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Initialize
      (This         : in out Replace_Code_By_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
       Start_Cursor : File_Cursor'Class;
       Replaced_Exp : String;
       New_String   : String)
    is
    begin
-      This.Start_Cursor := File_Cursor (Start_Cursor);
+      This.Start_Cursor := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Start_Cursor));
       This.Replaced_Exp := new String'(Replaced_Exp);
       This.New_String   := new String'(New_String);
    end Initialize;
@@ -1202,17 +1204,24 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
-      Line    : constant String := Get_Line (Current_Text, This.Start_Cursor);
+      Start_Cursor : File_Cursor := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Start_Cursor.all));
+      Start_Index  : Char_Index;
+
+      Line    : constant String := Get_Line (Current_Text, Start_Cursor, 1);
       Matcher : constant Pattern_Matcher := Compile (This.Replaced_Exp.all);
       Matches : Match_Array (0 .. Paren_Count (Matcher));
    begin
-      Match (Matcher, Line, Matches);
+      Start_Index := To_Char_Index (Get_Column (Start_Cursor), Line);
+
+      Match (Matcher, Line (Integer (Start_Index) .. Line'Last), Matches);
+
+      Set_Location (Start_Cursor, Get_Line (Start_Cursor), 1);
 
       if Matches (0) /= No_Match then
-         Get
+         Get_Line
            (Current_Text,
-            This.Start_Cursor,
-            Matches (1).Last - Matches (1).First + 1,
+            Start_Cursor,
             New_Extract);
 
          Replace
@@ -1232,6 +1241,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Replaced_Exp);
       Free (This.New_String);
+      Free (This.Start_Cursor);
    end Free;
 
 end Codefix.Text_Manager.Ada_Commands;
