@@ -25,10 +25,14 @@ with Code_Coverage;      use Code_Coverage;
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with VFS;                use VFS;
 
+--  ??? Need to add comments describing the use of this procedure.
+
 procedure Main is
    VFS_File_Name : constant VFS.Virtual_File := VFS.Create ("dummy_main.adb");
    Cov_File_Name : constant VFS.Virtual_File := VFS.Create
      ("/bonn.a/descarpe/src/gps/code_analysis/main.adb.gcov");
+   --  ??? Hard-coded path should be removed
+
    File_Contents : GNAT.OS_Lib.String_Access;
    Project_Name  : VFS.Virtual_File;
    Project_Node  : Project_Access;
