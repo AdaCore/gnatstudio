@@ -166,13 +166,6 @@ package body Bookmark_Views is
       Event : Gdk_Event) return Bookmark_Data_Access;
    --  Return the entry selected by event
 
-   procedure Set
-     (Tree   : access Gtk_Tree_Store_Record'Class;
-      Iter   : Gtk_Tree_Iter;
-      Column : Gint;
-      Value  : System.Address);
-   --  Set a pointer in the tree
-
    procedure Load_Bookmarks (Kernel : access Kernel_Handle_Record'Class);
    procedure Save_Bookmarks (Kernel : access Kernel_Handle_Record'Class);
    --  Load or save the bookmarks from the XML file
@@ -415,26 +408,6 @@ package body Bookmark_Views is
       return Failure;
    end Execute;
 
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Tree   : access Gtk_Tree_Store_Record'Class;
-      Iter   : Gtk_Tree_Iter;
-      Column : Gint;
-      Value  : System.Address)
-   is
-      procedure Internal
-        (Tree   : System.Address;
-         Iter   : Gtk_Tree_Iter;
-         Column : Gint;
-         Value  : System.Address);
-      pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr");
-   begin
-      Internal (Get_Object (Tree), Iter, Column, Value);
-   end Set;
-
    ----------
    -- Free --
    ----------
@@ -586,7 +559,7 @@ package body Bookmark_Views is
    procedure Refresh (View : access Bookmark_View_Record'Class) is
       Model : constant Gtk_Tree_Store :=
                 Gtk_Tree_Store (Get_Model (View.Tree));
-      List  :  Bookmark_List.List_Node := First (Bookmark_Views_Module.List);
+      List  : Bookmark_List.List_Node := First (Bookmark_Views_Module.List);
       Iter  : Gtk_Tree_Iter;
    begin
       Clear (Model);
@@ -594,7 +567,7 @@ package body Bookmark_Views is
          Append (Model, Iter, Null_Iter);
          Set (Model, Iter, Icon_Column, C_Proxy (View.Goto_Icon));
          Set (Model, Iter, Name_Column, Data (List).Name.all);
-         Set (Model, Iter, Data_Column, Convert (Data (List)));
+         Set (Model, Iter, Data_Column, Address => Convert (Data (List)));
          Set (Model, Iter, Editable_Column, True);
          List := Next (List);
       end loop;
