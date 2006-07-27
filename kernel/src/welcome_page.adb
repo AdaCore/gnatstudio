@@ -32,7 +32,6 @@ with Gtk.Widget;  use Gtk.Widget;
 with Gtk.Window;  use Gtk.Window;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
-with VFS;         use VFS;
 with Traces;      use Traces;
 with GPS.Intl;  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -95,7 +94,7 @@ package body Welcome_Page is
    is
       pragma Unreferenced (Widget);
    begin
-      Open_Html (Kernel, Create_From_Base ("gps-welcome.html"));
+      Open_Html (Kernel, "gps-welcome.html");
       return False;
    exception
       when E : others =>
@@ -114,7 +113,7 @@ package body Welcome_Page is
    is
       pragma Unreferenced (Widget);
    begin
-      Open_Html (Kernel, Create_From_Base ("gps-tutorial.html"));
+      Open_Html (Kernel, "gps-tutorial.html");
       return False;
    exception
       when E : others =>
@@ -133,7 +132,7 @@ package body Welcome_Page is
    is
       pragma Unreferenced (Widget);
    begin
-      Open_Html (Kernel, Create_From_Base ("gps.html"));
+      Open_Html (Kernel, "gps.html");
       return False;
    exception
       when E : others =>

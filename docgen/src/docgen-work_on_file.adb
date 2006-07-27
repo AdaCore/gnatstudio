@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -619,10 +619,8 @@ package body Docgen.Work_On_File is
 
       Open_Html
         (Data.Kernel,
-         Filename => Create
-           (Full_Filename =>
-              Get_Doc_Directory (Data.Backend, Data.Kernel)
-            & "index" & Get_Extension (Data.Backend)));
+         URL_Or_File => Get_Doc_Directory (Data.Backend, Data.Kernel)
+            & "index" & Get_Extension (Data.Backend));
 
       Pop_State (Data.Kernel);
       Free (Data);
