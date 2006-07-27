@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 with System.Assertions;         use System.Assertions;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -26,10 +27,10 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Commands.Custom;           use Commands.Custom;
-with Commands.Interactive;      use Commands, Commands.Interactive;
 with Traces;                    use Traces;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Intl;                  use GPS.Intl;
 with File_Utils;                use File_Utils;
 with Remote;                    use Remote;
@@ -42,31 +43,14 @@ package body GPS.Kernel.Custom is
    Me            : constant Debug_Handle := Create ("Kernel.Custom");
    XML_Extension : constant String := ".xml";
 
-   type Startup_File_Description is record
-      Initialization : Node_Ptr;
-      Load           : Boolean;
-      Explicit       : Boolean;
+   use Scripts_Hash.String_Hash_Table;
+
+   type Scripts_Htable_Record is new Root_Table with record
+      Table : Scripts_Hash.String_Hash_Table.HTable;
    end record;
-   No_Startup_File : constant Startup_File_Description :=
-     (null, False, False);
+   type Scripts_Htable_Access is access all Scripts_Htable_Record'Class;
 
-   procedure Free (File : in out Startup_File_Description);
-   --  Free the memory occupied by File
-
-   package Startup_Files_Hash is new String_Hash
-     (Data_Type      => Startup_File_Description,
-      Free_Data      => Free,
-      Null_Ptr       => No_Startup_File,
-      Case_Sensitive => Is_Case_Sensitive (Server => GPS_Server));
-   use Startup_Files_Hash.String_Hash_Table;
-
-   type Startup_Files_Htable_Record is new Root_Table with record
-      Table : Startup_Files_Hash.String_Hash_Table.HTable;
-   end record;
-   type Startup_Files_Htable_Access
-     is access all Startup_Files_Htable_Record'Class;
-
-   procedure Reset (Table : access Startup_Files_Htable_Record);
+   procedure Reset (Table : access Scripts_Htable_Record);
    --  Reset the table
 
    procedure Parse_Custom_Dir
@@ -223,12 +207,12 @@ package body GPS.Kernel.Custom is
 
                         Command := Initialization_Command (Kernel, F);
                         if Command /= null then
-                           while Execute (Command, Null_Context) =
-                             Execute_Again
-                           loop
-                              null;
-                           end loop;
-                           Destroy (Command_Access (Command));
+                           Launch_Background_Command
+                             (Kernel,
+                              Command    => Command,
+                              Active     => True,
+                              Show_Bar   => False,
+                              Block_Exit => False);
                         end if;
                      end if;
                   end if;
@@ -422,7 +406,7 @@ package body GPS.Kernel.Custom is
       Startup : constant String :=
         Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
    begin
-      Kernel.Startup_Scripts := new Startup_Files_Htable_Record;
+      Kernel.Startup_Scripts := new Scripts_Htable_Record;
 
       if Is_Regular_File (Startup) then
          XML_Parsers.Parse
@@ -440,13 +424,14 @@ package body GPS.Kernel.Custom is
                if N.Tag.all = "startup" then
                   begin
                      Set
-                       (Startup_Files_Htable_Access
+                       (Scripts_Htable_Access
                           (Kernel.Startup_Scripts).Table,
                         K => Get_Attribute (N, "file"),
-                        E =>
+                        E => new Script_Description'
                           (Initialization => Deep_Copy (N.Child),
                            Explicit => True,
-                           Load => Boolean'Value (Get_Attribute (N, "load"))));
+                           Load => Boolean'Value (Get_Attribute (N, "load")),
+                           File => VFS.No_File));
                   exception
                      when Constraint_Error =>
                         null;
@@ -456,8 +441,170 @@ package body GPS.Kernel.Custom is
             end loop;
             Free (Node);
          end if;
+      else
+         Trace (Me, "File not found: " & Startup);
       end if;
    end Parse_Startup_Scripts_List;
+
+   -------------------------------
+   -- Save_Startup_Scripts_List --
+   -------------------------------
+
+   procedure Save_Startup_Scripts_List
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Startup     : constant String :=
+        Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
+      File, Child : Node_Ptr;
+      Iter : Scripts_Hash.String_Hash_Table.Iterator;
+      Script : Script_Description_Access;
+   begin
+      File     := new Node;
+      File.Tag := new String'("GPS");
+
+      Get_First (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
+      loop
+         Script := Get_Element (Iter);
+         exit when Script = null;
+
+         if Script.Explicit then
+            Child := new Node;
+            Child.Tag := new String'("startup");
+            Set_Attribute (Child, "load", Boolean'Image (Script.Load));
+            Set_Attribute (Child, "file", Get_Key (Iter));
+            if Script.Initialization /= null then
+               Add_Child (Child, Deep_Copy (Script.Initialization),
+                          Append => True);
+               --  Append in case Initialization has several siblings
+            end if;
+            Add_Child (File, Child);
+         end if;
+
+         Get_Next (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
+      end loop;
+
+
+      Trace (Me, "Saving " & Startup);
+      Print (File, Startup);
+      Free (File);
+   end Save_Startup_Scripts_List;
+
+   ------------------------------
+   -- Get_First_Startup_Script --
+   ------------------------------
+
+   procedure Get_First_Startup_Script
+     (Kernel : access Kernel_Handle_Record'Class;
+      Iter   : out Script_Iterator) is
+   begin
+      Get_First (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+                 Iter.Iter);
+      Iter.Kernel := Kernel_Handle (Kernel);
+   end Get_First_Startup_Script;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next  (Iter : in out Script_Iterator) is
+   begin
+      Get_Next (Scripts_Htable_Access (Iter.Kernel.Startup_Scripts).Table,
+                Iter.Iter);
+   end Next;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Script_Iterator) return Boolean is
+   begin
+      return Get_Element (Iter.Iter) = null;
+   end At_End;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Script_Iterator) return Script_Description is
+   begin
+      return Get_Element (Iter.Iter).all;
+   end Get;
+
+   ----------------
+   -- Get_Script --
+   ----------------
+
+   function Get_Script (Iter : Script_Iterator) return String is
+   begin
+      return Get_Key (Iter.Iter);
+   end Get_Script;
+
+   -------------------
+   -- Get_Full_File --
+   -------------------
+
+   function Get_Full_File (Desc : Script_Description) return Virtual_File is
+   begin
+      return Desc.File;
+   end Get_Full_File;
+
+   --------------
+   -- Get_Load --
+   --------------
+
+   function Get_Load (Desc : Script_Description) return Boolean is
+   begin
+      return Desc.Load;
+   end Get_Load;
+
+   ------------------
+   -- Get_Explicit --
+   ------------------
+
+   function Get_Explicit (Desc : Script_Description) return Boolean is
+   begin
+      return Desc.Explicit;
+   end Get_Explicit;
+
+   --------------
+   -- Get_Init --
+   --------------
+
+   function Get_Init (Descr : Script_Description) return Node_Ptr is
+   begin
+      return Descr.Initialization;
+   end Get_Init;
+
+   -----------------------------
+   -- Override_Startup_Script --
+   -----------------------------
+
+   procedure Override_Startup_Script
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Base_Name      : String;
+      Load           : Boolean;
+      Initialization : String := "")
+   is
+      Startup : Script_Description_Access :=
+        Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+             K => Base_Name);
+      pragma Unreferenced (Initialization);
+   begin
+      if Startup /= null then
+         Startup.Load           := Load;
+         Startup.Initialization := null;  --  ??? Should use Initialization
+         Startup.Explicit       := True;
+      else
+         Startup := new Script_Description'
+           (File           => VFS.No_File,
+            Load           => Load,
+            Explicit       => True,
+            Initialization => null);  --  ??? Should use Initialization
+         Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+              K => Base_Name,
+              E => Startup);
+      end if;
+   end Override_Startup_Script;
 
    --------------------------
    -- Load_File_At_Startup --
@@ -468,15 +615,35 @@ package body GPS.Kernel.Custom is
       File    : VFS.Virtual_File;
       Default : Boolean) return Boolean
    is
-      Startup : constant Startup_File_Description :=
-        Get (Startup_Files_Htable_Access (Kernel.Startup_Scripts).Table,
+      Startup : Script_Description_Access :=
+        Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
              K => Base_Name (File));
    begin
-      if Startup.Explicit then
-         return Startup.Load;
+      if Startup /= null then
+         if Startup.File /= VFS.No_File then
+            Insert (Kernel,
+                    -"There are several startup scripts with the same name: "
+                    & Base_Name (File)
+                    & ASCII.LF
+                    & (-"Not loading: ") & Full_Name (File).all,
+                    Mode => Error);
+            return False;
+         else
+            Startup.File := File;
+         end if;
+
       else
-         return Default;
+         Startup := new Script_Description'
+           (File           => File,
+            Load           => Default,
+            Explicit       => False,
+            Initialization => null);
+         Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+              K => Base_Name (File),
+              E => Startup);
       end if;
+
+      return Startup.Load;
    end Load_File_At_Startup;
 
    ----------------------------
@@ -489,11 +656,11 @@ package body GPS.Kernel.Custom is
       return Commands.Custom.Custom_Command_Access
    is
       Custom : Custom_Command_Access;
-      Startup : constant Startup_File_Description :=
-        Get (Startup_Files_Htable_Access (Kernel.Startup_Scripts).Table,
+      Startup : constant Script_Description_Access :=
+        Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
              K => Base_Name (File));
    begin
-      if Startup.Initialization /= null then
+      if Startup /= null and then Startup.Initialization /= null then
          Custom := new Custom_Command;
          Create
            (Item                 => Custom,
@@ -512,16 +679,19 @@ package body GPS.Kernel.Custom is
    -- Free --
    ----------
 
-   procedure Free (File : in out Startup_File_Description) is
+   procedure Free (File : in out Script_Description_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Script_Description, Script_Description_Access);
    begin
       Free (File.Initialization);
+      Unchecked_Free (File);
    end Free;
 
    -----------
    -- Reset --
    -----------
 
-   procedure Reset (Table : access Startup_Files_Htable_Record) is
+   procedure Reset (Table : access Scripts_Htable_Record) is
    begin
       Reset (Table.Table);
    end Reset;

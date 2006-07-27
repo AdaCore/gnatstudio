@@ -52,6 +52,8 @@
 with Glib;
 with Glib.Xml_Int;
 with Commands.Custom;
+with File_Utils;
+with Remote;
 
 package GPS.Kernel.Custom is
 
@@ -91,9 +93,9 @@ package GPS.Kernel.Custom is
    --  Send a signal to all registered modules to indicate a new customization
    --  string.
 
-   -----------------------------------------------
-   -- Customization files and automatic loading --
-   -----------------------------------------------
+   -------------------------------
+   -- Customization directories --
+   -------------------------------
 
    function Autoload_System_Dir
      (Kernel : access Kernel_Handle_Record'Class) return String;
@@ -116,10 +118,28 @@ package GPS.Kernel.Custom is
    --  Return a colon-separated list of directories in which the user might
    --  have put custom scripts to autoload.
 
+   -----------------------------------------------
+   -- Customization files and automatic loading --
+   -----------------------------------------------
+
    procedure Parse_Startup_Scripts_List
      (Kernel : access Kernel_Handle_Record'Class);
    --  Parse the list of scripts that should be automatically loaded at
    --  startup, and their initialization commands.
+
+   procedure Save_Startup_Scripts_List
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Save the file ~/.gps/startup.xml
+
+   procedure Override_Startup_Script
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Base_Name      : String;
+      Load           : Boolean;
+      Initialization : String := "");
+   --  Override the attributes of startup.xml for this specific script. This
+   --  new value will automatically be saved in startup.xml at the end of the
+   --  session.
+   --  This mustn't be called while you are iterating over all known scripts.
 
    function Load_File_At_Startup
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -127,14 +147,74 @@ package GPS.Kernel.Custom is
       Default : Boolean) return Boolean;
    --  Whether File should be loaded at startup, based on the contents of
    --  the file ~/.gps/startup.xml
+   --  This function also registers File as a startup script, so that GPS can
+   --  list them to the user later on.
 
    function Initialization_Command
      (Kernel  : access Kernel_Handle_Record'Class;
       File    : VFS.Virtual_File)
-         return Commands.Custom.Custom_Command_Access;
+      return Commands.Custom.Custom_Command_Access;
    --  Return the command to execute to initialize this module. This is
    --  null if no initialization command was provided. These are read from
    --  the file ~/.gps/startup.xml.
    --  The user must free the returned value.
+
+   type Script_Iterator is private;
+   type Script_Description is private;
+
+   procedure Get_First_Startup_Script
+     (Kernel : access Kernel_Handle_Record'Class;
+      Iter   : out Script_Iterator);
+   procedure Next  (Iter : in out Script_Iterator);
+   function At_End (Iter : Script_Iterator) return Boolean;
+   function Get    (Iter : Script_Iterator) return Script_Description;
+   function Get_Script (Iter : Script_Iterator) return String;
+   --  Iterate over all known startup
+
+   function Get_Full_File (Desc : Script_Description) return VFS.Virtual_File;
+   --  Return the full file name of the startup script. This is different from
+   --  Get_Script above.
+   --  The latter returns the base name of the script, as found in startup.xml.
+   --  The script can thus be found anywhere in the GPS directories.
+   --  Get_Full_File will return the actual location where the script was
+   --  found, or No_File if it was not found when GPS started.
+
+   function Get_Load (Desc : Script_Description) return Boolean;
+   --  Whether this script should be loaded on startup. This boolean might
+   --  either have been specified in startup.xml, or found explicitly from the
+   --  location of the startup script
+
+   function Get_Explicit (Desc : Script_Description) return Boolean;
+   --  Whether the current loading status of the file was given by startup.xml
+   --  (if True is returned), or found automatically
+
+   function Get_Init (Descr : Script_Description) return Glib.Xml_Int.Node_Ptr;
+   --  The initialization commands that should be performed after the script
+   --  has been loaded. You mustn't free the returned value, which points to
+   --  internal data.
+
+private
+   type Script_Description is record
+      Initialization : Glib.Xml_Int.Node_Ptr; --  from startup.xml
+      Load           : Boolean;               --  from startup.xml
+      Explicit       : Boolean;               --  whether it was in startup.xml
+      File           : VFS.Virtual_File;      --  from reading the directories
+   end record;
+   type Script_Description_Access is access all Script_Description;
+
+   procedure Free (File : in out Script_Description_Access);
+   --  Free the memory occupied by File
+
+   package Scripts_Hash is new String_Hash
+     (Data_Type      => Script_Description_Access,
+      Free_Data      => Free,
+      Null_Ptr       => null,
+      Case_Sensitive =>
+         File_Utils.Is_Case_Sensitive (Server => Remote.GPS_Server));
+
+   type Script_Iterator is record
+      Kernel : Kernel_Handle;
+      Iter   : Scripts_Hash.String_Hash_Table.Iterator;
+   end record;
 
 end GPS.Kernel.Custom;
