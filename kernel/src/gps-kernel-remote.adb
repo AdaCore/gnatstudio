@@ -202,6 +202,9 @@ package body GPS.Kernel.Remote is
       Attribute : Descriptor_Attribute);
    --  Parse a remote_machine_descriptor node
 
+   procedure Parse_Remote_Path_Node (Node : Glib.Xml_Int.Node_Ptr);
+   --  Parse a remote_path node
+
    ------------------------
    -- Server list dialog --
    ------------------------
@@ -623,6 +626,48 @@ package body GPS.Kernel.Remote is
       Run_Hook (Kernel, Server_List_Changed_Hook);
    end Parse_Remote_Machine_Descriptor_Node;
 
+   ----------------------------
+   -- Parse_Remote_Path_Node --
+   ----------------------------
+
+   procedure Parse_Remote_Path_Node
+     (Node      : Glib.Xml_Int.Node_Ptr)
+   is
+      Nickname : constant String := Get_Attribute (Node, "server_name");
+      List     : constant Mirror_List_Access := Get_List (Nickname);
+      Path     : Mirror_Path;
+      Child    : Node_Ptr := Node.Child;
+
+   begin
+      while Child /= null loop
+         declare
+            Local_Path  : constant String :=
+                            Get_Attribute (Child, "local_path");
+            Remote_Path : constant String :=
+                            Get_Attribute (Child, "remote_path");
+            Sync_Str    : constant String :=
+                            Get_Attribute (Child, "sync", "never");
+            Sync        : Synchronisation_Type;
+         begin
+
+            --  Retrieve Sync value from string.
+            begin
+               Sync := Synchronisation_Type'Value (Sync_Str);
+            exception
+               when Constraint_Error =>
+                  Sync := Never;
+            end;
+
+            Path.Init (Local_Path      => Local_Path,
+                       Remote_Path     => Remote_Path,
+                       Synchronisation => Sync);
+            List.Append (Path);
+         end;
+
+         Child := Child.Next;
+      end loop;
+   end Parse_Remote_Path_Node;
+
    ------------------------------
    -- Load_Remote_Machine_List --
    ------------------------------
@@ -730,7 +775,34 @@ package body GPS.Kernel.Remote is
             Item := new Glib.Xml_Int.Node;
             Item.Tag := new String'("remote_path_config");
             Set_Attribute (Item, "server_name", Desc.Nickname.all);
-            Save_Remote_Path_Node (Desc.Nickname.all, Item);
+
+            declare
+               List   : constant Mirror_List_Access :=
+                          Get_List (Desc.Nickname.all);
+               Cursor : Mirror_List.Cursor;
+               Path   : Mirror_Path;
+            begin
+               Cursor := Mirror_List.First (List.all);
+
+               while Mirror_List.Has_Element (Cursor) loop
+                  Path := Mirror_List.Element (Cursor);
+
+                  if Path /= Null_Path then
+                     Child := new Glib.Xml_Int.Node;
+                     Child.Tag := new String'("mirror_path");
+                     Set_Attribute
+                       (Child, "sync",
+                        Synchronisation_Type'Image (Path.Get_Synchronisation));
+                     Set_Attribute
+                       (Child, "remote_path", Path.Get_Remote_Path);
+                     Set_Attribute (Child, "local_path", Path.Get_Local_Path);
+                     Add_Child (Item, Child, True);
+                  end if;
+
+                  Mirror_List.Next (Cursor);
+               end loop;
+            end;
+
             Add_Child (File, Item, True);
          end if;
       end loop;
