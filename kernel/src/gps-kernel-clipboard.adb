@@ -572,6 +572,7 @@ package body GPS.Kernel.Clipboard is
          end if;
 
          Clipboard.Last_Paste := Index1;
+         Set_Text (Gtk.Clipboard.Get, Clipboard.List (Index1).all);
          Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
       end if;
    end Merge_Clipboard;
