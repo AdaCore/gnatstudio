@@ -379,7 +379,7 @@ package Codefix.Errors_Parser is
    --  Fix instruction where '|' stands for 'or'
 
    type Bad_End_Block is new Error_Parser
-     (new String'("Wrong_Keyword"), 1)
+     (new String'("Wrong_Keyword"), 2)
    with null record;
 
    overriding
