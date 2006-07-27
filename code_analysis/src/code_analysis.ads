@@ -62,6 +62,7 @@ package Code_Analysis is
 
    type Analysis is record
       Coverage_Data : Coverage_Access;
+      --  futur other specific analysis records should be added here, such as
       --  Metrics_Data : Metrics_Record_Access;
       --  SSAT_Data    : SSAT_Record_Access;
    end record;
@@ -73,9 +74,6 @@ package Code_Analysis is
 
    subtype Line_Id is Natural;
    type Subprogram_Id is access all String;
---   ??? Why are these commented out
---   type File_Id is new VFS.Virtual_File;
---   type Project_Id is new VFS.Virtual_File;
 
    type Node;
    type Line;
@@ -112,6 +110,8 @@ package Code_Analysis is
         Equivalent_Keys => VFS."=");
    --  Used to stored the Project nodes
 
+   type Code_Analysis_Tree is access all Project_Maps.Map;
+
    type Node is abstract tagged record
       Analysis_Data : Analysis;
    end record;
@@ -139,8 +139,8 @@ package Code_Analysis is
    end record;
 
    type Project is new Node with record
-      Name        : VFS.Virtual_File;
-      Files       : File_Maps.Map;
+      Name  : VFS.Virtual_File;
+      Files : File_Maps.Map;
    end record;
 
    -------------------
@@ -161,12 +161,8 @@ package Code_Analysis is
    --  allow to get an access pointing on an identified tree node
    --  if the node doesn't exists, it is created
 
-   ----------------------
-   -- Root of the tree --
-   ----------------------
-
-   Projects : Project_Maps.Map;
-   --  ??? Should not use global variables, in particular public
+   function Get_Tree return Code_Analysis_Tree;
+   --  Getter of the root tree map defined private bellow
 
    -------------
    -- Free-er --
@@ -187,7 +183,7 @@ private
    procedure Free_Analysis (Analysis_Id : in out Analysis);
    --  Free an Analysis record, so also a
    --  Coverage record if allocated
-   --  to be continued???
+   --  and futur other specific analysis records should be added here
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (String, Subprogram_Id);
@@ -206,5 +202,11 @@ private
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Project, Project_Access);
+
+   ------------------------------------
+   -- Root of the code analysis tree --
+   ------------------------------------
+
+   Projects : aliased Project_Maps.Map;
 
 end Code_Analysis;
