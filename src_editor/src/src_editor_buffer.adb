@@ -806,7 +806,7 @@ package body Src_Editor_Buffer is
       if Success then
          C := Get_Char (Current);
 
-         for J in Delimiters'Range loop
+         for J in Delimiters'Range (1) loop
             if Delimiters (J, Closing) = C then
                Delimiter := J;
                exit;
@@ -814,7 +814,7 @@ package body Src_Editor_Buffer is
          end loop;
       end if;
 
-      if Delimiter in Delimiters'Range then
+      if Delimiter in Delimiters'Range (1) then
          Counter    := 0;
          Stack      := 1;
          String_Tag := False;
@@ -847,14 +847,14 @@ package body Src_Editor_Buffer is
       Copy (On_Cursor_Iter, Current);
       C := Get_Char (On_Cursor_Iter);
 
-      for J in Delimiters'Range loop
+      for J in Delimiters'Range (1) loop
          if Delimiters (J, Opening) = C then
             Delimiter := J;
             exit;
          end if;
       end loop;
 
-      if Delimiter in Delimiters'Range then
+      if Delimiter in Delimiters'Range (1) then
          Counter    := 0;
          Stack      := 1;
          String_Tag := False;
