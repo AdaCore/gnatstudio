@@ -667,6 +667,7 @@ package body GPS.Kernel.Custom is
             Name                 => "Initialize " & Full_Name (File).all,
             Kernel               => Kernel_Handle (Kernel),
             Command              => Startup.Initialization,
+            Default_Output       => No_Output,
             Show_Command         => False,
             Show_In_Task_Manager => False);
          return Custom;
