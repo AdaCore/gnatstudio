@@ -407,9 +407,6 @@ package body Remote_Sync_Module is
          Strip_CR      => False,
          Use_Pipes     => False);
 
-      Free (Src_Path);
-      Free (Dest_Path);
-
       return Ret_Data.Status = 0 and then Success;
    end On_Rsync_Hook;
 
