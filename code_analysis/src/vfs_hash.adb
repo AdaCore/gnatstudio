@@ -24,6 +24,8 @@ package body VFS_Hash is
 
    function VFS_Hash (Key : VFS.Virtual_File) return Hash_Type is
    begin
+      --  ??? We need to take into account case-sensitivity of the filesystem
+      --  on which File is stored.
       return Ada.Strings.Hash (Full_Name (Key, True).all);
    end VFS_Hash;
 
