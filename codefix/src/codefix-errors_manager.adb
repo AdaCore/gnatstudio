@@ -241,6 +241,8 @@ package body Codefix.Errors_Manager is
                              (This.Potential_Corrections)).Message;
                   else
                      Previous_Message := Invalid_Error_Message;
+
+                     exit;
                   end if;
                end loop;
             end if;
