@@ -1259,7 +1259,9 @@ package body Codefix.Errors_Parser is
 
          if Get (Current_Text, Message, 3) /= "not" then
             Solutions := Replace_Code_By
-              (Begin_Cursor, "^([\s]+in[\s]+([\w\.])+)", "'Valid");
+              (Begin_Cursor,
+               Current_Text,
+               "^([\s]+in[\s]+([\w\.])+)", "'Valid");
          else
             raise Uncorrectable_Message;
          end if;
@@ -2046,6 +2048,30 @@ package body Codefix.Errors_Parser is
         (Current_Text, Message, Source_Cursor, Seek_With);
 
       Free (Source_Cursor);
+   end Fix;
+
+   ----------------------------
+   -- Consecutive_Underlines --
+   ----------------------------
+
+   procedure Initialize (This : in out Consecutive_Underlines) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("two consecutive underlines not permitted")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Consecutive_Underlines;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List, Options, Matches);
+   begin
+      Solutions := Remove_Extra_Underlines (Current_Text, Message);
    end Fix;
 
 end Codefix.Errors_Parser;
