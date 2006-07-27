@@ -224,10 +224,17 @@ package Codefix.Formal_Errors is
 
    function Replace_Code_By
      (Start_Cursor : File_Cursor'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Replaced_Exp : String;
       New_String   : String) return Solution_List;
    --  Propose to replace the Replaced_Exp from Current_Text starting at
    --  Start_Cursor by New_String
+
+   function Remove_Extra_Underlines
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Solution_List;
+   --  Propose to remove the extra underlines of the identifier pointed by the
+   --  cursor.
 
    function Clone (This : Error_Message) return Error_Message;
    --  Duplicate all the information used in Error_Message, specially the
