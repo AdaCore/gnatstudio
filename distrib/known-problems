@@ -6,10 +6,10 @@ Known Problems fixed in GPS 4.0.1
            the Emacs theme under Windows).
   Workaround: In GPS, do a cut then a paste instead of a copy
 
-- F721-015 Sometimes crash in remote mode with rsync
-  Problem:    When using directory synchronisation with rsync in remote mode,
+- F721-015 Intermittent crash in remote mode when using rsync
+  Problem:    When using directory synchronization with rsync in remote mode,
               GPS sometimes crash.
-  Workaround: No known workaround
+  Workaround: Use direct disk access (e.g. nfs) instead of rsync
 
 Known Problems fixed in GPS 4.0.0
 
