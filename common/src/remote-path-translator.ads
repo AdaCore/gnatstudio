@@ -21,7 +21,6 @@
 --  between a remote host and the local machine.
 
 with Ada.Containers.Doubly_Linked_Lists;
-with Glib.Xml_Int;
 
 package Remote.Path.Translator is
 
@@ -39,13 +38,6 @@ package Remote.Path.Translator is
 
    function Get_List (Server : String) return Mirror_List_Access;
    --  Same as above, with a server nickname
-
-   procedure Parse_Remote_Path_Node (Node : Glib.Xml_Int.Node_Ptr);
-   --  Parse a remote_path node
-
-   procedure Save_Remote_Path_Node (Server : String;
-                                    Node   : in out Glib.Xml_Int.Node_Ptr);
-   --  Save a remote_path node
 
    -----------------------
    -- Utility functions --

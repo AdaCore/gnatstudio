@@ -23,7 +23,6 @@ with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
 with Glib;         use Glib;
-with Glib.Xml_Int; use Glib.Xml_Int;
 
 with Filesystem;   use Filesystem;
 with Traces;       use Traces;
@@ -88,81 +87,6 @@ package body Remote.Path.Translator is
 
       return List.List;
    end Get_List;
-
-   ----------------------------
-   -- Parse_Remote_Path_Node --
-   ----------------------------
-
-   procedure Parse_Remote_Path_Node
-     (Node      : Glib.Xml_Int.Node_Ptr)
-   is
-      Nickname : constant String := Get_Attribute (Node, "server_name");
-      List     : constant Mirror_List_Access := Get_List (Nickname);
-      Path     : Mirror_Path;
-      Child    : Node_Ptr := Node.Child;
-
-   begin
-      while Child /= null loop
-         declare
-            Local_Path  : constant String :=
-                            Get_Attribute (Child, "local_path");
-            Remote_Path : constant String :=
-                            Get_Attribute (Child, "remote_path");
-            Sync_Str    : constant String :=
-                            Get_Attribute (Child, "sync", "never");
-            Sync        : Synchronisation_Type;
-         begin
-
-            --  Retrieve Sync value from string.
-            begin
-               Sync := Synchronisation_Type'Value (Sync_Str);
-            exception
-               when Constraint_Error =>
-                  Sync := Never;
-            end;
-
-            Path.Init (Local_Path      => Local_Path,
-                       Remote_Path     => Remote_Path,
-                       Synchronisation => Sync);
-            List.Append (Path);
-         end;
-
-         Child := Child.Next;
-      end loop;
-   end Parse_Remote_Path_Node;
-
-   ---------------------------
-   -- Save_Remote_Path_Node --
-   ---------------------------
-
-   procedure Save_Remote_Path_Node
-     (Server : String;
-      Node   : in out Glib.Xml_Int.Node_Ptr)
-   is
-      List   : constant Mirror_List_Access := Get_List (Server);
-      Cursor : Mirror_List.Cursor;
-      Child  : Node_Ptr;
-      Path   : Mirror_Path;
-   begin
-      Cursor := First (List.all);
-
-      while Mirror_List.Has_Element (Cursor) loop
-         Path := Mirror_List.Element (Cursor);
-
-         if Path /= Null_Path then
-            Child := new Glib.Xml_Int.Node;
-            Child.Tag := new String'("mirror_path");
-            Set_Attribute
-              (Child, "sync",
-               Synchronisation_Type'Image (Path.Get_Synchronisation));
-            Set_Attribute (Child, "remote_path", Path.Get_Remote_Path);
-            Set_Attribute (Child, "local_path", Path.Get_Local_Path);
-            Add_Child (Node, Child, True);
-         end if;
-
-         Mirror_List.Next (Cursor);
-      end loop;
-   end Save_Remote_Path_Node;
 
    ------------------------
    -- To_Remote_Possible --
