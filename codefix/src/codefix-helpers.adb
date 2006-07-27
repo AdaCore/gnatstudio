@@ -79,6 +79,7 @@ package body Codefix.Helpers is
       Add_Parser (new Generic_Use_Unallowed);
       Add_Parser (new Non_Visible_Declaration);
       Add_Parser (new Redundant_With_In_Body);
+      Add_Parser (new Consecutive_Underlines);
       Initialize_Parsers;
    end Create_Parsers;
 
