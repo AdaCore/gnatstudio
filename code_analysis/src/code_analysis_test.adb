@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Command_Line;   use Ada.Command_Line;
+with Ada.Text_IO;        use Ada.Text_IO;
+
 with Code_Analysis;      use Code_Analysis;
 with Code_Analysis_Dump; use Code_Analysis_Dump;
 with Code_Coverage;      use Code_Coverage;
@@ -25,17 +28,56 @@ with Code_Coverage;      use Code_Coverage;
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with VFS;                use VFS;
 
---  ??? Need to add comments describing the use of this procedure.
+--  Code_Analysis_Test reads a gcov output file, built from the given source
+--  file name, builds a Code_Analysis tree structure from it, displays it
+--  on the standard output, and cleanly quits
+--  So a correct usage is : $ code_analysis_test source_file_name
+--  Example :
+--  $ code_analysis_test main.adb
+--   O| Project Dummy_Project_Name
+--     o| File main.adb
+--       院 Subprogram main__read_file 0 / 0 1 call(s)
+--       院 Subprogram main 0 / 0 2 call(s)
+--       院 Subprogram main___clean 0 / 0 1 call(s)
+--       院 Subprogram main__read_file___clean 0 / 0 1 call(s)
+--         會 Line 1
+--         會 Line 2
+--         會 Line 3 4 execution(s)
+--         會 Line 4 /!\ Never executed /!\
 
 procedure Code_Analysis_Test is
-   VFS_File_Name : constant VFS.Virtual_File := VFS.Create ("dummy_main.adb");
-   Cov_File_Name : constant VFS.Virtual_File := VFS.Create ("main.adb.gcov");
-   
+
+   procedure Print_Usage;
+   --  Print the correct usage of the program to the standard output
+
+   -----------------
+   -- Print_Usage --
+   -----------------
+
+   procedure Print_Usage is
+   begin
+      Put_Line ("Usage is : $ code_analysis_test source_file_name");
+   end Print_Usage;
+
+   VFS_File_Name : VFS.Virtual_File;
+   Cov_File_Name : VFS.Virtual_File;
    File_Contents : GNAT.OS_Lib.String_Access;
    Project_Name  : VFS.Virtual_File;
    Project_Node  : Project_Access;
    File_Node     : Code_Analysis.File_Access;
 begin
+   if Argument_Count > 1 then
+      Put_Line ("/!\ Too many arguments /!\");
+      Print_Usage;
+      return;
+   elsif Argument_Count < 1 then
+      Put_Line ("/!\ Argument missing /!\");
+      Print_Usage;
+      return;
+   end if;
+
+   VFS_File_Name := Create (Argument (1));
+   Cov_File_Name := Create (Argument (1) & ".gcov");
    Project_Name  := Get_Project_From_File (VFS_File_Name);
    Project_Node  := Get_Or_Create (Project_Name);
    File_Contents := Read_File (Cov_File_Name);
