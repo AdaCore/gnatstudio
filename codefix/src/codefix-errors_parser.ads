@@ -1175,4 +1175,22 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'non visible declaration at'.
 
+   type Consecutive_Underlines is new Error_Parser
+     (new String'("Consecutive_Underlines"), 1)
+   with null record;
+
+   overriding
+   procedure Initialize (This : in out Consecutive_Underlines);
+
+   overriding
+   procedure Fix
+     (This         : Consecutive_Underlines;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'two consecutives underlines not permitted'.
+
 end Codefix.Errors_Parser;
