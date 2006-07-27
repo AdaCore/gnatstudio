@@ -62,13 +62,16 @@ package Code_Analysis is
 
    type Analysis is record
       Coverage_Data : Coverage_Access;
-      --  futur other specific analysis records should be added here, such as
+      --  Future other specific analysis records might be added here, such as
       --  Metrics_Data : Metrics_Record_Access;
       --  SSAT_Data    : SSAT_Record_Access;
    end record;
    --  Store the various code analysis information
-   --  As this stage, we don't want to elaborate something more complicated
-   --  We need to have visibility on all structures within a same module.
+   --  ??? In the future, we want a more flexible data structure where each
+   --  module can store their data without having visibility on all these
+   --  modules in code_analysis.
+   --  As this stage, we don't want to elaborate something more complicated,
+   --  so we need to have visibility on all structures within a same module.
 
    ----------------
    -- Tree types --
