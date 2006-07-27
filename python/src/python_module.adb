@@ -37,7 +37,6 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Commands.Custom;            use Commands.Custom;
-with Commands.Interactive;       use Commands, Commands.Interactive;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -45,6 +44,7 @@ with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with Histories;                  use Histories;
 with Python.GUI;                 use Python, Python.GUI;
 with Python.Ada;                 use Python.Ada;
@@ -979,10 +979,12 @@ package body Python_Module is
 
                   Command := Initialization_Command (Kernel, VF);
                   if Command /= null then
-                     while Execute (Command, Null_Context) = Execute_Again loop
-                        null;
-                     end loop;
-                     Destroy (Command_Access (Command));
+                     Launch_Background_Command
+                       (Kernel,
+                        Command    => Command,
+                        Active     => True,
+                        Show_Bar   => False,
+                        Block_Exit => False);
                   end if;
                end if;
             end if;
