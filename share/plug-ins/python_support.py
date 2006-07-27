@@ -1,4 +1,5 @@
-
+## This file provides enhanced support for editing Python files
+##
 ## Nothing is done if the projects do not support python, otherwise, the
 ## following are provided:
 ##   - Create highlight rules for python files
@@ -16,6 +17,9 @@
 ##   - "indent region", "dedent region", "check module", "run module"
 ##   - "class browser" -> project view in GPS
 
+
+############# No user customization below this point ################
+
 import GPS, sys, os.path
 
 try:
@@ -24,17 +28,12 @@ try:
 except:
   has_pygtk=0
 
-
 pydoc_proc = None
 pydoc_port = 9432
 python_menu = None
 
-def create_python_menu():
-  global python_menu
-  if not python_menu:
-     python_menu = GPS.Menu.create ("/Python", ref="Help", add_before=1)
-     GPS.Menu.create ("/Python/Import & Reload", on_activate=reload_file)
-     GPS.parse_xml ("""
+def register_doc():
+  GPS.parse_xml ("""
   <documentation_file>
      <name>http://www.python.org/doc/2.4.2/tut/tut.html</name>
      <descr>Python tutorial</descr>
@@ -48,7 +47,7 @@ def create_python_menu():
      <category>Scripts</category>
   </documentation_file>""")
 
-     if has_pygtk:
+  if has_pygtk:
         GPS.parse_xml ("""
   <documentation_file>
      <name>http://www.pygtk.org/pygtk2tutorial/index.html</name>
@@ -62,6 +61,12 @@ def create_python_menu():
      <menu>/Python/PyGTK Reference Manual</menu>
      <category>Scripts</category>
   </documentation_file>""")
+
+def create_python_menu():
+  global python_menu
+  if not python_menu:
+     python_menu = GPS.Menu.create ("/Python", ref="Help", add_before=1)
+     GPS.Menu.create ("/Python/Import & Reload", on_activate=reload_file)
 
 def destroy_python_menu():
   global python_menu
@@ -191,3 +196,4 @@ GPS.parse_xml ("""
   </filter_and>
 """)
 
+register_doc ()
