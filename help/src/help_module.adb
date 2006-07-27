@@ -53,7 +53,6 @@ with OS_Utils;                   use OS_Utils;
 with File_Utils;                 use File_Utils;
 with String_Utils;               use String_Utils;
 with Generic_List;
-with Histories;                  use Histories;
 with VFS;                        use VFS;
 with Welcome_Page;               use Welcome_Page;
 with XML_Parsers;
@@ -83,7 +82,7 @@ package body Help_Module is
                               (1 => Name_Cst'Access);
 
    type Help_File_Record is record
-      File       : VFS.Virtual_File;
+      URL        : GNAT.OS_Lib.String_Access;
       Shell_Cmd  : GNAT.OS_Lib.String_Access;
       Shell_Lang : GNAT.OS_Lib.String_Access;
       Descr      : GNAT.OS_Lib.String_Access;
@@ -178,13 +177,13 @@ package body Help_Module is
    --  Create and load the index of all help contents
 
    procedure Register_Help
-     (Kernel     : access Kernel_Handle_Record'Class;
-      HTML_File  : VFS.Virtual_File := VFS.No_File;
-      Shell_Cmd  : String := "";
-      Shell_Lang : String := "";
-      Descr      : String;
-      Category   : String;
-      Menu_Path  : String;
+     (Kernel      : access Kernel_Handle_Record'Class;
+      URL         : String := "";
+      Shell_Cmd   : String := "";
+      Shell_Lang  : String := "";
+      Descr       : String;
+      Category    : String;
+      Menu_Path   : String;
       Menu_Before : String := "";
       Menu_After  : String := "");
    --  Register the menu in the GPS menubar.
@@ -193,9 +192,9 @@ package body Help_Module is
 
    procedure Open_HTML_File
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      URL    : String;
       Anchor : String := "");
-   --  Open an HTML file.
+   --  Open an URL.
 
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -210,7 +209,7 @@ package body Help_Module is
    --  Menu Help->Welcome...
 
    type String_Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      File       : VFS.Virtual_File;
+      URL        : GNAT.OS_Lib.String_Access;
       Shell      : GNAT.OS_Lib.String_Access;
       Shell_Lang : GNAT.OS_Lib.String_Access;
    end record;
@@ -219,16 +218,14 @@ package body Help_Module is
    procedure On_Destroy (Item : access Gtk_Widget_Record'Class);
    --  Called when a String_Menu_Item is destroyed
 
-   type On_Recent is new Menu_Callback_Record with record
-      Kernel : Kernel_Handle;
-   end record;
-   procedure Activate (Callback : access On_Recent; Item : String);
-
-   function Create_Html
+   function Create_URL
      (Name   : Glib.UTF8_String;
-      Kernel : access Kernel_Handle_Record'Class) return VFS.Virtual_File;
-   --  Filename can be a full name or a base name, and can include ancors (e.g
-   --  "foo.html#anchor").
+      Kernel : access Kernel_Handle_Record'Class) return Glib.UTF8_String;
+   --  Filename can be an url, a full name or a base name, and can include
+   --  ancors (e.g "foo.html#anchor").
+
+   function Find_File (Name : Glib.UTF8_String) return VFS.Virtual_File;
+   --  Finds a doc file from base name on disc by looking in doc places
 
    procedure Parse_Index_File
      (Kernel    : access Kernel_Handle_Record'Class;
@@ -246,32 +243,56 @@ package body Help_Module is
      (Kernel : access Kernel_Handle_Record'Class) return Glib.Xml_Int.Node_Ptr;
    --  Parse and return the XML documentation file
 
-   -----------------
-   -- Create_Html --
-   -----------------
+   ----------------
+   -- Create_URL --
+   ----------------
 
-   function Create_Html
+   function Create_URL
      (Name   : Glib.UTF8_String;
-      Kernel : access Kernel_Handle_Record'Class) return VFS.Virtual_File
+      Kernel : access Kernel_Handle_Record'Class) return Glib.UTF8_String
    is
       --  We still pass Kernel as a parameter so that we can easily one day
       --  query the module from the kernel instead of keeping a global
       --  variable to store it.
       pragma Unreferenced (Kernel);
-      Full   : GNAT.OS_Lib.String_Access;
+      File   : VFS.Virtual_File;
       Anchor : Natural := Index (Name, "#");
+      Protocol : constant Natural := Index (Name, "://");
    begin
-      if Is_Absolute_Path_Or_URL (Name) then
-         return Create (Full_Filename => Name);
+      if Protocol > 0 then
+         return Name;
+      end if;
+
+      if Is_Absolute_Path (Name) then
+         return "file://" & Name;
       end if;
 
       if Anchor = 0 then
          Anchor := Name'Last + 1;
       end if;
 
+      File := Find_File (Name (Name'First .. Anchor - 1));
+
+      if File = VFS.No_File then
+         return "";
+      end if;
+
+      return "file://" & Full_Name (File).all & Name (Anchor .. Name'Last);
+   end Create_URL;
+
+   ---------------
+   -- Find_File --
+   ---------------
+
+   function Find_File (Name : Glib.UTF8_String) return VFS.Virtual_File is
+      Full   : GNAT.OS_Lib.String_Access;
+   begin
+      if Is_Absolute_Path (Name) then
+         return Create (Name);
+      end if;
+
       Full := Locate_Regular_File
-        (Locale_From_UTF8 (Name (Name'First .. Anchor - 1)),
-         Help_Module_ID.Doc_Path.all);
+        (Locale_From_UTF8 (Name), Help_Module_ID.Doc_Path.all);
 
       if Full = null then
          return VFS.No_File;
@@ -280,14 +301,10 @@ package body Help_Module is
             F : constant String := Locale_To_UTF8 (Full.all);
          begin
             Free (Full);
-            if Anchor <= Name'Last then
-               return Create (Full_Filename => F & Name (Anchor .. Name'Last));
-            else
-               return Create (Full_Filename => F);
-            end if;
+            return Create (F);
          end;
       end if;
-   end Create_Html;
+   end Find_File;
 
    -------------
    -- Destroy --
@@ -519,13 +536,13 @@ package body Help_Module is
       elsif Command = "browse" then
          Name_Parameters (Data, Browse_Cmd_Parameters);
          declare
-            File : constant Virtual_File :=
-              Create_Html (Nth_Arg (Data, 1), Get_Kernel (Data));
+            URL : constant String :=
+              Create_URL (Nth_Arg (Data, 1), Get_Kernel (Data));
             Anchor : constant String := Nth_Arg (Data, 2, Default => "");
          begin
             Open_HTML_File
               (Get_Kernel (Data),
-               File   => File,
+               URL    => URL,
                Anchor => Anchor);
          end;
 
@@ -572,26 +589,13 @@ package body Help_Module is
       end if;
    end Add_Doc_Directory;
 
-   --------------
-   -- Activate --
-   --------------
-
-   procedure Activate (Callback : access On_Recent; Item : String) is
-   begin
-      Open_Html (Callback.Kernel, Create_Html (Item, Callback.Kernel));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Activate;
-
    ----------
    -- Free --
    ----------
 
    procedure Free (Data : in out Help_File_Record) is
    begin
+      Free (Data.URL);
       Free (Data.Shell_Cmd);
       Free (Data.Shell_Lang);
       Free (Data.Descr);
@@ -632,12 +636,10 @@ package body Help_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Item      : constant String_Menu_Item := String_Menu_Item (Widget);
-      HTML_File : VFS.Virtual_File := VFS.No_File;
    begin
-      if Item.File /= VFS.No_File then
-         HTML_File := Create_Html (Full_Name (Item.File).all, Kernel);
-         Trace (Me, "Loading HTML file " & Full_Name (Item.File).all
-                & " => " & Full_Name (HTML_File).all);
+      if Item.URL /= null and then Item.URL.all /= "" then
+         Trace (Me, "Loading HTML file " & Item.URL.all);
+         Open_Html (Kernel, Item.URL.all);
 
       elsif Item.Shell /= null then
          Trace (Me, "On_Load_HTML: No file specified, executing shell cmd");
@@ -658,13 +660,9 @@ package body Help_Module is
                   & Item.Shell.all,
                   Mode => Error);
             else
-               HTML_File := Create_Html (File, Kernel);
+               Open_Html (Kernel, File);
             end if;
          end;
-      end if;
-
-      if HTML_File /= VFS.No_File then
-         Open_Html (Kernel, HTML_File);
       end if;
 
    exception
@@ -689,7 +687,7 @@ package body Help_Module is
 
    procedure Register_Help
      (Kernel      : access Kernel_Handle_Record'Class;
-      HTML_File   : VFS.Virtual_File := VFS.No_File;
+      URL         : String := "";
       Shell_Cmd   : String := "";
       Shell_Lang  : String := "";
       Descr       : String;
@@ -705,7 +703,10 @@ package body Help_Module is
       if Menu_Path /= "" then
          Item := new String_Menu_Item_Record;
          Gtk.Menu_Item.Initialize_With_Mnemonic (Item, Base_Name (Menu_Path));
-         Item.File       := HTML_File;
+
+         if URL /= "" then
+            Item.URL        := new String'(URL);
+         end if;
 
          if Shell_Cmd /= "" then
             Item.Shell      := new String'(Shell_Cmd);
@@ -758,7 +759,7 @@ package body Help_Module is
       end if;
 
       Append (Cat.Files,
-              (File       => HTML_File,
+              (URL        => new String'(URL),
                Shell_Cmd  => new String'(Shell_Cmd),
                Shell_Lang => new String'(Shell_Lang),
                Descr      => new String'(Descr)));
@@ -810,23 +811,16 @@ package body Help_Module is
 
    procedure Open_HTML_File
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      URL    : String;
       Anchor : String := "")
    is
-      Result : Boolean;
-      pragma Unreferenced (Result);
-      Name : constant String := Full_Name (File).all;
    begin
-      Trace (Me, "Open_HTML_File " & Name & " #" & Anchor);
+      Trace (Me, "Open_HTML_File " & URL & "#" & Anchor);
 
-      if Name'Length > 7
-        and then Name (Name'First .. Name'First + 6) = "http://"
-      then
-         --  Assume we have a URL already, let the browser deal with it
-         Display_Help (Kernel, URL => Full_Name (File, True).all);
-
+      if Anchor /= "" then
+         Display_Help (Kernel, URL => URL & "#" & Anchor);
       else
-         Display_Help (Kernel, URL => "file://" & Full_Name (File, True).all);
+         Display_Help (Kernel, URL => URL);
       end if;
    end Open_HTML_File;
 
@@ -838,14 +832,13 @@ package body Help_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean
    is
-      D    : constant Html_Hooks_Args := Html_Hooks_Args (Data.all);
-      Html : constant Virtual_File :=
-        Create_Html (Full_Name (D.File).all, Kernel);
+      D   : constant Html_Hooks_Args := Html_Hooks_Args (Data.all);
+      URL : constant String := Create_URL (D.URL_Or_File, Kernel);
    begin
-      if Html = VFS.No_File then
+      if URL = "" then
          return True;
       else
-         Open_HTML_File (Kernel, Html, D.Anchor);
+         Open_HTML_File (Kernel, URL, D.Anchor);
       end if;
 
       return True;
@@ -921,7 +914,6 @@ package body Help_Module is
       Name, Descr, Menu, Cat : Node_Ptr;
       Shell, Shell_Lang      : GNAT.OS_Lib.String_Access;
       Field                  : Node_Ptr;
-      HTML_File              : Virtual_File;
    begin
       if Node.Tag.all = "doc_path" then
          Add_Doc_Directory (Kernel, Node.Value.all);
@@ -963,21 +955,25 @@ package body Help_Module is
                     -"<documentation_file> must have a <menu> child",
                     Mode => Error);
          elsif Name /= null then
-            HTML_File := Create_Html (Name.Value.all, Kernel);
-            if HTML_File = VFS.No_File then
-               Trace (Me, "Not adding " & Name.Value.all
-                      & " since file not found");
-            else
-               Trace (Me, "Adding " & Name.Value.all & ' ' & Menu.Value.all);
-               Register_Help
-                 (Kernel,
-                  HTML_File   => Create_Html (Name.Value.all, Kernel),
-                  Descr       => Descr.Value.all,
-                  Category    => Cat.Value.all,
-                  Menu_Before => Get_Attribute (Menu, "before", ""),
-                  Menu_After  => Get_Attribute (Menu, "after", ""),
-                  Menu_Path   => Menu.Value.all);
-            end if;
+            declare
+               URL : constant String := Create_URL (Name.Value.all, Kernel);
+            begin
+               if URL = "" then
+                  Trace (Me, "Not adding " & Name.Value.all
+                         & " since file not found");
+               else
+                  Trace
+                    (Me, "Adding " & Name.Value.all & ' ' & Menu.Value.all);
+                  Register_Help
+                    (Kernel,
+                     URL         => URL,
+                     Descr       => Descr.Value.all,
+                     Category    => Cat.Value.all,
+                     Menu_Before => Get_Attribute (Menu, "before", ""),
+                     Menu_After  => Get_Attribute (Menu, "after", ""),
+                     Menu_Path   => Menu.Value.all);
+               end if;
+            end;
          else
             if Shell = null then
                Insert
@@ -988,7 +984,7 @@ package body Help_Module is
             else
                Register_Help
                  (Kernel,
-                  HTML_File   => VFS.No_File,
+                  URL         => "",
                   Shell_Cmd   => Shell.all,
                   Shell_Lang  => Shell_Lang.all,
                   Descr       => Descr.Value.all,
@@ -1043,7 +1039,7 @@ package body Help_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      File     : constant Virtual_File := Create_Html (Template_Index, Kernel);
+      File     : constant Virtual_File := Find_File (Template_Index);
       Buffer   : GNAT.OS_Lib.String_Access := Read_File (File);
       Index    : Natural;
       Str      : Unbounded_String;
@@ -1077,9 +1073,10 @@ package body Help_Module is
 
             F := First (Data (Cat).Files);
             while F /= Help_File_List.Null_Node loop
-               if Data (F).File /= VFS.No_File then
+               if Data (F).URL /= null and then Data (F).URL.all /= "" then
                   Append (In_Category, "<tr><td><a href=""");
-                  Append (In_Category, Full_Name (Data (F).File).all);
+                  --  ??? need url here
+                  Append (In_Category, Data (F).URL.all);
                   Append (In_Category, """>" & Data (F).Descr.all
                           & "</a></td></tr>");
                end if;
@@ -1108,7 +1105,7 @@ package body Help_Module is
 
          Free (Buffer);
 
-         Open_Html (Kernel, Output);
+         Open_Html (Kernel, Output.Full_Name (True).all);
       end if;
    end On_Load_Index;
 
