@@ -619,8 +619,18 @@ package body Task_Manager.GUI is
          end loop;
       end if;
 
-      if View /= null and then View.Lines = null then
-         View.Lines := new Iter_Array (View.Manager.Queues'Range);
+      if View /= null then
+         if View.Lines /= null
+           and then (View.Lines'First /= View.Manager.Queues'First
+                     or else View.Lines'Last /= View.Manager.Queues'Last)
+         then
+            Unchecked_Free (View.Lines);
+            View.Lines := null;
+         end if;
+
+         if View.Lines = null then
+            View.Lines := new Iter_Array (View.Manager.Queues'Range);
+         end if;
       end if;
 
       for J in Manager.Queues'Range loop
