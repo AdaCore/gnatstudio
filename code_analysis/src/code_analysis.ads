@@ -23,7 +23,7 @@
 --  analysis informations such as code coverage (provided by gcov),
 --  Metrics, SSAT, GNATmem, (Valgrind).
 --  Information are stored in a tree structure with the following
---  levels : Project, File, Subprogram, Line.
+--  levels: Project, File, Subprogram, Line.
 --  </description>
 
 with Ada.Containers.Indefinite_Hashed_Maps; use Ada.Containers;
@@ -31,8 +31,8 @@ with Ada.Strings.Hash;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 
-with VFS;                                   use VFS;
-with VFS_Hash;                              use VFS_Hash;
+with VFS;      use VFS;
+with VFS_Hash; use VFS_Hash;
 
 package Code_Analysis is
 
@@ -73,6 +73,7 @@ package Code_Analysis is
 
    subtype Line_Id is Natural;
    type Subprogram_Id is access all String;
+--   ??? Why are these commented out
 --   type File_Id is new VFS.Virtual_File;
 --   type Project_Id is new VFS.Virtual_File;
 
@@ -118,7 +119,7 @@ package Code_Analysis is
    --  Line, Subprogram, File, Project
 
    type Line is new Node with record
-      Number        : Line_Id;
+      Number : Line_Id;
    end record;
 
    type Line_Array is array (Positive range <>) of Line_Access;
@@ -146,20 +147,17 @@ package Code_Analysis is
    -- Get_Or_Create --
    -------------------
 
-   function Get_Or_Create (File_Node : Code_Analysis.File_Access;
-                           Line_Num  : Line_Id)
-                           return Line_Access;
-
-   function Get_Or_Create (File_Node  : File_Access;
-                           Sub_Id     : Subprogram_Id)
-                           return Subprogram_Access;
-
-   function Get_Or_Create (Project_Node : Project_Access;
-                           File_Id      : VFS.Virtual_File)
-                           return File_Access;
-
-   function Get_Or_Create (Project_Id : VFS.Virtual_File)
-                           return Project_Access;
+   function Get_Or_Create
+     (File_Node : Code_Analysis.File_Access;
+      Line_Num  : Line_Id) return Line_Access;
+   function Get_Or_Create
+     (File_Node : File_Access;
+      Sub_Id    : Subprogram_Id) return Subprogram_Access;
+   function Get_Or_Create
+     (Project_Node : Project_Access;
+      File_Id      : VFS.Virtual_File) return File_Access;
+   function Get_Or_Create
+     (Project_Id : VFS.Virtual_File) return Project_Access;
    --  allow to get an access pointing on an identified tree node
    --  if the node doesn't exists, it is created
 
@@ -168,6 +166,7 @@ package Code_Analysis is
    ----------------------
 
    Projects : Project_Maps.Map;
+   --  ??? Should not use global variables, in particular public
 
    -------------
    -- Free-er --
@@ -188,7 +187,7 @@ private
    procedure Free_Analysis (Analysis_Id : in out Analysis);
    --  Free an Analysis record, so also a
    --  Coverage record if allocated
-   --  to be continued...
+   --  to be continued???
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (String, Subprogram_Id);
