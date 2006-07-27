@@ -274,6 +274,7 @@ package Codefix.Text_Manager.Ada_Commands is
 
    procedure Initialize
      (This         : in out Replace_Code_By_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
       Start_Cursor : File_Cursor'Class;
       Replaced_Exp : String;
       New_String   : String);
@@ -354,7 +355,7 @@ private
    end record;
 
    type Replace_Code_By_Cmd is new Text_Command with record
-      Start_Cursor : File_Cursor;
+      Start_Cursor : Ptr_Mark;
       Replaced_Exp : GNAT.OS_Lib.String_Access;
       New_String   : GNAT.OS_Lib.String_Access;
    end record;
