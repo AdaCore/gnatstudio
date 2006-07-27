@@ -1,9 +1,10 @@
 Known Problems fixed in GPS 4.0.1
 
 - F724-012 Cannot paste in external applications
-  Problem: if you select and copy some text in GPS, this text cannot be
-           pasted in other applications afterward
-  Workaround: in GPS, do a cut then a paste instead of a copy
+  Problem: If you select and copy some text in GPS, this text cannot always be
+           pasted in other applications afterward, in particular when
+           using the Emacs theme or redefining key bindings for copy/paste.
+  Workaround: In GPS, do a cut then a paste instead of a copy
 
 Known Problems fixed in GPS 4.0.0
 
