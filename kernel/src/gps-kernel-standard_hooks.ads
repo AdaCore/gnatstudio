@@ -370,9 +370,10 @@ package GPS.Kernel.Standard_Hooks is
    -- Html_Action_Hook --
    ----------------------
 
-   type Html_Hooks_Args (Anchor_Length : Natural) is new Hooks_Data with record
-      File              : VFS.Virtual_File;
+   type Html_Hooks_Args (URL_Length, Anchor_Length : Natural) is new Hooks_Data
+   with record
       Enable_Navigation : Boolean := True;
+      URL_Or_File       : String (1 .. URL_Length);
       Anchor            : String (1 .. Anchor_Length);
    end record;
 
@@ -380,9 +381,9 @@ package GPS.Kernel.Standard_Hooks is
 
    procedure Open_Html
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename          : VFS.Virtual_File;
+      URL_Or_File       : String;
       Enable_Navigation : Boolean := True);
-   --  Open, or create, an html viewer for Filename (Mime_Html_File type)
+   --  Open, or create, an html viewer for URL or file (Mime_Html_File type)
    --  If Enable_Navigation is True, then the location visited will be
    --  stored in the history for Back/Forward navigation.
    --  Filename can contain only a base name, and will be fully resolved by
