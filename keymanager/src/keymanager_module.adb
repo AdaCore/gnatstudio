@@ -2859,7 +2859,7 @@ package body KeyManager_Module is
    begin
       Register_Menu
         (Kernel, '/' & (-"Edit"),
-         -"_Key shortcuts",
+         -"_Key Shortcuts",
          Callback => On_Edit_Keys'Access,
          Ref_Item => -"Preferences");
    end Register_Key_Menu;
