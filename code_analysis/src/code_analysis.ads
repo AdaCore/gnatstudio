@@ -67,6 +67,8 @@ package Code_Analysis is
       --  SSAT_Data    : SSAT_Record_Access;
    end record;
    --  Store the various code analysis information
+   --  As this stage, we don't want to elaborate something more complicated
+   --  We need to have visibility on all structures within a same module.
 
    ----------------
    -- Tree types --
