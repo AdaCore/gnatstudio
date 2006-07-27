@@ -11,6 +11,12 @@ Known Problems fixed in GPS 4.0.1
               GPS sometimes crash.
   Workaround: Use direct disk access (e.g. nfs) instead of rsync
 
+- F713-006 Crash when creating an extending project
+  Problem:    When creating an extending project using the project wizard,
+              if the file corresponding to the extending project already 
+              exists, GPS might crash when pressing the Apply button.
+  Workaround: Remove or rename the existing extended project file.
+
 Known Problems fixed in GPS 4.0.0
 
 - F630-024 GPS hangs with C++ files
