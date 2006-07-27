@@ -1,10 +1,10 @@
 Known Problems fixed in GPS 4.0.1
 
 - F724-012 Cannot paste in external applications
-  Problem: If you select and copy some text in GPS, this text cannot always be
-           pasted in other applications afterward (when e.g. using the
-           the Emacs theme under Windows).
-  Workaround: In GPS, do a cut then a paste instead of a copy
+  Problem: If you select and copy some text in GPS, this text cannot be
+           pasted in other applications afterward (except when using the
+           Ctrl-C shortcut, and this shortcut hasn't been redefined).
+  Workaround: Use Ctrl-C to copy, or do a cut then a paste instead of a copy
 
 - F721-015 Intermittent crash in remote mode when using rsync
   Problem:    When using directory synchronization with rsync in remote mode,
