@@ -27,6 +27,6 @@ with Ada.Containers; use Ada.Containers;
 
 package Integer_Hash is
 
-   function Mersenne_Prime (I : Integer) return Hash_Type;
+   function Mersenne_Prime (Key : Integer) return Hash_Type;
 
 end Integer_Hash;

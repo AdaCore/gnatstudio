@@ -22,9 +22,9 @@ with Ada.Strings.Hash;
 
 package body VFS_Hash is
 
-   function VFS_Hash (V : VFS.Virtual_File) return Hash_Type is
+   function VFS_Hash (Key : VFS.Virtual_File) return Hash_Type is
    begin
-      return Ada.Strings.Hash (Full_Name (V, True).all);
+      return Ada.Strings.Hash (Full_Name (Key, True).all);
    end VFS_Hash;
 
 end VFS_Hash;

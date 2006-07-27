@@ -146,16 +146,19 @@ package Code_Analysis is
    -- Get_Or_Create --
    -------------------
 
-   function Get_Or_Create (F_A : Code_Analysis.File_Access; L_I : Line_Id)
+   function Get_Or_Create (File_Node : Code_Analysis.File_Access;
+                           Line_Num  : Line_Id)
                            return Line_Access;
 
-   function Get_Or_Create (F_A : File_Access; S_I : Subprogram_Id)
+   function Get_Or_Create (File_Node  : File_Access;
+                           Sub_Id     : Subprogram_Id)
                            return Subprogram_Access;
 
-   function Get_Or_Create (P_A : Project_Access; F_I : VFS.Virtual_File)
+   function Get_Or_Create (Project_Node : Project_Access;
+                           File_Id      : VFS.Virtual_File)
                            return File_Access;
 
-   function Get_Or_Create (P_I : VFS.Virtual_File)
+   function Get_Or_Create (Project_Id : VFS.Virtual_File)
                            return Project_Access;
    --  allow to get an access pointing on an identified tree node
    --  if the node doesn't exists, it is created
@@ -170,19 +173,19 @@ package Code_Analysis is
    -- Free-er --
    -------------
 
-   procedure Free_Project (P_A : in out Project_Access);
+   procedure Free_Project (Project_Node : in out Project_Access);
    --  Free every children and himself
 
 private
 
-   procedure Free_Line (L_A : in out Line_Access);
+   procedure Free_Line (Line_Node : in out Line_Access);
    --  Free every children
-   procedure Free_Subprogram (S_A : in out Subprogram_Access);
+   procedure Free_Subprogram (Sub_Node : in out Subprogram_Access);
    --  Free every children
-   procedure Free_File (F_A : in out File_Access);
+   procedure Free_File (File_Node : in out File_Access);
    --  Free every children
 
-   procedure Free_Analysis (A : in out Analysis);
+   procedure Free_Analysis (Analysis_Id : in out Analysis);
    --  Free an Analysis record, so also a
    --  Coverage record if allocated
    --  to be continued...

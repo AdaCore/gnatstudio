@@ -28,6 +28,6 @@ with VFS;            use VFS;
 
 package VFS_Hash is
 
-   function VFS_Hash (V : VFS.Virtual_File) return Hash_Type;
+   function VFS_Hash (Key : VFS.Virtual_File) return Hash_Type;
 
 end VFS_Hash;

@@ -30,30 +30,30 @@ with GNAT.OS_Lib;     use GNAT.OS_Lib;
 package Code_Coverage is
 
    function Get_Project_From_File
-     (F_I : VFS.Virtual_File) return VFS.Virtual_File;
+     (File : VFS.Virtual_File) return VFS.Virtual_File;
    --  Currently returns a preset name of project
 
    procedure Add_Subprograms
-     (F_A           : Code_Analysis.File_Access;
+     (File_Node     : Code_Analysis.File_Access;
       File_Contents : String_Access);
    --  Find subprograms in a gcov formated output file, and add them to the
    --  given File node.
 
    procedure Add_Lines
-     (F_A           : File_Access;
+     (File_Node     : File_Access;
       File_Contents : String_Access);
    --  Find coverage info of the given lines of a gcov formated output file
    --  and fill it into the correct Code_Analysis lines
 
-   procedure Dump_Node_Coverage (C_A : Coverage_Access);
+   procedure Dump_Node_Coverage (Coverage : Coverage_Access);
    --  Currently dump to the standard output coverage information stored
    --  in a Code_Analysis.Coverage for the types before Line, ie the tree nodes
 
-   procedure Dump_Line_Coverage (C_A : Coverage_Access);
+   procedure Dump_Line_Coverage (Coverage : Coverage_Access);
    --  Currently dump to the standard output coverage information stored
    --  in a Code_Analysis.Coverage record for the Line type
 
-   procedure Dump_Subp_Coverage (C_A : Coverage_Access);
+   procedure Dump_Subp_Coverage (Coverage : Coverage_Access);
    --  Currently dump to the standard output coverage information stored in a
    --  Code_Analysis.Coverage for the Subprogram nodes, ie with extra Called
 

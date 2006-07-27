@@ -21,7 +21,7 @@
 with Ada.Text_IO;   use Ada.Text_IO;
 
 with Code_Coverage; use Code_Coverage;
-with VFS;             use VFS;
+with VFS;           use VFS;
 
 package body Code_Analysis_Dump is
 
@@ -38,37 +38,38 @@ package body Code_Analysis_Dump is
    -- Dump_Project --
    ------------------
 
-   procedure Dump_Project (C : Project_Maps.Cursor) is
-      P_A : constant Project_Access := Project_Maps.Element (C);
+   procedure Dump_Project (Cursor : Project_Maps.Cursor) is
+      Project_Node : constant Project_Access := Project_Maps.Element (Cursor);
    begin
-      Put (" O| Project " & VFS.Base_Name (P_A.Name));
+      Put (" O| Project " & VFS.Base_Name (Project_Node.Name));
 
-      if P_A.Analysis_Data.Coverage_Data /= null then
-         Dump_Node_Coverage (P_A.Analysis_Data.Coverage_Data);
+      if Project_Node.Analysis_Data.Coverage_Data /= null then
+         Dump_Node_Coverage (Project_Node.Analysis_Data.Coverage_Data);
       end if;
 
       New_Line;
-      P_A.Files.Iterate (Dump_File'Access);
+      Project_Node.Files.Iterate (Dump_File'Access);
    end Dump_Project;
 
    ---------------
    -- Dump_File --
    ---------------
 
-   procedure Dump_File (C : File_Maps.Cursor) is
-      F_A : constant Code_Analysis.File_Access := File_Maps.Element (C);
+   procedure Dump_File (Cursor : File_Maps.Cursor) is
+      File_Node : constant Code_Analysis.File_Access
+        := File_Maps.Element (Cursor);
    begin
-      Put ("   o| File " & VFS.Base_Name (F_A.Name));
+      Put ("   o| File " & VFS.Base_Name (File_Node.Name));
 
-      if F_A.Analysis_Data.Coverage_Data /= null then
-         Dump_Node_Coverage (F_A.Analysis_Data.Coverage_Data);
+      if File_Node.Analysis_Data.Coverage_Data /= null then
+         Dump_Node_Coverage (File_Node.Analysis_Data.Coverage_Data);
       end if;
 
       New_Line;
-      F_A.Subprograms.Iterate (Dump_Subprogram'Access);
+      File_Node.Subprograms.Iterate (Dump_Subprogram'Access);
 
-      for J in 1 .. F_A.Lines'Length loop
-         Dump_Line (F_A.Lines (J));
+      for J in 1 .. File_Node.Lines'Length loop
+         Dump_Line (File_Node.Lines (J));
       end loop;
    end Dump_File;
 
@@ -76,13 +77,14 @@ package body Code_Analysis_Dump is
    -- Dump_Subprogram --
    ---------------------
 
-   procedure Dump_Subprogram (C : Subprogram_Maps.Cursor) is
-      S_A : constant Subprogram_Access := Subprogram_Maps.Element (C);
+   procedure Dump_Subprogram (Cursor : Subprogram_Maps.Cursor) is
+      Sub_Node : constant Subprogram_Access
+        := Subprogram_Maps.Element (Cursor);
    begin
-      Put ("     院 Subprogram " & S_A.Name.all);
+      Put ("     院 Subprogram " & Sub_Node.Name.all);
 
-      if S_A.Analysis_Data.Coverage_Data /= null then
-         Dump_Subp_Coverage (S_A.Analysis_Data.Coverage_Data);
+      if Sub_Node.Analysis_Data.Coverage_Data /= null then
+         Dump_Subp_Coverage (Sub_Node.Analysis_Data.Coverage_Data);
       end if;
 
       New_Line;
@@ -92,12 +94,12 @@ package body Code_Analysis_Dump is
    -- Dump_Line --
    ---------------
 
-   procedure Dump_Line (L_A : Line_Access) is
+   procedure Dump_Line (Line_Node : Line_Access) is
    begin
-      Put ("       會 Line" & Natural'Image (L_A.Number));
+      Put ("       會 Line" & Natural'Image (Line_Node.Number));
 
-      if L_A.Analysis_Data.Coverage_Data /= null then
-         Dump_Line_Coverage (L_A.Analysis_Data.Coverage_Data);
+      if Line_Node.Analysis_Data.Coverage_Data /= null then
+         Dump_Line_Coverage (Line_Node.Analysis_Data.Coverage_Data);
       end if;
 
       New_Line;

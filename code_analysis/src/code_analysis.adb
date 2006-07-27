@@ -25,18 +25,18 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (F_A : Code_Analysis.File_Access;
-      L_I : Line_Id) return Line_Access is
-      L_A : Line_Access;
+     (File_Node : Code_Analysis.File_Access;
+      Line_Num  : Line_Id) return Line_Access is
+      Line_Node : Line_Access;
    begin
-      if F_A.Lines (Integer (L_I)) /= null then
-         return F_A.Lines (Natural (L_I));
+      if File_Node.Lines (Integer (Line_Num)) /= null then
+         return File_Node.Lines (Natural (Line_Num));
       end if;
 
-      L_A := new Line;
-      L_A.Number := Integer (L_I);
-      F_A.Lines (Integer (L_I)) := L_A;
-      return L_A;
+      Line_Node := new Line;
+      Line_Node.Number := Integer (Line_Num);
+      File_Node.Lines (Integer (Line_Num)) := Line_Node;
+      return Line_Node;
    end Get_Or_Create;
 
    -------------------
@@ -44,18 +44,18 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (F_A : File_Access;
-      S_I : Subprogram_Id) return Subprogram_Access is
-      S_A : Subprogram_Access;
+     (File_Node  : File_Access;
+      Sub_Id     : Subprogram_Id) return Subprogram_Access is
+      Sub_Node : Subprogram_Access;
    begin
-      if F_A.Subprograms.Contains (String (S_I.all)) then
-         return F_A.Subprograms.Element (S_I.all);
+      if File_Node.Subprograms.Contains (String (Sub_Id.all)) then
+         return File_Node.Subprograms.Element (Sub_Id.all);
       end if;
 
-      S_A := new Subprogram;
-      S_A.Name := S_I;
-      F_A.Subprograms.Insert (String (S_I.all), S_A);
-      return S_A;
+      Sub_Node := new Subprogram;
+      Sub_Node.Name := Sub_Id;
+      File_Node.Subprograms.Insert (String (Sub_Id.all), Sub_Node);
+      return Sub_Node;
    end Get_Or_Create;
 
    -------------------
@@ -63,18 +63,18 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (P_A : Project_Access;
-      F_I : VFS.Virtual_File) return File_Access is
-      F_A : File_Access;
+     (Project_Node : Project_Access;
+      File_Id      : VFS.Virtual_File) return File_Access is
+      File_Node : File_Access;
    begin
-      if P_A.Files.Contains (F_I) then
-         return P_A.all.Files.Element (F_I);
+      if Project_Node.Files.Contains (File_Id) then
+         return Project_Node.all.Files.Element (File_Id);
       end if;
 
-      F_A := new File;
-      F_A.Name := F_I;
-      P_A.Files.Insert (F_I, F_A);
-      return F_A;
+      File_Node := new File;
+      File_Node.Name := File_Id;
+      Project_Node.Files.Insert (File_Id, File_Node);
+      return File_Node;
    end Get_Or_Create;
 
    -------------------
@@ -82,27 +82,27 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (P_I : VFS.Virtual_File) return Project_Access is
-      P_A : Project_Access;
+     (Project_Id : VFS.Virtual_File) return Project_Access is
+      Project_Node : Project_Access;
    begin
-      if Projects.Contains (P_I) then
-         return Projects.Element (P_I);
+      if Projects.Contains (Project_Id) then
+         return Projects.Element (Project_Id);
       end if;
 
-      P_A := new Project;
-      P_A.Name := P_I;
-      Projects.Insert (P_I, P_A);
-      return P_A;
+      Project_Node := new Project;
+      Project_Node.Name := Project_Id;
+      Projects.Insert (Project_Id, Project_Node);
+      return Project_Node;
    end Get_Or_Create;
 
    -------------------
    -- Free_Analysis --
    -------------------
 
-   procedure Free_Analysis (A : in out Analysis) is
+   procedure Free_Analysis (Analysis_Id : in out Analysis) is
    begin
-      if A.Coverage_Data /= null then
-         Unchecked_Free (A.Coverage_Data);
+      if Analysis_Id.Coverage_Data /= null then
+         Unchecked_Free (Analysis_Id.Coverage_Data);
       end if;
    end Free_Analysis;
 
@@ -110,77 +110,77 @@ package body Code_Analysis is
    -- Free_Line --
    ---------------
 
-   procedure Free_Line (L_A : in out Line_Access) is
+   procedure Free_Line (Line_Node : in out Line_Access) is
    begin
-      Free_Analysis (L_A.Analysis_Data);
-      Unchecked_Free (L_A);
+      Free_Analysis (Line_Node.Analysis_Data);
+      Unchecked_Free (Line_Node);
    end Free_Line;
 
    ---------------------
    -- Free_Subprogram --
    ---------------------
 
-   procedure Free_Subprogram (S_A : in out Subprogram_Access) is
+   procedure Free_Subprogram (Sub_Node : in out Subprogram_Access) is
    begin
-      Free_Analysis (S_A.Analysis_Data);
-      Unchecked_Free (S_A.Name);
-      Unchecked_Free (S_A);
+      Free_Analysis (Sub_Node.Analysis_Data);
+      Unchecked_Free (Sub_Node.Name);
+      Unchecked_Free (Sub_Node);
    end Free_Subprogram;
 
    ---------------
    -- Free_File --
    ---------------
 
-   procedure Free_File (F_A : in out File_Access) is
+   procedure Free_File (File_Node : in out File_Access) is
 
-      procedure Free_From_Cursor (C : Subprogram_Maps.Cursor);
+      procedure Free_From_Cursor (Cursor : Subprogram_Maps.Cursor);
       --  To be used by Idefinite_Hashed_Maps.Iterate subprogram
 
       ----------------------
       -- Free_From_Cursor --
       ----------------------
 
-      procedure Free_From_Cursor (C : Subprogram_Maps.Cursor) is
-         S_A : Subprogram_Access := Subprogram_Maps.Element (C);
+      procedure Free_From_Cursor (Cursor : Subprogram_Maps.Cursor) is
+         Sub_Node : Subprogram_Access := Subprogram_Maps.Element (Cursor);
       begin
-         Free_Subprogram (S_A);
+         Free_Subprogram (Sub_Node);
       end Free_From_Cursor;
 
    begin
 
-      for J in 1 .. F_A.Lines'Length loop
-         Free_Line (F_A.Lines (J));
+      for J in 1 .. File_Node.Lines'Length loop
+         Free_Line (File_Node.Lines (J));
       end loop;
 
-      F_A.Subprograms.Iterate (Free_From_Cursor'Access);
-      Free_Analysis (F_A.Analysis_Data);
-      Unchecked_Free (F_A);
+      File_Node.Subprograms.Iterate (Free_From_Cursor'Access);
+      Free_Analysis (File_Node.Analysis_Data);
+      Unchecked_Free (File_Node);
    end Free_File;
 
    ------------------
    -- Free_Project --
    ------------------
 
-   procedure Free_Project (P_A : in out Project_Access) is
+   procedure Free_Project (Project_Node : in out Project_Access) is
 
-      procedure Free_From_Cursor (C : File_Maps.Cursor);
+      procedure Free_From_Cursor (Cursor : File_Maps.Cursor);
       --  To be used by Idefinite_Hashed_Maps.Iterate subprogram
 
       ----------------------
       -- Free_From_Cursor --
       ----------------------
 
-      procedure Free_From_Cursor (C : File_Maps.Cursor) is
-         F_A : File_Access := File_Maps.Element (C);
+      procedure Free_From_Cursor (Cursor : File_Maps.Cursor) is
+         File_Node : File_Access := File_Maps.Element (Cursor);
       begin
-         Free_File (F_A);
+         Free_File (File_Node);
       end Free_From_Cursor;
 
    begin
-      P_A.Files.Iterate (Free_From_Cursor'Access);
-      Free_Analysis (P_A.Analysis_Data);
-      Project_Maps.Delete (Projects, P_A.Name);
-      Unchecked_Free (P_A);
+      Project_Node.Files.Iterate (Free_From_Cursor'Access);
+      Free_Analysis (Project_Node.Analysis_Data);
+      Project_Maps.Delete (Projects, Project_Node.Name);
+      Unchecked_Free (Project_Node);
    end Free_Project;
 
 end Code_Analysis;

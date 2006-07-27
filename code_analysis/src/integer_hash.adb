@@ -24,10 +24,10 @@ package body Integer_Hash is
    -- Prime_Mersenne --
    --------------------
 
-   function Mersenne_Prime (I : Integer) return Hash_Type is
+   function Mersenne_Prime (Key : Integer) return Hash_Type is
       M31 : constant := 2 ** 31 - 1;
    begin
-      return Hash_Type (I) * M31;
+      return Hash_Type (Key) * M31;
    end Mersenne_Prime;
 
 end Integer_Hash;
