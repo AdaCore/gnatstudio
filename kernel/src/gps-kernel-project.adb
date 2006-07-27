@@ -52,9 +52,15 @@ package body GPS.Kernel.Project is
    --  project file
 
    procedure Compute_Predefined_Paths
-     (Handle : access Kernel_Handle_Record'Class);
+     (Handle : access Kernel_Handle_Record'Class;
+      Use_Cache : Boolean := True);
    --  Compute the predefined source and object paths, given the current
    --  project view associated with Handle.
+
+   procedure On_Build_Server_Connection
+     (Handle : access Kernel_Handle_Record'Class);
+   --  Recompute the predefined source and object paths upon build server
+   --  connection, when this information was previously retrieved from cache.
 
    type Registry_Error_Handler_Record is new Error_Handler_Record with record
       Handle : Kernel_Handle;
@@ -164,7 +170,8 @@ package body GPS.Kernel.Project is
    ------------------------------
 
    procedure Compute_Predefined_Paths
-     (Handle : access Kernel_Handle_Record'Class)
+     (Handle    : access Kernel_Handle_Record'Class;
+      Use_Cache : Boolean := True)
    is
       Gnatls         : constant String := Get_Attribute_Value
         (Get_Project (Handle), Gnatlist_Attribute, Default => "gnatls");
@@ -191,7 +198,7 @@ package body GPS.Kernel.Project is
             return;
          end if;
 
-         if not Is_Local (Build_Server) then
+         if not Is_Local (Build_Server) and then Use_Cache then
             Property_Index.Nickname :=
               new String'(Get_Nickname (Build_Server));
             Property_Index.Gnatls   := Gnatls_Args (Gnatls_Args'First);
@@ -207,8 +214,10 @@ package body GPS.Kernel.Project is
                  (Handle.Registry.all, Property.Object_Path.all);
                Set_Predefined_Project_Path
                  (Handle.Registry.all, Property.Project_Path.all);
-               --  ??? Add hook upon connection to build_server to recompute
-               --  the cache
+               Add_Hook
+                 (Handle, Build_Server_Connected_Hook,
+                  Wrapper (On_Build_Server_Connection'Access),
+                  "compute_predefined_path");
                return;
             end if;
          end if;
@@ -248,6 +257,20 @@ package body GPS.Kernel.Project is
       Free (Gnatls_Args);
       Basic_Types.Free (Langs);
    end Compute_Predefined_Paths;
+
+   --------------------------------
+   -- On_Build_Server_Connection --
+   --------------------------------
+
+   procedure On_Build_Server_Connection
+     (Handle : access Kernel_Handle_Record'Class) is
+   begin
+      Trace (Me, -"Build server connected: recompute predefined paths");
+      Compute_Predefined_Paths (Handle, False);
+      Remove_Hook
+        (Handle, Build_Server_Connected_Hook,
+         Wrapper (On_Build_Server_Connection'Access));
+   end On_Build_Server_Connection;
 
    --------------------------
    -- Load_Default_Project --
