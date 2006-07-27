@@ -124,6 +124,7 @@ with Scenario_Views;
 with Shell_Script;
 with Socket_Module;
 with Src_Editor_Module;
+with Startup_Module;
 with Theme_Manager_Module;
 with VCS.ClearCase;
 with VCS_Module;
@@ -176,6 +177,8 @@ procedure GPS.Main is
                                        Create ("MODULE.GVD", On);
    Aunit_Trace            : constant Debug_Handle :=
                                        Create ("MODULE.Aunit", On);
+   Startup_Trace          : constant Debug_Handle :=
+                                       Create ("MODULE.Startup", On);
    VFS_Trace              : constant Debug_Handle := Create ("MODULE.VFS", On);
    Help_Trace             : constant Debug_Handle :=
                                        Create ("MODULE.Help", On);
@@ -1404,6 +1407,10 @@ procedure GPS.Main is
       Bookmark_Views.Register_Module (GPS_Main.Kernel);
 
       Buffer_Views.Register_Module (GPS_Main.Kernel);
+
+      if Active (Startup_Trace) then
+         Startup_Module.Register_Module (GPS_Main.Kernel);
+      end if;
 
       GPS.Kernel.Custom.Parse_Startup_Scripts_List (GPS_Main.Kernel);
 
