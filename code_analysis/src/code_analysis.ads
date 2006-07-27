@@ -70,8 +70,10 @@ package Code_Analysis is
    --  ??? In the future, we want a more flexible data structure where each
    --  module can store their data without having visibility on all these
    --  modules in code_analysis.
-   --  As this stage, we don't want to elaborate something more complicated,
-   --  so we need to have visibility on all structures within a same module.
+   --  As this stage, we don't want to elaborate something more complicated.
+   --  Furthermore we will need to have visibility on all structures within a
+   --  same module when writing advanced tools which will cross information
+   --  coming from different code analysis tools.
 
    ----------------
    -- Tree types --
