@@ -95,6 +95,12 @@ package body Code_Analysis is
       return Project_Node;
    end Get_Or_Create;
 
+   function Get_Tree return Code_Analysis_Tree is
+      Tree : constant Code_Analysis_Tree := Projects'Access;
+   begin
+      return Tree;
+   end Get_Tree;
+
    -------------------
    -- Free_Analysis --
    -------------------
