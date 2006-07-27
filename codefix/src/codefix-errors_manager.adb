@@ -218,33 +218,40 @@ package body Codefix.Errors_Manager is
             --  We are assuming that style errors and/or warnings are grouped
             --  together.
 
-            if Previous_Message /= Invalid_Error_Message
-              and then Is_Style_Or_Warning (Previous_Message)
-              and then not Is_Style_Or_Warning (Current_Message)
-              and then Get_Line (Previous_Message) = Get_Line (Current_Message)
-              and then Get_File (Previous_Message) = Get_File (Current_Message)
-            then
-               --  Remove previous from list
-               Memorized_Corrections.Remove_Nodes
-                 (This.Potential_Corrections, Prev
-                    (This.Potential_Corrections,
-                     Last (This.Potential_Corrections)));
+            if not Is_Style_Or_Warning (Current_Message) then
+               while Previous_Message /= Invalid_Error_Message
+                 and then Is_Style_Or_Warning (Previous_Message)
+                 and then not Is_Style_Or_Warning (Current_Message)
+                 and then Get_Line (Previous_Message)
+                 = Get_Line (Current_Message)
+                 and then Get_File (Previous_Message)
+                 = Get_File (Current_Message)
+               loop
+                  --  Remove previous from list
+                  Memorized_Corrections.Remove_Nodes
+                    (This.Potential_Corrections, Prev
+                       (This.Potential_Corrections,
+                        Last (This.Potential_Corrections)));
 
-               if Memorized_Corrections.First (This.Potential_Corrections)
-                 /= Memorized_Corrections.Null_Node
-               then
-                  Previous_Message :=
-                    Data (Memorized_Corrections.Last
-                          (This.Potential_Corrections)).Message;
-               else
-                  Previous_Message := Invalid_Error_Message;
-               end if;
-            elsif Previous_Message /= Invalid_Error_Message
+                  if Memorized_Corrections.First (This.Potential_Corrections)
+                    /= Memorized_Corrections.Null_Node
+                  then
+                     Previous_Message :=
+                       Data (Memorized_Corrections.Last
+                             (This.Potential_Corrections)).Message;
+                  else
+                     Previous_Message := Invalid_Error_Message;
+                  end if;
+               end loop;
+            end if;
+
+            if Previous_Message /= Invalid_Error_Message
               and then Is_Style_Or_Warning (Current_Message)
               and then not Is_Style_Or_Warning (Previous_Message)
               and then Get_Line (Previous_Message) = Get_Line (Current_Message)
             then
-               --  Ignore this error
+               --  Ignore this error if it's a warning and there has already
+               --  been a real error on this line.
                null;
 
             else
