@@ -1145,17 +1145,81 @@ package body Codefix.Formal_Errors is
 
    function Replace_Code_By
      (Start_Cursor : File_Cursor'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Replaced_Exp : String;
       New_String   : String) return Solution_List
    is
       Result   : Solution_List;
       Solution : Replace_Code_By_Cmd;
    begin
-      Initialize (Solution, Start_Cursor, Replaced_Exp, New_String);
+      Initialize
+        (Solution, Current_Text, Start_Cursor, Replaced_Exp, New_String);
       Append (Result, Solution);
 
       return Result;
    end Replace_Code_By;
+
+   -----------------------------
+   -- Remove_Extra_Underlines --
+   -----------------------------
+
+   function Remove_Extra_Underlines
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Solution_List
+   is
+      Line         : constant String := Get_Line (Current_Text, Cursor, 1);
+      New_Id       : String (1 .. Line'Length);
+      Index        : Char_Index := To_Char_Index (Get_Column (Cursor), Line);
+      New_Id_Index : Integer := 1;
+      Start_Index  : Char_Index;
+   begin
+      while Index > Char_Index (Line'First)
+        and then not Is_Separator (Line (Integer (Index)))
+      loop
+         Index := Index - 1;
+      end loop;
+
+      if Is_Blank (Line (Integer (Index))) then
+         Index := Index + 1;
+      end if;
+
+      Start_Index := Index;
+
+      while Index < Char_Index (Line'Last)
+        and then not Is_Separator (Line (Integer (Index)))
+      loop
+         if Line (Integer (Index)) = '_' then
+            New_Id (New_Id_Index) := Line (Integer (Index));
+            Index := Index + 1;
+            New_Id_Index := New_Id_Index + 1;
+
+            while Index < Char_Index (Line'Last)
+              and then Line (Integer (Index)) = '_'
+            loop
+               Index := Index + 1;
+            end loop;
+         else
+            New_Id (New_Id_Index) := Line (Integer (Index));
+            Index := Index + 1;
+            New_Id_Index := New_Id_Index + 1;
+         end if;
+      end loop;
+
+      declare
+         Begin_Cursor : File_Cursor := File_Cursor (Clone (Cursor));
+      begin
+         Set_Location
+           (Begin_Cursor,
+            Get_Line (Begin_Cursor),
+            To_Column_Index (Start_Index, Line));
+
+         return Replace_Code_By
+           (Begin_Cursor,
+            Current_Text,
+            "([\w]+)",
+            New_Id (1 .. New_Id_Index - 1));
+      end;
+   end Remove_Extra_Underlines;
 
    -------------------------
    -- Is_Style_Or_Warning --
