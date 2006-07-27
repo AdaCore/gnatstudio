@@ -387,23 +387,23 @@ package body GPS.Kernel.Standard_Hooks is
 
    procedure Open_Html
      (Kernel            : access Kernel_Handle_Record'Class;
-      Filename          : Virtual_File;
+      URL_Or_File       : String;
       Enable_Navigation : Boolean := True)
    is
-      Full   : constant String := Full_Name (Filename).all;
-      Anchor : Natural := Index (Full, "#");
+      Anchor : Natural := Index (URL_Or_File, "#");
    begin
       if Anchor = 0 then
-         Anchor := Full'Last + 1;
+         Anchor := URL_Or_File'Last + 1;
       end if;
 
       declare
          Data : aliased Html_Hooks_Args :=
            (Hooks_Data with
-            Anchor_Length     => Integer'Max (0, Full'Last - Anchor),
-            File              => Create (Full (Full'First .. Anchor - 1)),
+            URL_Length        => Anchor - URL_Or_File'First,
+            Anchor_Length     => Integer'Max (0, URL_Or_File'Last - Anchor),
             Enable_Navigation => Enable_Navigation,
-            Anchor            => Full (Anchor + 1 .. Full'Last));
+            URL_Or_File       => URL_Or_File (URL_Or_File'First .. Anchor - 1),
+            Anchor            => URL_Or_File (Anchor + 1 .. URL_Or_File'Last));
       begin
          if not Run_Hook_Until_Success
            (Kernel, Html_Action_Hook, Data'Unchecked_Access, False)
@@ -534,13 +534,14 @@ package body GPS.Kernel.Standard_Hooks is
    function From_Callback_Data_Html
      (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      URL    : constant String := Nth_Arg (Data, 2);
       Anchor : constant String := Nth_Arg (Data, 4);
    begin
       return Html_Hooks_Args'
         (Hooks_Data with
-         File         => Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel))),
          Enable_Navigation => Nth_Arg (Data, 3),
+         URL_Length        => URL'Length,
+         URL_Or_File       => URL,
          Anchor_Length     => Anchor'Length,
          Anchor            => Anchor);
    end From_Callback_Data_Html;
@@ -829,12 +830,11 @@ package body GPS.Kernel.Standard_Hooks is
       Data      : access Html_Hooks_Args)
       return GPS.Kernel.Scripts.Callback_Data_Access
    is
-      F : constant Class_Instance := Create_File (Script, Data.File);
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 4));
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
-      Set_Nth_Arg (D.all, 2, F);
+      Set_Nth_Arg (D.all, 2, Data.URL_Or_File);
       Set_Nth_Arg (D.all, 3, Data.Enable_Navigation);
       Set_Nth_Arg (D.all, 4, Data.Anchor);
       return D;
