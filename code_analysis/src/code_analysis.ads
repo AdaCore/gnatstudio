@@ -208,5 +208,6 @@ private
    ------------------------------------
 
    Projects : aliased Project_Maps.Map;
+   --  ??? this is still a global variable that we want to get rid of
 
 end Code_Analysis;
