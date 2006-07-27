@@ -33,3 +33,7 @@ F720-008 Improved Emacs emulation (2006-07-21)
   Several new key bindings were defined to emulate Emacs. The handling of
   selections (mark+cursor) was also enhanced
 
+F704-013 Fix "end loop Name; expected" (2006-07-27)
+
+  It's now possible to fix automatically messages like "end loop Name; 
+  expected".
