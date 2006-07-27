@@ -267,7 +267,7 @@ The file should be opened directly at line and column. If column_end is not 0, t
 
   <shell_doc name="@hook@ html_action_hook" >
      <param name="hook">A string, the name of the hook</param>
-     <param name="file">An instance of GPS.File</param>
+     <param name="url_or_file">A string</param>
      <param name="enable_navigation">A boolean</param>
      <param name="anchor">A string</param>
      <return>A boolean</return>
@@ -448,7 +448,7 @@ This directory always ends with a directory separator</description>
             ## string we use in this implementation to detect multiple consecutive
             ## calls to this function. Note that this works whether the function is
             ## called from the same key binding or not, and from the same GPS action
-            ## or not 
+            ## or not
             append = GPS.last_command() == "my-kill-line":
             GPS.set_last_command ("my-kill-line")
      </example>
@@ -471,7 +471,7 @@ This directory always ends with a directory separator</description>
   <shell_doc name="GPS.lookup_actions">
        <return>A list of strings</return>
        <description>This command returns the list of all known GPS actions. This doesn't include menu names. All actions are lower-cased, but the order in the list is not significant.</description>
-     <see_also name="GPS.lookup_actions_from_key" /> 
+     <see_also name="GPS.lookup_actions_from_key" />
   </shell_doc>
 
   <shell_doc name="GPS.insmod">
@@ -4064,7 +4064,7 @@ It is possible to close all editors at once using a command like
        <param name="self">An instance of GPS.EditorBuffer</param>
        <description>Cancel the current selection in the buffer</description>
   </shell_doc>
-       
+
 
   <shell_doc name="GPS.EditorBuffer.selection_start">
        <param name="self">An instance of GPS.EditorBuffer</param>
