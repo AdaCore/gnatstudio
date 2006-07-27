@@ -120,7 +120,7 @@ class Makefile:
       # with any version of make, not only GNU make
       os.chdir (dirname (project.file().name()))
 
-      args = switches + extra_make_switches + " " \
+      args = switches + " " + extra_make_switches + " " \
          + " -f " + self.makefile + " " + target \
          + project.scenario_variables_cmd_line ("")
       return Console_Process (make, args) 
@@ -146,6 +146,7 @@ class Makefile:
             self.menus.append \
                (Menu.create \
                   ("/Build/Makefile/Edit Makefile",
+                   ref = "Make", add_before=False,
                    on_activate=self.edit_makefile))
              
             matcher=re.compile ("^([^#.=%][^#=\(\)%]*?):[^#]*(#(.+))?")
