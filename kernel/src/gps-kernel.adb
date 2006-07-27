@@ -1295,6 +1295,9 @@ package body GPS.Kernel is
       Free (Handle.History.all);
       Unchecked_Free (Handle.History);
 
+      Save_Startup_Scripts_List (Handle);
+      Reset (Handle.Startup_Scripts);
+
       Destroy_Clipboard (Handle);
       Destroy (Handle.Preferences);
       Free (Handle.Gnatls_Cache);
@@ -1314,7 +1317,6 @@ package body GPS.Kernel is
       --        Unref (Handle.Last_Context_For_Contextual);
 
       Reset (Handle.Actions);
-      Reset (Handle.Startup_Scripts);
       Reset (Handle.Styles);
       Hooks_Hash.String_Hash_Table.Reset (Handle.Hooks);
       Tools_Htable.String_Hash_Table.Reset (Handle.Tools);
