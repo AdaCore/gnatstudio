@@ -6,6 +6,11 @@ Known Problems fixed in GPS 4.0.1
            the Emacs theme under Windows).
   Workaround: In GPS, do a cut then a paste instead of a copy
 
+- F721-015 Sometimes crash in remote mode with rsync
+  Problem:    When using directory synchronisation with rsync in remote mode,
+              GPS sometimes crash.
+  Workaround: No known workaround
+
 Known Problems fixed in GPS 4.0.0
 
 - F630-024 GPS hangs with C++ files
@@ -13,12 +18,12 @@ Known Problems fixed in GPS 4.0.0
               named 'foo' as well (a constructor for example). GPS hangs when
               getting the full name of the entity 'foo'. At least 'calls (in
               tree)', 'calls (in browser)', 'is called by (in browser)' and
-              the tooltip over the entity 'foo' are affected. 
+              the tooltip over the entity 'foo' are affected.
   Workaound:  No known workaround
 
 - F628-001 Instabilities with the clipboard view
   Problem:    Trying to paste an entry from the clipboard view by double
-              clicking on it when no source editor is open may cause some 
+              clicking on it when no source editor is open may cause some
               instabilities.
   Workaround: Make sure at least one source editor is open before double
               clicking on a clipboard entry.
