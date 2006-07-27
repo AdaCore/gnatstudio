@@ -1,3 +1,10 @@
+Known Problems fixed in GPS 4.0.1
+
+- F724-012 Cannot paste in external applications
+  Problem: if you select and copy some text in GPS, this text cannot be
+           pasted in other applications afterward
+  Workaround: in GPS, do a cut then a paste instead of a copy
+
 Known Problems fixed in GPS 4.0.0
 
 - F630-024 GPS hangs with C++ files
