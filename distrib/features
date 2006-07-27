@@ -14,14 +14,10 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
-F719-012 Removed support for old customization directories
+F727-011 Fix "two consecutive underlines not permitted" (2006-07-27)
 
-  in GPS 2.x, the following directories were searched for customization
-  files: ~/.gps/customize, ~/.gps/python_startup, $prefix/share/gps/customize
-  and the file $prefix/share/gps/python/autoexec.py.
-  GPS 3.x was no longer creating these directories, although still reading
-  them if it found scripts in there. GPS now ignores these directories.
-  Use $prefix/share/gps/plug-ins and ~/.gps/plug-ins instead
+  GPS will provide auto fixes for "two consecutive underlines not permitted"
+  message, by removing extra underlines.
 
 F721-007 New incremental search module (2006-07-25)
 
@@ -32,6 +28,15 @@ F720-008 Improved Emacs emulation (2006-07-21)
 
   Several new key bindings were defined to emulate Emacs. The handling of
   selections (mark+cursor) was also enhanced
+
+F719-012 Removed support for old customization directories
+
+  in GPS 2.x, the following directories were searched for customization
+  files: ~/.gps/customize, ~/.gps/python_startup, $prefix/share/gps/customize
+  and the file $prefix/share/gps/python/autoexec.py.
+  GPS 3.x was no longer creating these directories, although still reading
+  them if it found scripts in there. GPS now ignores these directories.
+  Use $prefix/share/gps/plug-ins and ~/.gps/plug-ins instead
 
 F704-013 Fix "end loop Name; expected" (2006-07-27)
 
