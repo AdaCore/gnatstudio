@@ -454,8 +454,11 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize (This : in out Bad_End_Block) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'
-        (Compile ("""(end [\w]+;)"" expected in column [\d]+")));
+      This.Matcher :=
+        (new Pattern_Matcher'
+           (Compile ("""(end [\w]+;)"" expected")),
+         new Pattern_Matcher'
+           (Compile ("""(end loop [\w]+;)"" expected")));
    end Initialize;
 
    procedure Fix
