@@ -202,13 +202,17 @@ package body Codefix.Merge_Utils is
       Position   : constant Natural := Get_Array_Position (This, Start);
       Offset     : Natural := 0;
       Copy_Infos : constant Merge_Array := This.Infos.all;
-      J, K       : Natural;
+      J, Characters_Deleted : Natural;
    begin
       J := Position;
-      K := 1;
+      Characters_Deleted := 1;
 
       if J not in This.Infos'Range then
-         raise Codefix_Panic;
+         if Len = 0 then
+            return;
+         else
+            raise Codefix_Panic;
+         end if;
       end if;
 
       loop
@@ -216,7 +220,11 @@ package body Codefix.Merge_Utils is
             J := J + 1;
 
             if J > This.Infos'Last then
-               raise Codefix_Panic;
+               if Len = 0 then
+                  return;
+               else
+                  raise Codefix_Panic;
+               end if;
             end if;
          end loop;
 
@@ -232,9 +240,9 @@ package body Codefix.Merge_Utils is
 
          J := J + 1;
 
-         exit when K = Len or else J > This.Infos'Last;
+         exit when Characters_Deleted = Len or else J > This.Infos'Last;
 
-         K := K + 1;
+         Characters_Deleted := Characters_Deleted + 1;
 
       end loop;
    end Delete;
