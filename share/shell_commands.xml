@@ -84,6 +84,11 @@ when the GPS window is fully visible to the user:
      <description>Hook called when a new bookmark has been removed by the user</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ build_server_connected_hook">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when GPS connects to the build server in remote mode</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ preferences_changed">
      <param name="hook">A string, the name of the hook</param>
      <description>Hook called when the value of some of the preferences changes. Modules should refresh themselves dynamically</description>
