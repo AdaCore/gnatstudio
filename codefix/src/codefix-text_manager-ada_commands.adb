@@ -823,16 +823,14 @@ package body Codefix.Text_Manager.Ada_Commands is
          Position_File            : VFS.Virtual_File;
          Begin_Cursor, End_Cursor : out File_Cursor)
       is
-         Buffer : constant GNAT.OS_Lib.String_Access := Get_Buffer
-           (Get_File (Current_Text, Position_File));
-
          Paren_Depth : Integer := 0;
 
          function Entity_Callback
            (Entity         : Language_Entity;
             Sloc_Start     : Source_Location;
             Sloc_End       : Source_Location;
-            Partial_Entity : Boolean) return Boolean;
+            Partial_Entity : Boolean;
+            Line           : String) return Boolean;
 
          ---------------------
          -- Entity_Callback --
@@ -842,18 +840,10 @@ package body Codefix.Text_Manager.Ada_Commands is
            (Entity         : Language_Entity;
             Sloc_Start     : Source_Location;
             Sloc_End       : Source_Location;
-            Partial_Entity : Boolean) return Boolean
+            Partial_Entity : Boolean;
+            Line           : String) return Boolean
          is
             pragma Unreferenced (Partial_Entity);
-
-            Line_Offset : constant Integer :=
-              Get_Construct (Position_It).Sloc_Start.Line - 1;
-            --  In order to get the line in the real buffer, lines from the
-            --  analysis have to be incremented by this value.
-
-            Column_Offset : constant Integer :=
-              Get_Construct (Position_It).Sloc_Start.Column - 1;
-            --  Column offset for the first line.
 
             procedure Begin_Of_Profile;
 
@@ -866,17 +856,10 @@ package body Codefix.Text_Manager.Ada_Commands is
             procedure Begin_Of_Profile is
             begin
                Begin_Cursor.File := Position_File;
-               Begin_Cursor.Line := Sloc_Start.Line + Line_Offset;
-
-               if Sloc_Start.Line = 1 then
-                  Begin_Cursor.Col := To_Column_Index
-                    (Char_Index (Sloc_Start.Column + Column_Offset),
-                     Get_Line (Current_Text, Begin_Cursor, 1));
-               else
-                  Begin_Cursor.Col := To_Column_Index
-                    (Char_Index (Sloc_Start.Column),
-                     Get_Line (Current_Text, Begin_Cursor, 1));
-               end if;
+               Begin_Cursor.Line := Sloc_Start.Line;
+               Begin_Cursor.Col := To_Column_Index
+                 (Char_Index (Sloc_Start.Column),
+                  Get_Line (Current_Text, Begin_Cursor, 1));
             end Begin_Of_Profile;
 
             --------------------
@@ -886,18 +869,10 @@ package body Codefix.Text_Manager.Ada_Commands is
             procedure End_Of_Profile is
             begin
                End_Cursor.File := Position_File;
-               End_Cursor.Line := Sloc_Start.Line + Line_Offset;
-
-               if Sloc_Start.Line = 1 then
-                  End_Cursor.Col := To_Column_Index
-                    (Char_Index (Sloc_Start.Column + Column_Offset),
-                     Get_Line (Current_Text, End_Cursor, 1));
-               else
-                  End_Cursor.Col := To_Column_Index
-                    (Char_Index (Sloc_Start.Column),
-                     Get_Line (Current_Text, End_Cursor, 1));
-               end if;
-
+               End_Cursor.Line := Sloc_Start.Line;
+               End_Cursor.Col := To_Column_Index
+                 (Char_Index (Sloc_Start.Column),
+                  Get_Line (Current_Text, End_Cursor, 1));
                End_Cursor := File_Cursor
                  (Previous_Char (Current_Text, End_Cursor));
 
@@ -908,7 +883,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             end End_Of_Profile;
 
             Name : constant String := To_Lower
-              (Buffer (Sloc_Start.Index .. Sloc_End.Index));
+              (Line (Sloc_Start.Index .. Sloc_End.Index));
 
          begin
             if Paren_Depth = 0 then
@@ -941,16 +916,29 @@ package body Codefix.Text_Manager.Ada_Commands is
             return False;
          end Entity_Callback;
 
+         Begin_Analyze_Cursor : File_Cursor;
+
       begin
 
          Begin_Cursor := Null_File_Cursor;
          End_Cursor := Null_File_Cursor;
 
+         Set_File (Begin_Analyze_Cursor, Position_File);
+
+         Set_Line
+           (Begin_Analyze_Cursor, Get_Construct (Position_It).Sloc_Start.Line);
+
+         Set_Column
+           (Begin_Analyze_Cursor,
+            To_Column_Index
+              (Char_Index (Get_Construct (Position_It).Sloc_Start.Column),
+               Get_Line (Current_Text, Begin_Analyze_Cursor, 1)));
+
          Parse_Entities
            (Ada_Lang,
-            Buffer.all
-              (Get_Construct (Position_It).Sloc_Start.Index .. Buffer'Last),
-            Entity_Callback'Unrestricted_Access);
+            Current_Text,
+            Entity_Callback'Unrestricted_Access,
+            Begin_Analyze_Cursor);
       end Initialize_Profile;
 
       Destination_Begin, Destination_End : File_Cursor;
