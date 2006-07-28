@@ -1228,44 +1228,8 @@ package body Codefix.Errors_Parser is
       Matches      : Match_Array)
    is
       pragma Unreferenced (This, Errors_List, Matches, Options);
-
-      Begin_Cursor : File_Cursor := File_Cursor (Message);
    begin
-      Set_Location (Begin_Cursor, Get_Line (Begin_Cursor), 1);
-
-      declare
-         Line       : constant String := Get_Line (Current_Text, Begin_Cursor);
-         Real_Begin : Column_Index := Get_Column (Message) - 1;
-         Real_Begin_Char_Index : constant Char_Index :=
-           To_Char_Index (Real_Begin, Line);
-      begin
-         while Real_Begin > 1
-           and then Is_Separator (Line (Natural (Real_Begin_Char_Index)))
-         loop
-            Real_Begin := Real_Begin - 1;
-         end loop;
-
-         if not Is_Separator (Line (Natural (Real_Begin_Char_Index))) then
-            Set_Location
-              (Begin_Cursor,
-               Get_Line (Begin_Cursor),
-               Real_Begin + 1);
-         else
-            Set_Location
-              (Begin_Cursor,
-               Get_Line (Begin_Cursor),
-               Get_Column (Message));
-         end if;
-
-         if Get (Current_Text, Message, 3) /= "not" then
-            Solutions := Replace_Code_By
-              (Begin_Cursor,
-               Current_Text,
-               "^([\s]+in[\s]+([\w\.])+)", "'Valid");
-         else
-            raise Uncorrectable_Message;
-         end if;
-      end;
+      Solutions := Change_To_Tick_Valid (Current_Text, Message);
    end Fix;
 
    ------------------
