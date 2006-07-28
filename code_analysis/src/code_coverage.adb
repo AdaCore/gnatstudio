@@ -136,7 +136,7 @@ package body Code_Coverage is
    procedure Dump_Line_Coverage (Coverage : Coverage_Access) is
    begin
       if Coverage.Covered = 0 then
-         Put (" /!\ Never executed /!\");
+         Put (" warning: line never executed");
       else
          Put (Natural'Image (Coverage.Covered) & " execution(s)");
       end if;
@@ -151,7 +151,7 @@ package body Code_Coverage is
       Dump_Node_Coverage (Coverage);
 
       if Subprogram_Coverage (Coverage.all).Called = 0 then
-         Put (" /!\ Never called /!\");
+         Put (" warning: subprogram never called");
       else
          Put (Natural'Image (Subprogram_Coverage (Coverage.all).Called)
               & " call(s)");
