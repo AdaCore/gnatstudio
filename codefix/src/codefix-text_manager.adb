@@ -791,6 +791,20 @@ package body Codefix.Text_Manager is
       return Get_Tree (Get_File (This, Get_File (Cursor)));
    end Get_Tree;
 
+   --------------------
+   -- Parse_Entities --
+   --------------------
+
+   procedure Parse_Entities
+     (Lang     : access Language_Root'Class;
+      This     : Text_Navigator_Abstr'Class;
+      Callback : Codefix_Entity_Callback;
+      Start    : File_Cursor'Class) is
+   begin
+      Parse_Entities
+        (Lang, Get_File (This, Get_File (Start)).all, Callback, Start);
+   end Parse_Entities;
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -1349,6 +1363,90 @@ package body Codefix.Text_Manager is
          end if;
       end loop;
    end Previous_Char;
+
+   --------------------
+   -- Parse_Entities --
+   --------------------
+
+   procedure Parse_Entities
+     (Lang     : access Language_Root'Class;
+      This     : Text_Interface'Class;
+      Callback : Codefix_Entity_Callback;
+      Start    : Text_Cursor'Class)
+   is
+      Stop : Boolean := False;
+      Line_Offset, Col_Offset : Integer;
+
+      First_Line : constant String := Get_Line (This, Start, 1);
+      Cursor     : Text_Cursor := Text_Cursor (Start);
+      Last_Line  : constant Integer := Line_Max (This);
+
+   begin
+      Line_Offset := Get_Line (Start) - 1;
+      Col_Offset := Integer
+        (To_Column_Index (Char_Index (Get_Column (Start)), First_Line)) - 1;
+
+      while not Stop and then Line_Offset + 1 <= Last_Line loop
+         declare
+            --  ??? The & " " at the end of the line is a temporary workaround
+            --  because the ada parser does not seems to be able to retreive
+            --  single characters constructs at the end of the buffer. to
+            --  be investigated.
+            Line : constant String := Get_Line (This, Cursor, 1) & " ";
+
+            function Internal_Callback
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean;
+
+            -----------------------
+            -- Internal_Callback --
+            -----------------------
+
+            function Internal_Callback
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean
+            is
+               Adjusted_Sloc_Start, Adjusted_Sloc_End : Source_Location;
+            begin
+               Adjusted_Sloc_Start := Sloc_Start;
+               Adjusted_Sloc_End := Sloc_End;
+
+               Adjusted_Sloc_Start.Column :=
+                 Adjusted_Sloc_Start.Column + Col_Offset;
+               Adjusted_Sloc_End.Column :=
+                 Adjusted_Sloc_End.Column + Col_Offset;
+
+               Adjusted_Sloc_Start.Line :=
+                 Adjusted_Sloc_Start.Line + Line_Offset;
+               Adjusted_Sloc_End.Line :=
+                 Adjusted_Sloc_End.Line + Line_Offset;
+
+               Stop :=
+                 Callback
+                   (Entity,
+                    Adjusted_Sloc_Start,
+                    Adjusted_Sloc_End,
+                    Partial_Entity,
+                    Line);
+
+               return Stop;
+            end Internal_Callback;
+         begin
+            Parse_Entities
+              (Lang,
+               Line (1 + Col_Offset .. Line'Last),
+               Internal_Callback'Unrestricted_Access);
+            Col_Offset := 0;
+            Line_Offset := Line_Offset + 1;
+         end;
+
+         Set_Location (Cursor, Get_Line (Cursor) + 1, 1);
+      end loop;
+   end Parse_Entities;
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -3996,6 +4094,55 @@ package body Codefix.Text_Manager is
       Free (Cursor);
    end Execute;
 
+   ----------------------
+   -- Replace_Slice_Cmd --
+   ----------------------
+
+   procedure Initialize
+     (This                     : in out Replace_Slice_Cmd;
+      Current_Text             : Text_Navigator_Abstr'Class;
+      Start_Cursor, End_Cursor : File_Cursor'Class;
+      New_Text                 : String) is
+   begin
+      This.Start_Mark := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Start_Cursor));
+      This.End_Mark := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, End_Cursor));
+      This.New_Text := new String'(New_Text);
+   end Initialize;
+
+   procedure Free (This : in out Replace_Slice_Cmd) is
+   begin
+      Free (This.Start_Mark);
+      Free (This.End_Mark);
+      Free (This.New_Text);
+   end Free;
+
+   procedure Execute
+     (This         : Replace_Slice_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+      Start_Cursor, End_Cursor : File_Cursor;
+   begin
+      Start_Cursor := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Start_Mark.all));
+      End_Cursor := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.End_Mark.all));
+
+      for J in Start_Cursor.Line .. End_Cursor.Line loop
+         declare
+            Cursor : File_Cursor := Start_Cursor;
+         begin
+            Set_Location (Cursor, J, 1);
+            Get_Line (Current_Text, Cursor, New_Extract);
+         end;
+      end loop;
+
+      Erase (New_Extract, Start_Cursor, End_Cursor);
+      Replace (New_Extract, Start_Cursor, 0, This.New_Text.all);
+   end Execute;
+
    --------------------
    -- Merge_Extracts --
    --------------------
@@ -4072,6 +4219,24 @@ package body Codefix.Text_Manager is
    begin
       return This.File;
    end Get_File;
+
+   --------------
+   -- Set_Line --
+   --------------
+
+   procedure Set_Line (This : in out Text_Cursor; Line : Natural) is
+   begin
+      This.Line := Line;
+   end Set_Line;
+
+   ----------------
+   -- Set_Column --
+   ----------------
+
+   procedure Set_Column (This : in out Text_Cursor; Column : Column_Index) is
+   begin
+      This.Col := Column;
+   end Set_Column;
 
    ----------
    -- Free --

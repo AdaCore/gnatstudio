@@ -74,6 +74,10 @@ package Codefix.Text_Manager is
    function Get_Column (This : Text_Cursor) return Column_Index;
    --  Return the location
 
+   procedure Set_Line (This : in out Text_Cursor; Line : Natural);
+   procedure Set_Column (This : in out Text_Cursor; Column : Column_Index);
+   --  Set the line or column
+
    type File_Cursor is new Text_Cursor with private;
    Null_File_Cursor : constant File_Cursor;
 
@@ -327,6 +331,22 @@ package Codefix.Text_Manager is
    --  Return a cursor positioned on the first non-blank character before the
    --  position specified by the cursor
 
+   type Codefix_Entity_Callback is access function
+     (Entity         : Language_Entity;
+      Sloc_Start     : Source_Location;
+      Sloc_End       : Source_Location;
+      Partial_Entity : Boolean;
+      Line           : String) return Boolean;
+
+   procedure Parse_Entities
+     (Lang     : access Language_Root'Class;
+      This     : Text_Interface'Class;
+      Callback : Codefix_Entity_Callback;
+      Start    : Text_Cursor'Class);
+   --  Parse entities (as defined by Language_Entity) contained in buffer.
+   --  For each match, call Callback. Stops at the end of Buffer or when
+   --  callback returns True.
+
    ----------------------------------------------------------------------------
    --  type Text_Navigator
    ----------------------------------------------------------------------------
@@ -534,6 +554,15 @@ package Codefix.Text_Manager is
       return Construct_Tree_Access;
    --  Return the construct tree corresponding to the file pointed by the given
    --  cursor.
+
+   procedure Parse_Entities
+     (Lang     : access Language_Root'Class;
+      This     : Text_Navigator_Abstr'Class;
+      Callback : Codefix_Entity_Callback;
+      Start    : File_Cursor'Class);
+   --  Parse entities (as defined by Language_Entity) contained in buffer.
+   --  For each match, call Callback. Stops at the end of Buffer or when
+   --  callback returns True.
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
@@ -1193,6 +1222,28 @@ package Codefix.Text_Manager is
       New_Extract  : out Extract'Class);
    --  Set an extract with the invertion add of the line.
 
+   -----------------------
+   -- Replace_Slice_Cmd --
+   -----------------------
+
+   type Replace_Slice_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This                     : in out Replace_Slice_Cmd;
+      Current_Text             : Text_Navigator_Abstr'Class;
+      Start_Cursor, End_Cursor : File_Cursor'Class;
+      New_Text                 : String);
+   --  Set all the marks that will be necessary later to remove the slice.
+
+   procedure Free (This : in out Replace_Slice_Cmd);
+   --  Free the memory associated to a Remove_Sloce_Cmd.
+
+   procedure Execute
+     (This         : Replace_Slice_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the slice removed.
+
 private
 
    function Compare_Last (Str_1, Str_2 : String) return Boolean;
@@ -1355,6 +1406,12 @@ private
    type Add_Line_Cmd is new Text_Command with record
       Line     : GNAT.OS_Lib.String_Access;
       Position : Ptr_Mark;
+   end record;
+
+   type Replace_Slice_Cmd is new Text_Command with record
+      Start_Mark : Ptr_Mark;
+      End_Mark   : Ptr_Mark;
+      New_Text   : GNAT.OS_Lib.String_Access;
    end record;
 
    ----------------------------------------------------------------------------
