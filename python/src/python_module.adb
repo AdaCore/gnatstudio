@@ -674,7 +674,7 @@ package body Python_Module is
       Ignored : Integer;
       Result  : PyObject;
       Tmp     : Boolean;
-      pragma Unreferenced (Ignored, Result, Tmp);
+      pragma Unreferenced (Ignored, Tmp);
       Errors  : aliased Boolean;
 
       procedure Init_PyGtk;
@@ -730,10 +730,13 @@ package body Python_Module is
          & "      except: pass" & ASCII.LF
          & ASCII.LF);
 
+      --  Avoid warning about useless assignment.
+      pragma Warnings (Off);
       Result := Run_Command
         (Python_Module_Id.Script.Interpreter,
          "import GPS", Hide_Output => True,
          Errors => Errors'Unchecked_Access);
+      pragma Warnings (On);
 
       Set_Default_Console
         (Python_Module_Id.Script.Interpreter,
@@ -755,6 +758,13 @@ package body Python_Module is
          Text        => -"_Python",
          Callback    => Open_Python_Console'Access);
 
+      --  PyGTK prints its error messages using sys.argv, which doesn't
+      --  exist in non-interactive mode. We therefore define it here
+      Result := Run_Command
+        (Python_Module_Id.Script.Interpreter,
+         "sys.argv=['GPS']", Hide_Output => True,
+         Errors         => Errors'Unchecked_Access);
+
       --  If PyGtk is available, register some special functions, so that
       --  users can interact directly with widgets
 
@@ -774,30 +784,26 @@ package body Python_Module is
          Result := Run_Command
            (Python_Module_Id.Script.Interpreter,
             "pygtk.require('2.0'); import gtk", Hide_Output => True,
-            Errors => Errors'Unchecked_Access);
+            Errors         => Errors'Unchecked_Access);
+         if Result = null then
+            Trace (Me, "Couldn't initialize gtk");
+         else
+            Init_PyGtk;
 
-         Init_PyGtk;
-
-         Register_Command
-           (Python_Module_Id.Script,
-            Command      => "pywidget",
-            Handler      => Python_GUI_Command_Handler'Access,
-            Class        => Get_GUI_Class (Kernel));
-         Register_Command
-           (Python_Module_Id.Script,
-            Command       => "add",
-            Handler       => Python_GUI_Command_Handler'Access,
-            Class         => New_Class (Kernel, "MDI"),
-            Minimum_Args  => 1,
-            Maximum_Args  => 3,
-            Static_Method => True);
-
-         --  PyGTK prints its error messages using sys.argv, which doesn't
-         --  exist in non-interactive mode. We therefore define it here
-         Result := Run_Command
-           (Python_Module_Id.Script.Interpreter,
-            "sys.argv=['GPS']", Hide_Output => True,
-            Errors => Errors'Unchecked_Access);
+            Register_Command
+              (Python_Module_Id.Script,
+               Command      => "pywidget",
+               Handler      => Python_GUI_Command_Handler'Access,
+               Class        => Get_GUI_Class (Kernel));
+            Register_Command
+              (Python_Module_Id.Script,
+               Command       => "add",
+               Handler       => Python_GUI_Command_Handler'Access,
+               Class         => New_Class (Kernel, "MDI"),
+               Minimum_Args  => 1,
+               Maximum_Args  => 3,
+               Static_Method => True);
+         end if;
 
       else
          Trace (Me, "Not loading support for pygtk");
