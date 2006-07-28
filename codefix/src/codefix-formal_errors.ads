@@ -236,6 +236,11 @@ package Codefix.Formal_Errors is
    --  Propose to remove the extra underlines of the identifier pointed by the
    --  cursor.
 
+   function Change_To_Tick_Valid
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Solution_List;
+   --  Change the code given at the cursor by the corresponding 'Valid
+
    function Clone (This : Error_Message) return Error_Message;
    --  Duplicate all the information used in Error_Message, specially the
    --  object referenced in.
