@@ -42,3 +42,8 @@ F704-013 Fix "end loop Name; expected" (2006-07-27)
 
   It's now possible to fix automatically messages like "end loop Name; 
   expected".
+
+EA14-021 Fix "use 'Valid attribute instead" (2006-07-28)
+
+  It's now possible to fix automatically messages like "use 'Valid instead", 
+  in e.g. "A in B" (won't work with "not in").
