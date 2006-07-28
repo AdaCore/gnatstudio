@@ -19,14 +19,18 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Hash;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Filesystem;              use Filesystem;
 
 package body VFS_Hash is
 
    function VFS_Hash (Key : VFS.Virtual_File) return Hash_Type is
    begin
-      --  ??? We need to take into account case-sensitivity of the filesystem
-      --  on which File is stored.
-      return Ada.Strings.Hash (Full_Name (Key, True).all);
+      if Is_Case_Sensitive (Get_Filesystem (Key)) then
+         return Ada.Strings.Hash (Full_Name (Key, True).all);
+      else
+         return Ada.Strings.Hash (To_Lower (Full_Name (Key, True).all));
+      end if;
    end VFS_Hash;
 
 end VFS_Hash;
