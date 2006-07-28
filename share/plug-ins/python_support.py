@@ -67,6 +67,7 @@ def create_python_menu():
   if not python_menu:
      python_menu = GPS.Menu.create ("/Python", ref="Help", add_before=1)
      GPS.Menu.create ("/Python/Import & Reload", on_activate=reload_file)
+     register_doc ()
 
 def destroy_python_menu():
   global python_menu
@@ -196,4 +197,3 @@ GPS.parse_xml ("""
   </filter_and>
 """)
 
-register_doc ()
