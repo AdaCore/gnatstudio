@@ -251,12 +251,31 @@ package body Help_Module is
      (Name   : Glib.UTF8_String;
       Kernel : access Kernel_Handle_Record'Class) return Glib.UTF8_String
    is
+      function To_Slashes (S : String) return String;
+      --  Transforms '\' to '/'
+
+      ----------------
+      -- To_Slashes --
+      ----------------
+
+      function To_Slashes (S : String) return String is
+         Str : String := S;
+      begin
+         for J in Str'Range loop
+            if Str (J) = '\' then
+               Str (J) := '/';
+            end if;
+         end loop;
+
+         return Str;
+      end To_Slashes;
+
       --  We still pass Kernel as a parameter so that we can easily one day
       --  query the module from the kernel instead of keeping a global
       --  variable to store it.
       pragma Unreferenced (Kernel);
-      File   : VFS.Virtual_File;
-      Anchor : Natural := Index (Name, "#");
+      File     : VFS.Virtual_File;
+      Anchor   : Natural := Index (Name, "#");
       Protocol : constant Natural := Index (Name, "://");
    begin
       if Protocol > 0 then
@@ -264,7 +283,8 @@ package body Help_Module is
       end if;
 
       if Is_Absolute_Path (Name) then
-         return "file://" & Name;
+         return "file://" &
+           To_Slashes (Normalize_Pathname (Name, Resolve_Links => True));
       end if;
 
       if Anchor = 0 then
