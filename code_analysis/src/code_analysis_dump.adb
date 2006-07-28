@@ -41,7 +41,7 @@ package body Code_Analysis_Dump is
    procedure Dump_Project (Cursor : Project_Maps.Cursor) is
       Project_Node : constant Project_Access := Project_Maps.Element (Cursor);
    begin
-      Put (" O| Project " & VFS.Base_Name (Project_Node.Name));
+      Put ("Project " & VFS.Base_Name (Project_Node.Name));
 
       if Project_Node.Analysis_Data.Coverage_Data /= null then
          Dump_Node_Coverage (Project_Node.Analysis_Data.Coverage_Data);
@@ -59,7 +59,7 @@ package body Code_Analysis_Dump is
       File_Node : constant Code_Analysis.File_Access
         := File_Maps.Element (Cursor);
    begin
-      Put ("   o| File " & VFS.Base_Name (File_Node.Name));
+      Put ("  File " & VFS.Base_Name (File_Node.Name));
 
       if File_Node.Analysis_Data.Coverage_Data /= null then
          Dump_Node_Coverage (File_Node.Analysis_Data.Coverage_Data);
@@ -81,7 +81,7 @@ package body Code_Analysis_Dump is
       Sub_Node : constant Subprogram_Access
         := Subprogram_Maps.Element (Cursor);
    begin
-      Put ("     °| Subprogram " & Sub_Node.Name.all);
+      Put ("    Subprogram " & Sub_Node.Name.all);
 
       if Sub_Node.Analysis_Data.Coverage_Data /= null then
          Dump_Subp_Coverage (Sub_Node.Analysis_Data.Coverage_Data);
@@ -96,7 +96,7 @@ package body Code_Analysis_Dump is
 
    procedure Dump_Line (Line_Node : Line_Access) is
    begin
-      Put ("       ·| Line" & Natural'Image (Line_Node.Number));
+      Put ("      Line" & Natural'Image (Line_Node.Number));
 
       if Line_Node.Analysis_Data.Coverage_Data /= null then
          Dump_Line_Coverage (Line_Node.Analysis_Data.Coverage_Data);
