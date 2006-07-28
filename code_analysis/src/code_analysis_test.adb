@@ -34,16 +34,16 @@ with VFS;                use VFS;
 --  So a correct usage is : $ code_analysis_test source_file_name
 --  Example :
 --  $ code_analysis_test main.adb
---   O| Project Dummy_Project_Name
---     o| File main.adb
---       院 Subprogram main__read_file 0 / 0 1 call(s)
---       院 Subprogram main 0 / 0 2 call(s)
---       院 Subprogram main___clean 0 / 0 1 call(s)
---       院 Subprogram main__read_file___clean 0 / 0 1 call(s)
---         會 Line 1
---         會 Line 2
---         會 Line 3 4 execution(s)
---         會 Line 4 /!\ Never executed /!\
+--  Project Dummy_Project_Name
+--    File main.adb
+--      Subprogram main__read_file 0 / 0 1 call(s)
+--      Subprogram main 0 / 0 2 call(s)
+--      Subprogram main___clean 0 / 0 1 call(s)
+--      Subprogram main__read_file___clean 0 / 0 1 call(s)
+--        Line 1
+--        Line 2
+--        Line 3 4 execution(s)
+--        Line 4 warning: line never executed
 
 procedure Code_Analysis_Test is
 
@@ -67,11 +67,11 @@ procedure Code_Analysis_Test is
    File_Node     : Code_Analysis.File_Access;
 begin
    if Argument_Count > 1 then
-      Put_Line ("/!\ Too many arguments /!\");
+      Put_Line ("error: too many arguments");
       Print_Usage;
       return;
    elsif Argument_Count < 1 then
-      Put_Line ("/!\ Argument missing /!\");
+      Put_Line ("error: missing one argument");
       Print_Usage;
       return;
    end if;
