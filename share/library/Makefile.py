@@ -72,6 +72,10 @@ class Console_Process (Console, Process):
       self.write (remaining_output)
       self.write ("exit status: " + `status`)
 
+      # Among other things, this automatically reparses xref if the user
+      # has set the preference for it
+      Hook ("compilation_finished").run (locations_category)
+
    def on_destroy (self):
       """If the console is destroyed, we kill the make process as well"""
       self.kill ()
@@ -110,7 +114,9 @@ class Makefile:
 
    def spawn (self, target):
       # Make sure everything if saved if needed
-      MDI.save_all (force=False)
+      if not Hook ("compilation_starting").run_until_failure \
+         (locations_category, False):
+         return
 
       project  = Project.root()
       switches = project.get_attribute_as_string ("switches", "make")
