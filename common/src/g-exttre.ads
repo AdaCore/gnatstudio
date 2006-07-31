@@ -230,6 +230,9 @@ package GNAT.Expect.TTY.Remote is
    function Is_Configured (Nickname : String) return Boolean;
    --  Tells if server Nickname exists
 
+   function Is_Ready_Session (Nickname : String) return Boolean;
+   --  Tell if a ready session is available for specified server
+
    function Get_Network_Name (Nickname : String) return String;
    --  Retrieve the network name of the specified server.
    --  Raise Invalid_Nickname if Nickname does not correspond to a server

@@ -1902,6 +1902,28 @@ package body GNAT.Expect.TTY.Remote is
    end Is_Configured;
 
    ----------------------
+   -- Is_Ready_Session --
+   ----------------------
+
+   function Is_Ready_Session (Nickname : String) return Boolean is
+      Desc : Machine_Descriptor_Access;
+   begin
+      Desc := Get_Machine_Descriptor (Nickname);
+
+      for J in Desc.Sessions'Range loop
+         if Desc.Sessions (J).State = READY then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+
+   exception
+      when Invalid_Nickname =>
+         return False;
+   end Is_Ready_Session;
+
+   ----------------------
    -- Get_Network_Name --
    ----------------------
 
