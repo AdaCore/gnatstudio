@@ -45,6 +45,7 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
@@ -1561,9 +1562,14 @@ package body Builder_Module is
          Title        : String)
       is
          Console : Interactive_Console;
-
+         Child   : MDI_Child;
       begin
          Console := Create_Interactive_Console (K, Title);
+         Child := Find_MDI_Child (Get_MDI (K), Console);
+         if Child /= null then
+            Raise_Child (Child);
+         end if;
+
          Launch_Process
            (K,
             Command              => Command,
