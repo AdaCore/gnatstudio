@@ -129,6 +129,11 @@ package GPS.Kernel.Project is
    --  scenario variables.
    --  This emits the "project_view_changed" signal.
 
+   procedure Invalidate_Predefined_Paths_Cache
+     (Handle : access Kernel_Handle_Record'Class;
+      Host   : in String);
+   --  Invalidates default path cached.
+
    --------------
    -- Scenarii --
    --------------
