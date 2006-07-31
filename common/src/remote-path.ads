@@ -61,6 +61,13 @@ package Remote.Path is
       Synchronisation : Synchronisation_Type);
    --  Same as above for sync
 
+   procedure Set_Deleted_State (Mirror : in out Mirror_Path);
+   function Get_Deleted_State (Mirror : in Mirror_Path) return Boolean;
+   --  Set/Get the deleted state
+
+   function Is_Modified (Mirror : in Mirror_Path) return Boolean;
+   --  Tell if Mirror as a tentative value set.
+
    procedure Apply (Mirror : in out Mirror_Path);
 
    procedure Cancel (Mirror : in out Mirror_Path);
@@ -80,6 +87,7 @@ private
       Actual             : Mirror_Path_Record;
       Tentative          : Mirror_Path_Record;
       Tentative_Sync_Set : Boolean := False;
+      Tentative_Delete   : Boolean := False;
    end record;
 
    Null_Path : constant Mirror_Path :=
@@ -89,6 +97,7 @@ private
                   Tentative          => (Local_Path  => null,
                                          Remote_Path => null,
                                          Sync        => Never),
-                  Tentative_Sync_Set => False);
+                  Tentative_Sync_Set => False,
+                  Tentative_Delete   => False);
 
 end Remote.Path;
