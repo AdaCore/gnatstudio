@@ -255,7 +255,6 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Set_Shortcut : Boolean;
       Mains        : Argument_List);
    --  Add new entries for all the main subprograms of Project.
    --  If Menu is null, a new one is created if there are any entries
@@ -272,7 +271,6 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Set_Shortcut : Boolean;
       Mains        : Argument_List);
    --  Same as Add_Build_Menu, but for the Run menu
 
@@ -1681,7 +1679,6 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Set_Shortcut : Boolean;
       Mains        : Argument_List)
    is
       Mitem          : Dynamic_Menu_Item;
@@ -1697,7 +1694,6 @@ package body Builder_Module is
 
       --  Accelerators were removed when the menu items were destroyed (just
       --  before the update)
-      Builder_Module_ID.Build_Item := null;
 
       for M in Mains'Range loop
          Mitem := new Dynamic_Menu_Item_Record;
@@ -1719,35 +1715,8 @@ package body Builder_Module is
             User_Data   => File_Project_Record'
               (Project => Project,
                File    => Main));
-
-         declare
-            Accel_Path : constant String := Make_Menu_Prefix &
-              Item_Accel_Path & Image (M);
-            Key : Gtk_Accel_Key;
-            Found : Boolean;
-
-         begin
-            Set_Accel_Path (Mitem, Accel_Path, Group);
-
-            --  The first item in the make menu should have a key binding
-
-            if Set_Shortcut and then M = Mains'First then
-               Lookup_Entry
-                 (Accel_Path => Accel_Path,
-                  Key        => Key,
-                  Found      => Found);
-
-               if not Found or else Key.Accel_Key = 0 then
-                  Tmp := Change_Entry
-                    (Accel_Path => Accel_Path,
-                     Accel_Key  => GDK_F4,
-                     Accel_Mods => 0,
-                     Replace    => False);
-               end if;
-
-               Builder_Module_ID.Build_Item := Gtk_Menu_Item (Mitem);
-            end if;
-         end;
+         Set_Accel_Path
+           (Mitem, Make_Menu_Prefix & Item_Accel_Path & Image (M), Group);
       end loop;
    end Add_Build_Menu;
 
@@ -1804,7 +1773,6 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Set_Shortcut : Boolean;
       Mains        : Argument_List)
    is
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
@@ -1835,34 +1803,8 @@ package body Builder_Module is
                  (Project => Project,
                   File    => Create
                     (Executables_Directory (Project) & Exec)));
-
-            declare
-               Accel_Path : constant String := Run_Menu_Prefix &
-                 Item_Accel_Path & Image (M);
-               Key        : Gtk_Accel_Key;
-               Found      : Boolean;
-            begin
-               Set_Accel_Path (Mitem, Accel_Path, Group);
-
-               --  The first item in the run menu should have a key binding
-
-               if Set_Shortcut and then M = Mains'First then
-                  Lookup_Entry
-                    (Accel_Path => Accel_Path,
-                     Key        => Key,
-                     Found      => Found);
-
-                  if not Found or else Key.Accel_Key = 0 then
-                     Tmp := Change_Entry
-                       (Accel_Path => Accel_Path,
-                        Accel_Key  => GDK_F2,
-                        Accel_Mods => Shift_Mask,
-                        Replace    => False);
-                  end if;
-
-                  Builder_Module_ID.Build_Item := Gtk_Menu_Item (Mitem);
-               end if;
-            end;
+            Set_Accel_Path
+              (Mitem, Run_Menu_Prefix & Item_Accel_Path & Image (M), Group);
          end;
       end loop;
    end Add_Run_Menu;
@@ -1980,13 +1922,11 @@ package body Builder_Module is
                     (Menu         => Builder_Module_ID.Make_Menu,
                      Project      => Get_Project (Kernel),
                      Kernel       => Kernel,
-                     Set_Shortcut => True,
                      Mains        => Mains);
                   Add_Run_Menu
                     (Menu         => Builder_Module_ID.Run_Menu,
                      Project      => Get_Project (Kernel),
                      Kernel       => Kernel,
-                     Set_Shortcut => True,
                      Mains        => Mains);
                   Free (Mains);
                   exit;
@@ -2014,24 +1954,12 @@ package body Builder_Module is
            (Project => No_Project,
             File    => VFS.No_File));
 
-      if Builder_Module_ID.Build_Item = null then
-         Add_Accelerator
-           (Mitem, "activate", Group, GDK_F4, 0,
-            Gtk.Accel_Group.Accel_Visible);
-         Builder_Module_ID.Build_Item := Mitem;
-      end if;
-
       Mitem := new Dynamic_Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Mitem, -Custom_Make_Suffix);
       Append (Menu1, Mitem);
       Kernel_Callback.Connect
         (Mitem, "activate", On_Custom'Access,
          User_Data => Kernel_Handle (Kernel));
-      --  ??? This line means that the menu Build->Make->Custom will always
-      --  be shown with the accelerator F9, eventhough it can be associated to
-      --  another key through the Key Shortcuts editor.
-      Add_Accelerator
-        (Mitem, "activate", Group, GDK_F9, 0, Gtk.Accel_Group.Accel_Visible);
       Set_Accel_Path (Mitem, "<gps>/Build/Make/Custom...", Group);
 
       --  Should be able to run any program
@@ -2082,7 +2010,6 @@ package body Builder_Module is
            (Menu         => M,
             Project      => Project_Information (Context),
             Kernel       => Get_Kernel (Context),
-            Set_Shortcut => False,
             Mains        => Mains);
       end if;
       Free (Mains);
@@ -2111,7 +2038,6 @@ package body Builder_Module is
         (Menu         => M,
          Project      => Project_Information (Context),
          Kernel       => Get_Kernel (Context),
-         Set_Shortcut => False,
          Mains        => Mains);
       Free (Mains);
    end Append_To_Menu;
@@ -2167,6 +2093,19 @@ package body Builder_Module is
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
       Set_Submenu (Mitem, Menu);
+
+      declare
+         Result : constant String := Add_Customization_String
+           (Kernel        => Kernel,
+            Customization => "<key action='/Build/Make/item1'>F4</key>"
+            & "<key action='/Build/Run/item1'>shift-F2</key>"
+            & "<key action='/Build/Make/Custom...'>F9</key>",
+            From_File     => "builder module");
+      begin
+         if Result /= "" then
+            Insert (Kernel, Result, Mode => Error);
+         end if;
+      end;
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);

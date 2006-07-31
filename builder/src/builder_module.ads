@@ -21,8 +21,6 @@
 --  Builder module.
 
 with Gtk.Menu;
-with Gtk.Menu_Item;
-
 with GPS.Kernel.Modules;
 with String_List_Utils;
 with Projects;
@@ -34,7 +32,6 @@ package Builder_Module is
    with record
       Make_Menu  : Gtk.Menu.Gtk_Menu;
       Run_Menu   : Gtk.Menu.Gtk_Menu;
-      Build_Item : Gtk.Menu_Item.Gtk_Menu_Item;
       --  The build menu, updated automatically every time the list of main
       --  units changes.
 
