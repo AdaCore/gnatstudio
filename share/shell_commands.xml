@@ -209,11 +209,47 @@ GPS.Hook ("file_changed_detected").add (on_file_changed)
      <description>Hook called when some external action has changed the contents of a file on the disk, such as a VCS operation. The parameter might be a directory instead of a file, indicating that any file in that directory might have changed</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ compilation_starting">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="category">A string, the location/highlighting category that contains the compilation output.</param>
+     <param name="quiet">A boolean</param>
+     <return>A boolean</return>
+     <description>Hook called when a compile operation is about to start.
+Among the various tasks that GPS connects to this hook are: check whether unsaved editors should be saved (asking the user), and stop the background task that parses all xref info. If quiet is True, then no visible modification should be done in the MDI, like raising consoles, clearing their content,..., since the compilation should happen in background mode.
+Funtions connected to this hook should return False if the compilation should not occur for some reason, True if it is OK to start the compilation. Typically, the reason to reject a compilation would be because the user has explicitly cancelled it through a graphical dialog, or because running a background compilation is not suitable at this time.</description>
+     <example lang="python">
+         # The following code adds a confirmation dialog to all
+         # compilation commands.
+         def on_compilation_started (hook, category, quiet):
+            if not quiet:
+               return MDI.yes_no_dialog ("Confirm compilation ?")
+            else:
+               return True
+         Hook ("compilation_starting").add (on_compilation_started)
+     </example>
+     <example lang="python">
+         # If you create a script to execute your own build script, you
+         # should always do the following as part of your script. This
+         # ensures a better integration in GPS (saving unsaved editors,
+         # reloading xref information automatically in the end, raising
+         # the GPS console, parsing error messages for automatically
+         # fixable errors,...)
+
+         if not Hook ("compilation_starting").run_until_failure \
+            ("Builder results", False):
+            return
+
+         # ... spawn your command
+
+         Hook ("compilation_finished").run ("Builder results")
+     </example>
+  </shell_doc>
+
   <shell_doc name="@hook@ compilation_finished">
      <param name="hook">A string, the name of the hook</param>
-     <param name="file">An instance of GPS.File</param>
      <param name="category">A string, the location/highlighting category that contains the compilation output.</param>
-     <description>Hook called when a compile operation has finished. The parameter indicates what file has just been compiled if GPS was compiling a single file</description>
+     <description>Hook called when a compile operation has finished.
+Among the various tasks that GPS connects to this hook are the automatic reparsing of all xref information, and the activation of the automatic-error fixes</description>
   </shell_doc>
 
   <shell_doc name="@hook@ open_file_action_hook">
@@ -3006,8 +3042,29 @@ This command returns the output of the process up to the point where regexp matc
   <shell_doc name="GPS.Hook.run">
       <param name="self">The instance of GPS.Hook</param>
       <param name="...">Any number of parameters to pass to the hook.
+      <return>Depends on the type of the hook</return>
 The specific list depends on the hook type</param>
-      <description>Run the hook. This will call all the functions that attached to that hook</description>
+      <description>Run the hook. This will call all the functions that attached to that hook, and return the return value of the last callback (this depends on the type of the hook, most often this is always None). When the callbacks for this hook are expected to return a boolean, this command stops as soon as one the callbacks returns True</description>
+      <see_also name="GPS.Hook.run_until_success" />
+      <see_also name="GPS.Hook.run_until_failure" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Hook.run_until_success">
+      <param name="self">The instance of GPS.Hook</param>
+      <param name="...">Any number of parameters to pass to the hook.</param>
+      <return>A boolean</return>
+      <description>This only applies to hooks returning a boolean. This executes all functions attached to this hook, until one returns True, in which case no further function is called. This returns the returned value of the last executed function. This is mostly the same as GPS.Hook.run, but makes the halt condition more explicit.</description>
+      <see_also name="GPS.Hook.run_until_failure"/>
+      <see_also name="GPS.Hook.run" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Hook.run_until_failure">
+      <param name="self">The instance of GPS.Hook</param>
+      <param name="...">Any number of parameters to pass to the hook.</param>
+      <return>A boolean</return>
+      <description>This only applies to hooks returning a boolean. This executes all functions attached to this hook, until one returns False, in which case no further function is called. This returns the returned value of the last executed function.</description>
+      <see_also name="GPS.Hook.run_until_success"/>
+      <see_also name="GPS.Hook.run" />
   </shell_doc>
 
   <shell_doc name="GPS.Hook.add">
