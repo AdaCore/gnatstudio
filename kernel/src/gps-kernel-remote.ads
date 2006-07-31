@@ -86,7 +86,7 @@ package GPS.Kernel.Remote is
       Message : String);
 
    procedure Spawn
-     (Kernel           : Kernel_Handle := null;
+     (Kernel           : Kernel_Handle;
       Arguments        : GNAT.OS_Lib.Argument_List;
       Server           : Server_Type;
       Pd               : out GNAT.Expect.Process_Descriptor_Access;
