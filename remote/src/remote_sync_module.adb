@@ -532,8 +532,7 @@ package body Remote_Sync_Module is
 
                declare
                   Password : constant String :=
-                               Get_Password (Get_Main_Window (Data.Kernel),
-                                             Cb_Data.Network_Name.all,
+                               Get_Password (Cb_Data.Network_Name.all,
                                              Cb_Data.User_Name.all,
                                              Force);
                begin
@@ -561,8 +560,7 @@ package body Remote_Sync_Module is
                declare
                   Password : constant String :=
                                Get_Passphrase
-                                 (Get_Main_Window (Data.Kernel),
-                                  Buffer
+                                 (Buffer
                                     (Matched (1).First .. Matched (1).Last),
                                   Force);
                begin
