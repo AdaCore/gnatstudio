@@ -140,8 +140,7 @@ package body Commands.External is
                      --  Password/passphrase prompt
                      declare
                         Password : constant String :=
-                          Get_Tool_Password (Get_Main_Window (D.Kernel),
-                                             D.Command.all,
+                          Get_Tool_Password (D.Command.all,
                                              D.Nb_Pwd > 0);
                      begin
                         D.Nb_Pwd := D.Nb_Pwd + 1;
