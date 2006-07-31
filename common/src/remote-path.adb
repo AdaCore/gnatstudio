@@ -40,6 +40,7 @@ package body Remote.Path is
          Remote_Path => null,
          Sync        => Never);
       Mirror.Tentative_Sync_Set := False;
+      Mirror.Tentative_Delete   := False;
    end Init;
 
    --------------------
@@ -143,6 +144,35 @@ package body Remote.Path is
       Mirror.Tentative.Sync := Synchronisation;
    end Set_Tentative_Synchronisation;
 
+   -----------------------
+   -- Set_Deleted_State --
+   -----------------------
+
+   procedure Set_Deleted_State (Mirror : in out Mirror_Path) is
+   begin
+      Mirror.Tentative_Delete := True;
+   end Set_Deleted_State;
+
+   -----------------------
+   -- Get_Deleted_State --
+   -----------------------
+
+   function Get_Deleted_State (Mirror : in Mirror_Path) return Boolean is
+   begin
+      return Mirror.Tentative_Delete;
+   end Get_Deleted_State;
+
+   -----------------
+   -- Is_Modified --
+   -----------------
+
+   function Is_Modified (Mirror : in Mirror_Path) return Boolean is
+   begin
+      return Mirror.Tentative.Local_Path /= null
+        or else Mirror.Tentative.Remote_Path /= null
+        or else Mirror.Tentative_Sync_Set;
+   end Is_Modified;
+
    -----------
    -- Apply --
    -----------
@@ -187,6 +217,7 @@ package body Remote.Path is
          Free (Mirror.Tentative.Remote_Path);
       end if;
 
+      Mirror.Tentative_Delete := False;
       Mirror.Tentative_Sync_Set := False;
    end Cancel;
 
