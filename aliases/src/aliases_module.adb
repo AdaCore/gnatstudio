@@ -775,6 +775,9 @@ package body Aliases_Module is
                if Str (S + 1) = '_' then
                   Cursor.all := Ada.Strings.Unbounded.Length (Result);
 
+               elsif Str (S + 1) = Special then
+                  Result := Result & Special;
+
                else
                   Tmp := Aliases_Module_Id.Module_Funcs (Str (S + 1));
 
@@ -1615,8 +1618,11 @@ package body Aliases_Module is
 
       Gtk_New (Item, View, -"Insert Cursor Position", Special & "_");
       Add (Menu, Item);
-      Widget_Callback.Connect
-        (Item, "activate", Insert_Special'Access);
+      Widget_Callback.Connect (Item, "activate", Insert_Special'Access);
+
+      Gtk_New (Item, View, -"Insert Percent Sign", Special & Special);
+      Add (Menu, Item);
+      Widget_Callback.Connect (Item, "activate", Insert_Special'Access);
 
       for C in Aliases_Module_Id.Module_Funcs'Range loop
          Tmp := Aliases_Module_Id.Module_Funcs (C);
