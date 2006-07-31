@@ -18,7 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;      use Glib;
+with Glib;                 use Glib;
+with User_Interface_Tools; use User_Interface_Tools;
 
 package body Password_Manager is
 
@@ -50,10 +51,9 @@ package body Password_Manager is
       Next      : Tool_Access;
    end record;
 
-   Password_List   : Password_Access   := null;
-   Passphrase_List : Passphrase_Access := null;
-   Tool_List       : Tool_Access       := null;
-   The_UI          : UI_Ptr            := null;
+   Password_List   : Password_Access    := null;
+   Passphrase_List : Passphrase_Access  := null;
+   Tool_List       : Tool_Access        := null;
 
    Password_Regexp : constant Pattern_Matcher :=
                        Compile ("^[^\n]*[Pp]assword: *$",
@@ -61,24 +61,6 @@ package body Password_Manager is
    Passphrase_Regexp : constant Pattern_Matcher :=
                          Compile ("^[^\n]*[Pp]assphrase for key '([^']*)': *$",
                                   Multiple_Lines or Single_Line);
-
-   ------------
-   -- Set_UI --
-   ------------
-
-   procedure Set_UI (User_Interface : UI_Ptr) is
-   begin
-      The_UI := User_Interface;
-   end Set_UI;
-
-   ------------
-   -- Get_UI --
-   ------------
-
-   function Get_UI return UI_Ptr is
-   begin
-      return The_UI;
-   end Get_UI;
 
    ---------------------------------
    -- Get_Default_Password_Regexp --
@@ -125,10 +107,6 @@ package body Password_Manager is
       end Full_Machine_Name;
 
    begin
-      if The_UI = null then
-         raise UI_Not_Set;
-      end if;
-
       while Pwd /= null loop
          exit when Pwd.Machine.all = Network_Name
            and then Pwd.User_Name.all = User_Name;
@@ -150,8 +128,7 @@ package body Password_Manager is
          declare
             Str : constant String :=
                     Query_User
-                      (The_UI.all,
-                       "Please enter " & Full_Machine_Name & "'s password:",
+                      ("Please enter " & Full_Machine_Name & "'s password:",
                        Password_Mode => True);
          begin
             if Str = "" then
@@ -175,10 +152,6 @@ package body Password_Manager is
    is
       Psp : Passphrase_Access := Passphrase_List;
    begin
-      if The_UI = null then
-         raise UI_Not_Set;
-      end if;
-
       while Psp /= null loop
          exit when Psp.Key_Id.all = Key_Id;
          Psp := Psp.Next;
@@ -198,8 +171,7 @@ package body Password_Manager is
          declare
             Str : constant String :=
                     Query_User
-                      (The_UI.all,
-                       "Please enter passphrase for key " & Key_Id & ":",
+                      ("Please enter passphrase for key " & Key_Id & ":",
                        Password_Mode => True);
          begin
             if Str = "" then
@@ -223,10 +195,6 @@ package body Password_Manager is
    is
       Psp : Tool_Access := Tool_List;
    begin
-      if The_UI = null then
-         raise UI_Not_Set;
-      end if;
-
       while Psp /= null loop
          exit when Psp.Tool_Name.all = Tool;
          Psp := Psp.Next;
@@ -246,8 +214,7 @@ package body Password_Manager is
          declare
             Str : constant String :=
                     Query_User
-                      (The_UI.all,
-                       "Please enter password for tool " & Tool & ":",
+                      ("Please enter password for tool " & Tool & ":",
                        Password_Mode => True);
          begin
             if Str = "" then

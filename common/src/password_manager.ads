@@ -24,27 +24,6 @@ with GNAT.Regpat; use GNAT.Regpat;
 
 package Password_Manager is
 
-   UI_Not_Set : exception;
-
-   type UI is abstract tagged null record;
-   type UI_Ptr is access all UI'Class;
-
-   function Query_User
-     (User_Interface : UI;
-      Prompt         : String;
-      Password_Mode  : Boolean) return String is abstract;
-   --  Open a new Dialog to query a response to the user.
-   --  If Password_Mode is set, then the query will print * instead of
-   --   the entered characters.
-   --  Return "" if the user hasn't entered anything
-
-   procedure Set_UI (User_Interface : UI_Ptr);
-   --  Set the User Interface to use. It shall be set before any call to
-   --  Get_Password, Get_Passphrase, Get_Tool_Password
-
-   function Get_UI return UI_Ptr;
-   --  Get the User Interface set by Set_UI.
-
    function Get_Default_Password_Regexp return Pattern_Matcher;
    --  Get the default password regexp
 
@@ -60,18 +39,21 @@ package Password_Manager is
    --  child of this window.
    --  If Force_Asking is set, the user will be asked for the password. Else
    --  the password is reused if it was already set.
-   --  Raises UI_Not_Set if UI was not set previously
+   --  Raises User_Interface_Not_Set if UI was not set previously (see package
+   --  User_Interface_Tools)
 
    function Get_Passphrase
      (Key_Id       : String;
       Force_Asking : Boolean := False) return String;
    --  Same as above, for a passphrase.
-   --  Raises UI_Not_Set if UI was not set previously
+   --  Raises User_Interface_Not_Set if UI was not set previously (see package
+   --  User_Interface_Tools)
 
    function Get_Tool_Password
      (Tool         : String;
       Force_Asking : Boolean := False) return String;
    --  Same as above, for the specified tool
-   --  Raises UI_Not_Set if UI was not set previously
+   --  Raises User_Interface_Not_Set if UI was not set previously (see package
+   --  User_Interface_Tools)
 
 end Password_Manager;
