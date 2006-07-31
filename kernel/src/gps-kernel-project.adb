@@ -19,6 +19,9 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 with Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
@@ -165,6 +168,23 @@ package body GPS.Kernel.Project is
       Property.Project_Path := new String'(Child.Value.all);
    end Load;
 
+   ---------------------------------------
+   -- Invalidate_Predefined_Paths_Cache --
+   ---------------------------------------
+
+   procedure Invalidate_Predefined_Paths_Cache
+     (Handle : access Kernel_Handle_Record'Class;
+      Host   : in String)
+   is
+      Property_Index   : Property_Index_Type := No_Index;
+   begin
+      Property_Index.Nickname := new String'(Host);
+      Property_Index.Gnatls   := Handle.Gnatls_Cache;
+      Remove_Property
+        ("predefined_path", To_String (Property_Index), "gnatls");
+      Free (Property_Index.Nickname);
+   end Invalidate_Predefined_Paths_Cache;
+
    ------------------------------
    -- Compute_Predefined_Paths --
    ------------------------------
@@ -198,20 +218,32 @@ package body GPS.Kernel.Project is
             return;
          end if;
 
-         if not Is_Local (Build_Server) and then Use_Cache then
-            Property_Index.Nickname :=
-              new String'(Get_Nickname (Build_Server));
-            Property_Index.Gnatls   := Gnatls_Args (Gnatls_Args'First);
+         Free (Handle.Gnatls_Cache);
+         Free (Handle.Gnatls_Server);
+         Handle.Gnatls_Cache := new String'(Gnatls);
+         Handle.Gnatls_Server := new String'(Get_Nickname (Build_Server));
+
+         if not Is_Local (Build_Server)
+           and then Use_Cache
+           and then not Is_Ready_Session (Get_Nickname (Build_Server))
+         then
+            Property_Index.Nickname := Handle.Gnatls_Server;
+            Property_Index.Gnatls   := Handle.Gnatls_Cache;
             Get_Property
               (Property, "predefined_path", To_String (Property_Index),
                Name => "gnatls", Found => Success);
 
             if Success then
-               Free (Property_Index.Nickname);
+               Trace (Me, "set source path from cache to " &
+                      Property.Source_Path.all);
                Set_Predefined_Source_Path
                  (Handle.Registry.all, Property.Source_Path.all);
+               Trace (Me, "set object path from cache to " &
+                      Property.Source_Path.all);
                Set_Predefined_Object_Path
                  (Handle.Registry.all, Property.Object_Path.all);
+               Trace (Me, "set project path from cache to " &
+                      Property.Source_Path.all);
                Set_Predefined_Project_Path
                  (Handle.Registry.all, Property.Project_Path.all);
                Add_Hook
@@ -221,11 +253,6 @@ package body GPS.Kernel.Project is
                return;
             end if;
          end if;
-
-         Free (Handle.Gnatls_Cache);
-         Free (Handle.Gnatls_Server);
-         Handle.Gnatls_Cache := new String'(Gnatls);
-         Handle.Gnatls_Server := new String'(Get_Nickname (Build_Server));
 
          Error_Handler.Handle := Kernel_Handle (Handle);
          Error_Handler.Mode   := Info;
@@ -547,12 +574,22 @@ package body GPS.Kernel.Project is
                   Full_Name (Local_Project, True).all &
                   (-"'. Trying with the build server set to (local)...") &
                   ASCII.LF);
+
+               --  Reset the predefined paths cached, in case they are faulty
+               Trace (Me, "Invalidate predefined paths cache");
+               Invalidate_Predefined_Paths_Cache
+                 (Kernel, Get_Nickname (Build_Server));
+
+               --  Reset the build server
+               Trace (Me, "Reset the build server");
                Assign (Kernel_Handle (Kernel),
                        Build_Server,
                        "",
                        Local_Project,
                        Reload_Prj => False);
+               Trace (Me, "Recompute predefined paths");
                Compute_Predefined_Paths (Kernel);
+               Trace (Me, "Load the project locally");
                Load (Registry           => Kernel.Registry.all,
                      Root_Project_Path  => Local_Project,
                      Errors             => Report_Error'Unrestricted_Access,
