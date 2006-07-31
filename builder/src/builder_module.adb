@@ -50,11 +50,13 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -356,6 +358,11 @@ package body Builder_Module is
       Data : access Hooks_Data'Class);
    --  Called when the compilation is finished.
 
+   function On_Compilation_Starting
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data : access Hooks_Data'Class) return Boolean;
+   --  Called when the compilation is starting
+
    procedure Load_Xref_In_Memory (Kernel : access Kernel_Handle_Record'Class);
    --  Load the Xref info in memory, in a background task.
 
@@ -618,11 +625,7 @@ package body Builder_Module is
          end loop;
       end if;
 
-      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
-
-      if Builder_Module_ID.Build_Count = 0 then
-         Compilation_Finished (Data.Kernel, Error_Category);
-      end if;
+      Compilation_Finished (Data.Kernel, Error_Category);
    end Free_Temporary_Files;
 
    --------------
@@ -682,15 +685,6 @@ package body Builder_Module is
 
       Free (Langs);
 
-      --  Ask for saving sources/projects before building.
-      --  Do this before checking the project, in case we have a default
-      --  project whose name is changed when saving
-
-      if not Save_MDI_Children (Kernel, Force => Get_Pref (Auto_Save)) then
-         Free (Args);
-         return;
-      end if;
-
       Prj := Project;
 
       --  If no file was specified in data, simply compile the current file
@@ -727,12 +721,6 @@ package body Builder_Module is
          Change_Dir (Dir_Name (Project_Path (Project)).all);
       end if;
 
-      if Builder_Module_ID.Build_Count = 0 then
-         Clear_Compilation_Output (Kernel, False);
-      end if;
-
-      Interrupt_Xrefs_Loading (Kernel);
-
       case Syntax is
          when GNAT_Syntax =>
             Cmd := new String'(Get_Attribute_Value
@@ -743,25 +731,24 @@ package body Builder_Module is
             Cmd := new String'("gprmake");
       end case;
 
-      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
-
-      Console.Raise_Console (Kernel);
-      Launch_Process
-        (Kernel,
-         Command              => Cmd.all,
-         Arguments            => Args.all,
-         Server               => Build_Server,
-         Console              => Get_Console (Kernel),
-         Show_Command         => True,
-         Show_Output          => False,
-         Callback_Data        => new Files_Callback_Data,
-         Success              => Success,
-         Line_By_Line         => False,
-         Callback             => Parse_Compiler_Output'Access,
-         Exit_Cb              => Free_Temporary_Files'Access,
-         Show_In_Task_Manager => True,
-         Synchronous          => Synchronous,
-         Show_Exit_Status     => True);
+      if Compilation_Starting (Kernel, Error_Category, Quiet => False) then
+         Launch_Process
+           (Kernel,
+            Command              => Cmd.all,
+            Arguments            => Args.all,
+            Server               => Build_Server,
+            Console              => Get_Console (Kernel),
+            Show_Command         => True,
+            Show_Output          => False,
+            Callback_Data        => new Files_Callback_Data,
+            Success              => Success,
+            Line_By_Line         => False,
+            Callback             => Parse_Compiler_Output'Access,
+            Exit_Cb              => Free_Temporary_Files'Access,
+            Show_In_Task_Manager => True,
+            Synchronous          => Synchronous,
+            Show_Exit_Status     => True);
+      end if;
 
       Free (Cmd);
       Free (Args);
@@ -874,16 +861,6 @@ package body Builder_Module is
 
       To_Lower (Lang);
 
-      --  Save the corresponding files if needed
-
-      if not Shadow then
-         if not Save_MDI_Children
-           (Kernel, Force => Get_Pref (Auto_Save))
-         then
-            return;
-         end if;
-      end if;
-
       --  Determine the project for the file
 
       if Prj = No_Project then
@@ -926,12 +903,6 @@ package body Builder_Module is
          Cmd         := new String'("gprmake");
          Common_Args := new Argument_List'(1 .. 0 => null);
       end if;
-
-      if Builder_Module_ID.Build_Count = 0 then
-         Clear_Compilation_Output (Kernel, Shadow);
-      end if;
-
-      Interrupt_Xrefs_Loading (Kernel);
 
       Cb_Data := new Files_Callback_Data;
 
@@ -996,28 +967,26 @@ package body Builder_Module is
 
       Args := Compute_Arguments
         (Kernel, Prj, Shadow_Path.all, Compilable_File, Compile_Only => True);
-      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
-      if not Quiet then
-         Console.Raise_Console (Kernel);
+      if Compilation_Starting (Kernel, Error_Category, Quiet => Quiet) then
+         Launch_Process
+           (Kernel,
+            Command              => Cmd.all,
+            Arguments            => Common_Args.all & Args.all,
+            Server               => Build_Server,
+            Console              => Get_Console (Kernel),
+            Show_Command         => not Quiet,
+            Show_Output          => False,
+            Callback_Data        => Cb_Data.all'Access,
+            Success              => Success,
+            Line_By_Line         => False,
+            Callback             => Parse_Compiler_Output'Access,
+            Exit_Cb              => Free_Temporary_Files'Access,
+            Show_In_Task_Manager => True,
+            Synchronous          => Synchronous,
+            Show_Exit_Status     => True);
       end if;
 
-      Launch_Process
-        (Kernel,
-         Command              => Cmd.all,
-         Arguments            => Common_Args.all & Args.all,
-         Server               => Build_Server,
-         Console              => Get_Console (Kernel),
-         Show_Command         => not Quiet,
-         Show_Output          => False,
-         Callback_Data        => Cb_Data.all'Access,
-         Success              => Success,
-         Line_By_Line         => False,
-         Callback             => Parse_Compiler_Output'Access,
-         Exit_Cb              => Free_Temporary_Files'Access,
-         Show_In_Task_Manager => True,
-         Synchronous          => Synchronous,
-         Show_Exit_Status     => True);
       Free (Args);
       Basic_Types.Unchecked_Free (Common_Args);
       Free (Cmd);
@@ -1159,42 +1128,30 @@ package body Builder_Module is
          return;
       end if;
 
-      if not Save_MDI_Children
-        (Kernel, Force => Get_Pref (Auto_Save))
-      then
-         return;
+      if Compilation_Starting (Kernel, Error_Category, Quiet => False) then
+         declare
+            Args : Argument_List_Access := Argument_String_To_List (Cmd);
+         begin
+            --  ??? Is this always the Build_Server ? Should ask the user ?
+            Launch_Process
+              (Kernel,
+               Command              => Args (Args'First).all,
+               Arguments            => Args (Args'First + 1 .. Args'Last),
+               Server               => Build_Server,
+               Console              => Get_Console (Kernel),
+               Show_Command         => True,
+               Show_Output          => False,
+               Callback_Data        => new Files_Callback_Data,
+               Success              => Success,
+               Line_By_Line         => False,
+               Callback             => Parse_Compiler_Output'Access,
+               Exit_Cb              => Free_Temporary_Files'Access,
+               Show_In_Task_Manager => True,
+               Synchronous          => False,
+               Show_Exit_Status     => True);
+            Free (Args);
+         end;
       end if;
-
-      if Builder_Module_ID.Build_Count = 0 then
-         Clear_Compilation_Output (Kernel, False);
-      end if;
-
-      Interrupt_Xrefs_Loading (Kernel);
-
-      declare
-         Args : Argument_List_Access := Argument_String_To_List (Cmd);
-      begin
-         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
-         Console.Raise_Console (Kernel);
-         --  ??? Is this always the Build_Server ? Should ask the user ?
-         Launch_Process
-           (Kernel,
-            Command              => Args (Args'First).all,
-            Arguments            => Args (Args'First + 1 .. Args'Last),
-            Server               => Build_Server,
-            Console              => Get_Console (Kernel),
-            Show_Command         => True,
-            Show_Output          => False,
-            Callback_Data        => new Files_Callback_Data,
-            Success              => Success,
-            Line_By_Line         => False,
-            Callback             => Parse_Compiler_Output'Access,
-            Exit_Cb              => Free_Temporary_Files'Access,
-            Show_In_Task_Manager => True,
-            Synchronous          => False,
-            Show_Exit_Status     => True);
-         Free (Args);
-      end;
 
    exception
       when E : others =>
@@ -1394,6 +1351,46 @@ package body Builder_Module is
    end On_Load_Xref_In_Memory;
 
    -----------------------------
+   -- On_Compilation_Starting --
+   -----------------------------
+
+   function On_Compilation_Starting
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data : access Hooks_Data'Class) return Boolean
+   is
+      D : constant String_Boolean_Hooks_Args :=
+        String_Boolean_Hooks_Args (Data.all);
+   begin
+      --  Small issue here: if the user cancels the compilation in one of the
+      --  custom hooks the user might have connected, then all changes done
+      --  her (increase Build_Count) will not be undone since
+      --  On_Compilation_Finished is not called.
+
+      --  Ask for saving sources/projects before building.
+      --  Do this before checking the project, in case we have a default
+      --  project whose name is changed when saving
+
+      if not D.Bool
+        and then not Save_MDI_Children (Kernel, Force => Get_Pref (Auto_Save))
+      then
+         return False;
+      end if;
+
+      if not D.Bool and then Builder_Module_ID.Build_Count = 0 then
+         Clear_Compilation_Output (Kernel_Handle (Kernel), False);
+      end if;
+
+      Interrupt_Xrefs_Loading (Kernel);
+
+      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
+
+      if not D.Bool then
+         Console.Raise_Console (Kernel);
+      end if;
+      return True;
+   end On_Compilation_Starting;
+
+   -----------------------------
    -- On_Compilation_Finished --
    -----------------------------
 
@@ -1403,8 +1400,14 @@ package body Builder_Module is
    is
       pragma Unreferenced (Data);
    begin
-      if Get_Pref (Automatic_Xrefs_Load) then
-         Load_Xref_In_Memory (Kernel);
+      if Builder_Module_ID.Build_Count > 0 then
+         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
+      end if;
+
+      if Builder_Module_ID.Build_Count = 0 then
+         if Get_Pref (Automatic_Xrefs_Load) then
+            Load_Xref_In_Memory (Kernel);
+         end if;
       end if;
    end On_Compilation_Finished;
 
@@ -1838,7 +1841,6 @@ package body Builder_Module is
                  Item_Accel_Path & Image (M);
                Key        : Gtk_Accel_Key;
                Found      : Boolean;
-
             begin
                Set_Accel_Path (Mitem, Accel_Path, Group);
 
@@ -2029,7 +2031,7 @@ package body Builder_Module is
       --  be shown with the accelerator F9, eventhough it can be associated to
       --  another key through the Key Shortcuts editor.
       Add_Accelerator
-        (Mitem, "activate", Group, GDK_F9, 0, Gtk.Accel_Group.Accel_Visible);
+      (Mitem, "activate", Group, GDK_F9, 0, Gtk.Accel_Group.Accel_Visible);
       Set_Accel_Path (Mitem, "<gps>/Build/Make/Custom...", Group);
 
       --  Should be able to run any program
@@ -2192,6 +2194,11 @@ package body Builder_Module is
          Hook   => Compilation_Finished_Hook,
          Func   => Wrapper (On_Compilation_Finished'Access),
          Name   => "load_xrefs");
+      Add_Hook
+        (Kernel => Kernel,
+         Hook   => Compilation_Starting_Hook,
+         Func   => Wrapper (On_Compilation_Starting'Access),
+         Name   => "stop_load_xrefs");
       Add_Hook
         (Kernel => Kernel,
          Hook   => Project_Changed_Hook,
