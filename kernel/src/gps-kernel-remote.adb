@@ -85,6 +85,7 @@ with Filesystem.Unix;            use Filesystem.Unix;
 with Filesystem.Windows;         use Filesystem.Windows;
 with GUI_Utils;                  use GUI_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
+with Password_Manager;
 with Projects;                   use Projects;
 with Remote.Path.Translator;     use Remote.Path, Remote.Path.Translator;
 with String_Utils;               use String_Utils;
@@ -418,6 +419,16 @@ package body GPS.Kernel.Remote is
    -- Utility methods --
    ---------------------
 
+   type UI is new Password_Manager.UI with record
+      Main_Window : Gtk.Window.Gtk_Window;
+   end record;
+
+   function Query_User
+     (User_Interface : UI;
+      Prompt         : String;
+      Password_Mode  : Boolean) return String;
+   --  See inherited for documentation.
+
    procedure Simple_Free is new Ada.Unchecked_Deallocation
      (Object => Argument_List, Name => Argument_List_Access);
    --  Frees the pointer without freeing internal strings
@@ -438,6 +449,19 @@ package body GPS.Kernel.Remote is
    function From_Callback_Data_Server_Config_Changed_Hook
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  retrieve hook data from callback data
+
+   ----------------
+   -- Query_User --
+   ----------------
+
+   function Query_User
+     (User_Interface : UI;
+      Prompt         : String;
+      Password_Mode  : Boolean) return String is
+   begin
+      return GUI_Utils.Query_User
+        (User_Interface.Main_Window, Prompt, Password_Mode);
+   end Query_User;
 
    ----------
    -- Free --
@@ -2579,6 +2603,10 @@ package body GPS.Kernel.Remote is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
+      --  Set the user interface of Password_Manager
+      Password_Manager.Set_UI
+        (new UI'(Main_Window => Get_Main_Window (Kernel)));
+
       --  Register synchronisation hook
       Register_Hook_Data_Type
         (Kernel, Rsync_Hook_Type,
@@ -3450,7 +3478,7 @@ package body GPS.Kernel.Remote is
    -----------
 
    procedure Spawn
-     (Kernel           : Kernel_Handle := null;
+     (Kernel           : Kernel_Handle;
       Arguments        : GNAT.OS_Lib.Argument_List;
       Server           : Server_Type;
       Pd               : out GNAT.Expect.Process_Descriptor_Access;
@@ -3514,8 +3542,6 @@ package body GPS.Kernel.Remote is
          end if;
       end On_New_Connection;
 
-      Main_Window : Gtk.Window.Gtk_Window := null;
-
    begin
       Success := False;
 
@@ -3526,10 +3552,6 @@ package body GPS.Kernel.Remote is
          In_Use_Error_Manager := Default_Error_Manager'Unchecked_Access;
       else
          In_Use_Error_Manager := Error_Manager;
-      end if;
-
-      if Kernel /= null then
-         Main_Window := Get_Main_Window (Kernel);
       end if;
 
       --  First verify the executable to be launched
@@ -3645,7 +3667,6 @@ package body GPS.Kernel.Remote is
             Args                => Args.all,
             Execution_Directory => Old_Dir.all,
             Err_To_Out          => True,
-            Main_Window         => Main_Window,
             On_New_Connection   => On_New_Connection'Access);
          Free (Old_Dir);
       end if;
