@@ -419,7 +419,10 @@ package body GPS.Kernel.Hooks is
       Info   : constant Hook_Description_Access :=
         Get_Or_Create_Hook (Kernel, Name);
    begin
-      Assert (Me, Command = "run", "Invalid command: " & Command);
+      Assert (Me, Command = "run"
+              or else Command = "run_until_failure"
+              or else Command = "run_until_success",
+              "Invalid command: " & Command);
       if Info.Parameters_Type = null
         or else Info.Parameters_Type.From_Data = null
       then
@@ -429,9 +432,15 @@ package body GPS.Kernel.Hooks is
             Args : aliased Hooks_Data'Class :=
               Info.Parameters_Type.From_Data (Data);
          begin
-            Set_Return_Value
-              (Data, Run_Hook_Until_Success
-                 (Kernel, Name, Args'Unchecked_Access, Set_Busy => True));
+            if Command = "run" or else Command = "run_until_success" then
+               Set_Return_Value
+                 (Data, Run_Hook_Until_Success
+                    (Kernel, Name, Args'Unchecked_Access, Set_Busy => True));
+            else
+               Set_Return_Value
+                 (Data, Run_Hook_Until_Failure
+                    (Kernel, Name, Args'Unchecked_Access, Set_Busy => True));
+            end if;
             Destroy (Args);
          end;
       end if;
@@ -1274,7 +1283,10 @@ package body GPS.Kernel.Hooks is
             end if;
          end;
 
-      elsif Command = "run" then
+      elsif Command = "run"
+        or else Command = "run_until_success"
+        or else Command = "run_until_failure"
+      then
          begin
             Info := Get_Data (Data, 1);
             Info.Command_Handler (Data, Command);
@@ -1454,6 +1466,9 @@ package body GPS.Kernel.Hooks is
       Register_Hook_Return_Boolean
         (Kernel, File_Changed_Detected_Hook, File_Hook_Type);
 
+      Register_Hook_Return_Boolean
+        (Kernel, Compilation_Starting_Hook, String_Boolean_Hook_Type);
+
       Register_Command
         (Kernel, Constructor_Method,
          Class        => Hook_Class,
@@ -1462,6 +1477,16 @@ package body GPS.Kernel.Hooks is
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "run",
+         Class        => Hook_Class,
+         Maximum_Args => Natural'Last,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "run_until_success",
+         Class        => Hook_Class,
+         Maximum_Args => Natural'Last,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "run_until_failure",
          Class        => Hook_Class,
          Maximum_Args => Natural'Last,
          Handler      => Default_Command_Handler'Access);
