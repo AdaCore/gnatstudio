@@ -292,8 +292,7 @@ package body Commands.Custom is
 
                declare
                   Password : constant String :=
-                    Get_Tool_Password (Get_Main_Window (Data.Kernel),
-                                       Command.Name.all,
+                    Get_Tool_Password (Command.Name.all,
                                        Force);
                begin
                   Send (Data.Descriptor.all, Password);
@@ -316,8 +315,7 @@ package body Commands.Custom is
                declare
                   Password : constant String :=
                     Get_Passphrase
-                      (Get_Main_Window (Data.Kernel),
-                       Output (Matched (1).First .. Matched (1).Last),
+                      (Output (Matched (1).First .. Matched (1).Last),
                        Force);
                begin
                   Send (Data.Descriptor.all, Password);
