@@ -11364,6 +11364,9 @@ parameters and possibly other recursive expansions. This is similar to pressing
 @key{control-o} (or any key you have defined for alias expansion) in the
 expanded form of the alias.
 
+@item %%
+Inserts a percent sign as part of the expanded text
+
 You cannot expand an alias recursively when already expanding that alias. For
 instance, if the alias expansion for @i{procedure} contains @i{procedure%O},
 the inner procedure will not be expanded.
