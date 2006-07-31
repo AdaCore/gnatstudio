@@ -611,6 +611,17 @@ package GPS.Kernel is
       File   : VFS.Virtual_File);
    --  Runs the "file_changed_on_disk" hook
 
+   function Compilation_Starting
+     (Handle   : access Kernel_Handle_Record;
+      Category : String;
+      Quiet    : Boolean) return Boolean;
+   --  Runs the "compilation_starting" hook.
+   --  The Category corresponds to the location/highlighting category that
+   --  will contain the compilation output.
+   --  Quiet is true if the compilation should not ask the user any question,
+   --  nor, generally, change the MDI setup.
+   --  Return True if the compilation should be started.
+
    procedure Compilation_Finished
      (Handle   : access Kernel_Handle_Record;
       Category : String);
@@ -638,6 +649,7 @@ package GPS.Kernel is
    File_Changed_Detected_Hook    : constant String := "file_changed_detected";
    File_Changed_On_Disk_Hook     : constant String := "file_changed_on_disk";
    Compilation_Finished_Hook     : constant String := "compilation_finished";
+   Compilation_Starting_Hook     : constant String := "compilation_starting";
 
    --  Hooks with Context_Hooks_Args argument
    Context_Changed_Hook          : constant String := "context_changed";
