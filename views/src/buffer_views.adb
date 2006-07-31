@@ -42,8 +42,10 @@ with Gtkada.MDI;           use Gtkada.MDI;
 
 with Generic_Views;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with Histories;              use Histories;
 with GUI_Utils;              use GUI_Utils;
@@ -90,6 +92,10 @@ package body Buffer_Views is
 
    procedure Child_Selected (View : access Gtk_Widget_Record'Class);
    --  Called when a new child is selected
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences change
 
    procedure Refresh (View : access Gtk_Widget_Record'Class);
    --  Refresh the contents of the Buffer view
@@ -552,6 +558,8 @@ package body Buffer_Views is
          Hide_Expander      => False);
       Add (View, View.Tree);
 
+      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
+
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_added", Refresh'Access, Slot_Object => View);
       Widget_Callback.Object_Connect
@@ -583,8 +591,30 @@ package body Buffer_Views is
          ID              => Generic_View.Get_Module,
          Context_Func    => View_Context_Factory'Access);
 
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "windows view.preferences_changed",
+                Watch => GObject (View));
+
       Refresh (View);
    end Initialize;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Child : constant MDI_Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Buffer_View_Record'Tag);
+      View  : Buffer_View_Access;
+   begin
+      if Child /= null then
+         View := Buffer_View_Access (Get_Widget (Child));
+         Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
+      end if;
+   end Preferences_Changed;
 
    ---------------------
    -- Register_Module --
