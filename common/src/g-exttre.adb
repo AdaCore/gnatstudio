@@ -23,17 +23,18 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions;     use Ada.Exceptions;
+with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
+with Ada.Strings.Fixed;    use Ada.Strings.Fixed;
 
-with Config;             use Config;
+with Config;               use Config;
 with Filesystem.Unix;
 with Filesystem.Windows;
-with Password_Manager;   use Password_Manager;
-with String_Utils;       use String_Utils;
-with Traces;             use Traces;
+with Password_Manager;     use Password_Manager;
+with String_Utils;         use String_Utils;
+with Traces;               use Traces;
+with User_Interface_Tools; use User_Interface_Tools;
 
 package body GNAT.Expect.TTY.Remote is
 
@@ -499,8 +500,7 @@ package body GNAT.Expect.TTY.Remote is
                   Free (Descriptor.Machine.Desc.User_Name);
                   Descriptor.Machine.Desc.User_Name := new String'
                     (Query_User
-                       (Password_Manager.Get_UI.all,
-                        Expect_Out (Descriptor),
+                       (Expect_Out (Descriptor),
                         Password_Mode => False));
 
                   if Descriptor.Machine.Desc.User_Name.all = "" then
@@ -599,8 +599,7 @@ package body GNAT.Expect.TTY.Remote is
                else
                   declare
                      Str : constant String := Query_User
-                       (Password_Manager.Get_UI.all,
-                        Remote_Desc.Extra_Prompt_Array
+                       (Remote_Desc.Extra_Prompt_Array
                           (Res_Extra).Question.all,
                         False);
                   begin
