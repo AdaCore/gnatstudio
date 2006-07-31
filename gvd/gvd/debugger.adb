@@ -275,7 +275,8 @@ package body Debugger is
 
       begin
          GPS.Kernel.Remote.Spawn
-           (Arguments     => The_Args,
+           (Kernel        => Debugger.Kernel,
+            Arguments     => The_Args,
             Server        => Debug_Server,
             Pd            => Descriptor,
             Success       => Success,
