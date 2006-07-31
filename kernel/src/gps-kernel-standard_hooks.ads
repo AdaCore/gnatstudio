@@ -69,6 +69,22 @@ package GPS.Kernel.Standard_Hooks is
    --  Type_Name parameter of String_Hook_Type
    --  See inherited doc
 
+   String_Boolean_Hook_Type : constant String := "string_boolean_hooks";
+   type String_Boolean_Hooks_Args (Length : Natural) is new
+     String_Hooks_Args (Length) with
+      record
+         Bool : Boolean;
+      end record;
+   function Create_Callback_Data
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Hook_Name : String;
+      Data      : access String_Boolean_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
+   --  Hooks that take a string and a boolean as a parameter.
+   --  To create such hooks, use GPS.Kernel.Hooks.Register_Hook with a
+   --  Type_Name parameter of String_Boolean_Hook_Type
+   --  See inherited doc
+
    Project_Hook_Type : constant String := "project_hooks";
    type Project_Hooks_Args is new Hooks_Data with record
       Project : Projects.Project_Type;

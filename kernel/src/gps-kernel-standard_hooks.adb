@@ -58,6 +58,8 @@ package body GPS.Kernel.Standard_Hooks is
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_String
      (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_String_Boolean
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_Project
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_Line_Info
@@ -603,6 +605,20 @@ package body GPS.Kernel.Standard_Hooks is
         (Hooks_Data with Length => Value'Length, Value => Value);
    end From_Callback_Data_String;
 
+   ---------------------------------------
+   -- From_Callback_Data_String_Boolean --
+   ---------------------------------------
+
+   function From_Callback_Data_String_Boolean
+     (Data : Callback_Data'Class) return Hooks_Data'Class
+   is
+      Value : constant String := Nth_Arg (Data, 2);
+   begin
+      return String_Boolean_Hooks_Args'
+        (Hooks_Data with Length => Value'Length, Value => Value,
+         Bool => Nth_Arg (Data, 3));
+   end From_Callback_Data_String_Boolean;
+
    --------------------------------
    -- From_Callback_Data_Context --
    --------------------------------
@@ -679,6 +695,25 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Data.Value);
+      return D;
+   end Create_Callback_Data;
+
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
+
+   function Create_Callback_Data
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Hook_Name : String;
+      Data      : access String_Boolean_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
+   is
+      D : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 3));
+   begin
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, Data.Value);
+      Set_Nth_Arg (D.all, 3, Data.Bool);
       return D;
    end Create_Callback_Data;
 
@@ -980,6 +1015,10 @@ package body GPS.Kernel.Standard_Hooks is
       Register_Hook_Data_Type
         (Kernel, String_Hook_Type,
          Args_Creator => From_Callback_Data_String'Access);
+
+      Register_Hook_Data_Type
+        (Kernel, String_Boolean_Hook_Type,
+         Args_Creator => From_Callback_Data_String_Boolean'Access);
 
       Register_Hook_Data_Type
         (Kernel, Project_Hook_Type,
