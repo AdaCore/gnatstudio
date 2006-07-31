@@ -464,7 +464,9 @@ package body KeyManager_Module is
       Action            : String;
       Default           : String := "none";
       Use_Markup        : Boolean := True;
-      Default_On_Gtk    : Boolean := True) return String;
+      Return_Multiple   : Boolean := True;
+      Default_On_Gtk    : Boolean := True;
+      Is_User_Changed   : access Boolean) return String;
    --  Return the list of key bindings set for a specific action. The returned
    --  string can be displayed as is to the user, but is not suitable for
    --  parsing as a keybinding. The list of keybindings includes the
@@ -475,6 +477,12 @@ package body KeyManager_Module is
    --  If Default_On_Gtk is true and the action is not found in the table but
    --  corresponds to a menu, look it up using standard gtk+ mechanisms and
    --  insert the corresponding entry in Table to speed up further lookups.
+   --  If Return_Multiple is True and there are multiple shortcuts for this
+   --  action, all are concatenated in the resulting string, otherwise only the
+   --  first one found is returned.
+   --  On exit, Is_User_Changed is set to true if at least one of the key
+   --  bindings has been modified by the user (as opposed to being set by a
+   --  script or by default in GPS)
 
    Action_Column     : constant := 0;
    Key_Column        : constant := 1;
@@ -709,6 +717,7 @@ package body KeyManager_Module is
       Iter : Key_Htable.Iterator;
       List : Key_Description_List;
    begin
+      Reset (To);
       Get_First (From, Iter);
       while Get_Element (Iter) /= null loop
          Clone (From => Get_Element (Iter), To => List);
@@ -750,6 +759,8 @@ package body KeyManager_Module is
          Default_Mod : Gdk.Types.Gdk_Modifier_Type)
       is
          Tmp, Binding3, Binding2 : Key_Description_List;
+         Success : Boolean;
+         pragma Unreferenced (Success);
       begin
          if not Remove_Existing_Actions_For_Shortcut then
             Binding3 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
@@ -764,6 +775,22 @@ package body KeyManager_Module is
                    (Tmp.Action.all, Action, Case_Sensitive => False)
                then
                   return;
+               end if;
+               Tmp := Tmp.Next;
+            end loop;
+
+         elsif Update_Menus then
+            --  Remove the gtk+ bindings
+            Tmp := Get (Table, Key_Binding'(Default_Key, Default_Mod));
+            while Tmp /= null loop
+               if Tmp.Action /= null
+                 and then Tmp.Action (Tmp.Action'First) = '/'
+               then
+                  Success := Change_Entry
+                    ("<gps>" & Tmp.Action.all,
+                     Accel_Key  => 0,
+                     Accel_Mods => 0,
+                     Replace    => True);
                end if;
                Tmp := Tmp.Next;
             end loop;
@@ -872,6 +899,7 @@ package body KeyManager_Module is
       if Key = "" or else Key = -Disabled_String then
          --  Bind to an invalid key, so that when saving we know this should be
          --  removed
+         Bind_Internal (Table, 0, 0);
          return;
       end if;
 
@@ -1193,9 +1221,15 @@ package body KeyManager_Module is
                   Child := new Node;
                   Child.Tag := new String'("key");
                   Set_Attribute (Child, "action", Binding.Action.all);
-                  Child.Value := new String'
-                    (Prefix
-                     & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
+
+                  --  Key will be 0 if we have voluntarily saved an invalid
+                  --  binding to indicate the binding should be disabled on the
+                  --  next startup.
+                  if Get_Key (Iter).Key /= 0 then
+                     Child.Value := new String'
+                       (Prefix
+                        & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
+                  end if;
 
                   Add_Child (File, Child);
 
@@ -1256,6 +1290,8 @@ package body KeyManager_Module is
             Prev := Keymanager_Module.Menus_Created;
             Keymanager_Module.Menus_Created := True;
 
+            Handler_Block (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
+
             while Child /= null loop
                --  Remove all other bindings previously defined, so that only
                --  the last definition is taken into account
@@ -1271,6 +1307,8 @@ package body KeyManager_Module is
                Child := Child.Next;
             end loop;
 
+            Handler_Unblock
+              (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
             Keymanager_Module.Menus_Created := Prev;
 
             Free (File);
@@ -1394,7 +1432,9 @@ package body KeyManager_Module is
       Action            : String;
       Default           : String := "none";
       Use_Markup        : Boolean := True;
-      Default_On_Gtk    : Boolean := True) return String
+      Return_Multiple   : Boolean := True;
+      Default_On_Gtk    : Boolean := True;
+      Is_User_Changed   : access Boolean) return String
    is
       use Ada.Strings.Unbounded;
       Result : Ada.Strings.Unbounded.Unbounded_String;
@@ -1415,6 +1455,12 @@ package body KeyManager_Module is
             Binding := Get_Element (Iter);
             exit when Binding = No_Key;
 
+            --  If we have voluntarily assigned an invalid binding to indicate
+            --  a key should be removed, ignore this here as well.
+            if Get_Key (Iter).Key = 0 then
+               Binding := null;
+            end if;
+
             while Binding /= null loop
                if Binding.Action = null then
                   if Binding.Keymap /= null then
@@ -1429,17 +1475,34 @@ package body KeyManager_Module is
                             Case_Sensitive => False)
                  and then Get_Key (Iter).Key /= 0
                then
-                  if Result /= Null_Unbounded_String then
-                     if Use_Markup then
-                        Result := Result & " <b>or</b> ";
-                     else
-                        Result := Result & " or ";
+                  if Return_Multiple
+                    or else Result = Null_Unbounded_String
+                  then
+                     if Result /= Null_Unbounded_String then
+                        if Use_Markup then
+                           Result := Result & " <b>or</b> ";
+                        else
+                           Result := Result & " or ";
+                        end if;
                      end if;
-                  end if;
 
-                  Result := Result
-                    & Prefix
-                    & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier);
+                     Is_User_Changed.all :=
+                       Is_User_Changed.all or Binding.Changed;
+                     Result := Result
+                       & Prefix
+                       & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier);
+
+                  elsif not Return_Multiple
+                    and then Prefix = ""
+                  then
+                     --  When returning a single key binding, give priority to
+                     --  the ones with a single key, so that we can display
+                     --  them in menu shortcuts
+                     Is_User_Changed.all :=
+                       Is_User_Changed.all or Binding.Changed;
+                     Result := To_Unbounded_String
+                       (Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
+                  end if;
                end if;
 
                Binding := Binding.Next;
@@ -1452,6 +1515,8 @@ package body KeyManager_Module is
       Key   : Gtk_Accel_Key;
       Found : Boolean;
    begin
+      Is_User_Changed.all := False;
+
       --  The table also includes the menu accelerators set by gtk+, so by
       --  traversing the table we get access to everything.
       --  ??? This is not true for stock accelerators.
@@ -1461,8 +1526,8 @@ package body KeyManager_Module is
       --  mechanism.
 
       if Default_On_Gtk
-        and then To_String (Result) = ""
         and then Action (Action'First) = '/'
+        and then Result = Null_Unbounded_String
       then
          Lookup_Entry ("<gps>" & Action, Key, Found);
 
@@ -1481,7 +1546,7 @@ package body KeyManager_Module is
                   Key_Binding'(Key.Accel_Key, Key.Accel_Mods), Bind);
             end;
 
-            return Image (Key.Accel_Key, Key.Accel_Mods);
+            Result := Result & Image (Key.Accel_Key, Key.Accel_Mods);
          end if;
       end if;
 
@@ -1502,6 +1567,7 @@ package body KeyManager_Module is
 
       procedure Refresh_Iter (Iter : Gtk_Tree_Iter) is
          It : Gtk_Tree_Iter;
+         User_Changed : aliased Boolean;
       begin
          Iter_Copy (Source => Iter, Dest => It);
          while It /= Null_Iter loop
@@ -1514,7 +1580,8 @@ package body KeyManager_Module is
                     (Editor.Bindings,
                      Action => Get_String (Editor.Model, It, Action_Column),
                      Default => "",
-                     Default_On_Gtk => False));
+                     Default_On_Gtk => False,
+                     Is_User_Changed => User_Changed'Unchecked_Access));
             end if;
 
             Next (Editor.Model, It);
@@ -1555,6 +1622,7 @@ package body KeyManager_Module is
          Iter : Gtk_Tree_Iter;
          pragma Unreferenced (Data, Changed, Iter, Accel_Key, Accel_Mods);
          First : Natural := Accel_Path'First + 1;
+         User_Changed : aliased Boolean;
       begin
          while First <= Accel_Path'Last
            and then Accel_Path (First - 1) /= '>'
@@ -1575,6 +1643,7 @@ package body KeyManager_Module is
                Key        => Lookup_Key_From_Action
                  (Editor.Bindings,
                   Action            => Accel_Path (First .. Accel_Path'Last),
+                  Is_User_Changed   => User_Changed'Unchecked_Access,
                   Default           => "",
                   Default_On_Gtk    => True));
          end if;
@@ -1583,6 +1652,7 @@ package body KeyManager_Module is
       Parent      : Gtk_Tree_Iter;
       Action      : Action_Record_Access;
       Action_Iter : Action_Iterator := Start (Editor.Kernel);
+      User_Changed : aliased Boolean;
    begin
       --  Disable tree filtering while refreshing the contents of the tree.
       --  This works around a bug in gtk+.
@@ -1631,6 +1701,7 @@ package body KeyManager_Module is
                   Key     => Lookup_Key_From_Action
                     (Editor.Bindings,
                      Name,
+                     Is_User_Changed => User_Changed'Unchecked_Access,
                      Default => -Disabled_String));
             end;
          end if;
@@ -1692,6 +1763,12 @@ package body KeyManager_Module is
             Binding := Get_Element (Iter);
             exit Foreach_Binding when Binding = No_Key;
 
+            if Get_Key (Iter).Key = 0 then
+               --  An invalid key, here just to indicate the key should be
+               --  disabled during the next startup.
+               Binding := null;
+            end if;
+
             while Binding /= null loop
                if Binding.Action /= null
                  and then Equal
@@ -1731,7 +1808,6 @@ package body KeyManager_Module is
       end Process_Menu_Binding;
 
    begin
-      Reset (Handler.Table.all);
       Clone (From => Editor.Bindings.all, To => Handler.Table.all);
 
       --  Update the gtk+ accelerators for the menus to reflect the keybindings
@@ -1914,6 +1990,7 @@ package body KeyManager_Module is
             Remove_Existing_Shortcuts_For_Action => True,
             Remove_Existing_Actions_For_Shortcut => True,
             Update_Menus      => False);
+
          Refresh_Editor (Ed);
       end if;
 
@@ -1968,6 +2045,7 @@ package body KeyManager_Module is
          end loop;
       end Insert_Details;
 
+      User_Changed : aliased Boolean;
    begin
       Get_Selected (Selection, Model, Iter);
 
@@ -2004,6 +2082,8 @@ package body KeyManager_Module is
                  (Ed.Bindings,
                   Action            => Get_String (Model, Iter, Action_Column),
                   Default           => -"none",
+                  Is_User_Changed => User_Changed'Unchecked_Access,
+                  Default_On_Gtk    => False,
                   Use_Markup        => False));
 
             Insert_With_Tags
@@ -2733,19 +2813,64 @@ package body KeyManager_Module is
          First := First + 1;
       end loop;
 
-      --  Remove any other keybinding associated with that action, as well as
-      --  any action associated with that key.
-      Bind_Default_Key_Internal
-        (Table  => Keymanager_Module.Key_Manager.Table.all,
-         Kernel => Kernel,
-         Action => Accel_Path (First .. Accel_Path'Last),
-         Key                                  => Image (Accel_Key, Accel_Mods),
-         Save_In_Keys_XML  =>
-           (Keymanager_Module.Key_Manager.Custom_Keys_Loaded
-            and then Keymanager_Module.Menus_Created),
-         Remove_Existing_Shortcuts_For_Action => True,
-         Remove_Existing_Actions_For_Shortcut => True,
-         Update_Menus                         => False);
+      --  Special handling when Key is 0 => either the accel_path has just
+      --  been created, in which case we should preserve any key binding that
+      --  was there before, or the user has cancelled dynamically the key
+      --  binding through gtk+, in which case we need to obey the order.
+      --
+      --  Unfortunately, there is no way currently in gtk+ to distinguish
+      --  between the two apparently, so the least inconvenient is to do
+      --  nothing, and thus ignore cases where the user has pressed Backspace
+      --  in a menu item to delete the shortcut. In fact, we even reset the
+      --  old binding so that the menu still shows the old binding, for
+      --  consistency.
+
+      if Accel_Key = 0 then
+         declare
+            User_Changed : aliased Boolean;
+            Old : constant String := Lookup_Key_From_Action
+              (Table   => Keymanager_Module.Key_Manager.Table,
+               Action  => Accel_Path (First .. Accel_Path'Last),
+               Default => "",
+               Use_Markup => False,
+               Is_User_Changed => User_Changed'Unchecked_Access,
+               Return_Multiple => False,
+               Default_On_Gtk => False);
+         begin
+            if Old /= "" then
+               --  Prevent recursive call to On_Accel_Map_Changed, since we
+               --  are asking to modify the menus here.
+               Handler_Block
+                 (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
+
+               Bind_Default_Key_Internal
+                 (Table  => Keymanager_Module.Key_Manager.Table.all,
+                  Kernel => Kernel,
+                  Action => Accel_Path (First .. Accel_Path'Last),
+                  Key    => Old,
+                  Save_In_Keys_XML  => User_Changed,
+                  Remove_Existing_Shortcuts_For_Action => True,
+                  Remove_Existing_Actions_For_Shortcut => True,
+                  Update_Menus                         => True);
+               Handler_Unblock
+                 (Gtk.Accel_Map.Get, Keymanager_Module.Accel_Map_Id);
+            end if;
+         end;
+      else
+         --  Remove any other keybinding associated with that action, as well
+         --  as any action associated with that key.
+         Bind_Default_Key_Internal
+           (Table  => Keymanager_Module.Key_Manager.Table.all,
+            Kernel => Kernel,
+            Action => Accel_Path (First .. Accel_Path'Last),
+            Key    => Image (Accel_Key, Accel_Mods),
+            Save_In_Keys_XML  =>
+              (Keymanager_Module.Key_Manager.Custom_Keys_Loaded
+               and then Keymanager_Module.Menus_Created),
+            Remove_Existing_Shortcuts_For_Action => True,
+            Remove_Existing_Actions_For_Shortcut => True,
+            Update_Menus                         => False);
+      end if;
    end On_Accel_Map_Changed;
 
    ---------------------
