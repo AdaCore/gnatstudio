@@ -7,6 +7,14 @@ Known Problems fixed in GPS 4.1.0
               one session to the next
   Workaround: None found
 
+- F731-004 Cannot change font for Window view and Project view
+  Problem:    The font used in these views comes from the global gtk+
+              theme set for the system, and cannot be changed from the
+              GPS preferences
+  Workaround: These fonts can be modified by created a file ~/.gps/gtkrc
+              to change gtk+ theme. On linux desktops, there is generally
+              a more convenient system-wide configuration.
+
 - F629-007 Status bar says line 0 when indentation disabled
   Problem:    Let's consider a source editor for which no automatic indentation
               is performed either because it as been explicitely disable in the
