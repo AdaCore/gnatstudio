@@ -1096,6 +1096,8 @@ package body GPS.Kernel.Remote is
       procedure Free is new Ada.Unchecked_Deallocation
         (Path_Row_Record, Path_Row);
    begin
+      Mirror_List.Update_Element
+        (Widget.M_List.all, Row.Cursor, Set_Deleted_State'Access);
       Remove (Widget.Table, Row.Local_Frame);
       Remove (Widget.Table, Row.Remote_Frame);
       Remove (Widget.Table, Row.Sync_Combo);
@@ -2384,14 +2386,34 @@ package body GPS.Kernel.Remote is
                                   Get_Machine_Descriptor (N).Nickname.all;
                      List     : Mirror_List_Access;
                      Cursor   : Mirror_List.Cursor;
+                     Next     : Mirror_List.Cursor;
+                     Path     : Mirror_Path;
+                     Modified : Boolean;
                   begin
-                     List := Get_List (Nickname);
-                     Cursor := List.First;
+                     Modified := False;
+                     List     := Get_List (Nickname);
+                     Cursor   := List.First;
 
                      while Mirror_List.Has_Element (Cursor) loop
-                        List.Update_Element (Cursor, Apply'Access);
-                        Mirror_List.Next (Cursor);
+                        Path := Mirror_List.Element (Cursor);
+
+                        if Get_Deleted_State (Path) then
+                           Modified := True;
+                           Next := Mirror_List.Next (Cursor);
+                           List.Delete (Cursor);
+                           Cursor := Next;
+                        else
+                           if Is_Modified (Path) then
+                              Modified := True;
+                              List.Update_Element (Cursor, Apply'Access);
+                           end if;
+                           Mirror_List.Next (Cursor);
+                        end if;
                      end loop;
+
+                     if Modified then
+                        Invalidate_Predefined_Paths_Cache (Kernel, Nickname);
+                     end if;
                   end;
                end loop;
 
