@@ -62,9 +62,11 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
+with GUI_Utils;
 with Projects;                  use Projects;
 with Remote;                    use Remote;
 with Traces;                    use Traces;
+with User_Interface_Tools;
 
 package body GPS.Main_Window is
 
@@ -184,6 +186,29 @@ package body GPS.Main_Window is
    procedure Default_Window_Command_Handler
      (Data    : in out Callback_Data'Class; Command : String);
    --  Handles shell commands for MDIWindow class
+
+   type User_Interface is new User_Interface_Tools.User_Interface with record
+      Main_Window : Gtk.Window.Gtk_Window;
+   end record;
+   --  Generic User Interface object
+
+   function Query_User
+     (UI            : User_Interface;
+      Prompt        : String;
+      Password_Mode : Boolean) return String;
+   --  See inherited for documentation.
+
+   ----------------
+   -- Query_User --
+   ----------------
+
+   function Query_User
+     (UI            : User_Interface;
+      Prompt        : String;
+      Password_Mode : Boolean) return String is
+   begin
+      return GUI_Utils.Query_User (UI.Main_Window, Prompt, Password_Mode);
+   end Query_User;
 
    -------------
    -- Execute --
@@ -606,6 +631,10 @@ package body GPS.Main_Window is
       Kernel_Callback.Connect
         (Main_Window, "drag_data_received",
          Drag_Data_Received'Access, Kernel_Handle (Main_Window.Kernel));
+
+      --  Set the generic user interface
+      User_Interface_Tools.Set_User_Interface
+        (new User_Interface'(Main_Window => Gtk_Window (Main_Window)));
    end Initialize;
 
    -------------------
