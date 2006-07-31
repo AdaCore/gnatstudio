@@ -194,6 +194,10 @@ package body Project_Explorers is
       Continue        : out Boolean);
    --  Search the next occurrence in the explorer
 
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed.
+
    --------------
    -- Tooltips --
    --------------
@@ -640,6 +644,7 @@ package body Project_Explorers is
       Set_Column_Types (Gtk_Tree_View (Explorer.Tree));
 
       Add (Scrolled, Explorer.Tree);
+      Modify_Font (Explorer.Tree, Get_Pref (View_Fixed_Font));
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
@@ -686,6 +691,11 @@ package body Project_Explorers is
         (Kernel, Project_Changed_Hook, H2,
          Name => "explorer.project_changed", Watch => GObject (Explorer));
 
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "project_Explorer.preferences_changed",
+                Watch => GObject (Explorer));
+
       --  The explorer (project view) is automatically refreshed when the
       --  project view is changed.
 
@@ -705,6 +715,23 @@ package body Project_Explorers is
       Tooltip.Explorer := Project_Explorer_Access (Explorer);
       Set_Tooltip (Tooltip, Explorer.Tree, 250);
    end Initialize;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Child : constant MDI_Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Project_Explorer_Record'Tag);
+      Explorer : Project_Explorer_Access;
+   begin
+      if Child /= null then
+         Explorer := Project_Explorer_Access (Get_Widget (Child));
+         Modify_Font (Explorer.Tree, Get_Pref (View_Fixed_Font));
+      end if;
+   end Preferences_Changed;
 
    --------------------
    -- Child_Selected --
