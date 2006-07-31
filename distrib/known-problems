@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.1.0
 
+- F731-006 Cannot unset the F4 keybinding
+  Problem:    F4 is by default assigning to building the first main unit.
+              You cannot currently unset this key shortcuts through the dialog
+              in /Edit/Key shortcuts, since GPS will keep recreating it from
+              one session to the next
+  Workaround: None found
+
 - F629-007 Status bar says line 0 when indentation disabled
   Problem:    Let's consider a source editor for which no automatic indentation
               is performed either because it as been explicitely disable in the
