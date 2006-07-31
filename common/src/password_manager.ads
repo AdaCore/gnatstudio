@@ -38,7 +38,7 @@ package Password_Manager is
    --   the entered characters.
    --  Return "" if the user hasn't entered anything
 
-   procedure Set_UI (User_Interface : access UI'Class);
+   procedure Set_UI (User_Interface : UI_Ptr);
    --  Set the User Interface to use. It shall be set before any call to
    --  Get_Password, Get_Passphrase, Get_Tool_Password
 
