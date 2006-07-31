@@ -53,7 +53,7 @@ package body Password_Manager is
    Password_List   : Password_Access   := null;
    Passphrase_List : Passphrase_Access := null;
    Tool_List       : Tool_Access       := null;
-   User_Interface  : UI_Ptr            := null;
+   The_UI          : UI_Ptr            := null;
 
    Password_Regexp : constant Pattern_Matcher :=
                        Compile ("^[^\n]*[Pp]assword: *$",
@@ -66,9 +66,9 @@ package body Password_Manager is
    -- Set_UI --
    ------------
 
-   procedure Set_UI (User_Interface : access UI'Class) is
+   procedure Set_UI (User_Interface : UI_Ptr) is
    begin
-      Password_Manager.User_Interface := UI_Ptr (User_Interface);
+      The_UI := User_Interface;
    end Set_UI;
 
    ------------
@@ -77,7 +77,7 @@ package body Password_Manager is
 
    function Get_UI return UI_Ptr is
    begin
-      return User_Interface;
+      return The_UI;
    end Get_UI;
 
    ---------------------------------
@@ -125,7 +125,7 @@ package body Password_Manager is
       end Full_Machine_Name;
 
    begin
-      if User_Interface = null then
+      if The_UI = null then
          raise UI_Not_Set;
       end if;
 
@@ -150,7 +150,7 @@ package body Password_Manager is
          declare
             Str : constant String :=
                     Query_User
-                      (User_Interface.all,
+                      (The_UI.all,
                        "Please enter " & Full_Machine_Name & "'s password:",
                        Password_Mode => True);
          begin
@@ -175,7 +175,7 @@ package body Password_Manager is
    is
       Psp : Passphrase_Access := Passphrase_List;
    begin
-      if User_Interface = null then
+      if The_UI = null then
          raise UI_Not_Set;
       end if;
 
@@ -198,7 +198,7 @@ package body Password_Manager is
          declare
             Str : constant String :=
                     Query_User
-                      (User_Interface.all,
+                      (The_UI.all,
                        "Please enter passphrase for key " & Key_Id & ":",
                        Password_Mode => True);
          begin
@@ -223,7 +223,7 @@ package body Password_Manager is
    is
       Psp : Tool_Access := Tool_List;
    begin
-      if User_Interface = null then
+      if The_UI = null then
          raise UI_Not_Set;
       end if;
 
@@ -246,7 +246,7 @@ package body Password_Manager is
          declare
             Str : constant String :=
                     Query_User
-                      (User_Interface.all,
+                      (The_UI.all,
                        "Please enter password for tool " & Tool & ":",
                        Password_Mode => True);
          begin
