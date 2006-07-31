@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;      use Glib;
-with GUI_Utils; use GUI_Utils;
 
 package body Password_Manager is
 
@@ -54,6 +53,7 @@ package body Password_Manager is
    Password_List   : Password_Access   := null;
    Passphrase_List : Passphrase_Access := null;
    Tool_List       : Tool_Access       := null;
+   User_Interface  : UI_Ptr            := null;
 
    Password_Regexp : constant Pattern_Matcher :=
                        Compile ("^[^\n]*[Pp]assword: *$",
@@ -61,6 +61,24 @@ package body Password_Manager is
    Passphrase_Regexp : constant Pattern_Matcher :=
                          Compile ("^[^\n]*[Pp]assphrase for key '([^']*)': *$",
                                   Multiple_Lines or Single_Line);
+
+   ------------
+   -- Set_UI --
+   ------------
+
+   procedure Set_UI (User_Interface : access UI'Class) is
+   begin
+      Password_Manager.User_Interface := UI_Ptr (User_Interface);
+   end Set_UI;
+
+   ------------
+   -- Get_UI --
+   ------------
+
+   function Get_UI return UI_Ptr is
+   begin
+      return User_Interface;
+   end Get_UI;
 
    ---------------------------------
    -- Get_Default_Password_Regexp --
@@ -85,8 +103,7 @@ package body Password_Manager is
    ------------------
 
    function Get_Password
-     (Parent       : Gtk.Window.Gtk_Window;
-      Network_Name : String;
+     (Network_Name : String;
       User_Name    : String := "";
       Force_Asking : Boolean := False) return String
    is
@@ -108,6 +125,10 @@ package body Password_Manager is
       end Full_Machine_Name;
 
    begin
+      if User_Interface = null then
+         raise UI_Not_Set;
+      end if;
+
       while Pwd /= null loop
          exit when Pwd.Machine.all = Network_Name
            and then Pwd.User_Name.all = User_Name;
@@ -129,7 +150,7 @@ package body Password_Manager is
          declare
             Str : constant String :=
                     Query_User
-                      (Parent,
+                      (User_Interface.all,
                        "Please enter " & Full_Machine_Name & "'s password:",
                        Password_Mode => True);
          begin
@@ -149,12 +170,15 @@ package body Password_Manager is
    --------------------
 
    function Get_Passphrase
-     (Parent       : Gtk.Window.Gtk_Window;
-      Key_Id       : String;
+     (Key_Id       : String;
       Force_Asking : Boolean := False) return String
    is
       Psp : Passphrase_Access := Passphrase_List;
    begin
+      if User_Interface = null then
+         raise UI_Not_Set;
+      end if;
+
       while Psp /= null loop
          exit when Psp.Key_Id.all = Key_Id;
          Psp := Psp.Next;
@@ -174,7 +198,7 @@ package body Password_Manager is
          declare
             Str : constant String :=
                     Query_User
-                      (Parent,
+                      (User_Interface.all,
                        "Please enter passphrase for key " & Key_Id & ":",
                        Password_Mode => True);
          begin
@@ -194,12 +218,15 @@ package body Password_Manager is
    -----------------------
 
    function Get_Tool_Password
-     (Parent       : Gtk.Window.Gtk_Window;
-      Tool         : String;
+     (Tool         : String;
       Force_Asking : Boolean := False) return String
    is
       Psp : Tool_Access := Tool_List;
    begin
+      if User_Interface = null then
+         raise UI_Not_Set;
+      end if;
+
       while Psp /= null loop
          exit when Psp.Tool_Name.all = Tool;
          Psp := Psp.Next;
@@ -219,7 +246,7 @@ package body Password_Manager is
          declare
             Str : constant String :=
                     Query_User
-                      (Parent,
+                      (User_Interface.all,
                        "Please enter password for tool " & Tool & ":",
                        Password_Mode => True);
          begin
