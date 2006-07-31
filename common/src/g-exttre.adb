@@ -31,7 +31,6 @@ with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
 with Config;             use Config;
 with Filesystem.Unix;
 with Filesystem.Windows;
-with GUI_Utils;          use GUI_Utils;
 with Password_Manager;   use Password_Manager;
 with String_Utils;       use String_Utils;
 with Traces;             use Traces;
@@ -154,10 +153,9 @@ package body GNAT.Expect.TTY.Remote is
    --  Handle exceptions raised by gnat.expect or gnat.expect.tty
 
    procedure Get_Or_Init_Session
-     (Descriptor  : in out Remote_Process_Descriptor;
-      Err_To_Out  : Boolean := True;
-      Main_Window : Gtk.Window.Gtk_Window;
-      On_New_Connection   : access procedure (Target_Name : String) := null);
+     (Descriptor        : in out Remote_Process_Descriptor;
+      Err_To_Out        : Boolean := True;
+      On_New_Connection : access procedure (Target_Name : String) := null);
    --  Retrieve a READY session, or initialize a new one.
    --  Assign it to descriptor upon success
    --  Raises No_Session_Available is all sessions are BUSY
@@ -354,10 +352,9 @@ package body GNAT.Expect.TTY.Remote is
    -------------------------
 
    procedure Get_Or_Init_Session
-     (Descriptor  : in out Remote_Process_Descriptor;
-      Err_To_Out  : Boolean := True;
-      Main_Window : Gtk.Window.Gtk_Window;
-      On_New_Connection   : access procedure (Target_Name : String) := null)
+     (Descriptor        : in out Remote_Process_Descriptor;
+      Err_To_Out        : Boolean := True;
+      On_New_Connection : access procedure (Target_Name : String) := null)
    is
       Session_Nb   : Natural := 0;
       Remote_Desc  : Remote_Descriptor_Access;
@@ -502,7 +499,7 @@ package body GNAT.Expect.TTY.Remote is
                   Free (Descriptor.Machine.Desc.User_Name);
                   Descriptor.Machine.Desc.User_Name := new String'
                     (Query_User
-                       (Main_Window,
+                       (Password_Manager.Get_UI.all,
                         Expect_Out (Descriptor),
                         Password_Mode => False));
 
@@ -549,16 +546,14 @@ package body GNAT.Expect.TTY.Remote is
                      --  Password
                      Password := new String'
                        (Get_Password
-                          (Main_Window,
-                           Descriptor.Machine.Desc.Network_Name.all,
+                          (Descriptor.Machine.Desc.Network_Name.all,
                            Descriptor.Machine.Desc.User_Name.all,
                            Force_Password_Ask));
                   else
                      --  Passphrase
                      Password := new String'
                        (Get_Passphrase
-                          (Main_Window,
-                           Expect_Out
+                          (Expect_Out
                              (Descriptor.Machine.Sessions (Session_Nb).Pd)
                                (Matched (1).First .. Matched (1).Last),
                            Force_Password_Ask));
@@ -604,7 +599,7 @@ package body GNAT.Expect.TTY.Remote is
                else
                   declare
                      Str : constant String := Query_User
-                       (Main_Window,
+                       (Password_Manager.Get_UI.all,
                         Remote_Desc.Extra_Prompt_Array
                           (Res_Extra).Question.all,
                         False);
@@ -884,7 +879,6 @@ package body GNAT.Expect.TTY.Remote is
       Args                : GNAT.OS_Lib.Argument_List;
       Execution_Directory : String := "";
       Err_To_Out          : Boolean := False;
-      Main_Window         : Gtk.Window.Gtk_Window := null;
       On_New_Connection   : access procedure (Target_Name : String) := null)
    is
       Res          : Expect_Match;
@@ -922,7 +916,7 @@ package body GNAT.Expect.TTY.Remote is
          Desc.Session_Died         := False;
 
          Get_Or_Init_Session
-           (Desc, True, Main_Window, On_New_Connection);
+           (Desc, True, On_New_Connection);
 
          Desc.Terminated :=  False;
          Desc.Busy := True;
