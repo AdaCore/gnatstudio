@@ -3281,22 +3281,24 @@ package body Project_Properties is
    function Get_Attribute_Type_From_Name
      (Pkg : String; Name : String) return Attribute_Description_Access is
    begin
-      for P in Properties_Module_ID.Pages'Range loop
-         for S in Properties_Module_ID.Pages (P).Sections'Range loop
-            declare
-               Sect : Attribute_Page_Section renames
-                 Properties_Module_ID.Pages (P).Sections (S);
-            begin
-               for A in Sect.Attributes'Range loop
-                  if Sect.Attributes (A).Pkg.all = Pkg
-                    and then Sect.Attributes (A).Name.all = Name
-                  then
-                     return Sect.Attributes (A);
-                  end if;
-               end loop;
-            end;
+      if Properties_Module_ID.Pages /= null then
+         for P in Properties_Module_ID.Pages'Range loop
+            for S in Properties_Module_ID.Pages (P).Sections'Range loop
+               declare
+                  Sect : Attribute_Page_Section renames
+                    Properties_Module_ID.Pages (P).Sections (S);
+               begin
+                  for A in Sect.Attributes'Range loop
+                     if Sect.Attributes (A).Pkg.all = Pkg
+                       and then Sect.Attributes (A).Name.all = Name
+                     then
+                        return Sect.Attributes (A);
+                     end if;
+                  end loop;
+               end;
+            end loop;
          end loop;
-      end loop;
+      end if;
 
       return null;
    end Get_Attribute_Type_From_Name;
