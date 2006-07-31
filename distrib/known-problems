@@ -11,7 +11,7 @@ Known Problems fixed in GPS 4.1.0
   Problem:    The font used in these views comes from the global gtk+
               theme set for the system, and cannot be changed from the
               GPS preferences
-  Workaround: These fonts can be modified by created a file ~/.gps/gtkrc
+  Workaround: These fonts can be modified by creating a file ~/.gps/gtkrc
               to change gtk+ theme. On linux desktops, there is generally
               a more convenient system-wide configuration.
 
