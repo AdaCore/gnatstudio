@@ -4600,6 +4600,12 @@ The last four parameters are callbacks:
       <description>This function returns the current contents of the command window</description>
   </shell_doc>
 
+  <shell_doc name="GPS.CommandWindow.set_background">
+      <param name="self">An instance of GPS.CommandWindow</param>
+      <param name="color" default="">A string</param>
+      <description>Change the background color of the command window. In most cases, this can be used to make the command window more obvious, or to point out errors by changing the color. If the color parameter is not specified, the color reverts to its default</description>
+  </shell_doc>
+
   <!--#################################################################
       ## Clipboard class
       #################################################################-->
