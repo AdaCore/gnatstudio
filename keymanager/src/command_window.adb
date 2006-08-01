@@ -23,6 +23,7 @@ with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with GPS.Kernel;             use GPS.Kernel;
+with Gdk.Color;              use Gdk.Color;
 with Gdk.Event;              use Gdk.Event;
 with Gdk.Main;               use Gdk.Main;
 with Gdk.Types;              use Gdk.Types;
@@ -39,14 +40,13 @@ with Gtk.Frame;              use Gtk.Frame;
 with Gtk.GEntry;             use Gtk.GEntry;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.Object;             use Gtk.Object;
+with Gtk.Style;              use Gtk.Style;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 with GUI_Utils;              use GUI_Utils;
 with KeyManager_Module;      use KeyManager_Module;
---  with Traces;                 use Traces;
 
 package body Command_Window is
---     Me : constant Debug_Handle := Create ("CW");
 
    type Command_Window_Record is new Gtk_Window_Record with record
       Kernel      : Kernel_Handle;
@@ -111,6 +111,7 @@ package body Command_Window is
    On_Key_Cst      : aliased constant String := "on_key";
    Text_Cst        : aliased constant String := "text";
    Cursor_Cst      : aliased constant String := "cursor";
+   Color_Cst       : aliased constant String := "color";
 
    ------------------
    -- On_Key_Press --
@@ -395,6 +396,8 @@ package body Command_Window is
         New_Class (Get_Kernel (Data), "CommandWindow");
       Inst  : constant Class_Instance := Nth_Arg (Data, 1, Class);
       Window : Command_Window;
+      Color  : Gdk_Color;
+      Success : Boolean;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, ( --  1 => Self,
@@ -437,6 +440,20 @@ package body Command_Window is
          else
             Set_Return_Value (Data, "");
          end if;
+
+      elsif Command = "set_background" then
+         Name_Parameters (Data, ( --  1 => Self,
+                                 2 => Color_Cst'Access));
+         Window := Command_Window (GObject'(Get_Data (Inst)));
+         if Nth_Arg (Data, 2, "") = "" then
+            Color := Get_Base (Get_Style (Window), State_Normal);
+         else
+            Color := Parse (Nth_Arg (Data, 2));
+            Alloc_Color (Get_Default_Colormap, Color, Success => Success);
+         end if;
+         Modify_Base (Window.Line, State_Normal, Color);
+         Modify_Base (Window.Line, State_Active, Color);
+         Modify_Base (Window.Line, State_Selected, Color);
       end if;
    end Command_Handler;
 
@@ -461,6 +478,9 @@ package body Command_Window is
          Handler => Command_Handler'Access);
       Register_Command
         (Kernel, "read", 0, 0, Class => Class,
+         Handler => Command_Handler'Access);
+      Register_Command
+        (Kernel, "set_background", 0, 1, Class => Class,
          Handler => Command_Handler'Access);
    end Register_Module;
 
