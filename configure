@@ -4864,7 +4864,7 @@ case "${host}" in
   ia64-*-* )
     case "${host}" in
       *-linux-gnu* )
-	PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
+        PYTHON_LIBS="-Wl,-export-dynamic -ldl ${PYTHON_LIBS}"
         opsys=gnu-linux
 	PRINT_CMD="a2ps"
         ;;
