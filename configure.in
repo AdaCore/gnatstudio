@@ -176,7 +176,7 @@ case "${host}" in
     case "${host}" in
       *-linux-gnu* )
 	PYTHON_LIBS="-Wl,-export-dynamic -ldl ${PYTHON_LIBS}"
-        opsys=gnu-linux
+	opsys=gnu-linux
 	PRINT_CMD="a2ps"
         ;;
       *-hp-hpux11* )
