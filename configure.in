@@ -118,6 +118,7 @@ case "${host}" in
 
   powerpc-*-darwin* )
     machine=powerpc opsys=darwin
+    PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
     STRIP_CR=True
   ;;
 
