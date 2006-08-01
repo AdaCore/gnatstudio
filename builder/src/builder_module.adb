@@ -684,7 +684,7 @@ package body Builder_Module is
 
       Free (Langs);
 
-      Prj := Project;
+      Prj := Extending_Project (Project, Recurse => True);
 
       --  If no file was specified in data, simply compile the current file
 
@@ -700,7 +700,9 @@ package body Builder_Module is
                   Change_Dir (Directory_Information (Context));
                end if;
 
-               Prj := Get_Project_From_File (Get_Registry (Kernel).all, F);
+               Prj := Extending_Project
+                 (Get_Project_From_File (Get_Registry (Kernel).all, F),
+                  Recurse => True);
                Args := Compute_Arguments (Kernel, Prj, "", F);
             end;
 
@@ -714,7 +716,7 @@ package body Builder_Module is
 
       else
          Args := Compute_Arguments
-           (Kernel, Project, "", File,
+           (Kernel, Prj, "", File,
             Unique_Project => not Main_Units,
             Extra_Args     => Common_Args);
          Change_Dir (Dir_Name (Project_Path (Project)).all);
@@ -731,6 +733,9 @@ package body Builder_Module is
       end case;
 
       if Compilation_Starting (Kernel, Error_Category, Quiet => False) then
+         String_List_Utils.String_List.Append
+           (Builder_Module_ID.Output,
+            Cmd.all & " " & Argument_List_To_Quoted_String (Args.all));
          Launch_Process
            (Kernel,
             Command              => Cmd.all,
@@ -830,8 +835,9 @@ package body Builder_Module is
       Extra_Args  : Argument_List_Access := null)
    is
       Prj             : constant Project_Type :=
-                          Get_Project_From_File
-                            (Get_Registry (Kernel).all, File);
+        Extending_Project
+          (Get_Project_From_File (Get_Registry (Kernel).all, File),
+           Recurse => True);
       Old_Dir         : constant Dir_Name_Str := Get_Current_Dir;
       Cmd             : String_Access;
       Fd              : Process_Descriptor_Access;
@@ -968,6 +974,11 @@ package body Builder_Module is
         (Kernel, Prj, Shadow_Path.all, Compilable_File, Compile_Only => True);
 
       if Compilation_Starting (Kernel, Error_Category, Quiet => Quiet) then
+         String_List_Utils.String_List.Append
+           (Builder_Module_ID.Output,
+            Cmd.all & " " & Argument_List_To_Quoted_String
+              (Common_Args.all & Args.all));
+
          Launch_Process
            (Kernel,
             Command              => Cmd.all,
@@ -1132,6 +1143,12 @@ package body Builder_Module is
             Args : Argument_List_Access := Argument_String_To_List (Cmd);
          begin
             --  ??? Is this always the Build_Server ? Should ask the user ?
+            String_List_Utils.String_List.Append
+              (Builder_Module_ID.Output,
+               Args (Args'First).all & " "
+               & Argument_List_To_Quoted_String
+                 (Args (Args'First + 1 .. Args'Last)));
+
             Launch_Process
               (Kernel,
                Command              => Args (Args'First).all,
