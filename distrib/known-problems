@@ -15,6 +15,14 @@ Known Problems fixed in GPS 4.1.0
               to change gtk+ theme. On linux desktops, there is generally
               a more convenient system-wide configuration.
 
+- F703-013 Compiling a file ignores extending projects
+  Problem:    If you are using extending projects, and compile a file that is
+              not overridden in the extending project, GPS compiles it in the
+              context of the original project, but should really compile in
+              the context of the extending project.
+  Workaround: Use the menu /Build/Make/Custom... to enter your own custom
+              compilation command
+
 - F629-007 Status bar says line 0 when indentation disabled
   Problem:    Let's consider a source editor for which no automatic indentation
               is performed either because it as been explicitely disable in the
