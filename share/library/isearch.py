@@ -253,6 +253,11 @@ class Isearch (CommandWindow):
      # sent to the parent window
      try:
         key.index ("control-")
+        self.destroy()
+        return True
+     except: pass
+
+     try:
         key.index ("alt-")
         self.destroy ()
         return True
