@@ -56,6 +56,11 @@ highlight_next_matches = True
 next_matches_color = "cyan"
 ## Color to use to highlight the next matches
 
+background_color = "yellow"
+## Background color to use for the search field
+
+error_color = "red"
+## Background color to use for the search field when no match is found
 
 #############################################################################
 ## No user-customization beyond this line
@@ -125,6 +130,7 @@ class Isearch (CommandWindow):
        self.overlay.set_property ("background", next_matches_color)
        self.insert_overlays_id = 0
        self.remove_overlays ()
+       self.set_background (background_color)
 
      except:
        pass
@@ -183,7 +189,7 @@ class Isearch (CommandWindow):
      """Highlight the match at self.loc"""
      self.editor.select (self.loc, self.end_loc)
      if save_in_stack:
-        self.stack.append ((self.loc, self.end_loc, self.read ()))
+        self.stack.append ((self.loc, self.end_loc, self.read (), 1))
 
    def on_key (self, input, key, cursor_pos):
      """The user has typed a new key.
@@ -203,8 +209,9 @@ class Isearch (CommandWindow):
           end = start.forward_line () - 2  ## Go to end of this line
     
        self.locked = True
-       self.write (input[:cursor_pos + 1] + self.editor.get_chars (start, end) + \
-             input[cursor_pos + 1 :])
+       self.write (input[:cursor_pos + 1] + \
+                   self.editor.get_chars (start, end) + \
+                   input[cursor_pos + 1 :])
        self.locked = False
        self.editor.select (self.loc, end + 1)
        return True
@@ -215,22 +222,23 @@ class Isearch (CommandWindow):
            self.stack.pop ()
         if self.stack != []:
            self.locked = True
-           (self.loc, self.end_loc, pattern) = self.stack [-1]
+           (self.loc, self.end_loc, pattern, matched) = self.stack [-1]
            changed = pattern != input
            if changed: self.remove_overlays ()
            self.write (pattern)
            self.highlight_match (save_in_stack = 0)
+           self.set_background (background_color)
            if changed: self.insert_overlays ()
            self.locked = False
            return True
 
      # doing another isearch just searches for the next occurrence
-     # Since we do not know which key binding is bound to this action, we test for
-     # the name of the action directly. Note that if the user has defined another
-     # action wrapping this function, this will fail... Not too bad
+     # Since we do not know which key binding is bound to this action, we test
+     # for the name of the action directly. Note that if the user has defined
+     # another action wrapping this function, this will fail when he starts
+     # using the other action
      actions = lookup_actions_from_key (key)
-     if actions.__contains__ (isearch_action_name) \
-        or actions.__contains__ (isearch_menu):
+     if isearch_action_name in actions or isearch_menu in actions:
         if input == "":
            self.write (Isearch.last_search)
         else:
@@ -239,13 +247,13 @@ class Isearch (CommandWindow):
            self.on_changed (input, len (input), redo_overlays=0)
         return True
 
-     if actions.__contains__ (isearch_backward_action_name) \
-        or actions.__contains__ (isearch_backward_menu):
+     if isearch_backward_action_name in actions \
+        or isearch_backward_menu in actions:
         if input == "":
            self.write (Isearch.last_search)
         else:
            self.backward = True
-           self.loc = self.end_loc
+           self.loc = self.loc - 1
            self.on_changed (input, len (input), redo_overlays=0)
         return True
 
@@ -287,14 +295,19 @@ class Isearch (CommandWindow):
         Isearch.last_search = input
 
         # Special case for backward search: if the current location matches,
-        # no need to do anything else
+        # no need to do anything else. This is so that when the user keeps
+        # adding characters to the pattern, we correctly highlight them at
+        # the current location
         if self.backward:
-           (match_from, match_to) = self.loc.search \
+           result = self.loc.search \
               (input, regexp = self.regexp,
                case_sensitive = self.case_sensitive,
+               dialog_on_failure = False, 
                backward = False)
-           if match_from == self.loc:
-              self.end_log = match_to
+           if result and result[0] == self.loc:
+              self.set_background (background_color)
+              (match_from, match_to) = result
+              self.end_loc = match_to
               self.highlight_match ()
               self.insert_overlays ()
               return 
@@ -302,11 +315,25 @@ class Isearch (CommandWindow):
         result = self.loc.search \
             (input, regexp = self.regexp,
                     case_sensitive = self.case_sensitive,
+                    dialog_on_failure = False, 
                     backward = self.backward)
         if result:
+           self.set_background (background_color)
            (self.loc, self.end_loc) = result
            self.highlight_match ()
            if redo_overlays: self.insert_overlays ()
+        else:
+           # If the last entry in the stack was a match, add a new one
+           if self.stack [-1][3]:
+              self.stack.append ((self.loc, self.end_loc, self.read (), 0))
+
+           # Loop around, so that next search matches
+           if self.backward:
+             self.loc = self.loc.buffer().end_of_buffer()
+           else:
+             self.loc = self.loc.buffer().beginning_of_buffer()
+           self.end_loc = self.loc
+           self.set_background (error_color)
 
    def on_activate (self, input):
      """The user has pressed enter"""
