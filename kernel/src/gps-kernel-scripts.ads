@@ -889,7 +889,7 @@ package GPS.Kernel.Scripts is
 
    function Get_Data (Data : Callback_Data; N : Positive)
       return Projects.Project_Type;
-   --  Retrieve get some project information in Instance
+   --  Retrieve some project information in Instance
 
    function Create_Project
      (Script  : access Scripting_Language_Record'Class;
