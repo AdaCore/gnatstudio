@@ -505,7 +505,7 @@ This directory always ends with a directory separator</description>
   <shell_doc name="GPS.lookup_actions_from_key">
        <param name="key">A string</param>
        <return>A list of strings</return>
-       <description>Given a key binding, for instance "control-x control-b", this function returns the list of actions that could be executed. Not all actions would be executed, though, since only the ones for which the filter matches are executed</description>
+       <description>Given a key binding, for instance "control-x control-b", this function returns the list of actions that could be executed. Not all actions would be executed, though, since only the ones for which the filter matches are executed. The name of the actions is always in lower cases.</description>
        <see_also name="GPS.lookup_actions" />
   </shell_doc>
 
