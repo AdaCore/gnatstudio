@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;            use Ada.Calendar;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
@@ -2755,7 +2756,7 @@ package body KeyManager_Module is
 
                   while Binding /= No_Key loop
                      if Binding.Action /= null then
-                        Set_Return_Value (Data, Binding.Action.all);
+                        Set_Return_Value (Data, To_Lower (Binding.Action.all));
                      elsif Binding.Keymap /= null then
                         Set_Return_Value (Data, "");
                      end if;
@@ -2784,7 +2785,7 @@ package body KeyManager_Module is
          begin
             Set_Return_Value_As_List (Data);
             while Get (Iter) /= null loop
-               Set_Return_Value (Data, Get (Iter));
+               Set_Return_Value (Data, To_Lower (Get (Iter)));
                Next (Get_Kernel (Data), Iter);
             end loop;
          end;
