@@ -45,8 +45,14 @@ unmodified in any copy.
 @end titlepage
 
 @ifnottex
+@ifhtml
+@node Top, Introduction,,
+@top Using the GNAT Programming Studio
+@end ifhtml
+@ifnothtml
 @node Top, Introduction, (dir), (dir)
 @top Using the GNAT Programming Studio
+@end ifnothtml
 
 Version @value{GPSVersion}
 
