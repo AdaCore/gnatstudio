@@ -87,6 +87,7 @@ case "${host}" in
   ## HP 9000 series 700 and 800, running HP/UX
   hppa*-hp-hpux1[[0-9]]* )
     machine=hp800 opsys=hpux10
+    PYTHON_LIBS="-Wl,-E ${PYTHON_LIBS}"
   ;;
 
   mips-sgi-irix6.5* )
@@ -180,6 +181,7 @@ case "${host}" in
 	PRINT_CMD="a2ps"
         ;;
       *-hp-hpux11* )
+	PYTHON_LIBS="-ldld -ldl -Wl,-E ${PYTHON_LIBS}"
         opsys=hpux10
         ;;
     esac
