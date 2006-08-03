@@ -26,7 +26,7 @@ with Gdk.Event;
 with Glib.Xml_Int;
 with GNAT.OS_Lib;
 with GPS.Kernel;
-with Gtk.Widget;
+with Gtk.Box;
 
 package Commands.Interactive is
 
@@ -75,33 +75,11 @@ package Commands.Interactive is
    --  result of executing GPS shell or Python scripts, or running external
    --  applications.
 
-   function Component_Editor
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Component : access Command_Component_Record)
-      return Gtk.Widget.Gtk_Widget is abstract;
-   --  Return a graphical widget that can be used to edit Component.
-   --  This widget should provide all the fields to edit the contents of the
-   --  component.
-   --  The result will be destroyed automatically when its parent container
-   --  is destroyed.
-
-   procedure Update_From_Editor
-     (Component : access Command_Component_Record;
-      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class) is abstract;
-   --  This function is passed the Editor created by Component_Editor, and
-   --  should update the component accordingly.
-
    function Get_Name
      (Component : access Command_Component_Record) return String is abstract;
    --  Return a short name for the component. This will generally be the
    --  command that it executes. This is used when listing all the components
    --  of an action
-
-   procedure To_XML
-     (Component   : access Command_Component_Record;
-      Action_Node : Glib.Xml_Int.Node_Ptr) is abstract;
-   --  Create an XML node for the Component, and add it to Child, which should
-   --  describe the command itself.
 
    -------------------------
    -- Interactive_Command --
@@ -139,29 +117,22 @@ package Commands.Interactive is
    --  only one component, not editable graphically.
    --  Returned value must be freed by the caller.
 
-   function Command_Editor
-     (Command : access Interactive_Command) return Gtk.Widget.Gtk_Widget;
-   --  Return a widget to edit the general properties of the command.
-   --  This editor should include the various command_components, which are
-   --  edited separately. For instance, the return widget should be used to
-   --  edit the default window in which the output of the command goes,
-   --  whether it applies to such or such module,...
-   --  null should be returned if there is no specific property to edit for
-   --  this command. This is the default.
+   type Command_Editor_Record is abstract new Gtk.Box.Gtk_Box_Record
+      with null record;
+   type Command_Editor is access all Command_Editor_Record'Class;
 
-   procedure Update_From_Editor
+   function Create_Command_Editor
      (Command : access Interactive_Command;
-      Editor  : Gtk.Widget.Gtk_Widget);
-   --  Edit the properties of the command from the editor returned by
-   --  Command_Editor
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Command_Editor;
+   --  Return a widget to edit a command and its various components
 
-   procedure To_XML
-     (Command     : access Interactive_Command;
-      Action_Node : Glib.Xml_Int.Node_Ptr);
-   --  Create XML nodes for Command. This should add attributes to Action_Node,
-   --  and new children if needed.
-   --  This should also save all components of the command
-   --  By default, this does nothing
+   function To_XML
+     (Editor      : access Command_Editor_Record)
+      return Glib.Xml_Int.Node_Ptr is abstract;
+   --  Return a newly allocated XML node representing the command edited by
+   --  Editor. null will be returned if the command cannot be represented in
+   --  XML (internal command for instance).
 
    -------------------------
    --  Component_Iterator --

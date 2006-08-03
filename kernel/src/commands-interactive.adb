@@ -19,12 +19,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
-
 with Glib.Xml_Int; use Glib.Xml_Int;
 with Gdk.Event;    use Gdk.Event;
-with Gtk.Label;    use Gtk.Label;
 with GPS.Intl;     use GPS.Intl;
 
 package body Commands.Interactive is
@@ -42,18 +39,8 @@ package body Commands.Interactive is
    type Internal_Component_Record is new Command_Component_Record
       with null record;
 
-   function Component_Editor
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Component : access Internal_Component_Record)
-      return Gtk.Widget.Gtk_Widget;
-   procedure Update_From_Editor
-     (Component : access Internal_Component_Record;
-      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
    function Get_Name
      (Component : access Internal_Component_Record) return String;
-   procedure To_XML
-     (Component   : access Internal_Component_Record;
-      Action_Node : Glib.Xml_Int.Node_Ptr);
    --  See docs for inherited subprograms
 
    Internal_Component : aliased Internal_Component_Record;
@@ -92,35 +79,6 @@ package body Commands.Interactive is
       Free (Iter.all);
       Unchecked_Free (Iter);
    end Free;
-
-   ----------------------
-   -- Component_Editor --
-   ----------------------
-
-   function Component_Editor
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Component : access Internal_Component_Record)
-      return Gtk.Widget.Gtk_Widget
-   is
-      pragma Unreferenced (Kernel, Component);
-      Label : Gtk_Label;
-   begin
-      Gtk_New (Label, -"Built-in action");
-      return Gtk.Widget.Gtk_Widget (Label);
-   end Component_Editor;
-
-   ------------------------
-   -- Update_From_Editor --
-   ------------------------
-
-   procedure Update_From_Editor
-     (Component : access Internal_Component_Record;
-      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
-      pragma Unreferenced (Component, Editor);
-   begin
-      null;
-   end Update_From_Editor;
 
    -----------
    -- Start --
@@ -260,30 +218,19 @@ package body Commands.Interactive is
       Free (X.Label);
    end Free;
 
-   --------------------
-   -- Command_Editor --
-   --------------------
+   ---------------------------
+   -- Create_Command_Editor --
+   ---------------------------
 
-   function Command_Editor
-     (Command : access Interactive_Command) return Gtk.Widget.Gtk_Widget
+   function Create_Command_Editor
+     (Command : access Interactive_Command;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Command_Editor
    is
-      pragma Unreferenced (Command);
+      pragma Unreferenced (Command, Kernel);
    begin
       return null;
-   end Command_Editor;
-
-   ------------------------
-   -- Update_From_Editor --
-   ------------------------
-
-   procedure Update_From_Editor
-     (Command : access Interactive_Command;
-      Editor  : Gtk.Widget.Gtk_Widget)
-   is
-      pragma Unreferenced (Command, Editor);
-   begin
-      null;
-   end Update_From_Editor;
+   end Create_Command_Editor;
 
    --------------
    -- Get_Name --
@@ -296,34 +243,6 @@ package body Commands.Interactive is
    begin
       return -"Built-in command";
    end Get_Name;
-
-   ------------
-   -- To_XML --
-   ------------
-
-   procedure To_XML
-     (Component   : access Internal_Component_Record;
-      Action_Node : Glib.Xml_Int.Node_Ptr)
-   is
-      pragma Unreferenced (Component);
-      C : constant Node_Ptr := new Node;
-   begin
-      C.Tag := new String'("builtin");
-      Add_Child (Action_Node, C);
-   end To_XML;
-
-   ------------
-   -- To_XML --
-   ------------
-
-   procedure To_XML
-     (Command     : access Interactive_Command;
-      Action_Node : Glib.Xml_Int.Node_Ptr)
-   is
-      pragma Unreferenced (Command);
-   begin
-      Set_Attribute (Action_Node, "built-in", "true");
-   end To_XML;
 
    --------------
    -- Progress --
