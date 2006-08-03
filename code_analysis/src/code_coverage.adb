@@ -27,10 +27,13 @@ package body Code_Coverage is
    -- Get_Project_From_File --
    ---------------------------
 
-   function Get_Project_From_File (File : VFS.Virtual_File)
-                                   return VFS.Virtual_File is
+   function Get_Project_From_File
+     (File   : VFS.Virtual_File;
+      Number : Natural) return VFS.Virtual_File
+   is
       pragma Unreferenced (File);
-      Project : constant VFS.Virtual_File := VFS.Create ("Dummy_Project_Name");
+      Project : constant VFS.Virtual_File := VFS.Create
+        ("Dummy_Project_Name" & Natural'Image (Number));
    begin
       return Project;
    end Get_Project_From_File;
@@ -41,7 +44,8 @@ package body Code_Coverage is
 
    procedure Add_Subprograms
      (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access) is
+      File_Contents : String_Access)
+   is
       Regexp_1   : constant Pattern_Matcher
         := Compile ("^function (_ada_)?(\w+)([.]\d+)? called (\d+)"
            , Multiple_Lines);
@@ -73,7 +77,8 @@ package body Code_Coverage is
 
    procedure Add_Lines
      (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access) is
+      File_Contents : String_Access)
+   is
       Regexp     : constant Pattern_Matcher
         := Compile ("^ +(\d+|#####|-): *(\d+):.*$", Multiple_Lines);
       Matches    : Match_Array (0 .. 2);
