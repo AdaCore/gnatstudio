@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;           use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
 with System;                   use System;
 with GNAT.OS_Lib;
 with GNAT.Strings;             use GNAT.Strings;
@@ -42,7 +41,6 @@ with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.Paned;                use Gtk.Paned;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
@@ -50,7 +48,6 @@ with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
@@ -101,20 +98,16 @@ package body Action_Editor is
      (Editor : out Actions_Editor; Kernel : access Kernel_Handle_Record'Class);
    --  Create a new actions editor
 
-   type Widget_Array is array (Natural range <>) of Gtk.Widget.Gtk_Widget;
-   type Widget_Array_Access is access Widget_Array;
-
    type Action_Editor_Dialog_Record is new Gtk_Dialog_Record with record
       Action      : Action_Record_Access;
       Kernel      : Kernel_Handle;
       Action_Name : Gtk_Label;
       Filter      : Gtk_Combo;
       Description : Gtk_Text_Buffer;
-      Properties  : Gtk_Widget;
-      Model       : Gtk_Tree_Store;
-      View        : Gtk_Tree_View;
-      Components  : Gtk_Box;
-      Editors     : Widget_Array_Access;
+--      Properties  : Gtk_Widget;
+--      Model       : Gtk_Tree_Store;
+--      View        : Gtk_Tree_View;
+      Editor      : Command_Editor;
    end record;
    type Action_Editor_Dialog is access all Action_Editor_Dialog_Record'Class;
 
@@ -131,8 +124,6 @@ package body Action_Editor is
 
    Action_Column    : constant := 0;
    Modified_Column  : constant := 1;
-   Component_Column : constant := 0;
-   Component_Index  : constant := 1;
 
    function Set
      (Model  : Gtk_Tree_Store;
@@ -140,13 +131,6 @@ package body Action_Editor is
       Descr  : String;
       Modified : Boolean) return Gtk_Tree_Iter;
    --  Insert a new item in the tree model for the list of actions
-
-   function Set
-     (Model     : Gtk_Tree_Store;
-      Parent    : Gtk_Tree_Iter;
-      Component : String;
-      Index     : Integer) return Gtk_Tree_Iter;
-   --  Insert a new item in the tree model for the list of components
 
    function Find_Parent
      (Model : Gtk_Tree_Store; Filter : Action_Filter) return Gtk_Tree_Iter;
@@ -158,9 +142,6 @@ package body Action_Editor is
       Event  : Gdk_Event) return Boolean;
    --  Called when the user has clicked in the list of actions
 
-   procedure On_Component_Changed (Dialog : access Gtk_Widget_Record'Class);
-   --  Called when a new component is selected.
-
    procedure Update_Contents
      (Editor : access Actions_Editor_Record'Class);
    --  Update the list of actions in the editor
@@ -169,94 +150,6 @@ package body Action_Editor is
      (Action : Action_Record_Access;
       Dialog : Action_Editor_Dialog);
    --  Update the action from the dialog
-
-   procedure On_Destroy (Dialog : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Called when the dialog is destroyed
-
-   --------------------------
-   -- On_Component_Changed --
-   --------------------------
-
-   procedure On_Component_Changed (Dialog : access Gtk_Widget_Record'Class) is
-      Ed    : constant Action_Editor_Dialog := Action_Editor_Dialog (Dialog);
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-      Index : Gint;
-      Comp_Iter, Result : Component_Iterator;
-      Comp      : Command_Component;
-      Current   : Gint := 1;
-      Label     : Gtk_Label;
-
-      procedure Get_Component_From_Index
-        (Comp_Iter : in out Component_Iterator;
-         Result    : out Component_Iterator);
-      --  Return the the Index-th component in the action, including the
-      --  on-failure components. Result must be freed by the caller
-
-      procedure Get_Component_From_Index
-        (Comp_Iter : in out Component_Iterator;
-         Result    : out Component_Iterator)
-      is
-         Child : Component_Iterator;
-      begin
-         while Get (Comp_Iter) /= null and then Current /= Index loop
-            Current := Current + 1;
-
-            Child := On_Failure (Comp_Iter);
-            if Child /= null then
-               Get_Component_From_Index (Child, Result);
-               if Result /= null then
-                  Free (Comp_Iter);
-                  return;
-               end if;
-            end if;
-
-            Next (Comp_Iter);
-         end loop;
-
-         if Get (Comp_Iter) /= null then
-            Result := Comp_Iter;
-         else
-            Free (Comp_Iter);
-            Result := null;
-         end if;
-      end Get_Component_From_Index;
-
-   begin
-      Get_Selected (Get_Selection (Ed.View), Model, Iter);
-      if Iter /= Null_Iter then
-         Remove_All_Children (Ed.Components);
-
-         Index := Get_Int (Ed.Model, Iter, Component_Index);
-         if Index /= -1 then
-
-            Comp_Iter := Start (Ed.Action.Command);
-            Get_Component_From_Index (Comp_Iter, Result);
-
-            if Result /= null then
-               Comp := Get (Result);
-               if Comp /= null then
-                  if Ed.Editors (Integer (Index)) = null then
-                     Ed.Editors (Integer (Index)) :=
-                       Component_Editor (Ed.Kernel, Comp);
-                     Ref (Ed.Editors (Integer (Index)));
-                  end if;
-
-                  Pack_Start
-                    (Ed.Components, Ed.Editors (Integer (Index)),
-                     Expand => False);
-               end if;
-               Free (Result);
-            end if;
-         else
-            Gtk_New (Label, -("The following commands are executed if the"
-                              & " previous one has failed"));
-            Pack_Start (Ed.Components, Label, Expand => True);
-         end if;
-
-         Show_All (Ed.Components);
-      end if;
-   end On_Component_Changed;
 
    -------------
    -- Gtk_New --
@@ -276,53 +169,11 @@ package body Action_Editor is
       Label     : Gtk_Label;
       Button    : Gtk_Button;
       W         : Gtk_Widget;
-      Render   : Gtk_Cell_Renderer_Text;
-      Num      : Gint;
-      Col      : Gtk_Tree_View_Column;
-      Comp_Iter : Component_Iterator;
-      Pane     : Gtk_Paned;
-      pragma Unreferenced (W, Num);
+      pragma Unreferenced (W);
 
       Filter_Iter : Action_Filter_Iterator := Start (Kernel);
       Filter      : Action_Filter;
       List        : Gtk.Enums.String_List.Glist;
-      Index       : Integer := 1;
-
-      procedure Add_Components
-        (Comp_Iter : in out Component_Iterator; Parent : Gtk_Tree_Iter);
-      --  Add all the components from Comp_Iter to the tree
-
-      procedure Add_Components
-        (Comp_Iter : in out Component_Iterator; Parent : Gtk_Tree_Iter)
-      is
-         Comp : Command_Component;
-         Child : Component_Iterator;
-         Node : Gtk_Tree_Iter;
-      begin
-         loop
-            Comp := Get (Comp_Iter);
-            exit when Comp = null;
-
-            Node := Set
-              (Dialog.Model, Parent,
-               Component => Get_Name (Comp),
-               Index     => Index);
-            Index := Index + 1;
-
-            Child := On_Failure (Comp_Iter);
-            if Child /= null then
-               Node := Set
-                 (Dialog.Model, Node,
-                  Component => "on-failure",
-                  Index     => -1);
-               Add_Components (Child, Node);
-            end if;
-
-            Next (Comp_Iter);
-         end loop;
-
-         Free (Comp_Iter);
-      end Add_Components;
 
    begin
       Dialog := new Action_Editor_Dialog_Record;
@@ -395,81 +246,13 @@ package body Action_Editor is
          Set_Text (Get_Entry (Dialog.Filter), -No_Filter);
       end if;
 
-      --  General action properties
-
-      Dialog.Properties := Command_Editor (Action.Command);
-      if Dialog.Properties /= null then
-         Gtk_New (Frame, -"Properties");
-         Pack_Start (Get_Vbox (Dialog), Frame, Expand => False, Padding => 5);
-         Add (Frame, Dialog.Properties);
-      end if;
-
-      --  List of components
-
-      Gtk_New (Frame, -"Commands");
-      Pack_Start (Get_Vbox (Dialog), Frame, Expand => True, Padding => 5);
-      Gtk_New_Hpaned (Pane);
-      Add (Frame, Pane);
-
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Pack1 (Pane, Scrolled, True, True);
-
-      Gtk_New (Dialog.Model,
-               (Component_Column => GType_String,
-                Component_Index  => GType_Int));
-      Gtk_New (Dialog.View, Dialog.Model);
-      Set_Headers_Visible (Dialog.View, False);
-      Add (Scrolled, Dialog.View);
-
-      Gtk_New (Render);
-
-      Gtk_New (Col);
-      Num := Append_Column (Dialog.View, Col);
-      Pack_Start (Col, Render, True);
-      Add_Attribute (Col, Render, "text", Component_Column);
-      Set_Resizable (Col, True);
-
-      Widget_Callback.Object_Connect
-        (Get_Selection (Dialog.View), "changed",
-         On_Component_Changed'Access,
-         Slot_Object => Dialog);
-
-      Gtk_New_Vbox (Dialog.Components, Homogeneous => False);
-      Pack2 (Pane, Dialog.Components, True, True);
-
-      Comp_Iter := Start (Action.Command);
-      Add_Components (Comp_Iter, Null_Iter);
-      Dialog.Editors := new Widget_Array (1 .. Index - 1);
-
-      Select_Iter (Get_Selection (Dialog.View), Get_Iter_First (Dialog.Model));
-      Expand_All (Dialog.View);
-
-      Widget_Callback.Connect (Dialog, "destroy", On_Destroy'Access);
-
-      Set_Position (Pane, 200);
+      Dialog.Editor := Create_Command_Editor (Action.Command, Kernel);
+      Pack_Start
+        (Get_Vbox (Dialog), Dialog.Editor, Expand => True, Fill => True);
 
       W := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       W := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
    end Gtk_New;
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Dialog : access Gtk.Widget.Gtk_Widget_Record'Class) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Widget_Array, Widget_Array_Access);
-      D : constant Action_Editor_Dialog := Action_Editor_Dialog (Dialog);
-   begin
-      for W in D.Editors'Range loop
-         if D.Editors (W) /= null then
-            Destroy (D.Editors (W));
-         end if;
-      end loop;
-
-      Unchecked_Free (D.Editors);
-   end On_Destroy;
 
    -------------------------------
    -- Update_Action_From_Dialog --
@@ -479,38 +262,8 @@ package body Action_Editor is
      (Action : Action_Record_Access;
       Dialog : Action_Editor_Dialog)
    is
-      Comp_Iter : Component_Iterator;
-      Index     : Natural := 1;
-
-      procedure Update_Components (Comp_Iter : in out Component_Iterator);
-      --  Update the components recursively
-
-      procedure Update_Components (Comp_Iter : in out Component_Iterator) is
-         Comp  : Command_Component;
-         Child : Component_Iterator;
-      begin
-         loop
-            Comp := Get (Comp_Iter);
-            exit when Comp = null;
-
-            if Dialog.Editors (Index) /= null then
-               Update_From_Editor (Comp, Dialog.Editors (Index));
-            end if;
-
-            Index := Index + 1;
-
-            Child := On_Failure (Comp_Iter);
-            if Child /= null then
-               Update_Components (Child);
-            end if;
-
-            Next (Comp_Iter);
-         end loop;
-
-         Free (Comp_Iter);
-      end Update_Components;
-
       Start_Iter, End_Iter : Gtk_Text_Iter;
+      XML : Node_Ptr;
    begin
       Action.Modified := True;
 
@@ -521,10 +274,20 @@ package body Action_Editor is
       Action.Description := new String'
         (Get_Text (Dialog.Description, Start_Iter, End_Iter));
 
-      Update_From_Editor (Action.Command, Dialog.Properties);
+      --  ??? Not implemented yet
 
-      Comp_Iter := Start (Action.Command);
-      Update_Components (Comp_Iter);
+--        Free (Action.Command);
+--        Action.Command := new Custom_Command;
+      XML := To_XML (Dialog.Editor);
+
+--        Create
+--          (Item           => Custom_Command_Access (Action.Command),
+--           Name           => Get_Text (Dialog.Action_Name),
+--           Kernel         => Dialog.Kernel,
+--           Command        => XML,
+--           Default_Output => );
+
+      Free (XML);
    end Update_Action_From_Dialog;
 
    ---------------------
@@ -600,33 +363,6 @@ package body Action_Editor is
         (Get_Object (Model), Iter'Address,
          Col1 => Action_Column, Value1 => Descr & ASCII.NUL,
          Col2 => Modified_Column, Value2 => Boolean'Pos (Modified));
-      return Iter;
-   end Set;
-
-   ---------
-   -- Set --
-   ---------
-
-   function Set
-     (Model     : Gtk_Tree_Store;
-      Parent    : Gtk_Tree_Iter;
-      Component : String;
-      Index     : Integer) return Gtk_Tree_Iter
-   is
-      procedure Internal
-        (Tree, Iter : System.Address;
-         Col1       : Gint; Value1 : String;
-         Col2       : Gint; Value2 : Gint);
-      pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr_int");
-
-      Iter : aliased Gtk_Tree_Iter;
-
-   begin
-      Append (Model, Iter, Parent);
-      Internal
-        (Get_Object (Model), Iter'Address,
-         Col1 => Component_Column, Value1 => Component & ASCII.NUL,
-         Col2 => Component_Index,  Value2 => Gint (Index));
       return Iter;
    end Set;
 
@@ -837,7 +573,8 @@ package body Action_Editor is
 --                 To_XML (Action.Filter, Child);
 --              end if;
 
-            To_XML (Action.Command, Child);
+            --  ??? Not implemented yet.
+            --  To_XML (Action.Command, Child);
 
             Action.Modified := False;
          end if;
