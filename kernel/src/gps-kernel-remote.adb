@@ -1096,8 +1096,6 @@ package body GPS.Kernel.Remote is
       procedure Free is new Ada.Unchecked_Deallocation
         (Path_Row_Record, Path_Row);
    begin
-      Mirror_List.Update_Element
-        (Widget.M_List.all, Row.Cursor, Set_Deleted_State'Access);
       Remove (Widget.Table, Row.Local_Frame);
       Remove (Widget.Table, Row.Remote_Frame);
       Remove (Widget.Table, Row.Sync_Combo);
@@ -1179,6 +1177,8 @@ package body GPS.Kernel.Remote is
 
    procedure On_Remove_Path_Clicked (W : access Path_Cb_Data'Class) is
    begin
+      Mirror_List.Update_Element
+        (Widget.M_List.all, Row.Cursor, Set_Deleted_State'Access);
       Remove_Path_Row (W.Widget, W.Row);
       On_Changed (W.Widget.Dialog, False);
 
@@ -2390,6 +2390,7 @@ package body GPS.Kernel.Remote is
                      Path     : Mirror_Path;
                      Modified : Boolean;
                   begin
+                     Trace (Me, "Apply path for machine " & Nickname);
                      Modified := False;
                      List     := Get_List (Nickname);
                      Cursor   := List.First;
@@ -2398,14 +2399,18 @@ package body GPS.Kernel.Remote is
                         Path := Mirror_List.Element (Cursor);
 
                         if Get_Deleted_State (Path) then
+                           Trace (Me, "Delete element");
                            Modified := True;
                            Next := Mirror_List.Next (Cursor);
                            List.Delete (Cursor);
                            Cursor := Next;
                         else
                            if Is_Modified (Path) then
+                              Trace (Me, "Update element");
                               Modified := True;
                               List.Update_Element (Cursor, Apply'Access);
+                           else
+                              Trace (Me, "Element not modified");
                            end if;
                            Mirror_List.Next (Cursor);
                         end if;
