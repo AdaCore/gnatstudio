@@ -41,13 +41,13 @@ package Code_Analysis is
    -----------------------------
 
    type Coverage is tagged record
-      Covered : Natural;
+      Covered : Natural := 0;
    end record;
    --  Basic code coverage information
    --  Record the Line's execution counts
 
    type Node_Coverage is new Coverage with record
-      Children : Natural;
+      Children : Natural := 0;
    end record;
    --  Extra node coverage information
    --  The Covered value will be covered child count, and the Children value
