@@ -583,23 +583,26 @@ package body GPS.Kernel.Custom is
      (Kernel         : access Kernel_Handle_Record'Class;
       Base_Name      : String;
       Load           : Boolean;
-      Initialization : String := "")
+      Initialization : Glib.Xml_Int.Node_Ptr)
    is
       Startup : Script_Description_Access :=
         Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
              K => Base_Name);
-      pragma Unreferenced (Initialization);
    begin
       if Startup /= null then
          Startup.Load           := Load;
-         Startup.Initialization := null;  --  ??? Should use Initialization
+         if Startup.Initialization /= Initialization then
+            Free (Startup.Initialization);
+         end if;
+
+         Startup.Initialization := Initialization;
          Startup.Explicit       := True;
       else
          Startup := new Script_Description'
            (File           => VFS.No_File,
             Load           => Load,
             Explicit       => True,
-            Initialization => null);  --  ??? Should use Initialization
+            Initialization => Initialization);
          Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
               K => Base_Name,
               E => Startup);
@@ -666,10 +669,7 @@ package body GPS.Kernel.Custom is
            (Item                 => Custom,
             Name                 => "Initialize " & Full_Name (File).all,
             Kernel               => Kernel_Handle (Kernel),
-            Command              => Startup.Initialization,
-            Default_Output       => No_Output,
-            Show_Command         => False,
-            Show_In_Task_Manager => False);
+            Command              => Startup.Initialization);
          return Custom;
       else
          return null;

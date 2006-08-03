@@ -135,11 +135,13 @@ package GPS.Kernel.Custom is
      (Kernel         : access Kernel_Handle_Record'Class;
       Base_Name      : String;
       Load           : Boolean;
-      Initialization : String := "");
+      Initialization : Glib.Xml_Int.Node_Ptr);
    --  Override the attributes of startup.xml for this specific script. This
    --  new value will automatically be saved in startup.xml at the end of the
    --  session.
    --  This mustn't be called while you are iterating over all known scripts.
+   --  Initialization shouldn't be freed by the caller, and becomes the
+   --  ownership of Kernel
 
    function Load_File_At_Startup
      (Kernel  : access Kernel_Handle_Record'Class;
