@@ -42,8 +42,10 @@ with Gdk.Types;                use Gdk.Types;
 with Gdk.Window;               use Gdk.Window;
 
 with Gtk.Accel_Map;            use Gtk.Accel_Map;
+with Gtk.Alignment;            use Gtk.Alignment;
 with Gtk.Bin;                  use Gtk.Bin;
 with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Clist;                use Gtk.Clist;
@@ -54,6 +56,7 @@ with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Image;                use Gtk.Image;
 with Gtk.Item;                 use Gtk.Item;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.List;                 use Gtk.List;
@@ -1858,5 +1861,34 @@ package body GUI_Utils is
          return To_String (Result);
       end if;
    end Get_Selection;
+
+   ----------------------------------
+   -- Gtk_New_From_Stock_And_Label --
+   ----------------------------------
+
+   procedure Gtk_New_From_Stock_And_Label
+     (Button   : out Gtk_Button;
+      Stock_Id : String;
+      Label    : String)
+   is
+      Box : Gtk_Box;
+      Lab : Gtk_Label;
+      Img : Gtk_Image;
+      Align : Gtk_Alignment;
+   begin
+      Gtk_New (Button);
+
+      Gtk_New (Align, 0.5, 0.5, 0.0, 0.0);
+      Add (Button, Align);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Add (Align, Box);
+
+      Gtk_New (Img, Stock_Id => Stock_Id, Size => Icon_Size_Button);
+      Pack_Start (Box, Img, Expand => False);
+
+      Gtk_New (Lab, Label);
+      Pack_Start (Box, Lab, Expand => False, Fill => True);
+   end Gtk_New_From_Stock_And_Label;
 
 end GUI_Utils;

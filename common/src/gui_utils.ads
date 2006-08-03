@@ -34,6 +34,7 @@ with Gtk.Menu_Item;
 with Gdk.Types;
 with Gdk.Window;
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
+with Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Clist;
@@ -70,6 +71,17 @@ package GUI_Utils is
    --  If Password_Mode is set, then the query will print * instead of
    --   the entered characters.
    --  Return "" if the user hasn't entered anything
+
+   -------------
+   -- Buttons --
+   -------------
+
+   procedure Gtk_New_From_Stock_And_Label
+     (Button   : out Gtk.Button.Gtk_Button;
+      Stock_Id : String;
+      Label    : String);
+   --  Create a new button, that uses the image from a stock icon, but with
+   --  a specific text
 
    ----------------------
    -- Combos and lists --
