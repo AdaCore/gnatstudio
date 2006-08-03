@@ -31,6 +31,9 @@ package Code_Analysis_Dump is
    --  Starts a dominos calling to the text dumping subprograms
    --  following the Code_Analysis tree structure
 
+   procedure Dump_Line (Line_Node : Line_Access);
+   --  Dump in text format a Line ending-node by standard output
+
 private
 
    procedure Dump_Project (Cursor : Project_Maps.Cursor);
@@ -41,8 +44,5 @@ private
 
    procedure Dump_Subprogram (Cursor : Subprogram_Maps.Cursor);
    --  Dump in text format a Subprogram node by standard output
-
-   procedure Dump_Line (Line_Node : Line_Access);
-   --  Dump in text format a Line ending-node by standard output
 
 end Code_Analysis_Dump;
