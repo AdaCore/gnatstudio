@@ -129,8 +129,8 @@ package body Command_Window is
       --  Ignore when the key is just one of the modifier. No binding can
       --  be associated to them anyway, so this is slightly more efficient,
       --  and this also avoids resetting the last command.
-      if Modif = 0
-        and then Key >= GDK_Shift_L
+      --  Note that Modif might be different of 0 on Windows in this case.
+      if Key >= GDK_Shift_L
         and then Key <= GDK_Hyper_R
       then
          return True;
