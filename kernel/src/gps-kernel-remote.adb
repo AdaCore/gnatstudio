@@ -1178,7 +1178,7 @@ package body GPS.Kernel.Remote is
    procedure On_Remove_Path_Clicked (W : access Path_Cb_Data'Class) is
    begin
       Mirror_List.Update_Element
-        (Widget.M_List.all, Row.Cursor, Set_Deleted_State'Access);
+        (W.Widget.M_List.all, W.Row.Cursor, Set_Deleted_State'Access);
       Remove_Path_Row (W.Widget, W.Row);
       On_Changed (W.Widget.Dialog, False);
 
