@@ -66,6 +66,7 @@ package body Startup_Module is
    Column_File       : constant := 3;
    Column_Initialize : constant := 4;
    Column_Modified   : constant := 5;
+   Column_Background : constant := 6;
 
    type Startup_Editor_Record is new Gtk_Dialog_Record with record
       Kernel      : Kernel_Handle;
@@ -74,6 +75,13 @@ package body Startup_Module is
       Description : Gtk_Text_Buffer;
       Script_Name : Gtk_Label;
       Init        : Gtk_Box;
+      Init_Box    : Gtk_Box;
+
+      Edited_Iter         : Gtk_Tree_Iter;
+      --  Currently selected script
+
+      Init_Editor         : Commands.Interactive.Command_Editor;
+      --  Graphical editor for the initialization commands
    end record;
    type Startup_Editor is access all Startup_Editor_Record'Class;
 
@@ -93,10 +101,57 @@ package body Startup_Module is
    procedure Save (Editor : access Startup_Editor_Record'Class);
    --  Save the changes done in Editor into the kernel
 
+   procedure Save_Initialization_String
+     (Editor : access Startup_Editor_Record'Class);
+   --  Save the currently edited initialization string into the tree
+
+   procedure Set_Modified
+     (Editor : access Startup_Editor_Record'Class;
+      Iter   : Gtk_Tree_Iter);
+   --  Mark the corresponding script as modified
+
    function "+" is new Ada.Unchecked_Conversion
      (Glib.Xml_Int.Node_Ptr, System.Address);
    function "+" is new Ada.Unchecked_Conversion
      (System.Address, Glib.Xml_Int.Node_Ptr);
+
+   ------------------
+   -- Set_Modified --
+   ------------------
+
+   procedure Set_Modified
+     (Editor : access Startup_Editor_Record'Class;
+      Iter   : Gtk_Tree_Iter)
+   is
+   begin
+      Set (Editor.Model, Iter, Column_Modified, True);
+      Set (Editor.Model, Iter, Column_Background, "grey");
+   end Set_Modified;
+
+   --------------------------------
+   -- Save_Initialization_String --
+   --------------------------------
+
+   procedure Save_Initialization_String
+     (Editor : access Startup_Editor_Record'Class)
+   is
+      XML, Old       : Node_Ptr;
+   begin
+      if Editor.Init_Editor /= null then
+         XML := To_XML (Editor.Init_Editor);
+
+         Old := +Get_Address
+           (Editor.Model, Editor.Edited_Iter, Column_Initialize);
+         if not Is_Equal (Old, XML.Child) then
+            Set (Editor.Model, Editor.Edited_Iter, Column_Initialize,
+                 +Deep_Copy (XML.Child));
+            Set_Modified (Editor, Editor.Edited_Iter);
+         end if;
+
+         Free (XML);
+         Editor.Init_Editor := null;
+      end if;
+   end Save_Initialization_String;
 
    --------------------------
    -- On_Selection_Changed --
@@ -112,15 +167,17 @@ package body Startup_Module is
       Contents   : String_Access;
       File       : VFS.Virtual_File := VFS.No_File;
       Init       : Glib.Xml_Int.Node_Ptr;
-      XML_Editor : Gtk_Widget;
-      XML_Added  : Boolean := False;
-      Label      : Gtk_Label;
       Command    : Custom_Command_Access;
-      Component_Iter : Component_Iterator;
-      Component      : Command_Component;
    begin
+      Save_Initialization_String (Ed);
+
       Get_Selected (Selection, Model, Iter);
       if Iter /= Null_Iter then
+         Ed.Edited_Iter := Iter;
+
+         Set_Sensitive
+           (Ed.Init_Box, Get_Boolean (Ed.Model, Iter, Column_Load));
+
          Set_Text (Ed.Script_Name, Get_String (Model, Iter, Column_Name));
 
          Set_Text (Ed.Description, "");
@@ -177,39 +234,21 @@ package body Startup_Module is
          Remove_All_Children (Ed.Init);
          Init := +Get_Address (Model, Iter, Column_Initialize);
 
-         if Init /= null then
-            Command := new Custom_Command;
-            Create
-              (Item                 => Command,
-               Name                 => Get_String (Model, Iter, Column_Name),
-               Kernel               => Ed.Kernel,
-               Command              => Init,
-               Default_Output       => No_Output,
-               Show_Command         => False,
-               Show_In_Task_Manager => False);
+         Command := new Custom_Command;
+         Create
+           (Item                 => Command,
+            Name                 => Get_String (Model, Iter, Column_Name),
+            Kernel               => Ed.Kernel,
+            Command              => Init);
+         Ed.Init_Editor := Create_Command_Editor (Command, Ed.Kernel);
+         Destroy (Command_Access (Command));
 
-            Component_Iter := Start (Command);
-            loop
-               Component := Get (Component_Iter);
-               exit when Component = null;
-               XML_Editor := Component_Editor (Ed.Kernel, Component);
-               Pack_Start (Ed.Init, XML_Editor, Expand => True, Fill => True);
-               Set_Sensitive (XML_Editor, False);
-               XML_Added := True;
-               Next (Component_Iter);
-            end loop;
-            Free (Component_Iter);
-
-            Destroy (Command_Access (Command));
-         end if;
-
-         if not XML_Added then
-            Gtk_New (Label, -"No initialization commands defined");
-            Pack_Start (Ed.Init, Label, Expand => True, Fill => True);
+         if Ed.Init_Editor /= null then
+            Pack_Start
+              (Ed.Init, Ed.Init_Editor, Expand => True, Fill => True);
          end if;
 
          Show_All (Ed.Init);
-
       end if;
    end On_Selection_Changed;
 
@@ -220,6 +259,8 @@ package body Startup_Module is
    procedure Save (Editor : access Startup_Editor_Record'Class) is
       Iter : Gtk_Tree_Iter;
    begin
+      Save_Initialization_String (Editor);
+
       Iter := Get_Iter_First (Editor.Model);
       while Iter /= Null_Iter loop
          if Get_Boolean (Editor.Model, Iter, Column_Modified) then
@@ -227,7 +268,8 @@ package body Startup_Module is
               (Kernel         => Editor.Kernel,
                Base_Name      => Get_String (Editor.Model, Iter, Column_Name),
                Load           => Get_Boolean (Editor.Model, Iter, Column_Load),
-               Initialization => "");
+               Initialization =>
+               +Get_Address (Editor.Model, Iter, Column_Initialize));
          end if;
 
          Next (Editor.Model, Iter);
@@ -247,7 +289,7 @@ package body Startup_Module is
       Iter        : Gtk_Tree_Iter;
    begin
       Iter := Get_Iter_From_String (Ed.Model, Path_String);
-      Set (Ed.Model, Iter, Column_Modified, True);
+      Set_Modified (Ed, Iter);
 
       --  Refresh the description box
       On_Selection_Changed (Editor);
@@ -286,6 +328,7 @@ package body Startup_Module is
          Parent => Get_Main_Window (Kernel),
          Flags  => Destroy_With_Parent);
       Set_Default_Size (Editor, 800, 600);
+      Set_Name (Editor, "Startup Scripts Editor");
 
       Gtk_New_Hpaned (Pane);
       Pack_Start (Get_Vbox (Editor), Pane, Expand => True, Fill => True);
@@ -301,7 +344,8 @@ package body Startup_Module is
                           Column_Explicit   => GType_Boolean,
                           Column_File       => GType_String,
                           Column_Initialize => GType_Pointer,
-                          Column_Modified   => GType_Boolean),
+                          Column_Modified   => GType_Boolean,
+                          Column_Background => GType_String),
          Column_Names => (Column_Load + 1 => Load_Cst'Unchecked_Access,
                           Column_Name + 1 => Name_Cst'Unchecked_Access),
          Show_Column_Titles => True,
@@ -326,7 +370,7 @@ package body Startup_Module is
       Gtk_New (Editor.Description);
       Gtk_New (Text, Editor.Description);
       Add (Scrolled, Text);
-      Set_Wrap_Mode (Text, Wrap_Word);
+      Set_Wrap_Mode (Text, Wrap_None);
       Set_Editable (Text, False);
 
       Gtk_New (Scrolled);
@@ -334,13 +378,27 @@ package body Startup_Module is
       Append_Page (Note, Scrolled, Label);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
 
+      Gtk_New_Vbox (Editor.Init_Box);
+      Add (Scrolled, Editor.Init_Box);
+
       Gtk_New_Vbox (Editor.Init);
-      Add (Scrolled, Editor.Init);
+      Pack_Start (Editor.Init_Box, Editor.Init, Expand => True, Fill => True);
 
       List := Get_Cell_Renderers (Get_Column (Editor.Tree, Column_Load));
+      Add_Attribute
+        (Get_Column (Editor.Tree, Column_Load),
+         Cell_Renderer_List.Get_Data (List),
+         "cell_background", Column_Background);
       Widget_Callback.Object_Connect
         (Cell_Renderer_List.Get_Data (List), "toggled",
          On_Load_Toggled'Access, Editor, After => True);
+      Cell_Renderer_List.Free (List);
+
+      List := Get_Cell_Renderers (Get_Column (Editor.Tree, Column_Name));
+      Add_Attribute
+        (Get_Column (Editor.Tree, Column_Name),
+         Cell_Renderer_List.Get_Data (List),
+         "cell_background", Column_Background);
       Cell_Renderer_List.Free (List);
 
       Widget_Callback.Object_Connect
