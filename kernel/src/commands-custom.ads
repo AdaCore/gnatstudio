@@ -62,7 +62,6 @@ with GNAT.Expect;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
 with Glib.Xml_Int;
-with Gtk.Widget;
 
 with Commands;                use Commands;
 with Commands.Interactive;    use Commands.Interactive;
@@ -70,7 +69,6 @@ with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Interactive_Consoles;
-with Remote;                  use Remote;
 
 package Commands.Custom is
 
@@ -106,7 +104,7 @@ package Commands.Custom is
       Command              : Glib.Xml_Int.Node_Ptr;
       Default_Output       : String := Console_Output;
       Show_Command         : Boolean := True;
-      Show_In_Task_Manager : Boolean := True);
+      Show_In_Task_Manager : Boolean := False);
    --  Create a new command with a list of <shell> and <external> nodes, as
    --  done in the customization files. Filter is the filter that needs to
    --  be tested to make sure that all parameters can be satisfied.
@@ -146,10 +144,9 @@ package Commands.Custom is
 
    procedure Interrupt (Command : in out Custom_Command);
    function Start (Command : access Custom_Command) return Component_Iterator;
-   function Command_Editor
-     (Command : access Custom_Command) return Gtk.Widget.Gtk_Widget;
-   procedure Update_From_Editor
-     (Command : access Custom_Command; Editor : Gtk.Widget.Gtk_Widget);
+   function Create_Command_Editor
+     (Command : access Custom_Command;
+      Kernel  : access Kernel_Handle_Record'Class) return Command_Editor;
    --  See doc from inherited subprograms
 
 private
@@ -206,63 +203,11 @@ private
    --  Stores information relevant only while a command is executing, to
    --  limit the memory footprint when storing a command.
 
-   type Custom_Component_Record is abstract new Command_Component_Record with
-      record
-         Show_Command : Boolean;
-         Output       : String_Access;  --  use Default if this is null
-         Command      : String_Access;
-      end record;
-   type Custom_Component is access all Custom_Component_Record'Class;
-
-   function Get_Name
-     (Component : access Custom_Component_Record) return String;
-   --  See doc from inherited subprogram
-
-   procedure Free (Component : in out Custom_Component_Record);
-   --  Free the memory occupied by Component
-
-   type Shell_Component_Record is new Custom_Component_Record with record
-      Script       : GPS.Kernel.Scripts.Scripting_Language;
-   end record;
-   --  A component that executes a shell command
-
-   type External_Component_Record is new Custom_Component_Record with record
-      Server               : Server_Type;
-      Check_Password       : Boolean;
-      Show_In_Task_Manager : Boolean;
-      Progress_Regexp      : String_Access;
-      Progress_Current     : Natural;
-      Progress_Final       : Natural;
-      Progress_Hide        : Boolean;
-   end record;
-
-   function Component_Editor
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Component : access Shell_Component_Record) return Gtk.Widget.Gtk_Widget;
-   procedure Update_From_Editor
-     (Component : access Shell_Component_Record;
-      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
-   procedure To_XML
-     (Component   : access Shell_Component_Record;
-      Action_Node : Glib.Xml_Int.Node_Ptr);
-   function Component_Editor
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Component : access External_Component_Record)
-      return Gtk.Widget.Gtk_Widget;
-   procedure Update_From_Editor
-     (Component : access External_Component_Record;
-      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
-   procedure Free (Component : in out External_Component_Record);
-   procedure To_XML
-     (Component   : access External_Component_Record;
-      Action_Node : Glib.Xml_Int.Node_Ptr);
-   --  See doc for inherited subprograms
-
    type Command_Component_Description is record
-      Component : Custom_Component;
+      Component      : Command_Component;
       On_Failure_For : Integer := -1;
-      --  Index of the command for which is component is part of the on-failure
-      --  group. For instance, with the following XML file:
+      --  Index of the command for which thiis component is part of the
+      --  on-failure group. For instance, with the following XML file:
       --      1-   <external />
       --           <on-failure>
       --      2-       <script />
@@ -298,10 +243,5 @@ private
 
       Sub_Command : Scheduled_Command_Access;
    end record;
-
-   procedure To_XML
-     (Command     : access Custom_Command;
-      Action_Node : Glib.Xml_Int.Node_Ptr);
-   --  See doc for inherited subprograms
 
 end Commands.Custom;

@@ -27,20 +27,32 @@ with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regpat;               use GNAT.Regpat;
 with System;
 
-with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
-
+with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
 with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
+with Gtk.Paned;                 use Gtk.Paned;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Spin_Button;           use Gtk.Spin_Button;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
+with Gtk.Text_Iter;             use Gtk.Text_Iter;
+with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Tooltips;              use Gtk.Tooltips;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
 with Gtk.Widget;                use Gtk.Widget;
-
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
@@ -48,9 +60,10 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GUI_Utils;                 use GUI_Utils;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Password_Manager;          use Password_Manager;
-with Remote.Path.Translator;    use Remote.Path.Translator;
+with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
@@ -58,12 +71,14 @@ package body Commands.Custom is
 
    Me : constant Debug_Handle := Create ("Commands.Custom", Off);
 
-   Output_Use_Default : constant String := "<use default>";
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Boolean_Array, Boolean_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
+
+   ------------------------
+   -- Component iterator --
+   ------------------------
 
    type Custom_Component_Iterator is new Component_Iterator_Record with record
       Command    : Custom_Command_Access;
@@ -79,48 +94,167 @@ package body Commands.Custom is
      (Iter : access Custom_Component_Iterator) return Component_Iterator;
    --  See doc from inherited subprograms
 
-   type Command_Editor_Record is new Gtk_Box_Record with record
-      Show_Command : Gtk_Check_Button;
-      Show_Output  : Gtk_Check_Button;
-      Output       : Gtk_Entry;
-   end record;
-   type Command_Editor_Widget is access all Command_Editor_Record'Class;
-   --  This widget is used to graphically edit a custom command
+   -----------------------
+   -- Custom components --
+   -----------------------
 
-   type Custom_Component_Editor is record
-      Kernel       : Kernel_Handle;
-      Command      : Gtk_Entry;
-      Show_Command : Gtk_Check_Button;
-      Output       : Gtk_Entry;
-   end record;
+   type Component_Type is (Component_Shell, Component_External);
+
+   type Custom_Component_Record (The_Type : Component_Type) is
+     new Command_Component_Record with
+      record
+         Show_Command : Boolean := True; --  "show-command" attribute
+         Output       : String_Access;   --  use Default if this is null
+         Command      : String_Access;
+
+         case The_Type is
+            when Component_Shell =>
+               Script               : GPS.Kernel.Scripts.Scripting_Language;
+            when Component_External =>
+               Server               : Server_Type;      --  "server" attribute
+               Check_Password       : Boolean := False; --  "check-password"
+               Show_In_Task_Manager : Boolean;          --  "show-task-manager"
+               Progress_Regexp      : String_Access;    --  "progress-regexp"
+               Progress_Current     : Natural := 1;     --  "progress-current"
+               Progress_Final       : Natural := 2;     --  "progress-final"
+               Progress_Hide        : Boolean := True;  --  "progress-hide"
+               --  Changes to this list must be reflected in the record
+               --  Custom_Component_Editor_Record as well
+         end case;
+      end record;
+   type Custom_Component is access all Custom_Component_Record'Class;
+
+   function Get_Name
+     (Component : access Custom_Component_Record) return String;
+   --  See doc from inherited subprogram
+
+   procedure Free (Component : in out Custom_Component);
+   --  Free the memory occupied by Component
+
+   -------------------------------
+   -- Custom components editors --
+   -------------------------------
+
+   type Custom_Component_Editor_Record (The_Type : Component_Type) is
+     new Gtk_Frame_Record with
+      record
+         Kernel       : Kernel_Handle;
+         Command      : Gtk_Text_Buffer;
+         Show_Command : Gtk_Check_Button;
+         Output       : Gtk_Entry;
+
+         case The_Type is
+            when Component_Shell =>
+               Script      : GPS.Kernel.Scripts.Scripting_Language;
+            when Component_External =>
+               Regexp       : Gtk_Entry;
+               Current      : Gtk_Spin_Button;
+               Final        : Gtk_Spin_Button;
+               Hide         : Gtk_Check_Button;
+         end case;
+      end record;
+   type Custom_Component_Editor is
+     access all Custom_Component_Editor_Record'Class;
    --  This widget is used to edit a Custom_Component_Record
 
-   procedure Component_Editor
-     (Component : access Custom_Component_Record'Class;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Editor    : access Gtk_Box_Record'Class;
-      Custom    : out Custom_Component_Editor;
-      Size      : Gtk_Size_Group);
-   --  Add the widgets required to edit Component to Editor
+   function To_XML
+     (Editor         : access Custom_Component_Editor_Record'Class)
+     return Glib.Xml_Int.Node_Ptr;
+   --  Return the XML representation of the component edited in Editor
 
-   type Shell_Component_Editor_Record is new Gtk_Box_Record with record
-      Custom       : Custom_Component_Editor;
-      Lang         : Gtk_Combo;
-   end record;
-   type Shell_Component_Editor is access
-     all Shell_Component_Editor_Record'Class;
-   --  This widget is used to graphically edit a shell component
+   procedure On_Command_Changed (Editor : access Gtk_Widget_Record'Class);
+   --  Called when the text of a command is being changed
 
-   type External_Component_Editor_Record is new Gtk_Box_Record with record
-      Custom       : Custom_Component_Editor;
-      Regexp       : Gtk_Entry;
-      Current      : Gtk_Spin_Button;
-      Final        : Gtk_Spin_Button;
-      Hide         : Gtk_Check_Button;
+   ----------------------------
+   -- Custom commands editor --
+   ----------------------------
+
+   type Component_Or_Failure is record
+      Component : Custom_Component_Editor;
+      On_Failure_For : Integer := -1;
    end record;
-   type External_Component_Editor is
-     access all External_Component_Editor_Record'Class;
-   --  This widget is used to graphically edit an external component
+   --  List of widgets to edit the various components. When a component has
+   --  been removed by the user, the Component field is set to null, but the
+   --  element of the Component_Array is not removed, so that the Gtk_Tree
+   --  still contains valid indexes into the array.
+
+   type Component_Array is array (Natural range <>)
+     of Component_Or_Failure;
+   type Component_Array_Access is access all Component_Array;
+   type Custom_Command_Editor_Record is new Command_Editor_Record with
+      record
+         Kernel       : Kernel_Handle;
+         Components   : Component_Array_Access;
+         Tree         : Gtk_Tree_View;
+         Pane         : Gtk_Paned;
+         Button_Remove : Gtk_Button;
+      end record;
+   type Custom_Command_Editor_Widget
+     is access all Custom_Command_Editor_Record'Class;
+   --  This widget is used to graphically edit a custom command
+
+   function Create_Component_Editor
+     (Component      : access Custom_Component_Record'Class;
+      Command        : access Custom_Command_Editor_Record'Class;
+      Kernel         : access Kernel_Handle_Record'Class;
+      Default_Output : String) return Custom_Component_Editor;
+   --  Return a widget used to edit Component.
+
+   function Create_Empty_Component_Editor
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Command        : access Custom_Command_Editor_Record'Class;
+      Default_Output : String;
+      The_Type       : Component_Type;
+      Script         : Scripting_Language := null)
+      return Custom_Component_Editor;
+   --  Return an empty component editor.
+   --  If Component is null, an empty editor is displayed, associated with
+   --  The_Type. Otherwise, the parameter The_Type is unused
+
+   function To_XML
+     (Editor : access Custom_Command_Editor_Record)
+      return Glib.Xml_Int.Node_Ptr;
+   --  See inherited documentation
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Component_Array, Component_Array_Access);
+
+   function Get_Selected_Component
+     (Editor : access Custom_Command_Editor_Record'Class) return Integer;
+   --  Return the index of the currently selected component, or -1 if none
+   --  is selected.
+
+   procedure Refresh_And_Select
+     (Editor   : access Custom_Command_Editor_Record'Class;
+      Selected : Integer := -1);
+   --  Refresh the contents of Editor (list of components,...).
+   --  If Selected is specified, the line for that component is selected
+
+   procedure On_Component_Changed (Editor : access Gtk_Widget_Record'Class);
+   --  Called when a component was selected in the command editor
+
+   type Component_Type_And_Lang is record
+      The_Type : Component_Type;
+      Script   : Scripting_Language;
+   end record;
+   package Component_Type_And_Lang_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Component_Type_And_Lang);
+   use Component_Type_And_Lang_Callback;
+
+   procedure On_Add
+     (Editor : access Gtk_Widget_Record'Class;
+      Data   : Component_Type_And_Lang);
+   --  Called when a new component is added after the current one
+
+   procedure On_Remove (Editor : access Gtk_Widget_Record'Class);
+   --  Called when a component is being removed
+
+   procedure On_Destroy (Editor : access Gtk_Widget_Record'Class);
+   --  Called when the editor is being destroyed
+
+   ----------------------
+   -- Misc subprograms --
+   ----------------------
 
    procedure Check_Save_Output
      (Command          : access Custom_Command'Class;
@@ -157,10 +291,10 @@ package body Commands.Custom is
    function External_From_XML
      (Command                      : Glib.Xml_Int.Node_Ptr;
       Default_Show_In_Task_Manager : Boolean;
-      Default_Show_Command         : Boolean) return Custom_Component;
+      Default_Show_Command         : Boolean) return Command_Component;
    function Shell_From_XML
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Glib.Xml_Int.Node_Ptr) return Custom_Component;
+      Command : Glib.Xml_Int.Node_Ptr) return Command_Component;
    --  Create a command component from an XML node
 
    function From_XML
@@ -429,7 +563,8 @@ package body Commands.Custom is
    begin
       Clear_Console (Command.Default_Output_Destination);
       for C in Command.Components'Range loop
-         Clear_Console (Command.Components (C).Component.Output);
+         Clear_Console
+           (Custom_Component (Command.Components (C).Component).Output);
       end loop;
    end Clear_Consoles;
 
@@ -511,7 +646,8 @@ package body Commands.Custom is
       while Index <= Command.Components'Last loop
          declare
             S : constant String := String_Utils.Substitute
-              (Command.Components (Index).Component.Command.all,
+              (Custom_Component
+                 (Command.Components (Index).Component).Command.all,
                Substitution_Char => GPS.Kernel.Macros.Special_Character,
                Callback          => Substitution'Unrestricted_Access,
                Recursive         => False);
@@ -545,16 +681,19 @@ package body Commands.Custom is
    -- Free --
    ----------
 
-   procedure Free (Component : in out Custom_Component_Record) is
+   procedure Free (Component : in out Custom_Component) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Custom_Component_Record'Class, Custom_Component);
    begin
       Free (Component.Output);
       Free (Component.Command);
-   end Free;
-
-   procedure Free (Component : in out External_Component_Record) is
-   begin
-      Free (Component.Progress_Regexp);
-      Free (Custom_Component_Record (Component));
+      case Component.The_Type is
+         when Component_Shell =>
+            null;
+         when Component_External =>
+            Free (Component.Progress_Regexp);
+      end case;
+      Unchecked_Free (Component);
    end Free;
 
    ----------
@@ -563,8 +702,6 @@ package body Commands.Custom is
 
    procedure Free (X : in out Custom_Command) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Custom_Component_Record'Class, Custom_Component);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Components_Array, Components_Array_Access);
    begin
       Free (X.Default_Output_Destination);
@@ -572,8 +709,7 @@ package body Commands.Custom is
       Free (X.Execution);
 
       for C in X.Components'Range loop
-         Free (X.Components (C).Component.all);
-         Unchecked_Free (X.Components (C).Component);
+         Free (Custom_Component (X.Components (C).Component));
       end loop;
       Unchecked_Free (X.Components);
    end Free;
@@ -593,8 +729,9 @@ package body Commands.Custom is
       Item.Kernel := Kernel;
       Item.Name   := new String'(Name);
       Item.Components := new Components_Array'
-        (1 => (Component => new Shell_Component_Record'
+        (1 => (Component => new Custom_Component_Record'
                  (Command_Component_Record with
+                  The_Type     => Component_Shell,
                   Show_Command => False,
                   Output       => new String'(No_Output),
                   Command      => new String'(Command),
@@ -608,7 +745,7 @@ package body Commands.Custom is
 
    function Shell_From_XML
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Glib.Xml_Int.Node_Ptr) return Custom_Component
+      Command : Glib.Xml_Int.Node_Ptr) return Command_Component
    is
       Output : constant String := Get_Attribute (Command, "output", "@@");
       Outp   : GNAT.OS_Lib.String_Access := null;
@@ -622,8 +759,9 @@ package body Commands.Custom is
          Outp := new String'(Output);
       end if;
 
-      return new Shell_Component_Record'
+      return new Custom_Component_Record'
         (Command_Component_Record with
+         The_Type     => Component_Shell,
          Show_Command => Show_Command,
          Output       => Outp,
          Command      => new String'(Command.Value.all),
@@ -637,7 +775,7 @@ package body Commands.Custom is
    function External_From_XML
      (Command                      : Glib.Xml_Int.Node_Ptr;
       Default_Show_In_Task_Manager : Boolean;
-      Default_Show_Command         : Boolean) return Custom_Component
+      Default_Show_Command         : Boolean) return Command_Component
    is
       Output : constant String := Get_Attribute (Command, "output", "@@");
       Outp   : GNAT.OS_Lib.String_Access := null;
@@ -680,8 +818,9 @@ package body Commands.Custom is
             Server_T := GPS_Server;
       end;
 
-      return new External_Component_Record'
+      return new Custom_Component_Record'
         (Command_Component_Record with
+         The_Type         => Component_External,
          Server           => Server_T,
          Check_Password   => Check_Password,
          Show_Command     => Show_C,
@@ -786,8 +925,8 @@ package body Commands.Custom is
             Count := Count + 1;
          elsif N.Tag.all = "on-failure" then
             if Count = Result'First
-              or else Result (Count - 1).Component.all not in
-                External_Component_Record'Class
+              or else Custom_Component (Result (Count - 1).Component).The_Type
+                /= Component_External
             then
                Insert (Kernel,
                        "<on-failure> can only follow an <external> node, in"
@@ -833,7 +972,7 @@ package body Commands.Custom is
       Command              : Glib.Xml_Int.Node_Ptr;
       Default_Output       : String := Console_Output;
       Show_Command         : Boolean := True;
-      Show_In_Task_Manager : Boolean := True) is
+      Show_In_Task_Manager : Boolean := False) is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
@@ -1080,9 +1219,9 @@ package body Commands.Custom is
          --  Return the contents of P, or the empty string if P is null
 
          function Execute_Shell
-           (Component : Shell_Component_Record'Class) return Boolean;
+           (Component : Custom_Component_Record'Class) return Boolean;
          function Execute_External
-           (Component : External_Component_Record'Class) return Boolean;
+           (Component : Custom_Component_Record'Class) return Boolean;
          --  Execute a shell or an external component. Return the success
          --  status.
 
@@ -1104,7 +1243,7 @@ package body Commands.Custom is
          -------------------
 
          function Execute_Shell
-           (Component : Shell_Component_Record'Class) return Boolean
+           (Component : Custom_Component_Record'Class) return Boolean
          is
             Errors  : aliased Boolean;
             Old_Dir : GNAT.OS_Lib.String_Access;
@@ -1160,7 +1299,7 @@ package body Commands.Custom is
          ----------------------
 
          function Execute_External
-           (Component : External_Component_Record'Class) return Boolean
+           (Component : Custom_Component_Record'Class) return Boolean
          is
             Tmp  : GNAT.OS_Lib.String_Access;
             Args : String_List_Access;
@@ -1247,17 +1386,15 @@ package body Commands.Custom is
             return False;
          end if;
 
-         --  ??? Should use dispatching
-         if Component.all in Shell_Component_Record'Class then
-            Success := Execute_Shell
-              (Shell_Component_Record'Class (Component.all));
-         else
-            Old_Server := Current_Server;
-            Current_Server := External_Component_Record (Component.all).Server;
-            Success := Execute_External
-              (External_Component_Record'Class (Component.all));
-            Current_Server := Old_Server;
-         end if;
+         case Component.The_Type is
+            when Component_Shell =>
+               Success := Execute_Shell (Component.all);
+            when Component_External =>
+               Old_Server     := Current_Server;
+               Current_Server := Component.Server;
+               Success        := Execute_External (Component.all);
+               Current_Server := Old_Server;
+         end case;
 
          if not Success then
             Trace
@@ -1289,11 +1426,12 @@ package body Commands.Custom is
          loop
             Current := Command.Components (Command.Execution.Cmd_Index);
             if Current.On_Failure_For = Command.Execution.Current_Failure then
-               Success := Execute_Simple_Command (Current.Component);
+               Success := Execute_Simple_Command
+                 (Custom_Component (Current.Component));
 
                if not Context.Synchronous
-                 and then Current.Component.all
-                    in External_Component_Record'Class
+                 and then Custom_Component (Current.Component).The_Type =
+                   Component_External
                then
                   --  We'll have to run again to check for completion
                   return True;
@@ -1423,7 +1561,8 @@ package body Commands.Custom is
       Component : constant Command_Component := Get (Iter);
    begin
       if Component = null
-        or else Component.all in Shell_Component_Record'Class
+        or else Component.all not in Custom_Component_Record'Class
+        or else Custom_Component (Component).The_Type = Component_Shell
         or else Iter.Current = Iter.Command.Components'Last
         or else Iter.Command.Components (Iter.Current + 1).On_Failure_For /=
            Iter.Current
@@ -1462,76 +1601,314 @@ package body Commands.Custom is
       null;
    end Free;
 
-   --------------------
-   -- Command_Editor --
-   --------------------
+   ---------------------------
+   -- Create_Command_Editor --
+   ---------------------------
 
-   function Command_Editor
-     (Command : access Custom_Command) return Gtk.Widget.Gtk_Widget
+   function Create_Command_Editor
+     (Command : access Custom_Command;
+      Kernel  : access Kernel_Handle_Record'Class) return Command_Editor
    is
-      Box   : constant Command_Editor_Widget := new Command_Editor_Record;
+      Box   : constant Custom_Command_Editor_Widget :=
+        new Custom_Command_Editor_Record;
       Hbox  : Gtk_Box;
-      Label : Gtk_Label;
+      Command_Cst : aliased String := "command";
+      Bbox  : Gtk_Vbutton_Box;
+      Scrolled : Gtk_Scrolled_Window;
+      Button   : Gtk_Button;
    begin
       Initialize_Vbox (Box, Homogeneous => False);
+      Box.Kernel := Kernel_Handle (Kernel);
 
-      Gtk_New (Box.Show_Command, -"Show command (default)");
-      Set_Tip (Get_Tooltips (Command.Kernel), Box.Show_Command,
-               -("Whether the text of the command should be displayed along"
-                 & " with the actual output of the command. If the output is"
-                 & " hidden, the text will not be shown."));
-      Set_Active (Box.Show_Command, Command.Default_Show_Command);
-      Pack_Start (Box, Box.Show_Command, Expand => False);
-
-      Gtk_New (Box.Show_Output, -"Show command output (default)");
-      Set_Tip (Get_Tooltips (Command.Kernel), Box.Show_Output,
-               -("Whether the output of the command should be displayed"));
-      Set_Active (Box.Show_Output, Command.Default_Output_Destination /= null
-                 and then Command.Default_Output_Destination.all /= "none");
-      Pack_Start (Box, Box.Show_Output, Expand => False);
+      --  First Pane: The list of components + action buttons
+      Gtk_New_Vpaned (Box.Pane);
+      Pack_Start (Box, Box.Pane, True, True);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox, Expand => False);
+      Pack1 (Box.Pane, Hbox, True, True);
 
-      Gtk_New (Label, -"Output in:");
-      Pack_Start (Hbox, Label, Expand => False);
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Pack_Start (Hbox, Scrolled, Expand => True, Fill => True);
 
-      Gtk_New (Box.Output);
-      if Command.Default_Output_Destination = null
-        or else Command.Default_Output_Destination.all = ""
-      then
-         Set_Text (Box.Output, "Messages");
-      else
-         Set_Text (Box.Output, Command.Default_Output_Destination.all);
-      end if;
-      Set_Tip (Get_Tooltips (Command.Kernel), Box.Output,
-               -("Name of the window in which the output will be displayed."
-                 & " New windows are created as appropriate. This can be"
-                 & " overriden for each command below"));
-      Pack_Start (Hbox, Box.Output, Expand => True);
+      Box.Tree := Create_Tree_View
+        (Column_Types       => (1 => GType_String,
+                                2 => GType_Int),
+         Column_Names       => (1 => Command_Cst'Unchecked_Access),
+         Show_Column_Titles => False,
+         Sortable_Columns   => False);
+      Add (Scrolled, Box.Tree);
 
-      return Gtk.Widget.Gtk_Widget (Box);
-   end Command_Editor;
+      Gtk_New (Bbox);
+      Set_Layout (Bbox, Buttonbox_Start);
+      Pack_Start (Hbox, Bbox, Expand => False);
 
-   ------------------------
-   -- Update_From_Editor --
-   ------------------------
+      Gtk_New_From_Stock_And_Label (Button, Stock_Add, -"Add Python");
+      Pack_Start (Bbox, Button);
+      Component_Type_And_Lang_Callback.Object_Connect
+        (Button, "clicked", On_Add'Access, Box,
+         (Component_Shell, Lookup_Scripting_Language (Kernel, "Python")));
 
-   procedure Update_From_Editor
-     (Command : access Custom_Command; Editor : Gtk.Widget.Gtk_Widget)
+      Gtk_New_From_Stock_And_Label (Button, Stock_Add, -"Add Shell");
+      Pack_Start (Bbox, Button);
+      Component_Type_And_Lang_Callback.Object_Connect
+        (Button, "clicked", On_Add'Access, Box,
+         (Component_Shell, Lookup_Scripting_Language (Kernel,
+          GPS_Shell_Name)));
+
+      Gtk_New_From_Stock_And_Label (Button, Stock_Add, -"Add External");
+      Pack_Start (Bbox, Button);
+      Component_Type_And_Lang_Callback.Object_Connect
+        (Button, "clicked", On_Add'Access, Box,
+         (Component_External, null));
+
+      Gtk_New_From_Stock (Box.Button_Remove, Stock_Remove);
+      Set_Sensitive (Box.Button_Remove, False);
+      Pack_Start (Bbox, Box.Button_Remove);
+      Widget_Callback.Object_Connect
+        (Box.Button_Remove, "clicked", On_Remove'Access, Box);
+
+      --  Now fill the tree
+
+      Box.Components := new Component_Array (Command.Components'Range);
+      for C in Command.Components'Range loop
+         if Command.Default_Output_Destination = null
+           or else Command.Default_Output_Destination.all = ""
+         then
+            Box.Components (C) :=
+              (Component => Create_Component_Editor
+                 (Custom_Component (Command.Components (C).Component),
+                  Box,
+                  Kernel,
+                  Default_Output => "Messages"),
+               On_Failure_For => Command.Components (C).On_Failure_For);
+         else
+            Box.Components (C) :=
+              (Component => Create_Component_Editor
+                 (Custom_Component (Command.Components (C).Component),
+                  Box,
+                  Kernel,
+                  Default_Output => Command.Default_Output_Destination.all),
+               On_Failure_For => Command.Components (C).On_Failure_For);
+         end if;
+      end loop;
+
+      Widget_Callback.Object_Connect
+        (Get_Selection (Box.Tree), "changed",
+         On_Component_Changed'Access,
+         Slot_Object => Box);
+
+      Refresh_And_Select (Box, Selected => Command.Components'First);
+
+      Widget_Callback.Connect (Box, "destroy", On_Destroy'Access);
+
+      return Command_Editor (Box);
+   end Create_Command_Editor;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh_And_Select
+     (Editor : access Custom_Command_Editor_Record'Class;
+      Selected : Integer := -1)
    is
-      Ed : constant Command_Editor_Widget := Command_Editor_Widget (Editor);
+      Model : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Model (Editor.Tree));
+      Parent : Gtk_Tree_Iter;
+      Iter   : Gtk_Tree_Iter;
+      First, Last : Gtk_Text_Iter;
+      Selected_Iter : Gtk_Tree_Iter := Null_Iter;
    begin
-      Command.Default_Show_Command := Get_Active (Ed.Show_Command);
-      Free (Command.Default_Output_Destination);
+      Clear (Model);
+      Parent := Null_Iter;
 
-      if Get_Active (Ed.Show_Output) then
-         Command.Default_Output_Destination :=
-           new String'(Get_Text (Ed.Output));
-      else
-         Command.Default_Output_Destination := new String'(No_Output);
+      for C in Editor.Components'Range loop
+         --  Unless the component has been destroyed by the user
+         if Editor.Components (C).Component /= null then
+            if C > Editor.Components'First
+              and then Editor.Components (C).On_Failure_For >
+              Editor.Components (C - 1).On_Failure_For
+            then
+               Append (Model, Iter, Iter);
+               Set (Model, Iter, 0, "on-failure");
+               Set (Model, Iter, 1, -1);
+               Parent := Iter;
+            end if;
+
+            Get_Start_Iter (Editor.Components (C).Component.Command, First);
+            Get_End_Iter   (Editor.Components (C).Component.Command, Last);
+
+            Append (Model, Iter, Parent);
+            Set (Model, Iter, 0, Get_Text
+                 (Editor.Components (C).Component.Command, First, Last));
+            Set (Model, Iter, 1, Gint (C));
+
+            if C = Selected then
+               Selected_Iter := Iter;
+            end if;
+
+            if C < Editor.Components'Last
+              and then Editor.Components (C).On_Failure_For >
+              Editor.Components (C + 1).On_Failure_For
+            then
+               Parent := Gtk.Tree_Model.Parent
+                 (Gtk_Tree_Model (Model), Parent);
+            end if;
+         end if;
+      end loop;
+
+      if Selected_Iter /= Null_Iter then
+         Select_Iter (Get_Selection (Editor.Tree), Selected_Iter);
       end if;
-   end Update_From_Editor;
+
+      --  ??? Should preserve the expansion status
+      Expand_All (Editor.Tree);
+   end Refresh_And_Select;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Editor : access Gtk_Widget_Record'Class) is
+      Ed : constant Custom_Command_Editor_Widget :=
+        Custom_Command_Editor_Widget (Editor);
+   begin
+      if Ed.Components /= null then
+         for C in Ed.Components'Range loop
+            Destroy (Ed.Components (C).Component);
+         end loop;
+         Unchecked_Free (Ed.Components);
+
+         --  All other fields are destroyed with the standard gtk+ mechanism
+      end if;
+   end On_Destroy;
+
+   ----------------------------
+   -- Get_Selected_Component --
+   ----------------------------
+
+   function Get_Selected_Component
+     (Editor : access Custom_Command_Editor_Record'Class) return Integer
+   is
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
+   begin
+      Get_Selected (Get_Selection (Editor.Tree), Model, Iter);
+      if Iter /= Null_Iter then
+         return Integer (Get_Int (Model, Iter, 1));
+      end if;
+      return -1;
+   end Get_Selected_Component;
+
+   ---------------
+   -- On_Remove --
+   ---------------
+
+   procedure On_Remove (Editor : access Gtk_Widget_Record'Class) is
+      Ed : constant Custom_Command_Editor_Widget :=
+        Custom_Command_Editor_Widget (Editor);
+      Component : constant Integer := Get_Selected_Component (Ed);
+      Comp : Component_Array_Access := Ed.Components;
+   begin
+      if Component /= -1 then
+         Destroy (Comp (Component).Component);
+
+         Ed.Components := new Component_Array (Comp'First .. Comp'Last - 1);
+         Ed.Components (Comp'First .. Component - 1) :=
+           Comp (Comp'First .. Component - 1);
+         Ed.Components (Component .. Ed.Components'Last) :=
+           Comp (Component + 1 .. Comp'Last);
+         Unchecked_Free (Comp);
+         Refresh_And_Select (Ed, Integer'Min (Ed.Components'Last, Component));
+      end if;
+   end On_Remove;
+
+   --------------------------
+   -- On_Component_Changed --
+   --------------------------
+
+   procedure On_Component_Changed (Editor : access Gtk_Widget_Record'Class) is
+      Ed : constant Custom_Command_Editor_Widget :=
+        Custom_Command_Editor_Widget (Editor);
+      Component : Integer;
+   begin
+      --  Preserve the current component editor, since we'll need it to
+      --  generate the XML in the end. It will be destroyed when the editor
+      --  itself is destroyed.
+      if Get_Child2 (Ed.Pane) /= null then
+         Ref (Get_Child2 (Ed.Pane));
+         Remove (Ed.Pane, Get_Child2 (Ed.Pane));
+      end if;
+
+      Component := Get_Selected_Component (Ed);
+      if Component /= -1 then
+         Pack2 (Ed.Pane, Ed.Components (Component).Component, True, True);
+         Show_All (Ed.Pane);
+      end if;
+      Set_Sensitive (Ed.Button_Remove, Component /= -1);
+   end On_Component_Changed;
+
+   ------------------------
+   -- On_Command_Changed --
+   ------------------------
+
+   procedure On_Command_Changed (Editor : access Gtk_Widget_Record'Class) is
+      Ed : constant Custom_Command_Editor_Widget :=
+        Custom_Command_Editor_Widget (Editor);
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
+      Component : Custom_Component_Editor;
+      First, Last : Gtk_Text_Iter;
+
+   begin
+      Get_Selected (Get_Selection (Ed.Tree), Model, Iter);
+      if Iter /= Null_Iter then
+         Component := Custom_Component_Editor (Get_Child2 (Ed.Pane));
+         Get_Start_Iter (Component.Command, First);
+         Get_End_Iter   (Component.Command, Last);
+         Set (Gtk_Tree_Store (Model), Iter, 0,
+              Get_Text (Component.Command, First, Last));
+      end if;
+   end On_Command_Changed;
+
+   ------------
+   -- On_Add --
+   ------------
+
+   procedure On_Add
+     (Editor : access Gtk_Widget_Record'Class;
+      Data   : Component_Type_And_Lang)
+   is
+      Ed : constant Custom_Command_Editor_Widget :=
+        Custom_Command_Editor_Widget (Editor);
+      Component : Integer := Get_Selected_Component (Ed);
+      Comp : Component_Array_Access := Ed.Components;
+   begin
+      Ed.Components := new Component_Array (Comp'First .. Comp'Last + 1);
+
+      if Component = -1 then
+         Component := Comp'Last;
+      end if;
+
+      Ed.Components (Comp'First .. Component) :=
+        Comp (Comp'First .. Component);
+      if Component + 1 <= Comp'Last then
+         Ed.Components (Component + 2 .. Ed.Components'Last) :=
+           Comp (Component + 1 .. Comp'Last);
+      end if;
+
+      Unchecked_Free (Comp);
+      Ed.Components (Component + 1) :=
+        (Component      => Create_Empty_Component_Editor
+           (The_Type       => Data.The_Type,
+            Command        => Ed,
+            Kernel         => Ed.Kernel,
+            Default_Output => "",
+            Script         => Data.Script),
+         On_Failure_For => -1);
+      Refresh_And_Select (Ed, Component + 1);
+   end On_Add;
 
    -----------
    -- Start --
@@ -1548,228 +1925,194 @@ package body Commands.Custom is
          On_Failure => -1);
    end Start;
 
-   ----------------------
-   -- Component_Editor --
-   ----------------------
+   -----------------------------------
+   -- Create_Empty_Component_Editor --
+   -----------------------------------
 
-   procedure Component_Editor
-     (Component : access Custom_Component_Record'Class;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Editor    : access Gtk_Box_Record'Class;
-      Custom    : out Custom_Component_Editor;
-      Size      : Gtk_Size_Group)
+   function Create_Empty_Component_Editor
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Command        : access Custom_Command_Editor_Record'Class;
+      Default_Output : String;
+      The_Type       : Component_Type;
+      Script         : Scripting_Language := null)
+      return Custom_Component_Editor
    is
-      Box   : Gtk_Box;
-      Label : Gtk_Label;
+      Comp : aliased Custom_Component_Record (The_Type);
    begin
-      Custom.Kernel := Kernel_Handle (Kernel);
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Editor, Box, Expand => False);
-      Gtk_New    (Label, -"Command: ");
+      case The_Type is
+         when Component_Shell =>
+            Comp.Script := Script;
+         when Component_External =>
+            null;
+      end case;
+
+      return Create_Component_Editor
+        (Comp'Unchecked_Access, Command, Kernel, Default_Output);
+   end Create_Empty_Component_Editor;
+
+   -----------------------------
+   -- Create_Component_Editor --
+   -----------------------------
+
+   function Create_Component_Editor
+     (Component      : access Custom_Component_Record'Class;
+      Command        : access Custom_Command_Editor_Record'Class;
+      Kernel         : access Kernel_Handle_Record'Class;
+      Default_Output : String) return Custom_Component_Editor
+   is
+      Editor    : Custom_Component_Editor;
+      Size      : Gtk_Size_Group;
+      Box, HBox : Gtk_Box;
+      Label     : Gtk_Label;
+      Scrolled  : Gtk_Scrolled_Window;
+      View      : Gtk_Text_View;
+      Iter      : Gtk_Text_Iter;
+   begin
+      Editor := new Custom_Component_Editor_Record
+        (The_Type => Component.The_Type);
+      Gtk.Frame.Initialize (Editor);
+      Editor.Kernel := Kernel_Handle (Kernel);
+
+      case Component.The_Type is
+         when Component_Shell =>
+            Set_Label (Editor, Get_Name (Component.Script));
+         when Component_External =>
+            Set_Label (Editor, -"External");
+      end case;
+
+      Gtk_New_Vbox (Box, Homogeneous => False);
+      Add (Editor, Box);
+
+      Gtk_New (Size);
+
+      Gtk_New_Hbox (HBox, Homogeneous => False);
+      Pack_Start (Box, HBox, Expand => False);
+
+      Gtk_New (Label, -"Output: ");
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New    (Custom.Command);
-      Set_Text   (Custom.Command, Component.Command.all);
-      Pack_Start (Box, Custom.Command, Expand => True, Fill => True);
-      Set_Tip (Get_Tooltips (Kernel), Custom.Command,
-               -"The command to execute");
+      Pack_Start (HBox, Label, Expand => False);
 
-      Gtk_New (Custom.Show_Command, -"Show command");
-      Pack_Start (Editor, Custom.Show_Command, Expand => False);
-      Set_Active (Custom.Show_Command, Component.Show_Command);
-      Set_Tip (Get_Tooltips (Kernel), Custom.Show_Command,
+      Gtk_New (Editor.Output);
+      Pack_Start (HBox, Editor.Output, Expand => True);
+      Set_Tip
+        (Get_Tooltips (Kernel), Editor.Output,
+         -("Name of the window in which the output of the command should"
+           & " be displayed. A new window will be created if necessary."));
+      if Component.Output = null then
+         if Default_Output = Console_Output then
+            Set_Text (Editor.Output, "Messages");
+         else
+            Set_Text (Editor.Output, Default_Output);
+         end if;
+      else
+         Set_Text (Editor.Output, Component.Output.all);
+      end if;
+
+      Gtk_New (Editor.Show_Command, -"Display command");
+      Pack_Start (HBox, Editor.Show_Command, Expand => False);
+      Set_Active (Editor.Show_Command, Component.Show_Command);
+      Set_Tip (Get_Tooltips (Kernel), Editor.Show_Command,
                -("Whether the text of the command should be displayed in the"
                  & " output window. This overrides the default setup for the"
                  & " action"));
 
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Editor, Box, Expand => False);
-      Gtk_New (Label, -"Output in: ");
+      Gtk_New_Hbox (HBox, Homogeneous => False);
+      Pack_Start (Box, HBox, Expand => False);
+      Gtk_New    (Label, -"Command: ");
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New (Custom.Output);
-      Pack_Start (Box, Custom.Output, Expand => True);
-      Set_Tip (Get_Tooltips (Kernel), Custom.Output,
-               -("Name of the window in which the output of the command should"
-                 & " be displayed. A new window will be created if necessary."
-                 & " This value can be inherited from the action's own setup"
-                 & " by specifying") & '"' & Output_Use_Default & '"');
+      Pack_Start (HBox, Label, Expand => False);
 
-      if Component.Output = null then
-         Set_Text (Custom.Output, Output_Use_Default);
-      else
-         Set_Text (Custom.Output, Component.Output.all);
+      Gtk_New (Scrolled);
+      Set_Shadow_Type (Scrolled, Shadow_In);
+      Pack_Start (HBox, Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+
+      Gtk_New (Editor.Command);
+      Gtk_New (View, Editor.Command);
+      Add (Scrolled, View);
+
+      Get_End_Iter (Editor.Command, Iter);
+      if Component.Command /= null then
+         Insert (Editor.Command, Iter, Component.Command.all);
       end if;
-   end Component_Editor;
 
-   ----------------------
-   -- Component_Editor --
-   ----------------------
+      Widget_Callback.Object_Connect
+        (Editor.Command, "changed", On_Command_Changed'Access, Command);
 
-   function Component_Editor
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Component : access Shell_Component_Record) return Gtk.Widget.Gtk_Widget
-   is
-      Editor : constant Shell_Component_Editor :=
-        new Shell_Component_Editor_Record;
-      Box    : Gtk_Box;
-      Label  : Gtk_Label;
-      List   : Gtk.Enums.String_List.Glist;
-      Languages : constant Scripting_Language_Array :=
-        Get_Scripting_Languages (Kernel);
-      Size   : Gtk_Size_Group;
-   begin
-      Initialize_Vbox (Editor, Homogeneous => False);
+      case Editor.The_Type is
+         when Component_Shell =>
+            Editor.Script := Component.Script;
 
-      Gtk_New (Size);
-      Component_Editor (Component, Kernel, Editor, Editor.Custom, Size);
+         when Component_External =>
+            Gtk_New_Hbox (HBox, Homogeneous => False);
+            Pack_Start (Box, HBox, Expand => False);
 
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Editor, Box, Expand => False);
-      Gtk_New (Label, -"Language: ");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New (Editor.Lang);
-      Pack_Start (Box, Editor.Lang, Expand => True);
+            Gtk_New (Label, -"Progress: ");
+            Set_Alignment (Label, 0.0, 0.5);
+            Add_Widget (Size, Label);
+            Pack_Start (HBox, Label, Expand => False);
 
-      Set_Tip (Get_Tooltips (Kernel), Get_Entry (Editor.Lang),
-               -("The language in which the command is written"));
+            Gtk_New (Editor.Regexp);
+            Pack_Start (HBox, Editor.Regexp, Expand => True, Fill => True);
+            if Component.Progress_Regexp /= null then
+               Set_Text (Editor.Regexp, Component.Progress_Regexp.all);
+            end if;
+            Set_Tip (Get_Tooltips (Kernel), Editor.Regexp,
+              -("Regular expression, matched against each line of the output."
+                & " If it matches, its contents is analyzed to find the"
+                & " current progress of the action, and display a progress"
+                & " bar at the bottom of GPS's window. Leave this empty"
+                & " to ignore this feature."));
 
-      for L in Languages'Range loop
-         Gtk.Enums.String_List.Append (List, Get_Name (Languages (L)));
-      end loop;
-      Set_Popdown_Strings (Editor.Lang, List);
+            Gtk_New (Label, -"Current:");
+            Set_Alignment (Label, 0.0, 0.5);
+            Pack_Start (HBox, Label, Expand => False);
 
-      Set_Text (Get_Entry (Editor.Lang), Get_Name (Component.Script));
+            Gtk_New (Editor.Current, 0.0, 20.0, 1.0);
+            Pack_Start (HBox, Editor.Current, Expand => False);
+            Set_Value (Editor.Current, Gdouble (Component.Progress_Current));
+            Set_Tip (Get_Tooltips (Kernel), Editor.Current,
+              -("Index of the open parenthesis the group that matches the"
+                & " current progress of the command. 0 is for the whole"
+                & " string matched by the regexp, 1 for the first open"
+                & " parenthesis, and so on..."));
 
-      return Gtk.Widget.Gtk_Widget (Editor);
-   end Component_Editor;
+            Gtk_New (Label, -"Total:");
+            Set_Alignment (Label, 0.0, 0.5);
+            Pack_Start (HBox, Label, Expand => False);
 
-   ------------------------
-   -- Update_From_Editor --
-   ------------------------
+            Gtk_New (Editor.Final, 0.0, 20.0, 1.0);
+            Pack_Start (HBox, Editor.Final, Expand => False);
+            Set_Value (Editor.Final, Gdouble (Component.Progress_Final));
+            Set_Tip (Get_Tooltips (Kernel), Editor.Final,
+              -("Index of the open parenthesis the group that matches the"
+                & " final progress of the command. This group should match"
+                & " a number which indicates the total to reach to complete"
+                & " the command. This total might change after each line of"
+                & " the output, since some tools might not know in advance"
+                & " how much processing they have to do."));
 
-   procedure Update_From_Editor
-     (Component : access Shell_Component_Record;
-      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
-      Ed : constant Shell_Component_Editor := Shell_Component_Editor (Editor);
-   begin
-      Component.Show_Command := Get_Active (Ed.Custom.Show_Command);
-      Free (Component.Output);
-      Component.Output := new String'(Get_Text (Ed.Custom.Output));
-      Free (Component.Command);
-      Component.Command := new String'(Get_Text (Ed.Custom.Command));
-      Component.Script := Lookup_Scripting_Language
-        (Ed.Custom.Kernel, Get_Text (Get_Entry (Ed.Lang)));
-   end Update_From_Editor;
+            Gtk_New (Editor.Hide, -"Hide matches");
+            Pack_Start (HBox, Editor.Hide, Expand => False);
+            Set_Active (Editor.Hide, Component.Progress_Hide);
+            Set_Tip (Get_Tooltips (Kernel), Editor.Hide,
+              -("Whether the lines matching the regexp should be hidden"
+                & " when the output is displayed in the GPS window. This"
+                & " allows tools to output special lines just for GPS, but"
+                & " which are invisible to the user"));
 
-   ----------------------
-   -- Component_Editor --
-   ----------------------
+            Gtk_New_Hbox (HBox, Homogeneous => False);
+            Pack_Start (Box, HBox, Expand => False);
 
-   function Component_Editor
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Component : access External_Component_Record)
-      return Gtk.Widget.Gtk_Widget
-   is
-      Editor : constant External_Component_Editor :=
-        new External_Component_Editor_Record;
-      Label : Gtk_Label;
-      Box   : Gtk_Box;
-      Size  : Gtk_Size_Group;
-   begin
-      Initialize_Vbox (Editor, Homogeneous => False);
-      Gtk_New (Size);
-      Component_Editor (Component, Kernel, Editor, Editor.Custom, Size);
+            --  ??? Should be able to edit check-password
+            --  ??? Should be able to edit server
+            --  ??? Should be able to edit Show_In_Task_Manager
+      end case;
 
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Editor, Box, Expand => False);
-      Gtk_New (Label, -"Progress regexp: ");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New (Editor.Regexp);
-      Pack_Start (Box, Editor.Regexp, Expand => True, Fill => True);
-      Set_Text (Editor.Regexp, Component.Progress_Regexp.all);
-      Set_Tip (Get_Tooltips (Kernel), Editor.Regexp,
-               -("Regular expression, matched against each line of the output."
-                 & " If it matches, its contents is analyzed to find the"
-                 & " current progress of the action, and display a progress"
-                 & " bar at the bottom of GPS's window. Leave this empty"
-                 & " to ignore this feature."));
-
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Editor, Box, Expand => False);
-      Gtk_New (Label, -"Current progress at: ");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New (Editor.Current, 0.0, 20.0, 1.0);
-      Pack_Start (Box, Editor.Current, Expand => False);
-      Set_Value (Editor.Current, Gdouble (Component.Progress_Current));
-      Set_Tip (Get_Tooltips (Kernel), Editor.Current,
-               -("Index of the open parenthesis the group that matches the"
-                 & " current progress of the command. 0 is for the whole"
-                 & " string matched by the regexp, 1 for the first open"
-                 & " parenthesis, and so on..."));
-
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Editor, Box, Expand => False);
-      Gtk_New (Label, -"Final progress at: ");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New (Editor.Final, 0.0, 20.0, 1.0);
-      Pack_Start (Box, Editor.Final, Expand => False);
-      Set_Value (Editor.Final, Gdouble (Component.Progress_Final));
-      Set_Tip (Get_Tooltips (Kernel), Editor.Final,
-               -("Index of the open parenthesis the group that matches the"
-                 & " final progress of the command. This group should match"
-                 & " a number which indicates the total to reach to complete"
-                 & " the command. This total might change after each line of"
-                 & " the output, since some tools might not know in advance"
-                 & " how much processing they have to do."));
-
-      Gtk_New (Editor.Hide, -"Hide progress output");
-      Pack_Start (Editor, Editor.Hide, Expand => False);
-      Set_Active (Editor.Hide, Component.Progress_Hide);
-      Set_Tip (Get_Tooltips (Kernel), Editor.Hide,
-               -("Whether the lines matching the regexp should be hidden"
-                 & " when the output is displayed in the GPS window. This"
-                 & " allows tools to output special lines just for GPS, but"
-                 & " which are invisible to the user"));
-
-      Gtk_New (Label, -"External: " & Component.Command.all);
-      return Gtk.Widget.Gtk_Widget (Editor);
-   end Component_Editor;
-
-   ------------------------
-   -- Update_From_Editor --
-   ------------------------
-
-   procedure Update_From_Editor
-     (Component : access External_Component_Record;
-      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
-      Ed : constant External_Component_Editor :=
-        External_Component_Editor (Editor);
-   begin
-      Component.Show_Command := Get_Active (Ed.Custom.Show_Command);
-      Free (Component.Output);
-      Component.Output := new String'(Get_Text (Ed.Custom.Output));
-      Free (Component.Command);
-      Component.Command := new String'(Get_Text (Ed.Custom.Command));
-
-      Free (Component.Progress_Regexp);
-      Component.Progress_Regexp  := new String'(Get_Text (Ed.Regexp));
-      Component.Progress_Current := Natural (Get_Value_As_Int (Ed.Current));
-      Component.Progress_Final   := Natural (Get_Value_As_Int (Ed.Final));
-      Component.Progress_Hide    := Get_Active (Ed.Hide);
-   end Update_From_Editor;
+      return Editor;
+   end Create_Component_Editor;
 
    --------------
    -- Get_Name --
@@ -1785,106 +2128,103 @@ package body Commands.Custom is
    -- To_XML --
    ------------
 
-   procedure To_XML
-     (Command     : access Custom_Command;
-      Action_Node : Glib.Xml_Int.Node_Ptr)
+   function To_XML
+     (Editor : access Custom_Command_Editor_Record)
+      return Glib.Xml_Int.Node_Ptr
    is
-      Parent, Tmp : Node_Ptr;
+      Action, Tmp, Parent, XML : Node_Ptr;
    begin
-      Set_Attribute (Action_Node, "output",
-                     Command.Default_Output_Destination.all);
+      Action     := new Node;
+      Action.Tag := new String'("action");
 
-      if not Command.Default_Show_Command then
-         Set_Attribute (Action_Node, "show-command", "false");
-      end if;
+      Parent := Action;
 
-      Parent := Action_Node;
+      for C in Editor.Components'Range loop
+         --  If the component has not been removed
+         if Editor.Components (C).Component /= null then
+            if C /= Editor.Components'First
+              and then Editor.Components (C).On_Failure_For >
+              Editor.Components (C - 1).On_Failure_For
+            then
+               Tmp := new Node;
+               Tmp.Tag := new String'("on-failure");
+               Add_Child (Parent, Tmp, Append => True);
+               Parent := Tmp;
+            end if;
 
-      for C in Command.Components'Range loop
-         if C /= Command.Components'First
-           and then Command.Components (C).On_Failure_For >
-             Command.Components (C - 1).On_Failure_For
-         then
-            Tmp := new Node;
-            Tmp.Tag := new String'("on-failure");
-            Add_Child (Parent, Tmp, Append => True);
-            Parent := Tmp;
-         end if;
+            XML := To_XML (Editor.Components (C).Component);
+            if XML /= null then
+               Add_Child (Parent, XML, Append => True);
+            end if;
 
-         To_XML (Command.Components (C).Component, Parent);
-
-         if C /= Command.Components'Last
-           and then Command.Components (C).On_Failure_For >
-             Command.Components (C + 1).On_Failure_For
-         then
-            Parent := Parent.Parent;
+            if C /= Editor.Components'Last
+              and then Editor.Components (C).On_Failure_For >
+              Editor.Components (C + 1).On_Failure_For
+            then
+               Parent := Parent.Parent;
+            end if;
          end if;
       end loop;
+      return Action;
    end To_XML;
 
    ------------
    -- To_XML --
    ------------
 
-   procedure To_XML
-     (Component   : access Shell_Component_Record;
-      Action_Node : Glib.Xml_Int.Node_Ptr)
+   function To_XML
+     (Editor         : access Custom_Component_Editor_Record'Class)
+      return Glib.Xml_Int.Node_Ptr
    is
-      Node : constant Node_Ptr := new Glib.Xml_Int.Node;
+      Node : Node_Ptr;
+      First, Last : Gtk_Text_Iter;
+      Output : constant String := Get_Text (Editor.Output);
    begin
-      Node.Tag := new String'("shell");
-      Node.Value := new String'(Component.Command.all);
-      Add_Child (Action_Node, Node, Append => True);
+      Get_Start_Iter (Editor.Command, First);
+      Get_End_Iter   (Editor.Command, Last);
 
-      if not Component.Show_Command then
-         Set_Attribute (Node, "show-command", "false");
-      end if;
-
-      if Component.Output /= null
-        and then Component.Output.all /= Output_Use_Default
-      then
-         Set_Attribute (Node, "output", Component.Output.all);
-      end if;
-
-      Set_Attribute (Node, "lang", Get_Name (Component.Script));
-   end To_XML;
-
-   ------------
-   -- To_XML --
-   ------------
-
-   procedure To_XML
-     (Component   : access External_Component_Record;
-      Action_Node : Glib.Xml_Int.Node_Ptr)
-   is
-      Node : constant Node_Ptr := new Glib.Xml_Int.Node;
-   begin
-      Node.Tag := new String'("external");
-      Node.Value := new String'(Component.Command.all);
-      Add_Child (Action_Node, Node, Append => True);
-
-      if not Component.Show_Command then
-         Set_Attribute (Node, "show-command", "false");
-      end if;
-
-      if Component.Output /= null
-        and then Component.Output.all /= Output_Use_Default
-      then
-         Set_Attribute (Node, "output", Component.Output.all);
-      end if;
-
-      if Component.Progress_Regexp.all /= "" then
-         Set_Attribute (Node, "progress-regexp",
-                        Component.Progress_Regexp.all);
-         Set_Attribute (Node, "progress-current",
-                        Image (Component.Progress_Current));
-         Set_Attribute (Node, "progress-final",
-                        Image (Component.Progress_Final));
-
-         if not Component.Progress_Hide then
-            Set_Attribute (Node, "progress-hide", "false");
+      declare
+         Command : constant String := Get_Text (Editor.Command, First, Last);
+      begin
+         if Command = "" then
+            return null;
          end if;
-      end if;
+
+         Node := new Glib.Xml_Int.Node;
+
+         case Editor.The_Type is
+            when Component_Shell =>
+               Node.Tag := new String'("shell");
+               Set_Attribute (Node, "lang", Get_Name (Editor.Script));
+
+            when Component_External =>
+               Node.Tag := new String'("external");
+               if Get_Text (Editor.Regexp) /= "" then
+                  Set_Attribute
+                    (Node, "progress-regexp", Get_Text (Editor.Regexp));
+                  Set_Attribute
+                    (Node, "progress-current",
+                     Image (Integer (Get_Value_As_Int (Editor.Current))));
+                  Set_Attribute
+                    (Node, "progress-final",
+                     Image (Integer (Get_Value_As_Int (Editor.Final))));
+                  if not Get_Active (Editor.Hide) then
+                     Set_Attribute (Node, "progress-hide", "false");
+                  end if;
+               end if;
+         end case;
+
+         Node.Value := new String'(Command);
+
+         if not Get_Active (Editor.Show_Command) then
+            Set_Attribute (Node, "show-command", "false");
+         end if;
+
+         if Output /= "" and then Output /= "Messages" then
+            Set_Attribute (Node, "output", Output);
+         end if;
+         return Node;
+      end;
    end To_XML;
 
    ---------------
