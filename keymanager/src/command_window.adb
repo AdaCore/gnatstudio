@@ -51,6 +51,7 @@ package body Command_Window is
    type Command_Window_Record is new Gtk_Window_Record with record
       Kernel      : Kernel_Handle;
       Box         : Gtk_Box;
+      Prompt      : Gtk_Label;
       Line        : Gtk_Entry;
       Inst        : Class_Instance := No_Class_Instance;
       On_Changed  : Subprogram_Type;
@@ -307,7 +308,6 @@ package body Command_Window is
       X, Y           : Gint;
       Requisition    : Gtk_Requisition;
       Frame          : Gtk_Frame;
-      Label          : Gtk_Label;
       Applies_To     : Gtk_Widget;
       Success        : Boolean;
    begin
@@ -333,10 +333,11 @@ package body Command_Window is
       Add (Frame, Window.Box);
 
       if Prompt /= "" then
-         Gtk_New (Label, Prompt);
-         Pack_Start (Window.Box, Label, Expand => False, Fill => False);
-         Set_Alignment (Label, 0.0, 0.5);
-         Modify_Font (Label, Get_Pref (Default_Font));
+         Gtk_New (Window.Prompt, Prompt);
+         Pack_Start
+           (Window.Box, Window.Prompt, Expand => False, Fill => False);
+         Set_Alignment (Window.Prompt, 0.0, 0.5);
+         Modify_Font (Window.Prompt, Get_Pref (Default_Font));
       end if;
 
       Gtk_New (Window.Line);
@@ -441,19 +442,29 @@ package body Command_Window is
             Set_Return_Value (Data, "");
          end if;
 
+      elsif Command = "set_prompt" then
+         Name_Parameters (Data, ( --  1 => Self,
+                                 2 => Prompt_Cst'Access));
+         Window := Command_Window (GObject'(Get_Data (Inst)));
+         if Window /= null then
+            Set_Text (Window.Prompt, Nth_Arg (Data, 2));
+         end if;
+
       elsif Command = "set_background" then
          Name_Parameters (Data, ( --  1 => Self,
                                  2 => Color_Cst'Access));
          Window := Command_Window (GObject'(Get_Data (Inst)));
-         if Nth_Arg (Data, 2, "") = "" then
-            Color := Get_Base (Get_Style (Window), State_Normal);
-         else
-            Color := Parse (Nth_Arg (Data, 2));
-            Alloc_Color (Get_Default_Colormap, Color, Success => Success);
+         if Window /= null then
+            if Nth_Arg (Data, 2, "") = "" then
+               Color := Get_Base (Get_Style (Window), State_Normal);
+            else
+               Color := Parse (Nth_Arg (Data, 2));
+               Alloc_Color (Get_Default_Colormap, Color, Success => Success);
+            end if;
+            Modify_Base (Window.Line, State_Normal, Color);
+            Modify_Base (Window.Line, State_Active, Color);
+            Modify_Base (Window.Line, State_Selected, Color);
          end if;
-         Modify_Base (Window.Line, State_Normal, Color);
-         Modify_Base (Window.Line, State_Active, Color);
-         Modify_Base (Window.Line, State_Selected, Color);
       end if;
    end Command_Handler;
 
@@ -481,6 +492,9 @@ package body Command_Window is
          Handler => Command_Handler'Access);
       Register_Command
         (Kernel, "set_background", 0, 1, Class => Class,
+         Handler => Command_Handler'Access);
+      Register_Command
+        (Kernel, "set_prompt", 1, 1, Class => Class,
          Handler => Command_Handler'Access);
    end Register_Module;
 
