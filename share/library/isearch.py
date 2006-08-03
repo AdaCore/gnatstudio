@@ -33,6 +33,10 @@
 ##      the pattern is preserved and the editor is moved back to the stack
 ##      location.
 ##
+##    - alt-c
+##      Toggles the case sensitivity of the search (default is not case
+##      sensitive)
+##
 ##    - Esc, movement keys, keys with control or alt
 ##      cancels the current search, and unselect the last occurrence found
 ##
@@ -231,6 +235,12 @@ class Isearch (CommandWindow):
            if changed: self.insert_overlays ()
            self.locked = False
            return True
+
+     # Toggle case sensitivity
+     if key.lower() == "alt-c":
+       self.case_sensitive = not self.case_sensitive
+       self.on_changed (input, len (input), redo_overlays=1) 
+       return True
 
      # doing another isearch just searches for the next occurrence
      # Since we do not know which key binding is bound to this action, we test
