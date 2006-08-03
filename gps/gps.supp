@@ -18,6 +18,13 @@
 }
 {
    Errors in Xserver
+   Memcheck:Param
+   writev(vector[...])
+   fun:__write_nocancel
+   fun:_X11TransWrite
+}
+{
+   Errors in Xserver
    Memcheck:Cond
    fun:XInitImage
    obj:/usr/lib/libcairo.so.2.2.3
