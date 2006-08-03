@@ -34,8 +34,10 @@
 ##      location.
 ##
 ##    - alt-c
-##      Toggles the case sensitivity of the search (default is not case
-##      sensitive)
+##      Toggles the case sensitivity of the search
+##      The prompt will include the status "[CS]" if the search is currently
+##      case sensitive. By default, searches are case insensitive, unless your
+##      pattern includes upper cased letters
 ##
 ##    - Esc, movement keys, keys with control or alt
 ##      cancels the current search, and unselect the last occurrence found
@@ -116,17 +118,12 @@ class Isearch (CommandWindow):
 
    def __init__ (self, case_sensitive=0, backward=0, regexp=0):
      try:
-       CommandWindow.__init__ (self,
-                               prompt      = "Pattern:",
-                               on_changed  = self.on_changed,
-                               on_cancel   = self.on_cancel,
-                               on_key      = self.on_key,
-                               on_activate = self.on_activate)
        self.editor   = EditorBuffer.get ()
        self.loc      = self.editor.current_view ().cursor ()
        self.end_loc  = self.loc
        self.regexp   = regexp
        self.case_sensitive = case_sensitive
+       self.explicit_case_sensitive = False   ## Automatic or from alt-c ?
        self.backward = backward
        self.stack = [(self.loc, self.end_loc, "", 0)]
        self.locked = False
@@ -135,9 +132,22 @@ class Isearch (CommandWindow):
        self.insert_overlays_id = 0
        self.remove_overlays ()
        self.set_background (background_color)
+       CommandWindow.__init__ (self,
+                               prompt      = self.prompt(),
+                               on_changed  = self.on_changed,
+                               on_cancel   = self.on_cancel,
+                               on_key      = self.on_key,
+                               on_activate = self.on_activate)
 
      except:
        pass
+
+   def prompt (self):
+     """Return the prompt to use for the command window"""
+     prompt = ""
+     if self.case_sensitive:
+        prompt = prompt + "[CS] "
+     return prompt + "Pattern:"
 
    def cancel_idle_overlays (self):
      """Cancel the background loop that computes the next matches"""
@@ -239,6 +249,8 @@ class Isearch (CommandWindow):
      # Toggle case sensitivity
      if key.lower() == "alt-c":
        self.case_sensitive = not self.case_sensitive
+       self.explicit_case_sensitive = True
+       self.set_prompt (self.prompt())
        self.on_changed (input, len (input), redo_overlays=1) 
        return True
 
@@ -293,6 +305,14 @@ class Isearch (CommandWindow):
 
      if not self.locked and input != "":
         if redo_overlays: self.remove_overlays ()
+
+        # Automatic case sensitivity: when we have an upper case, switch to
+        # case sensitive
+        if not self.explicit_case_sensitive \
+         and not self.case_sensitive \
+         and input.lower () != input:
+           self.case_sensitive = True
+           self.set_prompt (self.prompt ())    
 
         Isearch.last_search = input
 
