@@ -228,10 +228,12 @@ package body Codefix.Errors_Manager is
                  = Get_File (Current_Message)
                loop
                   --  Remove previous from list
+
                   Memorized_Corrections.Remove_Nodes
-                    (This.Potential_Corrections, Prev
-                       (This.Potential_Corrections,
-                        Last (This.Potential_Corrections)));
+                    (This.Potential_Corrections,
+                     Prev (This.Potential_Corrections,
+                       Last (This.Potential_Corrections)),
+                     Last (This.Potential_Corrections));
 
                   if Memorized_Corrections.First (This.Potential_Corrections)
                     /= Memorized_Corrections.Null_Node
@@ -241,8 +243,6 @@ package body Codefix.Errors_Manager is
                              (This.Potential_Corrections)).Message;
                   else
                      Previous_Message := Invalid_Error_Message;
-
-                     exit;
                   end if;
                end loop;
             end if;
