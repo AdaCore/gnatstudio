@@ -30,7 +30,8 @@ with GNAT.OS_Lib;     use GNAT.OS_Lib;
 package Code_Coverage is
 
    function Get_Project_From_File
-     (File : VFS.Virtual_File) return VFS.Virtual_File;
+     (File   : VFS.Virtual_File;
+      Number : Natural) return VFS.Virtual_File;
    --  Currently returns a preset name of project
 
    procedure Add_Subprograms
