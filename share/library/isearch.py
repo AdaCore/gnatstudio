@@ -124,7 +124,7 @@ class Isearch (CommandWindow):
        self.regexp   = regexp
        self.case_sensitive = case_sensitive
        self.backward = backward
-       self.stack = [(self.loc, self.end_loc, "")]
+       self.stack = [(self.loc, self.end_loc, "", 0)]
        self.locked = False
        self.overlay = self.editor.create_overlay ("isearch")
        self.overlay.set_property ("background", next_matches_color)
@@ -238,39 +238,31 @@ class Isearch (CommandWindow):
      # another action wrapping this function, this will fail when he starts
      # using the other action
      actions = lookup_actions_from_key (key)
-     if isearch_action_name in actions or isearch_menu in actions:
+     if isearch_action_name in actions or isearch_menu.lower() in actions:
+        self.backward = False
         if input == "":
            self.write (Isearch.last_search)
         else:
-           self.backward = False
            self.loc = self.loc + 1
            self.on_changed (input, len (input), redo_overlays=0)
         return True
 
      if isearch_backward_action_name in actions \
-        or isearch_backward_menu in actions:
+       or isearch_backward_menu.lower() in actions:
+        self.backward = True
         if input == "":
            self.write (Isearch.last_search)
         else:
-           self.backward = True
            self.loc = self.loc - 1
            self.on_changed (input, len (input), redo_overlays=0)
         return True
 
      # Cancel the search on any special key. Currently, the key is lost, not
      # sent to the parent window
-     try:
-        key.index ("control-")
+     if "control-" in key \
+        or "alt-" in key:
         self.destroy()
         return True
-     except: pass
-
-     try:
-        key.index ("alt-")
-        self.destroy ()
-        return True
-     except:
-        pass
 
      if key.lower() == "left" \
         or key.lower() == "right" \
@@ -324,7 +316,7 @@ class Isearch (CommandWindow):
            if redo_overlays: self.insert_overlays ()
         else:
            # If the last entry in the stack was a match, add a new one
-           if self.stack [-1][3]:
+           if self.stack != [] and self.stack [-1][3]:
               self.stack.append ((self.loc, self.end_loc, self.read (), 0))
 
            # Loop around, so that next search matches
