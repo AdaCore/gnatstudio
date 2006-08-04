@@ -108,16 +108,16 @@ procedure Code_Analysis_Test is
       Time_Before   : Time;
       Time_After    : Time;
       Mesure        : Duration;
-      Time_Too_Long : exception;
+      Timeout       : exception;
       Create_Max    : constant Duration := 10.0;
       --  ??? Currently observed on bonn : 3.3s
       Request_Max   : constant Duration := 2.0;
       --  ??? Currently observed on bonn : 0.00013s
       Destroy_Max   : constant Duration := 2.0;
       --  ??? Currently observed on bonn : 0.1s
-      --  ??? I suppose that users wont wait more than 2s for these operations
-      --  And so we would have to add a waiting dialog (filling task bar)
-      --  the creation operation tracking
+      --  ??? I make the supposition that users dont want to wait more than 2s
+      --  for these operations and so we would have to add a waiting dialog
+      --  (filling task bar) the creation operation tracking
       Analysis_Tree : Code_Analysis_Tree;
       Cursor_Tree   : Cursor;
    begin
@@ -145,9 +145,12 @@ procedure Code_Analysis_Test is
                 & "s");
 
       if Mesure > Create_Max then
-         raise Time_Too_Long with "Code_Analysis's creation benchmark alarm :"
+         raise Timeout with "Creation alarm :"
            & Duration'Image (Mesure)
-           & "s";
+           & "s"
+           & ASCII.LF
+           & "Timeout set to :"
+           & Duration'Image (Create_Max);
       end if;
 
       Time_Before := Clock;
@@ -165,9 +168,12 @@ procedure Code_Analysis_Test is
                 & "s");
 
       if Mesure > Request_Max then
-         raise Time_Too_Long with "Code_Analysis's request benchmark alarm :"
+         raise Timeout with "Request alarm :"
            & Duration'Image (Mesure)
-           & "s";
+           & "s"
+           & ASCII.LF
+           & "Timeout set to :"
+           & Duration'Image (Request_Max);
       end if;
 
       Analysis_Tree := Get_Tree;
@@ -188,10 +194,12 @@ procedure Code_Analysis_Test is
                 & "s");
 
       if Mesure > Destroy_Max then
-         raise Time_Too_Long with
-         "Code_Analysis's destruction benchmark alarm :"
+         raise Timeout with "Destruction alarm :"
            & Duration'Image (Mesure)
-           & "s";
+           & "s"
+           & ASCII.LF
+           & "Timeout set to :"
+           & Duration'Image (Destroy_Max);
       end if;
    end Benchmark;
 begin
