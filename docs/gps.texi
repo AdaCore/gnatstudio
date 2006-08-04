@@ -199,14 +199,16 @@ Customizing and Extending GPS
 * The Preferences Dialog::
 * GPS Themes::
 * The Key Manager Dialog::
-* Customizing through XML files::
+* The Startup Scripts Editor::
+* Customizing through XML and Python files::
 * Adding support for new tools::
 * Customization examples::
 * Scripting GPS::
 * Adding support for new Version Control Systems::
 * The Server Mode::
 
-Customizing through XML files
+Customizing through XML and Python files
+* Customization files and plugins::
 * Defining Actions::
 * Macro arguments::
 * Filtering actions::
@@ -3202,7 +3204,7 @@ See @ref{Find All References} for more details.
 @item Browsers
 @cindex browsers
 This item gives access to graph representations of callers and callees for
-subprograms. 
+subprograms.
 
 @table @command
 @item @i{Entity} calls
@@ -5960,7 +5962,7 @@ again).
 The breakpoint editor can be accessed from the menu
 @i{Data->Edit Breakpoints}. It allows manipulation of different kinds
 of breakpoints: at a source location, on a subprogram, at an executable
-address, on memory access (watchpoints), and on Ada exceptions.  
+address, on memory access (watchpoints), and on Ada exceptions.
 
 The top area provides an interface to create the different kinds of
 breakpoints, while the bottom area lists existing breakpoints and
@@ -8244,7 +8246,8 @@ still access it using cmd.exe (@xref{Connection settings}.)
 * The Preferences Dialog::
 * GPS Themes::
 * The Key Manager Dialog::
-* Customizing through XML files::
+* The Startup Scripts Editor::
+* Customizing through XML and Python files::
 * Adding support for new tools::
 * Customization examples::
 * Scripting GPS::
@@ -9341,11 +9344,6 @@ their parents and childs. Links are created in order to ease the navigation.
 @cindex themes
 @c -----------------------------------------------------------------
 
-
-@menu
-* The Emacs Theme::
-@end menu
-
 @noindent
 GPS provides an extensive support for themes. Themes are predefined set
 of value for the preferences, for the key bindings, or any other
@@ -9372,90 +9370,6 @@ preferences, the last theme which is loaded by GPS will override all previously
 loaded themes. However, there is no predefined order in which the themes are
 loaded.
 
-@c -----------------------------------------------------------------------
-@node The Emacs Theme
-@subsection The Emacs Theme
-@cindex emacs theme
-@c -----------------------------------------------------------------------
-
-The Emacs Theme, which is provided by default with GPS, defines a number of
-key bindings similar to Emacs.
-
-@table @code
-@item control-c n
-Create a title box above the current Ada subprogram
-
-@item control-k
-Remove text from the cursor to the end of line
-
-@item control-d
-Remove the character after the cursor
-
-@item control-t
-Transpose the characters before and after the cursor
-
-@item control-x control-s
-Save the current editor
-
-@item control-a
-Go to the beginning of the line
-
-@item control-e
-Go to the end of the line
-
-@item alt-less
-Go to the beginning of the buffer
-
-@item control-c control-d
-Navigate to the declaration or the body of the current entity
-
-@item control-c o
-Goto from the specification to the body, and vice-versa
-
-@item control-y
-Paste the current clipboard
-
-@item alt-w
-Copy the current selection to the clipboard
-
-@item control-w
-Cut the current selection to the clipboard
-
-@item shift-control-underscore
-Undo the previous edition
-
-@item control-x k
-Close the current window
-
-@item control-x control-c
-Exit GPS
-
-@item control-s
-Bring up the "Find/Replace" dialog
-
-@item control-x 3
-Split the window horizontally
-
-@item control-x 2
-Split the window vertically
-
-@item control-x o
-Select the other window
-
-@item control-l
-Center the cursor on the screen
-
-@item alt-backspace
-Delete the previous word
-
-@item alt-right
-Go to the next word
-
-@item alt-left
-Go to the previous word
-
-@end table
-
 @c -----------------------------------------------------------------
 @node The Key Manager Dialog
 @section The Key Manager Dialog
@@ -9465,7 +9379,7 @@ Go to the previous word
 The key manager is accessible through the menu @code{Edit->Key Shortcuts}.
 This dialog provides an easy way to associate key shortcuts with actions.
 These actions are either predefined in GPS, or defined in your own
-customization files, as documented in @ref{Customizing through XML files}.
+customization files, as documented in @ref{Customizing through XML and Python files}.
 It also provides an easy way to redefine the menu shortcuts.
 
 @iftex
@@ -9505,12 +9419,99 @@ When you assign a new shortcut to an action, the following happens:
 @end itemize
 
 @c -----------------------------------------------------------------
-@node Customizing through XML files
-@section Customizing through XML files
+@node The Startup Scripts Editor
+@section The Startup Scripts Editor
+@c -----------------------------------------------------------------
+
+@noindent
+GPS can be extensively customized through external scripts. You can
+write your own scripts (@pxref{Customization files and plugins}), but
+GPS also comes with its own collection of scripts.
+
+Some of them are loaded by default when GPS starts (for instance the
+support for the CVS version management system or support for
+highlighting in various programming languages); others are available
+for any user but not loaded automatically by GPS, for instance an
+Emacs emulation mode.
+
+You can chose graphically which scripts should or should not be loaded
+on startup. To do so, select the menu @code{/Edit/Startup Scripts}.
+This brings up a new window, containing two parts:
+
+@item @bullet
+@item On the left is the list of all known scripts.
+
+As described in @xref{Customization files and plugins}, GPS will
+search for candidates in various directories, and based on these
+directories decide whether to automatically load the script or not.
+
+This list indicates the name of the script, and whether it has been
+loaded in this GPS session (when the toggle button is checked).
+
+@item On the right are the details for the selected script
+
+This window is displayed as a notebook with two pages: on the first
+one you will see the exact location of the script, the reason why it
+was loaded or not, and, more importantly, the source of the script.
+By convention, each script starts with a general comment that
+indicates the purpose of this script, and some more detailed
+documentation on its usage.
+
+For those interested, this also contains the script itself, so that
+this can act as an example to create your own customization script.
+
+The second page in the notebook can be used to edit the initialization
+commands. This commands will be executed after the module has been
+loaded (and never if the module is not loaded). This will typically be
+used to change some of the configuration variables for the script (as
+documented in the script itself).
+
+Technically, the list of scripts to load or not to load, and their
+initialization commands are stored in the file
+@file{HOME/.gps/startup.xml}. The list of initialization commands has
+the same format as used when creating GPS actions (@pxref{Defining
+Actions}). The graphical editor in the Startup Scripts Editor makes it
+easier to edit the commands.
+
+There are currently three kinds of commands that you can execute (you
+can have any number of them, in any order you wish): GPS shell
+commands, Python commands and external commands. External commands are
+spawned outside of GPS, and can be used for instance to launch a
+command such as @code{ls} or @code{gnatls -v}. In case the external
+command returns an exit status different from 0, you can specify a
+list of commands to execute (known as @code{on-failure} commands).
+
+To add any of the three kinds of commands, click on the appropriate
+@code{Add} button. This adds the commands just after the currently
+selected one (or at the end if none is selected). If you have first
+selected a @code{on-failure} node, the new command will execute only
+when the command to which on-failure is attached fails. If you want to
+add another command to execute in case of failure, select that first
+command, and click @code{Add} again. If you then want to add a command
+to execute when the first external command succeeded, select that
+external command.
+
+If you have modified anything through this dialog (the list of scripts
+to load or unload, or any of the initialization commands), you will
+need to restart GPS. GPS cannot unload a module, since it can have too
+many possible effects on GPS (adding menus, overriding key
+shortcuts,...). Likewise, re-executing initialization commands
+immediately might be too late, since once they are running some of the
+scripts might not take the changes into account.
+
+A dialog is displayed asking you whether you would like to exit GPS
+now. This will properly save all your files, of course.
+
+@end itemize
+
+@c -----------------------------------------------------------------
+@node Customizing through XML and Python files
+@section Customizing through XML and Python files
 @cindex customization
 @c -----------------------------------------------------------------
 
 @menu
+* Customization files and plugins::
 * Defining Actions::
 * Macro arguments::
 * Filtering actions::
@@ -9531,58 +9532,93 @@ When you assign a new shortcut to an action, the following happens:
 * Remote programming customization::
 @end menu
 
+@c -----------------------------------------------------------------------
+@node Customization files and plugins
+@subsection Customization files and plugins
+@c -----------------------------------------------------------------------
+
 @noindent
-You can customize lots of capabilities in GPS using XML files that are
+You can customize lots of capabilities in GPS using files that are
 loaded by GPS at start up.
 
 For example, you can add items in the menu and tool bars, as well as
 defining new key bindings, new languages, new tools, @dots{}
+Using Python as a programming language, you can also add brand new facilities
+and integrate your own tools in the GPS platform.
 
-XML files are found through three mechanisms, described here in the order in
-which they are searched. Files with the @file{.xml} extension found through
-@code{GPS_CUSTOM_PATH} or the user's directory can override any setup found in
-the system directory. Likewise, files found in the user's directory can
-override any file found in the @code{GPS_CUSTOM_PATH} directories.
+These customization files are searched for at startup in several different
+places. Depending on the location where they are found, these files will either
+be automatically loaded by GPS (and thus can immediately modify things in GPS),
+or will simply be made visible in the Startup Scripts Editor
+(@pxref{The Startup Scripts Editor}).
 
-Note that only files with the @file{.xml} or @file{.py} extensions
-are considered, other files are ignored.
+These directories are searched for in the order given below. Any script loaded
+latter can override setups done by previously loaded scripts. For instance,
+they could override a key shortcut, remove a menu, redefining a GPS
+action,@dots{}.
 
-@itemize @bullet
-@item System wide customization
+In the directory names below, @file{INSTALL} is the name of the directory in
+which you have installed GPS. @file{HOME} is the user's home directory, either
+by default or as overriden by the @code{GPS_HOME} environment variable. If none
+of these exist, GPS will use the @code{USERPROFILE} environment variable.
 
-The @file{INSTALL/share/gps/plug-ins} directory, where
-@file{INSTALL} is the name of the GPS installation directory, should contain
-the xml and python files that will always be loaded whenever GPS is started,
-by any user on the system.
+In all these directories, only the files with @file{.xml} or @file{.py}
+extensions are taken into account. Other files are ignored, although for
+compatibility with future versions of GPS it is recommanded not to keep other
+files in the same directory.
+
+@item @bullet
+@item Automatically loaded system wide modules
+
+The @file{INSTALL/share/gps/plug-ins} directory should contain the files that
+GPS will automatically load by default (unless overriden by the user through
+the Startup Scripts Editor). These scripts are visible to any user on the
+system that uses the same GPS installation. This directory should be reserved
+for critical scripts that almost every one should use.
+
+@item Not automatically system wide modules
+
+The @file{INSTALL/share/gps/library} directory should contain the files that
+GPS should show in the Startup Scripts Editor, but not load automatically.
+Typically, these would be files that add optional capabilities to GPS, for
+instance an emacs emulation mode, or additional editor capabilities that a lot
+of users would not generally use.
 
 @item @code{GPS_CUSTOM_PATH}
 
 This environment variable can be set before launching GPS. It should contain
 a list of directories, separated by semicolons (';') on Windows systems and
-colons (':') on Unix systems. All the files found in these directories will
-be searched for customization files.
+colons (':') on Unix systems. All the files in these directories with the
+appropriate extensions will be automatically loaded by default by GPS,
+unless overriden by the user through the Startup Scripts Editor.
 
 This is a convenient way to have project-specific customization files. You can
 for instance create scripts, or icons, that set the appropriate value for the
 variable and then start GPS. Depending on your project, this allows you to
 load specific aliases which do not make sense for other projects.
 
-@item User directory
+@item Automatically loaded user directory
 
-The directory @file{$HOME/.gps/plug-ins} on Unix
-systems, and @file{%HOME%\.gps\plug-ins} on Windows systems, can also contain
-customization files which are loaded at startup. This is a convenient way for
-users to define their own plug-ins, that they want to load no matter which
-project they are working on. Note that you can use the environment variable
-@code{GPS_HOME} to override the value of the @code{HOME} variable.
+The directory @file{HOME/.gps/plug-ins} is searched last. Any script
+found in there will be automatically loaded unless overriden in the
+Startup Scripts Editor.
 
-Alternatively, if none of @code{HOME} and @code{GPS_HOME} are defined,
-@code{USERPROFILE} is also considered.
+This is a convenient way for users to create their own plug-ins, or
+test them before they are made available to the whole system by
+copying them to one of the other directories.
+
 @end itemize
 
-XML files must be utf8-encoded by default. In addition, you can specify any
-specific encoding through the standard @code{<?xml encoding="..." ?>}
-declaration, as in the following example:
+Any script loaded by GPS can contain customization for various aspects
+of GPS, mixing aliases, new languages or menus,@dots{} in a single
+file. This is a convenient way to distribute your plug-ins to other
+users.
+
+@subsubsection XML files
+
+XML files must be utf8-encoded by default. In addition, you can
+specify any specific encoding through the standard @code{<?xml
+encoding="..." ?>} declaration, as in the following example:
 
 @smallexample
 <?xml version="1.0" encoding="iso-8859-1"?>
@@ -9590,10 +9626,6 @@ declaration, as in the following example:
   <title>encoded text/title>
 </submenu>
 @end smallexample
-
-Any given XML file can contain customization for various aspects of GPS, mixing
-aliases, new languages or menus,@dots{} in a single file. This is
-a convenient way to distribute your plug-ins to other users.
 
 These files must be valid XML files, i.e. must start with the
 @code{<?xml?>} tag, and contain a single root XML node, the name of which is
@@ -9606,7 +9638,7 @@ left to your consideration. The general format is therefore
 </root_node>
 @end smallexample
 
-The list of valid XML child nodes that can be specified under <root> is
+The list of valid XML nodes that can be specified under <root> is
 described in later sections. It includes:
 
 @table @code
@@ -12742,7 +12774,7 @@ tool:
 Each of these points is discussed in further sections. In all these cases, most
 of the work can be done statically through XML customization files.
 These files have the same format as other XML customization files
-(@pxref{Customizing through XML files}), and the tool descriptions are found in
+(@pxref{Customizing through XML and Python files}), and the tool descriptions are found in
 @code{<tool>} tags.
 
 This tag accepts the following attributes:
@@ -13686,7 +13718,7 @@ from the command line, you would pass the following command switches:
 gps --eval=shell:'Entity entity_name file_name; Entity.show %1'
 @end smallexample
 
-See the section @ref{Customizing through XML files} on how to bind key
+See the section @ref{Customizing through XML and Python files} on how to bind key
 shortcuts to shell commands.
 
 @c --------------------------------------------------------------------
@@ -13787,7 +13819,7 @@ These return values will be modified also for internal commands sent
 by GPS, so you should really only use this when you emit multiple
 commands at the same time, and don't do any other action in GPS. This
 is mostly useful when used for command-line scripts (see @code{--eval}
-and @code{--load}), or for custom files, @xref{Customizing through XML files}.
+and @code{--load}), or for custom files, @xref{Customizing through XML and Python files}.
 
 Arguments to commands can, but need not, be quoted. If they don't contain
 any space, double-quote ('"') or newline characters, you do not need to quote
@@ -14895,7 +14927,7 @@ needs, or to add support for other Version Control systems.
 
 Custom VCS interfaces are defined entirely through XML files. Those
 files are read in the same location as all the other XML
-customizations that GPS offers. See @ref{Customizing through XML files} for a
+customizations that GPS offers. See @ref{Customizing through XML and Python files} for a
 complete description.
 
 There are two steps to follow when creating a custom VCS
@@ -15572,7 +15604,7 @@ Set the search path for the documentation. @xref{Adding New Help Files}.
    @item GPS_CUSTOM_PATH
 @cindex GPS_CUSTOM_PATH
 Contains a list of directories to search for custom files. See
-@ref{Customizing through XML files} for more details.
+@ref{Customizing through XML and Python files} for more details.
 
 
    @item GPS_CHANGELOG_USER
@@ -15662,7 +15694,7 @@ All xml and python files found under this directory are loaded by GPS during
 start up.
 You can create/edit these files to add your own menu/tool-bar entries in GPS,
 or define support for new languages.
-@pxref{Customizing through XML files} and
+@pxref{Customizing through XML and Python files} and
 @pxref{Adding support for new languages}.
 
    @item $HOME/.gps/keys.xml
