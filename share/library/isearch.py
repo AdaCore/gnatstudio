@@ -131,13 +131,13 @@ class Isearch (CommandWindow):
        self.overlay.set_property ("background", next_matches_color)
        self.insert_overlays_id = 0
        self.remove_overlays ()
-       self.set_background (background_color)
        CommandWindow.__init__ (self,
                                prompt      = self.prompt(),
                                on_changed  = self.on_changed,
                                on_cancel   = self.on_cancel,
                                on_key      = self.on_key,
                                on_activate = self.on_activate)
+       self.set_background (background_color)
 
      except:
        pass
