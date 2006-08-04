@@ -550,10 +550,13 @@ package body Language is
 
          --  Looking_At goes always one character beyond characters and
          --  strings, otherwise next call to Looking_At would start on
-         --  a string or character delimiter.
+         --  a string or character delimiter. Keywors are also set one
+         --  character beyond.
 
          if Column_Inc > 1
-           and then (Entity = String_Text or else Entity = Character_Text)
+           and then (Entity = String_Text
+                     or else Entity = Character_Text
+                     or else Entity = Keyword_Text)
          then
             Col := Column_Inc - 1;
          else
