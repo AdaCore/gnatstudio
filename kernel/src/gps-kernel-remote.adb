@@ -99,6 +99,8 @@ package body GPS.Kernel.Remote is
 
    Me : constant Debug_Handle := Create ("GPS.Kernel.Remote");
 
+   Invalid_Path : exception;
+
    type Remote_Module_Record is new Module_ID_Record with record
       Kernel : Kernel_Handle;
    end record;
@@ -1292,39 +1294,59 @@ package body GPS.Kernel.Remote is
       Local  : constant String := Get_Text (Row.Local_Entry);
       Remote : constant String := Get_Text (Row.Remote_Entry);
       Sync   : Synchronisation_Type := Never;
+      Dead   : Message_Dialog_Buttons;
+      pragma Unreferenced (Dead);
 
    begin
-      --  ??? get remote machine from the widget to be able to get remote FS
-
-      if Local /= Enter_Local_Path_String
-        and then Local /= ""
-        and then Is_Absolute_Path (Get_Local_Filesystem, Local)
-        and then Remote /= Enter_Remote_Path_String
-        and then Remote /= ""
+      if Local = Enter_Local_Path_String
+        or else Local = ""
       then
-         --  ??? Attribute item need to be determined
-         for J in Synchronisation_Type'Range loop
-            if Get_Text (Get_Entry (Row.Sync_Combo)) =
-              Synchronisation_String (J).all
-            then
-               Sync := J;
-               exit;
-            end if;
-         end loop;
-
-         Item := new Mirror_Path_Record'
-           (Local_Path  => new String'
-              (Ensure_Directory (Get_Local_Filesystem, Local)),
-            Remote_Path => new String'
-              (Ensure_Directory (FS, Remote)),
-            Sync        => Sync,
-            Attribute   => User_Defined,
-            Next        => null);
-
-         return Item;
+         Dead := Message_Dialog (-"Please enter a valid local path",
+                                 Error, Button_OK);
+         raise Invalid_Path;
       end if;
 
-      return null;
+      if Remote = Enter_Remote_Path_String
+        or else Remote = ""
+      then
+         Dead := Message_Dialog (-"Please enter a valid remote path",
+                                 Error, Button_OK);
+         raise Invalid_Path;
+      end if;
+
+      if not Is_Absolute_Path (Get_Local_Filesystem, Local) then
+         Dead := Message_Dialog
+           (-"Local path " & Local & (-" needs to be an absolute path"),
+            Error, Button_OK);
+         raise Invalid_Path;
+      end if;
+
+      if not Is_Absolute_Path (FS, Remote) then
+         Dead := Message_Dialog
+           (-"Remote path " & Remote & (-" needs to be an absolute path"),
+            Error, Button_OK);
+         raise Invalid_Path;
+      end if;
+
+      for J in Synchronisation_Type'Range loop
+         if Get_Text (Get_Entry (Row.Sync_Combo)) =
+           Synchronisation_String (J).all
+         then
+            Sync := J;
+            exit;
+         end if;
+      end loop;
+
+      Item := new Mirror_Path_Record'
+        (Local_Path  => new String'
+           (Ensure_Directory (Get_Local_Filesystem, Local)),
+         Remote_Path => new String'
+           (Ensure_Directory (FS, Remote)),
+         Sync        => Sync,
+         Attribute   => User_Defined,
+         Next        => null);
+
+      return Item;
    end Get_Path;
 
    -------------------------
@@ -2025,13 +2047,14 @@ package body GPS.Kernel.Remote is
          return True;
       end Check_Fields;
 
-      Model      : Gtk.Tree_Store.Gtk_Tree_Store;
-      Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Item       : Item_Access;
-      Path_Item  : Mirrors_List_Access;
-      Attribute  : Descriptor_Attribute;
-      Modified   : Boolean;
-      Dbg        : Connection_Debugger;
+      Model       : Gtk.Tree_Store.Gtk_Tree_Store;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Item        : Item_Access;
+      Path_Item   : Mirrors_List_Access;
+      Attribute   : Descriptor_Attribute;
+      Modified    : Boolean;
+      Dbg         : Connection_Debugger;
+      Is_Selected : Boolean;
 
    begin
       Trace (Me, "Save");
@@ -2044,8 +2067,8 @@ package body GPS.Kernel.Remote is
          --  Do not check or save a selected item !
 
          if Get_Boolean (Model, Iter, Modified_Col)
-           and then (Save_Selected or else
-                     not Iter_Is_Selected (Get_Selection (Dialog.Machine_Tree),
+           and then (not Save_Selected or else
+                     Iter_Is_Selected (Get_Selection (Dialog.Machine_Tree),
                                            Iter))
          then
             Modified := True;
@@ -2061,14 +2084,19 @@ package body GPS.Kernel.Remote is
          return True;
       end if;
 
+      Is_Selected := Iter_Is_Selected (Get_Selection (Dialog.Machine_Tree),
+                                       Iter);
+
       if not Check_Fields (Model, Iter, Dialog) then
          Trace (Me, "Setting back selection to uncomplete machine");
-         Dialog.Select_Back := True;
-         Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
+
+         if not Is_Selected then
+            Dialog.Select_Back := True;
+            Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
+         end if;
+
          return False;
       end if;
-
-      Set (Model, Iter, Modified_Col, False);
 
       declare
          Nickname : constant String := Get_String (Model, Iter, Name_Col);
@@ -2149,11 +2177,25 @@ package body GPS.Kernel.Remote is
 
          Free (Path_Item.Path_List);
 
-         Path_Item.Path_List := Get_Path_List
-           (Dialog.Paths_List_Widget,
-            Get_Filesystem_From_Shell
-              (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))));
+         begin
+            Path_Item.Path_List := Get_Path_List
+              (Dialog.Paths_List_Widget,
+               Get_Filesystem_From_Shell
+                 (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))));
+         exception
+            when Invalid_Path =>
+               Trace (Me, "Invalid path detected, selecting back " & Nickname);
+
+               if not Is_Selected then
+                  Dialog.Select_Back := True;
+                  Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
+               end if;
+
+               return False;
+         end;
       end;
+
+      Set (Model, Iter, Modified_Col, False);
 
       return True;
    end Save;
