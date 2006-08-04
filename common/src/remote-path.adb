@@ -18,7 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Traces; use Traces;
+
 package body Remote.Path is
+
+   Me : constant Debug_Handle := Create ("Remote.Path");
 
    ----------
    -- Init --
@@ -113,7 +117,15 @@ package body Remote.Path is
          Free (Mirror.Tentative.Local_Path);
       end if;
 
+      if Mirror.Actual.Local_Path /= null
+        and then Mirror.Actual.Local_Path.all = Path
+      then
+         Trace (Me, "tentative local path identical to actual: " & Path);
+         return;
+      end if;
+
       Mirror.Tentative.Local_Path := new String'(Path);
+      Trace (Me, "tentative local path set to " & Path);
    end Set_Tentative_Local_Path;
 
    -------------------------------
@@ -128,7 +140,15 @@ package body Remote.Path is
          Free (Mirror.Tentative.Remote_Path);
       end if;
 
+      if Mirror.Actual.Remote_Path /= null
+        and then Mirror.Actual.Remote_Path.all = Path
+      then
+         Trace (Me, "tentative remote path identical to actual: " & Path);
+         return;
+      end if;
+
       Mirror.Tentative.Remote_Path := new String'(Path);
+      Trace (Me, "tentative remote path set to " & Path);
    end Set_Tentative_Remote_Path;
 
    -----------------------------------
@@ -140,8 +160,15 @@ package body Remote.Path is
       Synchronisation : Synchronisation_Type)
    is
    begin
+      if Mirror.Actual.Sync = Synchronisation then
+         Mirror.Tentative_Sync_Set := False;
+         return;
+      end if;
+
       Mirror.Tentative_Sync_Set := True;
       Mirror.Tentative.Sync := Synchronisation;
+      Trace (Me, "tentative sync set to " &
+             Synchronisation_Type'Image (Synchronisation));
    end Set_Tentative_Synchronisation;
 
    -----------------------
@@ -150,6 +177,7 @@ package body Remote.Path is
 
    procedure Set_Deleted_State (Mirror : in out Mirror_Path) is
    begin
+      Trace (Me, "Deleted state set");
       Mirror.Tentative_Delete := True;
    end Set_Deleted_State;
 
@@ -159,6 +187,8 @@ package body Remote.Path is
 
    function Get_Deleted_State (Mirror : in Mirror_Path) return Boolean is
    begin
+      Trace (Me, "Deleted state is " &
+             Boolean'Image (Mirror.Tentative_Delete));
       return Mirror.Tentative_Delete;
    end Get_Deleted_State;
 
@@ -186,6 +216,7 @@ package body Remote.Path is
 
          Mirror.Actual.Local_Path := Mirror.Tentative.Local_Path;
          Mirror.Tentative.Local_Path := null;
+         Trace (Me, "Apply local path " & Mirror.Actual.Local_Path.all);
       end if;
 
       if Mirror.Tentative.Remote_Path /= null then
@@ -195,11 +226,14 @@ package body Remote.Path is
 
          Mirror.Actual.Remote_Path := Mirror.Tentative.Remote_Path;
          Mirror.Tentative.Remote_Path := null;
+         Trace (Me, "Apply remote path " & Mirror.Actual.Remote_Path.all);
       end if;
 
       if Mirror.Tentative_Sync_Set then
          Mirror.Tentative_Sync_Set := False;
          Mirror.Actual.Sync := Mirror.Tentative.Sync;
+         Trace (Me, "Apply sync " &
+                Synchronisation_Type'Image (Mirror.Actual.Sync));
       end if;
    end Apply;
 
