@@ -34,6 +34,9 @@ procedure Code_Analysis_Test is
    procedure Print_Usage;
    --  Print the correct usage of the program to the standard output
 
+   function Build_Structure (File_Name : String) return Project_Access;
+   --  Build a code_analysis structure from a gcov file
+
    procedure Build_Display_Destroy (File_Name : String);
    --  reads a gcov output file, built from a given source file name, builds a
    --  Code_Analysis tree structure from it, displays it on the standard output
@@ -56,6 +59,9 @@ procedure Code_Analysis_Test is
    --  builds a big Code_Analysis tree structure and outputs the time needed to
    --  build, perform one request, and destroy the structure
 
+--     procedure Treeview (File_Name : String);
+   --  builds a code_analysis structure and display it in a Gtk tree view
+
    -----------------
    -- Print_Usage --
    -----------------
@@ -64,14 +70,15 @@ procedure Code_Analysis_Test is
    begin
       Put_Line
         ("Usage: code_analysis_test source_file test_name test_name...");
-      Put_Line ("Available tests are: build_display_destroy, benchmark");
+      Put_Line
+        ("Available tests are: build_display_destroy, benchmark,treeview");
    end Print_Usage;
 
-   ---------------------------
-   -- Build_Display_Destroy --
-   ---------------------------
+   ---------------------
+   -- Build_Structure --
+   ---------------------
 
-   procedure Build_Display_Destroy (File_Name : String) is
+   function Build_Structure (File_Name : String) return Project_Access is
       VFS_File_Name : VFS.Virtual_File;
       Cov_File_Name : VFS.Virtual_File;
       File_Contents : GNAT.OS_Lib.String_Access;
@@ -87,8 +94,19 @@ procedure Code_Analysis_Test is
       File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
       Add_Subprograms (File_Node, File_Contents);
       Add_Lines (File_Node, File_Contents);
-      Dump_Text;
       Free (File_Contents);
+      return Project_Node;
+   end Build_Structure;
+
+   ---------------------------
+   -- Build_Display_Destroy --
+   ---------------------------
+
+   procedure Build_Display_Destroy (File_Name : String) is
+      Project_Node  : Project_Access;
+   begin
+      Project_Node  := Build_Structure (File_Name);
+      Dump_Text;
       Free_Project (Project_Node);
    end Build_Display_Destroy;
 
@@ -197,6 +215,17 @@ procedure Code_Analysis_Test is
       end if;
    end Benchmark;
 
+   --------------
+   -- Treeview --
+   --------------
+
+--     procedure Treeview (File_Name : String) is
+--        Project_Node  : Project_Access;
+--     begin
+--        Project_Node  := Build_Structure (File_Name);
+--        Dump_Text;
+--        Free_Project (Project_Node);
+--     end Treeview;
 begin
    if Argument_Count < 2 then
       Put_Line ("error: missing arguments");
@@ -208,6 +237,8 @@ begin
       if Argument (J) = "build_display_destroy" then
          Build_Display_Destroy (Argument (1));
       elsif Argument (J) = "benchmark" then
+         Benchmark (Argument (1));
+      elsif Argument (J) = "treeview" then
          Benchmark (Argument (1));
       else
          Print_Usage;
