@@ -28,6 +28,7 @@ with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Custom;    use GPS.Kernel.Custom;
 with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
 with GPS.Intl;             use GPS.Intl;
+with GPS.Main_Window;      use GPS.Main_Window;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Cell_Renderer;    use Gtk.Cell_Renderer;
@@ -258,12 +259,44 @@ package body Startup_Module is
 
    procedure Save (Editor : access Startup_Editor_Record'Class) is
       Iter : Gtk_Tree_Iter;
+      Is_Modified : Boolean := False;
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Widget;
+      Label  : Gtk_Label;
+      Must_Restart : Boolean := False;
    begin
       Save_Initialization_String (Editor);
 
       Iter := Get_Iter_First (Editor.Model);
       while Iter /= Null_Iter loop
          if Get_Boolean (Editor.Model, Iter, Column_Modified) then
+            if not Is_Modified then
+               Gtk_New (Dialog,
+                        Title  => -"Restart GPS ?",
+                        Parent => Get_Main_Window (Editor.Kernel),
+                        Flags  => Destroy_With_Parent);
+               Gtk_New
+                 (Label,
+                  -("You have changed the status of some scripts. You will"
+                    & ASCII.LF
+                    & "need to restart GPS to take this change into account."
+                    & ASCII.LF & ASCII.LF
+                    & "Do you want to exit GPS now ?"));
+               Pack_Start
+                 (Get_Vbox (Dialog), Label, Expand => True, Fill => True);
+               Button := Add_Button (Dialog, -"Exit GPS", Gtk_Response_OK);
+               Button := Add_Button
+                 (Dialog, -"Will restart later", Gtk_Response_Cancel);
+               Grab_Default (Button);
+
+               Show_All (Dialog);
+               Must_Restart := Run (Dialog) = Gtk_Response_OK;
+               Destroy (Dialog);
+
+               --  Do not ask again
+               Is_Modified := True;
+            end if;
+
             Override_Startup_Script
               (Kernel         => Editor.Kernel,
                Base_Name      => Get_String (Editor.Model, Iter, Column_Name),
@@ -274,6 +307,11 @@ package body Startup_Module is
 
          Next (Editor.Model, Iter);
       end loop;
+
+      if Must_Restart then
+         Quit (GPS_Window (Get_Main_Window (Editor.Kernel)),
+               Status => 100);
+      end if;
    end Save;
 
    ---------------------
