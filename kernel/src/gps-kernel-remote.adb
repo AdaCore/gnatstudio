@@ -100,6 +100,8 @@ package body GPS.Kernel.Remote is
 
    Me : constant Debug_Handle := Create ("GPS.Kernel.Remote");
 
+   Invalid_Path : exception;
+
    type Remote_Module_Record is new Module_ID_Record with record
       Kernel : Kernel_Handle;
    end record;
@@ -839,6 +841,7 @@ package body GPS.Kernel.Remote is
       Attach (Widget.Table, Label, 2, 3, 0, 1, 0, 0);
 
       Gtk_New (Widget.Add_Path_Button);
+      Set_Name (Widget.Add_Path_Button, "add path button");
       Gtk_New (Pix, Stock_Add, Icon_Size_Menu);
       Add (Widget.Add_Path_Button, Pix);
       Attach (Widget.Table, Widget.Add_Path_Button, 5, 4, 1, 2, 0, 0);
@@ -947,6 +950,8 @@ package body GPS.Kernel.Remote is
       Add (Row.Local_Frame, Row.Local_Hbox);
 
       Gtk_New (Row.Local_Entry);
+      Set_Name (Row.Local_Entry,
+                "local path entry" & Guint'Image (Row_Number));
       Set_Width_Chars (Row.Local_Entry, 16);
       Pack_Start (Row.Local_Hbox, Row.Local_Entry, True, True);
       Set_Tip
@@ -972,6 +977,8 @@ package body GPS.Kernel.Remote is
       Add (Row.Remote_Frame, Row.Remote_Hbox);
 
       Gtk_New (Row.Remote_Entry);
+      Set_Name (Row.Remote_Entry,
+                "remote path entry" & Guint'Image (Row_Number));
       Set_Width_Chars (Row.Remote_Entry, 16);
       Pack_Start (Row.Remote_Hbox, Row.Remote_Entry, True, True);
       Set_Tip
@@ -1009,10 +1016,10 @@ package body GPS.Kernel.Remote is
         (Tips, Get_Entry (Row.Sync_Combo),
          -("Four kind of paths synchronisation can be set for each defined " &
            "path:" & ASCII.LF &
-            "* None: no synchronisation is required from GPS, the paths " &
+           "* None: no synchronisation is required from GPS, the paths " &
            "are shared using an OS mechanism like NFS." & ASCII.LF &
-           "* Always: source path of your project. They are kept " &
-           "synchronised by GPS before and after every remote action." &
+           "* Always: the paths are kept synchronised by GPS before and " &
+           "after every remote action." &
            ASCII.LF &
            "* Once to local/Once to remote: project's dependencies. They are" &
            " synchronized once when a remote project is loaded or when a " &
@@ -1028,23 +1035,32 @@ package body GPS.Kernel.Remote is
 
       Path_Row_List.Append (Widget.List, Row);
 
-      if Path = Null_Path then
-         Set_Text (Row.Local_Entry, Enter_Local_Path_String);
-         Set_Text (Row.Remote_Entry, Enter_Remote_Path_String);
-         Widget_Callback.Object_Connect
-           (Row.Local_Entry, "grab_focus",
-            On_Path_Grab_Focus'Access, Row.Local_Entry);
-         Widget_Callback.Object_Connect
-           (Row.Remote_Entry, "grab_focus",
-            On_Path_Grab_Focus'Access, Row.Remote_Entry);
+      declare
+         Local  : constant String := Path.Get_Local_Path (True);
+         Remote : constant String := Path.Get_Remote_Path (True);
+      begin
+         if Local = "" then
+            Set_Text (Row.Local_Entry, Enter_Local_Path_String);
+            Widget_Callback.Object_Connect
+              (Row.Local_Entry, "grab_focus",
+               On_Path_Grab_Focus'Access, Row.Local_Entry);
+         else
+            Set_Text (Row.Local_Entry, Path.Get_Local_Path (True));
+         end if;
 
-      else
-         Set_Text (Row.Local_Entry, Path.Get_Local_Path (True));
-         Set_Text (Row.Remote_Entry, Path.Get_Remote_Path (True));
+         if Remote = "" then
+            Set_Text (Row.Remote_Entry, Enter_Remote_Path_String);
+            Widget_Callback.Object_Connect
+              (Row.Remote_Entry, "grab_focus",
+               On_Path_Grab_Focus'Access, Row.Remote_Entry);
+         else
+            Set_Text (Row.Remote_Entry, Path.Get_Remote_Path (True));
+         end if;
+
          Set_Text
            (Get_Entry (Row.Sync_Combo),
             Synchronisation_String (Path.Get_Synchronisation (True)).all);
-      end if;
+      end;
 
       Data := new Path_Cb_Data;
       Data.Widget := Widget;
@@ -1116,33 +1132,59 @@ package body GPS.Kernel.Remote is
       Local  : constant String := Get_Text (Row.Local_Entry);
       Remote : constant String := Get_Text (Row.Remote_Entry);
       Sync   : Synchronisation_Type := Never;
+      Dead   : Message_Dialog_Buttons;
+      pragma Unreferenced (Dead);
 
    begin
-      --  ??? get remote machine from the widget to be able to get remote FS
-
-      if Local /= Enter_Local_Path_String
-        and then Local /= ""
-        and then Is_Absolute_Path (Get_Local_Filesystem, Local)
-        and then Remote /= Enter_Remote_Path_String
-        and then Remote /= ""
+      if Local = Enter_Local_Path_String
+        or else Local = ""
       then
-         --  ??? Attribute item need to be determined
-         for J in Synchronisation_Type'Range loop
-            if Get_Text (Get_Entry (Row.Sync_Combo)) =
-              Synchronisation_String (J).all
-            then
-               Sync := J;
-               exit;
-            end if;
-         end loop;
-
-         Path.Set_Tentative_Local_Path
-           (Get_Local_Filesystem.Ensure_Directory  (Local));
-         Path.Set_Tentative_Remote_Path
-           (FS.Ensure_Directory (Remote));
-         Path.Set_Tentative_Synchronisation (Sync);
-         --  ??? What about attributes ?
+         Dead := Message_Dialog (-"Please enter a valid local path",
+                                 Error, Button_OK);
+         raise Invalid_Path;
       end if;
+
+      if Remote = Enter_Remote_Path_String
+        or else Remote = ""
+      then
+         Dead := Message_Dialog (-"Please enter a valid remote path",
+                                 Error, Button_OK);
+         raise Invalid_Path;
+      end if;
+
+      if not Is_Absolute_Path (Get_Local_Filesystem, Local) then
+         Dead := Message_Dialog
+           (-"Local path " & Local & (-" needs to be an absolute path"),
+            Error, Button_OK);
+         raise Invalid_Path;
+      end if;
+
+      if not Is_Absolute_Path (FS, Remote) then
+         Dead := Message_Dialog
+           (-"Remote path " & Remote & (-" needs to be an absolute path"),
+            Error, Button_OK);
+         raise Invalid_Path;
+      end if;
+
+      for J in Synchronisation_Type'Range loop
+         if Get_Text (Get_Entry (Row.Sync_Combo)) =
+           Synchronisation_String (J).all
+         then
+            Sync := J;
+            exit;
+         end if;
+      end loop;
+
+      if Active (Me) then
+         Trace (Me, "Set tentative : " & Local & " - " & Remote & " - " &
+                Synchronisation_Type'Image (Sync));
+      end if;
+
+      Path.Set_Tentative_Local_Path
+        (Get_Local_Filesystem.Ensure_Directory  (Local));
+      Path.Set_Tentative_Remote_Path
+        (FS.Ensure_Directory (Remote));
+      Path.Set_Tentative_Synchronisation (Sync);
    end Update_Path;
 
    -------------------------
@@ -1351,6 +1393,7 @@ package body GPS.Kernel.Remote is
          Sortable_Columns   => True,
          Initial_Sort_On    => 1,
          Hide_Expander      => False);
+      Set_Name (Dialog.Machine_Tree, "machine tree");
       Add (Scrolled, Dialog.Machine_Tree);
 
       --  Add/Restore/Remove buttons
@@ -1399,6 +1442,7 @@ package body GPS.Kernel.Remote is
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
       Gtk_New (Dialog.Network_Name_Entry);
+      Set_Name (Dialog.Network_Name_Entry, "network name entry");
       Attach (Dialog.Right_Table, Dialog.Network_Name_Entry,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
@@ -1418,6 +1462,7 @@ package body GPS.Kernel.Remote is
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
       Gtk_New (Dialog.Remote_Access_Combo);
+      Set_Name (Dialog.Remote_Access_Combo, "remote access combo");
       Set_Editable (Get_Entry (Dialog.Remote_Access_Combo), False);
       Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
@@ -1442,6 +1487,7 @@ package body GPS.Kernel.Remote is
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
       Gtk_New (Dialog.Remote_Shell_Combo);
+      Set_Name (Dialog.Remote_Shell_Combo, "remote shell combo");
       Set_Editable (Get_Entry (Dialog.Remote_Shell_Combo), False);
       Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
@@ -1706,7 +1752,6 @@ package body GPS.Kernel.Remote is
    begin
       if not Dialog.Restoring then
          Get_Selected (Get_Selection (Dialog.Machine_Tree), Model, Iter);
-         Trace (Me, "Changes detected for current selection");
 
          --  Set this iter as modified
          Set (Gtk_Tree_Store (Model), Iter, Modified_Col, True);
@@ -1844,12 +1889,13 @@ package body GPS.Kernel.Remote is
          return True;
       end Check_Fields;
 
-      Model      : Gtk.Tree_Store.Gtk_Tree_Store;
-      Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Item       : Item_Access;
-      Attribute  : Descriptor_Attribute;
-      Modified   : Boolean;
-      Dbg        : Connection_Debugger;
+      Model       : Gtk.Tree_Store.Gtk_Tree_Store;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Item        : Item_Access;
+      Attribute   : Descriptor_Attribute;
+      Modified    : Boolean;
+      Dbg         : Connection_Debugger;
+      Is_Selected : Boolean;
 
    begin
       Trace (Me, "Save");
@@ -1862,9 +1908,9 @@ package body GPS.Kernel.Remote is
          --  Do not check or save a selected item !
 
          if Get_Boolean (Model, Iter, Modified_Col)
-           and then (Save_Selected or else
-                     not Iter_Is_Selected (Get_Selection (Dialog.Machine_Tree),
-                                           Iter))
+           and then (not Save_Selected or else
+                     Iter_Is_Selected (Get_Selection (Dialog.Machine_Tree),
+                                       Iter))
          then
             Modified := True;
             exit;
@@ -1879,14 +1925,19 @@ package body GPS.Kernel.Remote is
          return True;
       end if;
 
+      Is_Selected := Iter_Is_Selected (Get_Selection (Dialog.Machine_Tree),
+                                       Iter);
+
       if not Check_Fields (Model, Iter, Dialog) then
          Trace (Me, "Setting back selection to uncomplete machine");
-         Dialog.Select_Back := True;
-         Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
+
+         if not Is_Selected then
+            Dialog.Select_Back := True;
+            Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
+         end if;
+
          return False;
       end if;
-
-      Set (Model, Iter, Modified_Col, False);
 
       declare
          Nickname : constant String := Get_String (Model, Iter, Name_Col);
@@ -1951,11 +2002,27 @@ package body GPS.Kernel.Remote is
 
          Trace (Me, "Internal save paths");
 
-         Save_Tentative_Path_List
-           (Dialog.Paths_List_Widget,
-            Get_Filesystem_From_Shell
-              (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))));
+         begin
+            Save_Tentative_Path_List
+              (Dialog.Paths_List_Widget,
+               Get_Filesystem_From_Shell
+                 (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))));
+         exception
+            when Invalid_Path =>
+               Trace (Me, "Invalid path detected, selecting back " & Nickname);
+
+               if not Is_Selected then
+                  Dialog.Select_Back := True;
+                  Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
+               end if;
+
+               return False;
+         end;
       end;
+
+      --  Machine saved, set the Modified_Col to False
+
+      Set (Model, Iter, Modified_Col, False);
 
       return True;
    end Save;
@@ -1975,16 +2042,21 @@ package body GPS.Kernel.Remote is
       User_Only : Boolean;
 
    begin
+      Trace (Me, "on selection changed");
+
       if Dialog.Select_Back then
          --  Do not change dialog values
+         Trace (Me, "select change: selecting back");
          Dialog.Select_Back := False;
-
          return;
       end if;
 
       --  If we just added a machine, do not perform any save
 
-      if not Dialog.Added_Item and then not Save (Server_List_Editor (W)) then
+      if not Dialog.Added_Item
+        and then not Save (Server_List_Editor (W))
+      then
+
          return;
       end if;
 
@@ -2425,6 +2497,7 @@ package body GPS.Kernel.Remote is
                Save_Remote_Config (Kernel);
                Run_Hook (Kernel, Server_List_Changed_Hook);
 
+               exit when Resp = Gtk_Response_OK;
             end if;
 
          else
@@ -2457,9 +2530,8 @@ package body GPS.Kernel.Remote is
                end;
             end loop;
 
+            exit; --  Exit loop when Cancel is clicked
          end if;
-
-         exit when Resp /= Gtk_Response_Apply;
       end loop;
 
       --  Destroy duplicated machine list
