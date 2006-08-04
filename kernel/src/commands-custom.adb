@@ -71,6 +71,10 @@ package body Commands.Custom is
 
    Me : constant Debug_Handle := Create ("Commands.Custom", Off);
 
+   On_Failure_Node_Name : constant String := "on-failure";
+   --  Name of the node that represents an on-failure in the list of components
+   --  in the GUI editor for commands.
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Boolean_Array, Boolean_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -140,6 +144,7 @@ package body Commands.Custom is
       record
          Kernel       : Kernel_Handle;
          Command      : Gtk_Text_Buffer;
+         View         : Gtk_Text_View;
          Show_Command : Gtk_Check_Button;
          Output       : Gtk_Entry;
 
@@ -1719,9 +1724,11 @@ package body Commands.Custom is
       Iter   : Gtk_Tree_Iter;
       First, Last : Gtk_Text_Iter;
       Selected_Iter : Gtk_Tree_Iter := Null_Iter;
+      On_Failure : Gtk_Tree_Iter := Null_Iter;
    begin
       Clear (Model);
       Parent := Null_Iter;
+
 
       for C in Editor.Components'Range loop
          --  Unless the component has been destroyed by the user
@@ -1730,10 +1737,7 @@ package body Commands.Custom is
               and then Editor.Components (C).On_Failure_For >
               Editor.Components (C - 1).On_Failure_For
             then
-               Append (Model, Iter, Iter);
-               Set (Model, Iter, 0, "on-failure");
-               Set (Model, Iter, 1, -1);
-               Parent := Iter;
+               Parent := On_Failure;
             end if;
 
             Get_Start_Iter (Editor.Components (C).Component.Command, First);
@@ -1743,6 +1747,16 @@ package body Commands.Custom is
             Set (Model, Iter, 0, Get_Text
                  (Editor.Components (C).Component.Command, First, Last));
             Set (Model, Iter, 1, Gint (C));
+
+            if Editor.Components (C).Component.The_Type
+              = Component_External
+            then
+               --  Always create the on-failure node, so that one can add
+               --  failure conditions
+               Append (Model, On_Failure, Iter);
+               Set (Model, On_Failure, 0, On_Failure_Node_Name);
+               Set (Model, On_Failure, 1, -1);
+            end if;
 
             if C = Selected then
                Selected_Iter := Iter;
@@ -1758,12 +1772,12 @@ package body Commands.Custom is
          end if;
       end loop;
 
+      --  ??? Should preserve the expansion status
+      Expand_All (Editor.Tree);
+
       if Selected_Iter /= Null_Iter then
          Select_Iter (Get_Selection (Editor.Tree), Selected_Iter);
       end if;
-
-      --  ??? Should preserve the expansion status
-      Expand_All (Editor.Tree);
    end Refresh_And_Select;
 
    ----------------
@@ -1882,15 +1896,39 @@ package body Commands.Custom is
    is
       Ed : constant Custom_Command_Editor_Widget :=
         Custom_Command_Editor_Widget (Editor);
-      Component : Integer := Get_Selected_Component (Ed);
+      Component : Integer;
       Comp : Component_Array_Access := Ed.Components;
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
+      On_Failure_For : Integer := -1;
    begin
-      Ed.Components := new Component_Array (Comp'First .. Comp'Last + 1);
+      Get_Selected (Get_Selection (Ed.Tree), Model, Iter);
+      if Iter /= Null_Iter then
+         Component := Integer (Get_Int (Model, Iter, 1));
+         if Component = -1
+           and then Get_String (Model, Iter, 0) =
+           On_Failure_Node_Name
+         then
+            --  On a "on-failure" node ?
+            Iter := Parent (Model, Iter);
+            Component := Integer (Get_Int (Model, Iter, 1));
+            On_Failure_For := Component;
 
-      if Component = -1 then
+         else
+            --  New component has same on-failure level as currently selected
+            --  one. We should skip all on-failure nodes for the current node
+            --  as well.
+            On_Failure_For := Comp (Component).On_Failure_For;
+            for C in Component + 1 .. Comp'Last loop
+               exit when Comp (C).On_Failure_For < On_Failure_For;
+               Component := C;
+            end loop;
+         end if;
+      else
          Component := Comp'Last;
       end if;
 
+      Ed.Components := new Component_Array (Comp'First .. Comp'Last + 1);
       Ed.Components (Comp'First .. Component) :=
         Comp (Comp'First .. Component);
       if Component + 1 <= Comp'Last then
@@ -1906,8 +1944,9 @@ package body Commands.Custom is
             Kernel         => Ed.Kernel,
             Default_Output => "",
             Script         => Data.Script),
-         On_Failure_For => -1);
+         On_Failure_For => On_Failure_For);
       Refresh_And_Select (Ed, Component + 1);
+      Grab_Focus (Ed.Components (Component + 1).Component.View);
    end On_Add;
 
    -----------
@@ -1965,7 +2004,6 @@ package body Commands.Custom is
       Box, HBox : Gtk_Box;
       Label     : Gtk_Label;
       Scrolled  : Gtk_Scrolled_Window;
-      View      : Gtk_Text_View;
       Iter      : Gtk_Text_Iter;
    begin
       Editor := new Custom_Component_Editor_Record
@@ -2030,8 +2068,8 @@ package body Commands.Custom is
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
 
       Gtk_New (Editor.Command);
-      Gtk_New (View, Editor.Command);
-      Add (Scrolled, View);
+      Gtk_New (Editor.View, Editor.Command);
+      Add (Scrolled, Editor.View);
 
       Get_End_Iter (Editor.Command, Iter);
       if Component.Command /= null then
