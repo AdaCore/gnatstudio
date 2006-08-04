@@ -15,8 +15,8 @@
      <key action="goto beginning of buffer">alt-less</key>
      <key action="goto end of buffer">alt-shift-greater</key>
      <key action="Format selection" >tab</key>
-     <key action="/File/Open...">ctrl-x ctrl-f</key>
-     <key action="/Edit/Undo">ctrl-_</key>
+     <key action="/File/Open...">control-x control-f</key>
+     <key action="/Edit/Undo">control-_</key>
 
      <key action="goto declaration or body">control-c control-d</key>
      <key action="goto other file">control-c o</key>
