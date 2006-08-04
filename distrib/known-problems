@@ -11,6 +11,11 @@ Known Problems fixed in GPS 4.0.1
               GPS sometimes crash.
   Workaround: Use direct disk access (e.g. nfs) instead of rsync
 
+- EB18-016 Wrong highlighting of keywords on non Ada/C/C++ files
+  Problem:    Keywords in the source editor for some languages (e.g. python,
+              perl) are highlighted one character too long.
+  Workaround: This is only a display glitch which can be ignored
+
 Known Problems fixed in GPS 4.0.0
 
 - F713-006 Crash when creating an extending project
