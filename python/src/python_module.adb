@@ -1006,7 +1006,6 @@ package body Python_Module is
 
       Load_Dir (Autoload_System_Dir (Kernel),    Default_Autoload => True);
       Load_Dir (No_Autoload_System_Dir (Kernel), Default_Autoload => False);
-      Load_Dir (Autoload_User_Dir (Kernel),      Default_Autoload => True);
 
       Path := Start (Env_Path);
       while not At_End (Env_Path, Path) loop
@@ -1015,6 +1014,8 @@ package body Python_Module is
          end if;
          Path := Next (Env_Path, Path);
       end loop;
+
+      Load_Dir (Autoload_User_Dir (Kernel),      Default_Autoload => True);
    end Load_Python_Startup_Files;
 
    ---------------------------------
