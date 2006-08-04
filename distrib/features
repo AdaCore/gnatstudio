@@ -34,6 +34,13 @@ F720-008 Improved Emacs emulation (2006-07-21)
   Several new key bindings were defined to emulate Emacs. The handling of
   selections (mark+cursor) was also enhanced
 
+F719-012 New dialog /Edit/Startup Script Editor
+
+  This new dialog allows you to chose which scripts GPS should load on
+  startup. We have also made more scripts optionally loadable through this
+  dialog, when you previously had to copy them manually from the examples
+  directory.
+
 F719-012 Removed support for old customization directories
 
   in GPS 2.x, the following directories were searched for customization
