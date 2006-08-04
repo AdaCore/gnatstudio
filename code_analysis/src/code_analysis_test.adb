@@ -38,8 +38,8 @@ procedure Code_Analysis_Test is
    --  reads a gcov output file, built from a given source file name, builds a
    --  Code_Analysis tree structure from it, displays it on the standard output
    --  and cleanly quits
-   --  Correct usage : $ code_analysis_test source_file build_display_destroy
-   --  Example :
+   --  Correct usage: code_analysis_test source_file build_display_destroy
+   --  Example:
    --  $ code_analysis_test main.adb build_display_destroy
    --  Project Dummy_Project_Name
    --    File main.adb
@@ -63,8 +63,8 @@ procedure Code_Analysis_Test is
    procedure Print_Usage is
    begin
       Put_Line
-        ("Usage : $ code_analysis_test source_file test_name test_name...");
-      Put_Line ("Available tests are : build_display_destroy, benchmark");
+        ("Usage: code_analysis_test source_file test_name test_name...");
+      Put_Line ("Available tests are: build_display_destroy, benchmark");
    end Print_Usage;
 
    ---------------------------
@@ -107,7 +107,7 @@ procedure Code_Analysis_Test is
       Project_Node  : Project_Access;
       Time_Before   : Time;
       Time_After    : Time;
-      Mesure        : Duration;
+      Measure       : Duration;
       Timeout       : exception;
       Create_Max    : constant Duration := 10.0;
       --  ??? Currently observed on bonn : 3.3s
@@ -120,6 +120,17 @@ procedure Code_Analysis_Test is
       --  (filling task bar) the creation operation tracking
       Analysis_Tree : Code_Analysis_Tree;
       Cursor_Tree   : Cursor;
+
+      function Build_Msg (S : String; Value, Time : Duration) return String;
+      --  Build a message used when raising Timeout exception
+
+      function Build_Msg
+        (S : String; Value, Time : Duration) return String is
+      begin
+         return S & Duration'Image (Value) & "s" & ASCII.LF & "Timeout set to:"
+           & Duration'Image (Time);
+      end Build_Msg;
+
    begin
       Time_Before := Clock;
 
@@ -139,18 +150,11 @@ procedure Code_Analysis_Test is
       end loop;
 
       Time_After    := Clock;
-      Mesure        := Time_After - Time_Before;
-      Put_Line ("Creation time    :"
-                & Duration'Image (Mesure)
-                & "s");
+      Measure       := Time_After - Time_Before;
+      Put_Line ("Creation time   :" & Duration'Image (Measure) & "s");
 
-      if Mesure > Create_Max then
-         raise Timeout with "Creation alarm :"
-           & Duration'Image (Mesure)
-           & "s"
-           & ASCII.LF
-           & "Timeout set to :"
-           & Duration'Image (Create_Max);
+      if Measure > Create_Max then
+         raise Timeout with Build_Msg ("Creation alarm:", Measure, Create_Max);
       end if;
 
       Time_Before := Clock;
@@ -161,19 +165,15 @@ procedure Code_Analysis_Test is
       Line_Node     := Get_Or_Create (File_Node, Line_Id (534));
       Put_Line ("Request result   :");
       Dump_Line (Line_Node);
-      Time_After := Clock;
-      Mesure        := Time_After - Time_Before;
-      Put_Line ("Request time     :"
-                & Duration'Image (Mesure)
+      Time_After    := Clock;
+      Measure       := Time_After - Time_Before;
+      Put_Line ("Request time    :"
+                & Duration'Image (Measure)
                 & "s");
 
-      if Mesure > Request_Max then
-         raise Timeout with "Request alarm :"
-           & Duration'Image (Mesure)
-           & "s"
-           & ASCII.LF
-           & "Timeout set to :"
-           & Duration'Image (Request_Max);
+      if Measure > Request_Max then
+         raise Timeout
+           with Build_Msg ("Request alarm:", Measure, Request_Max);
       end if;
 
       Analysis_Tree := Get_Tree;
@@ -188,20 +188,15 @@ procedure Code_Analysis_Test is
       end loop;
 
       Time_After    := Clock;
-      Mesure        := Time_After - Time_Before;
-      Put_Line ("Destruction time :"
-                & Duration'Image (Mesure)
-                & "s");
+      Measure        := Time_After - Time_Before;
+      Put_Line ("Destruction time:" & Duration'Image (Measure) & "s");
 
-      if Mesure > Destroy_Max then
-         raise Timeout with "Destruction alarm :"
-           & Duration'Image (Mesure)
-           & "s"
-           & ASCII.LF
-           & "Timeout set to :"
-           & Duration'Image (Destroy_Max);
+      if Measure > Destroy_Max then
+         raise Timeout
+           with Build_Msg ("Destruction alarm:", Measure, Destroy_Max);
       end if;
    end Benchmark;
+
 begin
    if Argument_Count < 2 then
       Put_Line ("error: missing arguments");
