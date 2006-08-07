@@ -3509,19 +3509,6 @@ package body GPS.Kernel.Remote is
          Queue_Id       => Queue_Id);
    end Synchronize;
 
-   --------------
-   -- On_Error --
-   --------------
-
-   procedure On_Error
-     (Manager : access Default_Error_Display_Record;
-      Message : String) is
-   begin
-      if Manager.Kernel /= null then
-         Insert (Manager.Kernel, Message, Mode => Error);
-      end if;
-   end On_Error;
-
    -----------
    -- Spawn --
    -----------
@@ -3536,15 +3523,12 @@ package body GPS.Kernel.Remote is
       Console          : Interactive_Consoles.Interactive_Console := null;
       Show_Command     : Boolean := True;
       Directory        : String := "";
-      Use_Pipes        : Boolean := True;
-      Error_Manager    : Error_Display := null)
+      Use_Pipes        : Boolean := True)
    is
       Exec                  : String_Access;
       Old_Dir               : String_Access;
       Args                  : Argument_List_Access;
       L_Args                : Argument_List_Access := null;
-      Default_Error_Manager : aliased Default_Error_Display_Record;
-      In_Use_Error_Manager  : Error_Display;
 
       function Check_Exec (Exec : String) return String_Access;
       --  Check that executable is on the path, and return the full path if
@@ -3564,9 +3548,10 @@ package body GPS.Kernel.Remote is
          Full_Exec := Locate_Exec_On_Path (Exec);
 
          if Full_Exec = null then
-            On_Error
-              (In_Use_Error_Manager,
-               -"Could not locate executable on path: " & Exec);
+            Insert
+              (Kernel,
+               -"Could not locate executable on path: " & Exec,
+               Mode => Error);
             return null;
          end if;
 
@@ -3593,15 +3578,6 @@ package body GPS.Kernel.Remote is
 
    begin
       Success := False;
-
-      --  Set the error display manager
-
-      if Error_Manager = null then
-         Default_Error_Manager.Kernel := Kernel;
-         In_Use_Error_Manager := Default_Error_Manager'Unchecked_Access;
-      else
-         In_Use_Error_Manager := Error_Manager;
-      end if;
 
       --  First verify the executable to be launched
 
@@ -3727,16 +3703,18 @@ package body GPS.Kernel.Remote is
    exception
       when E : Invalid_Process | Process_Died =>
          Success := False;
-         On_Error
-           (In_Use_Error_Manager,
+         Insert
+           (Kernel,
             -"Error while trying to execute " & Args (Args'First).all & ": " &
-            Ada.Exceptions.Exception_Message (E));
+            Ada.Exceptions.Exception_Message (E),
+            Mode => Error);
       when E : Invalid_Nickname =>
          Success := False;
-         On_Error
-           (In_Use_Error_Manager,
+         Insert
+           (Kernel,
             -"Remote configuration error: " &
-            Ada.Exceptions.Exception_Message (E));
+            Ada.Exceptions.Exception_Message (E),
+            Mode => Error);
    end Spawn;
 
 end GPS.Kernel.Remote;
