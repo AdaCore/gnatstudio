@@ -7,17 +7,26 @@
    case insensitive
 """
 
-######################## No user customization below this point ###############
+############################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Edit/Startup Scripts)
+
+action_name = "execute extended command"
+
+
+############################################################################
+## No user customization below this line
+############################################################################
 
 from GPS import *
 
-parse_xml ("""
-   <action name="execute extended command" output="none">
+def on_gps_started (hook_name):
+   parse_xml ("""
+   <action name='""" + action_name + """' output="none">
       <description>This action asks interactively for the name of an action to execute, and execute it. This allows you to execute any GPS action even if no menu and no key shortcut exists for it</description>
       <shell lang="python">execute_extended.Extended_Command ()</shell>
    </action>
-
-   <key action="execute extended command">alt-x</key>
   """)
 
 def smaller_than (x, y):
@@ -53,6 +62,4 @@ class Extended_Command (CommandWindow):
              self.write (match [0])
        return True
 
-        
-        
-     
+Hook ("gps_started").add (on_gps_started)

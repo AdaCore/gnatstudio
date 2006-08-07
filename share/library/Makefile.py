@@ -33,6 +33,11 @@
    messages to display them in the locations window as usual.
 """
 
+############################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Edit/Startup Scripts)
+
 locations_category = "Builder results"
 ## Name of the category in the Locations window in which error messages
 ## will be displayed
@@ -44,7 +49,10 @@ extra_make_switches = ""
 ## script is loaded, and therefore changing the python variable afterward
 ## has no impact
 
-################ No user customization below this point #####################
+
+############################################################################
+## No user customization below this line
+############################################################################
 
 from GPS import *
 from os.path import *
@@ -210,5 +218,11 @@ class Makefile:
 
       Hook ("project_view_changed").add (self.on_project_view_changed)
       Hook ("project_changed").add (self.on_project_changed)
+      self.on_project_changed ("project_changed")
+      self.on_project_view_changed ("project_view_changed")
 
-Makefile()
+def on_gps_started (hook_name):
+   Makefile()
+   
+
+Hook ("gps_started").add (on_gps_started)

@@ -9,6 +9,7 @@
 
       For best emulation of Emacs, it is recommanded that you also load the
       following startup scripts:
+         - navigation_utils.py
          - text_utils.py
          - execute_extended.py
          - isearch.py

@@ -32,7 +32,15 @@
        JKIL
 """
 
-################# No user customization below this point #############
+############################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Edit/Startup Scripts)
+
+
+############################################################################
+## No user customization below this line
+############################################################################
 
 from GPS import *
 import traceback
@@ -122,7 +130,7 @@ def rectangle_string (menu, text=None):
        text = text [0]
     apply_on_rectangle (rectangle_replace_func, start, end - 1, text)
 
-def register_menus ():
+def on_gps_started (hook_name):
     """Create the menus associated with this module"""
 
     Menu.create ("/Edit/Rectangle",
@@ -138,11 +146,9 @@ def register_menus ():
     Menu.create ("/Edit/Rectangle/Replace with Text", on_activate = rectangle_string)
     Menu.create ("/Edit/Rectangle/Insert Text", on_activate = rectangle_insert)
 
-register_menus ()
-
-#####################################################################################
+##############################################################################
 ## No public function below this
-#####################################################################################
+##############################################################################
 
 def rectangle_cut_func (rect_start, rect_end, start, end, in_clipboard, copy):
     """Removes or Copies the range START .. END, and copy it in the clipboard if
@@ -196,3 +202,5 @@ def apply_on_rectangle (func, start, end, *args):
    except:
       Logger ("RECTANGLE").log ("Unexpected exception: " + traceback.format_exc())
       
+
+Hook ("gps_started").add (on_gps_started)

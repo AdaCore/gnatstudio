@@ -1,14 +1,20 @@
-## This module provides compatibility with older versions of GPS
-##
-## This script is not intended to be loaded automatically on startup,
-## although it won't damage your environment.
-## However, it might be useful for your own Python scripts, and therefore
-## you should import it with
-##     import GPS_old
-##
-## Simply import it in your own script if some of the recent changes in GPS
-## break your scripts.
-## As much as possible, you should update your scripts, though
+"""This module provides compatibility with older versions of GPS
+
+This script is not intended to be loaded automatically on startup,
+although it won't damage your environment.
+However, it might be useful for your own Python scripts, and therefore
+you should import it with
+    import GPS_old
+
+Simply import it in your own script if some of the recent changes in GPS
+break your scripts.
+As much as possible, you should update your scripts, though
+"""
+
+
+###########################################################################
+## No user customization below this line
+############################################################################
 
 import GPS
 class Preference:

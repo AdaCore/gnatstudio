@@ -1,58 +1,64 @@
-## This script adds an incremental-search capability to GPS
-##
-## This is similar to what Emacs does
-## When you select the menu /Navigate/Find Incremental (or bind a key
-## shortcut to it through the editor at /Edit/Key shortcuts), a temporary
-## window is open. From then on, any character you type is displayed in
-## this new window, and makes a search pattern. Whenever this pattern
-## is modified, GPS will search, starting at the current location, for its
-## next occurrence in the current file.
-## While you are editing the pattern, there are a number of special key
-## shortcuts that can be used:
-##    - control-w
-##      will copy the current word into the pattern, and moves the cursor
-##      to the next word, so that pressing control-w multiple times in
-##      a row allows you to easily copy part of a line into the pattern
-##
-##    - control-y
-##      is similar to control-w but copies the end of the current line into
-##      the pattern. If the cursor is at the end of the current line, the
-##      whole next line is copied
-##
-##    - Key that activates the isearch
-##      If you press the same key that was used to activate the incremental
-##      search, GPS will jump to the next occurrence. If you press the key
-##      to activate the backward incremental search, GPS will jump to the
-##      stack occurrence.
-##      If you press that key twice in a row when the pattern is empty, it
-##      will restart a search for the previous pattern
-##
-##    - Backspace
-##      Goes back to the stack location or search pattern. If you have just
-##      added a character to the pattern, this character is removed. Otherwise
-##      the pattern is preserved and the editor is moved back to the stack
-##      location.
-##
-##    - alt-c
-##      Toggles the case sensitivity of the search
-##      The prompt will include the status "[CS]" if the search is currently
-##      case sensitive. By default, searches are case insensitive, unless your
-##      pattern includes upper cased letters
-##
-##    - Esc, movement keys, keys with control or alt
-##      cancels the current search, and unselect the last occurrence found
-##
-## If you press <enter> while there is no search string, this module will
-## automatically open the advanced, non-incremental search dialog of GPS, to
-## match Emacs' behavior
-##
-## If the variable highlight_next_matches is set to True, then whenever you
-## modify the current pattern, GPS will also highlight the next matches of
-## this pattern in the buffer. Such higlights will stay even when you cancel
-## the current search. To hide them, start a new search, and cancel it
-## immediately. The highlighting of the next matches is done in the background
-## if pygtk was installed along with GPS. Otherwise, it is done every time the
-## pattern is modified, and will slow things down a little
+"""This script adds an incremental-search capability to GPS
+
+This is similar to what Emacs does
+When you select the menu /Navigate/Find Incremental (or bind a key
+shortcut to it through the editor at /Edit/Key shortcuts), a temporary
+window is open. From then on, any character you type is displayed in
+this new window, and makes a search pattern. Whenever this pattern
+is modified, GPS will search, starting at the current location, for its
+next occurrence in the current file.
+While you are editing the pattern, there are a number of special key
+shortcuts that can be used:
+   - control-w
+     will copy the current word into the pattern, and moves the cursor
+     to the next word, so that pressing control-w multiple times in
+     a row allows you to easily copy part of a line into the pattern
+
+   - control-y
+     is similar to control-w but copies the end of the current line into
+     the pattern. If the cursor is at the end of the current line, the
+     whole next line is copied
+
+   - Key that activates the isearch
+     If you press the same key that was used to activate the incremental
+     search, GPS will jump to the next occurrence. If you press the key
+     to activate the backward incremental search, GPS will jump to the
+     stack occurrence.
+     If you press that key twice in a row when the pattern is empty, it
+     will restart a search for the previous pattern
+
+   - Backspace
+     Goes back to the stack location or search pattern. If you have just
+     added a character to the pattern, this character is removed. Otherwise
+     the pattern is preserved and the editor is moved back to the stack
+     location.
+
+   - alt-c
+     Toggles the case sensitivity of the search
+     The prompt will include the status "[CS]" if the search is currently
+     case sensitive. By default, searches are case insensitive, unless your
+     pattern includes upper cased letters
+
+   - Esc, movement keys, keys with control or alt
+     cancels the current search, and unselect the last occurrence found
+
+If you press <enter> while there is no search string, this module will
+automatically open the advanced, non-incremental search dialog of GPS, to
+match Emacs' behavior
+
+If the variable highlight_next_matches is set to True, then whenever you
+modify the current pattern, GPS will also highlight the next matches of
+this pattern in the buffer. Such higlights will stay even when you cancel
+the current search. To hide them, start a new search, and cancel it
+immediately. The highlighting of the next matches is done in the background
+if pygtk was installed along with GPS. Otherwise, it is done every time the
+pattern is modified, and will slow things down a little
+"""
+
+############################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Edit/Startup Scripts)
 
 highlight_next_matches = True
 ## Whether GPS should highlight the next matches. This highlighting will be
@@ -68,8 +74,15 @@ background_color = "yellow"
 error_color = "red"
 ## Background color to use for the search field when no match is found
 
+isearch_action_name = 'isearch'
+isearch_menu = '/Navigate/Find Incremental'
+isearch_backward_action_name = 'isearch backward'
+isearch_backward_menu = '/Navigate/Find Previous Incremental'
+## Changing the name of menus should be reflected in emacs.xml
+
+
 #############################################################################
-## No user-customization beyond this line
+## No user customization below this line
 #############################################################################
 
 from GPS import *
@@ -82,13 +95,8 @@ try:
 except:
    has_pygtk = 0
 
-## Changing the name of menus should be reflected in emacs.xml
-isearch_action_name = 'isearch'
-isearch_menu = '/Navigate/Find Incremental'
-isearch_backward_action_name = 'isearch backward'
-isearch_backward_menu = '/Navigate/Find Previous Incremental'
-
-parse_xml ("""
+def on_gps_started (hook_name):
+  parse_xml ("""
   <action name='""" + isearch_action_name + """' category="Editor" output="none">
      <description>This action provides an incremental search facility: once activated, each character you type is added to the search pattern, and GPS jumps to the next occurrence of the pattern</description> 
      <filter id="Source editor" />
@@ -108,7 +116,6 @@ parse_xml ("""
     <title>""" + isearch_menu + """</title>
  </menu>
 """)
-
 
 class Isearch (CommandWindow):
    """This class provides an incremental search facility in GPS.
@@ -366,3 +373,5 @@ class Isearch (CommandWindow):
      """The user has cancelled the search"""
      self.cancel_idle_overlays ()
      self.editor.unselect ()
+
+Hook ("gps_started").add (on_gps_started)
