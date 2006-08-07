@@ -1,20 +1,21 @@
-## Enhanced documentation for python and GPS shell commands
-##
-## This package provides support for:
-##  - storing the documentation for any Python entity in a separate XML file.
-##    This allows dynamic modification, easier
-##    translation, and saves some memory since it doesn't need to be kept
-##    in memory at all times, and once per language in addition.
-##
-##  - Dynamically generating HTML file to document python entities. In
-##    particular, a predefined menu is added for the GPS extensions
+"""Enhanced documentation for python and GPS shell commands
+
+This package provides support for:
+ - storing the documentation for any Python entity in a separate XML file.
+   This allows dynamic modification, easier
+   translation, and saves some memory since it doesn't need to be kept
+   in memory at all times, and once per language in addition.
+
+ - Dynamically generating HTML file to document python entities. In
+   particular, a predefined menu is added for the GPS extensions
+"""
 
 ############################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
 # with this script (see /Edit/Startup Scripts)
 
-^L
+
 ############################################################################
 ## No user customization below this line
 ############################################################################

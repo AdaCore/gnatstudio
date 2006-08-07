@@ -1,17 +1,18 @@
-## This file provides enhanced support for editing Python files
-##
-## Nothing is done if the projects do not support python, otherwise, the
-## following are provided:
-##   - Create highlight rules for python files
-##   - Defines a convenient filter "Python File" to use when defining your
-##     own actions
-##   - New menu to reload the current script. This menu is only visible when
-##     editing a python file.
-##   - Easy access to standard python library through shift-F3
-##   - Easy access to user-defined GPS configuration scripts through shift-F3
-##     This is always active, even if the current project doesn't support
-##     python
-##   - Add links to python documentation on the internet
+"""This file provides enhanced support for editing Python files
+
+Nothing is done if the projects do not support python, otherwise, the
+following are provided:
+  - Create highlight rules for python files
+  - Defines a convenient filter "Python File" to use when defining your
+    own actions
+  - New menu to reload the current script. This menu is only visible when
+    editing a python file.
+  - Easy access to standard python library through shift-F3
+  - Easy access to user-defined GPS configuration scripts through shift-F3
+    This is always active, even if the current project doesn't support
+    python
+  - Add links to python documentation on the internet
+"""
 
 ############################################################################
 # Customization variables
@@ -24,7 +25,7 @@ pydoc_port = 9432
 ## external web browsers can connect to to get the documentation for the
 ## standard python library
 
-^L
+
 ############################################################################
 ## No user customization below this line
 ############################################################################

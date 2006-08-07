@@ -1,11 +1,12 @@
-## Provides sort functions in the editors
-##
-## This file provides two sort functions, which can be used to sort lines
-## in a source file.
-## To use: first select the lines that you wish to sort, and then select
-## one of the two menus:
-##   - /Edit/Sort Ascending
-##   - /Edit/Sort Descending
+"""Provides sort functions in the editors
+
+This file provides two sort functions, which can be used to sort lines
+in a source file.
+To use: first select the lines that you wish to sort, and then select
+one of the two menus:
+  - /Edit/Sort Ascending
+  - /Edit/Sort Descending
+"""
 
 ############################################################################
 # Customization variables
@@ -15,7 +16,7 @@
 menu_name1 = "/Edit/Sort Descending"
 menu_name2 = "/Edit/Sort Ascending"
 
-^L
+
 ############################################################################
 ## No user customization below this line
 ############################################################################

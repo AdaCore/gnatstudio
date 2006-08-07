@@ -1,11 +1,12 @@
-## This module implements high level actions related to source navigation
-##
-## This script defines a number of functions and GPS actions that you can
-## reuse in your own scripts.
-## In particular, it provides the following GPS actions, to which you can
-## bind key shortcuts through the menu /Edit/Key shortcuts:
-##   - "goto declaration or body"
-##   - "goto other file" 
+"""This module implements high level actions related to source navigation
+
+This script defines a number of functions and GPS actions that you can
+reuse in your own scripts.
+In particular, it provides the following GPS actions, to which you can
+bind key shortcuts through the menu /Edit/Key shortcuts:
+  - "goto declaration or body"
+  - "goto other file" 
+"""
 
 ############################################################################
 # Customization variables

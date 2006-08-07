@@ -1,15 +1,16 @@
-## Defines editor-specific functions
-##
-## YOU SHOULD ALMOST ALWAYS LOAD THIS FILE
-##
-## This script defines a number of python functions and GPS actions that can
-## be used inside GPS editors. These can be used to move the cursor around or
-## edit the text.
-## They are often programmed so that they emulate the Emacs editor, but they
-## are independent of the Emacs mode and do not override any key shortcut. As
-## a result you can define your own shortcuts for the actions defined in this
-## package.
-## See also emacs.xml
+"""Defines editor-specific functions
+
+YOU SHOULD ALMOST ALWAYS LOAD THIS FILE
+
+This script defines a number of python functions and GPS actions that can
+be used inside GPS editors. These can be used to move the cursor around or
+edit the text.
+They are often programmed so that they emulate the Emacs editor, but they
+are independent of the Emacs mode and do not override any key shortcut. As
+a result you can define your own shortcuts for the actions defined in this
+package.
+See also emacs.xml
+"""
 
 ###########################################################################
 # Customization variables
@@ -21,7 +22,7 @@ transient_mark_mode = False
 ## modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs
 ## mode with the same name, although will behave differently in some cases
 
-^L
+
 ############################################################################
 ## No user customization below this line
 ############################################################################
