@@ -86,560 +86,110 @@ when editing other languages
 ## No user customization below this line
 ############################################################################
 
-from string import *
-from misc_text_utils import *
 import re
 import GPS
 
-def align_use_clauses ():
-   """Aligns use-clauses occuring in an Ada context clause"""
-   try:
-      current_file = GPS.current_context().file().name()
-   except:
-      GPS.MDI.dialog("Cannot get current file name")
+def range_align_on (top, bottom, sep, replace_with=None):
+   """Align each line from top to bottom, aligning, for each line, sep in
+      the same column. For instance:
+          a sep b
+          long    sep    short
+      becomes:
+          a    sep b
+          long sep short
+      sep is a regular expression.
+      top and bottom are instances of GPS.EditorLocation
+      replace_with is the text that should replace the text matched by sep.
+      It can do backward references to parenthesis groups in sep by using the
+      usual \1, \2,... strings. All the replacement texts will occupy the same
+      length in the editor, that is they will also be aligned.
+   """
+
+   if not replace_with:
+      replace_with = sep
+   sep_re = re.compile (sep)
+   pos = 0
+   replace_len = 0
+   line = top.beginning_of_line ()
+   while line <= bottom:
+      chars   = top.buffer().get_chars (line, line.end_of_line())
+      matched = sep_re.search (chars)
+      if matched:
+         pos = max (pos, len (chars[:matched.start()].rstrip()) + 1)
+         try:
+            sub = sep_re.sub (replace_with, matched.group())
+         except:
+            sub = matched.group()
+         replace_len = max (replace_len, len (sub))
+      line = line.forward_line ()
+ 
+   if pos != 0:
+     try:
+        top.buffer().start_undo_group()
+        line = top.beginning_of_line ()
+        while line <= bottom:
+           chars   = top.buffer ().get_chars (line, line.end_of_line())
+           matched = sep_re.search (chars)
+           if matched:
+              width  = pos - len (chars[:matched.start()].rstrip()) - 1
+              try:
+                 sub    = sep_re.sub (replace_with, matched.group())
+              except:
+                 sub = matched.group()
+              width2 = replace_len - len (sub)
+
+              top.buffer().delete (line, line.end_of_line())
+              top.buffer().insert \
+                 (line, chars[:matched.start()].rstrip() \
+                  + (' ' * width) + sub + (' ' * width2) \
+                  + chars[matched.end():].lstrip())
+           line = line.forward_line ()
+     finally:
+        top.buffer().finish_undo_group()
+
+def buffer_align_on (sep, replace_with=None, buffer=None):
+   """Align the current selection in buffer, based on the separator sep.
+      See the description for range_align_on"""
+   if not buffer:
+      buffer = GPS.EditorBuffer.get ()
+   top    = buffer.selection_start ()
+   bottom = buffer.selection_end ()
+   if top == bottom:
+      GPS.MDI.dialog ("You must first select the intended text")
       return
-
-   try:
-      top_line = GPS.current_context().start_line()
-   except:
-      GPS.MDI.dialog("You must first select the intended text")
-      return
-
-   bottom_line = GPS.current_context().end_line()
-   max_use_pos = 0
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      use_pos = find(line,'use ')
-      if use_pos != -1:
-         left_part = line[:use_pos]
-         use_pos = len(rstrip(left_part)) + 1
-         if use_pos > max_use_pos:
-            max_use_pos = use_pos
-
-      current_line = current_line + 1
-
-   if max_use_pos == 0:
-      GPS.MDI.dialog("No use-clauses found to align!")
-      return
-
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      use_pos = find(line,'use ')
-      if use_pos != -1:
-         left_part = line[:use_pos]
-         right_part = line[use_pos+3:]
-         width = max_use_pos - len( rstrip(left_part) )
-         replace_line (current_file, rstrip(left_part) + blanks(width) + 'use ' + lstrip(right_part))
-
-      current_line = current_line + 1
-
+   range_align_on (top, bottom, sep, replace_with)
+   
 def align_colons ():
    """Aligns colons (eg in object and record type declarations"""
-   try:
-      current_file = GPS.current_context().file().name()
-   except:
-      GPS.MDI.dialog("Cannot get current file name")
-      return
-
-   try:
-      top_line = GPS.current_context().start_line()
-   except:
-      GPS.MDI.dialog("You must first select the intended text")
-      return
-
-   bottom_line = GPS.current_context().end_line()
-   # calculate new position for rightmost colon
-   max_colon_pos = 0
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      colon_pos = find(line,':')
-      if colon_pos != -1 and find(line,'=') != colon_pos+1: # not assignment ":="
-         left_part = line[:colon_pos]
-         colon_pos = len(rstrip(left_part)) + 1
-         if colon_pos > max_colon_pos:
-            max_colon_pos = colon_pos
-
-      current_line = current_line + 1
-
-   if max_colon_pos == 0:
-      GPS.MDI.dialog("No colons found to align!")
-      return
-
-   # Python strings start at zero instead of one so we have to add one back
-   max_colon_pos = max_colon_pos + 1
-
-   # now replace the text up to the colons and the new colons so that the new colons line up
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      colon_pos = find(line,':')
-      if colon_pos != -1:
-         left_part = line[:colon_pos]
-         right_part = line[colon_pos+1:]
-         width = max_colon_pos - len( rstrip(left_part) ) - 1
-         replace_line(current_file, rstrip(left_part) + blanks(width) + ': ' + lstrip(right_part) )
-
-      current_line = current_line + 1
+   buffer_align_on (sep=":(?!=)", replace_with=" : ")
 
 def align_reserved_is ():
    """Aligns reserved word 'is' (eg in type declarations)"""
-   try:
-      current_file = GPS.current_context().file().name()
-   except:
-      GPS.MDI.dialog("Cannot get current file name")
-      return
+   buffer_align_on (sep=" is ")
 
-   try:
-      top_line = GPS.current_context().start_line()
-   except:
-      GPS.MDI.dialog("You must first select the intended text")
-      return
-
-   bottom_line = GPS.current_context().end_line()
-   # calculate new position for rightmost colon
-   max_pos = 0
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      pos = find(line,' is ')
-      if pos != -1:
-         left_part = line[:pos]
-         pos = len(rstrip(left_part)) + 1
-         if pos > max_pos:
-            max_pos = pos
-
-      current_line = current_line + 1
-
-   if max_pos == 0:
-      GPS.MDI.dialog("No reserved words 'is' found to align!")
-      return
-
-   # Python strings start at zero instead of one so we have to add one back
-   max_pos = max_pos + 1
-
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      pos = find(line,' is ')
-      if pos != -1:
-         left_part = line[:pos]
-         right_part = line[pos+3:]
-         width = max_pos - len( rstrip(left_part) ) - 1
-         replace_line(current_file, rstrip(left_part) + blanks(width) + 'is ' + lstrip(right_part) )
-
-      current_line = current_line + 1
-
-def align_formal_params():
-   """Aligns the colons, modes, and formal types in formal parameter specifications"""
-   try:
-      current_file = GPS.current_context().file().name()
-   except:
-      GPS.MDI.dialog("Cannot get current file name")
-      return
-
-   try:
-      top_line = GPS.current_context().start_line()
-   except:
-      GPS.MDI.dialog("You must first select the intended text")
-      return
-
-   bottom_line = GPS.current_context().end_line()
-
-   #line up the formal parameter names on the same starting column
-   open_paren_pos = -1  #-1 signifies "not found"
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      open_paren_pos = find(line,'(')
-      if open_paren_pos != -1:
-         paren_line = current_line
-         break;
-
-      current_line = current_line + 1
-
-   if open_paren_pos == -1:
-      print "No opening left parenthesis found!"
-      return
-
-   formal_start_column = open_paren_pos + 1
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      if current_line != paren_line:
-         #insert enough blanks to align the formal param name
-         replace_line(current_file, blanks(formal_start_column) + lstrip(line) )
-      else: #handle the procedure|function|entry too
-         left_part = line[:open_paren_pos]
-         right_part = line[open_paren_pos:]
-         width = formal_start_column - len( rstrip(left_part) ) - 1
-         replace_line(current_file, rstrip(left_part) + blanks(width) + lstrip(right_part) )
-
-      current_line = current_line + 1
-
-   # calculate new position for rightmost colon
-   max_colon_pos = 0
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      colon_pos = find(line,':')
-      if colon_pos != -1 and find(line,'=') != colon_pos+1: # not assignment ":="
-         left_part = line[:colon_pos]
-         colon_pos = len(rstrip(left_part)) + 1
-         if colon_pos > max_colon_pos:
-            max_colon_pos = colon_pos
-
-      current_line = current_line + 1
-
-   if max_colon_pos == 0:
-      GPS.MDI.dialog("No colons found to align!")
-      return
-
-   # Python strings start at zero instead of one so we have to add one back
-   max_colon_pos = max_colon_pos + 1
-
-   # now replace the text up to the colons and the new colons so that the new colons line up
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      colon_pos = find(line,':')
-      if colon_pos != -1:
-         left_part = line[:colon_pos]
-         right_part = line[colon_pos+1:]
-         width = max_colon_pos - len( rstrip(left_part) ) - 1
-         replace_line(current_file, rstrip(left_part) + blanks(width) + ': ' + lstrip(right_part) )
-
-      current_line = current_line + 1
-
-   # NOTE : the 'magic numbers' that appear below with max_typemark_pos correspond
-   #        to the lengths of the strings used for the modes when the line is replaced
-
-   #find the largest column number for the type-mark
-   max_typemark_pos = 0
-   current_line = top_line;
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      colon_pos = find(line,':')
-      if colon_pos != -1 and find(line,'=',colon_pos+1) != 0: # not assignment ":="
-         pattern = re.compile ("^(.*):([ \t]*)([a-zA-Z0-9_.]+)([ \t]*)([a-zA-Z0-9_.]+)([ \t]*)(.*)", re.IGNORECASE)
-         match = re.search (pattern, line)
-         n1 = match.group(3)
-         n2 = match.group(5)
-         n3 = match.group(7)
-         if n1 == 'in':
-            if n2 == 'out': # mode 'in out'
-               max_typemark_pos = 8
-            else: # mode 'in'
-               if max_typemark_pos == 5: # seen mode 'out' already
-                  max_typemark_pos = 8
-               elif 4 > max_typemark_pos:
-                  max_typemark_pos = 4
-
-         elif n1 == 'out': # mode 'out'
-            if max_typemark_pos == 4: # mode 'in' already detected so indent the 'out'
-               max_typemark_pos = 8
-            elif 5 > max_typemark_pos: # just mode 'out' seen so far
-               max_typemark_pos = 5
-
-         elif n1 == 'access':
-            max_typemark_pos = 8
-         else: # default mode 'in'
-            if 1 > max_typemark_pos:
-               max_typemark_pos = 1
-
-      current_line = current_line + 1
-
-   # In the following block, the silly '+ 1' is retained for clarity, so that the
-   # numbers correspond to their uses above
-
-   # now line up the text after the colons, ie the modes and formals' types, etc.
-   current_line = top_line;
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      colon_pos = find(line,':')
-      if colon_pos != -1 and find(line,'=',colon_pos+1) != 0: # not assignment ":="
-         #parse line with before ':' n1 n2 n3
-         pattern = re.compile ("^(.*):([ \t]*)([a-zA-Z0-9_.]+)([ \t]*)([a-zA-Z0-9_.]+)([ \t]*)(.*)", re.IGNORECASE)
-         match = re.search (pattern, line)
-         n1 = match.group(3)
-         n2 = match.group(5)
-         n3 = match.group(7)
-         if n1 == 'in':
-            if n2 == 'out': # mode 'in out'
-               #parse line with before ':' n1 n2 rest
-               pattern = re.compile ("^(.*):([ \t]*)([a-zA-Z0-9_.]+)([ \t]*)([a-zA-Z0-9_.]+)([ \t]*)(.*)", re.IGNORECASE)
-               match = re.search (pattern, line)
-               before = match.group(1)
-               rest = match.group(7)
-               replace_line ( current_file, before + ': in out ' + rest )
-            else: # mode 'in'
-               width = max_typemark_pos - 4 + 1
-               #parse line with before ':' n1 rest
-               pattern = re.compile ("^(.*):([ \t]*)([a-zA-Z0-9_.]+)([ \t]*)(.*)", re.IGNORECASE)
-               match = re.search (pattern, line)
-               before = match.group(1)
-               rest = match.group(5)
-               replace_line (current_file,  before + ': in' + blanks(width) + rest)
-
-         elif n1 == 'out': # mode 'out'
-            if max_typemark_pos == 8: # mode is 'in out' or 'access' for some other param
-               width = max_typemark_pos - 8 + 1
-               mode = ':    out'
-            else:
-               width = max_typemark_pos - 5 + 1
-               mode = ': out'
-
-            #parse line with before ':' n1 rest
-            pattern = re.compile ("^(.*):([ \t]*)([a-zA-Z0-9_.]+)([ \t]*)(.*)", re.IGNORECASE)
-            match = re.search (pattern, line)
-            before = match.group(1)
-            rest = match.group(5)
-            replace_line (current_file, before + mode + blanks(width) + lstrip(rest))
-         elif n1 == 'access':
-            #parse line with before ':' n1 rest
-            pattern = re.compile ("^(.*):([ \t]*)([a-zA-Z0-9_.]+)([ \t]*)(.*)", re.IGNORECASE)
-            match = re.search (pattern, line)
-            before = match.group(1)
-            rest = match.group(5)
-            replace_line (current_file, before + ': access ' + rest)
-         else: # default mode 'in'
-            width = max_typemark_pos - 1 + 1  # where 1 is length of mode string
-            before = line[:colon_pos]
-            rest = line[colon_pos+1:]
-            replace_line (current_file, before + ':' + blanks(width) + lstrip(rest))
-
-      current_line = current_line + 1
+def align_use_clauses ():
+   """Aligns use-clauses occuring in an Ada context clause"""
+   buffer_align_on (sep=" use ")
 
 def align_arrows ():
    """Aligns the '=>' symbols"""
-   try:
-      current_file = GPS.current_context().file().name()
-   except:
-      GPS.MDI.dialog("Cannot get current file name")
-      return
-
-   try:
-      top_line = GPS.current_context().start_line()
-   except:
-      GPS.MDI.dialog("You must first select the intended text")
-      return
-
-   bottom_line = GPS.current_context().end_line()
-   # calculate new position for rightmost arrow
-   max_arrow_pos = 0
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      arrow_pos = find(line,'=>')
-      if arrow_pos != -1:
-         left_part = line[:arrow_pos]
-         arrow_pos = len(rstrip(left_part)) + 1
-         if arrow_pos > max_arrow_pos:
-            max_arrow_pos = arrow_pos
-
-      current_line = current_line + 1
-
-   if max_arrow_pos == 0:
-      GPS.MDI.dialog("No arrows found to align!")
-      return
-
-   # put a blank between the longest LHS and the arrow
-   max_arrow_pos = max_arrow_pos + 1
-
-   # now make them line up
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      arrow_pos = find(line,'=>')
-      if arrow_pos != -1:
-         left_part = line[:arrow_pos]
-         right_part = line[arrow_pos+2:]
-         width = max_arrow_pos - len(rstrip(left_part)) - 1
-         replace_line (current_file, rstrip(left_part) + blanks(width) + '=> ' + lstrip(right_part) )
-
-      current_line = current_line + 1
-
-def align_record_rep_clause ():
-   """Aligns the various parts of a record representation clause"""
-   try:
-      current_file = GPS.current_context().file().name()
-   except:
-      GPS.MDI.dialog("Cannot get current file name")
-      return
-
-   try:
-      top_line = GPS.current_context().start_line()
-   except:
-      GPS.MDI.dialog("You must first select the intended text")
-      return
-
-   bottom_line = GPS.current_context().end_line()
-   # calculate new position for rightmost arrow
-   max_at_pos = 0
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      at_pos = find(line,' at ')
-      if at_pos != -1:
-         left_part = line[:at_pos]
-         at_pos = len(rstrip(left_part)) + 1
-         if at_pos > max_at_pos:
-            max_at_pos = at_pos
-
-      current_line = current_line + 1
-
-   if max_at_pos == 0:
-      GPS.MDI.dialog("No reserved word 'at' found to align in representation clause!")
-      return
-
-   # now line up occurrences of " at "
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      at_pos = find(line,' at ')
-      if at_pos != -1:
-         left_part = line[:at_pos]
-         right_part = line[at_pos+4:]
-         width = max_at_pos - len(rstrip(left_part)) - 1
-         replace_line(current_file, rstrip(left_part) + blanks(width) + ' at ' + lstrip(right_part) )
-
-      current_line = current_line + 1
-
-   # do the same for 'range'
-   max_range_pos = 0
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      range_pos = find(line,' range ')
-      if range_pos != -1:
-         left_part = line[:range_pos]
-         range_pos = len(rstrip(left_part)) + 1
-         if range_pos > max_range_pos:
-            max_range_pos = range_pos
-
-      current_line = current_line + 1
-
-   if max_range_pos == 0:
-      GPS.MDI.dialog("No reserved word 'range' found to align in representation clause!")
-      return
-
-   # now line up occurrences of " range "
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      range_pos = find(line,' range ')
-      if range_pos != -1:
-         left_part = line[:range_pos]
-         right_part = line[range_pos+7:]
-         width = max_range_pos - len(rstrip(left_part)) - 1
-         replace_line(current_file, rstrip(left_part) + blanks(width) + ' range ' + lstrip(right_part) )
-
-      current_line = current_line + 1
-
-   # do the same for '..'
-   max_dots_pos = 0
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      dots_pos = find(line,'..')
-      if dots_pos != -1:
-         left_part = line[:dots_pos]
-         dots_pos = len(rstrip(left_part)) + 1
-         if dots_pos > max_dots_pos:
-            max_dots_pos = dots_pos
-
-      current_line = current_line + 1
-
-   if max_dots_pos == 0:
-      print "No '..' found to align in representation clause!"
-      return
-
-   # now line up occurrences of " .. "
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      dots_pos = find(line,'..')
-      if dots_pos != -1:
-         left_part = line[:dots_pos]
-         right_part = line[dots_pos+2:]
-         width = max_dots_pos - len(rstrip(left_part)) - 1
-         replace_line(current_file, rstrip(left_part) + blanks(width) + ' .. ' + lstrip(right_part) )
-
-      current_line = current_line + 1
+   buffer_align_on (sep="=>", replace_with=" => ")
 
 def align_assignments ():
    """Aligns the ':=' symbols in selected text"""
-   try:
-      current_file = GPS.current_context().file().name()
-   except:
-      GPS.MDI.dialog("Cannot get current file name")
-      return
+   buffer_align_on (sep=":=", replace_with=" := ")
 
-   try:
-      top_line = GPS.current_context().start_line()
-   except:
-      GPS.MDI.dialog("You must first select the intended text")
-      return
+def align_formal_params():
+   """Aligns the colons, modes, and formal types in parameter specifications"""
+   ## The regexp needs the three nested groups, since we want \\1 to always
+   ## returns at least the empty string
+   buffer_align_on (sep=":\s*(((in\s+out|out|in|access) )?)",
+                    replace_with=" : \\1")
 
-   bottom_line = GPS.current_context().end_line()
-   # calculate new position for rightmost assignment
-   max_assignment_pos = 0
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      assignment_pos = find(line,':=')
-      if assignment_pos != -1:
-         left_part = line[:assignment_pos]
-         assignment_pos = len(rstrip(left_part)) + 1
-         if assignment_pos > max_assignment_pos:
-            max_assignment_pos = assignment_pos
-
-      current_line = current_line + 1
-
-   if max_assignment_pos == 0:
-      GPS.MDI.dialog("No assignment symbols found to align!")
-      return
-
-   # put a blank between the longest LHS and the assignment
-   max_assignment_pos = max_assignment_pos + 1
-
-   # now make them line up
-   current_line = top_line
-   while current_line <= bottom_line:
-      GPS.Editor.cursor_set_position (current_file, current_line, 0)
-      line = get_line()
-      assignment_pos = find(line,':=')
-      if assignment_pos != -1:
-         left_part = line[:assignment_pos]
-         right_part = line[assignment_pos+2:]
-         width = max_assignment_pos - len(rstrip(left_part)) - 1
-         replace_line (current_file, rstrip(left_part) + blanks(width) + ':= ' + lstrip(right_part) )
-
-      current_line = current_line + 1
-
+def align_record_rep_clause ():
+   """Aligns the various parts of a record representation clause"""
+   buffer_align_on (sep=" at ")
+   buffer_align_on (sep=" range ")
 
 def on_gps_started (hook_name):
    GPS.parse_xml ("""
