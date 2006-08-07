@@ -9438,7 +9438,7 @@ You can chose graphically which scripts should or should not be loaded
 on startup. To do so, select the menu @code{/Edit/Startup Scripts}.
 This brings up a new window, containing two parts:
 
-@item @bullet
+@itemize @bullet
 @item On the left is the list of all known scripts.
 
 As described in @xref{Customization files and plugins}, GPS will
@@ -9567,7 +9567,7 @@ extensions are taken into account. Other files are ignored, although for
 compatibility with future versions of GPS it is recommanded not to keep other
 files in the same directory.
 
-@item @bullet
+@itemize @bullet
 @item Automatically loaded system wide modules
 
 The @file{INSTALL/share/gps/plug-ins} directory should contain the files that
