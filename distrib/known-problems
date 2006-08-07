@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.0.1
 
+- F803-004 Remote paths translation not saved
+  Problem: In the remote configuration dialog, if a path is incorrectly entered
+           then the path is not saved, and no warning is shown to the user.
+  Workaround: Make sure the entered paths are correct.
+
 - F724-012 Cannot paste in external applications
   Problem: If you select and copy some text in GPS, this text cannot be
            pasted in other applications afterward (except when using the
