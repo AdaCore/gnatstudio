@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.0.1
 
+- F807-005 Unwanted scrolling in the Smart Completion window.
+  Problem:    When pressing the Down arrow on the Smart Completion window,
+              pressing Down on the last item jumps to the first item in the
+              list.
+  Workaround: Use the mouse and the scrollbar to reach the bottom of the list.
+
 - F803-004 Remote paths translation not saved
   Problem: In the remote configuration dialog, if a path is incorrectly entered
            then the path is not saved, and no warning is shown to the user.
