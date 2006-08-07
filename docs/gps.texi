@@ -9614,6 +9614,62 @@ of GPS, mixing aliases, new languages or menus,@dots{} in a single
 file. This is a convenient way to distribute your plug-ins to other
 users.
 
+@subsubsection Python files
+
+Although the format of the python scripts is free (as long as it can
+be executed by Python), the following organization is suggested. These
+scripts will be visible in the Startup Scripts Editor, and therefore having
+a common format makes it easier for users to understand the goal of the
+scripts:
+
+@itemize @bullet
+@item Comment
+
+  The first part of the script should be a general comment on the goal and
+  usage of the script. This comment should use python's triple-quote
+  convention, rather than start-of-line hash ('#') signs.
+
+  The first line of the comment should be a one liner explaining the goal
+  of the script. It is separated by a blank line from the rest of the
+  comment.
+
+  The rest of the comment is free-form.
+
+@item Customization variables
+
+  If your script can be configured by the user by changing some global
+  variables, they should be listed in their own section, and fully
+  documented. The user can then, through the /Edit/Startup Scripts editor
+  change the value of these variables
+
+@item Implementation
+
+  The implementation should be separated from the initial comment by a
+  form-feed (control-L) character. The startup scripts editor will know
+  not to display the rest of the script on the first page of the editor.
+
+  Generally speaking, scripts should avoid executing code as soon as they
+  are loaded. This gives a chance to the user to change the value of global
+  variables or even override functions before the script is actually launched.
+
+  The solution is to connect to the @code{"gps_started"} hook, as in
+
+@smallexample
+  ^L
+  ###########################################################
+  ## No user customization below this line
+  ###########################################################
+
+  import GPS
+
+  def on_gps_started (hook_name):
+     ... launch the script
+
+  GPS.Hook ("gps_started").add (on_gps_started)
+@end smallexample
+
+@end itemize
+
 @subsubsection XML files
 
 XML files must be utf8-encoded by default. In addition, you can
@@ -9622,6 +9678,7 @@ encoding="..." ?>} declaration, as in the following example:
 
 @smallexample
 <?xml version="1.0" encoding="iso-8859-1"?>
+<!--  general description -->
 <submenu>
   <title>encoded text/title>
 </submenu>
@@ -9637,6 +9694,10 @@ left to your consideration. The general format is therefore
    ...
 </root_node>
 @end smallexample
+
+It is also recommanded that the first line after the @code{<?xml?>} tag
+contains a general comment describing the purpose and usage of the script.
+This comment will be made visible in the Startup Scripts editor.
 
 The list of valid XML nodes that can be specified under <root> is
 described in later sections. It includes:
