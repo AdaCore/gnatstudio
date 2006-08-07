@@ -773,11 +773,9 @@ package body Browsers.Dependency_Items is
             Priority => Priority_Low_Idle,
             Destroy  => Destroy_Idle'Access);
       else
-         pragma Warnings (Off); --  Disable "possible infinite loop" warning.
          while Examine_Ancestors_Idle (Data) loop
             null;
          end loop;
-         pragma Warnings (On);
 
          Destroy_Idle (Data);
          Layout (Browser);
