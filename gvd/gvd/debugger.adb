@@ -43,6 +43,7 @@ with GVD.Process;                use GVD.Process;
 with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Scripts;                use GVD.Scripts;
 with GVD.Types;                  use GVD.Types;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with GPS.Intl;                   use GPS.Intl;
 with Items;                      use Items;
@@ -226,30 +227,6 @@ package body Debugger is
       return Debugger.Process;
    end Get_Process;
 
-   type Error_Display_Manager is new Error_Display_Record with
-     null record;
-   procedure On_Error (Manager : access Error_Display_Manager;
-                       Message : String);
-   --  Displays all error messages
-
-   --------------
-   -- On_Error --
-   --------------
-
-   procedure On_Error (Manager : access Error_Display_Manager;
-                       Message : String)
-   is
-      Buttons : Message_Dialog_Buttons;
-      pragma Unreferenced (Manager, Buttons);
-   begin
-      Buttons :=
-        Message_Dialog
-          (Message,
-           Error,
-           Button_OK,
-           Button_OK);
-   end On_Error;
-
    -------------------
    -- General_Spawn --
    -------------------
@@ -264,7 +241,6 @@ package body Debugger is
       Success    : Boolean;
       The_Args   : Argument_List := (new String'(Debugger_Name) &
                                      Arguments);
-      Error_Mng  : aliased Error_Display_Manager;
 
    begin
       --  Start the external debugger.
@@ -279,22 +255,23 @@ package body Debugger is
             Arguments     => The_Args,
             Server        => Debug_Server,
             Pd            => Descriptor,
-            Success       => Success,
-            Error_Manager => Error_Mng'Unchecked_Access);
+            Success       => Success);
          Free (The_Args (The_Args'First));
 
          if not Success then
-            On_Error (Error_Mng'Access,
-                      -("Could not find executable ") &
-                      '"' & Debugger_Name & '"' & (-" in path."));
+            Insert (Debugger.Kernel,
+                    -("Could not find executable ") &
+                    '"' & Debugger_Name & '"' & (-" in path."),
+                    Mode => Error);
             raise Spawn_Error;
          end if;
 
       exception
          when Invalid_Process =>
-            On_Error (Error_Mng'Access,
-                      (-"Could not spawn the process: ") & ASCII.LF
-                      & (-"  debugger: ") & Debugger_Name);
+            Insert (Debugger.Kernel,
+                    (-"Could not spawn the process: ") & ASCII.LF
+                    & (-"  debugger: ") & Debugger_Name,
+                    Mode => Error);
             raise Spawn_Error;
       end;
 
