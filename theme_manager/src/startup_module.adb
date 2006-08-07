@@ -434,7 +434,7 @@ package body Startup_Module is
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
 
       Gtk_New_Vbox (Editor.Init_Box);
-      Add (Scrolled, Editor.Init_Box);
+      Add_With_Viewport (Scrolled, Editor.Init_Box);
 
       Gtk_New_Vbox (Editor.Init);
       Pack_Start (Editor.Init_Box, Editor.Init, Expand => True, Fill => True);
