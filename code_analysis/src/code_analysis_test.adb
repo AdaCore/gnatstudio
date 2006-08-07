@@ -127,7 +127,7 @@ procedure Code_Analysis_Test is
       Time_After    : Time;
       Measure       : Duration;
       Timeout       : exception;
-      Create_Max    : constant Duration := 10.0;
+      Create_Max    : constant Duration := 13.0;
       --  ??? Currently observed on bonn : 3.3s
       Request_Max   : constant Duration := 2.0;
       --  ??? Currently observed on bonn : 0.00013s
