@@ -757,7 +757,17 @@ package body Completion_Window is
             return True;
 
          when GDK_Down | GDK_KP_Down =>
-            Select_Next (Completion_Window_Access (Window));
+            Sel := Get_Selection (Window.View);
+            Get_Selected (Sel, Model, Iter);
+
+            if Iter /= Null_Iter then
+               Next (Window.Model, Iter);
+
+               if Iter /= Null_Iter then
+                  Select_Iter (Sel, Iter);
+               end if;
+            end if;
+
             return True;
 
          when GDK_Up | GDK_KP_Up =>
