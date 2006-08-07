@@ -2484,7 +2484,7 @@ to make it more readable, more extendable,...
 Refactoring technics are generally things that programmers are used to do by
 hand, but which are faster and more secure to do automatically through a tool.
 
-One of the basic recommandations when you refactor your code is to recompile
+One of the basic recommendations when you refactor your code is to recompile
 and test your application very regularly, to make sure that each of the small
 modifications you made to it didn't break the behavior of your application.
 This is particularly true with GPS, since it relies on the cross-references
@@ -9564,7 +9564,7 @@ of these exist, GPS will use the @code{USERPROFILE} environment variable.
 
 In all these directories, only the files with @file{.xml} or @file{.py}
 extensions are taken into account. Other files are ignored, although for
-compatibility with future versions of GPS it is recommanded not to keep other
+compatibility with future versions of GPS it is recommended not to keep other
 files in the same directory.
 
 @itemize @bullet
@@ -9695,7 +9695,7 @@ left to your consideration. The general format is therefore
 </root_node>
 @end smallexample
 
-It is also recommanded that the first line after the @code{<?xml?>} tag
+It is also recommended that the first line after the @code{<?xml?>} tag
 contains a general comment describing the purpose and usage of the script.
 This comment will be made visible in the Startup Scripts editor.
 
