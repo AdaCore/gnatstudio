@@ -74,6 +74,7 @@ package body Startup_Module is
       Tree        : Gtk_Tree_View;
       Model       : Gtk_Tree_Store;
       Description : Gtk_Text_Buffer;
+      Implementation : Gtk_Text_Buffer;
       Script_Name : Gtk_Label;
       Init        : Gtk_Box;
       Init_Box    : Gtk_Box;
@@ -165,6 +166,7 @@ package body Startup_Module is
       Iter       : Gtk_Tree_Iter;
       Bold       : Gtk_Text_Tag;
       Text_Iter  : Gtk_Text_Iter;
+      End_Of_Descr : Integer;
       Contents   : String_Access;
       File       : VFS.Virtual_File := VFS.No_File;
       Init       : Glib.Xml_Int.Node_Ptr;
@@ -182,6 +184,7 @@ package body Startup_Module is
          Set_Text (Ed.Script_Name, Get_String (Model, Iter, Column_Name));
 
          Set_Text (Ed.Description, "");
+         Set_Text (Ed.Implementation, "");
          Get_End_Iter (Ed.Description, Text_Iter);
 
          Bold := Create_Tag (Ed.Description);
@@ -224,11 +227,25 @@ package body Startup_Module is
 
          Contents := Read_File (File);
          if Contents /= null then
+            End_Of_Descr := Contents'Last;
+            for C in Contents'Range loop
+               if Contents (C) = ASCII.FF then
+                  End_Of_Descr := C - 1;
+                  exit;
+               end if;
+            end loop;
+
             Insert_With_Tags
               (Ed.Description, Text_Iter,
                (-"Description and script:") & ASCII.LF,
                Bold);
-            Insert (Ed.Description, Text_Iter, Contents.all);
+            Insert (Ed.Description, Text_Iter,
+                    Contents (Contents'First .. End_Of_Descr));
+
+            if End_Of_Descr < Contents'Last then
+               Set_Text (Ed.Implementation,
+                         Contents (End_Of_Descr  + 1 .. Contents'Last));
+            end if;
             Free (Contents);
          end if;
 
@@ -421,6 +438,17 @@ package body Startup_Module is
 
       Gtk_New_Vbox (Editor.Init);
       Pack_Start (Editor.Init_Box, Editor.Init, Expand => True, Fill => True);
+
+      Gtk_New (Scrolled);
+      Gtk_New (Label, -"Implementation");
+      Append_Page (Note, Scrolled, Label);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+
+      Gtk_New (Editor.Implementation);
+      Gtk_New (Text, Editor.Implementation);
+      Add (Scrolled, Text);
+      Set_Wrap_Mode (Text, Wrap_None);
+      Set_Editable (Text, False);
 
       List := Get_Cell_Renderers (Get_Column (Editor.Tree, Column_Load));
       Add_Attribute
