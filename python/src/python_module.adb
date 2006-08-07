@@ -730,14 +730,10 @@ package body Python_Module is
          & "      except: pass" & ASCII.LF
          & ASCII.LF);
 
-      --  Avoid warning about useless assignment.
-      pragma Warnings (Off);
       Result := Run_Command
         (Python_Module_Id.Script.Interpreter,
          "import GPS", Hide_Output => True,
          Errors => Errors'Unchecked_Access);
-      pragma Warnings (On);
-
       Set_Default_Console
         (Python_Module_Id.Script.Interpreter,
          Get_Console (Kernel),
