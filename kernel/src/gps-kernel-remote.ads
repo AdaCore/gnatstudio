@@ -65,26 +65,6 @@ package GPS.Kernel.Remote is
       Queue_Id       : String  := "");
    --  Same as above, with From and To servers identified by their nickname
 
-   ---------------------------------
-   -- Error display when spawning --
-   ---------------------------------
-
-   type Error_Display_Record is abstract tagged null record;
-   type Error_Display is access all Error_Display_Record'Class;
-
-   procedure On_Error
-     (Manager : access Error_Display_Record;
-      Message : String) is abstract;
-
-   type Default_Error_Display_Record is new Error_Display_Record with record
-      Kernel : Kernel_Handle;
-   end record;
-   --  Displays error on the messages console
-
-   procedure On_Error
-     (Manager : access Default_Error_Display_Record;
-      Message : String);
-
    procedure Spawn
      (Kernel           : Kernel_Handle;
       Arguments        : GNAT.OS_Lib.Argument_List;
@@ -95,8 +75,7 @@ package GPS.Kernel.Remote is
       Console          : Interactive_Consoles.Interactive_Console := null;
       Show_Command     : Boolean := True;
       Directory        : String := "";
-      Use_Pipes        : Boolean := True;
-      Error_Manager    : Error_Display := null);
+      Use_Pipes        : Boolean := True);
    --  Launch given arguments on Server. Returns a valid Process
    --  descriptor and success set to true upon success.
    --  If Use_Ext_Terminal is not null, then the program is executed in a
