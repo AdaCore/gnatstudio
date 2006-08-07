@@ -6,6 +6,12 @@ Known Problems fixed in GPS 4.0.1
               list.
   Workaround: Use the mouse and the scrollbar to reach the bottom of the list.
 
+- F807-004 Smart Completion window blinking when there is no completion.
+  Problem:    When calling Smart Completion at a location where GPS finds
+              no completion, the Smart Completion window might appear and
+              then disappear immediately.
+  Workaround: The window can be safely ignored.
+
 - F803-004 Remote paths translation not saved
   Problem: In the remote configuration dialog, if a path is incorrectly entered
            then the path is not saved, and no warning is shown to the user.
