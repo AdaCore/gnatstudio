@@ -659,6 +659,14 @@ package body Completion_Module is
                     (Get_Offset (It)) - 1 + Data.The_Text.all'First);
                Trace (Me_Adv, "Getting completions done");
 
+               --  If the completion list is empty, return without showing
+               --  the completions window.
+               if At_End (First (Data.Result)) then
+                  Trace (Me_Adv, "No completions found");
+                  On_Completion_Destroy (View, Data);
+                  return Commands.Success;
+               end if;
+
                Gtk_New (Win, Command.Kernel);
 
                Get_Iter_At_Mark
