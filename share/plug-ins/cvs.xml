@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
-<!--  This file adds support for cvs -->
+<!--  Provides support for the CVS configuration management system.
+
+      This file integrates into GPS's VCS support, and uses the same
+      menus as all other VCS systems supported by GPS.
+      You can easily edit this file to configurat the CVS commands that
+      are executed by each of the menus
+-->
 
 <GPS>
 

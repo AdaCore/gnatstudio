@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
-<!--  This file adds support for Subversion -->
+<!--  Provides support for the Subversion configuration management system.
+
+      It integrates into GPS's VCS support, and uses the same menus
+      as all other VCS systems supported by GPS.
+      You can easily edit this file if you would like to customize
+      the svn commands that are sent for each of the menus.
+-->
 
 <GPS>
 

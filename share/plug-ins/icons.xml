@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
+<!--  Defines the default icon theme for GPS.
 
-<!-- This file adds default icons -->
+      Most icons in GPS can be edited by changing the contents of this script
+      (or creating another one similar to this one and loading it instead of
+      this one).
+-->
 
 <GPS>
 

@@ -1,7 +1,14 @@
 <?xml version="1.0" ?>
+<!--  Adds support for GNAT's gnatmetric tool
 
-<!--  This file adds support for the gnatmetric utility.
-      This external tool generates a set of software metrics -->
+      The gnatmetric tool computes software metrics on Ada code. This is
+      a command line provided with the GNAT compiler.
+      This package integrates it into GPS:
+         - menu /Tools/Compute metrics for root project
+         - menu /Tools/Compute metrics for current file
+      The result of gnatmetric is displayed in a graphical tree for easy
+      browsing.
+-->
 
 <GPS>
   <action name="metrics project" category="Metrics" >

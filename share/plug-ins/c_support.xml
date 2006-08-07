@@ -1,6 +1,14 @@
 <?xml version="1.0" ?>
+<!--  This file provides enhanced support for C and C++ files.
 
-<!--  This file adds support for C and C++ (GCC) switches and aliases  -->
+      It declares a number of project attributes (and how they should be
+      edited graphically in the project properties editor),
+      It also adds a number of predefined search patterns to match
+      function or class declarations,...
+
+      Syntax highlighting and cross-references are built-in in GPS, and are
+      not defined in this file.
+-->
 
 <GPS>
    <tool name="C" package="Compiler" index="c" >

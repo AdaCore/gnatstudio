@@ -1,6 +1,12 @@
 <?xml version="1.0"?>
+<!--  This file adds support for editing ChangeLog files.
+      It provides syntax highlighting in these files, and a
+      text alias "hdr" which expands to the following line:
+          date user_name <user_name@>
 
-<!--  This file adds support for editing global ChangeLog files -->
+      You do not need to load this file if you never edit
+      Changelog files
+ -->
 
 <GPS>
   <Language>

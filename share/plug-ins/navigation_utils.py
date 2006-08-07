@@ -1,18 +1,40 @@
 ## This module implements high level actions related to source navigation
+##
+## This script defines a number of functions and GPS actions that you can
+## reuse in your own scripts.
+## In particular, it provides the following GPS actions, to which you can
+## bind key shortcuts through the menu /Edit/Key shortcuts:
+##   - "goto declaration or body"
+##   - "goto other file" 
+
+############################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Edit/Startup Scripts)
+
+
+
+############################################################################
+## No user customization below this line
+############################################################################
 
 import GPS
 import string, re
 
+def on_gps_started (hook_name):
+   """Registers the GPS actions. This is done only after GPS has finished
+      its startup, so that the user can modify the variables above to edit
+      the name of menus"""
 
-## Register the GPS actions
-
-GPS.parse_xml ("""
+   GPS.parse_xml ("""
    <action name="goto declaration or body" output="none" category="Editor">
+     <description>Jump to the declaration of the current entity. If the cursor is already on the declaration, jump to the body/implementation of the entity instead</description>
      <filter id="Source editor" />
      <shell lang="python">navigation_utils.goto_declaration_body()</shell>
    </action>
 
    <action name="goto other file" output="none" category="Editor">
+     <description>If the editor is currently on a spec file (.ads or .h typically), jump to the implementation/body (.adb or .c). The exact extensions of the files are defined in the naming scheme in the project files</description>
      <filter id="Source editor" />
      <shell lang="python">navigation_utils.goto_other_file()</shell>
    </action>
@@ -95,3 +117,5 @@ def goto_other_file():
    else:
       GPS.Editor.edit (current_file.other_file().name())
 
+
+GPS.Hook ("gps_started").add (on_gps_started)

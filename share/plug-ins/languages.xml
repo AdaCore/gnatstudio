@@ -1,4 +1,13 @@
 <?xml version="1.0"?>
+<!--  Adds syntax highlighting for a number of languages
+
+      This script provides basic support when editing languages other
+      than Ada and C. In particular, it provides syntax highlighting,
+      and support for showing the entities in the Outline View.
+
+      Based on these examples, you can add support for your own
+      languages.
+-->
 
 <GPS>
   <Language>

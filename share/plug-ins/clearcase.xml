@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
+<!--  Provides support for the ClearCase configuration management system.
 
-<!--  This file adds support for ClearCase -->
+      It integrates into GPS's VCS support, and uses the same menus
+      as all other VCS systems supported by GPS.
+      You can easily edit this file if you would like to customize
+      the cleartool commands that are sent for each of the menus.
+-->
 
 <ClearCase_support>
 

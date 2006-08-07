@@ -13,12 +13,25 @@
 ##     python
 ##   - Add links to python documentation on the internet
 
-## To be added (from idle environment)
-##   - "indent region", "dedent region", "check module", "run module"
-##   - "class browser" -> project view in GPS
+############################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Edit/Startup Scripts)
 
+pydoc_port = 9432
+## Port that should be used for the pydoc daemon.
+## This is a small program provided in the python distribution, which
+## external web browsers can connect to to get the documentation for the
+## standard python library
 
-############# No user customization below this point ################
+^L
+############################################################################
+## No user customization below this line
+############################################################################
+
+# To be added (from idle environment)
+#   - "indent region", "dedent region", "check module", "run module"
+#   - "class browser" -> project view in GPS
 
 import GPS, sys, os.path
 
@@ -29,7 +42,6 @@ except:
   has_pygtk=0
 
 pydoc_proc = None
-pydoc_port = 9432
 python_menu = None
 
 def register_doc():
@@ -154,15 +166,11 @@ def before_exit (hook_name):
     pydoc_proc = None
   return 1
 
-
 ### Do not call create_python_menu yet, since keeping a hidden toplevel menu
 ### triggers bugs in gtk+, for instance leaving an empty space in the menubar
 
-GPS.Hook ("project_view_changed").add (project_recomputed)
-GPS.Hook ("before_exit_action_hook").add (before_exit)
-GPS.Hook ("context_changed").add (context_changed)
-
-GPS.parse_xml ("""
+def on_gps_started (hook_name):
+  GPS.parse_xml ("""
   <Language>
     <Name>Python</Name>
     <Spec_Suffix>.py</Spec_Suffix>
@@ -196,4 +204,9 @@ GPS.parse_xml ("""
      <filter language="Python" />
   </filter_and>
 """)
+
+GPS.Hook ("project_view_changed").add (project_recomputed)
+GPS.Hook ("before_exit_action_hook").add (before_exit)
+GPS.Hook ("context_changed").add (context_changed)
+GPS.Hook ("gps_started").add (on_gps_started)
 

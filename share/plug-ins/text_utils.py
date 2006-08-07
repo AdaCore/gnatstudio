@@ -1,22 +1,40 @@
-## This module implements high level actions related to text editing
-## Most of the functions provided here are trying to emulate the behavior
-## of the Emacs editor. However, this file provides no keybinding, this is
-## left to a separate file (emacs.xml), which defines a theme that users
-## can activate optionally.
-## This makes it possible for you to use any of the functions here without
-## activating the Emacs mode
+## Defines editor-specific functions
+##
+## YOU SHOULD ALMOST ALWAYS LOAD THIS FILE
+##
+## This script defines a number of python functions and GPS actions that can
+## be used inside GPS editors. These can be used to move the cursor around or
+## edit the text.
+## They are often programmed so that they emulate the Emacs editor, but they
+## are independent of the Emacs mode and do not override any key shortcut. As
+## a result you can define your own shortcuts for the actions defined in this
+## package.
+## See also emacs.xml
+
+###########################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Edit/Startup Scripts)
+
+transient_mark_mode = False
+## If set to False, then the region is never unselected when the clipboard is
+## modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs
+## mode with the same name, although will behave differently in some cases
+
+^L
+############################################################################
+## No user customization below this line
+############################################################################
 
 import GPS
 import string, traceback
 import navigation_utils
 
-transient_mark_mode = True
-## If set to False, then the region is never unselected when the clipboard is
-## modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs
-## mode with the same name, although will behave differently in some cases
+def on_gps_started (hook_name):
+  if transient_mark_mode:
+    GPS.Hook ("clipboard_changed").add (on_clipboard_changed)
 
-## Register the actions
-GPS.parse_xml ("""
+  GPS.parse_xml ("""
    <action name="subprogram box" output="none" category="Editor">
       <description>Search backward for the first subprogram or package declaration. Before the start of this declaration, insert a comment box containing the name of the subprogram. This provides helpful separations between subprograms, and is similar to the style used in the GNAT compiler or GPS themselves</description>
       <filter_and>
@@ -454,9 +472,8 @@ def cancel_mark_command (buffer = None):
 
 def on_clipboard_changed (hook):
     """Called when the contents of the clipboard has changed"""
-    global transient_mark_mode
-    if transient_mark_mode:
-       cancel_mark_command ()
-GPS.Hook ("clipboard_changed").add (on_clipboard_changed)
+    cancel_mark_command ()
+
+GPS.Hook ("gps_started").add (on_gps_started)
 
 

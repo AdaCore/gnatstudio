@@ -1,15 +1,30 @@
-### Support file for the GNAT Programm System
+## Provides sort functions in the editors
 ##
 ## This file provides two sort functions, which can be used to sort lines
 ## in a source file.
-## It is used by selecting the lines to sort, and then selecting one the
-## menus in Edit/Sort Ascending or Edit/Sort Descending
+## To use: first select the lines that you wish to sort, and then select
+## one of the two menus:
+##   - /Edit/Sort Ascending
+##   - /Edit/Sort Descending
 
+############################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Edit/Startup Scripts)
+
+menu_name1 = "/Edit/Sort Descending"
+menu_name2 = "/Edit/Sort Ascending"
+
+^L
+############################################################################
+## No user customization below this line
+############################################################################
 
 import GPS
 import string
 
-GPS.parse_xml ("""
+def on_gps_started (hook_name):
+  GPS.parse_xml ("""
   <action name="sort selected lines ascending" output="none" category="Editor">
      <filter id="Source editor" />
      <description>Sorts current selection</description>
@@ -17,7 +32,7 @@ GPS.parse_xml ("""
   </action>
 
   <menu action="sort selected lines ascending" after="Refill">
-     <title>/Edit/Sort Ascending</title>
+     <title>""" + menu_name2 + """</title>
   </menu>
 
    <action name="sort selected lines descending" output="none" category="Editor">
@@ -27,7 +42,7 @@ GPS.parse_xml ("""
    </action>
 
   <menu action="sort selected lines descending" after="Refill">
-     <title>/Edit/Sort Descending</title>
+     <title>""" + menu_name1 + """</title>
   </menu>
 """)
 
@@ -60,3 +75,5 @@ def sort_selection (revert):
    ed.delete (start, to)
    ed.insert (start, "\n".join (lines) + "\n")
    ed.finish_undo_group()
+
+GPS.Hook ("gps_started").add (on_gps_started)

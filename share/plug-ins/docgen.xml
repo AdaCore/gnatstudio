@@ -1,4 +1,14 @@
 <?xml version="1.0" ?>
+<!--  Global configuration file for the documentation-generation tool.
+
+      DocGen is the documentation generation tool built-in in GPS. Its
+      output can be configured by a number of HTML template files. The
+      name of the templates to use for the various components of the
+      documentation is defined in this file.
+
+      You must load this file if you intend to use DocGen.
+-->
+
 <GPS>
    <docgen_backend name="HTML" format="text">
       <extension>html</extension>

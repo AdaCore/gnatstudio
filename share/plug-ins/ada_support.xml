@@ -1,6 +1,9 @@
 <?xml version="1.0" ?>
-
-<!--  This file adds support for Ada (GNAT) switches and aliases  -->
+<!--  This file provides support for Ada and GNAT:
+      This includes switches in the project properties editor.
+      This also includes predefined search patterns.
+      And finally a number of predefined text aliases are defined.
+-->
 
 <GPS>
    <tool name="Make" package="Builder" index="ada">

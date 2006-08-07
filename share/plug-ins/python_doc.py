@@ -1,20 +1,30 @@
+## Enhanced documentation for python and GPS shell commands
+##
 ## This package provides support for:
 ##  - storing the documentation for any Python entity in a separate XML file.
-##    This allows dynamia modification (post it for instance), easier
+##    This allows dynamic modification, easier
 ##    translation, and saves some memory since it doesn't need to be kept
 ##    in memory at all times, and once per language in addition.
 ##
 ##  - Dynamically generating HTML file to document python entities. In
 ##    particular, a predefined menu is added for the GPS extensions
 
+############################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Edit/Startup Scripts)
+
+^L
+############################################################################
+## No user customization below this line
+############################################################################
+
 import GPS, pydoc, os, inspect, pydoc, sys, re
 from string import rstrip, lstrip, expandtabs
 
-#####################################################################
-##  The following classes provide a nice way to display HTML documentation.
-##  They are mostly useful for the GPS module, although they are expected to
-##  work on other modules as well
-#####################################################################
+# The following classes provide a nice way to display HTML documentation.
+# They are mostly useful for the GPS module, although they are expected to
+# work on other modules as well
 
 class DocGenerator:
    def __init__ (self):
@@ -561,13 +571,16 @@ def browse_doc (entity):
   ## Use a hook, so that users can substitute their internal browser if they wish
   GPS.Hook ("html_action_hook").run (generate_doc (entity), 1, "")
 
-## Create a default menu for the python documentation
-GPS.parse_xml("""
+def on_gps_started (hook_name):
+  """Creates the menus for this package"""
+  GPS.parse_xml("""
   <documentation_file>
        <shell lang="python">python_doc.browse_doc(GPS)</shell>
        <descr>GPS'extensions for Python</descr>
        <menu before="About">/Help/Python extensions</menu>
        <category>Scripts</category>
     </documentation_file>""")
+
+GPS.Hook ("gps_started").add (on_gps_started)
 
 

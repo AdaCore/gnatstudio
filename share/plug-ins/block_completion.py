@@ -1,10 +1,35 @@
-
-# Defines an action named Block_Completion that, according to GPS block
-# information, close the block with the proper ending statement.
+# Provides end-of-block completion for the Ada language
 #
+# This script defines an action named Block_Completion that, based on
+# GPS block information, ends the current block with the proper ending
+# statement.
 # The current implementation handles the if, case, loop (with optional
 # label), procedure, function, declare block (with optional label), package
 # spec and body.
+#
+# Example of use:
+#   in an Ada file, type the following (leave the cursor at the '_' character):
+#       if Foo then
+#          null;
+#       _
+#   and then select the menu /Edit/Complete Block
+#   This automatically adds "end if;" on the line following the statement
+
+############################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Edit/Startup Scripts)
+
+action_name="Block Completion"
+menu_name="/Edit/Complete Block"
+## Name of the action and the menu defined by this package.
+
+
+############################################################################
+## No user customization below this line
+############################################################################
+
+import re, string, GPS
 
 # BLOCKS_DEFS is a dictionary describing the action to be done for each block.
 #
@@ -33,22 +58,19 @@ BLOCKS_DEFS = {
     'CAT_ENTRY'          : [r'end \1;', r'\s*entry\s+([^ \n]+).*']
     }
 
-import re, string, GPS
+def on_gps_started (hook_name):
+   "Initializes this module."
 
-GPS.parse_xml ("""
-   <action name="Block Completion" category="Editor">
-      <description>End the current block.</description>
-      <filter language="ada" error="Block_Completion requires an Ada file" />
+   GPS.parse_xml ("<action name='" + action_name + "' category='Editor'>"
+     + """<description>End the current Ada block, by providing the appropriate "end" statement</description>
+      <filter language="ada"
+              error='""" + action_name + """' requires an Ada file" />
       <shell lang="python" output="none">block_completion.block_complete("%F");</shell>
    </action>
 
-   <Submenu>
-      <Title>Edit</Title>
-      <menu action="Block Completion" before="Refill" >
-         <Title>Complete Block</Title>
-      </menu>
-   </Submenu>
-""")
+   <menu action='""" + action_name + """' before="Refill">
+      <title>""" + menu_name + """</title>
+   </menu>""")
 
 def block_complete_on_location (buffer, location):
     block = location.block_type();
@@ -82,13 +104,14 @@ def block_complete_on_location (buffer, location):
 
 def block_complete (filename):
     file = GPS.File (filename);
-    lang = file.language ();
 
     # Only Ada language supported
-    if lang != "ada":
+    if file.language().lower() != "ada":
         return;
 
     eb = GPS.EditorBuffer.get (file);
     ev = eb.current_view();
     el = ev.cursor();
     block_complete_on_location (eb, el);
+
+GPS.Hook ("gps_started").add (on_gps_started)
