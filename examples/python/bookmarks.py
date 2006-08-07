@@ -2,6 +2,8 @@
 # Missing in this very partial implementation:
 #   - Add known bookmarks to a menu dynamically, for easy jumps
 
+# This is mostly reimplemented in GPS itself at this point
+
 import GPS
 
 GPS.Editor.register_highlighting ("bookmarks", "orange", True)

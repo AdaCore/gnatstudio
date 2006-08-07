@@ -1,4 +1,5 @@
 ## This module implements multiple-clipboards in GPS.
+##
 ## Pressing the keys "alt-e 0" to "alt-e 9" will copy the current
 ## selection into one of the name clipboards 0 to 9.
 ## These clipboards can in turn be pasted with "control-t 0" to "control-t 9"
