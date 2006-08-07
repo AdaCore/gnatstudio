@@ -1729,7 +1729,6 @@ package body Commands.Custom is
       Clear (Model);
       Parent := Null_Iter;
 
-
       for C in Editor.Components'Range loop
          --  Unless the component has been destroyed by the user
          if Editor.Components (C).Component /= null then
@@ -1763,11 +1762,15 @@ package body Commands.Custom is
             end if;
 
             if C < Editor.Components'Last
-              and then Editor.Components (C).On_Failure_For >
-              Editor.Components (C + 1).On_Failure_For
+              and then
+                (Editor.Components (C).On_Failure_For >
+                   Editor.Components (C + 1).On_Failure_For
+                 or else Editor.Components (C + 1).On_Failure_For = -1)
             then
                Parent := Gtk.Tree_Model.Parent
-                 (Gtk_Tree_Model (Model), Parent);
+                 (Gtk_Tree_Model (Model),
+                  Gtk.Tree_Model.Parent
+                    (Gtk_Tree_Model (Model), Parent));
             end if;
          end if;
       end loop;
@@ -1824,15 +1827,25 @@ package body Commands.Custom is
         Custom_Command_Editor_Widget (Editor);
       Component : constant Integer := Get_Selected_Component (Ed);
       Comp : Component_Array_Access := Ed.Components;
+      Count : Natural := 1;
    begin
       if Component /= -1 then
          Destroy (Comp (Component).Component);
 
-         Ed.Components := new Component_Array (Comp'First .. Comp'Last - 1);
+         --  Remove all the commands associated with on-failure:
+         for C in Component + 1 .. Comp'Last loop
+            exit when Comp (C).On_Failure_For < Component;
+            Count := Count + 1;
+         end loop;
+
+         Ed.Components := new Component_Array
+           (Comp'First .. Comp'Last - Count);
          Ed.Components (Comp'First .. Component - 1) :=
            Comp (Comp'First .. Component - 1);
-         Ed.Components (Component .. Ed.Components'Last) :=
-           Comp (Component + 1 .. Comp'Last);
+         if Component + Count <= Comp'Last then
+            Ed.Components (Component .. Ed.Components'Last) :=
+              Comp (Component + Count .. Comp'Last);
+         end if;
          Unchecked_Free (Comp);
          Refresh_And_Select (Ed, Integer'Min (Ed.Components'Last, Component));
       end if;
@@ -1915,12 +1928,13 @@ package body Commands.Custom is
             On_Failure_For := Component;
 
          else
-            --  New component has same on-failure level as currently selected
-            --  one. We should skip all on-failure nodes for the current node
-            --  as well.
+            --  New component will have same on-failure level as currently
+            --  selected one. We should skip all on-failure nodes for the
+            --  current node as well.
             On_Failure_For := Comp (Component).On_Failure_For;
             for C in Component + 1 .. Comp'Last loop
-               exit when Comp (C).On_Failure_For < On_Failure_For;
+               exit when Comp (C).On_Failure_For < On_Failure_For
+                 or else Comp (C).On_Failure_For = -1;
                Component := C;
             end loop;
          end if;
