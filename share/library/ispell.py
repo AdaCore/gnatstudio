@@ -41,6 +41,8 @@ use_static_menu = False
 
 import GPS, re
 
+ispell = None
+
 class Ispell:
    """Interface to ispell. This takes care of properly starting a process,
       monitoring it for unexpected termination, and generally interactive with
