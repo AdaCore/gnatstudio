@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.0.1
 
+- F808-015 GPS.EditorView.set_read_only has inverted logic
+  Problem:    If you pass True to this function, the buffer is made writable
+              instead of read-only, and the opposite for False
+  Workaround: Swap True for False
+
 - F808-010 GPS.Project.get_tool_switches_as_string returns empty string
   Problem:    If you use the above shell function, an empty string is always
               returned. In particular, the SPARK plug-in is affected by this
