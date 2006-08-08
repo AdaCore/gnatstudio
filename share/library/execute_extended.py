@@ -14,6 +14,9 @@
 
 action_name = "execute extended command"
 
+show_completions = True
+# Whether we should display possible completions in the command window
+
 
 ############################################################################
 ## No user customization below this line
@@ -29,9 +32,17 @@ def on_gps_started (hook_name):
    </action>
   """)
 
-def smaller_than (x, y):
-  """Compare the length of two strings. This is used as a sorting criteria"""
-  return len (x) < len (y)
+def findcommonstart(strlist):
+  return strlist[0][:([min([x[0]==elem for elem in x]) \
+                 for x in zip(*strlist)]+[0]).index(0)]
+
+def remove_completion (input):
+  brace = input.find ('{')
+  if brace == -1:
+     return input
+  else:
+     brace2 = input.find ('}')
+     return input[:brace] + input [brace2 + 1:]
 
 class Extended_Command (CommandWindow):
   """This class provides a command window in which the user can type the name
@@ -45,21 +56,31 @@ class Extended_Command (CommandWindow):
                                on_key  = self.on_key,
                                on_activate = self.on_activate)
        self.actions = lookup_actions()
+       self.locked  = False
     except:
        pass
 
   def on_activate (self, input):
     if input != "":
-       execute_action (input)
+       execute_action (remove_completion (input))
 
   def on_key (self, input, key, cursor_pos):
     if key.lower() == "tab":
-       input = input.lower()
+       input = remove_completion (input.lower())
        match = filter (lambda x: x.startswith (input), self.actions)
        if match != []:
-          match.sort (smaller_than)
-          if match[0] != input:
-             self.write (match [0])
+          match.sort ()
+          completions = ""
+          prefix = findcommonstart (match)
+          if show_completions:
+             for m in match:
+                if completions != "": completions = completions + ","
+                completions = completions + m[len(prefix):]
+             if completions != "": completions = "{" + completions + "}"
+             
+          self.write (prefix + completions, cursor=len(prefix))
        return True
+    else:
+       self.write (remove_completion (input))
 
 Hook ("gps_started").add (on_gps_started)
