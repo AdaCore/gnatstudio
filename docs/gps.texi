@@ -624,7 +624,7 @@ If you open the node for a source file, the file is parsed by one of the
 fast parsers integrated in GPS so that all entities declared in
 the project can be shown. These entities are grouped into various
 categories, which depend on the language. Typical categories include
-subprograms, packages, types, variables, tasks,@dots{}
+subprograms, packages, types, variables, tasks, @dots{}
 
 @end table
 
@@ -1297,7 +1297,7 @@ windows are put into a bigger window which is itself under control of
 the system or the windows manager.
 
 This means that, by default, no matter how many editors, browsers,
-explorers,@dots{} windows you have opened, your system will still see only
+explorers, @dots{} windows you have opened, your system will still see only
 one window (On Windows systems, the task bar shows only one
 icon). However, you can organize the GPS windows exactly the way you
 want, all inside the GPS main window.
@@ -1367,7 +1367,7 @@ its title bar, and then select the menu @code{Window->Close}
 @noindent
 The window in the central area of the MDI can be split at will, through
 any combination of horizontal and vertical splits.
-This feature requires at least two windows (text editors, browsers,...)
+This feature requires at least two windows (text editors, browsers, @dots{})
 to be superimposed in the central area. Selecting either the
 @code{Window->Split Horizontally} or @code{Window->Split Vertically} menus
 will then split the selected window in two. In the left (resp. top) pane,
@@ -1415,7 +1415,7 @@ it is possible that you prefer to have several top-level windows under
 direct control of your system or window manager. This would be the
 case for instance if you want to benefit from some extra possibilities
 that your system might provide (virtual desktops, different window
-decoration depending on the window's type, transparent windows,@dots{}).
+decoration depending on the window's type, transparent windows, @dots{}).
 
 GPS is fully compatible with this behavior, since windows can also be
 @b{floating windows}. Any window that is currently embedded in the MDI
@@ -2479,7 +2479,7 @@ Remove the selected substring from the case substring exception dictionary.
 GPS includes basic facilities for refactoring your code. Refactoring is the
 standard term used to describe manipulation of the source code that do not
 affect the behavior of the application, but help reorganize the source code
-to make it more readable, more extendable,...
+to make it more readable, more extendable, @dots{}
 
 Refactoring technics are generally things that programmers are used to do by
 hand, but which are faster and more secure to do automatically through a tool.
@@ -2499,9 +2499,9 @@ GPS currently provides the following refactoring capabilities:
 Clicking on an entity in a source file and selecting the
 @code{Refactoring/Rename} menu will open a dialog asking for the new name
 of the entity. GPS will rename all instances of the entity in your application.
-This includes the definition of the entity, its body, all calls to it... Of
-course, no comment is updated, and you should probably check manually that the
-comment for the entity still applies.
+This includes the definition of the entity, its body, all calls to it, etc@dots{}
+Of course, no comment is updated, and you should probably check manually that
+the comment for the entity still applies.
 
 GPS will handle primitive operations by also renaming the operations it
 overrides or that overrides it. This means that any dispatching call to that
@@ -3165,7 +3165,7 @@ displaying references to the current entity or selection.
 @cindex find all references
 Find all references to @i{entity} in all the files in the project, @xref{Find All References}.
 
-@item Find all references ...
+@item Find all references...
 This menu is similar to the one above, except it is possible to select more
 precisely what kind of reference should be selected. It is also possible
 to indicate the scope of the search, and whether the context (or caller)
@@ -3991,7 +3991,7 @@ other.
 
 This is likely the wizard you will use most often. It creates a project
 file from scratch, and asks you for the location of source directories,
-the object directory,... The rest of this chapter describes this wizard
+the object directory, @dots{}; The rest of this chapter describes this wizard
 in more details
 
 @item Project Tree
@@ -4550,7 +4550,7 @@ elements. For instance, it is possible to search in the currently
 edited source file, or in all the source files belonging to the
 project, even those that are not currently open. It is also possible
 to search in the project explorer (on the left side of the main GPS
-window),@dots{}
+window), @dots{}
 @cindex project explorer
 
 @cindex menu
@@ -4595,7 +4595,7 @@ In this combo box, a number of predefined patterns are provided. The
 top two ones are empty patterns, that automatically set up the
 appropriate fixed strings/regular expression mode. The other regular
 expressions are language-specific, and will match patterns like Ada
-type definition, C++ method declaration,@dots{}
+type definition, C++ method declaration, @dots{}
 @cindex C++
 @cindex Ada
 
@@ -5169,7 +5169,7 @@ added for the files.
 The browser is not refreshed automatically, since there are lots of
 cases where the dependencies might change (editing source files,
 changing the project hierarchy or the value of the scenario
-variables,...)
+variables, @dots{})
 
 It also recomputes the layout of the graph, and will change the current
 position of the boxes.
@@ -5244,7 +5244,7 @@ The list of parameters is displayed
 @item Packages
 The list of all the entities declared in that package is displayed
 
-@item and more ...
+@item and more...
 
 @end table
 
@@ -5660,7 +5660,7 @@ the following commands. Failing to do so will result in blank windows.
 
 The Data Window is the area in which various information about the debugged
 process can be displayed. This includes the value of selected variables, the
-current contents of the registeres, the local variables,@dots{}
+current contents of the registeres, the local variables, @dots{}
 
 @cindex Data Window
 This window is not open by default when you start the debugger. It will be
@@ -8294,7 +8294,7 @@ Each page corresponds to a set of preferences.
 @item @b{Themes}
 
 This page allows you to quickly change the current settings for GPS, including
-preferences, key bindings, menus@dots{}. See @ref{GPS Themes} for more
+preferences, key bindings, menus@dots{}; See @ref{GPS Themes} for more
 information on themes. It is only displayed when there are themes registered.
 
 @item @b{General}
@@ -8307,7 +8307,7 @@ The default font used in GPS
 @item Fixed view font
 @cindex font
 The fixed (monospace) font used in views like the outline view, the bookmark
-view,@dots{}. As much as possible, this font should use a fixed width for
+view, @dots{}; As much as possible, this font should use a fixed width for
 characters, for a better rendering
 
 @item Character set
@@ -8542,7 +8542,7 @@ The Speed Column is never displayed.
 @item Automatic
 The Speed Column is shown whenever lines are highlighted in the editor, for
 example to show the current execution point, or lines
-containing compilation errors, @dots{}
+containing compilation errors, @dots{};
 It disappears when no lines are highlighted.
 
 @item Always
@@ -8881,7 +8881,7 @@ The number of spaces for the default indentation.
 If this preference is enabled, the debugger will automatically save breakpoints
 when it exists, and restore them the next time the same executable is debugged.
 This is a convenient way to work on an executable, where the typical usage
-looks like compile, debug, compile, debug,@dots{}
+looks like compile, debug, compile, debug, @dots{}
 
 When the preference is enabled, the debugger will also preserve the contents
 of the data window whenever it is closed. Reopening the window either during
@@ -9454,7 +9454,7 @@ Among the scripts that are provided with GPS, you will find:
 @item Cross-references enhancements
   Various scripts take advantage of GPS's cross-references information to
   create additional menus to navigate (for instance to jump to the primitive
-  operations of Ada tagged types, to the body of Ada separate entities,...)
+  operations of Ada tagged types, to the body of Ada separate entities, @dots{})
 
 @item Text manipulation
   Several scripts provide support for advanced text manipulation in the
@@ -9523,7 +9523,7 @@ If you have modified anything through this dialog (the list of scripts
 to load or unload, or any of the initialization commands), you will
 need to restart GPS. GPS cannot unload a module, since it can have too
 many possible effects on GPS (adding menus, overriding key
-shortcuts,...). Likewise, re-executing initialization commands
+shortcuts, @dots{}). Likewise, re-executing initialization commands
 immediately might be too late, since once they are running some of the
 scripts might not take the changes into account.
 
@@ -9570,7 +9570,7 @@ You can customize lots of capabilities in GPS using files that are
 loaded by GPS at start up.
 
 For example, you can add items in the menu and tool bars, as well as
-defining new key bindings, new languages, new tools, @dots{}
+defining new key bindings, new languages, new tools, @dots{};
 Using Python as a programming language, you can also add brand new facilities
 and integrate your own tools in the GPS platform.
 
@@ -9583,7 +9583,7 @@ or will simply be made visible in the Startup Scripts Editor
 These directories are searched for in the order given below. Any script loaded
 latter can override setups done by previously loaded scripts. For instance,
 they could override a key shortcut, remove a menu, redefining a GPS
-action,@dots{}.
+action, @dots{}
 
 In the directory names below, @file{INSTALL} is the name of the directory in
 which you have installed GPS. @file{HOME} is the user's home directory, either
@@ -9638,7 +9638,7 @@ copying them to one of the other directories.
 @end itemize
 
 Any script loaded by GPS can contain customization for various aspects
-of GPS, mixing aliases, new languages or menus,@dots{} in a single
+of GPS, mixing aliases, new languages or menus, @dots{} in a single
 file. This is a convenient way to distribute your plug-ins to other
 users.
 
@@ -9837,7 +9837,7 @@ graphical user interface (although this is still doable through XML commands).
 @end table
 
 If you are defining the same action multiple times, the last definition will
-be kept. However, existing menus, buttons,@dots{} that already reference that
+be kept. However, existing menus, buttons, @dots{} that already reference that
 action will keep their existing semantic. The new definition will only be
 used for all new menus created from that point on.
 
@@ -10059,7 +10059,8 @@ for a full list.
 More information on chaining commands is provided in @xref{Chaining commands}.
 
 Some actions are also predefined in GPS itself. This include for instance
-aliases expansion, manipulating MDI windows,... All known actions (predefined
+aliases expansion, manipulating MDI windows, @dots{};
+All known actions (predefined
 and the ones you have defined in your own customization files) can be
 discovered by opening the key shortcut editor (@code{Edit->Key shortcuts} menu).
 
@@ -10413,7 +10414,7 @@ This attribute specifies a shell command to execute. The output value of this
 command is used to find whether the filter matches: if it returns "1" or
 "true", the filter matches. In any other case, the filter fails.
 
-Note that currently no expansion of macro arguments (%f, %p,@dots{}) is done
+Note that currently no expansion of macro arguments (%f, %p, @dots{}) is done
 in this command.
 
 @item shell_lang (optional)
@@ -11052,7 +11053,7 @@ doesn't exist yet.
 
 This tag accepts any other customization tag that can be put in the
 customization files. This includes setting preferences (@code{<pref>},
-defining key bindings (@code{<key}), defining menus (@code{<menu>}),@dots{}
+defining key bindings (@code{<key}), defining menus (@code{<menu>}), @dots{}
 
 If the same theme is defined in multiple locations (multiple times in the
 same customization file or in different files), their effects will be
@@ -11619,7 +11620,7 @@ end %(p);</text>
 The project files are required by GPS, and are used to store various
 pieces of information related to the current set of source files. This
 includes how to find the source files, how the files should be compiled,
-or manipulated through various tools,@dots{}.
+or manipulated through various tools, @dots{}.
 
 However, the default set of attributes that are usable in a project file
 is limited to the attributes needed by the tool packaged with GPS or GNAT.
@@ -13218,7 +13219,7 @@ It is easier to explain it through an example. Specifying the GNAT switch
 "-gnaty" is equivalent to specifying "-gnatyabcefhiklmnprst". This is in
 fact a style check switch, with a number of default values. But it is also
 equivalent to decomposing it into several switches, as in "-gnatya",
-"-gnatyb",@dots{} With this information, GPS will try to keep the
+"-gnatyb", @dots{}; With this information, GPS will try to keep the
 command line length as short as possible, to keep it readable.
 
 Both these aspects are defined in a unique @code{<expansion>} tag, which
@@ -13228,7 +13229,7 @@ optional. Alias contains the text "-gnatyabcefhiklmnprst" in our example.
 It also accepts any number of @code{<entry>} children, each has a mandatory
 @code{switch} access. The set of all these children define the expanded
 equivalent of the switch. In our example, we need one @code{<entry>} child
-for "-gnatya", one for "-gnatyb",@dots{}.
+for "-gnatya", one for "-gnatyb", @dots{}
 
 The exact algorithm used by GPS is the following:
 @itemize
@@ -13354,7 +13355,7 @@ action is stopped immediately, and no further command is performed.
 
 @cindex MDI.save_all
 Before launching the external tool, you might want to force GPS to save all
-open files, the project@dots{}. This is done using the same command GPS itself
+open files, the project@dots{}; This is done using the same command GPS itself
 uses before starting a compilation. This command is called @code{MDI.save_all},
 and takes one optional boolean argument which specifies whether an interactive
 dialog should be displayed for the user.
@@ -13757,7 +13758,7 @@ strong advantage: they do not require any recompilation of the GPS
 core, and can be tested and executed interactively.
 
 The goal of such scripts is to be able to help automate processes such
-as builds, automatic generation of graphs,@dots{}
+as builds, automatic generation of graphs, @dots{}
 
 These languages all have a separate console associated with them,
 which you can open from the @code{Tools} menu. In each of these
@@ -13828,7 +13829,7 @@ done through the @code{<shell>} XML tag.
 
 But the opposite is also true. From a script, you can execute any action
 registered in GPS. This can for instance be used to split windows, highlight
-lines in the editor,@dots{} when no equivalent shell function exists. This can
+lines in the editor, @dots{} when no equivalent shell function exists. This can
 also be used to execute external commands, if the scripting language doesn't
 support this in an easy manner.
 
@@ -13895,7 +13896,7 @@ course you can run these commands again to get a new reference.
 
 
 The return value of the 9 previous commands can easily be recalled by
-passing @code{%1}, @code{%2},@dots{} on the command line. For instance,
+passing @code{%1}, @code{%2}, @dots{} on the command line. For instance,
 the previous example could be rewritten as
 
 @smallexample
@@ -14535,7 +14536,7 @@ sys.stdout=GPS.Console ("Python")
 
 The parameter to the constructor @code{GPS.Console} indicates whether any
 output sent to that console should be saved by GPS, and reused for the
-@code{%1}, @code{%2},... parameters if the command is executed in a
+@code{%1}, @code{%2}, @dots{} parameters if the command is executed in a
 GPS action. That should generally be 1, except for stderr where it should
 be 0.
 @end itemize
@@ -14765,7 +14766,7 @@ parameter, the command to be executed. This is a subprogram parameter (@pxref{Su
 @item GPS shell
 
 The command can be any GPS action (@pxref{Defining Actions}). The arguments for
-the hook will be passed to the action, and are available as $1, $2,@dots{}.
+the hook will be passed to the action, and are available as $1, $2, @dots{};
 In the following example, the message "Just executed
 the hook: project_changed" will be printed in the Shell console. Note that we
 are defining the action to be executed inline, but this could in fact be
