@@ -1338,9 +1338,56 @@ package body Project_Properties is
          Attribute_Is_List : Boolean;
          As_List          : Boolean);
       --  Store in Data the value of a specific attribute.
-      --  Attribute_Is_List indicates the type of the attribute. If this
-      --  doesn't match, an empty list or string will be returned.
+      --  Attribute_Is_List indicates the type of the attribute. This is the
+      --  first type that will be tested, although if no match is found the
+      --  other type will also be tested.
       --  As_List indicates the format of the returned value
+
+      procedure Set_Return_Attribute
+        (List : in out Argument_List; As_List : Boolean);
+      --  Sets the contents of List into the return value. Frees the List on
+      --  exit.
+
+      procedure Set_Return_Attribute
+        (Value : String; As_List : Boolean);
+      --  Sets the contents of Value into the return value
+
+      --------------------------
+      -- Set_Return_Attribute --
+      --------------------------
+
+      procedure Set_Return_Attribute
+        (List : in out Argument_List; As_List : Boolean)
+      is
+         Result : Unbounded_String;
+      begin
+         if As_List then
+            Set_Return_Value_As_List (Data);
+            for L in List'Range loop
+               Set_Return_Value (Data, List (L).all);
+            end loop;
+
+         else
+            for L in List'Range loop
+               Append (Result, List (L).all & " ");
+            end loop;
+            Set_Return_Value (Data, To_String (Result));
+         end if;
+         Basic_Types.Free (List);
+      end Set_Return_Attribute;
+
+      --------------------------
+      -- Set_Return_Attribute --
+      --------------------------
+
+      procedure Set_Return_Attribute
+        (Value : String; As_List : Boolean) is
+      begin
+         if As_List then
+            Set_Return_Value_As_List (Data);
+         end if;
+         Set_Return_Value (Data, Value);
+      end Set_Return_Attribute;
 
       --------------------------
       -- Set_Return_Attribute --
@@ -1366,25 +1413,33 @@ package body Project_Properties is
                   List : Argument_List := Get_Attribute_Value
                     (Project, Build (Pkg, Attr), Index);
                begin
-                  if As_List then
-                     Set_Return_Value_As_List (Data);
-                     for L in List'Range loop
-                        Set_Return_Value (Data, List (L).all);
-                     end loop;
+                  if List'Length = 0 then
+                     --  Did we have a string attribute in fact ?
+                     Set_Return_Attribute
+                       (Get_Attribute_Value
+                          (Project, Build (Pkg, Attr), "", Index),
+                        As_List);
                   else
-                     for L in List'Range loop
-                        Append (Result, List (L).all & " ");
-                     end loop;
-                     Set_Return_Value (Data, To_String (Result));
+                     Set_Return_Attribute (List, As_List);
                   end if;
-                  Basic_Types.Free (List);
                end;
             else
                declare
                   Val : constant String := Get_Attribute_Value
                     (Project, Build (Pkg, Attr), "", Index);
                begin
-                  Set_Return_Value (Data, Val);
+                  if Val = "" then
+                     --  Did we have a list attribute in fact ?
+                     declare
+                        List : Argument_List := Get_Attribute_Value
+                          (Project, Build (Pkg, Attr), Index);
+                     begin
+                        Set_Return_Attribute (List, As_List);
+                     end;
+
+                  else
+                     Set_Return_Attribute (Val, As_List);
+                  end if;
                end;
             end if;
             return;
@@ -1392,31 +1447,16 @@ package body Project_Properties is
 
          --  Else use the description from projects.xml, which also provides
          --  the default value for attributes not declared in the project
-         if Attribute_Is_List then
+         if Descr.Is_List then
             declare
                List : GNAT.OS_Lib.String_List := Get_Current_Value
                  (Kernel, Project, Descr, Index);
             begin
-               if As_List then
-                  Set_Return_Value_As_List (Data);
-                  for L in List'Range loop
-                     Set_Return_Value (Data, List (L).all);
-                  end loop;
-               else
-                  for L in List'Range loop
-                     Append (Result, List (L).all & " ");
-                  end loop;
-                  Set_Return_Value (Data, To_String (Result));
-               end if;
-               Basic_Types.Free (List);
+               Set_Return_Attribute (List, As_List);
             end;
          else
-            declare
-               Val : constant String := Get_Current_Value
-                   (Project, Descr, Index);
-            begin
-               Set_Return_Value (Data, Val);
-            end;
+            Set_Return_Attribute
+              (Get_Current_Value (Project, Descr, Index), As_List);
          end if;
       end Set_Return_Attribute;
 
