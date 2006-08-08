@@ -222,13 +222,20 @@ procedure Code_Analysis_Test is
    -- Treeview --
    --------------
 
+   Node_Col_Num  : constant Guint := 1;
+   --  Number of columns needed to store the node information in a
+   --  Gtk_Tree_Model
+   Cov_Col_Num   : constant Guint := 2;
+   --  Number of columns needed to store the coverage information in a
+   --  Gtk_Tree_Model
+
    procedure Treeview (File_Name : String) is
       Project_Node  : Project_Access;
       Window        : Gtk_Window;
       Container     : Gtk_Box;
       Tree_View     : Gtk_Tree_View;
       Tree_Store    : Gtk_Tree_Store;
-      Types_Array   : GType_Array (1 .. 3);
+      Types_Array   : GType_Array (1 .. Node_Col_Num + Cov_Col_Num);
       Iter          : Gtk_Tree_Iter;
       Tree_Col      : Gtk_Tree_View_Column;
       Text_Render   : Gtk_Cell_Renderer_Text;
@@ -242,7 +249,7 @@ procedure Code_Analysis_Test is
       Gtk_New_Vbox (Container);
       Add (Window, Container);
 
-      for J in 1 .. 1 + 2 loop
+      for J in 1 .. Node_Col_Num + Cov_Col_Num loop
          Types_Array (Guint (J)) := GType_String;
       end loop;
       --  1 text column to display the nodes
@@ -269,7 +276,7 @@ procedure Code_Analysis_Test is
       Gtk_New (Tree_Col);
       Num_Col := Append_Column (Tree_View, Tree_Col);
 
-      for J in 1 .. 2 loop
+      for J in 1 .. Cov_Col_Num loop
          Gtk_New (Text_Render);
          Pack_Start (Tree_Col, Text_Render, True);
          Add_Attribute (Tree_Col, Text_Render, "text", Gint (J));
