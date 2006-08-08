@@ -18,16 +18,26 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Command_Line;   use Ada.Command_Line;
-with Ada.Text_IO;        use Ada.Text_IO;
-with Ada.Calendar;       use Ada.Calendar;
+with Ada.Command_Line;         use Ada.Command_Line;
+with Ada.Text_IO;              use Ada.Text_IO;
+with Ada.Calendar;             use Ada.Calendar;
 
-with Code_Analysis;      use Code_Analysis;
-with Code_Analysis_Dump; use Code_Analysis_Dump;
-with Code_Coverage;      use Code_Coverage;
+with Code_Analysis;            use Code_Analysis;
+with Code_Analysis_Dump;       use Code_Analysis_Dump;
+with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
+with Code_Coverage;            use Code_Coverage;
 
-with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with VFS;                use VFS;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with VFS;                      use VFS;
+with Glib;                     use Glib;
+with Gtk.Main;                 use Gtk.Main;
+with Gtk.Window;               use Gtk.Window;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 
 procedure Code_Analysis_Test is
 
@@ -59,8 +69,8 @@ procedure Code_Analysis_Test is
    --  builds a big Code_Analysis tree structure and outputs the time needed to
    --  build, perform one request, and destroy the structure
 
---     procedure Treeview (File_Name : String);
-   --  builds a code_analysis structure and display it in a Gtk tree view
+   procedure Treeview (File_Name : String);
+   --  builds a code_analysis structure and display it in a Gtk_Tree_View
 
    -----------------
    -- Print_Usage --
@@ -71,7 +81,7 @@ procedure Code_Analysis_Test is
       Put_Line
         ("Usage: code_analysis_test source_file test_name test_name...");
       Put_Line
-        ("Available tests are: build_display_destroy, benchmark,treeview");
+        ("Available tests are: build_display_destroy, benchmark, treeview");
    end Print_Usage;
 
    ---------------------
@@ -92,6 +102,10 @@ procedure Code_Analysis_Test is
       Project_Node  := Get_Or_Create (Project_Name);
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
+      File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+      File_Node.Analysis_Data.Coverage_Data.Covered := 54;
+      Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children
+        := 8000;
       Add_Subprograms (File_Node, File_Contents);
       Add_Lines (File_Node, File_Contents);
       Free (File_Contents);
@@ -104,10 +118,11 @@ procedure Code_Analysis_Test is
 
    procedure Build_Display_Destroy (File_Name : String) is
       Project_Node  : Project_Access;
+      pragma Unreferenced (Project_Node);
    begin
       Project_Node  := Build_Structure (File_Name);
       Dump_Text;
-      Free_Project (Project_Node);
+      Free_Code_Analysis;
    end Build_Display_Destroy;
 
    ---------------
@@ -115,7 +130,6 @@ procedure Code_Analysis_Test is
    ---------------
 
    procedure Benchmark (File_Name : String) is
-      use Project_Maps;
       Line_Node     : Line_Access;
       VFS_File_Name : VFS.Virtual_File;
       Cov_File_Name : VFS.Virtual_File;
@@ -136,8 +150,6 @@ procedure Code_Analysis_Test is
       --  ??? I make the supposition that users dont want to wait more than 2s
       --  for these operations and so we would have to add a waiting dialog
       --  (filling task bar) the creation operation tracking
-      Analysis_Tree : Code_Analysis_Tree;
-      Cursor_Tree   : Cursor;
 
       function Build_Msg (S : String; Value, Time : Duration) return String;
       --  Build a message used when raising Timeout exception
@@ -167,15 +179,15 @@ procedure Code_Analysis_Test is
          end loop;
       end loop;
 
-      Time_After    := Clock;
-      Measure       := Time_After - Time_Before;
+      Time_After := Clock;
+      Measure    := Time_After - Time_Before;
       Put_Line ("Creation time   :" & Duration'Image (Measure) & "s");
 
       if Measure > Create_Max then
          raise Timeout with Build_Msg ("Creation alarm:", Measure, Create_Max);
       end if;
 
-      Time_Before := Clock;
+      Time_Before   := Clock;
       Project_Name  := Get_Project_From_File (VFS_File_Name, 5);
       Project_Node  := Get_Or_Create (Project_Name);
       VFS_File_Name := Create (File_Name & Integer'Image (50));
@@ -194,19 +206,10 @@ procedure Code_Analysis_Test is
            with Build_Msg ("Request alarm:", Measure, Request_Max);
       end if;
 
-      Analysis_Tree := Get_Tree;
-      Cursor_Tree   := Analysis_Tree.First;
-      Time_Before   := Clock;
-
-      loop
-         exit when Cursor_Tree = No_Element;
-         Project_Node := Element (Cursor_Tree);
-         Next (Cursor_Tree);
-         Free_Project (Project_Node);
-      end loop;
-
-      Time_After    := Clock;
-      Measure        := Time_After - Time_Before;
+      Time_Before := Clock;
+      Free_Code_Analysis;
+      Time_After  := Clock;
+      Measure     := Time_After - Time_Before;
       Put_Line ("Destruction time:" & Duration'Image (Measure) & "s");
 
       if Measure > Destroy_Max then
@@ -219,13 +222,67 @@ procedure Code_Analysis_Test is
    -- Treeview --
    --------------
 
---     procedure Treeview (File_Name : String) is
---        Project_Node  : Project_Access;
---     begin
---        Project_Node  := Build_Structure (File_Name);
---        Dump_Text;
---        Free_Project (Project_Node);
---     end Treeview;
+   procedure Treeview (File_Name : String) is
+      Project_Node  : Project_Access;
+      Window        : Gtk_Window;
+      Container     : Gtk_Box;
+      Tree_View     : Gtk_Tree_View;
+      Tree_Store    : Gtk_Tree_Store;
+      Types_Array   : GType_Array (1 .. 3);
+      Iter          : Gtk_Tree_Iter;
+      Tree_Col      : Gtk_Tree_View_Column;
+      Text_Render   : Gtk_Cell_Renderer_Text;
+      Num_Col       : Gint;
+      pragma Unreferenced (Num_Col, Project_Node);
+   begin
+      Project_Node  := Build_Structure (File_Name);
+      Init;
+      Gtk_New (Window);
+      Set_Title (Window, "Analysis report");
+      Gtk_New_Vbox (Container);
+      Add (Window, Container);
+
+      for J in 1 .. 1 + 2 loop
+         Types_Array (Guint (J)) := GType_String;
+      end loop;
+      --  1 text column to display the nodes
+      --  2 text columns to display the coverage info
+
+      Gtk_New (Tree_Store, Types_Array);
+      Gtk_New (Tree_View, Gtk_Tree_Model (Tree_Store));
+
+      -----------------
+      -- Node column --
+      -----------------
+
+      Gtk_New (Tree_Col);
+      Gtk_New (Text_Render);
+      Pack_Start (Tree_Col, Text_Render, True);
+      Num_Col := Append_Column (Tree_View, Tree_Col);
+      Add_Attribute (Tree_Col, Text_Render, "text", 0);
+      Set_Title (Tree_Col, "Entities");
+
+      ----------------------
+      -- Coverage columns --
+      ----------------------
+
+      Gtk_New (Tree_Col);
+      Num_Col := Append_Column (Tree_View, Tree_Col);
+
+      for J in 1 .. 2 loop
+         Gtk_New (Text_Render);
+         Pack_Start (Tree_Col, Text_Render, True);
+         Add_Attribute (Tree_Col, Text_Render, "text", Gint (J));
+      end loop;
+
+      Set_Title (Tree_Col, "Coverage");
+      Pack_Start (Container, Tree_View);
+      Iter := Get_Iter_First (Gtk_Tree_Model (Tree_Store));
+      Fill_Store (Tree_Store, Iter);
+      Show_All (Window);
+      Main;
+      Free_Code_Analysis;
+   end Treeview;
 begin
    if Argument_Count < 2 then
       Put_Line ("error: missing arguments");
@@ -239,7 +296,7 @@ begin
       elsif Argument (J) = "benchmark" then
          Benchmark (Argument (1));
       elsif Argument (J) = "treeview" then
-         Benchmark (Argument (1));
+         Treeview (Argument (1));
       else
          Print_Usage;
          return;
