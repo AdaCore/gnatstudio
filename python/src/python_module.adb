@@ -734,6 +734,8 @@ package body Python_Module is
         (Python_Module_Id.Script.Interpreter,
          "import GPS", Hide_Output => True,
          Errors => Errors'Unchecked_Access);
+      Assert (Me, Result /= null, "Couldn't import GPS module");
+
       Set_Default_Console
         (Python_Module_Id.Script.Interpreter,
          Get_Console (Kernel),
