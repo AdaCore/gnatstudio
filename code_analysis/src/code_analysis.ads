@@ -157,12 +157,15 @@ package Code_Analysis is
    function Get_Or_Create
      (File_Node : Code_Analysis.File_Access;
       Line_Num  : Line_Id) return Line_Access;
+
    function Get_Or_Create
      (File_Node : File_Access;
       Sub_Id    : Subprogram_Id) return Subprogram_Access;
+
    function Get_Or_Create
      (Project_Node : Project_Access;
       File_Id      : VFS.Virtual_File) return File_Access;
+
    function Get_Or_Create
      (Project_Id : VFS.Virtual_File) return Project_Access;
    --  allow to get an access pointing on an identified tree node
@@ -175,17 +178,25 @@ package Code_Analysis is
    -- Free-er --
    -------------
 
-   procedure Free_Project (Project_Node : in out Project_Access);
-   --  Free every children and himself
+   procedure Free_Code_Analysis;
+   --  Free a whole code analysis structure
 
 private
 
+   -------------
+   -- Free-er --
+   -------------
    procedure Free_Line (Line_Node : in out Line_Access);
-   --  Free every children
+   --  Free every children and himself
+
    procedure Free_Subprogram (Sub_Node : in out Subprogram_Access);
-   --  Free every children
+   --  Free every children and himself
+
    procedure Free_File (File_Node : in out File_Access);
-   --  Free every children
+   --  Free every children and himself
+
+   procedure Free_Project (Project_Node : in out Project_Access);
+   --  Free every children and himself
 
    procedure Free_Analysis (Analysis_Id : in out Analysis);
    --  Free an Analysis record, so also a
