@@ -429,6 +429,11 @@ package body GPS.Kernel.Clipboard is
                return;
             end if;
 
+            if not Default_Editable then
+               --  Cannot paste in read-only buffers.
+               return;
+            end if;
+
             --  Delete the selected region if it exists.
             --  ??? This works around a bug which it seems is in gtk+,
             --  to be investigated.
