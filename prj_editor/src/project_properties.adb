@@ -1305,6 +1305,7 @@ package body Project_Properties is
       Index_Cst     : aliased constant String := "index";
       Tool_Cst      : aliased constant String := "tool";
       Value_Cst     : aliased constant String := "value";
+      Recursive_Cst : aliased constant String := "recursive";
       Get_Attributes_Parameters : constant Cst_Argument_List :=
         (1 => Attribute_Cst'Unchecked_Access,
          2 => Package_Cst'Unchecked_Access,
@@ -1494,8 +1495,19 @@ package body Project_Properties is
                   As_List => Command = "get_tool_switches_as_list");
             end if;
          end;
+
       elsif Command = "properties_editor" then
          Edit_Properties (Get_Data (Data, 1), Kernel);
+
+      elsif Command = "is_modified" then
+         Name_Parameters (Data, (  --  1 => Self,
+                                 2 => Recursive_Cst'Unchecked_Access));
+         declare
+            Project   : constant Project_Type := Get_Data (Data, 1);
+            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
+         begin
+            Set_Return_Value (Data, Project_Modified (Project, Recursive));
+         end;
 
       elsif Command = "set_attribute_as_string" then
          Name_Parameters (Data, Set_Attribute_Parameters);
@@ -1699,6 +1711,12 @@ package body Project_Properties is
          Maximum_Args => 3,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_modified",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class         => Get_Project_Class (Kernel),
+         Handler       => Create_Project_Command_Handler'Access);
    end Register_Module;
 
    ------------------------------
@@ -4337,6 +4355,7 @@ package body Project_Properties is
          Title  => -"Properties for " & Project_Name (Project),
          Parent => Get_Current_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
+      Set_Name (Editor, "Project Properties"); --  For testsuite
       Set_Policy
         (Editor,
          Allow_Shrink => False,
