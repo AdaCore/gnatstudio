@@ -109,6 +109,7 @@ install_binaries() {
   fi
 
   rm -rf $basedir/lib/gps $basedir/bin/gps*
+  rm -f $basedir/share/gps/plug-ins/emacs.xml
 
   # Do the installation through tar, to preserve symbolic links
   # We also explicitly work on specific directories to avoid
