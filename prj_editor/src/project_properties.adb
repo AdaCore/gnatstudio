@@ -1335,35 +1335,48 @@ package body Project_Properties is
       procedure Set_Return_Attribute
         (Project          : Project_Type;
          Attr, Pkg, Index : String;
+         Attribute_Is_List : Boolean;
          As_List          : Boolean);
-      --  Store in Data the value of a specific attribute
+      --  Store in Data the value of a specific attribute.
+      --  Attribute_Is_List indicates the type of the attribute. If this
+      --  doesn't match, an empty list or string will be returned.
+      --  As_List indicates the format of the returned value
 
       --------------------------
       -- Set_Return_Attribute --
       --------------------------
 
       procedure Set_Return_Attribute
-        (Project          : Project_Type;
-         Attr, Pkg, Index : String;
-         As_List          : Boolean)
+        (Project           : Project_Type;
+         Attr, Pkg, Index  : String;
+         Attribute_Is_List : Boolean;
+         As_List           : Boolean)
       is
-         Descr : constant Attribute_Description_Access :=
-            Get_Attribute_Type_From_Name (Pkg, Attr);
+         Descr  : constant Attribute_Description_Access :=
+           Get_Attribute_Type_From_Name (Pkg, Attr);
+         Result : Unbounded_String;
       begin
          if Descr = null then
             --  Test whether the attribute is known anyway. Not all attributes
             --  are declared in projects.xml, in particular the predefined ones
             --  related to switches and naming, that have their own editor
 
-            if As_List then
+            if Attribute_Is_List then
                declare
                   List : Argument_List := Get_Attribute_Value
                     (Project, Build (Pkg, Attr), Index);
                begin
-                  Set_Return_Value_As_List (Data);
-                  for L in List'Range loop
-                     Set_Return_Value (Data, List (L).all);
-                  end loop;
+                  if As_List then
+                     Set_Return_Value_As_List (Data);
+                     for L in List'Range loop
+                        Set_Return_Value (Data, List (L).all);
+                     end loop;
+                  else
+                     for L in List'Range loop
+                        Append (Result, List (L).all & " ");
+                     end loop;
+                     Set_Return_Value (Data, To_String (Result));
+                  end if;
                   Basic_Types.Free (List);
                end;
             else
@@ -1379,15 +1392,22 @@ package body Project_Properties is
 
          --  Else use the description from projects.xml, which also provides
          --  the default value for attributes not declared in the project
-         if As_List then
+         if Attribute_Is_List then
             declare
                List : GNAT.OS_Lib.String_List := Get_Current_Value
                  (Kernel, Project, Descr, Index);
             begin
-               Set_Return_Value_As_List (Data);
-               for L in List'Range loop
-                  Set_Return_Value (Data, List (L).all);
-               end loop;
+               if As_List then
+                  Set_Return_Value_As_List (Data);
+                  for L in List'Range loop
+                     Set_Return_Value (Data, List (L).all);
+                  end loop;
+               else
+                  for L in List'Range loop
+                     Append (Result, List (L).all & " ");
+                  end loop;
+                  Set_Return_Value (Data, To_String (Result));
+               end if;
                Basic_Types.Free (List);
             end;
          else
@@ -1410,7 +1430,8 @@ package body Project_Properties is
             Attr    => Nth_Arg (Data, 2),
             Pkg     => Nth_Arg (Data, 3, ""),
             Index   => Nth_Arg (Data, 4, ""),
-            As_List => Command = "get_attribute_as_list");
+            Attribute_Is_List => Command = "get_attribute_as_list",
+            As_List           => Command = "get_attribute_as_list");
 
       elsif Command = "get_tool_switches_as_list"
         or else Command = "get_tool_switches_as_string"
@@ -1420,16 +1441,17 @@ package body Project_Properties is
             Tool  : constant String := Nth_Arg (Data, 2);
             Props : constant Tool_Properties_Record :=
               Get_Tool_Properties (Kernel, Tool);
-
          begin
             if Props = No_Tool then
                Set_Error_Msg (Data, -"No such tool: " & Tool);
+
             else
                Set_Return_Attribute
                  (Project => Get_Data (Data, 1),
                   Attr    => Props.Project_Attribute.all,
                   Pkg     => Props.Project_Package.all,
                   Index   => Props.Project_Index.all,
+                  Attribute_Is_List => True,
                   As_List => Command = "get_tool_switches_as_list");
             end if;
          end;
