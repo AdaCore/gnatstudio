@@ -22,7 +22,7 @@ CODE_ANALYSIS_OBJ_DIR = $(CODE_ANALYSIS_BASE_DIR)/obj
 OBJ_DIR = $(CODE_ANALYSIS_OBJ_DIR)
 
 CFLAGS = -g -O2
-ADA_SOURCES = casis.adb
+ADA_SOURCES = code_analysis_test.adb
 
 PROJECT_FILE = code_analysis
 
