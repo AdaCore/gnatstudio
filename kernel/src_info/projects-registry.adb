@@ -1414,7 +1414,6 @@ package body Projects.Registry is
       Dirs := Source_Dirs (Project, False);
 
       for D in Dirs'Range loop
-
          Open (Dir, Dirs (D).all);
          Has_File := False;
 
