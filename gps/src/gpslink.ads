@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2004                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2004-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,3 +20,4 @@
 
 function GPSLink return Integer;
 --  Linker wrapper used to build GPS
+--  Now obsolete, could be removed when all scripts/tests no longer use it ???
