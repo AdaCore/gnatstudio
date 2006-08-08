@@ -163,4 +163,29 @@ package body Code_Coverage is
       end if;
    end Dump_Subp_Coverage;
 
+   ----------------
+   -- Fill_Store --
+   ----------------
+
+   procedure Fill_Store
+     (Tree_Store : in out Gtk_Tree_Store;
+      Iter       : in out Gtk_Tree_Iter;
+      Coverage   : Coverage_Access) is
+   begin
+      Set
+        (Tree_Store,
+         Iter,
+         Cov_Col,
+         Natural'Image (Coverage.Covered)
+         & " /"
+         & Natural'Image (Node_Coverage (Coverage.all).Children));
+      if Coverage.all in Subprogram_Coverage'Class then
+         Set
+           (Tree_Store,
+            Iter,
+            Call_Col,
+            "Called :"
+            & Natural'Image (Subprogram_Coverage (Coverage.all).Called));
+      end if;
+   end Fill_Store;
 end Code_Coverage;
