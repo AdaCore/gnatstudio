@@ -1401,7 +1401,6 @@ package body Project_Properties is
       is
          Descr  : constant Attribute_Description_Access :=
            Get_Attribute_Type_From_Name (Pkg, Attr);
-         Result : Unbounded_String;
       begin
          if Descr = null then
             --  Test whether the attribute is known anyway. Not all attributes
