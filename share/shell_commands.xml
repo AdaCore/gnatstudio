@@ -1389,6 +1389,13 @@ Related hooks:
       </example>
   </shell_doc>
 
+  <shell_doc name="GPS.Project.is_modified">
+     <param name="self">The instance of GPS.Project</param>
+     <param name="recursive" default="False">A boolean</param>
+     <return>A boolean</return>
+     <description>Return True if the project has been modified but not saved yet. If recursive is true, then the return value takes into account all projects imported by self</description>
+  </shell_doc> 
+
   <shell_doc name="GPS.Project.dependencies">
       <param name="self">The instance of GPS.Project</param>
       <param name="recursive" default="False">A boolean</param>
