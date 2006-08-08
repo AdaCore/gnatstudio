@@ -2,25 +2,26 @@ Known Problems fixed in GPS 4.0.1
 
 - F808-010 GPS.Project.get_tool_switches_as_string returns empty string
   Problem:    If you use the above shell function, an empty string is always
-              returns.
-  Workaround: use GPS.Project.get_tool_switches_as_list
+              returned. In particular, the SPARK plug-in is affected by this
+              problem.
+  Workaround: use GPS.Project.get_tool_switches_as_list instead
 
 - F807-005 Unwanted scrolling in the Smart Completion window.
   Problem:    When pressing the Down arrow on the Smart Completion window,
               pressing Down on the last item jumps to the first item in the
               list.
-  Workaround: Use the mouse and the scrollbar to reach the bottom of the list.
+  Workaround: Use the mouse and the scrollbar to reach the bottom of the list
 
 - F807-004 Smart Completion window blinking when there is no completion.
   Problem:    When calling Smart Completion at a location where GPS finds
               no completion, the Smart Completion window might appear and
               then disappear immediately.
-  Workaround: The window can be safely ignored.
+  Workaround: The window can be safely ignored
 
 - F803-004 Remote paths translation not saved
   Problem: In the remote configuration dialog, if a path is incorrectly entered
            then the path is not saved, and no warning is shown to the user.
-  Workaround: Make sure the entered paths are correct.
+  Workaround: Make sure the entered paths are correct
 
 - F724-012 Cannot paste in external applications
   Problem: If you select and copy some text in GPS, this text cannot be
