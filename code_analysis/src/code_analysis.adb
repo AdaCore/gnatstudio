@@ -26,7 +26,8 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (File_Node : Code_Analysis.File_Access;
-      Line_Num  : Line_Id) return Line_Access is
+      Line_Num  : Line_Id) return Line_Access
+   is
       Line_Node : Line_Access;
    begin
       if File_Node.Lines (Integer (Line_Num)) /= null then
@@ -45,7 +46,8 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (File_Node  : File_Access;
-      Sub_Id     : Subprogram_Id) return Subprogram_Access is
+      Sub_Id     : Subprogram_Id) return Subprogram_Access
+   is
       Sub_Node : Subprogram_Access;
    begin
       if File_Node.Subprograms.Contains (String (Sub_Id.all)) then
@@ -64,7 +66,8 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (Project_Node : Project_Access;
-      File_Id      : VFS.Virtual_File) return File_Access is
+      File_Id      : VFS.Virtual_File) return File_Access
+   is
       File_Node : File_Access;
    begin
       if Project_Node.Files.Contains (File_Id) then
@@ -82,7 +85,8 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (Project_Id : VFS.Virtual_File) return Project_Access is
+     (Project_Id : VFS.Virtual_File) return Project_Access
+   is
       Project_Node : Project_Access;
    begin
       if Projects.Contains (Project_Id) then
@@ -189,4 +193,20 @@ package body Code_Analysis is
       Unchecked_Free (Project_Node);
    end Free_Project;
 
+   ------------------------
+   -- Free_Code_Analysis --
+   ------------------------
+
+   procedure Free_Code_Analysis is
+      use Project_Maps;
+      Cur          : Cursor := Projects.First;
+      Project_Node : Project_Access;
+   begin
+      loop
+         exit when Cur = No_Element;
+         Project_Node := Element (Cur);
+         Next (Cur);
+         Free_Project (Project_Node);
+      end loop;
+   end Free_Code_Analysis;
 end Code_Analysis;
