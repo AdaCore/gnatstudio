@@ -14,6 +14,13 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+F801-019 Project with links hides files in the project explorer (2006-08-08)
+
+  When a project's source dirs are in fact symbolic links, and if you have
+  forgotten to unselect the preference Fast Project Loading, the project
+  explorer will now show the source files anyway, but the directory names
+  have been changed to the directory pointed to by the symbolic links.
+
 F731-001 Alias expansion containing percent sign (2006-07-31)
 
   It is now possible to use a percent sign as part of an alias expansion,
