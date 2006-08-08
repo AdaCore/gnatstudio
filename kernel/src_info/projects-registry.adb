@@ -361,6 +361,16 @@ package body Projects.Registry is
       Registry.Data.Trusted_Mode := Trusted_Mode;
    end Set_Trusted_Mode;
 
+   ----------------------
+   -- Get_Trusted_Mode --
+   ----------------------
+
+   function Get_Trusted_Mode
+     (Registry : Project_Registry'Class) return Boolean is
+   begin
+      return Registry.Data.Trusted_Mode;
+   end Get_Trusted_Mode;
+
    ------------------------------------
    -- Reset_Scenario_Variables_Cache --
    ------------------------------------
@@ -985,7 +995,7 @@ package body Projects.Registry is
                  (Registry.Data.View_Tree.Files_HT, Current_Source);
 
                --  If we are in the fast-project loading mode, then no symbolic
-               --  link is resolved, and files are seend through links. We get
+               --  link is resolved, and files are seen through links. We get
                --  in the project explorer the directories as mentioned in the
                --  project file, and any link in these is properly displayed.
                --
@@ -1404,6 +1414,7 @@ package body Projects.Registry is
       Dirs := Source_Dirs (Project, False);
 
       for D in Dirs'Range loop
+
          Open (Dir, Dirs (D).all);
          Has_File := False;
 

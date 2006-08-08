@@ -55,6 +55,8 @@ package Projects.Registry is
    procedure Set_Trusted_Mode
      (Registry     : Project_Registry'Class;
       Trusted_Mode : Boolean);
+   function Get_Trusted_Mode
+     (Registry : Project_Registry'Class) return Boolean;
    --  Set the trusted mode for the registry:
    --  If it is True, then it is assumed that no links are used in the project,
    --  and that directory names cannot match file names according to the
