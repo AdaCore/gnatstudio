@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.0.1
 
+- F808-010 GPS.Project.get_tool_switches_as_string returns empty string
+  Problem:    If you use the above shell function, an empty string is always
+              returns.
+  Workaround: use GPS.Project.get_tool_switches_as_list
+
 - F807-005 Unwanted scrolling in the Smart Completion window.
   Problem:    When pressing the Down arrow on the Smart Completion window,
               pressing Down on the last item jumps to the first item in the
