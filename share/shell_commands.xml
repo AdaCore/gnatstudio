@@ -4591,7 +4591,9 @@ The last four parameters are callbacks:
   <shell_doc name="GPS.CommandWindow.write">
       <param name="self">An instance of GPS.CommandWindow</param>
       <param name="text">A string</param>
-      <description>This function replaces the current content of the command line. As a result, you should make sure to preserve the character you want, as in the on_key callback in the example above. Calling this function will also result in several calls to the on_changed callback, one of them with an empty string (since gtk first deletes the contents and then writes the new contents</description>
+      <param name="cursor" default="-1">An integer</param>
+      <description>This function replaces the current content of the command line. As a result, you should make sure to preserve the character you want, as in the on_key callback in the example above. Calling this function will also result in several calls to the on_changed callback, one of them with an empty string (since gtk first deletes the contents and then writes the new contents.
+The cursor parameter can be used to specify where the cursor should be left after the insertion. -1 indicates the end of the string.</description>
   </shell_doc>
 
   <shell_doc name="GPS.CommandWindow.read">
