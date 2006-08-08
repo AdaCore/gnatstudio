@@ -2589,13 +2589,13 @@ package body Src_Editor_Module.Shell is
          Name_Parameters (Data, (1 => Read_Only_Cst'Access));
          Get_Box (Box, Data, 1);
          if Box /= null then
-            Set_Writable (Box, Nth_Arg (Data, 2, True));
+            Set_Writable (Box, not Nth_Arg (Data, 2, True));
          end if;
 
       elsif Command = "is_read_only" then
          Get_Box (Box, Data, 1);
          if Box /= null then
-            Set_Return_Value (Data, Get_Writable (Box));
+            Set_Return_Value (Data, not Get_Writable (Box));
          end if;
 
       elsif Command = "center" then
