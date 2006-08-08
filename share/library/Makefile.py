@@ -68,6 +68,7 @@ class Console_Process (Console, Process):
    def on_output (self, unmatched, matched):
       """Called when new output is available from make"""
       self.write (unmatched + matched)
+      self.cumulated_output = self.cumulated_output + unmatched + matched
       Locations.parse \
         (output   = unmatched + matched,
          category = locations_category)
@@ -83,6 +84,8 @@ class Console_Process (Console, Process):
       # Among other things, this automatically reparses xref if the user
       # has set the preference for it
       Hook ("compilation_finished").run (locations_category)
+      Codefix.parse (category=locations_category,
+                     output=self.cumulated_output)
 
    def on_destroy (self):
       """If the console is destroyed, we kill the make process as well"""
@@ -97,6 +100,7 @@ class Console_Process (Console, Process):
       self.clear()
       self.write (process + " " + args + "\n")
       MDI.get ("Messages").raise_window()
+      self.cumulated_output = ""
       Process.__init__ (self, process + ' ' + args + "",
                         regexp="^.+\\n",
                         progress_regexp=Console_Process.progress_regexp,
