@@ -9434,6 +9434,34 @@ highlighting in various programming languages); others are available
 for any user but not loaded automatically by GPS, for instance an
 Emacs emulation mode.
 
+Among the scripts that are provided with GPS, you will find:
+@itemize @bullet
+@item Emacs emulation
+  @cindex Emacs
+  several scripts emulate some of the functions provided by Emacs, such
+  as the interactive search, manipulation of rectangles, navigation in
+  the editor, and of course the usual Emacs key shortcuts
+
+  This emacs mode used to be activated in the preferences dialog, on the
+  Themes page, but you should now activate it by loading the @file{emacs.xml}
+  startup script
+
+@item Makefile support
+  @cindex Makefile
+  a script is provided that parses a Makefile and creates menus for each of
+  its possible targets, so that you can easily start a make command
+
+@item Cross-references enhancements
+  Various scripts take advantage of GPS's cross-references information to
+  create additional menus to navigate (for instance to jump to the primitive
+  operations of Ada tagged types, to the body of Ada separate entities,...)
+
+@item Text manipulation
+  Several scripts provide support for advanced text manipulation in the
+  editors, for instance to be able to align a set of lines based on various
+  criteria, or to manipulate a rectangular selection of text
+@end itemize
+
 You can chose graphically which scripts should or should not be loaded
 on startup. To do so, select the menu @code{/Edit/Startup Scripts}.
 This brings up a new window, containing two parts:
@@ -15801,6 +15829,10 @@ This file is created automatically when the @file{$HOME/.gps/} directory is
 created. If you remove it manually, it won't be recreated the next time you
 start GPS.
 
+   @item $HOME/.gps/startup.xml
+This file contains the list of scripts to load at startup, as well as
+additional code that need to be executed to setup the script.
+
    @item @i{prefix}
 The prefix directory where GPS is installed, e.g @file{/opt/gps}.
 
@@ -15832,10 +15864,12 @@ See @url{gps-tutorial.html}.
 
    @item @i{prefix}/share/gps/plug-ins
 Directory containing files with system-wide plug-ins (xml and python files)
-loaded at start-up.
+loaded automatically at start-up.
 
-   @item @i{prefix}/share/gps/python
-Directory containing python files that are not loaded automatically.
+   @item @i{prefix}/share/gps/library
+Directory containing files with system-wide plug-ins (xml and python files)
+that are not loaded automatically at startup, but can be selected in the
+Startup Scripts editor.
 
    @item @i{prefix}/share/gps/gps-animation.png
 @cindex png
