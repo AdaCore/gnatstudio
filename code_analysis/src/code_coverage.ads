@@ -26,6 +26,9 @@ with Code_Analysis;   use Code_Analysis;
 with VFS;             use VFS;
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
+with Gtk.Tree_Store;  use Gtk.Tree_Store;
+with Gtk.Tree_Model;  use Gtk.Tree_Model;
+with Glib;            use Glib;
 
 package Code_Coverage is
 
@@ -57,5 +60,21 @@ package Code_Coverage is
    procedure Dump_Subp_Coverage (Coverage : Coverage_Access);
    --  Currently dump to the standard output coverage information stored in a
    --  Code_Analysis.Coverage for the Subprogram nodes, ie with extra Called
+
+   Node_Col : constant Gint := 0;
+   --  Gtk_Tree_Model column number dedicated to the nodes of code_analysis
+   --  structure
+   Cov_Col  : constant Gint := 1;
+   --  Gtk_Tree_Model column number dedicated to the coverage information
+   --  contained in the node coverage records
+   Call_Col : constant Gint := 2;
+   --  Gtk_Tree_Model column number dedicated to the coverage information
+   --  contained in the Subprogram coverage records
+
+   procedure Fill_Store
+     (Tree_Store : in out Gtk_Tree_Store;
+      Iter       : in out Gtk_Tree_Iter;
+      Coverage   : Coverage_Access);
+   --  Fill the Gtk_Tree_Store with the given coverage record
 
 end Code_Coverage;
