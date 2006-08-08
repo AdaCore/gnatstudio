@@ -1335,43 +1335,110 @@ package body Project_Properties is
       procedure Set_Return_Attribute
         (Project          : Project_Type;
          Attr, Pkg, Index : String;
+         Attribute_Is_List : Boolean;
          As_List          : Boolean);
-      --  Store in Data the value of a specific attribute
+      --  Store in Data the value of a specific attribute.
+      --  Attribute_Is_List indicates the type of the attribute. This is the
+      --  first type that will be tested, although if no match is found the
+      --  other type will also be tested.
+      --  As_List indicates the format of the returned value
+
+      procedure Set_Return_Attribute
+        (List : in out Argument_List; As_List : Boolean);
+      --  Sets the contents of List into the return value. Frees the List on
+      --  exit.
+
+      procedure Set_Return_Attribute
+        (Value : String; As_List : Boolean);
+      --  Sets the contents of Value into the return value
 
       --------------------------
       -- Set_Return_Attribute --
       --------------------------
 
       procedure Set_Return_Attribute
-        (Project          : Project_Type;
-         Attr, Pkg, Index : String;
-         As_List          : Boolean)
+        (List : in out Argument_List; As_List : Boolean)
       is
-         Descr : constant Attribute_Description_Access :=
-            Get_Attribute_Type_From_Name (Pkg, Attr);
+         Result : Unbounded_String;
+      begin
+         if As_List then
+            Set_Return_Value_As_List (Data);
+            for L in List'Range loop
+               Set_Return_Value (Data, List (L).all);
+            end loop;
+
+         else
+            for L in List'Range loop
+               Append (Result, List (L).all & " ");
+            end loop;
+            Set_Return_Value (Data, To_String (Result));
+         end if;
+         Basic_Types.Free (List);
+      end Set_Return_Attribute;
+
+      --------------------------
+      -- Set_Return_Attribute --
+      --------------------------
+
+      procedure Set_Return_Attribute
+        (Value : String; As_List : Boolean) is
+      begin
+         if As_List then
+            Set_Return_Value_As_List (Data);
+         end if;
+         Set_Return_Value (Data, Value);
+      end Set_Return_Attribute;
+
+      --------------------------
+      -- Set_Return_Attribute --
+      --------------------------
+
+      procedure Set_Return_Attribute
+        (Project           : Project_Type;
+         Attr, Pkg, Index  : String;
+         Attribute_Is_List : Boolean;
+         As_List           : Boolean)
+      is
+         Descr  : constant Attribute_Description_Access :=
+           Get_Attribute_Type_From_Name (Pkg, Attr);
       begin
          if Descr = null then
             --  Test whether the attribute is known anyway. Not all attributes
             --  are declared in projects.xml, in particular the predefined ones
             --  related to switches and naming, that have their own editor
 
-            if As_List then
+            if Attribute_Is_List then
                declare
                   List : Argument_List := Get_Attribute_Value
                     (Project, Build (Pkg, Attr), Index);
                begin
-                  Set_Return_Value_As_List (Data);
-                  for L in List'Range loop
-                     Set_Return_Value (Data, List (L).all);
-                  end loop;
-                  Basic_Types.Free (List);
+                  if List'Length = 0 then
+                     --  Did we have a string attribute in fact ?
+                     Set_Return_Attribute
+                       (Get_Attribute_Value
+                          (Project, Build (Pkg, Attr), "", Index),
+                        As_List);
+                  else
+                     Set_Return_Attribute (List, As_List);
+                  end if;
                end;
             else
                declare
                   Val : constant String := Get_Attribute_Value
                     (Project, Build (Pkg, Attr), "", Index);
                begin
-                  Set_Return_Value (Data, Val);
+                  if Val = "" then
+                     --  Did we have a list attribute in fact ?
+                     declare
+                        List : Argument_List := Get_Attribute_Value
+                          (Project, Build (Pkg, Attr), Index);
+                     begin
+                        Set_Return_Attribute (List, As_List);
+                     end;
+
+                  else
+                     Set_Return_Attribute (Val, As_List);
+                  end if;
                end;
             end if;
             return;
@@ -1379,24 +1446,16 @@ package body Project_Properties is
 
          --  Else use the description from projects.xml, which also provides
          --  the default value for attributes not declared in the project
-         if As_List then
+         if Descr.Is_List then
             declare
                List : GNAT.OS_Lib.String_List := Get_Current_Value
                  (Kernel, Project, Descr, Index);
             begin
-               Set_Return_Value_As_List (Data);
-               for L in List'Range loop
-                  Set_Return_Value (Data, List (L).all);
-               end loop;
-               Basic_Types.Free (List);
+               Set_Return_Attribute (List, As_List);
             end;
          else
-            declare
-               Val : constant String := Get_Current_Value
-                   (Project, Descr, Index);
-            begin
-               Set_Return_Value (Data, Val);
-            end;
+            Set_Return_Attribute
+              (Get_Current_Value (Project, Descr, Index), As_List);
          end if;
       end Set_Return_Attribute;
 
@@ -1410,7 +1469,8 @@ package body Project_Properties is
             Attr    => Nth_Arg (Data, 2),
             Pkg     => Nth_Arg (Data, 3, ""),
             Index   => Nth_Arg (Data, 4, ""),
-            As_List => Command = "get_attribute_as_list");
+            Attribute_Is_List => Command = "get_attribute_as_list",
+            As_List           => Command = "get_attribute_as_list");
 
       elsif Command = "get_tool_switches_as_list"
         or else Command = "get_tool_switches_as_string"
@@ -1420,16 +1480,17 @@ package body Project_Properties is
             Tool  : constant String := Nth_Arg (Data, 2);
             Props : constant Tool_Properties_Record :=
               Get_Tool_Properties (Kernel, Tool);
-
          begin
             if Props = No_Tool then
                Set_Error_Msg (Data, -"No such tool: " & Tool);
+
             else
                Set_Return_Attribute
                  (Project => Get_Data (Data, 1),
                   Attr    => Props.Project_Attribute.all,
                   Pkg     => Props.Project_Package.all,
                   Index   => Props.Project_Index.all,
+                  Attribute_Is_List => True,
                   As_List => Command = "get_tool_switches_as_list");
             end if;
          end;
@@ -3281,22 +3342,24 @@ package body Project_Properties is
    function Get_Attribute_Type_From_Name
      (Pkg : String; Name : String) return Attribute_Description_Access is
    begin
-      for P in Properties_Module_ID.Pages'Range loop
-         for S in Properties_Module_ID.Pages (P).Sections'Range loop
-            declare
-               Sect : Attribute_Page_Section renames
-                 Properties_Module_ID.Pages (P).Sections (S);
-            begin
-               for A in Sect.Attributes'Range loop
-                  if Sect.Attributes (A).Pkg.all = Pkg
-                    and then Sect.Attributes (A).Name.all = Name
-                  then
-                     return Sect.Attributes (A);
-                  end if;
-               end loop;
-            end;
+      if Properties_Module_ID.Pages /= null then
+         for P in Properties_Module_ID.Pages'Range loop
+            for S in Properties_Module_ID.Pages (P).Sections'Range loop
+               declare
+                  Sect : Attribute_Page_Section renames
+                    Properties_Module_ID.Pages (P).Sections (S);
+               begin
+                  for A in Sect.Attributes'Range loop
+                     if Sect.Attributes (A).Pkg.all = Pkg
+                       and then Sect.Attributes (A).Name.all = Name
+                     then
+                        return Sect.Attributes (A);
+                     end if;
+                  end loop;
+               end;
+            end loop;
          end loop;
-      end loop;
+      end if;
 
       return null;
    end Get_Attribute_Type_From_Name;
