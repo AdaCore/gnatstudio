@@ -80,6 +80,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
 with Remote;                    use Remote;
 with String_Hash;
 with String_List_Utils;
@@ -642,6 +643,8 @@ package body Project_Explorers is
       Gtk_New (Explorer.Tree, Columns_Types);
       Set_Headers_Visible (Explorer.Tree, False);
       Set_Column_Types (Gtk_Tree_View (Explorer.Tree));
+
+      Set_Name (Explorer.Tree, "Project Explorer Tree");  --  For testsuite
 
       Add (Scrolled, Explorer.Tree);
       Modify_Font (Explorer.Tree, Get_Pref (View_Fixed_Font));
@@ -1677,8 +1680,23 @@ package body Project_Explorers is
       for J in Sources'Range loop
          if Sources (J) /= No_Name then
             Get_Name_String (Sources (J));
-            String_List_Utils.String_List.Append
-              (Dirs, Name_As_Directory (Name_Buffer (1 .. Name_Len)));
+
+            --  Do we need to normalize the names here ?
+            --  Otherwise, in trusted mode, some of the files will not show up
+            --  in the explorer. The price to pay, though, is that the
+            --  directory names might be different than in the project, since
+            --  we show the name of the pointed directory
+
+            if not Get_Trusted_Mode (Get_Registry (Explorer.Kernel).all) then
+               String_List_Utils.String_List.Append
+                 (Dirs, Name_As_Directory (Name_Buffer (1 .. Name_Len)));
+            else
+               String_List_Utils.String_List.Append
+                 (Dirs, Name_As_Directory
+                    (Normalize_Pathname
+                       (Name_Buffer (1 .. Name_Len),
+                        Resolve_Links => True)));
+            end if;
          end if;
       end loop;
 
