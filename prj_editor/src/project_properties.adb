@@ -1412,13 +1412,14 @@ package body Project_Properties is
                declare
                   List : Argument_List := Get_Attribute_Value
                     (Project, Build (Pkg, Attr), Index);
+                  Var  : constant String := Get_Attribute_Value
+                    (Project, Build (Pkg, Attr), "", Index);
                begin
-                  if List'Length = 0 then
+                  if List'Length = 0
+                    and then Var /= ""
+                  then
                      --  Did we have a string attribute in fact ?
-                     Set_Return_Attribute
-                       (Get_Attribute_Value
-                          (Project, Build (Pkg, Attr), "", Index),
-                        As_List);
+                     Set_Return_Attribute (Var, As_List);
                   else
                      Set_Return_Attribute (List, As_List);
                   end if;
@@ -1434,7 +1435,11 @@ package body Project_Properties is
                         List : Argument_List := Get_Attribute_Value
                           (Project, Build (Pkg, Attr), Index);
                      begin
-                        Set_Return_Attribute (List, As_List);
+                        if List'Length /= 0 then
+                           Set_Return_Attribute (List, As_List);
+                        else
+                           Set_Return_Attribute (Val, As_List);
+                        end if;
                      end;
 
                   else
@@ -4367,6 +4372,7 @@ package body Project_Properties is
       Pack_Start (Get_Vbox (Editor), Main_Box, Expand => True, Fill => True);
 
       Gtk_New (Main_Note);
+      Set_Name (Main_Note, "Project Properties Notebook"); --  Testsuite
       Set_Tab_Pos (Main_Note, Pos_Left);
       Pack1 (Main_Box, Main_Note, Resize => True, Shrink => True);
 
