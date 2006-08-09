@@ -47,9 +47,9 @@ package Language.Tree is
       Compute_Scopes : Boolean := True)
       return Construct_Tree;
    --  Return the construct tree corresponding to the construct list given in
-   --  parameter. If Compute_Scopes is True, the we will make an other pass
-   --  trying to associate the different parts of the same construct (e.g.
-   --  body and spec of a function, public and private part of a type...).
+   --  parameter. If Compute_Scopes is True we will make an other pass trying
+   --  to associate the different parts of the same construct (e.g. body and
+   --  spec of a function, public and private part of a type...).
    --  This is possibly time consuming, and if not needed, can be deactivated
    --  by the user.
 
