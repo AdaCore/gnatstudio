@@ -2731,6 +2731,13 @@ package body Src_Editor_Module.Shell is
             -("Cannot create instances directly, "
               & " use EditorBuffer.create_overlay()"));
 
+      elsif Command = "name" then
+         Get_Overlay (Tag, Data, 1);
+         if Tag /= null then
+            Set_Return_Value
+              (Data, Get_Property (Tag, Gtk.Text_Tag.Name_Property));
+         end if;
+
       elsif Command = "get_property" then
          Name_Parameters (Data, (1 => Name_Cst'Access));
          Get_Overlay (Tag, Data, 1);
@@ -2886,6 +2893,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, "get_property", 1, 1, Overlay_Cmds'Access, EditorOverlay);
       Register_Command
         (Kernel, "set_property", 2, 2, Overlay_Cmds'Access, EditorOverlay);
+      Register_Command
+        (Kernel, "name", 0, 0, Overlay_Cmds'Access, EditorOverlay);
 
       --  EditorLocation
 
