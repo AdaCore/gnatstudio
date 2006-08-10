@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2004                      --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -70,12 +70,12 @@ package Dynamic_Arrays is
    --  Return the number of allocated elements in T
 
    procedure Append (T : in out Instance; Item : Data);
-   --  Add a new element at the end of the table, which is grown if needed
+   --  Add a new element at the end of the table which grows if needed
 
    procedure Remove (T : in out Instance; Item : Data);
    pragma Inline (Remove);
    --  Remove the first occurrence of Item in the table. The table is not
-   --  shrunk, but keeps its current size for efficiency
+   --  shrunk, but keeps its current size for efficiency.
 
    procedure Remove (T : in out Instance; Index : Index_Type);
    procedure Remove (T : in out Instance; From, To : Index_Type);
@@ -85,7 +85,7 @@ package Dynamic_Arrays is
 
    function Find (T : Instance; Item : Data) return Index_Type;
    --  Return the position of the first occurrence of Item in the table,
-   --  of (First - 1) if the table doesn't contain that element
+   --  or (First - 1) if the table doesn't contain that element.
 
    procedure Free (T : in out Instance);
    --  Free the memory allocated for T
