@@ -192,6 +192,7 @@ class Dynamic_Contextual (GPS.Contextual):
 
 
 def on_gps_started (hook_name):
+   global ispell
    ispell = Ispell()
    if use_static_menu:
       static = Static_Contextual ()
