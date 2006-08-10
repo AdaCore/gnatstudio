@@ -1244,18 +1244,20 @@ package body Src_Contexts is
 
       if Match /= null then
          Found := True;
-         Get_Iter_At_Line_Offset
-           (Editor, Match_From,
-            Gint (Match.Begin_Line - 1), Gint (Match.Begin_Column - 1));
-         Get_Iter_At_Line_Offset
-           (Editor, Match_Up_To,
-            Gint (Match.End_Line - 1), Gint (Match.End_Column - 1));
-
          Context.Begin_Line   := Editable_Line_Type (Match.Begin_Line);
          Context.Begin_Column := Match.Begin_Column;
 
          Context.End_Line     := Editable_Line_Type (Match.End_Line);
          Context.End_Column   := Match.End_Column;
+
+         Get_Iter_At_Line_Offset
+           (Editor, Match_From,
+            Gint (Get_Buffer_Line (Editor, Context.Begin_Line) - 1),
+            Gint (Context.Begin_Column - 1));
+         Get_Iter_At_Line_Offset
+           (Editor, Match_Up_To,
+            Gint (Get_Buffer_Line (Editor, Context.End_Line) - 1),
+            Gint (Context.End_Column - 1));
 
          Unchecked_Free (Match);
 
@@ -1317,7 +1319,8 @@ package body Src_Contexts is
 
       if Found then
          Push_Current_Editor_Location_In_History (Kernel);
-         Select_Region (Get_Buffer (Editor), Match_From, Match_Up_To);
+         Select_Region (Get_Buffer (Editor), Match_Up_To, Match_From);
+
          Center_Cursor (Get_View (Editor));
          return True;
       else
