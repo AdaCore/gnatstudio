@@ -11,6 +11,11 @@ Known Problems fixed in GPS 4.0.1
               problem.
   Workaround: use GPS.Project.get_tool_switches_as_list instead
 
+- F807-022 Notebook tabs not displayed properly
+  Problem:    When there are multiple pages in a notebook, the active tab
+              might not be displayed properly.
+  Workaround: Click on any of the open tabs to refresh the display.
+
 - F807-005 Unwanted scrolling in the Smart Completion window.
   Problem:    When pressing the Down arrow on the Smart Completion window,
               pressing Down on the last item jumps to the first item in the
