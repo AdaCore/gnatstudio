@@ -2807,7 +2807,18 @@ package body GPS.Kernel.Remote is
       --  Assign servers following property values
 
       for J in Property.Servers'Range loop
-         Assign (J, Property.Servers (J).Nickname.all);
+         declare
+            Nickname  : constant String := Property.Servers (J).Nickname.all;
+            Hook_Data : aliased Server_Config_Changed_Hooks_Args :=
+              (Hooks_Data with
+               Nickname_Length => Nickname'Length,
+               Server          => J,
+               Nickname        => Nickname);
+         begin
+            Assign (J, Nickname);
+            Run_Hook (Kernel, Server_Config_Changed_Hook,
+                      Hook_Data'Unchecked_Access);
+         end;
       end loop;
 
       --  If Project is loaded from a distant host, force build_server as
