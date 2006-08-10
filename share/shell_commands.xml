@@ -3757,6 +3757,13 @@ The set of predefined attributes is fixed. However, overlays are especially usef
       <description>This subprogram is used to retrieve one of the predefined properties of the overlay. This list of these properties is described for GPS.EditorOverlay.set_property</description>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorOverlay.name">
+      <param name="self">An instance of GPS.EditorOverlay</param>
+      <return>A string</return>
+      <description>Return the name associated with this overlay, as given to GPS.EditorBuffer.create_overlay()</description>
+      <see_also name="GPS.EditorBuffer.create_overlay" />
+  </shell_doc>
+
   <!--#################################################################
       ### EditorLocation
       #################################################################-->
