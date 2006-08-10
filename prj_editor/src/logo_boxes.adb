@@ -142,6 +142,7 @@ package body Logo_Boxes is
 
       Gtk_New_Hbox (Win.Content, Homogeneous => True);
       Pack_Start (Vbox, Win.Content, True, True, 0);
+      Set_Name (Win.Content, "wizard contents");  --  testsuite
    end Initialize;
 
    ---------------------
