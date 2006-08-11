@@ -177,6 +177,14 @@ package body Entities.Queries is
    function To_String (Location : File_Location) return String;
    --  For debugging purposes only
 
+   function Get_Parent_Or_Child_Types
+     (Entity    : Entity_Information;
+      Parents   : Boolean;
+      Recursive : Boolean) return Entity_Information_Array;
+   --  This subprogram returns either the parents or the children of an
+   --  entity. This factorizes code between Get_Parent_Types and
+   --  Get_Child_Types.
+
    ---------------
    -- To_String --
    ---------------
@@ -856,6 +864,7 @@ package body Entities.Queries is
             return Get_Name (Entity).all = Get_Name (Iter.Entity).all;
          else
             Top := Entity;
+
             while Overriden_Entity (Top) /= null loop
                Top := Overriden_Entity (Top);
             end loop;
@@ -875,11 +884,13 @@ package body Entities.Queries is
          if Entity /= null then
             Find_All_Primitive_Operations
               (Prim, Entity, Include_Inherited => False);
+
             while not At_End (Prim) loop
                Primitive := Get (Prim);
 
                if Is_Same_Entity (Primitive) then
                   Found := False;
+
                   for E in Entity_Information_Arrays.First ..
                     Last (Iter.Extra_Entities)
                   loop
@@ -896,6 +907,7 @@ package body Entities.Queries is
 
                Next (Prim);
             end loop;
+
             Destroy (Prim);
          end if;
       end Add_Prims_Of_Entity;
@@ -905,23 +917,19 @@ package body Entities.Queries is
       ---------------------
 
       procedure Add_Children_Of (Entity : Entity_Information) is
-         Child_Iter : Child_Type_Iterator;
+         Children : constant Entity_Information_Array :=
+                      Get_Child_Types (Entity, Recursive => True);
       begin
-         Get_Child_Types (Child_Iter, Entity);
-         while not At_End (Child_Iter) loop
-            if Get (Child_Iter) /= null then
-               Add_Prims_Of_Entity (Get (Child_Iter));
-               Add_Children_Of (Get (Child_Iter));
-            end if;
-            Next (Child_Iter);
+         for Index in Children'Range loop
+            Add_Prims_Of_Entity (Children (Index));
          end loop;
-         Destroy (Child_Iter);
       end Add_Children_Of;
 
       Prim_Of : Entity_Information;
    begin
       if not Use_Approximate_Overriding_Algorithm then
          Toplevel_Entity := Iter.Entity;
+
          while Overriden_Entity (Toplevel_Entity) /= null loop
             Toplevel_Entity := Overriden_Entity (Toplevel_Entity);
          end loop;
@@ -931,8 +939,8 @@ package body Entities.Queries is
 
       if Prim_Of /= null then
          declare
-            Parents    : constant Entity_Information_Array :=
-              Get_Parent_Types (Prim_Of, Recursive => True);
+            Parents : constant Entity_Information_Array :=
+                        Get_Parent_Types (Prim_Of, Recursive => True);
          begin
             Add_Children_Of (Prim_Of);
             for P in Parents'Range loop
@@ -2630,43 +2638,58 @@ package body Entities.Queries is
       Unchecked_Free (Iter.Parents);
    end Destroy;
 
-   ----------------------
-   -- Get_Parent_Types --
-   ----------------------
+   -------------------------------
+   -- Get_Parent_Or_Child_Types --
+   -------------------------------
 
-   function Get_Parent_Types
+   function Get_Parent_Or_Child_Types
      (Entity    : Entity_Information;
-      Recursive : Boolean := False) return Entity_Information_Array
+      Parents   : Boolean;
+      Recursive : Boolean) return Entity_Information_Array
    is
-      Result : Entity_Information_List;
+      Result  : Entity_Information_List;
+      Members : Entity_Information_List;
 
-      procedure Process_Recursive (Entity : Entity_Information);
-      --  Add Entity and possibly all its parents to Result
+      procedure Process_Recursive (Entity  : Entity_Information);
+      --  Add Entity and possibly all its parents/children to Result
 
       -----------------------
       -- Process_Recursive --
       -----------------------
 
-      procedure Process_Recursive (Entity : Entity_Information) is
+      procedure Process_Recursive (Entity  : Entity_Information) is
+         Members : Entity_Information_List;
       begin
+         if Parents then
+            Members := Entity.Parent_Types;
+         else
+            Members := Entity.Child_Types;
+         end if;
+
          Append (Result, Entity);
 
          if Recursive then
             Update_Xref (Get_File (Get_Declaration_Of (Entity)));
 
             for P in
-              Entity_Information_Arrays.First .. Last (Entity.Parent_Types)
+              Entity_Information_Arrays.First .. Last (Members)
             loop
-               Process_Recursive (Entity.Parent_Types.Table (P));
+               Process_Recursive (Members.Table (P));
             end loop;
          end if;
       end Process_Recursive;
 
    begin
+      if Parents then
+         Members := Entity.Parent_Types;
+      else
+         Members := Entity.Child_Types;
+      end if;
+
       for P in
-        Entity_Information_Arrays.First .. Last (Entity.Parent_Types)
+        Entity_Information_Arrays.First .. Last (Members)
       loop
-         Process_Recursive (Entity.Parent_Types.Table (P));
+         Process_Recursive (Members.Table (P));
       end loop;
 
       declare
@@ -2681,83 +2704,29 @@ package body Entities.Queries is
          Free (Result);
          return R;
       end;
+   end Get_Parent_Or_Child_Types;
+
+   ----------------------
+   -- Get_Parent_Types --
+   ----------------------
+
+   function Get_Parent_Types
+     (Entity    : Entity_Information;
+      Recursive : Boolean := False) return Entity_Information_Array is
+   begin
+      return Get_Parent_Or_Child_Types (Entity, True, Recursive);
    end Get_Parent_Types;
 
    ---------------------
    -- Get_Child_Types --
    ---------------------
 
-   procedure Get_Child_Types
-     (Iter   : out Child_Type_Iterator;
-      Entity : Entity_Information) is
+   function Get_Child_Types
+     (Entity    : Entity_Information;
+      Recursive : Boolean := False) return Entity_Information_Array is
    begin
-      --  Parse all the files that might contain a reference to the entity
-      Find_Ancestor_Dependencies
-        (Iter         => Iter.Dep,
-         File         => Get_File (Get_Declaration_Of (Entity)),
-         Include_Self => True);
-      Iter.Entity := Entity;
-      Iter.Index  := Entity_Information_Arrays.First;
+      return Get_Parent_Or_Child_Types (Entity, False, Recursive);
    end Get_Child_Types;
-
-   ------------
-   -- At_End --
-   ------------
-
-   function At_End (Iter : Child_Type_Iterator) return Boolean is
-   begin
-      return At_End (Iter.Dep)
-        and then Iter.Index > Last (Iter.Entity.Child_Types);
-   end At_End;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next (Iter : in out Child_Type_Iterator) is
-   begin
-      if At_End (Iter.Dep) then
-         Iter.Index := Iter.Index + 1;
-      else
-         Next (Iter.Dep);
-      end if;
-   end Next;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get (Iter : Child_Type_Iterator) return Entity_Information is
-   begin
-      if At_End (Iter.Dep) then
-         return Iter.Entity.Child_Types.Table (Iter.Index);
-      else
-         return null;
-      end if;
-   end Get;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Iter : in out Child_Type_Iterator) is
-   begin
-      Destroy (Iter.Dep);
-   end Destroy;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Iter : in out Child_Type_Iterator_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Child_Type_Iterator, Child_Type_Iterator_Access);
-   begin
-      if Iter /= null then
-         Destroy (Iter.all);
-         Unchecked_Free (Iter);
-      end if;
-   end Destroy;
 
    ------------------
    -- Is_Parameter --
@@ -2765,21 +2734,26 @@ package body Entities.Queries is
 
    function Is_Parameter (Entity : Entity_Information) return Boolean is
       Caller : constant Entity_Information :=
-        Get_Caller (Declaration_As_Reference (Entity));
+                 Get_Caller (Declaration_As_Reference (Entity));
       Param_Iter : Subprogram_Iterator;
       Param      : Entity_Information;
    begin
       if Caller /= null then
          Param_Iter := Get_Subprogram_Parameters (Caller);
+
          loop
             Get (Param_Iter, Param);
+
             exit when Param = null;
+
             if Param = Entity then
                return True;
             end if;
+
             Next (Param_Iter);
          end loop;
       end if;
+
       return False;
    end Is_Parameter;
 
