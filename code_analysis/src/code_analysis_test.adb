@@ -27,6 +27,8 @@ with Code_Analysis_Dump;       use Code_Analysis_Dump;
 with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
 with Code_Coverage;            use Code_Coverage;
 
+with Projects;                 use Projects;
+with Projects.Registry;        use Projects.Registry;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with VFS;                      use VFS;
 with Glib;                     use Glib;
@@ -44,10 +46,11 @@ procedure Code_Analysis_Test is
    procedure Print_Usage;
    --  Print the correct usage of the program to the standard output
 
-   function Build_Structure (File_Name : String) return Project_Access;
+   function Build_Structure (File_Name : String; Project_File : String)
+                             return Project_Access;
    --  Build a code_analysis structure from a gcov file
 
-   procedure Build_Display_Destroy (File_Name : String);
+   procedure Build_Display_Destroy (File_Name : String; Project_File : String);
    --  reads a gcov output file, built from a given source file name, builds a
    --  Code_Analysis tree structure from it, displays it on the standard output
    --  and cleanly quits
@@ -65,11 +68,11 @@ procedure Code_Analysis_Test is
    --        Line 3 4 execution(s)
    --        Line 4 warning: line never executed
 
-   procedure Benchmark (File_Name : String);
+   procedure Benchmark (File_Name : String; Project_File : String);
    --  builds a big Code_Analysis tree structure and outputs the time needed to
    --  build, perform one request, and destroy the structure
 
-   procedure Treeview (File_Name : String);
+   procedure Treeview (File_Name : String; Project_File : String);
    --  builds a code_analysis structure and display it in a Gtk_Tree_View
 
    -----------------
@@ -79,7 +82,7 @@ procedure Code_Analysis_Test is
    procedure Print_Usage is
    begin
       Put_Line
-        ("Usage: code_analysis_test source_file test_name test_name...");
+        ("Usage: code_analysis_test src_file prj_file tst_name tst_name...");
       Put_Line
         ("Available tests are: build_display_destroy, benchmark, treeview");
    end Print_Usage;
@@ -88,17 +91,22 @@ procedure Code_Analysis_Test is
    -- Build_Structure --
    ---------------------
 
-   function Build_Structure (File_Name : String) return Project_Access is
+   function Build_Structure (File_Name : String; Project_File : String)
+                             return Project_Access is
       VFS_File_Name : VFS.Virtual_File;
       Cov_File_Name : VFS.Virtual_File;
       File_Contents : GNAT.OS_Lib.String_Access;
-      Project_Name  : VFS.Virtual_File;
+      Registry      : Project_Registry;
+      Project_Name  : Project_Type;
       Project_Node  : Project_Access;
       File_Node     : Code_Analysis.File_Access;
    begin
-      VFS_File_Name := Create (File_Name);
-      Cov_File_Name := Create (File_Name & ".gcov");
-      Project_Name  := Get_Project_From_File (VFS_File_Name, 1);
+      Cov_File_Name := Create (File_Name);
+      VFS_File_Name := Create (File_Name
+                               (File_Name'First .. File_Name'Last - 5));
+      Projects.Registry.Initialize;
+      Load_Empty_Project (Registry);
+      Project_Name  := Load_Or_Find (Registry, Project_File);
       Project_Node  := Get_Or_Create (Project_Name);
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
@@ -116,11 +124,12 @@ procedure Code_Analysis_Test is
    -- Build_Display_Destroy --
    ---------------------------
 
-   procedure Build_Display_Destroy (File_Name : String) is
+   procedure Build_Display_Destroy (File_Name : String; Project_File : String)
+   is
       Project_Node  : Project_Access;
       pragma Unreferenced (Project_Node);
    begin
-      Project_Node  := Build_Structure (File_Name);
+      Project_Node  := Build_Structure (File_Name, Project_File);
       Dump_Text;
       Free_Code_Analysis;
    end Build_Display_Destroy;
@@ -129,13 +138,15 @@ procedure Code_Analysis_Test is
    -- Benchmark --
    ---------------
 
-   procedure Benchmark (File_Name : String) is
+   procedure Benchmark (File_Name : String; Project_File : String) is
+      use Project_Maps;
       Line_Node     : Line_Access;
       VFS_File_Name : VFS.Virtual_File;
       Cov_File_Name : VFS.Virtual_File;
       File_Contents : GNAT.OS_Lib.String_Access;
       File_Node     : Code_Analysis.File_Access;
-      Project_Name  : VFS.Virtual_File;
+      Registry      : Project_Registry;
+      Project_Name  : Project_Type;
       Project_Node  : Project_Access;
       Time_Before   : Time;
       Time_After    : Time;
@@ -160,17 +171,26 @@ procedure Code_Analysis_Test is
          return S & Duration'Image (Value) & "s" & ASCII.LF & "Timeout set to:"
            & Duration'Image (Time);
       end Build_Msg;
-
    begin
       Time_Before := Clock;
+      Projects.Registry.Initialize;
+      Load_Empty_Project (Registry);
 
-      for J in 1 .. 10 loop
-         Project_Name  := Get_Project_From_File (VFS_File_Name, J);
+      for J in 0 .. 9 loop
+         Project_Name  := Load_Or_Find
+           (Registry,
+            (Project_File
+               (Project_File'First .. Project_File'Last - 4)
+             & "_"
+             & Integer'Image (J) (2)
+             & ".gpr"));
          Project_Node  := Get_Or_Create (Project_Name);
 
          for JJ in 0 .. 99 loop
-            VFS_File_Name := Create (File_Name & Integer'Image (JJ));
-            Cov_File_Name := Create (File_Name & ".gcov");
+            Cov_File_Name := Create (File_Name);
+            VFS_File_Name := Create (File_Name
+                                     (File_Name'First .. File_Name'Last - 5)
+                                     & Integer'Image (JJ));
             File_Contents := Read_File (Cov_File_Name);
             File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
             Add_Subprograms (File_Node, File_Contents);
@@ -187,12 +207,20 @@ procedure Code_Analysis_Test is
          raise Timeout with Build_Msg ("Creation alarm:", Measure, Create_Max);
       end if;
 
+      Project_Name  := Load_Or_Find
+        (Registry,
+         (Project_File
+            (Project_File'First .. Project_File'Last - 4)
+          & "_"
+          & Integer'Image (5) (2)
+          & ".gpr"));
       Time_Before   := Clock;
-      Project_Name  := Get_Project_From_File (VFS_File_Name, 5);
-      Project_Node  := Get_Or_Create (Project_Name);
-      VFS_File_Name := Create (File_Name & Integer'Image (50));
+      Project_Node  := Element (Get_Tree.Find (Project_Name));
+      VFS_File_Name := Create (File_Name
+                                     (File_Name'First .. File_Name'Last - 5)
+                                     & Integer'Image (50));
       File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
-      Line_Node     := Get_Or_Create (File_Node, Line_Id (534));
+      Line_Node     := Get_Or_Create (File_Node, 534);
       Put_Line ("Request result   :");
       Dump_Line (Line_Node);
       Time_After    := Clock;
@@ -222,34 +250,34 @@ procedure Code_Analysis_Test is
    -- Treeview --
    --------------
 
-   Node_Col_Num  : constant Guint := 1;
+   Node_Col_Count : constant Guint := 1;
    --  Number of columns needed to store the node information in a
    --  Gtk_Tree_Model
-   Cov_Col_Num   : constant Guint := 2;
+   Cov_Col_Count  : constant Guint := 2;
    --  Number of columns needed to store the coverage information in a
    --  Gtk_Tree_Model
 
-   procedure Treeview (File_Name : String) is
+   procedure Treeview (File_Name : String; Project_File : String) is
       Project_Node  : Project_Access;
       Window        : Gtk_Window;
       Container     : Gtk_Box;
       Tree_View     : Gtk_Tree_View;
       Tree_Store    : Gtk_Tree_Store;
-      Types_Array   : GType_Array (1 .. Node_Col_Num + Cov_Col_Num);
+      Types_Array   : GType_Array (1 .. Node_Col_Count + Cov_Col_Count);
       Iter          : Gtk_Tree_Iter;
       Tree_Col      : Gtk_Tree_View_Column;
       Text_Render   : Gtk_Cell_Renderer_Text;
       Num_Col       : Gint;
       pragma Unreferenced (Num_Col, Project_Node);
    begin
-      Project_Node  := Build_Structure (File_Name);
+      Project_Node  := Build_Structure (File_Name, Project_File);
       Init;
       Gtk_New (Window);
       Set_Title (Window, "Analysis report");
       Gtk_New_Vbox (Container);
       Add (Window, Container);
 
-      for J in 1 .. Node_Col_Num + Cov_Col_Num loop
+      for J in 1 .. Node_Col_Count + Cov_Col_Count loop
          Types_Array (Guint (J)) := GType_String;
       end loop;
       --  1 text column to display the nodes
@@ -276,7 +304,7 @@ procedure Code_Analysis_Test is
       Gtk_New (Tree_Col);
       Num_Col := Append_Column (Tree_View, Tree_Col);
 
-      for J in 1 .. Cov_Col_Num loop
+      for J in 1 .. Cov_Col_Count loop
          Gtk_New (Text_Render);
          Pack_Start (Tree_Col, Text_Render, True);
          Add_Attribute (Tree_Col, Text_Render, "text", Gint (J));
@@ -291,19 +319,19 @@ procedure Code_Analysis_Test is
       Free_Code_Analysis;
    end Treeview;
 begin
-   if Argument_Count < 2 then
+   if Argument_Count < 3 then
       Put_Line ("error: missing arguments");
       Print_Usage;
       return;
    end if;
 
-   for J in 2 .. Argument_Count loop
+   for J in 3 .. Argument_Count loop
       if Argument (J) = "build_display_destroy" then
-         Build_Display_Destroy (Argument (1));
+         Build_Display_Destroy (Argument (1), Argument (2));
       elsif Argument (J) = "benchmark" then
-         Benchmark (Argument (1));
+         Benchmark (Argument (1), Argument (2));
       elsif Argument (J) = "treeview" then
-         Treeview (Argument (1));
+         Treeview (Argument (1), Argument (2));
       else
          Print_Usage;
          return;
