@@ -23,6 +23,8 @@
 --  Gtk_Tree_View for Code_Analysis structure
 --  </description>
 
+with Glib;                     use Glib;
+with Projects;                 use Projects;
 with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
 with Code_Coverage;            use Code_Coverage;
 with VFS;
@@ -103,7 +105,10 @@ package body Code_Analysis_Tree_Model is
    begin
       Append (Tree_Store, Iter, Null_Iter);
       Self_Iter := Iter;
-      Set (Tree_Store, Iter, Node_Col, VFS.Base_Name (Project_Node.Name));
+      Set (Tree_Store,
+        Iter,
+        Node_Col,
+        UTF8_String (String'(Project_Name (Project_Node.Name))));
       Fill_Store (Tree_Store, Iter, Project_Node.Analysis_Data);
       Cur := Project_Node.Files.First;
 
