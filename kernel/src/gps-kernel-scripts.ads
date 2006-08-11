@@ -718,7 +718,7 @@ package GPS.Kernel.Scripts is
    --
    --  If Command is Addition_Method, this is a function that should take one
    --  argument in addition to the instance, and return a new instance. This
-   --  handles statemetns like "inst + 1", although the second argument can be
+   --  handles statements like "inst + 1", although the second argument can be
    --  of any type (you can even handle multiple types in your implementation)
    --
    --  Subscription_Method is similar to Addition_Method.
