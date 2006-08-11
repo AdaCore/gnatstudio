@@ -324,11 +324,17 @@ package body Browsers.Entities is
      (Browser : access Gtk_Widget_Record'Class; Item : Browser_Item);
    --  Display a source editor to show the declaration of the entity
 
-   procedure Find_Parent_Types (Item  : access Arrow_Item_Record'Class);
+   procedure Find_Parent_Types (Item : access Arrow_Item_Record'Class);
    --  Display the parent types for the item
 
-   procedure Find_Children_Types (Item  : access Arrow_Item_Record'Class);
+   procedure Find_Child_Types (Item : access Arrow_Item_Record'Class);
    --  Display the children types for the item
+
+   procedure Find_Parent_Or_Child_Types
+     (Item    : access Arrow_Item_Record'Class;
+      Members : Entity_Information_Array;
+      Parents : Boolean);
+   --  Display the parent/child types for the item
 
    procedure Hide_Show_Inherited
      (Event : Gdk_Event;
@@ -370,19 +376,6 @@ package body Browsers.Entities is
 
    procedure Sort (Arr : in out Entity_Information_Arrays.Instance);
    --  Sort the array alphabetically
-
-   type Find_Children_Types_Data is record
-      Iter    : Child_Type_Iterator_Access;
-      Item    : Type_Item;
-      Browser : Type_Browser;
-   end record;
-
-   package Children_Types_Idle is new Gtk.Main.Idle (Find_Children_Types_Data);
-
-   procedure Destroy_Idle (Data : in out Find_Children_Types_Data);
-   function Find_Children_Types_Idle
-     (Data : Find_Children_Types_Data) return Boolean;
-   --  Subprograms used for the lazy computation of children entities
 
    --------------
    -- Commands --
@@ -671,20 +664,17 @@ package body Browsers.Entities is
 
          elsif Command = "derived_types" then
             declare
-               Iter : Child_Type_Iterator;
+               Children : constant Entity_Information_Array :=
+                            Get_Child_Types (Entity);
             begin
                Set_Return_Value_As_List (Data);
-               Get_Child_Types (Iter, Entity);
-               while not At_End (Iter) loop
-                  if Get (Iter) /= null then
-                     Set_Return_Value
-                       (Data, Create_Entity (Get_Script (Data), Get (Iter)));
-                  end if;
-                  Next (Iter);
-               end loop;
-               Destroy (Iter);
-            end;
 
+               for Index in Children'Range loop
+                  Set_Return_Value
+                    (Data,
+                     Create_Entity (Get_Script (Data), Children (Index)));
+               end loop;
+            end;
          end if;
       end if;
 
@@ -822,11 +812,11 @@ package body Browsers.Entities is
          Initialize
            (Item, Browser,
             Get_Name (Entity).all & ASCII.LF & "   " & UML_Abstract,
-            Find_Parent_Types'Access, Find_Children_Types'Access);
+            Find_Parent_Types'Access, Find_Child_Types'Access);
       else
          Initialize
            (Item, Browser, Get_Name (Entity).all,
-            Find_Parent_Types'Access, Find_Children_Types'Access);
+            Find_Parent_Types'Access, Find_Child_Types'Access);
       end if;
       Ref (Entity);
       Item.Entity := Entity;
@@ -1334,20 +1324,30 @@ package body Browsers.Entities is
       Highlight (Browser_Item (New_Item));
    end Add_Item_And_Link;
 
-   -----------------------
-   -- Find_Parent_Types --
-   -----------------------
+   --------------------------------
+   -- Find_Parent_Or_Child_Types --
+   --------------------------------
 
-   procedure Find_Parent_Types (Item  : access Arrow_Item_Record'Class) is
-      It      : constant Type_Item := Type_Item (Item);
-      Parents : constant Entity_Information_Array :=
-                  Get_Parent_Types (It.Entity);
+   procedure Find_Parent_Or_Child_Types
+     (Item    : access Arrow_Item_Record'Class;
+      Members : Entity_Information_Array;
+      Parents : Boolean)
+   is
+      It : constant Type_Item := Type_Item (Item);
    begin
-      for P in Parents'Range loop
-         Add_Item_And_Link (It, Parents (P), "", Parent_Link => True);
+      for P in Members'Range loop
+         Add_Item_And_Link
+           (It, Members (P), "",
+            Parent_Link => True,
+            Reverse_Link => not Parents);
       end loop;
 
-      Set_Parents_Shown (It, True);
+      if Parents then
+         Set_Parents_Shown (It, True);
+      else
+         Set_Children_Shown (It, True);
+      end if;
+
       Redraw_Title_Bar (Item);
 
       Layout (Type_Browser (Get_Browser (Item)), Force => False);
@@ -1357,81 +1357,35 @@ package body Browsers.Entities is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+   end Find_Parent_Or_Child_Types;
+
+   -----------------------
+   -- Find_Parent_Types --
+   -----------------------
+
+   procedure Find_Parent_Types (Item  : access Arrow_Item_Record'Class) is
+   begin
+      Find_Parent_Or_Child_Types
+        (Item, Get_Parent_Types (Type_Item (Item).Entity), Parents => True);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Find_Parent_Types;
 
-   ------------------------------
-   -- Find_Children_Types_Idle --
-   ------------------------------
+   ----------------------
+   -- Find_Child_Types --
+   ----------------------
 
-   function Find_Children_Types_Idle
-     (Data : Find_Children_Types_Data) return Boolean
-   is
-      C : Entity_Information;
+   procedure Find_Child_Types (Item  : access Arrow_Item_Record'Class) is
    begin
-      if At_End (Data.Iter.all) then
-         return False;
-
-      else
-         C := Get (Data.Iter.all);
-         if C /= null then
-            Add_Item_And_Link
-              (Data.Item, C, "", Parent_Link => True,
-               Reverse_Link => True);
-         end if;
-
-         Next (Data.Iter.all);
-         return True;
-      end if;
-
+      Find_Parent_Or_Child_Types
+        (Item, Get_Child_Types (Type_Item (Item).Entity), Parents => False);
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-         return False;
-   end Find_Children_Types_Idle;
-
-   ------------------
-   -- Destroy_Idle --
-   ------------------
-
-   procedure Destroy_Idle (Data : in out Find_Children_Types_Data) is
-   begin
-      Layout (Data.Browser, Force => False);
-      Destroy (Data.Iter);
-      Pop_State (Get_Kernel (Data.Browser));
-      Refresh_Canvas (Get_Canvas (Data.Browser));
-      Data.Browser.Idle_Id := 0;
-   end Destroy_Idle;
-
-   -------------------------
-   -- Find_Children_Types --
-   -------------------------
-
-   procedure Find_Children_Types  (Item  : access Arrow_Item_Record'Class) is
-      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
-      Data   : constant Find_Children_Types_Data :=
-                 (Item    => Type_Item (Item),
-                  Browser => Type_Browser (Get_Browser (Item)),
-                  Iter    => new Child_Type_Iterator);
-   begin
-      Push_State (Kernel, Busy);
-      Get_Child_Types (Data.Iter.all, Data.Item.Entity);
-
-      Data.Browser.Idle_Id := Children_Types_Idle.Add
-        (Cb       => Find_Children_Types_Idle'Access,
-         D        => Data,
-         Priority => Priority_Low_Idle,
-         Destroy  => Destroy_Idle'Access);
-
-      Set_Children_Shown (Item, True);
-      Redraw_Title_Bar (Item);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         Pop_State (Kernel);
-   end Find_Children_Types;
+   end Find_Child_Types;
 
    -------------------------
    -- Hide_Show_Inherited --
