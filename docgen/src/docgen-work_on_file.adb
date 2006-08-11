@@ -187,8 +187,6 @@ package body Docgen.Work_On_File is
 
    function Is_Tagged_Type (Info : Entity_Information) return Boolean is
       Kind      : constant E_Kind := Get_Kind (Info);
-      Child     : Child_Type_Iterator;
-      Is_Tagged : Boolean := False;
    begin
       if Kind.Is_Type then
          case Kind.Kind is
@@ -196,33 +194,19 @@ package body Docgen.Work_On_File is
                return True;
 
             when Record_Kind =>
-               --  In Ada, tagged type are classified as Record
+               --  In Ada, tagged types are classified as Record
                --  The only way to distinguish them to classic
                --  record is to search for parent and children.
                --  ??? tagged types without child and without
                --  parent don't appear in the list
+               --  ??? Ada tagged types are of Class kind.
 
-               if Get_Parent_Types (Info)'Length /= 0 then
-                  Is_Tagged := True;
-
-               else
-                  Get_Child_Types (Child, Info);
-                  while not At_End (Child) loop
-                     if Get (Child) /= null then
-                        Is_Tagged := True;
-                        exit;
-                     end if;
-                     Next (Child);
-                  end loop;
-                  Destroy (Child);
-               end if;
-
-               return Is_Tagged;
+               return Get_Parent_Types (Info)'Length > 0
+                 or else Get_Child_Types (Info)'Length > 0;
 
             when others =>
                return False;
          end case;
-
       else
          return False;
       end if;
