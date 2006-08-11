@@ -22,6 +22,7 @@ with Ada.Text_IO;   use Ada.Text_IO;
 
 with Code_Coverage; use Code_Coverage;
 with VFS;           use VFS;
+with Projects;      use Projects;
 
 package body Code_Analysis_Dump is
 
@@ -41,7 +42,7 @@ package body Code_Analysis_Dump is
    procedure Dump_Project (Cursor : Project_Maps.Cursor) is
       Project_Node : constant Project_Access := Project_Maps.Element (Cursor);
    begin
-      Put ("Project " & VFS.Base_Name (Project_Node.Name));
+      Put ("Project " & Project_Name (Project_Node.Name));
 
       if Project_Node.Analysis_Data.Coverage_Data /= null then
          Dump_Node_Coverage (Project_Node.Analysis_Data.Coverage_Data);
