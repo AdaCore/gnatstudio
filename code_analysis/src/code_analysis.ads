@@ -27,12 +27,15 @@
 --  </description>
 
 with Ada.Containers.Indefinite_Hashed_Maps; use Ada.Containers;
+with GNAT.Strings;                          use GNAT.Strings;
 with Ada.Strings.Hash;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 
-with VFS;      use VFS;
-with VFS_Hash; use VFS_Hash;
+with VFS;           use VFS;
+with VFS_Hash;      use VFS_Hash;
+with Projects;      use Projects;
+with Projects_Hash; use Projects_Hash;
 
 package Code_Analysis is
 
@@ -79,9 +82,6 @@ package Code_Analysis is
    -- Tree types --
    ----------------
 
-   subtype Line_Id is Natural;
-   type Subprogram_Id is access all String;
-
    type Node;
    type Line;
    type Subprogram;
@@ -111,10 +111,10 @@ package Code_Analysis is
 
    package Project_Maps is
      new Indefinite_Hashed_Maps
-       (Key_Type        => VFS.Virtual_File,
+       (Key_Type        => Project_Type,
         Element_Type    => Project_Access,
-        Hash            => VFS_Hash.VFS_Hash,
-        Equivalent_Keys => VFS."=");
+        Hash            => Projects_Hash.Projects_Hash,
+        Equivalent_Keys => Projects."=");
    --  Used to stored the Project nodes
 
    type Code_Analysis_Tree is access all Project_Maps.Map;
@@ -126,7 +126,7 @@ package Code_Analysis is
    --  Line, Subprogram, File, Project
 
    type Line is new Node with record
-      Number : Line_Id;
+      Number : Natural;
    end record;
 
    type Line_Array is array (Positive range <>) of Line_Access;
@@ -134,7 +134,7 @@ package Code_Analysis is
    type Line_Array_Access is access Line_Array;
 
    type Subprogram is new Node with record
-      Name : Subprogram_Id;
+      Name : String_Access;
    end record;
    --  A Subprogram is identified in the Subprograms' maps of every File record
    --  by a string type
@@ -146,7 +146,7 @@ package Code_Analysis is
    end record;
 
    type Project is new Node with record
-      Name  : VFS.Virtual_File;
+      Name  : Project_Type;
       Files : File_Maps.Map;
    end record;
 
@@ -156,18 +156,18 @@ package Code_Analysis is
 
    function Get_Or_Create
      (File_Node : Code_Analysis.File_Access;
-      Line_Num  : Line_Id) return Line_Access;
+      Line_Num  : Natural) return Line_Access;
 
    function Get_Or_Create
      (File_Node : File_Access;
-      Sub_Id    : Subprogram_Id) return Subprogram_Access;
+      Sub_Name  : String_Access) return Subprogram_Access;
 
    function Get_Or_Create
      (Project_Node : Project_Access;
-      File_Id      : VFS.Virtual_File) return File_Access;
+      File_Name    : VFS.Virtual_File) return File_Access;
 
    function Get_Or_Create
-     (Project_Id : VFS.Virtual_File) return Project_Access;
+     (Project_Name : Project_Type) return Project_Access;
    --  allow to get an access pointing on an identified tree node
    --  if the node doesn't exists, it is created
 
@@ -204,7 +204,7 @@ private
    --  and futur other specific analysis records should be added here
 
    procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (String, Subprogram_Id);
+     Ada.Unchecked_Deallocation (String, String_Access);
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Coverage'Class, Coverage_Access);
