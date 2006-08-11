@@ -37,20 +37,20 @@ package Src_Highlighting is
    --  This array contains the tags associated to each Language Entity
    --  Kind that needs to be highlighted in the source editor.
 
-   Keyword_Color_Tag_Name   : constant String := "keyword_tag";
-   Comment_Color_Tag_Name   : constant String := "comment_tag";
-   String_Color_Tag_Name    : constant String := "string_tag";
-   Character_Color_Tag_Name : constant String := "character_tag";
+   Keyword_Color_Tag_Name   : constant String := "keyword";
+   Comment_Color_Tag_Name   : constant String := "comment";
+   String_Color_Tag_Name    : constant String := "string";
+   Character_Color_Tag_Name : constant String := "character";
    --  Respectively, the name of the tags use to highlight keywords, comments,
    --  and strings. Declared as public so that one can retrieve them from
    --  the source buffer using their names.
 
-   Highlight_Line_Tag_Name : constant String := "hl_line_tag";
+   Highlight_Line_Tag_Name : constant String := "hl_line";
    --  The name of the tag used to highlight a line in the buffer.
    --  Declared as public so that one can retrieve them from the
    --  Source Buffer using its name.
 
-   Highlight_Region_Tag_Name : constant String := "hl_region_tag";
+   Highlight_Region_Tag_Name : constant String := "hl_region";
    --  The name of the tag used to highlight regions in the buffer.
    --  Declared as public so that one can retrieve them from the
    --  Source Buffer using its name.
