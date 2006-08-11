@@ -14,6 +14,11 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+F810-009 Entity browser speed up (2006-08-11)
+
+  The cross-reference engine has been improved so that getting the children of
+  a tagged type in the entity browser is now much faster.
+
 F801-019 Project with links hides files in the project explorer (2006-08-08)
 
   When a project's source dirs are in fact symbolic links, and if you have
@@ -59,10 +64,10 @@ F719-012 Removed support for old customization directories
 
 F704-013 Fix "end loop Name; expected" (2006-07-27)
 
-  It's now possible to fix automatically messages like "end loop Name; 
+  It's now possible to fix automatically messages like "end loop Name;
   expected".
 
 EA14-021 Fix "use 'Valid attribute instead" (2006-07-28)
 
-  It's now possible to fix automatically messages like "use 'Valid instead", 
+  It's now possible to fix automatically messages like "use 'Valid instead",
   in e.g. "A in B" (won't work with "not in").
