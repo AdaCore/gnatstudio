@@ -23,7 +23,6 @@
 --  </description>
 
 with Code_Analysis;   use Code_Analysis;
-with VFS;             use VFS;
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with Gtk.Tree_Store;  use Gtk.Tree_Store;
@@ -31,11 +30,6 @@ with Gtk.Tree_Model;  use Gtk.Tree_Model;
 with Glib;            use Glib;
 
 package Code_Coverage is
-
-   function Get_Project_From_File
-     (File   : VFS.Virtual_File;
-      Number : Natural) return VFS.Virtual_File;
-   --  Currently returns a preset name of project
 
    procedure Add_Subprograms
      (File_Node     : Code_Analysis.File_Access;
