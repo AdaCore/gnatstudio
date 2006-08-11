@@ -331,7 +331,7 @@ package body Completion.Entities_Extractor is
 
          declare
             Parents     : constant Entity_Information_Array :=
-              Get_Parent_Types (Type_Of, True);
+                            Get_Parent_Types (Type_Of, True);
             Parent_Type : Entity_Information;
          begin
             for J in reverse Parents'Range loop
@@ -760,65 +760,6 @@ package body Completion.Entities_Extractor is
                         Get_Name (Get (It.It)).all,
                         It.Is_Partial);
    end Is_Valid;
-
-   -----------
-   -- First --
-   -----------
-
-   function First
-     (Parent : Child_Wrapper)
-      return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
-   is
-      It : Child_Iterator_Wrapper;
-   begin
-      Get_Child_Types (It.It, Parent.Parent);
-      It.Resolver := Parent.Resolver;
-
-      return It;
-   end First;
-
-   ------------
-   -- At_End --
-   ------------
-
-   function At_End (It : Child_Iterator_Wrapper) return Boolean is
-   begin
-      return At_End (It.It);
-   end At_End;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next (It : in out Child_Iterator_Wrapper) is
-   begin
-      Next (It.It);
-   end Next;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get
-     (This : Child_Iterator_Wrapper) return Completion_Proposal'Class is
-   begin
-      return Entity_Completion_Proposal'
-        (Mode                 => Show_Identifiers,
-         Resolver             => This.Resolver,
-         Entity               => Get (This.It),
-         Is_All               => False,
-         Filter               => Everything,
-         Params_In_Expression => 0);
-   end Get;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Child_Iterator_Wrapper) is
-   begin
-      Destroy (This.It);
-   end Free;
 
    -----------
    -- First --

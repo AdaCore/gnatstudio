@@ -224,38 +224,6 @@ private
    --  user. Note that the end iterator is a valid iterator regarding this
    --  definition.
 
-   -- Child_Iterator --
-
-   type Child_Wrapper is new Completion_List_Pckg.Virtual_List_Component
-   with record
-      Parent   : Entity_Information;
-      Resolver : Completion_Resolver_Access;
-   end record;
-
-   type Child_Iterator_Wrapper is new
-     Completion_List_Pckg.Virtual_List_Component_Iterator
-   with record
-      It       : Child_Type_Iterator;
-      Resolver : Completion_Resolver_Access;
-   end record;
-
-   function First (Parent : Child_Wrapper)
-      return Completion_List_Pckg.Virtual_List_Component_Iterator'Class;
-   --  See inherited documentation
-
-   function At_End (It : Child_Iterator_Wrapper) return Boolean;
-   --  See inherited documentation
-
-   procedure Next (It : in out Child_Iterator_Wrapper);
-   --  See inherited documentation
-
-   function Get
-     (This : Child_Iterator_Wrapper) return Completion_Proposal'Class;
-   --  See inherited documentation
-
-   procedure Free (This : in out Child_Iterator_Wrapper);
-   --  See inherited documentation
-
    -- Source_File_Iterator --
 
    type Source_File_Component is new
