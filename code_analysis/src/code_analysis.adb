@@ -26,16 +26,16 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (File_Node : Code_Analysis.File_Access;
-      Line_Num  : Line_Id) return Line_Access
+      Line_Num  : Natural) return Line_Access
    is
       Line_Node : Line_Access;
    begin
-      if File_Node.Lines (Integer (Line_Num)) /= null then
-         return File_Node.Lines (Natural (Line_Num));
+      if File_Node.Lines (Line_Num) /= null then
+         return File_Node.Lines (Line_Num);
       end if;
 
       Line_Node := new Line;
-      Line_Node.Number := Integer (Line_Num);
+      Line_Node.Number := Line_Num;
       File_Node.Lines (Integer (Line_Num)) := Line_Node;
       return Line_Node;
    end Get_Or_Create;
@@ -46,17 +46,17 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (File_Node  : File_Access;
-      Sub_Id     : Subprogram_Id) return Subprogram_Access
+      Sub_Name   : String_Access) return Subprogram_Access
    is
       Sub_Node : Subprogram_Access;
    begin
-      if File_Node.Subprograms.Contains (String (Sub_Id.all)) then
-         return File_Node.Subprograms.Element (Sub_Id.all);
+      if File_Node.Subprograms.Contains (Sub_Name.all) then
+         return File_Node.Subprograms.Element (Sub_Name.all);
       end if;
 
       Sub_Node := new Subprogram;
-      Sub_Node.Name := Sub_Id;
-      File_Node.Subprograms.Insert (String (Sub_Id.all), Sub_Node);
+      Sub_Node.Name := Sub_Name;
+      File_Node.Subprograms.Insert (Sub_Name.all, Sub_Node);
       return Sub_Node;
    end Get_Or_Create;
 
@@ -66,17 +66,17 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (Project_Node : Project_Access;
-      File_Id      : VFS.Virtual_File) return File_Access
+      File_Name      : VFS.Virtual_File) return File_Access
    is
       File_Node : File_Access;
    begin
-      if Project_Node.Files.Contains (File_Id) then
-         return Project_Node.all.Files.Element (File_Id);
+      if Project_Node.Files.Contains (File_Name) then
+         return Project_Node.all.Files.Element (File_Name);
       end if;
 
       File_Node := new File;
-      File_Node.Name := File_Id;
-      Project_Node.Files.Insert (File_Id, File_Node);
+      File_Node.Name := File_Name;
+      Project_Node.Files.Insert (File_Name, File_Node);
       return File_Node;
    end Get_Or_Create;
 
@@ -85,17 +85,17 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (Project_Id : VFS.Virtual_File) return Project_Access
+     (Project_Name : Project_Type) return Project_Access
    is
       Project_Node : Project_Access;
    begin
-      if Projects.Contains (Project_Id) then
-         return Projects.Element (Project_Id);
+      if Projects.Contains (Project_Name) then
+         return Projects.Element (Project_Name);
       end if;
 
       Project_Node := new Project;
-      Project_Node.Name := Project_Id;
-      Projects.Insert (Project_Id, Project_Node);
+      Project_Node.Name := Project_Name;
+      Projects.Insert (Project_Name, Project_Node);
       return Project_Node;
    end Get_Or_Create;
 
