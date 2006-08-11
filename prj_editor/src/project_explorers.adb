@@ -58,6 +58,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
 
+with Namet;                     use Namet;
 with Types;                     use Types;
 
 with Basic_Types;
@@ -1357,7 +1358,6 @@ package body Project_Explorers is
 
    begin
       --  If the node is not already up-to-date
-
       if not Is_Up_To_Date (Explorer.Tree.Model, Node) then
          --  Remove the dummy node, and report that the node is up-to-date
 
@@ -1454,6 +1454,7 @@ package body Project_Explorers is
       Area_Rect : Gdk_Rectangle;
       Path2     : Gtk_Tree_Path;
       Iter      : Gtk_Tree_Iter;
+
    begin
       if T.Expanding then
          return;
@@ -1489,11 +1490,13 @@ package body Project_Explorers is
 
       --  Set back the cursor to the parent node.
       Set_Cursor (T.Tree, Path, null, False);
+      T.Expanding := False;
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+         T.Expanding := False;
    end Expand_Tree_Cb;
 
    ----------------------
@@ -1628,6 +1631,7 @@ package body Project_Explorers is
          Case_Sensitive => Is_Case_Sensitive (Server => Build_Server));
       use Boolean_String_Hash.String_Hash_Table;
       Sources  : Boolean_String_Hash.String_Hash_Table.HTable;
+      Sources_D    : constant Name_Id_Array := Source_Dirs (Project);
       Sources_Iter : Boolean_String_Hash.String_Hash_Table.Iterator;
 
       ----------------
@@ -1696,6 +1700,11 @@ package body Project_Explorers is
 
       for F in Files'Range loop
          Set (Sources, Dir_Name (Files (F)).all, True);
+      end loop;
+
+      for F in Sources_D'Range loop
+         Get_Name_String (Sources_D (F));
+         Set (Sources, Name_As_Directory (Name_Buffer (1 .. Name_Len)), True);
       end loop;
 
       Get_First (Sources, Sources_Iter);
