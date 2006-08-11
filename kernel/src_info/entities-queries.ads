@@ -408,21 +408,10 @@ package Entities.Queries is
    --  Return the parent package for the package Pkg.
    --  This is not intended to be use for nested packages.
 
-   type Child_Type_Iterator is private;
-   type Child_Type_Iterator_Access is access Child_Type_Iterator;
-
-   procedure Get_Child_Types
-     (Iter   : out Child_Type_Iterator;
-      Entity : Entity_Information);
-   --  Return all the entities derived from Entity
-
-   function  At_End  (Iter : Child_Type_Iterator) return Boolean;
-   procedure Next    (Iter : in out Child_Type_Iterator);
-   function  Get     (Iter : Child_Type_Iterator) return Entity_Information;
-   procedure Destroy (Iter : in out Child_Type_Iterator);
-   procedure Destroy (Iter : in out Child_Type_Iterator_Access);
-   --  Usual subprograms for iterators. Get might return null if not all source
-   --  files have been parsed.
+   function Get_Child_Types
+     (Entity    : Entity_Information;
+      Recursive : Boolean := False) return Entity_Information_Array;
+   --  Return the list of children for Entity.
 
    --------------------------
    -- Primitive operations --
@@ -457,12 +446,6 @@ private
       Current_Parent    : Integer;
 
       Current_Primitive : Entity_Information_Arrays.Index_Type;
-   end record;
-
-   type Child_Type_Iterator is record
-      Entity : Entity_Information;
-      Dep    : Dependency_Iterator;
-      Index  : Entity_Information_Arrays.Index_Type;
    end record;
 
    type Entity_Iterator is record
