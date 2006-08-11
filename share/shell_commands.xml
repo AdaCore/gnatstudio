@@ -4279,7 +4279,9 @@ It is possible to close all editors at once using a command like
       <param name="self">An instance of GPS.EditorBuffer</param>
       <param name="name" default="">A string</param>
       <return>An instance of GPS.EditorOverlay</return>
-      <description>Create a new overlay. Properties can be set on this overlay, which can then be applied to one or more ranges of text to changes its visual rqendering or to associate user data with it. If name is specified, this function will return an existing overlay with the same name in this buffer if any can be found. If the name is not specified, a new overlay is created. Changing the properties of an existing overlay results in an immediate graphical update of the views associated with the buffer.</description>
+      <description>Create a new overlay. Properties can be set on this overlay, which can then be applied to one or more ranges of text to changes its visual rqendering or to associate user data with it. If name is specified, this function will return an existing overlay with the same name in this buffer if any can be found. If the name is not specified, a new overlay is created. Changing the properties of an existing overlay results in an immediate graphical update of the views associated with the buffer.
+A number of predefined overlay exits. Among these are the ones used for syntax highlighting by GPS itself, which are "keyword", "comment", "string", "character". You can use these to navigate from one comment section to the next for instance.
+</description>
   </shell_doc>
 
   <shell_doc name="GPS.EditorBuffer.apply_overlay">
