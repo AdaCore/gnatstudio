@@ -438,11 +438,16 @@ package body Docgen.Backend.Text is
         (Entity : Entity_Information; E_Data : in out T_Entities);
       --  Output Text info related to Entity.
 
-      Has_Parents  : Boolean := False; -- True if parent entities exist
-      P_Entities   : T_Entities;
+      Parents  : constant Entity_Information_Array :=
+                   Get_Parent_Types (Entity);
+      Children : constant Entity_Information_Array :=
+                   Get_Child_Types (Entity);
 
-      Has_Children : Boolean := False; -- Idem for children
+      Has_Parents  : constant Boolean := Parents'Length > 0;
+      Has_Children : constant Boolean := Children'Length > 0;
+
       C_Entities   : T_Entities;
+      P_Entities   : T_Entities;
 
       -------------------
       -- Output_Entity --
@@ -471,14 +476,10 @@ package body Docgen.Backend.Text is
          E_Data.Decl_Column := E_Data.Decl_Column & Col;
       end Output_Entity;
 
-      Parents : constant Entity_Information_Array := Get_Parent_Types (Entity);
-      Child   : Child_Type_Iterator;
    begin
       --  Parents
 
-      if Parents'Length > 0 then
-         Has_Parents := True;
-
+      if Has_Parents then
          for P in Parents'Range loop
             Output_Entity (Parents (P), P_Entities);
          end loop;
@@ -486,18 +487,10 @@ package body Docgen.Backend.Text is
 
       --  Children
 
-      Get_Child_Types (Iter => Child, Entity => Entity);
-
-      if not At_End (Child) then
-         Has_Children := True;
-
-         while not At_End (Child) loop
-            if Get (Child) /= null then
-               Output_Entity (Get (Child), C_Entities);
-            end if;
-            Next (Child);
+      if Has_Children then
+         for P in Children'Range loop
+            Output_Entity (Children (P), C_Entities);
          end loop;
-         Destroy (Child);
       end if;
 
       Append
