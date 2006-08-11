@@ -23,21 +23,6 @@ with GNAT.Regpat; use GNAT.Regpat;
 
 package body Code_Coverage is
 
-   ---------------------------
-   -- Get_Project_From_File --
-   ---------------------------
-
-   function Get_Project_From_File
-     (File   : VFS.Virtual_File;
-      Number : Natural) return VFS.Virtual_File
-   is
-      pragma Unreferenced (File);
-      Project : constant VFS.Virtual_File := VFS.Create
-        ("Dummy_Project_Name" & Natural'Image (Number));
-   begin
-      return Project;
-   end Get_Project_From_File;
-
    ---------------------
    -- Add_Subprograms --
    ---------------------
@@ -51,7 +36,7 @@ package body Code_Coverage is
            , Multiple_Lines);
       Matches_1  : Match_Array (0 .. 4);
       Current    : Natural;
-      Subprogram : Subprogram_Id;
+      Subprogram : String_Access;
       Sub_Node   : Subprogram_Access;
    begin
       Current    := File_Contents'First;
@@ -84,7 +69,7 @@ package body Code_Coverage is
       Matches    : Match_Array (0 .. 2);
       Current    : Natural;
       Line_Count : Natural := 0;
-      Line       : Line_Id;
+      Line       : Natural;
       Line_Node  : Line_Access;
    begin
       for C in File_Contents'First .. File_Contents'Last
