@@ -58,8 +58,6 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
 
-with Namet;                     use Namet;
-
 with Types;                     use Types;
 
 with Basic_Types;
@@ -80,7 +78,6 @@ with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
 with Remote;                    use Remote;
 with String_Hash;
 with String_List_Utils;
@@ -1623,8 +1620,25 @@ package body Project_Explorers is
       Dir_Node : String_List_Utils.String_List.List_Node;
       Project  : constant Project_Type := Get_Project_From_Node
         (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-      Sources  : constant Name_Id_Array := Source_Dirs (Project);
       Imported : Project_Type_Array := Get_Imported_Projects (Project);
+
+      procedure Do_Nothing (B : in out Boolean);
+      package Boolean_String_Hash is new String_Hash
+        (Boolean, Do_Nothing, False,
+         Case_Sensitive => Is_Case_Sensitive (Server => Build_Server));
+      use Boolean_String_Hash.String_Hash_Table;
+      Sources  : Boolean_String_Hash.String_Hash_Table.HTable;
+      Sources_Iter : Boolean_String_Hash.String_Hash_Table.Iterator;
+
+      ----------------
+      -- Do_Nothing --
+      ----------------
+
+      procedure Do_Nothing (B : in out Boolean) is
+         pragma Unreferenced (B);
+      begin
+         null;
+      end Do_Nothing;
 
       ------------------
       -- Add_Projects --
@@ -1674,31 +1688,23 @@ package body Project_Explorers is
       end Add_Remaining_Source_Dirs;
 
    begin
-      --  The goal here is to keep the directories if their current state
-      --  (expanded or not), while doing the update.
+      --  Do not trust the source dirs returned by Project: depending on
+      --  whether we are in trusted mode or not, and whether the user is
+      --  using links or not, the names in Source_Dirs might not be the same
+      --  than the name through which we see the sources.
+      --  Use a temporary hash table to get a unique entry for each directory
 
-      for J in Sources'Range loop
-         if Sources (J) /= No_Name then
-            Get_Name_String (Sources (J));
-
-            --  Do we need to normalize the names here ?
-            --  Otherwise, in trusted mode, some of the files will not show up
-            --  in the explorer. The price to pay, though, is that the
-            --  directory names might be different than in the project, since
-            --  we show the name of the pointed directory
-
-            if not Get_Trusted_Mode (Get_Registry (Explorer.Kernel).all) then
-               String_List_Utils.String_List.Append
-                 (Dirs, Name_As_Directory (Name_Buffer (1 .. Name_Len)));
-            else
-               String_List_Utils.String_List.Append
-                 (Dirs, Name_As_Directory
-                    (Normalize_Pathname
-                       (Name_Buffer (1 .. Name_Len),
-                        Resolve_Links => True)));
-            end if;
-         end if;
+      for F in Files'Range loop
+         Set (Sources, Dir_Name (Files (F)).all, True);
       end loop;
+
+      Get_First (Sources, Sources_Iter);
+      while Get_Element (Sources_Iter) loop
+         String_List_Utils.String_List.Append (Dirs, Get_Key (Sources_Iter));
+         Get_Next (Sources, Sources_Iter);
+      end loop;
+
+      Reset (Sources);
 
       if Is_Case_Sensitive (Build_Server) then
          String_List_Utils.Sort (Dirs);
