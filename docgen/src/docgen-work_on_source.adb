@@ -1017,6 +1017,11 @@ package body Docgen.Work_On_Source is
       Index_File    : File_Descriptor;
       Result        : Unbounded_String;
 
+      procedure Process_Parents_Or_Children
+        (Members             : Entity_Information_Array;
+         Member_With_Link    : Family_Type;
+         Member_Without_Link : Family_Type;
+         No_Member           : Family_Type);
       procedure Process_Parents  (Info : Entity_Information);
       procedure Process_Children (Info : Entity_Information);
       --  Output references to the parents and children of a tagged type
@@ -1033,32 +1038,44 @@ package body Docgen.Work_On_Source is
       -- Process_Parents --
       ---------------------
 
-      procedure Process_Parents (Info : Entity_Information)
-      is
-         Parents : constant Entity_Information_Array :=
-           Get_Parent_Types (Info);
+      procedure Process_Parents_Or_Children
+        (Members             : Entity_Information_Array;
+         Member_With_Link    : Family_Type;
+         Member_Without_Link : Family_Type;
+         No_Member           : Family_Type) is
       begin
-         if Parents'Length /= 0 then
-            for P in Parents'Range loop
+         if Members'Length /= 0 then
+            for M in Members'Range loop
                if Source_File_In_List
                  (Source_File_List,
-                  Get_File (Get_Declaration_Of (Parents (P))))
+                  Get_File (Get_Declaration_Of (Members (M))))
                then
                   Doc_Index_Tagged_Type
-                    (B, Kernel, Result, Source_File_List, Parents (P),
-                     Parent_With_Link);
-
+                    (B, Kernel, Result, Source_File_List, Members (M),
+                     Member_With_Link);
                else
                   Doc_Index_Tagged_Type
-                    (B, Kernel, Result, Source_File_List, Parents (P),
-                     Parent_Without_Link);
+                    (B, Kernel, Result, Source_File_List, Members (M),
+                     Member_Without_Link);
                end if;
             end loop;
 
          else
             Doc_Index_Tagged_Type
-              (B, Kernel, Result, Source_File_List, null, No_Parent);
+              (B, Kernel, Result, Source_File_List, null, No_Member);
          end if;
+      end Process_Parents_Or_Children;
+
+      ---------------------
+      -- Process_Parents --
+      ---------------------
+
+      procedure Process_Parents (Info : Entity_Information) is
+         Parents : constant Entity_Information_Array :=
+                     Get_Parent_Types (Info);
+      begin
+         Process_Parents_Or_Children
+           (Parents, Parent_With_Link, Parent_Without_Link, No_Parent);
       end Process_Parents;
 
       ----------------------
@@ -1066,35 +1083,11 @@ package body Docgen.Work_On_Source is
       ----------------------
 
       procedure Process_Children (Info : Entity_Information) is
-         Child  : Child_Type_Iterator;
-         Son    : Entity_Information;
+         Children : constant Entity_Information_Array :=
+                      Get_Child_Types (Info);
       begin
-         Get_Child_Types (Iter => Child, Entity => Info);
-         if At_End (Child) then
-            Doc_Index_Tagged_Type
-              (B, Kernel, Result, Source_File_List, null, No_Child);
-         end if;
-
-         while not At_End (Child) loop
-            Son := Get (Child);
-            if Son /= null then
-               if Source_File_In_List
-                 (Source_File_List,
-                  Get_File (Get_Declaration_Of (Son)))
-               then
-                  Doc_Index_Tagged_Type
-                    (B, Kernel, Result, Source_File_List,
-                     Son, Child_With_Link);
-               else
-                  Doc_Index_Tagged_Type
-                    (B, Kernel, Result, Source_File_List,
-                     Son, Child_Without_Link);
-               end if;
-            end if;
-            Next (Child);
-         end loop;
-
-         Destroy (Child);
+         Process_Parents_Or_Children
+           (Children, Child_With_Link, Child_Without_Link, No_Child);
       end Process_Children;
 
       ------------------
