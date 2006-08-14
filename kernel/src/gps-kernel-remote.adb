@@ -103,7 +103,8 @@ package body GPS.Kernel.Remote is
    Invalid_Path : exception;
 
    type Remote_Module_Record is new Module_ID_Record with record
-      Kernel : Kernel_Handle;
+      Kernel            : Kernel_Handle;
+      Project_Reloading : Boolean := False;
    end record;
    type Remote_Module_ID is access all Remote_Module_Record'Class;
 
@@ -2683,6 +2684,7 @@ package body GPS.Kernel.Remote is
       --  Register the module
       Remote_Module := new Remote_Module_Record;
       Remote_Module.Kernel := Kernel_Handle (Kernel);
+      Remote_Module.Project_Reloading := False;
       Register_Module
         (Remote_Module, Kernel, "remote");
 
@@ -2763,6 +2765,11 @@ package body GPS.Kernel.Remote is
       Local_File : VFS.Virtual_File;
 
    begin
+      --  This module reloaded the project: remote config is OK
+      if Remote_Module.Project_Reloading then
+         return;
+      end if;
+
       --  Get local file equivalence for project
 
       if not Is_Local (D.File) then
@@ -2774,11 +2781,15 @@ package body GPS.Kernel.Remote is
 
       --  Get servers associated with this file
 
-      Trace (Me, "Loading servers_config property for file " &
-             Full_Name (Local_File).all);
-      Get_Property
-        (Property, Local_File,
-         Name => "servers_config", Found => Success);
+      if Get_Automatic_Server_Assignment_State then
+         Trace (Me, "Loading servers_config property for file " &
+                Full_Name (Local_File).all);
+         Get_Property
+           (Property, Local_File,
+            Name => "servers_config", Found => Success);
+      else
+         Success := False;
+      end if;
 
       --  If no previous property exist, create it
       if not Success then
@@ -2807,18 +2818,40 @@ package body GPS.Kernel.Remote is
       --  Assign servers following property values
 
       for J in Property.Servers'Range loop
-         declare
-            Nickname  : constant String := Property.Servers (J).Nickname.all;
-            Hook_Data : aliased Server_Config_Changed_Hooks_Args :=
-              (Hooks_Data with
-               Nickname_Length => Nickname'Length,
-               Server          => J,
-               Nickname        => Nickname);
-         begin
-            Assign (J, Nickname);
-            Run_Hook (Kernel, Server_Config_Changed_Hook,
-                      Hook_Data'Unchecked_Access);
-         end;
+         --  If current server is not local, and we're assigning the local
+         --  server.
+         if not Is_Local (J) and then
+           (Property.Servers (J).Nickname.all = Local_Nickname
+            or else Property.Servers (J).Nickname.all = "")
+         then
+            declare
+               Hook_Data : aliased Server_Config_Changed_Hooks_Args :=
+                 (Hooks_Data with
+                  Nickname_Length => Local_Nickname'Length,
+                  Server          => J,
+                  Nickname        => Local_Nickname);
+            begin
+               Assign (J, "");
+               Run_Hook (Kernel, Server_Config_Changed_Hook,
+                         Hook_Data'Unchecked_Access);
+            end;
+
+         elsif Property.Servers (J).Nickname.all /= Get_Nickname (J) then
+            declare
+               Nickname  : constant String :=
+                             Property.Servers (J).Nickname.all;
+               Hook_Data : aliased Server_Config_Changed_Hooks_Args :=
+                             (Hooks_Data with
+                              Nickname_Length => Nickname'Length,
+                              Server          => J,
+                              Nickname        => Nickname);
+
+            begin
+               Assign (J, Nickname);
+               Run_Hook (Kernel, Server_Config_Changed_Hook,
+                         Hook_Data'Unchecked_Access);
+            end;
+         end if;
       end loop;
 
       --  If Project is loaded from a distant host, force build_server as
@@ -3196,9 +3229,20 @@ package body GPS.Kernel.Remote is
    function Reload_Prj_Cb (Data : Reload_Callback_Data) return Boolean is
    begin
       Trace (Me, "Reloading the project");
+      Remote_Module.Project_Reloading := True;
       Load_Project (Data.Kernel, Project_Path (Get_Project (Data.Kernel)));
+      Remote_Module.Project_Reloading := False;
       return False;
    end Reload_Prj_Cb;
+
+   -------------------------------------------
+   -- Get_Automatic_Server_Assignment_State --
+   -------------------------------------------
+
+   function Get_Automatic_Server_Assignment_State return Boolean is
+   begin
+      return Get_Pref (Auto_Reload_Remote_Config);
+   end Get_Automatic_Server_Assignment_State;
 
    ------------
    -- Assign --
@@ -3227,6 +3271,18 @@ package body GPS.Kernel.Remote is
       pragma Unreferenced (Id);
 
    begin
+      if Nickname = "" then
+         --  Force to local nickname so that hook's data is correct.
+         Assign (Kernel, Server, Local_Nickname, Prj_File, Reload_Prj);
+         return;
+      end if;
+
+      if Get_Nickname (Server) = Nickname
+        or else Get_Printable_Nickname (Server) = Nickname
+      then
+         return;
+      end if;
+
       Assign (Server, Nickname);
 
       --  Update the project's property
