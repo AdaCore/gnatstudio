@@ -1192,8 +1192,6 @@ package body GNAT.Expect.TTY.Remote is
       Res       : Expect_Match;
       NL_Regexp : constant Pattern_Matcher :=
                     Compile ("^[^\n]*\n", Single_Line);
-      Desc      : TTY_Process_Descriptor renames
-                    Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd;
 
    begin
       if Descriptor.Session_Nb = 0 then
