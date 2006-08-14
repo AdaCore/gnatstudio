@@ -1196,6 +1196,10 @@ package body GNAT.Expect.TTY.Remote is
                     Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd;
 
    begin
+      if Descriptor.Session_Nb = 0 then
+         return;
+      end if;
+
       if not Finalized then
          if Descriptor.Busy then
             Interrupt (Descriptor);
@@ -1205,111 +1209,118 @@ package body GNAT.Expect.TTY.Remote is
                         Filter_Out'Access);
          Status := 0;
 
-         --  Close is called before remote program terminates. Close the
-         --  underlying session.
-         --  This happens when the session is blocked or has died.
+         declare
+            Desc : TTY_Process_Descriptor renames
+              Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd;
+            State : Shell_State_Type renames
+              Descriptor.Machine.Sessions (Descriptor.Session_Nb).State;
+         begin
 
-         if not Descriptor.Terminated then
-            Descriptor.Machine.Sessions (Descriptor.Session_Nb).State := OFF;
-            Close (Desc,
-                   Status);
-            Descriptor.Session_Died := True;
+            --  Close is called before remote program terminates. Close the
+            --  underlying session.
+            --  This happens when the session is blocked or has died.
 
-         elsif not Descriptor.Session_Died then
-            if Descriptor.Shell.Get_Status_Cmd /= null then
-               --  Try to retrieve the terminated program's status
+            if not Descriptor.Terminated then
+               State := OFF;
+               Close (Desc, Status);
+               Descriptor.Session_Died := True;
 
-               Send (Desc, Descriptor.Shell.Get_Status_Cmd.all);
+            elsif not Descriptor.Session_Died then
+               if Descriptor.Shell.Get_Status_Cmd /= null then
+                  --  Try to retrieve the terminated program's status
 
-               if Descriptor.Machine.Desc.Dbg /= null then
-                  Print (Descriptor.Machine.Desc.Dbg,
-                         Descriptor.Shell.Get_Status_Cmd.all,
-                         Input);
-               end if;
+                  Send (Desc, Descriptor.Shell.Get_Status_Cmd.all);
 
-               --  Skip echo if needed
-
-               if Descriptor.Machine.Echoing then
-                  Expect (Desc,
-                          Res,
-                          NL_Regexp,
-                          Matched,
-                          Descriptor.Machine.Desc.Timeout);
-                  Trace
-                    (Me, "skipped " & Expect_Out (Desc));
-               end if;
-
-               --  Get status
-               Expect (Desc,
-                       Res,
-                       Descriptor.Shell.Get_Status_Ptrn.all,
-                       Matched,
-                       Descriptor.Machine.Desc.Timeout);
-
-               if Descriptor.Machine.Desc.Dbg /= null then
-                  Print (Descriptor.Machine.Desc.Dbg,
-                         Expect_Out (Desc),
-                         Output);
-               end if;
-
-               if Matched (0) /= No_Match then
-                  declare
-                     Out_Str : constant String :=
-                                 Expect_Out (Desc)
-                                   (Matched (1).First .. Matched (1).Last);
-                  begin
-                     Trace (Me, "Status is '" & Out_Str & "'");
-                     Status := Integer'Value (Out_Str);
-
-                     if Active (Me) then
-                        Trace (Me, "status is " & Integer'Image (Status));
-                     end if;
-
-                  exception
-                     when Constraint_Error =>
-                        Trace (Me, "could not evaluate status from '" &
-                               Out_Str & "'");
-                        Status := 1;
-                  end;
-
-               else
-
-                  if Active (Me) then
-                     Trace (Me, "status does not match status pattern");
-                     Trace (Me, Desc.Buffer.all);
+                  if Descriptor.Machine.Desc.Dbg /= null then
+                     Print (Descriptor.Machine.Desc.Dbg,
+                            Descriptor.Shell.Get_Status_Cmd.all,
+                            Input);
                   end if;
 
-                  Status := 0;
+                  --  Skip echo if needed
+
+                  if Descriptor.Machine.Echoing then
+                     Expect (Desc,
+                             Res,
+                             NL_Regexp,
+                             Matched,
+                             Descriptor.Machine.Desc.Timeout);
+                     Trace
+                       (Me, "skipped " & Expect_Out (Desc));
+                  end if;
+
+                  --  Get status
+                  Expect (Desc,
+                          Res,
+                          Descriptor.Shell.Get_Status_Ptrn.all,
+                          Matched,
+                          Descriptor.Machine.Desc.Timeout);
+
+                  if Descriptor.Machine.Desc.Dbg /= null then
+                     Print (Descriptor.Machine.Desc.Dbg,
+                            Expect_Out (Desc),
+                            Output);
+                  end if;
+
+                  if Matched (0) /= No_Match then
+                     declare
+                        Out_Str : constant String :=
+                                    Expect_Out (Desc)
+                                    (Matched (1).First .. Matched (1).Last);
+                     begin
+                        Trace (Me, "Status is '" & Out_Str & "'");
+                        Status := Integer'Value (Out_Str);
+
+                        if Active (Me) then
+                           Trace (Me, "status is " & Integer'Image (Status));
+                        end if;
+
+                     exception
+                        when Constraint_Error =>
+                           Trace (Me, "could not evaluate status from '" &
+                                  Out_Str & "'");
+                           Status := 1;
+                     end;
+
+                  else
+
+                     if Active (Me) then
+                        Trace (Me, "status does not match status pattern");
+                        Trace (Me, Desc.Buffer.all);
+                     end if;
+
+                     Status := 0;
+                  end if;
+
+                  --  Get prompt
+
+                  Expect (Desc, Res, Descriptor.Shell.Prompt.all,
+                          Matched,
+                          Descriptor.Machine.Desc.Timeout);
+
+                  if Res = Expect_Timeout then
+                     --  Shell does not respond to command. Kill it
+
+                     raise Process_Died;
+
+                  elsif Descriptor.Machine.Desc.Dbg /= null then
+                     Print (Descriptor.Machine.Desc.Dbg,
+                            Expect_Out (Desc),
+                            Output);
+                  end if;
                end if;
 
-               --  Get prompt
-
-               Expect (Desc, Res, Descriptor.Shell.Prompt.all,
-                       Matched,
-                       Descriptor.Machine.Desc.Timeout);
-
-               if Res = Expect_Timeout then
-                  --  Shell does not respond to command. Kill it
-
-                  raise Process_Died;
-
-               elsif Descriptor.Machine.Desc.Dbg /= null then
-                  Print (Descriptor.Machine.Desc.Dbg,
-                         Expect_Out (Desc),
-                         Output);
-               end if;
+               State := READY;
             end if;
 
-            Descriptor.Machine.Sessions (Descriptor.Session_Nb).State := READY;
-         end if;
-
-         Descriptor.Input_Fd   := GNAT.OS_Lib.Invalid_FD;
-         Descriptor.Output_Fd  := GNAT.OS_Lib.Invalid_FD;
-         Descriptor.Error_Fd   := GNAT.OS_Lib.Invalid_FD;
-         Descriptor.Pid        := Invalid_Pid;
-         Descriptor.Process    := Null_Address;
-         Descriptor.Session_Nb := 0;
-         Close_Pseudo_Descriptor (Descriptor);
+            Descriptor.Input_Fd   := GNAT.OS_Lib.Invalid_FD;
+            Descriptor.Output_Fd  := GNAT.OS_Lib.Invalid_FD;
+            Descriptor.Error_Fd   := GNAT.OS_Lib.Invalid_FD;
+            Descriptor.Pid        := Invalid_Pid;
+            Descriptor.Process    := Null_Address;
+            Descriptor.Session_Nb := 0;
+            Close_Pseudo_Descriptor (Descriptor);
+         end;
 
       else
          Status := 0;
