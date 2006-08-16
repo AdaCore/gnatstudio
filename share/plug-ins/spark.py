@@ -1,6 +1,6 @@
 ## This file provides utilities used by the SPARK plug-in for GPS.
-## Copyright (c) 2004-2005 Praxis High Integrity Systems Limited
-## Copyright (c) 2005 AdaCore
+## Copyright (c) 2004-2006 Praxis High Integrity Systems Limited
+## Copyright (c) 2005-2006 AdaCore
 
 #####################################
 # SPARK Toolset Customization for GPS
@@ -52,8 +52,7 @@
 
 
 a = """<?xml version="1.0"?>
-<!--  Note: do not use the ampersand character in XML comments!!
--->
+<!--  Note: do not use the ampersand character in XML comments!!       -->
 
 <SPARK>
 
@@ -70,17 +69,16 @@ a = """<?xml version="1.0"?>
     <!-- gvd/common/language-ada.adb).                             -->
     <!-- The SPARK keywords are listed first, for maintainability. -->
     <Keywords>^(assert|check|derives|global|from|h(ide|old)|</Keywords>
- 
-<Keywords>in(herit|itializes|variant)|main_program|own|p(re|ost)|</Keywords>
-<Keywords>some|</Keywords>
-<Keywords>a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|</Keywords> 
-<Keywords>b(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|</Keywords>
-<Keywords>e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|</Keywords>
-<Keywords>g(eneric|oto)|i[fns]|l(imited|oop)|mod|n(ew|ot|ull)|</Keywords>
-<Keywords>o(thers|ut|[fr])|p(ackage|r(agma|ivate|o(cedure|tected)))|</Keywords>
-<Keywords>r(a(ise|nge)|e(cord|m|names|queue|turn|verse))|</Keywords>
-<Keywords>s(e(lect|parate)|ubtype)|t(a(gged|sk)|erminate|hen|ype)|</Keywords>
-<Keywords>u(ntil|se)|w(h(en|ile)|ith)|xor)</Keywords>
+    <Keywords>in(herit|itializes|variant)|main_program|own|p(re|ost)|</Keywords>
+    <Keywords>some|</Keywords>
+    <Keywords>a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|</Keywords>
+    <Keywords>b(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|</Keywords>
+    <Keywords>e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|</Keywords>
+    <Keywords>g(eneric|oto)|i[fns]|l(imited|oop)|mod|n(ew|ot|ull)|</Keywords>
+    <Keywords>o(thers|ut|[fr])|p(ackage|r(agma|ivate|o(cedure|tected)))|</Keywords>
+    <Keywords>r(a(ise|nge)|e(cord|m|names|queue|turn|verse))|</Keywords>
+    <Keywords>s(e(lect|parate)|ubtype)|t(a(gged|sk)|erminate|hen|ype)|</Keywords>
+    <Keywords>u(ntil|se)|w(h(en|ile)|ith)|xor)</Keywords>
 
     <Context>
       <!-- This hard-codes # and $ as annotation characters.       -->
@@ -141,12 +139,9 @@ a = """<?xml version="1.0"?>
     <language>Ada</language>
     <switches columns ="2" lines="5">
       <title line="1" column-span="2">Examiner Files</title>
-      <field line="1" label=" Index File " as-file="true"
-switch="~index_file=" />
-      <field line="1" label=" Warning File " as-file="true"
-switch="~warning_file=" />
-      <field line="1" label=" Configuration File " as-file="true"
-switch="~config=" />
+      <field line="1" label=" Index File " as-file="true" switch="~index_file=" />
+      <field line="1" label=" Warning File " as-file="true" switch="~warning_file=" />
+      <field line="1" label=" Configuration File " as-file="true" switch="~config=" />
       <title line="1" column="2" column-span="0" />
       <title column="1" line="2">Language</title>
       <radio column="1" line="2" >
@@ -156,14 +151,11 @@ switch="~config=" />
       </radio>
       <title column="2" line="2">Analysis</title>
       <radio column="2" line="2">
-        <radio-entry label="Information and Data Flow"
-switch="~flow_analysis=information" />
+        <radio-entry label="Information and Data Flow" switch="~flow_analysis=information" />
         <radio-entry label="Data Flow only" switch="~flow_analysis=data" />
       </radio>
-      <check column="2" line="2" label="Generate Run Time Checks"
-switch="~exp_checks" />
-      <title line="3" line-span="2">Replacement rules for composite
-constants</title>
+      <check column="2" line="2" label="Generate Run Time Checks" switch="~exp_checks" />
+      <title line="3" line-span="2">Replacement rules for composite constants</title>
       <radio line="3">
         <radio-entry label="None" switch="~rules=none" />
         <radio-entry label="Lazy" switch="~rules=lazy" />
@@ -173,21 +165,16 @@ constants</title>
       <title column="2" line="3">Error Explanations</title>
       <radio column="2" line="3">
         <radio-entry label="Off" switch="~error_explanations=off" />
-        <radio-entry label="First Occurrence"
-switch="~error_explanations=first" />
-	<radio-entry label="Every Occurrence"
-switch="~error_explanations=every" />
+        <radio-entry label="First Occurrence" switch="~error_explanations=first" />
+	<radio-entry label="Every Occurrence" switch="~error_explanations=every" />
       </radio>
       <title line="4" column="1" line-span="0" />
       <title column="2" line="4">General</title>
-      <field column="2" line="4" label=" Annotation Character "
-switch="~annotation_character=" tip="Enter a single character to follow
-'--' as the mark for SPARK annotations (default '#')" />
+      <field column="2" line="4" label=" Annotation Character " switch="~annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
       <title line="5" column-span="2">Output</title>
       <check line="5" label=" Plain Output " switch="~plain" />
       <check line="5" label=" HTML Output " switch="~html" />
-      <field line="5" label=" Listing File Extension "
-switch="~listing=" />
+      <field line="5" label=" Listing File Extension " switch="~listing=" />
       <field line="5" label=" Report File Name " switch="~report=" />
       <title line="5" column="2" column-span="0" />
     </switches>
@@ -207,10 +194,8 @@ switch="~listing=" />
       <check line="2" label="Echo Simplifier output" switch="~e" />
       <title line="3">Process control</title>
       <check line="3" label="Dry run" switch="~n" />
-      <spin line="3" label="Multiprocessing" switch="~p=" min="1"
-max="100" default="1"
-            tip="Use N processes to run the Simplifier. On a
-multiprocessor machine simplifications will occur in parallel" />
+      <spin line="3" label="Multiprocessing" switch="~p=" min="1" max="100" default="1"
+            tip="Use N processes to run the Simplifier. On a multiprocessor machine simplifications will occur in parallel" />
     </switches>
   </tool>
 
@@ -222,19 +207,14 @@ multiprocessor machine simplifications will occur in parallel" />
       <check line="1" label="No Echo" switch="/noecho" />
       <check line="1" label="Plain Output" switch="/plain" />
       <title line="2">Tactics</title>
-      <check line="2" label="No Simplification"
-switch="/nosimplification" />
+      <check line="2" label="No Simplification" switch="/nosimplification" />
       <check line="2" label="No Standardisation" switch="/nostand" />
-      <check line="2" label="No Contradiction Hunt" switch="/nocontra"
-/>
-      <check line="2" label="No Substitution Elimination"
-switch="/nosubstitution" />
-      <check line="2" label="No Rule Substitution"
-switch="/norule_substitution" />
+      <check line="2" label="No Contradiction Hunt" switch="/nocontra" />
+      <check line="2" label="No Substitution Elimination" switch="/nosubstitution" />
+      <check line="2" label="No Rule Substitution" switch="/norule_substitution" />
       <check line="2" label="No Expression Reduction" switch="/noexp" />
       <title line="3">Limits</title>
-      <spin line="3" label="Memory Limit" switch="/memory_limit="
-min="250000" max="30000000" default="9000000"
+      <spin line="3" label="Memory Limit" switch="/memory_limit=" min="250000" max="30000000" default="9000000"
             tip="Max PROLOG Heap.  Default 9000000." />
     </switches>
   </tool>
@@ -246,8 +226,7 @@ min="250000" max="30000000" default="9000000"
       <title line="1">Global variables modes</title>
       <radio line="1">
             <radio-entry label="Unchanged" switch="~noadd_modes" />
-            <radio-entry label="Add modes to procedures"
-switch="~add_modes" />
+            <radio-entry label="Add modes to procedures" switch="~add_modes" />
       </radio>
       <title line="2">Function globals</title>
       <radio line="2">
@@ -261,26 +240,12 @@ switch="~add_modes" />
         <radio-entry label="Expand" switch="~expand" />
       </radio>
       <title line="4">Annotations</title>
-      <field line="4" label="Annotation Character"
-switch="~annotation_character=" tip="Enter a single character to follow
-'--' as the mark for SPARK annotations (default '#')" />
+      <field line="4" label="Annotation Character" switch="~annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
 	  <title line="5">Indentation</title>
-        <field line="5" label="Globals indentation"
-switch="~global_indent=" tip="Enter a number ( >0 )for the amount of
-indentation from '--#' for the global variables, or state 'inline'
-(default 'inline')" />
-		<field line="5" label="Exports indentation"
-switch="~export_indent=" tip="Enter a number ( >0 )for the amount of
-indentation from '--#' for the export variables, or state 'inline'
-(default 'inline')" />
-		<field line="5" label="Imports indentation"
-switch="~import_indent=" tip="Enter a number ( >0 )for the amount of
-indentation from '--#' for the import variables, or state 'inline'
-(default 'inline')" />
-		<field line="5" label="Seperators indentation"
-switch="~separator_indent=" tip="Enter a number ( >0 )for the amount of
-indentation from '--#' for the separators ('from' and ampersand, or
-state 'inline' (default 'inline')" />
+        <field line="5" label="Globals indentation" switch="~global_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the global variables, or state 'inline' (default 'inline')" />
+		<field line="5" label="Exports indentation" switch="~export_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the export variables, or state 'inline' (default 'inline')" />
+		<field line="5" label="Imports indentation" switch="~import_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the import variables, or state 'inline' (default 'inline')" />
+		<field line="5" label="Seperators indentation" switch="~separator_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the separators ('from' and ampersand, or state 'inline' (default 'inline')" />
     </switches>
   </tool>
 
@@ -319,14 +284,11 @@ state 'inline' (default 'inline')" />
      <filter language="SPARK" />
      <filter language="Ada" />
      <shell>MDI.save_all false</shell>
-	 <shell>Locations.remove_category Examiner</shell>  <!-- clears
-the Location window to remove previous errors -->
+	 <shell>Locations.remove_category Examiner</shell>  <!-- clears the Location window to remove previous errors -->
      <shell>Project %p</shell>
      <shell>Project.get_tool_switches_as_string %1 "Examiner" </shell>
-     <external output="SPARK Output">spark %1 ~brief %f</external> <!--
-force /brief option as can't parse output otherwise -->
-     <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot;
-Examiner</shell>
+     <external output="SPARK Output">spark %1 ~brief %f</external> <!-- force /brief option as can't parse output otherwise -->
+     <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
   </action>
 
   <action name="SPARKFormat file" category="Spark">
@@ -334,8 +296,7 @@ Examiner</shell>
      <filter language="Ada" />
      <shell>MDI.save_all false</shell>
      <shell>Project %p</shell>
-     <shell>Project.get_tool_switches_as_string %1 "SPARKFormat"
-</shell>
+     <shell>Project.get_tool_switches_as_string %1 "SPARKFormat" </shell>
      <external output="SPARK Output">sparkformat %1 %f</external>
      <shell>Editor.edit %f 0 0 0 true</shell>
   </action>
@@ -347,8 +308,7 @@ Examiner</shell>
      <shell>Project %p</shell>
      <shell>Project.get_tool_switches_as_string %1 "Examiner" </shell>
      <external output="SPARK Output">spark %1 ~brief @%f</external>
-     <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot;
-Examiner</shell>
+     <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
   </action>
 
   <action name="SPARK help" output="SPARK Help" category="Spark">
@@ -367,8 +327,7 @@ Examiner</shell>
     <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
     <shell>Project %P</shell>
     <shell>Project.get_tool_switches_as_string %1 "SPARKSimp" </shell>
-    <external output="SPARKSimp Output">sparksimp %1 ~sargs %3
-</external>
+    <external output="SPARKSimp Output">sparksimp %1 ~sargs %3 </external>
   </action>
 
   <action name="POGS" category="Spark">
@@ -378,8 +337,7 @@ Examiner</shell>
     <shell>Project.get_tool_switches_as_string %1 "POGS" </shell>
     <external output="POGS Output">pogs %1</external>
     <!-- Python is C-like - use non-zero (-1) for true -->
-    <shell lang="python">GPS.Editor.edit(spark.pogs_file(), 0, 0, 0,
--1)</shell>
+    <shell lang="python">GPS.Editor.edit(spark.pogs_file(), 0, 0, 0, -1)</shell>
   </action>
 
   <action name="SPARKmake" category="Spark">
@@ -490,4 +448,3 @@ if on_path("spark"):
     a = a.replace('~', '-')
 
   GPS.parse_xml(a)
-
