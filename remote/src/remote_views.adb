@@ -86,8 +86,9 @@ package body Remote_Views is
       To_Local_Buttons   : Sync_Buttons_Array;
       To_Remote_Buttons  : Sync_Buttons_Array;
       Check_Button       : Gtk_Button;
-      Connect_Button     : Gtk_Button;
-      Config_List_Button : Gtk_Button;
+      Apply_Button       : Gtk_Button;
+      Settings_Button    : Gtk_Button;
+      Set_Default_Button : Gtk_Button;
       Normal_Style       : Gtk_Style;
       Modified_Style     : Gtk_Style;
       Connecting         : Boolean := False;
@@ -176,17 +177,12 @@ package body Remote_Views is
    procedure On_Check_Clicked
      (W    : access Gtk_Widget_Record'Class;
       User : Remote_Data);
-   --  Called when the 'clicked' button is clicked
+   --  Called when the 'check' button is clicked
 
    procedure On_Connect_Clicked
      (W    : access Gtk_Widget_Record'Class;
       User : Remote_Data);
-   --  Called when the 'connect' button is clicked
-
---     procedure On_Sync_Clicked
---       (W    : access Gtk_Widget_Record'Class;
---        User : Remote_Data);
---     --  Called when the 'sync' button is clicked
+   --  Called when the 'Apply' button is clicked
 
    procedure On_Sync_Menu_Clicked
      (W    : access Gtk_Widget_Record'Class;
@@ -196,7 +192,12 @@ package body Remote_Views is
    procedure On_Config_List_Clicked
      (View : access Gtk_Widget_Record'Class;
       User : Remote_Data);
-   --  Called when the config_list button is clicked
+   --  Called when the "Settings" button is clicked
+
+   procedure On_Set_Default_Clicked
+     (View : access Gtk_Widget_Record'Class;
+      User : Remote_Data);
+   --  Called when the "Set default" button is clicked
 
    procedure On_Show_Remote_View
      (Widget : access GObject_Record'Class;
@@ -401,7 +402,7 @@ package body Remote_Views is
 
       --  Buttons
 
-      Gtk_New_Hbox (Buttons_Box, Homogeneous => True, Spacing => 5);
+      Gtk_New_Hbox (Buttons_Box, Homogeneous => False, Spacing => 5);
       Attach (View.Main_Table, Buttons_Box, 0, 1, 1, 2, 0, 0, 5, 0);
 
       Gtk_New (View.Check_Button, Label => -"Check");
@@ -414,26 +415,39 @@ package body Remote_Views is
         (View.Check_Button, "clicked", On_Check_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
-      Gtk_New (View.Connect_Button, Label => -"Apply");
+      Gtk_New (View.Apply_Button, Label => -"Apply");
       Set_Tip
-        (Tooltips, View.Connect_Button,
+        (Tooltips, View.Apply_Button,
          -"Apply remote servers configuration");
-      Set_Sensitive (View.Connect_Button, False);
-      Pack_Start (Buttons_Box, View.Connect_Button);
+      Set_Sensitive (View.Apply_Button, False);
+      Pack_Start (Buttons_Box, View.Apply_Button);
       View_Callback.Connect
-        (View.Connect_Button, "clicked", On_Connect_Clicked'Access,
+        (View.Apply_Button, "clicked", On_Connect_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
-      Gtk_New (View.Config_List_Button, -"Settings");
+      Gtk_New (View.Set_Default_Button, -"Set default");
       Gtk_New (Pix, Stock_Preferences, Icon_Size_Button);
-      Set_Image (View.Config_List_Button, Pix);
+      Set_Image (View.Set_Default_Button, Pix);
       Set_Tip
-        (Tooltips, View.Config_List_Button,
+        (Tooltips, View.Set_Default_Button,
+         -"Set the servers assignment as default for the current project");
+      Pack_Start (Buttons_Box, View.Set_Default_Button);
+--        Attach (View.Main_Table, View.Set_Default_Button,
+--                2, 3, 1, 2, 0, 0, 5, 5);
+      View_Callback.Connect
+        (View.Set_Default_Button, "clicked", On_Set_Default_Clicked'Access,
+         (View => Remote_View (View), Server => GPS_Server));
+
+      Gtk_New (View.Settings_Button, -"Settings");
+      Gtk_New (Pix, Stock_Preferences, Icon_Size_Button);
+      Set_Image (View.Settings_Button, Pix);
+      Set_Tip
+        (Tooltips, View.Settings_Button,
          -"Configure the list of available servers");
-      Attach (View.Main_Table, View.Config_List_Button,
+      Attach (View.Main_Table, View.Settings_Button,
               2, 3, 1, 2, 0, 0, 5, 5);
       View_Callback.Connect
-        (View.Config_List_Button, "clicked", On_Config_List_Clicked'Access,
+        (View.Settings_Button, "clicked", On_Config_List_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Set_Servers (View);
@@ -583,6 +597,11 @@ package body Remote_Views is
             Set_Modified (Remote_View (View), The_Entry, False);
          end;
       end loop;
+
+      --  Set 'set default' button sensitivity
+
+      Set_Sensitive (View.Set_Default_Button,
+                     not GPS.Kernel.Remote.Is_Default_Remote_Setting);
 
       --  Update simple view by calling the combo_changed CB
 
@@ -756,7 +775,7 @@ package body Remote_Views is
         (User.View, Get_Entry (User.View.Servers_Combo (GPS_Server)),
          Modified);
       Set_Sensitive (User.View.Check_Button, Remote and then Modified);
-      Set_Sensitive (User.View.Connect_Button, Modified);
+      Set_Sensitive (User.View.Apply_Button, Modified);
 
    exception
       when E : others =>
@@ -843,6 +862,8 @@ package body Remote_Views is
       end loop;
 
       begin
+         --  In case of a remote build server: check that the project has an
+         --  equivalent path on the remote server, or the paths are identical.
          if New_Build_Server /= Local_Nickname
            and then not To_Remote_Possible (Project, New_Build_Server)
            and then not Is_Regular_File (Create (New_Build_Server, Project))
@@ -987,6 +1008,20 @@ package body Remote_Views is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Config_List_Clicked;
+
+   ----------------------------
+   -- On_Set_Default_Clicked --
+   ----------------------------
+
+   procedure On_Set_Default_Clicked
+     (View : access Gtk_Widget_Record'Class;
+      User : Remote_Data)
+   is
+      pragma Unreferenced (View);
+   begin
+      GPS.Kernel.Remote.Set_Default_Remote_Settings;
+      Set_Sensitive (User.View.Set_Default_Button, False);
+   end On_Set_Default_Clicked;
 
    -------------------------
    -- On_Show_Remote_View --
