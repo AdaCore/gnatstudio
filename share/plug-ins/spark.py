@@ -71,28 +71,16 @@ a = """<?xml version="1.0"?>
     <!-- The SPARK keywords are listed first, for maintainability. -->
     <Keywords>^(assert|check|derives|global|from|h(ide|old)|</Keywords>
  
-<Keywords>in(herit|itializes|variant)|main_program|own|p(re|ost)|</Keywo
-rds>
-    <Keywords>some|</Keywords>
- 
-<Keywords>a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|</Keywords
-> >
- 
-<Keywords>b(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|</Keyw
-ords>
- 
+<Keywords>in(herit|itializes|variant)|main_program|own|p(re|ost)|</Keywords>
+<Keywords>some|</Keywords>
+<Keywords>a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|</Keywords> 
+<Keywords>b(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|</Keywords>
 <Keywords>e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|</Keywords>
- 
-<Keywords>g(eneric|oto)|i[fns]|l(imited|oop)|mod|n(ew|ot|ull)|</Keywords
-> >
- 
-<Keywords>o(thers|ut|[fr])|p(ackage|r(agma|ivate|o(cedure|tected)))|</Ke
-ywords>
-    <Keywords>r(a(ise|nge)|e(cord|m|names|queue|turn|verse))|</Keywords>
- 
-<Keywords>s(e(lect|parate)|ubtype)|t(a(gged|sk)|erminate|hen|ype)|</Keyw
-ords>
-    <Keywords>u(ntil|se)|w(h(en|ile)|ith)|xor)</Keywords>
+<Keywords>g(eneric|oto)|i[fns]|l(imited|oop)|mod|n(ew|ot|ull)|</Keywords>
+<Keywords>o(thers|ut|[fr])|p(ackage|r(agma|ivate|o(cedure|tected)))|</Keywords>
+<Keywords>r(a(ise|nge)|e(cord|m|names|queue|turn|verse))|</Keywords>
+<Keywords>s(e(lect|parate)|ubtype)|t(a(gged|sk)|erminate|hen|ype)|</Keywords>
+<Keywords>u(ntil|se)|w(h(en|ile)|ith)|xor)</Keywords>
 
     <Context>
       <!-- This hard-codes # and $ as annotation characters.       -->
@@ -132,8 +120,7 @@ ords>
     <Spec_Suffix>.vcg</Spec_Suffix>
   </Language>
 
-  <!-- Index and Listing are just set up so that GPS can recognise them
--->
+  <!-- Index and Listing are just set up so that GPS can recognise them -->
 
   <Language>
     <Name>Index</Name>
@@ -171,8 +158,7 @@ switch="~config=" />
       <radio column="2" line="2">
         <radio-entry label="Information and Data Flow"
 switch="~flow_analysis=information" />
-        <radio-entry label="Data Flow only" switch="~flow_analysis=data"
-/>
+        <radio-entry label="Data Flow only" switch="~flow_analysis=data" />
       </radio>
       <check column="2" line="2" label="Generate Run Time Checks"
 switch="~exp_checks" />
@@ -472,10 +458,8 @@ import os, re, string
 import GPS
 
 def pogs_file ():
-  """Return the filename of the POGS file based on the current
-directory"""
-  ## If no context is currently selected, then this will fail with an
-exception.
+  """Return the filename of the POGS file based on the current directory"""
+  ## If no context is currently selected, then this will fail with an exception.
   full_path = GPS.current_context().directory()
   match_obj = re.search(r'.*[\\/]([^\\/]*)[\\/]', full_path)
   dir_name = match_obj.group(1)
