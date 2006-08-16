@@ -24,6 +24,7 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with Basic_Types;               use Basic_Types;
 with File_Utils;                use File_Utils;
+with Glib.Convert;              use Glib.Convert;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Namet;                     use Namet;
@@ -641,7 +642,8 @@ package body Projects is
             Get_Name_String (String_Elements (Project)(Src).Display_Value);
 
             declare
-               File : constant String := Name_Buffer (1 .. Name_Len);
+               File : constant String :=
+                 Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
             begin
                Project.Data.Files (Index) := Create
                  (File, Project, Use_Object_Path => False);
