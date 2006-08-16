@@ -54,6 +54,7 @@ with Pango.Layout;              use Pango.Layout;
 with Basic_Types;
 
 with Browsers.Canvas;           use Browsers.Canvas;
+with Doc_Utils;                 use Doc_Utils;
 with Entities.Queries;          use Entities, Entities.Queries;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GPS.Intl;                  use GPS.Intl;
@@ -519,6 +520,10 @@ package body Browsers.Entities is
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
+        (Kernel, "documentation",
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
+      Register_Command
         (Kernel, "return_type",
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
@@ -582,6 +587,11 @@ package body Browsers.Entities is
 
                Destroy (Iter);
             end;
+
+         elsif Command = "documentation" then
+            Set_Return_Value
+              (Data,
+               Get_Documentation (Get_Language_Handler (Kernel), Entity));
 
          elsif Command = "parameters" then
             declare
