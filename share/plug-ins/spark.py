@@ -1,6 +1,6 @@
 ## This file provides utilities used by the SPARK plug-in for GPS.
-## Copyright (c) 2004-2005 Praxis High Integrity Systems Limited
-## Copyright (c) 2005 AdaCore
+## Copyright (c) 2004-2006 Praxis High Integrity Systems Limited
+## Copyright (c) 2005-2006 AdaCore
 
 #####################################
 # SPARK Toolset Customization for GPS
@@ -48,6 +48,8 @@
 #   - Better EMACS integration (particularly on Windows...)
 #
 ######################################
+
+
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
@@ -135,43 +137,46 @@ a = """<?xml version="1.0"?>
   <tool name="Examiner">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches lines="7">
-      <title line="1">Examiner Files</title>
+    <switches columns ="2" lines="5">
+      <title line="1" column-span="2">Examiner Files</title>
       <field line="1" label=" Index File " as-file="true" switch="~index_file=" />
       <field line="1" label=" Warning File " as-file="true" switch="~warning_file=" />
       <field line="1" label=" Configuration File " as-file="true" switch="~config=" />
-      <title line="2">Language</title>
-      <radio line="2" >
+      <title line="1" column="2" column-span="0" />
+      <title column="1" line="2">Language</title>
+      <radio column="1" line="2" >
         <radio-entry label="SPARK95" switch="~profile=sequential" />
         <radio-entry label="RavenSPARK" switch="~profile=ravenscar" />
         <radio-entry label="SPARK83" switch="~ada83" />
       </radio>
-      <title line="3">Analysis</title>
-      <radio line="3">
+      <title column="2" line="2">Analysis</title>
+      <radio column="2" line="2">
         <radio-entry label="Information and Data Flow" switch="~flow_analysis=information" />
         <radio-entry label="Data Flow only" switch="~flow_analysis=data" />
       </radio>
-      <check line="3" label="Generate Run Time Checks" switch="~exp_checks" />
-      <title line="4">Replacement rules for composite constants</title>
-      <radio line="4">
+      <check column="2" line="2" label="Generate Run Time Checks" switch="~exp_checks" />
+      <title line="3" line-span="2">Replacement rules for composite constants</title>
+      <radio line="3">
         <radio-entry label="None" switch="~rules=none" />
         <radio-entry label="Lazy" switch="~rules=lazy" />
 		<radio-entry label="Keen" switch="~rules=keen" />
         <radio-entry label="All" switch="~rules=all" />
       </radio>
-      <title line="5">Output</title>
-      <check line="5" label=" Plain Output " switch="~plain" />
-      <check line="5" label=" HTML Output " switch="~html" />
-      <field line="5" label=" Listing File Extension " switch="~listing=" />
-      <field line="5" label=" Report File Name " switch="~report=" />
-      <title line="6">Error Explanations</title>
-      <radio line="6">
+      <title column="2" line="3">Error Explanations</title>
+      <radio column="2" line="3">
         <radio-entry label="Off" switch="~error_explanations=off" />
         <radio-entry label="First Occurrence" switch="~error_explanations=first" />
 	<radio-entry label="Every Occurrence" switch="~error_explanations=every" />
       </radio>
-      <title line="7">General</title>
-      <field line="7" label=" Annotation Character " switch="~annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
+      <title line="4" column="1" line-span="0" />
+      <title column="2" line="4">General</title>
+      <field column="2" line="4" label=" Annotation Character " switch="~annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
+      <title line="5" column-span="2">Output</title>
+      <check line="5" label=" Plain Output " switch="~plain" />
+      <check line="5" label=" HTML Output " switch="~html" />
+      <field line="5" label=" Listing File Extension " switch="~listing=" />
+      <field line="5" label=" Report File Name " switch="~report=" />
+      <title line="5" column="2" column-span="0" />
     </switches>
   </tool>
 
@@ -199,16 +204,17 @@ a = """<?xml version="1.0"?>
     <language>Ada</language>
     <switches lines="3">
       <title line="1">Output</title>
-      <check line="1" label="No Echo" switch="~noecho" />
-      <check line="1" label="Plain Output" switch="~plain" />
+      <check line="1" label="No Echo" switch="/noecho" />
+      <check line="1" label="Plain Output" switch="/plain" />
       <title line="2">Tactics</title>
-      <check line="2" label="No Simplification" switch="~nosimplification" />
-      <check line="2" label="No Standardisation" switch="~nostand" />
-      <check line="2" label="No Contradiction Hunt" switch="~nocontra" />
-      <check line="2" label="No Substitution Elimination" switch="~nosubstitution" />
-      <check line="2" label="No Rule Substitution" switch="~norule_substitution" />
+      <check line="2" label="No Simplification" switch="/nosimplification" />
+      <check line="2" label="No Standardisation" switch="/nostand" />
+      <check line="2" label="No Contradiction Hunt" switch="/nocontra" />
+      <check line="2" label="No Substitution Elimination" switch="/nosubstitution" />
+      <check line="2" label="No Rule Substitution" switch="/norule_substitution" />
+      <check line="2" label="No Expression Reduction" switch="/noexp" />
       <title line="3">Limits</title>
-      <spin line="3" label="Memory Limit" switch="~memory_limit=" min="250000" max="30000000" default="9000000"
+      <spin line="3" label="Memory Limit" switch="/memory_limit=" min="250000" max="30000000" default="9000000"
             tip="Max PROLOG Heap.  Default 9000000." />
     </switches>
   </tool>
