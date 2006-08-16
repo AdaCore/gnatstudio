@@ -1128,19 +1128,6 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (ClearCase_Command), -"VCS:ClearCase");
 
-      -- Remote --
-
-      Auto_Reload_Remote_Config := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Remote-Auto-Reload-Remote-Config",
-         Default => False,
-         Flags   => Param_Readable or Param_Writable,
-         Blurb   => -("Whether remote configuration shall be " &
-                      "restored when a project is reloaded"),
-         Nick    => -("Auto reload remote config")));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Auto_Reload_Remote_Config), -"Remote");
-
       -- External Commands --
 
       List_Processes := Param_Spec_String (Gnew_String
