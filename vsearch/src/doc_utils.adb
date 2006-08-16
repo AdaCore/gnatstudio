@@ -19,13 +19,14 @@
 -----------------------------------------------------------------------
 
 with Basic_Types;
-
+with Glib.Convert;
 with Entities;               use Entities;
 with Entities.Queries;       use Entities.Queries;
 with Language;               use Language;
 with String_Utils;           use String_Utils;
 with Find_Utils;             use Find_Utils;
 with Traces;                 use Traces;
+with GPS.Kernel.Charsets;    use GPS.Kernel.Charsets;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with VFS;                    use VFS;
 with Language_Handlers;      use Language_Handlers;
@@ -80,19 +81,31 @@ package body Doc_Utils is
       Context := Get_Language_Context (Lang);
 
       if Declaration_File_Contents = "" then
-         Buffer := Read_File (Declaration_File);
+         declare
+            Tmp_Buffer : String_Access;
+         begin
+            Tmp_Buffer := Read_File (Declaration_File);
 
-         if Buffer = null then
-            if Active (Me) then
-               Trace (Me, "Get_Documentation, no file found "
-                      & Full_Name (Declaration_File).all);
+            if Tmp_Buffer = null then
+               if Active (Me) then
+                  Trace (Me, "Get_Documentation, no file found "
+                         & Full_Name (Declaration_File).all);
+               end if;
+
+               return "";
             end if;
 
-            return "";
-         end if;
+            Buffer := new String'
+              (Glib.Convert.Convert
+                 (Str          => Tmp_Buffer.all,
+                  To_Codeset   => "UTF-8",
+                  From_Codeset => Get_File_Charset (Declaration_File)));
 
-         Must_Free_Buffer := True;
-         Index := Buffer'First;
+            Must_Free_Buffer := True;
+            Index := Buffer'First;
+
+            Free (Tmp_Buffer);
+         end;
       end if;
 
       Line   := Get_Declaration_Of (Entity).Line;
