@@ -2781,15 +2781,11 @@ package body GPS.Kernel.Remote is
 
       --  Get servers associated with this file
 
-      if Get_Automatic_Server_Assignment_State then
-         Trace (Me, "Loading servers_config property for file " &
-                Full_Name (Local_File).all);
-         Get_Property
-           (Property, Local_File,
-            Name => "servers_config", Found => Success);
-      else
-         Success := False;
-      end if;
+      Trace (Me, "Loading servers_config property for file " &
+             Full_Name (Local_File).all);
+      Get_Property
+        (Property, Local_File,
+         Name => "servers_config", Found => Success);
 
       --  If no previous property exist, create it
       if not Success then
@@ -3235,14 +3231,100 @@ package body GPS.Kernel.Remote is
       return False;
    end Reload_Prj_Cb;
 
-   -------------------------------------------
-   -- Get_Automatic_Server_Assignment_State --
-   -------------------------------------------
+   -------------------------------
+   -- Is_Default_Remote_Setting --
+   -------------------------------
 
-   function Get_Automatic_Server_Assignment_State return Boolean is
+   function Is_Default_Remote_Setting return Boolean is
+      The_File : VFS.Virtual_File;
+      Property : Servers_Property;
+      Found    : Boolean;
+
    begin
-      return Get_Pref (Auto_Reload_Remote_Config);
-   end Get_Automatic_Server_Assignment_State;
+      if Status (Get_Project (Remote_Module.Kernel)) /= From_File then
+         return True;
+      end if;
+
+      The_File := Project_Path (Get_Project (Remote_Module.Kernel));
+      Get_Property (Property, The_File, "servers_config", Found);
+
+      if not Found then
+         --  Check that all servers are local
+         for J in Distant_Server_Type'Range loop
+            if not Is_Local (J) then
+               Trace
+                 (Me, "server " & Server_Type'Image (J) & " not local");
+               return False;
+            end if;
+         end loop;
+
+      else
+         for J in Distant_Server_Type'Range loop
+            if  Property.Servers (J).Nickname.all /= Get_Printable_Nickname (J)
+              and then Property.Servers (J).Nickname.all /= Get_Nickname (J)
+            then
+               Trace
+                 (Me, "server " & Server_Type'Image (J) &
+                  " is changed from property");
+               return False;
+            end if;
+         end loop;
+      end if;
+
+      return True;
+   end Is_Default_Remote_Setting;
+
+   ---------------------------------
+   -- Set_Default_Remote_Settings --
+   ---------------------------------
+
+   procedure Set_Default_Remote_Settings is
+      The_File : VFS.Virtual_File;
+      Property : Servers_Property;
+      Prop     : Property_Access;
+      Found    : Boolean;
+      Set_Prop : Boolean;
+
+   begin
+      if Status (Get_Project (Remote_Module.Kernel)) /= From_File then
+         --  ??? do we want to be able to set a default config for the default
+         --  project ?
+         return;
+      end if;
+
+      The_File := Project_Path (Get_Project (Remote_Module.Kernel));
+      Get_Property (Property, The_File, "servers_config", Found);
+
+      if Found then
+         Remove_Property (The_File, "servers_config");
+      end if;
+
+      Set_Prop := False;
+      for J in Distant_Server_Type'Range loop
+         if not Is_Local (J) then
+            Set_Prop := True;
+            exit;
+         end if;
+      end loop;
+
+      if not Set_Prop then
+         --  No need to save: default setting is 'all servers set to local'
+         return;
+      end if;
+
+      for J in Property.Servers'Range loop
+         if Is_Local (J) then
+            Property.Servers (J) :=
+              (Is_Local => True, Nickname => new String'(""));
+         else
+            Property.Servers (J) :=
+              (Is_Local => False, Nickname => new String'(Get_Nickname (J)));
+         end if;
+      end loop;
+
+      Prop := new Servers_Property'(Property);
+      Set_Property (The_File, "servers_config", Prop, Persistent => True);
+   end Set_Default_Remote_Settings;
 
    ------------
    -- Assign --
@@ -3263,11 +3345,6 @@ package body GPS.Kernel.Remote is
       Timeout   : constant Guint32 := 50;
       Id        : Timeout_Handler_Id;
       Load_Data : Reload_Callback_Data;
-      Property  : Servers_Property;
-      Prop      : Property_Access;
-      Found     : Boolean;
-      The_File  : VFS.Virtual_File;
-      Set_Prop  : Boolean;
       pragma Unreferenced (Id);
 
    begin
@@ -3284,58 +3361,6 @@ package body GPS.Kernel.Remote is
       end if;
 
       Assign (Server, Nickname);
-
-      --  Update the project's property
-
-      if Prj_File /= VFS.No_File then
-         The_File := Prj_File;
-      elsif Status (Get_Project (Kernel)) = From_File then
-         The_File := Project_Path (Get_Project (Kernel));
-      else
-         The_File := VFS.No_File;
-      end if;
-
-      if The_File /= VFS.No_File then
-         Get_Property (Property, The_File, "servers_config", Found);
-      else
-         Found := False;
-      end if;
-
-      if not Found then
-         Trace (Me, "Property servers_config does not exist. Create it");
-
-         for J in Property.Servers'Range loop
-            Property.Servers (J) := (Is_Local => True,
-                                     Nickname => new String'(""));
-         end loop;
-      else
-         --  Remove previously set property
-         Remove_Property (The_File, "servers_config");
-      end if;
-
-      Trace (Me, "Saving servers_config property");
-      Glib.Free (Property.Servers (Server).Nickname);
-      Property.Servers (Server) :=
-        (Is_Local => Is_Local (Server),
-         Nickname => new String'(Get_Nickname (Server)));
-
-      --  Set property only if one of the servers is not local
-      Set_Prop := False;
-
-      for J in Property.Servers'Range loop
-         if not Property.Servers (J).Is_Local then
-            Set_Prop := True;
-            exit;
-         end if;
-      end loop;
-
-      if Set_Prop and then The_File /= VFS.No_File then
-         Prop := new Servers_Property'(Property);
-         Set_Property (The_File,
-                       "servers_config",
-                       Prop,
-                       Persistent => True);
-      end if;
 
       --  Reload project if Build_Server has been assigned
 
