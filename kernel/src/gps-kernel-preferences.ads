@@ -267,9 +267,6 @@ package GPS.Kernel.Preferences is
    CVS_Command         : Param_Spec_String;
    ClearCase_Command   : Param_Spec_String;
 
-   -- Remote --
-   Auto_Reload_Remote_Config : Param_Spec_Boolean;
-
    --  Debugger preferences are registered in GVD.Preferences
 
    package Indentation_Properties is new
