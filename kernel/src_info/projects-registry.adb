@@ -1014,6 +1014,20 @@ package body Projects.Registry is
                         then
                            Directory := Registry.Data.View_Tree.Units.Table
                              (Unit.Unit).File_Names (S).Display_Path;
+
+                           --  Convert the directory name to UTF8 if needed.
+                           --  This might unfortunately be costly, but there is
+                           --  no way around that if we want to support
+                           --  non-utf8 file systems.
+                           Get_Name_String (Directory);
+                           declare
+                              Dir : constant String := Locale_To_UTF8
+                                (Name_Buffer (1 .. Name_Len));
+                           begin
+                              Name_Len := Dir'Length;
+                              Name_Buffer (1 .. Name_Len) := Dir;
+                              Directory := Name_Find;
+                           end;
                            exit;
                         end if;
                      end loop;
