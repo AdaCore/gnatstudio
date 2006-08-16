@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.1.0
 
+- F816-014 Incorrect support of accented file names
+  Problem:    If the name of the source files includes non-ASCII characters,
+              and the file system is not UTF8-encoded, then GPS will incorrectly
+              display the list of source files in various places, like the
+              Project View
+  Workaround: avoid accented letters in file names
+
 - F810-007 Crash when displaying tooltips in editors containing non-ASCII text
   Problem:    If you are using non-ASCII text in your source files, in
               particular for the comments associated with entities, then GPS
