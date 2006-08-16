@@ -33,6 +33,7 @@ package Doc_Utils is
    --  just before or just after the declaration of the entity.
    --  Declaration_File_Contents can be provided to save loading the file from
    --  the disk. However, if not specified, the contents of the file will be
-   --  read from the disk as appropriate.
+   --  read from the disk as appropriate. When specified,
+   --  Declaration_File_Contents must be UTF8-encoded
 
 end Doc_Utils;
