@@ -188,7 +188,10 @@ package GPS.Kernel.Remote is
      (Server : Server_Type) return Filesystem_Record'Class;
    --  Get the filesystem of the specified server
 
-   function Get_Automatic_Server_Assignment_State return Boolean;
-   --  Tell if the servers are automatically assigned on project load
+   function Is_Default_Remote_Setting return Boolean;
+   --  Tell if the servers assigned are default for the current project
+
+   procedure Set_Default_Remote_Settings;
+   --  Set the current remote settings as default for the current project
 
 end GPS.Kernel.Remote;
