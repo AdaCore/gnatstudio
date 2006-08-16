@@ -1187,6 +1187,12 @@ to a generic instantiation in Ada. If synchronous is True, then the result will 
       <description>Return the list of primitive operations (aka methods) for self. This list is not sorted</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Entity.documentation">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>A string</return>
+      <description>Return the documentation for the entity. This is the comment block found just before or just after the declaration of the entity (if any such block exists). This is also the documentation string displayed in the tooltips when you leave the mouse cursor over an entity for a while.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Entity.calls">
       <param name="self">The instance of GPS.Entity</param>
       <return>A dictionary, see below</return>
