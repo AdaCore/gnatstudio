@@ -1701,9 +1701,9 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Console_Write_Args);
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          if Console /= null then
-            Insert
+            Insert_UTF8
               (Console,
-               Text   => Nth_Arg (Data, 2),
+               UTF8   => Nth_Arg (Data, 2),
                Add_LF => False);
          end if;
 
