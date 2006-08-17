@@ -3174,6 +3174,11 @@ create()
      <description>Return the window that currently has the focus, or raise an error if there is none</description>
   </shell_doc>
 
+  <shell_doc name="GPS.MDI.children">
+     <return>A list of GPS.MDIWindow</return>
+     <description>Return all the windows currently in the MDI</description>
+  </shell_doc>
+
   <shell_doc name="GPS.MDI.dialog">
      <param name="msg">A string</param>
      <description>Display a modal dialog to report information to a user. This blocks the interpreter until the dialog is closed</description>
@@ -3259,6 +3264,12 @@ Windows acts as containers for other widgets</description>
      <param name="self">An instance of GPS.MDIWindow</param>
      <param name="float" default="True">A boolean</param>
      <description>Float the window, ie create a new toplevel window to display it. It is then under control of the user's operating system or window manager. If float is False, the window is reintegrated within the GPS MDI instead</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.MDIWindow.is_floating">
+     <param name="self">An instance of GPS.MDIWindow</param>
+     <return>A boolean</return>
+     <description>Return whether the window is currently floating (ie in its own toplevel window), or False if the window is integrated into the main GPS window</description>
   </shell_doc>
 
   <shell_doc name="GPS.MDIWindow.raise_window">

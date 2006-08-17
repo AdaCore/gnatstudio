@@ -775,6 +775,10 @@ package body GPS.Main_Window is
          Class         => MDI_Window_Class,
          Handler       => Default_Window_Command_Handler'Access);
       Register_Command
+        (Main_Window.Kernel, "is_floating",
+         Class         => MDI_Window_Class,
+         Handler       => Default_Window_Command_Handler'Access);
+      Register_Command
         (Main_Window.Kernel, "raise_window",
          Class         => MDI_Window_Class,
          Handler       => Default_Window_Command_Handler'Access);
@@ -799,6 +803,11 @@ package body GPS.Main_Window is
          Static_Method => True,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
+         Handler       => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "children",
+         Class         => MDI_Class,
+         Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "get_by_child",
@@ -867,6 +876,9 @@ package body GPS.Main_Window is
       elsif Command = "float" then
          Name_Parameters (Data, Float_Cmd_Parameters);
          Float_Child (Child, Nth_Arg (Data, 2, True));
+
+      elsif Command = "is_floating" then
+         Set_Return_Value (Data, Is_Floating (Child));
 
       elsif Command = "raise_window" then
          Raise_Child (Child, Give_Focus => True);
@@ -983,6 +995,24 @@ package body GPS.Main_Window is
             end if;
             Set_Return_Value (Data, Inst);
          end if;
+
+      elsif Command = "children" then
+         declare
+            Iter : Child_Iterator := First_Child (Get_MDI (Kernel));
+            Class : constant Class_Type := New_Class (Kernel, "MDIWindow");
+         begin
+            Set_Return_Value_As_List (Data);
+            while Get (Iter) /= null loop
+               Child := Get (Iter);
+               Inst := Get_Instance (Get_Script (Data), Child);
+               if Inst = No_Class_Instance then
+                  Inst := New_Instance (Get_Script (Data), Class);
+                  Set_Data (Inst, GObject (Child));
+               end if;
+               Set_Return_Value (Data, Inst);
+               Next (Iter);
+            end loop;
+         end;
 
       elsif Command = "dialog" then
          Name_Parameters (Data, Dialog_Cmd_Parameters);
