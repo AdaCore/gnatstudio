@@ -14,6 +14,9 @@
       x3A0
 """
 
+background_color = "yellow"
+## Background color to use for the command window
+
 
 ############################################################################
 ## No user customization below this line
@@ -36,6 +39,7 @@ class Unicode (CommandWindow):
    def __init__ (self):
       CommandWindow.__init__ (self, prompt="Character code:",
                               on_activate = self.on_activate)
+      self.set_background (background_color)
 
    def on_activate (self, input):
       if input != "":
