@@ -12,12 +12,16 @@ Two types of menus are provided in this example:
     replacement. When the user selects one of these entries, the current
     word is replaced
 
+This script also adds a new menu /Edit/Spell Check, which runs spell
+checking on the whole buffer, or only the comments.
+
 The menus are implemented as new python classes, since this is the
 cleanest way to encapsulate data in python. We could have used global
 function calls instead.
 This example also demonstrates how to start and monitor an external
 executable.
 It also shows how to get the word under the cursor in GPS.
+
 """
 
 ############################################################################
@@ -25,14 +29,21 @@ It also shows how to get the word under the cursor in GPS.
 # These variables can be changed in the initialization commands associated
 # with this script (see /Edit/Startup Scripts)
 
-ispell_command = "ispell -S -a"
+#ispell_command = "ispell -S -a"
+ispell_command = "aspell -a --lang=en "
 # Command to use to start a process to which words can be sent on standard
 # input. The process is expected to return a list of words that could
-# replace the current one
+# replace the current one.
+#   -S => Sort the list of guesses by probable correctness
+#   -a => read from stdin, until pipe is closed
+
 
 use_static_menu = False
 # Whether we should use the static menu, as described above, or the
 # dynamic menu
+
+background_color = "yellow"
+# Background color for the command window when checking a whole buffer
 
 
 ###########################################################################
@@ -190,6 +201,120 @@ class Dynamic_Contextual (GPS.Contextual):
       context.ispell_module_start.buffer().insert (context.ispell_module_start, choice)
 
 
+####################################
+### Spell check paragraphs and buffers
+####################################
+
+class BlockIterator:
+   """An iterator for all comment blocks. Each iteration returns a
+      tuple (start, end) of EditorLocation"""
+   def __init__ (self, buffer, overlay_name):
+      self.mark    = buffer.beginning_of_buffer ().create_mark()
+      if overlay_name != "":
+         self.overlay = buffer.create_overlay (overlay_name)
+         self.in_comment = buffer.beginning_of_buffer().has_overlay (self.overlay)
+      else:
+         self.overlay = None
+   def __iter__ (self):
+      return self
+   def next (self):
+      loc = self.mark.location ()
+      if not self.overlay:
+        if loc < loc.buffer().end_of_buffer():
+           self.mark.move (loc.buffer().end_of_buffer())
+           return (loc.buffer().beginning_of_buffer(),
+                   loc.buffer().end_of_buffer())
+      else:
+        while loc < loc.buffer().end_of_buffer():
+           loc2 = loc.forward_overlay (self.overlay)
+           self.in_comment = not self.in_comment
+           if not self.in_comment:
+             # Use a mark, in case the buffer is modified between iterations
+             self.mark.move (loc2 + 1)
+             return (loc, loc2 - 1)
+           else:
+             loc = loc2
+      raise StopIteration
+
+class WordIterator:
+   """An iterator for all words in a block. Each iteration returns a
+      tuple (start, end) of EditorLocation"""
+   def __init__ (self, start, end):
+      self.mark = start.create_mark()
+      self.end  = end
+   def __iter__ (self):
+      return self
+   def next (self):
+      loc = self.mark.location () 
+      while loc < self.end:
+         loc2 = loc.forward_word ()
+         if loc.get_char().isalpha():
+            # Use a mark, in case the buffer is modified
+            self.mark.move (loc2 + 1)
+            return (loc, loc2 - 1)
+         else:
+            loc = loc + 1
+      raise StopIteration
+
+class SpellCheckBuffer (GPS.CommandWindow):
+   """Spell check all the comments in a buffer.
+      The user is asked interactively for possible replacements"""
+
+   def __init__ (self, category, buffer = None):
+      GPS.CommandWindow.__init__ (self, on_key=self.on_key)
+      self.set_background (background_color)
+      if not buffer: buffer = GPS.EditorBuffer.get()
+      self.word_iter = None
+      self.comment = BlockIterator (buffer, category)
+      try:
+        self.next_with_error()
+      except StopIteration:
+        self.destroy()
+
+   def next (self):
+      """Move to next word to analyze. Raise StopIteration at the end.
+         Returns a tuple (word_start, word_end) on success"""
+      while True:
+         try:
+           if not self.word_iter: raise StopIteration
+           return self.word_iter.next()
+         except StopIteration:
+           block          = self.comment.next()
+           self.word_iter = WordIterator (block[0], block[1])
+
+   def next_with_error (self):
+      """Store the location of the next word with spelling errors.
+         Raise StopIteration when there are no more words"""
+      global ispell
+      while True:
+         word = self.next()
+         text = word[0].buffer().get_chars (word[0], word[1])
+         replace = ispell.parse (text)
+         if replace:
+           suggest = ""
+           for p in range (min (9, len (replace))):
+              suggest=suggest + "[" + `p` + "]" + replace[p] + " "
+           word[0].buffer().select (word[0], word[1] + 1)
+           self.write (suggest, 0)
+           self.word    = word
+           self.replace = replace
+           return
+
+   def on_key (self, input, key, cursor_pos):
+      # Do the replacement
+      if key.isdigit():
+         buffer = self.word[0].buffer()
+         buffer.delete (self.word[0], self.word[1])
+         buffer.insert (self.word[0], self.replace[int (key)])
+
+      # Move to next word
+      try:
+        self.next_with_error()
+      except StopIteration:
+        self.destroy()
+      return True
+
+####################################
 
 def on_gps_started (hook_name):
    global ispell
@@ -198,6 +323,27 @@ def on_gps_started (hook_name):
       static = Static_Contextual ()
    else:
       dynamic = Dynamic_Contextual() 
+
+   GPS.parse_xml ("""
+     <action name="spell check comments" category="Editor" output="none">
+      <description>Check the spelling for all comments in the current editor</description>
+      <filter id="Source editor"/>
+      <shell lang="python">ispell.SpellCheckBuffer ("comments")</shell>
+    </action>
+    <action name="spell check editor" category="Editor" output="none">
+      <description>Check the spelling for the whole contents of the editor</description>
+      <filter id="Source editor" />
+      <shell lang="python">ispell.SpellCheckBuffer ("")</shell>
+    </action>
+    <submenu before="Comment Lines">
+      <title>/Edit/Spell Check</title>
+      <menu action="spell check comments">
+         <title>Comments</title>
+      </menu>
+      <menu action="spell check editor">
+         <title>Editor</title>
+      </menu>
+    </submenu>""")
 
 GPS.Hook ("before_exit_action_hook").add (before_exit)
 GPS.Hook ("gps_started").add (on_gps_started)
