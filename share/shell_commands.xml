@@ -2659,8 +2659,11 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
 
   <shell_doc name="GPS.Console.write">
       <param name="self">The instance of GPS.Console</param>
-      <param name="text">A string</param>
+      <param name="text">A utf8 string</param>
       <description>Output some text on the console</description>
+      <example lang="python">
+          Console().write (u"\N{LATIN CAPITAL LETTER E WITH ACUTE}".encode("utf-8"))
+      </example>
   </shell_doc>
 
   <shell_doc name="GPS.Console.clear">
@@ -3922,8 +3925,14 @@ the same line/column even if new lines are added in the buffer. This location is
 
   <shell_doc name="GPS.EditorLocation.get_char">
      <param name="self">The instance of GPS.EditorLocation</param>
-     <return>A character</return>
-     <description>Return the character at that location in the buffer. An exception is raised when trying to read past the end of the buffer</description>
+     <return>A UTF8 string</return>
+     <description>Return the character at that location in the buffer. An exception is raised when trying to read past the end of the buffer. The character might be encoded on several bytes, since it is a UTF8 string.</description>
+     <example lang="python">
+        char = buffer.beginning_of_buffer().get_char()
+        GPS.Console().write (char)  ## Prints the character
+        # To manipulate in python, convert the string to a unicode string:
+        unicode = char.decode("utf-8")
+     </example>
   </shell_doc>
 
   <shell_doc name="GPS.EditorLocation.create_mark">
