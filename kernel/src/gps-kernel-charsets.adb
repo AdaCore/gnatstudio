@@ -278,13 +278,21 @@ package body GPS.Kernel.Charsets is
       Prop  : String_Property;
    begin
       if File = VFS.No_File then
-         return Get_Pref (Default_Charset);
+         if Default_Charset = null then
+            return "";
+         else
+            return Get_Pref (Default_Charset);
+         end if;
       else
          Get_Property (Prop, File, "charset", Found);
          if Found then
             return Prop.Value.all;
          else
-            return Get_Pref (Default_Charset);
+            if Default_Charset = null then
+               return "";
+            else
+               return Get_Pref (Default_Charset);
+            end if;
          end if;
       end if;
    end Get_File_Charset;
