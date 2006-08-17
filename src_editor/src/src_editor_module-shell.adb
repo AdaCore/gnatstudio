@@ -29,6 +29,7 @@ with Gdk.Color;                 use Gdk.Color;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
+with Glib.Unicode;              use Glib.Unicode;
 
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
@@ -2255,7 +2256,6 @@ package body Src_Editor_Module.Shell is
       Mark        : Gtk_Text_Mark;
       Success     : Boolean;
       Count       : Gint;
-      Char        : Character;
       Block       : Block_Record;
    begin
       if Command = Constructor_Method then
@@ -2444,13 +2444,20 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value (Data, Create_Editor_Mark (Get_Script (Data), Mark));
 
       elsif Command = "get_char" then
-         Get_Location (Iter, Data, 1, Default => Iter);
-         Char := Get_Char (Iter);
-         if Char = ASCII.NUL then
-            Set_Error_Msg (Data, "Invalid buffer position");
-         else
-            Set_Return_Value (Data, Char & "");
-         end if;
+         declare
+            Unichar : Gunichar;
+            Buffer  : String (1 .. 6);
+            Last    : Natural;
+         begin
+            Get_Location (Iter, Data, 1, Default => Iter);
+            Unichar := Get_Char (Iter);
+            if Unichar = 0 then
+               Set_Error_Msg (Data, "Invalid buffer position");
+            else
+               Unichar_To_UTF8 (Unichar, Buffer, Last);
+               Set_Return_Value (Data, Buffer (1 .. Last));
+            end if;
+         end;
 
       elsif Command = "block_fold" then
          Get_Location (Iter, Data, 1, Default => Iter);
