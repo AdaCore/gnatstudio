@@ -46,7 +46,6 @@ with Gtk.Text_Iter;                       use Gtk.Text_Iter;
 with Gtk.Text_Mark;                       use Gtk.Text_Mark;
 with Gtk.Text_Tag;                        use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;                  use Gtk.Text_Tag_Table;
-with Gtk.Widget;                          use Gtk.Widget;
 
 with Gtkada.Dialogs;                      use Gtkada.Dialogs;
 with Gtkada.Types;                        use Gtkada.Types;
