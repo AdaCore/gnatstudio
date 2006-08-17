@@ -1229,25 +1229,21 @@ package body Projects is
       --  Special case for the naming scheme, since we need to get access to
       --  the default registered values for foreign languages
 
-      if Attribute = Spec_Suffix_Attribute then
+      if Attribute = Spec_Suffix_Attribute
+        or else Attribute = Specification_Suffix_Attribute
+      then
          Value := Value_Of
            (Index    => Get_String (Index),
             In_Array => Projects_Table (Project)(View).Naming.Spec_Suffix,
             In_Tree  => Project.View_Tree);
 
-      elsif Attribute = Impl_Suffix_Attribute then
+      elsif Attribute = Impl_Suffix_Attribute
+        or else Attribute = Implementation_Suffix_Attribute
+      then
          Value := Value_Of
            (Index    => Get_String (Index),
             In_Array => Projects_Table (Project)(View).Naming.Body_Suffix,
             In_Tree  => Project.View_Tree);
-
-      elsif Attribute = Specification_Suffix_Attribute then
-         return Get_String
-           (Projects_Table (Project)(View).Naming.Ada_Spec_Suffix);
-
-      elsif Attribute = Implementation_Suffix_Attribute then
-         return Get_String
-           (Projects_Table (Project)(View).Naming.Ada_Body_Suffix);
 
       elsif Attribute = Separate_Suffix_Attribute then
          return Get_String
@@ -1259,6 +1255,18 @@ package body Projects is
       elsif Attribute = Dot_Replacement_Attribute then
          return Get_String
            (Projects_Table (Project)(View).Naming.Dot_Replacement);
+
+      elsif Attribute = Old_Implementation_Attribute then
+         Value := Value_Of
+          (Index    => Get_String (Index),
+           In_Array => Projects_Table (Project)(View).Naming.Bodies,
+           In_Tree  => Project.View_Tree);
+
+      elsif Attribute = Old_Specification_Attribute then
+         Value := Value_Of
+          (Index    => Get_String (Index),
+           In_Array => Projects_Table (Project)(View).Naming.Specs,
+           In_Tree  => Project.View_Tree);
 
       else
          Value := Get_Attribute_Value (Project, Attribute, Index);
