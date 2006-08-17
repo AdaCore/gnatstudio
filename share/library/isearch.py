@@ -203,7 +203,7 @@ class Isearch (CommandWindow):
            if has_pygtk:
               self.insert_overlays_id = \
                 gobject.idle_add (self.insert_next_overlay, input)
-           else:
+           elif len (input) > 2:
               while self.insert_next_overlay (input): pass
 
    def highlight_match (self, save_in_stack=1):
