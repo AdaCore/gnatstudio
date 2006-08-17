@@ -305,6 +305,8 @@ package Projects is
    Spec_Suffix_Attribute           : constant Attribute_Pkg;
    Impl_Suffix_Attribute           : constant Attribute_Pkg;
    Dot_Replacement_Attribute       : constant Attribute_Pkg;
+   Old_Specification_Attribute     : constant Attribute_Pkg;
+   Old_Implementation_Attribute    : constant Attribute_Pkg;
    Specification_Attribute         : constant Attribute_Pkg;
    Implementation_Attribute        : constant Attribute_Pkg;
    Spec_Exception_Attribute        : constant Attribute_Pkg;
@@ -755,6 +757,13 @@ private
                                   "naming#dot_replacement";
    Specification_Attribute    : constant Attribute_Pkg := "naming#spec";
    Implementation_Attribute   : constant Attribute_Pkg := "naming#body";
+
+   --  For backward compatiblity
+   Old_Specification_Attribute  : constant Attribute_Pkg :=
+                                    "naming#specification";
+   Old_Implementation_Attribute : constant Attribute_Pkg :=
+                                    "naming#implementation";
+
    Spec_Exception_Attribute   : constant Attribute_Pkg :=
                                   "naming#specification_exceptions";
    Impl_Exception_Attribute   : constant Attribute_Pkg :=
