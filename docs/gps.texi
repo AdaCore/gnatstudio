@@ -16069,6 +16069,12 @@ copy of the code on your local machine).
 GPS requires at least 65535 colors to run properly, so you need to configure
 your X server to allow 65K colors or more.
 
+@item GPS is very slow compared to previous versions under unix (GPS < 4.0.0)
+
+GPS 4.0.0 and above need the X RENDER extension when running under unix
+systems to perform at a reasonable speed, so you need to make sure you X
+server properly supports this extension.
+
 @end table
 
 @c --------------------------------------------------------------------
