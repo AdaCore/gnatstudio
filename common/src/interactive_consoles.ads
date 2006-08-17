@@ -22,6 +22,7 @@
 
 with Gdk.Color;   use Gdk.Color;
 
+with Glib;
 with Gtk.Enums;
 with Gtk.Main;
 with Gtk.Text_Buffer;
@@ -93,6 +94,12 @@ package Interactive_Consoles is
    procedure Insert
      (Console        : access Interactive_Console_Record;
       Text           : String;
+      Add_LF         : Boolean := True;
+      Highlight      : Boolean := False;
+      Add_To_History : Boolean := False);
+   procedure Insert_UTF8
+     (Console        : access Interactive_Console_Record;
+      UTF8           : Glib.UTF8_String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
       Add_To_History : Boolean := False);

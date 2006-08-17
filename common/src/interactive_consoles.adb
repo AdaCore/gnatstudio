@@ -171,6 +171,21 @@ package body Interactive_Consoles is
       Add_To_History : Boolean := False)
    is
       UTF8        : constant String := Glib.Convert.Locale_To_UTF8 (Text);
+   begin
+      Insert_UTF8 (Console, UTF8, Add_LF, Highlight, Add_To_History);
+   end Insert;
+
+   -----------------
+   -- Insert_UTF8 --
+   -----------------
+
+   procedure Insert_UTF8
+     (Console        : access Interactive_Console_Record;
+      UTF8           : Glib.UTF8_String;
+      Add_LF         : Boolean := True;
+      Highlight      : Boolean := False;
+      Add_To_History : Boolean := False)
+   is
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
       Success     : Boolean;
@@ -227,7 +242,7 @@ package body Interactive_Consoles is
 
       Console.Message_Was_Displayed := True;
       Console.Internal_Insert := Internal;
-   end Insert;
+   end Insert_UTF8;
 
    -----------------
    -- Is_Editable --
