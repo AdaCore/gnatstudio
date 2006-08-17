@@ -426,14 +426,10 @@ package body Remote_Views is
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New (View.Set_Default_Button, -"Set default");
-      Gtk_New (Pix, Stock_Preferences, Icon_Size_Button);
-      Set_Image (View.Set_Default_Button, Pix);
       Set_Tip
         (Tooltips, View.Set_Default_Button,
          -"Set the servers assignment as default for the current project");
       Pack_Start (Buttons_Box, View.Set_Default_Button);
---        Attach (View.Main_Table, View.Set_Default_Button,
---                2, 3, 1, 2, 0, 0, 5, 5);
       View_Callback.Connect
         (View.Set_Default_Button, "clicked", On_Set_Default_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
