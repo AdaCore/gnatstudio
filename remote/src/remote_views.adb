@@ -43,7 +43,6 @@ with Gtk.Label;              use Gtk.Label;
 with Gtk.List;               use Gtk.List;
 with Gtk.List_Item;          use Gtk.List_Item;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
-with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Style;              use Gtk.Style;
 with Gtk.Table;              use Gtk.Table;
 with Gtk.Tooltips;           use Gtk.Tooltips;
@@ -234,13 +233,12 @@ package body Remote_Views is
       Success        : Boolean;
       Hbox           : Gtk_Hbox;
       Buttons_Box    : Gtk_Hbox;
-      Pix            : Gtk_Image;
       To_Local_Img   : Gtk_Image;
       To_Remote_Img  : Gtk_Image;
 
    begin
       Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Never, Policy_Automatic);
+      Set_Policy (View, Policy_Automatic, Policy_Automatic);
       Set_Shadow_Type (View, Shadow_None);
       Gtk_New (View.Main_Table, 3, 2, False);
       Add_With_Viewport (View, View.Main_Table);
@@ -251,14 +249,14 @@ package body Remote_Views is
       --  Server selection pane
 
       Gtk_New (View.Pane, "Servers assignment");
-      Attach (View.Main_Table, View.Pane, 0, 3, 0, 1,
+      Attach (View.Main_Table, View.Pane, 0, 2, 0, 1,
               Expand or Fill, 0);
       Set_Reduce_Window (View.Pane, False);
 
-      Gtk_New (Simple_Table, 2, 1, False);
+      Gtk_New (Simple_Table, 1, 2, False);
       Set_Collapsed_Widget (View.Pane,
                             Simple_Table);
-      Gtk_New (Full_Table, 2, 6, False);
+      Gtk_New (Full_Table, 6, 2, False);
       Set_Expanded_Widget (View.Pane,
                            Full_Table);
 
@@ -403,14 +401,18 @@ package body Remote_Views is
       --  Buttons
 
       Gtk_New_Hbox (Buttons_Box, Homogeneous => False, Spacing => 5);
-      Attach (View.Main_Table, Buttons_Box, 0, 1, 1, 2, 0, 0, 5, 0);
+      Attach (View.Main_Table, Buttons_Box, 0, 1, 1, 2,
+              Xoptions => Fill or Expand,
+              Yoptions => 0,
+              Xpadding => 5,
+              Ypadding => 0);
 
       Gtk_New (View.Check_Button, Label => -"Check");
       Set_Tip
         (Tooltips, View.Check_Button,
          -"Check your configuration against current project");
       Set_Sensitive (View.Check_Button, False);
-      Pack_Start (Buttons_Box, View.Check_Button);
+      Pack_Start (Buttons_Box, View.Check_Button, False, False);
       View_Callback.Connect
         (View.Check_Button, "clicked", On_Check_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
@@ -420,7 +422,7 @@ package body Remote_Views is
         (Tooltips, View.Apply_Button,
          -"Apply remote servers configuration");
       Set_Sensitive (View.Apply_Button, False);
-      Pack_Start (Buttons_Box, View.Apply_Button);
+      Pack_Start (Buttons_Box, View.Apply_Button, False, False);
       View_Callback.Connect
         (View.Apply_Button, "clicked", On_Connect_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
@@ -429,19 +431,24 @@ package body Remote_Views is
       Set_Tip
         (Tooltips, View.Set_Default_Button,
          -"Set the servers assignment as default for the current project");
-      Pack_Start (Buttons_Box, View.Set_Default_Button);
+      Attach (View.Main_Table, View.Set_Default_Button,
+              1, 2, 1, 2, 0, 0, 5, 0);
       View_Callback.Connect
         (View.Set_Default_Button, "clicked", On_Set_Default_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
-      Gtk_New (View.Settings_Button, -"Settings");
-      Gtk_New (Pix, Stock_Preferences, Icon_Size_Button);
-      Set_Image (View.Settings_Button, Pix);
+      Gtk_New_Hbox (Buttons_Box, Homogeneous => False, Spacing => 5);
+      Attach (View.Main_Table, Buttons_Box, 0, 2, 2, 3,
+              Yoptions => 0,
+              Xpadding => 5,
+              Ypadding => 5);
+
+      Gtk_New (View.Settings_Button, -"Servers settings");
+      Set_Name (View.Settings_Button, -"remote_view_servers_settings");
       Set_Tip
         (Tooltips, View.Settings_Button,
          -"Configure the list of available servers");
-      Attach (View.Main_Table, View.Settings_Button,
-              2, 3, 1, 2, 0, 0, 5, 5);
+      Pack_Start (Buttons_Box, View.Settings_Button, False, False);
       View_Callback.Connect
         (View.Settings_Button, "clicked", On_Config_List_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
