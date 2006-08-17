@@ -1242,16 +1242,12 @@ package body Projects is
             In_Tree  => Project.View_Tree);
 
       elsif Attribute = Specification_Suffix_Attribute then
-         Value := Value_Of
-           (Index    => Get_String (Index),
-            In_Array => Projects_Table (Project)(View).Naming.Specs,
-            In_Tree  => Project.View_Tree);
+         return Get_String
+           (Projects_Table (Project)(View).Naming.Ada_Spec_Suffix);
 
       elsif Attribute = Implementation_Suffix_Attribute then
-         Value := Value_Of
-           (Index    => Get_String (Index),
-            In_Array => Projects_Table (Project)(View).Naming.Bodies,
-            In_Tree  => Project.View_Tree);
+         return Get_String
+           (Projects_Table (Project)(View).Naming.Ada_Body_Suffix);
 
       elsif Attribute = Separate_Suffix_Attribute then
          return Get_String
