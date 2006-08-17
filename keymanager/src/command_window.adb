@@ -332,12 +332,14 @@ package body Command_Window is
       Gtk_New_Hbox (Window.Box, Homogeneous => False);
       Add (Frame, Window.Box);
 
-      if Prompt /= "" then
-         Gtk_New (Window.Prompt, Prompt);
-         Pack_Start
-           (Window.Box, Window.Prompt, Expand => False, Fill => False);
-         Set_Alignment (Window.Prompt, 0.0, 0.5);
-         Modify_Font (Window.Prompt, Get_Pref (Default_Font));
+      Gtk_New (Window.Prompt, Prompt);
+      Pack_Start
+        (Window.Box, Window.Prompt, Expand => False, Fill => False);
+      Set_Alignment (Window.Prompt, 0.0, 0.5);
+      Modify_Font (Window.Prompt, Get_Pref (Default_Font));
+
+      if Prompt = "" then
+         Set_Child_Visible (Window.Prompt, False);
       end if;
 
       Gtk_New (Window.Line);
@@ -447,7 +449,18 @@ package body Command_Window is
                                  2 => Prompt_Cst'Access));
          Window := Command_Window (GObject'(Get_Data (Inst)));
          if Window /= null then
-            Set_Text (Window.Prompt, Nth_Arg (Data, 2));
+            declare
+               P : constant String := Nth_Arg (Data, 2);
+            begin
+               Set_Text (Window.Prompt, P);
+               if P /= "" then
+                  Set_Child_Visible (Window.Prompt, True);
+                  Show_All (Window.Prompt);
+               else
+                  Set_Child_Visible (Window.Prompt, False);
+                  Hide_All (Window.Prompt);
+               end if;
+            end;
          end if;
 
       elsif Command = "set_background" then
