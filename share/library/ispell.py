@@ -210,11 +210,12 @@ class BlockIterator:
       tuple (start, end) of EditorLocation"""
    def __init__ (self, buffer, overlay_name):
       self.mark    = buffer.beginning_of_buffer ().create_mark()
-      if overlay_name != "":
+      if overlay_name != "" and overlay_name != "selection":
          self.overlay = buffer.create_overlay (overlay_name)
          self.in_comment = buffer.beginning_of_buffer().has_overlay (self.overlay)
       else:
          self.overlay = None
+         self.overlay_name = overlay_name
    def __iter__ (self):
       return self
    def next (self):
@@ -222,8 +223,12 @@ class BlockIterator:
       if not self.overlay:
         if loc < loc.buffer().end_of_buffer():
            self.mark.move (loc.buffer().end_of_buffer())
-           return (loc.buffer().beginning_of_buffer(),
-                   loc.buffer().end_of_buffer())
+           if self.overlay_name == "selection":
+              return (loc.buffer().selection_start(),
+                      loc.buffer().selection_end())
+           else:
+              return (loc.buffer().beginning_of_buffer(),
+                      loc.buffer().end_of_buffer())
       else:
         while loc < loc.buffer().end_of_buffer():
            loc2 = loc.forward_overlay (self.overlay)
@@ -335,13 +340,21 @@ def on_gps_started (hook_name):
       <filter id="Source editor" />
       <shell lang="python">ispell.SpellCheckBuffer ("")</shell>
     </action>
-    <submenu before="Comment Lines">
+    <action name="spell check selection" category="Editor" output="none">
+      <description>Check the spelling in the current selection</description>
+      <filter id="Source editor" />
+      <shell lang="python">ispell.SpellCheckBuffer ("selection")</shell>
+    </action>
+     <submenu before="Comment Lines">
       <title>/Edit/Spell Check</title>
       <menu action="spell check comments">
          <title>Comments</title>
       </menu>
       <menu action="spell check editor">
          <title>Editor</title>
+      </menu>
+      <menu action="spell check selection">
+         <title>Selection</title>
       </menu>
     </submenu>""")
 
