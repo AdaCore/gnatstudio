@@ -18,14 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;
-
+with Basic_Types;            use Basic_Types;
+with Glib.Convert;
 with Entities;               use Entities;
 with Entities.Queries;       use Entities.Queries;
 with Language;               use Language;
 with String_Utils;           use String_Utils;
 with Find_Utils;             use Find_Utils;
+with Interfaces.C.Strings;   use Interfaces.C.Strings;
 with Traces;                 use Traces;
+with GPS.Kernel.Charsets;    use GPS.Kernel.Charsets;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with VFS;                    use VFS;
 with Language_Handlers;      use Language_Handlers;
@@ -45,8 +47,12 @@ package body Doc_Utils is
       Entity       : Entities.Entity_Information;
       Declaration_File_Contents : String := "") return String
    is
-      Buffer             : String_Access :=
+      Buffer             : Unchecked_String_Access :=
                              Declaration_File_Contents'Unrestricted_Access;
+      Buffer_Len         : aliased Natural := Buffer'Length;
+      Read               : aliased Natural;
+      Chars_Buffer       : chars_ptr;
+
       Index              : Natural := Declaration_File_Contents'First;
       Declaration_File   : constant Virtual_File :=
                              Get_Filename (Get_Declaration_Of (Entity).File);
@@ -57,7 +63,6 @@ package body Doc_Utils is
       Current, Beginning : Natural;
       Context            : Language_Context_Access;
       Location           : File_Location;
-      Must_Free_Buffer   : Boolean := False;
       Lines_Skipped      : Natural;
       Line               : Integer;
       Column             : Basic_Types.Character_Offset_Type;
@@ -80,29 +85,42 @@ package body Doc_Utils is
       Context := Get_Language_Context (Lang);
 
       if Declaration_File_Contents = "" then
-         Buffer := Read_File (Declaration_File);
+         declare
+            Tmp_Buffer : GNAT.OS_Lib.String_Access;
+         begin
+            Tmp_Buffer := Read_File (Declaration_File);
 
-         if Buffer = null then
-            if Active (Me) then
-               Trace (Me, "Get_Documentation, no file found "
-                      & Full_Name (Declaration_File).all);
+            if Tmp_Buffer = null then
+               if Active (Me) then
+                  Trace (Me, "Get_Documentation, no file found "
+                         & Full_Name (Declaration_File).all);
+               end if;
+
+               return "";
             end if;
 
-            return "";
-         end if;
+            Chars_Buffer := Glib.Convert.Convert
+              (Str          => Tmp_Buffer.all,
+               To_Codeset   => "UTF-8",
+               From_Codeset => Get_File_Charset (Declaration_File),
+               Bytes_Read   => Read'Unchecked_Access,
+               Bytes_Written => Buffer_Len'Unchecked_Access);
 
-         Must_Free_Buffer := True;
-         Index := Buffer'First;
+            Buffer := To_Unchecked_String (Chars_Buffer);
+
+            Index := 1;
+            Free (Tmp_Buffer);
+         end;
       end if;
 
       Line   := Get_Declaration_Of (Entity).Line;
       Column := Basic_Types.Character_Offset_Type
         (Get_Declaration_Of (Entity).Column);
       Find_Closest_Match
-        (Buffer.all, Line, Column,
+        (Buffer (1 .. Buffer_Len), Line, Column,
          Get_Name (Entity).all,
          Case_Sensitive => Context.Case_Sensitive);
-      Skip_Lines (Buffer.all, Line - 1, Index, Lines_Skipped);
+      Skip_Lines (Buffer (1 .. Buffer_Len), Line - 1, Index, Lines_Skipped);
 
       if Lines_Skipped /= Line - 1 then
          return "";
@@ -112,7 +130,7 @@ package body Doc_Utils is
 
       Get_Documentation_Before
         (Context       => Context.all,
-         Buffer        => Buffer.all,
+         Buffer        => Buffer (1 .. Buffer_Len),
          Decl_Index    => Index,
          Comment_Start => Beginning,
          Comment_End   => Current,
@@ -125,7 +143,7 @@ package body Doc_Utils is
 
          Get_Documentation_After
            (Context       => Context.all,
-            Buffer        => Buffer.all,
+            Buffer        => Buffer (1 .. Buffer_Len),
             Decl_Index    => Index,
             Comment_Start => Beginning,
             Comment_End   => Current,
@@ -169,9 +187,9 @@ package body Doc_Utils is
             end if;
 
             if Location /= No_File_Location then
-               Index := Buffer'First;
+               Index := 1; --  Buffer'First
                Skip_Lines
-                 (Buffer.all,
+                 (Buffer (1 .. Buffer_Len),
                   Get_Line (Location) - 1,
                   Index,
                   Lines_Skipped);
@@ -179,7 +197,7 @@ package body Doc_Utils is
                if Lines_Skipped = Get_Line (Location) - 1 then
                   Get_Documentation_After
                     (Context       => Context.all,
-                     Buffer        => Buffer.all,
+                     Buffer        => Buffer (1 .. Buffer_Len),
                      Decl_Index    => Index,
                      Comment_Start => Beginning,
                      Comment_End   => Current,
@@ -192,8 +210,10 @@ package body Doc_Utils is
       --  If not found, check the comment just before the body
 
       if Beginning = 0  then
-         if Must_Free_Buffer then
-            Free (Buffer);
+         if Chars_Buffer /= Null_Ptr then
+            Free (Chars_Buffer);
+            Chars_Buffer := Null_Ptr;
+            Buffer := null;
          end if;
 
          Find_Next_Body (Entity, Location => Location);
@@ -201,28 +221,40 @@ package body Doc_Utils is
          if Location /= No_File_Location
            and then Location /= Get_Declaration_Of (Entity)
          then
-            Buffer := Read_File (Get_Filename (Location.File));
+            declare
+               Tmp_Buffer : GNAT.OS_Lib.String_Access;
+            begin
+               Tmp_Buffer := Read_File (Get_Filename (Location.File));
 
-            --  Buffer = null means that reading the file failed (e.g.
-            --  the file does not exist or is not readable).
+               if Tmp_Buffer /= null then
+                  Chars_Buffer := Glib.Convert.Convert
+                    (Str          => Tmp_Buffer.all,
+                     To_Codeset   => "UTF-8",
+                     From_Codeset =>
+                       Get_File_Charset (Get_Filename (Location.File)),
+                     Bytes_Read   => Read'Unchecked_Access,
+                     Bytes_Written => Buffer_Len'Unchecked_Access);
 
-            if Buffer /= null then
-               Must_Free_Buffer := True;
-               Index := Buffer'First;
+                  Buffer     := To_Unchecked_String (Chars_Buffer);
 
-               Skip_Lines
-                 (Buffer.all, Location.Line - 1, Index, Lines_Skipped);
+                  Index := 1;
+                  Free (Tmp_Buffer);
 
-               if Lines_Skipped = Location.Line - 1 then
-                  Get_Documentation_Before
-                    (Context       => Context.all,
-                     Buffer        => Buffer.all,
-                     Decl_Index    => Index,
-                     Comment_Start => Beginning,
-                     Comment_End   => Current,
-                     Debug         => Me);
+                  Skip_Lines
+                    (Buffer (1 .. Buffer_Len), Location.Line - 1, Index,
+                     Lines_Skipped);
+
+                  if Lines_Skipped = Location.Line - 1 then
+                     Get_Documentation_Before
+                       (Context       => Context.all,
+                        Buffer        => Buffer (1 .. Buffer_Len),
+                        Decl_Index    => Index,
+                        Comment_Start => Beginning,
+                        Comment_End   => Current,
+                        Debug         => Me);
+                  end if;
                end if;
-            end if;
+            end;
          end if;
       end if;
 
@@ -230,19 +262,24 @@ package body Doc_Utils is
          declare
             Result : constant String := Comment_Block
               (Lang,
-               Buffer (Line_Start (Buffer.all, Beginning) .. Current),
+               Buffer (Line_Start (Buffer (1 .. Buffer_Len), Beginning)
+                       .. Current),
                Comment => False,
                Clean   => True);
          begin
-            if Must_Free_Buffer then
-               Free (Buffer);
+            if Chars_Buffer /= Null_Ptr then
+               Free (Chars_Buffer);
+               Chars_Buffer := Null_Ptr;
+               Buffer := null;
             end if;
 
             return Result;
          end;
       else
-         if Must_Free_Buffer then
-            Free (Buffer);
+         if Chars_Buffer /= Null_Ptr then
+            Free (Chars_Buffer);
+            Chars_Buffer := Null_Ptr;
+            Buffer := null;
          end if;
 
          return "";
