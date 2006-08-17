@@ -845,7 +845,7 @@ package body GPS.Kernel.Remote is
       Set_Name (Widget.Add_Path_Button, "add path button");
       Gtk_New (Pix, Stock_Add, Icon_Size_Menu);
       Add (Widget.Add_Path_Button, Pix);
-      Attach (Widget.Table, Widget.Add_Path_Button, 5, 4, 1, 2, 0, 0);
+      Attach (Widget.Table, Widget.Add_Path_Button, 3, 4, 1, 2, 0, 0);
 
       Widget.List := Path_Row_List.Null_List;
       Widget_Callback.Object_Connect
