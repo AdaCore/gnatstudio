@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.1.0
 
+- F817-018 Cannot access menus with underscore from scripts
+  Problem:    It isn't possible currently to execute a menu whose name
+              contains an underscore from the script.
+  Workaround: The underscore characters should be doubled
+
 - F817-018 Cannot create custom toolbar separators
   Problem:    If you create an XML file with "<button/>" to insert a separator,
               nothing is done by GPS
@@ -11,13 +16,6 @@ Known Problems fixed in GPS 4.1.0
               display the list of source files in various places, like the
               Project View
   Workaround: avoid accented letters in file names
-
-- F810-007 Crash when displaying tooltips in editors containing non-ASCII text
-  Problem:    If you are using non-ASCII text in your source files, in
-              particular for the comments associated with entities, then GPS
-              will crash when displaying the tooltip when you leave the mouse
-              on top of such an entity.
-  Workaround: Disable the Editor/Tooltips preference
 
 - F804-008 Cannot create key shortcuts for menus created from python
   Problem:    When a menu is created in python with GPS.Menu.create(), no
