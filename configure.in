@@ -8,7 +8,7 @@ STRIP_CR=False
 CAN_OUTPUT=True
 TARGET_CFLAGS=""
 TARGET_LFLAGS=""
-EXEC_COMMAND="sh -c"
+EXEC_COMMAND="xterm -e"
 DEFAULT_FONT="sans 9"
 
 ## We need to double the quotes here, since this is inserted in an Ada file
