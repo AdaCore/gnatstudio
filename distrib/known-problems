@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.1.0
 
+- F817-018 Cannot create custom toolbar separators
+  Problem:    If you create an XML file with "<button/>" to insert a separator,
+              nothing is done by GPS
+  Workaround: None
+
 - F816-014 Incorrect support of accented file names
   Problem:    If the name of the source files includes non-ASCII characters,
               and the file system is not UTF8-encoded, then GPS will incorrectly
