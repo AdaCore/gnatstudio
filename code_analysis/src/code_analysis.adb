@@ -66,7 +66,7 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (Project_Node : Project_Access;
-      File_Name      : VFS.Virtual_File) return File_Access
+      File_Name    : VFS.Virtual_File) return File_Access
    is
       File_Node : File_Access;
    begin
@@ -85,7 +85,8 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (Project_Name : Project_Type) return Project_Access
+     (Projects     : Code_Analysis_Tree;
+      Project_Name : Project_Type) return Project_Access
    is
       Project_Node : Project_Access;
    begin
@@ -98,12 +99,6 @@ package body Code_Analysis is
       Projects.Insert (Project_Name, Project_Node);
       return Project_Node;
    end Get_Or_Create;
-
-   function Get_Tree return Code_Analysis_Tree is
-      Tree : constant Code_Analysis_Tree := Projects'Access;
-   begin
-      return Tree;
-   end Get_Tree;
 
    -------------------
    -- Free_Analysis --
@@ -189,7 +184,6 @@ package body Code_Analysis is
    begin
       Project_Node.Files.Iterate (Free_From_Cursor'Access);
       Free_Analysis (Project_Node.Analysis_Data);
-      Project_Maps.Delete (Projects, Project_Node.Name);
       Unchecked_Free (Project_Node);
    end Free_Project;
 
@@ -197,15 +191,15 @@ package body Code_Analysis is
    -- Free_Code_Analysis --
    ------------------------
 
-   procedure Free_Code_Analysis is
+   procedure Free_Code_Analysis (Projects : Code_Analysis_Tree) is
       use Project_Maps;
-      Cur          : Cursor := Projects.First;
+      Cur       : Cursor := Projects.First;
       Project_Node : Project_Access;
    begin
       loop
          exit when Cur = No_Element;
          Project_Node := Element (Cur);
-         Next (Cur);
+         Project_Maps.Delete (Projects.all, Cur);
          Free_Project (Project_Node);
       end loop;
    end Free_Code_Analysis;
