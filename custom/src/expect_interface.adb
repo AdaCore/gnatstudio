@@ -97,6 +97,7 @@ package body Expect_Interface is
 
    function Execute
      (Command : access Custom_Action_Record) return Command_Return_Type;
+   procedure Interrupt (Command : in out Custom_Action_Record);
    --  Do not do anything. This command is not aimed at being used in the
    --  task manager.
 
@@ -119,7 +120,7 @@ package body Expect_Interface is
    -- Local subprograms --
    -----------------------
 
-   procedure Exit_Cb (D : Custom_Action_Access);
+   procedure Exit_Cb (D : in out Custom_Action_Record);
    --  Called when an external process has finished running
 
    procedure Output_Cb (D : Custom_Action_Access; Output : String);
@@ -189,6 +190,17 @@ package body Expect_Interface is
       end if;
    end Free;
 
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   procedure Interrupt (Command : in out Custom_Action_Record) is
+   begin
+      Interrupt (Command.Pd.all);
+      Close     (Command.Pd.all);
+      Exit_Cb   (Command);
+   end Interrupt;
+
    -------------
    -- Execute --
    -------------
@@ -221,7 +233,7 @@ package body Expect_Interface is
          end if;
 
          Close (Command.Pd.all, Command.Status);
-         Exit_Cb (Custom_Action_Access (Command));
+         Exit_Cb (Command.all);
 
          if Command.Status /= 0 then
             return Failure;
@@ -288,13 +300,14 @@ package body Expect_Interface is
    -- Exit_Cb --
    -------------
 
-   procedure Exit_Cb (D : Custom_Action_Access)
+   procedure Exit_Cb (D : in out Custom_Action_Record)
    is
       Tmp  : Boolean;
       pragma Unreferenced (Tmp);
    begin
       if D.Pd /= null then
          Trace (Me, "Exited");
+         D.Pd := null;
 
          if D.On_Exit /= null then
             declare
@@ -310,7 +323,6 @@ package body Expect_Interface is
             end;
          end if;
 
-         D.Pd := null;
       end if;
 
       --  ??? Add exception handler ?
