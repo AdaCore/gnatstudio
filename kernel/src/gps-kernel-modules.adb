@@ -33,7 +33,6 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
-with Gtk.Button;                use Gtk.Button;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
@@ -48,6 +47,7 @@ with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Selection;             use Gtk.Selection;
+with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
@@ -1490,17 +1490,23 @@ package body GPS.Kernel.Modules is
       Image   : Gtk.Image.Gtk_Image := null;
       Tooltip : String := "")
    is
-      Button  : Gtk_Button;
+      Button  : Gtk_Tool_Button;
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
    begin
       if Image = null then
-         Gtk_New (Button, Text);
-         Set_Relief (Button, Relief_None);
-         Append_Widget (Toolbar, Button);
+         Gtk_New (Button, null, Text);
+         --  Set_Relief (Button, Relief_None);
       else
-         Button := Append_Item
-           (Toolbar, Text, Text, Tooltip, Gtk_Widget (Image));
+         Gtk_New (Button, Gtk_Widget (Image), Text);
       end if;
+
+      Insert (Toolbar, Button);
+
+      if Tooltip /= "" then
+         Set_Tooltip (Button, Get_Tooltips (Kernel), Tooltip);
+      end if;
+
+      Show_All (Button);
 
       Command_Callback.Object_Connect
         (Button, "clicked", Execute_Command'Access,
@@ -1518,10 +1524,15 @@ package body GPS.Kernel.Modules is
       Command  : Interactive_Command_Access := null;
       Tooltip  : String := "")
    is
-      Button  : Gtk_Button;
-      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Button  : Gtk_Tool_Button;
    begin
-      Button := Insert_Stock (Toolbar, Stock_Id, Tooltip);
+      Gtk_New_From_Stock (Button, Stock_Id);
+      if Tooltip /= "" then
+         Set_Tooltip (Button, Get_Tooltips (Kernel), Tooltip);
+      end if;
+      Insert (Get_Toolbar (Kernel), Button, -1);
+
+      Show_All (Button);
 
       Command_Callback.Object_Connect
         (Button, "clicked", Execute_Command'Access,
