@@ -27,7 +27,7 @@ with Code_Analysis; use Code_Analysis;
 
 package Code_Analysis_Dump is
 
-   procedure Dump_Text;
+   procedure Dump_Text (Projects : Code_Analysis_Tree);
    --  Starts a dominos calling to the text dumping subprograms
    --  following the Code_Analysis tree structure
 

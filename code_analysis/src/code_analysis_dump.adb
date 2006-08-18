@@ -30,9 +30,9 @@ package body Code_Analysis_Dump is
    -- Dump_Text --
    ---------------
 
-   procedure Dump_Text is
+   procedure Dump_Text (Projects : Code_Analysis_Tree) is
    begin
-      Get_Tree.Iterate (Dump_Project'Access);
+      Projects.Iterate (Dump_Project'Access);
    end Dump_Text;
 
    ------------------
