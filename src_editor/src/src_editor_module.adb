@@ -36,7 +36,6 @@ with Glib.Properties.Creation;          use Glib.Properties.Creation;
 with Glib.Values;                       use Glib.Values;
 
 with Gtk.Box;                           use Gtk.Box;
-with Gtk.Button;                        use Gtk.Button;
 with Gtk.Combo;                         use Gtk.Combo;
 with Gtk.Dialog;                        use Gtk.Dialog;
 with Gtk.Enums;                         use Gtk.Enums;
@@ -48,6 +47,8 @@ with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Rc;                            use Gtk.Rc;
 with Gtk.Size_Group;                    use Gtk.Size_Group;
 with Gtk.Stock;                         use Gtk.Stock;
+with Gtk.Separator_Tool_Item;           use Gtk.Separator_Tool_Item;
+with Gtk.Tool_Button;                   use Gtk.Tool_Button;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Window;                        use Gtk.Window;
 
@@ -2466,7 +2467,6 @@ package body Src_Editor_Module is
       Edit               : constant String := '/' & (-"Edit") & '/';
       Navigate           : constant String := '/' & (-"Navigate") & '/';
       Mitem              : Gtk_Menu_Item;
-      Button             : Gtk_Button;
       Toolbar            : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       UR                 : constant Undo_Redo := new Undo_Redo_Information;
       Selector           : Scope_Selector;
@@ -2843,13 +2843,25 @@ package body Src_Editor_Module is
       Register_Menu
         (Kernel, Edit, Mitem, Ref_Item => "Redo", Add_Before => False);
 
-      Insert_Space (Toolbar, Position => 3);
-      UR.Undo_Button := Insert_Stock
-        (Toolbar, Stock_Undo, -"Undo Previous Action", Position => 4);
-      Set_Sensitive (UR.Undo_Button, False);
-      UR.Redo_Button := Insert_Stock
-        (Toolbar, Stock_Redo, -"Redo Previous Action", Position => 5);
-      Set_Sensitive (UR.Redo_Button, False);
+      declare
+         Space  : Gtk_Separator_Tool_Item;
+      begin
+         Gtk_New (Space);
+         Set_Draw (Space, True);
+         Insert (Toolbar, Space);
+
+         Gtk_New_From_Stock (UR.Undo_Button, Stock_Undo);
+         Set_Tooltip (UR.Undo_Button, Get_Tooltips (Kernel),
+                      -"Undo Previous Action");
+         Set_Sensitive (UR.Undo_Button, False);
+         Insert (Toolbar, UR.Undo_Button);
+
+         Gtk_New_From_Stock (UR.Redo_Button, Stock_Redo);
+         Set_Tooltip (UR.Redo_Button, Get_Tooltips (Kernel),
+                      -"Redo Previous Action");
+         Set_Sensitive (UR.Redo_Button, False);
+         Insert (Toolbar, UR.Redo_Button);
+      end;
 
       Kernel_Callback.Connect
         (Toolbar, "destroy",
@@ -2933,20 +2945,27 @@ package body Src_Editor_Module is
 
       --  Toolbar buttons
 
-      Button := Insert_Stock
-        (Toolbar, Stock_New, -"Create a New File", Position => 0);
-      Kernel_Callback.Connect
-        (Button, "clicked", On_New_File'Access, Kernel_Handle (Kernel));
+      declare
+         Button : Gtk_Tool_Button;
+      begin
+         Gtk_New_From_Stock (Button, Stock_New);
+         Set_Tooltip (Button, Get_Tooltips (Kernel), -"Create a New File");
+         Insert (Toolbar, Button, 0);
+         Kernel_Callback.Connect
+           (Button, "clicked", On_New_File'Access, Kernel_Handle (Kernel));
 
-      Button := Insert_Stock
-        (Toolbar, Stock_Open, -"Open a File", Position => 1);
-      Kernel_Callback.Connect
-        (Button, "clicked", On_Open_File'Access, Kernel_Handle (Kernel));
+         Gtk_New_From_Stock (Button, Stock_Open);
+         Set_Tooltip (Button, Get_Tooltips (Kernel), -"Open a File");
+         Insert (Toolbar, Button, 1);
+         Kernel_Callback.Connect
+           (Button, "clicked", On_Open_File'Access, Kernel_Handle (Kernel));
 
-      Button := Insert_Stock
-        (Toolbar, Stock_Save, -"Save Current File", Position => 2);
-      Kernel_Callback.Connect
-        (Button, "clicked", On_Save'Access, Kernel_Handle (Kernel));
+         Gtk_New_From_Stock (Button, Stock_Save);
+         Set_Tooltip (Button, Get_Tooltips (Kernel), -"Save Current File");
+         Insert (Toolbar, Button, 2);
+         Kernel_Callback.Connect
+           (Button, "clicked", On_Save'Access, Kernel_Handle (Kernel));
+      end;
 
       Add_Hook (Kernel, File_Saved_Hook,
                 Wrapper (File_Saved_Cb'Access),
