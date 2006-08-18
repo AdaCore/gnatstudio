@@ -17,6 +17,8 @@ action_name = "execute extended command"
 show_completions = True
 # Whether we should display possible completions in the command window
 
+background_color = "yellow"
+
 
 ############################################################################
 ## No user customization below this line
@@ -55,6 +57,7 @@ class Extended_Command (CommandWindow):
                                prompt  = "Action:",
                                on_key  = self.on_key,
                                on_activate = self.on_activate)
+       self.set_background (background_color)
        self.actions = lookup_actions()
        self.locked  = False
     except:
