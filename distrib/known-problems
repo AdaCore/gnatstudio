@@ -7,6 +7,12 @@ Known Problems fixed in GPS 4.0.1
   Workaround: Use an external terminal when running the process, which can
               be done from the dialog open before spawning the executable
 
+- F811-014 Debugger external execution window still active in remote mode
+  Problem:    The preference 'external execution window' is taken into account
+              even in remote mode, but is unsupported and thus leads to errors.
+  Workaround: Make sure that the preference is unset before launching a
+              remote debugging session.
+
 - F810-007 Crash when displaying tooltips in editors containing non-ASCII text
   Problem:    If you are using non-ASCII text in your source files, in
               particular for the comments associated with entities, then GPS
