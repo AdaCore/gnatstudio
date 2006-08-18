@@ -167,18 +167,16 @@ package Code_Analysis is
       File_Name    : VFS.Virtual_File) return File_Access;
 
    function Get_Or_Create
-     (Project_Name : Project_Type) return Project_Access;
+     (Projects     : Code_Analysis_Tree;
+      Project_Name : Project_Type) return Project_Access;
    --  allow to get an access pointing on an identified tree node
    --  if the node doesn't exists, it is created
-
-   function Get_Tree return Code_Analysis_Tree;
-   --  Getter of the root tree map defined private bellow
 
    -------------
    -- Free-er --
    -------------
 
-   procedure Free_Code_Analysis;
+   procedure Free_Code_Analysis (Projects : Code_Analysis_Tree);
    --  Free a whole code analysis structure
 
 private
@@ -220,12 +218,5 @@ private
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Project, Project_Access);
-
-   ------------------------------------
-   -- Root of the code analysis tree --
-   ------------------------------------
-
-   Projects : aliased Project_Maps.Map;
-   --  ??? this is still a global variable that we want to get rid of
 
 end Code_Analysis;
