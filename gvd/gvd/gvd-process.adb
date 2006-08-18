@@ -78,6 +78,7 @@ with Process_Proxies;            use Process_Proxies;
 with Projects;                   use Projects;
 with Projects.Editor;            use Projects.Editor;
 with Projects.Registry;          use Projects.Registry;
+with Remote_Servers;             use Remote_Servers;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
@@ -1049,6 +1050,7 @@ package body GVD.Process is
         (Process,
          Create_If_Necessary =>
            Get_Pref (Execution_Window)
+           and then Is_Local (Debug_Server)
            and then Support_TTY (Process.Debugger)
            and then GNAT.TTY.TTY_Supported);
 
