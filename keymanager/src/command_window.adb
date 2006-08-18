@@ -37,10 +37,12 @@ with Gtk.Accel_Group;        use Gtk.Accel_Group;
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Frame;              use Gtk.Frame;
-with Gtk.GEntry;             use Gtk.GEntry;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.Object;             use Gtk.Object;
 with Gtk.Style;              use Gtk.Style;
+with Gtk.Text_Buffer;        use Gtk.Text_Buffer;
+with Gtk.Text_Iter;          use Gtk.Text_Iter;
+with Gtk.Text_View;          use Gtk.Text_View;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 with GUI_Utils;              use GUI_Utils;
@@ -52,7 +54,7 @@ package body Command_Window is
       Kernel      : Kernel_Handle;
       Box         : Gtk_Box;
       Prompt      : Gtk_Label;
-      Line        : Gtk_Entry;
+      Line        : Gtk_Text_View;
       Inst        : Class_Instance := No_Class_Instance;
       On_Changed  : Subprogram_Type;
       On_Key      : Subprogram_Type;
@@ -97,6 +99,10 @@ package body Command_Window is
    procedure On_Changed (Window : access Gtk_Widget_Record'Class);
    --  Called when the contents of the command line has changed
 
+   function Get_Text
+     (Window : access Command_Window_Record'Class) return String;
+   --  Return the current text in the window
+
    function On_Focus_In
      (Window : access Gtk_Widget_Record'Class) return Boolean;
    function On_Focus_Out
@@ -113,6 +119,21 @@ package body Command_Window is
    Text_Cst        : aliased constant String := "text";
    Cursor_Cst      : aliased constant String := "cursor";
    Color_Cst       : aliased constant String := "color";
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+     (Window : access Command_Window_Record'Class) return String
+   is
+      Buffer : constant Gtk_Text_Buffer := Get_Buffer (Window.Line);
+      From, To : Gtk_Text_Iter;
+   begin
+      Get_Start_Iter (Buffer, From);
+      Get_End_Iter (Buffer, To);
+      return Get_Text (Buffer, From, To);
+   end Get_Text;
 
    ------------------
    -- On_Key_Press --
@@ -143,7 +164,7 @@ package body Command_Window is
         and then (Key = GDK_Return or Key = GDK_ISO_Enter)
       then
          declare
-            Str : constant String := Get_Text (Win.Line);
+            Str         : constant String := Get_Text (Win);
             On_Activate : constant Subprogram_Type := Win.On_Activate;
          begin
             --  Prevent callback when window is destroyed
@@ -170,10 +191,14 @@ package body Command_Window is
          declare
             C : Callback_Data'Class := Create (Get_Script (Win.On_Key.all), 3);
             Tmp : Boolean;
+            Cursor : Gtk_Text_Iter;
          begin
-            Set_Nth_Arg (C, 1, Get_Text (Win.Line));
+            Get_Iter_At_Mark (Get_Buffer (Win.Line), Cursor,
+                              Get_Insert (Get_Buffer (Win.Line)));
+
+            Set_Nth_Arg (C, 1, Get_Text (Win));
             Set_Nth_Arg (C, 2, Image (Key, Modif));
-            Set_Nth_Arg (C, 3, Integer (Get_Position (Win.Line)));
+            Set_Nth_Arg (C, 3, Integer (Get_Offset (Cursor)));
             Tmp := Execute (Win.On_Key, C);
             Free (C);
 
@@ -225,9 +250,12 @@ package body Command_Window is
               Create (Get_Script (Win.On_Changed.all), 2);
             Tmp : Boolean;
             pragma Unreferenced (Tmp);
+            Cursor : Gtk_Text_Iter;
          begin
-            Set_Nth_Arg (C, 1, Get_Text (Win.Line));
-            Set_Nth_Arg (C, 2, Integer (Get_Position (Win.Line)));
+            Get_Iter_At_Mark (Get_Buffer (Win.Line), Cursor,
+                              Get_Insert (Get_Buffer (Win.Line)));
+            Set_Nth_Arg (C, 1, Get_Text (Win));
+            Set_Nth_Arg (C, 2, Integer (Get_Offset (Cursor)));
             Tmp := Execute (Win.On_Changed, C);
             Free (C);
          end;
@@ -251,7 +279,7 @@ package body Command_Window is
             Tmp : Boolean;
             pragma Unreferenced (Tmp);
          begin
-            Set_Nth_Arg (C, 1, Get_Text (Win.Line));
+            Set_Nth_Arg (C, 1, Get_Text (Win));
             Tmp := Execute (Win.On_Cancel, C);
             Free (C);
          end;
@@ -343,6 +371,7 @@ package body Command_Window is
       end if;
 
       Gtk_New (Window.Line);
+      Set_Wrap_Mode (Window.Line, Wrap_Word);
       Pack_Start (Window.Box, Window.Line, Expand => True, Fill => True);
       Modify_Font (Window.Line, Get_Pref (View_Fixed_Font));
 
@@ -356,7 +385,7 @@ package body Command_Window is
       Widget_Callback.Connect
         (Window, Gtk.Object.Signal_Destroy, On_Destroy'Access);
       Widget_Callback.Object_Connect
-        (Window.Line, "changed",
+        (Get_Buffer (Window.Line), "changed",
          On_Changed'Access, Window, After => True);
       Return_Callback.Object_Connect
         (Window.Line, "focus_in_event",
@@ -432,14 +461,27 @@ package body Command_Window is
                                  3 => Cursor_Cst'Access));
          Window := Command_Window (GObject'(Get_Data (Inst)));
          if Window /= null then
-            Set_Text (Window.Line, Nth_Arg (Data, 2));
-            Set_Position (Window.Line, Gint (Nth_Arg (Data, 3, -1)));
+            declare
+               Buffer : constant Gtk_Text_Buffer := Get_Buffer (Window.Line);
+               Loc    : constant Gint := Gint (Nth_Arg (Data, 3, -1));
+               From, To : Gtk_Text_Iter;
+            begin
+               Get_Start_Iter (Buffer, From);
+               Get_End_Iter (Buffer, To);
+               Delete (Buffer, From, To);
+               Insert_At_Cursor (Buffer, Nth_Arg (Data, 2));
+
+               if Loc /= -1 then
+                  Get_Iter_At_Offset (Buffer, From, Loc);
+                  Place_Cursor (Buffer, From);
+               end if;
+            end;
          end if;
 
       elsif Command = "read" then
          Window := Command_Window (GObject'(Get_Data (Inst)));
          if Window /= null then
-            Set_Return_Value (Data, Get_Text (Window.Line));
+            Set_Return_Value (Data, Get_Text (Window));
          else
             Set_Return_Value (Data, "");
          end if;
