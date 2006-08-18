@@ -105,11 +105,15 @@ package body Doc_Utils is
                From_Codeset => Get_File_Charset (Declaration_File),
                Bytes_Read   => Read'Unchecked_Access,
                Bytes_Written => Buffer_Len'Unchecked_Access);
+            Free (Tmp_Buffer);
+
+            if Chars_Buffer = Null_Ptr then
+               --  In case the conversion to UTF-8 failed
+               return "";
+            end if;
 
             Buffer := To_Unchecked_String (Chars_Buffer);
-
             Index := 1;
-            Free (Tmp_Buffer);
          end;
       end if;
 
@@ -234,11 +238,15 @@ package body Doc_Utils is
                        Get_File_Charset (Get_Filename (Location.File)),
                      Bytes_Read   => Read'Unchecked_Access,
                      Bytes_Written => Buffer_Len'Unchecked_Access);
+                  Free (Tmp_Buffer);
 
-                  Buffer     := To_Unchecked_String (Chars_Buffer);
+                  if Chars_Buffer = Null_Ptr then
+                     return "";
+                  end if;
+
+                  Buffer := To_Unchecked_String (Chars_Buffer);
 
                   Index := 1;
-                  Free (Tmp_Buffer);
 
                   Skip_Lines
                     (Buffer (1 .. Buffer_Len), Location.Line - 1, Index,
