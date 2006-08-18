@@ -46,11 +46,15 @@ procedure Code_Analysis_Test is
    procedure Print_Usage;
    --  Print the correct usage of the program to the standard output
 
-   function Build_Structure (File_Name : String; Project_File : String)
+   function Build_Structure (Projects     : Code_Analysis_Tree;
+                             File_Name    : String;
+                             Project_File : String)
                              return Project_Access;
    --  Build a code_analysis structure from a gcov file
 
-   procedure Build_Display_Destroy (File_Name : String; Project_File : String);
+   procedure Build_Display_Destroy (Projects     : Code_Analysis_Tree;
+                                    File_Name    : String;
+                                    Project_File : String);
    --  reads a gcov output file, built from a given source file name, builds a
    --  Code_Analysis tree structure from it, displays it on the standard output
    --  and cleanly quits
@@ -68,11 +72,17 @@ procedure Code_Analysis_Test is
    --        Line 3 4 execution(s)
    --        Line 4 warning: line never executed
 
-   procedure Benchmark (File_Name : String; Project_File : String);
+   procedure Benchmark (Projects     : Code_Analysis_Tree;
+                        File_Name    : String;
+                        Project_File : String;
+                        Project_Num  : String;
+                        File_Num     : String);
    --  builds a big Code_Analysis tree structure and outputs the time needed to
    --  build, perform one request, and destroy the structure
 
-   procedure Treeview (File_Name : String; Project_File : String);
+   procedure Treeview (Projects     : Code_Analysis_Tree;
+                       File_Name    : String;
+                       Project_File : String);
    --  builds a code_analysis structure and display it in a Gtk_Tree_View
 
    -----------------
@@ -85,13 +95,18 @@ procedure Code_Analysis_Test is
         ("Usage: code_analysis_test src_file prj_file tst_name tst_name...");
       Put_Line
         ("Available tests are: build_display_destroy, benchmark, treeview");
+      Put_Line
+        ("For ``benchmark'' add <num of projects> <num of files per project>");
+
    end Print_Usage;
 
    ---------------------
    -- Build_Structure --
    ---------------------
 
-   function Build_Structure (File_Name : String; Project_File : String)
+   function Build_Structure (Projects     : Code_Analysis_Tree;
+                             File_Name    : String;
+                             Project_File : String)
                              return Project_Access is
       VFS_File_Name : VFS.Virtual_File;
       Cov_File_Name : VFS.Virtual_File;
@@ -104,10 +119,10 @@ procedure Code_Analysis_Test is
       Cov_File_Name := Create (File_Name);
       VFS_File_Name := Create (File_Name
                                (File_Name'First .. File_Name'Last - 5));
-      Projects.Registry.Initialize;
+      Initialize;  --  from Projects.Registry
       Load_Empty_Project (Registry);
       Project_Name  := Load_Or_Find (Registry, Project_File);
-      Project_Node  := Get_Or_Create (Project_Name);
+      Project_Node  := Get_Or_Create (Projects, Project_Name);
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
       File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
@@ -124,21 +139,27 @@ procedure Code_Analysis_Test is
    -- Build_Display_Destroy --
    ---------------------------
 
-   procedure Build_Display_Destroy (File_Name : String; Project_File : String)
+   procedure Build_Display_Destroy (Projects     : Code_Analysis_Tree;
+                                    File_Name    : String;
+                                    Project_File : String)
    is
       Project_Node  : Project_Access;
       pragma Unreferenced (Project_Node);
    begin
-      Project_Node  := Build_Structure (File_Name, Project_File);
-      Dump_Text;
-      Free_Code_Analysis;
+      Project_Node  := Build_Structure (Projects, File_Name, Project_File);
+      Dump_Text (Projects);
+      Free_Code_Analysis (Projects);
    end Build_Display_Destroy;
 
    ---------------
    -- Benchmark --
    ---------------
 
-   procedure Benchmark (File_Name : String; Project_File : String) is
+   procedure Benchmark (Projects     : Code_Analysis_Tree;
+                        File_Name    : String;
+                        Project_File : String;
+                        Project_Num  : String;
+                        File_Num     : String) is
       use Project_Maps;
       Line_Node     : Line_Access;
       VFS_File_Name : VFS.Virtual_File;
@@ -153,11 +174,8 @@ procedure Code_Analysis_Test is
       Measure       : Duration;
       Timeout       : exception;
       Create_Max    : constant Duration := 13.0;
-      --  ??? Currently observed on bonn : 3.3s
       Request_Max   : constant Duration := 2.0;
-      --  ??? Currently observed on bonn : 0.00013s
       Destroy_Max   : constant Duration := 2.0;
-      --  ??? Currently observed on bonn : 0.1s
       --  ??? I make the supposition that users dont want to wait more than 2s
       --  for these operations and so we would have to add a waiting dialog
       --  (filling task bar) the creation operation tracking
@@ -173,10 +191,10 @@ procedure Code_Analysis_Test is
       end Build_Msg;
    begin
       Time_Before := Clock;
-      Projects.Registry.Initialize;
+      Initialize;  --  from Projects.Registry
       Load_Empty_Project (Registry);
 
-      for J in 0 .. 9 loop
+      for J in 0 .. Integer'Value (Project_Num) loop
          Project_Name  := Load_Or_Find
            (Registry,
             (Project_File
@@ -184,9 +202,9 @@ procedure Code_Analysis_Test is
              & "_"
              & Integer'Image (J) (2)
              & ".gpr"));
-         Project_Node  := Get_Or_Create (Project_Name);
+         Project_Node  := Get_Or_Create (Projects, Project_Name);
 
-         for JJ in 0 .. 99 loop
+         for JJ in 0 .. Integer'Value (File_Num) loop
             Cov_File_Name := Create (File_Name);
             VFS_File_Name := Create (File_Name
                                      (File_Name'First .. File_Name'Last - 5)
@@ -215,7 +233,7 @@ procedure Code_Analysis_Test is
           & Integer'Image (5) (2)
           & ".gpr"));
       Time_Before   := Clock;
-      Project_Node  := Element (Get_Tree.Find (Project_Name));
+      Project_Node  := Element (Projects.Find (Project_Name));
       VFS_File_Name := Create (File_Name
                                      (File_Name'First .. File_Name'Last - 5)
                                      & Integer'Image (50));
@@ -235,7 +253,7 @@ procedure Code_Analysis_Test is
       end if;
 
       Time_Before := Clock;
-      Free_Code_Analysis;
+      Free_Code_Analysis (Projects);
       Time_After  := Clock;
       Measure     := Time_After - Time_Before;
       Put_Line ("Destruction time:" & Duration'Image (Measure) & "s");
@@ -257,7 +275,9 @@ procedure Code_Analysis_Test is
    --  Number of columns needed to store the coverage information in a
    --  Gtk_Tree_Model
 
-   procedure Treeview (File_Name : String; Project_File : String) is
+   procedure Treeview (Projects     : Code_Analysis_Tree;
+                       File_Name    : String;
+                       Project_File : String) is
       Project_Node  : Project_Access;
       Window        : Gtk_Window;
       Container     : Gtk_Box;
@@ -270,7 +290,7 @@ procedure Code_Analysis_Test is
       Num_Col       : Gint;
       pragma Unreferenced (Num_Col, Project_Node);
    begin
-      Project_Node  := Build_Structure (File_Name, Project_File);
+      Project_Node  := Build_Structure (Projects, File_Name, Project_File);
       Init;
       Gtk_New (Window);
       Set_Title (Window, "Analysis report");
@@ -289,7 +309,6 @@ procedure Code_Analysis_Test is
       -----------------
       -- Node column --
       -----------------
-
       Gtk_New (Tree_Col);
       Gtk_New (Text_Render);
       Pack_Start (Tree_Col, Text_Render, True);
@@ -300,7 +319,6 @@ procedure Code_Analysis_Test is
       ----------------------
       -- Coverage columns --
       ----------------------
-
       Gtk_New (Tree_Col);
       Num_Col := Append_Column (Tree_View, Tree_Col);
 
@@ -313,28 +331,33 @@ procedure Code_Analysis_Test is
       Set_Title (Tree_Col, "Coverage");
       Pack_Start (Container, Tree_View);
       Iter := Get_Iter_First (Gtk_Tree_Model (Tree_Store));
-      Fill_Store (Tree_Store, Iter);
+      Fill_Store (Tree_Store, Iter, Projects.First);
       Show_All (Window);
       Main;
-      Free_Code_Analysis;
+      Free_Code_Analysis (Projects);
    end Treeview;
+
+   Projects  : constant Code_Analysis_Tree := new Project_Maps.Map;
+   Arg_Count : constant Natural := 3;
 begin
-   if Argument_Count < 3 then
+   if Argument_Count < Arg_Count then
       Put_Line ("error: missing arguments");
       Print_Usage;
       return;
    end if;
 
-   for J in 3 .. Argument_Count loop
-      if Argument (J) = "build_display_destroy" then
-         Build_Display_Destroy (Argument (1), Argument (2));
-      elsif Argument (J) = "benchmark" then
-         Benchmark (Argument (1), Argument (2));
-      elsif Argument (J) = "treeview" then
-         Treeview (Argument (1), Argument (2));
-      else
-         Print_Usage;
-         return;
-      end if;
-   end loop;
+   if Argument (Arg_Count) = "build_display_destroy" then
+      Build_Display_Destroy (Projects, Argument (1), Argument (2));
+   elsif Argument (Arg_Count) = "benchmark" then
+      Benchmark (Projects,
+                 Argument (1),
+                 Argument (2),
+                 Argument (4),
+                 Argument (5));
+   elsif Argument (Arg_Count) = "treeview" then
+      Treeview (Projects, Argument (1), Argument (2));
+   else
+      Print_Usage;
+      return;
+   end if;
 end Code_Analysis_Test;
