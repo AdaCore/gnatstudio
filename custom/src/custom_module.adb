@@ -695,12 +695,6 @@ package body Custom_Module is
          Space   : Gtk_Separator_Tool_Item;
 
       begin
-         if Action = "" then
-            Insert (Kernel, -"<button> nodes must have an action attribute",
-                    Mode => Error);
-            raise Assert_Failure;
-         end if;
-
          Child := Node.Child;
 
          while Child /= null loop
@@ -721,6 +715,12 @@ package body Custom_Module is
          end loop;
 
          if Title.all /= "" then
+            if Action = "" then
+               Insert (Kernel, -"<button> nodes must have an action attribute",
+                       Mode => Error);
+               raise Assert_Failure;
+            end if;
+
             if Pixmap.all /= ""
               and then Is_Regular_File (Pixmap.all)
             then
@@ -739,9 +739,9 @@ package body Custom_Module is
 
          else
             Gtk_New (Space);
-            Insert
-              (Get_Toolbar (Kernel), Space,
-               Get_N_Items (Get_Toolbar (Kernel)));
+            Set_Draw (Space, True);
+            Show_All (Space);
+            Insert (Get_Toolbar (Kernel), Space, -1);
          end if;
 
          Free (Title);
