@@ -1400,7 +1400,7 @@ Related hooks:
      <param name="recursive" default="False">A boolean</param>
      <return>A boolean</return>
      <description>Return True if the project has been modified but not saved yet. If recursive is true, then the return value takes into account all projects imported by self</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Project.dependencies">
       <param name="self">The instance of GPS.Project</param>
@@ -2536,6 +2536,34 @@ Access the various suggested fixes through the methods of the Codefix class</des
       </example>
   </shell_doc>
 
+
+  <!--#################################################################
+    ####   Code_Analysis class
+    ###################################################################-->
+
+  <shell_doc name="GPS.code_analysis">
+      <description>This class is a toolset that allows to handle Code_Analysis tree structures</description>
+      <see_also name="GPS.code_analysis" />
+      <see_also name="GPS.code_analysis.create" />
+      <see_also name="GPS.code_analysis.add_gcov_info" />
+      <see_also name="GPS.code_analysis.show_tree_view" />
+  </shell_doc>
+
+  <shell_doc name="GPS.code_analysis.create">
+      <description>Creates an empty Code_Analysis data structure</description>
+      <see_also name="GPS.code_analysis" />
+  </shell_doc>
+
+  <shell_doc name="GPS.code_analysis.add_gcov_info">
+      <description>Adds Code_Analysis nodes and coverage info provided by a .gcov file parsing</description>
+      <param name="File_Name">The long name of the .gcov file to parse</param>
+      <see_also name="GPS.code_analysis" />
+  </shell_doc>
+
+  <shell_doc name="GPS.code_analysis.show_tree_view">
+      <description>Display a Code_Analysis data structure in a Gtk_Tree_View within a GPS MDI Child</description>
+      <see_also name="GPS.code_analysis" />
+  </shell_doc>
 
   <!--#################################################################
     ####   CodefixError class
