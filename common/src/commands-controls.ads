@@ -21,15 +21,15 @@
 --  This package enables the user to connect Undo / Redo buttons to a
 --  queue of commands
 
-with Gtk.Button;    use Gtk.Button;
-with Gtk.Menu_Item; use Gtk.Menu_Item;
-with Gtk.Handlers;  use Gtk.Handlers;
+with Gtk.Handlers;            use Gtk.Handlers;
+with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Tool_Button;         use Gtk.Tool_Button;
 
 package Commands.Controls is
 
    type Undo_Redo_Information is record
-      Undo_Button    : Gtk.Button.Gtk_Button;
-      Redo_Button    : Gtk.Button.Gtk_Button;
+      Undo_Button    : Gtk.Tool_Button.Gtk_Tool_Button;
+      Redo_Button    : Gtk.Tool_Button.Gtk_Tool_Button;
 
       Undo_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
       Redo_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
