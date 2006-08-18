@@ -126,19 +126,18 @@ package body Code_Analysis_Tree_Model is
 
    procedure Fill_Store
      (Tree_Store : in out Gtk_Tree_Store;
-      Iter       : in out Gtk_Tree_Iter)
+      Iter       : in out Gtk_Tree_Iter;
+      Cur        : Project_Maps.Cursor)
    is
       use Project_Maps;
-      Cur          : Cursor;
+      Variable_Cur : Cursor := Cur;
       Project_Node : Project_Access;
    begin
-      Cur := Get_Tree.First;
-
       loop
-         exit when Cur = No_Element;
-         Project_Node := Element (Cur);
+         exit when Variable_Cur = No_Element;
+         Project_Node := Element (Variable_Cur);
          Fill_Store (Tree_Store, Iter, Project_Node);
-         Next (Cur);
+         Next (Variable_Cur);
       end loop;
    end Fill_Store;
 end Code_Analysis_Tree_Model;
