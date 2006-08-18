@@ -145,8 +145,10 @@ class Makefile:
 
    def destroy_menus (self):
       """Destroy all menus associated with the Makefile"""
-      for m in self.menus:
-         m.destroy()
+      if self.menus:
+        for m in self.menus:
+           m.destroy()
+        self.menus = None
 
    def edit_makefile (self, menu):
       """Open an editor to edit the current Makefile"""
@@ -192,6 +194,7 @@ class Makefile:
          pass
 
    def on_project_changed (self, hook):
+      self.destroy_menus ()
       self.compute_makefile ()
 
    def __init__ (self):
