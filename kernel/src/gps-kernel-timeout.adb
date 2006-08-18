@@ -211,7 +211,7 @@ package body GPS.Kernel.Timeout is
          if Command.Data.Console /= null then
             Trace (Me, "Connect the command_handler to the console");
             Set_Command_Handler (Command.Data.Console, Data_Handler'Access,
-                                 Command.Data'Address);
+                                 Command.Data.all'Address);
             Command.Data.Delete_Id := Object_Return_Callback.Object_Connect
               (Command.Data.Console, "delete_event",
                Delete_Handler'Access, GObject (Command.Data));
