@@ -8901,6 +8901,11 @@ debugger (use the breakpoint editor for running debuggers).
 @cindex tty
 Specifies whether the debugger should create a separate execution
 window for the program being debugged.
+
+Note that this preference cannot be taken into account for the current
+debug session: you need to terminate the current debug session and restart
+a new one.
+
 If true, a separate console will be created. Under Unix systems, this
 console is another window in the bottom part of the main window; under
 Windows, this is a separate window created by the underlying gdb, since
