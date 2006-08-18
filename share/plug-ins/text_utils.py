@@ -349,6 +349,90 @@ def capitalize_case_word (location=None):
    """Capitalize the current word (starting at the current character)"""
    apply_func_to_word (str.capitalize, location)
 
+class BlockIterator:
+   """An iterator for the various sections of an editor.
+      Each step in the iteration returns a tuple (start, end) of EditorLocation
+      instances for the section.
+      The constructor parameter overlay_name can be one of:
+          - "":          The whole buffer is returned
+          - "selection": The current selection in the buffer is returned
+          - "word":      The current word in the buffer is returned
+          - overlay name: All sections for which this overlay applies are
+                         returned. The name could be one of "comment",
+                         "keywords", "string" or "character"
+      Example of use:
+          buffer = EditorBuffer.get()
+          for start, end in BlockIterator (buffer, "comments"):
+             ...
+   """
+   def __init__ (self, buffer, overlay_name):
+      self.mark    = buffer.beginning_of_buffer ().create_mark()
+      if overlay_name != "" \
+       and overlay_name != "selection" \
+       and overlay_name != "word":
+         self.overlay = buffer.create_overlay (overlay_name)
+         self.in_comment = \
+           buffer.beginning_of_buffer().has_overlay (self.overlay)
+      else:
+         self.overlay = None
+         self.overlay_name = overlay_name
+   def __iter__ (self):
+      return self
+   def next (self):
+      loc = self.mark.location ()
+      if not self.overlay:
+        if loc < loc.buffer().end_of_buffer():
+           self.mark.move (loc.buffer().end_of_buffer())
+           if self.overlay_name == "selection":
+              return (loc.buffer().selection_start(),
+                      loc.buffer().selection_end())
+           elif self.overlay_name == "word":
+              cursor = loc.buffer().current_view().cursor()
+              start = cursor
+              while not start.starts_word(): start = start - 1
+              while not cursor.ends_word() : cursor = cursor + 1 
+              return (start, cursor)
+           else:
+              return (loc.buffer().beginning_of_buffer(),
+                      loc.buffer().end_of_buffer())
+      else:
+        while loc < loc.buffer().end_of_buffer():
+           loc2 = loc.forward_overlay (self.overlay)
+           self.in_comment = not self.in_comment
+           if not self.in_comment:
+             # Use a mark, in case the buffer is modified between iterations
+             self.mark.move (loc2 + 1)
+             return (loc, loc2 - 1)
+           else:
+             loc = loc2
+      raise StopIteration
+
+class WordIterator:
+   """An iterator for all words in a block. Each iteration returns a
+      tuple (start, end) of EditorLocation instances.
+      Example of use:
+        buffer = EditorBuffer.get()
+        for blockStart, blockEnd in BlockIterator (buffer, "comments"):
+           for wordStart, wordEnd in WordIterator (blockStart, blockEnd):
+              ...
+   """
+   def __init__ (self, start, end):
+      self.mark = start.create_mark()
+      self.end  = end
+   def __iter__ (self):
+      return self
+   def next (self):
+      loc = self.mark.location ()
+      while loc < self.end:
+         loc2 = loc.forward_word ()
+         if loc.get_char().isalpha():
+            # Use a mark, in case the buffer is modified
+            self.mark.move (loc2 + 1)
+            return (loc, loc2 - 1)
+         else:
+            loc = loc + 1
+      raise StopIteration
+
 ### Emulating Emacs selection:
 ### In Emacs, one sets the mark first, then when the cursor is moved the
 ### selection is extended appropriately. This is rather tricky to emulate
