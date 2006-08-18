@@ -4,7 +4,7 @@ Known Problems fixed in GPS 4.1.0
   Problem:    If you spawn a process in a script through GPS.Process,
               and interrupt it via the GPS task manager, the process itself
               is not killed, although it disappears from the GPS task manager
-  Workaround: Kill the process using "kill" or the windows task manager
+  Workaround: Kill the process using "kill" or the Windows task manager
 
 - F817-018 Cannot access menus with underscore from scripts
   Problem:    It isn't possible currently to execute a menu whose name
