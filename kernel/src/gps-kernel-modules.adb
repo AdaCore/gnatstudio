@@ -1129,6 +1129,7 @@ package body GPS.Kernel.Modules is
             Menu         => null,
             Path         => Path,
             Accelerators => Get_Default_Accelerators (Kernel),
+            Use_Mnemonics => False,
             Allow_Create => False);
       end if;
    end Find_Menu_Item;
