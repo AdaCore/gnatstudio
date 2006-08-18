@@ -211,7 +211,7 @@ package body GPS.Kernel.Timeout is
          if Command.Data.Console /= null then
             Trace (Me, "Connect the command_handler to the console");
             Set_Command_Handler (Command.Data.Console, Data_Handler'Access,
-                                 Command.Data'Address);
+                                 Command.Data.all'Address);
             Command.Data.Delete_Id := Object_Return_Callback.Object_Connect
               (Command.Data.Console, "delete_event",
                Delete_Handler'Access, GObject (Command.Data));
@@ -463,12 +463,12 @@ package body GPS.Kernel.Timeout is
 
    exception
       when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
          Remove (Process.Id);
          Unchecked_Free (Process.Expect_Regexp);
          Cleanup (Process);
          Unref (Process);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
          return "";
    end Data_Handler;
 
@@ -546,6 +546,7 @@ package body GPS.Kernel.Timeout is
 
       C := new Monitor_Command;
       C.Data := new Console_Process_Data;
+      Initialize (C.Data);
 
       No_Handler.Id := Null_Handler_Id;
 
@@ -556,7 +557,6 @@ package body GPS.Kernel.Timeout is
       end if;
 
       C.Name := new String'(Command);
-      Initialize (C.Data);
       C.Data.Args             := new String_List'((1 => new String'(Command)) &
                                                   Clone (Arguments));
       C.Data.Server               := Server;
