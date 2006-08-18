@@ -28,9 +28,10 @@ with Glib.Object;                use Glib.Object;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
-with Gtk.Button;                 use Gtk.Button;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Separator_Tool_Item;    use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                  use Gtk.Stock;
+with Gtk.Tool_Button;            use Gtk.Tool_Button;
 with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Widget;                 use Gtk.Widget;
 
@@ -930,7 +931,8 @@ package body Navigation_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Toolbar   : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Button    : Gtk_Button;
+      Button    : Gtk_Tool_Button;
+      Space     : Gtk_Separator_Tool_Item;
       Navigate  : constant String := "/_" & (-"Navigate");
       Menu_Item : Gtk_Menu_Item;
       Src_Action_Context : constant Action_Filter :=
@@ -1001,23 +1003,27 @@ package body Navigation_Module is
                 Wrapper (On_Marker_Added_In_History'Access),
                 Name => "navigation.maker_added");
 
-      Append_Space (Toolbar);
+      Gtk_New (Space);
+      Set_Draw (Space, True);
+      Insert (Toolbar, Space, 9);
 
-      Button := Insert_Stock
-        (Toolbar, "gps-navigate-back", -"Goto Previous Location");
+      Gtk_New_From_Stock (Button, "gps-navigate-back");
+      Set_Tooltip (Button, Get_Tooltips (Kernel),
+                   -"Goto Previous Location");
+      Insert (Toolbar, Button, 10);
+      Kernel_Callback.Connect
+        (Button, "clicked", On_Back'Access, Kernel_Handle (Kernel));
       Navigation_Module (Navigation_Module_ID).Back_Button :=
         Gtk_Widget (Button);
 
-      Kernel_Callback.Connect
-        (Button, "clicked", On_Back'Access, Kernel_Handle (Kernel));
-
-      Button := Insert_Stock
-        (Toolbar, "gps-navigate-forward", -"Goto Next Location");
-      Navigation_Module (Navigation_Module_ID).Forward_Button :=
-        Gtk_Widget (Button);
-
+      Gtk_New_From_Stock (Button, "gps-navigate-forward");
+      Set_Tooltip (Button, Get_Tooltips (Kernel),
+                   -"Goto Next Location");
+      Insert (Toolbar, Button, 11);
       Kernel_Callback.Connect
         (Button, "clicked", On_Forward'Access, Kernel_Handle (Kernel));
+      Navigation_Module (Navigation_Module_ID).Forward_Button :=
+        Gtk_Widget (Button);
 
       Load_History_Markers (Kernel);
       Refresh_Location_Buttons (Kernel);
