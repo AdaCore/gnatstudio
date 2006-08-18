@@ -402,13 +402,17 @@ package GUI_Utils is
    -----------
 
    procedure Find_Menu_Item_By_Name
-     (Menu_Bar  : Gtk.Menu_Bar.Gtk_Menu_Bar;
-      Menu      : Gtk.Menu.Gtk_Menu;
-      Name      : String;
-      Menu_Item : out Gtk.Menu_Item.Gtk_Menu_Item;
-      Index     : out Gint);
+     (Menu_Bar      : Gtk.Menu_Bar.Gtk_Menu_Bar;
+      Menu          : Gtk.Menu.Gtk_Menu;
+      Name          : String;
+      Menu_Item     : out Gtk.Menu_Item.Gtk_Menu_Item;
+      Index         : out Gint;
+      Use_Mnemonics : Boolean := True);
    --  Return the menu item with name Name, either from Menu, or from Menu_Bar
    --  if the latter is null.
+   --  If Use_Mnemonics is True, then '_' characters in the path will indicate
+   --  keyboard shortcuts, and need to be doubled to actually display an
+   --  underscore.
 
    function Find_Or_Create_Menu_Tree
      (Menu_Bar      : Gtk.Menu_Bar.Gtk_Menu_Bar;

@@ -1394,7 +1394,8 @@ package body GUI_Utils is
       Menu      : Gtk_Menu;
       Name      : String;
       Menu_Item : out Gtk_Menu_Item;
-      Index     : out Gint)
+      Index     : out Gint;
+      Use_Mnemonics : Boolean := True)
    is
       use type Widget_List.Glist;
       Children, Tmp : Widget_List.Glist;
@@ -1411,7 +1412,7 @@ package body GUI_Utils is
       end if;
 
       for J in Name'Range loop
-         if Name (J) = '_' then
+         if Use_Mnemonics and then Name (J) = '_' then
             if J - 1 >= Name'First and then Name (J - 1) = '_' then
                New_Name (Last) := '_';
                Last := Last + 1;
@@ -1499,7 +1500,8 @@ package body GUI_Utils is
          Find_Menu_Item_By_Name
            (Menu_Bar, Parent,
             Strip_Character (Path (First .. Last - 1), '\'),
-            Menu_Item, Index);
+            Menu_Item, Index,
+            Use_Mnemonics => Use_Mnemonics);
          exit when Menu_Item = null;
 
          --  Have we found the item ?
@@ -1537,7 +1539,8 @@ package body GUI_Utils is
             end if;
 
             Find_Menu_Item_By_Name
-              (Menu_Bar, Parent, Ref_Item, Pred, Index);
+              (Menu_Bar, Parent, Ref_Item, Pred, Index,
+               Use_Mnemonics => Use_Mnemonics);
             Add_Menu (Parent, Menu_Bar, Menu_Item, Index, Add_Before);
             Show_All (Menu_Item);
             Parent := M;
