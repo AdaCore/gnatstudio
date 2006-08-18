@@ -13,7 +13,16 @@ Two types of menus are provided in this example:
     word is replaced
 
 This script also adds a new menu /Edit/Spell Check, which runs spell
-checking on the whole buffer, or only the comments.
+checking on the whole buffer, or only the comments. In this mode, the
+keys are recognized:
+  - "a": Insert the current word in your personal dictionnary, to be
+         remembered across sessions
+  - "i": Ignore this word during this session. This setting will be
+         remembered until you either kill the ispell process in the
+         task manager, or exit GPS
+  - "space": Ignore this word, and go to the next word
+  - "Escape": Cancel current spell checking
+  - "0-9" or "A-Z": Replace the current word with this replacement
 
 The menus are implemented as new python classes, since this is the
 cleanest way to encapsulate data in python. We could have used global
@@ -67,7 +76,15 @@ class Ispell:
    def on_exit (self, proc, exit_status, output):
       """Called the ispell process has terminated"""
       self.proc = None
- 
+
+   def restart_if_needed (self):
+      if self.proc == None:
+        ## Do not display the process in the task manager, since it will run
+        ## forever in any case.
+        self.proc = GPS.Process \
+           (ispell_command, on_exit=self.on_exit, task_manager=False)
+        result = self.proc.expect ("^.*", timeout=2000)
+
    def read (self, word):
       """Run ispell to find out the possible completions for the word stored in
          the context. Ispell runs forever, waiting for words to check on its
@@ -76,14 +93,16 @@ class Ispell:
          for some reason ispell answers something unexpected, we don't keep
          waiting for ever"""
 
-      if self.proc == None:
-         ## Do not display the process in the task manager, since it will run
-         ## forever in any case.
-         self.proc = GPS.Process (ispell_command, on_exit=self.on_exit, task_manager=False)
-         result = self.proc.expect ("^.*", timeout=2000)
+      attempt = 0
+      while attempt < 2:
+         self.restart_if_needed()
+         self.proc.send (word + "\n")
+         result = self.proc.expect ("^[&#\*\+\?\-].*", timeout=2000)
+         if result: break
+         attempt = attempt + 1
+         self.proc.kill()
+         self.proc = None
 
-      self.proc.send (word + "\n")
-      result = self.proc.expect ("^[&#\*\+\?\-].*", timeout=2000)
       try:
          return re.compile ("^([&#*+?-].*)", re.M).search (result).group(1)
       except:
@@ -94,12 +113,22 @@ class Ispell:
          replacements"""
 
       result = self.read (word)
-      if result[0] == '&':
+      if result and result[0] == '&':
          colon = result.find (":")
          result = result[colon + 2 :].replace (" ","")
          return result.split (",") 
       else:
          return []
+
+   def ignore (self, word):
+      """Should ignore word from now on, but not add it to personal dict"""
+      self.restart_if_needed()
+      self.proc.send ("@" + word)
+
+   def add_to_dict (self, word):
+      """Add word to the user's personal dictionary"""
+      self.restart_if_needed()
+      self.proc.send ("*" + word)
 
    def kill (self):
       if self.proc != None:
@@ -212,7 +241,8 @@ class SpellCheckBuffer (GPS.CommandWindow):
       The user is asked interactively for possible replacements"""
 
    def __init__ (self, category, buffer = None):
-      GPS.CommandWindow.__init__ (self, on_key=self.on_key)
+      GPS.CommandWindow.__init__ (self, prompt="(i,a,space)",
+                                  on_key=self.on_key)
       self.set_background (background_color)
       if not buffer: buffer = GPS.EditorBuffer.get()
       self.word_iter = None
@@ -243,8 +273,10 @@ class SpellCheckBuffer (GPS.CommandWindow):
          replace = ispell.parse (text)
          if replace:
            suggest = ""
-           for p in range (min (9, len (replace))):
-              suggest=suggest + "[" + `p` + "]" + replace[p] + " "
+           for p in range (len(replace)):
+              if p <= 9: key=`p`
+              else:      key=chr (ord('A') + p - 10)
+              suggest=suggest + "[" + key + "]" + replace[p] + " "
            word[0].buffer().select (word[0], word[1] + 1)
            self.write (suggest, 0)
            self.word    = word
@@ -252,11 +284,32 @@ class SpellCheckBuffer (GPS.CommandWindow):
            return
 
    def on_key (self, input, key, cursor_pos):
+      global ispell
       # Do the replacement
-      if key.isdigit():
-         buffer = self.word[0].buffer()
+      buffer = self.word[0].buffer()
+      replace = None
+      key = key.replace ("shift-", "")
+      if key == "a":
+         ispell.add_to_dict (buffer.get_chars (self.word[0], self.word[1]))
+      elif key == "i":
+         ispell.ignore (buffer.get_chars (self.word[0], self.word[1]))
+      elif key.isdigit():
+         try: replace = self.replace[int (key)]
+         except IndexError: return True
+      elif key.isupper():
+         try: replace = self.replace [ord(key) - ord('A') + 10]
+         except IndexError: return True
+      elif key == "Escape":
+         self.destroy()
+         return True 
+      elif key == "space":
+         pass
+      else:
+         return True
+
+      if replace:
          buffer.delete (self.word[0], self.word[1])
-         buffer.insert (self.word[0], self.replace[int (key)])
+         buffer.insert (self.word[0], replace)
 
       # Move to next word
       try:
