@@ -4439,7 +4439,8 @@ submenu 'Update Directory' of the submenu 'Directory' of the menu 'VCS'. Path is
      <description>Create a new menu in the GPS system. The menu is added at the given location (see GPS.Menu.get for more information on the path parameter). Submenus are created as necessary so that path is valid.
 If on_activate is specified, it will be executed every time the user selects that menu. It is called with only one parameter, the instance of GPS.Menu that was just created.
 If ref and add_before are specified, they specify the name of another item in the parent menu (and not a full path) before or after which the new menu should be added.
-If the name of the menu starts with a '-' sign, as in "/Edit/-", then a menu separator is inserted instead. In this case, on_activate is ignored.</description>
+If the name of the menu starts with a '-' sign, as in "/Edit/-", then a menu separator is inserted instead. In this case, on_activate is ignored.
+Underscore characters ('_') need to be duplicated in the path. A single underscore indicates the mnemonic to be used for that menu. For instance, if you create the menu "/_File", then the user can open the menu by pressing alt-F. But the underscore itself will not be displayed in the name of the menu.</description>
      <example lang="python">
          def on_activate (self):
              print "A menu was selected: " + self.data
