@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.0.1
 
+- F816-015 Crash on user input when running an executable
+  Problem:    If you run, through /Build/Run, an executable that expects to
+              read input interactively, GPS crashed when you press Enter in
+              the console
+  Workaround: Use an external terminal when running the process, which can
+              be done from the dialog open before spawning the executable
+
 - F810-007 Crash when displaying tooltips in editors containing non-ASCII text
   Problem:    If you are using non-ASCII text in your source files, in
               particular for the comments associated with entities, then GPS
