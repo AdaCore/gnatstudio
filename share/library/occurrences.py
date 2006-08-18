@@ -24,7 +24,7 @@ Locations window.
 
 menu_name = "/Navigate/Mark Occurrences in File"
 mark_action_name = "Mark occurrences"
-remove_action_Name = "Remove marked occurrences"
+remove_action_name = "Remove marked occurrences"
 
 highlight_color = "lightblue"
 
