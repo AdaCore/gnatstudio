@@ -1,0 +1,105 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2006                         --
+--                              AdaCore                              --
+--                                                                   --
+-- GPS is Free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  <description>
+--  This package defines the module for code analysis storage structure
+--  </description>
+
+with Ada.Unchecked_Deallocation;
+
+with Traces;               use Traces;
+with Code_Analysis;        use Code_Analysis;
+
+with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
+with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
+
+with Gtk.Box;              use Gtk.Box;
+with Gtk.Tree_View;        use Gtk.Tree_View;
+with Gtk.Tree_Store;       use Gtk.Tree_Store;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+
+package Code_Analysis_Module is
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the module into the list
+
+private
+
+   type Code_Analysis_View_Record is new Gtk_Hbox_Record with record
+      Tree            : Gtk_Tree_View;
+      Model           : Gtk_Tree_Store;
+      Iter            : Gtk_Tree_Iter;
+      Node_Column     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Cov_Column      : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+   end record;
+
+   type Code_Analysis_View is access all Code_Analysis_View_Record;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Code_Analysis_View_Record, Code_Analysis_View);
+
+   type Code_Analysis_Module_ID_Record is new Module_ID_Record with record
+      Kernel : Kernel_Handle;
+      Class  : Class_Type;
+   end record;
+
+   type Code_Analysis_Module_ID_Access is access all
+     Code_Analysis_Module_ID_Record'Class;
+
+   type Code_Analysis_Class_Record is new Instance_Property_Record with record
+      Projects : Code_Analysis_Tree;
+      View     : Code_Analysis_View;
+      Child    : GPS_MDI_Child;
+   end record;
+
+   type Code_Analysis_Class is access all Code_Analysis_Class_Record;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Code_Analysis_Class_Record, Code_Analysis_Class);
+
+   Code_Analysis_Cst_Str      : constant String := "code_analysis";
+   Code_Analysis_Module_ID    : Code_Analysis_Module_ID_Access;
+   Me : constant Debug_Handle := Create (Code_Analysis_Cst_Str);
+
+   procedure Create
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Create a new instance of Code_Analysis data structure
+
+   procedure Add_Gcov_Info
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Add node and coverage info provided by a gcov file parsing
+
+   procedure Show_Tree_View
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Creata an display a Code_Analysis tree view within a MDI Child
+
+   procedure Destroy
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Free memory used by a Code_Analysis instance
+
+end Code_Analysis_Module;
