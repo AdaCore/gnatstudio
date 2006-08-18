@@ -300,9 +300,8 @@ package body Expect_Interface is
    -- Exit_Cb --
    -------------
 
-   procedure Exit_Cb (D : in out Custom_Action_Record)
-   is
-      Tmp  : Boolean;
+   procedure Exit_Cb (D : in out Custom_Action_Record) is
+      Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
       if D.Pd /= null then
