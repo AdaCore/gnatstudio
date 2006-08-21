@@ -344,8 +344,11 @@ package body GPS.Kernel.Project is
       end if;
 
       if Found then
-         Load_Project (Kernel, Project,
-                       Clear => Clear, Is_Default => Is_Default);
+         Load_Project
+           (Kernel, Project,
+            Clear                    => Clear,
+            Is_Default               => Is_Default,
+            Empty_Project_On_Failure => True);
       else
          Load_Empty_Project (Kernel);
       end if;
@@ -419,11 +422,12 @@ package body GPS.Kernel.Project is
    ------------------
 
    procedure Load_Project
-     (Kernel     : access Kernel_Handle_Record'class;
-      Project    : VFS.Virtual_File;
-      No_Save    : Boolean := False;
-      Clear      : Boolean := True;
-      Is_Default : Boolean := False)
+     (Kernel                   : access Kernel_Handle_Record'class;
+      Project                  : VFS.Virtual_File;
+      No_Save                  : Boolean := False;
+      Clear                    : Boolean := True;
+      Is_Default               : Boolean := False;
+      Empty_Project_On_Failure : Boolean := False)
    is
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console.
@@ -611,13 +615,22 @@ package body GPS.Kernel.Project is
                      Status             => Load_Status);
 
             else
-               Report_Error
-                 (-"Error while loading project '" &
-                  Full_Name (Local_Project, True).all &
-                  (-"'. Loading the default project.") & ASCII.LF);
-               --  Load default project
-               Load_Default_Project
-                 (Kernel, Dir (Local_Project), Clear => False);
+               if Empty_Project_On_Failure then
+                  Report_Error
+                    (-"Error while loading project '" &
+                     Full_Name (Local_Project, True).all &
+                     (-"'. Loading the empty project.") & ASCII.LF);
+                  Load_Empty_Project (Kernel);
+
+               else
+                  Report_Error
+                    (-"Error while loading project '" &
+                     Full_Name (Local_Project, True).all &
+                     (-"'. Loading the default project.") & ASCII.LF);
+                  Load_Default_Project
+                    (Kernel, Dir (Local_Project), Clear => False);
+               end if;
+
                Pop_State (Kernel_Handle (Kernel));
                return;
             end if;
