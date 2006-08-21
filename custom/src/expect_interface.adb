@@ -55,6 +55,7 @@ package body Expect_Interface is
    Progress_Regexp_Cst  : aliased constant String := "progress_regexp";
    Progress_Current_Cst : aliased constant String := "progress_current";
    Progress_Total_Cst   : aliased constant String := "progress_total";
+   Before_Kill_Cst      : aliased constant String := "before_kill";
    Constructor_Args : constant Cst_Argument_List :=
      (2 => Command_Cst'Access,
       3 => Regexp_Cst'Access,
@@ -63,7 +64,8 @@ package body Expect_Interface is
       6 => Task_Manager_Cst'Access,
       7 => Progress_Regexp_Cst'Access,
       8 => Progress_Current_Cst'Access,
-      9 => Progress_Total_Cst'Access);
+      9 => Progress_Total_Cst'Access,
+      10 => Before_Kill_Cst'Access);
    Send_Args : constant Cst_Argument_List :=
      (Command_Cst'Access, Add_Lf_Cst'Access);
    Expect_Args : constant Cst_Argument_List :=
@@ -74,12 +76,13 @@ package body Expect_Interface is
      (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
 
    type Custom_Action_Record is new Root_Command with record
-      Pattern    : Pattern_Matcher_Access;
-      Command    : Argument_List_Access;
-      On_Match   : GPS.Kernel.Scripts.Subprogram_Type;
-      On_Exit    : GPS.Kernel.Scripts.Subprogram_Type;
+      Pattern     : Pattern_Matcher_Access;
+      Command     : Argument_List_Access;
+      On_Match    : GPS.Kernel.Scripts.Subprogram_Type;
+      On_Exit     : GPS.Kernel.Scripts.Subprogram_Type;
+      Before_Kill : GPS.Kernel.Scripts.Subprogram_Type;
       Pd         : Process_Descriptor_Access;
-      Status     : Integer;
+      Status     : Integer := 0;
       Terminated : Boolean;
       Inst       : Class_Instance;
       Progress_Regexp : Pattern_Matcher_Access;
@@ -138,6 +141,9 @@ package body Expect_Interface is
 
    procedure Exit_Cb (D : in out Custom_Action_Record);
    --  Called when an external process has finished running
+
+   procedure Before_Kill_Cb (D : in out Custom_Action_Record);
+   --  Called before killing the external process
 
    procedure Output_Cb (D : Custom_Action_Access; Output : String);
    --  Called when an external process has produced some output.
@@ -212,9 +218,10 @@ package body Expect_Interface is
 
    procedure Interrupt (Command : in out Custom_Action_Record) is
    begin
-      Exit_Cb   (Command);
-      Interrupt (Command.Pd.all);
-      Close     (Command.Pd.all);
+      Before_Kill_Cb (Command);
+      Interrupt      (Command.Pd.all);
+      Close          (Command.Pd.all, Command.Status);
+      Exit_Cb        (Command);
       Command.Pd := null;
    end Interrupt;
 
@@ -251,8 +258,8 @@ package body Expect_Interface is
                        Strip_CR (Expect_Out (Command.Pd.all)));
          end if;
 
-         Exit_Cb (Command.all);
          Close (Command.Pd.all, Command.Status);
+         Exit_Cb (Command.all);
          Command.Pd := null;
 
          if Command.Status /= 0 then
@@ -324,6 +331,7 @@ package body Expect_Interface is
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
+      Trace (Me, "MANU Exit_Cb");
       if D.Pd /= null then
          Trace (Me, "Exiting");
 
@@ -348,6 +356,31 @@ package body Expect_Interface is
 
       --  ??? Add exception handler ?
    end Exit_Cb;
+
+   --------------------
+   -- Before_Kill_Cb --
+   --------------------
+
+   procedure Before_Kill_Cb (D : in out Custom_Action_Record) is
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      if D.Pd /= null then
+         if D.Before_Kill /= null then
+            declare
+               C : Callback_Data'Class := Create
+                 (Get_Script (D.Inst), Arguments_Count => 2);
+            begin
+               Set_Nth_Arg (C, 1, D.Inst);
+               Set_Nth_Arg (C, 2, To_String (D.Processed_Output)
+                            & To_String (D.Unmatched_Output));
+               Tmp := Execute (D.Before_Kill, C);
+               Free (C);
+            end;
+         end if;
+
+      end if;
+   end Before_Kill_Cb;
 
    ---------------
    -- Output_Cb --
@@ -687,6 +720,7 @@ package body Expect_Interface is
             D.Command  := Argument_String_To_List (Command_Line);
             D.On_Match := Nth_Arg (Data, 4, null);
             D.On_Exit  := Nth_Arg (Data, 5, null);
+            D.Before_Kill := Nth_Arg (Data, 10, null);
             D.Inst     := Inst;
 
             if Progress_Regexp /= "" then
@@ -817,7 +851,7 @@ package body Expect_Interface is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
-         Maximum_Args => 9,
+         Maximum_Args => 10,
          Class         => Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
       Register_Command
