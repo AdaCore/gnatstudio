@@ -421,6 +421,8 @@ class WordIterator:
       self.end  = end
    def __iter__ (self):
       return self
+   def starts_at (self, loc):
+      self.mark.move (loc)
    def next (self):
       loc = self.mark.location ()
       while loc < self.end:
