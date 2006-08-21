@@ -15,9 +15,9 @@ Two types of menus are provided in this example:
 This script also adds a new menu /Edit/Spell Check, which runs spell
 checking on the whole buffer, or only the comments. In this mode, the
 keys are recognized:
-  - "a": Insert the current word in your personal dictionnary, to be
+  - "i": Accept the current word in your personal dictionnary, to be
          remembered across sessions
-  - "i": Ignore this word during this session. This setting will be
+  - "a": Accept this word during this session. This setting will be
          remembered until you either kill the ispell process in the
          task manager, or exit GPS
   - "space": Ignore this word, and go to the next word
@@ -72,10 +72,23 @@ class Ispell:
 
    def __init__ (self):
       self.proc = None
+      self.personal_dict_modified=False
 
    def on_exit (self, proc, exit_status, output):
-      """Called the ispell process has terminated"""
+      """Called when the ispell process has terminated"""
+      self.save_personal_dict ()
       self.proc = None
+
+   def save_personal_dict (self):
+      if self.personal_dict_modified and self.proc:
+        if GPS.MDI.yes_no_dialog ("Spell-checking personal dictionary modified. Save ?"):
+          self.proc.send ("#")
+
+          # Make sure the dict is saved: since ispell doesn't show any output,
+          # we generate some
+          self.read ("GPS")
+
+          self.personal_dict_modified = False
 
    def restart_if_needed (self):
       if self.proc == None:
@@ -96,7 +109,7 @@ class Ispell:
       attempt = 0
       while attempt < 2:
          self.restart_if_needed()
-         self.proc.send (word + "\n")
+         self.proc.send (word)
          result = self.proc.expect ("^[&#\*\+\?\-].*", timeout=2000)
          if result: break
          attempt = attempt + 1
@@ -129,9 +142,11 @@ class Ispell:
       """Add word to the user's personal dictionary"""
       self.restart_if_needed()
       self.proc.send ("*" + word)
+      self.personal_dict_modified=True
 
    def kill (self):
       if self.proc != None:
+         self.save_personal_dict ()
          self.proc.kill ()
          self.proc = None
 
@@ -289,9 +304,9 @@ class SpellCheckBuffer (GPS.CommandWindow):
       buffer = self.word[0].buffer()
       replace = None
       key = key.replace ("shift-", "")
-      if key == "a":
+      if key == "i":
          ispell.add_to_dict (buffer.get_chars (self.word[0], self.word[1]))
-      elif key == "i":
+      elif key == "a":
          ispell.ignore (buffer.get_chars (self.word[0], self.word[1]))
       elif key.isdigit():
          try: replace = self.replace[int (key)]
