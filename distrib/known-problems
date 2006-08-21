@@ -1,9 +1,15 @@
 Known Problems fixed in GPS 4.0.1
 
+- F818-007 GPS hangs when loading default.gpr with syntax errors
+  Problem:    When launching GPS with a file named default.gpr containing
+              syntax errors, GPS will hangs, trying to reload this file
+              indefinitely.
+  Workaround: Fix the error in default.gpr before starting GPS
+
 - F816-015 Crash on user input when running an executable
   Problem:    If you run, through /Build/Run, an executable that expects to
               read input interactively, GPS crashed when you press Enter in
-              the console
+              the console.
   Workaround: Use an external terminal when running the process, which can
               be done from the dialog open before spawning the executable
 
