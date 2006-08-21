@@ -20,6 +20,8 @@ keys are recognized:
   - "a": Accept this word during this session. This setting will be
          remembered until you either kill the ispell process in the
          task manager, or exit GPS
+  - "r": Replace current word with typed-in value. The replacement
+         is rechecked after insertion
   - "space": Ignore this word, and go to the next word
   - "Escape": Cancel current spell checking
   - "0-9" or "A-Z": Replace the current word with this replacement
@@ -256,16 +258,26 @@ class SpellCheckBuffer (GPS.CommandWindow):
       The user is asked interactively for possible replacements"""
 
    def __init__ (self, category, buffer = None):
-      GPS.CommandWindow.__init__ (self, prompt="(i,a,space)",
-                                  on_key=self.on_key)
-      self.set_background (background_color)
       if not buffer: buffer = GPS.EditorBuffer.get()
       self.word_iter = None
       self.comment = BlockIterator (buffer, category)
-      try:
-        self.next_with_error()
-      except StopIteration:
-        self.destroy()
+      self.replace_mode = False
+      self.has_window = False
+      self.next_with_error_or_destroy()
+
+   def create_window (self):
+      """Create the command window if necessary. This is only created when
+         needed, to avoid a flicker if the buffer contains no mispelled word.
+         Also that gives the impression that ispell starts faster, since we
+         wait before the window is displayed, not after it has been displayed"""
+      if not self.has_window:
+         GPS.CommandWindow.__init__ \
+           (self, prompt="(i,a,r,space)", on_key=self.on_key, 
+            on_activate=self.on_activate, close_on_activate=False)
+         self.set_background (background_color)
+         self.has_window = True
+      else:
+         self.set_prompt ("(i,a,r,space")
 
    def next (self):
       """Move to next word to analyze. Raise StopIteration at the end.
@@ -278,60 +290,78 @@ class SpellCheckBuffer (GPS.CommandWindow):
            block          = self.comment.next()
            self.word_iter = WordIterator (block[0], block[1])
 
-   def next_with_error (self):
+   def next_with_error_or_destroy (self):
       """Store the location of the next word with spelling errors.
          Raise StopIteration when there are no more words"""
       global ispell
-      while True:
-         word = self.next()
-         text = word[0].buffer().get_chars (word[0], word[1])
-         replace = ispell.parse (text)
-         if replace:
-           suggest = ""
-           for p in range (len(replace)):
-              if p <= 9: key=`p`
-              else:      key=chr (ord('A') + p - 10)
-              suggest=suggest + "[" + key + "]" + replace[p] + " "
-           word[0].buffer().select (word[0], word[1] + 1)
-           self.write (suggest, 0)
-           self.word    = word
-           self.replace = replace
-           return
+      try:
+        while True:
+          word = self.next()
+          text = word[0].buffer().get_chars (word[0], word[1])
+          replace = ispell.parse (text)
+          if replace:
+            suggest = ""
+            for p in range (len(replace)):
+               if p <= 9: key=`p`
+               else:      key=chr (ord('A') + p - 10)
+               suggest=suggest + "[" + key + "]" + replace[p] + " "
+            word[0].buffer().select (word[0], word[1] + 1)
+            self.create_window()
+            self.write (suggest, 0)
+            self.word    = word
+            self.replace = replace
+            return
+      except StopIteration:
+        self.destroy()
+
+   def on_activate (self, input):
+      if self.replace_mode:
+         buffer = self.word[0].buffer()
+         buffer.delete (self.word[0], self.word[1])
+         buffer.insert (self.word[0], input)
+         self.word_iter.starts_at (self.word[0])
+         self.replace_mode = False
+         self.next_with_error_or_destroy()
 
    def on_key (self, input, key, cursor_pos):
       global ispell
-      # Do the replacement
-      buffer = self.word[0].buffer()
-      replace = None
-      key = key.replace ("shift-", "")
-      if key == "i":
-         ispell.add_to_dict (buffer.get_chars (self.word[0], self.word[1]))
-      elif key == "a":
-         ispell.ignore (buffer.get_chars (self.word[0], self.word[1]))
-      elif key.isdigit():
-         try: replace = self.replace[int (key)]
-         except IndexError: return True
-      elif key.isupper():
-         try: replace = self.replace [ord(key) - ord('A') + 10]
-         except IndexError: return True
-      elif key == "Escape":
-         self.destroy()
-         return True 
-      elif key == "space":
-         pass
+      if self.replace_mode:
+         return False
       else:
+         buffer = self.word[0].buffer()
+         replace = None
+         key = key.replace ("shift-", "")
+         if key == "i":
+            ispell.add_to_dict (buffer.get_chars (self.word[0], self.word[1]))
+         elif key == "a":
+            ispell.ignore (buffer.get_chars (self.word[0], self.word[1]))
+         elif key == "r":
+            self.write ("")         
+            self.set_prompt ("Replace with:")
+            self.replace_mode = True
+            return True
+         elif key.isdigit():
+            try: replace = self.replace[int (key)]
+            except IndexError: return True
+         elif key.isupper():
+            try: replace = self.replace [ord(key) - ord('A') + 10]
+            except IndexError: return True
+         elif key == "Escape":
+            self.destroy()
+            return True 
+         elif key == "space":
+            pass
+         else:
+            # Invalid key, wait for valid one
+            return True
+
+         if replace:
+            buffer.delete (self.word[0], self.word[1])
+            buffer.insert (self.word[0], replace)
+
+         # Move to next word
+         self.next_with_error_or_destroy()
          return True
-
-      if replace:
-         buffer.delete (self.word[0], self.word[1])
-         buffer.insert (self.word[0], replace)
-
-      # Move to next word
-      try:
-        self.next_with_error()
-      except StopIteration:
-        self.destroy()
-      return True
 
 ####################################
 
