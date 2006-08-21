@@ -1,9 +1,9 @@
 Known Problems fixed in GPS 4.0.1
 
-- F821-001 Remote browsing a LynxOS failure.
+- F821-001 Remote browsing on LynxOS does not work
   Problem:    Browsing a remote LynxOS machine using the file selector or the
-              directory selector fails: no file is shown.
-  Workaround: Directly specify the full file path in the file entry.
+              directory selector does not work: no file is shown.
+  Workaround: Directly specify the full file path in the file entry
 
 - F818-007 GPS hangs when loading default.gpr with syntax errors
   Problem:    When launching GPS with a file named default.gpr containing
