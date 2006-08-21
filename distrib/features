@@ -46,6 +46,12 @@ F720-008 Improved Emacs emulation (2006-07-21)
   Several new key bindings were defined to emulate Emacs. The handling of
   selections (mark+cursor) was also enhanced
 
+F719-014 Improved support for "no title bar" (2006-08-21)
+
+  When disabling the "Show title bars" preference, GPS now displays the
+  full name of the current editor in the main title bar, to ease working
+  in this mode, and differenciate files with the same base name.
+
 F719-012 New dialog /Edit/Startup Script Editor
 
   This new dialog allows you to chose which scripts GPS should load on
