@@ -1607,9 +1607,15 @@ procedure GPS.Main is
          if Child = null then
             Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
          else
-            Reset_Title
-              (GPS_Window (Get_Main_Window (Kernel)),
-               Get_Short_Title (Child));
+            if Get_Pref (Pref_Draw_Title_Bars) then
+               Reset_Title
+                 (GPS_Window (Get_Main_Window (Kernel)),
+                  Get_Short_Title (Child));
+            else
+               Reset_Title
+                 (GPS_Window (Get_Main_Window (Kernel)),
+                  Get_Title (Child));
+            end if;
          end if;
       end if;
    end Set_Main_Title;
