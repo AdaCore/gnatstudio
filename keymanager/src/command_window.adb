@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;         use Ada.Exceptions;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
@@ -47,6 +48,7 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 with GUI_Utils;              use GUI_Utils;
 with KeyManager_Module;      use KeyManager_Module;
+with Traces;                 use Traces;
 
 package body Command_Window is
 
@@ -60,6 +62,7 @@ package body Command_Window is
       On_Key      : Subprogram_Type;
       On_Activate : Subprogram_Type;
       On_Cancel   : Subprogram_Type;
+      Close_On_Activate : Boolean;
    end record;
    type Command_Window is access all Command_Window_Record'Class;
 
@@ -119,6 +122,7 @@ package body Command_Window is
    Text_Cst        : aliased constant String := "text";
    Cursor_Cst      : aliased constant String := "cursor";
    Color_Cst       : aliased constant String := "color";
+   Close_On_Activate_Cst : aliased constant String := "close_on_activate";
 
    --------------
    -- Get_Text --
@@ -158,7 +162,8 @@ package body Command_Window is
          return True;
       end if;
 
-      --  If the user has pressed Enter, we activate the Command_Window
+      --  If the user has pressed Enter, we activate the Command_Window and
+      --  close it automatically
 
       if Modif = 0
         and then (Key = GDK_Return or Key = GDK_ISO_Enter)
@@ -166,10 +171,15 @@ package body Command_Window is
          declare
             Str         : constant String := Get_Text (Win);
             On_Activate : constant Subprogram_Type := Win.On_Activate;
+            On_Cancel   : constant Subprogram_Type := Win.On_Cancel;
          begin
-            --  Prevent callback when window is destroyed
-            Win.On_Cancel := null;
-            Destroy (Win);
+            if Win.Close_On_Activate then
+               --  Prevent callback when window is destroyed
+               Win.On_Cancel := null;
+               Destroy (Win);
+               Win.On_Cancel := On_Cancel;
+            end if;
+
             if On_Activate /= null then
                declare
                   C : Callback_Data'Class :=
@@ -292,6 +302,11 @@ package body Command_Window is
       Keyboard_Ungrab;
 
       KeyManager_Module.Unblock_Key_Shortcuts (Win.Kernel);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception: "
+                & Exception_Information (E));
    end On_Destroy;
 
    -----------------
@@ -438,7 +453,8 @@ package body Command_Window is
                                  4 => On_Changed_Cst'Access,
                                  5 => On_Activate_Cst'Access,
                                  6 => On_Cancel_Cst'Access,
-                                 7 => On_Key_Cst'Access));
+                                 7 => On_Key_Cst'Access,
+                                 8 => Close_On_Activate_Cst'Access));
          if CW_Module.Window /= null then
             Set_Error_Msg (Data, "A command window is already in use");
          else
@@ -453,6 +469,7 @@ package body Command_Window is
             CW_Module.Window.On_Activate := Nth_Arg (Data, 5, null);
             CW_Module.Window.On_Cancel   := Nth_Arg (Data, 6, null);
             CW_Module.Window.On_Key      := Nth_Arg (Data, 7, null);
+            CW_Module.Window.Close_On_Activate := Nth_Arg (Data, 8, True);
          end if;
 
       elsif Command = "write" then
@@ -537,7 +554,7 @@ package body Command_Window is
       Register_Module (CW_Module, Kernel, "Command_Window");
 
       Register_Command
-        (Kernel, Constructor_Method, 0, 6, Class => Class,
+        (Kernel, Constructor_Method, 0, 7, Class => Class,
          Handler => Command_Handler'Access);
       Register_Command
         (Kernel, "write", 1, 2, Class => Class,
