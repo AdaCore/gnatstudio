@@ -633,17 +633,18 @@ package body Filesystem.Unix is
                return
                  (new String'("sh"),
                   new String'("-c"),
-                  new String'("ls -AbL1p '" &
+                  new String'("ls -AL1F '" &
                               Local_Dir_Name &
-                              "' | grep /$ 2> /dev/null"));
+                              "' 2> /dev/null | grep /$"));
 
          elsif Files_Only then
                return
                  (new String'("sh"),
                   new String'("-c"),
-                  new String'("ls -AbL1p '" &
+                  new String'("ls -AL1F '" &
                               Local_Dir_Name &
-                              "' | grep -v /$ 2> /dev/null"));
+                              "' 2> /dev/null | grep -v /$ | " &
+                              "sed -e 's/[*=@\|]$//'"));
 
          else
             return (new String'("ls"),
