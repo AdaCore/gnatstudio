@@ -37,6 +37,7 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 with Commands;                use Commands;
+with System;
 
 package body Expect_Interface is
 
@@ -115,6 +116,21 @@ package body Expect_Interface is
    type Action_Property is new Instance_Property_Record with record
       Action : Custom_Action_Access;
    end record;
+
+   procedure In_Trace_Filter
+     (Description : Process_Descriptor'Class;
+      Str         : String;
+      User_Data   : System.Address);
+   procedure Out_Trace_Filter
+     (Description : Process_Descriptor'Class;
+      Str         : String;
+      User_Data   : System.Address);
+   procedure Died_Trace_Filter
+     (Description : Process_Descriptor'Class;
+      Str         : String;
+      User_Data   : System.Address);
+   --  Various filters to trace the external process executing when traces are
+   --  activated
 
    -----------------------
    -- Local subprograms --
@@ -196,9 +212,10 @@ package body Expect_Interface is
 
    procedure Interrupt (Command : in out Custom_Action_Record) is
    begin
+      Exit_Cb   (Command);
       Interrupt (Command.Pd.all);
       Close     (Command.Pd.all);
-      Exit_Cb   (Command);
+      Command.Pd := null;
    end Interrupt;
 
    -------------
@@ -220,9 +237,11 @@ package body Expect_Interface is
             Output_Cb (Custom_Action_Access (Command),
                        Strip_CR (Expect_Out (Command.Pd.all)));
          end if;
-      end if;
 
-      return Execute_Again;
+         return Execute_Again;
+      else
+         return Failure;
+      end if;
 
    exception
       when Process_Died =>
@@ -232,8 +251,9 @@ package body Expect_Interface is
                        Strip_CR (Expect_Out (Command.Pd.all)));
          end if;
 
-         Close (Command.Pd.all, Command.Status);
          Exit_Cb (Command.all);
+         Close (Command.Pd.all, Command.Status);
+         Command.Pd := null;
 
          if Command.Status /= 0 then
             return Failure;
@@ -305,8 +325,7 @@ package body Expect_Interface is
       pragma Unreferenced (Tmp);
    begin
       if D.Pd /= null then
-         Trace (Me, "Exited");
-         D.Pd := null;
+         Trace (Me, "Exiting");
 
          if D.On_Exit /= null then
             declare
@@ -320,6 +339,9 @@ package body Expect_Interface is
                Tmp := Execute (D.On_Exit, C);
                Free (C);
             end;
+
+            --  Avoid running a second time
+            D.On_Exit := null;
          end if;
 
       end if;
@@ -342,8 +364,6 @@ package body Expect_Interface is
       Current, Final : Natural;
 
    begin
-      Trace (Me, "Output: " & Output);
-
       --  First check the progress regexp
 
       if D.Progress_Regexp /= null then
@@ -583,6 +603,48 @@ package body Expect_Interface is
          return Exit_Type'(Died);
    end Interactive_Expect;
 
+   ---------------------
+   -- In_Trace_Filter --
+   ---------------------
+
+   procedure In_Trace_Filter
+     (Description : Process_Descriptor'Class;
+      Str         : String;
+      User_Data   : System.Address)
+   is
+      pragma Unreferenced (Description, User_Data);
+   begin
+      Trace (Me, "Sending: " & Str);
+   end In_Trace_Filter;
+
+   ----------------------
+   -- Out_Trace_Filter --
+   ----------------------
+
+   procedure Out_Trace_Filter
+     (Description : Process_Descriptor'Class;
+      Str         : String;
+      User_Data   : System.Address)
+   is
+      pragma Unreferenced (Description, User_Data);
+   begin
+      Trace (Me, "Receiving: " & Str);
+   end Out_Trace_Filter;
+
+   -----------------------
+   -- Died_Trace_Filter --
+   -----------------------
+
+   procedure Died_Trace_Filter
+     (Description : Process_Descriptor'Class;
+      Str         : String;
+      User_Data   : System.Address)
+   is
+      pragma Unreferenced (Description, User_Data);
+   begin
+      Trace (Me, "Died: " & Str);
+   end Died_Trace_Filter;
+
    --------------------------
    -- Custom_Spawn_Handler --
    --------------------------
@@ -654,6 +716,18 @@ package body Expect_Interface is
             end;
 
             if Success then
+               if Active (Me) then
+                  Add_Filter (D.Pd.all,
+                              Filter => In_Trace_Filter'Access,
+                              Filter_On => Input);
+                  Add_Filter (D.Pd.all,
+                              Filter => Out_Trace_Filter'Access,
+                              Filter_On => Output);
+                  Add_Filter (D.Pd.all,
+                              Filter => Died_Trace_Filter'Access,
+                              Filter_On => Died);
+               end if;
+
                Created_Command := Launch_Background_Command
                  (Kernel          => Kernel,
                   Command         => D,
