@@ -4650,11 +4650,12 @@ Among other things, it is used in the implementation of the interactive search f
      <param name="on_activate" default="null">A subprogram</param>
      <param name="on_cancel" default="null">A subprogram</param>
      <param name="on_key" default="null">A subprogram</param>
+     <param name="close_on_activate" default="True">A boolean</param>
      <description>This function initializes an instance of a command window. An exception is raised if such a window is already active in GPS. Otherwise, the new window is popped up on the screen. Its location depends on the global_window parameter: if true, the command window is displayed at the bottom of the GPS window and occupies its whole width. If false, it is displayed at the bottom of the currently selected window.
 The prompt is the short string displayed just before the command line itself. Its goal is to indicate to the user what he is entering.
 The last four parameters are callbacks:
    - on_changed is called when the user has entered one or more new characters in the command line. This function is given two parameters: the current input string, and the last cursor position in this string. See the example above on how to get the part of the input before and after the cursor.
-   - on_activate is called when the user has pressed enter. The command window has already been closed at that point, and the focus given back to the initial MDI window that had it. This callback is given a single parameter, the final input string
+   - on_activate is called when the user has pressed enter. The command window has already been closed at that point if close_on_activate is True, and the focus given back to the initial MDI window that had it. This callback is given a single parameter, the final input string
    - on_cancel is called when the user has pressed a key that closed the dialog, for instance Esc. It is given a single parameter, the final input string. This callback is also called when you explicitly destroy the window yourself by calling self.destroy().
    - on_key is called when the user has pressed a new key on his keyboard, but before the corresponding character has been added to the command line. This can be used to filter out some characters, or provide special behavior for some key combination (see the example above). It is given three parameters, the current input string, the key that was pressed, and the current cursor position.</description>
    </shell_doc>
