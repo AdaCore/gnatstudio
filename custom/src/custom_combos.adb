@@ -28,6 +28,7 @@ with Gtk.GEntry;         use Gtk.GEntry;
 with Gtk.List_Item;      use Gtk.List_Item;
 with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Toolbar;        use Gtk.Toolbar;
+with Gtk.Tool_Item;      use Gtk.Tool_Item;
 with Gtk.Label;          use Gtk.Label;
 with Gtk.Widget;         use Gtk.Widget;
 
@@ -220,9 +221,16 @@ package body Custom_Combos is
    begin
       while Tmp /= Null_List loop
          Child := Get_Data (Tmp);
-         if Get_Name (Child) = Id then
+         if Get_Name (Child) = Id  then
             Free (Children);
             return Child;
+
+         elsif Child.all in Gtk_Tool_Item_Record'Class
+           and then Get_Child (Gtk_Tool_Item (Child)) /= null
+           and then Get_Name (Get_Child (Gtk_Tool_Item (Child))) = Id
+         then
+            Free (Children);
+            return Get_Child (Gtk_Tool_Item (Child));
          end if;
 
          Tmp := Next (Tmp);
@@ -423,10 +431,16 @@ package body Custom_Combos is
          declare
             EntInst : constant Class_Instance :=
               Nth_Arg (Data, 2, Get_GUI_Class (Kernel));
+            Tip  : constant String := Nth_Arg (Data, 3, "");
+            Item : Gtk_Tool_Item;
          begin
-            Append_Widget (Get_Toolbar (Kernel),
-                           Gtk_Widget (GObject'(Get_Data (EntInst))),
-                           Tooltip_Text => Nth_Arg (Data, 3, ""));
+            Gtk_New (Item);
+            Add (Item, Gtk_Widget (GObject'(Get_Data (EntInst))));
+            Insert (Get_Toolbar (Kernel), Item);
+            Show_All (Item);
+            if Tip /= "" then
+               Set_Tooltip (Item, Get_Tooltips (Kernel), Tip);
+            end if;
          end;
       end if;
    end Custom_Toolbar_Handler;
