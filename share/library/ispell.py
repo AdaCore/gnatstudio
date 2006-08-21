@@ -76,7 +76,7 @@ class Ispell:
       self.proc = None
       self.personal_dict_modified=False
 
-   def on_exit (self, proc, exit_status, output):
+   def before_kill (self, proc, output):
       """Called when the ispell process has terminated"""
       self.save_personal_dict ()
       self.proc = None
@@ -97,7 +97,7 @@ class Ispell:
         ## Do not display the process in the task manager, since it will run
         ## forever in any case.
         self.proc = GPS.Process \
-           (ispell_command, on_exit=self.on_exit, task_manager=False)
+           (ispell_command, before_kill=self.before_kill, task_manager=False)
         result = self.proc.expect ("^.*", timeout=2000)
 
    def read (self, word):
