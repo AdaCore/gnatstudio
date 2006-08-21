@@ -234,6 +234,7 @@ package GPS.Kernel.Preferences is
    MDI_Title_Bar_Color   : Param_Spec_Color;
    MDI_Focus_Title_Color : Param_Spec_Color;
    MDI_All_Floating      : Param_Spec_Boolean;
+   Pref_Draw_Title_Bars  : Param_Spec_Boolean;
 
    -- Project Editor --
    Default_Switches_Color          : Param_Spec_Color;

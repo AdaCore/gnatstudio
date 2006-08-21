@@ -128,7 +128,6 @@ package body GPS.Main_Window is
    package Toolbar_Icons_Size_Properties is new Generic_Enumeration_Property
      ("Toobar_Icons", Toolbar_Icons_Size);
 
-   Pref_Draw_Title_Bars : Param_Spec_Boolean;
    Pref_Tabs_Policy     : Param_Spec_Enum;
    Pref_Tabs_Position   : Param_Spec_Enum;
    Pref_Toolbar_Style   : Param_Spec_Enum;
