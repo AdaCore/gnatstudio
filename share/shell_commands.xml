@@ -2975,13 +2975,18 @@ My_Gdb()
       <param name="progress_regexp" default="">A string</param>
       <param name="progress_current" default="1">An integer</param>
       <param name="progress_total" default="1">An integer</param>
+      <param name="before_kill" default="None">A subprogram</param>
       <description>Spawn specified command. If regexp is not-empty and on_match_action is specified, launch on_match_action when regexp is found in the process output. If on_exit_action is specified, execute it when the process terminates. Return the ID of the spawned process.
 on_match is a subprogram called with the parameters:
   $1 = the instance of GPS.Process
   $2 = the string which matched the regexp
   $3 = the string since the last match
 
-on_exit is a subprogram called with the parameters:
+before_kill is a subprogram called just before the process is about to be killed. It is called when the user is interrupting the process through the task manager, or when GPS exits. It is not called when the process terminates normally. When it is called, the process is still valid and can be send commands. Its parameters are:
+  $1 = the instance of GPS.Process
+  $2 = the entire output of the process
+
+on_exit is a subprogram called when the process has exited. You can no longer send input to it at this stage. Its parameters are:
   $1 = the instance of GPS.Process
   $2 = the exit status
   $3 = the entire output of the process
