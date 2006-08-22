@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.0.1
 
+- F821-007 /Edit/Refill deletes 1 letter words at end of lines
+  Problem:    If you call this menu on a line that ends with a 1 letter word,
+              that word is deleted during the refill
+  Workaround: Either do the refill manually, or add two random letters at the
+              end of the line and delete them after the refill
+
 - F821-001 Remote browsing on LynxOS does not work
   Problem:    Browsing a remote LynxOS machine using the file selector or the
               directory selector does not work: no file is shown.
