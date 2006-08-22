@@ -171,10 +171,11 @@ package body GPS.Kernel.Console is
    -------------------
 
    procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class) is
-      pragma Unreferenced (Kernel);
+      Console : constant Interactive_Console := Get_Console (Kernel);
    begin
       if Console_Module_Id.Child /= null then
          Raise_Child (Console_Module_Id.Child, Give_Focus => False);
+         Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console), False);
       end if;
    end Raise_Console;
 
