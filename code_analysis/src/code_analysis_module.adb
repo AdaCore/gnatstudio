@@ -18,11 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;           use Ada.Exceptions;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with Glib;                     use Glib;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Window;               use Gtk.Window;
 with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Code_Coverage;            use Code_Coverage;
 with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
@@ -48,11 +54,10 @@ package body Code_Analysis_Module is
         := new Code_Analysis_Class_Record;
       Instance : Class_Instance;
    begin
-      Instance             := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property.Projects    := new Project_Maps.Map;
-      Property.View        := new Code_Analysis_View_Record;
-      Initialize_Hbox (Property.View);
-      GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
+      Instance          := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
+      Property.Projects := new Project_Maps.Map;
+      GPS.Kernel.Scripts.Set_Property
+        (Instance, Code_Analysis_Cst_Str,
          Instance_Property_Record (Property.all));
    end Create;
 
@@ -84,32 +89,25 @@ package body Code_Analysis_Module is
       Project_Name  := Get_Project_From_File
         (Get_Registry (Code_Analysis_Module_ID.Kernel).all, VFS_File_Name);
       Project_Node  := Get_Or_Create (Property.Projects, Project_Name);
+
       File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
       File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
-      File_Node.Analysis_Data.Coverage_Data.Covered := 54;
-      Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children
-        := 8000;
       File_Contents := Read_File (Cov_File_Name);
+
       Add_Subprograms (File_Node, File_Contents);
-      Add_Lines (File_Node, File_Contents);
+      Add_Lines (File_Node, File_Contents,
+                 Node_Coverage
+                   (File_Node.Analysis_Data.Coverage_Data.all).Children,
+                 File_Node.Analysis_Data.Coverage_Data.Covered);
+
       Free (File_Contents);
-      GPS.Kernel.Scripts.Set_Property
-        (Instance,
-         Code_Analysis_Cst_Str,
-         Instance_Property_Record
-           (Property));
+      GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
+         Instance_Property_Record (Property));
    end Add_Gcov_Info;
 
    --------------------
    -- Show_Tree_View --
    --------------------
-
-   Node_Col_Count : constant Guint := 1;
-   --  Number of columns needed to store the node information in a
-   --  Gtk_Tree_Model
-   Cov_Col_Count  : constant Guint := 2;
-   --  Number of columns needed to store the coverage information in a
-   --  Gtk_Tree_Model
 
    procedure Show_Tree_View
      (Data    : in out Callback_Data'Class;
@@ -119,8 +117,9 @@ package body Code_Analysis_Module is
       Property     : Code_Analysis_Class_Record;
       Instance     : Class_Instance;
       Project_Node : Project_Access;
-      Types_Array  : GType_Array (1 .. Node_Col_Count + Cov_Col_Count);
+      Scrolled     : Gtk_Scrolled_Window;
       Text_Render  : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend  : Gtk_Cell_Renderer_Pixbuf;
       Num_Col      : Gint;
       pragma Unreferenced (Num_Col, Project_Node);
    begin
@@ -128,53 +127,86 @@ package body Code_Analysis_Module is
       Property      := Code_Analysis_Class_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
 
-      GPS.Kernel.MDI.Gtk_New (Property.Child,
-                              Property.View,
-                              Module => Code_Analysis_Module_ID);
+      if Property.View = null then
+         Property.View := new Code_Analysis_View_Record;
+         Initialize_Hbox (Property.View);
 
-      Set_Title (Property.Child, -"Code Analysis Report");
+         Property.View.Instance := Instance;
 
-      for J in 1 .. Node_Col_Count + Cov_Col_Count loop
-         Types_Array (Guint (J)) := GType_String;
-      end loop;
-      --  1 text column to display the nodes
-      --  2 text columns to display the coverage info
+         Widget_Callback.Connect (Property.View, "destroy", On_Destroy'Access);
 
-      Gtk_New (Property.View.Model, Types_Array);
-      Gtk_New (Property.View.Tree, Gtk_Tree_Model (Property.View.Model));
+         if Code_Analysis_Module_ID.Project_Pixbuf = null then
+            Code_Analysis_Module_ID.Project_Pixbuf := Render_Icon
+              (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
+               "gps-project-closed", Gtk.Enums.Icon_Size_Menu);
+            Code_Analysis_Module_ID.File_Pixbuf := Render_Icon
+              (Get_Main_Window (Code_Analysis_Module_ID.Kernel), "gps-file",
+               Gtk.Enums.Icon_Size_Menu);
+            Code_Analysis_Module_ID.Subp_Pixbuf := Render_Icon
+              (Get_Main_Window (Code_Analysis_Module_ID.Kernel), "gps-box",
+               Gtk.Enums.Icon_Size_Menu);
+         end if;
 
-      -----------------
-      -- Node column --
-      -----------------
+         Gtk_New (Property.View.Model, GType_Array'
+             (Pix_Col  => Gdk.Pixbuf.Get_Type,
+              Node_Col => GType_String,
+              Cov_Col  => GType_String));
+         Gtk_New (Property.View.Tree, Gtk_Tree_Model (Property.View.Model));
 
-      Gtk_New (Property.View.Node_Column);
-      Gtk_New (Text_Render);
-      Pack_Start (Property.View.Node_Column, Text_Render, True);
-      Num_Col := Append_Column (Property.View.Tree, Property.View.Node_Column);
-      Add_Attribute (Property.View.Node_Column, Text_Render, "text", 0);
-      Set_Title (Property.View.Node_Column, -"Entities");
+         -----------------
+         -- Node column --
+         -----------------
 
-      ----------------------
-      -- Coverage columns --
-      ----------------------
-
-      Gtk_New (Property.View.Cov_Column);
-      Num_Col := Append_Column (Property.View.Tree, Property.View.Cov_Column);
-
-      for J in 1 .. Cov_Col_Count loop
-         Gtk_New (Text_Render);
-         Pack_Start (Property.View.Cov_Column, Text_Render, True);
+         Gtk_New (Property.View.Node_Column);
+         Gtk_New (Pixbuf_Rend);
+         Pack_Start (Property.View.Node_Column, Pixbuf_Rend, False);
          Add_Attribute
-           (Property.View.Cov_Column, Text_Render, "text", Gint (J));
-      end loop;
+           (Property.View.Node_Column, Pixbuf_Rend, "pixbuf", Pix_Col);
+         Gtk_New (Text_Render);
+         Pack_Start (Property.View.Node_Column, Text_Render, False);
+         Add_Attribute
+           (Property.View.Node_Column, Text_Render, "text", Node_Col);
+         Num_Col := Append_Column
+           (Property.View.Tree, Property.View.Node_Column);
+         Set_Title (Property.View.Node_Column, -"Entities");
+         Set_Resizable (Property.View.Node_Column, True);
 
-      Set_Title (Property.View.Cov_Column, -"Coverage");
-      Pack_Start (Property.View, Property.View.Tree);
-      Property.View.Iter := Get_Iter_First
-        (Gtk_Tree_Model (Property.View.Model));
-      Fill_Store
-        (Property.View.Model, Property.View.Iter, Property.Projects.First);
-      Put (Get_MDI (Code_Analysis_Module_ID.Kernel), Property.Child);
+         ----------------------
+         -- Coverage columns --
+         ----------------------
+
+         Gtk_New (Property.View.Cov_Column);
+         Num_Col :=
+           Append_Column (Property.View.Tree, Property.View.Cov_Column);
+
+         Gtk_New (Text_Render);
+         Pack_Start (Property.View.Cov_Column, Text_Render, False);
+         Add_Attribute
+           (Property.View.Cov_Column, Text_Render, "text", Cov_Col);
+
+         Set_Title (Property.View.Cov_Column, -"Coverage");
+
+         Gtk_New (Scrolled);
+         Set_Policy
+           (Scrolled, Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+         Add (Scrolled, Property.View.Tree);
+         Add (Property.View, Scrolled);
+         Property.View.Iter := Get_Iter_First
+           (Gtk_Tree_Model (Property.View.Model));
+         Fill_Iter
+           (Property.View.Model, Property.View.Iter, Property.Projects.First);
+
+         GPS.Kernel.MDI.Gtk_New (Property.Child,
+                                 Property.View,
+                                 Module => Code_Analysis_Module_ID);
+         Set_Title (Property.Child, -"Code Analysis Report");
+         Put (Get_MDI (Code_Analysis_Module_ID.Kernel), Property.Child);
+         GPS.Kernel.Scripts.Set_Property
+           (Instance, Code_Analysis_Cst_Str,
+            Instance_Property_Record (Property));
+      end if;
+
+      Raise_Child (Property.Child);
    end Show_Tree_View;
 
    -------------
@@ -195,6 +227,26 @@ package body Code_Analysis_Module is
       Free_Code_Analysis (Property.Projects);
       Unchecked_Free (Property.View);
    end Destroy;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
+      V : constant Code_Analysis_View := Code_Analysis_View (View);
+      Property : Code_Analysis_Class_Record;
+   begin
+      Property := Code_Analysis_Class_Record
+        (Get_Property (V.Instance, Code_Analysis_Cst_Str));
+      Property.View := null;
+      GPS.Kernel.Scripts.Set_Property
+           (V.Instance, Code_Analysis_Cst_Str,
+            Instance_Property_Record (Property));
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Destroy;
 
    ---------------------
    -- Register_Module --
