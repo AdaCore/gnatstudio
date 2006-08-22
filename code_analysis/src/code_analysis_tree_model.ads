@@ -33,36 +33,36 @@ package Code_Analysis_Tree_Model is
    -- Filler --
    ------------
 
-   procedure Fill_Store
-     (Tree_Store : in out Gtk_Tree_Store;
+   procedure Fill_Iter
+     (Model      : in out Gtk_Tree_Store;
       Iter       : in out Gtk_Tree_Iter;
       Cur        : Project_Maps.Cursor);
    --  Fill the Gtk_Tree_Store
 
-   procedure Fill_Store
-     (Tree_Store : in out Gtk_Tree_Store;
+   procedure Fill_Iter
+     (Model      : in out Gtk_Tree_Store;
       Iter       : in out Gtk_Tree_Iter;
       Parent     : Gtk_Tree_Iter;
       Sub_Node   : Subprogram_Access);
    --  Fill the Gtk_Tree_Store with the given Subprogram node
 
-   procedure Fill_Store
-     (Tree_Store : in out Gtk_Tree_Store;
+   procedure Fill_Iter
+     (Model      : in out Gtk_Tree_Store;
       Iter       : in out Gtk_Tree_Iter;
       Parent     : Gtk_Tree_Iter;
       File_Node  : File_Access);
    --  Fill the Gtk_Tree_Store with the given File node
 
-   procedure Fill_Store
-     (Tree_Store   : in out Gtk_Tree_Store;
+   procedure Fill_Iter
+     (Model        : in out Gtk_Tree_Store;
       Iter         : in out Gtk_Tree_Iter;
       Project_Node : Project_Access);
    --  Fill the Gtk_Tree_Store with the given Project node
 
-   procedure Fill_Store
-     (Tree_Store  : in out Gtk_Tree_Store;
-      Iter        : in out Gtk_Tree_Iter;
-      Analysis_Id : Analysis);
+   procedure Fill_Iter
+     (Model        : in out Gtk_Tree_Store;
+      Iter         : in out Gtk_Tree_Iter;
+      Analysis_Id  : Analysis);
    --  Fill the Gtk_Tree_Store with the given Analysis record
 
 end Code_Analysis_Tree_Model;
