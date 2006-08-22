@@ -27,7 +27,6 @@ with Code_Analysis;   use Code_Analysis;
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with Gtk.Tree_Store;  use Gtk.Tree_Store;
 with Gtk.Tree_Model;  use Gtk.Tree_Model;
-with Glib;            use Glib;
 
 package Code_Coverage is
 
@@ -39,7 +38,9 @@ package Code_Coverage is
 
    procedure Add_Lines
      (File_Node     : File_Access;
-      File_Contents : String_Access);
+      File_Contents : String_Access;
+      Line_Count    : out Natural;
+      Covered_Lines : out Natural);
    --  Find coverage info of the given lines of a gcov formated output file
    --  and fill it into the correct Code_Analysis lines
 
@@ -55,17 +56,11 @@ package Code_Coverage is
    --  Currently dump to the standard output coverage information stored in a
    --  Code_Analysis.Coverage for the Subprogram nodes, ie with extra Called
 
-   Node_Col : constant Gint := 0;
-   --  Gtk_Tree_Model column number dedicated to the nodes of code_analysis
-   --  structure
-   Cov_Col  : constant Gint := 1;
+   Cov_Col  : constant := 2;
    --  Gtk_Tree_Model column number dedicated to the coverage information
    --  contained in the node coverage records
-   Call_Col : constant Gint := 2;
-   --  Gtk_Tree_Model column number dedicated to the coverage information
-   --  contained in the Subprogram coverage records
 
-   procedure Fill_Store
+   procedure Fill_Iter
      (Tree_Store : in out Gtk_Tree_Store;
       Iter       : in out Gtk_Tree_Iter;
       Coverage   : Coverage_Access);
