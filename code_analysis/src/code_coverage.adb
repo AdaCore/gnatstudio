@@ -62,16 +62,20 @@ package body Code_Coverage is
 
    procedure Add_Lines
      (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access)
+      File_Contents : String_Access;
+      Line_Count    : out Natural;
+      Covered_Lines : out Natural)
    is
       Regexp     : constant Pattern_Matcher
         := Compile ("^ +(\d+|#####|-): *(\d+):.*$", Multiple_Lines);
       Matches    : Match_Array (0 .. 2);
       Current    : Natural;
-      Line_Count : Natural := 0;
       Line       : Natural;
       Line_Node  : Line_Access;
    begin
+      Line_Count    := 0;
+      Covered_Lines := 0;
+
       for C in File_Contents'First .. File_Contents'Last
       loop
          if File_Contents (C) = ASCII.LF then
@@ -102,6 +106,7 @@ package body Code_Coverage is
                Line_Node.Analysis_Data.Coverage_Data := new Coverage;
                Line_Node.Analysis_Data.Coverage_Data.Covered := Natural'Value
                  (File_Contents (Matches (1).First .. Matches (1).Last));
+               Covered_Lines := Covered_Lines + 1;
          end case;
 
          Current := Matches (0).Last + 1;
@@ -148,29 +153,64 @@ package body Code_Coverage is
       end if;
    end Dump_Subp_Coverage;
 
-   ----------------
-   -- Fill_Store --
-   ----------------
+   ---------------
+   -- Fill_Iter --
+   ---------------
 
-   procedure Fill_Store
+   procedure Fill_Iter
      (Tree_Store : in out Gtk_Tree_Store;
       Iter       : in out Gtk_Tree_Iter;
-      Coverage   : Coverage_Access) is
+      Coverage   : Coverage_Access)
+   is
+      function Txt_Lig (Lig_Count : Natural) return String;
+      function Txt_Sub (Coverage  : Coverage_Access) return String;
+
+      Cov_Txt   : constant String  := Natural'Image (Coverage.Covered);
+      Lig_Count : constant Natural := Node_Coverage (Coverage.all).Children;
+
+      function Txt_Lig (Lig_Count : Natural) return String is
+      begin
+         if Lig_Count = 1 then
+            --  ??? Might be possible in C language, but extremely useless
+            return " line (";
+         else
+            return " lines (";
+         end if;
+      end Txt_Lig;
+
+      function Txt_Sub (Coverage : Coverage_Access) return String is
+
+         function Txt_Cal (Cal_Count : Natural) return String;
+         function Txt_Cal (Cal_Count : Natural) return String is
+         begin
+            if Cal_Count = 1 then
+               return " time";
+            else
+               return " times";
+            end if;
+         end Txt_Cal;
+         pragma Inline (Txt_Cal);
+      begin
+         if Coverage.all in Subprogram_Coverage'Class then
+            declare
+               Cal_Count : constant Natural :=
+                             Subprogram_Coverage (Coverage.all).Called;
+            begin
+               return String'(", called"
+                              & Natural'Image (Cal_Count)
+                              & Txt_Cal (Cal_Count));
+            end;
+         else
+            return "";
+         end if;
+      end Txt_Sub;
+      pragma Inline (Txt_Lig, Txt_Sub);
    begin
-      Set
-        (Tree_Store,
-         Iter,
-         Cov_Col,
-         Natural'Image (Coverage.Covered)
-         & " /"
-         & Natural'Image (Node_Coverage (Coverage.all).Children));
-      if Coverage.all in Subprogram_Coverage'Class then
-         Set
-           (Tree_Store,
-            Iter,
-            Call_Col,
-            "Called :"
-            & Natural'Image (Subprogram_Coverage (Coverage.all).Called));
-      end if;
-   end Fill_Store;
+      Set (Tree_Store, Iter, Cov_Col,
+         Natural'Image (Lig_Count)
+         & Txt_Lig (Lig_Count)
+         & Cov_Txt (Cov_Txt'First + 1 .. Cov_Txt'Last)
+         & " not covered)"
+         & Txt_Sub (Coverage));
+   end Fill_Iter;
 end Code_Coverage;
