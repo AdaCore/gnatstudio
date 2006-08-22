@@ -150,6 +150,13 @@ package Code_Analysis is
       Files : File_Maps.Map;
    end record;
 
+   Pix_Col  : constant := 0;
+   --  Gtk_Tree_Model column number dedicated to the icons associated with each
+   --  node of code_analysis data structure
+   Node_Col : constant := 1;
+   --  Gtk_Tree_Model column number dedicated to the nodes of code_analysis
+   --  structure
+
    -------------------
    -- Get_Or_Create --
    -------------------
