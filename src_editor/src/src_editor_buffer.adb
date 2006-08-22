@@ -5200,7 +5200,7 @@ package body Src_Editor_Buffer is
 
          --  Read all words on the line
 
-         while F < Str'Last loop
+         while F <= Str'Last loop
             --  Skip spaces
 
             while F < Str'Last and then Str (F) = ' ' loop
