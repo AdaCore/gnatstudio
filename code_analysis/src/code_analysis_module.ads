@@ -32,26 +32,46 @@ with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 
+with Gdk.Pixbuf;           use Gdk.Pixbuf;
+
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_Store;       use Gtk.Tree_Store;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with Gtk.Widget;           use Gtk.Widget;
 
 package Code_Analysis_Module is
+
+   type Code_Analysis_Module_ID_Record is new Module_ID_Record with record
+      Kernel         : Kernel_Handle;
+      Class          : Class_Type;
+      Project_Pixbuf : Gdk_Pixbuf;
+      File_Pixbuf    : Gdk_Pixbuf;
+      Subp_Pixbuf    : Gdk_Pixbuf;
+   end record;
+
+   type Code_Analysis_Module_ID_Access is access all
+     Code_Analysis_Module_ID_Record'Class;
+
+   Code_Analysis_Module_ID : Code_Analysis_Module_ID_Access;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
 private
+   type Code_Analysis_Class_Record;
+
+   type Code_Analysis_Class is access all Code_Analysis_Class_Record;
 
    type Code_Analysis_View_Record is new Gtk_Hbox_Record with record
-      Tree            : Gtk_Tree_View;
-      Model           : Gtk_Tree_Store;
-      Iter            : Gtk_Tree_Iter;
-      Node_Column     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Cov_Column      : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Tree        : Gtk_Tree_View;
+      Model       : Gtk_Tree_Store;
+      Iter        : Gtk_Tree_Iter;
+      Node_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Cov_Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Instance    : Class_Instance;
    end record;
 
    type Code_Analysis_View is access all Code_Analysis_View_Record;
@@ -59,27 +79,16 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Code_Analysis_View_Record, Code_Analysis_View);
 
-   type Code_Analysis_Module_ID_Record is new Module_ID_Record with record
-      Kernel : Kernel_Handle;
-      Class  : Class_Type;
-   end record;
-
-   type Code_Analysis_Module_ID_Access is access all
-     Code_Analysis_Module_ID_Record'Class;
-
    type Code_Analysis_Class_Record is new Instance_Property_Record with record
       Projects : Code_Analysis_Tree;
       View     : Code_Analysis_View;
       Child    : GPS_MDI_Child;
    end record;
 
-   type Code_Analysis_Class is access all Code_Analysis_Class_Record;
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Code_Analysis_Class_Record, Code_Analysis_Class);
 
    Code_Analysis_Cst_Str      : constant String := "code_analysis";
-   Code_Analysis_Module_ID    : Code_Analysis_Module_ID_Access;
    Me : constant Debug_Handle := Create (Code_Analysis_Cst_Str);
 
    procedure Create
@@ -101,5 +110,8 @@ private
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Free memory used by a Code_Analysis instance
+
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" signal
 
 end Code_Analysis_Module;
