@@ -94,12 +94,10 @@ package body Code_Analysis_Module is
       File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
       File_Contents := Read_File (Cov_File_Name);
 
-      Add_Subprograms (File_Node, File_Contents);
-      Add_Lines (File_Node, File_Contents,
-                 Node_Coverage
-                   (File_Node.Analysis_Data.Coverage_Data.all).Children,
-                 File_Node.Analysis_Data.Coverage_Data.Covered);
-
+      Read_Gcov_Info (File_Node, File_Contents,
+                      Node_Coverage
+                        (File_Node.Analysis_Data.Coverage_Data.all).Children,
+                      File_Node.Analysis_Data.Coverage_Data.Covered);
       Free (File_Contents);
       GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
          Instance_Property_Record (Property));
