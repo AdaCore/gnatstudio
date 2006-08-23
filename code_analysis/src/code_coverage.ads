@@ -30,19 +30,13 @@ with Gtk.Tree_Model;  use Gtk.Tree_Model;
 
 package Code_Coverage is
 
-   procedure Add_Subprograms
-     (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access);
-   --  Find subprograms in a gcov formated output file, and add them to the
-   --  given File node.
-
-   procedure Add_Lines
+   procedure Read_Gcov_Info
      (File_Node     : File_Access;
       File_Contents : String_Access;
       Line_Count    : out Natural;
       Covered_Lines : out Natural);
-   --  Find coverage info of the given lines of a gcov formated output file
-   --  and fill it into the correct Code_Analysis lines
+   --  Parse the File_Contents and fill the File_Node with gcov info
+   --  And set Line_Count and Covered_Lines
 
    procedure Dump_Node_Coverage (Coverage : Coverage_Access);
    --  Currently dump to the standard output coverage information stored
@@ -65,5 +59,21 @@ package Code_Coverage is
       Iter       : in out Gtk_Tree_Iter;
       Coverage   : Coverage_Access);
    --  Fill the Gtk_Tree_Store with the given coverage record
+
+private
+
+   procedure Add_Subprograms
+     (File_Node     : File_Access;
+      File_Contents : String_Access);
+   --  Find subprograms in a gcov formated output file, and add them to the
+   --  given File node.
+
+   procedure Add_Lines
+     (File_Node     : File_Access;
+      File_Contents : String_Access;
+      Line_Count    : out Natural;
+      Covered_Lines : out Natural);
+   --  Find coverage info of the given lines of a gcov formated output file
+   --  and fill it into the correct Code_Analysis lines
 
 end Code_Coverage;
