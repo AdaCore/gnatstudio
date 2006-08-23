@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -146,8 +146,9 @@ package body VFS is
    -- Create --
    ------------
 
-   function Create (Host          : UTF8_String;
-                    Full_Filename : UTF8_String) return Virtual_File
+   function Create
+     (Host          : UTF8_String;
+      Full_Filename : UTF8_String) return Virtual_File
    is
       Valid       : Boolean;
       Invalid_Pos : Natural;
@@ -159,6 +160,7 @@ package body VFS is
       else
          Last := Full_Filename'Last;
       end if;
+
       while Last >= Full_Filename'First loop
          exit when Full_Filename (Last) /= ASCII.LF
            and then Full_Filename (Last) /= ASCII.CR;
@@ -248,8 +250,9 @@ package body VFS is
             --  Conversion to and from UTF8 are not needed, since '.' and '/'
             --     are encoded the same in UTF8 anyway.
 
-            if File.Value.Full_Name (File.Value.Full_Name'Last) = '/' or else
-              File.Value.Full_Name (File.Value.Full_Name'Last) = '\' then
+            if File.Value.Full_Name (File.Value.Full_Name'Last) = '/'
+              or else File.Value.Full_Name (File.Value.Full_Name'Last) = '\'
+            then
                declare
                   Normalized : constant String := Normalize_Pathname
                     (File.Value.Full_Name.all,
@@ -294,9 +297,9 @@ package body VFS is
 
       if Is_Local (File) then
 
-         if File.Value.Full_Name (File.Value.Full_Name'Last) = '/' or
-           File.Value.Full_Name (File.Value.Full_Name'Last) = '\' then
-
+         if File.Value.Full_Name (File.Value.Full_Name'Last) = '/'
+           or else File.Value.Full_Name (File.Value.Full_Name'Last) = '\'
+         then
             return "";
          end if;
 
@@ -325,8 +328,9 @@ package body VFS is
       end if;
 
       if Is_Local (File) then
-         if File.Value.Full_Name (File.Value.Full_Name'Last) = '/' or
-           File.Value.Full_Name (File.Value.Full_Name'Last) = '\' then
+         if File.Value.Full_Name (File.Value.Full_Name'Last) = '/'
+           or else File.Value.Full_Name (File.Value.Full_Name'Last) = '\'
+         then
             return Base_Name (File.Value.Full_Name
                 (File.Value.Full_Name'First .. File.Value.Full_Name'Last - 1));
          else
@@ -816,13 +820,14 @@ package body VFS is
          Sep := GNAT.Directory_Operations.Dir_Separator;
 
          if Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '/'
-           and Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '\'
+           and then Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '\'
          then
             Full := new String'(Dir.Value.Full_Name.all & Sep);
             Free (Dir.Value.Full_Name);
             Dir.Value.Full_Name := Full;
             Changed := True;
          end if;
+
       else
          declare
             Dir_Path : constant String :=
@@ -1180,8 +1185,8 @@ package body VFS is
       elsif File2.Value = null then
          return False;
       else
-         Case_Sensitive := File1.Get_Filesystem.Is_Case_Sensitive and then
-           File2.Get_Filesystem.Is_Case_Sensitive;
+         Case_Sensitive := File1.Get_Filesystem.Is_Case_Sensitive
+           and then File2.Get_Filesystem.Is_Case_Sensitive;
 
          if Case_Sensitive then
             return File1.Value.Full_Name.all < File2.Value.Full_Name.all;
@@ -1279,6 +1284,10 @@ package body VFS is
       function Lt (Op1, Op2 : Natural) return Boolean;
       --  Return True if the first item is to be sorted before the second.
 
+      ----------
+      -- Xchg --
+      ----------
+
       procedure Xchg (Op1, Op2 : Natural) is
          Buffer : Virtual_File;
       begin
@@ -1287,11 +1296,16 @@ package body VFS is
          Files (Files'First - 1 + Op2) := Buffer;
       end Xchg;
 
+      --------
+      -- Lt --
+      --------
+
       function Lt (Op1, Op2 : Natural) return Boolean is
       begin
          return Files (Files'First - 1 + Op1) <
            Files (Files'First - 1 + Op2);
       end Lt;
+
    begin
       Sort (Files'Length, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);
    end Sort;
