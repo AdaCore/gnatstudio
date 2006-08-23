@@ -911,7 +911,7 @@ package body GPS.Kernel.Scripts is
                Custom := Create_Proxy
                  (Command => Action.Command,
                   Context => (Event       => null,
-                              Context     => No_Context,
+                              Context     => Context,
                               Synchronous => Synchronous,
                               Dir         => null,
                               Args        => Args,
