@@ -362,6 +362,8 @@ package body Command_Window is
       --  This one also has the drawback that other applications can no longer
       --  be driven by the keyboard.
       Window := new Command_Window_Record;
+
+      --  Not Window_Popup, since otherwise it never gains the focus
       Gtk.Window.Initialize   (Window, Window_Toplevel);
       Set_Decorated           (Window, False);
       Set_Transient_For       (Window, Get_Main_Window (Kernel));
@@ -402,6 +404,9 @@ package body Command_Window is
       Widget_Callback.Object_Connect
         (Get_Buffer (Window.Line), "changed",
          On_Changed'Access, Window, After => True);
+
+      --  So that when the commandWindow gets the keyboard focus, it keeps it
+      --  forever (Grab)
       Return_Callback.Object_Connect
         (Window.Line, "focus_in_event",
          On_Focus_In'Access, Window);
