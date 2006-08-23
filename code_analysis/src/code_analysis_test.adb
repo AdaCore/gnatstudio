@@ -126,11 +126,10 @@ procedure Code_Analysis_Test is
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
       File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
-      File_Node.Analysis_Data.Coverage_Data.Covered := 54;
-      Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children
-        := 8000;
-      Add_Subprograms (File_Node, File_Contents);
-      Add_Lines (File_Node, File_Contents);
+      Read_Gcov_Info (File_Node, File_Contents,
+                      Node_Coverage
+                        (File_Node.Analysis_Data.Coverage_Data.all).Children,
+                      File_Node.Analysis_Data.Coverage_Data.Covered);
       Free (File_Contents);
       return Project_Node;
    end Build_Structure;
@@ -211,8 +210,11 @@ procedure Code_Analysis_Test is
                                      & Integer'Image (JJ));
             File_Contents := Read_File (Cov_File_Name);
             File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
-            Add_Subprograms (File_Node, File_Contents);
-            Add_Lines (File_Node, File_Contents);
+            Read_Gcov_Info
+              (File_Node, File_Contents,
+               Node_Coverage
+                 (File_Node.Analysis_Data.Coverage_Data.all).Children,
+               File_Node.Analysis_Data.Coverage_Data.Covered);
             Free (File_Contents);
          end loop;
       end loop;
@@ -331,7 +333,7 @@ procedure Code_Analysis_Test is
       Set_Title (Tree_Col, "Coverage");
       Pack_Start (Container, Tree_View);
       Iter := Get_Iter_First (Gtk_Tree_Model (Tree_Store));
-      Fill_Store (Tree_Store, Iter, Projects.First);
+      Fill_Iter (Tree_Store, Iter, Projects.First);
       Show_All (Window);
       Main;
       Free_Code_Analysis (Projects);
