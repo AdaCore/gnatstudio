@@ -101,12 +101,16 @@ class DocGenerator:
 
    def get_formated_documentation (self, module_name, object):
       """Same as get_documentation, except new lines that should be protected
-         are also protected in the output of get_formated_documentation"""
+         are also protected in the output of get_formated_documentation. We
+         cannot replace all < or > symbols, since doc already contains the HTML
+         formating which we need to preserve"""
       doc = self.get_documentation (object) or ""
       doc = "&amp;".join (doc.split ('&'))
       doc = "&lt; ".join (doc.split ('< '))
+      doc = "&lt;".join (doc.split ('<<'))
       doc = "&lt;,".join (doc.split ('<, '))
       doc = "&gt; ".join (doc.split ('> '))
+      doc = "&gt;".join (doc.split ('>>'))
       doc = "&gt;,".join (doc.split ('>,'))
       doc = "<p>\n".join (doc.split ("\n\n"))
 

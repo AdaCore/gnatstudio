@@ -5,6 +5,10 @@
       We avoid hard-coded descriptions, so that it is easier to translate the
       GPS help, and to check the spelling in the documentation.
       User can also add their own knowledge database
+
+      To insert explicit '<' characters, you need to either follow them with a
+      space or a comma ',', or double them as  &lt;&lt;
+      Same for '>' character
   -->
 
 <docs>
@@ -3147,7 +3151,7 @@ The specific list depends on the hook type</param>
   <shell_doc name="GPS.Hook.describe_functions">
       <param name="self">The instance of GPS.Hook</param>
       <return>A list of strings</return>
-      <description>List all the functions that are executed when the hook is executed. The returned list might contain &lt;internal&gt; strings, which indicate that some Ada function is connected to this hook</description>
+      <description>List all the functions that are executed when the hook is executed. The returned list might contain &lt;&lt;internal&gt; strings, which indicate that some Ada function is connected to this hook</description>
   </shell_doc>
 
   <shell_doc name="GPS.Hook.list_types">
