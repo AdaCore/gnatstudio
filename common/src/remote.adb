@@ -46,7 +46,7 @@ package body Remote is
    is
    begin
       Glib.Free (Servers (Server).Nickname);
-      if Nickname /= "" and Nickname /= Local_Nickname then
+      if Nickname /= "" and then Nickname /= Local_Nickname then
          Servers (Server) := (Is_Local => False,
                               Nickname => new String'(Nickname));
       else
@@ -81,8 +81,7 @@ package body Remote is
    -- Get_Printable_Nickname --
    ----------------------------
 
-   function Get_Printable_Nickname (Server : Server_Type) return String
-   is
+   function Get_Printable_Nickname (Server : Server_Type) return String is
    begin
       if Is_Local (Server) then
          return Local_Nickname;

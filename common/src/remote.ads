@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package handles the remote servers assignment.
+--  This package handles the remote servers assignment
 
 package Remote is
 
@@ -33,8 +33,9 @@ package Remote is
    subtype Distant_Server_Type is Server_Type
      range Build_Server .. Debug_Server;
 
-   procedure Assign (Server   : Server_Type;
-                     Nickname : String);
+   procedure Assign
+     (Server   : Server_Type;
+      Nickname : String);
 
    function Is_Local (Server : Server_Type) return Boolean;
    --  Tell is the server is the localhost
