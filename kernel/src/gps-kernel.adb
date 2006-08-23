@@ -1407,7 +1407,6 @@ package body GPS.Kernel is
    function Get_Current_Focus_Widget
      (Kernel : access Kernel_Handle_Record) return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Kernel);
       use Widget_List;
       W, W2       : Gtk_Widget;
       Toplevel    : Gtk_Window;
@@ -1443,6 +1442,27 @@ package body GPS.Kernel is
          end loop;
 
          Free (List);
+      end if;
+
+      --  If still no one has the focus, then no window in GPS currently has
+      --  it. In this case, we assume that would be the main GPS window unless
+      --  a floating child last had the focus. In particular, this is used when
+      --  a Command_Window was used, then closed just before calling the
+      --  on_activate user callback. Since the gtk+ main loop hasn't been
+      --  called in between, the focus has not been transfered by the window
+      --  manager yet.
+      if W = null then
+         declare
+            Iter : constant Child_Iterator := First_Child (Get_MDI (Kernel));
+         begin
+            if Get (Iter) /= null
+              and then Is_Floating (Get (Iter))
+            then
+               W := Get_Focus (Gtk_Window (Get_Toplevel (Get (Iter))));
+            else
+               W := Get_Focus (Get_Main_Window (Kernel));
+            end if;
+         end;
       end if;
 
       if W /= null then
