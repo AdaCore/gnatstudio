@@ -23,6 +23,22 @@ with GNAT.Regpat; use GNAT.Regpat;
 
 package body Code_Coverage is
 
+   --------------------
+   -- Read_Gcov_Info --
+   --------------------
+
+   procedure Read_Gcov_Info
+     (File_Node     : Code_Analysis.File_Access;
+      File_Contents : String_Access;
+      Line_Count    : out Natural;
+      Covered_Lines : out Natural) is
+   begin
+      Add_Subprograms (File_Node, File_Contents);
+      Add_Lines (File_Node, File_Contents, Line_Count, Covered_Lines);
+      --  Must be done in this order, as Add_Lines needs to have an info
+      --  set up by Add_Subprograms
+   end Read_Gcov_Info;
+
    ---------------------
    -- Add_Subprograms --
    ---------------------
@@ -45,9 +61,9 @@ package body Code_Coverage is
          Match (Regexp_1, File_Contents.all, Matches_1, Current);
          exit when Matches_1 (0) = No_Match;
 
-         Subprogram     := new String'(File_Contents (
+         Subprogram := new String'(File_Contents (
            Matches_1 (2).First .. Matches_1 (2).Last));
-         Sub_Node     := Get_Or_Create (File_Node, Subprogram);
+         Sub_Node   := Get_Or_Create (File_Node, Subprogram);
          Sub_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
          Subprogram_Coverage (Sub_Node.Analysis_Data.Coverage_Data.all).Called
            := Natural'Value
@@ -86,8 +102,8 @@ package body Code_Coverage is
          end if;
       end loop;
 
-      File_Node.Lines := new Line_Array
-        (1 .. Line_Count - Natural (File_Node.Subprograms.Length) - 5);
+      Line_Count := Line_Count - (Natural (File_Node.Subprograms.Length) + 5);
+      File_Node.Lines := new Line_Array (1 .. Line_Count);
       --  Create a Line_Array with exactly the number of elements corresponding
       --  to the number of code lines in the original source code file.
 
