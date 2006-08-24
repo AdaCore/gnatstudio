@@ -12,7 +12,10 @@
                     either "Makefile" or "makefile" in the directory
                     containing the root project
        "make.switches": list of extra switches to pass the Makefile. By
-                    default, "-k" is used.
+                    default, "-k" is used. If you want to have the progress bar
+                    working for a project containing Ada sources, it is a good
+                    idea to pass gnatmake the -d switch, which can be done
+                    through a make variable.
    GPS will systematically set the Makefile variables corresponding with the
    scenario variables (see the menu /Tools/Views/Scenario). For instance, this
    will result in calling
