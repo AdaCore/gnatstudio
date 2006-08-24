@@ -635,6 +635,9 @@ package body GPS.Kernel.Task_Manager is
    begin
       return Command_Property
         (Get_Property (Instance, Command_Class_Name)).Command;
+   exception
+      when Invalid_Data =>
+         return null;
    end Get_Data;
 
 end GPS.Kernel.Task_Manager;
