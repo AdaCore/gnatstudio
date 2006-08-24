@@ -331,7 +331,6 @@ package body Expect_Interface is
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
-      Trace (Me, "MANU Exit_Cb");
       if D.Pd /= null then
          Trace (Me, "Exiting");
 
