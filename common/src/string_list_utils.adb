@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -199,7 +199,7 @@ package body String_List_Utils is
          Node := Next (Node);
          while Node /= Null_Node loop
             declare
-               Data_S  : constant String := Data (Node);
+               Data_S : constant String := Data (Node);
             begin
                Length := Natural'Min (Length, Data_S'Length);
                while Length > 0
