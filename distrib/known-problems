@@ -1,10 +1,5 @@
 Known Problems fixed in GPS 4.1.0
 
-- F822-018 Crash when using the search dialog
-  Problem:    GPS may crash when searching for all occurences of a pattern
-              using the the "Find All" button in the search dialog.
-  Workaround: Use the "References" contextual menus.
-
 - F818-013 Interrupting GPS.Process in task manager doesn't kill it
   Problem:    If you spawn a process in a script through GPS.Process,
               and interrupt it via the GPS task manager, the process itself
