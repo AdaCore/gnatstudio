@@ -37,8 +37,8 @@ def on_exit (process, exit_status, output):
 
 def display():
    # Two possible ways here: older versions of GNAT still have the
-   # gnatpsta utility, whereas for more recent versions with need
-   # to compile a file with -gnatS. Try the second solution first:
+   # gnatpsta utility, whereas for more recent versions we need to
+   # compile a file with -gnatS. Try gnatpsta first:
 
    dir  = tempfile.mkdtemp ()
    path = None
