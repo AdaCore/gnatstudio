@@ -47,8 +47,10 @@ package body GPS.Kernel.Command_API is
       if Command = Destructor_Method then
          Command_Instance := Nth_Arg (Data, 1, Command_Class);
          Data_Command := Get_Data (Command_Instance);
-         Remove_Instance (Data_Command, Get_Script (Data));
-         Destroy (Command_Access (Data_Command));
+         if Data_Command /= null then
+            Remove_Instance (Data_Command, Get_Script (Data));
+            Destroy (Command_Access (Data_Command));
+         end if;
       elsif Command = "list" then
          declare
             Commands : constant Command_Array := Get_Scheduled_Commands
