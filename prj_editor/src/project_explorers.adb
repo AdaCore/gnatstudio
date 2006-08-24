@@ -189,7 +189,7 @@ package body Project_Explorers is
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean;
-      Found           :  out Boolean;
+      Found           : out Boolean;
       Continue        : out Boolean);
    --  Search the next occurrence in the explorer
 
