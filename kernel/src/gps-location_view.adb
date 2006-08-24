@@ -1758,7 +1758,7 @@ package body GPS.Location_View is
       Sort_In_File       : Boolean := False)
    is
       View : constant Location_View := Get_Or_Create_Location_View (Kernel);
-      Iter : Gtk_Tree_Iter;
+      Iter : Gtk_Tree_Iter := Null_Iter;
    begin
       if View /= null then
          if Has_Markups then
