@@ -3,7 +3,7 @@ Known Problems fixed in GPS 4.0.1
 - F822-018 Crash when using the search dialog
   Problem:    GPS may crash when searching for all occurences of a pattern
               using the the "Find All" button in the search dialog.
-  Workaround: Use the "References" contextual menus.
+  Workaround: Use the "References" contextual menu instead
 
 - F821-007 /Edit/Refill deletes 1 letter words at end of lines
   Problem:    If you call this menu on a line that ends with a 1 letter word,
