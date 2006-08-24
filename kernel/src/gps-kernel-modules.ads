@@ -400,7 +400,7 @@ package GPS.Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Group       : Natural := 0);
-   --  Register a new contextual menu entry to tbe displayed.
+   --  Register a new contextual menu entry to be displayed.
    --  This menu will only be shown when the filter associated with the Action
    --  matches. The name used in the menu will be Label (or Name if label isn't
    --  specified), interpreted with the usual parameter substitution:
