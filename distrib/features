@@ -14,6 +14,11 @@ of the feature.
 New features in GPS 4.0.1
 -------------------------
 
+F725-001 Support for leon-elf toolchain (2006-08-24)
+
+  The project properties editor now lists the leon-elf toolchain as one of
+  the choices.
+
 F618-002 Support for python (2006-08-11)
 
   All GPS binaries are now built with python support enabled, allowing
