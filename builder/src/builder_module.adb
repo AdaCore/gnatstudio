@@ -973,6 +973,12 @@ package body Builder_Module is
       Args := Compute_Arguments
         (Kernel, Prj, Shadow_Path.all, Compilable_File, Compile_Only => True);
 
+      --  Remove the entry corresponding to file in the location view.
+      --  This is needed otherwise the location view is not cleared in case
+      --  there is another compilation running.
+
+      Remove_Location_Category (Kernel, Error_Category, File);
+
       if Compilation_Starting (Kernel, Error_Category, Quiet => Quiet) then
          String_List_Utils.String_List.Append
            (Builder_Module_ID.Output,
@@ -1375,11 +1381,11 @@ package body Builder_Module is
       Data : access Hooks_Data'Class) return Boolean
    is
       D : constant String_Boolean_Hooks_Args :=
-        String_Boolean_Hooks_Args (Data.all);
+            String_Boolean_Hooks_Args (Data.all);
    begin
       --  Small issue here: if the user cancels the compilation in one of the
       --  custom hooks the user might have connected, then all changes done
-      --  her (increase Build_Count) will not be undone since
+      --  here (increase Build_Count) will not be undone since
       --  On_Compilation_Finished is not called.
 
       --  Ask for saving sources/projects before building.
