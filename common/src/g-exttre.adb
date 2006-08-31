@@ -502,15 +502,15 @@ package body GNAT.Expect.TTY.Remote is
                   Descriptor.Machine.Desc.User_Name := new String'
                     (Query_User
                        (Main_Window,
-                        Expect_Out (Descriptor),
+                        Expect_Out
+                          (Descriptor.Machine.Sessions (Session_Nb).Pd),
                         Password_Mode => False));
 
                   if Descriptor.Machine.Desc.User_Name.all = "" then
-                     Free (Descriptor.Machine.Desc.User_Name);
                      Close (Descriptor.Machine.Sessions (Session_Nb).Pd);
                      Raise_Exception
                        (Invalid_Process'Identity,
-                        "Connection canceled by user");
+                           "Connection canceled by user");
                   end if;
                end if;
 
