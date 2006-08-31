@@ -927,6 +927,8 @@ package body Builder_Module is
 
       if Builder_Module_ID.Build_Count = 0 then
          Clear_Compilation_Output (Kernel, Shadow);
+      else
+         Remove_Location_Category (Kernel, Error_Category, File);
       end if;
 
       Interrupt_Xrefs_Loading (Kernel);
