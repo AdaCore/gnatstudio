@@ -11,6 +11,12 @@ Known Problems fixed in GPS 4.0.1
   Workaound:  Right click on the entry in the Locations window and select the
               'Remove File' contextual menu.
 
+- F828-007 Metrics tree is empty
+  Problem:    When querying metrics through the menu Tools->Metrics or using
+              the corresponding shell commands, the metrics are computed but
+              the metrics viewer remains empty.
+  Workaround: Use the command-line to read the output of the gnat metric tool.
+
 - F822-018 Crash when using the search dialog
   Problem:    GPS may crash when searching for all occurences of a pattern
               using the the "Find All" button in the search dialog.
