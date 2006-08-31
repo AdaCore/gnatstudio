@@ -500,11 +500,11 @@ package body GNAT.Expect.TTY.Remote is
                   Free (Descriptor.Machine.Desc.User_Name);
                   Descriptor.Machine.Desc.User_Name := new String'
                     (Query_User
-                       (Expect_Out (Descriptor),
+                       (Expect_Out
+                          (Descriptor.Machine.Sessions (Session_Nb).Pd),
                         Password_Mode => False));
 
                   if Descriptor.Machine.Desc.User_Name.all = "" then
-                     Free (Descriptor.Machine.Desc.User_Name);
                      Close (Descriptor.Machine.Sessions (Session_Nb).Pd);
 
                      raise Invalid_Process with "Connection canceled by user";
