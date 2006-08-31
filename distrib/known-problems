@@ -11,6 +11,12 @@ Known Problems fixed in GPS 4.0.1
   Workaound:  Right click on the entry in the Locations window and select the
               'Remove File' contextual menu.
 
+- F825-008 Hang when connecting to a remote host asking for a user name
+  Problem:    When connecting to a remote host using a remote connection tool
+              that asks for a user name, GPS hangs without prompting for this
+              user name.
+  Workaround: Enter the user name in the host's advanced configuration
+
 - F828-007 Metrics tree is empty
   Problem:    When querying metrics through the menu Tools->Metrics or using
               the corresponding shell commands, the metrics are computed but
