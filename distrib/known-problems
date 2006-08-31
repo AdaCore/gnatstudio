@@ -1,5 +1,16 @@
 Known Problems fixed in GPS 4.1.0
 
+- F830-003 Editor highlighting not refreshed when doing parallel compilations
+  Problem:    Launch a compilation by pressing F4 for example. While the
+              compilation is on going compile a file by pressing Shift+F4.
+              You discover that there is an error in the file. There is an
+              entry in the Locations window and the corresponding line is
+              highlighted in the editor. Fix the error and recompile the file.
+              The entry in the Locations windows has not disappeared and the
+              corresponding line in the editor remains highlighted.
+  Workaound:  Right click on the entry in the Locations window and select the
+              'Remove File' contextual menu.
+
 - F818-013 Interrupting GPS.Process in task manager doesn't kill it
   Problem:    If you spawn a process in a script through GPS.Process,
               and interrupt it via the GPS task manager, the process itself
