@@ -384,6 +384,7 @@ package body XML_Viewer is
          Set_Data (Inst, Widget => GObject (View));
 
       elsif Command = "parse" then
+         Inst := Nth_Arg (Data, 1, XML_Viewer_Class);
          View := XML_Viewer (GObject'(Get_Data (Inst)));
          Set_Error_Msg (Data, Parse_Metrix (View, Nth_Arg (Data, 2)));
 
