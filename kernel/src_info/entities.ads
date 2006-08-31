@@ -1039,7 +1039,7 @@ private
       Primitive_Subprograms : Entity_Information_List;
 
       Child_Types           : Entity_Information_List;
-      --  All the types derives from this one.
+      --  All the types derived from this one.
 
       References            : Entity_Reference_List;
       --  All the references to this entity in the parsed files
