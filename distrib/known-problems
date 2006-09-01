@@ -267,6 +267,12 @@ Known Problems fixed in GPS 4.0.0
               in the debugger console crashes GPS under non Windows platforms.
   Workaround: Type 'quit' instead of using an abreviation
 
+- F329-018 Crash when getting characters at wrong locations
+  Problem:    The GPS shell functions that manipulate GPS.EditorLocation
+              instances may crash GPS when they do not point a valid position
+              in the buffer (e.g. GPS.EditorBuffer.get_chars).
+  Workaround: No known workaround
+
 - F327-002 Project's Source_File attribute and shared directories
   Problem:    When two or more projects share the same source directories,
               and use the Source_Files attribute to avoid conflicts, GPS
