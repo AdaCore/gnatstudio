@@ -149,6 +149,10 @@ Known Problems fixed in GPS 4.0.0
   Workaround: Move the cursor one character to the left or right to force a
               refresh
 
+- F606-012 generic_cvs_annotate crashes GPS
+  Problem:    Using the generic_cvs_annotate shell function may crash GPS.
+  Workaround: Bind a key shortcut to the VCS/Annotate action instead
+
 - F602-022 GPS hangs when doing some VCS comparisons
   Problem:    GPS hangs when using the VCS interface (and CVS in particular)
               to compare a given file against HEAD or any other specific
