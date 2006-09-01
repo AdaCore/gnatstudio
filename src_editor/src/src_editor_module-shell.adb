@@ -402,7 +402,9 @@ package body Src_Editor_Module.Shell is
       else
          Info := Location_Property
            (Get_Property (Loc_Inst, Editor_Location_Class_Name)).Location;
-         if Info.Buffer = null then
+         if Info.Buffer = null
+           or else not Is_Valid_Position (Info.Buffer, Info.Line, Info.Offset)
+         then
             Copy (Source => Default, Dest => Iter);
          else
             Get_Iter_At_Line_Offset
