@@ -271,7 +271,7 @@ Known Problems fixed in GPS 4.0.0
   Problem:    The GPS shell functions that manipulate GPS.EditorLocation
               instances may crash GPS when they do not point a valid position
               in the buffer (e.g. GPS.EditorBuffer.get_chars).
-  Workaround: No known workaround
+  Workaround: Avoid invalid positions when using EditorLocation instances
 
 - F327-002 Project's Source_File attribute and shared directories
   Problem:    When two or more projects share the same source directories,
