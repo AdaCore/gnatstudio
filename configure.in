@@ -95,16 +95,9 @@ case "${host}" in
   ;;
 
   ## IBM, AIX machines
-  rs6000-ibm-aix4.1* | powerpc-ibm-aix4.1*  )
-    machine=ibmrs6000 opsys=aix4-1
-    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
-  ;;
-  powerpc-ibm-aix4.2* | powerpc-ibm-aix4.3* | powerpc-ibm-aix5.*  )
+  powerpc-ibm-aix5.*  )
     machine=ibmrs6000 opsys=aix4-2
-    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
-  ;;
-  rs6000-ibm-aix4.0* | powerpc-ibm-aix4.0*  )
-    machine=ibmrs6000 opsys=aix4
+    PYTHON_LIBS="-lld ${PYTHON_LIBS}"
     TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
   ;;
 
