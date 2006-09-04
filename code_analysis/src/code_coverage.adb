@@ -31,66 +31,52 @@ package body Code_Coverage is
      (File_Node     : Code_Analysis.File_Access;
       File_Contents : String_Access;
       Line_Count    : out Natural;
-      Covered_Lines : out Natural) is
-   begin
-      Add_Subprograms (File_Node, File_Contents);
-      Add_Lines (File_Node, File_Contents, Line_Count, Covered_Lines);
-      --  Must be done in this order, as Add_Lines needs to have an info
-      --  set up by Add_Subprograms
-   end Read_Gcov_Info;
-
-   ---------------------
-   -- Add_Subprograms --
-   ---------------------
-
-   procedure Add_Subprograms
-     (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access)
-   is
-      Regexp_1   : constant Pattern_Matcher
-        := Compile ("^function (_ada_)?(\w+)([.]\d+)? called (\d+)"
-           , Multiple_Lines);
-      Matches_1  : Match_Array (0 .. 4);
-      Current    : Natural;
-      Subprogram : String_Access;
-      Sub_Node   : Subprogram_Access;
-   begin
-      Current    := File_Contents'First;
-
-      loop
-         Match (Regexp_1, File_Contents.all, Matches_1, Current);
-         exit when Matches_1 (0) = No_Match;
-
-         Subprogram := new String'(File_Contents (
-           Matches_1 (2).First .. Matches_1 (2).Last));
-         Sub_Node   := Get_Or_Create (File_Node, Subprogram);
-         Sub_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
-         Subprogram_Coverage (Sub_Node.Analysis_Data.Coverage_Data.all).Called
-           := Natural'Value
-             (File_Contents (Matches_1 (4).First .. Matches_1 (4).Last));
-         Current := Matches_1 (0).Last + 1;
-      end loop;
-   end Add_Subprograms;
-
-   ---------------
-   -- Add_Lines --
-   ---------------
-
-   procedure Add_Lines
-     (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access;
-      Line_Count    : out Natural;
       Covered_Lines : out Natural)
    is
-      Regexp     : constant Pattern_Matcher
-        := Compile ("^ +(\d+|#####|-): *(\d+):.*$", Multiple_Lines);
-      Matches    : Match_Array (0 .. 2);
-      Current    : Natural;
-      Line       : Natural;
-      Line_Node  : Line_Access;
+      Subp_Regexp   : constant Pattern_Matcher
+        := Compile ("^function (\w+)([.]\d+)? called (\d+)"
+           , Multiple_Lines);
+      Subp_Matches  : Match_Array (0 .. 3);
+      Current       : Natural;
+      Subprogram    : String_Access;
+      Subp_Node     : Subprogram_Access;
+      Line_Regexp   : constant Pattern_Matcher
+        := Compile ("^ +(\d+|#####|-): *(\d+):", Multiple_Lines);
+      Line_Matches  : Match_Array (0 .. 2);
+      Line          : Natural;
+      Line_Node     : Line_Access;
+      Bad_Gcov_File : exception;
    begin
+      Current       := File_Contents'First;
       Line_Count    := 0;
       Covered_Lines := 0;
+
+      loop
+         Match (Subp_Regexp, File_Contents.all, Subp_Matches, Current);
+         exit when Subp_Matches (0) = No_Match;
+
+         Subprogram := new String'(File_Contents (
+           Subp_Matches (1).First .. Subp_Matches (1).Last));
+         Subp_Node  := Get_Or_Create (File_Node, Subprogram);
+         Match (Line_Regexp,
+                File_Contents.all,
+                Line_Matches,
+                Subp_Matches (3).Last);
+
+         if Line_Matches (0) = No_Match then
+            raise Bad_Gcov_File with "Gcov file has bad format after "
+              & Subprogram.all
+              & " subprogram body declaration.";
+         end if;
+
+         Subp_Node.Body_Line := Natural'Value
+           (File_Contents (Line_Matches (2).First .. Line_Matches (2).Last));
+         Subp_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
+         Subprogram_Coverage (Subp_Node.Analysis_Data.Coverage_Data.all).Called
+           := Natural'Value
+             (File_Contents (Subp_Matches (3).First .. Subp_Matches (3).Last));
+         Current := Subp_Matches (3).Last + 1;
+      end loop;
 
       for C in File_Contents'First .. File_Contents'Last
       loop
@@ -108,26 +94,27 @@ package body Code_Coverage is
       --  to the number of code lines in the original source code file.
 
       loop
-         Match (Regexp, File_Contents.all, Matches, Current);
-         exit when Matches (0) = No_Match;
+         Match (Line_Regexp, File_Contents.all, Line_Matches, Current);
+         exit when Line_Matches (0) = No_Match;
          Line    := Natural'Value
-           (File_Contents (Matches (2).First .. Matches (2).Last));
+           (File_Contents (Line_Matches (2).First .. Line_Matches (2).Last));
          Line_Node := Get_Or_Create (File_Node, Line);
 
-         case File_Contents (Matches (1).First) is
+         case File_Contents (Line_Matches (1).First) is
             when '#' => Line_Node.Analysis_Data.Coverage_Data := new Coverage;
                Line_Node.Analysis_Data.Coverage_Data.Covered := 0;
             when '-' => null;
             when others =>
                Line_Node.Analysis_Data.Coverage_Data := new Coverage;
                Line_Node.Analysis_Data.Coverage_Data.Covered := Natural'Value
-                 (File_Contents (Matches (1).First .. Matches (1).Last));
+                 (File_Contents
+                    (Line_Matches (1).First .. Line_Matches (1).Last));
                Covered_Lines := Covered_Lines + 1;
          end case;
 
-         Current := Matches (0).Last + 1;
+         Current := Line_Matches (0).Last + 1;
       end loop;
-   end Add_Lines;
+   end Read_Gcov_Info;
 
    ------------------------
    -- Dump_Node_Coverage --
@@ -169,6 +156,22 @@ package body Code_Coverage is
       end if;
    end Dump_Subp_Coverage;
 
+   ------------------------
+   -- Line_Coverage_Info --
+   ------------------------
+
+   function Line_Coverage_Info (Coverage : Coverage_Access)
+                                return String_Access is
+   begin
+      case Coverage.Covered is
+         when 0 => return new String'(" never executed ");
+         when 1 => return new String'(" 1 execution ");
+         when others =>
+            return new String'(Natural'Image (Coverage.Covered)
+                               & " executions ");
+      end case;
+   end Line_Coverage_Info;
+
    ---------------
    -- Fill_Iter --
    ---------------
@@ -187,7 +190,6 @@ package body Code_Coverage is
       function Txt_Lig (Lig_Count : Natural) return String is
       begin
          if Lig_Count = 1 then
-            --  ??? Might be possible in C language, but extremely useless
             return " line (";
          else
             return " lines (";
