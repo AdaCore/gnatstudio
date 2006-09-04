@@ -31,18 +31,3 @@ you first need to call
 On Tiger, it is advised to run with the debugger preference "Execution window"
 disabled, for better performance while debugging.
 
-RUNNING GPS ON LINUX X86_64
-
-The GPS binary is a 32 bit application and needs two 32 bit libraries
-installed if not already present on the 64 bit system. These two libraries
-are libjpeg and libpng.
-
-On Red Hat Enterprise Linux (release 4 for 64-bit AMD64/Intel EM64T),
-the packages can be found as:
-  libjpeg-6b-*.i386.rpm
-  libpng-1.2.*.i386.rpm
-
-For SuSE Linux Enterprise Server (version 9 service pack 1), the packages
-can be found as:
-  libjpeg-32bit-9-200407011229.x86_64.rpm (on Release CD #1)
-  libpng-32bit-9-200408140621.x86_64.rpm (on SP 1 CD #1)
