@@ -40,6 +40,10 @@ with Gtk.Tree_Store;       use Gtk.Tree_Store;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Menu;             use Gtk.Menu;
+with Gdk.Event;            use Gdk.Event;
+with Glib;
+with Glib.Object;
 
 package Code_Analysis_Module is
 
@@ -49,6 +53,7 @@ package Code_Analysis_Module is
       Project_Pixbuf : Gdk_Pixbuf;
       File_Pixbuf    : Gdk_Pixbuf;
       Subp_Pixbuf    : Gdk_Pixbuf;
+      Warn_Pixbuf    : Gdk_Pixbuf;
    end record;
 
    type Code_Analysis_Module_ID_Access is access all
@@ -114,4 +119,44 @@ private
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
 
+   procedure Context_Func
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu);
+   --  Determine the content of the contextual menu displays for the Coverage
+   --  Report MDI child nodes
+
+   procedure Add_Gcov_File_Annotations
+     (Object : access Gtk_Widget_Record'Class);
+   --  Callback attached to the "View with coverage annotations" contextual
+   --  menu entry of a File node in the Coverage Report
+
+   procedure Add_Gcov_Subp_Annotations
+     (Object : access Gtk_Widget_Record'Class);
+   --  Callback attached to the "View with coverage annotations" contextual
+   --  menu entry of a Subprogram node in the Coverage Report
+
+   procedure Add_Gcov_Annotations (File_Node : Code_Analysis.File_Access);
+   --  Actually add the coverage annotation columns to a VFS.Virtual_File
+   --  displayed in a source editor of the MDI
+   --  Is called by both Add_Gcov_File_Annotations & Add_Gcov_Subp_Annotations
+
+   procedure Remove_Gcov_File_Annotations
+     (Object : access Gtk_Widget_Record'Class);
+   --  Callback attached to the "Remove coverage annotations" contextual
+   --  menu entry of a File node in the Coverage Report
+
+   procedure Remove_Gcov_Subp_Annotations
+     (Object : access Gtk_Widget_Record'Class);
+   --  Callback attached to the "Remove coverage annotations" contextual
+   --  menu entry of a Subprogram node in the Coverage Report
+
+   procedure Remove_Gcov_Annotations (File_Node : Code_Analysis.File_Access);
+   --  Actually remove the coverage annotation columns to a VFS.Virtual_File
+   --  displayed in a source editor of the MDI
+   --  Is called by both Remove_Gcov_File_Annotations
+   --  & Remove_Gcov_Subp_Annotations
 end Code_Analysis_Module;
