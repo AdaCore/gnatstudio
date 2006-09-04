@@ -29,6 +29,8 @@ with Gtk.Tree_Model;  use Gtk.Tree_Model;
 
 package Code_Analysis_Tree_Model is
 
+   package GType_Node is new Generic_Set (Code_Analysis.File);
+
    ------------
    -- Filler --
    ------------
@@ -40,17 +42,17 @@ package Code_Analysis_Tree_Model is
    --  Fill the Gtk_Tree_Store
 
    procedure Fill_Iter
-     (Model      : in out Gtk_Tree_Store;
-      Iter       : in out Gtk_Tree_Iter;
-      Parent     : Gtk_Tree_Iter;
-      Sub_Node   : Subprogram_Access);
+     (Model     : in out Gtk_Tree_Store;
+      Iter      : in out Gtk_Tree_Iter;
+      Parent    : Gtk_Tree_Iter;
+      Subp_Node : Subprogram_Access);
    --  Fill the Gtk_Tree_Store with the given Subprogram node
 
    procedure Fill_Iter
-     (Model      : in out Gtk_Tree_Store;
-      Iter       : in out Gtk_Tree_Iter;
-      Parent     : Gtk_Tree_Iter;
-      File_Node  : File_Access);
+     (Model     : in out Gtk_Tree_Store;
+      Iter      : in out Gtk_Tree_Iter;
+      Parent    : Gtk_Tree_Iter;
+      File_Node : File_Access);
    --  Fill the Gtk_Tree_Store with the given File node
 
    procedure Fill_Iter
