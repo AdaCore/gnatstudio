@@ -134,7 +134,8 @@ package Code_Analysis is
    type Line_Array_Access is access Line_Array;
 
    type Subprogram is new Node with record
-      Name : String_Access;
+      Name      : String_Access;
+      Body_Line : Natural := 1;
    end record;
    --  A Subprogram is identified in the Subprograms' maps of every File record
    --  by a string type
@@ -153,9 +154,15 @@ package Code_Analysis is
    Pix_Col  : constant := 0;
    --  Gtk_Tree_Model column number dedicated to the icons associated with each
    --  node of code_analysis data structure
-   Node_Col : constant := 1;
+   Name_Col : constant := 1;
+   --  Gtk_Tree_Model column number dedicated to the name of the nodes of
+   --  code_analysis structure
+   Node_Col : constant := 2;
    --  Gtk_Tree_Model column number dedicated to the nodes of code_analysis
    --  structure
+   Cov_Col  : constant := 3;
+   --  Gtk_Tree_Model column number dedicated to the coverage information
+   --  contained in the node coverage records
 
    -------------------
    -- Get_Or_Create --
