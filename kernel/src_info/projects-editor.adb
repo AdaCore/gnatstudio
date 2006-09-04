@@ -3365,7 +3365,7 @@ package body Projects.Editor is
       New_Path      : Virtual_File;
       Report_Errors : Output.Output_Proc := null)
    is
-      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
+      Tree     : constant Project_Node_Tree_Ref := Root_Project.Tree;
       Old_Path : constant Virtual_File := Project_Directory (Project);
 
       procedure Change_Directory (Node : Project_Node_Id);
@@ -3404,13 +3404,13 @@ package body Projects.Editor is
       end Change_Directory;
 
       D           : constant String :=
-        Name_As_Directory (Full_Name (New_Path).all)
-        & To_File_Name (New_Name) & Project_File_Extension;
+                      Name_As_Directory (Full_Name (New_Path).all)
+                      & To_File_Name (New_Name) & Project_File_Extension;
       Full_Path   : Name_Id := No_Name;
       Name        : constant Name_Id := Get_String (New_Name);
       Old_Name    : constant Name_Id := Prj.Tree.Name_Of (Project.Node, Tree);
       Old         : constant Project_Node_Id :=
-        Find_Project_In_Hierarchy (Root_Project, Name);
+                      Find_Project_In_Hierarchy (Root_Project, Name);
       Imported    : Project_Type;
       Iterator    : Imported_Project_Iterator;
       With_Clause : Project_Node_Id;
@@ -3534,10 +3534,10 @@ package body Projects.Editor is
    is
       Tree         : constant Project_Node_Tree_Ref := Get_Tree (Registry);
       D            : constant String :=
-        Name_As_Directory (Full_Name (Path).all)
-        & To_File_Name (Name) & Project_File_Extension;
+                       Name_As_Directory (Full_Name (Path).all)
+                       & To_File_Name (Name) & Project_File_Extension;
       Project      : constant Project_Node_Id :=
-        Default_Project_Node (Tree, N_Project);
+                       Default_Project_Node (Tree, N_Project);
       Project_Name : Name_Id;
       P            : Project_Type;
 
