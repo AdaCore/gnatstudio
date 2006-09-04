@@ -51,16 +51,17 @@ package body Code_Analysis_Tree_Model is
    ---------------
 
    procedure Fill_Iter
-     (Model    : in out Gtk_Tree_Store;
-      Iter     : in out Gtk_Tree_Iter;
-      Parent   : Gtk_Tree_Iter;
-      Sub_Node : Subprogram_Access) is
+     (Model     : in out Gtk_Tree_Store;
+      Iter      : in out Gtk_Tree_Iter;
+      Parent    : Gtk_Tree_Iter;
+      Subp_Node : Subprogram_Access)
+   is
    begin
       Append (Model, Iter, Parent);
       Set (Model, Iter, Pix_Col, C_Proxy
            (Code_Analysis_Module_ID.Subp_Pixbuf));
-      Set (Model, Iter, Node_Col, String (Sub_Node.Name.all));
-      Fill_Iter (Model, Iter, Sub_Node.Analysis_Data);
+      Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
+      Fill_Iter (Model, Iter, Subp_Node.Analysis_Data);
    end Fill_Iter;
 
    ---------------
@@ -76,20 +77,21 @@ package body Code_Analysis_Tree_Model is
       use Subprogram_Maps;
       Self_Iter : Gtk_Tree_Iter;
       Cur       : Cursor;
-      Sub_Node  : Subprogram_Access;
+      Subp_Node : Subprogram_Access;
    begin
       Append (Model, Iter, Parent);
       Self_Iter := Iter;
       Set (Model, Iter, Pix_Col, C_Proxy
            (Code_Analysis_Module_ID.File_Pixbuf));
-      Set (Model, Iter, Node_Col, VFS.Base_Name (File_Node.Name));
+      Set (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
+      GType_Node.Set (Model, Iter, Node_Col, File_Node.all'Access);
       Fill_Iter (Model, Iter, File_Node.Analysis_Data);
       Cur := File_Node.Subprograms.First;
 
       loop
          exit when Cur = No_Element;
-         Sub_Node := Element (Cur);
-         Fill_Iter (Model, Iter, Self_Iter, Sub_Node);
+         Subp_Node := Element (Cur);
+         Fill_Iter (Model, Iter, Self_Iter, Subp_Node);
          Next (Cur);
       end loop;
    end Fill_Iter;
@@ -112,7 +114,7 @@ package body Code_Analysis_Tree_Model is
       Self_Iter := Iter;
       Set (Model, Iter, Pix_Col, C_Proxy
            (Code_Analysis_Module_ID.Project_Pixbuf));
-      Set (Model, Iter, Node_Col,
+      Set (Model, Iter, Name_Col,
            UTF8_String (String'(Project_Name (Project_Node.Name))));
       Fill_Iter (Model, Iter, Project_Node.Analysis_Data);
       Cur := Project_Node.Files.First;
