@@ -55,11 +55,11 @@ package GPS.Kernel.Project is
    -------------------
 
    procedure Load_Project
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Project    : VFS.Virtual_File;
-      No_Save    : Boolean := False;
-      Clear      : Boolean := True;
-      Is_Default : Boolean := False;
+     (Kernel                   : access Kernel_Handle_Record'Class;
+      Project                  : VFS.Virtual_File;
+      No_Save                  : Boolean := False;
+      Clear                    : Boolean := True;
+      Is_Default               : Boolean := False;
       Empty_Project_On_Failure : Boolean := False);
    --  Load project Project as the current project.
    --  This emits the "project_changed" and "project_view_changed" signals.
