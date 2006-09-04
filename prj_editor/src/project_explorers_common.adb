@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -412,7 +412,7 @@ package body Project_Explorers_Common is
    -- Child_Drag_Finished --
    -------------------------
 
-   procedure Child_Drag_Finished (Child  : access MDI_Explorer_Child_Record) is
+   procedure Child_Drag_Finished (Child : access MDI_Explorer_Child_Record) is
    begin
       --  So that we can also move the explorer itself
       Child.Dnd_From_File := VFS.No_File;
@@ -443,7 +443,8 @@ package body Project_Explorers_Common is
             Path_Free (Path);
 
             case Node_Types'Val
-                 (Integer (Get_Int (Model, Iter, Node_Type_Column))) is
+              (Integer (Get_Int (Model, Iter, Node_Type_Column)))
+            is
 
                when Directory_Node | Project_Node | Category_Node =>
                   if Get_Event_Type (Event) = Gdk_2button_Press then

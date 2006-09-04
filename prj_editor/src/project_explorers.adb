@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                            AdaCore                                --
+--                      Copyright (C) 2001-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -100,12 +100,12 @@ package body Project_Explorers is
    --  Id for the explorer module
 
    Explorers_Tooltips : constant Debug_Handle :=
-     Create ("Explorers.Tooltips", Off);
+                          Create ("Explorers.Tooltips", Off);
 
    Show_Absolute_Paths : constant History_Key :=
-     "explorer-show-absolute-paths";
+                           "explorer-show-absolute-paths";
    Show_Flat_View : constant History_Key :=
-     "explorer-show-flat-view";
+                      "explorer-show-flat-view";
 
    Projects_Before_Directories : constant Boolean := False;
    --  <preference> True if the projects should be displayed, when sorted,

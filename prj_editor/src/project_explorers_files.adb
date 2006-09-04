@@ -678,9 +678,9 @@ package body Project_Explorers_Files is
       pragma Unreferenced (Event_Widget);
 
       T         : constant Project_Explorer_Files :=
-        Project_Explorer_Files (Object);
+                    Project_Explorer_Files (Object);
       Iter      : constant Gtk_Tree_Iter :=
-        Find_Iter_For_Event (T.File_Tree, T.File_Model, Event);
+                    Find_Iter_For_Event (T.File_Tree, T.File_Model, Event);
       Path      : Gtk_Tree_Path;
       File      : Virtual_File;
       Node_Type : Node_Types;
@@ -824,9 +824,9 @@ package body Project_Explorers_Files is
       Values   : GValues)
    is
       T       : constant Project_Explorer_Files :=
-        Project_Explorer_Files (Explorer);
+                  Project_Explorer_Files (Explorer);
       Path    : constant Gtk_Tree_Path :=
-        Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
+                  Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
       Iter    : Gtk_Tree_Iter;
       Success : Boolean;
       pragma Unreferenced (Success);
@@ -843,7 +843,7 @@ package body Project_Explorers_Files is
 
          declare
             Iter_Name : constant String :=
-              Get_String (T.File_Model, Iter, Absolute_Name_Column);
+                         Get_String (T.File_Model, Iter, Absolute_Name_Column);
             N_Type : constant Node_Types := Node_Types'Val
               (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
 
@@ -876,10 +876,7 @@ package body Project_Explorers_Files is
          end;
 
          Success := Expand_Row (T.File_Tree, Path, False);
-         Scroll_To_Cell
-           (T.File_Tree,
-            Path, null, True,
-            0.1, 0.1);
+         Scroll_To_Cell (T.File_Tree, Path, null, True, 0.1, 0.1);
 
          T.Expanding := False;
       end if;

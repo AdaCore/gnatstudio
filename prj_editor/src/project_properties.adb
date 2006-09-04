@@ -1206,11 +1206,11 @@ package body Project_Properties is
       use type Types.Name_Id;
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
       Attr  : constant Attribute_Pkg :=
-        Build
-          (Package_Name   => Editor.Attribute.Pkg.all,
-           Attribute_Name => Editor.Attribute.Name.all);
+                Build
+                  (Package_Name   => Editor.Attribute.Pkg.all,
+                   Attribute_Name => Editor.Attribute.Name.all);
       Assoc : Projects.Associative_Array :=
-        Get_Attribute_Value (Project, Attr);
+                Get_Attribute_Value (Project, Attr);
    begin
       --  Remove all the values that are no longer in the list. We keep those
       --  that are still in the list, so that we can compare them with their
@@ -3764,13 +3764,14 @@ package body Project_Properties is
 
             if Attr_Type.Default.all = "" then
                return GNAT.OS_Lib.String_List'(1 .. 0 => null);
+
             elsif Attr_Type.Default.all = "project source files" then
                if Project = Projects.No_Project then
                   return GNAT.OS_Lib.String_List'(1 .. 0 => null);
                else
                   declare
                      Files : File_Array_Access :=
-                       Get_Source_Files (Project, Recursive => False);
+                               Get_Source_Files (Project, Recursive => False);
                      Result : GNAT.OS_Lib.String_List (Files'Range);
                   begin
                      for R in Result'Range loop
@@ -4898,7 +4899,7 @@ package body Project_Properties is
                New_Name : constant String := Get_Text (Editor.Name);
                New_File : constant String := To_File_Name (New_Name);
                New_Path : constant String :=
-                 Name_As_Directory (Get_Text (Editor.Path));
+                            Name_As_Directory (Get_Text (Editor.Path));
             begin
                if (New_Name /= Project_Name (Project)
                    or else New_Path /=
