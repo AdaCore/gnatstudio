@@ -111,6 +111,7 @@ def range_align_on (top, bottom, sep, replace_with=None):
    pos = 0
    replace_len = 0
    line = top.beginning_of_line ()
+
    while line <= bottom:
       chars   = top.buffer().get_chars (line, line.end_of_line())
       matched = sep_re.search (chars)
@@ -121,7 +122,10 @@ def range_align_on (top, bottom, sep, replace_with=None):
          except:
             sub = matched.group()
          replace_len = max (replace_len, len (sub))
+      prev = line
       line = line.forward_line ()
+      if prev == line:
+         break
  
    if pos != 0:
      try:
@@ -143,7 +147,10 @@ def range_align_on (top, bottom, sep, replace_with=None):
                  (line, chars[:matched.start()].rstrip() \
                   + (' ' * width) + sub + (' ' * width2) \
                   + chars[matched.end():].lstrip())
+           prev = Line
            line = line.forward_line ()
+           if prev == line:
+              break
      finally:
         top.buffer().finish_undo_group()
 
