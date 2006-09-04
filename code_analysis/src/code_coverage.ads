@@ -50,30 +50,15 @@ package Code_Coverage is
    --  Currently dump to the standard output coverage information stored in a
    --  Code_Analysis.Coverage for the Subprogram nodes, ie with extra Called
 
-   Cov_Col  : constant := 2;
-   --  Gtk_Tree_Model column number dedicated to the coverage information
-   --  contained in the node coverage records
+   function Line_Coverage_Info (Coverage : Coverage_Access)
+                                return String_Access;
+   --  Returns a String_Access pointing on a message describing the coverage
+   --  state of the line from which the Coverage record had been extracted
 
    procedure Fill_Iter
      (Tree_Store : in out Gtk_Tree_Store;
       Iter       : in out Gtk_Tree_Iter;
       Coverage   : Coverage_Access);
    --  Fill the Gtk_Tree_Store with the given coverage record
-
-private
-
-   procedure Add_Subprograms
-     (File_Node     : File_Access;
-      File_Contents : String_Access);
-   --  Find subprograms in a gcov formated output file, and add them to the
-   --  given File node.
-
-   procedure Add_Lines
-     (File_Node     : File_Access;
-      File_Contents : String_Access;
-      Line_Count    : out Natural;
-      Covered_Lines : out Natural);
-   --  Find coverage info of the given lines of a gcov formated output file
-   --  and fill it into the correct Code_Analysis lines
 
 end Code_Coverage;
