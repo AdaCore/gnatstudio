@@ -4020,7 +4020,7 @@ the same line/column even if new lines are added in the buffer. This location is
       <param name="self">The instance of GPS.EditorLocation</param>
       <param name="count">An integer</param>
       <return>A new instance of GPS.EditorLocation</return>
-      <description>Return a new location located count lines after self. The location is moved back to the beginning of the line</description>
+      <description>Return a new location located count lines after self. The location is moved back to the beginning of the line. In case self is on the last line, the beginning of the last line is returned.</description>
   </shell_doc>
 
   <shell_doc name="GPS.EditorLocation.search">
