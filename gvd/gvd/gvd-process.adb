@@ -119,9 +119,9 @@ package body GVD.Process is
    --  Real handler called by First_Text_Output_Filter
 
    procedure Process_Graph_Command
-     (Debugger       : Visual_Debugger;
-      Command        : String;
-      Mode           : Command_Type);
+     (Debugger : Visual_Debugger;
+      Command  : String;
+      Mode     : Command_Type);
    --  Process a "graph ..." command
 
    function On_Editor_Text_Delete_Event
@@ -171,11 +171,11 @@ package body GVD.Process is
    type String_Access_Access is access all Basic_Types.String_Access;
 
    procedure Process_User_Command
-     (Debugger        : Visual_Debugger;
-      Command         : String;
-      Output_Command  : Boolean := False;
-      Mode            : Command_Type;
-      Output          : String_Access_Access);
+     (Debugger       : Visual_Debugger;
+      Command        : String;
+      Output_Command : Boolean := False;
+      Mode           : Command_Type;
+      Output         : String_Access_Access);
    --  Wrapper implementing common code for Process_User_Command routines
 
    ----------------
@@ -303,6 +303,10 @@ package body GVD.Process is
 
       function Get_String (Attr : String) return Basic_Types.String_Access;
       --  return the value of Attr (or null if the Attr doesn't exist
+
+      ----------------
+      -- Get_String --
+      ----------------
 
       function Get_String (Attr : String) return Basic_Types.String_Access is
          Value : constant String := Get_Attribute (Breaks, Attr, "");
@@ -525,7 +529,7 @@ package body GVD.Process is
    is
       Process : Visual_Debugger;
       List    : Debugger_List_Link :=
-        Get_Debugger_List (Main_Debug_Window.Kernel);
+                  Get_Debugger_List (Main_Debug_Window.Kernel);
 
    begin
       while List /= null loop
@@ -762,7 +766,7 @@ package body GVD.Process is
       Window     : System.Address)
    is
       Process        : constant Visual_Debugger :=
-        Convert (To_Main_Debug_Window (Window), Descriptor);
+                         Convert (To_Main_Debug_Window (Window), Descriptor);
       Tmp_Str        : GNAT.OS_Lib.String_Access;
       Current_Filter : Regexp_Filter_List;
       Matched        : Match_Array (0 .. Max_Paren_Count);
@@ -957,12 +961,12 @@ package body GVD.Process is
       Debugger_Name   : String := "";
       Success         : out Boolean)
    is
-      Window        : constant GPS_Window :=
-        GPS_Window (Process.Window);
-      Buttons       : Message_Dialog_Buttons;
+      Window      : constant GPS_Window :=
+                      GPS_Window (Process.Window);
+      Buttons     : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
-      WTX_Version   : Natural := 0;
-      Widget        : Gtk_Menu_Item;
+      WTX_Version : Natural := 0;
+      Widget      : Gtk_Menu_Item;
 
    begin
       Set_Busy (Process, True);
@@ -1265,14 +1269,14 @@ package body GVD.Process is
    ---------------------------
 
    procedure Process_Graph_Command
-     (Debugger       : Visual_Debugger;
-      Command        : String;
-      Mode           : Command_Type)
+     (Debugger : Visual_Debugger;
+      Command  : String;
+      Mode     : Command_Type)
    is
-      Data  : History_Data;
-      Index : Natural;
       Busy  : constant Boolean :=
                 Command_In_Process (Get_Process (Debugger.Debugger));
+      Data  : History_Data;
+      Index : Natural;
 
    begin
       Data.Mode := Mode;
@@ -1325,11 +1329,11 @@ package body GVD.Process is
    --------------------------
 
    procedure Process_User_Command
-     (Debugger        : Visual_Debugger;
-      Command         : String;
-      Output_Command  : Boolean := False;
-      Mode            : Command_Type;
-      Output          : String_Access_Access)
+     (Debugger       : Visual_Debugger;
+      Command        : String;
+      Output_Command : Boolean := False;
+      Mode           : Command_Type;
+      Output         : String_Access_Access)
    is
       Quit_String     : constant String := "quit     ";
       Lowered_Command : constant String := To_Lower (Command);
@@ -1337,7 +1341,12 @@ package body GVD.Process is
       Busy            : Boolean;
 
       function Check (S : String) return String;
+
       --  Check validity of debugger command S, and modify it if needed
+
+      -----------
+      -- Check --
+      -----------
 
       function Check (S : String) return String is
       begin
@@ -1471,10 +1480,10 @@ package body GVD.Process is
    end Process_User_Command;
 
    function Process_User_Command
-     (Debugger        : Visual_Debugger;
-      Command         : String;
-      Output_Command  : Boolean := False;
-      Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
+     (Debugger       : Visual_Debugger;
+      Command        : String;
+      Output_Command : Boolean := False;
+      Mode           : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String
    is
       Result : aliased Basic_Types.String_Access;
@@ -1668,8 +1677,7 @@ package body GVD.Process is
    -----------------------------
 
    function Get_Current_Source_File
-     (Process : access Visual_Debugger_Record)
-      return VFS.Virtual_File is
+     (Process : access Visual_Debugger_Record) return VFS.Virtual_File is
    begin
       return Process.Current_File;
    end Get_Current_Source_File;
@@ -1679,8 +1687,7 @@ package body GVD.Process is
    -----------------------------
 
    function Get_Current_Source_Line
-     (Process : access Visual_Debugger_Record)
-     return Integer is
+     (Process : access Visual_Debugger_Record) return Integer is
    begin
       return Process.Current_Line;
    end Get_Current_Source_Line;
@@ -1695,20 +1702,25 @@ package body GVD.Process is
       Project : Projects.Project_Type;
       Args    : String) return Visual_Debugger
    is
-      Process : Visual_Debugger;
-      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Edit           : GVD.Source_Editor.GPS.GEdit;
-      Module         : VFS.Virtual_File;
-      Program_Args   : GNAT.OS_Lib.String_Access;
-      Blank_Pos      : Natural;
-      Proxy          : Process_Proxy_Access;
-      Success        : Boolean;
-      Property       : Breakpoint_Property_Record;
-      Exec           : GNAT.OS_Lib.String_Access;
+      Top          : constant GPS_Window :=
+                       GPS_Window (Get_Main_Window (Kernel));
+      Process      : Visual_Debugger;
+      Edit         : GVD.Source_Editor.GPS.GEdit;
+      Module       : VFS.Virtual_File;
+      Program_Args : GNAT.OS_Lib.String_Access;
+      Blank_Pos    : Natural;
+      Proxy        : Process_Proxy_Access;
+      Success      : Boolean;
+      Property     : Breakpoint_Property_Record;
+      Exec         : GNAT.OS_Lib.String_Access;
 
       procedure Check_Extension (Module : in out Virtual_File);
       --  Check for a missing extension in module, and add it if needed
       --  Extensions currently checked in order: .exe, .out, .vxe
+
+      ---------------------
+      -- Check_Extension --
+      ---------------------
 
       procedure Check_Extension (Module : in out Virtual_File) is
          type Extension_Array is array (Positive range <>) of String (1 .. 4);
@@ -1887,15 +1899,15 @@ package body GVD.Process is
 
       declare
          Debugger_Name : constant String :=
-           (Get_Attribute_Value
-             (Project, Debugger_Command_Attribute, Default => ""));
+                           Get_Attribute_Value
+                             (Project,
+                              Debugger_Command_Attribute, Default => "");
          Target        : constant String :=
-           (Get_Attribute_Value
-             (Project, Program_Host_Attribute, Default => ""));
+                           Get_Attribute_Value
+                             (Project, Program_Host_Attribute, Default => "");
          Protocol      : constant String :=
-           (Get_Attribute_Value
-             (Project, Protocol_Attribute, Default => ""));
-
+                           Get_Attribute_Value
+                             (Project, Protocol_Attribute, Default => "");
       begin
          Unload_Project (Project_Registry (Get_Registry (Kernel).all));
 

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2003                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -102,7 +102,7 @@ private package Projects.Editor.Normalize is
    --  that cannot currently be normalized.
    --  If Print_Error is not null, then error messages will be sent to this
    --  procedure.
-   --  If Recurse is true, then imported proejcts area also normalized.
+   --  If Recurse is true, then imported projects area also normalized.
 
    type Matching_Item_Callback is access
      procedure (Item : Prj.Tree.Project_Node_Id);
