@@ -38,6 +38,10 @@ package Code_Coverage is
    --  Parse the File_Contents and fill the File_Node with gcov info
    --  And set Line_Count and Covered_Lines
 
+   procedure Compute_Project_Coverage (Project_Node : in out Project_Access);
+   --  Compute the nodes coverage informations of the single given project from
+   --  the coverage informations of its File children
+
    procedure Dump_Node_Coverage (Coverage : Coverage_Access);
    --  Currently dump to the standard output coverage information stored
    --  in a Code_Analysis.Coverage for the types before Line, ie the tree nodes

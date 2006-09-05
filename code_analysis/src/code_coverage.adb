@@ -116,6 +116,35 @@ package body Code_Coverage is
       end loop;
    end Read_Gcov_Info;
 
+   procedure Compute_Project_Coverage (Project_Node : in out Project_Access) is
+      Cur       : File_Maps.Cursor;
+      File_Node : Code_Analysis.File_Access;
+      use File_Maps;
+   begin
+      Cur := Project_Node.Files.First;
+
+      if Project_Node.Analysis_Data.Coverage_Data = null then
+         Project_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+      end if;
+
+      loop
+         exit when Cur = No_Element;
+         File_Node := Element (Cur);
+         if File_Node.Analysis_Data.Coverage_Data /= null then
+            Node_Coverage
+              (Project_Node.Analysis_Data.Coverage_Data.all).Children
+              := Node_Coverage
+                (Project_Node.Analysis_Data.Coverage_Data.all).Children
+                + Node_Coverage
+              (File_Node.Analysis_Data.Coverage_Data.all).Children;
+            Project_Node.Analysis_Data.Coverage_Data.Covered
+              := Project_Node.Analysis_Data.Coverage_Data.Covered
+              + File_Node.Analysis_Data.Coverage_Data.Covered;
+         end if;
+         Next (Cur);
+      end loop;
+   end Compute_Project_Coverage;
+
    ------------------------
    -- Dump_Node_Coverage --
    ------------------------
