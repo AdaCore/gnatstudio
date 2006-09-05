@@ -182,7 +182,9 @@
        <alternate                     file="../icons/other/welcome_header.png" size="3" />
     </icon>
 
-    <icon id="gps-warning"            file="../icons/16px/warning.png" />
+    <icon id="gps-warning"            file="../icons/16px/warning.png">
+       <alternate                     file="../icons/16px/warning.png" size="1" />
+    </icon>
 
     <!-- VCS icons -->
 
