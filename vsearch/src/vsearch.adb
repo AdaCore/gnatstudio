@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with System;
+with Interfaces.C.Strings;    use Interfaces.C.Strings;
+
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
@@ -29,6 +32,7 @@ with Gtk.Alignment;           use Gtk.Alignment;
 with Gtk.Clipboard;           use Gtk.Clipboard;
 with Gtk.Hbutton_Box;         use Gtk.Hbutton_Box;
 with Gtk.Dialog;              use Gtk.Dialog;
+with Gtk.Editable;            use Gtk.Editable;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Image;               use Gtk.Image;
 with Gtk.List;                use Gtk.List;
@@ -36,6 +40,9 @@ with Gtk.List_Item;           use Gtk.List_Item;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Selection;           use Gtk.Selection;
 with Gtk.Stock;               use Gtk.Stock;
+with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
+with Gtk.Text_Iter;           use Gtk.Text_Iter;
+with Gtk.Text_View;           use Gtk.Text_View;
 with Gtk.Tooltips;            use Gtk.Tooltips;
 with Gtk.Window;              use Gtk.Window;
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
@@ -232,6 +239,14 @@ package body Vsearch is
    --  Internal implementation of search capability, used by On_Search and
    --  On_Search_Replace.
 
+   procedure Receive_Text
+     (Clipboard : Gtk_Clipboard;
+      Text      : Interfaces.C.Strings.chars_ptr;
+      Data      : System.Address);
+   pragma Convention (C, Receive_Text);
+   --  Used to paste the contents of the clibboard in the search pattern entry,
+   --  when no selection can be found
+
    ---------------
    -- Callbacks --
    ---------------
@@ -297,7 +312,7 @@ package body Vsearch is
 
    procedure Store_Position (Vsearch : Vsearch_Access);
    procedure Restore_Position (Vsearch : Vsearch_Access);
-   --  Store and restore the position of the Vsearc dialog.
+   --  Store and restore the position of the Vsearch dialog.
 
    ----------------------
    -- Restore_Position --
@@ -1675,6 +1690,31 @@ package body Vsearch is
          return False;
    end On_Delete;
 
+   ------------------
+   -- Receive_Text --
+   ------------------
+
+   procedure Receive_Text
+     (Clipboard : Gtk_Clipboard;
+      Text      : Interfaces.C.Strings.chars_ptr;
+      Data      : System.Address)
+   is
+      pragma Unreferenced (Clipboard, Data);
+   begin
+      if Text /= Interfaces.C.Strings.Null_Ptr then
+         declare
+            Ada_Text : constant String := Interfaces.C.Strings.Value (Text);
+         begin
+            if Ada_Text /= ""
+              and then Ada_Text'Length < 128
+              and then Index (Ada_Text, (1 => ASCII.LF)) = 0
+            then
+               Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, Ada_Text);
+            end if;
+         end;
+      end if;
+   end Receive_Text;
+
    ---------------------------
    -- Get_Or_Create_Vsearch --
    ---------------------------
@@ -1687,13 +1727,55 @@ package body Vsearch is
       Child   : GPS_MDI_Child;
       Success : Boolean;
 
-      Text : constant UTF8_String :=
-        Wait_For_Text (Gtk.Clipboard.Get (Selection_Primary));
+      Default_Pattern : String_Access := null;
 
       pragma Unreferenced (Success);
    begin
       Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
                               (Get_MDI (Kernel), Vsearch_Record'Tag));
+
+      declare
+         W : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+         Start, Stop : Guint;
+         Success : Boolean := False;
+      begin
+         if W /= null and then W.all in Gtk_Editable_Record'Class then
+            Get_Selection_Bounds (Gtk_Editable (W), Success, Start, Stop);
+
+            if Success and then Start /= Stop then
+               Default_Pattern := new String'
+                 (Get_Chars (Gtk_Editable (W), Gint (Start), Gint (Stop)));
+            end if;
+         elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
+            declare
+               Buffer     : constant Gtk_Text_Buffer := Get_Buffer
+                 (Gtk_Text_View (W));
+               First_Iter : Gtk_Text_Iter;
+               Last_Iter  : Gtk_Text_Iter;
+            begin
+               Get_Selection_Bounds
+                 (Buffer, First_Iter, Last_Iter, Success);
+
+               if Success and then
+                 Get_Offset (First_Iter) /= Get_Offset (Last_Iter)
+               then
+                  Default_Pattern := new String'
+                    (Get_Slice (Buffer, First_Iter, Last_Iter));
+               end if;
+            end;
+         end if;
+
+         if Default_Pattern /= null
+           and then
+             (Default_Pattern'Length >= 128
+              or else Index (Default_Pattern.all, (1 => ASCII.LF)) /= 0)
+         then
+            --  In this case, the selection is not suitable for being used by
+            --  the search widget
+
+            Free (Default_Pattern);
+         end if;
+      end;
 
       --  If not currently displayed
       if Child = null then
@@ -1738,11 +1820,15 @@ package body Vsearch is
       --  Automatically fill the pattern text entry with the selection, if
       --  there is one which does not contain multiple lines.
 
-      if Text /= ""
-        and then Text'Length < 128
-        and then Index (Text, (1 => ASCII.LF)) = 0
-      then
-         Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, Text);
+      if Default_Pattern /= null then
+         Set_Text
+           (Vsearch_Module_Id.Search.Pattern_Entry, Default_Pattern.all);
+         Free (Default_Pattern);
+      else
+         Request_Text
+           (Gtk.Clipboard.Get (Selection_Primary),
+            Receive_Text'Access,
+            System.Null_Address);
       end if;
 
       if Raise_Widget then
@@ -2067,9 +2153,9 @@ package body Vsearch is
       Find_All : constant String := -"Find All References";
       Mitem    : Gtk_Menu_Item;
 
-      open_options_xpm : aliased Chars_Ptr_Array (0 .. 0);
+      open_options_xpm : aliased Gtkada.Types.Chars_Ptr_Array (0 .. 0);
       pragma Import (C, open_options_xpm, "unfold_block_xpm");
-      close_options_xpm  : aliased Chars_Ptr_Array (0 .. 0);
+      close_options_xpm  : aliased Gtkada.Types.Chars_Ptr_Array (0 .. 0);
       pragma Import (C, close_options_xpm, "fold_block_xpm");
    begin
       Vsearch_Module_Id := new Vsearch_Module_Record;
