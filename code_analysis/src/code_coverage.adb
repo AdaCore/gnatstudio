@@ -33,20 +33,24 @@ package body Code_Coverage is
       Line_Count    : out Natural;
       Covered_Lines : out Natural)
    is
-      Subp_Regexp   : constant Pattern_Matcher
-        := Compile ("^function (\w+)([.]\d+)? called (\d+)"
-           , Multiple_Lines);
+      Subp_Regexp   : constant Pattern_Matcher :=
+                        Compile ("^function (\w+)([.]\d+)? called (\d+)",
+                                 Multiple_Lines);
       Subp_Matches  : Match_Array (0 .. 3);
       Current       : Natural;
       Subprogram    : String_Access;
       Subp_Node     : Subprogram_Access;
-      Line_Regexp   : constant Pattern_Matcher
-        := Compile ("^ +(\d+|#####|-): *(\d+):", Multiple_Lines);
+      Line_Regexp   : constant Pattern_Matcher :=
+                        Compile ("^ +(\d+|#####|-): *(\d+):", Multiple_Lines);
       Line_Matches  : Match_Array (0 .. 2);
       Line          : Natural;
       Line_Node     : Line_Access;
       Bad_Gcov_File : exception;
+
    begin
+      --  ??? should have one or several CE/exception handlers in this code,
+      --  in case matching do not work "as expected"
+
       Current       := File_Contents'First;
       Line_Count    := 0;
       Covered_Lines := 0;
@@ -78,10 +82,10 @@ package body Code_Coverage is
          Current := Subp_Matches (3).Last + 1;
       end loop;
 
-      for C in File_Contents'First .. File_Contents'Last
-      loop
+      for C in File_Contents'First .. File_Contents'Last loop
          if File_Contents (C) = ASCII.LF then
             Line_Count := Line_Count + 1;
+
             if Line_Count = 5 then
                Current := C;
             end if;
@@ -116,10 +120,15 @@ package body Code_Coverage is
       end loop;
    end Read_Gcov_Info;
 
+   ------------------------------
+   -- Compute_Project_Coverage --
+   ------------------------------
+
    procedure Compute_Project_Coverage (Project_Node : in out Project_Access) is
       Cur       : File_Maps.Cursor;
       File_Node : Code_Analysis.File_Access;
       use File_Maps;
+
    begin
       Cur := Project_Node.Files.First;
 
@@ -127,22 +136,26 @@ package body Code_Coverage is
          Project_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
       end if;
 
-      loop
-         exit when Cur = No_Element;
-         File_Node := Element (Cur);
-         if File_Node.Analysis_Data.Coverage_Data /= null then
-            Node_Coverage
-              (Project_Node.Analysis_Data.Coverage_Data.all).Children
-              := Node_Coverage
-                (Project_Node.Analysis_Data.Coverage_Data.all).Children
-                + Node_Coverage
-              (File_Node.Analysis_Data.Coverage_Data.all).Children;
-            Project_Node.Analysis_Data.Coverage_Data.Covered
-              := Project_Node.Analysis_Data.Coverage_Data.Covered
-              + File_Node.Analysis_Data.Coverage_Data.Covered;
-         end if;
-         Next (Cur);
-      end loop;
+      declare
+         Data : constant access Node_Coverage :=
+                  Node_Coverage
+                    (Project_Node.Analysis_Data.Coverage_Data.all)'Access;
+      begin
+         loop
+            exit when Cur = No_Element;
+            File_Node := Element (Cur);
+
+            if File_Node.Analysis_Data.Coverage_Data /= null then
+               Data.Children := Data.Children +
+                 Node_Coverage
+                   (File_Node.Analysis_Data.Coverage_Data.all).Children;
+               Data.Covered := Data.Covered +
+                 File_Node.Analysis_Data.Coverage_Data.Covered;
+            end if;
+
+            Next (Cur);
+         end loop;
+      end;
    end Compute_Project_Coverage;
 
    ------------------------
@@ -211,7 +224,10 @@ package body Code_Coverage is
       Coverage   : Coverage_Access)
    is
       function Txt_Lig (Lig_Count : Natural) return String;
+      --  ???
+
       function Txt_Sub (Coverage  : Coverage_Access) return String;
+      --  ???
 
       Cov_Txt   : constant String  := Natural'Image (Coverage.Covered);
       Lig_Count : constant Natural := Node_Coverage (Coverage.all).Children;
@@ -228,6 +244,8 @@ package body Code_Coverage is
       function Txt_Sub (Coverage : Coverage_Access) return String is
 
          function Txt_Cal (Cal_Count : Natural) return String;
+         --  ???
+
          function Txt_Cal (Cal_Count : Natural) return String is
          begin
             if Cal_Count = 1 then
@@ -236,7 +254,7 @@ package body Code_Coverage is
                return " times";
             end if;
          end Txt_Cal;
-         pragma Inline (Txt_Cal);
+
       begin
          if Coverage.all in Subprogram_Coverage'Class then
             declare
@@ -251,8 +269,11 @@ package body Code_Coverage is
             return "";
          end if;
       end Txt_Sub;
-      pragma Inline (Txt_Lig, Txt_Sub);
+
    begin
+      --  ??? Should use String_Utils.Image instead of 'Image, and same
+      --  elsewhere in this package
+
       Set (Tree_Store, Iter, Cov_Col,
          Natural'Image (Lig_Count)
          & Txt_Lig (Lig_Count)
@@ -260,4 +281,5 @@ package body Code_Coverage is
          & " not covered)"
          & Txt_Sub (Coverage));
    end Fill_Iter;
+
 end Code_Coverage;
