@@ -147,7 +147,7 @@ def range_align_on (top, bottom, sep, replace_with=None):
                  (line, chars[:matched.start()].rstrip() \
                   + (' ' * width) + sub + (' ' * width2) \
                   + chars[matched.end():].lstrip())
-           prev = Line
+           prev = line
            line = line.forward_line ()
            if prev == line:
               break
