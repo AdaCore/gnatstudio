@@ -117,7 +117,12 @@ private
    --  Free memory used by a Code_Analysis instance
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
-   --  Callback for the "destroy" signal
+   --  Callback for the "destroy" signal that cleanly destroy the widget
+
+   function On_Double_Click (View  : access Gtk_Widget_Record'Class;
+                             Event : Gdk_Event) return Boolean;
+   --  Callback for the "2button_press" signal that show the File or Subprogram
+   --  indicated by the selected Coverage Report tree node
 
    procedure Context_Func
      (Context      : in out Selection_Context;
@@ -129,34 +134,12 @@ private
    --  Determine the content of the contextual menu displays for the Coverage
    --  Report MDI child nodes
 
-   procedure Add_Gcov_File_Annotations
-     (Object : access Gtk_Widget_Record'Class);
+   procedure Add_Gcov_Annotations (Object : access Gtk_Widget_Record'Class);
    --  Callback attached to the "View with coverage annotations" contextual
-   --  menu entry of a File node in the Coverage Report
+   --  menu entry of a File or Subprogram nodes in a Coverage Report
 
-   procedure Add_Gcov_Subp_Annotations
-     (Object : access Gtk_Widget_Record'Class);
-   --  Callback attached to the "View with coverage annotations" contextual
-   --  menu entry of a Subprogram node in the Coverage Report
-
-   procedure Add_Gcov_Annotations (File_Node : Code_Analysis.File_Access);
-   --  Actually add the coverage annotation columns to a VFS.Virtual_File
-   --  displayed in a source editor of the MDI
-   --  Is called by both Add_Gcov_File_Annotations & Add_Gcov_Subp_Annotations
-
-   procedure Remove_Gcov_File_Annotations
-     (Object : access Gtk_Widget_Record'Class);
+   procedure Remove_Gcov_Annotations (Object : access Gtk_Widget_Record'Class);
    --  Callback attached to the "Remove coverage annotations" contextual
-   --  menu entry of a File node in the Coverage Report
+   --  menu entry of a File or Subprogram nodes in a Coverage Report
 
-   procedure Remove_Gcov_Subp_Annotations
-     (Object : access Gtk_Widget_Record'Class);
-   --  Callback attached to the "Remove coverage annotations" contextual
-   --  menu entry of a Subprogram node in the Coverage Report
-
-   procedure Remove_Gcov_Annotations (File_Node : Code_Analysis.File_Access);
-   --  Actually remove the coverage annotation columns to a VFS.Virtual_File
-   --  displayed in a source editor of the MDI
-   --  Is called by both Remove_Gcov_File_Annotations
-   --  & Remove_Gcov_Subp_Annotations
 end Code_Analysis_Module;
