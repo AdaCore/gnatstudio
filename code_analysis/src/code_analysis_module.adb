@@ -100,6 +100,7 @@ package body Code_Analysis_Module is
                       Node_Coverage
                         (File_Node.Analysis_Data.Coverage_Data.all).Children,
                       File_Node.Analysis_Data.Coverage_Data.Covered);
+      Compute_Project_Coverage (Project_Node);
       Free (File_Contents);
       GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
          Instance_Property_Record (Property));
