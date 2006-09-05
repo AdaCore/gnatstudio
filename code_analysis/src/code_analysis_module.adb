@@ -133,8 +133,6 @@ package body Code_Analysis_Module is
 
          Property.View.Instance := Instance;
 
-         Widget_Callback.Connect (Property.View, "destroy", On_Destroy'Access);
-
          if Code_Analysis_Module_ID.Project_Pixbuf = null then
             Code_Analysis_Module_ID.Project_Pixbuf := Render_Icon
               (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
@@ -147,7 +145,7 @@ package body Code_Analysis_Module is
                Gtk.Enums.Icon_Size_Menu);
             Code_Analysis_Module_ID.Warn_Pixbuf := Render_Icon
               (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
-               "gtk-dialog-warning", Gtk.Enums.Icon_Size_Menu);
+               "gps-warning", Gtk.Enums.Icon_Size_Menu);
          end if;
 
          Gtk_New (Property.View.Model, GType_Array'
@@ -210,6 +208,15 @@ package body Code_Analysis_Module is
             ID              => Module_ID (Code_Analysis_Module_ID),
             Context_Func    => Context_Func'Access);
 
+         Widget_Callback.Connect (Property.View, "destroy", On_Destroy'Access);
+         Gtkada.Handlers.Return_Callback.Object_Connect
+           (Property.View.Tree,
+            "button_press_event",
+            Gtkada.Handlers.Return_Callback.To_Marshaller
+              (On_Double_Click'Access),
+            Property.View,
+            After => False);
+
          Put (Get_MDI (Code_Analysis_Module_ID.Kernel), Property.Child);
          GPS.Kernel.Scripts.Set_Property
            (Instance, Code_Analysis_Cst_Str,
@@ -245,131 +252,104 @@ package body Code_Analysis_Module is
    ----------------
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
-      V : constant Code_Analysis_View := Code_Analysis_View (View);
+      V        : constant Code_Analysis_View := Code_Analysis_View (View);
       Property : Code_Analysis_Class_Record;
    begin
       Property := Code_Analysis_Class_Record
         (Get_Property (V.Instance, Code_Analysis_Cst_Str));
       Property.View := null;
-      GPS.Kernel.Scripts.Set_Property
-           (V.Instance, Code_Analysis_Cst_Str,
-            Instance_Property_Record (Property));
+      GPS.Kernel.Scripts.Set_Property (V.Instance, Code_Analysis_Cst_Str,
+                                       Instance_Property_Record (Property));
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Destroy;
 
-   -------------------------------
-   -- Add_Gcov_File_Annotations --
-   -------------------------------
+   ---------------------
+   -- On_Double_Click --
+   ---------------------
 
-   procedure Add_Gcov_File_Annotations
-     (Object : access Gtk_Widget_Record'Class)
+   function On_Double_Click (View  : access Gtk_Widget_Record'Class;
+                             Event : Gdk_Event) return Boolean
    is
-      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
+      V         : constant Code_Analysis_View := Code_Analysis_View (View);
       Iter      : Gtk_Tree_Iter;
       Model     : Gtk_Tree_Model;
-      File_Node : Code_Analysis.File_Access;
-   begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      File_Node := File_Access
-        (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-      Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
-      Add_Gcov_Annotations (File_Node);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Add_Gcov_File_Annotations;
-
-   -------------------------------
-   -- Add_Gcov_Subp_Annotations --
-   -------------------------------
-
-   procedure Add_Gcov_Subp_Annotations
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter      : Gtk_Tree_Iter;
-      Model     : Gtk_Tree_Model;
+      Path      : Gtk_Tree_Path;
       File_Node : Code_Analysis.File_Access;
       Subp_Name : String_Access;
       Subp_Node : Subprogram_Access;
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      File_Node := File_Access (GType_Node.Get
-           (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
-      Subp_Name := new String'(Get_String (Model, Iter, Name_Col));
-      Subp_Node := Get_Or_Create (File_Node, Subp_Name);
-      Open_File_Editor
-        (Code_Analysis_Module_ID.Kernel,
-         File_Node.Name,
-         Subp_Node.Body_Line);
-      Add_Gcov_Annotations (File_Node);
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Gdk_2button_Press
+      then
+         Get_Selected (Get_Selection (V.Tree), Model, Iter);
+         Path := Get_Path (Model, Iter);
 
+         if Get_Depth (Path) = 2 then
+            File_Node := File_Access
+              (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+            Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+         elsif Get_Depth (Path) = 3 then
+            File_Node := File_Access
+              (GType_Node.Get
+                 (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
+            Subp_Name := new String'(Get_String (Model, Iter, Name_Col));
+            Subp_Node := Get_Or_Create (File_Node, Subp_Name);
+            Open_File_Editor
+              (Code_Analysis_Module_ID.Kernel,
+               File_Node.Name,
+               Subp_Node.Body_Line);
+         end if;
+
+         return True;
+      end if;
+
+      return False;
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Add_Gcov_Subp_Annotations;
-
-   ----------------------------------
-   -- Remove_Gcov_File_Annotations --
-   ----------------------------------
-
-   procedure Remove_Gcov_File_Annotations
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter      : Gtk_Tree_Iter;
-      Model     : Gtk_Tree_Model;
-      File_Node : Code_Analysis.File_Access;
-   begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      File_Node := File_Access
-        (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-      Remove_Gcov_Annotations (File_Node);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Remove_Gcov_File_Annotations;
-
-   ----------------------------------
-   -- Remove_Gcov_Subp_Annotations --
-   ----------------------------------
-
-   procedure Remove_Gcov_Subp_Annotations
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter      : Gtk_Tree_Iter;
-      Model     : Gtk_Tree_Model;
-      File_Node : Code_Analysis.File_Access;
-   begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      File_Node := File_Access (GType_Node.Get
-           (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
-      Remove_Gcov_Annotations (File_Node);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Remove_Gcov_Subp_Annotations;
+         return False;
+   end On_Double_Click;
 
    --------------------------
    -- Add_Gcov_Annotations --
    --------------------------
 
-   procedure Add_Gcov_Annotations (File_Node : Code_Analysis.File_Access)
+   procedure Add_Gcov_Annotations
+     (Object : access Gtk_Widget_Record'Class)
    is
+      View       : constant Code_Analysis_View := Code_Analysis_View (Object);
+      Iter       : Gtk_Tree_Iter;
+      Model      : Gtk_Tree_Model;
+      Path       : Gtk_Tree_Path;
+      File_Node  : Code_Analysis.File_Access;
+      Subp_Name  : String_Access;
+      Subp_Node  : Subprogram_Access;
       Line_Info  : Line_Information_Data;
       Line_Icons : Line_Information_Data;
    begin
+      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Path := Get_Path (Model, Iter);
+
+         if Get_Depth (Path) = 2 then
+            File_Node := File_Access
+              (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+            Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+         elsif Get_Depth (Path) = 3 then
+            File_Node := File_Access
+              (GType_Node.Get
+                 (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
+            Subp_Name := new String'(Get_String (Model, Iter, Name_Col));
+            Subp_Node := Get_Or_Create (File_Node, Subp_Name);
+            Open_File_Editor
+              (Code_Analysis_Module_ID.Kernel,
+               File_Node.Name,
+               Subp_Node.Body_Line);
+         end if;
+
       Line_Info  := new Line_Information_Array (1 .. File_Node.Lines'Length);
       Line_Icons := new Line_Information_Array (1 .. File_Node.Lines'Length);
 
@@ -398,14 +378,38 @@ package body Code_Analysis_Module is
          File_Node.Name, "Coverage Analysis",
          Line_Info);
       Unchecked_Free (Line_Info);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Add_Gcov_Annotations;
 
    -----------------------------
    -- Remove_Gcov_Annotations --
    -----------------------------
 
-   procedure Remove_Gcov_Annotations (File_Node : Code_Analysis.File_Access) is
+   procedure Remove_Gcov_Annotations
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
+      Iter      : Gtk_Tree_Iter;
+      Model     : Gtk_Tree_Model;
+      Path      : Gtk_Tree_Path;
+      File_Node : Code_Analysis.File_Access;
    begin
+      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Path := Get_Path (Model, Iter);
+
+         if Get_Depth (Path) = 2 then
+            File_Node := File_Access
+              (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+            Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+         elsif Get_Depth (Path) = 3 then
+            File_Node := File_Access
+              (GType_Node.Get
+                 (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
+         end if;
+
       Remove_Line_Information_Column
         (Code_Analysis_Module_ID.Kernel,
          File_Node.Name,
@@ -414,6 +418,10 @@ package body Code_Analysis_Module is
         (Code_Analysis_Module_ID.Kernel,
          File_Node.Name,
          "Coverage Analysis");
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Remove_Gcov_Annotations;
 
    ------------------
@@ -456,30 +464,16 @@ package body Code_Analysis_Module is
 
       Select_Path (Get_Selection (View.Tree), Path);
 
-      if Get_Depth (Path) = 2 then
-         Gtk_New (Mitem, -"View with coverage annotations");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Add_Gcov_File_Annotations'Access,
-            View, After => False);
-         Append (Menu, Mitem);
-         Gtk_New (Mitem, -"Remove coverage annotations");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Remove_Gcov_File_Annotations'Access,
-            View, After => False);
-         Append (Menu, Mitem);
-      elsif Get_Depth (Path) = 3 then
-         Gtk_New (Mitem, -"View with coverage annotations");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Add_Gcov_Subp_Annotations'Access,
-            View, After => False);
-         Append (Menu, Mitem);
-         Gtk_New (Mitem, -"Remove coverage annotations");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Remove_Gcov_Subp_Annotations'Access,
-            View, After => False);
-         Append (Menu, Mitem);
-      end if;
-
+      Gtk_New (Mitem, -"View with coverage annotations");
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Mitem, "activate", Add_Gcov_Annotations'Access,
+         View, After => False);
+      Append (Menu, Mitem);
+      Gtk_New (Mitem, -"Remove coverage annotations");
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Mitem, "activate", Remove_Gcov_Annotations'Access,
+         View, After => False);
+      Append (Menu, Mitem);
    end Context_Func;
 
    ---------------------
