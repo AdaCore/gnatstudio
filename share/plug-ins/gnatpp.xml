@@ -25,7 +25,7 @@
    </action>
 
    <submenu>
-     <title>Edit</title>
+     <title>Tools/_Programming</title>
      <menu action="Pretty print" before="Unit Testing" >
         <title>P_retty Print</title>
      </menu>
@@ -42,7 +42,7 @@
 
          <spin label="Default indentation" switch="-i" min="1" max="9" default="3" />
          <spin label="Continuation lines" switch="-cl" min="1" max="9" default="2" />
-         <spin label="Maximum line length" switch="-M" min="20" max="100"
+         <spin label="Maximum line length" switch="-M" min="20" max="256"
                default="79" />
 
          <combo label="Keyword" switch="-k" line="2" noswitch="L" nodigit="L" >
