@@ -18,21 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;          use Ada.Calendar;
-with Ada.Exceptions;        use Ada.Exceptions;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with GNAT.OS_Lib;           use GNAT;
+with Ada.Calendar;               use Ada.Calendar;
+with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib;                use GNAT;
 with GNAT.HTable;
-with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
+with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 
-with Glib.Xml_Int;          use Glib.Xml_Int;
+with Glib.Xml_Int;               use Glib.Xml_Int;
 
-with GPS.Kernel.Project;    use GPS.Kernel.Project;
-with Projects;              use Projects;
-with Projects.Registry;     use Projects.Registry;
-with Traces;                use Traces;
-with VCS.Unknown_VCS;       use VCS.Unknown_VCS;
-with VCS_View;              use VCS_View;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with Projects;                   use Projects;
+with Projects.Registry;          use Projects.Registry;
+with String_Hash;
+with Traces;                     use Traces;
+with VCS.Unknown_VCS;            use VCS.Unknown_VCS;
+with VCS_View;                   use VCS_View;
 with XML_Parsers;
 
 package body VCS_Activities is
@@ -41,6 +43,13 @@ package body VCS_Activities is
 
    Activities_Filename : constant String := "activities.xml";
 
+   Item_Tag            : constant String_Access := new String'("@TAG@");
+   --  Used as the data for file keys
+
+   package Key_Hash is new String_Hash (String_Access, Free, null);
+   use Key_Hash;
+   type Key_Hash_Access is access String_Hash_Table.HTable;
+
    type Activity_Record is record
       Project      : Virtual_File;
       Name         : String_Access;
@@ -48,12 +57,13 @@ package body VCS_Activities is
       VCS          : VCS_Access;
       Group_Commit : Boolean := False;
       Closed       : Boolean := False;
+      Keys         : Key_Hash_Access;
       Files        : String_List.List;
    end record;
 
    Empty_Activity : constant Activity_Record :=
                       (VFS.No_File, null, No_Activity,
-                       null, False, False, String_List.Null_List);
+                       null, False, False, null, String_List.Null_List);
 
    subtype Hash_Header is Positive range 1 .. 123;
 
@@ -134,14 +144,21 @@ package body VCS_Activities is
          Item := (Create (Project),
                   new String'(Name), Value (Id),
                   null, Group_Commit,
-                  Committed or Closed, String_List.Null_List);
+                  Committed or Closed,
+                  new String_Hash_Table.HTable, String_List.Null_List);
 
          while Child /= null loop
             if Child.Tag.all = "file" then
-               String_List.Append (Item.Files, Child.Value.all);
-               --  Note that here we can't use Add_File. At this point the
-               --  project is not yet loaded and we can't compute the VCS for
-               --  each activities.
+               declare
+                  File : constant Virtual_File := Create (Child.Value.all);
+               begin
+                  String_Hash_Table.Set
+                    (Item.Keys.all, File_Key (File), Item_Tag);
+                  String_List.Append (Item.Files, Child.Value.all);
+                  --  Note that here we can't use Add_File. At this point the
+                  --  project is not yet loaded and we can't compute the VCS
+                  --  for each activities.
+               end;
             end if;
             Child := Child.Next;
          end loop;
@@ -278,6 +295,7 @@ package body VCS_Activities is
                   UID,
                   null,
                   False, False,
+                  new String_Hash_Table.HTable,
                   String_List.Null_List));
 
                Save_Activities (Kernel);
@@ -348,6 +366,9 @@ package body VCS_Activities is
    procedure Delete_Activity
      (Kernel : access Kernel_Handle_Record'Class; Activity : Activity_Id)
    is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (String_Hash_Table.HTable, Key_Hash_Access);
+
       Logs_Dir  : constant String := Get_Home_Dir (Kernel) & "log_files";
       File_Name : constant String :=
                     Logs_Dir & OS_Lib.Directory_Separator &
@@ -358,7 +379,9 @@ package body VCS_Activities is
          Item : Activity_Record := Get (Activity);
       begin
          String_List.Free (Item.Files);
+         String_Hash_Table.Reset (Item.Keys.all);
          Free (Item.Name);
+         Free (Item.Keys);
       end;
 
       Remove (Activity);
@@ -506,7 +529,8 @@ package body VCS_Activities is
    begin
       while Item /= Empty_Activity loop
          if not Item.Closed
-           and then Is_In_List (Item.Files, File_Key (File))
+           and then String_Hash_Table.Get
+             (Item.Keys.all, File_Key (File)) /= null
          then
             return Item.Id;
          end if;
@@ -544,16 +568,17 @@ package body VCS_Activities is
                      Get_VCS_From_Id
                        (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
 
-      procedure Add (Name : String);
+      procedure Add (File : Virtual_File);
       --  Add Name (a file or directory) into the VCS Activities
 
       ---------
       -- Add --
       ---------
 
-      procedure Add (Name : String) is
+      procedure Add (File : Virtual_File) is
+         Name : constant String := File_Key (File);
       begin
-         if not Is_In_List (Item.Files, Name) then
+         if String_Hash_Table.Get (Item.Keys.all, Name) = null then
 
             if Item.VCS = null then
                --  This is the first file added into this activity, set the
@@ -564,7 +589,8 @@ package body VCS_Activities is
                  and then Atomic_Commands_Supported (VCS);
             end if;
 
-            String_List.Append (Item.Files, Name);
+            String_Hash_Table.Set (Item.Keys.all, File_Key (File), Item_Tag);
+            String_List.Append (Item.Files, Full_Name (File, False).all);
 
             Set (Activity, Item);
 
@@ -585,7 +611,7 @@ package body VCS_Activities is
          return;
       end if;
 
-      Add (File_Key (File));
+      Add (File);
    end Add_File;
 
    -----------------
@@ -599,7 +625,8 @@ package body VCS_Activities is
    is
       Item : Activity_Record := Get (Activity);
    begin
-      Remove_From_List (Item.Files, File_Key (File));
+      String_Hash_Table.Remove (Item.Keys.all, File_Key (File));
+      Remove_From_List (Item.Files, Full_Name (File, False).all);
 
       Set (Activity, Item);
       Save_Activities (Kernel);
