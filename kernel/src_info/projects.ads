@@ -184,8 +184,7 @@ package Projects is
 
    function Get_Source_Files
      (Project   : Project_Type;
-      Recursive : Boolean)
-      return VFS.File_Array_Access;
+      Recursive : Boolean) return VFS.File_Array_Access;
    --  Return the list of source files belonging to the project.
    --  If Recursive is False, only the direct sources of the project are
    --  returned. Otherwise, the sources from imported projects are returned as

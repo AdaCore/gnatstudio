@@ -139,7 +139,7 @@ package body GPR_Creation is
    --  If the project is not a root project, some attributes are ignored.
 
    function Src_Dirs_Have_Unique_Obj_Dir
-     (Related_To  : Is_Related_To) return Boolean;
+     (Related_To : Is_Related_To) return Boolean;
    --  Return true if each source directory has object files in a single
    --  directory.
 
@@ -457,7 +457,7 @@ package body GPR_Creation is
       Value           : String;
       Attribute_Index : String := "")
    is
-      List  : Argument_List_Access;
+      List : Argument_List_Access;
    begin
       if Value /= "" then
          List := Argument_String_To_List (Value);
@@ -574,23 +574,24 @@ package body GPR_Creation is
    --------------------
 
    procedure Generate_Withs
-     (Projects          : Project_Type_Array;
-      Root_Project      : Project_Type;
-      Related_To        : Is_Related_To;
-      Source_Dirs       : String_List;
-      Obj_Dirs          : String_List;
-      Src_Files         : File_Htables.HTable;
-      Object_Dirs       : in out Object_Directory_Info_Array;
-      Current_Project   : Integer;
-      All_Source_Dirs   : Boolean := False)
+     (Projects        : Project_Type_Array;
+      Root_Project    : Project_Type;
+      Related_To      : Is_Related_To;
+      Source_Dirs     : String_List;
+      Obj_Dirs        : String_List;
+      Src_Files       : File_Htables.HTable;
+      Object_Dirs     : in out Object_Directory_Info_Array;
+      Current_Project : Integer;
+      All_Source_Dirs : Boolean := False)
    is
       Current_Dir : Natural;
-      Tmp  : Import_Project_Error;
+      Tmp         : Import_Project_Error;
    begin
       for D in Object_Dirs'Range loop
          --  Have we found the object directory matching our current project ?
          if Object_Dirs (D).Project_Num = Current_Project then
             Current_Dir := D;
+
          else
             Tmp := Add_Imported_Project
               (Root_Project      => Root_Project,
@@ -632,8 +633,8 @@ package body GPR_Creation is
          end;
 
       else
-         Process_List (Projects (Current_Project),
-                       Source_Dirs_Attribute, Source_Dirs);
+         Process_List
+           (Projects (Current_Project), Source_Dirs_Attribute, Source_Dirs);
          Generate_Source_Files_List
            (Project       => Projects (Current_Project),
             Src_Files     => Src_Files,
@@ -663,9 +664,10 @@ package body GPR_Creation is
       Obj_Dirs        : Object_Directory_Info_Array (Object_Dirs'Range);
       Src_Files       : File_Htables.HTable;
       Obj_Files_Count : Natural;
-      Single_Obj_Dir, Tmp  : Boolean;
+      Single_Obj_Dir  : Boolean;
+      Tmp             : Boolean;
       Related_To      : Is_Related_To (Source_Dirs'Range, Object_Dirs'Range) :=
-        (others => (others => False));
+                               (others => (others => False));
       pragma Unreferenced (Tmp);
    begin
       Parse_Source_Dirs (Source_Dirs, Src_Files);
@@ -791,8 +793,8 @@ package body GPR_Creation is
       Linker_Switches   : String;
       Cross_Prefix      : String := "")
    is
-      S_Source_Dirs       : GNAT.OS_Lib.String_List (Source_Dirs'Range);
-      S_Object_Dirs       : GNAT.OS_Lib.String_List (Object_Dirs'Range);
+      S_Source_Dirs : GNAT.OS_Lib.String_List (Source_Dirs'Range);
+      S_Object_Dirs : GNAT.OS_Lib.String_List (Object_Dirs'Range);
    begin
 
       for J in Source_Dirs'Range loop
