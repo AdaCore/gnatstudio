@@ -977,19 +977,21 @@ package body Projects.Registry is
 
          Sources := Projects_Table (Registry)(Get_View (P)).Sources;
          while Sources /= Nil_String loop
-            Get_Name_String (String_Elements (Registry)(Sources).Value);
+            Get_Name_String
+              (String_Elements (Registry) (Sources).Display_Value);
 
             declare
                Current_Source : constant Name_Id :=
-                                  String_Elements (Registry)(Sources).Value;
-               UTF8      : constant String :=
-                             Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
-               Directory : Name_Id := No_Name;
-               Unit      : Unit_Project;
+                                  String_Elements
+                                    (Registry) (Sources).Display_Value;
+               UTF8           : constant String :=
+                                  Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
+               Directory      : Name_Id := No_Name;
+               Unit           : Unit_Project;
             begin
                Name_Len := UTF8'Length;
                Name_Buffer (1 .. Name_Len) := UTF8;
-               String_Elements (Registry)(Sources).Value := Name_Find;
+               String_Elements (Registry)(Sources).Display_Value := Name_Find;
 
                Unit := Files_Htable.Get
                  (Registry.Data.View_Tree.Files_HT, Current_Source);
@@ -1354,12 +1356,13 @@ package body Projects.Registry is
       --  ??? Should be shared with the project parser (Prj.Nmsc)
 
       declare
-         Data : constant Project_Data :=
-           Projects_Table (Registry)(Get_View (Project));
+         Data    : constant Project_Data :=
+                     Projects_Table (Registry) (Get_View (Project));
          Sources : constant Variable_Value :=
-           Prj.Util.Value_Of (Name_Source_Files, Data.Decl.Attributes,
-                              Registry.Data.View_Tree);
-         File : String_List_Id := Sources.Values;
+                     Prj.Util.Value_Of
+                       (Name_Source_Files, Data.Decl.Attributes,
+                        Registry.Data.View_Tree);
+         File    : String_List_Id := Sources.Values;
 
       begin
          if not Sources.Default then
@@ -1377,10 +1380,11 @@ package body Projects.Registry is
 
       declare
          Data : constant Project_Data :=
-           Projects_Table (Registry)(Get_View (Project));
+                  Projects_Table (Registry) (Get_View (Project));
          Source_List_File : constant Variable_Value :=
-           Prj.Util.Value_Of (Name_Source_List_File, Data.Decl.Attributes,
-                              Registry.Data.View_Tree);
+                              Prj.Util.Value_Of
+                                (Name_Source_List_File, Data.Decl.Attributes,
+                                 Registry.Data.View_Tree);
          File : Prj.Util.Text_File;
          Line : String (1 .. 2000);
          Last : Natural;
@@ -1443,13 +1447,13 @@ package body Projects.Registry is
             --  Convert the file to UTF8
 
             declare
-               UTF8 : String := Locale_To_UTF8 (Buffer (1 .. Length));
-               Part : Unit_Part;
+               UTF8      : String := Locale_To_UTF8 (Buffer (1 .. Length));
+               Part      : Unit_Part;
                Unit_Name : Name_Id;
             begin
                Canonical_Case_File_Name (UTF8);
 
-               --  Check if the file is in the list of sources for this,
+               --  Check if the file is in the list of sources, for this
                --  project, as specified in the project file.
 
                if File_In_Sources (UTF8) then
@@ -2058,8 +2062,7 @@ package body Projects.Registry is
    ---------------------------------
 
    function Get_Predefined_Source_Files
-     (Registry : Project_Registry)
-      return VFS.File_Array_Access is
+     (Registry : Project_Registry) return VFS.File_Array_Access is
    begin
       --  ??? A nicer way would be to implement this with a predefined project,
       --  and rely on the project parser to return the source
@@ -2125,11 +2128,11 @@ package body Projects.Registry is
       Use_Object_Path : Boolean;
       Project         : Project_Type := No_Project)
    is
-      Locale   : constant String := Locale_From_UTF8 (Filename);
+      Locale                 : constant String := Locale_From_UTF8 (Filename);
       Project2, Real_Project : Project_Type;
-      Path     : GNAT.OS_Lib.String_Access;
-      Iterator : Imported_Project_Iterator;
-      Info     : Source_File_Data := No_Source_File_Data;
+      Path                   : GNAT.OS_Lib.String_Access;
+      Iterator               : Imported_Project_Iterator;
+      Info                   : Source_File_Data := No_Source_File_Data;
 
    begin
       if Is_Absolute_Path (Filename) then
@@ -2178,7 +2181,7 @@ package body Projects.Registry is
                then
                   declare
                      S : constant String :=
-                       Full_Name (Project_Path (Project2)).all;
+                           Full_Name (Project_Path (Project2)).all;
                   begin
                      Name_Len := S'Length;
                      Name_Buffer (1 .. Name_Len) := S;
