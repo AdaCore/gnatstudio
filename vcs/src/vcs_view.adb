@@ -329,6 +329,8 @@ package body VCS_View is
 
       Set (Explorer.Model, Iter, Has_Log_Column, Line_Info.Log);
       Set (Explorer.Model, Iter, Name_Column,
+           Full_Name (Line_Info.Status.File).all);
+      Set (Explorer.Model, Iter, Key_Column,
            File_Key (Line_Info.Status.File));
 
       if Is_Directory (Line_Info.Status.File) then
@@ -408,7 +410,7 @@ package body VCS_View is
          Quit : in out Boolean) is
       begin
          if not Root
-           and then Get_String (Explorer.Model, Iter, Name_Column) = Full_Name
+           and then Get_String (Explorer.Model, Iter, Key_Column) = Full_Name
          then
             Result := Iter;
             Quit   := True;
@@ -431,7 +433,7 @@ package body VCS_View is
       Iter      : Gtk_Tree_Iter := Children (Explorer.Model, Parent);
    begin
       while Iter /= Null_Iter loop
-         if Get_String (Explorer.Model, Iter, Name_Column) = Full_Name then
+         if Get_String (Explorer.Model, Iter, Key_Column) = Full_Name then
             return Iter;
          end if;
          Next (Explorer.Model, Iter);
