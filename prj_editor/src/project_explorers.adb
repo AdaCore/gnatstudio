@@ -308,7 +308,7 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Files    : File_Array_Access;
       Node     : Gtk_Tree_Iter);
-   --  Recompute the directories for the project.
+   --  Recompute the directories for the project
 
    procedure Update_Directory_Node
      (Explorer         : access Project_Explorer_Record'Class;
@@ -332,7 +332,7 @@ package body Project_Explorers is
 
    procedure Update_Flat_View
      (Explorer : access Gtk_Widget_Record'Class);
-   --  Update the tree when "show flat view" setting has changed.
+   --  Update the tree when "show flat view" setting has changed
 
    ----------------------------
    -- Retrieving information --
