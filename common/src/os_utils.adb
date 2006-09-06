@@ -369,7 +369,8 @@ package body OS_Utils is
                  and then Result (Result'First + 1) = ':'
                  and then Result (Result'First + 2) = '/'
                then
-                  return "/cygdrive/" & Result (Result'First) &
+                  return "/cygdrive/" &
+                    Case_Util.To_Lower (Result (Result'First)) &
                     Result (Result'First + 2 .. Result'Last);
                else
                   return Result;
