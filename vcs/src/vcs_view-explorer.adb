@@ -77,6 +77,7 @@ package body VCS_View.Explorer is
       return GType_Array'
         (Base_Name_Column          => GType_String,
          Name_Column               => GType_String,
+         Key_Column                => GType_String,
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
          Status_Description_Column => GType_String,
@@ -210,7 +211,7 @@ package body VCS_View.Explorer is
             if not Match_Filter (Explorer.all, C_Stat) then
                --  Current status does not match or the status has changed
                Set (Explorer.Hidden,
-                    Get_String (Explorer.Model, Iter, Name_Column), 0);
+                    Get_String (Explorer.Model, Iter, Key_Column), 0);
                Remove (Explorer.Model, Iter);
 
             else
@@ -483,8 +484,8 @@ package body VCS_View.Explorer is
                else
                   --  Register this file as part of the explorer
 
-                  if Get (Explorer.Hidden, Full_Name (File).all) = 1 then
-                     Set (Explorer.Hidden, Full_Name (File).all, 0);
+                  if Get (Explorer.Hidden, File_Key (File)) = 1 then
+                     Set (Explorer.Hidden, File_Key (File), 0);
                   end if;
 
                   --  And if present on the explorer, remove it
