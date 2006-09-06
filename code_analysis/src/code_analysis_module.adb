@@ -39,8 +39,10 @@ with VFS;                       use VFS;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Location_View;         use GPS.Location_View;
 
 package body Code_Analysis_Module is
 
@@ -199,6 +201,7 @@ package body Code_Analysis_Module is
 
          GPS.Kernel.MDI.Gtk_New (Property.Child,
                                  Property.View,
+                                 Group  => Group_VCS_Explorer,
                                  Module => Code_Analysis_Module_ID);
          Set_Title (Property.Child, -"Code Analysis Report");
 
@@ -315,11 +318,11 @@ package body Code_Analysis_Module is
          return False;
    end On_Double_Click;
 
-   --------------------------
-   -- Add_Gcov_Annotations --
-   --------------------------
+   ------------------------------
+   -- Add_Coverage_Annotations --
+   ------------------------------
 
-   procedure Add_Gcov_Annotations
+   procedure Add_Coverage_Annotations
      (Object : access Gtk_Widget_Record'Class)
    is
       View       : constant Code_Analysis_View := Code_Analysis_View (Object);
@@ -335,21 +338,22 @@ package body Code_Analysis_Module is
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
       Path := Get_Path (Model, Iter);
 
-         if Get_Depth (Path) = 2 then
-            File_Node := Code_Analysis.File_Access
-              (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-            Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
-         elsif Get_Depth (Path) = 3 then
-            File_Node := Code_Analysis.File_Access
-              (GType_Node.Get
-                 (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
-            Subp_Name := new String'(Get_String (Model, Iter, Name_Col));
-            Subp_Node := Get_Or_Create (File_Node, Subp_Name);
-            Open_File_Editor
-              (Code_Analysis_Module_ID.Kernel,
-               File_Node.Name,
-               Subp_Node.Body_Line);
-         end if;
+      if Get_Depth (Path) = 2 then
+         File_Node := Code_Analysis.File_Access
+           (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+         Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+
+      elsif Get_Depth (Path) = 3 then
+         File_Node := Code_Analysis.File_Access
+           (GType_Node.Get
+              (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
+         Subp_Name := new String'(Get_String (Model, Iter, Name_Col));
+         Subp_Node := Get_Or_Create (File_Node, Subp_Name);
+         Open_File_Editor
+           (Code_Analysis_Module_ID.Kernel,
+            File_Node.Name,
+            Subp_Node.Body_Line);
+      end if;
 
       Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
       Line_Icons := new Line_Information_Array (File_Node.Lines'Range);
@@ -384,13 +388,13 @@ package body Code_Analysis_Module is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Add_Gcov_Annotations;
+   end Add_Coverage_Annotations;
 
-   -----------------------------
-   -- Remove_Gcov_Annotations --
-   -----------------------------
+   ---------------------------------
+   -- Remove_Coverage_Annotations --
+   ---------------------------------
 
-   procedure Remove_Gcov_Annotations
+   procedure Remove_Coverage_Annotations
      (Object : access Gtk_Widget_Record'Class)
    is
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
@@ -402,15 +406,15 @@ package body Code_Analysis_Module is
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
       Path := Get_Path (Model, Iter);
 
-         if Get_Depth (Path) = 2 then
-            File_Node := Code_Analysis.File_Access
-              (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-            Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
-         elsif Get_Depth (Path) = 3 then
-            File_Node := Code_Analysis.File_Access
-              (GType_Node.Get
-                 (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
-         end if;
+      if Get_Depth (Path) = 2 then
+         File_Node := Code_Analysis.File_Access
+           (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+         Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+      elsif Get_Depth (Path) = 3 then
+         File_Node := Code_Analysis.File_Access
+           (GType_Node.Get
+              (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
+      end if;
 
       Remove_Line_Information_Column
         (Code_Analysis_Module_ID.Kernel,
@@ -424,7 +428,47 @@ package body Code_Analysis_Module is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Remove_Gcov_Annotations;
+   end Remove_Coverage_Annotations;
+
+   ------------------------------------
+   -- List_Not_Covered_Lines_In_File --
+   ------------------------------------
+
+   procedure List_Not_Covered_Lines_In_File
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
+      Iter      : Gtk_Tree_Iter;
+      Model     : Gtk_Tree_Model;
+      File_Node : Code_Analysis.File_Access;
+      Coverage_Category : constant Glib.UTF8_String := -"Not covered lines";
+   begin
+      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      File_Node := Code_Analysis.File_Access
+        (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+      Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+
+      for J in File_Node.Lines'Range loop
+         if File_Node.Lines (J) /= Null_Line then
+            if File_Node.Lines (J).Analysis_Data.Coverage_Data.Covered = 0 then
+               Insert_Location
+                 (Kernel             => Code_Analysis_Module_ID.Kernel,
+                  Category           => Coverage_Category,
+                  File               => File_Node.Name,
+                  Text               => -"Line not covered",
+                  Line               => J,
+                  Column             => 1,
+                  Highlight          => True,
+                  Highlight_Category => Builder_Warnings_Style);
+            end if;
+         end if;
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end List_Not_Covered_Lines_In_File;
 
    ------------------
    -- Context_Func --
@@ -469,15 +513,26 @@ package body Code_Analysis_Module is
       if Get_Depth (Path) > 1 then
          Gtk_New (Mitem, -"View with coverage annotations");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Add_Gcov_Annotations'Access,
+           (Mitem, "activate", Add_Coverage_Annotations'Access,
             View, After => False);
          Append (Menu, Mitem);
          Gtk_New (Mitem, -"Remove coverage annotations");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Remove_Gcov_Annotations'Access,
+           (Mitem, "activate", Remove_Coverage_Annotations'Access,
             View, After => False);
          Append (Menu, Mitem);
       end if;
+
+      if Get_Depth (Path) = 2 then
+         Gtk_New (Mitem);
+         Append (Menu, Mitem);
+         Gtk_New (Mitem, -"List not covered lines");
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Mitem, "activate", List_Not_Covered_Lines_In_File'Access,
+            View, After => False);
+         Append (Menu, Mitem);
+      end if;
+
    end Context_Func;
 
    ---------------------
