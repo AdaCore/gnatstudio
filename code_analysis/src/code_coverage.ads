@@ -30,10 +30,12 @@ with Gtk.Tree_Model;  use Gtk.Tree_Model;
 
 package Code_Coverage is
 
+   Int_Image_Padding : constant Positive := 5;
+
    procedure Read_Gcov_Info
-     (File_Node     : File_Access;
+     (File_Node     : Code_Analysis.File_Access;
       File_Contents : String_Access;
-      Line_Count    : out Natural;
+      Lines_Count   : out Natural;
       Covered_Lines : out Natural);
    --  Parse the File_Contents and fill the File_Node with gcov info
    --  And set Line_Count and Covered_Lines
