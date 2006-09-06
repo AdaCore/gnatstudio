@@ -30,8 +30,6 @@ with Gtk.Tree_Model;  use Gtk.Tree_Model;
 
 package Code_Coverage is
 
-   Int_Image_Padding : constant Positive := 5;
-
    procedure Read_Gcov_Info
      (File_Node     : Code_Analysis.File_Access;
       File_Contents : String_Access;
