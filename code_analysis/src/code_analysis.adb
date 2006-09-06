@@ -25,26 +25,6 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (File_Node : Code_Analysis.File_Access;
-      Line_Num  : Natural) return Line_Access
-   is
-      Line_Node : Line_Access;
-   begin
-      if File_Node.Lines (Line_Num) /= null then
-         return File_Node.Lines (Line_Num);
-      end if;
-
-      Line_Node := new Line;
-      Line_Node.Number := Line_Num;
-      File_Node.Lines (Integer (Line_Num)) := Line_Node;
-      return Line_Node;
-   end Get_Or_Create;
-
-   -------------------
-   -- Get_Or_Create --
-   -------------------
-
-   function Get_Or_Create
      (File_Node  : File_Access;
       Sub_Name   : String_Access) return Subprogram_Access
    is
@@ -115,10 +95,9 @@ package body Code_Analysis is
    -- Free_Line --
    ---------------
 
-   procedure Free_Line (Line_Node : in out Line_Access) is
+   procedure Free_Line (Line_Node : in out Line'Class) is
    begin
       Free_Analysis (Line_Node.Analysis_Data);
-      Unchecked_Free (Line_Node);
    end Free_Line;
 
    ---------------------
