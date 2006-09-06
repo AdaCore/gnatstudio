@@ -47,8 +47,9 @@ package VCS_Status is
    --  freed.
 
    procedure Set_Cache
-     (Cache : Status_Cache;
-      File  : VFS.Virtual_File; Status : in out Line_Record);
+     (Cache  : Status_Cache;
+      File   : VFS.Virtual_File;
+      Status : in out Line_Record);
    --  Record the Status for the given file
 
    procedure Clear_Cache (Cache : Status_Cache);
