@@ -160,7 +160,6 @@ procedure Code_Analysis_Test is
                         Project_Num  : String;
                         File_Num     : String) is
       use Project_Maps;
-      Line_Node     : Line_Access;
       VFS_File_Name : VFS.Virtual_File;
       Cov_File_Name : VFS.Virtual_File;
       File_Contents : GNAT.OS_Lib.String_Access;
@@ -240,9 +239,8 @@ procedure Code_Analysis_Test is
                                      (File_Name'First .. File_Name'Last - 5)
                                      & Integer'Image (50));
       File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
-      Line_Node     := Get_Or_Create (File_Node, 534);
       Put_Line ("Request result   :");
-      Dump_Line (Line_Node);
+      Dump_Line (File_Node.Lines (534));
       Time_After    := Clock;
       Measure       := Time_After - Time_Before;
       Put_Line ("Request time    :"
