@@ -134,12 +134,19 @@ private
    --  Determine the content of the contextual menu displays for the Coverage
    --  Report MDI child nodes
 
-   procedure Add_Gcov_Annotations (Object : access Gtk_Widget_Record'Class);
+   procedure Add_Coverage_Annotations
+     (Object : access Gtk_Widget_Record'Class);
    --  Callback attached to the "View with coverage annotations" contextual
    --  menu entry of a File or Subprogram nodes in a Coverage Report
 
-   procedure Remove_Gcov_Annotations (Object : access Gtk_Widget_Record'Class);
+   procedure Remove_Coverage_Annotations
+     (Object : access Gtk_Widget_Record'Class);
    --  Callback attached to the "Remove coverage annotations" contextual
    --  menu entry of a File or Subprogram nodes in a Coverage Report
+
+   procedure List_Not_Covered_Lines_In_File
+     (Object : access Gtk_Widget_Record'Class);
+   --  Add to the location view the unexecuted lines of the selected File of a
+   --  coverage report
 
 end Code_Analysis_Module;
