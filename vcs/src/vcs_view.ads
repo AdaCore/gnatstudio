@@ -207,6 +207,7 @@ private
    Has_Log_Column            : constant := 6;
    Activity_Column           : constant := 7;
    Control_Column            : constant := 8;
+   Key_Column                : constant := 9;
    --  Used to control the Activity "editable" attribute for the Activities
    --  Explorer or the Log "visible" attribute of the VCS Explorer.
 
