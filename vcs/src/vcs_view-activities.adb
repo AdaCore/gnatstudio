@@ -76,6 +76,7 @@ package body VCS_View.Activities is
       return GType_Array'
         (Base_Name_Column          => GType_String,
          Name_Column               => GType_String,
+         Key_Column                => GType_String,
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
          Status_Description_Column => GType_String,
