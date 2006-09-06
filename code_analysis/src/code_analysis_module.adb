@@ -289,11 +289,11 @@ package body Code_Analysis_Module is
          Path := Get_Path (Model, Iter);
 
          if Get_Depth (Path) = 2 then
-            File_Node := File_Access
+            File_Node := Code_Analysis.File_Access
               (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
             Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
          elsif Get_Depth (Path) = 3 then
-            File_Node := File_Access
+            File_Node := Code_Analysis.File_Access
               (GType_Node.Get
                  (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
             Subp_Name := new String'(Get_String (Model, Iter, Name_Col));
@@ -336,11 +336,11 @@ package body Code_Analysis_Module is
       Path := Get_Path (Model, Iter);
 
          if Get_Depth (Path) = 2 then
-            File_Node := File_Access
+            File_Node := Code_Analysis.File_Access
               (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
             Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
          elsif Get_Depth (Path) = 3 then
-            File_Node := File_Access
+            File_Node := Code_Analysis.File_Access
               (GType_Node.Get
                  (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
             Subp_Name := new String'(Get_String (Model, Iter, Name_Col));
@@ -351,13 +351,14 @@ package body Code_Analysis_Module is
                Subp_Node.Body_Line);
          end if;
 
-      Line_Info  := new Line_Information_Array (1 .. File_Node.Lines'Length);
-      Line_Icons := new Line_Information_Array (1 .. File_Node.Lines'Length);
+      Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
+      Line_Icons := new Line_Information_Array (File_Node.Lines'Range);
 
-      for J in 1 .. File_Node.Lines'Length loop
-         if File_Node.Lines (J).Analysis_Data.Coverage_Data /= null then
+      for J in File_Node.Lines'Range loop
+         if File_Node.Lines (J) /= Null_Line then
             Line_Info (J).Text := Line_Coverage_Info
               (File_Node.Lines (J).Analysis_Data.Coverage_Data);
+
             if File_Node.Lines (J).Analysis_Data.Coverage_Data.Covered = 0 then
                Line_Icons (J).Image := Code_Analysis_Module_ID.Warn_Pixbuf;
             end if;
@@ -402,11 +403,11 @@ package body Code_Analysis_Module is
       Path := Get_Path (Model, Iter);
 
          if Get_Depth (Path) = 2 then
-            File_Node := File_Access
+            File_Node := Code_Analysis.File_Access
               (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
             Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
          elsif Get_Depth (Path) = 3 then
-            File_Node := File_Access
+            File_Node := Code_Analysis.File_Access
               (GType_Node.Get
                  (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
          end if;
@@ -465,16 +466,18 @@ package body Code_Analysis_Module is
 
       Select_Path (Get_Selection (View.Tree), Path);
 
-      Gtk_New (Mitem, -"View with coverage annotations");
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Mitem, "activate", Add_Gcov_Annotations'Access,
-         View, After => False);
-      Append (Menu, Mitem);
-      Gtk_New (Mitem, -"Remove coverage annotations");
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Mitem, "activate", Remove_Gcov_Annotations'Access,
-         View, After => False);
-      Append (Menu, Mitem);
+      if Get_Depth (Path) > 1 then
+         Gtk_New (Mitem, -"View with coverage annotations");
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Mitem, "activate", Add_Gcov_Annotations'Access,
+            View, After => False);
+         Append (Menu, Mitem);
+         Gtk_New (Mitem, -"Remove coverage annotations");
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Mitem, "activate", Remove_Gcov_Annotations'Access,
+            View, After => False);
+         Append (Menu, Mitem);
+      end if;
    end Context_Func;
 
    ---------------------
