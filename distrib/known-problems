@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.1.0
 
+- F823-029 GPS can't commit activity with capital letter files on win32
+  Problem:    On Windows, using Cygwin based Subversion, it is not
+              possible to check-in an activity (as an atomic commit) if
+              some files are imported using Source_Files (instead of
+              Source_Dirs) and have some capital letters on the pathname.
+  Workaround: Do not use the group commit option or commit the files on the
+              command line.
+
 - F818-013 Interrupting GPS.Process in task manager doesn't kill it
   Problem:    If you spawn a process in a script through GPS.Process,
               and interrupt it via the GPS task manager, the process itself
