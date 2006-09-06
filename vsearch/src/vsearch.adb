@@ -1713,6 +1713,11 @@ package body Vsearch is
             end if;
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Receive_Text;
 
    ---------------------------
