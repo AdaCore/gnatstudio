@@ -18,8 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO; use Ada.Text_IO;
-with GNAT.Regpat; use GNAT.Regpat;
+with Ada.Text_IO;       use Ada.Text_IO;
+with GNAT.Regpat;       use GNAT.Regpat;
+with String_Utils;      use String_Utils;
+with Ada.Strings;       use Ada.Strings;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with VFS;               use VFS;
 
 package body Code_Coverage is
 
@@ -30,29 +34,32 @@ package body Code_Coverage is
    procedure Read_Gcov_Info
      (File_Node     : Code_Analysis.File_Access;
       File_Contents : String_Access;
-      Line_Count    : out Natural;
+      Lines_Count   : out Natural;
       Covered_Lines : out Natural)
    is
-      Subp_Regexp   : constant Pattern_Matcher :=
-                        Compile ("^function (\w+)([.]\d+)? called (\d+)",
-                                 Multiple_Lines);
-      Subp_Matches  : Match_Array (0 .. 3);
-      Current       : Natural;
-      Subprogram    : String_Access;
-      Subp_Node     : Subprogram_Access;
-      Line_Regexp   : constant Pattern_Matcher :=
-                        Compile ("^ +(\d+|#####|-): *(\d+):", Multiple_Lines);
-      Line_Matches  : Match_Array (0 .. 2);
-      Line          : Natural;
-      Line_Node     : Line_Access;
-      Bad_Gcov_File : exception;
+      Subp_Regexp       : constant Pattern_Matcher :=
+                             Compile ("^function (\w+)([.]\d+)? called (\d+)",
+                                      Multiple_Lines);
+      Subp_Matches      : Match_Array (0 .. 3);
+      Current           : Natural;
+      Subprogram        : String_Access;
+      Subp_Node         : Subprogram_Access;
+      Line_Regexp       : constant Pattern_Matcher :=
+                             Compile ("^ +(\d+|#####): *(\d+):",
+                                      Multiple_Lines);
+      Line_Matches      : Match_Array (0 .. 2);
+      Last_Line_Regexp  : constant Pattern_Matcher :=
+                             Compile ("^ +-: *(\d+):", Multiple_Lines);
+      Last_Line_Matches : Match_Array (0 .. 1);
+      Line_Num          : Natural;
+      Bad_Gcov_File     : exception;
 
    begin
       --  ??? should have one or several CE/exception handlers in this code,
       --  in case matching do not work "as expected"
 
       Current       := File_Contents'First;
-      Line_Count    := 0;
+      Lines_Count   := 0;
       Covered_Lines := 0;
 
       loop
@@ -82,35 +89,78 @@ package body Code_Coverage is
          Current := Subp_Matches (3).Last + 1;
       end loop;
 
-      for C in File_Contents'First .. File_Contents'Last loop
-         if File_Contents (C) = ASCII.LF then
-            Line_Count := Line_Count + 1;
+      Current := File_Contents'Last;
+      Current := Index
+        (File_Contents.all, (1 => ASCII.LF), Current, Backward);
 
-            if Line_Count = 5 then
-               Current := C;
+      if Current = File_Contents'Last then
+         if Current > 0 then
+            Current := Index
+              (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
+            if Current = 0 then
+               raise Bad_Gcov_File with VFS.Base_Name (File_Node.Name)
+                 & ".gcov is not a valid Gcov file."
+                 & " No last source code line found.";
             end if;
+         else
+            raise Bad_Gcov_File with VFS.Base_Name (File_Node.Name)
+              & ".gcov is not a valid Gcov file";
+         end if;
+      end if;
+
+      loop
+         Match (Last_Line_Regexp,
+                File_Contents.all,
+                Last_Line_Matches,
+                Current);
+
+         exit when Last_Line_Matches (0) /= No_Match;
+
+         if Current > 0 then
+            Current := Index
+              (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
+
+            if Current = 0 then
+               raise Bad_Gcov_File with VFS.Base_Name (File_Node.Name)
+                 & ".gcov is not a valid Gcov file."
+                 & " No last source code line found.";
+            end if;
+         else
+            raise Bad_Gcov_File with VFS.Base_Name (File_Node.Name)
+              & ".gcov is not a valid Gcov file";
          end if;
       end loop;
 
-      Line_Count := Line_Count - (Natural (File_Node.Subprograms.Length) + 5);
-      File_Node.Lines := new Line_Array (1 .. Line_Count);
+      Lines_Count := Natural'Value
+        (File_Contents
+           (Last_Line_Matches (1).First .. Last_Line_Matches (1).Last));
+      File_Node.Lines := new Line_Array (1 .. Lines_Count);
       --  Create a Line_Array with exactly the number of elements corresponding
       --  to the number of code lines in the original source code file.
 
+      File_Node.Lines.all := (others => Null_Line);
+
+      Current := File_Contents'First;
+
       loop
          Match (Line_Regexp, File_Contents.all, Line_Matches, Current);
+
          exit when Line_Matches (0) = No_Match;
-         Line    := Natural'Value
+
+         Line_Num := Natural'Value
            (File_Contents (Line_Matches (2).First .. Line_Matches (2).Last));
-         Line_Node := Get_Or_Create (File_Node, Line);
+         File_Node.Lines (Line_Num).Number := Line_Num;
 
          case File_Contents (Line_Matches (1).First) is
-            when '#' => Line_Node.Analysis_Data.Coverage_Data := new Coverage;
-               Line_Node.Analysis_Data.Coverage_Data.Covered := 0;
-            when '-' => null;
+            when '#' => File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data
+                 := new Coverage;
+               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Covered
+                 := 0;
             when others =>
-               Line_Node.Analysis_Data.Coverage_Data := new Coverage;
-               Line_Node.Analysis_Data.Coverage_Data.Covered := Natural'Value
+               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data
+                 := new Coverage;
+               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Covered
+                 := Natural'Value
                  (File_Contents
                     (Line_Matches (1).First .. Line_Matches (1).Last));
                Covered_Lines := Covered_Lines + 1;
@@ -203,14 +253,23 @@ package body Code_Coverage is
    ------------------------
 
    function Line_Coverage_Info (Coverage : Coverage_Access)
-                                return String_Access is
+                                return String_Access
+   is
+      Pango_Markup_To_Open  : constant String := "<span size=""small"">";
+      Pango_Markup_To_Close : constant String := " </span>";
    begin
       case Coverage.Covered is
-         when 0 => return new String'(" never executed ");
-         when 1 => return new String'(" 1 execution ");
+         when 0 => return new String'(Pango_Markup_To_Open
+                                      & "never executed"
+                                      & Pango_Markup_To_Close);
+         when 1 => return new String'(Pango_Markup_To_Open
+                                      & "    1 execution "
+                                      & Pango_Markup_To_Close);
          when others =>
-            return new String'(Natural'Image (Coverage.Covered)
-                               & " executions ");
+            return new String'(Pango_Markup_To_Open
+              & Image (Coverage.Covered, Int_Image_Padding)
+              & " executions"
+              & Pango_Markup_To_Close);
       end case;
    end Line_Coverage_Info;
 
@@ -224,10 +283,12 @@ package body Code_Coverage is
       Coverage   : Coverage_Access)
    is
       function Txt_Lig (Lig_Count : Natural) return String;
-      --  ???
+      --  Returns in a String the children count coverage info used to
+      --  fill the Gtk_Tree_Store of a coverage report
 
       function Txt_Sub (Coverage  : Coverage_Access) return String;
-      --  ???
+      --  Returns in a String the Subprograms specific coverage info used to
+      --  fill the Gtk_Tree_Store of a coverage report
 
       Cov_Txt   : constant String  := Natural'Image (Coverage.Covered);
       Lig_Count : constant Natural := Node_Coverage (Coverage.all).Children;
@@ -244,7 +305,8 @@ package body Code_Coverage is
       function Txt_Sub (Coverage : Coverage_Access) return String is
 
          function Txt_Cal (Cal_Count : Natural) return String;
-         --  ???
+         --  Used to distinguish wether the Subprogram had already been called
+         --  once or more in order to have a clean display
 
          function Txt_Cal (Cal_Count : Natural) return String is
          begin
@@ -271,15 +333,12 @@ package body Code_Coverage is
       end Txt_Sub;
 
    begin
-      --  ??? Should use String_Utils.Image instead of 'Image, and same
-      --  elsewhere in this package
-
       Set (Tree_Store, Iter, Cov_Col,
-         Natural'Image (Lig_Count)
-         & Txt_Lig (Lig_Count)
-         & Cov_Txt (Cov_Txt'First + 1 .. Cov_Txt'Last)
-         & " not covered)"
-         & Txt_Sub (Coverage));
+           Image (Lig_Count, Int_Image_Padding)
+           & Txt_Lig (Lig_Count)
+           & Cov_Txt (Cov_Txt'First + 1 .. Cov_Txt'Last)
+           & " not covered)"
+           & Txt_Sub (Coverage));
    end Fill_Iter;
 
 end Code_Coverage;
