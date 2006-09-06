@@ -88,7 +88,6 @@ package Code_Analysis is
    type File;
    type Project;
 
-   type Line_Access is access all Line;
    type Subprogram_Access is access all Subprogram;
    type File_Access is access all File;
    type Project_Access is access all Project;
@@ -129,7 +128,9 @@ package Code_Analysis is
       Number : Natural;
    end record;
 
-   type Line_Array is array (Positive range <>) of Line_Access;
+   Null_Line : constant Line := (Node with Number => 0);
+
+   type Line_Array is array (Positive range <>) of Line;
 
    type Line_Array_Access is access Line_Array;
 
@@ -169,10 +170,6 @@ package Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (File_Node : Code_Analysis.File_Access;
-      Line_Num  : Natural) return Line_Access;
-
-   function Get_Or_Create
      (File_Node : File_Access;
       Sub_Name  : String_Access) return Subprogram_Access;
 
@@ -198,8 +195,9 @@ private
    -------------
    -- Free-er --
    -------------
-   procedure Free_Line (Line_Node : in out Line_Access);
-   --  Free every children and himself
+
+   procedure Free_Line (Line_Node : in out Line'Class);
+   --  Free the data associated to a Line
 
    procedure Free_Subprogram (Sub_Node : in out Subprogram_Access);
    --  Free every children and himself
@@ -220,9 +218,6 @@ private
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Coverage'Class, Coverage_Access);
-
-   procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (Line, Line_Access);
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Subprogram, Subprogram_Access);
