@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.0.1
 
+- F906-010 Cannot set max line length for pretty printing beyond 100
+  Problem:    The handling of -M pretty printer switch does not allow
+              a value above 100 while gnatpp accepts up to 256.
+  Workaround: Type the parameter manually in the command line at the bottom
+              of the switch editor, or edit gnatpp.xml and change 100 to 256
+
 - F830-003 Editor highlighting not refreshed when doing parallel compilations
   Problem:    Launch a compilation by pressing F4 for example. While the
               compilation is on going compile a file by pressing Shift+F4.
@@ -8,7 +14,7 @@ Known Problems fixed in GPS 4.0.1
               highlighted in the editor. Fix the error and recompile the file.
               The entry in the Locations windows has not disappeared and the
               corresponding line in the editor remains highlighted.
-  Workaound:  Right click on the entry in the Locations window and select the
+  Workaround: Right click on the entry in the Locations window and select the
               'Remove File' contextual menu.
 
 - F825-008 Hang when connecting to a remote host asking for a user name
