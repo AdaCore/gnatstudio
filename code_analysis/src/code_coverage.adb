@@ -27,6 +27,9 @@ with VFS;               use VFS;
 
 package body Code_Coverage is
 
+   Int_Image_Padding : constant Positive := 5;
+   --  Size of padding wanted with String_Utils.Image
+
    --------------------
    -- Read_Gcov_Info --
    --------------------
