@@ -25,7 +25,7 @@
    </action>
 
    <submenu>
-     <title>Tools/_Programming</title>
+     <title>Edit</title>
      <menu action="Pretty print" before="Unit Testing" >
         <title>P_retty Print</title>
      </menu>
