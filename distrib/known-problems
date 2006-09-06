@@ -475,3 +475,7 @@ Known Problems fixed in GPS 4.0.0
               highlighting of matching parenthesis.
   Workaround: Use the search dialog to find the next/previous parenthesis
 
+- D802-017 Focus is not given to editors
+  Problem:    In some cases, when starting GPS, the focus can't be given to
+              the editor, and it's impossible to edit any file.
+  Workaround: Select a window outside GPS, and then go back to GPS. 
