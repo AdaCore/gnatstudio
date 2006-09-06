@@ -121,7 +121,7 @@ package Projects is
    --  No_File is returned if the project is No_Project.
 
    function Parent_Project (Project : Project_Type) return Project_Type;
-   --  Return the project that Project is extending, or No_Project is there are
+   --  Return the project that Project is extending, or No_Project if there are
    --  none.
 
    function Extending_Project
