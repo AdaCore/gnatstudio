@@ -1538,18 +1538,6 @@ procedure GPS.Main is
          end loop;
       end if;
 
-      --  Execute the startup scripts now, even though it is recommended that
-      --  they connect to the GPS_Started_Hook if they have graphical actions
-      --  to do
-
-      if Batch_Script /= null then
-         Execute_Batch (Batch_Script.all, As_File => False);
-      end if;
-
-      if Batch_File /= null then
-         Execute_Batch (Batch_File.all, As_File => True);
-      end if;
-
       if Program_Args /= null then
          --  Initialize the debugger after having executed scripts if any,
          --  so that it is possible to set up the environment before starting
@@ -1566,6 +1554,22 @@ procedure GPS.Main is
 
       if not Hide_GPS then
          Show (GPS_Main);
+      end if;
+
+      --  Execute the startup scripts now, even though it is recommended that
+      --  they connect to the GPS_Started_Hook if they have graphical actions
+      --  to do
+      --  This has to be launched after the call to Show, otherwise, the
+      --  mini-loop launched in the trace function of the python module
+      --  displatchs FOCUS_CHANGE, even if keyboard never been ungrab. This
+      --  causes the editor to be uneditable on some cases on windows.
+
+      if Batch_Script /= null then
+         Execute_Batch (Batch_Script.all, As_File => False);
+      end if;
+
+      if Batch_File /= null then
+         Execute_Batch (Batch_File.all, As_File => True);
       end if;
 
       Started := True;
