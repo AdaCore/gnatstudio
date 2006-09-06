@@ -636,7 +636,7 @@ package body Projects is
          Count := Direct_Sources_Count (Project);
          Project.Data.Files := new File_Array (1 .. Count);
 
-         Src  := Projects_Table (Project)(Get_View (Project)).Sources;
+         Src := Projects_Table (Project)(Get_View (Project)).Sources;
 
          while Src /= Nil_String loop
             Get_Name_String (String_Elements (Project)(Src).Display_Value);
@@ -660,9 +660,8 @@ package body Projects is
    ----------------------
 
    function Get_Source_Files
-     (Project            : Project_Type;
-      Recursive          : Boolean)
-      return VFS.File_Array_Access
+     (Project   : Project_Type;
+      Recursive : Boolean) return VFS.File_Array_Access
    is
       Count   : Natural;
       Index   : Natural := 1;
@@ -677,11 +676,13 @@ package body Projects is
       end if;
 
       declare
-         Seen    : Boolean_Htable.String_Hash_Table.HTable;
-         Iter    : Imported_Project_Iterator := Start (Project, Recursive);
+         Seen : Boolean_Htable.String_Hash_Table.HTable;
+         Iter : Imported_Project_Iterator := Start (Project, Recursive);
       begin
          Reset (Seen);
          Count := 0;
+
+         --  Count files
 
          loop
             P := Current (Iter);
@@ -693,6 +694,8 @@ package body Projects is
 
          Sources := new File_Array (1 .. Count);
          Iter    := Start (Project, Recursive);
+
+         --  Now add files to the Sources array
 
          loop
             P := Current (Iter);
@@ -719,16 +722,16 @@ package body Projects is
    -----------------------
 
    procedure Check_Suffix_List
-     (Tree               : Prj.Project_Tree_Ref;
-      Filename           : String;
-      Langs              : String_List_Id;
-      List               : in out Array_Element_Id;
-      Len                : out Natural)
+     (Tree     : Prj.Project_Tree_Ref;
+      Filename : String;
+      Langs    : String_List_Id;
+      List     : in out Array_Element_Id;
+      Len      : out Natural)
    is
       Candidate     : Array_Element_Id := No_Array_Element;
       Candidate_Len : Natural := 0;
-      Lang : Name_Id;
-      L    : String_List_Id;
+      Lang          : Name_Id;
+      L             : String_List_Id;
    begin
       while List /= No_Array_Element loop
          Lang := Tree.Array_Elements.Table (List).Index;
@@ -740,7 +743,7 @@ package body Projects is
          --  schemes, such as .h for c++ files). If this is not found in the
          --  list of supported languages, then return any match we had
 
-         L     := Langs;
+         L := Langs;
          if Suffix_Matches (Filename, Name_Buffer (1 .. Name_Len)) then
             while L /= Nil_String loop
                if Tree.String_Elements.Table (L).Value = Lang then
@@ -775,11 +778,11 @@ package body Projects is
    is
       View   : Project_Id;
       Naming : Naming_Data;
-      F    : String := Filename;
-      Arr  : Array_Element_Id;
-      Len  : Natural;
-      File : Name_Id;
-      Langs : String_List_Id;
+      F      : String := Filename;
+      Arr    : Array_Element_Id;
+      Len    : Natural;
+      File   : Name_Id;
+      Langs  : String_List_Id;
    begin
       if Project = No_Project then
          Naming := Standard_Naming_Data;
@@ -905,7 +908,7 @@ package body Projects is
    function Get_Unit_Part_From_Filename
      (Project : Project_Type; Filename : VFS.Virtual_File) return Unit_Part
    is
-      Unit : Unit_Part;
+      Unit       : Unit_Part;
       Name, Lang : Name_Id;
    begin
       Get_Unit_Part_And_Name_From_Filename
@@ -920,7 +923,7 @@ package body Projects is
    function Get_Unit_Name_From_Filename
      (Project : Project_Type; Filename : VFS.Virtual_File) return String
    is
-      Unit : Unit_Part;
+      Unit       : Unit_Part;
       Name, Lang : Name_Id;
    begin
       Get_Unit_Part_And_Name_From_Filename
@@ -1128,9 +1131,9 @@ package body Projects is
    function Delete_File_Suffix
      (Filename : String; Project : Project_Type) return Natural
    is
-      View : constant Project_Id := Get_View (Project);
-      Arr  : Array_Element_Id;
-      Len  : Natural;
+      View  : constant Project_Id := Get_View (Project);
+      Arr   : Array_Element_Id;
+      Len   : Natural;
       Langs : String_List_Id;
    begin
       --  View will be null when called from the project wizard
@@ -1214,10 +1217,10 @@ package body Projects is
    -------------------------
 
    function Get_Attribute_Value
-     (Project        : Project_Type;
-      Attribute      : Attribute_Pkg;
-      Default        : String := "";
-      Index          : String := "") return String
+     (Project   : Project_Type;
+      Attribute : Attribute_Pkg;
+      Default   : String := "";
+      Index     : String := "") return String
    is
       Value : Variable_Value;
       View  : constant Project_Id := Get_View (Project);
@@ -1290,17 +1293,17 @@ package body Projects is
      (Project        : Project_Type;
       Attribute      : Attribute_Pkg) return Associative_Array
    is
-      Sep : constant Natural := Split_Package (Attribute);
-      Pkg_Name : constant String :=
-        String (Attribute (Attribute'First .. Sep - 1));
+      Sep            : constant Natural := Split_Package (Attribute);
+      Pkg_Name       : constant String :=
+                         String (Attribute (Attribute'First .. Sep - 1));
       Attribute_Name : constant String :=
-        String (Attribute (Sep + 1 .. Attribute'Last));
-      Pkg : Package_Id := No_Package;
-      Arr : Array_Id;
-      Elem, Elem2 : Array_Element_Id;
-      N    : Name_Id;
-      Project_View : constant Project_Id := Get_View (Project);
-      Count : Natural := 0;
+                         String (Attribute (Sep + 1 .. Attribute'Last));
+      Project_View   : constant Project_Id := Get_View (Project);
+      Pkg            : Package_Id := No_Package;
+      Arr            : Array_Id;
+      Elem, Elem2    : Array_Element_Id;
+      N              : Name_Id;
+      Count          : Natural := 0;
    begin
       if Project_View = Prj.No_Project then
          return (1 .. 0 => (No_Name, Nil_Variable_Value));
@@ -1370,15 +1373,19 @@ package body Projects is
      (Project : Project_Type; Recursive : Boolean := False)
       return GNAT.OS_Lib.Argument_List
    is
-      Iter : Imported_Project_Iterator := Start (Project, Recursive);
+      Iter          : Imported_Project_Iterator := Start (Project, Recursive);
       Num_Languages : Natural := 0;
-      Val : Variable_Value;
-      Value : String_List_Id;
-      P : Project_Type;
+      Val           : Variable_Value;
+      Value         : String_List_Id;
+      P             : Project_Type;
 
       procedure Add_Language
         (Lang : in out Argument_List; Index : in out Natural; Str : String);
       --  Add a new language in the list, if not already there
+
+      ------------------
+      -- Add_Language --
+      ------------------
 
       procedure Add_Language
         (Lang : in out Argument_List; Index : in out Natural; Str : String) is
@@ -1774,7 +1781,7 @@ package body Projects is
    is
       Root_Project : constant Project_Type := Get_Root_Project
         (Project_Registry (Get_Registry (Project)));
-      Iter : Imported_Project_Iterator;
+      Iter         : Imported_Project_Iterator;
    begin
       if Project = No_Project then
          return Start (Root_Project, Recursive => True);
@@ -2485,9 +2492,9 @@ package body Projects is
       return String_List_Utils.String_List.List
    is
       Values : String_List_Utils.String_List.List;
-      Tree : constant Prj.Tree.Project_Node_Tree_Ref :=
-        Get_Tree (Project_Registry (Registery));
-      Iter : String_List_Iterator := Value_Of (Tree, Var);
+      Tree   : constant Prj.Tree.Project_Node_Tree_Ref :=
+                 Get_Tree (Project_Registry (Registery));
+      Iter   : String_List_Iterator := Value_Of (Tree, Var);
    begin
       while not Done (Iter) loop
          --  We know this is a list of static strings
