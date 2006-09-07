@@ -31,6 +31,7 @@ with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
+with GPS.Intl;             use GPS.Intl;
 
 with Gdk.Pixbuf;           use Gdk.Pixbuf;
 
@@ -93,7 +94,8 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Code_Analysis_Class_Record, Code_Analysis_Class);
 
-   Code_Analysis_Cst_Str      : constant String := "code_analysis";
+   Code_Analysis_Cst_Str : constant String := "code_analysis";
+   Coverage_Category     : constant Glib.UTF8_String := -"Not covered lines";
    Me : constant Debug_Handle := Create (Code_Analysis_Cst_Str);
 
    procedure Create
@@ -105,6 +107,12 @@ private
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Add node and coverage info provided by a gcov file parsing
+
+   procedure List_Not_Covered_Lines
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Add in the location view every not covered lines of any projects loaded
+   --  in the Code_Analysis structure of the current Instance.
 
    procedure Show_Tree_View
      (Data    : in out Callback_Data'Class;
@@ -144,9 +152,26 @@ private
    --  Callback attached to the "Remove coverage annotations" contextual
    --  menu entry of a File or Subprogram nodes in a Coverage Report
 
-   procedure List_Not_Covered_Lines_In_File
+   procedure Menu_List_Not_Covered_Lines_In_Project
      (Object : access Gtk_Widget_Record'Class);
-   --  Add to the location view the unexecuted lines of the selected File of a
-   --  coverage report
+   --  Callback of contextual menu for Project rows in a Coverage Report.
+   --  Add to the location view the unexecuted lines of all files of the
+   --  selected Project.
+
+   procedure Menu_List_Not_Covered_Lines_In_File
+     (Object : access Gtk_Widget_Record'Class);
+   --  Callback of contextual menu for File rows in a Coverage Report. Opens
+   --  the select File in a source editor and call
+   --  List_Not_Covered_Lines_In_File.
+
+   procedure List_Not_Covered_Lines_In_Project
+     (Project_Node : Project_Access);
+   --  Add to the location view the unexecuted lines of the given Project of a
+   --  Coverage Report.
+
+   procedure List_Not_Covered_Lines_In_File
+     (File_Node : Code_Analysis.File_Access);
+   --  Add to the location view the unexecuted lines of the given File of a
+   --  Coverage Report.
 
 end Code_Analysis_Module;
