@@ -2551,6 +2551,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <see_also name="GPS.code_analysis.create" />
       <see_also name="GPS.code_analysis.add_gcov_info" />
       <see_also name="GPS.code_analysis.show_tree_view" />
+      <see_also name="GPS.code_analysis.list_not_covered_lines" />
   </shell_doc>
 
   <shell_doc name="GPS.code_analysis.create">
@@ -2560,12 +2561,18 @@ Access the various suggested fixes through the methods of the Codefix class</des
 
   <shell_doc name="GPS.code_analysis.add_gcov_info">
       <description>Adds Code_Analysis nodes and coverage info provided by a .gcov file parsing</description>
-      <param name="File_Name">The long name of the .gcov file to parse</param>
+      <param name="Src_File_Name">The long name of the source file to refer to</param>
+      <param name="Cov_File_Name">The long name of the .gcov file to parse</param>
       <see_also name="GPS.code_analysis" />
   </shell_doc>
 
   <shell_doc name="GPS.code_analysis.show_tree_view">
       <description>Display a Code_Analysis data structure in a Gtk_Tree_View within a GPS MDI Child</description>
+      <see_also name="GPS.code_analysis" />
+  </shell_doc>
+
+  <shell_doc name="GPS.code_analysis.list_not_coreved_lines">
+      <description>Puts in the Location View every not covered lines of the Code_Analysis_Tree stored in the code_analysis instance.</description>
       <see_also name="GPS.code_analysis" />
   </shell_doc>
 
