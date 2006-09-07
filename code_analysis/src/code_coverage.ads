@@ -34,7 +34,7 @@ package Code_Coverage is
      (File_Node     : Code_Analysis.File_Access;
       File_Contents : String_Access;
       Lines_Count   : out Natural;
-      Covered_Lines : out Natural);
+      Not_Cov_Count : out Natural);
    --  Parse the File_Contents and fill the File_Node with gcov info
    --  And set Line_Count and Covered_Lines
 
