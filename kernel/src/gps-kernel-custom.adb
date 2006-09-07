@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -54,9 +54,9 @@ package body GPS.Kernel.Custom is
    --  Reset the table
 
    procedure Parse_Custom_Dir
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : String;
-      Level     : Customization_Level;
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Directory        : String;
+      Level            : Customization_Level;
       Default_Autoload : Boolean);
    --  Parse and process all the XML files in the directory. Only those files
    --  that should be automatically loaded according to ~/.gps/startup.xml and
@@ -401,17 +401,18 @@ package body GPS.Kernel.Custom is
    procedure Parse_Startup_Scripts_List
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Err  : String_Access;
-      Node, N : Node_Ptr;
       Startup : constant String :=
-        Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
+                  Format_Pathname
+                    (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
+      Err     : String_Access;
+      Node, N : Node_Ptr;
    begin
       Kernel.Startup_Scripts := new Scripts_Htable_Record;
 
       if Is_Regular_File (Startup) then
          XML_Parsers.Parse
-           (File => Startup,
-            Tree => Node,
+           (File  => Startup,
+            Tree  => Node,
             Error => Err);
 
          if Node = null then
@@ -454,10 +455,11 @@ package body GPS.Kernel.Custom is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Startup     : constant String :=
-        Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
+                      Format_Pathname
+                        (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
       File, Child : Node_Ptr;
-      Iter : Scripts_Hash.String_Hash_Table.Iterator;
-      Script : Script_Description_Access;
+      Iter        : Scripts_Hash.String_Hash_Table.Iterator;
+      Script      : Script_Description_Access;
    begin
       File     := new Node;
       File.Tag := new String'("GPS");
@@ -482,7 +484,6 @@ package body GPS.Kernel.Custom is
 
          Get_Next (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
       end loop;
-
 
       Trace (Me, "Saving " & Startup);
       Print (File, Startup);
@@ -586,8 +587,8 @@ package body GPS.Kernel.Custom is
       Initialization : Glib.Xml_Int.Node_Ptr)
    is
       Startup : Script_Description_Access :=
-        Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-             K => Base_Name);
+                  Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+                       K => Base_Name);
    begin
       if Startup /= null then
          Startup.Load           := Load;
@@ -619,8 +620,8 @@ package body GPS.Kernel.Custom is
       Default : Boolean) return Boolean
    is
       Startup : Script_Description_Access :=
-        Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-             K => Base_Name (File));
+                  Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+                       K => Base_Name (File));
    begin
       if Startup /= null then
          if Startup.File /= VFS.No_File then
@@ -654,22 +655,22 @@ package body GPS.Kernel.Custom is
    ----------------------------
 
    function Initialization_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      File    : VFS.Virtual_File)
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File)
       return Commands.Custom.Custom_Command_Access
    is
-      Custom : Custom_Command_Access;
       Startup : constant Script_Description_Access :=
-        Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-             K => Base_Name (File));
+                  Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+                       K => Base_Name (File));
+      Custom  : Custom_Command_Access;
    begin
       if Startup /= null and then Startup.Initialization /= null then
          Custom := new Custom_Command;
          Create
-           (Item                 => Custom,
-            Name                 => "Initialize " & Full_Name (File).all,
-            Kernel               => Kernel_Handle (Kernel),
-            Command              => Startup.Initialization);
+           (Item    => Custom,
+            Name    => "Initialize " & Full_Name (File).all,
+            Kernel  => Kernel_Handle (Kernel),
+            Command => Startup.Initialization);
          return Custom;
       else
          return null;
