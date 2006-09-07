@@ -40,7 +40,6 @@ with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;         use GPS.Location_View;
 
@@ -77,36 +76,62 @@ package body Code_Analysis_Module is
    pragma Unreferenced (Command);
       Property      : Code_Analysis_Class_Record;
       Instance      : Class_Instance;
-      VFS_File_Name : VFS.Virtual_File;
-      Cov_File_Name : VFS.Virtual_File;
+      VFS_Src_File  : VFS.Virtual_File;
+      VFS_Cov_File  : VFS.Virtual_File;
       File_Contents : GNAT.OS_Lib.String_Access;
       Project_Name  : Project_Type;
       Project_Node  : Project_Access;
-      File_Name     : constant String := Nth_Arg (Data, 2);
+      Cov_File_Name : constant String := Nth_Arg (Data, 3);
+      Src_File_Name : constant String := Nth_Arg (Data, 2);
       File_Node     : Code_Analysis.File_Access;
    begin
       Instance      := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property      := Code_Analysis_Class_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
-      Cov_File_Name := Create (File_Name);
-      VFS_File_Name := Create (File_Name
-                               (File_Name'First .. File_Name'Last - 5));
+      VFS_Cov_File  := Create (Cov_File_Name);
+      VFS_Src_File  := Create (Src_File_Name);
       Project_Name  := Get_Project_From_File
-        (Get_Registry (Code_Analysis_Module_ID.Kernel).all, VFS_File_Name);
+        (Get_Registry (Code_Analysis_Module_ID.Kernel).all, VFS_Src_File);
       Project_Node  := Get_Or_Create (Property.Projects, Project_Name);
 
-      File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
+      File_Node     := Get_Or_Create (Project_Node, VFS_Src_File);
       File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
-      File_Contents := Read_File (Cov_File_Name);
+      File_Contents := Read_File (VFS_Cov_File);
       Read_Gcov_Info (File_Node, File_Contents,
                       Node_Coverage
                         (File_Node.Analysis_Data.Coverage_Data.all).Children,
-                      File_Node.Analysis_Data.Coverage_Data.Covered);
+                      File_Node.Analysis_Data.Coverage_Data.Coverage);
       Compute_Project_Coverage (Project_Node);
       Free (File_Contents);
       GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
-         Instance_Property_Record (Property));
+                                       Instance_Property_Record (Property));
    end Add_Gcov_Info;
+
+   ----------------------------
+   -- List_Not_Covered_Lines --
+   ----------------------------
+
+   procedure List_Not_Covered_Lines
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      use Project_Maps;
+      Property : Code_Analysis_Class_Record;
+      Instance : Class_Instance;
+      Cur      : Cursor;
+   begin
+      Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
+      Property := Code_Analysis_Class_Record
+        (Get_Property (Instance, Code_Analysis_Cst_Str));
+      Cur      := Property.Projects.First;
+
+      loop
+         exit when Cur = No_Element;
+         List_Not_Covered_Lines_In_Project (Element (Cur));
+         Next (Cur);
+      end loop;
+   end List_Not_Covered_Lines;
 
    --------------------
    -- Show_Tree_View --
@@ -155,7 +180,8 @@ package body Code_Analysis_Module is
              (Pix_Col  => Gdk.Pixbuf.Get_Type,
               Name_Col => GType_String,
               Node_Col => GType_Pointer,
-              Cov_Col  => GType_String));
+              Cov_Col  => GType_String,
+              Sort_Col => GType_Int));
          Gtk_New (Property.View.Tree, Gtk_Tree_Model (Property.View.Model));
 
          -----------------
@@ -175,6 +201,7 @@ package body Code_Analysis_Module is
            (Property.View.Tree, Property.View.Node_Column);
          Set_Title (Property.View.Node_Column, -"Entities");
          Set_Resizable (Property.View.Node_Column, True);
+         Set_Sort_Column_Id (Property.View.Node_Column, Name_Col);
 
          ----------------------
          -- Coverage columns --
@@ -190,6 +217,7 @@ package body Code_Analysis_Module is
            (Property.View.Cov_Column, Text_Render, "text", Cov_Col);
 
          Set_Title (Property.View.Cov_Column, -"Coverage");
+         Set_Sort_Column_Id (Property.View.Cov_Column, Sort_Col);
 
          Gtk_New (Scrolled);
          Set_Policy
@@ -282,7 +310,6 @@ package body Code_Analysis_Module is
       Model     : Gtk_Tree_Model;
       Path      : Gtk_Tree_Path;
       File_Node : Code_Analysis.File_Access;
-      Subp_Name : String_Access;
       Subp_Node : Subprogram_Access;
    begin
       if Get_Button (Event) = 1
@@ -293,14 +320,14 @@ package body Code_Analysis_Module is
 
          if Get_Depth (Path) = 2 then
             File_Node := Code_Analysis.File_Access
-              (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+              (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
             Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
          elsif Get_Depth (Path) = 3 then
             File_Node := Code_Analysis.File_Access
-              (GType_Node.Get
+              (GType_File.Get
                  (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
-            Subp_Name := new String'(Get_String (Model, Iter, Name_Col));
-            Subp_Node := Get_Or_Create (File_Node, Subp_Name);
+            Subp_Node := Subprogram_Access
+              (GType_Subprogram.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
             Open_File_Editor
               (Code_Analysis_Module_ID.Kernel,
                File_Node.Name,
@@ -330,7 +357,6 @@ package body Code_Analysis_Module is
       Model      : Gtk_Tree_Model;
       Path       : Gtk_Tree_Path;
       File_Node  : Code_Analysis.File_Access;
-      Subp_Name  : String_Access;
       Subp_Node  : Subprogram_Access;
       Line_Info  : Line_Information_Data;
       Line_Icons : Line_Information_Data;
@@ -340,15 +366,15 @@ package body Code_Analysis_Module is
 
       if Get_Depth (Path) = 2 then
          File_Node := Code_Analysis.File_Access
-           (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+           (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
          Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
 
       elsif Get_Depth (Path) = 3 then
          File_Node := Code_Analysis.File_Access
-           (GType_Node.Get
+           (GType_File.Get
               (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
-         Subp_Name := new String'(Get_String (Model, Iter, Name_Col));
-         Subp_Node := Get_Or_Create (File_Node, Subp_Name);
+         Subp_Node := Subprogram_Access
+           (GType_Subprogram.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
          Open_File_Editor
            (Code_Analysis_Module_ID.Kernel,
             File_Node.Name,
@@ -363,7 +389,8 @@ package body Code_Analysis_Module is
             Line_Info (J).Text := Line_Coverage_Info
               (File_Node.Lines (J).Analysis_Data.Coverage_Data);
 
-            if File_Node.Lines (J).Analysis_Data.Coverage_Data.Covered = 0 then
+            if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
+              = 0 then
                Line_Icons (J).Image := Code_Analysis_Module_ID.Warn_Pixbuf;
             end if;
          end if;
@@ -384,6 +411,7 @@ package body Code_Analysis_Module is
          File_Node.Name, "Coverage Analysis",
          Line_Info);
       Unchecked_Free (Line_Info);
+      Unchecked_Free (Line_Icons);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -408,11 +436,11 @@ package body Code_Analysis_Module is
 
       if Get_Depth (Path) = 2 then
          File_Node := Code_Analysis.File_Access
-           (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+           (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
          Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
       elsif Get_Depth (Path) = 3 then
          File_Node := Code_Analysis.File_Access
-           (GType_Node.Get
+           (GType_File.Get
               (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
       end if;
 
@@ -430,44 +458,94 @@ package body Code_Analysis_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end Remove_Coverage_Annotations;
 
-   ------------------------------------
-   -- List_Not_Covered_Lines_In_File --
-   ------------------------------------
+   --------------------------------------------
+   -- Menu_List_Not_Covered_Lines_In_Project --
+   --------------------------------------------
 
-   procedure List_Not_Covered_Lines_In_File
+   procedure Menu_List_Not_Covered_Lines_In_Project
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View  : constant Code_Analysis_View := Code_Analysis_View (Object);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Project_Node : Project_Access;
+   begin
+      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Project_Node := Project_Access
+        (GType_Project.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+      List_Not_Covered_Lines_In_Project (Project_Node);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Menu_List_Not_Covered_Lines_In_Project;
+
+   -----------------------------------------
+   -- Menu_List_Not_Covered_Lines_In_File --
+   -----------------------------------------
+
+   procedure Menu_List_Not_Covered_Lines_In_File
      (Object : access Gtk_Widget_Record'Class)
    is
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
       Iter      : Gtk_Tree_Iter;
       Model     : Gtk_Tree_Model;
       File_Node : Code_Analysis.File_Access;
-      Coverage_Category : constant Glib.UTF8_String := -"Not covered lines";
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
       File_Node := Code_Analysis.File_Access
-        (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+        (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
       Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
-
-      for J in File_Node.Lines'Range loop
-         if File_Node.Lines (J) /= Null_Line then
-            if File_Node.Lines (J).Analysis_Data.Coverage_Data.Covered = 0 then
-               Insert_Location
-                 (Kernel             => Code_Analysis_Module_ID.Kernel,
-                  Category           => Coverage_Category,
-                  File               => File_Node.Name,
-                  Text               => -"Line not covered",
-                  Line               => J,
-                  Column             => 1,
-                  Highlight          => True,
-                  Highlight_Category => Builder_Warnings_Style);
-            end if;
-         end if;
-      end loop;
+      List_Not_Covered_Lines_In_File (File_Node);
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+   end Menu_List_Not_Covered_Lines_In_File;
+
+   ---------------------------------------
+   -- List_Not_Covered_Lines_In_Project --
+   ---------------------------------------
+
+   procedure List_Not_Covered_Lines_In_Project
+     (Project_Node : Project_Access)
+   is
+      use File_Maps;
+      Cur   : Cursor;
+   begin
+      Cur := Project_Node.Files.First;
+
+      loop
+         exit when Cur = No_Element;
+         List_Not_Covered_Lines_In_File (Element (Cur));
+         Next (Cur);
+      end loop;
+   end List_Not_Covered_Lines_In_Project;
+
+   ------------------------------------
+   -- List_Not_Covered_Lines_In_File --
+   ------------------------------------
+
+   procedure List_Not_Covered_Lines_In_File
+     (File_Node : Code_Analysis.File_Access) is
+   begin
+      for J in File_Node.Lines'Range loop
+         if File_Node.Lines (J) /= Null_Line then
+            if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
+              = 0 then
+               Insert_Location
+                 (Kernel    => Code_Analysis_Module_ID.Kernel,
+                  Category  => Coverage_Category,
+                  File      => File_Node.Name,
+                  Text      => -"Line not covered",
+                  Line      => J,
+                  Column    => 1,
+                  Highlight => True,
+                  Highlight_Category => Builder_Warnings_Style);
+            end if;
+         end if;
+      end loop;
    end List_Not_Covered_Lines_In_File;
 
    ------------------
@@ -523,12 +601,20 @@ package body Code_Analysis_Module is
          Append (Menu, Mitem);
       end if;
 
+      if Get_Depth (Path) = 1 then
+         Gtk_New (Mitem, -"List not covered lines");
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Mitem, "activate", Menu_List_Not_Covered_Lines_In_Project'Access,
+            View, After => False);
+         Append (Menu, Mitem);
+      end if;
+
       if Get_Depth (Path) = 2 then
          Gtk_New (Mitem);
          Append (Menu, Mitem);
          Gtk_New (Mitem, -"List not covered lines");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", List_Not_Covered_Lines_In_File'Access,
+           (Mitem, "activate", Menu_List_Not_Covered_Lines_In_File'Access,
             View, After => False);
          Append (Menu, Mitem);
       end if;
@@ -559,10 +645,14 @@ package body Code_Analysis_Module is
          Handler       => Create'Access);
       Register_Command
         (Kernel, "add_gcov_info",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
          Class         => Code_Analysis_Class,
          Handler       => Add_Gcov_Info'Access);
+      Register_Command
+        (Kernel, "list_not_covered_lines",
+         Class         => Code_Analysis_Class,
+         Handler       => List_Not_Covered_Lines'Access);
       Register_Command
         (Kernel, "show_tree_view",
          Class         => Code_Analysis_Class,
