@@ -129,7 +129,9 @@ procedure Code_Analysis_Test is
       Read_Gcov_Info (File_Node, File_Contents,
                       Node_Coverage
                         (File_Node.Analysis_Data.Coverage_Data.all).Children,
-                      File_Node.Analysis_Data.Coverage_Data.Covered);
+                      File_Node.Analysis_Data.Coverage_Data.Coverage);
+      Project_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+      Compute_Project_Coverage (Project_Node);
       Free (File_Contents);
       return Project_Node;
    end Build_Structure;
@@ -213,7 +215,7 @@ procedure Code_Analysis_Test is
               (File_Node, File_Contents,
                Node_Coverage
                  (File_Node.Analysis_Data.Coverage_Data.all).Children,
-               File_Node.Analysis_Data.Coverage_Data.Covered);
+               File_Node.Analysis_Data.Coverage_Data.Coverage);
             Free (File_Contents);
          end loop;
       end loop;
