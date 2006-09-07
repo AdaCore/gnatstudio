@@ -29,7 +29,9 @@ with Gtk.Tree_Model;  use Gtk.Tree_Model;
 
 package Code_Analysis_Tree_Model is
 
-   package GType_Node is new Generic_Set (Code_Analysis.File);
+   package GType_Subprogram is new Generic_Set (Code_Analysis.Subprogram);
+   package GType_File is new Generic_Set (Code_Analysis.File);
+   package GType_Project is new Generic_Set (Code_Analysis.Project);
 
    ------------
    -- Filler --
