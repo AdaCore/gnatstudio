@@ -57,8 +57,8 @@ package body Code_Analysis_Dump is
    ---------------
 
    procedure Dump_File (Cursor : File_Maps.Cursor) is
-      File_Node : constant Code_Analysis.File_Access
-        := File_Maps.Element (Cursor);
+      File_Node : constant Code_Analysis.File_Access :=
+                    File_Maps.Element (Cursor);
    begin
       Put ("  File " & VFS.Base_Name (File_Node.Name));
 
@@ -95,9 +95,13 @@ package body Code_Analysis_Dump is
    -- Dump_Line --
    ---------------
 
-   procedure Dump_Line (Line_Node : Line_Access) is
+   procedure Dump_Line (Line_Node : Code_Analysis.Line) is
    begin
-      Put ("      Line" & Natural'Image (Line_Node.Number));
+      Put ("      Line");
+
+      if Line_Node /= Null_Line then
+         Put (Natural'Image (Line_Node.Number));
+      end if;
 
       if Line_Node.Analysis_Data.Coverage_Data /= null then
          Dump_Line_Coverage (Line_Node.Analysis_Data.Coverage_Data);
