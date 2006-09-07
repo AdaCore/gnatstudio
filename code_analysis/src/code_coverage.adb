@@ -195,9 +195,13 @@ package body Code_Coverage is
                   Node_Coverage
                     (Project_Node.Analysis_Data.Coverage_Data.all)'Access;
       begin
+         Data.Coverage := 0;
+         Data.Children := 0;
+
          loop
             exit when Cur = No_Element;
             File_Node := Element (Cur);
+            Next (Cur);
 
             if File_Node.Analysis_Data.Coverage_Data /= null then
                Data.Children := Data.Children +
@@ -206,8 +210,6 @@ package body Code_Coverage is
                Data.Coverage := Data.Coverage +
                  File_Node.Analysis_Data.Coverage_Data.Coverage;
             end if;
-
-            Next (Cur);
          end loop;
       end;
    end Compute_Project_Coverage;
