@@ -61,6 +61,7 @@ package body Code_Analysis_Tree_Model is
       Set (Model, Iter, Pix_Col, C_Proxy
            (Code_Analysis_Module_ID.Subp_Pixbuf));
       Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
+      GType_Subprogram.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
       Fill_Iter (Model, Iter, Subp_Node.Analysis_Data);
    end Fill_Iter;
 
@@ -77,21 +78,19 @@ package body Code_Analysis_Tree_Model is
       use Subprogram_Maps;
       Self_Iter : Gtk_Tree_Iter;
       Cur       : Cursor;
-      Subp_Node : Subprogram_Access;
    begin
       Append (Model, Iter, Parent);
       Self_Iter := Iter;
       Set (Model, Iter, Pix_Col, C_Proxy
            (Code_Analysis_Module_ID.File_Pixbuf));
       Set (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
-      GType_Node.Set (Model, Iter, Node_Col, File_Node.all'Access);
+      GType_File.Set (Model, Iter, Node_Col, File_Node.all'Access);
       Fill_Iter (Model, Iter, File_Node.Analysis_Data);
       Cur := File_Node.Subprograms.First;
 
       loop
          exit when Cur = No_Element;
-         Subp_Node := Element (Cur);
-         Fill_Iter (Model, Iter, Self_Iter, Subp_Node);
+         Fill_Iter (Model, Iter, Self_Iter, Element (Cur));
          Next (Cur);
       end loop;
    end Fill_Iter;
@@ -108,7 +107,6 @@ package body Code_Analysis_Tree_Model is
       use File_Maps;
       Self_Iter : Gtk_Tree_Iter;
       Cur       : Cursor;
-      File_Node : File_Access;
    begin
       Append (Model, Iter, Null_Iter);
       Self_Iter := Iter;
@@ -116,13 +114,13 @@ package body Code_Analysis_Tree_Model is
            (Code_Analysis_Module_ID.Project_Pixbuf));
       Set (Model, Iter, Name_Col,
            UTF8_String (String'(Project_Name (Project_Node.Name))));
+      GType_Project.Set (Model, Iter, Node_Col, Project_Node.all'Access);
       Fill_Iter (Model, Iter, Project_Node.Analysis_Data);
       Cur := Project_Node.Files.First;
 
       loop
          exit when Cur = No_Element;
-         File_Node := Element (Cur);
-         Fill_Iter (Model, Iter, Self_Iter, File_Node);
+         Fill_Iter (Model, Iter, Self_Iter, Element (Cur));
          Next (Cur);
       end loop;
    end Fill_Iter;
