@@ -44,7 +44,7 @@ package Code_Analysis is
    -----------------------------
 
    type Coverage is tagged record
-      Covered : Natural := 0;
+      Coverage : Natural := 0;
    end record;
    --  Basic code coverage information
    --  Record the Line's execution counts
@@ -164,6 +164,9 @@ package Code_Analysis is
    Cov_Col  : constant := 3;
    --  Gtk_Tree_Model column number dedicated to the coverage information
    --  contained in the node coverage records
+   Sort_Col : constant := 4;
+   --  Gtk_Tree_Model column number dedicated to some raw coverage information
+   --  used to sort rows by not covered lines order
 
    -------------------
    -- Get_Or_Create --
