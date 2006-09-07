@@ -24,6 +24,7 @@ with String_Utils;      use String_Utils;
 with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with VFS;               use VFS;
+with Glib;
 
 package body Code_Coverage is
 
@@ -38,7 +39,7 @@ package body Code_Coverage is
      (File_Node     : Code_Analysis.File_Access;
       File_Contents : String_Access;
       Lines_Count   : out Natural;
-      Covered_Lines : out Natural)
+      Not_Cov_Count : out Natural)
    is
       Subp_Regexp       : constant Pattern_Matcher :=
                              Compile ("^function (\w+)([.]\d+)? called (\d+)",
@@ -63,7 +64,7 @@ package body Code_Coverage is
 
       Current       := File_Contents'First;
       Lines_Count   := 0;
-      Covered_Lines := 0;
+      Not_Cov_Count := 0;
 
       loop
          Match (Subp_Regexp, File_Contents.all, Subp_Matches, Current);
@@ -157,16 +158,16 @@ package body Code_Coverage is
          case File_Contents (Line_Matches (1).First) is
             when '#' => File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data
                  := new Coverage;
-               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Covered
+               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
                  := 0;
+               Not_Cov_Count := Not_Cov_Count + 1;
             when others =>
                File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data
                  := new Coverage;
-               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Covered
+               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
                  := Natural'Value
                  (File_Contents
                     (Line_Matches (1).First .. Line_Matches (1).Last));
-               Covered_Lines := Covered_Lines + 1;
          end case;
 
          Current := Line_Matches (0).Last + 1;
@@ -202,8 +203,8 @@ package body Code_Coverage is
                Data.Children := Data.Children +
                  Node_Coverage
                    (File_Node.Analysis_Data.Coverage_Data.all).Children;
-               Data.Covered := Data.Covered +
-                 File_Node.Analysis_Data.Coverage_Data.Covered;
+               Data.Coverage := Data.Coverage +
+                 File_Node.Analysis_Data.Coverage_Data.Coverage;
             end if;
 
             Next (Cur);
@@ -217,7 +218,7 @@ package body Code_Coverage is
 
    procedure Dump_Node_Coverage (Coverage : Coverage_Access) is
    begin
-      Put (Natural'Image (Coverage.Covered)
+      Put (Natural'Image (Coverage.Coverage)
            & " /"
            & Natural'Image (Node_Coverage (Coverage.all).Children));
    end Dump_Node_Coverage;
@@ -228,10 +229,10 @@ package body Code_Coverage is
 
    procedure Dump_Line_Coverage (Coverage : Coverage_Access) is
    begin
-      if Coverage.Covered = 0 then
+      if Coverage.Coverage = 0 then
          Put (" warning: line never executed");
       else
-         Put (Natural'Image (Coverage.Covered) & " execution(s)");
+         Put (Natural'Image (Coverage.Coverage) & " execution(s)");
       end if;
    end Dump_Line_Coverage;
 
@@ -261,7 +262,7 @@ package body Code_Coverage is
       Pango_Markup_To_Open  : constant String := "<span size=""small"">";
       Pango_Markup_To_Close : constant String := " </span>";
    begin
-      case Coverage.Covered is
+      case Coverage.Coverage is
          when 0 => return new String'(Pango_Markup_To_Open
                                       & "never executed"
                                       & Pango_Markup_To_Close);
@@ -270,7 +271,7 @@ package body Code_Coverage is
                                       & Pango_Markup_To_Close);
          when others =>
             return new String'(Pango_Markup_To_Open
-              & Image (Coverage.Covered, Int_Image_Padding)
+              & Image (Coverage.Coverage, Int_Image_Padding)
               & " executions"
               & Pango_Markup_To_Close);
       end case;
@@ -293,7 +294,7 @@ package body Code_Coverage is
       --  Returns in a String the Subprograms specific coverage info used to
       --  fill the Gtk_Tree_Store of a coverage report
 
-      Cov_Txt   : constant String  := Natural'Image (Coverage.Covered);
+      Cov_Txt   : constant String  := Natural'Image (Coverage.Coverage);
       Lig_Count : constant Natural := Node_Coverage (Coverage.all).Children;
 
       function Txt_Lig (Lig_Count : Natural) return String is
@@ -342,6 +343,7 @@ package body Code_Coverage is
            & Cov_Txt (Cov_Txt'First + 1 .. Cov_Txt'Last)
            & " not covered)"
            & Txt_Sub (Coverage));
+      Set (Tree_Store, Iter, Sort_Col, Glib.Gint (Coverage.Coverage));
    end Fill_Iter;
 
 end Code_Coverage;
