@@ -2422,12 +2422,22 @@ package body GVD_Module is
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
       use GNAT.OS_Lib;
-      Mitem : Gtk_Menu_Item;
-      Menu  : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
-      Iter  : Imported_Project_Iterator := Start (Get_Project (Kernel));
-      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
+      Mitem             : Gtk_Menu_Item;
+      Menu              : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
+      Group             : constant Gtk_Accel_Group :=
+                            Get_Default_Accelerators (Kernel);
+      Loaded_Project    : constant Project_Type := Get_Project (Kernel);
+      Loaded_Mains      : Argument_List :=
+                            Get_Attribute_Value
+                              (Loaded_Project,
+                               Attribute => Main_Attribute);
+      Loaded_Has_Mains  : constant Boolean := Loaded_Mains'Length > 0;
+      Extended_Project  : constant Project_Type :=
+                            Parent_Project (Loaded_Project);
+      Iter              : Imported_Project_Iterator :=
+                            Start (Loaded_Project);
+      Current_Project   : Project_Type := Current (Iter);
       Debuggable_Suffix : GNAT.OS_Lib.String_Access := Get_Debuggable_Suffix;
-
    begin
       --  Remove all existing menus
 
@@ -2437,39 +2447,55 @@ package body GVD_Module is
          Debuggable_Suffix := new String'("");
       end if;
 
-      --  Add all the main units from all the imported projects
+      --  The following loop should be factorized with the one in the builder
+      --  module (see Builder_Module.On_View_Changed).
 
-      while Current (Iter) /= No_Project loop
-         declare
-            Mains : GNAT.OS_Lib.Argument_List := Get_Attribute_Value
-              (Current (Iter), Attribute => Main_Attribute);
-         begin
-            for M in Mains'Range loop
-               declare
-                  Exec : constant String := Get_Executable_Name
-                    (Current (Iter), Mains (M).all);
-               begin
-                  Gtk_New (Mitem, Exec);
-                  Append (Menu, Mitem);
-                  File_Project_Cb.Object_Connect
-                    (Mitem, "activate",
-                     On_Debug_Init'Access,
-                     Slot_Object => Kernel,
-                     User_Data => File_Project_Record'
-                       (Project => Current (Iter),
-                        File    => Create
-                          (Executables_Directory (Current (Iter)) & Exec)));
-                  Set_Accel_Path
-                    (Mitem, Debug_Menu_Prefix & "item" & Image (M), Group);
-               end;
-            end loop;
+      while Current_Project /= No_Project loop
+         if not Loaded_Has_Mains
+           or else Current_Project /= Extended_Project
+         then
+            declare
+               Mains : Argument_List :=
+                         Get_Attribute_Value
+                           (Current_Project, Attribute => Main_Attribute);
+            begin
+               for M in reverse Mains'Range loop
+                  declare
+                     Exec : constant String :=
+                              Get_Executable_Name
+                                (Current_Project, Mains (M).all);
+                  begin
+                     Gtk_New (Mitem, Exec);
+                     Prepend (Menu, Mitem);
+                     File_Project_Cb.Object_Connect
+                       (Mitem, "activate",
+                        On_Debug_Init'Access,
+                        Slot_Object => Kernel,
+                        User_Data   => File_Project_Record'
+                          (Project => No_Project,
+                           File    => Create
+                             (Executables_Directory
+                                (Current_Project) & Exec)));
 
-            Free (Mains);
-         end;
+                     if M = Mains'First
+                       and then Current_Project = Loaded_Project
+                     then
+                        Set_Accel_Path
+                          (Mitem, Debug_Menu_Prefix & "item" & Image (M),
+                           Group);
+                     end if;
+                  end;
+               end loop;
+
+               Free (Mains);
+            end;
+         end if;
 
          Next (Iter);
+         Current_Project := Current (Iter);
       end loop;
 
+      Free (Loaded_Mains);
       Free (Debuggable_Suffix);
 
       --  Specific entry to start the debugger without any main program
