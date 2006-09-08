@@ -256,7 +256,8 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List);
+      Mains        : Argument_List;
+      Set_Shortcut : Boolean);
    --  Add new entries for all the main subprograms of Project.
    --  If Menu is null, a new one is created if there are any entries
    --  If Set_Shortcut is true, the F4 shortcut is set for the first entry.
@@ -272,7 +273,8 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List);
+      Mains        : Argument_List;
+      Set_Shortcut : Boolean);
    --  Same as Add_Build_Menu, but for the Run menu
 
    type Builder_Contextual is new Submenu_Factory_Record with null record;
@@ -1708,9 +1710,10 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List)
+      Mains        : Argument_List;
+      Set_Shortcut : Boolean)
    is
-      Mitem          : Dynamic_Menu_Item;
+      Mitem : Dynamic_Menu_Item;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
       Main  : Virtual_File;
       Tmp   : Boolean;
@@ -1724,10 +1727,10 @@ package body Builder_Module is
       --  Accelerators were removed when the menu items were destroyed (just
       --  before the update)
 
-      for M in Mains'Range loop
+      for M in reverse Mains'Range loop
          Mitem := new Dynamic_Menu_Item_Record;
          Gtk.Menu_Item.Initialize (Mitem, Mains (M).all);
-         Append (Menu, Mitem);
+         Prepend (Menu, Mitem);
 
          --  If the name of the main is not a source file, we might not be
          --  able to resolve it.
@@ -1744,8 +1747,11 @@ package body Builder_Module is
             User_Data   => File_Project_Record'
               (Project => Project,
                File    => Main));
-         Set_Accel_Path
-           (Mitem, Make_Menu_Prefix & Item_Accel_Path & Image (M), Group);
+
+         if Set_Shortcut and then M = Mains'First then
+            Set_Accel_Path
+              (Mitem, Make_Menu_Prefix & Item_Accel_Path & Image (M), Group);
+         end if;
       end loop;
    end Add_Build_Menu;
 
@@ -1802,7 +1808,8 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List)
+      Mains        : Argument_List;
+      Set_Shortcut : Boolean)
    is
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
       Mitem : Dynamic_Menu_Item;
@@ -1817,14 +1824,14 @@ package body Builder_Module is
          Gtk_New (Menu);
       end if;
 
-      for M in Mains'Range loop
+      for M in reverse Mains'Range loop
          declare
             Exec : constant String :=
               Get_Executable_Name (Project, Mains (M).all);
          begin
             Mitem := new Dynamic_Menu_Item_Record;
             Gtk.Menu_Item.Initialize (Mitem, Exec);
-            Append (Menu, Mitem);
+            Prepend (Menu, Mitem);
             File_Project_Cb.Object_Connect
               (Mitem, "activate", On_Run'Access,
                Slot_Object => Kernel,
@@ -1832,8 +1839,11 @@ package body Builder_Module is
                  (Project => Project,
                   File    => Create
                     (Executables_Directory (Project) & Exec)));
-            Set_Accel_Path
-              (Mitem, Run_Menu_Prefix & Item_Accel_Path & Image (M), Group);
+
+            if Set_Shortcut and then M = Mains'First then
+               Set_Accel_Path
+                 (Mitem, Run_Menu_Prefix & Item_Accel_Path & Image (M), Group);
+            end if;
          end;
       end loop;
    end Add_Run_Menu;
@@ -1927,7 +1937,18 @@ package body Builder_Module is
       --  projects.
 
       declare
-         P : Project_Type := Get_Project (Kernel);
+         Loaded_Project   : constant Project_Type := Get_Project (Kernel);
+         Loaded_Mains     : Argument_List :=
+                              Get_Attribute_Value
+                                (Loaded_Project,
+                                 Attribute => Main_Attribute);
+         Loaded_Has_Mains : constant Boolean := Loaded_Mains'Length > 0;
+         Extended_Project : constant Project_Type :=
+                              Parent_Project (Loaded_Project);
+         Iter             : Imported_Project_Iterator :=
+                              Start (Loaded_Project);
+         Current_Project  : Project_Type := Current (Iter);
+         Set_Shortcut     : Boolean := True;
       begin
          if Builder_Module_ID.Make_Menu /= null then
             Remove_All_Children (Builder_Module_ID.Make_Menu,
@@ -1939,37 +1960,78 @@ package body Builder_Module is
                                  Is_Dynamic_Menu_Item'Access);
          end if;
 
-         while P /= No_Project loop
-            declare
-               Mains : Argument_List := Get_Attribute_Value
-                 (P, Attribute => Main_Attribute);
-            begin
-               if Mains'Length /= 0 then
-                  --  Use the main units of the extending project, but we
-                  --  should still compile in the context of the root project
-                  Add_Build_Menu
-                    (Menu         => Builder_Module_ID.Make_Menu,
-                     Project      => Get_Project (Kernel),
-                     Kernel       => Kernel,
-                     Mains        => Mains);
-                  Add_Run_Menu
-                    (Menu         => Builder_Module_ID.Run_Menu,
-                     Project      => Get_Project (Kernel),
-                     Kernel       => Kernel,
-                     Mains        => Mains);
-                  Free (Mains);
-                  exit;
-               end if;
+         --  ??? Few limitations on what is done here:
+         --
+         --  1. We iterate over all imported projects. We look at the extended
+         --  project main files only if the loaded project has none. This
+         --  means that it will work when the current project inherits its Main
+         --  attribute from the extended project or when it redefines it except
+         --  with an empy list in which case the extended project main files
+         --  should be looked at but they are not.
+         --
+         --  2. We only consider the project extended by the lodaded project as
+         --  a special case. Other extended projects are handled as imported
+         --  projects whereas they should also be handled separately.
+         --
+         --  3. This loop is shared with the one in the builder module that is
+         --  responsible for filling the /Debug/Initialize menu. Both should
+         --  be factorized but this requires maniplulating (main file, project)
+         --  association since a main file needs to be build in a specific
+         --  context which is not necessarily the one in which is it defined
+         --  (see the comment below about main files from extended projects).
 
-               P := Parent_Project (P);
-               Free (Mains);
-            end;
+         while Current_Project /= No_Project loop
+            if not Loaded_Has_Mains
+              or else Current_Project /= Extended_Project
+            then
+               declare
+                  Mains : Argument_List :=
+                            Get_Attribute_Value
+                              (Current_Project, Attribute => Main_Attribute);
+                  Context_Project : Project_Type;
+               begin
+                  --  We should compile main files from the extended project
+                  --  in the context of the loaded project.
+
+                  if Current_Project = Extended_Project then
+                     Context_Project := Loaded_Project;
+                  else
+                     Context_Project := Current_Project;
+                  end if;
+
+                  if Mains'Length /= 0 then
+                     Set_Shortcut := Current_Project = Loaded_Project;
+
+                     Add_Build_Menu
+                       (Menu         => Builder_Module_ID.Make_Menu,
+                        Project      => Context_Project,
+                        Kernel       => Kernel,
+                        Mains        => Mains,
+                        Set_Shortcut => Set_Shortcut);
+
+                     Add_Run_Menu
+                       (Menu         => Builder_Module_ID.Run_Menu,
+                        Project      => Context_Project,
+                        Kernel       => Kernel,
+                        Mains        => Mains,
+                        Set_Shortcut => Set_Shortcut);
+                     --  The provided Project Argument is not relevant here.
+                  end if;
+
+                  Free (Mains);
+               end;
+            end if;
+
+            Next (Iter);
+            Current_Project := Current (Iter);
          end loop;
+
+         Free (Loaded_Mains);
       end;
 
       Add_Root_Project_Build_Menu (Builder_Module_ID.Make_Menu, Kernel, True);
 
-      --  No main program ?
+      --  No main program?
 
       Mitem := new Dynamic_Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Mitem, -Current_Make_Suffix);
@@ -2039,7 +2101,8 @@ package body Builder_Module is
            (Menu         => M,
             Project      => Project_Information (Context),
             Kernel       => Get_Kernel (Context),
-            Mains        => Mains);
+            Mains        => Mains,
+            Set_Shortcut => False);
       end if;
       Free (Mains);
    end Append_To_Menu;
@@ -2067,7 +2130,8 @@ package body Builder_Module is
         (Menu         => M,
          Project      => Project_Information (Context),
          Kernel       => Get_Kernel (Context),
-         Mains        => Mains);
+         Mains        => Mains,
+         Set_Shortcut => False);
       Free (Mains);
    end Append_To_Menu;
 
