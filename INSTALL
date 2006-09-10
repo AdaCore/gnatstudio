@@ -57,3 +57,6 @@ above, with a few additional steps:
 
 - You need to use the CVS version of GtkAda matching GPS sources (same date/tag)
 
+- Depending on your GNAT version, you may also need to apply
+  distrib/gps-4.0-gap-2005.diff
+
