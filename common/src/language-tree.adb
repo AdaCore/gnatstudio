@@ -1076,7 +1076,7 @@ package body Language.Tree is
            Identifier.Position_Start (J)
            - Identifier.Position_Start (From) + 1;
          Result.Position_End (J - From + 1) :=
-           Identifier.Position_End (From)
+           Identifier.Position_End (J)
            - Identifier.Position_Start (From) + 1;
       end loop;
 
