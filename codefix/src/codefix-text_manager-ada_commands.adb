@@ -1034,6 +1034,28 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
+   --------------------------------
+   -- Get_Package_To_Be_Imported --
+   --------------------------------
+
+   function Get_Package_To_Be_Withed
+     (Current_Text    : Text_Navigator_Abstr'Class;
+      Source_Position : File_Cursor'Class) return String
+   is
+      Tree : constant Construct_Tree_Access :=
+        Get_Tree (Current_Text, Source_Position);
+      It   : Construct_Tree_Iterator :=
+        Get_Iterator_At (Current_Text, Source_Position, After);
+   begin
+      while Get_Parent_Scope (Tree.all, It)
+        /= Null_Construct_Tree_Iterator
+      loop
+         It := Get_Parent_Scope (Tree.all, It);
+      end loop;
+
+      return Get_Full_Name (Tree.all, It);
+   end Get_Package_To_Be_Withed;
+
    -------------
    -- Add_Use --
    -------------
@@ -1047,24 +1069,17 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Result      : Get_Visible_Declaration_Cmd;
       With_Cursor : File_Cursor;
-      Pkg_Name    : GNAT.OS_Lib.String_Access;
       Clauses_Str : GNAT.OS_Lib.String_Access := new String'("");
-
-      Tree        : constant Construct_Tree_Access :=
-        Get_Tree (Current_Text, Source_Position);
+      Pkg_Name    : constant String := Get_Package_To_Be_Withed
+        (Current_Text, Source_Position);
    begin
-      Assign
-        (Pkg_Name,
-         Get_Full_Name
-           (Tree.all, Get_Iterator_At (Current_Text, Source_Position, After)));
-
       if With_Could_Miss then
          With_Cursor := File_Cursor
            (Search_With
-              (Current_Text, File_Destination, Pkg_Name.all));
+              (Current_Text, File_Destination, Pkg_Name));
 
          if With_Cursor = Null_File_Cursor then
-            Assign (Clauses_Str, "with " & Pkg_Name.all & "; ");
+            Assign (Clauses_Str, "with " & Pkg_Name & "; ");
          end if;
       end if;
 
@@ -1072,15 +1087,18 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Result.Insert_With,
          Current_Text,
          Get_Next_With_Position (Current_Text, File_Destination),
-         Clauses_Str.all & "use " & Pkg_Name.all & ";");
+         Clauses_Str.all & "use " & Pkg_Name & ";");
 
       Result.Insert_With_Enabled := True;
 
-      Free (Pkg_Name);
       Free (Clauses_Str);
 
       This := Result;
    end Add_Use;
+
+   -------------------
+   -- Prefix_Object --
+   -------------------
 
    procedure Prefix_Object
      (This            : out Get_Visible_Declaration_Cmd;
@@ -1092,20 +1110,13 @@ package body Codefix.Text_Manager.Ada_Commands is
       Result      : Get_Visible_Declaration_Cmd;
       Word        : Word_Cursor;
       With_Cursor : File_Cursor;
-      Pkg_Name    : GNAT.OS_Lib.String_Access;
-
-      Tree        : constant Construct_Tree_Access :=
-        Get_Tree (Current_Text, Source_Position);
+      Pkg_Name    : constant String := Get_Package_To_Be_Withed
+        (Current_Text, Source_Position);
    begin
-      Assign
-        (Pkg_Name,
-         Get_Full_Name
-           (Tree.all, Get_Iterator_At (Current_Text, Source_Position, After)));
-
       if With_Could_Miss then
          With_Cursor := File_Cursor
            (Search_With
-              (Current_Text, Get_File (Object_Position), Pkg_Name.all));
+              (Current_Text, Get_File (Object_Position), Pkg_Name));
 
          if With_Cursor = Null_File_Cursor then
             Initialize
@@ -1113,7 +1124,7 @@ package body Codefix.Text_Manager.Ada_Commands is
                Current_Text,
                Get_Next_With_Position
                  (Current_Text, Get_File (Object_Position)),
-               "with " & Pkg_Name.all & ";");
+               "with " & Pkg_Name & ";");
 
             Result.Insert_With_Enabled := True;
          end if;
