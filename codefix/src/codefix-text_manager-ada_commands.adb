@@ -1049,10 +1049,14 @@ package body Codefix.Text_Manager.Ada_Commands is
       With_Cursor : File_Cursor;
       Pkg_Name    : GNAT.OS_Lib.String_Access;
       Clauses_Str : GNAT.OS_Lib.String_Access := new String'("");
+
+      Tree        : constant Construct_Tree_Access :=
+        Get_Tree (Current_Text, Source_Position);
    begin
       Assign
         (Pkg_Name,
-         Get_Full_Prefix (Current_Text, Source_Position));
+         Get_Full_Name
+           (Tree.all, Get_Iterator_At (Current_Text, Source_Position, After)));
 
       if With_Could_Miss then
          With_Cursor := File_Cursor
@@ -1089,10 +1093,14 @@ package body Codefix.Text_Manager.Ada_Commands is
       Word        : Word_Cursor;
       With_Cursor : File_Cursor;
       Pkg_Name    : GNAT.OS_Lib.String_Access;
+
+      Tree        : constant Construct_Tree_Access :=
+        Get_Tree (Current_Text, Source_Position);
    begin
       Assign
         (Pkg_Name,
-         Get_Full_Prefix (Current_Text, Source_Position));
+         Get_Full_Name
+           (Tree.all, Get_Iterator_At (Current_Text, Source_Position, After)));
 
       if With_Could_Miss then
          With_Cursor := File_Cursor
@@ -1111,23 +1119,28 @@ package body Codefix.Text_Manager.Ada_Commands is
          end if;
       end if;
 
-      Word := (Clone (File_Cursor (Object_Position)) with
-        String_Match => new String'
-          (Get_Full_Prefix
-             (Current_Text, Source_Position)
-           & "."),
-        Mode         => Text_Ascii);
+      declare
+         Prefix : constant String := Get_Full_Prefix
+           (Current_Text, Source_Position);
+      begin
+         if Prefix /= "" then
+            Word := (Clone (File_Cursor (Object_Position)) with
+                     String_Match => new String'
+                       (Prefix & "."),
+                     Mode         => Text_Ascii);
 
-      Initialize
-        (Result.Prefix_Obj,
-         Current_Text,
-         Word,
-         File_Cursor (Word),
-         False);
+            Initialize
+              (Result.Prefix_Obj,
+               Current_Text,
+               Word,
+               File_Cursor (Word),
+               False);
 
-      Result.Prefix_Obj_Enabled := True;
+            Result.Prefix_Obj_Enabled := True;
 
-      Free (Word);
+            Free (Word);
+         end if;
+      end;
 
       This := Result;
    end Prefix_Object;
