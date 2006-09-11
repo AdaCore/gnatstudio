@@ -1063,9 +1063,9 @@ package body Codefix.Text_Manager is
       return Null_Construct_Info;
    end Search_Unit;
 
-   -------------------
-   -- Get_Full_Name --
-   -------------------
+   ---------------------
+   -- Get_Full_Prefix --
+   ---------------------
 
    function Get_Full_Prefix
      (This     : access Text_Interface'Class;
@@ -1073,8 +1073,7 @@ package body Codefix.Text_Manager is
       Category : Language_Category := Cat_Unknown)
       return String
    is
-      It           : Construct_Tree_Iterator;
-      Parent_It    : Construct_Tree_Iterator;
+      It : Construct_Tree_Iterator;
    begin
       if Category = Cat_Unknown then
          It := Get_Iterator_At (This, Cursor, After);
@@ -1082,13 +1081,16 @@ package body Codefix.Text_Manager is
          It := Get_Iterator_At (This, Cursor, After, (1 => Category));
       end if;
 
-      Parent_It := Get_Parent_Scope (Get_Tree (This).all, It);
-
-      if Parent_It = Null_Construct_Tree_Iterator then
-         return "";
-      else
-         return Get_Full_Name (Get_Tree (This).all, Parent_It);
-      end if;
+      declare
+         It_Id : constant Composite_Identifier :=
+           To_Composite_Identifier (Get_Full_Name (Get_Tree (This).all, It));
+      begin
+         if Length (It_Id) = 1 then
+            return "";
+         else
+            return To_String (Get_Slice (It_Id, 1, Length (It_Id) - 1));
+         end if;
+      end;
    end Get_Full_Prefix;
 
    ---------------------
