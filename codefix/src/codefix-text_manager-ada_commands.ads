@@ -241,6 +241,12 @@ package Codefix.Text_Manager.Ada_Commands is
 
    type Get_Visible_Declaration_Cmd is new Text_Command with private;
 
+   function Get_Package_To_Be_Withed
+     (Current_Text    : Text_Navigator_Abstr'Class;
+      Source_Position : File_Cursor'Class) return String;
+   --  Return the package name that has to be withed in order to be able to
+   --  use the entity pointed at the given position
+
    procedure Add_Use
      (This             : out Get_Visible_Declaration_Cmd;
       Current_Text     : Text_Navigator_Abstr'Class;
