@@ -24,11 +24,11 @@ Known Problems fixed in GPS 4.1.0
               is not killed, although it disappears from the GPS task manager
   Workaround: Kill the process using "kill" or the Windows task manager
 
-- F818-003 codefix bad with clause update
+- F818-003 Wrong automatic code fix with clause update
   Problem:    The auto-fix for messages like "non-visible declaration at 
-              file:line" did not add the proper with / use statements, and the 
-              entity was not correctly prefixed.
-  Workaround: Fix manually the error, by adding the missing with, use, and / or
+              file:line" does not add the proper with/use statements, and the 
+              entity is not correctly prefixed.
+  Workaround: Fix manually the error, by adding the missing with, use, and/or
               prefix.
 
 - F817-018 Cannot access menus with underscore from scripts
