@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.0.1
 
+- F911-020 Firefox does not handle the links of the generated python doc
+  Problem:    On windows, the generated documentation will contain links of the
+              form "file://C:\home\.gps\/generated_doc/a_file.html". This kind
+              of links is not handled by Firefox.
+  Workaround: The files are correctly generated and can be manually opened in
+              Firefox.
+
 - F906-010 Cannot set max line length for pretty printing beyond 100
   Problem:    The handling of -M pretty printer switch does not allow
               a value above 100 while gnatpp accepts up to 256.
@@ -478,4 +485,4 @@ Known Problems fixed in GPS 4.0.0
 - D802-017 Focus is not given to editors
   Problem:    In some cases, when starting GPS, the focus can't be given to
               the editor, and it's impossible to edit any file.
-  Workaround: Select a window outside GPS, and then go back to GPS. 
+  Workaround: Select a window outside GPS, and then go back to GPS.
