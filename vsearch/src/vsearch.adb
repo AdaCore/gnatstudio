@@ -21,50 +21,51 @@
 with System;
 with Interfaces.C.Strings;    use Interfaces.C.Strings;
 
-with Gdk.Event;               use Gdk.Event;
-with Gdk.Types;               use Gdk.Types;
-with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
-with Gdk.Window;              use Gdk.Window;
-with Glib;                    use Glib;
-with Glib.Object;             use Glib.Object;
-with Glib.Xml_Int;            use Glib.Xml_Int;
-with Gtk.Alignment;           use Gtk.Alignment;
-with Gtk.Clipboard;           use Gtk.Clipboard;
-with Gtk.Hbutton_Box;         use Gtk.Hbutton_Box;
-with Gtk.Dialog;              use Gtk.Dialog;
-with Gtk.Editable;            use Gtk.Editable;
-with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Image;               use Gtk.Image;
-with Gtk.List;                use Gtk.List;
-with Gtk.List_Item;           use Gtk.List_Item;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Selection;           use Gtk.Selection;
-with Gtk.Stock;               use Gtk.Stock;
-with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
-with Gtk.Text_Iter;           use Gtk.Text_Iter;
-with Gtk.Text_View;           use Gtk.Text_View;
-with Gtk.Tooltips;            use Gtk.Tooltips;
-with Gtk.Window;              use Gtk.Window;
-with Gtkada.Dialogs;          use Gtkada.Dialogs;
-with Gtkada.MDI;              use Gtkada.MDI;
-with Gtkada.Handlers;         use Gtkada.Handlers;
-with Gtkada.Types;            use Gtkada.Types;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Types;                use Gdk.Types;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
+with Gdk.Window;               use Gdk.Window;
+with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Glib.Xml_Int;             use Glib.Xml_Int;
+with Gtk.Alignment;            use Gtk.Alignment;
+with Gtk.Clipboard;            use Gtk.Clipboard;
+with Gtk.Hbutton_Box;          use Gtk.Hbutton_Box;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Editable;             use Gtk.Editable;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Image;                use Gtk.Image;
+with Gtk.List;                 use Gtk.List;
+with Gtk.List_Item;            use Gtk.List_Item;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Selection;            use Gtk.Selection;
+with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Tooltips;             use Gtk.Tooltips;
+with Gtk.Window;               use Gtk.Window;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.Types;             use Gtkada.Types;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Task_Manager;  use GPS.Kernel.Task_Manager;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
-with GUI_Utils;               use GUI_Utils;
+with GUI_Utils;                use GUI_Utils;
 with Generic_List;
-with Histories;               use Histories;
+with Histories;                use Histories;
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Exceptions;          use Ada.Exceptions;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Exceptions;           use Ada.Exceptions;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Traces; use Traces;
@@ -78,11 +79,26 @@ package body Vsearch is
    Pattern_Hist_Key   : constant History_Key := "search_patterns";
    Replace_Hist_Key   : constant History_Key := "search_replace";
    Auto_Hide_Hist_Key : constant History_Key := "search_autohide";
-   Select_Window_Hist_Key : constant History_Key := "search_select_window";
    Window_X_Hist_Key  : constant History_Key := "search_window_x";
    Window_Y_Hist_Key  : constant History_Key := "search_window_y";
    Options_Collapsed_Hist_Key  : constant History_Key := "options_collapsed";
    --  The key for the histories.
+
+   Ask_Confirmation_For_Replace_All : Param_Spec_Boolean;
+   Close_On_Match                   : Param_Spec_Boolean;
+   Select_On_Match                  : Param_Spec_Boolean;
+   --  The preferences
+
+   Close_On_Match_Description : constant String :=
+     -("If this is selected, the search dialog is closed when a match is"
+       & " found. You can still search for the next occurrence by using"
+       & " the appropriate shortcut (Ctrl-N by default)");
+
+   Select_On_Match_Description : constant String :=
+     -("When a match is found, give the focus to the matching editor. If"
+       & " unselected, the focus is left on the search window, which means"
+       & " you can keep typing Enter to go to the next search, but can't"
+       & " modify the editor directly");
 
    procedure Free (Data : in out Search_Module_Data);
    --  Free the memory associated with Data
@@ -268,6 +284,18 @@ package body Vsearch is
 
    procedure On_Replace_All (Object : access Gtk_Widget_Record'Class);
    --  Called when button "Replace_All" is clicked.
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences are changed
+
+   procedure On_Select_On_Match_Toggled
+     (Object : access Gtk_Widget_Record'Class);
+   --  Called when the checkbox "select on match" is toggled.
+
+   procedure On_Close_On_Match_Toggled
+     (Object : access Gtk_Widget_Record'Class);
+   --  Called when the checkbox "close on match" is toggled.
 
    procedure On_Context_Entry_Changed
      (Object : access Gtk_Widget_Record'Class);
@@ -955,19 +983,49 @@ package body Vsearch is
       pragma Unreferenced (Has_Next);
 
       C           : Search_Commands.Generic_Asynchronous_Command_Access;
-      Button      : Message_Dialog_Buttons;
-   begin
-      Button := Message_Dialog
+      Button      : Gtk_Widget;
+      pragma Unreferenced (Button);
+
+      Dialog : constant Gtk_Dialog := Create_Gtk_Dialog
         (Msg      => (-"You are about to replace all occurrences of """)
          & Get_Text (Vsearch.Pattern_Entry) & """."
          & ASCII.LF & (-"Continue?"),
          Dialog_Type => Warning,
          Title       => -"Replacing all occurrences",
-         Buttons     => Button_OK or Button_Cancel,
          Parent      => Gtk_Window (Get_Toplevel (Vsearch)));
 
-      if (Button and Button_OK) = 0 then
-         return;
+      Do_Not_Ask : Gtk_Check_Button;
+
+      Response : Gtk_Response_Type;
+
+   begin
+      if Get_Pref (Ask_Confirmation_For_Replace_All) then
+         Gtk_New (Do_Not_Ask, -"Do not ask this question again");
+         Pack_Start (Get_Vbox (Dialog), Do_Not_Ask);
+
+         Button := Add_Button
+           (Dialog,
+            Text => "gtk-yes",
+            Response_Id => Gtk_Response_Yes);
+
+         Button := Add_Button
+           (Dialog,
+            Text => "gtk-no",
+            Response_Id => Gtk_Response_No);
+
+         Show_All (Dialog);
+         Response := Run (Dialog);
+
+         if Get_Active (Do_Not_Ask) then
+            Set_Pref
+              (Vsearch.Kernel, Ask_Confirmation_For_Replace_All, False);
+         end if;
+
+         Destroy (Dialog);
+
+         if Response /= Gtk_Response_Yes then
+            return;
+         end if;
       end if;
 
       Create_Context (Vsearch, True);
@@ -988,6 +1046,64 @@ package body Vsearch is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Replace_All;
+
+   ----------------------------
+   -- On_Preferences_Changed --
+   ----------------------------
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      if Vsearch_Module_Id.Search /= null then
+         if Get_Pref (Select_On_Match)
+           /= Get_Active (Vsearch_Module_Id.Search.Select_Editor_Check)
+         then
+            Set_Active
+              (Vsearch_Module_Id.Search.Select_Editor_Check,
+               Get_Pref (Select_On_Match));
+         end if;
+
+         if Get_Pref (Close_On_Match)
+           /= Get_Active (Vsearch_Module_Id.Search.Auto_Hide_Check)
+         then
+            Set_Active
+              (Vsearch_Module_Id.Search.Auto_Hide_Check,
+               Get_Pref (Close_On_Match));
+         end if;
+      end if;
+   end On_Preferences_Changed;
+
+   --------------------------------
+   -- On_Select_On_Match_Toggled --
+   --------------------------------
+
+   procedure On_Select_On_Match_Toggled
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
+   begin
+      Set_Pref
+        (Vsearch.Kernel,
+         Select_On_Match,
+         Get_Active (Vsearch.Select_Editor_Check));
+   end On_Select_On_Match_Toggled;
+
+   -------------------------------
+   -- On_Close_On_Match_Toggled --
+   -------------------------------
+
+   procedure On_Close_On_Match_Toggled
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
+   begin
+      Set_Pref
+        (Vsearch.Kernel,
+         Close_On_Match,
+         Get_Active (Vsearch.Auto_Hide_Check));
+   end On_Close_On_Match_Toggled;
 
    ----------------------
    -- Resize_If_Needed --
@@ -1524,28 +1640,21 @@ package body Vsearch is
       Gtk_New (Vsearch.Select_Editor_Check, -"Select on Match");
       Set_Tip
         (Get_Tooltips (Handle), Vsearch.Select_Editor_Check,
-         -("When a match is found, give the focus to the matching editor. If"
-           & " unselected, the focus is left on the search window, which means"
-           & " you can keep typing Enter to go to the next search, but can't"
-           & " modify the editor directly"));
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Handle).all, Select_Window_Hist_Key, False);
-      Associate
-        (Get_History (Handle).all, Select_Window_Hist_Key,
-         Vsearch.Select_Editor_Check);
+         Select_On_Match_Description);
+      Set_Active (Vsearch.Select_Editor_Check, Get_Pref (Select_On_Match));
+      Widget_Callback.Object_Connect
+        (Vsearch.Select_Editor_Check, "toggled",
+         On_Select_On_Match_Toggled'Access, Vsearch);
       Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 1, 2, 1, 2);
 
       Gtk_New (Vsearch.Auto_Hide_Check, -"Close on Match");
       Set_Tip
         (Get_Tooltips (Handle), Vsearch.Auto_Hide_Check,
-         -("If this is selected, the search dialog is closed when a match is"
-           & " found. You can still search for the next occurrence by using"
-           & " the appropriate shortcut (Ctrl-N by default)"));
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Handle).all, Auto_Hide_Hist_Key, False);
-      Associate
-        (Get_History (Handle).all, Auto_Hide_Hist_Key,
-         Vsearch.Auto_Hide_Check);
+         -Close_On_Match_Description);
+      Set_Active (Vsearch.Auto_Hide_Check, Get_Pref (Close_On_Match));
+      Widget_Callback.Object_Connect
+        (Vsearch.Auto_Hide_Check, "toggled",
+         On_Close_On_Match_Toggled'Access, Vsearch);
       Attach (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check, 0, 2, 2, 3);
 
       --  Create the widget
@@ -1767,6 +1876,8 @@ package body Vsearch is
                   Default_Pattern := new String'
                     (Get_Slice (Buffer, First_Iter, Last_Iter));
                end if;
+
+               Select_Range (Buffer, First_Iter, First_Iter);
             end;
          end if;
 
@@ -2213,7 +2324,54 @@ package body Vsearch is
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "vsearch.preferences_changed");
+
+      Register_Preferences (Kernel);
    end Register_Module;
+
+   --------------------------
+   -- Register_Preferences --
+   --------------------------
+
+   procedure Register_Preferences
+     (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Ask_Confirmation_For_Replace_All :=
+        Glib.Properties.Creation.Param_Spec_Boolean
+          (Gnew_Boolean
+             (Name  => "Ask-Confirmation-For-Replace-All",
+              Nick  => -"Confirmation for 'Replace all'",
+              Blurb => -("Enable the confirmation popup before doing a" &
+                " replace all from the search window."),
+              Default => True));
+      Register_Property
+        (Kernel, Param_Spec (Ask_Confirmation_For_Replace_All), -"Search");
+
+      Close_On_Match :=
+        Glib.Properties.Creation.Param_Spec_Boolean
+          (Gnew_Boolean
+             (Name  => "Close-On-Match",
+              Nick  => -"Close on Match",
+              Blurb => Select_On_Match_Description,
+              Default => False));
+      Register_Property
+        (Kernel, Param_Spec (Close_On_Match), -"Search");
+
+      Select_On_Match :=
+        Glib.Properties.Creation.Param_Spec_Boolean
+          (Gnew_Boolean
+             (Name  => "Select-On-Match",
+              Nick  => -"Select on Match",
+              Blurb => Close_On_Match_Description,
+              Default => False));
+      Register_Property
+        (Kernel, Param_Spec (Select_On_Match), -"Search");
+
+      Add_Hook
+        (Kernel => Kernel,
+         Hook   => Preferences_Changed_Hook,
+         Func   => Wrapper (On_Preferences_Changed'Access),
+         Name   => "Vsearch.preferences");
+   end Register_Preferences;
 
    ----------
    -- Free --
