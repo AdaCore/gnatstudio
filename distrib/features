@@ -17,10 +17,10 @@ New features in GPS 4.1.0
 F822-013 Disable the "replace all" confirmation with a preference (2006-09-12)
 
   A new preference has been added, in the search pannel of the GPS preferences,
-  "Confirmation for "Replace all"". By default, this preference is enabled, and
-  pressing "Replace all" from the search window display a confirmation popup.
+  'Confirmation for "Replace all"'. By default, this preference is enabled, and
+  pressing "Replace all" from the search window displays a confirmation dialog.
   It's possible to disable this either by unchecking the checkbox in the
-  preferences pannel, or by directly checking the checkbox "Do not ask again"
+  preferences panel, or by directly checking the checkbox "Do not ask again"
   in the popup.
 
 F810-009 Entity browser speed up (2006-08-11)
