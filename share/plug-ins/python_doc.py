@@ -547,7 +547,7 @@ pydoc.html          = XMLHtmlDoc()
 ## User accessible methods
 ####################################################################
 
-docgen = GPSDocGenerator (GPS.get_home_dir() + "/generated_doc")
+docgen = GPSDocGenerator (GPS.get_home_dir() + "generated_doc")
 
 def generate_doc (entity):
   """Generate the documentation for a python entity dynamically.
