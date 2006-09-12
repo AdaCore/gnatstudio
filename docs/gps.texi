@@ -4731,7 +4731,11 @@ grayed out), and @code{Replace & Find} will replace the occurence and then
 jump to the next one, if any. If you don't want to replace the current
 occurence, you can jump directly to the next one by pressing @code{Next}.
 
-The @code{Repl all} button will replace all the occurences found.
+The @code{Repl all} button will replace all the occurences found. By default, 
+a popup is displayed and ask for confirmation. It's possible to disable this
+popup by either checking the box "Do not ask this question again", or by going
+in the Search pannel of the preferences pages, and unchecking "Confirmation for
+'Replace all'". The confirmation popup can be reenabled through this checkbox.
 
 @cindex MDI
 @cindex Multiple Document Interface
