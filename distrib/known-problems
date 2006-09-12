@@ -34,7 +34,7 @@ Known Problems fixed in GPS 4.0.1
               using the the "Find All" button in the search dialog.
   Workaround: Use the "References" contextual menu instead
 
-- F821-007 /Edit/Refill deletes 1 letter words at end of lines
+- F821-007 Edit->Refill deletes 1 letter words at end of lines
   Problem:    If you call this menu on a line that ends with a 1 letter word,
               that word is deleted during the refill
   Workaround: Either do the refill manually, or add two random letters at the
@@ -52,7 +52,7 @@ Known Problems fixed in GPS 4.0.1
   Workaround: Fix the error in default.gpr before starting GPS
 
 - F816-015 Crash on user input when running an executable
-  Problem:    If you run, through /Build/Run, an executable that expects to
+  Problem:    If you run, through Build->Run, an executable that expects to
               read input interactively, GPS crashed when you press Enter in
               the console.
   Workaround: Use an external terminal when running the process, which can
