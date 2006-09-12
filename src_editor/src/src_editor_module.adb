@@ -369,6 +369,10 @@ package body Src_Editor_Module is
    --  that we always use that one by default when looking for the last editor
    --  for a given file.
 
+   procedure Create_Files_Pixbufs_If_Needed
+     (Handle : access Kernel_Handle_Record'Class);
+   --  Create File_Pixbuf and File_Modified_Pixbuf if needed
+
    -----------------------
    -- On_Editor_Destroy --
    -----------------------
@@ -655,6 +659,24 @@ package body Src_Editor_Module is
          return False;
    end File_Edit_Callback;
 
+   ------------------------------------
+   -- Create_Files_Pixbufs_If_Needed --
+   ------------------------------------
+
+   procedure Create_Files_Pixbufs_If_Needed
+     (Handle : access Kernel_Handle_Record'Class) is
+   begin
+      if File_Pixbuf = Null_Pixbuf then
+         File_Pixbuf := Render_Icon
+           (Get_Main_Window (Handle), "gps-file", Icon_Size_Menu);
+      end if;
+
+      if File_Modified_Pixbuf = Null_Pixbuf then
+         File_Modified_Pixbuf := Render_Icon
+           (Get_Main_Window (Handle), "gps-file-modified", Icon_Size_Menu);
+      end if;
+   end Create_Files_Pixbufs_If_Needed;
+
    ------------------
    -- Load_Desktop --
    ------------------
@@ -678,15 +700,7 @@ package body Src_Editor_Module is
       Dummy  : Boolean;
       pragma Unreferenced (Dummy);
    begin
-      if File_Pixbuf = Null_Pixbuf then
-         File_Pixbuf := Render_Icon
-           (Get_Main_Window (User), "gps-file", Icon_Size_Menu);
-      end if;
-
-      if File_Modified_Pixbuf = Null_Pixbuf then
-         File_Modified_Pixbuf := Render_Icon
-           (Get_Main_Window (User), "gps-file-modified", Icon_Size_Menu);
-      end if;
+      Create_Files_Pixbufs_If_Needed (User);
 
       if Node.Tag.all = "Source_Editor" then
          File := Get_Field (Node, "File");
@@ -1128,6 +1142,8 @@ package body Src_Editor_Module is
       Child2  : MDI_Child;
 
    begin
+      Create_Files_Pixbufs_If_Needed (Kernel);
+
       if Active (Me) then
          Trace (Me, "Open file " & Full_Name (File).all
                 & " Focus=" & Focus'Img);
