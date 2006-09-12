@@ -82,7 +82,7 @@ class DocGenerator:
          here = end
       result.append (text[here:])
       return ''.join (result)
-                           
+
    def get_documentation (self, object):
       """Return the documentation for the object. This can easily be overriden if
          the documentation is dynamic for instance (a result of a method's call"""
@@ -318,7 +318,7 @@ class GPSDocGenerator (DocGenerator):
     """Class specifically setup to dynamically create the documentation for GPS's exported objects"""
 
     def __init__ (self, work_dir):
-        self.work_dir = work_dir 
+        self.work_dir = work_dir
         self.wrapper  = Help_Wrapper ()
 
     def get_documentation (self, object):
@@ -446,7 +446,7 @@ class Help_Wrapper:
          Help_Wrapper.current_class = ""
    set_current_class = staticmethod (set_current_class)
 
-   def getdoc_from_gps (self, object, as_html): 
+   def getdoc_from_gps (self, object, as_html):
       try:
 
          ## If we directly have a string, use it as the name to look up in the
@@ -532,7 +532,7 @@ pydoc.html          = XMLHtmlDoc()
 ## User accessible methods
 ####################################################################
 
-docgen = GPSDocGenerator (GPS.get_home_dir() + "/generated_doc")
+docgen = GPSDocGenerator (GPS.get_home_dir() + "generated_doc")
 
 def generate_doc (entity):
   """Generate the documentation for a python entity dynamically.
