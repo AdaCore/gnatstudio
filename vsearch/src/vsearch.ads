@@ -61,6 +61,9 @@ package Vsearch is
       Data   : Find_Utils.Search_Module_Data);
    --  See Find_Utils.Register_Search_Function;
 
+   procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class);
+   --  Register the preferences associated to the search functions
+
    function Search_Context_From_Module
      (Id : access GPS.Kernel.Abstract_Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data;
