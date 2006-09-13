@@ -993,13 +993,16 @@ package body Vsearch is
          Parent      => Gtk_Window (Get_Toplevel (Vsearch)));
 
       Do_Not_Ask : Gtk_Check_Button;
+      Box        : Gtk_Hbox;
 
       Response : Gtk_Response_Type;
 
    begin
       if Get_Pref (Ask_Confirmation_For_Replace_All) then
          Gtk_New (Do_Not_Ask, -"Do not ask this question again");
-         Pack_Start (Get_Vbox (Dialog), Do_Not_Ask);
+         Gtk_New_Hbox (Box);
+         Pack_Start (Get_Vbox (Dialog), Box, True, True, 3);
+         Pack_Start (Box, Do_Not_Ask, True, False, 3);
 
          Button := Add_Button
            (Dialog,
