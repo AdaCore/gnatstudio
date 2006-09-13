@@ -53,6 +53,7 @@ with GNAT.Regpat;
 with GPS.Kernel;
 with Glib.Object;
 with Gtk.Widget;
+with Histories;
 
 with Basic_Types; use Basic_Types;
 
@@ -305,12 +306,24 @@ package Find_Utils is
    -- Registering search modules --
    --------------------------------
 
+   No_Search_History_Key : Histories.History_Key (1 .. 16) := (others => ' ');
+
    type Search_Module_Data (Length : Natural) is record
       Mask              : Search_Options_Mask;
       Factory           : Module_Search_Context_Factory;
       Extra_Information : Gtk.Widget.Gtk_Widget;
       Id                : GPS.Kernel.Abstract_Module_ID;
       Label             : String (1 .. Length);
+
+      Last_Of_Module    : Histories.History_Key (1 .. 16) :=
+        No_Search_History_Key;
+      --  This is a boolean history key. When a given module has several search
+      --  functions, only one of them should have this preference set to true.
+      --  This is the last selected search function for this module, and this
+      --  is the one supposed to be automatically selected when opening the
+      --  search view in this context. When this is equals to
+      --  No_Search_History_Key no key is supposed to be assocated with the
+      --  data.
    end record;
    --  If Extra_Information is not null, then it will be displayed every time
    --  this label is selected. It can be used for instance to ask for more
@@ -347,7 +360,8 @@ package Find_Utils is
    --  callback function. Object is ignored, and can be anything.
 
    function Search_Context_From_Module
-     (Id : access GPS.Kernel.Abstract_Module_ID_Record'Class)
+     (Id     : access GPS.Kernel.Abstract_Module_ID_Record'Class;
+      Handle : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Find_Utils.Search_Module_Data;
    --  Return the first search context that matches Id, or No_Search if there
    --  is none.
@@ -366,7 +380,8 @@ private
       Mask              => 0,
       Factory           => null,
       Id                => null,
-      Extra_Information => null);
+      Extra_Information => null,
+      Last_Of_Module    => No_Search_History_Key);
 
    type Root_Search_Context is tagged limited record
       Options        : Search_Options;
