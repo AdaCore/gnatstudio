@@ -64,7 +64,7 @@ class DocGenerator:
       pattern = re.compile (module_name + r'\.(\w+)(\.(\w+))?')
       here = 0
       result = []
-      linked_module = "<a href='" + self.filename_for_module (module_name) + "'>" + module_name + "</a>."
+      linked_module = "<a href='file://" + self.filename_for_module (module_name) + "'>" + module_name + "</a>."
 
       while True:
          match = pattern.search (text, here)
@@ -74,10 +74,10 @@ class DocGenerator:
 
          name1, foo, name2 = match.groups()
          if foo:
-            result.append (linked_module + "<a href='" + self.filename_for_class (name1) + "'>" + name1 \
-              + "</a>.<a href='" + self.filename_for_class (name1) + "#" + self.anchor_name (name2) + "'>" + name2 + "</a>")
+            result.append (linked_module + "<a href='file://" + self.filename_for_class (name1) + "'>" + name1 \
+              + "</a>.<a href='file://" + self.filename_for_class (name1) + "#" + self.anchor_name (name2) + "'>" + name2 + "</a>")
          else:
-            result.append (linked_module + "<a href='" + self.filename_for_class (name1) + "'>" + name1 + "</a>")
+            result.append (linked_module + "<a href='file://" + self.filename_for_class (name1) + "'>" + name1 + "</a>")
 
          here = end
       result.append (text[here:])
