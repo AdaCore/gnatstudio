@@ -49,7 +49,7 @@ package body Doc_Utils is
    is
       Buffer             : Unchecked_String_Access :=
                              Declaration_File_Contents'Unrestricted_Access;
-      Buffer_Len         : aliased Natural := Buffer'Length;
+      Buffer_Len         : aliased Natural := Declaration_File_Contents'Length;
       Read               : aliased Natural;
       Chars_Buffer       : chars_ptr;
 
