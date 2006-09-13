@@ -73,7 +73,7 @@ package body Code_Analysis_Module is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-   pragma Unreferenced (Command);
+      pragma Unreferenced (Command);
       Property      : Code_Analysis_Class_Record;
       Instance      : Class_Instance;
       VFS_Src_File  : VFS.Virtual_File;
@@ -141,7 +141,7 @@ package body Code_Analysis_Module is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-   pragma Unreferenced (Command);
+      pragma Unreferenced (Command);
       Property     : Code_Analysis_Class_Record;
       Instance     : Class_Instance;
       Project_Node : Project_Access;
@@ -268,7 +268,7 @@ package body Code_Analysis_Module is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-   pragma Unreferenced (Command);
+      pragma Unreferenced (Command);
       Instance : Class_Instance;
       Property : Code_Analysis_Class_Record;
    begin
@@ -573,14 +573,14 @@ package body Code_Analysis_Module is
    begin
 
       Get_Path_At_Pos
-           (View.Tree,
-            Gint (X),
-            Gint (Y),
-            Path,
-            Column,
-            Buffer_X,
-            Buffer_Y,
-            Row_Found);
+        (View.Tree,
+         Gint (X),
+         Gint (Y),
+         Path,
+         Column,
+         Buffer_X,
+         Buffer_Y,
+         Row_Found);
 
       if Path = null then
          return;
@@ -629,7 +629,7 @@ package body Code_Analysis_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Code_Analysis_Class : constant Class_Type :=
-                              New_Class (Kernel, Code_Analysis_Cst_Str);
+        New_Class (Kernel, Code_Analysis_Cst_Str);
    begin
       Code_Analysis_Module_ID := new Code_Analysis_Module_ID_Record;
       Code_Analysis_Module_ID.Kernel := Kernel_Handle (Kernel);
