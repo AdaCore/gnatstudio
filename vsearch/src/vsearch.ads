@@ -65,9 +65,17 @@ package Vsearch is
    --  Register the preferences associated to the search functions
 
    function Search_Context_From_Module
-     (Id : access GPS.Kernel.Abstract_Module_ID_Record'Class)
+     (Id     : access GPS.Kernel.Abstract_Module_ID_Record'Class;
+      Handle : access Kernel_Handle_Record'Class)
       return Find_Utils.Search_Module_Data;
    --  See Find_Utils.Context_From_Module;
+
+   procedure Set_Last_Of_Module
+     (Handle      : access Kernel_Handle_Record'Class;
+      Search_Data : Find_Utils.Search_Module_Data);
+   --  The Search_Data given in parameter is set as beign the last one selected
+   --  by the user, and will be the next one shown for the corresponding
+   --  module.
 
    ---------------------
    -- Search Patterns --
