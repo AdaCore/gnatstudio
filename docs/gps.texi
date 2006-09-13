@@ -4613,7 +4613,7 @@ occur.
 @cindex search context
 GPS will automatically select the most appropriate context when you
 open the search dialog, depending on which component currently has the
-focus. If serveal contexts are possible for one component (for example, the
+focus. If several contexts are possible for one component (for example, the
 editor has "Current_File", "Files from Project", "Files..." and "Open Files"), 
 then the last one you've been using will be selected. You can of course change 
 the context to another one if needed.
