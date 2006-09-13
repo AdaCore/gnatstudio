@@ -1737,8 +1737,7 @@ package body Shell_Script is
          Data.Return_Value := new String (1 .. Tmp'Length + 1 + Value'Length);
          Data.Return_Value (1 .. Tmp'Length) := Tmp.all;
          Data.Return_Value (Tmp'Length + 1) := ASCII.LF;
-         Data.Return_Value (Tmp'Length + 2 .. Tmp'Length + 1 + Value'Length)
-           := Value;
+         Data.Return_Value (Tmp'Length + 2 .. Data.Return_Value'Last) := Value;
          Free (Tmp);
 
       else
