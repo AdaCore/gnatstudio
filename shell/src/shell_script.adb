@@ -1734,15 +1734,12 @@ package body Shell_Script is
       if Data.Return_As_List and then Data.Return_Value /= null then
          Tmp := Data.Return_Value;
 
-         declare
-            S : String (1 .. Tmp'Length + 1 + Value'Length);
-         begin
-            S (1 .. Tmp'Length) := Tmp.all;
-            S (Tmp'Length + 1) := ASCII.LF;
-            S (Tmp'Length + 2 .. Tmp'Length + 1 + Value'Length) := Value;
-            Free (Tmp);
-            Data.Return_Value := new String'(S);
-         end;
+         Data.Return_Value := new String (1 .. Tmp'Length + 1 + Value'Length);
+         Data.Return_Value (1 .. Tmp'Length) := Tmp.all;
+         Data.Return_Value (Tmp'Length + 1) := ASCII.LF;
+         Data.Return_Value (Tmp'Length + 2 .. Tmp'Length + 1 + Value'Length)
+           := Value;
+         Free (Tmp);
 
       else
          Free (Data.Return_Value);
