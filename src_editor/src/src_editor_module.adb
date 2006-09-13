@@ -3015,6 +3015,14 @@ package body Src_Editor_Module is
          Name3 : constant String := -"Files...";
          Name4 : constant String := -"Open Files";
 
+         Search_Context_Current_File       : constant History_Key :=
+           "src_ctxt_sch_1  ";
+         Search_Context_Files_From_Project : constant History_Key :=
+           "src_ctxt_sch_2  ";
+         Search_Context_Files              : constant History_Key :=
+           "src_ctxt_sch_3  ";
+         Search_Context_Open_Files         : constant History_Key :=
+           "src_ctxt_sch_4  ";
       begin
          Register_Search_Function
            (Kernel => Kernel,
@@ -3024,7 +3032,8 @@ package body Src_Editor_Module is
                Factory           => Current_File_Factory'Access,
                Extra_Information => Gtk_Widget (Selector),
                Id                => Abstract_Module_ID (Src_Editor_Module_Id),
-               Mask              => All_Options));
+               Mask              => All_Options,
+               Last_Of_Module    => Search_Context_Current_File));
          Register_Search_Function
            (Kernel => Kernel,
             Data   =>
@@ -3032,8 +3041,9 @@ package body Src_Editor_Module is
                Label             => Name2,
                Factory           => Files_From_Project_Factory'Access,
                Extra_Information => Gtk_Widget (Selector),
-               Id                => null,
-               Mask              => All_Options and not Search_Backward));
+               Id                => Abstract_Module_ID (Src_Editor_Module_Id),
+               Mask              => All_Options and not Search_Backward,
+               Last_Of_Module    => Search_Context_Files_From_Project));
          Register_Search_Function
            (Kernel => Kernel,
             Data   =>
@@ -3041,8 +3051,9 @@ package body Src_Editor_Module is
                Label             => Name3,
                Factory           => Files_Factory'Access,
                Extra_Information => Gtk_Widget (Extra),
-               Id                => null,
-               Mask              => All_Options and not Search_Backward));
+               Id                => Abstract_Module_ID (Src_Editor_Module_Id),
+               Mask              => All_Options and not Search_Backward,
+               Last_Of_Module    => Search_Context_Files));
          Register_Search_Function
            (Kernel => Kernel,
             Data   =>
@@ -3050,8 +3061,20 @@ package body Src_Editor_Module is
                Label             => Name4,
                Factory           => Open_Files_Factory'Access,
                Extra_Information => Gtk_Widget (Selector),
-               Id                => null,
-               Mask              => All_Options and not Search_Backward));
+               Id                => Abstract_Module_ID (Src_Editor_Module_Id),
+               Mask              => All_Options and not Search_Backward,
+               Last_Of_Module    => Search_Context_Open_Files));
+
+         Create_New_Boolean_Key_If_Necessary
+           (Get_History (Kernel).all, Search_Context_Current_File, True);
+         Create_New_Boolean_Key_If_Necessary
+           (Get_History (Kernel).all,
+            Search_Context_Files_From_Project,
+            False);
+         Create_New_Boolean_Key_If_Necessary
+           (Get_History (Kernel).all, Search_Context_Files, False);
+         Create_New_Boolean_Key_If_Necessary
+           (Get_History (Kernel).all, Search_Context_Open_Files, False);
       end;
 
       --  Register the aliases special entities
