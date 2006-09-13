@@ -1733,8 +1733,17 @@ package body Shell_Script is
    begin
       if Data.Return_As_List and then Data.Return_Value /= null then
          Tmp := Data.Return_Value;
-         Data.Return_Value := new String'(Tmp.all & ASCII.LF & Value);
-         Free (Tmp);
+
+         declare
+            S : String (1 .. Tmp'Length + 1 + Value'Length);
+         begin
+            S (1 .. Tmp'Length) := Tmp.all;
+            S (Tmp'Length + 1) := ASCII.LF;
+            S (Tmp'Length + 2 .. Tmp'Length + 1 + Value'Length) := Value;
+            Free (Tmp);
+            Data.Return_Value := new String'(S);
+         end;
+
       else
          Free (Data.Return_Value);
          Data.Return_Value := new String'(Value);
