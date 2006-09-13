@@ -56,7 +56,8 @@ package body Find_Utils is
       renames Vsearch.Register_Search_Function;
 
    function Search_Context_From_Module
-     (Id : access GPS.Kernel.Abstract_Module_ID_Record'Class)
+     (Id     : access GPS.Kernel.Abstract_Module_ID_Record'Class;
+      Handle : access Kernel_Handle_Record'Class)
       return Find_Utils.Search_Module_Data
       renames Vsearch.Search_Context_From_Module;
 
