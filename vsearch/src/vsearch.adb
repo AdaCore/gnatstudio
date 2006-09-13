@@ -78,7 +78,6 @@ package body Vsearch is
 
    Pattern_Hist_Key   : constant History_Key := "search_patterns";
    Replace_Hist_Key   : constant History_Key := "search_replace";
-   Auto_Hide_Hist_Key : constant History_Key := "search_autohide";
    Window_X_Hist_Key  : constant History_Key := "search_window_x";
    Window_Y_Hist_Key  : constant History_Key := "search_window_y";
    Options_Collapsed_Hist_Key  : constant History_Key := "options_collapsed";
@@ -825,8 +824,7 @@ package body Vsearch is
       if not Replace
         and then Realized_Is_Set (Vsearch)
         and then Get_Child_Visible (Vsearch.Auto_Hide_Check)
-        and then Get_History
-          (Get_History (Vsearch.Kernel).all, Auto_Hide_Hist_Key)
+        and then Get_Pref (Close_On_Match)
       then
          Close_Vsearch (Vsearch);
       end if;
@@ -2351,7 +2349,7 @@ package body Vsearch is
           (Gnew_Boolean
              (Name  => "Close-On-Match",
               Nick  => -"Close on Match",
-              Blurb => Select_On_Match_Description,
+              Blurb => Close_On_Match_Description,
               Default => False));
       Register_Property
         (Kernel, Param_Spec (Close_On_Match), -"Search");
@@ -2361,7 +2359,7 @@ package body Vsearch is
           (Gnew_Boolean
              (Name  => "Select-On-Match",
               Nick  => -"Select on Match",
-              Blurb => Close_On_Match_Description,
+              Blurb => Select_On_Match_Description,
               Default => False));
       Register_Property
         (Kernel, Param_Spec (Select_On_Match), -"Search");
