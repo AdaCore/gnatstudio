@@ -1150,6 +1150,7 @@ package body Vsearch is
 
    begin
       if Data /= No_Search then
+         Set_Last_Of_Module (Vsearch.Kernel, Data);
          Replace := (Data.Mask and Supports_Replace) /= 0;
          Set_Sensitive (Vsearch.Replace_Label, Replace);
          Set_Sensitive (Vsearch.Replace_Combo, Replace);
@@ -1472,6 +1473,7 @@ package body Vsearch is
    is
       Vsearch : constant Vsearch_Access := Vsearch_Module_Id.Search;
       Num     : Positive := 1;
+      Last_Id : GPS.Kernel.Abstract_Module_ID;
    begin
       loop
          declare
@@ -1482,11 +1484,15 @@ package body Vsearch is
 
             Add_Unique_Combo_Entry
               (Vsearch.Context_Combo, Data.Label);
-            Set_Text (Get_Entry (Vsearch.Context_Combo), Data.Label);
 
+            Last_Id := Data.Id;
             Num := Num + 1;
          end;
       end loop;
+
+      Set_Text
+        (Get_Entry (Vsearch.Context_Combo),
+         Search_Context_From_Module (Last_Id, Kernel).Label);
    end Search_Functions_Changed;
 
    -------------
@@ -1978,7 +1984,7 @@ package body Vsearch is
       if Module /= null then
          declare
             Search : constant Search_Module_Data :=
-              Search_Context_From_Module (Module);
+              Search_Context_From_Module (Module, Vsearch.Kernel);
          begin
             if Search /= No_Search then
                Set_Text (Get_Entry (Vsearch.Context_Combo), Search.Label);
@@ -2101,21 +2107,62 @@ package body Vsearch is
    --------------------------------
 
    function Search_Context_From_Module
-     (Id : access Abstract_Module_ID_Record'Class)
+     (Id     : access Abstract_Module_ID_Record'Class;
+      Handle : access Kernel_Handle_Record'Class)
       return Find_Utils.Search_Module_Data
    is
       List : List_Node := First (Vsearch_Module_Id.Search_Modules);
+
+      Last_Matching_Node : List_Node := Null_Node;
    begin
       while List /= Null_Node loop
          if Data (List).Id = Abstract_Module_ID (Id) then
-            return Data (List);
+            Last_Matching_Node := List;
+
+            if Data (List).Last_Of_Module /= No_Search_History_Key
+              and then Get_History
+                (Get_History (Handle).all, Data (List).Last_Of_Module)
+            then
+               return Data (List);
+            end if;
          end if;
 
          List := Next (List);
       end loop;
 
+      if Last_Matching_Node /= Null_Node then
+         return Data (Last_Matching_Node);
+      end if;
+
       return No_Search;
    end Search_Context_From_Module;
+
+   ------------------------
+   -- Set_Last_Of_Module --
+   ------------------------
+
+   procedure Set_Last_Of_Module
+     (Handle      : access Kernel_Handle_Record'Class;
+      Search_Data : Find_Utils.Search_Module_Data)
+   is
+      List : List_Node := First (Vsearch_Module_Id.Search_Modules);
+   begin
+      while List /= Null_Node loop
+         if Data (List).Id = Search_Data.Id then
+            if Data (List).Last_Of_Module /= No_Search_History_Key then
+               Set_History
+                 (Get_History (Handle).all, Data (List).Last_Of_Module, False);
+            end if;
+         end if;
+
+         List := Next (List);
+      end loop;
+
+      if Search_Data.Last_Of_Module /= No_Search_History_Key then
+         Set_History
+           (Get_History (Handle).all, Search_Data.Last_Of_Module, True);
+      end if;
+   end Set_Last_Of_Module;
 
    -----------------------------
    -- Register_Default_Search --
