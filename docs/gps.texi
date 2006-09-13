@@ -9028,6 +9028,26 @@ such as the PrintFile freeware utility available from
 
 @end table
 
+@item @b{Search}
+@cindex search
+@table @b 
+
+@item Confirmation for "Replace all"
+@cindex replace
+Enable or disable the confirmation popup for the replace all action.
+
+@item Close on Match
+@cindex search
+If this option is enabled, the search window will be closed when a match is 
+found.
+
+@item Select on Match
+@cindex search
+If this option is enabled, the focus will be given to the editor when a match
+is found.
+
+@end table
+
 @item @b{Browsers}
 @cindex browsers
 @table @i
