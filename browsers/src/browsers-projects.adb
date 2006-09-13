@@ -816,7 +816,8 @@ package body Browsers.Projects is
                     Extra_Information => null,
                     Id      => Abstract_Module_ID (Project_Browser_Module_ID),
                     Mask              => All_Options and not Supports_Replace
-                      and not Search_Backward and not All_Occurrences));
+                      and not Search_Backward and not All_Occurrences,
+                    Last_Of_Module => No_Search_History_Key));
    end Register_Module;
 
 end Browsers.Projects;

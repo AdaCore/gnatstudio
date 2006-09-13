@@ -2958,7 +2958,8 @@ package body Project_Explorers is
                      Extra_Information => Gtk_Widget (Extra),
                      Id             => Abstract_Module_ID (Explorer_Module_ID),
                      Mask              => All_Options and not Supports_Replace
-                       and not Search_Backward and not All_Occurrences));
+                       and not Search_Backward and not All_Occurrences,
+                     Last_Of_Module => No_Search_History_Key));
       end;
    end Register_Module;
 
