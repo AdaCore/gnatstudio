@@ -14,6 +14,13 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+F907-001 Remember the last search context for file searching (2006-09-13)
+
+  Doing a search from an editor opens the search view with the 'Look in field'
+  set to the last editor-related used context ("Current_File", 
+  "Files from project", "Files..." or "Open Files"), not only to "Current_File"
+  as it used to do.
+
 F822-013 Disable the "replace all" confirmation with a preference (2006-09-12)
 
   A new preference has been added, in the search pannel of the GPS preferences,
