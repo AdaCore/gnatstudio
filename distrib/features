@@ -14,7 +14,7 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
-F907-001 Remember the last search context for file searching (2006-09-13)
+F907-003 Remember the last search context for file searching (2006-09-13)
 
   Doing a search from an editor opens the search view with the 'Look in field'
   set to the last editor-related used context ("Current_File", 
