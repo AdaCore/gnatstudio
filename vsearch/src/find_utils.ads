@@ -306,7 +306,8 @@ package Find_Utils is
    -- Registering search modules --
    --------------------------------
 
-   No_Search_History_Key : Histories.History_Key (1 .. 16) := (others => ' ');
+   No_Search_History_Key : constant Histories.History_Key (1 .. 16) :=
+     (others => ' ');
 
    type Search_Module_Data (Length : Natural) is record
       Mask              : Search_Options_Mask;
