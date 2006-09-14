@@ -1359,18 +1359,26 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+      Context : Selection_Context;
+      Dir     : VFS.Virtual_File := VFS.No_File;
    begin
+      Context := Get_Current_Context (Kernel);
+
+      if Has_Directory_Information (Context) then
+         Dir := Create (Directory_Information (Context));
+      end if;
+
       declare
          Filename : constant Virtual_File :=
            Select_File
              (Title             => -"Open File",
+              Base_Directory    => Dir,
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
               File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
               Pattern_Name      => -"All files;Ada files;C/C++ files",
               History           => Get_History (Kernel));
-
       begin
          if Filename /= VFS.No_File then
             Open_File_Editor (Kernel, Filename);
