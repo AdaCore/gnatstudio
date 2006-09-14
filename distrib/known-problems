@@ -15,6 +15,12 @@ Known Problems fixed in GPS 4.0.1
   Workaround: The files are correctly generated and can be manually opened in
               Firefox.
 
+- F908-007 Automatic completion wrong in consoles
+  Problem:    In interactive consoles (such as the GPS Shell console or the
+              Python console), the Tab completion sometimes completes with
+              a prefix longer than the longer common prefix.
+  Workaround: Type the complete command manually.
+
 - F906-010 Cannot set max line length for pretty printing beyond 100
   Problem:    The handling of -M pretty printer switch does not allow
               a value above 100 while gnatpp accepts up to 256.
