@@ -63,17 +63,18 @@ package Language.Tree is
    Null_Construct_Tree_Iterator : constant Construct_Tree_Iterator;
 
    function First (Tree : Construct_Tree) return Construct_Tree_Iterator;
-   --  Return the first element of a construct tree, typically the firt item
+   --  Return the first element of a construct tree, typically the first item
    --  of the source
 
    function Get_Parent_Scope
-     (Tree : Construct_Tree; Iter : Construct_Tree_Iterator)
+     (Tree : Construct_Tree;
+      Iter : Construct_Tree_Iterator)
       return Construct_Tree_Iterator;
    --  Return the parent scope of the given iterator, Null_Construct_Tree if
    --  none.
 
-   function Get_Construct (Iter : Construct_Tree_Iterator)
-      return Construct_Access;
+   function Get_Construct
+     (Iter : Construct_Tree_Iterator) return Construct_Access;
    --  Return the construct pointed by the iterator given in parameter.
 
    type Category_Array is array (Natural range <>) of Language_Category;
@@ -84,14 +85,14 @@ package Language.Tree is
    function Get_Iterator_At
      (Tree              : Construct_Tree;
       Line, Line_Offset : Natural;
-      From_Type         : Position_Type := Start_Construct;
+      From_Type         : Position_Type     := Start_Construct;
       Position          : Relative_Position := Specified;
-      Categories_Seeked : Category_Array := Null_Category_Array)
+      Categories_Seeked : Category_Array    := Null_Category_Array)
       return Construct_Tree_Iterator;
    --  Return the closest iterator before the given position. It's possible to
    --  look for the closest match just before or after the given position, and
    --  to reduce the scope of search to certain categories. If
-   --  Categories_Seeked is null, then any category will be retreived.
+   --  Categories_Seeked is null, then any category will be retrieved.
    --  From_Type determines if the search has to be done on the start of the
    --  construct or on the start of its name. This value is not used if
    --  position is 'Enclosing'.
@@ -116,50 +117,51 @@ package Language.Tree is
       Iter         : Construct_Tree_Iterator;
       Scope_Policy : Scope_Navigation := Jump_Into)
       return Construct_Tree_Iterator;
-   --  Return the previous element of the tree. If Scope_Policy is Jump_Over,
-   --  then the prev function will not enter in any nested block, and will
-   --  jump directly to the previous element in the current scope.
-   --  If there is no previous element, then this function will return
+   --  Return the previous element of the tree.
+   --  If Scope_Policy is Jump_Over, Prev will not enter in any nested block
+   --  and will jump directly to the previous element in the current scope.
+   --  If there is no previous element,  this function will return
    --  Null_Construct_Iterator.
 
    function Has_Children (Iter : Construct_Tree_Iterator) return Boolean;
    --  Return true if the constrcut pointed by the iterator has any child
 
    function Get_Last_Child
-     (Tree : Construct_Tree; Iter : Construct_Tree_Iterator)
-      return Construct_Tree_Iterator;
+     (Tree : Construct_Tree;
+      Iter : Construct_Tree_Iterator) return Construct_Tree_Iterator;
    --  Return the last child of the construct. If none, return the construct
    --  itself.
 
    function Is_Same_Entity
-     (Tree : Construct_Tree; Iter1, Iter2 : Construct_Tree_Iterator)
-      return Boolean;
-   --  Return true if the two entity are the same, or two parts of the same
-   --  entity (e.g. body / spec, private / public part...).
+     (Tree         : Construct_Tree;
+      Iter1, Iter2 : Construct_Tree_Iterator) return Boolean;
+   --  Return true if the two entities are either the same or two parts of the
+   --  same entity (e.g. body / spec, private / public part...).
 
    function Encloses
-     (Tree : Construct_Tree; Scope, Iter : Construct_Tree_Iterator)
-      return Boolean;
-   --  Return true if the construct pointed by Iter1 is enclosed by the
+     (Tree        : Construct_Tree;
+      Scope, Iter : Construct_Tree_Iterator) return Boolean;
+   --  Return true if the construct pointed by Iter is enclosed by the
    --  construct enclosed by Scope.
    --  This returns always false if Scope is not actually pointing on a scope
    --  If Scope is a different part of the same scope, e.g. is Iter is on a
    --  body of a package and Scope is its spec, the function will still return
    --  true.
 
-   function Get_Spec (Tree : Construct_Tree; Iter : Construct_Tree_Iterator)
-     return Construct_Tree_Iterator;
+   function Get_Spec
+     (Tree : Construct_Tree;
+      Iter : Construct_Tree_Iterator) return Construct_Tree_Iterator;
    --  Return the specification of the given iterator if any, or the iterator
-   --  given in
+   --  itself otherwise.
 
    function Get_First_Body
-     (Tree : Construct_Tree; Iter : Construct_Tree_Iterator)
-      return Construct_Tree_Iterator;
+     (Tree : Construct_Tree;
+      Iter : Construct_Tree_Iterator) return Construct_Tree_Iterator;
    --  Return the first body found in the tree
 
    function Get_Second_Body
-     (Tree : Construct_Tree; Iter : Construct_Tree_Iterator)
-      return Construct_Tree_Iterator;
+     (Tree : Construct_Tree;
+      Iter : Construct_Tree_Iterator) return Construct_Tree_Iterator;
    --  Return the second body found in the tree
 
    function Encloses
@@ -190,21 +192,21 @@ package Language.Tree is
    function Length (Id : Composite_Identifier) return Natural;
    --  Return the number of items composing this identifier
 
-   function Get_Item (Id : Composite_Identifier; Number : Natural)
-     return String;
-   --  Return a given item from the identifier.
+   function Get_Item
+     (Id : Composite_Identifier; Number : Natural) return String;
+   --  Return an item given its identifier
 
    function Prepend
      (Id         : Composite_Identifier;
       Word_Begin : Natural;
       Word_End   : Natural)
-     return Composite_Identifier;
+      return Composite_Identifier;
    --  Return a composite identifier based on the same string, but with the
-   --  index of a new element before. This function is used to construct an
-   --  indentifier, and should not be called after.
+   --  index of a new element before. This function is used to build an
+   --  indentifier and should not be called afterwards.
 
-   function To_Composite_Identifier (Identifier : String)
-     return Composite_Identifier;
+   function To_Composite_Identifier
+     (Identifier : String) return Composite_Identifier;
    --  Convert the given identifier to a composite identifier. This function
    --  will not necesseraly parse the whole string, but will stop as soon as
    --  the thing given is not an identifier.
@@ -212,13 +214,14 @@ package Language.Tree is
    function To_String (Identifier : Composite_Identifier) return String;
    --  Return a string corresponding to the identifier given in parameter. This
    --  does not return blindly the string upon wich the identifier has been
-   --  created, but remove all the irrelevant caracters (typically, blanks
+   --  created but removes all the irrelevant caracters (typically, blanks
    --  charaters)
 
    function Get_Slice
-     (Identifier : Composite_Identifier; From : Natural; To : Natural)
+     (Identifier : Composite_Identifier;
+      From, To   : Natural)
       return Composite_Identifier;
-   --  Return an identifier base on the slice of items specified in
+   --  Return an identifier bases on the slice of items specified in
    --  parameterers.
 
    type Construct_Tree_Iterator_Array is array (Natural range <>) of
@@ -271,8 +274,8 @@ private
 
       First_Body_Index       : Natural := 0;
       --  If the entity is a subprogram, this stores the position of its body.
-      --  If it's a type, it stores the position of the declaration in the
-      --  public part if there are two.
+      --  If it's a type, it stores the position of the declaration (the public
+      --  declaration in case there is a full one in the private one as well).
 
       Second_Body_Index      : Natural := 0;
       --  Only used in the construct is a type. Stores the position of the
@@ -309,13 +312,14 @@ private
       end record;
 
    function Get_Last_Relevant_Construct
-     (Tree : Construct_Tree; Offset : Natural)
+     (Tree   : Construct_Tree;
+      Offset : Natural)
       return Construct_Tree_Iterator;
-   --  Return the last construct represtenting the scope where the offset is.
+   --  Return the last construct representing the scope where the offset is.
    --  It can be either the last entity declared in the scope, or the scope
    --  itself.
    --
-   --  example:
+   --  Example:
    --
    --  package A is
    --
