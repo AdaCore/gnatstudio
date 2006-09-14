@@ -203,8 +203,9 @@ package body String_List_Utils is
             begin
                Length := Natural'Min (Length, Data_S'Length);
                while Length > 0
-                 and then First_S (First_S'First + Length - 1) /=
-                 Data_S (Data_S'First + Length - 1)
+                 and then First_S
+                   (First_S'First .. First_S'First + Length - 1) /=
+                   Data_S (Data_S'First .. Data_S'First + Length - 1)
                loop
                   Length := Length - 1;
                end loop;
