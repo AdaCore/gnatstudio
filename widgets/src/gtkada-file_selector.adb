@@ -551,7 +551,7 @@ package body Gtkada.File_Selector is
             Title, History => History, Remote_Browsing => Remote_Browsing);
       else
          Gtk_New
-           (File_Selector, Get_Root (Initial_Dir), Initial_Dir,
+           (File_Selector, Get_Root (Base_Directory), Base_Directory,
             Title, History => History, Remote_Browsing => Remote_Browsing);
       end if;
 
