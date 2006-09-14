@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.0.1
 
+- F912-009 Crash after a compilation with long output.
+  Problem:    When a build yields a lot of errors (thousands of lines), GPS
+              might crash when parsing the output.
+  Workaround: Use the command line to reduce the number of errors, or disable
+              the "Automatic code fixing" in GPS by adding a line
+              "MODULE.CODEFIX=no" in the file traces.cfg which is located in
+              the .gps directory.
+
 - F911-020 Firefox does not handle the links of the generated python doc
   Problem:    On windows, the generated documentation will contain links of the
               form "file://C:\home\.gps\/generated_doc/a_file.html". This kind
