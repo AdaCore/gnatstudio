@@ -126,6 +126,7 @@ package body Project_Properties is
             | Attribute_As_Directory   =>
             Default           : GNAT.OS_Lib.String_Access;
             Filter            : File_Filter := Filter_None;
+            Allow_Empty       : Boolean := True;
          when Attribute_As_Static_List =>
             Static_Allows_Any_String : Boolean := False;
             Static_List       : GNAT.OS_Lib.String_List_Access;
@@ -187,6 +188,9 @@ package body Project_Properties is
       end case;
    end record;
 
+   function Attribute_Name (Attr : Attribute_Description) return String;
+   --  Return a string suitable for display that describes the attribute
+
    procedure Free (Attribute : in out Attribute_Description);
    --  Free the memory occupied by Attribute
 
@@ -225,6 +229,10 @@ package body Project_Properties is
    procedure Free (Page : in out Attribute_Page);
    --  Free the memory occupied by Page
 
+   function Is_Valid (Page : Attribute_Page) return String;
+   --  Whether all editors on the page have a valid value for their attribute.
+   --  See the description of Is_Valid for an Attribute_Description
+
    type Attribute_Page_Array is array (Natural range <>) of Attribute_Page;
    type Attribute_Page_List is access Attribute_Page_Array;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -255,6 +263,7 @@ package body Project_Properties is
    function Create_Content
      (Page : access XML_Project_Wizard_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
+   function Is_Complete (Page : access XML_Project_Wizard_Page) return String;
    --  See inherited doc
 
    -----------------------
@@ -287,6 +296,12 @@ package body Project_Properties is
       Attribute : Attribute_Description_Access;
       --  Description of the attribute
 
+      Wiz       : Wizard := null;
+      --  Wiz is the wizard in which the page is displayed. It should be null
+      --  if we are not in a wizard, but in the project properties editor. It
+      --  is used when validating fields, to display appropriate error
+      --  messages.
+
       Active_Check : Gtk_Check_Button;
       --  Set if the editor is not always activated, and this indicates the
       --  state of the editor in this case.
@@ -294,6 +309,7 @@ package body Project_Properties is
 
    procedure Create_Widget_Attribute
      (Kernel      : access Kernel_Handle_Record'Class;
+      Wiz         : Wizard;
       Project     : Project_Type;
       Attr        : Attribute_Description_Access;
       Size_Group  : in out Gtk_Size_Group;
@@ -309,9 +325,12 @@ package body Project_Properties is
    --  keep its current size.
    --  Path_Widget should contain the full directory to the project file's
    --  location, and is used to resolve relative names.
+   --  See the description of Attribute_Editor_Record.Wiz for info on the Wiz
+   --  parameter.
 
    function Create_Widget_Attribute
      (Kernel          : access Kernel_Handle_Record'Class;
+      Wiz             : Wizard;
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String;
@@ -321,6 +340,8 @@ package body Project_Properties is
    --  attribute type, associated with Description (since for all indexes in
    --  the attribute the type can be different).
    --  See above for the description of Path_Widget
+   --  See the description of Attribute_Editor_Record.Wiz for info on the Wiz
+   --  parameter.
 
    function Create_Attribute_Dialog
      (Kernel          : access Kernel_Handle_Record'Class;
@@ -349,6 +370,7 @@ package body Project_Properties is
 
    function Create_File_Attribute_Editor
      (Kernel          : access Kernel_Handle_Record'Class;
+      Wiz             : Wizard;
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String;
@@ -359,6 +381,8 @@ package body Project_Properties is
    --  Is_List should be true if the attribute is a list of simple strings
    --  Path_Widget is the widget that contains the full path to the project
    --  file's location, and is used to resolve relative names.
+   --  See the description of Attribute_Editor_Record.Wiz for info on the Wiz
+   --  parameter.
 
    function Get_Value_As_List
      (Editor          : access File_Attribute_Editor_Record;
@@ -371,6 +395,8 @@ package body Project_Properties is
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
       Project_Changed    : in out Boolean);
+   function Is_Valid
+     (Editor : access File_Attribute_Editor_Record) return String;
    --  See doc from inherited subprogram
 
    procedure Select_File (Editor : access Gtk_Widget_Record'Class);
@@ -517,7 +543,9 @@ package body Project_Properties is
    record
       Name               : Gtk.GEntry.Gtk_Entry;
       Path               : Gtk.GEntry.Gtk_Entry;
+      Note               : Gtk_Notebook;
       Use_Relative_Paths : Gtk.Check_Button.Gtk_Check_Button;
+      Errors             : Gtk_Label;
 
       Selector           : Scenario_Selector;
       Prj_Selector : Project_Selector;
@@ -544,6 +572,10 @@ package body Project_Properties is
       Kernel  : access Kernel_Handle_Record'Class);
    --  Internal initialization function
 
+   function Is_Complete (Editor : Properties_Editor) return Boolean;
+   --  Return True if the current page contains only valid fields. If not, an
+   --  error message is displayed to the user.
+
    procedure Editor_Destroyed
      (Editor : access Gtk_Widget_Record'Class;
       Attr   : Attribute_Description_Access);
@@ -567,7 +599,11 @@ package body Project_Properties is
 
    procedure Switch_Page
      (Notebook : access GObject_Record'Class; Editor : GObject);
-   --  Called when a new page is selected in the notebook
+   procedure Switch_Page_Validate
+     (Notebook : access GObject_Record'Class; Editor : GObject);
+   --  Called when a new page is selected in the notebook.
+   --  The second procedure is called before the actual switch, to validate the
+   --  contents of the current page
 
    function Paths_Are_Relative (Project : Project_Type) return Boolean;
    --  Return True if the paths in the project should be relative paths
@@ -711,6 +747,19 @@ package body Project_Properties is
    procedure Create_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handle shell commands
+
+   --------------------
+   -- Attribute_Name --
+   --------------------
+
+   function Attribute_Name (Attr : Attribute_Description) return String is
+   begin
+      if Attr.Pkg.all /= "" then
+         return Attr.Pkg.all & "'" & Attr.Name.all;
+      else
+         return Attr.Name.all;
+      end if;
+   end Attribute_Name;
 
    -------------
    -- Destroy --
@@ -1044,6 +1093,75 @@ package body Project_Properties is
          Free (Old_Values);
       end;
    end Update_Attribute_Value;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (Page : Attribute_Page) return String is
+   begin
+      if Page.Sections /= null then
+         for Section in Page.Sections'Range loop
+            if Page.Sections (Section).Attributes /= null then
+               for Attr in Page.Sections (Section).Attributes'Range loop
+                  if Page.Sections (Section).Attributes (Attr).Editor /=
+                    null
+                  then
+                     declare
+                        Msg : constant String := Is_Valid
+                          (Page.Sections (Section).Attributes (Attr).Editor);
+                     begin
+                        if Msg /= "" then
+                           return Msg;
+                        end if;
+                     end;
+                  end if;
+               end loop;
+            end if;
+         end loop;
+      end if;
+      return "";
+   end Is_Valid;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid
+     (Editor : access Root_Attribute_Editor_Record) return String
+   is
+      pragma Unreferenced (Editor);
+   begin
+      return "";
+   end Is_Valid;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid
+     (Editor : access File_Attribute_Editor_Record) return String
+   is
+   begin
+      if not Editor.Attribute.Non_Index_Type.Allow_Empty
+        and then Get_Text (Editor.Ent) = ""
+      then
+         return -"Empty value not allowed for "
+           & Attribute_Name (Editor.Attribute.all);
+      else
+         return "";
+      end if;
+   end Is_Valid;
+
+   -----------------
+   -- Is_Complete --
+   -----------------
+
+   function Is_Complete
+     (Page : access XML_Project_Wizard_Page) return String is
+   begin
+      return Is_Valid (Page.Page);
+   end Is_Complete;
 
    ----------------------
    -- Generate_Project --
@@ -1840,12 +1958,15 @@ package body Project_Properties is
       if Child = null then
          A := (Typ          => Attribute_As_String,
                Filter       => Filter_None,
+               Allow_Empty  => True,
                Default      => null);
 
       elsif Child.Tag.all = "string" then
          declare
             Typ     : constant String := Get_Attribute (Child, "type");
             Default : constant String := Get_Attribute (Child, "default");
+            Allow_Empty : constant Boolean :=
+              Boolean'Value (Get_Attribute (Child, "allow_empty", "True"));
             Filter  : File_Filter := Filter_None;
          begin
             if Get_Attribute (Child, "filter", "none") = "project" then
@@ -1859,10 +1980,12 @@ package body Project_Properties is
             if Typ = "file" then
                A := (Typ          => Attribute_As_Filename,
                      Filter       => Filter,
+                     Allow_Empty  => Allow_Empty,
                      Default => new String'(Default));
             elsif Typ = "directory" then
                A := (Typ     => Attribute_As_Directory,
                      Filter  => Filter,
+                     Allow_Empty  => Allow_Empty,
                      Default => new String'(Default));
             else
                if Typ /= "" then
@@ -1872,9 +1995,10 @@ package body Project_Properties is
                           Mode => Error);
                end if;
 
-               A := (Typ     => Attribute_As_String,
-                     Filter  => Filter,
-                     Default => new String'(Default));
+               A := (Typ         => Attribute_As_String,
+                     Filter      => Filter,
+                     Allow_Empty => Allow_Empty,
+                     Default     => new String'(Default));
             end if;
          end;
 
@@ -2043,21 +2167,12 @@ package body Project_Properties is
          if Attribute_Kind_Of (Attr_Id) /= Attr_Kind
            or else Variable_Kind_Of (Attr_Id) /= Var_Kind
          then
-            if Attr.Pkg.all = "" then
-               Insert
-                 (Kernel,
-                  Attr.Name.all & ": "
-                  & (-("Project attributes was already defined but with a"
-                    & " different type")),
-                  Mode => Error);
-            else
-               Insert
-                 (Kernel,
-                  Attr.Pkg.all & "'" & Attr.Name.all & ": "
-                  & (-("Project attributes was already defined but with a"
-                    & " different type")),
-                  Mode => Error);
-            end if;
+            Insert
+              (Kernel,
+               Attribute_Name (Attr.all) & ": "
+               & (-("Project attributes was already defined but with a"
+                 & " different type")),
+               Mode => Error);
          end if;
       end if;
    end Register_New_Attribute;
@@ -3044,6 +3159,7 @@ package body Project_Properties is
 
    function Create_File_Attribute_Editor
      (Kernel          : access Kernel_Handle_Record'Class;
+      Wiz             : Wizard;
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String;
@@ -3185,6 +3301,12 @@ package body Project_Properties is
 
       else
          Gtk_New (Editor.Ent);
+
+         if Wiz /= null then
+            Widget_Callback.Object_Connect
+              (Editor.Ent, "changed", Update_Buttons_Sensitivity'Access, Wiz);
+         end if;
+
          Set_Activates_Default (Editor.Ent, True);
 
          declare
@@ -3332,6 +3454,7 @@ package body Project_Properties is
 
    function Create_Widget_Attribute
      (Kernel          : access Kernel_Handle_Record'Class;
+      Wiz             : Wizard;
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String;
@@ -3347,8 +3470,8 @@ package body Project_Properties is
             | Attribute_As_Directory =>
             return Attribute_Editor
               (Create_File_Attribute_Editor
-                 (Kernel, Project, Description, Attribute_Index, Path_Widget,
-                  Is_List));
+                 (Kernel, Wiz, Project, Description, Attribute_Index,
+                  Path_Widget, Is_List));
 
          when Attribute_As_Static_List
               | Attribute_As_Dynamic_List =>
@@ -3853,6 +3976,7 @@ package body Project_Properties is
                            Flags  => Modal or Destroy_With_Parent);
                   Value_Ed := Create_Widget_Attribute
                     (Kernel          => Ed.Kernel,
+                     Wiz             => Ed.Wiz,
                      Project         => Ed.Project,
                      Description     => Ed.Attribute,
                      Attribute_Index => Attribute_Index,
@@ -4061,7 +4185,7 @@ package body Project_Properties is
                if not Index.Is_List then
                   Insert (Kernel,
                           -"Index for project attribute """
-                          & Attr.Pkg.all & "'" & Attr.Name.all
+                          & Attribute_Name (Attr.all)
                           & """ must be a list",
                           Mode => Error);
                else
@@ -4127,6 +4251,7 @@ package body Project_Properties is
 
    procedure Create_Widget_Attribute
      (Kernel      : access Kernel_Handle_Record'Class;
+      Wiz         : Wizard;
       Project     : Project_Type;
       Attr        : Attribute_Description_Access;
       Size_Group  : in out Gtk_Size_Group;
@@ -4241,9 +4366,11 @@ package body Project_Properties is
               (Kernel, Project, Attr, Path_Widget => Path_Widget));
       else
          Attr.Editor := Create_Widget_Attribute
-           (Kernel, Project, Attr, Attribute_Index => "",
+           (Kernel, Wiz, Project, Attr, Attribute_Index => "",
             Path_Widget => Path_Widget, Is_List => Attr.Is_List);
       end if;
+
+      Attr.Editor.Wiz := Wiz;
 
       Attribute_Handler.Connect
         (Attr.Editor, "destroy", Editor_Destroyed'Access, Attr);
@@ -4345,7 +4472,6 @@ package body Project_Properties is
       Kernel  : access Kernel_Handle_Record'Class)
   is
       Label        : Gtk_Label;
-      Main_Note    : Gtk_Notebook;
       Button       : Gtk_Widget;
       Page         : Project_Editor_Page;
       Box          : Gtk_Box;
@@ -4369,13 +4495,17 @@ package body Project_Properties is
          Auto_Shrink  => True);
       Realize (Editor);
 
+      Gtk_New (Editor.Errors);
+      Pack_Start (Get_Vbox (Editor), Editor.Errors, Expand => False);
+      Set_No_Show_All (Editor.Errors, No_Show_All => True);
+
       Gtk_New_Hpaned (Main_Box);
       Pack_Start (Get_Vbox (Editor), Main_Box, Expand => True, Fill => True);
 
-      Gtk_New (Main_Note);
-      Set_Name (Main_Note, "Project Properties Notebook"); --  Testsuite
-      Set_Tab_Pos (Main_Note, Pos_Left);
-      Pack1 (Main_Box, Main_Note, Resize => True, Shrink => True);
+      Gtk_New (Editor.Note);
+      Set_Name (Editor.Note, "Project Properties Notebook"); --  Testsuite
+      Set_Tab_Pos (Editor.Note, Pos_Left);
+      Pack1 (Main_Box, Editor.Note, Resize => True, Shrink => True);
 
       Gtk_New_Vbox (Box, Homogeneous => False);
       Pack2 (Main_Box, Box, Resize => False, Shrink => True);
@@ -4413,7 +4543,7 @@ package body Project_Properties is
                   Expand => False);
       Gtk_New (Label, -"General");
       Show (Event);
-      Append_Page (Main_Note, Event, Label);
+      Append_Page (Editor.Note, Event, Label);
 
       for P in Properties_Module_ID.Pages'Range loop
          --  We need to put the pages in an event box to workaround a gtk+ bug:
@@ -4425,6 +4555,7 @@ package body Project_Properties is
          XML_Page := XML_Project_Wizard_Page_Access
            (Attribute_Editors_Page_Box
               (Kernel           => Kernel,
+               Wiz              => null,  --  Not in a wizard
                Project          => Project,
                General_Page_Box => General_Page_Box,
                Nth_Page         => P,
@@ -4439,7 +4570,7 @@ package body Project_Properties is
 
             if Attribute_Editors_Page_Name (P) /= "General" then
                Gtk_New (Label, Attribute_Editors_Page_Name (P));
-               Append_Page (Main_Note, Event, Label);
+               Append_Page (Editor.Note, Event, Label);
             end if;
          end if;
 
@@ -4482,15 +4613,19 @@ package body Project_Properties is
             Gtk_New (Event);
             Add (Event, Editor.Pages (E));
             Show (Event);
-            Append_Page (Main_Note, Event, Label);
+            Append_Page (Editor.Note, Event, Label);
          end if;
       end loop;
 
-      Set_Current_Page (Main_Note, 0);
+      Set_Current_Page (Editor.Note, 0);
 
       --  Connect this only once we have created the pages
       Object_User_Callback.Connect
-        (Main_Note, "switch_page", Switch_Page'Access,
+        (Editor.Note, "switch_page", Switch_Page_Validate'Access,
+         User_Data => GObject (Editor),
+         After     => False);
+      Object_User_Callback.Connect
+        (Editor.Note, "switch_page", Switch_Page'Access,
          User_Data => GObject (Editor),
          After     => True);
    end Initialize;
@@ -4580,6 +4715,7 @@ package body Project_Properties is
 
    function Attribute_Editors_Page_Box
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Wiz              : Wizard;
       Project          : Projects.Project_Type;
       General_Page_Box : Gtk.Box.Gtk_Box := null;
       Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
@@ -4602,6 +4738,7 @@ package body Project_Properties is
          for A in Page.Sections (S).Attributes'Range loop
             Create_Widget_Attribute
               (Kernel,
+               Wiz,
                Project,
                Page.Sections (S).Attributes (A),
                Size,
@@ -4670,6 +4807,49 @@ package body Project_Properties is
          Project    => Projects.No_Project,
          Attr       => Attr);
    end Get_Languages;
+
+   -----------------
+   -- Is_Complete --
+   -----------------
+
+   function Is_Complete (Editor : Properties_Editor) return Boolean is
+      Page  : constant Integer := Integer (Get_Current_Page (Editor.Note));
+   begin
+      for P in Editor.XML_Pages'Range loop
+         if Get_Parent
+           (XML_Project_Wizard_Page_Access (Editor.XML_Pages (P)).Box)
+           = Get_Nth_Page (Editor.Note, Gint (Page))
+         then
+            declare
+               Msg : constant String := Is_Complete (Editor.XML_Pages (P));
+            begin
+               if Msg /= "" then
+                  Set_Text (Editor.Errors, Msg);
+                  Show (Editor.Errors);
+                  return False;
+               end if;
+            end;
+         end if;
+      end loop;
+
+      Hide (Editor.Errors);
+      return True;
+   end Is_Complete;
+
+   --------------------------
+   -- Switch_Page_Validate --
+   --------------------------
+
+   procedure Switch_Page_Validate
+     (Notebook : access GObject_Record'Class; Editor : GObject)
+   is
+      pragma Unreferenced (Notebook);
+      Ed    : constant Properties_Editor := Properties_Editor (Editor);
+   begin
+      if not Is_Complete (Ed) then
+         Emit_Stop_By_Name (Ed.Note, "switch_page");
+      end if;
+   end Switch_Page_Validate;
 
    -----------------
    -- Switch_Page --
@@ -4893,6 +5073,9 @@ package body Project_Properties is
                Dialog_Type => Error,
                Title   => -"Error",
                Parent  => Get_Current_Window (Kernel));
+
+         elsif not Is_Complete (Editor) then
+            null;
 
          else
             declare

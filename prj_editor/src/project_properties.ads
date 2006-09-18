@@ -31,6 +31,7 @@ with Projects;
 with GNAT.OS_Lib;
 with Commands.Interactive;
 with Creation_Wizard;
+with Wizards;
 
 package Project_Properties is
 
@@ -69,6 +70,7 @@ package Project_Properties is
 
    function Attribute_Editors_Page_Box
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Wiz              : Wizards.Wizard;
       Project          : Projects.Project_Type;
       General_Page_Box : Gtk.Box.Gtk_Box := null;
       Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
@@ -87,6 +89,10 @@ package Project_Properties is
    --  Context is the name of the window that will display this box. For
    --  instance, it is "wizard" for the project wizard. This acts as a filter
    --  over which attributes will be displayed.
+   --
+   --  Wiz is the wizard in which the editor is displayed. It should be left to
+   --  null if the editor is displayed in some other context like the project
+   --  properties editor.
 
    function Get_Current_Value
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -125,5 +131,10 @@ private
      is abstract;
    --  Return the current value in Editor for the given attribute_Index.
    --  The returned value must be freed by the user.
+
+   function Is_Valid
+     (Editor : access Root_Attribute_Editor_Record) return String;
+   --  Whether the contents of the editor is valid for its project attribute.
+   --  If invalid, an error message is returned, otherwise an empty string.
 
 end Project_Properties;
