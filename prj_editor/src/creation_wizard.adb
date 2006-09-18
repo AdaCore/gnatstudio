@@ -121,56 +121,45 @@ package body Creation_Wizard is
    -----------------
 
    function Is_Complete
-     (Page : access Name_And_Location_Page;
-      Wiz  : access Wizard_Record'Class) return Boolean
+     (Page : access Name_And_Location_Page) return String
    is
       Ignored : Message_Dialog_Buttons;
       pragma Unreferenced (Ignored);
    begin
       if Page.Project_Name = null then
-         return False;
+         return -"Specify a project name";
       end if;
 
       declare
          Project  : constant String := Get_Text (Page.Project_Name);
       begin
          if Project = "" then
-            Display_Message (Wiz, -"Specify a project name",
-                             As_Error => False);
-
             if not Has_Focus_Is_Set (Page.Project_Location) then
                Grab_Focus (Page.Project_Name);
             end if;
 
-            return False;
+            return -"Specify a project name";
          end if;
 
          if not Is_Valid_Project_Name (Project) then
-            Display_Message (Wiz,
-                             -("Invalid name for the project "
-                               & "(only letters, digits and underscores)"),
-                             As_Error => True);
-
             if not Has_Focus_Is_Set (Page.Project_Location) then
                Grab_Focus (Page.Project_Name);
             end if;
 
-            return False;
+            return -("Invalid name for the project "
+                     & "(only letters, digits and underscores)");
          end if;
       end;
 
       if Get_Text (Page.Project_Location) = "" then
-         Display_Message (Wiz, -"Specify a directory to store the project in",
-                          As_Error => False);
-
          if not Has_Focus_Is_Set (Page.Project_Name) then
             Grab_Focus (Page.Project_Location);
          end if;
 
-         return False;
+         return -"Specify a directory to store the project in";
       end if;
 
-      return True;
+      return "";
    end Is_Complete;
 
    --------------------

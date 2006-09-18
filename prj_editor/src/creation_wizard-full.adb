@@ -133,6 +133,7 @@ package body Creation_Wizard.Full is
       for E in 1 .. Attr_Count + 1 loop
          Page := Attribute_Editors_Page_Box
            (Kernel      => Get_Kernel (Wiz),
+            Wiz         => Wizard (Wiz),
             Project     => No_Project,
             Path_Widget => Get_Path_Widget (Name_And_Loc),
             Nth_Page    => E,

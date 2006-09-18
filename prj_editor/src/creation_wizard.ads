@@ -124,13 +124,10 @@ private
    procedure Perform_Finish (Wiz : access Project_Wizard_Record);
 
    function Is_Complete
-     (Page : access Name_And_Location_Page;
-      Wiz  : access Wizards.Wizard_Record'Class) return Boolean;
-
+     (Page : access Name_And_Location_Page) return String;
    function Create_Content
      (Page : access Name_And_Location_Page;
       Wiz  : access Wizards.Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-
    procedure Generate_Project
      (Page               : access Name_And_Location_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;

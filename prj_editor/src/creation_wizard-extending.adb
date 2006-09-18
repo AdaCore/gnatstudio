@@ -25,6 +25,7 @@ with Gtk.Box;                  use Gtk.Box;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Frame;                use Gtk.Frame;
+with Gtk.Label;                use Gtk.Label;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -61,9 +62,6 @@ package body Creation_Wizard.Extending is
    function Create_Content
      (Page : access Extending_Sources_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   function Is_Complete
-     (Page : access Extending_Sources_Page;
-      Wiz  : access Wizard_Record'Class) return Boolean;
    --  See inherited documentation
 
    type Edit_In_Extended_Project is
@@ -106,26 +104,6 @@ package body Creation_Wizard.Extending is
                 Toc         => -"Sources");
    end Add_Extending_Wizard_Pages;
 
-   -----------------
-   -- Is_Complete --
-   -----------------
-
-   function Is_Complete
-     (Page : access Extending_Sources_Page;
-      Wiz  : access Wizard_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Page);
-   begin
-      Display_Message
-        (Wiz,
-         -("Select the source files you want to modify."
-           & ASCII.LF
-           & "You can add sources later by modifying the project"
-           & " properties"),
-         As_Error => False);
-      return True;
-   end Is_Complete;
-
    --------------------
    -- Create_Content --
    --------------------
@@ -137,6 +115,7 @@ package body Creation_Wizard.Extending is
       Kernel   : constant Kernel_Handle := Get_Kernel (Wiz);
       Box      : Gtk_Box;
       Frame    : Gtk_Frame;
+      Label    : Gtk_Label;
       Scrolled : Gtk_Scrolled_Window;
       PIter    : Imported_Project_Iterator;
       TIter    : Gtk_Tree_Iter;
@@ -147,6 +126,14 @@ package body Creation_Wizard.Extending is
       File_Index : Positive;
    begin
       Gtk_New_Vbox (Box, Homogeneous => False);
+
+      Gtk_New
+        (Label,
+         -("Select the source files you want to modify."
+           & ASCII.LF
+           & "You can add sources later by modifying the project"
+           & " properties"));
+      Pack_Start (Box, Label, Expand => False);
 
       Gtk_New (Page.Copy_Files,
                -"Copy selected files to the project's directory");

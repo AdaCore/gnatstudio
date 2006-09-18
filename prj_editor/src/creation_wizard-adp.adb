@@ -51,9 +51,7 @@ package body Creation_Wizard.Adp is
    function Create_Content
      (Page : access Adp_Selection_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   function Is_Complete
-     (Page : access Adp_Selection_Page;
-      Wiz  : access Wizards.Wizard_Record'Class) return Boolean;
+   function Is_Complete (Page : access Adp_Selection_Page) return String;
    --  See inherited documentation
 
    procedure On_Browse
@@ -81,17 +79,15 @@ package body Creation_Wizard.Adp is
    -----------------
 
    function Is_Complete
-     (Page : access Adp_Selection_Page;
-      Wiz  : access Wizards.Wizard_Record'Class) return Boolean is
+     (Page : access Adp_Selection_Page) return String is
    begin
       if Page.Adp_File_Name /= null
         and then Get_Text (Page.Adp_File_Name) = ""
       then
-         Display_Message (Wiz, -"Specify a .adp project to convert");
          Grab_Focus (Page.Adp_File_Name);
-         return False;
+         return -"Specify a .adp project to convert";
       end if;
-      return True;
+      return "";
    end Is_Complete;
 
    ----------------------
