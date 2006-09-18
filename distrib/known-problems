@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.0
 
+- F913-006 Fix links to global routines in Python Extensions documentation
+  Problem:    If you select the menu Help/Python Extensions, and click on a
+              link to a global routine like GPS.current_context, the link was
+              incorrectly generated
+  Workaround: Click on "Global routines" on the left frame
+
 - F905-004 Executables listed twice for extending projects
   Problem:    If the project that is currently loaded explicitely mentions
               that its Main attribute is inherited from the extended project
