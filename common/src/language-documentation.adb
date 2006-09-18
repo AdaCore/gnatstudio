@@ -139,15 +139,15 @@ package body Language.Documentation is
       if Get_Construct (Node).Category in Subprogram_Category then
 
          declare
-            Sub_Iter      : Construct_Tree_Iterator :=
-              Next (Tree, Node, Jump_Into);
-            Has_Parameter : Boolean := False;
+            Sub_Iter               : Construct_Tree_Iterator :=
+                                       Next (Tree, Node, Jump_Into);
+            Has_Parameter          : Boolean := False;
             Biggest_Parameter_Name : Integer := 0;
          begin
             while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-                  if Get_Construct (Sub_Iter).Name'Length
-                    > Biggest_Parameter_Name
+                  if Get_Construct (Sub_Iter).Name'Length >
+                    Biggest_Parameter_Name
                   then
                      Biggest_Parameter_Name :=
                        Get_Construct (Sub_Iter).Name'Length;
@@ -185,11 +185,14 @@ package body Language.Documentation is
                      Append (Result, " ");
                   end loop;
 
-                  Append
-                    (Result,
-                     " : " & Buffer (Type_Start.Index .. Type_End.Index)
-                     & ASCII.LF);
-
+                  if Success then
+                     Append
+                       (Result,
+                        " : " & Buffer (Type_Start.Index .. Type_End.Index)
+                        & ASCII.LF);
+                  else
+                     Append (Result, " : ???" & ASCII.LF);
+                  end if;
                end if;
 
                Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
