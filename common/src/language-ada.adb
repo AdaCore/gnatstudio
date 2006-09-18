@@ -569,8 +569,9 @@ package body Language.Ada is
       Success    : out Boolean;
       From_Index : Natural := 0)
    is
-      Paren_Depth   : Integer := 0;
-      Has_Reference : Boolean := False;
+      Paren_Depth          : Integer := 0;
+      Has_Reference        : Boolean := False;
+      Skip_Next_Identifier : Boolean := False;
 
       function Token_Callback
         (Entity         : Language_Entity;
@@ -591,7 +592,7 @@ package body Language.Ada is
       is
          pragma Unreferenced (Partial_Entity);
          Word : constant String :=
-           Buffer (Sloc_Start_Got.Index .. Sloc_End_Got.Index);
+                  Buffer (Sloc_Start_Got.Index .. Sloc_End_Got.Index);
       begin
          if Paren_Depth = 0 then
             if Entity = Keyword_Text then
@@ -604,15 +605,20 @@ package body Language.Ada is
                   Has_Reference := True;
                end if;
             elsif Entity = Identifier_Text then
-               if Has_Reference then
-                  Sloc_Start := Sloc_Start_Got;
-                  Sloc_End := Sloc_End_Got;
-                  Success := True;
-               end if;
+               if not Skip_Next_Identifier then
+                  if Has_Reference then
+                     Sloc_Start := Sloc_Start_Got;
+                     Sloc_End := Sloc_End_Got;
+                     Success := True;
+                  end if;
 
-               return True;
+                  return True;
+               end if;
             elsif Entity = Operator_Text and then Word = ":" then
                Has_Reference := True;
+               Skip_Next_Identifier := False;
+            elsif Entity = Operator_Text and then Word = "," then
+               Skip_Next_Identifier := True;
             end if;
          end if;
 
