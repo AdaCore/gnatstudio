@@ -88,7 +88,7 @@ class DocGenerator:
             result.append (linked_module + "<a href='file://" + self.filename_for_class (name1) + "'>" + name1 \
               + "</a>.<a href='file://" + self.filename_for_class (name1) + "#" + self.anchor_name (name2) + "'>" + name2 + "</a>")
          else:
-            result.append (linked_module + "<a href='file://" + self.filename_for_class (name1) + "'>" + name1 + "</a>")
+            result.append (linked_module + "<a href='file://" + self.filename_for_global (module_name) + "#" + self.anchor_name (name1) + "'>" + name1 + "</a>")
 
          here = end
       result.append (text[here:])
