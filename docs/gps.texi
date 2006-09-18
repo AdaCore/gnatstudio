@@ -11861,6 +11861,12 @@ can be specified. If the filter is @code{"extended_project"}, then only the
 files from the project extended by the current project can be specified. The
 attribute will not be shown if the current project is not an extending project.
 
+@item @code{allow_empty} (one of "True" or "False, default "True")
+
+This attribute indicates whether the value for this attribute can be an
+empty string. If not, the user must specify a value or an error message will
+be displayed in the project properties editor and project wizard.
+
 @end itemize
 
 @cindex <choice>
