@@ -84,12 +84,10 @@ package body Wizards is
    -- Is_Complete --
    -----------------
 
-   function Is_Complete
-     (Page : access Wizard_Page_Record;
-      Wiz  : access Wizard_Record'Class) return Boolean is
-      pragma Unreferenced (Page, Wiz);
+   function Is_Complete (Page : access Wizard_Page_Record) return String is
+      pragma Unreferenced (Page);
    begin
-      return True;
+      return "";
    end Is_Complete;
 
    -----------------
@@ -216,8 +214,17 @@ package body Wizards is
       Free (Page.Title);
       Page.Title := new String'(Description);
 
-      Page.Was_Complete := Is_Complete (Page, Wiz);
-      Display_Message (Wiz, "", As_Error => False);
+      declare
+         Msg : constant String := Is_Complete (Page);
+      begin
+         Page.Was_Complete := Msg = "";
+
+         if Msg /= "" then
+            Display_Message (Wiz, Msg, As_Error => True);
+         else
+            Display_Message (Wiz, "", As_Error => False);
+         end if;
+      end;
 
       if Lazy_Creation then
          return;
@@ -327,10 +334,14 @@ package body Wizards is
      (Wiz : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       W : constant Wizard := Wizard (Wiz);
+      Msg : constant String := Is_Complete (W.Pages (W.Current_Page));
    begin
-      Display_Message (W, "", As_Error => False);
-      W.Pages (W.Current_Page).Was_Complete :=
-        Is_Complete (W.Pages (W.Current_Page), W);
+      W.Pages (W.Current_Page).Was_Complete := Msg = "";
+      if Msg /= "" then
+         Display_Message (W, Msg, As_Error => True);
+      else
+         Display_Message (W, "", As_Error => False);
+      end if;
 
       --  Special case: if we have a single page, show neither Back nor
       --  forward, since they will never apply anyway
@@ -462,6 +473,7 @@ package body Wizards is
       end if;
 
       Set_Current_Page (W, W.Current_Page + 1);
+
    exception
       when E : others =>
          Trace (Exception_Handle, "Unexpected exception "

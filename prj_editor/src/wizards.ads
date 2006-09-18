@@ -107,24 +107,23 @@ package Wizards is
    --              \-> 3bis ---/  (if the user selects an option on page 2)
 
    function Is_Complete
-     (Page : access Wizard_Page_Record;
-      Wiz  : access Wizard_Record'Class) return Boolean;
-   --  Return True if the user doesn't need to visit this page (ie it has
-   --  already been completed and provided a good content, or the default
-   --  values are correct).
-   --  Wiz is the wizard in which the page is displayed.
-   --  By default, the Finish button is activated when all pages return
-   --  True for this function.
+     (Page : access Wizard_Page_Record) return String;
+   --  Return an error message to display for the current page.
+   --  It should return the empty string "" if all fields on the page have a
+   --  valid value, and should return the message to display at the top of the
+   --  wizard otherwise.
+   --  By default, the Finish button is activated when all pages return the
+   --  empty string from this function.
    --  A user cannot move forward when a page is not complete. Therefore, you
-   --  can do data validation in this function, and return False if some data
-   --  is incorrect. However, it is your responsability to change the
-   --  sensitivity of the Next button once the content of the page is valid.
-   --  By default, this returns True.
-   --  Error messages should be displayed through the Display_Message
-   --  subprogram below. If a field is empty, but should be set, you should do
-   --  a Grab_Focus on it, and display a message for the user. If the value in
-   --  a field is incorrect, you should Grab_Focus on it, and display an error
-   --  message.
+   --  can do data validation in this function, and return a message if some
+   --  data is incorrect. However, it is your responsability to change the
+   --  sensitivity of the Next button once the content of the page is valid,
+   --  through a call to Update_Buttons_Sensitivity. This is generally done by
+   --  connecting to the "changed" signal on all fields and reset the button
+   --  sensitivity from there.
+   --  By default, this returns the empty string (no error).
+   --  If a field is empty or is incorrect, but should be set, you should do a
+   --  Grab_Focus on it.
    --  Be aware that this function might be called even before calling
    --  Create_Content if Lazy_Creation was set to True when it was added.
 
