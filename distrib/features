@@ -21,6 +21,13 @@ F907-003 Remember the last search context for file searching (2006-09-13)
   "Files from project", "Files..." or "Open Files"), not only to "Current_File"
   as it used to do.
 
+F906-007 Project wizard and properties check for empty object dir (2006-09-16)
+
+  A new XML attribute allow_empty can be used when describing project
+  attributes. In particular, it is now used to make sure that the user doesn't
+  set the object or exec directories to an empty string, which isn't supported
+  by tools and results in an error when parsing the project file.
+
 F822-013 Disable the "replace all" confirmation with a preference (2006-09-12)
 
   A new preference has been added, in the search pannel of the GPS preferences,
