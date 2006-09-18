@@ -1,5 +1,17 @@
 Known Problems fixed in GPS 4.0.1
 
+- F915-009 Smart completion not working with some contructs
+  Problem:    In some cases the smart completion will not work properly. This
+              happens in particular for subprograms that have several
+              parameters of the same type specified altogether and
+              comma-separated e.g.
+                procedure Complete (S1, S2 : String);
+              In this case the smart completion window will not list the
+              parameters correctly.
+  Workaround: Use the Edit/Complete Identifier menu instead or rewritte the
+              subprogram profile giving each parameter its type e.g.
+                 procedure Complete (S1 : String; S2 : String);
+
 - F912-009 Crash after a compilation with long output
   Problem:    When a build yields a lot of errors (thousands of lines), GPS
               might crash when parsing the output.
