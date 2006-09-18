@@ -328,8 +328,10 @@ package body Variable_Editors is
    is
       New_Name : constant String :=
         Get_Text (Get_Entry (Editor.Variable_Name));
+      Ada_Name : String (New_Name'Range);
       Changed  : Boolean := False;
       Iter     : Gtk_Tree_Iter;
+      Index    : Natural;
       Val_Iter : String_List_Iterator;
       Found    : Boolean;
       Num_Rows : Natural := 0;
@@ -347,40 +349,35 @@ package body Variable_Editors is
          return False;
       end if;
 
-      --  Check that the name is valid
+      --  Convert the name of the local variable in the project file to a
+      --  valid Ada identifier. Any character is allowed for the external
+      --  reference itself.
 
-      if not Is_Letter (New_Name (New_Name'First)) then
-         Message := Message_Dialog
-           (Msg     => -"Name must start with a letter",
-            Buttons => Button_OK,
-            Parent  => Gtk_Window (Editor));
-         return False;
-
-      else
-         for N in New_Name'First + 1 .. New_Name'Last loop
-            if not Is_Alphanumeric (New_Name (N))
-              and then New_Name (N) /= '_'
+      Index := Ada_Name'First;
+      for N in New_Name'Range loop
+         if (N = New_Name'First and then not Is_Letter (New_Name (N)))
+           or else (not Is_Alphanumeric (New_Name (N))
+                    and then New_Name (N) /= '_')
+         then
+            if N = New_Name'First
+              or else New_Name (N - 1) = '_'
             then
-               Message := Message_Dialog
-                 (Msg     => -("Name must include only letters, digits and"
-                               & " underscore characters"),
-                  Buttons => Button_OK,
-                  Parent  => Gtk_Window (Editor));
-               return False;
+               Ada_Name (Index) := 'A';
+            else
+               Ada_Name (Index) := '_';
             end if;
-
-            if New_Name (N) = '_'
+         else
+            if N /= New_Name'First
+              and then New_Name (N) = '_'
               and then New_Name (N - 1) = '_'
             then
-               Message := Message_Dialog
-                 (Msg     => -("Name cannot contain two underscore characters"
-                               & " next to each other"),
-                  Buttons => Button_OK,
-                  Parent  => Gtk_Window (Editor));
-               return False;
+               Ada_Name (Index) := 'A';
+            else
+               Ada_Name (Index) := New_Name (N);
             end if;
-         end loop;
-      end if;
+         end if;
+         Index := Index + 1;
+      end loop;
 
       Iter := Get_Iter_First (Editor.Model);
 
@@ -425,8 +422,8 @@ package body Variable_Editors is
       if Editor.Var = No_Variable then
          Editor.Var := Create_Environment_Variable
            (Project   => Get_Project (Editor.Kernel),
-            Name      => New_Name,
-            Type_Name => New_Name & "_Type",
+            Name      => Ada_Name,
+            Type_Name => Ada_Name & "_Type",
             Env_Name  => New_Name);
          --  ??? Report project as modified for kernel
 
