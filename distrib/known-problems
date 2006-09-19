@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 4.0.1
 
-- F915-009 Smart completion not working with some contructs
+- F915-009 Smart completion not working with some constructs
   Problem:    In some cases the smart completion will not work properly. This
               happens in particular for subprograms that have several
               parameters of the same type specified altogether and
