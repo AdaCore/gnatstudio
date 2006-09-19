@@ -97,7 +97,7 @@ F719-012 Removed support for old customization directories
   them if it found scripts in there. GPS now ignores these directories.
   Use $prefix/share/gps/plug-ins and ~/.gps/plug-ins instead
 
-F710-013 Better formatting of the debugger data window items
+F710-013 Better formatting of the debugger data window items (2006-09-19)
   The text displayed in the debugger data window items now uses the default
   fixed font. This allow a better rendering in particular when displaying
   registers content.
