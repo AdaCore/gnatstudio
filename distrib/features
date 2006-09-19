@@ -23,7 +23,7 @@ F912-027 Allow any character in scenario variable names (2006-09-16)
 F907-003 Remember the last search context for file searching (2006-09-13)
 
   Doing a search from an editor opens the search view with the 'Look in field'
-  set to the last editor-related used context ("Current_File", 
+  set to the last editor-related used context ("Current_File",
   "Files from project", "Files..." or "Open Files"), not only to "Current_File"
   as it used to do.
 
@@ -96,6 +96,11 @@ F719-012 Removed support for old customization directories
   GPS 3.x was no longer creating these directories, although still reading
   them if it found scripts in there. GPS now ignores these directories.
   Use $prefix/share/gps/plug-ins and ~/.gps/plug-ins instead
+
+F710-013 Better formatting of the debugger data window items
+  The text displayed in the debugger data window items now uses the default
+  fixed font. This allow a better rendering in particular when displaying
+  registers content.
 
 F704-013 Fix "end loop Name; expected" (2006-07-27)
 
