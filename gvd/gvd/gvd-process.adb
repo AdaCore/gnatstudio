@@ -1349,6 +1349,7 @@ package body GVD.Process is
       -----------
 
       function Check (S : String) return String is
+         Last : Integer := S'Last;
       begin
          --  ??? Should forbid commands that modify the configuration of the
          --  debugger, like "set annotate" for gdb, otherwise we can't be sure
@@ -1356,11 +1357,16 @@ package body GVD.Process is
 
          if S'Length = 0 then
             return "";
-         elsif S (S'Last) = '\' then
-            --  Strip trailing '\' which will block GPS
-            return S (S'First .. S'Last - 1);
          else
-            return S;
+            --  Strip trailing characters which will block GPS
+
+            while Last >= S'First
+              and then (S (Last) = '\' or else S (Last) = ASCII.HT)
+            loop
+                  Last := Last - 1;
+            end loop;
+
+            return S (S'First .. Last);
          end if;
       end Check;
 
