@@ -8,7 +8,7 @@ Known Problems fixed in GPS 4.0.1
                 procedure Complete (S1, S2 : String);
               In this case the smart completion window will not list the
               parameters correctly.
-  Workaround: Use the Edit/Complete Identifier menu instead or rewritte the
+  Workaround: Use the Edit/Complete Identifier menu instead or rewrite the
               subprogram profile giving each parameter its type e.g.
                  procedure Complete (S1 : String; S2 : String);
 
