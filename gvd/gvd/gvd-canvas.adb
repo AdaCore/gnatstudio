@@ -1222,13 +1222,13 @@ package body GVD.Canvas is
       end if;
 
       Canvas.Item_Context.Line_Height := To_Pixels
-        (Get_Size (Get_Pref (Default_Font)));
+        (Get_Size (Get_Pref (View_Fixed_Font)));
 
       Canvas.Item_Context.Big_Item_Height := Get_Pref (Big_Item_Height);
 
       Canvas.Item_Context.Text_Layout := Create_Pango_Layout (Canvas.Canvas);
       Set_Font_Description
-        (Canvas.Item_Context.Text_Layout, Get_Pref (Default_Font));
+        (Canvas.Item_Context.Text_Layout, Get_Pref (View_Fixed_Font));
 
       Canvas.Item_Context.Type_Layout := Create_Pango_Layout (Canvas.Canvas);
       Set_Font_Description
