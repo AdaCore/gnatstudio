@@ -38,9 +38,9 @@ package Code_Analysis_Tree_Model is
    ------------
 
    procedure Fill_Iter
-     (Model      : in out Gtk_Tree_Store;
-      Iter       : in out Gtk_Tree_Iter;
-      Cur        : Project_Maps.Cursor);
+     (Model    : in out Gtk_Tree_Store;
+      Iter     : in out Gtk_Tree_Iter;
+      Projects : Code_Analysis_Tree);
    --  Fill the Gtk_Tree_Store
 
    procedure Fill_Iter
