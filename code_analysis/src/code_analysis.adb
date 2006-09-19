@@ -18,15 +18,145 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Heap_Sort_G;
 package body Code_Analysis is
+
+   ----------------------
+   -- Sort_Subprograms --
+   ----------------------
+
+   procedure Sort_Subprograms (Nodes : in out Subprogram_Array) is
+
+      function Lt (Op1, Op2 : Natural) return Boolean;
+      --  Instanciation of Heap_Sort_G
+
+      procedure Move (From, To : Natural);
+      --  Instanciation of Heap_Sort_G
+
+      Tmp : Subprogram_Access;
+
+      function Lt (Op1, Op2 : Natural) return Boolean
+      is begin
+         if Op1 = 0 then
+            return Tmp.Name.all < Nodes (Op2).Name.all;
+         elsif Op2 = 0 then
+            return Nodes (Op1).Name.all < Tmp.Name.all;
+         else
+            return Nodes (Op1).Name.all < Nodes (Op2).Name.all;
+         end if;
+      end Lt;
+
+      procedure Move (From, To : Natural) is
+      begin
+         if From = 0 then
+            Nodes (To) := Tmp;
+         elsif To = 0 then
+            Tmp := Nodes (From);
+         else
+            Nodes (To) := Nodes (From);
+         end if;
+      end Move;
+
+      package Sort is new GNAT.Heap_Sort_G
+        (Move, Lt);
+   begin
+      Sort.Sort (Natural (Nodes'Length));
+   end Sort_Subprograms;
+
+   ----------------
+   -- Sort_Files --
+   ----------------
+
+   procedure Sort_Files (Nodes : in out File_Array) is
+
+      function Lt (Op1, Op2 : Natural) return Boolean;
+      --  Instanciation of Heap_Sort_G
+
+      procedure Move (From, To : Natural);
+      --  Instanciation of Heap_Sort_G
+
+      Tmp : File_Access;
+
+      function Lt (Op1, Op2 : Natural) return Boolean
+      is begin
+         if Op1 = 0 then
+            return Base_Name (Tmp.Name) < Base_Name (Nodes (Op2).Name);
+         elsif Op2 = 0 then
+            return Base_Name (Nodes (Op1).Name) < Base_Name (Tmp.Name);
+         else
+            return Base_Name (Nodes (Op1).Name) < Base_Name (Nodes (Op2).Name);
+         end if;
+      end Lt;
+
+      procedure Move (From, To : Natural) is
+      begin
+         if From = 0 then
+            Nodes (To) := Tmp;
+         elsif To = 0 then
+            Tmp := Nodes (From);
+         else
+            Nodes (To) := Nodes (From);
+         end if;
+      end Move;
+
+      package Sort is new GNAT.Heap_Sort_G
+        (Move, Lt);
+   begin
+      Sort.Sort (Natural (Nodes'Length));
+   end Sort_Files;
+
+   -------------------
+   -- Sort_Projects --
+   -------------------
+
+   procedure Sort_Projects (Nodes : in out Project_Array) is
+
+      function Lt (Op1, Op2 : Natural) return Boolean;
+      --  Instanciation of Heap_Sort_G
+
+      procedure Move (From, To : Natural);
+      --  Instanciation of Heap_Sort_G
+
+      Tmp : Project_Access;
+
+      function Lt (Op1, Op2 : Natural) return Boolean
+      is begin
+         if Op1 = 0 then
+            return String'(Project_Name (Tmp.Name)) <
+              String'(Project_Name (Nodes (Op2).Name));
+         elsif Op2 = 0 then
+            return String'(Project_Name (Nodes (Op1).Name)) <
+              String'(Project_Name (Tmp.Name));
+         else
+            return String'(Project_Name (Nodes (Op1).Name)) <
+              String'(Project_Name (Nodes (Op2).Name));
+         end if;
+      end Lt;
+
+      procedure Move (From, To : Natural) is
+      begin
+         if From = 0 then
+            Nodes (To) := Tmp;
+         elsif To = 0 then
+            Tmp := Nodes (From);
+         else
+            Nodes (To) := Nodes (From);
+         end if;
+      end Move;
+
+      package Sort is new GNAT.Heap_Sort_G
+        (Move, Lt);
+   begin
+      Sort.Sort (Natural (Nodes'Length));
+   end Sort_Projects;
 
    -------------------
    -- Get_Or_Create --
    -------------------
 
    function Get_Or_Create
-     (File_Node  : File_Access;
-      Sub_Name   : String_Access) return Subprogram_Access
+     (File_Node : File_Access;
+      Sub_Name  : String_Access) return Subprogram_Access
    is
       Sub_Node : Subprogram_Access;
    begin
@@ -172,7 +302,7 @@ package body Code_Analysis is
 
    procedure Free_Code_Analysis (Projects : Code_Analysis_Tree) is
       use Project_Maps;
-      Cur       : Cursor := Projects.First;
+      Cur          : Cursor := Projects.First;
       Project_Node : Project_Access;
    begin
       loop
