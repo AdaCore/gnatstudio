@@ -333,7 +333,7 @@ procedure Code_Analysis_Test is
       Set_Title (Tree_Col, "Coverage");
       Pack_Start (Container, Tree_View);
       Iter := Get_Iter_First (Gtk_Tree_Model (Tree_Store));
-      Fill_Iter (Tree_Store, Iter, Projects.First);
+      Fill_Iter (Tree_Store, Iter, Projects);
       Show_All (Window);
       Main;
       Free_Code_Analysis (Projects);
