@@ -81,15 +81,27 @@ package body Code_Analysis_Module is
       File_Contents : GNAT.OS_Lib.String_Access;
       Project_Name  : Project_Type;
       Project_Node  : Project_Access;
-      Cov_File_Name : constant String := Nth_Arg (Data, 3);
       Src_File_Name : constant String := Nth_Arg (Data, 2);
+      Cov_File_Name : constant String := Nth_Arg (Data, 3);
       File_Node     : Code_Analysis.File_Access;
    begin
       Instance      := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property      := Code_Analysis_Class_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
-      VFS_Cov_File  := Create (Cov_File_Name);
       VFS_Src_File  := Create (Src_File_Name);
+
+      if not Is_Regular_File (VFS_Src_File) then
+         Set_Error_Msg (Data, Src_File_Name & " doesn't exists");
+         return;
+      end if;
+
+      VFS_Cov_File  := Create (Cov_File_Name);
+
+      if not Is_Regular_File (VFS_Cov_File) then
+         Set_Error_Msg (Data, Cov_File_Name & " doesn't exists");
+         return;
+      end if;
+
       Project_Name  := Get_Project_From_File
         (Get_Registry (Code_Analysis_Module_ID.Kernel).all, VFS_Src_File);
       Project_Node  := Get_Or_Create (Property.Projects, Project_Name);
@@ -119,18 +131,27 @@ package body Code_Analysis_Module is
       use Project_Maps;
       Property : Code_Analysis_Class_Record;
       Instance : Class_Instance;
-      Cur      : Cursor;
+      Map_Cur  : Project_Maps.Cursor;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Code_Analysis_Class_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
-      Cur      := Property.Projects.First;
+      declare
+         Sort_Arr : Project_Array (1 .. Integer (Property.Projects.Length));
+      begin
+         Map_Cur  := Property.Projects.First;
 
-      loop
-         exit when Cur = No_Element;
-         List_Not_Covered_Lines_In_Project (Element (Cur));
-         Next (Cur);
-      end loop;
+         for J in Sort_Arr'Range loop
+            Sort_Arr (J) := Element (Map_Cur);
+            Next (Map_Cur);
+         end loop;
+
+         Sort_Projects (Sort_Arr);
+
+         for J in Sort_Arr'Range loop
+            List_Not_Covered_Lines_In_Project (Sort_Arr (J));
+         end loop;
+      end;
    end List_Not_Covered_Lines;
 
    --------------------
@@ -256,7 +277,7 @@ package body Code_Analysis_Module is
       end if;
 
       Fill_Iter
-        (Property.View.Model, Property.View.Iter, Property.Projects.First);
+        (Property.View.Model, Property.View.Iter, Property.Projects);
       Raise_Child (Property.Child);
    end Show_Tree_View;
 
@@ -512,14 +533,19 @@ package body Code_Analysis_Module is
      (Project_Node : Project_Access)
    is
       use File_Maps;
-      Cur   : Cursor;
+      Map_Cur  : File_Maps.Cursor := Project_Node.Files.First;
+      Sort_Arr : Code_Analysis.File_Array
+        (1 .. Integer (Project_Node.Files.Length));
    begin
-      Cur := Project_Node.Files.First;
+      for J in Sort_Arr'Range loop
+         Sort_Arr (J) := Element (Map_Cur);
+         Next (Map_Cur);
+      end loop;
 
-      loop
-         exit when Cur = No_Element;
-         List_Not_Covered_Lines_In_File (Element (Cur));
-         Next (Cur);
+      Sort_Files (Sort_Arr);
+
+      for J in Sort_Arr'Range loop
+         List_Not_Covered_Lines_In_File (Sort_Arr (J));
       end loop;
    end List_Not_Covered_Lines_In_Project;
 
