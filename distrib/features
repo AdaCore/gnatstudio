@@ -81,14 +81,14 @@ F719-014 Improved support for "no title bar" (2006-08-21)
   full name of the current editor in the main title bar, to ease working
   in this mode, and differenciate files with the same base name.
 
-F719-012 New dialog /Edit/Startup Script Editor
+F719-012 New dialog /Edit/Startup Script Editor (2006-08-04)
 
   This new dialog allows you to chose which scripts GPS should load on
   startup. We have also made more scripts optionally loadable through this
   dialog, when you previously had to copy them manually from the examples
   directory.
 
-F719-012 Removed support for old customization directories
+F719-012 Removed support for old customization directories (2006-08-04)
 
   in GPS 2.x, the following directories were searched for customization
   files: ~/.gps/customize, ~/.gps/python_startup, $prefix/share/gps/customize
