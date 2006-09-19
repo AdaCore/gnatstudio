@@ -17,7 +17,7 @@ New features in GPS 4.1.0
 F912-027 Allow any character in scenario variable names (2006-09-16)
 
   The list of valid character for names of scenario variables is no longer
-  limit to alphanumeric characters. In particular on VMS, it is standard to
+  limited to alphanumeric characters. In particular on VMS, it is standard to
   use names like GNAT$PLATFORM
 
 F907-003 Remember the last search context for file searching (2006-09-13)
