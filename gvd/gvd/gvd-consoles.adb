@@ -350,9 +350,11 @@ package body GVD.Consoles is
          --  Do not launch completion if the last character is ' ', as that
          --  might result in an output of several thousand entries, which
          --  will take a long time to parse.
-
+         --  Do not complete either when the last character is '\' as it will
+         --  hang GPS.
          if Input /= ""
            and then Input (Input'Last) /= ' '
+           and then Input (Input'Last) /= '\'
          then
             declare
                S : String_Array := Complete (Get_Process (C).Debugger, Input);
