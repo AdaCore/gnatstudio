@@ -186,6 +186,34 @@ package Code_Analysis is
    --  allow to get an access pointing on an identified tree node
    --  if the node doesn't exists, it is created
 
+   ------------------------------------
+   -- Determinist Ordered Provisions --
+   ------------------------------------
+
+   type Subprogram_Array is array (Positive range <>) of Subprogram_Access;
+   --  Used to sort Subprogram nodes in a determinist way before to process a
+   --  whole hashed map, that can't be iterate in a determinist order
+
+   type File_Array is array (Positive range <>) of File_Access;
+   --  Used to sort File nodes in a determinist way before to process a
+   --  whole hashed map, that can't be iterate in a determinist order
+
+   type Project_Array is array (Positive range <>) of Project_Access;
+   --  Used to sort Project nodes in a determinist way before to process a
+   --  whole hashed map, that can't be iterate in a determinist order
+
+   procedure Sort_Subprograms (Nodes : in out Subprogram_Array);
+   --  Heap sorts the given Subprogram_Array in alphabetical order based on the
+   --  Subprogram.Name
+
+   procedure Sort_Files (Nodes : in out File_Array);
+   --  Heap sorts the given File_Array in alphabetical order based on the
+   --  VFS.Base_Name (File.Name)
+
+   procedure Sort_Projects (Nodes : in out Project_Array);
+   --  Heap sorts the given Project_Array in alphabetical order based on the
+   --  String'(Project_Name (Project.Name))
+
    -------------
    -- Free-er --
    -------------
