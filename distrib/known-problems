@@ -76,6 +76,18 @@ Known Problems fixed in GPS 4.1.0
               to change gtk+ theme. On linux desktops, there is generally
               a more convenient system-wide configuration.
 
+- F710-022 GPS freezes in debug mode
+  Problem:    Sending commands that are terminated with horizontal tabs and/or
+              backslashes to the debugger via the console or a python script
+              might freeze GPS e.g.
+                in the debugger console:
+                   (gdb) foo \<horizontal tab>
+                   (gdb) \\<enter>
+                in a python script:
+                    debugger.send ("foo\\<horizontal tab>")
+              where <horizontal tab> represents the character emitted when
+              pressing the tabulation key and <enter> the enter one.
+
 - F703-013 Compiling a file ignores extending projects
   Problem:    If you are using extending projects, and compile a file that is
               not overridden in the extending project, GPS compiles it in the
