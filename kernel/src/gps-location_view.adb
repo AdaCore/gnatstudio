@@ -1327,6 +1327,8 @@ package body GPS.Location_View is
                Node := Next (Node);
             end loop;
 
+            Iter := Potential_Parent;
+
          else
             --  Fill Iter with main information.
 
