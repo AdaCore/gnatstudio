@@ -39,13 +39,12 @@ Known Problems fixed in GPS 4.0.1
   Workaround: Type the parameter manually in the command line at the bottom
               of the switch editor, or edit gnatpp.xml and change 100 to 256
 
-- F904-002 Jumping on the wrong editor after build errors.
+- F904-002 Jumping on the wrong editor after build errors
   Problem:    If there are other items in the Locations View (such as search
-              results, for instance), when compiling a file that contains
-              errors, GPS might jump to one of the other items in the
-              Location View instead of jumping on the first line of the
-              Builder results category.
-  Workaround: Click manually on the first entry in the Builder results.
+              results), when compiling a file that contains errors, GPS might
+              jump to one of the other items in the Location View instead of
+              jumping on the first line of the Builder results category.
+  Workaround: Click manually on the first entry in the Builder results
 
 - F830-003 Editor highlighting not refreshed when doing parallel compilations
   Problem:    Launch a compilation by pressing F4 for example. While the
