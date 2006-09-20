@@ -38,6 +38,8 @@ with VFS;                        use VFS;
 
 package body GPS.Kernel.Charsets is
 
+   CHARSET : constant String_Access := Getenv ("CHARSET");
+
    Default_Charset : GPS.Kernel.Charsets.Param_Spec_Charset;
    --  Preference that defines the default charset to use when opening files
 
@@ -278,13 +280,25 @@ package body GPS.Kernel.Charsets is
       Prop  : String_Property;
    begin
       if File = VFS.No_File then
-         return Get_Pref (Default_Charset);
+         if Default_Charset = null then
+            --  Cannot happen in GPS itself, but could in the test suites,
+            --  e.g. when no kernel/preferences are available.
+
+            return CHARSET.all;
+
+         else
+            return Get_Pref (Default_Charset);
+         end if;
       else
          Get_Property (Prop, File, "charset", Found);
          if Found then
             return Prop.Value.all;
          else
-            return Get_Pref (Default_Charset);
+            if Default_Charset = null then
+               return CHARSET.all;
+            else
+               return Get_Pref (Default_Charset);
+            end if;
          end if;
       end if;
    end Get_File_Charset;
