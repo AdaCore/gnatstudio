@@ -2542,38 +2542,34 @@ Access the various suggested fixes through the methods of the Codefix class</des
 
 
   <!--#################################################################
-    ####   Code_Analysis class
+    ####   CodeAnalysis class
     ###################################################################-->
 
-  <shell_doc name="GPS.code_analysis">
+  <shell_doc name="GPS.CodeAnalysis">
       <description>This class is a toolset that allows to handle Code_Analysis tree structures</description>
-      <see_also name="GPS.code_analysis" />
-      <see_also name="GPS.code_analysis.create" />
-      <see_also name="GPS.code_analysis.add_gcov_info" />
-      <see_also name="GPS.code_analysis.show_tree_view" />
-      <see_also name="GPS.code_analysis.list_not_covered_lines" />
   </shell_doc>
 
-  <shell_doc name="GPS.code_analysis.create">
+  <shell_doc name="GPS.CodeAnalysis.create">
+      <return>An instance of CodeAnalysis GPS module</return>
       <description>Creates an empty Code_Analysis data structure</description>
-      <see_also name="GPS.code_analysis" />
   </shell_doc>
 
-  <shell_doc name="GPS.code_analysis.add_gcov_info">
-      <description>Adds Code_Analysis nodes and coverage info provided by a .gcov file parsing</description>
-      <param name="Src_File_Name">The long name of the source file to refer to</param>
-      <param name="Cov_File_Name">The long name of the .gcov file to parse</param>
-      <see_also name="GPS.code_analysis" />
+  <shell_doc name="GPS.CodeAnalysis.add_gcov_info">
+      <param name="Src_File">A GPS.File instance, intended to be a source code file.</param>
+      <param name="Cov_File">A GPS.File instance, intended to be a .gcov file associated with the source code file given before.</param>
+      <see_also name="GPS.File" />
+      <see_also name="GPS.CodeAnalysis" />
+      <description>Adds Code_Analysis nodes and coverage info provided by a .gcov file parsing. Collected info are associated then to the given source code file.</description>
   </shell_doc>
 
-  <shell_doc name="GPS.code_analysis.show_tree_view">
+  <shell_doc name="GPS.CodeAnalysis.show_tree_view">
+      <see_also name="GPS.CodeAnalysis" />
       <description>Display a Code_Analysis data structure in a Gtk_Tree_View within a GPS MDI Child</description>
-      <see_also name="GPS.code_analysis" />
   </shell_doc>
 
-  <shell_doc name="GPS.code_analysis.list_not_coreved_lines">
-      <description>Puts in the Location View every not covered lines of the Code_Analysis_Tree stored in the code_analysis instance.</description>
-      <see_also name="GPS.code_analysis" />
+  <shell_doc name="GPS.CodeAnalysis.list_not_coreved_lines">
+      <see_also name="GPS.CodeAnalysis" />
+      <description>Puts in the Location View every not covered lines of the Code_Analysis_Tree stored in the CodeAnalysis instance.</description>
   </shell_doc>
 
   <!--#################################################################
