@@ -313,9 +313,8 @@ package Src_Editor_Buffer is
    --  Insert the given text in at the specified position.
    --
    --  The validity of the given position must be verified before invoking this
-   --  procedure. An incorrect position  will cause an Assertion_Failure when
-   --  compiled with assertion checks, or an undefined behavior
-   --  otherwise.
+   --  procedure. An incorrect position will cause an Assertion_Failure when
+   --  compiled with assertion checks, or an undefined behavior otherwise.
    --  If Enable_Undo is True, then the insertion action will be
    --  stored in the undo/redo queue.
 
