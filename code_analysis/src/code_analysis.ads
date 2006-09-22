@@ -19,23 +19,23 @@
 -----------------------------------------------------------------------
 
 --  <description>
---  This package provides a low level structure design to store code
---  analysis informations such as code coverage (provided by gcov),
---  Metrics, SSAT, GNATmem, (Valgrind).
+--  This package provides a low level structure designed to store code
+--  analysis information such as code coverage (provided by gcov), metrics,
+--  stack usage, memory usage, (Valgrind).
 --  Information are stored in a tree structure with the following
 --  levels: Project, File, Subprogram, Line.
 --  </description>
 
 with Ada.Containers.Indefinite_Hashed_Maps; use Ada.Containers;
-with GNAT.Strings;                          use GNAT.Strings;
 with Ada.Strings.Hash;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
+with GNAT.Strings;                          use GNAT.Strings;
 
-with VFS;           use VFS;
-with VFS_Hash;      use VFS_Hash;
-with Projects;      use Projects;
-with Projects_Hash; use Projects_Hash;
+with Projects;                              use Projects;
+with Projects_Hash;                         use Projects_Hash;
+with VFS;                                   use VFS;
+with VFS_Hash;                              use VFS_Hash;
 
 package Code_Analysis is
 
@@ -89,8 +89,8 @@ package Code_Analysis is
    type Project;
 
    type Subprogram_Access is access all Subprogram;
-   type File_Access is access all File;
-   type Project_Access is access all Project;
+   type File_Access       is access all File;
+   type Project_Access    is access all Project;
 
    package Subprogram_Maps is
      new Indefinite_Hashed_Maps
