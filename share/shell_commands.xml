@@ -2556,19 +2556,19 @@ Access the various suggested fixes through the methods of the Codefix class</des
 
   <shell_doc name="GPS.CodeAnalysis.add_gcov_info">
       <param name="self">An instance of GPS.CodeAnalysis</param>
-      <param name="source">A GPS.File instance</param>
+      <param name="src">A GPS.File instance</param>
       <param name="cov">A GPS.File instance</param>
       <description>Adds coverage info provided by a .gcov file parsing. The data is read from the cov parameter, and is associated with the specified source file.</description>
   </shell_doc>
 
   <shell_doc name="GPS.CodeAnalysis.show_tree_view">
       <param name="self">An instance of GPS.CodeAnalysis</param>
-      <description>Display the data stored in the CodeAnalysis instance into a new MDI window. This window contains a tree that can be interactively manipulated to analyze the results of the code analysis (coverage,...).</description>
+      <description>Display the data stored in the CodeAnalysis instance into a new MDI window. This window contains a tree that can be interactively manipulated to analyze the results of the code analysis (Coverage, ...).</description>
   </shell_doc>
 
   <shell_doc name="GPS.CodeAnalysis.list_not_coreved_lines">
       <param name="self">An instance of GPS.CodeAnalysis</param>
-      <description>Show in the Locations window the list of lines that are not covered in the code analysis tree. The lines are also highlighted in the corresponding source files.</description>
+      <description>Show in the Locations window the list of lines that are not covered in the projects loaded in the CodeAnalysis instance. The lines are also highlighted in the corresponding source files.</description>
       <see_also name="GPS.CodeAnalysis" />
   </shell_doc>
 
