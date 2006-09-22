@@ -263,20 +263,28 @@ package body Code_Coverage is
    function Line_Coverage_Info (Coverage : Coverage_Access)
                                 return String_Access
    is
-      Pango_Markup_To_Open  : constant String := "<span size=""small"">";
+      Pango_Markup_To_Open_1 : constant String
+        := "<span size=""small"" foreground=""";
+      Pango_Markup_To_Open_2 : constant String := """>";
       Pango_Markup_To_Close : constant String := " </span>";
    begin
       case Coverage.Coverage is
-         when 0 => return new String'(Pango_Markup_To_Open
-                                      & "never executed"
+         when 0 => return new String'(Pango_Markup_To_Open_1
+                                      & "red"
+                                      & Pango_Markup_To_Open_2
+                                      & " not covered "
                                       & Pango_Markup_To_Close);
-         when 1 => return new String'(Pango_Markup_To_Open
-                                      & "    1 execution "
+         when 1 => return new String'(Pango_Markup_To_Open_1
+                                      & "black"
+                                      & Pango_Markup_To_Open_2
+                                      & " 1 time "
                                       & Pango_Markup_To_Close);
          when others =>
-            return new String'(Pango_Markup_To_Open
+            return new String'(Pango_Markup_To_Open_1
+              & "black"
+              & Pango_Markup_To_Open_2
               & Image (Coverage.Coverage, Int_Image_Padding)
-              & " executions"
+              & " times"
               & Pango_Markup_To_Close);
       end case;
    end Line_Coverage_Info;
