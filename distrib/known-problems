@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.1.0
 
+- F921-003 Multiple views are not auto-saved
+  Problem:    Let's assume the Editor/Auto saved preference is enabled. If
+              you try to compile a file whose source buffer is modified and
+              there are at least two views of this buffer, GPS does not
+              automatically save the buffer.
+  Workaround: You can close the redundant views or manually save the buffer
+              before compiling.
+
 - F913-006 Fix links to global routines in Python Extensions documentation
   Problem:    If you select the menu Help/Python Extensions, and click on a
               link to a global routine like GPS.current_context, the link was
