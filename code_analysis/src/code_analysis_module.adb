@@ -45,6 +45,13 @@ with GPS.Location_View;         use GPS.Location_View;
 
 package body Code_Analysis_Module is
 
+   Src_File_Cst : aliased constant String := "src";
+   --  Constant string that represents the name of the source file parameter
+   --  of the GPS.CodeAnalysis.add_gcov_info subprogram
+   Cov_File_Cst : aliased constant String := "cov";
+   --  Constant string that represents the name of the .gcov file parameter
+   --  of the GPS.CodeAnalysis.add_gcov_info subprogram
+
    ------------
    -- Create --
    ------------
@@ -76,29 +83,49 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Command);
       Property      : Code_Analysis_Class_Record;
       Instance      : Class_Instance;
-      VFS_Src_File  : VFS.Virtual_File;
-      VFS_Cov_File  : VFS.Virtual_File;
       File_Contents : GNAT.OS_Lib.String_Access;
       Project_Name  : Project_Type;
       Project_Node  : Project_Access;
-      Src_File_Name : constant String := Nth_Arg (Data, 2);
-      Cov_File_Name : constant String := Nth_Arg (Data, 3);
+      Src_File      : Class_Instance;
+      Cov_File      : Class_Instance;
+      VFS_Src_File  : VFS.Virtual_File;
+      VFS_Cov_File  : VFS.Virtual_File;
       File_Node     : Code_Analysis.File_Access;
    begin
       Instance      := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property      := Code_Analysis_Class_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
-      VFS_Src_File  := Create (Src_File_Name);
+
+      Name_Parameters (Data, (2 => Src_File_Cst'Access,
+                              3 => Cov_File_Cst'Access));
+
+      Src_File := Nth_Arg
+           (Data, 2, Get_File_Class (Code_Analysis_Module_ID.Kernel),
+            Default => No_Class_Instance, Allow_Null => True);
+
+      if Src_File = No_Class_Instance then
+         VFS_Src_File := VFS.No_File;
+      else
+         VFS_Src_File := Get_Data (Src_File);
+      end if;
 
       if not Is_Regular_File (VFS_Src_File) then
-         Set_Error_Msg (Data, Src_File_Name & " doesn't exists");
+         Set_Error_Msg (Data, "The name given for 'src' file is wrong");
          return;
       end if;
 
-      VFS_Cov_File  := Create (Cov_File_Name);
+      Cov_File := Nth_Arg
+           (Data, 3, Get_File_Class (Code_Analysis_Module_ID.Kernel),
+            Default => No_Class_Instance, Allow_Null => True);
+
+      if Cov_File = No_Class_Instance then
+         VFS_Cov_File := VFS.No_File;
+      else
+         VFS_Cov_File := Get_Data (Cov_File);
+      end if;
 
       if not Is_Regular_File (VFS_Cov_File) then
-         Set_Error_Msg (Data, Cov_File_Name & " doesn't exists");
+         Set_Error_Msg (Data, "The name given for 'cov' file is wrong");
          return;
       end if;
 
@@ -117,6 +144,10 @@ package body Code_Analysis_Module is
       Free (File_Contents);
       GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
                                        Instance_Property_Record (Property));
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Add_Gcov_Info;
 
    ----------------------------
