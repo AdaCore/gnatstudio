@@ -557,7 +557,7 @@ package body Completion_Module is
    is
       M             : Completion_Module_Access renames Completion_Module;
       Widget        : constant Gtk_Widget :=
-        Get_Current_Focus_Widget (Command.Kernel);
+                        Get_Current_Focus_Widget (Command.Kernel);
       View          : Source_View;
       Shell_Command : Editor_Replace_Slice;
       Iter          : Gtk_Text_Iter;
@@ -579,6 +579,10 @@ package body Completion_Module is
       then
          View   := Source_View (Widget);
          Buffer := Source_Buffer (Get_Buffer (View));
+      end if;
+
+      if not Get_Writable (Buffer) then
+         return Commands.Failure;
       end if;
 
       if Command.Smart_Completion then
