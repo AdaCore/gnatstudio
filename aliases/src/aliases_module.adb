@@ -983,8 +983,8 @@ package body Aliases_Module is
       elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
          if Get_Editable (Gtk_Text_View (W)) then
             declare
-               Buffer     : constant Gtk_Text_Buffer := Get_Buffer
-                 (Gtk_Text_View (W));
+               Buffer     : constant Gtk_Text_Buffer :=
+                              Get_Buffer (Gtk_Text_View (W));
                First_Iter : Gtk_Text_Iter;
                Last_Iter  : Gtk_Text_Iter;
                Line_Start : Gtk_Text_Iter;
@@ -1007,23 +1007,25 @@ package body Aliases_Module is
                end loop;
 
                declare
-                  Cursor  : aliased Integer;
+                  Cursor        : aliased Integer;
                   Must_Reindent : aliased Boolean;
-                  Column  : constant Gint := Get_Line_Offset (First_Iter);
-                  Replace : constant String := Expand_Alias
-                    (Command.Kernel,
-                     Get_Slice (Buffer, First_Iter, Last_Iter),
-                     Cursor'Unchecked_Access,
-                     Must_Reindent'Unchecked_Access,
-                     Column);
-                  Result  : Boolean;
-                  Event   : Gdk_Event;
-                  Args    : Argument_List (1 .. 2);
-                  Count   : Natural := 0;
-                  Index   : Natural := Replace'First;
-                  Start_Line : constant Integer :=
-                    Integer (Get_Line (First_Iter));
-
+                  Column        : constant Gint :=
+                                    Get_Line_Offset (First_Iter);
+                  Replace       : constant String :=
+                                    Expand_Alias
+                                      (Command.Kernel,
+                                       Get_Slice
+                                         (Buffer, First_Iter, Last_Iter),
+                                       Cursor'Unchecked_Access,
+                                       Must_Reindent'Unchecked_Access,
+                                       Column);
+                  Result        : Boolean;
+                  Event         : Gdk_Event;
+                  Args          : Argument_List (1 .. 2);
+                  Count         : Natural := 0;
+                  Index         : Natural := Replace'First;
+                  Start_Line    : constant Integer :=
+                                    Integer (Get_Line (First_Iter));
                begin
                   if Replace /= "" then
                      Had_Focus := Has_Focus_Is_Set (W);
