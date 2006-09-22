@@ -1191,7 +1191,7 @@ package body Src_Editor_Module.Shell is
             Real_Col : Character_Offset_Type;
          begin
             if Editor /= null then
-               if Get_Writable (Editor) then
+               if Get_Writable (Get_Buffer (Editor)) then
                   Real_Col := Collapse_Tabs
                     (Get_Buffer (Editor),
                      Editable_Line_Type (Line),
@@ -2065,8 +2065,12 @@ package body Src_Editor_Module.Shell is
          if Buffer /= null then
             Get_Location (Iter, Data, 2, Default => Iter);
             if Get_Buffer (Iter) = Gtk_Text_Buffer (Buffer) then
-               Insert (Buffer, Iter, Nth_Arg (Data, 3));
-               End_Action (Buffer);
+               if Get_Writable (Buffer) then
+                  Insert (Buffer, Iter, Nth_Arg (Data, 3));
+                  End_Action (Buffer);
+               else
+                  Set_Error_Msg (Data, -"Buffer is not writable");
+               end if;
             else
                Set_Error_Msg (Data, -"Location is not in the same buffer");
             end if;
@@ -2077,8 +2081,12 @@ package body Src_Editor_Module.Shell is
          Get_Buffer (Buffer, Data, 1);
          Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
          if Buffer /= null then
-            Delete (Buffer, Iter, Iter2);
-            End_Action (Buffer);
+            if Get_Writable (Buffer) then
+               Delete (Buffer, Iter, Iter2);
+               End_Action (Buffer);
+            else
+               Set_Error_Msg (Data, -"Buffer is not writable");
+            end if;
          end if;
 
       elsif Command = "copy"
@@ -2097,8 +2105,12 @@ package body Src_Editor_Module.Shell is
                if Command = "copy" then
                   Copy_Clipboard (Get_Clipboard (Kernel), Buffer);
                else
-                  Cut_Clipboard (Get_Clipboard (Kernel), Buffer);
-                  End_Action (Buffer);
+                  if Get_Writable (Buffer) then
+                     Cut_Clipboard (Get_Clipboard (Kernel), Buffer);
+                     End_Action (Buffer);
+                  else
+                     Set_Error_Msg (Data, -"Buffer is not writable");
+                  end if;
                end if;
                if Append then
                   Merge_Clipboard (Get_Clipboard (Kernel), 1, 2);
@@ -2113,9 +2125,13 @@ package body Src_Editor_Module.Shell is
          if Get_Buffer (Iter) /= Gtk_Text_Buffer (Buffer) then
             Set_Error_Msg (Data, -"Location is not in the same buffer");
          elsif Buffer /= null then
-            Place_Cursor (Buffer, Iter);
-            Paste_Clipboard (Get_Clipboard (Kernel), Buffer);
-            End_Action (Buffer);
+            if Get_Writable (Buffer) then
+               Place_Cursor (Buffer, Iter);
+               Paste_Clipboard (Get_Clipboard (Kernel), Buffer);
+               End_Action (Buffer);
+            else
+               Set_Error_Msg (Data, -"Buffer is not writable");
+            end if;
          end if;
 
       elsif Command = "blocks_fold" then
@@ -2148,14 +2164,18 @@ package body Src_Editor_Module.Shell is
          Get_Buffer (Buffer, Data, 1);
          Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
          if Buffer /= null then
-            Select_Region
-              (Buffer,
-               Start_Line   => Get_Line (Iter),
-               Start_Column => Get_Line_Offset (Iter),
-               End_Line     => Get_Line (Iter2),
-               End_Column   => Get_Line_Offset (Iter2));
-            if not Do_Refill (Buffer) then
-               Set_Error_Msg (Data, -"Error while refilling buffer");
+            if Get_Writable (Buffer) then
+               Select_Region
+                 (Buffer,
+                  Start_Line   => Get_Line (Iter),
+                  Start_Column => Get_Line_Offset (Iter),
+                  End_Line     => Get_Line (Iter2),
+                  End_Column   => Get_Line_Offset (Iter2));
+               if not Do_Refill (Buffer) then
+                  Set_Error_Msg (Data, -"Error while refilling buffer");
+               end if;
+            else
+               Set_Error_Msg (Data, -"Buffer is not writable");
             end if;
          end if;
          End_Action (Buffer);
@@ -2232,11 +2252,19 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "undo" then
          Get_Buffer (Buffer, Data, 1);
-         Undo (Buffer);
+         if Get_Writable (Buffer) then
+            Undo (Buffer);
+         else
+            Set_Error_Msg (Data, -"Buffer is not writable");
+         end if;
 
       elsif Command = "redo" then
          Get_Buffer (Buffer, Data, 1);
-         Redo (Buffer);
+         if Get_Writable (Buffer) then
+            Redo (Buffer);
+         else
+            Set_Error_Msg (Data, -"Buffer is not writable");
+         end if;
 
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
@@ -2682,7 +2710,7 @@ package body Src_Editor_Module.Shell is
       elsif Command = "is_read_only" then
          Get_Box (Box, Data, 1);
          if Box /= null then
-            Set_Return_Value (Data, not Get_Writable (Box));
+            Set_Return_Value (Data, not Get_Writable (Get_Buffer (Box)));
          end if;
 
       elsif Command = "center" then
