@@ -2482,4 +2482,25 @@ package body Src_Editor_Box is
       end;
    end Get_Views;
 
+   -----------------------
+   -- Needs_To_Be_Saved --
+   -----------------------
+
+   function Needs_To_Be_Saved
+     (Box    : not null access Source_Editor_Box_Record;
+      Single : Boolean) return Boolean is
+   begin
+      if not Needs_To_Be_Saved (Box.Source_Buffer) then
+         return False;
+      else
+         declare
+            Views : constant Views_Array := Get_Views (Box.Source_Buffer);
+         begin
+            return Views'Length = 1
+              or else (not Single
+                       and then Box = Views (Views'First));
+         end;
+      end if;
+   end  Needs_To_Be_Saved;
+
 end Src_Editor_Box;

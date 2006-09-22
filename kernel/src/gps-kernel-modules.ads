@@ -198,12 +198,15 @@ package GPS.Kernel.Modules is
    --  then indicates whether the save was successful (True), or failed (False)
 
    function Save_Function
-     (Module : access Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget;
-      Mode   : Save_Function_Mode) return Boolean;
+     (Module       : access Module_ID_Record;
+      Child        : Gtk.Widget.Gtk_Widget;
+      Mode         : Save_Function_Mode;
+      Single_Child : Boolean) return Boolean;
    --  A function called when the kernel asks a MDI child to save itself.
    --  See the description of Mode for the description of the modes.
    --  Child is the widget that put directly in the MDI.
+   --  Single_Child is True if only one child is being saved, False otherwise.
+   --  This is needed to know whether a source editor box should be saved.
    --  Should return True if the Child needs to be saved (in Query mode), or
    --  if the child could be saved with success (in Action mode)
 
