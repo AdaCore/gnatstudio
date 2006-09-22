@@ -136,6 +136,21 @@ package Src_Editor_Buffer is
    --  If Internal is True, save the file to disk but do not modify the buffer
    --  status.
 
+   procedure Set_Writable
+     (Buffer   : not null access Source_Buffer_Record;
+      Writable : Boolean;
+      Explicit : Boolean);
+   --  Change the writable/read-only status of the buffer
+
+   function Get_Writable
+     (Buffer : not null access Source_Buffer_Record) return Boolean;
+   --  Return True if the buffer is writable, False otherwise
+
+   function Get_Explicit_Writable_Set
+     (Buffer : not null access Source_Buffer_Record) return Boolean;
+   --  Return True if the buffer has been explicitely marked as
+   --  writable/read-only.
+
    procedure Set_Language
      (Buffer : access Source_Buffer_Record;
       Lang   : Language.Language_Access);
@@ -1176,6 +1191,14 @@ private
 
       Blocks_Exact : Boolean := False;
       --  Whether the blocks information is exact
+
+      Writable : Boolean := True;
+      --  Whether the buffer is currently writable or read-only
+
+      Explicit_Writable_Set : Boolean := False;
+      --  Whether the user has manually toggled the editor read-only
+      --  or writable
+
    end record;
 
    procedure Emit_By_Name
