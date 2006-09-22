@@ -227,6 +227,10 @@ package body Code_Analysis is
 
    procedure Free_Line (Line_Node : in out Line'Class) is
    begin
+      if Line_Node.Contents /= null then
+         Free (Line_Node.Contents);
+      end if;
+
       Free_Analysis (Line_Node.Analysis_Data);
    end Free_Line;
 
