@@ -977,8 +977,8 @@ package body Src_Editor_Box is
    is
       Editor : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
-      Editor.Explicit_Writable_Set := True;
-      Set_Writable (Editor, not Editor.Writable);
+      Set_Writable
+        (Editor, not Get_Writable (Editor.Source_Buffer), Explicit => True);
 
       return False;
 
@@ -1048,7 +1048,7 @@ package body Src_Editor_Box is
       end if;
 
       --  Connect the Undo/Redo buttons to the buffer
-      if B.Writable then
+      if Get_Writable (B.Source_Buffer) then
          Add_Controls (B.Source_Buffer);
       else
          Remove_Controls (B.Source_Buffer);
@@ -1662,10 +1662,9 @@ package body Src_Editor_Box is
       Initialize
         (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
          Get_Language (Source.Source_Buffer));
-      Box.Writable := Source.Writable;
       Set_Text (Box.Modified_Label, Get_Text (Source.Modified_Label));
 
-      if Box.Writable then
+      if Get_Writable (Box.Source_Buffer) then
          Set_Text (Box.Read_Only_Label, -"Writable");
       else
          Set_Text (Box.Read_Only_Label, -"Read Only");
@@ -1700,7 +1699,9 @@ package body Src_Editor_Box is
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record) is
    begin
-      if Read_Only_Set or else Editor.Explicit_Writable_Set then
+      if Read_Only_Set
+        or else Get_Explicit_Writable_Set (Editor.Source_Buffer)
+      then
          return;
       end if;
 
@@ -1709,12 +1710,13 @@ package body Src_Editor_Box is
       --  Add_Controls/Remove_Controls introduce Storage_Error's in
       --  Commands.Undo.
 
-      Editor.Writable := Get_Filename (Editor.Source_Buffer) = VFS.No_File
-        or else Is_Writable (Get_Filename (Editor.Source_Buffer))
-        or else (not Is_Regular_File (Get_Filename (Editor.Source_Buffer))
-                 and then Editor.Writable);
+      Set_Writable
+        (Editor, Get_Filename (Editor.Source_Buffer) = VFS.No_File
+         or else Is_Writable (Get_Filename (Editor.Source_Buffer))
+         or else (not Is_Regular_File (Get_Filename (Editor.Source_Buffer))
+           and then Get_Writable (Editor.Source_Buffer)));
 
-      if Editor.Writable then
+      if Get_Writable (Editor.Source_Buffer) then
          Set_Text (Editor.Read_Only_Label, -"Writable");
          Set_Editable (Editor.Source_View, True);
       else
@@ -1769,8 +1771,7 @@ package body Src_Editor_Box is
       Set_Filename (Editor.Source_Buffer, Filename);
       Set_Charset (Editor.Source_Buffer, Get_File_Charset (Filename));
       Set_Text (Editor.Modified_Label, -"Unmodified");
-
-      Editor.Writable := True;
+      Set_Writable (Editor.Source_Buffer, Writable => True, Explicit => False);
       Set_Text (Editor.Read_Only_Label, -"Writable");
    end Load_Empty_File;
 
@@ -1800,7 +1801,7 @@ package body Src_Editor_Box is
       --  Do not authorize saving a read-only file, unless we save it to
       --  another disk file.
 
-      if not Editor.Writable
+      if not Get_Writable (Editor.Source_Buffer)
         and then Filename = VFS.No_File
       then
          Success := False;
@@ -2381,7 +2382,7 @@ package body Src_Editor_Box is
 
    procedure Undo (Editor : access Source_Editor_Box_Record) is
    begin
-      if Editor.Writable then
+      if Get_Writable (Editor.Source_Buffer) then
          Undo (Editor.Source_Buffer);
       end if;
    end Undo;
@@ -2392,7 +2393,7 @@ package body Src_Editor_Box is
 
    procedure Redo (Editor : access Source_Editor_Box_Record) is
    begin
-      if Editor.Writable then
+      if Get_Writable (Editor.Source_Buffer) then
          Redo (Editor.Source_Buffer);
       end if;
    end Redo;
@@ -2418,33 +2419,32 @@ package body Src_Editor_Box is
    end Get_Buffer;
 
    ------------------
-   -- Get_Writable --
-   ------------------
-
-   function Get_Writable
-     (Editor : access Source_Editor_Box_Record) return Boolean is
-   begin
-      return Editor.Writable;
-   end Get_Writable;
-
-   ------------------
    -- Set_Writable --
    ------------------
 
    procedure Set_Writable
      (Editor   : access Source_Editor_Box_Record;
-      Writable : Boolean) is
+      Writable : Boolean;
+      Explicit : Boolean := False)
+   is
+      Views       : constant Views_Array := Get_Views (Editor.Source_Buffer);
+      Is_Writable : Boolean;
    begin
-      Editor.Writable := Writable;
-      Set_Editable (Editor.Source_View, Editor.Writable);
+      Set_Writable (Editor.Source_Buffer, Writable, Explicit);
 
-      if Editor.Writable then
-         Set_Text (Editor.Read_Only_Label, -"Writable");
-         Add_Controls (Editor.Source_Buffer);
-      else
-         Set_Text (Editor.Read_Only_Label, -"Read Only");
-         Remove_Controls (Editor.Source_Buffer);
-      end if;
+      Is_Writable := Get_Writable (Editor.Source_Buffer);
+
+      for V in Views'Range loop
+         Set_Editable (Views (V).Source_View, Writable);
+
+         if Is_Writable then
+            Set_Text (Views (V).Read_Only_Label, -"Writable");
+            Add_Controls (Views (V).Source_Buffer);
+         else
+            Set_Text (Views (V).Read_Only_Label, -"Read Only");
+            Remove_Controls (Views (V).Source_Buffer);
+         end if;
+      end loop;
    end Set_Writable;
 
    ---------------
