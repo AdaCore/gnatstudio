@@ -595,7 +595,7 @@ package body Code_Analysis_Module is
                  (Kernel    => Code_Analysis_Module_ID.Kernel,
                   Category  => Coverage_Category,
                   File      => File_Node.Name,
-                  Text      => -"Line not covered",
+                  Text      => File_Node.Lines (J).Contents.all,
                   Line      => J,
                   Column    => 1,
                   Highlight => True,
