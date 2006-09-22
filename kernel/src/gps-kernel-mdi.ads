@@ -47,10 +47,6 @@ package GPS.Kernel.MDI is
    --  The main usage for this function should be to display the dialogs
    --  centered with regards to this window.
 
-   ------------
-   -- Saving --
-   ------------
-
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with private;
    type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
    --  Base record for all MDI children that go into the MDI
