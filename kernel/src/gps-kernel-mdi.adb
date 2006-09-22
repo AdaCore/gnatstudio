@@ -258,7 +258,10 @@ package body GPS.Kernel.MDI is
          Module := Get_Module_From_Child (Child);
 
          if Module /= null
-           and then Save_Function (Module, Get_Widget (Child), Mode => Query)
+           and then Save_Function
+             (Module, Get_Widget (Child),
+              Mode         => Query,
+              Single_Child => Children'Length = 1)
          then
             Append (Model, It, Null_Iter);
             Set (Model, It, 0, True);
@@ -276,7 +279,9 @@ package body GPS.Kernel.MDI is
       begin
          if Module /= null then
             return Save_Function
-              (Module, Get_Widget (Child), Mode => Action);
+              (Module, Get_Widget (Child),
+               Mode         => Action,
+               Single_Child => Children'Length = 1);
          else
             return True;
          end if;
@@ -347,14 +352,14 @@ package body GPS.Kernel.MDI is
                      Title  => -"Confirmation",
                      Parent => Get_Current_Window (Handle),
                      Flags  => Modal or Destroy_With_Parent);
-            Gtk_New (Label, -"Do you want to save the following file ?");
+            Gtk_New (Label, -"Do you want to save the following file?");
 
          else
             Gtk_New (Dialog,
                      Title  => -"Saving files",
                      Parent => Get_Current_Window (Handle),
                      Flags  => Modal or Destroy_With_Parent);
-            Gtk_New (Label, -"Do you want to save the following files ?");
+            Gtk_New (Label, -"Do you want to save the following files?");
          end if;
 
          Set_Alignment (Label, 0.0, 0.0);
