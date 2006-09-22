@@ -96,14 +96,13 @@ package Src_Editor_Box is
       return Src_Editor_Buffer.Source_Buffer;
    --  Return the source buffer associated with the box
 
-   function Get_Writable
-     (Editor : access Source_Editor_Box_Record) return Boolean;
-   --  Return whether the Editor is writable.
-
    procedure Set_Writable
      (Editor   : access Source_Editor_Box_Record;
-      Writable : Boolean);
-   --  Change the writable status of the editor.
+      Writable : Boolean;
+      Explicit : Boolean := False);
+   --  Change the writable status of the editor (the underlying buffer
+   --  actually). Explicit should be True when it is an explicit query from
+   --  the customer.
 
    procedure Read_Only_By_Default (State : Boolean := True);
    --  If State if True, this will set the Writable state of new
@@ -457,12 +456,6 @@ private
       Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
 
       --  The non graphical attributes
-
-      Writable             : Boolean := True;
-
-      Explicit_Writable_Set : Boolean := False;
-      --  Whether the user has manually toggled the editor read-only
-      --  or writable
 
       Overwrite            : Boolean := False;
 
