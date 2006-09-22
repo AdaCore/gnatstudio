@@ -393,6 +393,13 @@ package Src_Editor_Box is
    procedure Redo (Editor : access Source_Editor_Box_Record);
    --  Undo/Redo last edit command.
 
+   function Needs_To_Be_Saved
+     (Box    : not null access Source_Editor_Box_Record;
+      Single : Boolean) return Boolean;
+   --  Return True in case the underlying buffer needs to be saved and there is
+   --  either only one view or Single is False and the box is the last that had
+   --  the focus. False is returned otherwise.
+
 private
 
    function To_Box_Line
