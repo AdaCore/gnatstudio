@@ -3599,8 +3599,9 @@ package body Src_Editor_Buffer is
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
-      if not Buffer.Inserting then
+      if not Buffer.Writable then
          End_Action (Buffer);
+         return;
       end if;
 
       if not Enable_Undo then
@@ -3626,6 +3627,11 @@ package body Src_Editor_Buffer is
    is
       Buffer_Line : Buffer_Line_Type;
    begin
+      if not Buffer.Writable then
+         End_Action (Buffer);
+         return;
+      end if;
+
       Unfold_Line (Buffer, Line);
       Buffer_Line := Get_Buffer_Line (Buffer, Line);
 
@@ -3727,6 +3733,11 @@ package body Src_Editor_Buffer is
       Buffer_Line : Buffer_Line_Type;
 
    begin
+      if not Buffer.Writable then
+         End_Action (Buffer);
+         return;
+      end if;
+
       Unfold_Line (Buffer, Line);
       Buffer_Line := Get_Buffer_Line (Buffer, Line);
 
@@ -3799,6 +3810,11 @@ package body Src_Editor_Buffer is
    is
       Buffer_Start_Line, Buffer_End_Line : Buffer_Line_Type;
    begin
+      if not Buffer.Writable then
+         End_Action (Buffer);
+         return;
+      end if;
+
       for J in Start_Line .. End_Line loop
          Unfold_Line (Buffer, J);
       end loop;
@@ -4299,11 +4315,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class)
       return Boolean is
    begin
-      --  We never need to save the multiple views, only the last remaining one
-      --  Note that this is different from the Modified attribute for the
-      --  buffer.
-      return Buffer.Number_Of_Views = 1
-        and then Get_Status (Buffer) = Modified;
+      return Get_Status (Buffer) = Modified;
    end Needs_To_Be_Saved;
 
    ----------------
@@ -4601,6 +4613,11 @@ package body Src_Editor_Buffer is
       Iter, End_Pos : Gtk_Text_Iter;
       Result : Boolean;
    begin
+      if not Buffer.Writable then
+         End_Action (Buffer);
+         return False;
+      end if;
+
       Get_Selection_Bounds (Buffer, Iter, End_Pos, Result);
 
       if not Current_Line_Only and then Result then
@@ -4780,6 +4797,11 @@ package body Src_Editor_Buffer is
       end Replace_Text;
 
    begin  --  Do_Indentation
+      if not Buffer.Writable then
+         End_Action (Buffer);
+         return False;
+      end if;
+
       if not Get_Language_Context (Lang).Can_Indent then
          return False;
       end if;
@@ -5345,6 +5367,11 @@ package body Src_Editor_Buffer is
       end Is_Empty;
 
    begin -- Do_Refill
+      if not Buffer.Writable then
+         End_Action (Buffer);
+         return False;
+      end if;
+
       declare
          Result : Boolean;
       begin
@@ -5819,8 +5846,8 @@ package body Src_Editor_Buffer is
       Count   : Character_Offset_Type := 1;
       Current : Visible_Column_Type := 1;
       Result  : Boolean := True;
-      Tab_Len : constant Visible_Column_Type := Visible_Column_Type
-        (Buffer.Tab_Width);
+      Tab_Len : constant Visible_Column_Type :=
+                  Visible_Column_Type (Buffer.Tab_Width);
       J       : Natural;
    begin
       case Buffer.Editable_Lines (Line).Where is
@@ -5961,5 +5988,38 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.Constructs_State;
    end Get_Constructs_State;
+
+   ------------------
+   -- Set_Writable --
+   ------------------
+
+   procedure Set_Writable
+     (Buffer   : not null access Source_Buffer_Record;
+      Writable : Boolean;
+      Explicit : Boolean) is
+   begin
+      Buffer.Writable := Writable;
+      Buffer.Explicit_Writable_Set := Explicit;
+   end Set_Writable;
+
+   ------------------
+   -- Get_Writable --
+   ------------------
+
+   function Get_Writable
+     (Buffer : not null access Source_Buffer_Record) return Boolean is
+   begin
+      return Buffer.Writable;
+   end Get_Writable;
+
+   -------------------------------
+   -- Get_Explicit_Writable_Set --
+   -------------------------------
+
+   function Get_Explicit_Writable_Set
+     (Buffer : not null access Source_Buffer_Record) return Boolean is
+   begin
+      return Buffer.Explicit_Writable_Set;
+   end Get_Explicit_Writable_Set;
 
 end Src_Editor_Buffer;
