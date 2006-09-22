@@ -1023,9 +1023,10 @@ package body Src_Editor_Module is
    -------------------
 
    function Save_Function
-     (Module : access Source_Editor_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget;
-      Mode   : Save_Function_Mode) return Boolean
+     (Module       : access Source_Editor_Module_Record;
+      Child        : Gtk.Widget.Gtk_Widget;
+      Mode         : Save_Function_Mode;
+      Single_Child : Boolean) return Boolean
    is
       pragma Unreferenced (Module);
       Success : Boolean;
@@ -1033,10 +1034,10 @@ package body Src_Editor_Module is
    begin
       case Mode is
          when Query =>
-            return Needs_To_Be_Saved (Get_Buffer (Box));
+            return Needs_To_Be_Saved (Box, Single_Child);
 
          when Action =>
-            if Needs_To_Be_Saved (Get_Buffer (Box)) then
+            if Needs_To_Be_Saved (Box, Single_Child) then
                Save_To_File (Box, Success => Success);
                return Success;
             else

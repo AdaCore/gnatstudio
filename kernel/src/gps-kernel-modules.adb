@@ -263,11 +263,12 @@ package body GPS.Kernel.Modules is
    -------------------
 
    function Save_Function
-     (Module : access Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget;
-      Mode   : Save_Function_Mode) return Boolean
+     (Module       : access Module_ID_Record;
+      Child        : Gtk.Widget.Gtk_Widget;
+      Mode         : Save_Function_Mode;
+      Single_Child : Boolean) return Boolean
    is
-      pragma Unreferenced (Module, Child, Mode);
+      pragma Unreferenced (Module, Child, Mode, Single_Child);
    begin
       return False;
    end Save_Function;

@@ -253,9 +253,10 @@ private
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
    function Save_Function
-     (Module : access Source_Editor_Module_Record;
-      Child  : Gtk.Widget.Gtk_Widget;
-      Mode   : Save_Function_Mode) return Boolean;
+     (Module       : access Source_Editor_Module_Record;
+      Child        : Gtk.Widget.Gtk_Widget;
+      Mode         : Save_Function_Mode;
+      Single_Child : Boolean) return Boolean;
    procedure Customize
      (Module : access Source_Editor_Module_Record;
       File   : VFS.Virtual_File;
