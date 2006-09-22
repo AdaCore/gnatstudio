@@ -125,10 +125,11 @@ package Code_Analysis is
    --  Line, Subprogram, File, Project
 
    type Line is new Node with record
-      Number : Natural;
+      Number   : Natural;
+      Contents : String_Access;
    end record;
 
-   Null_Line : constant Line := (Node with Number => 0);
+   Null_Line : constant Line := (Node with Number => 0, Contents => null);
 
    type Line_Array is array (Positive range <>) of Line;
 
