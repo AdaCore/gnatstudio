@@ -2266,6 +2266,20 @@ package body Src_Editor_Module.Shell is
             Set_Error_Msg (Data, -"Buffer is not writable");
          end if;
 
+      elsif Command = "set_read_only" then
+         Name_Parameters (Data, (1 => Read_Only_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Set_Writable
+              (Buffer, not Nth_Arg (Data, 2, True), Explicit => True);
+         end if;
+
+      elsif Command = "is_read_only" then
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Set_Return_Value (Data, not Get_Writable (Buffer));
+         end if;
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -3092,6 +3106,10 @@ package body Src_Editor_Module.Shell is
         (Kernel, "start_undo_group", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "finish_undo_group", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "set_read_only", 0, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "is_read_only", 0, 0, Buffer_Cmds'Access, EditorBuffer);
 
       --  EditorView
 
