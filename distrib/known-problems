@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.0
 
+- F925-003 Long lines generated when editing a project
+  Problem:    If you edit a project with GPS, it is possible that the resulting
+              file contains lines that are too long for older versions of GNAT
+              (prior to 5.03)
+  Workaround: Manually edit the .gpr file and add newline characters
+
 - F921-003 Multiple views are not auto-saved
   Problem:    Let's assume the Editor/Auto saved preference is enabled. If
               you try to compile a file whose source buffer is modified and
