@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.0.1
 
+- F922-006 Conflict with /usr/lib64 libraries under x86-64 GNU Linux
+  Problem:    Under some x86-64 GNU Linux distributions, some Gtk+ libraries
+              installed under /usr/lib64 may conflict with those needed by
+              GPS.
+  Workaround: Move those conflicting libraries (e.g. libpangocairo-1.0.so.0)
+              out of /usr/lib64.
+
 - F915-009 Smart completion not working with some constructs
   Problem:    In some cases the smart completion will not work properly. This
               happens in particular for subprograms that have several
