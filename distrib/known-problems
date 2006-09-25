@@ -19,7 +19,9 @@ Known Problems fixed in GPS 4.1.0
               do some edition in it by e.g. using the Edit/Comment Lines or the
               Edit/Refill menu, the smart completion widget or the alias
               expansion.
-  Workaround: No known workaround.
+  Workaround: Avoid the above mentioned commands in a read-only editor. Note
+              that in any case, GPS will refuse to save the local changes
+              as long as the file is marked read-only.
 
 - F913-006 Fix links to global routines in Python Extensions documentation
   Problem:    If you select the menu Help/Python Extensions, and click on a
