@@ -4390,6 +4390,20 @@ A number of predefined overlay exits. Among these are the ones used for syntax h
        <description>Redo the last undone command on the editor</description>
   </shell_doc>
 
+  <shell_doc name="GPS.BufferView.is_read_only">
+      <param name="self">An instance of GPS.EditorBuffer</param>
+      <return>A boolean</return>
+      <description>Whether the buffer is editable or not.</description>
+      <see_also name="GPS.EditorBuffer.is_read_only" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.set_read_only">
+      <param name="self">An instance of GPS.EditorBuffer</param>
+      <param name="read_only" default="True">A boolean</param>
+      <description>Indicates whether the user should be able to edit the buffer interactively (through any view).</description>
+      <see_also name="GPS.EditorBuffer.set_read_only" />
+  </shell_doc>
+
   <!--#################################################################
       ### EditorView class
       #################################################################-->
@@ -4415,15 +4429,19 @@ To get a handle on the current editor, use the following code:
   </shell_doc>
 
   <shell_doc name="GPS.EditorView.is_read_only">
+      <obsolescent />
       <param name="self">An instance of GPS.EditorView</param>
       <return>A boolean</return>
-      <description>Whether the view is editable or not. It is possible that some views of a buffer are editable when others are not</description>
+      <description>Whether the view is editable or not. This property is in fact share by all views of the same buffer.</description>
+      <see_also name="GPS.EditorBuffer.is_read_only" />
   </shell_doc>
 
   <shell_doc name="GPS.EditorView.set_read_only">
+      <obsolescent />
       <param name="self">An instance of GPS.EditorView</param>
       <param name="read_only" default="True">A boolean</param>
-      <description>Indicates whether the user should be able to edit interactively through this view. If the parameter is set to False, no edit operation is allowed in this view</description>
+      <description>Indicates whether the user should be able to edit interactively through this view. Setting a view Writable/Read Only will also modified the status of the other views of the same buffer.</description>
+      <see_also name="GPS.EditorBuffer.set_read_only" />
   </shell_doc>
 
   <shell_doc name="GPS.EditorView.center">
