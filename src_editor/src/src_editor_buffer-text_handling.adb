@@ -266,6 +266,10 @@ package body Src_Editor_Buffer.Text_Handling is
       Line_Begin, Line_End     : Editable_Line_Type;
       Column_Begin, Column_End : Character_Offset_Type;
    begin
+      if not Get_Writable (Buffer) then
+         return;
+      end if;
+
       Get_Location
         (Buffer, Line, Column, Before, After,
          Line_Begin, Column_Begin, Line_End, Column_End);
