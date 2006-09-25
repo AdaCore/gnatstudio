@@ -14,6 +14,13 @@ Known Problems fixed in GPS 4.1.0
   Workaround: You can close the redundant views or manually save the buffer
               before compiling.
 
+- F919-009 Edition is allowed for read-only buffers
+  Problem:    Even if an editor is marked as read-only it is still possible to
+              do some edition in it by e.g. using the Edit/Comment Lines or the
+              Edit/Refill menu, the smart completion widget or the alias
+              expansion.
+  Workaround: No known workaround.
+
 - F913-006 Fix links to global routines in Python Extensions documentation
   Problem:    If you select the menu Help/Python Extensions, and click on a
               link to a global routine like GPS.current_context, the link was
