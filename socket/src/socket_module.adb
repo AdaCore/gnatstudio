@@ -480,7 +480,7 @@ package body Socket_Module is
       Socket_Module (Socket_Module_ID).Timeout_Handler :=
         Timeout_Add (100, Timeout_Process_Commands'Access);
       Socket_Module (Socket_Module_ID).Address.Addr :=
-        Addresses (Get_Host_By_Name (Host_Name), 1);
+        Inet_Addr ("127.0.0.1");
 
       --  Get a socket address that is an Internet address and a port
 
