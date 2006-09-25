@@ -1970,6 +1970,10 @@ package body Src_Editor_Module is
             Buffer := Get_Buffer
               (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
 
+            if not Get_Writable (Buffer) then
+               return;
+            end if;
+
             for J in Start_Line .. End_Line loop
                Append (Block, Get_Chars
                          (Buffer   => Buffer,
