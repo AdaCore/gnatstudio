@@ -19,6 +19,11 @@ F725-001 Support for leon-elf toolchain (2006-08-24)
   The project properties editor now lists the leon-elf toolchain as one of
   the choices.
 
+F710-013 Better formatting of the debugger data window items (2006-09-19)
+  The text displayed in the debugger data window items now uses the default
+  fixed font. This allow a better rendering in particular when displaying
+  registers content.
+
 F618-002 Support for python (2006-08-11)
 
   All GPS binaries are now built with python support enabled, allowing
