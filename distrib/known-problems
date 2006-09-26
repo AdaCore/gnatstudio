@@ -4,9 +4,9 @@ Known Problems fixed in GPS 4.0.1
   Problem:    If GPS is closed while a debug session is still running and the
               data window (canvas) is open, the next time GPS will be launched
               the data window will be part of the desktop and right clicking
-              on it might cause unexpected behaviors.
+              on it might cause unexpected behavior.
   Workaround: Either terminate the debug session before closing GPS
-              or make sure to close the data windows if any after starting GPS
+              or make sure to close the data window after starting GPS,
               or avoid right clicking on the data window until a debug session
               is started.
 
