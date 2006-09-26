@@ -4,7 +4,7 @@ clear
 cat <<EOF
 
   This script is provided to simplify the installation of GPS,
-  the GNAT Programming System.
+  the GNAT Programming Studio.
 
   You will be asked for confirmation before the actual installation is
   done. You can break out of this script at any time before this.
