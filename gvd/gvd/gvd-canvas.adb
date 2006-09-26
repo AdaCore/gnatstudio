@@ -1014,22 +1014,27 @@ package body GVD.Canvas is
      (Canvas : access Glib.Object.GObject_Record'Class;
       Event  : Gdk.Event.Gdk_Event)
    is
-      C      : constant GVD_Canvas := GVD_Canvas (Canvas);
-      Iter   : Item_Iterator;
+      C       : constant GVD_Canvas := GVD_Canvas (Canvas);
+      Process : constant Visual_Debugger := Get_Process (C);
+      Iter    : Item_Iterator;
    begin
+      if Process = null then
+         return;
+      end if;
+
       if Get_Button (Event) = 1 then
          Iter := Start (C.Canvas);
          if Get (Iter) /= null then
-            Unselect_All (Get_Process (C));
+            Unselect_All (Process);
          end if;
 
       elsif Get_Button (Event) = 3
         and then Get_Event_Type (Event) = Button_Press
       then
          Popup
-           (Contextual_Background_Menu (Get_Process (C)),
-            Button            => Get_Button (Event),
-            Activate_Time     => Get_Time (Event));
+           (Contextual_Background_Menu (Process),
+            Button        => Get_Button (Event),
+            Activate_Time => Get_Time (Event));
       end if;
 
    exception
@@ -1222,13 +1227,13 @@ package body GVD.Canvas is
       end if;
 
       Canvas.Item_Context.Line_Height := To_Pixels
-        (Get_Size (Get_Pref (Default_Font)));
+        (Get_Size (Get_Pref (View_Fixed_Font)));
 
       Canvas.Item_Context.Big_Item_Height := Get_Pref (Big_Item_Height);
 
       Canvas.Item_Context.Text_Layout := Create_Pango_Layout (Canvas.Canvas);
       Set_Font_Description
-        (Canvas.Item_Context.Text_Layout, Get_Pref (Default_Font));
+        (Canvas.Item_Context.Text_Layout, Get_Pref (View_Fixed_Font));
 
       Canvas.Item_Context.Type_Layout := Create_Pango_Layout (Canvas.Canvas);
       Set_Font_Description
