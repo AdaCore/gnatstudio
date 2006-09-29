@@ -10,6 +10,12 @@ Known Problems fixed in GPS 4.0.1
               or avoid right clicking on the data window until a debug session
               is started.
 
+- F925-003 Long lines generated when editing a project
+  Problem:    If you edit a project with GPS, it is possible that the resulting
+              file contains lines that are too long for older versions of GNAT
+              (prior to 5.03)
+  Workaround: Manually edit the .gpr file and add newline characters
+
 - F922-006 Conflict with /usr/lib64 libraries under x86-64 GNU Linux
   Problem:    Under some x86-64 GNU Linux distributions, some Gtk+ libraries
               installed under /usr/lib64 may conflict with those needed by
