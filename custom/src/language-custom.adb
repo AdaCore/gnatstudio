@@ -405,6 +405,11 @@ package body Language.Custom is
                   A_Lang := A_Lang.Next;
                end loop;
             end if;
+
+            if Lang.Parent /= null then
+               Lang.Indent_Params := Lang.Parent.Indent_Params;
+               Lang.Indent_Style  := Lang.Parent.Indent_Style;
+            end if;
          end;
       end if;
 
