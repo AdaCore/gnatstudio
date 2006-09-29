@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.0
 
+- F929-005 Wrong indentation parameters for .gpr files
+  Problem:    When indenting .gpr files, a default value of 8 is used for
+              the indentation spaces, instead of using the value specified for
+              Ada.
+  Workaround: Fix the indetnation manually by removing the extra spaces
+
 - F925-003 Long lines generated when editing a project
   Problem:    If you edit a project with GPS, it is possible that the resulting
               file contains lines that are too long for older versions of GNAT
