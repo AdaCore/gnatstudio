@@ -97,7 +97,7 @@ package body Src_Editor_Buffer.Line_Information is
               Buffer.Line_Numbers_Width + Natural (Line_Char_Width);
 
             Dummy := Dummy * 10;
-            exit when Dummy >= Buffer.Last_Editable_Line;
+            exit when Dummy > Buffer.Last_Editable_Line;
          end loop;
       else
          Buffer.Line_Numbers_Width := 0;
