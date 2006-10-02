@@ -144,3 +144,10 @@ Known Problems fixed in GPS 4.1.0
               incorrectly displayed in the menus.
   Workaround: Although not visible, the shortcut works as expected
 
+- F407-008 Problem in calculating width of line numbers
+  Problem:    In editors with 10, or 100, or 1000 (etc) lines, the width
+              of the space allocated to displaying the line numbers on the left
+              of editors was not correctly computed, and did not display the
+              leading 1.
+  Workaround: This problem can be safely ignored, and disappears when adding
+              or removing a line.
