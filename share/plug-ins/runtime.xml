@@ -1699,36 +1699,6 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "i-java.ads"</shell>
-   <descr>Interfaces.Java</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Java/&lt;Java&gt;</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-javlan.ads"</shell>
-   <descr>Interfaces.Java.Lang</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Java/Lang/&lt;Lang&gt;</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-jalaob.ads"</shell>
-   <descr>Interfaces.Java.Lang.Object</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Java/Lang/Object</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-jalasy.ads"</shell>
-   <descr>Interfaces.Java.Lang.System</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Java/Lang/System</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-jalath.ads"</shell>
-   <descr>Interfaces.Java.Lang.Thread</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Java/Lang/Thread</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "i-os2lib.ads"</shell>
    <descr>Interfaces.Os2lib</descr>
    <menu>/Help/GNAT Runtime/Interfaces/Os2lib/&lt;Os2lib&gt;</menu>
