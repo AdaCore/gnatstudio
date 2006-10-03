@@ -92,7 +92,7 @@ package Completion is
    --  subprogram. However, this procedure should take care of visibility
    --  problems, and return only the visible possibilities. Offset should be
    --  the offset of the place from where we try to find the corresponding
-   --  identifier, and visiblity will be calculated for this offset.
+   --  identifier, in bytes, and visiblity will be calculated for this offset.
    --  If offset is lower than zero, it means that the completion is done from
    --  the very begining of the file, and therefore nothing from the file
    --  should be extracted.
@@ -233,7 +233,7 @@ package Completion is
    --  to use the one below afterwards, until the completion process is done.
    --  It End_Is_Partial is true, then the position given is possibly an
    --  incomplete identifier. Otherwise, the expression will be analyzed as a
-   --  complete expression.
+   --  complete expression. Start_Offset has to be given in bytes.
 
    procedure Free (Proposal : in out Completion_Proposal) is abstract;
    --  Free the memory associated to the proposal.
