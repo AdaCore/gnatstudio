@@ -21,7 +21,25 @@
 <documentation_file>
    <shell>Editor.edit "a-calend.ads"</shell>
    <descr>Ada.Calendar</descr>
-   <menu>/Help/GNAT Runtime/Ada/Calendar</menu>
+   <menu>/Help/GNAT Runtime/Ada/Calendar/&lt;Calendar&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-calari.ads"</shell>
+   <descr>Ada.Calendar.Arithmetic</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Calendar/Arithmetic</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-calfor.ads"</shell>
+   <descr>Ada.Calendar.Formatting</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Calendar/Formatting</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-catizo.ads"</shell>
+   <descr>Ada.Calendar.Time_Zones</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Calendar/Time__Zones</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -241,6 +259,18 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-dispat.ads"</shell>
+   <descr>Ada.Dispatching</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Dispatching/&lt;Dispatching&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-diroro.ads"</shell>
+   <descr>Ada.Dispatching.Round_Robin</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Dispatching/Round__Robin</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-dynpri.ads"</shell>
    <descr>Ada.Dynamic_Priorities</descr>
    <menu>/Help/GNAT Runtime/Ada/Dynamic__Priorities</menu>
@@ -427,6 +457,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-nucoar.ads"</shell>
+   <descr>Ada.Numerics.Complex_Arrays</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Numerics/Complex__Arrays</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-ncelfu.ads"</shell>
    <descr>Ada.Numerics.Complex_Elementary_Functions</descr>
    <menu>/Help/GNAT Runtime/Ada/Numerics/Complex__Elementary__Functions</menu>
@@ -457,6 +493,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-ngcoar.ads"</shell>
+   <descr>Ada.Numerics.Generic_Complex_Arrays</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Numerics/Generic__Complex__Arrays</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-ngcefu.ads"</shell>
    <descr>Ada.Numerics.Generic_Complex_Elementary_Functions</descr>
    <menu>/Help/GNAT Runtime/Ada/Numerics/Generic__Complex__Elementary__Functions</menu>
@@ -475,6 +517,18 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-ngrear.ads"</shell>
+   <descr>Ada.Numerics.Generic_Real_Arrays</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Numerics/Generic__Real__Arrays</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-nlcoar.ads"</shell>
+   <descr>Ada.Numerics.Long_Complex_Arrays</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Numerics/Long__Complex__Arrays</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-nlcoty.ads"</shell>
    <descr>Ada.Numerics.Long_Complex_Types</descr>
    <menu>/Help/GNAT Runtime/Ada/Numerics/Long__Complex__Types</menu>
@@ -487,6 +541,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-nllcar.ads"</shell>
+   <descr>Ada.Numerics.Long_Long_Complex_Arrays</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Numerics/Long__Long__Complex__Arrays</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-nllcty.ads"</shell>
    <descr>Ada.Numerics.Long_Long_Complex_Types</descr>
    <menu>/Help/GNAT Runtime/Ada/Numerics/Long__Long__Complex__Types</menu>
@@ -496,6 +556,24 @@
    <shell>Editor.edit "a-nllefu.ads"</shell>
    <descr>Ada.Numerics.Long_Long_Elementary_Functions</descr>
    <menu>/Help/GNAT Runtime/Ada/Numerics/Long__Long__Elementary__Functions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-nllrar.ads"</shell>
+   <descr>Ada.Numerics.Long_Long_Real_Arrays</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Numerics/Long__Long__Real__Arrays</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-nlrear.ads"</shell>
+   <descr>Ada.Numerics.Long_Real_Arrays</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Numerics/Long__Real__Arrays</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-nurear.ads"</shell>
+   <descr>Ada.Numerics.Real_Arrays</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Numerics/Real__Arrays</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1075,9 +1153,21 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-ztcoio.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Complex_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Complex__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-ztdeio.ads"</shell>
    <descr>Ada.Wide_Wide_Text_IO.Decimal_IO</descr>
    <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Decimal__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ztedit.ads"</shell>
+   <descr>Ada.Wide_Wide_Text_IO.Editing</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Wide__Wide__Text__IO/Editing</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1423,6 +1513,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "g-sha1.ads"</shell>
+   <descr>GNAT.SHA1</descr>
+   <menu>/Help/GNAT Runtime/GNAT/SHA1</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "g-sestin.ads"</shell>
    <descr>GNAT.Secondary_Stack_Info</descr>
    <menu>/Help/GNAT Runtime/GNAT/Secondary__Stack__Info</menu>
@@ -1540,6 +1636,12 @@
    <shell>Editor.edit "g-wistsp.ads"</shell>
    <descr>GNAT.Wide_String_Split</descr>
    <menu>/Help/GNAT Runtime/GNAT/Wide__String__Split</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-bytswa.ads"</shell>
+   <descr>Gnat.Byte_Swapping</descr>
+   <menu>/Help/GNAT Runtime/Gnat/Byte__Swapping</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
