@@ -6,6 +6,14 @@ Known Problems fixed in GPS 4.1.0
               original line).
   Workaround: The trailing space manually can be removed manually.
 
+- F927-004 Unstability related to block folding
+  Problem:    If you delete the last character in a source editor, then
+              fold a block containing the last buffer line and then try to
+              move the cursor after the last visible line might cause GPS to
+              crash.
+  Workaround: Avoid deleting the last character from the buffer (the line
+              terminator).
+
 - F929-005 Wrong indentation parameters for .gpr files
   Problem:    When indenting .gpr files, a default value of 8 is used for
               the indentation spaces, instead of using the value specified for
