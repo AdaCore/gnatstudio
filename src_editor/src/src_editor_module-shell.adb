@@ -2505,8 +2505,16 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "block_fold" then
          Get_Location (Iter, Data, 1, Default => Iter);
-         Fold_Block (Source_Buffer (Get_Buffer (Iter)),
-                     Editable_Line_Type (Get_Line (Iter)));
+
+         declare
+            Buffer : constant Source_Buffer :=
+                       Source_Buffer (Get_Buffer (Iter));
+         begin
+            Fold_Block
+              (Buffer,
+               Get_Editable_Line (Buffer,
+                 Buffer_Line_Type (Get_Line (Iter) + 1)));
+         end;
 
       elsif Command = "block_unfold" then
          Get_Location (Iter, Data, 1, Default => Iter);
