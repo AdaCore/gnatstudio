@@ -1235,9 +1235,9 @@ package body Src_Editor_Buffer.Line_Information is
       Result               : Boolean;
 
       Buffer_Line : Buffer_Line_Type;
-      Line_Start : Editable_Line_Type;
-      Line_End   : Editable_Line_Type;
-      Iter       : Gtk_Text_Iter;
+      Line_Start  : Editable_Line_Type;
+      Line_End    : Editable_Line_Type;
+      Iter        : Gtk_Text_Iter;
 
       Command    : Unhide_Editable_Lines_Command;
       Number_Of_Lines_Folded : Natural := 0;
@@ -1252,6 +1252,20 @@ package body Src_Editor_Buffer.Line_Information is
 
       Line_Start := Get_Editable_Line (Buffer, Buffer_Line);
       Line_End := Line_Start + Number;
+
+      --  If there is no ASCII.LF at the end of the last line, add one since
+      --  otherwise moving the cursor to the end of the buffer crashes GPS.
+
+      Get_Iter_At_Line
+       (Buffer, Start_Iter, Gint (Get_Buffer_Line (Buffer, Line_End) - 1));
+
+      if not Ends_Line (Start_Iter) then
+         Forward_To_Line_End (Start_Iter, Result);
+      end if;
+
+      if Is_End (Start_Iter) and then Get_Char (Iter) /= ASCII.LF then
+         Insert (Buffer, Start_Iter, "" & ASCII.LF);
+      end if;
 
       --  Disable emitting new cursor positions while we hide lines.
 
@@ -1619,9 +1633,8 @@ package body Src_Editor_Buffer.Line_Information is
       for L in reverse Editable_Lines'First .. Line loop
          if Buffer.Editable_Lines (L).Where = In_Buffer then
             if Buffer.Editable_Lines (L).Side_Info_Data /= null
-              and then Buffer.Editable_Lines
-                (L).Side_Info_Data
-                (Buffer.Block_Highlighting_Column).Info /= null
+              and then Buffer.Editable_Lines (L).Side_Info_Data
+                         (Buffer.Block_Highlighting_Column).Info /= null
             then
                Command :=
                  Buffer.Editable_Lines (L).Side_Info_Data
