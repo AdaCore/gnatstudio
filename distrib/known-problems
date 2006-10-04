@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.0.1
 
+- F927-004 Unstability related to block folding
+  Problem:    If you delete the last character in a source editor, then
+              fold a block containing the last buffer line and then try to
+              move the cursor after the last visible line might cause GPS to
+              crash.
+  Workaround: Avoid deleting the last character from the buffer (the line
+              terminator).
+
 - F926-007: Potential issue with empty debugger data windows
   Problem:    If GPS is closed while a debug session is still running and the
               data window (canvas) is open, the next time GPS will be launched
