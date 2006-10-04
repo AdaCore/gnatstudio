@@ -361,12 +361,6 @@ package body Src_Editor_Buffer is
    --  The caller is responsible for freeing the returned value..
    --  The returned string is UTF8-encoded
 
-   function Get_Buffer_Lines
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type) return Basic_Types.String_Access;
-   --  Return the text from Start_Line to End_Line, included.
-
    procedure Free_Column_Info
      (Column_Info : in out Columns_Config_Access);
    --  Free the info contained in Column_Info;
