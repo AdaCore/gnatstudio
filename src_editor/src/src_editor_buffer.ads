@@ -762,6 +762,12 @@ package Src_Editor_Buffer is
    --  Return the entire editable string.
    --  The caller is responsible for freeing the returned value.
 
+   function Get_Buffer_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type) return Basic_Types.String_Access;
+   --  Return the text from Start_Line to End_Line, included.
+
    function Get_Editable_Line
      (Buffer : access Source_Buffer_Record;
       Line   : File_Line_Type) return Editable_Line_Type;
