@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.0.2
 
+- F929-005 Wrong indentation parameters for .gpr files
+  Problem:    When indenting .gpr files, a default value of 8 is used for
+              the indentation spaces, instead of using the value specified for
+              Ada.
+  Workaround: Fix the indentation manually by removing the extra spaces
+
 - F927-004 Unstability related to block folding
   Problem:    If you delete the last character in a source editor, then
               fold a block containing the last buffer line and then try to
