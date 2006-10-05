@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -21,7 +21,6 @@
 with GNAT.Regpat;           use GNAT.Regpat;
 with Pixmaps_IDE;           use Pixmaps_IDE;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
---  with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with String_Utils;          use String_Utils;
 with C_Analyzer;            use C_Analyzer;
 
@@ -267,6 +266,8 @@ package body Language.C is
       pragma Unreferenced (Lang);
       Index_Start : Natural;
       Index_Last  : Natural;
+      After_Start : Natural;
+      Before_Last : Natural;
    begin
       if Comment then
          --  Append "/* " at the beginning and " */" before the line end.
@@ -304,9 +305,11 @@ package body Language.C is
                return "/* " & Line & " */";
             end if;
          end;
-      else
+      else  --  Uncomment
          for Index in Line'First .. Line'Last - 1 loop
             if Line (Index .. Index + 1) = "//" then
+               --  Single line comment
+
                if Index + 3 <= Line'Last and then
                  Line (Index .. Index + 3) = "//  "
                then
@@ -331,26 +334,45 @@ package body Language.C is
                   return Line (Index + 2 .. Line'Last);
                end if;
             elsif Line (Index .. Index + 1) = "/*" then
+               --  Multiline comment
+
                Index_Last := Index;
                Skip_To_String (Line, Index_Last, "*/");
 
                if Index_Last < Line'Last
                  and then Line (Index_Last .. Index_Last + 1) = "*/"
                then
-                  --  The line contains "*/".
+                  --  The line contains "*/"
+
+                  Index_Start := Index;
+                  After_Start := Index_Start + 2;
+                  Before_Last := Index_Last - 1;
+
+                  if Is_Blank (Line (After_Start))
+                    and then After_Start + 1 < Index_Last
+                  then
+                     After_Start := After_Start + 1;
+                  end if;
+
+                  if Is_Blank (Line (Before_Last))
+                    and then Before_Last - 1 >= After_Start
+                  then
+                     Before_Last := Before_Last - 1;
+                  end if;
+
                   if Clean then
-                     Index_Start := Index + 2;
-                     Skip_Blanks (Line, Index_Start);
-                     return Line (Index_Start .. Index_Last - 1);
+                     Skip_Blanks (Line, After_Start);
+
+                     return Line (After_Start .. Before_Last);
                   end if;
 
                   if Index_Last + 1 < Line'Last then
-                     return Line (Line'First .. Index - 1)
-                       & Line (Index + 3 .. Index_Last - 1)
+                     return Line (Line'First .. Index_Start - 1)
+                       & Line (After_Start .. Before_Last)
                        & Line (Index_Last + 2 .. Line'Last);
                   else
-                     return Line (Line'First .. Index - 1)
-                       & Line (Index + 3 .. Index_Last - 1);
+                     return Line (Line'First .. Index_Start - 1)
+                       & Line (After_Start .. Before_Last);
                   end if;
                else
                   --  There is no "*/" in the line
@@ -368,40 +390,22 @@ package body Language.C is
                   end if;
                end if;
             elsif Line (Index .. Index + 1) = "*/" then
-               return Line (Index + 2 .. Line'Last);
-            end if;
+               --  Characters before the "*/" mark are part of the comment.
+               --  Extract the part after the mark.
 
-            exit when not (Line (Index) = ' ' or else Line (Index) = ASCII.HT);
+               Index_Start := Line'First;
+
+               if Clean then
+                  Skip_Blanks (Line, Index_Start);
+               end if;
+
+               return Line (Index_Start .. Index - 1)
+                 & Line (Index + 2 .. Line'Last);
+            end if;
          end loop;
 
-         --  No mark of a comment start has been found.
-
-         Index_Last := Line'First;
-         Skip_To_String (Line, Index_Last, "*/");
-
-         if Index_Last < Line'Last
-           and then Line (Index_Last .. Index_Last + 1) = "*/"
-         then
-            --  We are on a line ending a multi line comment:
-            --     "     some_code   */   "
-            --  Remove "*/" from the string.
-
-            Index_Start := Line'First;
-            if Clean then
-               Skip_Blanks (Line, Index_Start);
-            end if;
-
-            if Index_Last + 1 < Line'Last then
-               --  There are still characters after "*/" and they should be
-               --  kept (ACSII.LF, ASCII.CR,...).
-               return Line (Index_Start .. Index_Last - 1)
-                 & Line (Index_Last + 2 .. Line'Last);
-            else
-               return Line (Index_Start .. Index_Last - 1);
-            end if;
-         end if;
-
          Index_Start := Line'First;
+
          if Clean then
             Skip_Blanks (Line, Index_Start);
          end if;
