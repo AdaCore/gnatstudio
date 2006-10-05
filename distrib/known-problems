@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.1.0
 
+- F925-005 Instability when commenting a folded block
+  Problem:    Commenting a line that contains a folded block - such a line has
+              a little '+' icon on the left - might cause unexpected behaviors
+  Workaround: Unfold the block before commenting its first line.
+
 - F921-003 Multiple views are not auto-saved
   Problem:    Let's assume the Editor/Auto saved preference is enabled. If
               you try to compile a file whose source buffer is modified and
