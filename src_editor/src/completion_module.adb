@@ -652,12 +652,39 @@ package body Completion_Module is
 
                Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
 
-               Trace (Me_Adv, "Getting completions...");
-               Data.Result := Get_Initial_Completion_List
-                 (Manager      => Data.Manager.all,
-                  Start_Offset => Natural
-                    (Get_Offset (It)) - 1 + Data.The_Text.all'First);
-               Trace (Me_Adv, "Getting completions done");
+               --  The function Get_Initial_Completion_List requires the
+               --  offset of the cursor *in bytes* from the beginning of
+               --  Data.The_Text.all.
+               --  The Gtk functions can only allow retrieval of the cursor
+               --  position *in characters* from the beginning of the
+               --  buffer. Moreover, the Gtk functions cannot be used, since
+               --  inexact if there is block folding involved.
+               --  Therefore, in order to get the cursor position, we use the
+               --  mechanism below.
+               --  ??? This should be optimized somehow.
+
+               declare
+                  Offset : Natural;
+                  Lines  : Basic_Types.String_Access;
+               begin
+                  Lines := Get_Buffer_Lines
+                    (Buffer, 1,
+                     Get_Editable_Line
+                       (Buffer,
+                        Buffer_Line_Type (Get_Line (It) + 1)) - 1);
+
+                  Offset := Lines'Length
+                    + Natural (Get_Line_Index (It))
+                    + Data.The_Text.all'First;
+
+                  Free (Lines);
+
+                  Trace (Me_Adv, "Getting completions...");
+                  Data.Result := Get_Initial_Completion_List
+                    (Manager      => Data.Manager.all,
+                     Start_Offset => Offset);
+                  Trace (Me_Adv, "Getting completions done");
+               end;
 
                --  If the completion list is empty, return without showing
                --  the completions window.
