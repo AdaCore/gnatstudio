@@ -1,5 +1,20 @@
 Known Problems fixed in GPS 4.0.2
 
+- FA03-015 Smart Completion incompatible with block folding
+  Problem:    When using block folding, if an editor contains folded blocks
+              before the cursor, Smart Completion might get an empty or wrong
+              completion list, and might replace the current word at a wrong
+              offset.
+  Workaround: Use standard completion when working with files while using block
+              folding.
+
+- FA02-008 Smart Completion incompatible with UTF-8 characters
+  Problem:    When the editor contains international characters before the
+              cursor, Smart Completion might get a wrong list of completions,
+              or replace the current word at a wrong offset.
+  Workaround: Use standard completion when working with files that contain
+              international characters.
+
 - FA02-002 Space added when commenting and uncommenting C/C++ code
   Problem:    Commenting a single line of a C/C++ file and then uncommenting it
               result in a trailing space being added (in comparison to the
