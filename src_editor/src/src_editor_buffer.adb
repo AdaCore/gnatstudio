@@ -362,12 +362,6 @@ package body Src_Editor_Buffer is
    --  The caller is responsible for freeing the returned value..
    --  The returned string is UTF8-encoded
 
-   function Get_Buffer_Lines
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type) return Basic_Types.String_Access;
-   --  Return the text from Start_Line to End_Line, included.
-
    procedure Free_Column_Info
      (Column_Info : in out Columns_Config_Access);
    --  Free the info contained in Column_Info;
@@ -806,7 +800,7 @@ package body Src_Editor_Buffer is
       if Success then
          C := Get_Char (Current);
 
-         for J in Delimiters'Range loop
+         for J in Delimiters'Range (1) loop
             if Delimiters (J, Closing) = C then
                Delimiter := J;
                exit;
@@ -814,7 +808,7 @@ package body Src_Editor_Buffer is
          end loop;
       end if;
 
-      if Delimiter in Delimiters'Range then
+      if Delimiter in Delimiters'Range (1) then
          Counter    := 0;
          Stack      := 1;
          String_Tag := False;
@@ -847,14 +841,14 @@ package body Src_Editor_Buffer is
       Copy (On_Cursor_Iter, Current);
       C := Get_Char (On_Cursor_Iter);
 
-      for J in Delimiters'Range loop
+      for J in Delimiters'Range (1) loop
          if Delimiters (J, Opening) = C then
             Delimiter := J;
             exit;
          end if;
       end loop;
 
-      if Delimiter in Delimiters'Range then
+      if Delimiter in Delimiters'Range (1) then
          Counter    := 0;
          Stack      := 1;
          String_Tag := False;
