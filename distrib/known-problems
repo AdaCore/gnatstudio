@@ -6,12 +6,6 @@ Known Problems fixed in GPS 4.1.0
               original line).
   Workaround: The trailing space manually can be removed manually.
 
-- F929-005 Wrong indentation parameters for .gpr files
-  Problem:    When indenting .gpr files, a default value of 8 is used for
-              the indentation spaces, instead of using the value specified for
-              Ada.
-  Workaround: Fix the indentation manually by removing the extra spaces
-
 - F921-003 Multiple views are not auto-saved
   Problem:    Let's assume the Editor/Auto saved preference is enabled. If
               you try to compile a file whose source buffer is modified and
