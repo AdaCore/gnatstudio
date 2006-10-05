@@ -521,6 +521,8 @@ package body Completion_Module is
          M.Buffer := Get_Buffer (Get_Source_Box_From_MDI (Get (M.Child)));
          Trace (Me, "Testing new editor : "
                 & Full_Name (Get_Filename (M.Buffer)).all);
+         --  We do not care about untitled editor. Get_File_Identifier should
+         --  be called instead if we did.
 
          if Get_Language (M.Buffer) = null then
             M.Case_Sensitive := True;
@@ -555,7 +557,7 @@ package body Completion_Module is
    is
       M             : Completion_Module_Access renames Completion_Module;
       Widget        : constant Gtk_Widget :=
-        Get_Current_Focus_Widget (Command.Kernel);
+                        Get_Current_Focus_Widget (Command.Kernel);
       View          : Source_View;
       Shell_Command : Editor_Replace_Slice;
       Iter          : Gtk_Text_Iter;
@@ -577,6 +579,10 @@ package body Completion_Module is
       then
          View   := Source_View (Widget);
          Buffer := Source_Buffer (Get_Buffer (View));
+      end if;
+
+      if not Get_Writable (Buffer) then
+         return Commands.Failure;
       end if;
 
       if Command.Smart_Completion then
