@@ -1940,8 +1940,8 @@ package body Src_Editor_Module is
    is
       Context      : constant Selection_Context :=
                        Get_Current_Context (Kernel);
-      Start_Line   : Integer;
-      End_Line     : Integer;
+      Start_Line   : Editable_Line_Type;
+      End_Line     : Editable_Line_Type;
       Buffer       : Source_Buffer;
    begin
       if Has_File_Information (Context)
@@ -1952,11 +1952,19 @@ package body Src_Editor_Module is
             File  : constant Virtual_File := File_Information (Context);
             Block : Unbounded_String := Null_Unbounded_String;
          begin
+            Buffer := Get_Buffer
+              (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
+
+            if not Get_Writable (Buffer) then
+               return;
+            end if;
+
             if Has_Area_Information (Context) then
-               Get_Area (Context, Start_Line, End_Line);
+               Get_Area (Context, Natural (Start_Line), Natural (End_Line));
 
             elsif Has_Line_Information (Context) then
-               Start_Line := Contexts.Line_Information (Context);
+               Start_Line := Editable_Line_Type
+                 (Contexts.Line_Information (Context));
                End_Line   := Start_Line;
             else
                return;
@@ -1967,24 +1975,16 @@ package body Src_Editor_Module is
 
             --  Create a String representing the selected block
 
-            Buffer := Get_Buffer
-              (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
-
-            if not Get_Writable (Buffer) then
-               return;
-            end if;
-
             for J in Start_Line .. End_Line loop
-               Append (Block, Get_Chars
-                         (Buffer   => Buffer,
-                          Line     => Editable_Line_Type (J),
-                          Column   => 1));
+               Append
+                 (Block,
+                  Get_Chars (Buffer => Buffer, Line => J, Column => 1));
             end loop;
 
             Replace_Slice
               (Buffer,
                Text   => Comment_Block (Lang, To_String (Block), Comment),
-               Line   => Editable_Line_Type (Start_Line),
+               Line   => Start_Line,
                Column => 1,
                Before => 0,
                After  => Length (Block));
