@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.0.2
 
+- FA02-002 Space added when commenting and uncommenting C/C++ code
+  Problem:    Commenting a single line of a C/C++ file and then uncommenting it
+              result in a trailing space being added (in comparison to the
+              original line).
+  Workaround: The trailing space can be removed manually.
+
 - F929-005 Wrong indentation parameters for .gpr files
   Problem:    When indenting .gpr files, a default value of 8 is used for
               the indentation spaces, instead of using the value specified for
