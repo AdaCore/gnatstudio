@@ -54,6 +54,10 @@ package body Generic_Views is
       return null;
    end Save_To_XML;
 
+   ------------------
+   -- Simple_Views --
+   ------------------
+
    package body Simple_Views is
 
       Module : Module_ID;
@@ -205,6 +209,7 @@ package body Generic_Views is
             Menu_Name, "", On_Open_View_Access,
             Ref_Item => Before_Menu);
       end Register_Module;
+
    end Simple_Views;
 
 end Generic_Views;
