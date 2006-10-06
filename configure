@@ -4924,6 +4924,13 @@ case "${host}" in
 	OPAQUE_MDI=True
 	HOST_TYPE=Windows
 	;;
+
+      *-darwin* )
+        opsys=darwin
+        PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
+        STRIP_CR=True
+        ;;
+
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
   ;;
