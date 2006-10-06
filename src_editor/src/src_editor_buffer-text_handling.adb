@@ -183,7 +183,7 @@ package body Src_Editor_Buffer.Text_Handling is
    is
       Iter_Begin, Iter_End : Gtk_Text_Iter;
    begin
-      for J in Line_Begin + 1 .. Line_End - 1 loop
+      for J in Line_Begin .. Line_End loop
          Unfold_Line (Buffer, J);
       end loop;
 
