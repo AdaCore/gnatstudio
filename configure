@@ -4863,7 +4863,7 @@ case "${host}" in
 	PRINT_CMD="a2ps"
         ;;
       *-hp-hpux11* )
-	PYTHON_LIBS="-ldld -Wl,-E ${PYTHON_LIBS}"
+	PYTHON_LIBS="-ldld -ldl -Wl,-E ${PYTHON_LIBS}"
         opsys=hpux10
         ;;
     esac
