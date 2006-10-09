@@ -189,6 +189,12 @@ package body Src_Editor_Box is
    --  Open an editor for Filename. Go to Line, Column, or the nearest
    --  occurrence of Entity close by.
 
+   procedure Set_Writable (Views : Views_Array; Writable : Boolean);
+   --  Make the views editable and update their read-only label according to
+   --  Writable.
+   --  The purpose of this procedure is to share some code between the public
+   --  subprograms Set_Writable and Check_Writable.
+
    ----------------------------------
    -- The contextual menu handling --
    ----------------------------------
@@ -1698,6 +1704,7 @@ package body Src_Editor_Box is
    --------------------
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record) is
+      Views : constant Views_Array := Get_Views (Editor.Source_Buffer);
    begin
       if Read_Only_Set
         or else Get_Explicit_Writable_Set (Editor.Source_Buffer)
@@ -1705,25 +1712,33 @@ package body Src_Editor_Box is
          return;
       end if;
 
-      --  ??? It would probably be disirable to replace the following code with
-      --  a call to Set_Writable although the fact that it adds a call to
-      --  Add_Controls/Remove_Controls introduce Storage_Error's in
-      --  Commands.Undo.
-
       Set_Writable
-        (Editor, Get_Filename (Editor.Source_Buffer) = VFS.No_File
-         or else Is_Writable (Get_Filename (Editor.Source_Buffer))
+        (Editor.Source_Buffer,
+         Get_Filename (Editor.Source_Buffer) = VFS.No_File
+         or else VFS.Is_Writable (Get_Filename (Editor.Source_Buffer))
          or else (not Is_Regular_File (Get_Filename (Editor.Source_Buffer))
-           and then Get_Writable (Editor.Source_Buffer)));
+           and then Get_Writable (Editor.Source_Buffer)),
+         Explicit => False);
 
-      if Get_Writable (Editor.Source_Buffer) then
-         Set_Text (Editor.Read_Only_Label, -"Writable");
-         Set_Editable (Editor.Source_View, True);
-      else
-         Set_Text (Editor.Read_Only_Label, -"Read Only");
-         Set_Editable (Editor.Source_View, False);
-      end if;
+      Set_Writable (Views, Get_Writable (Editor.Source_Buffer));
    end Check_Writable;
+
+   ------------------
+   -- Set_Writable --
+   ------------------
+
+   procedure Set_Writable (Views : Views_Array; Writable : Boolean) is
+   begin
+      for V in Views'Range loop
+         Set_Editable (Views (V).Source_View, Writable);
+
+         if Writable then
+            Set_Text (Views (V).Read_Only_Label, -"Writable");
+         else
+            Set_Text (Views (V).Read_Only_Label, -"Read Only");
+         end if;
+      end loop;
+   end Set_Writable;
 
    ---------------
    -- Load_File --
@@ -2434,17 +2449,13 @@ package body Src_Editor_Box is
 
       Is_Writable := Get_Writable (Editor.Source_Buffer);
 
-      for V in Views'Range loop
-         Set_Editable (Views (V).Source_View, Writable);
+      if Is_Writable then
+         Add_Controls (Editor.Source_Buffer);
+      else
+         Remove_Controls (Editor.Source_Buffer);
+      end if;
 
-         if Is_Writable then
-            Set_Text (Views (V).Read_Only_Label, -"Writable");
-            Add_Controls (Views (V).Source_Buffer);
-         else
-            Set_Text (Views (V).Read_Only_Label, -"Read Only");
-            Remove_Controls (Views (V).Source_Buffer);
-         end if;
-      end loop;
+      Set_Writable (Views, Is_Writable);
    end Set_Writable;
 
    ---------------
