@@ -29,8 +29,6 @@ with Traces;         use Traces;
 
 package body Commands.Controls is
 
-   Me : constant Debug_Handle := Create ("Commands.Controls");
-
    type Queue_Change_Command is new Root_Command with record
       The_Queue : Command_Queue;
       UR        : Undo_Redo;
@@ -88,7 +86,9 @@ package body Commands.Controls is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace
+           (Exception_Handle,
+            "Unexpected exception: " & Exception_Information (E));
    end On_Undo;
 
    -------------
@@ -107,7 +107,9 @@ package body Commands.Controls is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace
+           (Exception_Handle,
+            "Unexpected exception: " & Exception_Information (E));
    end On_Redo;
 
    -------------
