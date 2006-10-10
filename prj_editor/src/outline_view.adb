@@ -372,12 +372,12 @@ package body Outline_View is
    is
       pragma Unreferenced (Kernel, Event_Widget, Menu);
       Outline : constant Outline_View_Access := Outline_View_Access (Object);
-      Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (Outline.Tree));
-      Path      : Gtk_Tree_Path;
-      Iter      : Gtk_Tree_Iter;
-      Line      : Integer;
-      Column    : Visible_Column_Type;
+      Model   : constant Gtk_Tree_Store :=
+                  Gtk_Tree_Store (Get_Model (Outline.Tree));
+      Path    : Gtk_Tree_Path;
+      Iter    : Gtk_Tree_Iter;
+      Line    : Integer;
+      Column  : Visible_Column_Type;
    begin
       Iter := Find_Iter_For_Event (Outline.Tree, Model, Event);
 
@@ -481,11 +481,11 @@ package body Outline_View is
      (Outline : access Gtk_Widget_Record'Class;
       Event   : Gdk_Event) return Boolean
    is
-      View : constant Outline_View_Access := Outline_View_Access (Outline);
+      View  : constant Outline_View_Access := Outline_View_Access (Outline);
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
-      Iter : Gtk_Tree_Iter;
-      Path : Gtk_Tree_Path;
+                Gtk_Tree_Store (Get_Model (View.Tree));
+      Iter  : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
    begin
       if Get_Button (Event) = 1 then
          Iter := Find_Iter_For_Event (View.Tree, Model, Event);
@@ -496,9 +496,9 @@ package body Outline_View is
 
             declare
                Mark_Name : aliased String :=
-                 Get_String (Model, Iter, Mark_Column);
-               Args : constant Argument_List :=
-                 (1 => Mark_Name'Unchecked_Access);
+                             Get_String (Model, Iter, Mark_Column);
+               Args      : constant Argument_List :=
+                             (1 => Mark_Name'Unchecked_Access);
             begin
                Execute_GPS_Shell_Command
                  (View.Kernel, "Editor.goto_mark", Args);
@@ -516,7 +516,7 @@ package body Outline_View is
      (Outline : out Outline_View_Access;
       Kernel  : access Kernel_Handle_Record'Class)
    is
-      Scrolled : Gtk_Scrolled_Window;
+      Scrolled     : Gtk_Scrolled_Window;
       Initial_Sort : Integer := 2;
    begin
       Outline := new Outline_View_Record;
@@ -596,7 +596,7 @@ package body Outline_View is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Child : constant MDI_Child := Find_MDI_Child_By_Tag
+      Child   : constant MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Get_Kernel (Context.Context)), Outline_View_Record'Tag);
       Outline : Outline_View_Access;
    begin
@@ -614,7 +614,7 @@ package body Outline_View is
 
    procedure Clear (Outline : access Outline_View_Record'Class) is
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (Outline.Tree));
+                Gtk_Tree_Store (Get_Model (Outline.Tree));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Args  : Argument_List (1 .. 1);
    begin
@@ -805,7 +805,7 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Outline : Outline_View_Access;
       Child   : MDI_Child;
    begin
@@ -921,7 +921,7 @@ package body Outline_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools : constant String := '/' & (-"Tools") & '/' & (-"Views");
+      Tools   : constant String := '/' & (-"Tools") & '/' & (-"Views");
       Command : Interactive_Command_Access;
    begin
       Outline_View_Module := new Outline_View_Module_Record;
