@@ -18,6 +18,8 @@ valgrind="valgrind -v --suppressions=$dir/valgrind-python.supp --suppressions=$d
 ## massif   : check heap usage
 ## addrcheck: check pointers usage, same as memcheck but doesn't do
 ##            "undefined-value checks". Twice as fast though
+## cachegrind: cache simulator
+## callgrind: call graph tracing for cachegrind
 
 mode=${1:-memcheck}
 shift
@@ -33,6 +35,7 @@ case $mode in
                    --alloc-fn=PyObject_Malloc --alloc-fn=g_malloc --alloc-fn=__gnat_realloc \
                    --alloc-fn=g_realloc --alloc-fn=g_try_malloc --alloc-fn=g_malloc0 \
                    --alloc-fn=g_mem_chunk_alloc --alloc-fn=_PyObject_GC_Malloc" ;;
+   callgrind) args="--tool=callgrind --dump-instr=yes --trace-jump=yes";;
    *) echo "Invalid first argument: expecting leaks, memcheck or massif"
       exit -1;;
 esac  
