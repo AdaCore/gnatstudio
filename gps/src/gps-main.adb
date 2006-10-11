@@ -1645,6 +1645,11 @@ procedure GPS.Main is
       if Started then
          Context_Changed (Kernel);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unhandled exception: " & Exception_Information (E));
    end Child_Selected;
 
    ---------------------
