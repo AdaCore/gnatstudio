@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -446,7 +446,7 @@ package body Src_Editor_Module is
       Color   : Gdk_Color;
       Success : Boolean;
       Id      : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+                  Source_Editor_Module (Src_Editor_Module_Id);
    begin
       Gdk_New (Id.Blank_Lines_GC, Get_Window (Widget));
       Gdk_New (Id.Post_It_Note_GC, Get_Window (Widget));
@@ -487,9 +487,10 @@ package body Src_Editor_Module is
    -- Get_File_Identifier --
    -------------------------
 
-   function Get_File_Identifier (Child  : MDI_Child) return VFS.Virtual_File is
+   function Get_File_Identifier (Child : MDI_Child) return VFS.Virtual_File is
    begin
       if Child /= null
+        and then Get_Widget (Child) /= null
         and then Get_Widget (Child).all in Source_Editor_Box_Record'Class
       then
          return Get_File_Identifier
@@ -506,6 +507,7 @@ package body Src_Editor_Module is
    function Get_Filename (Child : MDI_Child) return VFS.Virtual_File is
    begin
       if Child /= null
+        and then Get_Widget (Child) /= null
         and then Get_Widget (Child).all in Source_Editor_Box_Record'Class
       then
          return Get_Filename (Source_Editor_Box (Get_Widget (Child)));
