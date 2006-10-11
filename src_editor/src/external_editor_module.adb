@@ -19,13 +19,21 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
-with Basic_Types;               use Basic_Types;
+with Unchecked_Deallocation;
+
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with Glib;                      use Glib;
+with Glib.Properties.Creation;  use Glib.Properties.Creation;
+with Glib.Generic_Properties;   use Glib.Generic_Properties;
+with Gtk.Main;                  use Gtk.Main;
+
+with Basic_Types;               use Basic_Types;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -36,15 +44,10 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Gtk.Main;                  use Gtk.Main;
 with Traces;                    use Traces;
-with Unchecked_Deallocation;
-with Glib.Properties.Creation;  use Glib.Properties.Creation;
-with Glib.Generic_Properties;   use Glib.Generic_Properties;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with VFS;                       use VFS;
-with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body External_Editor_Module is
 
@@ -242,17 +245,17 @@ package body External_Editor_Module is
      (Process_Descriptor_Array, Process_Descriptor_Array_Access);
 
    procedure Spawn_Server
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Success        : out Boolean);
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Success : out Boolean);
    --  Start Emacs and the server, so that a client can connect to it.
    --  False is returned if the server could not be started.
 
    procedure Client_Command
-     (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String := "";
-      Line           : Natural := 1;
-      Column         : Visible_Column_Type := 1;
-      Extended_Lisp  : String := "");
+     (Kernel        : access Kernel_Handle_Record'Class;
+      File          : String := "";
+      Line          : Natural := 1;
+      Column        : Visible_Column_Type := 1;
+      Extended_Lisp : String := "");
    --  Calls the client with the appropriate parameters
 
    procedure Select_Client;
@@ -270,10 +273,10 @@ package body External_Editor_Module is
    --  Handle an edition request
 
    procedure Spawn_New_Process
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Command        : String;
-      Args           : GNAT.OS_Lib.Argument_List;
-      Result         : out Boolean);
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List;
+      Result  : out Boolean);
    --  Spawn a new process, and store it in External_Clients, so that we can
    --  properly handle its termination.
 
@@ -297,11 +300,11 @@ package body External_Editor_Module is
    -------------------
 
    procedure Select_Client is
-      Path  : GNAT.OS_Lib.String_Access;
-      Args  : Argument_List_Access;
-      Match : Boolean;
-      Default_Client : constant Supported_Clients :=
-        Supported_Clients'Val (Get_Pref (Default_External_Editor));
+      Path           : GNAT.OS_Lib.String_Access;
+      Args           : Argument_List_Access;
+      Match          : Boolean;
+      Default_Client : constant Supported_Clients := Supported_Clients'Val
+        (Get_Pref (Default_External_Editor));
    begin
       --  If the user has specified a default client, use that one.
       if Default_Client /= Auto then
@@ -422,8 +425,8 @@ package body External_Editor_Module is
    function External_Timeout (D : Process_Data) return Boolean is
       pragma Unreferenced (D);
       Result : Expect_Match;
-      Old : Process_Descriptor_Array_Access;
-      J : Integer := External_Editor_Module_Id.Processes'First;
+      Old    : Process_Descriptor_Array_Access;
+      J      : Integer := External_Editor_Module_Id.Processes'First;
    begin
       while External_Editor_Module_Id.Processes /= null
         and then J <= External_Editor_Module_Id.Processes'Last
@@ -614,11 +617,11 @@ package body External_Editor_Module is
    --------------------
 
    procedure Client_Command
-     (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String := "";
-      Line           : Natural := 1;
-      Column         : Visible_Column_Type := 1;
-      Extended_Lisp  : String := "")
+     (Kernel        : access Kernel_Handle_Record'Class;
+      File          : String := "";
+      Line          : Natural := 1;
+      Column        : Visible_Column_Type := 1;
+      Extended_Lisp : String := "")
    is
       Max_Tries : constant := 40;
       Line_Str  : constant String := Natural'Image (Line);
@@ -728,8 +731,8 @@ package body External_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Line           : Integer := 1;
-      Column         : Visible_Column_Type := 1;
+      Line   : Integer := 1;
+      Column : Visible_Column_Type := 1;
    begin
       Push_State (Get_Kernel (Context.Context), Busy);
       Trace (Me, "Edit file with external editor "
@@ -761,8 +764,8 @@ package body External_Editor_Module is
    --------------------
 
    function Open_File_Hook
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : access Hooks_Data'Class) return Boolean
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean
    is
       D : constant Source_File_Hooks_Args := Source_File_Hooks_Args (Data.all);
    begin
