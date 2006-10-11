@@ -344,6 +344,7 @@ package body GPS.Kernel.Modules is
          --   starting from the default desktop, make a child floating, and
          --   close it using the keyboard shortcut for File->Close
          if Get_Object (W) /= System.Null_Address
+           and then W.all in Gtk_Window_Record'Class
            and then Is_Active (Gtk_Window (W))
          then
             Free (List);
