@@ -35,6 +35,12 @@ Known Problems fixed in GPS 4.0.2
   Workaround: Avoid deleting the last character from the buffer (the line
               terminator).
 
+- EB17-017: GPS and pygtk interaction issue
+  Problem:    If a dialog is created using pygtk, and this dialog is not
+              destroyed after run is called, then GPS crashes.
+  Workaround: Pygtk dialogs should be destroyed as soon as their run procedure
+              exits.
+
 Known Problems fixed in GPS 4.0.1
 
 - F926-007: Potential issue with empty debugger data windows
