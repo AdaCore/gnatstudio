@@ -1592,11 +1592,17 @@ procedure GPS.Main is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (MDI);
-      C : constant MDI_Child := MDI_Child (To_Object (Child, 1));
+      C : MDI_Child;
    begin
       if not Exiting then
+         C := MDI_Child (To_Object (Child, 1));
          Set_Main_Title (Kernel, C);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unhandled exception: " & Exception_Information (E));
    end Title_Changed;
 
    --------------------
@@ -1634,12 +1640,13 @@ procedure GPS.Main is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Mdi);
-      Child : constant MDI_Child := MDI_Child (To_Object (Params, 1));
+      Child : MDI_Child;
    begin
       if Exiting then
          return;
       end if;
 
+      Child := MDI_Child (To_Object (Params, 1));
       Set_Main_Title (Kernel, Child);
 
       if Started then
