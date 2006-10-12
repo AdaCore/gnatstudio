@@ -410,3 +410,15 @@ C328-004 Remote programming capability (2006-06-19)
   The --host switch behavior has been changed to fit the new functionality.
 
   Keywords: Remote programming
+
+C311-018 Support for secondary locations in messages (2006-06-09)
+
+  Compiler messages may contain secondary locations, for instance:
+    44:14 missing body for "Set_Is_Equivalent_Type" declared at einfo.ads:18
+
+  The Locations View is now able to detect these secondary locations, and
+  display these as lines one level below the original message. Clicking on these
+  lines opens an editor to the corresponding file location.
+
+  Keywords: Locations View
+
