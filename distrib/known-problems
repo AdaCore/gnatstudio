@@ -234,6 +234,14 @@ Known Problems fixed in GPS 4.0.0
               exists, GPS might crash when pressing the Apply button.
   Workaround: Remove or rename the existing extended project file.
 
+- F710-024 Wrong placement of the Smart Completion Window.
+  Problem:    On screens with small resolutions, or when using dual display,
+              the "Documentation" Window accompanying the Smart Completion
+              list might be wrongly placed, sometimes overlapping the list
+              itself.
+  Workaround: The wrong placement does not affect the functionality of the
+              window.
+
 - F630-024 GPS hangs with C++ files
   Problem:    Let's consider a C++ class named 'foo' containing an entity
               named 'foo' as well (a constructor for example). GPS hangs when
