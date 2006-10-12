@@ -20,6 +20,11 @@ F912-027 Allow any character in scenario variable names (2006-09-16)
   limited to alphanumeric characters. In particular on VMS, it is standard to
   use names like GNAT$PLATFORM
 
+F912-002 The File Selection dialog uses the current context (2006-09-14)
+
+  When opening the File Selection dialog while an editor is selected, the
+  dialog starts at the directory in which the file is located.
+
 F907-003 Remember the last search context for file searching (2006-09-13)
 
   Doing a search from an editor opens the search view with the 'Look in field'
