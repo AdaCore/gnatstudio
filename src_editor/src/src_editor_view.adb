@@ -2053,6 +2053,17 @@ package body Src_Editor_View is
          =>
             External_End_Action (Buffer);
 
+         when GDK_space =>
+            --  ??? We need to make a special case here because the call to
+            --  Get_String (see "when => others" below) is not reliable. In
+            --  particular when using PyGTK to simulate a key press event
+            --  the key string is not set in the event object. As a result
+            --  the "word_added" whould not be called.
+
+            if not View.As_Is_Mode then
+               Word_Added (Buffer);
+            end if;
+
          when others =>
             declare
                Key_Str : constant String := Get_String (Event);
