@@ -3457,7 +3457,16 @@ package body Ada_Analyzer is
 
       Next_Word (Prec, Terminated, End_Reached);
 
-      if End_Reached or else Terminated then
+      --  If there is only one character in the buffer and the end of the
+      --  buffer has been reached, enter the main loop anyway. Otherwise,
+      --  the on-the-fly auto-casing will not work when adding a space after
+      --  single character identifier.
+
+      if (End_Reached
+          and then Buffer_Last > 1
+          and then Buffer (Buffer_Last) /= ASCII.LF)
+        or else Terminated
+      then
          return;
       end if;
 
