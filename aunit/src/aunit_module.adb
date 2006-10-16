@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,23 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object;                 use Glib.Object;
-with Gtk.Main;                    use Gtk.Main;
-with Gtk.Menu_Item;               use Gtk.Menu_Item;
+with Glib.Object;                       use Glib.Object;
+with Gtk.Menu_Item;                     use Gtk.Menu_Item;
+with Gtk.Dialog;                        use Gtk.Dialog;
 
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
-with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Exceptions;                    use Ada.Exceptions;
 
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel;                        use GPS.Kernel;
+with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
+with GPS.Intl;                          use GPS.Intl;
 
-with Make_Harness_Window_Pkg;     use Make_Harness_Window_Pkg;
-with Make_Suite_Window_Pkg;       use Make_Suite_Window_Pkg;
-with Make_Test_Window_Pkg;        use Make_Test_Window_Pkg;
+with Make_Harness_Window_Pkg;           use Make_Harness_Window_Pkg;
+with Make_Harness_Window_Pkg.Callbacks; use Make_Harness_Window_Pkg.Callbacks;
+with Make_Suite_Window_Pkg;             use Make_Suite_Window_Pkg;
+with Make_Suite_Window_Pkg.Callbacks;   use Make_Suite_Window_Pkg.Callbacks;
+with Make_Test_Window_Pkg;              use Make_Test_Window_Pkg;
+with Make_Test_Window_Pkg.Callbacks;    use Make_Test_Window_Pkg.Callbacks;
 
-with Traces;                      use Traces;
+with Traces;                            use Traces;
 
 package body Aunit_Module is
 
@@ -67,22 +68,16 @@ package body Aunit_Module is
    is
       pragma Unreferenced (Widget);
       Make_Test_Window : Make_Test_Window_Access;
+      Response         : Gtk_Response_Type;
    begin
       Gtk_New (Make_Test_Window, Kernel);
       Show_All (Make_Test_Window);
-      Gtk.Main.Main;
+      Response := Run (Make_Test_Window);
 
-      if Make_Test_Window.Name /= null then
-         declare
-            File : constant String := Make_Test_Window.Name.all;
-         begin
-            --  ??? Should use correct body and spec names
-            Open_File_Editor (Kernel, Create (File & ".ads", Kernel));
-            Open_File_Editor (Kernel, Create (File & ".adb", Kernel));
-         end;
+      if Response = Gtk_Response_OK then
+         On_Ok_Clicked (Make_Test_Window);
       end if;
 
-      Free (Make_Test_Window.Name);
       Destroy (Make_Test_Window);
 
    exception
@@ -102,25 +97,21 @@ package body Aunit_Module is
    is
       pragma Unreferenced (Widget);
       Make_Suite_Window : Make_Suite_Window_Access;
+      Response          : Gtk_Response_Type;
    begin
       Gtk_New (Make_Suite_Window, Kernel);
       Show_All (Make_Suite_Window);
-      Gtk.Main.Main;
+      Response := Run (Make_Suite_Window);
 
-      if Make_Suite_Window.Name /= null then
-         declare
-            File : constant String := Make_Suite_Window.Name.all;
-         begin
-            Open_File_Editor (Kernel, Create (File & ".adb", Kernel));
-         end;
+      if Response = Gtk_Response_OK then
+         On_Ok_Clicked (Make_Suite_Window);
       end if;
 
-      Free (Make_Suite_Window.Name);
       Destroy (Make_Suite_Window);
 
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception in On_New_Test_Case: "
+         Trace (Exception_Handle, "Unexpected exception in On_New_Test_Suite: "
                 & Exception_Information (E));
    end On_New_Test_Suite;
 
@@ -134,25 +125,22 @@ package body Aunit_Module is
    is
       pragma Unreferenced (Widget);
       Make_Harness_Window : Make_Harness_Window_Access;
+      Response            : Gtk_Response_Type;
    begin
       Gtk_New (Make_Harness_Window, Kernel);
       Show_All (Make_Harness_Window);
-      Gtk.Main.Main;
+      Response := Run (Make_Harness_Window);
 
-      if Make_Harness_Window.Procedure_Name /= null then
-         declare
-            File : constant String := Make_Harness_Window.Procedure_Name.all;
-         begin
-            Open_File_Editor (Kernel, Create (File & ".adb", Kernel));
-         end;
+      if Response = Gtk_Response_OK then
+         On_Ok_Clicked (Make_Harness_Window);
       end if;
 
-      Free (Make_Harness_Window.Procedure_Name);
       Destroy (Make_Harness_Window);
 
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception in On_New_Test_Case: "
+         Trace (Exception_Handle,
+                "Unexpected exception in On_New_Test_Harness: "
                 & Exception_Information (E));
    end On_New_Test_Harness;
 
