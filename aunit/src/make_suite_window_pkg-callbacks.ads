@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,15 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Arguments;
 with Gtk.Widget;    use Gtk.Widget;
 
 package Make_Suite_Window_Pkg.Callbacks is
    --  Handle callbacks for main "AUnit_Make_Suite" window.
 
-   function On_Make_Suite_Window_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+   procedure Check_Validity
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Add_Clicked
      (Object : access Gtk_Button_Record'Class);
@@ -34,11 +32,7 @@ package Make_Suite_Window_Pkg.Callbacks is
    procedure On_Remove_Clicked
      (Object : access Gtk_Button_Record'Class);
 
-   procedure On_Ok_Clicked
-     (Object : access Gtk_Button_Record'Class);
-
-   procedure On_Cancel_Clicked
-     (Object : access Gtk_Button_Record'Class);
+   procedure On_Ok_Clicked (Window : Make_Suite_Window_Access);
 
    procedure On_Browse_Directory_Clicked
      (Object : access Gtk_Button_Record'Class);

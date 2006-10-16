@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,9 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Window;           use Gtk.Window;
-with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Button;           use Gtk.Button;
+with Gtk.Dialog;           use Gtk.Dialog;
+with Gtk.GEntry;           use Gtk.GEntry;
+with Gtk.Label;            use Gtk.Label;
 with Gtk.Status_Bar;       use Gtk.Status_Bar;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
@@ -29,19 +30,16 @@ with GPS.Kernel;
 
 package Make_Harness_Window_Pkg is
 
-   type Make_Harness_Window_Record is new Gtk_Window_Record with record
+   type Make_Harness_Window_Record is new Gtk_Dialog_Record with record
       Kernel           : GPS.Kernel.Kernel_Handle;
       Suite_Name       : String_Access;
-      Procedure_Name   : String_Access;
-      Explorer         : File_Selector_Window_Access;
+      Package_Name     : String_Access;
       Directory_Entry  : Gtk_Entry;
       Procedure_Entry  : Gtk_Entry;
       File_Name_Entry  : Gtk_Entry;
       Browse_Directory : Gtk_Button;
       Browse           : Gtk_Button;
-      Ok               : Gtk_Button;
-      Cancel           : Gtk_Button;
-      Statusbar        : Gtk_Statusbar;
+      Label            : Gtk_Label;
    end record;
    type Make_Harness_Window_Access is
      access all Make_Harness_Window_Record'Class;

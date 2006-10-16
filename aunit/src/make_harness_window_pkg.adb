@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,11 +23,8 @@ with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Enums;           use Gtk.Enums;
 
 with Gtk.Box;             use Gtk.Box;
-with Gtk.Label;           use Gtk.Label;
-with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Stock;           use Gtk.Stock;
 
-with Gtkada.Handlers;     use Gtkada.Handlers;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
 with GPS.Intl;          use GPS.Intl;
 with Aunit_Utils;         use Aunit_Utils;
@@ -59,66 +56,56 @@ package body Make_Harness_Window_Pkg is
    is
       pragma Suppress (All_Checks);
 
-      Hbox1  : Gtk_Hbox;
-      Hbox2  : Gtk_Hbox;
-      Hbox3  : Gtk_Hbox;
-      Hbox4  : Gtk_Hbox;
-      Hbox5  : Gtk_Hbox;
-      Hbox6  : Gtk_Hbox;
-      Hbox7  : Gtk_Hbox;
+      Hbox_Main    : Gtk_Hbox;
+      Vbox_Labels  : Gtk_Vbox;
+      Vbox_Entries : Gtk_Vbox;
 
-      Vbox2  : Gtk_Vbox;
-      Vbox3  : Gtk_Vbox;
-      Vbox4  : Gtk_Vbox;
-      Vbox5  : Gtk_Vbox;
+      Hbox   : Gtk_Hbox;
 
       Label  : Gtk_Label;
+      Button : Gtk_Button;
+      pragma Unreferenced (Button);
 
-      Hbuttonbox1 : Gtk_Hbutton_Box;
    begin
       Make_Harness_Window.Kernel := Handle;
 
-      Gtk.Window.Initialize (Make_Harness_Window, Window_Toplevel);
-      Set_Title (Make_Harness_Window, -"Make new harness");
+      Gtk.Dialog.Initialize
+        (Make_Harness_Window,
+         Title  => -"Make new harness",
+         Parent => GPS.Kernel.Get_Main_Window (Handle),
+         Flags  => 0);
+      Set_Modal (Make_Harness_Window, True);
       Set_Policy (Make_Harness_Window, False, True, False);
       Set_Position (Make_Harness_Window, Win_Pos_Mouse);
-      Set_Modal (Make_Harness_Window, False);
-      Return_Callback.Connect
-        (Make_Harness_Window, "destroy_event",
-         On_Make_Harness_Window_Delete_Event'Access);
+      Set_Has_Separator (Make_Harness_Window, False);
 
-      Gtk_New_Vbox (Vbox3, False, 3);
-      Add (Make_Harness_Window, Vbox3);
+      Gtk_New_Hbox (Hbox_Main, False, 0);
+      Pack_Start (Get_Vbox (Make_Harness_Window), Hbox_Main, True, True, 0);
 
-      Gtk_New_Hbox (Hbox2, False, 0);
-      Pack_Start (Vbox3, Hbox2, True, True, 0);
+      Gtk_New_Vbox (Vbox_Labels, True, 0);
+      Pack_Start (Hbox_Main, Vbox_Labels, True, True, 3);
 
-      Gtk_New_Vbox (Vbox2, True, 0);
-      Pack_Start (Hbox2, Vbox2, True, True, 3);
+      Gtk_New_Vbox (Vbox_Entries, True, 0);
+      Pack_Start (Hbox_Main, Vbox_Entries, True, True, 3);
 
-      Gtk_New_Hbox (Hbox6, True, 0);
-      Pack_Start (Vbox2, Hbox6, True, True, 3);
-
+      Gtk_New_Hbox (Hbox, True, 0);
+      Pack_Start (Vbox_Labels, Hbox, True, True, 3);
       Gtk_New (Label, -"Save in:");
-      Pack_Start (Hbox6, Label, False, False, 3);
+      Pack_Start (Hbox, Label, False, False, 3);
 
-      Gtk_New_Hbox (Hbox4, False, 0);
-      Pack_Start (Vbox2, Hbox4, True, True, 0);
-
+      Gtk_New_Hbox (Hbox, False, 0);
+      Pack_Start (Vbox_Labels, Hbox, True, True, 0);
       Gtk_New (Label, -"Procedure name:");
-      Pack_Start (Hbox4, Label, False, False, 3);
+      Pack_Start (Hbox, Label, False, False, 3);
 
-      Gtk_New_Hbox (Hbox5, True, 0);
-      Pack_Start (Vbox2, Hbox5, True, True, 3);
-
+      Gtk_New_Hbox (Hbox, True, 0);
+      Pack_Start (Vbox_Labels, Hbox, True, True, 3);
       Gtk_New (Label, -"Suite file:");
-      Pack_Start (Hbox5, Label, False, False, 3);
+      Pack_Start (Hbox, Label, False, False, 3);
 
-      Gtk_New_Vbox (Vbox4, True, 0);
-      Pack_Start (Hbox2, Vbox4, True, True, 3);
 
-      Gtk_New_Hbox (Hbox7, False, 0);
-      Pack_Start (Vbox4, Hbox7, False, False, 3);
+      Gtk_New_Hbox (Hbox, False, 0);
+      Pack_Start (Vbox_Entries, Hbox, False, False, 3);
 
       Gtk_New (Make_Harness_Window.Directory_Entry);
       Set_Editable (Make_Harness_Window.Directory_Entry, True);
@@ -127,77 +114,66 @@ package body Make_Harness_Window_Pkg is
       Set_Text (Make_Harness_Window.Directory_Entry,
                 Get_Context_Directory (Handle));
       Set_Visibility (Make_Harness_Window.Directory_Entry, True);
-      Pack_Start (Hbox7, Make_Harness_Window.Directory_Entry, True, True, 3);
+      Pack_Start (Hbox, Make_Harness_Window.Directory_Entry, True, True, 3);
+      Widget_Callback.Connect
+        (Make_Harness_Window.Directory_Entry, "changed",
+         Check_Validity'Access);
 
       Gtk_New (Make_Harness_Window.Browse_Directory, -"Browse...");
       Set_Relief (Make_Harness_Window.Browse_Directory, Relief_Normal);
       Pack_Start
-        (Hbox7, Make_Harness_Window.Browse_Directory, False, False, 3);
+        (Hbox, Make_Harness_Window.Browse_Directory, False, False, 3);
       Button_Callback.Connect
         (Make_Harness_Window.Browse_Directory, "clicked",
          On_Browse_Directory_Clicked'Access);
 
-      Gtk_New_Hbox (Hbox1, False, 0);
-      Pack_Start (Vbox4, Hbox1, False, False, 3);
+      Gtk_New_Hbox (Hbox, False, 0);
+      Pack_Start (Vbox_Entries, Hbox, False, False, 3);
 
       Gtk_New (Make_Harness_Window.Procedure_Entry);
       Set_Editable (Make_Harness_Window.Procedure_Entry, True);
       Set_Max_Length (Make_Harness_Window.Procedure_Entry, 0);
       Set_Text (Make_Harness_Window.Procedure_Entry, -"Harness");
       Set_Visibility (Make_Harness_Window.Procedure_Entry, True);
-      Pack_Start (Hbox1, Make_Harness_Window.Procedure_Entry, True, True, 3);
-      Entry_Callback.Connect
-        (Make_Harness_Window.Procedure_Entry, "activate",
-         On_Procedure_Entry_Activate'Access);
+      Pack_Start (Hbox, Make_Harness_Window.Procedure_Entry, True, True, 3);
+      Widget_Callback.Connect
+        (Make_Harness_Window.Procedure_Entry, "changed",
+         Check_Validity'Access);
 
-      Gtk_New_Hbox (Hbox3, False, 0);
-      Pack_Start (Vbox4, Hbox3, True, True, 3);
+      Gtk_New_Hbox (Hbox, False, 0);
+      Pack_Start (Vbox_Entries, Hbox, True, True, 3);
 
       Gtk_New (Make_Harness_Window.File_Name_Entry);
       Set_Editable (Make_Harness_Window.File_Name_Entry, True);
       Set_Max_Length (Make_Harness_Window.File_Name_Entry, 0);
       Set_Text (Make_Harness_Window.File_Name_Entry, -"");
       Set_Visibility (Make_Harness_Window.File_Name_Entry, True);
-      Pack_Start (Hbox3, Make_Harness_Window.File_Name_Entry, True, True, 3);
-      Entry_Callback.Connect
-        (Make_Harness_Window.File_Name_Entry, "activate",
-         On_Name_Entry_Activate'Access);
-
-      Gtk_New_Vbox (Vbox5, True, 0);
-      Pack_Start (Hbox3, Vbox5, False, False, 3);
+      Pack_Start (Hbox, Make_Harness_Window.File_Name_Entry, True, True, 3);
+      Widget_Callback.Connect
+        (Make_Harness_Window.File_Name_Entry, "changed",
+         Check_Validity'Access);
 
       Gtk_New (Make_Harness_Window.Browse, -"Browse...");
       Set_Relief (Make_Harness_Window.Browse, Relief_Normal);
-      Pack_Start (Vbox5, Make_Harness_Window.Browse, False, False, 3);
+      Pack_Start (Hbox, Make_Harness_Window.Browse, False, False, 3);
       Button_Callback.Connect
         (Make_Harness_Window.Browse, "clicked",
          On_Browse_Clicked'Access);
 
-      Gtk_New (Hbuttonbox1);
-      Set_Spacing (Hbuttonbox1, 30);
-      Set_Layout (Hbuttonbox1, Buttonbox_Spread);
-      Set_Child_Size (Hbuttonbox1, 85, 27);
-      Set_Child_Ipadding (Hbuttonbox1, 7, 0);
-      Pack_Start (Vbox3, Hbuttonbox1, False, True, 0);
+      Gtk_New (Make_Harness_Window.Label);
+      Set_Alignment (Make_Harness_Window.Label, 0.0, 0.5);
+      Pack_Start (Get_Vbox (Make_Harness_Window),
+                  Make_Harness_Window.Label,
+                  Expand => True,
+                  Fill   => False,
+                  Padding => 10);
 
-      Gtk_New_From_Stock (Make_Harness_Window.Ok, Stock_Ok);
-      Set_Relief (Make_Harness_Window.Ok, Relief_Normal);
-      Set_Flags (Make_Harness_Window.Ok, Can_Default);
-      Button_Callback.Connect
-        (Make_Harness_Window.Ok, "clicked",
-         On_Ok_Clicked'Access);
-      Add (Hbuttonbox1, Make_Harness_Window.Ok);
+      Button := Gtk_Button
+        (Add_Button (Make_Harness_Window, Stock_Ok, Gtk_Response_OK));
+      Button := Gtk_Button
+        (Add_Button (Make_Harness_Window, Stock_Cancel, Gtk_Response_Cancel));
 
-      Gtk_New_From_Stock (Make_Harness_Window.Cancel, Stock_Cancel);
-      Set_Relief (Make_Harness_Window.Cancel, Relief_Normal);
-      Set_Flags (Make_Harness_Window.Cancel, Can_Default);
-      Button_Callback.Connect
-        (Make_Harness_Window.Cancel, "clicked",
-         On_Cancel_Clicked'Access);
-      Add (Hbuttonbox1, Make_Harness_Window.Cancel);
-
-      Gtk_New (Make_Harness_Window.Statusbar);
-      Pack_Start (Vbox3, Make_Harness_Window.Statusbar, False, False, 0);
+      Check_Validity (Make_Harness_Window);
    end Initialize;
 
 end Make_Harness_Window_Pkg;

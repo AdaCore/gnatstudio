@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,13 +22,10 @@ with Gtk;                 use Gtk;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Box;             use Gtk.Box;
-with Gtk.Label;           use Gtk.Label;
-with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Stock;           use Gtk.Stock;
 
-with Gtkada.Handlers;     use Gtkada.Handlers;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
-with GPS.Intl;          use GPS.Intl;
+with GPS.Intl;            use GPS.Intl;
 with Aunit_Utils;         use Aunit_Utils;
 
 with Make_Test_Window_Pkg.Callbacks; use Make_Test_Window_Pkg.Callbacks;
@@ -55,35 +52,29 @@ package body Make_Test_Window_Pkg is
      (Make_Test_Window : access Make_Test_Window_Record'Class;
       Handle           : GPS.Kernel.Kernel_Handle)
    is
-      pragma Suppress (All_Checks);
-
-      Vbox0 : Gtk_Vbox;
-      Vbox2 : Gtk_Vbox;
-
-      Hbox1 : Gtk_Hbox;
-      Hbox2 : Gtk_Hbox;
-      Vbox1 : Gtk_Vbox;
-      Label : Gtk_Label;
-
-      Hbuttonbox1 : Gtk_Hbutton_Box;
+      Vbox2  : Gtk_Vbox;
+      Hbox1  : Gtk_Hbox;
+      Hbox2  : Gtk_Hbox;
+      Vbox1  : Gtk_Vbox;
+      Label  : Gtk_Label;
+      Button : Gtk_Button;
+      pragma Unreferenced (Button);
 
    begin
       Make_Test_Window.Kernel := Handle;
 
-      Gtk.Window.Initialize (Make_Test_Window, Window_Toplevel);
-      Set_Title (Make_Test_Window, -"New test unit");
+      Gtk.Dialog.Initialize
+        (Make_Test_Window,
+         Title  => -"Make new test case",
+         Parent => GPS.Kernel.Get_Main_Window (Handle),
+         Flags  => 0);
       Set_Policy (Make_Test_Window, False, True, False);
       Set_Position (Make_Test_Window, Win_Pos_Mouse);
-      Set_Modal (Make_Test_Window, False);
-      Return_Callback.Connect
-        (Make_Test_Window, "delete_event",
-         On_Make_Test_Window_Delete_Event'Access);
-
-      Gtk_New_Vbox (Vbox0, False, 3);
-      Add (Make_Test_Window, Vbox0);
+      Set_Modal (Make_Test_Window, True);
+      Set_Has_Separator (Make_Test_Window, False);
 
       Gtk_New_Hbox (Hbox1, False, 3);
-      Pack_Start (Vbox0, Hbox1, True, True, 3);
+      Pack_Start (Get_Vbox (Make_Test_Window), Hbox1, True, True, 3);
 
       Gtk_New_Vbox (Vbox1, True, 0);
       Pack_Start (Hbox1, Vbox1, False, False, 5);
@@ -132,9 +123,9 @@ package body Make_Test_Window_Pkg is
       Set_Text (Make_Test_Window.Name_Entry, -"New_Test");
       Set_Visibility (Make_Test_Window.Name_Entry, True);
       Pack_Start (Vbox2, Make_Test_Window.Name_Entry, False, False, 3);
-      Entry_Callback.Connect
-        (Make_Test_Window.Name_Entry, "activate",
-         On_Name_Entry_Activate'Access);
+      Widget_Callback.Connect
+        (Make_Test_Window.Name_Entry, "changed",
+         Check_Validity'Access);
 
       Gtk_New (Make_Test_Window.Description_Entry);
       Set_Editable (Make_Test_Window.Description_Entry, True);
@@ -142,9 +133,9 @@ package body Make_Test_Window_Pkg is
       Set_Text (Make_Test_Window.Description_Entry, -"(no description)");
       Set_Visibility (Make_Test_Window.Description_Entry, True);
       Pack_Start (Vbox2, Make_Test_Window.Description_Entry, False, False, 3);
-      Entry_Callback.Connect
-        (Make_Test_Window.Description_Entry, "activate",
-         On_Description_Entry_Activate'Access);
+      Widget_Callback.Connect
+        (Make_Test_Window.Description_Entry, "changed",
+         Check_Validity'Access);
 
       Gtk_New (Make_Test_Window.Override_Tear_Down, -"Override Tear_Down");
       Set_Active (Make_Test_Window.Override_Tear_Down, False);
@@ -154,26 +145,20 @@ package body Make_Test_Window_Pkg is
       Set_Active (Make_Test_Window.Override_Set_Up, False);
       Pack_Start (Vbox2, Make_Test_Window.Override_Set_Up, False, False, 3);
 
-      Gtk_New (Hbuttonbox1);
-      Set_Spacing (Hbuttonbox1, 30);
-      Set_Layout (Hbuttonbox1, Buttonbox_Spread);
-      Set_Child_Size (Hbuttonbox1, 85, 27);
-      Set_Child_Ipadding (Hbuttonbox1, 7, 0);
-      Pack_Start (Vbox0, Hbuttonbox1, True, True, 3);
+      Gtk_New (Make_Test_Window.Label);
+      Set_Alignment (Make_Test_Window.Label, 0.0, 0.5);
+      Pack_Start (Get_Vbox (Make_Test_Window),
+                  Make_Test_Window.Label,
+                  Expand => True,
+                  Fill   => False,
+                  Padding => 10);
 
-      Gtk_New_From_Stock (Make_Test_Window.Ok, Stock_Ok);
-      Set_Relief (Make_Test_Window.Ok, Relief_Normal);
-      Set_Flags (Make_Test_Window.Ok, Can_Default);
-      Button_Callback.Connect
-        (Make_Test_Window.Ok, "clicked", On_Ok_Clicked'Access);
-      Add (Hbuttonbox1, Make_Test_Window.Ok);
+      Button := Gtk_Button
+        (Add_Button (Make_Test_Window, Stock_Ok, Gtk_Response_OK));
+      Button := Gtk_Button
+        (Add_Button (Make_Test_Window, Stock_Cancel, Gtk_Response_Cancel));
 
-      Gtk_New_From_Stock (Make_Test_Window.Cancel, Stock_Cancel);
-      Set_Relief (Make_Test_Window.Cancel, Relief_Normal);
-      Set_Flags (Make_Test_Window.Cancel, Can_Default);
-      Button_Callback.Connect
-        (Make_Test_Window.Cancel, "clicked", On_Cancel_Clicked'Access);
-      Add (Hbuttonbox1, Make_Test_Window.Cancel);
+      Check_Validity (Make_Test_Window);
    end Initialize;
 
 end Make_Test_Window_Pkg;

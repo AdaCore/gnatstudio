@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2005                    --
+--                        Copyright (C) 2001-2006                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,114 +18,63 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Text_IO;             use Ada.Text_IO;
-
-with Gdk.Pixbuf;              use Gdk.Pixbuf;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with Glib;                    use Glib;
+with Gdk.Pixbuf;              use Gdk.Pixbuf;
 
 with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Main;                use Gtk.Main;
 
-with Gtkada.Dialogs;          use Gtkada.Dialogs;
-with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.Types;            use Gtkada.Types;
 
 with Aunit_Filters;           use Aunit_Filters;
 with Case_Handling;           use Case_Handling;
-with File_Utils;              use File_Utils;
 with GPS.Intl;                use GPS.Intl;
 with Pixmaps_IDE;             use Pixmaps_IDE;
 with Row_Data;                use Row_Data;
 with VFS;                     use VFS;
 
+with Templates_Parser;        use Templates_Parser;
+with AUnit_Templates;         use AUnit_Templates;
+
 package body Make_Suite_Window_Pkg.Callbacks is
-   use Gtk.Arguments;
 
-   -----------------------
-   -- Local subprograms --
-   -----------------------
+   --------------------
+   -- Check_Validity --
+   --------------------
 
-   procedure On_Ok_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   --  Callback called when the file selector's "OK" button is clicked.
-
-   procedure On_Cancel_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   --  Callback called when the file selector's "Cancel" button is clicked.
-
-   ---------------------------------------
-   -- On_Make_Suite_Window_Delete_Event --
-   ---------------------------------------
-
-   function On_Make_Suite_Window_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      pragma Unreferenced (Params);
-   begin
-      Hide (Get_Toplevel (Object));
-      Main_Quit;
-      return True;
-   end On_Make_Suite_Window_Delete_Event;
-
-   --------------------------
-   -- On_Ok_Button_Clicked --
-   --------------------------
-
-   procedure On_Ok_Button_Clicked (Object : access Gtk_Widget_Record'Class) is
-      Suite_Window : constant Make_Suite_Window_Access :=
-        Make_Suite_Window_Access (Get_Toplevel (Object));
-
-      File         : constant Virtual_File :=
-        Get_Selection (Suite_Window.Explorer);
-      S            : constant String := Full_Name (File).all;
-      Row_Num      : Gint;
-      Suite_Name   : String_Access;
-      Package_Name : String_Access;
-
-   begin
-      Hide (Suite_Window.Explorer);
-
-      if File = VFS.No_File then
-         return;
-      end if;
-
-      Get_Suite_Name (S, Package_Name, Suite_Name);
-
-      if Suite_Name /= null and then Package_Name /= null then
-         if S (S'Last - 3 .. S'Last) = ".ads" then
-            Row_Num := Append
-              (Suite_Window.Test_List,
-               Null_Array
-               + S + ("(test) " & Suite_Name.all));
-            Set (Suite_Window.Test_List, Row_Num, Package_Name.all);
-
-         elsif S (S'Last - 3 .. S'Last) = ".adb" then
-            Row_Num := Append
-              (Suite_Window.Test_List,
-               Null_Array
-               + S + ("(suite) " & Suite_Name.all));
-            Set (Suite_Window.Test_List,
-                 Row_Num,
-                 Package_Name.all);
-         end if;
-      end if;
-   end On_Ok_Button_Clicked;
-
-   ------------------------------
-   -- On_Cancel_Button_Clicked --
-   ------------------------------
-
-   procedure On_Cancel_Button_Clicked
+   procedure Check_Validity
      (Object : access Gtk_Widget_Record'Class)
    is
-      Suite_Window : constant Make_Suite_Window_Access :=
-        Make_Suite_Window_Access (Get_Toplevel (Object));
+      Win   : constant Make_Suite_Window_Access :=
+                Make_Suite_Window_Access (Get_Toplevel (Object));
+      Valid : Boolean;
    begin
-      Hide (Suite_Window.Explorer);
-   end On_Cancel_Button_Clicked;
+      Valid := True;
+
+      if not Is_Directory (Get_Text (Win.Directory_Entry)) then
+         Valid := False;
+         Set_Text (Win.Label, -"Invalid or non existing directory selected");
+      end if;
+
+      if Valid and then Get_Text (Win.Name_Entry) = "" then
+         Valid := False;
+         Set_Text (Win.Label, -"Missing test suite name");
+      end if;
+
+      if Valid and then Get_Rows (Win.Test_List) = 0 then
+         Valid := False;
+         Set_Text (Win.Label, -"Missing test");
+      end if;
+
+      if Valid then
+         Set_Text
+           (Win.Label,
+            -"Ready to create new test suite " & Get_Text (Win.Name_Entry));
+      end if;
+
+      Set_Response_Sensitive (Win, Gtk_Response_OK, Valid);
+   end Check_Validity;
 
    --------------------
    -- On_Add_Clicked --
@@ -137,47 +86,71 @@ package body Make_Suite_Window_Pkg.Callbacks is
       --  Open explorer window to select components of the suite
 
       Suite_Window : constant Make_Suite_Window_Access :=
-        Make_Suite_Window_Access (Get_Toplevel (Object));
+                       Make_Suite_Window_Access (Get_Toplevel (Object));
 
-      Filter_A : Filter_Show_All_Access;
-      Filter_B : Filter_Show_Ada_Access;
-      Filter_C : Filter_Show_Tests_Access;
+      Filter_A     : Filter_Show_All_Access;
+      Filter_B     : Filter_Show_Ada_Access;
+      Filter_C     : Filter_Show_Tests_Access;
+      Response     : VFS.Virtual_File;
+      Suite_Name   : String_Access;
+      Package_Name : String_Access;
+      F_Type       : Test_Type;
+      Row_Num      : Gint;
+      Explorer     : File_Selector_Window_Access;
+
    begin
-      if Suite_Window.Explorer = null then
-         Filter_A := new Filter_Show_All;
-         Filter_B := new Filter_Show_Ada;
-         Filter_C := new Filter_Show_Tests;
+      Filter_A := new Filter_Show_All;
+      Filter_B := new Filter_Show_Ada;
+      Filter_C := new Filter_Show_Tests;
 
-         Filter_A.Label := new String'(-"All files");
-         Filter_B.Label := new String'(-"Ada files");
-         Filter_C.Label := new String'(-"Suite and test files");
+      Filter_A.Label := new String'(-"All files");
+      Filter_B.Label := new String'(-"Ada files");
+      Filter_C.Label := new String'(-"Suite and test files");
 
-         Gtk_New
-           (Suite_Window.Explorer,
-            Local_Root_Dir,
-            Create (Get_Text (Suite_Window.Directory_Entry)),
-            "Select test suite",
-            History => null);
+      Gtk_New
+        (Explorer,
+         Local_Root_Dir,
+         Create (Get_Text (Suite_Window.Directory_Entry)),
+         "Select test suite",
+         History => null);
 
-         Filter_C.Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
-         Filter_B.Spec_Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
-         Filter_B.Body_Pixbuf := Gdk_New_From_Xpm_Data (package_xpm);
+      Filter_C.Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
+      Filter_B.Spec_Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
+      Filter_B.Body_Pixbuf := Gdk_New_From_Xpm_Data (package_xpm);
 
-         Register_Filter (Suite_Window.Explorer, Filter_C);
-         Register_Filter (Suite_Window.Explorer, Filter_B);
-         Register_Filter (Suite_Window.Explorer, Filter_A);
+      Register_Filter (Explorer, Filter_C);
+      Register_Filter (Explorer, Filter_B);
+      Register_Filter (Explorer, Filter_A);
 
-         Widget_Callback.Object_Connect
-           (Get_Ok_Button (Suite_Window.Explorer),
-            "clicked", On_Ok_Button_Clicked'Access,
-            Gtk_Widget (Suite_Window));
-         Widget_Callback.Object_Connect
-           (Get_Cancel_Button (Suite_Window.Explorer),
-            "clicked", On_Cancel_Button_Clicked'Access,
-            Gtk_Widget (Suite_Window));
+      Response := Select_File (Explorer);
+
+      if Response = VFS.No_File then
+         return;
       end if;
 
-      Show_All (Suite_Window.Explorer);
+      Get_Suite_Name (Response.Full_Name.all,
+                      Package_Name, Suite_Name, F_Type);
+
+      if Suite_Name /= null and then Package_Name /= null then
+         if F_Type = Test_Case then
+            Row_Num := Append
+              (Suite_Window.Test_List,
+               Null_Array
+               + Response.Full_Name.all + ("(test) " & Suite_Name.all));
+            Set (Suite_Window.Test_List, Row_Num, Package_Name.all);
+
+         elsif F_Type = Test_Suite then
+            Row_Num := Append
+              (Suite_Window.Test_List,
+               Null_Array
+               + Response.Full_Name.all + ("(suite) " & Suite_Name.all));
+            Set (Suite_Window.Test_List,
+                 Row_Num,
+                 Package_Name.all);
+         end if;
+      end if;
+
+      Check_Validity (Suite_Window);
    end On_Add_Clicked;
 
    -----------------------
@@ -205,6 +178,8 @@ package body Make_Suite_Window_Pkg.Callbacks is
       end loop;
 
       Thaw (List);
+
+      Check_Validity (Suite_Window);
    end On_Remove_Clicked;
 
    ---------------------------------
@@ -219,135 +194,79 @@ package body Make_Suite_Window_Pkg.Callbacks is
         Make_Suite_Window_Access (Get_Toplevel (Object));
    begin
       Browse_Location (Suite_Window.Directory_Entry);
+      Check_Validity (Suite_Window);
    end On_Browse_Directory_Clicked;
 
    -------------------
    -- On_Ok_Clicked --
    -------------------
 
-   procedure On_Ok_Clicked (Object : access Gtk_Button_Record'Class) is
+   procedure On_Ok_Clicked (Window : Make_Suite_Window_Access) is
       --  Generate suite source file.  Exit program if successful
 
-      Window         : constant Make_Suite_Window_Access :=
-        Make_Suite_Window_Access (Get_Toplevel (Object));
       Directory_Name : constant String := Get_Text (Window.Directory_Entry);
-      File           : File_Type;
       Name           : String := Get_Text (Window.Name_Entry);
-      Filename       : constant String := Name_As_Directory
-        (Directory_Name) & To_File_Name (Name);
-
       use Row_List;
       List : Row_List.Glist := Get_Row_List (Window.Test_List);
+      Translation    : Translate_Set;
+      Packages_Tag   : Tag;
+      Test_Tag       : Tag;
+      Test_Kind_Tag  : Tag;
+      Success        : Boolean;
 
    begin
-      if Directory_Name /= ""
-        and then Is_Directory (Directory_Name)
-        and then Name /= ""
-      then
-         if To_Lower (Name) = "test_suite" then
-            if Message_Dialog
-              ("The name of the suite cannot be ""Test_Suite""."
-               & ASCII.LF & "Write the code anyways ?",
-               Warning,
-               Button_Yes or Button_No,
-               Button_No,
-               "",
-               "Warning !") = Button_No
-            then
-               return;
-            end if;
-         end if;
+      --  Correct the case for Name, if needed.
+      Mixed_Case (Name);
+      Insert (Translation,
+              Assoc ("TEST_SUITE_PACKAGE", Name));
+      --  ??? customisable test suite function name
+      Insert
+        (Translation, Assoc ("TEST_SUITE_NAME", "Suite"));
 
-         Mixed_Case (Name);
+      while List /= Null_List loop
+         declare
+            Package_Name : String :=
+                             Get (Window.Test_List, Get_Data (List));
+            S            : String :=
+                             Get_Text (Window.Test_List, Get_Data (List), 1);
+         begin
+            if Package_Name /= "" then
+               Mixed_Case (S);
+               Mixed_Case (Package_Name);
+               Packages_Tag := Packages_Tag & Package_Name;
 
-         if Is_Regular_File (Filename & ".adb") then
-            if Message_Dialog
-              ("File " & Filename & ".adb exists. Overwrite?",
-               Warning,
-               Button_Yes or Button_No,
-               Button_No,
-               "",
-               "Warning !") = Button_No
-            then
-               return;
-            end if;
-         end if;
+               if S (S'First .. S'First + 2) = "(te" then
+                  Test_Tag := Test_Tag & S (S'First + 7 .. S'Last);
+                  Test_Kind_Tag := Test_Kind_Tag & "TEST_CASE";
 
-         Ada.Text_IO.Create (File, Out_File, Filename & ".adb");
-         Put_Line (File, "with AUnit.Test_Suites; use AUnit.Test_Suites;");
+               elsif S (S'First .. S'First + 2) = "(su" then
+                  Test_Tag := Test_Tag & S (S'First + 8 .. S'Last);
+                  Test_Kind_Tag := Test_Kind_Tag & "TEST_SUITE";
 
-         while List /= Null_List loop
-            declare
-               Package_Name : String :=
-                                Get (Window.Test_List, Get_Data (List));
-            begin
-               if Package_Name /= "" then
-                  Mixed_Case (Package_Name);
-                  Put_Line (File, "with " & Package_Name & ";");
+               else
+                  Test_Tag := Test_Tag & "";
+                  Test_Kind_Tag := Test_Kind_Tag & "UNKNOWN";
                end if;
-            end;
+            end if;
+         end;
 
-            List := Next (List);
-         end loop;
+         List := Next (List);
+      end loop;
+      Insert (Translation, Assoc ("TEST_SUITE_PACKAGES", Packages_Tag));
+      Insert (Translation, Assoc ("TEST_SUITE_TESTS", Test_Tag));
+      Insert (Translation, Assoc ("TEST_SUITE_TESTS_KIND", Test_Kind_Tag));
 
-         New_Line (File);
-         Put_Line
-           (File,
-            "function "
-            & Name & " return Access_Test_Suite is"
-            & ASCII.LF
-            & "   Result : Access_Test_Suite := new Test_Suite;"
-            & ASCII.LF
-            & "begin");
+      Create_Files
+        (Window.Kernel,
+         "test_suite",
+         Translation,
+         Directory_Name,
+         Name,
+         Success);
 
-         List := Get_Row_List (Window.Test_List);
-
-         while List /= Null_List loop
-            declare
-               S : String := Get_Text (Window.Test_List, Get_Data (List), 1);
-               Package_Name : String :=
-                                Get (Window.Test_List, Get_Data (List));
-            begin
-               if Package_Name /= "" then
-                  Mixed_Case (S);
-                  Mixed_Case (Package_Name);
-                  if S (S'First .. S'First + 2) = "(te" then
-                     Put_Line
-                       (File,
-                        "   Add_Test (Result, new "
-                        & Package_Name
-                        & "." & S (S'First + 7 .. S'Last)
-                        & ");");
-                  end if;
-
-                  if S (S'First .. S'First + 2) = "(su" then
-                     Put_Line
-                       (File, "   Add_Test (Result, " & Package_Name &");");
-                  end if;
-               end if;
-            end;
-
-            List := Next (List);
-         end loop;
-
-         Put_Line
-           (File, "   return Result;" & ASCII.LF & "end " & Name & ';');
-         Close (File);
-         Window.Name := new String'(To_Lower (Filename));
+      if Success then
+         Hide (Window);
       end if;
-
-      Hide (Window);
-      Main_Quit;
    end On_Ok_Clicked;
-
-   -----------------------
-   -- On_Cancel_Clicked --
-   -----------------------
-
-   procedure On_Cancel_Clicked (Object : access Gtk_Button_Record'Class) is
-   begin
-      Hide (Get_Toplevel (Object));
-      Main_Quit;
-   end On_Cancel_Clicked;
 
 end Make_Suite_Window_Pkg.Callbacks;

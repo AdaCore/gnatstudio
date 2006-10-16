@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,30 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Arguments; use Gtk.Arguments;
 with Gtk.Widget;    use Gtk.Widget;
 
 package Make_Test_Window_Pkg.Callbacks is
    --  Handle callbacks from "AUnit_Make_Test" main window.  Generated
    --  by Glade
 
-   function On_Make_Test_Window_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-
-   procedure On_Name_Entry_Activate
-     (Object : access Gtk_Entry_Record'Class);
-
-   procedure On_Description_Entry_Activate
-     (Object : access Gtk_Entry_Record'Class);
-
-   procedure On_Ok_Clicked
-     (Object : access Gtk_Button_Record'Class);
-
-   procedure On_Cancel_Clicked
-     (Object : access Gtk_Button_Record'Class);
+   procedure Check_Validity
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Browse_Directory_Clicked
      (Object : access Gtk_Button_Record'Class);
+
+   procedure On_Ok_Clicked (Window : Make_Test_Window_Access);
 
 end Make_Test_Window_Pkg.Callbacks;

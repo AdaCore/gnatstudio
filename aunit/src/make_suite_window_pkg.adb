@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2006                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,14 +21,11 @@
 with Gtk;                 use Gtk;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Enums;           use Gtk.Enums;
-with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
-with Gtk.Label;           use Gtk.Label;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Vbutton_Box;     use Gtk.Vbutton_Box;
 with Gtk.Widget;          use Gtk.Widget;
 
-with Gtkada.Handlers;     use Gtkada.Handlers;
 
 with Aunit_Utils;         use Aunit_Utils;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
@@ -66,7 +63,6 @@ package body Make_Suite_Window_Pkg is
       Hbox3 : Gtk_Hbox;
       Hbox4 : Gtk_Hbox;
 
-      Vbox1 : Gtk_Vbox;
       Vbox2 : Gtk_Vbox;
       Vbox3 : Gtk_Vbox;
       Vbox4 : Gtk_Vbox;
@@ -74,28 +70,26 @@ package body Make_Suite_Window_Pkg is
       Label : Gtk_Label;
 
       Vbuttonbox1     : Gtk_Vbutton_Box;
-      Hbuttonbox1     : Gtk_Hbutton_Box;
       Scrolledwindow2 : Gtk_Scrolled_Window;
+      Button : Gtk_Button;
+      pragma Unreferenced (Button);
 
    begin
       Make_Suite_Window.Kernel := Handle;
 
-      Gtk.Window.Initialize (Make_Suite_Window, Window_Toplevel);
-      Set_Title (Make_Suite_Window, -"Make new suite");
+      Gtk.Dialog.Initialize
+        (Make_Suite_Window,
+         Title  => -"Make new suite",
+         Parent => GPS.Kernel.Get_Main_Window (Handle),
+         Flags  => 0);
+      Set_Modal (Make_Suite_Window, True);
       Set_Policy (Make_Suite_Window, False, True, False);
       Set_Position (Make_Suite_Window, Win_Pos_Mouse);
-      Set_Modal (Make_Suite_Window, False);
       Set_Default_Size (Make_Suite_Window, 500, 300);
-
-      Return_Callback.Connect
-        (Make_Suite_Window, "delete_event",
-         On_Make_Suite_Window_Delete_Event'Access);
-
-      Gtk_New_Vbox (Vbox1, False, 0);
-      Add (Make_Suite_Window, Vbox1);
+      Set_Has_Separator (Make_Suite_Window, False);
 
       Gtk_New_Hbox (Hbox1, False, 0);
-      Pack_Start (Vbox1, Hbox1, False, True, 3);
+      Pack_Start (Get_Vbox (Make_Suite_Window), Hbox1, False, True, 3);
 
       Gtk_New_Vbox (Vbox2, True, 0);
       Pack_Start (Hbox1, Vbox2, False, False, 5);
@@ -119,6 +113,9 @@ package body Make_Suite_Window_Pkg is
                 Get_Context_Directory (Handle));
       Set_Visibility (Make_Suite_Window.Directory_Entry, True);
       Pack_Start (Hbox4, Make_Suite_Window.Directory_Entry, True, True, 3);
+      Widget_Callback.Connect
+        (Make_Suite_Window.Directory_Entry, "changed",
+         Check_Validity'Access);
 
       Gtk_New (Make_Suite_Window.Browse_Directory, -"Browse...");
       Set_Relief (Make_Suite_Window.Browse_Directory, Relief_Normal);
@@ -134,9 +131,12 @@ package body Make_Suite_Window_Pkg is
       Set_Text (Make_Suite_Window.Name_Entry, -"New_Suite");
       Set_Visibility (Make_Suite_Window.Name_Entry, True);
       Pack_Start (Vbox3, Make_Suite_Window.Name_Entry, False, False, 1);
+      Widget_Callback.Connect
+        (Make_Suite_Window.Name_Entry, "changed",
+         Check_Validity'Access);
 
       Gtk_New_Hbox (Hbox3, False, 0);
-      Pack_Start (Vbox1, Hbox3, True, True, 3);
+      Pack_Start (Get_Vbox (Make_Suite_Window), Hbox3, True, True, 3);
 
       Gtk_New_Vbox (Vbox4, False, 0);
       Pack_Start (Hbox3, Vbox4, True, True, 3);
@@ -193,26 +193,20 @@ package body Make_Suite_Window_Pkg is
          On_Remove_Clicked'Access);
       Add (Vbuttonbox1, Make_Suite_Window.Remove);
 
-      Gtk_New (Hbuttonbox1);
-      Set_Spacing (Hbuttonbox1, 30);
-      Set_Layout (Hbuttonbox1, Buttonbox_Spread);
-      Set_Child_Size (Hbuttonbox1, 85, 27);
-      Set_Child_Ipadding (Hbuttonbox1, 7, 0);
-      Pack_Start (Vbox1, Hbuttonbox1, False, False, 3);
+      Gtk_New (Make_Suite_Window.Label);
+      Set_Alignment (Make_Suite_Window.Label, 0.0, 0.5);
+      Pack_Start (Get_Vbox (Make_Suite_Window),
+                  Make_Suite_Window.Label,
+                  Expand  => True,
+                  Fill    => False,
+                  Padding => 0);
 
-      Gtk_New_From_Stock (Make_Suite_Window.Ok, Stock_Ok);
-      Set_Relief (Make_Suite_Window.Ok, Relief_Normal);
-      Set_Flags (Make_Suite_Window.Ok, Can_Default);
-      Button_Callback.Connect
-        (Make_Suite_Window.Ok, "clicked", On_Ok_Clicked'Access);
-      Add (Hbuttonbox1, Make_Suite_Window.Ok);
+      Button := Gtk_Button
+        (Add_Button (Make_Suite_Window, Stock_Ok, Gtk_Response_OK));
+      Button := Gtk_Button
+        (Add_Button (Make_Suite_Window, Stock_Cancel, Gtk_Response_Cancel));
 
-      Gtk_New_From_Stock (Make_Suite_Window.Cancel, Stock_Cancel);
-      Set_Relief (Make_Suite_Window.Cancel, Relief_Normal);
-      Set_Flags (Make_Suite_Window.Cancel, Can_Default);
-      Button_Callback.Connect
-        (Make_Suite_Window.Cancel, "clicked", On_Cancel_Clicked'Access);
-      Add (Hbuttonbox1, Make_Suite_Window.Cancel);
+      Check_Validity (Make_Suite_Window);
    end Initialize;
 
 end Make_Suite_Window_Pkg;
