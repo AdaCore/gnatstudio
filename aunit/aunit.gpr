@@ -3,6 +3,7 @@ with "../common/common";
 with "../kernel/kernel";
 with "../widgets/widgets";
 with "../shared";
+with "../templates_parser/templates_parser";
 
 project Aunit is
 
