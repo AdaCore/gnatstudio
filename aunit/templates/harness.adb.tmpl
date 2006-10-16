@@ -1,0 +1,14 @@
+with AUnit;
+with @_HARNESS_TEST_SUITE_PACKAGE_@;
+
+---@_REPLACE_ALL(./-):HARNESS_NAME_@---
+-- @_HARNESS_NAME_@ --
+---@_REPLACE_ALL(./-):HARNESS_NAME_@---
+
+procedure @_HARNESS_NAME_@ is
+
+   procedure Run is new AUnit.Test_Runner (@_HARNESS_TEST_SUITE_PACKAGE_@.@_HARNESS_TEST_SUITE_@);
+
+begin
+   Run;
+end @_HARNESS_NAME_@;

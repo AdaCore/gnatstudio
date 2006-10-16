@@ -1,0 +1,11 @@
+with AUnit; use AUnit;
+@@IF@@ @_AUNIT_@ = "AUNIT1.X"
+with AUnit.Test_Suites;
+@@END_IF@@
+
+package @_TEST_SUITE_PACKAGE_@ is
+
+   function @_TEST_SUITE_NAME_@ return Test_Suites.Access_Test_Suite;
+   --  Return the test suite
+
+end @_TEST_SUITE_PACKAGE_@;

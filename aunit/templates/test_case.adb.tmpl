@@ -1,0 +1,60 @@
+@@IF@@ @_AUNIT_@ = "AUNIT1.X"
+with Aunit.Test_Cases.Registration; use AUnit.Test_Cases.Registration;
+with AUnit.Assertions;              use AUnit.Assertions;
+@@ELSE@@
+with AUnit; use AUnit.Test_Cases.Registration, AUnit.Assertions;
+@@END_IF@@
+package body @_TEST_CASE_PACKAGE_@ is
+
+   @@IF@@ @_OVERRIDE_SET_UP_@
+   ------------
+   -- Set_Up --
+   ------------
+
+   procedure Set_Up (T : in out @_TEST_CASE_TYPE_@) is
+      pragma Unreferenced (T);
+   begin
+      null;
+   end Set_Up;
+
+   @@END_IF@@
+   @@IF@@ @_OVERRIDE_TEAR_DOWN_@
+   ---------------
+   -- Tear_Down --
+   ---------------
+
+   procedure Tear_Down (T : in out @_TEST_CASE_TYPE_@) is
+      pragma Unreferenced (T);
+   begin
+      null;
+   end Tear_Down;
+
+   @@END_IF@@
+   ----------
+   -- Name --
+   ----------
+
+   function Name (T : @_TEST_CASE_TYPE_@)
+   @@IF@@ @_AUNIT_@ = "AUNIT1.X"
+                  return String_Access is
+   @@ELSE@@
+                  return Test_String is
+   @@END_IF@@
+   begin
+   @@IF@@ @_AUNIT_@ = "AUNIT1.X"
+      return new String'("@_TEST_CASE_DESCRIPTION_@");
+   @@ELSE@@
+      return Format ("@_TEST_CASE_DESCRIPTION_@");
+   @@END_IF@@
+   end Name;
+
+   --------------------
+   -- Register_Tests --
+   --------------------
+
+   procedure Register_Tests (T : in out @_TEST_CASE_TYPE_@) is
+   begin
+      null;
+   end Register_Tests;
+
+end @_TEST_CASE_PACKAGE_@;
