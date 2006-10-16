@@ -22,9 +22,10 @@ with Ada.Text_IO;             use Ada.Text_IO;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
 
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Projects;                  use Projects;
 
-with File_Utils;              use File_Utils;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 package body AUnit_Templates is
 
@@ -69,9 +70,20 @@ package body AUnit_Templates is
       Body_Template : constant String :=
                         Get_Template_File_Name
                           (Kernel, Base_Template & ".adb");
-      Filename      : constant String :=
-                        Name_As_Directory
-                          (Directory_Name) & To_File_Name (Name);
+      Spec_Filename : constant String :=
+                        Projects.Get_Filename_From_Unit
+                          (Get_Project (Kernel),
+                           Unit_Name       => Name,
+                           Part            => Unit_Spec,
+                           File_Must_Exist => False,
+                           Language        => "Ada");
+      Body_Filename : constant String :=
+                        Projects.Get_Filename_From_Unit
+                          (Get_Project (Kernel),
+                           Unit_Name       => Name,
+                           Part            => Unit_Body,
+                           File_Must_Exist => False,
+                           Language        => "Ada");
       Dead          : Message_Dialog_Buttons;
       pragma Unreferenced (Dead);
 
@@ -83,9 +95,9 @@ package body AUnit_Templates is
         and then Name /= ""
       then
          if Spec_Template /= "" then
-            if Is_Regular_File (Filename & ".ads") then
+            if Is_Regular_File (Directory_Name & Spec_Filename) then
                if Message_Dialog
-                 ("File " & Filename & ".ads exists. Overwrite?",
+                 ("File " & Spec_Filename & " exists. Overwrite?",
                   Warning,
                   Button_Yes or Button_No,
                   Button_No,
@@ -99,17 +111,18 @@ package body AUnit_Templates is
 
             --  At least one file created. Set success
             Success := True;
-            Ada.Text_IO.Create (File, Out_File, Filename & ".ads");
+            Ada.Text_IO.Create (File, Out_File,
+                                Directory_Name & Spec_Filename);
             Put (File, Parse (Spec_Template, Translations));
             Close (File);
             Open_File_Editor
-              (Kernel, Create (Filename & ".ads", Kernel));
+              (Kernel, Create (Directory_Name & Spec_Filename, Kernel));
          end if;
 
          if Body_Template /= "" then
-            if Is_Regular_File (Filename & ".adb") then
+            if Is_Regular_File (Directory_Name & Body_Filename) then
                if Message_Dialog
-                 ("File " & Filename & ".adb exists. Overwrite?",
+                 ("File " & Body_Filename & " exists. Overwrite?",
                   Warning,
                   Button_Yes or Button_No,
                   Button_No,
@@ -123,11 +136,12 @@ package body AUnit_Templates is
 
             --  At least one file created. Set success
             Success := True;
-            Ada.Text_IO.Create (File, Out_File, Filename & ".adb");
+            Ada.Text_IO.Create (File, Out_File,
+                                Directory_Name & Body_Filename);
             Put (File, Parse (Body_Template, Translations));
             Close (File);
             Open_File_Editor
-              (Kernel, Create (Filename & ".ads", Kernel));
+              (Kernel, Create (Directory_Name & Body_Filename, Kernel));
          end if;
       end if;
 
