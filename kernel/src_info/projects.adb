@@ -18,11 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Strings;                use Ada.Strings;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
+with Ada.Text_IO;                use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with Basic_Types;               use Basic_Types;
+with Casing;                    use Casing;
 with File_Utils;                use File_Utils;
 with Glib.Convert;              use Glib.Convert;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -996,10 +1000,11 @@ package body Projects is
       File_Must_Exist          : Boolean := True;
       Language                 : Name_Id) return String
    is
-      Arr   : Array_Element_Id := No_Array_Element;
-      Unit  : Name_Id;
-      View  : Project_Id;
-      Value : Variable_Value;
+      Arr             : Array_Element_Id := No_Array_Element;
+      Unit            : Name_Id;
+      View            : Project_Id;
+      Value           : Variable_Value;
+      Unit_Name_Cased : String := Unit_Name;
 
       function Has_Predefined_Prefix (S : String) return Boolean;
       --  Return True is S has a name that starts like a predefined unit
@@ -1061,13 +1066,28 @@ package body Projects is
 
          --  Otherwise test the standard naming scheme
 
+         case Projects_Table (Project)(View).Naming.Casing is
+            when All_Lower_Case =>
+               Fixed.Translate
+                 (Source  => Unit_Name_Cased,
+                  Mapping => Lower_Case_Map);
+
+            when All_Upper_Case =>
+               Fixed.Translate
+                 (Source  => Unit_Name_Cased,
+                  Mapping => Upper_Case_Map);
+
+            when others =>
+               null;
+         end case;
+
          case Part is
             when Unit_Body =>
                Arr := Projects_Table (Project)(View).Naming.Body_Suffix;
 
             when Unit_Separate =>
                declare
-                  N : constant String := Unit_Name & Get_String
+                  N : constant String := Unit_Name_Cased & Get_String
                     (Projects_Table (Project)(View).Naming.Separate_Suffix);
                begin
                   if not File_Must_Exist
@@ -1089,14 +1109,14 @@ package body Projects is
               (Projects_Table
                  (Project)(Get_View (Project)).Naming.Dot_Replacement);
             Uname           : String := Substitute_Dot
-              (Unit_Name, Dot_Replacement);
+              (Unit_Name_Cased, Dot_Replacement);
 
          begin
             --  Handle properly special naming such as a.b -> a~b
 
             if Language = Name_Ada
-              and then Unit_Name'Length > 2
-              and then Has_Predefined_Prefix (Unit_Name)
+              and then Unit_Name_Cased'Length > 2
+              and then Has_Predefined_Prefix (Unit_Name_Cased)
             then
                Uname (Uname'First + 1) := '~';
             end if;
