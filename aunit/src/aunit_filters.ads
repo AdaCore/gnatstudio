@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,12 +27,15 @@ with VFS; use VFS;
 
 package Aunit_Filters is
 
+      type Test_Type is (Unknown, Test_Case, Test_Suite);
+
    --  This package provides file selector filters to use with Aunit dialogs.
 
    procedure Get_Suite_Name
      (File_Name    : String;
       Package_Name : out GNAT.OS_Lib.String_Access;
-      Suite_Name   : out GNAT.OS_Lib.String_Access);
+      Suite_Name   : out GNAT.OS_Lib.String_Access;
+      F_Type       : out Test_Type);
    --  Open File_Name, do a basic parsing on it to look for aunit tests or
    --  tests suite. If found, then Suite_Name is initialized to this test/suite
    --  name, and Package_Name to the name of the main unit in the file.
