@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2005                    --
+--                        Copyright (C) 2001-2006                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -36,7 +36,8 @@ package body Aunit_Filters is
    procedure Get_Suite_Name
      (File_Name    : String;
       Package_Name : out GNAT.OS_Lib.String_Access;
-      Suite_Name   : out GNAT.OS_Lib.String_Access)
+      Suite_Name   : out GNAT.OS_Lib.String_Access;
+      F_Type       : out Test_Type)
    is
       Index             : Integer;
       File_Buffer       : GNAT.OS_Lib.String_Access;
@@ -47,6 +48,7 @@ package body Aunit_Filters is
    begin
       Package_Name := null;
       Suite_Name   := null;
+      F_Type       := Unknown;
 
       if not Is_Regular_File (File_Name)
         or else File_Name'Length <= 4
@@ -88,18 +90,12 @@ package body Aunit_Filters is
 
                if Index + 8 <= Current_Construct.Sloc_End.Index then
                   Found := True;
+                  F_Type := Test_Case;
                   Suite_Name := GNAT.OS_Lib.String_Access
                     (Current_Construct.Name);
                end if;
             end if;
 
-            Current_Construct := Current_Construct.Next;
-         end loop;
-
-      elsif File_Name (File_Name'Last - 3 .. File_Name'Last) = ".adb" then
-         while not Found
-           and then Current_Construct /= null
-         loop
             if Current_Construct.Category = Cat_Function
               and then Current_Construct.Name /= null
             then
@@ -114,6 +110,7 @@ package body Aunit_Filters is
 
                if Index + 16 <= Current_Construct.Sloc_End.Index then
                   Found := True;
+                  F_Type := Test_Suite;
                   Suite_Name := GNAT.OS_Lib.String_Access
                     (Current_Construct.Name);
                end if;
@@ -149,24 +146,23 @@ package body Aunit_Filters is
       pragma Unreferenced (Win);
       Suite_Name   : GNAT.OS_Lib.String_Access;
       Package_Name : GNAT.OS_Lib.String_Access;
-      Base         : constant String := Base_Name (File);
+      F_Type       : Test_Type;
 
    begin
-      --  To find suites, look for tests and suites in body files.
+      Get_Suite_Name (Full_Name (File).all, Package_Name, Suite_Name,
+                      F_Type);
 
-      if Base'Length > 4
-        and then Base (Base'Last - 3 .. Base'Last) = ".adb"
-      then
-         Get_Suite_Name (Full_Name (File).all, Package_Name, Suite_Name);
+      --  Don't need package name
+      Free (Package_Name);
 
-         if Suite_Name /= null then
-            State  := Normal;
-            Text   := Suite_Name;
-            Pixbuf := Filter.Pixbuf;
-            return;
-         end if;
+      if F_Type = Test_Suite then
+         State  := Normal;
+         Text   := Suite_Name;
+         Pixbuf := Filter.Pixbuf;
+         return;
       end if;
 
+      Free (Suite_Name);
       State  := Invisible;
       Text   := new String'("");
       Pixbuf := Null_Pixbuf;
@@ -187,21 +183,26 @@ package body Aunit_Filters is
       pragma Unreferenced (Win);
       Suite_Name   : GNAT.OS_Lib.String_Access;
       Package_Name : GNAT.OS_Lib.String_Access;
-   begin
-      Get_Suite_Name (Full_Name (File).all, Package_Name, Suite_Name);
+      F_Type       : Test_Type;
 
-      if Suite_Name /= null then
+   begin
+      Get_Suite_Name (Full_Name (File).all, Package_Name, Suite_Name,
+                      F_Type);
+
+      --  Don't need package name
+      Free (Package_Name);
+
+      if F_Type = Test_Suite or else F_Type = Test_Case then
          State  := Normal;
          Text   := Suite_Name;
          Pixbuf := Filter.Pixbuf;
-
-      else
-         State  := Invisible;
-         Text   := new String'("");
-         Pixbuf := Null_Pixbuf;
+         return;
       end if;
 
-      Free (Package_Name);
+      Free (Suite_Name);
+      State  := Invisible;
+      Text   := new String'("");
+      Pixbuf := Null_Pixbuf;
    end Use_File_Filter;
 
    ---------------------
