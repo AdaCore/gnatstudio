@@ -2266,13 +2266,22 @@ package body Gtkada.File_Selector is
 
    procedure Browse_Location (Ent : access Gtk_Widget_Record'Class) is
       Result : constant Gtk_Entry := Gtk_Entry (Ent);
-      Name   : constant Virtual_File := Select_Directory
-        (-"Select directory",
-         Parent            => Gtk_Window (Get_Toplevel (Ent)),
-         Use_Native_Dialog => True,
-         Base_Directory    => Create (Get_Text (Result)));
-
+      Name   : Virtual_File;
    begin
+      if Get_Text (Result) = "" then
+         Name := Select_Directory
+           (-"Select directory",
+            Parent            => Gtk_Window (Get_Toplevel (Ent)),
+            Use_Native_Dialog => True,
+            Base_Directory    => Get_Current_Dir);
+      else
+         Name := Select_Directory
+           (-"Select directory",
+            Parent            => Gtk_Window (Get_Toplevel (Ent)),
+            Use_Native_Dialog => True,
+            Base_Directory    => Create (Get_Text (Result)));
+      end if;
+
       if Name /= No_File then
          Set_Text (Result, Full_Name (Name).all);
       end if;
