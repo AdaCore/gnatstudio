@@ -29,6 +29,7 @@ install-common:
 	$(MKDIR) $(examplesdir)
 	$(MKDIR) $(sharedir)/gps
 	$(MKDIR) $(sharedir)/gps/docgen
+	$(MKDIR) $(sharedir)/gps/aunit
 	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.xml) | (cd $(sharedir)/gps; tar xf -)
@@ -40,6 +41,8 @@ install-common:
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
 	(cd docgen/templates; tar cf - html/) \
 		| (cd $(sharedir)/gps/docgen; tar xf -)
+	(cd aunit/templates; tar cf - *.tmpl) \
+		| (cd $(sharedir)/gps/aunit; tar xf -)
 	$(MAKE) -C docs install
 	(cd examples; tar cf - --exclude CVS . ) | (cd $(examplesdir); tar xf -)
 
