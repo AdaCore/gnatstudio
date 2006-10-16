@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -22,6 +22,7 @@ with Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Button; use Gtk.Button;
+with Gtk.Widget; use Gtk.Widget;
 
 package Callbacks_Aunit_Gui is
 
@@ -30,5 +31,8 @@ package Callbacks_Aunit_Gui is
 
    package Button_Callback is new
      Gtk.Handlers.Callback (Gtk_Button_Record);
+
+   package Widget_Callback is new
+     Gtk.Handlers.Callback (Gtk_Widget_Record);
 
 end Callbacks_Aunit_Gui;
