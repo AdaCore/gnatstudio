@@ -153,8 +153,10 @@ package body VFS is
       Valid       : Boolean;
       Invalid_Pos : Natural;
       Last        : Natural;
+      File        : Virtual_File;
    begin
       UTF8_Validate (Full_Filename, Valid, Invalid_Pos);
+
       if not Valid then
          Last := Invalid_Pos - 1;
       else
@@ -167,7 +169,7 @@ package body VFS is
          Last := Last - 1;
       end loop;
 
-      return
+      File :=
         (Ada.Finalization.Controlled with
          Value => new Contents_Record'
            (Server          => new String'(Host),
@@ -177,6 +179,12 @@ package body VFS is
             Normalized_Full => null,
             Dir_Name        => null,
             Kind            => Unknown));
+
+      if File.Full_Name.all = "" then
+         Ensure_Directory (File);
+      end if;
+
+      return File;
    end Create;
 
    ---------------------
@@ -819,8 +827,10 @@ package body VFS is
       if Is_Local (Dir) then
          Sep := GNAT.Directory_Operations.Dir_Separator;
 
-         if Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '/'
-           and then Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '\'
+         if Dir.Value.Full_Name.all = ""
+           or else
+             (Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '/'
+              and then Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '\')
          then
             Full := new String'(Dir.Value.Full_Name.all & Sep);
             Free (Dir.Value.Full_Name);
