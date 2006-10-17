@@ -1064,9 +1064,10 @@ package body GVD.Canvas is
       Add (Canvas, Canvas.Canvas);
       Add_Events (Canvas.Canvas, Key_Press_Mask);
 
-      Gtkada.Handlers.Return_Callback.Connect
+      Gtkada.Handlers.Return_Callback.Object_Connect
         (Canvas.Canvas, "key_press_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access));
+         Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
+         Canvas);
       Object_Callback.Object_Connect
         (Canvas.Canvas, "background_click",
          Object_Callback.To_Marshaller (On_Background_Click'Access),
