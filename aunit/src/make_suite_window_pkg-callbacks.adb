@@ -103,16 +103,28 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Filter_B := new Filter_Show_Ada;
       Filter_C := new Filter_Show_Tests;
 
+      Filter_B.Kernel := Suite_Window.Kernel;
+      Filter_C.Kernel := Suite_Window.Kernel;
+
       Filter_A.Label := new String'(-"All files");
       Filter_B.Label := new String'(-"Ada files");
       Filter_C.Label := new String'(-"Suite and test files");
 
-      Gtk_New
-        (Explorer,
-         Local_Root_Dir,
-         Create (Get_Text (Suite_Window.Directory_Entry)),
-         "Select test suite",
-         History => null);
+      if Get_Text (Suite_Window.Directory_Entry) = "" then
+         Gtk_New
+           (Explorer,
+            Local_Root_Dir,
+            Get_Current_Dir,
+            "Select test suite",
+            History => null);
+      else
+         Gtk_New
+           (Explorer,
+            Local_Root_Dir,
+            Create (Get_Text (Suite_Window.Directory_Entry)),
+            "Select test suite",
+            History => null);
+      end if;
 
       Filter_C.Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
       Filter_B.Spec_Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
@@ -128,7 +140,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
          return;
       end if;
 
-      Get_Suite_Name (Response.Full_Name.all,
+      Get_Suite_Name (Suite_Window.Kernel, Response.Full_Name.all,
                       Package_Name, Suite_Name, F_Type);
 
       if Suite_Name /= null and then Package_Name /= null then
