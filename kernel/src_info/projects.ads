@@ -229,6 +229,17 @@ package Projects is
    --  Return the unit name associated with a given file name, or the empty
    --  string if the name of the unit couldn't be computed.
 
+   procedure Get_Unit_Part_And_Name_From_Filename
+     (Filename  : Glib.UTF8_String;
+      Project   : Project_Type;
+      Part      : out Unit_Part;
+      Unit_Name : out Types.Name_Id;
+      Lang      : out Types.Name_Id);
+   --  Return the unit name and unit part for Filename.
+   --  This procedure doesn't fully handle krunched file name.
+   --  Project can be No_Project, in which case the default naming scheme is
+   --  used.
+
    function Delete_File_Suffix
      (Filename : String; Project : Project_Type) return Natural;
    --  Return the last index in Filename before the beginning of the file
@@ -652,17 +663,6 @@ private
    --  Attribute_Name is of the form "Package#Attribute" or "Attribute".
    --  A value less than Attribute_Name'First is returned if there is no
    --  package indicator
-
-   procedure Get_Unit_Part_And_Name_From_Filename
-     (Filename  : Glib.UTF8_String;
-      Project   : Project_Type;
-      Part      : out Unit_Part;
-      Unit_Name : out Types.Name_Id;
-      Lang      : out Types.Name_Id);
-   --  Return the unit name and unit part for Filename.
-   --  This procedure doesn't fully handle krunched file name.
-   --  Project can be No_Project, in which case the default naming scheme is
-   --  used.
 
    type Scenario_Variable is record
       Name        : Types.Name_Id;
