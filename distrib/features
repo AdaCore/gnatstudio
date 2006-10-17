@@ -14,6 +14,17 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+FA16-005 Better integration of AUnit in GPS (2006-10-17)
+
+  The AUnit integration in GPS has been enhanced:
+  * AUnit 2 is now supported, and becomes the default framework used by GPS.
+    It is still possible to generate AUnit 1.x units.
+  * GPS now uses the templates found in <prefix>/share/gps/aunit to create the
+    different units.
+  * The created file names are now generated from the project's naming scheme.
+  * The dialogs used to generate the code have been enhanced with a better
+    handling of required fields.
+
 F912-027 Allow any character in scenario variable names (2006-09-16)
 
   The list of valid character for names of scenario variables is no longer
