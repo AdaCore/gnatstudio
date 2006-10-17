@@ -108,6 +108,9 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Filter_B := new Filter_Show_Ada;
       Filter_C := new Filter_Show_Suites;
 
+      Filter_B.Kernel := Win.Kernel;
+      Filter_C.Kernel := Win.Kernel;
+
       Filter_A.Label := new String'(-"All files");
       Filter_B.Label := new String'(-"Ada files");
       Filter_C.Label := new String'(-"Suite files");
@@ -116,12 +119,21 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Filter_B.Spec_Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
       Filter_B.Body_Pixbuf := Gdk_New_From_Xpm_Data (package_xpm);
 
-      Gtk_New
-        (Explorer,
-         VFS.Local_Root_Dir,
-         VFS.Create (Get_Text (Win.Directory_Entry)),
-         -"Select test harness",
-         History => null); --  ??? No history
+      if Get_Text (Win.Directory_Entry) = "" then
+         Gtk_New
+           (Explorer,
+            VFS.Local_Root_Dir,
+            VFS.Get_Current_Dir,
+            -"Select test harness",
+            History => null); --  ??? No history
+      else
+         Gtk_New
+           (Explorer,
+            VFS.Local_Root_Dir,
+            VFS.Create (Get_Text (Win.Directory_Entry)),
+            -"Select test harness",
+            History => null); --  ??? No history
+      end if;
 
       Register_Filter (Explorer, Filter_C);
       Register_Filter (Explorer, Filter_B);
@@ -133,7 +145,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
          return;
       end if;
 
-      Get_Suite_Name (Response.Full_Name.all,
+      Get_Suite_Name (Win.Kernel, Response.Full_Name.all,
                       Package_Name, Suite_Name, F_Type);
 
       if Suite_Name /= null
@@ -147,7 +159,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Free (Win.Suite_Name);
       Free (Win.Package_Name);
 
-      Get_Suite_Name (Response.Full_Name.all,
+      Get_Suite_Name (Win.Kernel, Response.Full_Name.all,
                       Package_Name, Suite_Name, F_Type);
 
       if Suite_Name = null
