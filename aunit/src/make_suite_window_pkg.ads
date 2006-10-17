@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Button;           use Gtk.Button;
+with Gtk.Check_Button;     use Gtk.Check_Button;
 with Gtk.Clist;            use Gtk.Clist;
 with Gtk.Dialog;           use Gtk.Dialog;
 with Gtk.GEntry;           use Gtk.GEntry;
@@ -37,6 +38,7 @@ package Make_Suite_Window_Pkg is
       Browse_Directory : Gtk_Button;
       Add              : Gtk_Button;
       Remove           : Gtk_Button;
+      Aunit1_Button    : Gtk_Check_Button;
       Label            : Gtk_Label;
    end record;
    type Make_Suite_Window_Access is access all Make_Suite_Window_Record'Class;

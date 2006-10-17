@@ -256,6 +256,12 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Insert (Translation, Assoc ("TEST_SUITE_TESTS", Test_Tag));
       Insert (Translation, Assoc ("TEST_SUITE_TESTS_KIND", Test_Kind_Tag));
 
+      if Get_Active (Window.Aunit1_Button) then
+         Insert
+           (Translation,
+            Assoc ("AUNIT", "AUNIT1.X"));
+      end if;
+
       Create_Files
         (Window.Kernel,
          "test_suite",

@@ -116,6 +116,12 @@ package body Make_Test_Window_Pkg.Callbacks is
          Assoc
            ("OVERRIDE_TEAR_DOWN", Get_Active (Window.Override_Tear_Down)));
 
+      if Get_Active (Window.Aunit1_Button) then
+         Insert
+           (Translation,
+            Assoc ("AUNIT", "AUNIT1.X"));
+      end if;
+
       Create_Files
         (Window.Kernel,
          "test_case",

@@ -26,11 +26,11 @@ with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Vbutton_Box;     use Gtk.Vbutton_Box;
 with Gtk.Widget;          use Gtk.Widget;
 
-
-with Aunit_Utils;         use Aunit_Utils;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
 with GPS.Intl;            use GPS.Intl;
+with Histories;           use Histories;
 
+with Aunit_Utils;         use Aunit_Utils;
 with Make_Suite_Window_Pkg.Callbacks; use Make_Suite_Window_Pkg.Callbacks;
 
 package body Make_Suite_Window_Pkg is
@@ -192,6 +192,17 @@ package body Make_Suite_Window_Pkg is
         (Make_Suite_Window.Remove, "clicked",
          On_Remove_Clicked'Access);
       Add (Vbuttonbox1, Make_Suite_Window.Remove);
+
+      Gtk_New (Make_Suite_Window.Aunit1_Button, -"Create AUnit1.x test suite");
+      Create_New_Boolean_Key_If_Necessary
+        (GPS.Kernel.Get_History (Handle).all,
+         "aunit-aunit1-compatibility", False);
+      Associate
+        (GPS.Kernel.Get_History (Handle).all,
+         "aunit-aunit1-compatibility",
+         Make_Suite_Window.Aunit1_Button);
+      Pack_Start (Get_Vbox (Make_Suite_Window),
+                  Make_Suite_Window.Aunit1_Button);
 
       Gtk_New (Make_Suite_Window.Label);
       Set_Alignment (Make_Suite_Window.Label, 0.0, 0.5);
