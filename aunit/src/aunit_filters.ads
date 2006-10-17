@@ -23,6 +23,8 @@ with Gdk.Pixbuf;  use Gdk.Pixbuf;
 
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 
+with GPS.Kernel;
+
 with VFS; use VFS;
 
 package Aunit_Filters is
@@ -32,7 +34,8 @@ package Aunit_Filters is
    --  This package provides file selector filters to use with Aunit dialogs.
 
    procedure Get_Suite_Name
-     (File_Name    : String;
+     (Kernel       : GPS.Kernel.Kernel_Handle;
+      File_Name    : String;
       Package_Name : out GNAT.OS_Lib.String_Access;
       Suite_Name   : out GNAT.OS_Lib.String_Access;
       F_Type       : out Test_Type);
@@ -44,6 +47,7 @@ package Aunit_Filters is
    --  Return values must be freed by the user.
 
    type Filter_Show_Ada is new File_Filter_Record with record
+      Kernel      : GPS.Kernel.Kernel_Handle;
       Spec_Pixbuf : Gdk_Pixbuf;
       Body_Pixbuf : Gdk_Pixbuf;
    end record;
@@ -54,12 +58,14 @@ package Aunit_Filters is
    --  belonging to a project. This is easier to implement and more general
 
    type Filter_Show_Tests is new File_Filter_Record with record
+      Kernel      : GPS.Kernel.Kernel_Handle;
       Pixbuf : Gdk_Pixbuf;
    end record;
    type Filter_Show_Tests_Access is access all Filter_Show_Tests'Class;
    --  This filter shows only files containing tests.
 
    type Filter_Show_Suites is new File_Filter_Record with record
+      Kernel      : GPS.Kernel.Kernel_Handle;
       Pixbuf : Gdk_Pixbuf;
    end record;
    type Filter_Show_Suites_Access is access all Filter_Show_Suites'Class;
