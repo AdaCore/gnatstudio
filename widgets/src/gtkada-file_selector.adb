@@ -2283,6 +2283,7 @@ package body Gtkada.File_Selector is
       end if;
 
       if Name /= No_File then
+         Ensure_Directory (Name);
          Set_Text (Result, Full_Name (Name).all);
       end if;
    end Browse_Location;
