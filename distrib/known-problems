@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.0.2
 
+- FA17-006  Zooming the debugger data window not working with keyboard input
+  Problem:    The debugger data window cannot be zoomed using the keyboard
+              (equal '=' for zooming in and minus '-' for zooming out).
+  Workaround: Use the corresponding contextual menus ("Zoom in" and
+              "Zoom out").
+
 - FA03-015 Smart Completion incompatible with block folding
   Problem:    When using block folding, if an editor contains folded blocks
               before the cursor, Smart Completion might get an empty or wrong
