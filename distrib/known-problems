@@ -1,11 +1,5 @@
 Known Problems fixed in GPS 4.1.0
 
-- FA17-006  Zooming the debugger data window not working with keyboard input
-  Problem:    The debugger data window cannot be zoomed using the keyboard
-              (equal '=' for zooming in and minus '-' for zooming out).
-  Workaround: Use the corresponding contextual menus ("Zoom in" and
-              "Zoom out").
-
 - F925-005 Instability when commenting a folded block
   Problem:    Commenting a line that contains a folded block - such a line has
               a little '+' icon on the left - might cause unexpected behaviors
