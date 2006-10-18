@@ -1157,6 +1157,7 @@ package body GVD.Process is
       Prev          : Debugger_List_Link;
       Editor        : Code_Editor;
       Property      : Breakpoint_Property;
+      Window        : MDI_Window;
    begin
       if Process.Exiting then
          return;
@@ -1204,7 +1205,9 @@ package body GVD.Process is
 
       --  This might have been closed by the user
 
-      if Process.Debugger_Text /= null then
+      Window := Get_MDI (Kernel);
+
+      if Window /= null and then Process.Debugger_Text /= null then
          Close (Get_MDI (Kernel), Process.Debugger_Text, Force => True);
       end if;
 
@@ -1213,7 +1216,7 @@ package body GVD.Process is
       end if;
 
       Editor := Process.Editor_Text;
-      if Get_Mode (Editor) /= Source then
+      if Window /= null and then Get_Mode (Editor) /= Source then
          Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
       end if;
 
