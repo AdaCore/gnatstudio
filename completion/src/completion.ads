@@ -27,7 +27,8 @@
 
 with Glib;         use Glib;
 
-with Basic_Types;  use Basic_Types;
+with GNAT.Strings; use GNAT.Strings;
+with Basic_Types;
 with Language;     use Language;
 with Generic_List;
 with Virtual_Lists;
@@ -72,11 +73,14 @@ package Completion is
 
    type Possibilities_Filter is mod 2 ** 32;
 
-   All_Visible_Packages : Possibilities_Filter := 2#0000_0001#;
-   All_Visible_Entities : Possibilities_Filter :=
+   All_Visible_Packages : constant Possibilities_Filter := 2#0000_0001#;
+   --  Denotes only the packages that are already in the visible scope.
+   All_Visible_Entities : constant Possibilities_Filter :=
      2#0000_0010# or All_Visible_Packages;
-   All_Accessible_Units : Possibilities_Filter := 2#0000_0100#;
-   Everything           : Possibilities_Filter := 16#FFFFFF#;
+   --  Denotes all the visible entities.
+   All_Accessible_Units : constant Possibilities_Filter := 2#0000_0100#;
+   --  Denote all the units that are accessible, even if they are not visible.
+   Everything           : constant Possibilities_Filter := 16#FFFFFF#;
 
    procedure Get_Possibilities
      (Resolver   : access Completion_Resolver;
@@ -195,7 +199,6 @@ package Completion is
       Offset     : Positive;
       Is_Partial : Boolean;
       Result     : in out Completion_List) is abstract;
-   --  See inherited documentation is abstract;
    --  Return the possible children of this completion,
    --  Null_Completion_Proposal if none.
 
@@ -226,6 +229,7 @@ package Completion is
 
    function Get_Initial_Completion_List
      (Manager        : Completion_Manager;
+      Buffer         : String;
       Start_Offset   : Natural;
       End_Is_Partial : Boolean := True) return Completion_List is abstract;
    --  Generates an initial completion list, for the cursor pointing at the
@@ -291,7 +295,7 @@ private
 
    type Completion_Proposal is abstract tagged record
       Mode             : Proposal_Mode := Show_Identifiers;
-      Resolver         : Completion_Resolver_Access;
+      Resolver         : access Completion_Resolver'Class;
    end record;
 
    Null_File_Location : constant File_Location := (No_File, 0, 0);
