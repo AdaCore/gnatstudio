@@ -402,7 +402,8 @@ package body GPS.Kernel.Console is
       History             : History_Key := "interactive";
       Create_If_Not_Exist : Boolean := True;
       Module              : GPS.Kernel.Abstract_Module_ID := null;
-      Force_Create        : Boolean := False) return Interactive_Console
+      Force_Create        : Boolean := False;
+      Accept_Input        : Boolean := True) return Interactive_Console
    is
       Console : Interactive_Console;
       Child   : MDI_Child;
@@ -451,11 +452,11 @@ package body GPS.Kernel.Console is
 
          elsif Child /= null then
             Console := Interactive_Console (Get_Widget (Child));
-            Enable_Prompt_Display (Console, True);
             Highlight_Child (Child);
             Console := Interactive_Console (Get_Widget (Child));
          end if;
 
+         Enable_Prompt_Display (Console, Accept_Input);
          return Console;
 
       else
