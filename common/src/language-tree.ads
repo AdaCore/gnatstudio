@@ -231,7 +231,7 @@ package Language.Tree is
    -------------------
 
    type Tree_Language is abstract tagged private;
-   --  This type represent the language of a given tree. It's used to provide
+   --  This type represents the language of a given tree. It's used to provide
    --  various language-specific capabilities on a tree.
 
    type Tree_Language_Access is access all Tree_Language'Class;
