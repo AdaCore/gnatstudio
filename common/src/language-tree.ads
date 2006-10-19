@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006                      --
+--                      Copyright (C) 2006                           --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -17,6 +17,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with GNAT.Strings; use GNAT.Strings;
 
 with Language; use Language;
 
@@ -37,21 +39,24 @@ package Language.Tree is
 
    type Construct_Tree_Access is access all Construct_Tree;
 
+   procedure Free (Tree : in out Construct_Tree);
+   --  Free the data associated to a construct tree.
+
    procedure Free (Tree : in out Construct_Tree_Access);
    --  Free the data associated to a construct tree access
 
    function To_Construct_Tree
-     (Language       : Language_Access;
-      Buffer         : String;
-      List           : Construct_List;
-      Compute_Scopes : Boolean := True)
+     (List      : access Construct_List;
+      Free_List : Boolean := False)
       return Construct_Tree;
    --  Return the construct tree corresponding to the construct list given in
-   --  parameter. If Compute_Scopes is True we will make an other pass trying
-   --  to associate the different parts of the same construct (e.g. body and
-   --  spec of a function, public and private part of a type...).
-   --  This is possibly time consuming, and if not needed, can be deactivated
-   --  by the user.
+   --  parameter. If Free_List is true, then the list given in parameter will
+   --  be freed at the end of the process.
+
+   function To_Construct_Tree
+     (Buffer : String_Access; Lang : access Language_Root'Class)
+      return Construct_Tree;
+   --  Same as above
 
    -----------------------------
    -- Construct_Tree_Iterator --
@@ -66,6 +71,9 @@ package Language.Tree is
    --  Return the first element of a construct tree, typically the first item
    --  of the source
 
+   function Last (Tree : Construct_Tree) return Construct_Tree_Iterator;
+   --  Return the last element of a construct tree.
+
    function Get_Parent_Scope
      (Tree : Construct_Tree;
       Iter : Construct_Tree_Iterator)
@@ -74,7 +82,7 @@ package Language.Tree is
    --  none.
 
    function Get_Construct
-     (Iter : Construct_Tree_Iterator) return Construct_Access;
+     (Iter : Construct_Tree_Iterator) return Simple_Construct_Information;
    --  Return the construct pointed by the iterator given in parameter.
 
    type Category_Array is array (Natural range <>) of Language_Category;
@@ -148,22 +156,6 @@ package Language.Tree is
    --  body of a package and Scope is its spec, the function will still return
    --  true.
 
-   function Get_Spec
-     (Tree : Construct_Tree;
-      Iter : Construct_Tree_Iterator) return Construct_Tree_Iterator;
-   --  Return the specification of the given iterator if any, or the iterator
-   --  itself otherwise.
-
-   function Get_First_Body
-     (Tree : Construct_Tree;
-      Iter : Construct_Tree_Iterator) return Construct_Tree_Iterator;
-   --  Return the first body found in the tree
-
-   function Get_Second_Body
-     (Tree : Construct_Tree;
-      Iter : Construct_Tree_Iterator) return Construct_Tree_Iterator;
-   --  Return the second body found in the tree
-
    function Encloses
      (Tree              : Construct_Tree;
       Scope             : Construct_Tree_Iterator;
@@ -188,6 +180,11 @@ package Language.Tree is
    type Composite_Identifier (<>) is private;
    --  This type is used to store identifiers with multiple parts, e.g.
    --  A.B.
+
+   type Composite_Identifier_Access is access all Composite_Identifier;
+
+   procedure Free (This : in out Composite_Identifier_Access);
+   --  Free the data associated to a composite identifier
 
    function Length (Id : Composite_Identifier) return Natural;
    --  Return the number of items composing this identifier
@@ -229,60 +226,76 @@ package Language.Tree is
 
    Null_Construct_Tree_Iterator_Array : constant Construct_Tree_Iterator_Array;
 
-   function Get_Visible_Constructs
-     (Tree       : Construct_Tree;
-      Offset     : Natural;
-      Name       : String;
-      Use_Wise   : Boolean := True;
-      Is_Partial : Boolean := False)
-      return Construct_Tree_Iterator_Array;
-   function Get_Visible_Constructs
-     (Tree       : Construct_Tree;
-      From       : Construct_Tree_Iterator;
-      Name       : String;
-      Use_Wise   : Boolean := True;
-      Is_Partial : Boolean := False)
-      return Construct_Tree_Iterator_Array;
-   --  Return the closest entity (closest visibility-wise) from the position
-   --  given in parameter, for the given name.
+   -------------------
+   -- Tree_Language --
+   -------------------
 
-   function Get_Visible_Constructs
-     (Tree         : Construct_Tree;
-      Start_Entity : Construct_Tree_Iterator;
-      Id           : Composite_Identifier;
-      Use_Wise     : Boolean := True)
-      return Construct_Tree_Iterator_Array;
-   function Get_Visible_Constructs
-     (Tree     : Construct_Tree;
-      Offset   : Natural;
-      Id       : Composite_Identifier;
-      Use_Wise : Boolean := True)
-      return Construct_Tree_Iterator_Array;
-   --  Return the first construct visible with the given name from the given
-   --  offset. Null_Tree_Iterator if none. This function is sensitive to
-   --  private parts, and to use clauses.
+   type Tree_Language is abstract tagged private;
+   --  This type represent the language of a given tree. It's used to provide
+   --  various language-specific capabilities on a tree.
+
+   type Tree_Language_Access is access all Tree_Language'Class;
+
+   function Get_Language
+     (Tree : access Tree_Language) return Language_Access is abstract;
+   --  Return the language associated to this tree.
+
+   type Get_Parent_Tree_Result is (Left, Right, None);
+
+   function Get_Parent_Tree
+     (Lang       : access Tree_Language;
+      Left_Tree  : access Construct_Tree;
+      Right_Tree : access Construct_Tree)
+      return Get_Parent_Tree_Result is abstract;
+   --  Return Left if Left if the parent of Right, Right if it's the parent
+   --  of Left, None if no parent relationship can be estalished.
+
+   function Get_Public_Tree
+     (Lang      : access Tree_Language;
+      Full_Tree : access Construct_Tree;
+      Free_Tree : Boolean) return Construct_Tree is abstract;
+   --  Return a tree containing only the public information of the tree given
+   --  in parameter. If Free_Tree is True, then Full_Tree will be freed at
+   --  the end of the process.
+
+   function Get_Unit_Construct
+     (Lang : access Tree_Language;
+      Tree : access Construct_Tree) return Construct_Tree_Iterator is abstract;
+   --  Return the construct representing the unit of the file, if such a
+   --  notion exists in the target language. Otherwise, return
+   --  Null_Construct_Tree_Iterator.
+
+   function Get_Unit_Name
+     (Lang : access Tree_Language;
+      Tree : access Construct_Tree) return Composite_Identifier is abstract;
+   --  Return the identifier representing the unit of the file, if such a
+   --  notion exists in the target language.
+
+   function Get_Name_Index
+     (Lang      : access Tree_Language;
+      Construct : Simple_Construct_Information) return String is abstract;
+   --  Return the name that should be used to index the given construct. Takes
+   --  care of e.g. case handling.
 
 private
 
    type Construct_Tree_Node is record
-      Construct              : Construct_Access := null;
+      Construct              : Simple_Construct_Information;
       Sub_Nodes_Length       : Natural := 0;
       Previous_Sibling_Index : Natural := 0;
       Parent_Index           : Natural := 0;
-
-      Spec_Index             : Natural := 0;
-
-      First_Body_Index       : Natural := 0;
-      --  If the entity is a subprogram, this stores the position of its body.
-      --  If it's a type, it stores the position of the declaration (the public
-      --  declaration in case there is a full one in the private one as well).
-
-      Second_Body_Index      : Natural := 0;
-      --  Only used in the construct is a type. Stores the position of the
-      --  full declaration in the private part.
    end record;
 
-   type Construct_Tree is array (Positive range <>) of Construct_Tree_Node;
+   type Node_Array is array (Natural range <>) of Construct_Tree_Node;
+
+   type Construct_Tree (Length : Natural) is record
+      Contents : Node_Array (1 .. Length);
+
+      Unit_Index : Integer := -1;
+      Unit_Name : Composite_Identifier_Access := null;
+      --  These two fields may be set by the implementations of
+      --  Get_Unit_Construct.
+   end record;
 
    type Construct_Tree_Iterator is record
       Node  : Construct_Tree_Node;
@@ -290,13 +303,16 @@ private
    end record;
 
    Null_Construct_Tree_Node : constant Construct_Tree_Node :=
-     (null, 0, 0, 0, 0, 0, 0);
+     (Null_Simple_Construct_Info, 0, 0, 0);
 
    Null_Construct_Tree_Iterator : constant Construct_Tree_Iterator :=
      (Null_Construct_Tree_Node, 0);
 
-   Null_Construct_Tree : constant Construct_Tree (1 .. 0) :=
-     (others => Null_Construct_Tree_Node);
+   Null_Construct_Tree : constant Construct_Tree :=
+     (0,
+      Contents    => (others => Null_Construct_Tree_Node),
+      Unit_Index  => -1,
+      Unit_Name   => null);
 
    Null_Construct_Tree_Iterator_Array : constant Construct_Tree_Iterator_Array
      (1 .. 0) := (others => Null_Construct_Tree_Iterator);
@@ -310,6 +326,8 @@ private
          Position_Start : Positions_Array (1 .. Number_Of_Elements);
          Position_End   : Positions_Array (1 .. Number_Of_Elements);
       end record;
+
+   type Tree_Language is abstract tagged null record;
 
    function Get_Last_Relevant_Construct
      (Tree   : Construct_Tree;
