@@ -493,7 +493,9 @@ package body Codefix.Text_Manager is
       if Get_Construct (Unit_Info).Is_Declaration then
 
          Body_Info := Get_First_Body
-           (Get_Tree (Current_Text, Cursor).all, Unit_Info);
+           (Get_Tree (Current_Text, Cursor).all,
+            Get_Ada_Tree (Current_Text, Cursor).all,
+            Unit_Info);
 
          for J in Get_Construct (Body_Info).Sloc_Start.Line
            .. Get_Construct (Body_Info).Sloc_End.Line
@@ -585,7 +587,7 @@ package body Codefix.Text_Manager is
      (This      : Text_Navigator_Abstr'Class;
       File_Name : VFS.Virtual_File;
       Category  : Language_Category;
-      Name      : String := "") return Construct_Information is
+      Name      : String := "") return Simple_Construct_Information is
    begin
       return Search_Unit (Get_File (This, File_Name), Category, Name);
    end Search_Unit;
@@ -656,7 +658,9 @@ package body Codefix.Text_Manager is
 
       if Get_Construct (Unit_Info).Is_Declaration then
          Body_Info := Get_First_Body
-           (Get_Tree (Current_Text, Cursor).all, Unit_Info);
+           (Get_Tree (Current_Text, Cursor).all,
+            Get_Ada_Tree (Current_Text, Cursor).all,
+            Unit_Info);
       else
          Body_Info := Null_Construct_Tree_Iterator;
       end if;
@@ -790,6 +794,17 @@ package body Codefix.Text_Manager is
    begin
       return Get_Tree (Get_File (This, Get_File (Cursor)));
    end Get_Tree;
+
+   ------------------
+   -- Get_Ada_Tree --
+   ------------------
+
+   function Get_Ada_Tree
+     (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Ada_Construct_Tree_Access is
+   begin
+      return Get_Ada_Tree (Get_File (This, Get_File (Cursor)));
+   end Get_Ada_Tree;
 
    --------------------
    -- Parse_Entities --
@@ -1043,7 +1058,7 @@ package body Codefix.Text_Manager is
    function Search_Unit
      (This     : access Text_Interface'Class;
       Category : Language_Category;
-      Name     : String := "") return Construct_Information
+      Name     : String := "") return Simple_Construct_Information
    is
       Current_Info : Construct_Access;
    begin
@@ -1054,13 +1069,13 @@ package body Codefix.Text_Manager is
            and then
              (Name = "" or else Compare_Last (Current_Info.Name.all, Name))
          then
-            return Current_Info.all;
+            return To_Simple_Construct_Information (Current_Info.all, False);
          end if;
 
          Current_Info := Current_Info.Next;
       end loop;
 
-      return Null_Construct_Info;
+      return Null_Simple_Construct_Info;
    end Search_Unit;
 
    ---------------------
@@ -1287,6 +1302,18 @@ package body Codefix.Text_Manager is
       return This.Tree;
    end Get_Tree;
 
+   ------------------
+   -- Get_Ada_Tree --
+   ------------------
+
+   function Get_Ada_Tree
+     (This : access Text_Interface'Class) return Ada_Construct_Tree_Access is
+   begin
+      Update_Structure_If_Needed (This);
+
+      return This.Ada_Tree;
+   end Get_Ada_Tree;
+
    --------------------------------
    -- Update_Structure_If_Needed --
    --------------------------------
@@ -1295,6 +1322,7 @@ package body Codefix.Text_Manager is
    begin
       if not This.Structure_Up_To_Date.all then
          Free (This.Tree);
+         Free (This.Ada_Tree);
          Free (This.Structure);
          Free (This.Buffer);
 
@@ -1309,8 +1337,12 @@ package body Codefix.Text_Manager is
             Constructs       => This.Structure);
 
          This.Tree := new Construct_Tree'
-           (To_Construct_Tree
-              (Ada_Lang, This.Buffer.all, This.Structure.all));
+           (To_Construct_Tree (This.Structure, False));
+
+         This.Ada_Tree := new Ada_Construct_Tree'(Generate_Ada_Construct_Tree
+           (This.Tree.all,
+            Ada_Lang,
+            This.Buffer.all));
 
          This.Structure_Up_To_Date.all := True;
 
