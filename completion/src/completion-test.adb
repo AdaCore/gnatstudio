@@ -21,43 +21,39 @@
 with Ada.Command_Line;              use Ada.Command_Line;
 with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Text_IO;                   use Ada.Text_IO;
-with Ada.Strings.Unbounded;         use Ada.Strings;
-with Ada.Strings.Unbounded.Text_IO;
 with Ada.Calendar;                  use Ada.Calendar;
+with Ada.Directories;               use Ada.Directories;
+
+with GNAT.OS_Lib;
 
 with Completion.Ada;                  use Completion.Ada;
-with Completion.Entities_Extractor;   use Completion.Entities_Extractor;
-with Completion.Constructs_Extractor; use Completion.Constructs_Extractor;
 with Completion.Expression_Parser;    use Completion.Expression_Parser;
 
-with Language;          use Language;
-with String_Utils;      use String_Utils;
-with Ada_Analyzer;      use Ada_Analyzer;
-with Case_Handling;     use Case_Handling;
-with Language.Tree;     use Language.Tree;
-with Language_Handlers; use Language_Handlers;
-with Prj;               use Prj;
-with Projects;          use Projects;
-with Projects.Registry; use Projects.Registry;
-with Entities;          use Entities;
-with Entities.Queries;  use Entities.Queries;
-with ALI_Parser;        use ALI_Parser;
-with VFS;               use VFS;
-with Language.Ada;      use Language.Ada;
+with Completion.Ada.Constructs_Extractor;
+use Completion.Ada.Constructs_Extractor;
+
+with Language;               use Language;
+with String_Utils;           use String_Utils;
+with Language.Tree;          use Language.Tree;
+with Language.Tree.Ada;      use Language.Tree.Ada;
+with Language.Tree.Database; use Language.Tree.Database;
+with Projects;               use Projects;
+with Projects.Registry;      use Projects.Registry;
+with Entities;               use Entities;
+with VFS;                    use VFS;
 
 procedure Completion.Test is
    use Standard.Ada;
    use Token_List;
-   use type Strings.Unbounded.Unbounded_String;
-
-   File   : File_Type;
-   Buffer : Strings.Unbounded.Unbounded_String;
 
    Max_Accepted_Time_For_Creation : constant Duration := 0.1;
    --  Maximum time for the resolution, in seconds
 
    Max_Accepted_Time_For_Iteration : constant Duration := 0.1;
-   --  Maximum time for the resolution, in seconds
+   --  Maximum time for the iteration, in seconds
+
+   Max_Accepted_Time_For_Initialization : constant Duration := 0.1;
+   --  Maximum time for the initialization, in seconds
 
    procedure Next_Complete_Tag
      (Buffer      : String;
@@ -67,17 +63,14 @@ procedure Completion.Test is
 
    procedure Display (List : Completion_List; Name : String);
 
-   function Get_Construct_Completion_Resolver (Buffer : String)
-     return Completion_Resolver_Access;
+   function Get_New_Construct_Extractor
+     (File : Virtual_File; Project : String) return Completion_Resolver_Access;
 
-   function Get_Entity_Completion_Resolver (Buffer : String; Project : String)
-     return Completion_Resolver_Access;
-
-   procedure Parse_File (Buffer : String);
-   procedure Extract_Constructs (Buffer : String);
-   procedure Analyze_Proposal (Buffer : String);
-   procedure Extract_Entities (Buffer : String; Project : String);
-   procedure Full_Test (Buffer : String; Project : String);
+   procedure Parse_File (File : Virtual_File);
+   procedure Extract_Constructs (File : Virtual_File);
+   procedure Analyze_Proposal (File : Virtual_File);
+   procedure Extract_Entities (File : Virtual_File; Project : String);
+   procedure Full_Test (File : Virtual_File; Project : String);
 
    -----------------------
    -- Next_Complete_Tag --
@@ -169,8 +162,10 @@ procedure Completion.Test is
    -- Parse_File --
    ----------------
 
-   procedure Parse_File (Buffer : String) is
+   procedure Parse_File (File : Virtual_File) is
       Result      : Token_List.List;
+
+      Buffer : constant String_Access := String_Access (Read_File (File));
 
       procedure Display (List  : Token_List.List);
       procedure Display (Token : Token_Record);
@@ -204,80 +199,22 @@ procedure Completion.Test is
       end Display;
 
    begin
-      Result := Parse_Current_List (Buffer, Buffer'Last);
+      Result := Parse_Current_List (Buffer.all, Buffer'Last);
       Display (Result);
    end Parse_File;
 
-   ---------------------------------------
-   -- Get_Construct_Completion_Resolver --
-   ---------------------------------------
+   ---------------------------------
+   -- Get_New_Construct_Extractor --
+   ---------------------------------
 
-   function Get_Construct_Completion_Resolver
-     (Buffer : String) return Completion_Resolver_Access
+   New_Registry : aliased Project_Registry;
+   Construct_Db : constant Construct_Database_Access := new Construct_Database;
+   Db           : Entities_Database;
+   pragma Unreferenced (Db);
+
+   function Get_New_Construct_Extractor
+     (File : Virtual_File; Project : String) return Completion_Resolver_Access
    is
-      Constructs : constant Construct_List_Access := new Construct_List;
-   begin
-      Analyze_Ada_Source
-        (Buffer          => Buffer,
-         Indent_Params   => Default_Indent_Parameters,
-         Format          => False,
-         From            => 0,
-         To              => 0,
-         Replace         => null,
-         Constructs      => Constructs,
-         Callback        => null,
-         Indent_Offset   => 0,
-         Case_Exceptions => No_Casing_Exception);
-
-      return new Construct_Completion_Resolver'
-        (New_Construct_Completion_Resolver
-           (new Construct_Tree'(To_Construct_Tree
-            (Ada_Lang, Buffer, Constructs.all)),
-            Create_From_Base (Argument (1))));
-   end Get_Construct_Completion_Resolver;
-
-   ------------------------------------
-   -- Get_Entity_Completion_Resolver --
-   ------------------------------------
-
-   Registry : aliased Project_Registry;
-   Db       : Entities_Database;
-   ALI      : LI_Handler;
-
-   function Get_Entity_Completion_Resolver (Buffer : String; Project : String)
-     return Completion_Resolver_Access
-   is
-      Constructs  : constant Construct_List_Access := new Construct_List;
-
-      -------------------------
-      -- Create_Lang_Handler --
-      -------------------------
-
-      function Create_Lang_Handler return Language_Handler;
-
-      function Create_Lang_Handler return Language_Handler is
-         Handler : Language_Handler;
-      begin
-         Create_Handler (Handler);
-         Prj.Initialize (Get_Tree (Get_Root_Project (Registry)));
-
-         Register_Language_Handler (Db, Handler);
-
-         ALI := Create_ALI_Handler (Db, Registry);
-         Register_Language (Handler, Ada_Lang, ALI);
-         Register_Default_Language_Extension (Registry, "ada", ".ads", ".adb");
-
---       CPP_LI := Create_CPP_Handler (Db, Registry);
---       Register_Language (Handler, C_Lang, CPP_LI);
---       Register_Default_Language_Extension (Registry, "c", ".h", ".c");
---
---       Register_Language (Handler, Cpp_Lang, CPP_LI);
---       Register_Default_Language_Extension (Registry, "c++", ".h", ".cc");
-
-         Set_Registry (Handler, Registry'Unrestricted_Access);
-         return Handler;
-      end Create_Lang_Handler;
-
       procedure Project_Error (Msg : String);
 
       procedure Project_Error (Msg : String) is
@@ -288,61 +225,56 @@ procedure Completion.Test is
       Loaded  : Boolean;
       Success : Boolean;
 
-      Handler : Language_Handler;
+      Current_File : Structured_File_Access;
 
    begin
-      Analyze_Ada_Source
-        (Buffer          => Buffer,
-         Indent_Params   => Default_Indent_Parameters,
-         Format          => False,
-         From            => 0,
-         To              => 0,
-         Replace         => null,
-         Constructs      => Constructs,
-         Callback        => null,
-         Indent_Offset   => 0,
-         Case_Exceptions => No_Casing_Exception);
+      if Project /= "" then
+         Projects.Registry.Initialize;
 
-      Projects.Registry.Initialize;
+         Db := Create (New_Registry'Unchecked_Access);
 
-      Db := Create (Registry'Unchecked_Access);
+         Load
+           (Registry           => New_Registry,
+            Root_Project_Path  => Create_From_Dir (Get_Current_Dir, Project),
+            Errors             => Project_Error'Unrestricted_Access,
+            New_Project_Loaded => Loaded,
+            Status             => Success);
 
-      Load
-        (Registry           => Registry,
-         Root_Project_Path  => Create_From_Dir (Get_Current_Dir, Project),
-         Errors             => Project_Error'Unrestricted_Access,
-         New_Project_Loaded => Loaded,
-         Status             => Success);
+         Recompute_View (New_Registry, Project_Error'Unrestricted_Access);
 
-      Recompute_View (Registry, Project_Error'Unrestricted_Access);
+         declare
+            Files : constant VFS.File_Array_Access :=
+              Get_Source_Files (Get_Root_Project (New_Registry), True);
+         begin
+            for J in Files.all'Range loop
+               declare
+                  Dummy_File_Node : Structured_File_Access;
+                  pragma Unreferenced (Dummy_File_Node);
+               begin
+                  Dummy_File_Node := Get_Or_Create
+                    (Construct_Db,
+                     Files.all (J),
+                     Ada_Tree_Lang);
+               end;
+            end loop;
+         end;
+      end if;
 
-      Handler := Create_Lang_Handler;
-      --  It's important to have called that before the update of the xrefs !
+      Current_File := Get_Or_Create
+        (Construct_Db, File, Ada_Tree_Lang);
 
-      declare
-         Files : constant VFS.File_Array_Access :=
-           Get_Source_Files (Get_Root_Project (Registry), True);
-      begin
-         for J in Files.all'Range loop
-            Update_Xref (Get_Or_Create (Db, Files (J)));
-         end loop;
-      end;
-
-      Compute_All_Call_Graphs (Db);
-
-      return new Entity_Completion_Resolver'
-        (New_Entity_Completion_Resolver
-           (new Construct_Tree'(To_Construct_Tree
-            (Ada_Lang, Buffer, Constructs.all)),
-            Get_Root_Project (Registry),
-            Handler));
-   end Get_Entity_Completion_Resolver;
+      return new Construct_Completion_Resolver'
+        (New_Construct_Completion_Resolver
+           (Construct_Db,
+            File,
+            Get_Buffer (Current_File)));
+   end Get_New_Construct_Extractor;
 
    ------------------------
    -- Extract_Constructs --
    ------------------------
 
-   procedure Extract_Constructs (Buffer : String) is
+   procedure Extract_Constructs (File : Virtual_File) is
       Result      : Completion_List;
       Tag_Index   : Natural;
 
@@ -352,20 +284,22 @@ procedure Completion.Test is
       Manager  : constant Completion_Manager_Access :=
         new Ada_Completion_Manager;
       Resolver : constant Completion_Resolver_Access :=
-        Get_Construct_Completion_Resolver (Buffer);
+        Get_New_Construct_Extractor (File, "");
 
       Start_Date  : Time;
       Time_Passed : Duration;
 
+      Buffer : constant String_Access := String_Access (Read_File (File));
+
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, new String'(Buffer));
+      Set_Buffer (Manager.all, Buffer);
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
 
-         Next_Complete_Tag (Buffer, Tag_Index, Start_Word, End_Word);
+         Next_Complete_Tag (Buffer.all, Tag_Index, Start_Word, End_Word);
 
          exit when Tag_Index = 0;
 
@@ -398,7 +332,7 @@ procedure Completion.Test is
    -- Analyze_Proposal --
    ----------------------
 
-   procedure Analyze_Proposal (Buffer : String) is
+   procedure Analyze_Proposal (File : Virtual_File) is
       Result      : Completion_List;
       Tag_Index   : Natural;
 
@@ -408,20 +342,21 @@ procedure Completion.Test is
       Manager  : constant Completion_Manager_Access :=
         new Ada_Completion_Manager;
       Resolver : constant Completion_Resolver_Access :=
-        Get_Construct_Completion_Resolver (Buffer);
+        Get_New_Construct_Extractor (File, "");
 
       Start_Date  : Time;
       Time_Passed : Duration;
+      Buffer      : constant String_Access := String_Access (Read_File (File));
 
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, new String'(Buffer));
+      Set_Buffer (Manager.all, Buffer);
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
 
-         Next_Complete_Tag (Buffer, Tag_Index, Start_Word, End_Word);
+         Next_Complete_Tag (Buffer.all, Tag_Index, Start_Word, End_Word);
 
          exit when Tag_Index = 0;
 
@@ -429,6 +364,7 @@ procedure Completion.Test is
 
          Result := Get_Initial_Completion_List
            (Manager      => Manager.all,
+            Buffer       => Buffer.all,
             Start_Offset => End_Word);
 
          Time_Passed := Clock - Start_Date;
@@ -448,7 +384,7 @@ procedure Completion.Test is
    -- Extract_Entities --
    ----------------------
 
-   procedure Extract_Entities (Buffer : String; Project : String) is
+   procedure Extract_Entities (File : Virtual_File; Project : String) is
       Result      : Completion_List;
       Tag_Index   : Natural;
       Start_Word  : Natural;
@@ -457,20 +393,21 @@ procedure Completion.Test is
       Manager  : constant Completion_Manager_Access :=
         new Ada_Completion_Manager;
       Resolver : constant Completion_Resolver_Access :=
-        Get_Entity_Completion_Resolver (Buffer, Project);
+        Get_New_Construct_Extractor (File, Project);
 
       Start_Date  : Time;
       Time_Passed : Duration;
+      Buffer      : constant String_Access := String_Access (Read_File (File));
 
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, new String'(Buffer));
+      Set_Buffer (Manager.all, Buffer);
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
 
-         Next_Complete_Tag (Buffer, Tag_Index, Start_Word, End_Word);
+         Next_Complete_Tag (Buffer.all, Tag_Index, Start_Word, End_Word);
 
          exit when Tag_Index = 0;
 
@@ -503,7 +440,7 @@ procedure Completion.Test is
    -- Full_Test --
    ---------------
 
-   procedure Full_Test (Buffer : String; Project : String) is
+   procedure Full_Test (File : Virtual_File; Project : String) is
       Result      : Completion_List;
       Tag_Index   : Natural;
       Start_Word  : Natural;
@@ -511,23 +448,35 @@ procedure Completion.Test is
 
       Manager  : constant Completion_Manager_Access :=
         new Ada_Completion_Manager;
+      Resolver : Completion_Resolver_Access;
 
       Start_Date  : Time;
       Time_Passed : Duration;
 
+      Buffer : constant String_Access := String_Access (Read_File (File));
+
    begin
+      Start_Date := Clock;
+
+      Resolver := Get_New_Construct_Extractor (File, Project);
+
+      Time_Passed := Clock - Start_Date;
+
+      if Time_Passed > Max_Accepted_Time_For_Initialization then
+         Text_IO.Put_Line
+           ("Initialization is too long: "
+            & Duration'Image (Time_Passed)
+            & " seconds.");
+      end if;
+
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, new String'(Buffer));
-      Register_Resolver
-        (Manager, Get_Construct_Completion_Resolver (Buffer));
-      Register_Resolver
-        (Manager, Get_Entity_Completion_Resolver
-         (Buffer, Project));
+      Set_Buffer (Manager.all, Buffer);
+      Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
 
-         Next_Complete_Tag (Buffer, Tag_Index, Start_Word, End_Word);
+         Next_Complete_Tag (Buffer.all, Tag_Index, Start_Word, End_Word);
 
          exit when Tag_Index = 0;
 
@@ -535,6 +484,7 @@ procedure Completion.Test is
 
          Result := Get_Initial_Completion_List
            (Manager      => Manager.all,
+            Buffer       => Buffer.all,
             Start_Offset => End_Word);
 
          Time_Passed := Clock - Start_Date;
@@ -550,48 +500,39 @@ procedure Completion.Test is
       end loop;
    end Full_Test;
 
+   Given_File : Virtual_File;
+
 begin
    if Argument_Count < 2 then
       Put_Line ("Usage : <command> <file_name> <mode>");
       return;
    end if;
 
-   Open (File, In_File, Argument (1));
+   Given_File := Create_From_Base
+     (Current_Directory & GNAT.OS_Lib.Directory_Separator & Argument (1));
 
-   while not End_Of_File (File) loop
-      Strings.Unbounded.Append
-        (Buffer,
-         Strings.Unbounded.Text_IO.Get_Line (File) & ASCII.LF);
-   end loop;
-
-   Close (File);
-
-   declare
-      S : constant String := Strings.Unbounded.To_String (Buffer);
-   begin
-      if Argument (2) = "parse" then
-         Parse_File (S);
-      elsif Argument (2) = "construct" then
-         Extract_Constructs (S);
-      elsif Argument (2) = "analyze" then
-         Analyze_Proposal (S);
-      elsif Argument (2) = "entity" then
-         if Argument_Count < 3 then
-            Put_Line ("Usage : <command> <file_name> analyze <project_name>");
-            return;
-         end if;
-
-         Extract_Entities (S, Argument (3));
-
-      elsif Argument (2) = "full" then
-         if Argument_Count < 3 then
-            Put_Line ("Usage : <command> <file_name> full <project_name>");
-            return;
-         end if;
-
-         Full_Test (S, Argument (3));
+   if Argument (2) = "parse" then
+      Parse_File (Given_File);
+   elsif Argument (2) = "construct" then
+      Extract_Constructs (Given_File);
+   elsif Argument (2) = "analyze" then
+      Analyze_Proposal (Given_File);
+   elsif Argument (2) = "entity" then
+      if Argument_Count < 3 then
+         Put_Line ("Usage : <command> <file_name> entity <project_name>");
+         return;
       end if;
-   end;
+
+      Extract_Entities (Given_File, Argument (3));
+
+   elsif Argument (2) = "full" then
+      if Argument_Count < 3 then
+         Put_Line ("Usage : <command> <file_name> full <project_name>");
+         return;
+      end if;
+
+      Full_Test (Given_File, Argument (3));
+   end if;
 
    Flush;
 
