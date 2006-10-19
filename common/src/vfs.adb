@@ -1186,6 +1186,7 @@ package body VFS is
 
    function "<" (File1, File2 : Virtual_File) return Boolean is
       C1, C2 : Character;
+      Ind1, Ind2 : Integer;
       Case_Sensitive : Boolean;
    begin
       if File1 = File2 then
@@ -1198,25 +1199,35 @@ package body VFS is
          Case_Sensitive := File1.Get_Filesystem.Is_Case_Sensitive
            and then File2.Get_Filesystem.Is_Case_Sensitive;
 
+         Ensure_Normalized (File1);
+         Ensure_Normalized (File2);
+
          if Case_Sensitive then
-            return File1.Value.Full_Name.all < File2.Value.Full_Name.all;
+            return File1.Value.Normalized_Full.all
+              < File2.Value.Normalized_Full.all;
          else
-            for C in File1.Value.Full_Name'Range loop
-               if C > File2.Value.Full_Name'Last then
+            Ind1 := File1.Value.Normalized_Full'First;
+            Ind2 := File2.Value.Normalized_Full'First;
+
+            for C in 1 .. File1.Value.Normalized_Full'Length loop
+               if Ind2 > File2.Value.Normalized_Full'Last then
                   return False;
                end if;
 
-               C1 := To_Lower (File1.Value.Full_Name (C));
-               C2 := To_Lower (File2.Value.Full_Name (C));
+               C1 := To_Lower (File1.Value.Normalized_Full (Ind1));
+               C2 := To_Lower (File2.Value.Normalized_Full (Ind2));
 
                if C1 < C2 then
                   return True;
                elsif C1 > C2 then
                   return False;
                end if;
+
+               Ind1 := Ind1 + 1;
+               Ind2 := Ind2 + 1;
             end loop;
 
-            return True;
+            return False;
          end if;
       end if;
    end "<";
