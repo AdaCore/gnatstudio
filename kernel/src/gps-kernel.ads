@@ -42,6 +42,7 @@ with Basic_Mapper;
 with Entities;
 with Entities.Queries;
 with Language_Handlers;
+with Language.Tree.Database;
 with String_Hash;
 with Default_Preferences;
 with Histories;
@@ -256,6 +257,11 @@ package GPS.Kernel is
    function Get_Database
      (Kernel : access Kernel_Handle_Record) return Entities.Entities_Database;
    --  Return the database used for cross-references
+
+   function Get_Construct_Database
+     (Kernel : access Kernel_Handle_Record)
+      return Language.Tree.Database.Construct_Database_Access;
+   --  Return the database storing the construct information
 
    procedure Find_Declaration_Or_Overloaded
      (Kernel            : access Kernel_Handle_Record;
@@ -825,6 +831,9 @@ private
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Database : Entities.Entities_Database;
       --  The cross-reference information
+
+      Construct_Database : Language.Tree.Database.Construct_Database_Access;
+      --  The construct information
 
       Tools   : Tools_Htable.String_Hash_Table.HTable;
       --  The tools registered in the kernel
