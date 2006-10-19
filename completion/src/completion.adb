@@ -227,7 +227,7 @@ package body Completion is
    function Get_Resolver (Proposal : Completion_Proposal)
      return Completion_Resolver_Access is
    begin
-      return Proposal.Resolver;
+      return Completion_Resolver_Access (Proposal.Resolver);
    end Get_Resolver;
 
    -----------
