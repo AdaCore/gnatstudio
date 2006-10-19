@@ -82,6 +82,7 @@ with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
+with Language.Tree.Database;    use Language.Tree.Database;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects.Registry;         use Projects, Projects.Registry;
@@ -288,6 +289,21 @@ package body GPS.Kernel is
    begin
       return Kernel.Database;
    end Get_Database;
+
+   ----------------------------
+   -- Get_Construct_Database --
+   ----------------------------
+
+   function Get_Construct_Database
+     (Kernel : access Kernel_Handle_Record)
+      return Language.Tree.Database.Construct_Database_Access is
+   begin
+      if Kernel.Construct_Database = null then
+         Kernel.Construct_Database := new Construct_Database;
+      end if;
+
+      return Kernel.Construct_Database;
+   end Get_Construct_Database;
 
    ----------------------
    -- Load_Preferences --
@@ -1323,6 +1339,7 @@ package body GPS.Kernel is
       Free (Handle.Gnatls_Server);
       Free (Handle.Home_Dir);
       Free (Handle.Prefix);
+      Free (Handle.Construct_Database);
 
       Destroy (Handle.Registry.all);
       Unchecked_Free (Handle.Registry);
