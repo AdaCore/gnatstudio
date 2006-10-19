@@ -26,6 +26,7 @@ package Completion.Ada is
 
    function Get_Initial_Completion_List
      (Manager        : Ada_Completion_Manager;
+      Buffer         : String;
       Start_Offset   : Natural;
       End_Is_Partial : Boolean := True) return Completion_List;
    --  See inherited documentation
