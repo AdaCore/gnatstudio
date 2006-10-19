@@ -296,7 +296,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       use Codefix.Ada_Tools.Words_Lists;
 
-      Pkg_Info     : Construct_Information;
+      Pkg_Info     : Simple_Construct_Information;
       Word_Used    : Word_Cursor := Clone (Word);
       Clauses_List : Words_Lists.List;
       Clause_Node  : Words_Lists.List_Node;
@@ -310,7 +310,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             It : constant Construct_Tree_Iterator := Get_Iterator_At
               (Current_Text, Word, Position, (1 => Category));
          begin
-            Pkg_Info := Get_Construct (It).all;
+            Pkg_Info := Get_Construct (It);
          end;
       end if;
 
