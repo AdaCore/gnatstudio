@@ -25,7 +25,7 @@
 package Ada_Analyzer.Utils is
 
    function Is_Access
-     (Buffer : String; Construct : Construct_Information)
+     (Buffer : String; Construct : Simple_Construct_Information)
       return Boolean;
    --  Return true if the type of the construct given in parameter is an
    --  access type, false otherwise.

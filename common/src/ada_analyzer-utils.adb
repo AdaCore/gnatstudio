@@ -25,7 +25,7 @@ package body Ada_Analyzer.Utils is
    ---------------
 
    function Is_Access
-     (Buffer : String; Construct : Construct_Information)
+     (Buffer : String; Construct : Simple_Construct_Information)
       return Boolean
    is
       Result : Boolean := False;
