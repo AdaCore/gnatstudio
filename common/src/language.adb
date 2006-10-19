@@ -352,6 +352,32 @@ package body Language is
       end loop;
    end Looking_At;
 
+   -------------------------------------
+   -- To_Simple_Construct_Information --
+   -------------------------------------
+
+   function To_Simple_Construct_Information
+     (Construct : Construct_Information; Full_Copy : Boolean)
+      return Simple_Construct_Information
+   is
+      Simple : Simple_Construct_Information :=
+        (Category       => Construct.Category,
+         Is_Declaration => Construct.Is_Declaration,
+         Visibility     => Construct.Visibility,
+         Name           => Construct.Name,
+         Sloc_Start     => Construct.Sloc_Start,
+         Sloc_Entity    => Construct.Sloc_Entity,
+         Sloc_End       => Construct.Sloc_End);
+   begin
+      if Full_Copy then
+         if Construct.Name /= null then
+            Simple.Name := new String'(Simple.Name.all);
+         end if;
+      end if;
+
+      return Simple;
+   end To_Simple_Construct_Information;
+
    ------------------
    -- Comment_Line --
    ------------------
@@ -583,7 +609,7 @@ package body Language is
    procedure Get_Referenced_Entity
      (Lang       : access Language_Root;
       Buffer     : String;
-      Construct  : Construct_Information;
+      Construct  : Simple_Construct_Information;
       Sloc_Start : out Source_Location;
       Sloc_End   : out Source_Location;
       Success    : out Boolean;
