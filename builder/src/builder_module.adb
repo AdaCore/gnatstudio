@@ -49,6 +49,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
@@ -80,7 +81,6 @@ with OS_Utils;                  use OS_Utils;
 with Traces;                    use Traces;
 with Commands;                  use Commands;
 with Commands.Builder;          use Commands.Builder;
-with Task_Manager;              use Task_Manager;
 
 with Commands.Generic_Asynchronous;
 
@@ -122,8 +122,7 @@ package body Builder_Module is
    --  The size of the chunk of files loaded by the xrefs loader.
    --  ??? This should be configurable
 
-   Xrefs_Loading_Queue_0 : constant String := "xrefs_loading_0";
-   Xrefs_Loading_Queue_1 : constant String := "xrefs_loading_1";
+   Xrefs_Loading_Queue : constant String := "xrefs_loading";
 
    type Files_Callback_Data is new Callback_Data_Record with record
       Files  : File_Array_Access;
@@ -147,12 +146,6 @@ package body Builder_Module is
    function Is_Dynamic_Menu_Item
      (W : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
    --  Return True if W is a Dynamic menu item
-
-   function Kill_Xrefs_Queue
-     (Kernel : access Kernel_Handle_Record'Class; Queue_Name : String)
-      return Boolean;
-   --  Kills a given xrefs queue, provided that the command contained in this
-   --  queue is a xref loading command.
 
    procedure Interrupt_Xrefs_Loading
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -192,30 +185,8 @@ package body Builder_Module is
    -- Loading cross-references --
    ------------------------------
 
-   type Load_Xref_Data is record
-      Kernel           : Kernel_Handle;
-      Current_Progress : Natural;
-      Total_Progress   : Natural;
-      Std_Files        : File_Array_Access;
-      Project_Files    : File_Array_Access;
-      Index_In_Std     : Natural;
-      Index_In_Project : Natural;
-      Stop             : Boolean := False;
-   end record;
-   type Load_Xref_Data_Access is access Load_Xref_Data;
-
-   procedure Free (D : in out Load_Xref_Data_Access);
-   --  Free memory associated to D;
-
-   procedure Load_Xref_Iterate
-     (Xref_Data : in out Load_Xref_Data_Access;
-      Command   : Command_Access;
-      Result    : out Command_Return_Type);
-   --  Load all the Xref information in memory
-
-   package Load_Xref_Commands is new Commands.Generic_Asynchronous
-     (Data_Type => Load_Xref_Data_Access,
-      Free      => Free);
+   procedure Loads_Xrefs_From_File
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
 
    ----------
    -- Misc --
@@ -1283,80 +1254,17 @@ package body Builder_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Compute_Xref;
 
-   ----------
-   -- Free --
-   ----------
+   -------------------------
+   -- Load_Xref_From_File --
+   -------------------------
 
-   procedure Free (D : in out Load_Xref_Data_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Load_Xref_Data, Load_Xref_Data_Access);
+   procedure Loads_Xrefs_From_File
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File) is
    begin
-      Unchecked_Free (D.Std_Files);
-      Unchecked_Free (D.Project_Files);
-      Unchecked_Free (D);
-   end Free;
-
-   -----------------------
-   -- Load_Xref_Iterate --
-   -----------------------
-
-   procedure Load_Xref_Iterate
-     (Xref_Data : in out Load_Xref_Data_Access;
-      Command   : Command_Access;
-      Result    : out Command_Return_Type)
-   is
-      D            : Load_Xref_Data_Access renames Xref_Data;
-
-      procedure Load_From_File_Array
-        (Files : File_Array_Access; Index : in out Natural);
-
-      procedure Load_From_File_Array
-        (Files : File_Array_Access; Index : in out Natural)
-      is
-         Start, Stop : Integer;
-      begin
-         Start := Index;
-         Stop := Index + Sources_Load_Chunk;
-
-         if Stop > Files'Last then
-            Stop := Files'Last;
-         end if;
-
-         for J in Start .. Stop loop
-            Update_Xref
-              (Get_Or_Create
-                 (Get_Database (D.Kernel), Files (J)));
-         end loop;
-
-         Index := Stop;
-         D.Current_Progress := D.Current_Progress + 1;
-         Set_Progress
-           (Command,
-            (Running,
-             D.Current_Progress,
-             D.Total_Progress));
-      end Load_From_File_Array;
-
-   begin
-      if D.Stop then
-         Result := Success;
-         return;
-      end if;
-
-      if D.Std_Files /= null
-        and then D.Index_In_Std < D.Std_Files'Last
-      then
-         Load_From_File_Array (D.Std_Files, D.Index_In_Std);
-         Result := Execute_Again;
-      elsif D.Project_Files /= null
-        and then D.Index_In_Project < D.Project_Files'Last
-      then
-         Load_From_File_Array (D.Project_Files, D.Index_In_Project);
-         Result := Execute_Again;
-      else
-         Result := Success;
-      end if;
-   end Load_Xref_Iterate;
+      Update_Xref
+        (Get_Or_Create
+           (Get_Database (Kernel), File));
+   end Loads_Xrefs_From_File;
 
    ----------------------------
    -- On_Load_Xref_In_Memory --
@@ -1435,50 +1343,14 @@ package body Builder_Module is
       end if;
    end On_Compilation_Finished;
 
-   ----------------------
-   -- Kill_Xrefs_Queue --
-   ----------------------
-
-   function Kill_Xrefs_Queue
-     (Kernel : access Kernel_Handle_Record'Class; Queue_Name : String)
-      return Boolean
-   is
-      use Load_Xref_Commands;
-
-      Old_Command : Scheduled_Command_Access;
-      Old_Data    : Load_Xref_Data_Access;
-   begin
-      Old_Command := Scheduled_Command_Access
-        (Head (Get_Task_Manager (Kernel), Queue_Name));
-
-      if Old_Command /= null then
-         --  If there is already something in the queue, then interrupt it.
-
-         Old_Data := Get_Data
-           (Load_Xref_Commands.Generic_Asynchronous_Command_Access
-              (Get_Command (Old_Command)));
-         Old_Data.Stop := True;
-         Set_Data (Load_Xref_Commands.Generic_Asynchronous_Command_Access
-                   (Get_Command (Old_Command)), Old_Data);
-
-         return True;
-      end if;
-
-      return False;
-   end Kill_Xrefs_Queue;
-
    -----------------------------
    -- Interrupt_Xrefs_Loading --
    -----------------------------
 
    procedure Interrupt_Xrefs_Loading
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Dummy : Boolean;
-      pragma Unreferenced (Dummy);
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Dummy := Kill_Xrefs_Queue (Kernel, Xrefs_Loading_Queue_0);
-      Dummy := Kill_Xrefs_Queue (Kernel, Xrefs_Loading_Queue_1);
+      Kill_File_Iteration (Kernel, Xrefs_Loading_Queue);
    end Interrupt_Xrefs_Loading;
 
    -------------------------
@@ -1487,74 +1359,14 @@ package body Builder_Module is
 
    procedure Load_Xref_In_Memory (Kernel : access Kernel_Handle_Record'Class)
    is
-      use Load_Xref_Commands;
-
-      C              : Load_Xref_Commands.Generic_Asynchronous_Command_Access;
-      Projects_Count : Natural := 0;
-      Iter           : Imported_Project_Iterator :=
-        Start (Get_Project (Kernel));
-
-      Queue_Name  : String := Xrefs_Loading_Queue_0;
-
-      Std_Files      : File_Array_Access;
-      Project_Files  : File_Array_Access;
-      Total_Progress : Natural;
    begin
-      if Kill_Xrefs_Queue (Kernel, Queue_Name) then
-         --  If there is already something on queue 0, then kill it and load
-         --  queue 1.
-         Queue_Name := Xrefs_Loading_Queue_1;
-      else
-         declare
-            Dummy : constant Boolean :=
-              Kill_Xrefs_Queue (Kernel, Xrefs_Loading_Queue_1);
-            pragma Unreferenced (Dummy);
-            --  Just in case there is something on queue 1
-         begin
-            null;
-         end;
-      end if;
-
-      while Current (Iter) /= No_Project loop
-         Projects_Count := Projects_Count + 1;
-         Next (Iter);
-      end loop;
-
-      Std_Files := Get_Predefined_Source_Files (Get_Registry (Kernel).all);
-      Project_Files := Get_Source_Files
-        (Get_Root_Project (Get_Registry (Kernel).all), True);
-
-      Total_Progress := Std_Files'Length / Sources_Load_Chunk +
-        Project_Files'Length / Sources_Load_Chunk;
-
-      if Std_Files'Length mod Sources_Load_Chunk /= 0 then
-         Total_Progress := Total_Progress + 1;
-      end if;
-
-      if Project_Files'Length mod Sources_Load_Chunk /= 0 then
-         Total_Progress := Total_Progress + 1;
-      end if;
-
-      Load_Xref_Commands.Create
-        (C, -"Load xref info",
-         new Load_Xref_Data'
-           (Kernel_Handle (Kernel),
-            Current_Progress => 0,
-            Total_Progress   => Total_Progress,
-            Std_Files        => Std_Files,
-            Project_Files    => Project_Files,
-            Index_In_Std     => 1,
-            Index_In_Project => 1,
-            Stop             => False),
-         Load_Xref_Iterate'Access);
-
-      Launch_Background_Command
+      Do_On_Each_File
         (Kernel,
-         Command_Access (C),
+         Loads_Xrefs_From_File'Access,
+         Sources_Load_Chunk,
+         Xrefs_Loading_Queue,
          True,
-         True,
-         Queue_Name,
-         Block_Exit => False);
+         "load xrefs info");
    end Load_Xref_In_Memory;
 
    ------------
