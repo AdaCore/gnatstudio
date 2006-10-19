@@ -2676,6 +2676,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <param name="force" default="False">A boolean</param>
       <param name="on_input" default="">A subprogram, see GPS documentation</param>
       <param name="on_destroy" default="">A subprogram</param>
+      <param name="accept_input" default="True">A boolean</param>
       <description>Create a new instance of GPS.Console. GPS will try to reuse any existing console with the same name. If none exists yet, or the parameter force is set to True, then GPS will create a new console.
 
 If GPS reuses an existing console, on_input overrides the callback that was
@@ -2727,6 +2728,18 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
       <param name="self">The instance of GPS.Console</param>
       <return>A String</return>
       <description>Ask the user to enter a new line in the console, and returns that line. GPS is blocked until enter has been pressed in the console</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Console.accept_input">
+      <param name="self">The instance of GPS.Console</param>
+      <return>A boolean</return>
+      <description>Return True if the console accepts input, False otherwise</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Console.enable_input">
+      <param name="self">The instance of GPS.Console</param>
+      <param name="enable">A boolean</param>
+      <description>Make the console accept / reject input according to the value of "enable"</description>
   </shell_doc>
 
   <!--#################################################################
