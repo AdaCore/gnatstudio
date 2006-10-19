@@ -25,6 +25,18 @@ FA16-005 Better integration of AUnit in GPS (2006-10-17)
   * The dialogs used to generate the code have been enhanced with a better
     handling of required fields.
 
+FA12-009 Enhanced completion engine (2006-10-19)
+
+  * The completion engine doesn't rely anymore on the compilation output. The
+    database underneath is updated every time a file is saved, and works even
+    on non compilable files.
+  * The order of the proposed completions has been improved:
+     - First comes the completion found in the current buffer, from the 
+       closest one to the further one (was previously the other way around).
+     - Then comes the completions found from the specification and the parent
+       units, in the order of appearance.
+     - Finally, the completions found from the database, alphabetically ordered.  * Completing packages names is faster.
+
 F912-027 Allow any character in scenario variable names (2006-09-16)
 
   The list of valid character for names of scenario variables is no longer
