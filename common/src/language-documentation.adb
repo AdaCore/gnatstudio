@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006                      --
+--                         Copyright (C) 2006                        --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -170,7 +170,7 @@ package body Language.Documentation is
                   Get_Referenced_Entity
                     (Language,
                      Buffer,
-                     Get_Construct (Sub_Iter).all,
+                     Get_Construct (Sub_Iter),
                      Type_Start,
                      Type_End,
                      Success);
@@ -202,7 +202,7 @@ package body Language.Documentation is
          Get_Referenced_Entity
            (Language,
             Buffer,
-            Get_Construct (Node).all,
+            Get_Construct (Node),
             Type_Start,
             Type_End,
             Success);
