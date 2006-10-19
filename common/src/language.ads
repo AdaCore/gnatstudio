@@ -518,7 +518,25 @@ package Language is
    --  Information needed to define a language construct (e.g procedure,
    --  loop statement, ...).
 
+   type Simple_Construct_Information is record
+      Category       : Language_Category;
+      Is_Declaration : Boolean;
+      Visibility     : Construct_Visibility := Visibility_Public;
+      Name           : Basic_Types.String_Access;
+      Sloc_Start     : Source_Location;
+      Sloc_Entity    : Source_Location;
+      Sloc_End       : Source_Location;
+   end record;
+   --  Same as above, but containing only the needed construct information, no
+   --  list constructions.
+
+   function To_Simple_Construct_Information
+     (Construct : Construct_Information; Full_Copy : Boolean)
+      return Simple_Construct_Information;
+
    Null_Construct_Info : constant Construct_Information;
+
+   Null_Simple_Construct_Info : constant Simple_Construct_Information;
 
    type Construct_List is record
       First, Current, Last : Construct_Access;
@@ -601,7 +619,7 @@ package Language is
    procedure Get_Referenced_Entity
      (Lang       : access Language_Root;
       Buffer     : String;
-      Construct  : Construct_Information;
+      Construct  : Simple_Construct_Information;
       Sloc_Start : out Source_Location;
       Sloc_End   : out Source_Location;
       Success    : out Boolean;
@@ -686,5 +704,14 @@ private
       Sloc_End       => (0, 0, 0),
       Prev           => null,
       Next           => null);
+
+   Null_Simple_Construct_Info : constant Simple_Construct_Information :=
+     (Category       => Cat_Unknown,
+      Is_Declaration => False,
+      Visibility     => Visibility_Public,
+      Name           => null,
+      Sloc_Start     => (0, 0, 0),
+      Sloc_Entity    => (0, 0, 0),
+      Sloc_End       => (0, 0, 0));
 
 end Language;
