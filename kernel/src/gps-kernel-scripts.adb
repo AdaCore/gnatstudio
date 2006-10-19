@@ -289,8 +289,11 @@ package body GPS.Kernel.Scripts is
      (Name_Cst'Access, Force_Cst'Access,
       On_Input_Cst'Access, On_Destroy_Cst'Access);
 
-   Text_Cst         : aliased constant String := "text";
+   Enable_Cst         : aliased constant String := "enable";
+   Text_Cst           : aliased constant String := "text";
+
    Console_Write_Args : constant Cst_Argument_List := (1 => Text_Cst'Access);
+   Enable_Stdin_Args  : constant Cst_Argument_List := (1 => Enable_Cst'Access);
 
    -------------
    -- Destroy --
@@ -1718,6 +1721,23 @@ package body GPS.Kernel.Scripts is
          --  Do nothing, only needed for compatibility with Python's
          --  stdout stream
 
+      elsif Command = "has_stdin" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         if Console /= null then
+            Set_Return_Value (Data, Console.Is_Editable);
+         else
+            Set_Error_Msg (Data, -"Console was closed by user");
+         end if;
+
+      elsif Command = "enable_stdin" then
+         Name_Parameters (Data, Enable_Stdin_Args);
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         if Console /= null then
+            Console.Enable_Prompt_Display (Nth_Arg (Data, 2));
+         else
+            Set_Error_Msg (Data, -"Console was closed by user");
+         end if;
+
       elsif Command = "isatty" then
          Set_Return_Value (Data, False);
 
@@ -1834,7 +1854,17 @@ package body GPS.Kernel.Scripts is
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
+        (Kernel, "enable_stdin",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
         (Kernel, "flush",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "has_stdin",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
