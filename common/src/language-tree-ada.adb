@@ -1127,7 +1127,13 @@ package body Language.Tree.Ada is
    is
       pragma Unreferenced (Lang);
    begin
-      if Construct.Category = Cat_Package then
+      if Construct.Category = Cat_Package
+        or else Construct.Category = Cat_Procedure
+        or else Construct.Category = Cat_Function
+      then
+         --  If the construct may be a unit name, then we want to store only it
+         --  last item (e.g. in Pckg.Child, we store only Child in the db).
+
          declare
             Id : constant Composite_Identifier :=
               To_Composite_Identifier (Construct.Name.all);
