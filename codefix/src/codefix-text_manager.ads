@@ -21,9 +21,10 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 
-with Language;      use Language;
-with Language.Tree; use Language.Tree;
-with Basic_Types;  use Basic_Types;
+with Language;          use Language;
+with Language.Tree;     use Language.Tree;
+with Language.Tree.Ada; use Language.Tree.Ada;
+with Basic_Types;       use Basic_Types;
 with VFS;
 with Projects.Registry;
 
@@ -287,7 +288,7 @@ package Codefix.Text_Manager is
    function Search_Unit
      (This     : access Text_Interface'Class;
       Category : Language_Category;
-      Name     : String := "") return Construct_Information;
+      Name     : String := "") return Simple_Construct_Information;
    --  Return the first Contruct_Information that matche Category and name.
    --  If not found, return a Contruct_Information with Category = Cat_Unknown.
    --  If Name is "", then the first unit with the rigth Category will be
@@ -320,6 +321,11 @@ package Codefix.Text_Manager is
 
    function Get_Tree
      (This : access Text_Interface'Class) return Construct_Tree_Access;
+   --  Return the tree associated to this text.
+
+   function Get_Ada_Tree
+     (This : access Text_Interface'Class) return Ada_Construct_Tree_Access;
+   --  Return the ada-specific tree asssociated to this text.
 
    procedure Constrain_Update (This : in out Text_Interface) is abstract;
    --  This function should constrain the update of the information contained
@@ -490,7 +496,7 @@ package Codefix.Text_Manager is
      (This      : Text_Navigator_Abstr'Class;
       File_Name : VFS.Virtual_File;
       Category  : Language_Category;
-      Name      : String := "") return Construct_Information;
+      Name      : String := "") return Simple_Construct_Information;
    --  Return the first Contruct_Information that matche Category and name.
    --  If not found, return a Contruct_Information with Category = Cat_Unknown.
    --  If Name is "", then the first unit with the rigth Category will be
@@ -554,6 +560,12 @@ package Codefix.Text_Manager is
       return Construct_Tree_Access;
    --  Return the construct tree corresponding to the file pointed by the given
    --  cursor.
+
+   function Get_Ada_Tree
+     (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Ada_Construct_Tree_Access;
+   --  Return the ada-specific tree corresponding to the file pointed by the
+   --  given cursor.
 
    procedure Parse_Entities
      (Lang     : access Language_Root'Class;
@@ -1299,6 +1311,7 @@ private
    type Text_Interface is abstract tagged record
       Structure            : Construct_List_Access := new Construct_List;
       Tree                 : Construct_Tree_Access := null;
+      Ada_Tree             : Ada_Construct_Tree_Access := null;
       Buffer               : GNAT.OS_Lib.String_Access := null;
       File_Name            : VFS.Virtual_File;
       Structure_Up_To_Date : Ptr_Boolean := new Boolean'(False);
