@@ -283,17 +283,19 @@ package body GPS.Kernel.Scripts is
    Set_Scenario_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Value_Cst'Access);
 
+   Accept_Input_Cst : aliased constant String := "accept_input";
    On_Input_Cst     : aliased constant String := "on_input";
    On_Destroy_Cst   : aliased constant String := "on_destroy";
+
    Console_Constructor_Args : constant Cst_Argument_List :=
      (Name_Cst'Access, Force_Cst'Access,
-      On_Input_Cst'Access, On_Destroy_Cst'Access);
+      On_Input_Cst'Access, On_Destroy_Cst'Access, Accept_Input_Cst'Access);
 
    Enable_Cst         : aliased constant String := "enable";
    Text_Cst           : aliased constant String := "text";
 
    Console_Write_Args : constant Cst_Argument_List := (1 => Text_Cst'Access);
-   Enable_Stdin_Args  : constant Cst_Argument_List := (1 => Enable_Cst'Access);
+   Enable_Input_Args  : constant Cst_Argument_List := (1 => Enable_Cst'Access);
 
    -------------
    -- Destroy --
@@ -1669,10 +1671,11 @@ package body GPS.Kernel.Scripts is
       if Command = Constructor_Method then
          Name_Parameters (Data, Console_Constructor_Args);
          declare
-            Title      : constant String := Nth_Arg (Data, 2, "");
-            Force      : constant Boolean := Nth_Arg (Data, 3, False);
-            On_Input   : constant Subprogram_Type := Nth_Arg (Data, 4, null);
-            On_Destroy : constant Subprogram_Type := Nth_Arg (Data, 5, null);
+            Title        : constant String := Nth_Arg (Data, 2, "");
+            Force        : constant Boolean := Nth_Arg (Data, 3, False);
+            On_Input     : constant Subprogram_Type := Nth_Arg (Data, 4, null);
+            On_Destroy   : constant Subprogram_Type := Nth_Arg (Data, 5, null);
+            Accept_Input : constant Boolean := Nth_Arg (Data, 6, True);
          begin
             Console := Create_Interactive_Console
               (Kernel              => Get_Kernel (Data),
@@ -1680,7 +1683,8 @@ package body GPS.Kernel.Scripts is
                History             => History_Key ("console_" & Title),
                Create_If_Not_Exist => Title /= "Python"
                  and then Title /= "Shell",
-               Force_Create        => Force);
+               Force_Create        => Force,
+               Accept_Input        => Accept_Input);
             --   ??? If the console was already associated with an instance,
             --  we would lose that original instance and all data the user
             --  might have stored in it.
@@ -1721,7 +1725,7 @@ package body GPS.Kernel.Scripts is
          --  Do nothing, only needed for compatibility with Python's
          --  stdout stream
 
-      elsif Command = "has_stdin" then
+      elsif Command = "accept_input" then
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          if Console /= null then
             Set_Return_Value (Data, Console.Is_Editable);
@@ -1729,8 +1733,8 @@ package body GPS.Kernel.Scripts is
             Set_Error_Msg (Data, -"Console was closed by user");
          end if;
 
-      elsif Command = "enable_stdin" then
-         Name_Parameters (Data, Enable_Stdin_Args);
+      elsif Command = "enable_input" then
+         Name_Parameters (Data, Enable_Input_Args);
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          if Console /= null then
             Console.Enable_Prompt_Display (Nth_Arg (Data, 2));
@@ -1840,7 +1844,7 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 0,
-         Maximum_Args => 4,
+         Maximum_Args => 5,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
@@ -1854,7 +1858,7 @@ package body GPS.Kernel.Scripts is
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
-        (Kernel, "enable_stdin",
+        (Kernel, "enable_input",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Console_Class,
@@ -1864,7 +1868,7 @@ package body GPS.Kernel.Scripts is
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
-        (Kernel, "has_stdin",
+        (Kernel, "accept_input",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
