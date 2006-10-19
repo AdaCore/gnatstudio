@@ -10,7 +10,7 @@ project VDiff is
 
    package Compiler is
       for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
-      for Switches ("vdiff_pkg.adb") use ("-g", "-O2");
+      for Switches ("vdiff_pkg.adb") use ("-g", "-O2", "-gnat05");
    end Compiler;
 
    package IDE renames Shared.IDE;

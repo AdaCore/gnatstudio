@@ -14,7 +14,7 @@ project Src_Editor is
 
    package Compiler is
       for Default_Switches ("ada") use Shared.Compiler'Default_Switches ("ada");
-      for Switches ("files_extra_info_pkg.adb") use ("-g", "-O2");
+      for Switches ("files_extra_info_pkg.adb") use ("-g", "-O2", "-gnat05");
    end Compiler;
 
    package Naming is
