@@ -103,7 +103,7 @@ package Language.Ada is
    procedure Get_Referenced_Entity
      (Lang       : access Ada_Language;
       Buffer     : String;
-      Construct  : Construct_Information;
+      Construct  : Simple_Construct_Information;
       Sloc_Start : out Source_Location;
       Sloc_End   : out Source_Location;
       Success    : out Boolean;
