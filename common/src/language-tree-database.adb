@@ -175,9 +175,9 @@ package body Language.Tree.Database is
                   if List = null then
                      List := new Construct_Node_List;
                      List.Name := new String'(Name);
-                     Insert (File.Db.Entities_Db, List);
                      List.Constructs :=
                        new Construct_Vector.Lazy_Vector_Record;
+                     Insert (File.Db.Entities_Db, List);
                   end if;
 
                   Insert
@@ -366,9 +366,12 @@ package body Language.Tree.Database is
       procedure Internal is new Unchecked_Deallocation
         (Construct_Node_List, Construct_Node_List_Access);
    begin
-      Free (Node.Name);
-      Free (Node.Constructs);
-      Internal (Node);
+      if Node /= null then
+         Free (Node.Name);
+
+         Free (Node.Constructs);
+         Internal (Node);
+      end if;
    end Free;
 
    ----------
