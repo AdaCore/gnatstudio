@@ -21,6 +21,7 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 with Basic_Types;               use Basic_Types;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
@@ -35,14 +36,15 @@ with Commands.Interactive;      use Commands, Commands.Interactive;
 with Commands.Editor;           use Commands.Editor;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Intl;                  use GPS.Intl;
 with Language;                  use Language;
-with Language.Tree;             use Language.Tree;
+with Language_Handlers;         use Language_Handlers;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
@@ -55,16 +57,18 @@ with VFS; use VFS;
 with Completion_Window;               use Completion_Window;
 with Completion;                      use Completion;
 with Completion.Ada;                  use Completion.Ada;
-with Completion.Entities_Extractor;   use Completion.Entities_Extractor;
-with Completion.Constructs_Extractor; use Completion.Constructs_Extractor;
+with Completion.Ada.Constructs_Extractor;
+use Completion.Ada.Constructs_Extractor;
 
-with Projects.Registry;               use Projects.Registry;
+with Glib.Properties.Creation; use Glib.Properties.Creation;
 
 with Gtk.Text_View;                   use Gtk.Text_View;
 with Gtk.Text_Buffer;                 use Gtk.Text_Buffer;
 with Gtk.Enums;                       use Gtk.Enums;
 
 with Language.Ada;                    use Language.Ada;
+with Language.Tree.Database;          use Language.Tree.Database;
+with Language.Tree.Ada;               use Language.Tree.Ada;
 
 with Gtkada.Dialogs;                  use Gtkada.Dialogs;
 
@@ -73,6 +77,10 @@ package body Completion_Module is
    Me : constant Debug_Handle := Create ("Completion");
 
    Me_Adv : constant Debug_Handle := Create ("Completion_Advanced", Off);
+
+   Db_Loading_Queue : constant String := "constructs_db_loading";
+
+   Smart_Completion_Enabled : Glib.Properties.Creation.Param_Spec_Boolean;
 
    use String_List_Utils.String_List;
 
@@ -128,16 +136,16 @@ package body Completion_Module is
 
       Smart_Completion_Launched : Boolean := False;
       --  Whether the smart completion has been launched once.
+
+      Previous_Smart_Completion_State : Boolean := False;
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
    type Smart_Completion_Data is record
       Manager             : Completion_Manager_Access;
-      Entity_Resolver     : Completion_Resolver_Access;
       Constructs_Resolver : Completion_Resolver_Access;
       Result              : Completion_List;
       The_Text            : Basic_Types.String_Access;
-      Constructs_Tree     : Construct_Tree_Access;
    end record;
 
    package Smart_Completion_Callback is new
@@ -179,19 +187,61 @@ package body Completion_Module is
    procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
 
+   procedure File_Saved
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when a file is changed
+
+   procedure Register_Preferences
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences are changed.
+
+   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the project view is changed
+
+   procedure Load_Construct_Database
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Load a whole new construct database.
+
+   procedure Load_One_File_Constructs
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
+   --  Load the constructs from one file
+
    -------------------------
    -- Preferences_Changed --
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      pragma Unreferenced (Kernel);
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Completion_Module.Smart_Completion_Launched :=
         Get_Pref (Automatic_Xrefs_Load_Set) or else
       Get_Pref (Automatic_Xrefs_Load);
+
+      if Get_Pref (Smart_Completion_Enabled) and then
+        not Completion_Module.Previous_Smart_Completion_State
+      then
+         Load_Construct_Database (Kernel);
+      end if;
+
+      Completion_Module.Previous_Smart_Completion_State :=
+        Get_Pref (Smart_Completion_Enabled);
    end Preferences_Changed;
+
+   ---------------
+   -- File_Save --
+   ---------------
+
+   procedure File_Saved
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      File_Data : File_Hooks_Args := File_Hooks_Args (Data.all);
+   begin
+      if Get_Pref (Smart_Completion_Enabled) then
+         Update_Contents (Get_Construct_Database (Kernel), File_Data.File);
+      end if;
+   end File_Saved;
 
    ---------------------------
    -- On_Completion_Destroy --
@@ -204,11 +254,9 @@ package body Completion_Module is
       D : Smart_Completion_Data := Data;
    begin
       Free (D.Manager);
-      Free (D.Entity_Resolver);
       Free (D.Constructs_Resolver);
       Free (D.Result);
       Free (D.The_Text);
-      Free (D.Constructs_Tree);
 
       End_Completion (Source_View (Win));
    exception
@@ -629,32 +677,24 @@ package body Completion_Module is
                Win  : Completion_Window_Access;
                It   : Gtk_Text_Iter;
                Data : Smart_Completion_Data;
-               Constructs : Construct_List;
+               Constructs : aliased Construct_List;
 
             begin
                Data.Manager := new Ada_Completion_Manager;
                Data.The_Text := Get_String (Buffer);
                Constructs := Get_Constructs (Buffer, Exact);
 
-               Trace (Me_Adv, "Constructing tree...");
-               Data.Constructs_Tree := new Construct_Tree'
-                 (To_Construct_Tree (Ada_Lang, Data.The_Text.all, Constructs));
-               Trace (Me_Adv, "Constructing tree complete");
-
-               Set_Buffer (Data.Manager.all, Data.The_Text);
+               Set_Buffer
+                 (Data.Manager.all,
+                  GNAT.Strings.String_Access (Data.The_Text));
 
                Data.Constructs_Resolver := new Construct_Completion_Resolver'
                  (New_Construct_Completion_Resolver
-                    (Data.Constructs_Tree, Get_Filename (Buffer)));
-
-               Data.Entity_Resolver := new Entity_Completion_Resolver'
-                 (New_Entity_Completion_Resolver
-                    (Data.Constructs_Tree,
-                     Get_Root_Project (Get_Registry (Get_Kernel (Buffer)).all),
-                     Get_Language_Handler (Get_Kernel (Buffer))));
+                    (Get_Construct_Database (Command.Kernel),
+                     Get_Filename (Buffer),
+                     GNAT.Strings.String_Access (Data.The_Text)));
 
                Register_Resolver (Data.Manager, Data.Constructs_Resolver);
-               Register_Resolver (Data.Manager, Data.Entity_Resolver);
 
                Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
 
@@ -681,13 +721,14 @@ package body Completion_Module is
 
                   Offset := Lines'Length
                     + Natural (Get_Line_Index (It))
-                    + Data.The_Text.all'First;
+                    + Data.The_Text.all'First - 1;
 
                   Free (Lines);
 
-                  Trace (Me_Adv, "Getting completions...");
+                  Trace (Me_Adv, "Getting completions ...");
                   Data.Result := Get_Initial_Completion_List
                     (Manager      => Data.Manager.all,
+                     Buffer       => Data.The_Text.all,
                      Start_Offset => Offset);
                   Trace (Me_Adv, "Getting completions done");
                end;
@@ -816,6 +857,59 @@ package body Completion_Module is
    end Execute;
 
    ---------------------
+   -- On_View_Changed --
+   ---------------------
+
+   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Clear (Get_Construct_Database (Kernel));
+
+      if Get_Pref (Smart_Completion_Enabled) then
+         Load_Construct_Database (Kernel);
+      end if;
+   end On_View_Changed;
+
+   -----------------------------
+   -- Load_Construct_Database --
+   -----------------------------
+
+   procedure Load_Construct_Database
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+   begin
+      Do_On_Each_File
+        (Handle              => Kernel,
+         Callback            => Load_One_File_Constructs'Access,
+         Chunk_Size          => 1,
+         Queue_Base_Name     => Db_Loading_Queue,
+         Kill_Existing_Queue => True,
+         Operation_Name      => "load entity db");
+   end Load_Construct_Database;
+
+   ------------------------------
+   -- Load_One_File_Constructs --
+   ------------------------------
+
+   procedure Load_One_File_Constructs
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
+   is
+      Dummy : Structured_File_Access;
+      pragma Unreferenced (Dummy);
+   begin
+      if Get_Language_From_File
+        (Get_Language_Handler (Kernel), File)
+        = Ada_Lang
+      then
+         --  ??? This is a temporary kludge in order to avoid parsing C files.
+
+         Dummy := Get_Or_Create
+           (Get_Construct_Database (Kernel),
+            File,
+            Ada_Tree_Lang);
+      end if;
+   end Load_One_File_Constructs;
+
+   ---------------------
    -- Register_Module --
    ---------------------
 
@@ -867,7 +961,42 @@ package body Completion_Module is
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
-                Name => "src_editor.preferences_changed");
+                Name => "completion_module.preferences_changed");
+      Add_Hook
+        (Kernel => Kernel,
+         Hook   => Project_View_Changed_Hook,
+         Func   => Wrapper (On_View_Changed'Access),
+         Name   => "completion_module.on_view_changed");
+
+      Add_Hook
+        (Kernel,
+         File_Saved_Hook,
+         Wrapper (File_Saved'Access),
+         Name => "completion_module.file_saved");
+
+      Register_Preferences (Kernel);
    end Register_Module;
+
+   --------------------------
+   -- Register_Preferences --
+   --------------------------
+
+   procedure Register_Preferences
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+   begin
+      Smart_Completion_Enabled := Glib.Properties.Creation.Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name  => "Smart-Completion-Enabled",
+            Nick  => -"Enable smart completion",
+            Blurb => -("Enable all the mechanisms needed to have the smart " &
+              "completion working."),
+            Default => False));
+      Register_Property
+        (Kernel, Param_Spec (Smart_Completion_Enabled), -"General");
+
+      Completion_Module.Previous_Smart_Completion_State :=
+        Get_Pref (Smart_Completion_Enabled);
+   end Register_Preferences;
 
 end Completion_Module;
