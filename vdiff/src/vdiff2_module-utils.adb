@@ -30,6 +30,7 @@ with Gtkada.MDI;                        use Gtkada.MDI;
 
 with Commands;                          use Commands;
 with GPS.Intl;                          use GPS.Intl;
+with GPS.Kernel.Console;                use GPS.Kernel.Console;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
@@ -453,9 +454,6 @@ package body Vdiff2_Module.Utils is
       Diff_List : Diff_Head_List_Access) return Diff_Head_Access
    is
       Item_Access : Diff_Head_Access;
-      Button      : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-
    begin
       if Get_Diff_Node
           (Item.Files (1), Diff_List.all) = Diff_Head_List.Null_Node
@@ -473,10 +471,9 @@ package body Vdiff2_Module.Utils is
          end if;
       end if;
 
-      Button := Message_Dialog
-        (Msg     => -"One of these files is already used in VDiff",
-         Buttons => Button_OK,
-         Parent  => Get_Current_Window (Kernel));
+      Console.Insert
+        (Kernel, -"One of these files is already used in VDiff",
+         Mode => Info);
 
       return null;
    end Process_Differences;
@@ -1088,8 +1085,6 @@ package body Vdiff2_Module.Utils is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
       Result : Diff_List;
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
       Item   : Diff_Head;
 
    begin
@@ -1100,10 +1095,7 @@ package body Vdiff2_Module.Utils is
       end if;
 
       if Result = Diff_Chunk_List.Null_List then
-         Button := Message_Dialog
-           (Msg     => -"No differences found.",
-            Buttons => Button_OK,
-            Parent  => Get_Current_Window (Kernel));
+         Console.Insert (Kernel, -"No differences found.", Mode => Info);
          return null;
       end if;
 
@@ -1146,18 +1138,13 @@ package body Vdiff2_Module.Utils is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
       Result : Diff_List;
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
       Item   : Diff_Head;
 
    begin
       Result := Diff (Kernel, Orig_File, New_File, Diff_File, Revert);
 
       if Result = Diff_Chunk_List.Null_List then
-         Button := Message_Dialog
-           (Msg     => -"No differences found.",
-            Buttons => Button_OK,
-            Parent  => Get_Current_Window (Kernel));
+         Console.Insert (Kernel, -"No differences found.", Mode => Info);
          return null;
       end if;
 
