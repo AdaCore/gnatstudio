@@ -549,7 +549,7 @@ package body Codefix.Text_Manager is
       Searched       : String;
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step)
-     return File_Cursor'Class is
+      return File_Cursor'Class is
    begin
       return Search_String
         (Get_File (This, Get_File (Cursor)).all,
@@ -1885,8 +1885,7 @@ package body Codefix.Text_Manager is
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return Word_Cursor'Class
    is
-      Result        : Word_Cursor :=
-        (File_Cursor (Cursor) with null, Text_Ascii);
+      Result        : Word_Cursor;
       Result_String : constant String := To_String (This.Content);
       Start_Index   : Char_Index;
 
@@ -1918,6 +1917,8 @@ package body Codefix.Text_Manager is
       end Test_Result;
 
    begin
+      Result := (File_Cursor (Cursor) with null, Text_Ascii);
+
       if Result.Col = 0 then
          Start_Index := Char_Index (Result_String'Last);
       else
