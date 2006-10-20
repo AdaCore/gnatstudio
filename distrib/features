@@ -14,6 +14,11 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+FA20-002 New shell function to retrieve the content of a console (2006-10-20)
+
+  A new function called "get_text" has been added to the GPS.Console class.
+  It allows to get the whole content a console.
+
 FA16-005 Better integration of AUnit in GPS (2006-10-17)
 
   The AUnit integration in GPS has been enhanced:
