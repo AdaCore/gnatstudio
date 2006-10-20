@@ -1918,6 +1918,10 @@ package body Codefix.Text_Manager is
 
    begin
       Result := (File_Cursor (Cursor) with null, Text_Ascii);
+      --  ??? If this affectation is done directly as an initialization in the
+      --  elaboration of the procedure, GPS will crash (see FA09-007). So this
+      --  aftectation has to stay here as a workaround until the underlying
+      --  issue is fixed.
 
       if Result.Col = 0 then
          Start_Index := Char_Index (Result_String'Last);
