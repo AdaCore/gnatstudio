@@ -244,7 +244,6 @@ package GPS.Kernel.Preferences is
    Generate_Relative_Paths         : Param_Spec_Boolean;
    Trusted_Mode                    : Param_Spec_Boolean;
    Automatic_Xrefs_Load            : Param_Spec_Boolean;
-   Automatic_Xrefs_Load_Set        : Param_Spec_Boolean;
 
    -- Wizards --
    Wizard_Title_Font : Param_Spec_Font;
