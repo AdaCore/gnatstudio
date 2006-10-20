@@ -80,7 +80,8 @@ package body Completion_Module is
 
    Db_Loading_Queue : constant String := "constructs_db_loading";
 
-   Smart_Completion_Enabled : Glib.Properties.Creation.Param_Spec_Boolean;
+   Smart_Completion_Enabled : Param_Spec_Boolean;
+   Smart_Completion_Enabled_Set : Param_Spec_Boolean;
 
    use String_List_Utils.String_List;
 
@@ -215,8 +216,8 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Completion_Module.Smart_Completion_Launched :=
-        Get_Pref (Automatic_Xrefs_Load_Set) or else
-      Get_Pref (Automatic_Xrefs_Load);
+        Get_Pref (Smart_Completion_Enabled_Set) or else
+      Get_Pref (Smart_Completion_Enabled);
 
       if Get_Pref (Smart_Completion_Enabled) and then
         not Completion_Module.Previous_Smart_Completion_State
@@ -645,7 +646,7 @@ package body Completion_Module is
             --  Display the dialog if necessary.
 
             if not Completion_Module.Smart_Completion_Launched then
-               Set_Pref (Command.Kernel, Automatic_Xrefs_Load_Set, True);
+               Set_Pref (Command.Kernel, Smart_Completion_Enabled_Set, True);
                Completion_Module.Smart_Completion_Launched := True;
 
                declare
@@ -655,12 +656,11 @@ package body Completion_Module is
                     (Msg            =>
                      -("You are using smart completion for the first time."
                        & ASCII.LF & ASCII.LF
-                       & "This feature benefits from the GPS Xref engine."
+                       & "To take full advantage of this, you need to enable"
+                       & " the full smart completion engine "
                        & ASCII.LF
-                       & "To take full advantage of this, GPS can be"
-                       & " configured to "
-                       & ASCII.LF
-                       & "load the Xref information automatically at startup."
+                       & "The entity database will then be loaded at GPS "
+                       & " startup."
                        & ASCII.LF & ASCII.LF
                        & "Do you want to activate this now?"),
                      Buttons        => Button_Yes or Button_No,
@@ -668,7 +668,7 @@ package body Completion_Module is
                      Justification  => Justify_Left);
 
                   if (Buttons and Button_Yes) /= 0 then
-                     Set_Pref (Command.Kernel, Automatic_Xrefs_Load, True);
+                     Set_Pref (Command.Kernel, Smart_Completion_Enabled, True);
                   end if;
                end;
             end if;
@@ -994,6 +994,18 @@ package body Completion_Module is
             Default => False));
       Register_Property
         (Kernel, Param_Spec (Smart_Completion_Enabled), -"General");
+
+      Smart_Completion_Enabled_Set := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name    => "Smart-Completion-Enabled-Set",
+            Default => False,
+            Blurb   => -("Whether the user has manually launched"
+              & " smart completion at least once"),
+            Nick    => -"Smart completion enabled set",
+            Flags   => Param_Readable));
+      Register_Property
+        (Kernel,
+         Param_Spec (Smart_Completion_Enabled_Set), -"General");
 
       Completion_Module.Previous_Smart_Completion_State :=
         Get_Pref (Smart_Completion_Enabled);
