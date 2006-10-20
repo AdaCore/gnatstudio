@@ -267,6 +267,7 @@ package body Diff_Utils2 is
          Free (Cmd_Args);
          return Ret;
       end if;
+
       Args (1) := new String'(Locale_Full_Name (Ref_File));
       Args (2) := new String'(Locale_Full_Name (New_File));
 
@@ -274,24 +275,27 @@ package body Diff_Utils2 is
              & " " & Full_Name (New_File).all
              & " " & Full_Name (Ref_File).all);
 
-      Non_Blocking_Spawn
-        (Descriptor, Cmd.all,
-         Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
-      Free (Cmd);
-      Free (Cmd_Args);
-      Basic_Types.Free (Args);
+      begin
+         Non_Blocking_Spawn
+           (Descriptor, Cmd.all,
+            Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
+         Free (Cmd);
+         Free (Cmd_Args);
+         Basic_Types.Free (Args);
 
-      loop
-         Expect (Descriptor, Result, Pattern, Matches, Timeout => -1);
-         Compute_Occurrence
-           (Ret, Occurrence, Expect_Out (Descriptor), Matches);
-      end loop;
+         loop
+            Expect (Descriptor, Result, Pattern, Matches, Timeout => -1);
+            Compute_Occurrence
+              (Ret, Occurrence, Expect_Out (Descriptor), Matches);
+         end loop;
+
+      exception
+         when Process_Died =>
+            Close (Descriptor);
+            return Ret;
+      end;
 
    exception
-      when Process_Died =>
-         Close (Descriptor);
-         return Ret;
-
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
