@@ -2742,6 +2742,12 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
       <description>Make the console accept / reject input according to the value of "enable"</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Console.get_text">
+      <param name="self">The instance of GPS.Console</param>
+      <return>A string</return>
+      <description>Return the content of the console</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   Toolbar class
     ###################################################################-->
