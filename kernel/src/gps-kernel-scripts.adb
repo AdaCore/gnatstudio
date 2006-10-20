@@ -1728,7 +1728,7 @@ package body GPS.Kernel.Scripts is
       elsif Command = "accept_input" then
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          if Console /= null then
-            Set_Return_Value (Data, Console.Is_Editable);
+            Set_Return_Value (Data, Is_Editable (Console));
          else
             Set_Error_Msg (Data, -"Console was closed by user");
          end if;
@@ -1737,7 +1737,7 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Enable_Input_Args);
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          if Console /= null then
-            Console.Enable_Prompt_Display (Nth_Arg (Data, 2));
+            Enable_Prompt_Display (Console, Nth_Arg (Data, 2));
          else
             Set_Error_Msg (Data, -"Console was closed by user");
          end if;
@@ -1757,6 +1757,14 @@ package body GPS.Kernel.Scripts is
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          if Console /= null then
             Set_Return_Value (Data, Read (Console, Whole_Line => True));
+         else
+            Set_Error_Msg (Data, -"Console was closed by user");
+         end if;
+
+      elsif Command = "get_text" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         if Console /= null then
+            Set_Return_Value (Data, Get_Chars (Console));
          else
             Set_Error_Msg (Data, -"Console was closed by user");
          end if;
@@ -1881,6 +1889,10 @@ package body GPS.Kernel.Scripts is
          Handler      => Console_Command_Handler'Access);
       Register_Command
         (Kernel, "readline",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_text",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
 
