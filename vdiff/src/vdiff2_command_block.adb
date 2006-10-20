@@ -24,8 +24,8 @@ with Gtkada.Dialogs;      use Gtkada.Dialogs;
 
 with Basic_Types;         use Basic_Types;
 with GPS.Intl;            use GPS.Intl;
+with GPS.Kernel.Console;  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
 with Traces;              use Traces;
 with VFS;                 use VFS;
@@ -155,10 +155,7 @@ package body Vdiff2_Command_Block is
       end if;
 
       if Tmp = Diff_Chunk_List.Null_List then
-         Button := Message_Dialog
-           (Msg     => -"No differences found.",
-            Buttons => Button_OK,
-            Parent  => Get_Current_Window (Kernel));
+         Console.Insert (Kernel, -"No differences found.", Mode => Info);
       end if;
 
       Free_List (Item.List);
