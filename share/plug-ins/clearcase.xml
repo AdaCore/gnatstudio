@@ -103,7 +103,7 @@
         <shell>Hook.run %1  null %2 %3</shell>
         <shell>delete %5</shell>
       </on-failure>
-      <shell>echo No differences found</shell>
+      <shell output="">echo "No differences found."</shell>
    </action>
 
    <action name="clearcase_diff" show-command="true" output="none" category="">
@@ -117,7 +117,7 @@
         <shell>Hook.run %1 null %2 %3</shell>
         <shell>delete "%5"</shell>
       </on-failure>
-      <shell>echo No differences found</shell>
+      <shell output="">echo "No differences found."</shell>
    </action>
 
    <!-- ClearCase checkout -->
