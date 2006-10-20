@@ -94,9 +94,9 @@ package body Vdiff_Module is
       Title1, Title2 : String;
       Result : Diff_Occurrence_Link) return MDI_Child
    is
-      R      : Diff_Occurrence_Link := Result;
-      Vdiff  : Vdiff_Access;
-      Child  : GPS_MDI_Child;
+      R     : Diff_Occurrence_Link := Result;
+      Vdiff : Vdiff_Access;
+      Child : GPS_MDI_Child;
    begin
       if Result = null then
          Insert (Kernel, -"No differences found for: " &
