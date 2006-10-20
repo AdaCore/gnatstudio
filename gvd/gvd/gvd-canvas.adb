@@ -1004,6 +1004,11 @@ package body GVD.Canvas is
       end case;
 
       return False;
+   exception
+      when E : others =>
+         Traces.Trace (Exception_Handle,
+                       "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Key_Press;
 
    -------------------------
@@ -1114,6 +1119,10 @@ package body GVD.Canvas is
             C.Item_Context.Unknown_Mask, Null_Color, trash_xpm);
          Preferences_Changed (C);
       end if;
+   exception
+      when E : others =>
+         Traces.Trace (Exception_Handle,
+                       "Unexpected exception: " & Exception_Information (E));
    end On_Realize;
 
    ---------------------------
