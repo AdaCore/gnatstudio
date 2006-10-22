@@ -231,7 +231,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Mixed_Case (Name);
       Insert (Translation,
               Assoc ("TEST_SUITE_PACKAGE", Name));
-      --  ??? customisable test suite function name
+      --  ??? customizable test suite function name
       Insert
         (Translation, Assoc ("TEST_SUITE_NAME", "Suite"));
 

@@ -32,6 +32,8 @@ with VFS;                       use VFS;
 with AUnit_Templates;         use AUnit_Templates;
 with Templates_Parser;        use Templates_Parser;
 
+with Gtkada.File_Selector;    use Gtkada.File_Selector;
+
 package body Make_Harness_Window_Pkg.Callbacks is
    --  Callbacks for main "AUnit_Make_Harness" window.
 

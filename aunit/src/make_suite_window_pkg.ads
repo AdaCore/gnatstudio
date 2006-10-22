@@ -24,7 +24,6 @@ with Gtk.Clist;            use Gtk.Clist;
 with Gtk.Dialog;           use Gtk.Dialog;
 with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Label;            use Gtk.Label;
-with GtkAda.File_Selector; use GtkAda.File_Selector;
 
 with GPS.Kernel;
 
