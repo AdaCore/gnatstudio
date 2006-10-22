@@ -25,6 +25,7 @@ with Gdk.Pixbuf;              use Gdk.Pixbuf;
 
 with Gtk.Enums;               use Gtk.Enums;
 
+with Gtkada.File_Selector;    use Gtkada.File_Selector;
 with Gtkada.Types;            use Gtkada.Types;
 
 with Aunit_Filters;           use Aunit_Filters;

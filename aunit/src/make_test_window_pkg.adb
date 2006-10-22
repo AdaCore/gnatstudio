@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gtk;                 use Gtk;
-with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Stock;           use Gtk.Stock;
