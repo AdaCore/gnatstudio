@@ -22,10 +22,8 @@ with Gtk.Button;           use Gtk.Button;
 with Gtk.Dialog;           use Gtk.Dialog;
 with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Label;            use Gtk.Label;
-with Gtk.Status_Bar;       use Gtk.Status_Bar;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with Gtkada.File_Selector; use Gtkada.File_Selector;
 with GPS.Kernel;
 
 package Make_Harness_Window_Pkg is
