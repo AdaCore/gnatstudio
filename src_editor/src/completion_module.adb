@@ -669,6 +669,7 @@ package body Completion_Module is
 
                   if (Buttons and Button_Yes) /= 0 then
                      Set_Pref (Command.Kernel, Smart_Completion_Enabled, True);
+                     Preferences_Changed (Command.Kernel);
                   end if;
                end;
             end if;
