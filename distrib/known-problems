@@ -6,6 +6,9 @@ Known Problems fixed in GPS 4.0.2
   Workaround: Use the corresponding contextual menus ("Zoom in" and
               "Zoom out").
 
+- FA13-021 Incorrect initialization commands with csh and tcsh
+  Problem:    Setenv COLUMNS=2048 is not csh or tcsh compliant.
+
 - FA03-015 Smart Completion incompatible with block folding
   Problem:    When using block folding, if an editor contains folded blocks
               before the cursor, Smart Completion might get an empty or wrong
