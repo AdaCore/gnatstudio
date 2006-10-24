@@ -6,8 +6,11 @@ Known Problems fixed in GPS 4.0.2
   Workaround: Use the corresponding contextual menus ("Zoom in" and
               "Zoom out").
 
-- FA13-021 Incorrect initialization commands with csh and tcsh
-  Problem:    Setenv COLUMNS=2048 is not csh or tcsh compliant.
+- FA13-021 Incorrect init commands sent to csh or tcsh in remote programming.
+  Problem:    When connecting to the remote host, GPS initializes the csh shell
+              with "setenv COLUMNS=2048" which is incorrect.
+  Workaround: Use "setenv COLUMNS 2048" in your server's configuration
+              "initialisation command"
 
 - FA03-015 Smart Completion incompatible with block folding
   Problem:    When using block folding, if an editor contains folded blocks
