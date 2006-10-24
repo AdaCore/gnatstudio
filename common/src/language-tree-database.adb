@@ -26,6 +26,11 @@ with Language.Tree.Ada; use Language.Tree.Ada;
 
 package body Language.Tree.Database is
 
+   procedure Internal_Update_Contents
+     (File : Structured_File_Access; Is_New_File : Boolean);
+   --  Same as Update_Contents, but takes into account differences depending on
+   --  the fact that the file is a brand new one, or an existing one.
+
    ----------
    -- Free --
    ----------
@@ -113,34 +118,86 @@ package body Language.Tree.Database is
    ---------------------
 
    procedure Update_Contents (File : Structured_File_Access) is
+   begin
+      Internal_Update_Contents (File, False);
+   end Update_Contents;
+
+   ------------------------------
+   -- Internal_Update_Contents --
+   ------------------------------
+
+   procedure Internal_Update_Contents
+     (File : Structured_File_Access; Is_New_File : Boolean)
+   is
+
+      function Is_Spec_Of
+        (Supposed_Spec, Supposed_Body : Structured_File_Access) return Boolean;
+
+      function Is_Spec_Of
+        (Supposed_Spec, Supposed_Body : Structured_File_Access) return Boolean
+      is
+         Spec_Tree, Body_Tree : Construct_Tree_Access;
+      begin
+         if Supposed_Spec = null or else Supposed_Body = null then
+            return False;
+         end if;
+
+         Spec_Tree := Get_Public_Tree (Supposed_Spec);
+         Body_Tree := Get_Public_Tree (Supposed_Body);
+
+         return Get_Unit_Construct
+           (File.Lang, Spec_Tree).Node.Construct.Is_Declaration
+           and then not Get_Unit_Construct
+             (File.Lang, Body_Tree).Node.Construct.Is_Declaration
+           and then To_String (Get_Unit_Name (File.Lang, Spec_Tree))
+           = To_String (Get_Unit_Name (File.Lang, Body_Tree));
+      end Is_Spec_Of;
+
       Buffer     : GNAT.Strings.String_Access := Read_File (File.File);
       Full_Tree  : Construct_Tree_Access;
       Constructs : aliased Construct_List;
    begin
       --  Phase 1 : remove previous construct information from the database
 
-      if File.Public_Tree /= null then
-         for J in File.Public_Tree.Contents'Range loop
-            declare
-               Construct : constant Simple_Construct_Information :=
-                 File.Public_Tree.Contents (J).Construct;
-            begin
-               if Construct.Name /= null
-                 and then Construct.Category /= Cat_Parameter
-                 and then Construct.Category /= Cat_Field
-                 and then Construct.Category /= Cat_With
-                 and then Construct.Category /= Cat_Use
-               then
-                  Delete (File.Db_Data_Tree (J).Position);
-               end if;
-            end;
-         end loop;
-      end if;
+      if not Is_New_File then
+         if File.Public_Tree /= null then
+            for J in File.Public_Tree.Contents'Range loop
+               declare
+                  Construct : constant Simple_Construct_Information :=
+                    File.Public_Tree.Contents (J).Construct;
+               begin
+                  if Construct.Name /= null
+                    and then Construct.Category /= Cat_Parameter
+                    and then Construct.Category /= Cat_Field
+                    and then Construct.Category /= Cat_With
+                    and then Construct.Category /= Cat_Use
+                  then
+                     Delete (File.Db_Data_Tree (J).Position);
+                  end if;
+               end;
+            end loop;
+         end if;
 
-      Free (File.Cache_Tree);
-      Free (File.Cache_Buffer);
-      Free (File.Public_Tree);
-      Free (File.Db_Data_Tree);
+      --  Remove all the links to this file
+
+         declare
+            C          : File_Map.Cursor := First (File.Db.Files_Db);
+         begin
+            while C /= File_Map.No_Element loop
+               if Element (C).Parent_File = File then
+                  Element (C).Parent_File := null;
+               end if;
+
+               C := Next (C);
+            end loop;
+         end;
+
+         Free (File.Cache_Tree);
+         Free (File.Cache_Buffer);
+         Free (File.Public_Tree);
+         Free (File.Db_Data_Tree);
+         File.Parent_File := null;
+      end if;
 
       --  Phase 2 : analyze the file and add data in the database
 
@@ -187,10 +244,38 @@ package body Language.Tree.Database is
          end;
       end loop;
 
+      --  Compute the child / parent information
+
+      declare
+         C          : File_Map.Cursor := First (File.Db.Files_Db);
+         Parent     : Get_Parent_Tree_Result;
+      begin
+         while C /= File_Map.No_Element loop
+            Parent := Get_Parent_Tree
+              (File.Lang,
+               File.Public_Tree,
+               Get_Public_Tree (Element (C)));
+
+            if Parent = Left
+              and then not
+                Is_Spec_Of (Element (C).Parent_File, Element (C))
+            then
+               Element (C).Parent_File := File;
+            elsif Parent = Right
+              and then not
+                Is_Spec_Of (File.Parent_File, File)
+            then
+               File.Parent_File := Element (C);
+            end if;
+
+            C := Next (C);
+         end loop;
+      end;
+
       Free (Constructs);
       Free (Full_Tree);
       Free (Buffer);
-   end Update_Contents;
+   end Internal_Update_Contents;
 
    ---------
    -- "=" --
@@ -236,32 +321,7 @@ package body Language.Tree.Database is
    function Get_Or_Create
      (Db   : Construct_Database_Access;
       File : Virtual_File;
-      Lang : Tree_Language_Access) return Structured_File_Access
-   is
-
-      function Is_Spec_Of
-        (Supposed_Spec, Supposed_Body : Structured_File_Access) return Boolean;
-
-      function Is_Spec_Of
-        (Supposed_Spec, Supposed_Body : Structured_File_Access) return Boolean
-      is
-         Spec_Tree, Body_Tree : Construct_Tree_Access;
-      begin
-         if Supposed_Spec = null or else Supposed_Body = null then
-            return False;
-         end if;
-
-         Spec_Tree := Get_Public_Tree (Supposed_Spec);
-         Body_Tree := Get_Public_Tree (Supposed_Body);
-
-         return Get_Unit_Construct
-           (Lang, Spec_Tree).Node.Construct.Is_Declaration
-           and then not Get_Unit_Construct
-             (Lang, Body_Tree).Node.Construct.Is_Declaration
-           and then To_String (Get_Unit_Name (Lang, Spec_Tree))
-           = To_String (Get_Unit_Name (Lang, Body_Tree));
-      end Is_Spec_Of;
-
+      Lang : Tree_Language_Access) return Structured_File_Access is
    begin
       if Lang /= Ada_Tree_Lang then
          return null;
@@ -275,33 +335,7 @@ package body Language.Tree.Database is
             New_File.Lang := Lang;
             New_File.Db := Db;
 
-            Update_Contents (New_File);
-
-            declare
-               C          : File_Map.Cursor := First (Db.Files_Db);
-               Parent     : Get_Parent_Tree_Result;
-            begin
-               while C /= File_Map.No_Element loop
-                  Parent := Get_Parent_Tree
-                    (Lang,
-                     New_File.Public_Tree,
-                     Get_Public_Tree (Element (C)));
-
-                  if Parent = Left
-                    and then not
-                      Is_Spec_Of (Element (C).Parent_File, Element (C))
-                  then
-                     Element (C).Parent_File := New_File;
-                  elsif Parent = Right
-                    and then not
-                      Is_Spec_Of (New_File.Parent_File, New_File)
-                  then
-                     New_File.Parent_File := Element (C);
-                  end if;
-
-                  C := Next (C);
-               end loop;
-            end;
+            Internal_Update_Contents (New_File, True);
 
             Insert (Db.Files_Db, File, New_File);
             Insert (Db.Sorted_Files_Db, New_File);
