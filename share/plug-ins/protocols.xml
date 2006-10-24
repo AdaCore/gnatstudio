@@ -108,9 +108,9 @@
     <gps_prompt>---GPSPROMPT--#</gps_prompt>
     <filesystem>unix</filesystem>
     <init_commands>
-      <cmd>set prompt=---GPSPROMPT--#</cmd>
-      <cmd>setenv COLUMNS=2048</cmd>
-      <cmd>setenv LANG=C</cmd>
+      <cmd>set prompt = ---GPSPROMPT--#</cmd>
+      <cmd>setenv COLUMNS 2048</cmd>
+      <cmd>setenv LANG C</cmd>
       <cmd>unalias ls</cmd>
     </init_commands>
     <exit_commands>
@@ -129,9 +129,9 @@
     <gps_prompt>---GPSPROMPT--#</gps_prompt>
     <filesystem>unix</filesystem>
     <init_commands>
-      <cmd>set prompt=---GPSPROMPT--#</cmd>
-      <cmd>setenv COLUMNS=2048</cmd>
-      <cmd>setenv LANG=C</cmd>
+      <cmd>set prompt = ---GPSPROMPT--#</cmd>
+      <cmd>setenv COLUMNS 2048</cmd>
+      <cmd>setenv LANG C</cmd>
       <cmd>unalias ls</cmd>
     </init_commands>
     <exit_commands>
